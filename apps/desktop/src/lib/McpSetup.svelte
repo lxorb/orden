@@ -15,6 +15,7 @@
   import { openExternal } from './tauri'
 
   const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors'
+  const CHATGPT_PLUGINS = 'https://chatgpt.com/plugins'
   const CLAUDE_CODE = `claude mcp add --transport http nib ${MCP_URL}`
 
   const CLIENTS = $derived<{ id: Client; label: string }[]>([
@@ -178,11 +179,16 @@
             </div>
           {/if}
         {:else if connectors.client === 'chatgpt'}
+          <!-- ChatGPT keeps custom MCP servers under Plugins, behind its
+               Developer mode. Checked against the app in September 2026. -->
           <ol class="steps">
             <li>
-              <p>{t('In ChatGPT, open Settings → Connectors and click Create.')}</p>
+              <p>{t('In ChatGPT, open Settings → Plugins and click the plus button.')}</p>
+              <button class="link" onclick={() => void openExternal(CHATGPT_PLUGINS)}>
+                {t('Open ChatGPT’s plugins')}
+              </button>
               <p class="hint">
-                {t('No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.')}
+                {t('No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.')}
               </p>
             </li>
             <li>
@@ -198,8 +204,8 @@
               </p>
             </li>
             <li>
-              <p>{t('Click Connect and sign in with your Nib email.')}</p>
-              <p class="hint">{t('In a chat, choose + → More → Developer mode and turn Nib on.')}</p>
+              <p>{t('Sign in with your Nib email when ChatGPT asks.')}</p>
+              <p class="hint">{t('To use it in a chat, type @ and pick Nib.')}</p>
             </li>
           </ol>
         {:else}

@@ -298,17 +298,21 @@ export const ja: Dictionary = {
   Command: 'コマンド',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
     'ターミナルで実行し、Claude Code で /mcp と入力してサインインします。',
-  'In ChatGPT, open Settings → Connectors and click Create.':
-    'ChatGPT で 設定 → コネクタ を開き、「作成」をクリックします。',
-  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
-    '「作成」ボタンがない場合は、まず 設定 → アプリ → 詳細設定 で開発者モードをオンにします。',
   'Fill in the form and click Create.': 'フォームを埋めて「作成」をクリックします。',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'ChatGPT で設定 → プラグインを開き、プラスボタンをクリックします。',
+  'Open ChatGPT’s plugins':
+    'ChatGPT のプラグインを開く',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'プラグインの項目やプラスボタンが見当たらない場合は、まず設定 → セキュリティとログインで開発者モードをオンにします。',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'ChatGPT に求められたら、Nib のメールアドレスでサインインします。',
+  'To use it in a chat, type @ and pick Nib.':
+    'チャットで使うには @ を入力して Nib を選びます。',
   'Server URL': 'サーバー URL',
   Authentication: '認証',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'OAuth の詳細設定はそのままにして、「理解した上で続行する」にチェックを入れます。',
-  'In a chat, choose + → More → Developer mode and turn Nib on.':
-    'チャットで + → その他 → 開発者モード を選び、Nib をオンにします。',
   'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
     'Streamable HTTP と OAuth に対応した MCP クライアントなら何でも使えます。URL を渡すと自分で登録し、Nib のサインインページを開きます。',
   'Show config': '設定を表示',

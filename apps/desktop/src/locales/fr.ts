@@ -301,17 +301,21 @@ export const fr: Dictionary = {
   Command: 'Commande',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
     'Lancez-la dans un terminal, puis tapez /mcp dans Claude Code pour vous connecter.',
-  'In ChatGPT, open Settings → Connectors and click Create.':
-    'Dans ChatGPT, ouvrez Paramètres → Connecteurs et cliquez sur Créer.',
-  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
-    'Pas de bouton Créer ? Activez d’abord le mode développeur, dans Paramètres → Applications → Paramètres avancés.',
   'Fill in the form and click Create.': 'Remplissez le formulaire et cliquez sur Créer.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Dans ChatGPT, ouvrez Paramètres → Plugins et cliquez sur le bouton plus.',
+  'Open ChatGPT’s plugins':
+    'Ouvrir les plugins de ChatGPT',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Pas de section Plugins ou pas de bouton plus ? Activez d’abord le mode développeur, sous Paramètres → Sécurité et connexion.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Connectez-vous avec votre e-mail Nib quand ChatGPT le demande.',
+  'To use it in a chat, type @ and pick Nib.':
+    'Pour l’utiliser dans une discussion, tapez @ et choisissez Nib.',
   'Server URL': 'URL du serveur',
   Authentication: 'Authentification',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Laissez les paramètres OAuth avancés tels quels et cochez « Je comprends et je souhaite continuer ».',
-  'In a chat, choose + → More → Developer mode and turn Nib on.':
-    'Dans une discussion, choisissez + → Plus → Mode développeur et activez Nib.',
   'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
     'Tout client MCP qui parle Streamable HTTP avec OAuth. Donnez-lui l’URL : il s’enregistre lui-même et ouvre la page de connexion de Nib.',
   'Show config': 'Afficher la configuration',

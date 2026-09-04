@@ -302,17 +302,21 @@ export const gsw: Dictionary = {
   Command: 'Befehl',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
     'Füer en im Terminal uus und tipp dänn i Claude Code /mcp, zum di aamälde.',
-  'In ChatGPT, open Settings → Connectors and click Create.':
-    'Mach i ChatGPT Iistellige → Connectors uf und klick uf Erstelle.',
-  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
-    'Kei Erstelle-Chnopf? Schalt zerscht de Entwicklermodus ii, under Iistellige → Apps → Erwiiterti Iistellige.',
   'Fill in the form and click Create.': 'Füll s Formular uus und klick uf Erstelle.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Öffne in ChatGPT Iistellige → Plugins und klick ufs Plus.',
+  'Open ChatGPT’s plugins':
+    'Plugins in ChatGPT öffne',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Kei Bereich Plugins oder kei Plus? Schalt zerscht de Entwicklermodus ii, under Iistellige → Sicherheit und Aamäldig.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Mäld di mit dinere Nib-E-Mail aa, wenn ChatGPT dernaa fröget.',
+  'To use it in a chat, type @ and pick Nib.':
+    'Tipp in eme Chat @ und wähl Nib, zum s bruuche.',
   'Server URL': 'Server-URL',
   Authentication: 'Authentifizierig',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Lah di erwiiterete OAuth-Iistellige, wie si sind, und hagg „Ich verstehe und möchte fortfahren“ aa.',
-  'In a chat, choose + → More → Developer mode and turn Nib on.':
-    'Wähl im Chat + → Meh → Entwicklermodus und schalt Nib ii.',
   'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
     'Jede MCP-Client mit Streamable HTTP und OAuth. Gib em d URL: Er registriert sich sälber und macht d Aamäldsiite vo Nib uf.',
   'Show config': 'Konfiguration aazeige',

@@ -300,17 +300,21 @@ export const de: Dictionary = {
   Command: 'Befehl',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
     'Führe ihn im Terminal aus und tippe dann in Claude Code /mcp, um dich anzumelden.',
-  'In ChatGPT, open Settings → Connectors and click Create.':
-    'Öffne in ChatGPT Einstellungen → Connectors und klicke auf Erstellen.',
-  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
-    'Kein Erstellen-Knopf? Schalte zuerst den Entwicklermodus ein, unter Einstellungen → Apps → Erweiterte Einstellungen.',
   'Fill in the form and click Create.': 'Fülle das Formular aus und klicke auf Erstellen.',
+  'In ChatGPT, open Settings → Plugins and click the plus button.':
+    'Öffne in ChatGPT Einstellungen → Plugins und klicke auf das Plus.',
+  'Open ChatGPT’s plugins':
+    'Plugins in ChatGPT öffnen',
+  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
+    'Kein Bereich Plugins oder kein Plus? Schalte zuerst den Entwicklermodus ein, unter Einstellungen → Sicherheit und Anmeldung.',
+  'Sign in with your Nib email when ChatGPT asks.':
+    'Melde dich mit deiner Nib-E-Mail an, wenn ChatGPT danach fragt.',
+  'To use it in a chat, type @ and pick Nib.':
+    'Tippe in einem Chat @ und wähle Nib, um es zu benutzen.',
   'Server URL': 'Server-URL',
   Authentication: 'Authentifizierung',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Lass die erweiterten OAuth-Einstellungen, wie sie sind, und hake „Ich verstehe und möchte fortfahren“ an.',
-  'In a chat, choose + → More → Developer mode and turn Nib on.':
-    'Wähle im Chat + → Mehr → Entwicklermodus und schalte Nib ein.',
   'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
     'Jeder MCP-Client mit Streamable HTTP und OAuth. Gib ihm die URL: Er registriert sich selbst und öffnet die Anmeldeseite von Nib.',
   'Show config': 'Konfiguration anzeigen',
