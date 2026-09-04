@@ -2,11 +2,12 @@ import { closeBracketsKeymap } from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
-import { EditorState } from '@codemirror/state'
+import { EditorState, Prec } from '@codemirror/state'
 import { EditorView, drawSelection, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
 import { editorCompletion } from './emoji'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { codeThemeExtension } from './code-theme'
+import { closeFence } from './commands'
 import { nibKeymap } from './keymap'
 import { richPaste } from './paste'
 import { modeExtensions } from './modes'
@@ -53,6 +54,9 @@ export function createEditor(options: EditorOptions): EditorView {
         richPaste(),
         ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
         nibTheme,
+        // Above the markdown language's own Enter, which continues a list or
+        // a quote and would otherwise take the key on a fence inside one.
+        Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
         keymap.of([
           // Markdown bindings come first so they win over the defaults.
           ...nibKeymap,

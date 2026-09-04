@@ -163,6 +163,70 @@ function insertBlock(build: (indent: string) => { text: string; caret: number })
 }
 
 export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3 }))
+
+/** A fence line: up to three spaces, then three or more backticks or tildes,
+ *  then whatever names the language. A backtick fence may not have backticks
+ *  in that part, or it would be inline code. */
+const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
+
+function fenceOf(text: string): { mark: string; info: string } | null {
+  const match = FENCE.exec(text)
+  if (!match) return null
+  if (match[1][0] === '`' && match[2].includes('`')) return null
+  return { mark: match[1], info: match[2].trim() }
+}
+
+/** Whether a line closes a fence opened with `mark`: the same character, at
+ *  least as many of them, and nothing else. */
+function closes(text: string, mark: string): boolean {
+  const found = fenceOf(text)
+  return (
+    !!found && found.mark[0] === mark[0] && found.mark.length >= mark.length && !found.info
+  )
+}
+
+/** Enter at the end of an opening fence closes the fence as well, with the
+ *  caret on the blank line between. Without this a fence typed by hand takes
+ *  everything below it until a closing one is typed too, and the rest of the
+ *  note turns into code from one keystroke to the next. Only a fence nothing
+ *  later closes gets this; Enter on a closed one, or on the closing line of a
+ *  block, is left to the ordinary handler. */
+export const closeFence: StateCommand = ({ state, dispatch }) => {
+  const range = state.selection.main
+  if (!range.empty) return false
+
+  const line = state.doc.lineAt(range.head)
+  if (range.head !== line.to) return false
+
+  const fence = fenceOf(line.text)
+  if (!fence) return false
+
+  // Whether this line opens a block or ends one depends on everything above.
+  let open: string | null = null
+  for (let number = 1; number < line.number; number++) {
+    const text = state.doc.line(number).text
+    if (open) {
+      if (closes(text, open)) open = null
+    } else {
+      open = fenceOf(text)?.mark ?? null
+    }
+  }
+  if (open) return false
+
+  for (let number = line.number + 1; number <= state.doc.lines; number++) {
+    if (closes(state.doc.line(number).text, fence.mark)) return false
+  }
+
+  dispatch(
+    state.update({
+      changes: { from: line.to, insert: `\n\n${fence.mark}` },
+      selection: { anchor: line.to + 1 },
+      scrollIntoView: true,
+      userEvent: 'input',
+    }),
+  )
+  return true
+}
 export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }))
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
 

@@ -3,6 +3,7 @@ import { EditorSelection, EditorState, type StateCommand, type Transaction } fro
 import { describe, expect, test } from 'vitest'
 import {
   clearFormatting,
+  closeFence,
   insertCodeFence,
   insertLink,
   insertMathBlock,
@@ -173,5 +174,55 @@ describe('select word', () => {
 
   test('collapses on punctuation', () => {
     expect(runSelection(selectWord, 'one |- two')).toEqual([4, 4])
+  })
+})
+
+describe('pressing Enter after a code fence', () => {
+  /** Whether the command took the key, and what the document became. */
+  function press(marked: string): { took: boolean; doc: string } {
+    const caret = marked.indexOf('|')
+    const doc = marked.replace(/\|/g, '')
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(caret),
+      extensions: [markdown({ base: markdownLanguage })],
+    })
+
+    let next = state
+    const took = closeFence({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
+    return { took, doc: next.doc.toString() }
+  }
+
+  test('closes the fence and puts the caret inside it', () => {
+    expect(press('```|')).toEqual({ took: true, doc: '```\n\n```' })
+    expect(runSelection(closeFence, '```|')).toEqual([4, 4])
+  })
+
+  test('keeps the language', () => {
+    expect(press('```ts|').doc).toBe('```ts\n\n```')
+  })
+
+  test('keeps what follows outside the block', () => {
+    expect(press('```|\nmore text').doc).toBe('```\n\n```\nmore text')
+  })
+
+  test('closes tildes with tildes, and as many of them', () => {
+    expect(press('~~~~|').doc).toBe('~~~~\n\n~~~~')
+  })
+
+  test('leaves a fence that is already closed alone', () => {
+    expect(press('```|\ncode\n```').took).toBe(false)
+  })
+
+  test('leaves a closing fence alone', () => {
+    expect(press('```\ncode\n```|').took).toBe(false)
+  })
+
+  test('does nothing away from the end of the line', () => {
+    expect(press('``|`').took).toBe(false)
+  })
+
+  test('does nothing on an ordinary line', () => {
+    expect(press('just words|').took).toBe(false)
   })
 })
