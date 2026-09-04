@@ -1,15 +1,5 @@
 # Nib
 
-A simple, lightweight markdown editor offering all the features you could ever need. 
-
-See for yourself: [nibeditor.com](https://nibeditor.com)
-
-## Screenshot
-
-<img width="1999" height="1423" alt="nib-screenshot" src="https://github.com/user-attachments/assets/0d3c6eac-9d6b-4581-a405-0ac1b746d9d8" />
-
-## Download
-
 <p align="center">
   <a href="https://github.com/lxorb/nib/releases/latest">
     <img alt="Download for Windows" src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20arm64-0078D6?style=for-the-badge&logo=windows11&logoColor=white">
@@ -36,6 +26,14 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
     <img alt="Web app" src="https://img.shields.io/badge/web-nibeditor.com-767E8C?style=flat-square">
   </a>
 </p>
+
+A simple, lightweight markdown editor offering all the features you could ever need. 
+
+See for yourself: [nibeditor.com](https://nibeditor.com)
+
+## Screenshot
+
+<img width="1999" height="1423" alt="nib-screenshot" src="https://github.com/user-attachments/assets/0d3c6eac-9d6b-4581-a405-0ac1b746d9d8" />
 
 ## Why Nib?
 
