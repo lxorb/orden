@@ -237,3 +237,5 @@ Features Typora does not have, which are the reason this exists.
 - [x] MCP server exposing notes to any LLM client
 - [x] Command palette
 - [x] Motion system across the whole interface
+- [x] Recently deleted: notes and spaces wait 14 days before they are gone
+- [x] Selecting several notes with Ctrl and Shift, moved or deleted together
