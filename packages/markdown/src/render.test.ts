@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { documentTitle, frontMatter, renderMarkdown, stripFrontMatter } from './index'
+import {
+  codeBlocks,
+  documentTitle,
+  frontMatter,
+  frontMatterValue,
+  renderMarkdown,
+  stripFrontMatter,
+} from './index'
 
 describe('front matter', () => {
   test('is not rendered', () => {
@@ -14,6 +21,16 @@ describe('front matter', () => {
 
   test('leaves a document without it alone', () => {
     expect(stripFrontMatter('# Title')).toBe('# Title')
+  })
+
+  test('answers a single field', () => {
+    const source = '---\ntitle: "Field Notes"\nauthor: Ada\nexport:\n  paper: A5\n---\n\nBody'
+
+    expect(frontMatterValue(source, 'title')).toBe('Field Notes')
+    expect(frontMatterValue(source, 'author')).toBe('Ada')
+    expect(frontMatterValue(source, 'paper')).toBeNull()
+    expect(frontMatterValue(source, 'missing')).toBeNull()
+    expect(frontMatterValue('# No matter', 'title')).toBeNull()
   })
 })
 
@@ -45,6 +62,86 @@ describe('GitHub-flavoured basics', () => {
   test('renders task lists', () => {
     const html = renderMarkdown('- [x] done\n- [ ] open')
     expect(html).toContain('checked')
+  })
+
+  test('marks task items so a stylesheet can draw them', () => {
+    const html = renderMarkdown('- [x] done\n- [ ] open\n- plain')
+
+    expect(html).toContain('<li class="task-list-item is-done"><input checked=""')
+    expect(html).toContain('<li class="task-list-item"><input disabled=""')
+    expect(html).toContain('<li>plain</li>')
+  })
+
+  test('marks a link whose text is its address', () => {
+    const html = renderMarkdown('See <https://a.dev> or https://b.dev or [here](https://c.dev).')
+
+    expect(html).toContain('<a class="url" href="https://a.dev">https://a.dev</a>')
+    expect(html).toContain('<a class="url" href="https://b.dev">https://b.dev</a>')
+    expect(html).toContain('<a href="https://c.dev">here</a>')
+  })
+})
+
+describe('headings and the table of contents', () => {
+  const SOURCE = '# Title\n\n[toc]\n\n## Two words\n\n### Deeper, *with* `code`\n\n## Two words\n\nText'
+
+  test('are plain by default', () => {
+    const html = renderMarkdown(SOURCE)
+    expect(html).toContain('<h1>Title</h1>')
+    expect(html).toContain('<p>[toc]</p>')
+  })
+
+  test('get ids from their text when asked', () => {
+    const html = renderMarkdown(SOURCE, { toc: true })
+    expect(html).toContain('<h1 id="title">Title</h1>')
+    expect(html).toContain('<h2 id="two-words">Two words</h2>')
+    expect(html).toContain('<h3 id="deeper-with-code">Deeper, <em>with</em> <code>code</code></h3>')
+  })
+
+  test('keep ids apart when two headings read the same', () => {
+    const html = renderMarkdown(SOURCE, { toc: true })
+    expect(html).toContain('<h2 id="two-words-1">Two words</h2>')
+  })
+
+  test('turn [toc] into nested links', () => {
+    const html = renderMarkdown(SOURCE, { toc: true })
+    expect(html).not.toContain('[toc]')
+    expect(html).toContain('<nav class="toc">')
+    expect(html).toContain('<a href="#title">Title</a>')
+    expect(html).toContain('<a href="#deeper-with-code">Deeper, with code</a>')
+    expect(html).toMatch(/<li><a href="#two-words">Two words<\/a>\n?<ul>\n?<li><a href="#deeper-with-code">/)
+  })
+
+  test('accept [TOC] in capitals, as Typora does', () => {
+    expect(renderMarkdown('# A\n\n[TOC]\n', { toc: true })).toContain('<nav class="toc">')
+  })
+
+  test('leave a [toc] in running text alone', () => {
+    expect(renderMarkdown('see [toc] here', { toc: true })).toContain('see [toc] here')
+  })
+
+  test('render nothing for a [toc] in a document without headings', () => {
+    expect(renderMarkdown('[toc]\n\ntext', { toc: true })).not.toContain('<nav')
+  })
+})
+
+describe('code fences', () => {
+  test('are listed with their language', () => {
+    const blocks = codeBlocks('```js\nlet a\n```\n\n- item\n\n  ```mermaid\n  graph TD\n  ```\n\n```\nplain\n```')
+
+    expect(blocks).toEqual([
+      { language: 'js', code: 'let a' },
+      { language: 'mermaid', code: 'graph TD' },
+      { language: '', code: 'plain' },
+    ])
+  })
+
+  test('can be taken over by the caller', () => {
+    const html = renderMarkdown('```mermaid\ngraph TD\n```\n\n```js\nlet a = 1 < 2\n```', {
+      code: (code, language) => (language === 'mermaid' ? `<figure>${code}</figure>` : null),
+    })
+
+    expect(html).toContain('<figure>graph TD</figure>')
+    expect(html).toContain('<pre><code class="language-js">let a = 1 &lt; 2\n</code></pre>')
   })
 
   test('renders strikethrough', () => {
