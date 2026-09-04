@@ -115,6 +115,15 @@ export class FenceHeaderWidget extends NibWidget {
     bar.className = 'nib-fence-header'
     bar.contentEditable = 'false'
 
+    // The widget itself takes no width: it only holds the row open. What is
+    // seen sits in a box pinned to the line's right edge, so the fence text,
+    // when the caret reveals it, and the controls share one row rather than
+    // the controls wrapping onto a row of their own - which made the block
+    // grow whenever the caret was inside it.
+    const controls = document.createElement('span')
+    controls.className = 'nib-fence-controls'
+    bar.append(controls)
+
     const label = document.createElement('button')
     label.className = 'nib-fence-language'
     label.type = 'button'
@@ -128,7 +137,7 @@ export class FenceHeaderWidget extends NibWidget {
       this.editLanguage(view, label)
     })
 
-    bar.append(label)
+    controls.append(label)
 
     const copy = document.createElement('button')
     copy.className = 'nib-fence-copy'
@@ -174,7 +183,7 @@ export class FenceHeaderWidget extends NibWidget {
       })
     })
 
-    bar.append(copy)
+    controls.append(copy)
 
     // The button shows while the pointer is anywhere over the block. The block
     // is a run of sibling lines rather than one element, so no CSS selector

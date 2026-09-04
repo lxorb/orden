@@ -91,51 +91,96 @@
   box-decoration-break: clone;
 }
 
+/* CodeMirror sizes a selection's full-line rectangles from the content box,
+   less whatever padding its first line has. The writing surface keeps its
+   margins on the content element, so those rectangles ran out into the
+   margins - past the edge of a code block, which made a selection in one
+   look torn. Giving the first line the same padding, pulled back by a
+   negative margin so nothing on it moves, tells CodeMirror where the text
+   column really is. */
+.cm-content > .cm-line:first-child {
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
+  margin-left: calc(-1 * var(--space-5));
+  margin-right: calc(-1 * var(--space-5));
+}
+
 /* A block is a run of lines, so it is drawn line by line: a filled band on
    each, with the first and last carrying the corners. The room above and
    below is a transparent border rather than a margin, which CodeMirror's line
-   measuring would not see. A border eats into the radius of the padding box,
-   which is the edge the fill is clipped to, so the outer radius is made taller
-   by the border's width: what shows is a corner the size it was meant to be,
-   not a square one. */
+   measuring would not see.
+
+   The fill is a pseudo-element beneath the line rather than the line's own
+   background, and below the selection layer: CodeMirror paints selections
+   behind the content, so a background on the line itself covered them, and
+   all that showed of a selection in a block were the ends of its rectangles
+   poking out either side. The pseudo-element's box is the padding box, which
+   is exactly the part inside the transparent borders. */
 .cm-line.nib-code {
+  position: relative;
   font-family: var(--font-mono);
   font-size: 0.86em;
   line-height: 1.62;
-  background: var(--code-block-bg-color);
-  background-clip: padding-box;
   padding: 0 var(--space-4);
 }
 
+.cm-line.nib-code::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background: var(--code-block-bg-color);
+  pointer-events: none;
+}
+
+/* The first row holds the fence, shown or hidden, and the controls pinned to
+   its right; the last holds the closing fence. Both are there in either
+   state, so the block is the same height whether or not the caret is in it. */
 .cm-line.nib-code-open {
-  padding-top: var(--space-3);
+  padding-top: 6px;
   border-top: 1.1em solid transparent;
-  border-top-left-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
-  border-top-right-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
+}
+
+.cm-line.nib-code-open::after {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .cm-line.nib-code-close {
-  padding-bottom: var(--space-3);
+  padding-bottom: 6px;
   border-bottom: 1.1em solid transparent;
-  border-bottom-left-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
-  border-bottom-right-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
+  line-height: 1.3;
 }
 
-/* The fence's own line carries its language and a copy button.
-   Not floated: a line holding only a float has a zero-height box, so every
-   click in the block would land a line lower than it looked. Taking the full
-   width keeps the line measurable and still puts the controls on the right. */
+.cm-line.nib-code-close::after {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+/* The fence's own line carries its language and a copy button. The widget is
+   a zero-width box in the flow of the line: enough to hold the row open when
+   the fence text is hidden (a line holding nothing in flow has no height, and
+   every click in the block would land a line lower than it looked), and not
+   enough to push anything onto a second row. The controls themselves are
+   pinned to the line's right edge, level with that first row. */
 .nib-fence-header {
+  display: inline-block;
+  width: 0;
+  height: 1.62em;
+  vertical-align: top;
+  user-select: none;
+}
+
+.nib-fence-controls {
+  position: absolute;
+  top: 6px;
+  right: var(--space-3);
+  height: 1.62em;
   display: inline-flex;
-  width: 100%;
-  justify-content: flex-end;
   align-items: center;
   gap: var(--space-3);
   font-family: var(--font-ui);
   font-size: 0.82rem;
   line-height: 1;
   color: var(--muted);
-  user-select: none;
 }
 
 .nib-fence-language {
@@ -159,7 +204,8 @@
 }
 
 .cm-line.nib-code:hover .nib-fence-unset,
-.nib-fence-header:hover .nib-fence-unset {
+.nib-fence-header.nib-fence-hover .nib-fence-unset,
+.nib-fence-controls:hover .nib-fence-unset {
   opacity: 1;
 }
 
@@ -217,7 +263,7 @@
 }
 
 .nib-fence-header.nib-fence-hover .nib-fence-copy,
-.nib-fence-header:hover .nib-fence-copy,
+.nib-fence-controls:hover .nib-fence-copy,
 .nib-fence-copy:focus-visible,
 .nib-fence-copy.nib-fence-copied {
   opacity: 1;
@@ -371,14 +417,17 @@
   color: var(--line-strong);
 }
 
-/* Rendered, editable table. */
+/* Rendered, editable table. The padding is not spacing but room for the
+   controls that hang over the header and beside the rows. The negative
+   margins put that room in the page's own gutters, so the table starts where
+   the text does and can run into the right-hand gutter before its cells have
+   to wrap: a table that nearly fits the column should not fold for the sake
+   of an inset. Wider than that and it scrolls. */
 .nib-table-wrap {
   position: relative;
-  /* The padding above is not spacing, it is room for the column controls that
-     hang over the header, so the margin can be small without the table
-     crowding the text around it. */
-  padding: 0.15em 0 0.15em 26px;
-  padding-top: 18px;
+  margin-left: -26px;
+  margin-right: calc(-1 * var(--space-5));
+  padding: 18px 0 0.15em 26px;
   overflow-x: auto;
   animation: settle-in var(--dur-base) var(--ease-out);
 }
