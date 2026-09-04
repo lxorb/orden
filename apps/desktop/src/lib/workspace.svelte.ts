@@ -537,6 +537,13 @@ class Workspace {
     this.persist()
   }
 
+  /** The rail's way in. Picking a space with the sidebar closed showed
+   *  nothing, so the sidebar comes up with the tree, as Ctrl+Shift+L opens it. */
+  async showSpace(id: string) {
+    if (!this.panel) this.panel = 'tree'
+    await this.selectSpace(id)
+  }
+
   /** True as soon as one note on this machine has something written in it.
    *  Stops at the first, so a large space costs no more than a small one. */
   async hasLocalContent(): Promise<boolean> {
@@ -653,7 +660,7 @@ class Workspace {
     const existing = this.tabs.find((tab) => tab.path === path)
     if (existing) {
       // Opening for real what was only being looked at makes it stay.
-      if (!options.preview && this.previewTabId === existing.id) this.previewTabId = null
+      if (!options.preview) this.keep(existing.id)
       if (options.activate !== false) {
         this.activeTabId = existing.id
         this.showNote()
@@ -708,6 +715,16 @@ class Workspace {
     this.persist()
   }
 
+  /** Makes a tab that was only previewing its note stay: the italic goes, and
+   *  the next single click in the file list gets a tab of its own instead of
+   *  taking this one over. Every way of keeping a preview ends up here -
+   *  typing in it, opening the note for real from the list, a double click or
+   *  "Keep open" on the tab itself - so they cannot drift apart. Asking about
+   *  a tab that is not the preview changes nothing. */
+  keep(id: string) {
+    if (this.previewTabId === id) this.previewTabId = null
+  }
+
   close(id: string) {
     const index = this.tabs.findIndex((tab) => tab.id === id)
     if (index < 0) return
@@ -729,7 +746,7 @@ class Workspace {
     tab.dirty = true
 
     // Typing in a note you were only previewing is what makes it yours.
-    if (this.previewTabId === tab.id) this.previewTabId = null
+    this.keep(tab.id)
 
     this.scheduleSave()
     // Auto-save may be off, or the note may have nowhere to be saved to yet.

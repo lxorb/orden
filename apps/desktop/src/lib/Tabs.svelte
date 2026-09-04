@@ -2,10 +2,19 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { longPress } from './longpress'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { workspace, type Tab } from './workspace.svelte'
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
+
+  /** What a double click on the tab does, for a finger that cannot double
+   *  click. Only offered while the tab is still a preview: once kept, there is
+   *  nothing left to keep. */
+  function keepEntry(tab: Tab): MenuEntry[] {
+    if (tab.id !== workspace.previewTabId) return []
+    return [{ label: t('Keep open'), run: () => workspace.keep(tab.id) }]
+  }
 
   function tabMenu(tab: Tab): MenuEntry[] {
     return [
@@ -20,10 +29,15 @@
         },
       },
       DIVIDER,
+      ...keepEntry(tab),
+      DIVIDER,
       ...copyPathEntry(tab.path),
       ...revealEntry(tab.path),
     ]
   }
+
+  const showMenu = (event: MouseEvent, tab: Tab) =>
+    menu.show(event, tabMenu(tab), { title: stripped(tab.name) })
 </script>
 
 <div class="tabs">
@@ -34,10 +48,16 @@
       class:preview={tab.id === workspace.previewTabId}
       transition:fly={{ y: -8, duration: 180, easing: cubicOut }}
     >
+      <!-- A double click keeps a preview, the way VS Code does it. The two
+           single clicks it is made of activate the tab twice, which costs
+           nothing: activating the tab that is already active changes nothing.
+           A long press stands in for the right click on a touch screen. -->
       <button
         class="pick"
         onclick={() => workspace.activate(tab.id)}
-        oncontextmenu={(event) => menu.show(event, tabMenu(tab))}
+        ondblclick={() => workspace.keep(tab.id)}
+        oncontextmenu={(event) => showMenu(event, tab)}
+        use:longPress={(event) => showMenu(event, tab)}
       >
         {stripped(tab.name)}
         {#if tab.dirty}<span class="dot" aria-label={t('Unsaved')}></span>{/if}
@@ -91,11 +111,14 @@
     stroke-linecap: round;
   }
 
+  /* Not selectable: a double click keeps the tab, and must not also paint
+     its name blue the way it would any other text. */
   .tab {
     display: flex;
     align-items: center;
     position: relative;
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    user-select: none;
     transition: background var(--dur-fast) var(--ease-out);
   }
 
