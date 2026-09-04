@@ -31,7 +31,9 @@ class Viewport {
     this.narrow = narrow.matches
     narrow.addEventListener('change', (event) => (this.narrow = event.matches))
 
-    const standalone = window.matchMedia('(display-mode: standalone)')
+    // Installed, Nib asks for fullscreen (see the manifest), which is what
+    // takes the system bars away on a phone; standalone is the fallback.
+    const standalone = window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)')
     this.installed = standalone.matches
     standalone.addEventListener('change', (event) => (this.installed = event.matches))
 
