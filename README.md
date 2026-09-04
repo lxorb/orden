@@ -8,7 +8,7 @@
     <img alt="Download for macOS" src="https://img.shields.io/badge/macOS-universal-1A1A1A?style=for-the-badge&logo=apple&logoColor=white">
   </a>
   <a href="https://github.com/lxorb/nib/releases/latest">
-    <img alt="Download for Linux" src="https://img.shields.io/badge/Linux-x64-FCC624?style=for-the-badge&logo=linux&logoColor=black">
+    <img alt="Download for Linux" src="https://img.shields.io/badge/Linux-x64%20%C2%B7%20arm64-FCC624?style=for-the-badge&logo=linux&logoColor=black">
   </a>
   <a href="https://nibeditor.com">
     <img alt="Open in the browser" src="https://img.shields.io/badge/Browser-no%20install-7C6BF5?style=for-the-badge&logo=firefoxbrowser&logoColor=white">

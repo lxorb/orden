@@ -1,12 +1,60 @@
 name: release
 
+# Two kinds of release come out of here. A tag `v*` is a release proper, with
+# its own page and its own number. Every push to main is a build as well: the
+# desktop app follows main the way nibeditor.com does, so what is on main is
+# what people run, not only what was last tagged. Those builds land on one
+# rolling pre-release tagged `edge`, replaced each time - not `main`, since a
+# tag sharing a name with the branch makes every `git checkout main` ambiguous.
 on:
   push:
     tags: ['v*']
+    branches: [main]
   workflow_dispatch:
 
+# A newer push to main supersedes the build of an older one: only the newest
+# is worth finishing. A tag is a release of its own and is never cancelled.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+
 jobs:
+  # What this build is called, decided once for every platform.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
+      tag: ${{ steps.decide.outputs.tag }}
+      rolling: ${{ steps.decide.outputs.rolling }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The whole history, so the newest tag can be found from main.
+          fetch-depth: 0
+
+      - id: decide
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "rolling=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # One patch past the newest tag, with a pre-release number that only
+          # ever goes up. Semver puts 0.1.2-57 above 0.1.1 and below 0.1.2, so
+          # the app takes each main build and then the release that follows.
+          # Digits only in the pre-release, because the MSI bundler turns it
+          # into a fourth version number and accepts nothing else there.
+          latest=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.0.0)
+          IFS=. read -r major minor patch <<< "${latest#v}"
+          echo "version=$major.$minor.$((patch + 1))-$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "tag=edge" >> "$GITHUB_OUTPUT"
+          echo "rolling=true" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: version
     strategy:
       fail-fast: false
       matrix:
@@ -20,6 +68,9 @@ jobs:
           - platform: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             label: linux-x64
+          - platform: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            label: linux-arm64
           # One download that runs on every Mac, Intel or Apple silicon, which
           # needs both architectures installed to lipo together.
           - platform: macos-latest
@@ -61,11 +112,17 @@ jobs:
 
       # Signed so the updater will accept them. Without the key the build still
       # succeeds; it just produces bundles that cannot be auto-installed.
+      #
+      # The version is passed in rather than read from tauri.conf.json, so a
+      # build of main carries the number the manifest will claim for it.
       - name: Build the app
+        shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
-        run: pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }}
+        run: |
+          pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
+            --config '{"version":"${{ needs.version.outputs.version }}"}'
 
       - uses: actions/upload-artifact@v4
         with:
@@ -86,10 +143,13 @@ jobs:
 
   # One manifest for every platform, which is what the app polls.
   publish:
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
@@ -97,18 +157,35 @@ jobs:
 
       # Before the manifest, which builds its download URLs from the filenames.
       - name: Name the downloads for humans
-        run: node scripts/name-assets.mjs artifacts "${{ github.ref_name }}"
+        run: node scripts/name-assets.mjs artifacts "$VERSION"
 
       - name: Build latest.json
-        run: node scripts/update-manifest.mjs "${{ github.ref_name }}" artifacts > latest.json
+        run: node scripts/update-manifest.mjs "$TAG" "$VERSION" artifacts > latest.json
 
-      - name: Publish the release
+      # The rolling release is remade rather than added to: an old build's
+      # files under a new manifest would be the worst of both.
+      - name: Replace the build of main
+        if: needs.version.outputs.rolling == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes || true
-          gh release upload "${{ github.ref_name }}" latest.json --clobber
+          gh release delete "$TAG" --cleanup-tag --yes || true
+          gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
+            --title "main · $VERSION" \
+            --notes "Built from \`${GITHUB_SHA::7}\` on main. Replaced by every push; the desktop app updates itself from here."
+
+      - name: Publish the release
+        if: needs.version.outputs.rolling != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$TAG" --title "$TAG" --generate-notes || true
+
+      - name: Upload the files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$TAG" latest.json --clobber
           # The .app.tar.gz is what the updater downloads on a Mac, so it has to
           # be a release asset even though nobody clicks it.
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) \
-            -exec gh release upload "${{ github.ref_name }}" {} --clobber \;
+            -exec gh release upload "$TAG" {} --clobber \;

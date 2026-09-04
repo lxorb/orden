@@ -30,6 +30,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJGQUM4NjVBMDQ2QTcxMTAKUldRUWNXb0VXb2FzTDQyVlJYWmxKdkFvMXc5MERZeVVOTmttMExMSFlEbW9lMlA0OUY5R3M5ZW8K",
       "endpoints": [
+        "https://github.com/lxorb/nib/releases/download/edge/latest.json",
         "https://github.com/lxorb/nib/releases/latest/download/latest.json"
       ],
       "windows": {

@@ -3,7 +3,13 @@
  *  Every bundle the release workflow produced has a `.sig` beside it; the
  *  manifest pairs each platform with its download URL and that signature.
  *
- *    node scripts/update-manifest.mjs v0.2.0 artifacts > latest.json
+ *    node scripts/update-manifest.mjs v0.2.0 0.2.0 artifacts > latest.json
+ *    node scripts/update-manifest.mjs main 0.2.1-57 artifacts > latest.json
+ *
+ *  The tag is where the files are downloaded from; the version is what the
+ *  updater compares against the one installed. For a tagged release they say
+ *  the same thing. For the rolling build of main the tag is always `main`
+ *  and the version counts up on its own.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -11,11 +17,14 @@ import { join } from 'node:path'
 
 const REPO = 'lxorb/nib'
 
-/** Which Tauri platform key a built file belongs to. */
+/** Which Tauri platform key a built file belongs to. Each match names the
+ *  architecture as well as the kind of file: two Linux builds each carry an
+ *  AppImage, and the wrong one would install and refuse to start. */
 const PLATFORMS = [
   { key: 'windows-x86_64', match: (path) => /windows-x64/.test(path) && path.endsWith('.exe.sig') },
   { key: 'windows-aarch64', match: (path) => /windows-arm64/.test(path) && path.endsWith('.exe.sig') },
-  { key: 'linux-x86_64', match: (path) => path.endsWith('.AppImage.sig') },
+  { key: 'linux-x86_64', match: (path) => /linux-x64/.test(path) && path.endsWith('.AppImage.sig') },
+  { key: 'linux-aarch64', match: (path) => /linux-arm64/.test(path) && path.endsWith('.AppImage.sig') },
 ]
 
 /** The macOS bundle is universal, so every Mac is offered the same file. Tauri
@@ -23,9 +32,9 @@ const PLATFORMS = [
  *  newer clients, so all three keys point at it. */
 const MAC_KEYS = ['darwin-universal', 'darwin-aarch64', 'darwin-x86_64']
 
-const [, , tag, root] = process.argv
-if (!tag || !root) {
-  console.error('usage: update-manifest.mjs <tag> <artifacts-dir>')
+const [, , tag, version, root] = process.argv
+if (!tag || !version || !root) {
+  console.error('usage: update-manifest.mjs <tag> <version> <artifacts-dir>')
   process.exit(1)
 }
 
@@ -74,7 +83,7 @@ if (!Object.keys(platforms).length) {
 process.stdout.write(
   `${JSON.stringify(
     {
-      version: tag.replace(/^v/, ''),
+      version,
       pub_date: new Date().toISOString(),
       platforms,
     },

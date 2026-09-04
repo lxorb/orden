@@ -163,6 +163,51 @@ marks the toggle as "on" is a state, not a hover, and stays.
 lands there (on a desktop). The fallback when a pane disappears on sign-out
 stays Account, which is where "Not signed in" lives.
 
+## Later the same day
+
+Nine more items arrived while the above was being built. They are smaller
+and mostly sit in the app shell.
+
+12. **Help menu.** "About Nib" goes; "Source code" opens the GitHub
+    repository in the system browser (a new tab on the web).
+13. **Drawer settle.** After a swipe the drawer's remaining travel is timed
+    from the distance left (200–380ms) on a gentler curve, instead of the
+    210ms tap transition that made it leap the last stretch.
+14. **Resizable sidebar.** A thin strip on the sidebar's right edge drags its
+    width between 180 and 520px, kept in `localStorage` per device. Double-
+    click restores the default. Pointer capture keeps the drag going once
+    the pointer leaves the strip. Phones keep the drawer's own width.
+15. **The app follows main.** Every push to main builds the desktop app and
+    lands it on one rolling pre-release tagged `edge` (not `main`: a tag
+    named like the branch makes `git checkout main` ambiguous). Its version
+    is one patch past the newest `v*` tag with a numeric pre-release number
+    from the run (`0.1.2-57`) - above the last release, below the next, and
+    digits only because the MSI bundler turns it into a fourth number. The
+    updater polls `edge` first and the latest release second.
+16. **Sidebar animation on a desktop.** The sidebar's width slides open and
+    shut, so the document moves with it, instead of fading in beside an
+    instant reflow. Phones keep it instant so the drawer's width can be
+    measured the moment it mounts.
+17. **Linux arm64.** A fifth build on `ubuntu-22.04-arm`, labelled
+    `linux-arm64`, with its own key in the update manifest. The manifest's
+    Linux matches now name the architecture, so the two AppImages cannot be
+    confused. A new release is cut rather than the old one amended.
+18. **Menu animation on a desktop.** The popover grows out of its button:
+    opacity, a 6px drift and a 0.96→1 scale from the top-left, 220ms.
+19. **Switching spaces.** The sidebar's contents fly in from the side of the
+    rail the new space is on (below when it sits lower, above when higher),
+    and the document rises in with a fade. Switching tabs within a space
+    stays as it was.
+20. **The note over the list on narrow phones.** Below 460px the drawer is the
+    whole screen, so the layers swap: the drawer is the floor and the note is
+    what slides, off to the right to uncover the list and back over it when a
+    note is chosen. The same drag drives both modes; only which layer it moves
+    differs. Choosing a note, a search hit or an outline heading on a phone
+    closes the drawer, which reveal mode needs and overlay mode benefits from.
+21. **Icon sizes.** Icons grow to fit their buttons: rail glyphs 19px (24px
+    on a phone), rail buttons 15px (22px), the hamburger 17px (22px), the
+    sidebar toggle 16px (22px), the space initial 14px (18px).
+
 ## Testing
 
 - Worker (`services/sync`, vitest against real SQL): unpublished-subdomain

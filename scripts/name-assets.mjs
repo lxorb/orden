@@ -5,7 +5,7 @@
  *  `Nib-0.1.0-1.x86_64.rpm` - three spellings of the architecture and no word
  *  saying which operating system any of them is for.
  *
- *    node scripts/name-assets.mjs artifacts v0.1.0
+ *    node scripts/name-assets.mjs artifacts 0.1.0
  *
  *  Each artifact directory is named `nib-<platform>-<arch>` by the build
  *  matrix, which is exactly the label the file should carry. Underneath it the
@@ -20,14 +20,14 @@ import { join } from 'node:path'
 /** Longest first: `.app.tar.gz` has to win over `.gz`. */
 const KINDS = ['.app.tar.gz', '-setup.exe', '.AppImage', '.msi', '.dmg', '.deb', '.rpm']
 
-const [, , root, tag] = process.argv
-if (!root || !tag) {
-  console.error('usage: name-assets.mjs <artifacts-dir> <tag>')
+const [, , root, given] = process.argv
+if (!root || !given) {
+  console.error('usage: name-assets.mjs <artifacts-dir> <version>')
   process.exit(1)
 }
 
-// The tag carries a `v`; the filenames should not say `Nib-v0.1.0`.
-const version = tag.replace(/^v/, '')
+// A tag carries a `v`; the filenames should not say `Nib-v0.1.0`.
+const version = given.replace(/^v/, '')
 
 /** Every file under `dir`, however deep Tauri's own folders go. */
 function filesIn(dir) {
