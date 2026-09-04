@@ -3,8 +3,8 @@ import { codeBlocks, documentTitle, frontMatterValue, renderMarkdown } from '@ni
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
 import { drawDiagram } from './diagrams'
+import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 import { highlightCode, loadParsers, paletteCss } from './highlight'
-import { key } from './i18n.svelte'
 import { mathCss } from './math-fonts'
 import {
   DEFAULT_PAGE_SETUP,
@@ -17,23 +17,7 @@ import {
 import { invoke, isDesktop } from './tauri'
 import type { Scheme } from './theme.svelte'
 
-/** Formats pandoc can produce, in the order Typora lists them. The labels
- *  are product names and stay as they are; only `Presentation` is a plain
- *  noun, and it is translated where it is shown. */
-export const PANDOC_FORMATS = [
-  { id: 'docx', label: 'Word', extension: 'docx' },
-  { id: 'odt', label: 'OpenOffice', extension: 'odt' },
-  { id: 'rtf', label: 'RTF', extension: 'rtf' },
-  { id: 'epub', label: 'ePub', extension: 'epub' },
-  { id: 'latex', label: 'LaTeX', extension: 'tex' },
-  { id: 'mediawiki', label: 'MediaWiki', extension: 'wiki' },
-  { id: 'rst', label: 'reStructuredText', extension: 'rst' },
-  { id: 'textile', label: 'Textile', extension: 'textile' },
-  { id: 'opml', label: 'OPML', extension: 'opml' },
-  { id: 'revealjs', label: key('Presentation'), extension: 'html' },
-] as const
-
-export type PandocFormat = (typeof PANDOC_FORMATS)[number]['id']
+export { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 
 function escape(text: string): string {
   return text.replace(
