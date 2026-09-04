@@ -297,7 +297,7 @@
     height: 30px;
     border-radius: var(--radius-md);
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: 14px;
     font-weight: 620;
     letter-spacing: 0.01em;
     background: var(--surface-2);
@@ -308,10 +308,14 @@
       transform var(--dur-base) var(--ease-spring);
   }
 
-  .space:hover {
-    background: var(--surface-3);
-    color: var(--text-strong);
-    transform: scale(1.08);
+  /* Pointer only: a touch browser keeps the last tap "hovered", which left a
+     space grown and lit after choosing it. */
+  @media (hover: hover) {
+    .space:hover {
+      background: var(--surface-3);
+      color: var(--text-strong);
+      transform: scale(1.08);
+    }
   }
 
   /* Dragged spaces get out of the way of the line showing where they land. */
@@ -410,10 +414,12 @@
       transform var(--dur-base) var(--ease-spring);
   }
 
-  .add:hover {
-    background: var(--surface-2);
-    color: var(--text-strong);
-    transform: rotate(90deg);
+  @media (hover: hover) {
+    .add:hover {
+      background: var(--surface-2);
+      color: var(--text-strong);
+      transform: rotate(90deg);
+    }
   }
 
   .foot {
@@ -430,9 +436,9 @@
   }
 
   .glyph {
-    width: 16px;
-    height: 16px;
-    stroke-width: 1.8;
+    width: 19px;
+    height: 19px;
+    stroke-width: 1.7;
     stroke-linejoin: round;
   }
 
@@ -443,8 +449,8 @@
   }
 
   svg {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.4;
@@ -466,8 +472,17 @@
     }
 
     svg {
-      width: 17px;
-      height: 17px;
+      width: 22px;
+      height: 22px;
+    }
+
+    .glyph {
+      width: 24px;
+      height: 24px;
+    }
+
+    .space {
+      font-size: 18px;
     }
 
     /* No hover on a touch screen, so the label would never show. */

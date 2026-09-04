@@ -2,6 +2,7 @@ import { flushTableEdits } from '@nib/editor'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
 import { folderOf, invoke, isDesktop, joinPath } from './tauri'
+import { viewport } from './viewport.svelte'
 
 export interface Entry {
   name: string
@@ -639,12 +640,24 @@ class Workspace {
 
   /** `preview` opens the way a single click in the file list does: one tab,
    *  reused by the next preview, and kept only until something is typed in it. */
+  /** On a phone the drawer covers the note, so choosing one means wanting to
+   *  see it: the drawer goes. A desktop shows both and leaves it be. */
+  private showNote() {
+    if (!viewport.phone || !this.panel) return
+
+    this.panel = null
+    this.persist()
+  }
+
   async open(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
     const existing = this.tabs.find((tab) => tab.path === path)
     if (existing) {
       // Opening for real what was only being looked at makes it stay.
       if (!options.preview && this.previewTabId === existing.id) this.previewTabId = null
-      if (options.activate !== false) this.activeTabId = existing.id
+      if (options.activate !== false) {
+        this.activeTabId = existing.id
+        this.showNote()
+      }
       return
     }
 
@@ -665,7 +678,10 @@ class Workspace {
       reusable.doc = doc
       reusable.dirty = false
 
-      if (options.activate !== false) this.activeTabId = reusable.id
+      if (options.activate !== false) {
+        this.activeTabId = reusable.id
+        this.showNote()
+      }
       this.remember(path)
       this.persist()
       return
@@ -673,7 +689,10 @@ class Workspace {
 
     const tab: Tab = { id: identifier(), path, name: basename(path), doc, dirty: false }
     this.tabs = [...this.tabs, tab]
-    if (options.activate !== false) this.activeTabId = tab.id
+    if (options.activate !== false) {
+      this.activeTabId = tab.id
+      this.showNote()
+    }
     this.previewTabId = options.preview ? tab.id : this.previewTabId
     this.remember(path)
 

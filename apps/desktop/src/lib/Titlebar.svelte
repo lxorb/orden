@@ -131,9 +131,14 @@
       background var(--dur-fast) var(--ease-out);
   }
 
-  .toggle:hover {
-    background: var(--surface-2);
-    color: var(--text-strong);
+  /* Only where there is a pointer to hover with. A touch browser pretends the
+     last finger is still hovering, which left this lit after every swipe from
+     the corner it sits in. */
+  @media (hover: hover) {
+    .toggle:hover {
+      background: var(--surface-2);
+      color: var(--text-strong);
+    }
   }
 
   .toggle.on {
@@ -141,8 +146,8 @@
   }
 
   .toggle svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.2;
@@ -176,14 +181,16 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  .controls button:hover {
-    background: var(--surface-2);
-    color: var(--text-strong);
-  }
+  @media (hover: hover) {
+    .controls button:hover {
+      background: var(--surface-2);
+      color: var(--text-strong);
+    }
 
-  .controls button.close:hover {
-    background: var(--danger);
-    color: #fff;
+    .controls button.close:hover {
+      background: var(--danger);
+      color: #fff;
+    }
   }
 
   button:focus-visible {
@@ -247,12 +254,17 @@
     }
 
     .toggle svg {
-      width: 19px;
-      height: 19px;
+      width: 22px;
+      height: 22px;
     }
 
     .more {
       height: 48px;
+    }
+
+    .more svg {
+      width: 22px;
+      height: 22px;
     }
   }
 </style>

@@ -4,11 +4,16 @@
  *  that shrinks when the keyboard opens. */
 
 const PHONE = '(max-width: 720px)'
+/** Where the drawer is the whole width of the screen. The same breakpoint the
+ *  stylesheets use for it. */
+const NARROW = '(max-width: 460px)'
 
 class Viewport {
   /** Pixels of the window hidden behind the keyboard. Zero when it is closed. */
   keyboard = $state(0)
   phone = $state(false)
+  /** A phone so narrow that the drawer, open, covers all of it. */
+  narrow = $state(false)
   /** True while the app is running as an installed app rather than a tab. */
   installed = $state(false)
 
@@ -18,9 +23,13 @@ class Viewport {
     if (this.started || typeof window === 'undefined') return
     this.started = true
 
-    const narrow = window.matchMedia(PHONE)
-    this.phone = narrow.matches
-    narrow.addEventListener('change', (event) => (this.phone = event.matches))
+    const phone = window.matchMedia(PHONE)
+    this.phone = phone.matches
+    phone.addEventListener('change', (event) => (this.phone = event.matches))
+
+    const narrow = window.matchMedia(NARROW)
+    this.narrow = narrow.matches
+    narrow.addEventListener('change', (event) => (this.narrow = event.matches))
 
     const standalone = window.matchMedia('(display-mode: standalone)')
     this.installed = standalone.matches

@@ -1,9 +1,12 @@
 <script lang="ts">
+  import { fly, slide } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { newSpace } from './space-actions'
   import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import type { Entry, Hit, Panel, SortKey } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
+  import { viewport } from './viewport.svelte'
   import Tree from './Tree.svelte'
 
   let { ongoto }: { ongoto?: (line: number) => void } = $props()
@@ -119,12 +122,100 @@
   $effect(() => {
     if (workspace.panel === 'search') void workspace.loadTags()
   })
+
+  /** Which way the panel's contents come in when the space changes: from
+   *  below when the new space sits lower in the rail, from above when it sits
+   *  higher, so the motion agrees with the finger or the eye that chose it.
+   *  Remembers the last index between readings, which is what makes it a
+   *  direction and not a position. */
+  let lastIndex = -1
+  const direction = $derived.by(() => {
+    const index = workspace.spaces.findIndex((one) => one.id === workspace.activeSpaceId)
+    const towards = index >= lastIndex ? 1 : -1
+    lastIndex = index
+    return towards
+  })
+
+  /** The width is a habit of the machine, not of the account: a laptop and a
+   *  wide monitor want different ones, so it is kept here and not synced. */
+  const WIDTH_KEY = 'nib:sidebar-width'
+  const NARROWEST = 180
+  const WIDEST = 520
+
+  function savedWidth(): number | null {
+    const saved = Number(localStorage.getItem(WIDTH_KEY))
+    return saved >= NARROWEST && saved <= WIDEST ? saved : null
+  }
+
+  /** Null means the default width from the theme tokens. */
+  let width = $state<number | null>(savedWidth())
+  let resizing = $state(false)
+  let aside = $state<HTMLElement>()
+
+  /** The edge follows the pointer; letting go keeps the width. Pointer
+   *  capture keeps the events coming even once the pointer has left the thin
+   *  handle, which it does in the first few pixels of any drag. */
+  function startResize(event: PointerEvent) {
+    if (viewport.phone || event.button !== 0 || !aside) return
+
+    const handle = event.currentTarget as HTMLElement
+    const startX = event.clientX
+    const from = aside.getBoundingClientRect().width
+
+    handle.setPointerCapture(event.pointerId)
+    resizing = true
+    // The document keeps its own cursor and selection out of the way for
+    // the length of the drag.
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const move = (moved: PointerEvent) => {
+      width = Math.round(Math.min(WIDEST, Math.max(NARROWEST, from + moved.clientX - startX)))
+    }
+
+    const stop = () => {
+      handle.removeEventListener('pointermove', move)
+      handle.removeEventListener('pointerup', stop)
+      handle.removeEventListener('pointercancel', stop)
+      resizing = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      if (width !== null) localStorage.setItem(WIDTH_KEY, String(width))
+    }
+
+    handle.addEventListener('pointermove', move)
+    handle.addEventListener('pointerup', stop)
+    handle.addEventListener('pointercancel', stop)
+  }
+
+  /** Double-clicking the edge puts the default back. */
+  function resetWidth() {
+    width = null
+    localStorage.removeItem(WIDTH_KEY)
+  }
 </script>
 
-<!-- A CSS animation rather than a Svelte transition: transitions are driven by
-     requestAnimationFrame, which is paused in a backgrounded window, and a
-     stalled one would leave the sidebar invisible. -->
-<aside>
+<!-- On a desktop the sidebar slides open and shut, and the document slides
+     with it, because the width is what animates rather than the opacity. On
+     a phone the drawer it sits in is what moves, and this must be its full
+     width the moment it exists, or the drag that opened it measures a
+     sidebar still growing. -->
+<aside
+  bind:this={aside}
+  class:resizing
+  style:width={width !== null && !viewport.phone ? `${width}px` : undefined}
+  transition:slide={{ axis: 'x', duration: viewport.phone ? 0 : 210, easing: cubicOut }}
+>
+  <!-- The strip along the right edge that changes the width. Not on a phone,
+       where the drawer is as wide as the drawer is. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="edge"
+    title={t('Drag to resize')}
+    onpointerdown={startResize}
+    ondblclick={resetWidth}
+  ></div>
+
   <div class="switch">
     {#each PANELS as item (item.id)}
       <button
@@ -140,7 +231,10 @@
     {/each}
   </div>
 
-  <div class="body">
+  <!-- Rebuilt for each space, and arriving from the side of the rail the new
+       space is on. -->
+  {#key workspace.activeSpaceId}
+  <div class="body" in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}>
     {#if workspace.panel === 'tree'}
       {#if workspace.tree}
         {#if pinned.length}
@@ -244,10 +338,12 @@
       {/if}
     {/if}
   </div>
+  {/key}
 </aside>
 
 <style>
   aside {
+    position: relative;
     width: var(--sidebar-width);
     flex: none;
     display: flex;
@@ -255,15 +351,36 @@
     min-height: 0;
     border-right: 1px solid var(--line);
     background: var(--side-bar-bg-color);
-    animation: reveal var(--dur-base) var(--ease-out);
   }
 
-  @keyframes reveal {
-    from {
-      opacity: 0;
-      transform: translateX(-14px);
-    }
+  /* Wider than the line it sits on, so it can be caught, and drawn only while
+     it is being used: a handle that is always visible is a stripe. */
+  .edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -4px;
+    width: 8px;
+    z-index: 2;
+    cursor: col-resize;
   }
+
+  .edge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 2px;
+    background: transparent;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .edge:hover::after,
+  aside.resizing .edge::after {
+    background: var(--accent);
+  }
+
 
   .switch {
     display: flex;
@@ -501,6 +618,10 @@
   @media (max-width: 720px) {
     aside {
       width: min(78vw, 20rem);
+    }
+
+    .edge {
+      display: none;
     }
 
     /* On a narrow screen the rail plus a 20rem sidebar leaves a sliver of the

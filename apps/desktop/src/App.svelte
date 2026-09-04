@@ -1,9 +1,18 @@
 <script lang="ts">
   import { flushSync, untrack } from 'svelte'
+  import { fly } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
   import { i18n, key, message, t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import { CLAIM, claimsGesture, scrollsSideways, settleOpen } from './lib/swipe'
+  import {
+    CLAIM,
+    claimsGesture,
+    scrollsSideways,
+    SETTLE_MAX,
+    SETTLE_MIN,
+    settleOpen,
+  } from './lib/swipe'
   import {
     clearFormatting,
     EditorView,
@@ -146,6 +155,18 @@
   let drag = $state<number | null>(null)
   /** How far it can travel, measured when the gesture starts. */
   let dragWidth = $state(0)
+  /** How long the drawer takes to settle once the finger lifts, in
+   *  milliseconds. The tap-to-open transition is tuned to feel prompt, which
+   *  is far too quick for the last stretch of a drag: the drawer would leap
+   *  the rest of the way. Set from how far it still has to go, and cleared
+   *  once it has arrived so a tap goes back to being prompt. */
+  let settle = $state<number | null>(null)
+
+  /** Buttons inside a layer finish transitions of their own; only the layer's
+   *  own slide means it has arrived. */
+  function arrived(event: TransitionEvent) {
+    if (event.target === event.currentTarget && event.propertyName === 'transform') settle = null
+  }
   let middle = $state<HTMLElement>()
 
   // The drawer follows the finger, the way a phone app's does. Attached by
@@ -249,6 +270,10 @@
       if (!claimed) return
 
       const settled = settleOpen(drag ?? 0, width, velocity)
+      // The remaining distance decides the time, so the drawer moves at
+      // roughly the same pace whether it was let go near its end or its start.
+      const remaining = Math.abs((drag ?? 0) - (settled ? width : 0))
+      settle = Math.round(SETTLE_MIN + (SETTLE_MAX - SETTLE_MIN) * (width ? remaining / width : 0))
       drag = null
       claimed = false
 
@@ -285,6 +310,10 @@
 
   function goto(line: number) {
     if (!view) return
+
+    // Going somewhere in the note means wanting to see it, and on a phone
+    // the drawer is in the way.
+    if (viewport.phone && workspace.panel) workspace.showPanel(workspace.panel)
 
     const target = view.state.doc.line(Math.min(line + 1, view.state.doc.lines))
     view.dispatch({
@@ -485,7 +514,10 @@
       class="panels"
       class:open={!!workspace.panel}
       class:dragging={drag !== null}
-      style:transform={drag === null ? undefined : `translateX(${drag - dragWidth}px)`}
+      class:settling={settle !== null}
+      style:transform={drag === null || viewport.narrow ? undefined : `translateX(${drag - dragWidth}px)`}
+      style:--settle={settle === null ? undefined : `${settle}ms`}
+      ontransitionend={arrived}
     >
       <Rail
         {view}
@@ -508,25 +540,44 @@
       ></div>
     {/if}
 
-    <div class="document">
+    <!-- On a phone too narrow for the drawer to leave any of the note showing,
+         the layers swap: the list is the floor and the note is what moves,
+         sliding off to the right to uncover it and back over it. The same
+         drag drives both; only which layer it moves differs. -->
+    <div
+      class="document"
+      class:open={!!workspace.panel}
+      class:dragging={drag !== null}
+      class:settling={settle !== null}
+      style:transform={drag === null || !viewport.narrow ? undefined : `translateX(${drag}px)`}
+      style:--settle={settle === null ? undefined : `${settle}ms`}
+      ontransitionend={arrived}
+    >
       <Titlebar onopennotes={() => (palette = true)} />
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="editor" oncontextmenu={(event) => menu.show(event, editorMenu())}>
-        {#key workspace.activeTabId}
-          <Editor
-            bind:view
-            doc={workspace.active?.doc ?? ''}
-            onchange={(value) => workspace.edit(value)}
-            onimage={saveImage}
-            resolveimage={resolveImage}
-            onselection={(current) => {
-              formatBar?.follow(current)
-              if (placed && placed === workspace.activeTabId) {
-                workspace.noteView(placed, current.state.selection.main.head, current.scrollDOM.scrollTop)
-              }
-            }}
-          />
+        <!-- A new space brings a new document in with a small rise, so the
+             switch reads as going somewhere. A new tab in the same space
+             swaps the editor without the ceremony. -->
+        {#key workspace.activeSpaceId}
+          <div class="page" in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+            {#key workspace.activeTabId}
+              <Editor
+                bind:view
+                doc={workspace.active?.doc ?? ''}
+                onchange={(value) => workspace.edit(value)}
+                onimage={saveImage}
+                resolveimage={resolveImage}
+                onselection={(current) => {
+                  formatBar?.follow(current)
+                  if (placed && placed === workspace.activeTabId) {
+                    workspace.noteView(placed, current.state.selection.main.head, current.scrollDOM.scrollTop)
+                  }
+                }}
+              />
+            {/key}
+          </div>
         {/key}
       </div>
 
@@ -599,6 +650,13 @@
     display: flex;
   }
 
+  .page {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+  }
+
   /* Sits above the document, clear of the gesture bar. */
   .fab {
     position: absolute;
@@ -649,10 +707,46 @@
       transform: none;
     }
 
-    /* Full width rather than leaving a sliver of the document showing. */
+    /* Full width rather than leaving a sliver of the document showing - and
+       once it covers everything it is no longer a drawer over the note but
+       the layer beneath it. So here the note is what slides: off to the right
+       to uncover the list, back over it when a note is chosen. */
     @media (max-width: 460px) {
       .panels {
         width: 100%;
+        z-index: 1;
+        transform: none;
+        box-shadow: none;
+        transition: none;
+      }
+
+      .document {
+        position: relative;
+        z-index: 2;
+        background: var(--bg);
+        transition: transform var(--dur-base) var(--ease-out);
+      }
+
+      .document.open {
+        transform: translateX(100%);
+      }
+
+      .document.open,
+      .document.dragging {
+        box-shadow: -16px 0 40px rgb(0 0 0 / 0.3);
+      }
+
+      .document.dragging {
+        transition: none;
+      }
+
+      .document.settling {
+        transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
+      }
+
+      /* Nothing to dim: the note is either over the list or off the screen. */
+      .scrim {
+        display: none;
       }
     }
 
@@ -662,6 +756,12 @@
     .scrim.dragging {
       transition: none;
       animation: none;
+    }
+
+    /* After a drag: as long as the distance left asks for, on a curve that
+       starts at the finger's pace and eases to a stop rather than snapping. */
+    .panels.settling {
+      transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     .scrim {

@@ -21,6 +21,12 @@ export function scrollsSideways(from: Element | null, stopAt: Element): boolean 
 /** Pixels per millisecond past which the gesture reads as a flick. */
 const FLICK = 0.5
 
+/** How long the drawer takes to settle after the finger lifts, in
+ *  milliseconds: the shortest for a drawer let go beside its resting place,
+ *  the longest for one that has the whole width still to cross. */
+export const SETTLE_MIN = 200
+export const SETTLE_MAX = 380
+
 /** Whether the drawer should end up open.
  *
  *  `offset` is how far it has been pulled out, `width` how far it can go, and
