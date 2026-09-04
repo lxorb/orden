@@ -95,6 +95,15 @@ describe('keeping a preview tab', () => {
     expect(workspace.previewTabId).toBe(previewed.id)
   })
 
+  test('is what saving does, even with nothing to write', async () => {
+    const tab = await preview('/space/a.md')
+    expect(tab.dirty).toBe(false)
+
+    await workspace.save()
+    expect(workspace.previewTabId).toBeNull()
+    expect(workspace.tabs.map((one) => one.id)).toEqual([tab.id])
+  })
+
   test('is what typing in the note does', async () => {
     const tab = await preview('/space/a.md')
     const keep = vi.spyOn(workspace, 'keep')

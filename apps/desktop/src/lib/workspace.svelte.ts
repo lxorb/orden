@@ -867,6 +867,11 @@ class Workspace {
     const tab = target ?? this.active
     if (!tab) return
 
+    // Saving is as deliberate as it gets: a note that was only being looked
+    // at is one to stay from here on, whether or not there was anything to
+    // write.
+    this.keep(tab.id)
+
     let path = tab.path
     if (!path) {
       const picked = await pickSavePath(this.spaces, this.activeSpaceId, tab.doc)
