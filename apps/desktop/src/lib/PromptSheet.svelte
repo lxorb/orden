@@ -166,17 +166,6 @@
     color: var(--muted);
   }
 
-  select {
-    padding: 9px 11px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    outline: none;
-  }
-
   button {
     padding: 8px 14px;
     border: none;

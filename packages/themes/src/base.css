@@ -31,6 +31,54 @@ body {
   background: var(--selection);
 }
 
+/* ── Dropdowns ───────────────────────────────────────────────────── */
+
+/* One rule for every dropdown in the app. The native control brings the
+   operating system's own look with it, which is the one thing a theme cannot
+   reach, so the arrow is drawn here instead. The list that opens is still the
+   browser's - `color-scheme` on the root is what keeps that dark or light in
+   step with everything else. */
+select {
+  appearance: none;
+  padding: 8px 30px 8px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%238a93a2' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2 4l3 3 3-3'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  cursor: default;
+  outline: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+select:hover {
+  border-color: var(--muted);
+}
+
+select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+select:disabled {
+  opacity: 0.55;
+}
+
+/* Honoured by the popup on Windows and Linux, where it would otherwise open a
+   white list under a dark theme. */
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
 /* ── Writing surface ─────────────────────────────────────────────── */
 
 #write {
