@@ -418,6 +418,13 @@
     outline-offset: -1px;
   }
 
+  /* Larger than the rest of the sidebar's glyphs: these are the tabs, and a
+     13px mark in a 26px button read as padding around not much. */
+  .switch button svg {
+    width: 16px;
+    height: 16px;
+  }
+
   /* A column so the filler below the tree can take the leftover height. */
   .body {
     flex: 1;
@@ -640,6 +647,11 @@
     .switch button {
       width: 48px;
       height: 48px;
+    }
+
+    .switch button svg {
+      width: 22px;
+      height: 22px;
     }
 
     /* Same floor as the tree rows beneath them: everything in the drawer is
