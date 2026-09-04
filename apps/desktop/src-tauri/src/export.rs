@@ -149,45 +149,47 @@ pub async fn print_pdf(
     // The load event can come more than once; the page is printed once.
     let printed = Arc::new(AtomicBool::new(false));
 
-    let window = WebviewWindowBuilder::new(&app, format!("print-{stamp}"), WebviewUrl::External(url))
-        .title("Nib")
-        .visible(false)
-        .inner_size(900.0, 1200.0)
-        .on_page_load(move |window, payload| {
-            if payload.event() != PageLoadEvent::Finished || printed.swap(true, Ordering::SeqCst) {
-                return;
-            }
+    let window =
+        WebviewWindowBuilder::new(&app, format!("print-{stamp}"), WebviewUrl::External(url))
+            .title("Nib")
+            .visible(false)
+            .inner_size(900.0, 1200.0)
+            .on_page_load(move |window, payload| {
+                if payload.event() != PageLoadEvent::Finished
+                    || printed.swap(true, Ordering::SeqCst)
+                {
+                    return;
+                }
 
-            let done = done.clone();
-            let output = output.clone();
-            let page = page.clone();
+                let done = done.clone();
+                let output = output.clone();
+                let page = page.clone();
 
-            // Fonts and pictures are inline, but the layout still wants a
-            // moment to settle before it is measured for paper.
-            std::thread::spawn(move || {
-                std::thread::sleep(Duration::from_millis(300));
+                // Fonts and pictures are inline, but the layout still wants a
+                // moment to settle before it is measured for paper.
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(300));
 
-                let failed = done.clone();
-                let asked = window.with_webview(move |webview| {
-                    if let Err(error) = printer::print(&webview, &output, &page, done) {
-                        let _ = failed.send(Err(error));
+                    let failed = done.clone();
+                    let asked = window.with_webview(move |webview| {
+                        if let Err(error) = printer::print(&webview, &output, &page, done) {
+                            let _ = failed.send(Err(error));
+                        }
+                    });
+
+                    if let Err(error) = asked {
+                        let _ = failed_send(&window, error.to_string());
                     }
                 });
+            })
+            .build()
+            .map_err(|e| e.to_string())?;
 
-                if let Err(error) = asked {
-                    let _ = failed_send(&window, error.to_string());
-                }
-            });
-        })
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    let outcome = tauri::async_runtime::spawn_blocking(move || {
-        waited.recv_timeout(Duration::from_secs(45))
-    })
-    .await
-    .map_err(|e| e.to_string())?
-    .unwrap_or_else(|_| Err("the PDF took too long to write".into()));
+    let outcome =
+        tauri::async_runtime::spawn_blocking(move || waited.recv_timeout(Duration::from_secs(45)))
+            .await
+            .map_err(|e| e.to_string())?
+            .unwrap_or_else(|_| Err("the PDF took too long to write".into()));
 
     let _ = window.destroy();
     let _ = std::fs::remove_file(&path);
