@@ -207,6 +207,13 @@ and mostly sit in the app shell.
 21. **Icon sizes.** Icons grow to fit their buttons: rail glyphs 19px (24px
     on a phone), rail buttons 15px (22px), the hamburger 17px (22px), the
     sidebar toggle 16px (22px), the space initial 14px (18px).
+22. **GitHub in the rail.** A GitHub mark in the rail's foot, beside the
+    account and theme buttons, opens the repository outside the app.
+23. **Enter closes a fence.** Enter at the end of a hand-typed opening fence
+    inserts the closing fence too, with the caret between, so the rest of the
+    note does not turn into code from one keystroke to the next. Only for a
+    fence nothing later closes; bound above the markdown language's own
+    Enter so a fence inside a list gets it as well.
 
 ## Testing
 
