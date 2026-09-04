@@ -3,7 +3,7 @@
   import { i18n, key, message, t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import { CLAIM, claimsGesture, EDGE, settleOpen } from './lib/swipe'
+  import { CLAIM, claimsGesture, scrollsSideways, settleOpen } from './lib/swipe'
   import {
     clearFormatting,
     EditorView,
@@ -177,10 +177,10 @@
       openedByDrag = false
       measured = false
 
-      // Closed, the swipe has to start at the edge, or every horizontal drag
-      // across the text would drag the drawer out with it. Open, the drawer
-      // and its scrim are what the finger is on, so anywhere will do.
-      if (!workspace.panel && touch.clientX > EDGE) return
+      // From anywhere on the screen, not just the edge: an edge-only gesture is
+      // a thin target and easy to miss. The one thing that outranks it is
+      // something that scrolls sideways under the finger.
+      if (scrollsSideways(document.elementFromPoint(touch.clientX, touch.clientY), host)) return
 
       startX = touch.clientX
       startY = touch.clientY
@@ -207,6 +207,12 @@
           return
         }
         if (!claimsGesture(dx, dy)) return
+        // Closed, only a rightward pull opens it; a leftward one on the
+        // document means nothing and should be left alone.
+        if (!workspace.panel && dx < 0) {
+          width = 0
+          return
+        }
 
         claimed = true
 
@@ -641,6 +647,13 @@
 
     .panels.open {
       transform: none;
+    }
+
+    /* Full width rather than leaving a sliver of the document showing. */
+    @media (max-width: 460px) {
+      .panels {
+        width: 100%;
+      }
     }
 
     /* The finger is the animation while it is down; CSS takes over on release

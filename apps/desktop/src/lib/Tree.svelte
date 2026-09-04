@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import { longPress } from './longpress'
   import { folderOf } from './tauri'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
@@ -10,7 +11,6 @@
 
   let { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
 
-  let open = $state<Record<string, boolean>>({})
   let dropTarget = $state<string | null>(null)
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
@@ -133,22 +133,23 @@
           class="row folder"
           class:dropping={dropTarget === entry.path}
           style:padding-left="{depth * 12 + 8}px"
-          aria-expanded={!!open[entry.path]}
+          aria-expanded={workspace.isExpanded(entry.path)}
           draggable="true"
-          onclick={() => (open[entry.path] = !open[entry.path])}
+          onclick={() => workspace.toggleFolder(entry.path)}
           oncontextmenu={(event) => menu.show(event, folderMenu(entry))}
+          use:longPress={(event) => menu.show(event, folderMenu(entry))}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => drop(event, entry.path)}
         >
-          <svg class="chevron" class:open={open[entry.path]} viewBox="0 0 8 8">
+          <svg class="chevron" class:open={workspace.isExpanded(entry.path)} viewBox="0 0 8 8">
             <path d="M2 1l3 3-3 3" />
           </svg>
           <span class="label">{entry.name}</span>
         </button>
 
-        {#if open[entry.path]}
+        {#if workspace.isExpanded(entry.path)}
           <div transition:slide={{ duration: 190, easing: cubicOut }}>
             <Tree entries={entry.children} depth={depth + 1} />
           </div>
@@ -163,6 +164,7 @@
           onclick={() => workspace.open(entry.path, { preview: true })}
           ondblclick={() => workspace.open(entry.path)}
           oncontextmenu={(event) => menu.show(event, noteMenu(entry))}
+          use:longPress={(event) => menu.show(event, noteMenu(entry))}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}

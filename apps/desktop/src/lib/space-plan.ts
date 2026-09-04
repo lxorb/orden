@@ -58,12 +58,24 @@ export function planSpaces(input: {
   const roots = new Set(local.map((one) => one.root))
 
   const plan: Plan = { pair: [], upload: [], adopt: [], drop: [], detach: [], remove: [] }
+  const gone = new Set(deleted)
+
+  // Worked out first, because a folder on its way out must not be paired with
+  // anything, uploaded, or counted as already holding its name. Otherwise
+  // deleting a space and making a new one of the same name leaves the new one
+  // unadopted until some later pass.
+  const removing = new Set(
+    mirrors.filter((one) => roots.has(one.root) && gone.has(one.spaceId)).map((one) => one.root),
+  )
+
   const spoken = new Set(
-    mirrors.filter((one) => roots.has(one.root)).map((one) => one.spaceId),
+    mirrors
+      .filter((one) => roots.has(one.root) && !removing.has(one.root))
+      .map((one) => one.spaceId),
   )
 
   for (const space of local) {
-    if (mirrorByRoot.has(space.root)) continue
+    if (mirrorByRoot.has(space.root) || removing.has(space.root)) continue
 
     const match = remoteByName.get(space.name)
     if (match && !spoken.has(match.id)) {
@@ -76,14 +88,14 @@ export function planSpaces(input: {
 
   for (const space of remote) {
     if (spoken.has(space.id)) continue
-    // A folder of that name is about to be paired with it, or already is.
-    if (local.some((one) => one.name === space.name)) continue
+    // A folder of that name is about to be paired with it, or already is -
+    // unless that folder is the one being removed, in which case the name is
+    // free and this space should take it.
+    if (local.some((one) => one.name === space.name && !removing.has(one.root))) continue
 
     plan.adopt.push(space)
     spoken.add(space.id)
   }
-
-  const gone = new Set(deleted)
 
   for (const mirror of mirrors) {
     if (!roots.has(mirror.root)) {

@@ -885,53 +885,7 @@
   
   /* A phone has no room for two columns, so the list of panes becomes a strip
      across the top and the pane fills the rest. */
-  @media (max-width: 720px) {
-    .sheet {
-      top: auto;
-      bottom: 0;
-      left: 0;
-      translate: none;
-      width: 100%;
-      height: 88dvh;
-      grid-template-columns: 1fr;
-      grid-template-rows: auto 1fr;
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
-    }
 
-    nav {
-      flex-direction: row;
-      flex-wrap: nowrap;
-      border-right: none;
-      border-bottom: 1px solid var(--line);
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-
-    nav h1 {
-      display: none;
-    }
-
-    .search {
-      order: -1;
-      flex: none;
-      width: 11rem;
-      margin: 0;
-    }
-
-    nav button {
-      flex: none;
-      min-height: 44px;
-    }
-
-    .body {
-      padding: var(--space-4);
-    }
-
-    .setting {
-      min-height: 44px;
-    }
-  }
   /* ── Preferences ─────────────────────────────────────────────── */
 
   nav h1 {
@@ -1089,5 +1043,91 @@
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
+  }
+  @media (max-width: 720px) {
+    .sheet {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      translate: none;
+      width: 100%;
+      height: 88dvh;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    }
+
+    nav {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    nav h1 {
+      display: none;
+    }
+
+    .search {
+      order: -1;
+      flex: none;
+      width: 11rem;
+      margin: 0;
+    }
+
+    nav button {
+      flex: none;
+      min-height: 44px;
+    }
+
+    .body {
+      padding: var(--space-4);
+    }
+
+    .setting {
+      min-height: 48px;
+    }
+
+    /* The controls themselves, not just the rows they sit in: a 16px slider
+       and a 21px switch are fine for a pointer and hopeless for a thumb. */
+    .search {
+      height: 40px;
+    }
+
+    .toggle {
+      width: 46px;
+      height: 28px;
+    }
+
+    .toggle::after {
+      width: 22px;
+      height: 22px;
+    }
+
+    .toggle.on::after {
+      transform: translateX(18px);
+    }
+
+    .slider {
+      height: 28px;
+      width: 9rem;
+    }
+
+    .setting select {
+      min-height: 40px;
+      width: 10rem;
+    }
+
+    .accents {
+      gap: 10px;
+    }
+
+    .swatch {
+      width: 30px;
+      height: 30px;
+    }
   }
 </style>

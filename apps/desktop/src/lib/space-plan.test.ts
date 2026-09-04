@@ -120,6 +120,46 @@ describe('a space the account says was deleted', () => {
     expect(result.detach).toEqual([])
   })
 
+  test('frees its name for a new space of the same name, in one pass', () => {
+    // Deleted "Work" (id-old), then a new "Work" made elsewhere (id-new). The
+    // stale folder goes and the new space is taken up together, so the space
+    // does not vanish and reappear a pass later.
+    const result = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-new')],
+      mirrors: [mirror('Work', 'id-old')],
+      deleted: ['id-old'],
+    })
+
+    expect(result.remove).toEqual(['/spaces/Work'])
+    expect(result.adopt.map((one) => one.id)).toEqual(['id-new'])
+  })
+
+  test('does not upload the folder it is about to remove', () => {
+    const result = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-new')],
+      mirrors: [mirror('Work', 'id-old')],
+      deleted: ['id-old'],
+    })
+
+    expect(result.upload).toEqual([])
+    expect(result.pair).toEqual([])
+  })
+
+  test('leaves other spaces untouched while one is removed', () => {
+    const result = plan({
+      local: [local('Work'), local('Ideas')],
+      remote: [remote('Ideas')],
+      mirrors: [mirror('Work', 'id-old'), mirror('Ideas')],
+      deleted: ['id-old'],
+    })
+
+    expect(result.remove).toEqual(['/spaces/Work'])
+    expect(result.drop).toEqual([])
+    expect(result.detach).toEqual([])
+  })
+
   test('leaves a folder that was never mirrored alone', () => {
     // Same name, but this machine never had it paired with that space, so
     // there is nothing saying this folder is the one that was deleted.

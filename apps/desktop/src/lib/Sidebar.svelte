@@ -503,6 +503,19 @@
       width: min(78vw, 20rem);
     }
 
+    /* On a narrow screen the rail plus a 20rem sidebar leaves a sliver of the
+       document showing, which reads as a mistake rather than a peek. Past that
+       point the drawer takes the whole width, and this fills whatever the rail
+       does not - measuring it instead would need the rail's mobile width,
+       which is not what `--rail-width` says. */
+    @media (max-width: 460px) {
+      aside {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+      }
+    }
+
     .switch button {
       width: 48px;
       height: 48px;

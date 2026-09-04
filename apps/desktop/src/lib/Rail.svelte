@@ -4,8 +4,9 @@
   import type { EditorView } from '@nib/editor'
   import IconPicker from './IconPicker.svelte'
   import { type IconNode, loadIcons } from './icons'
+  import { longPress } from './longpress'
   import { t } from './i18n.svelte'
-  import { DIVIDER, menu, revealEntry } from './menu.svelte'
+  import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { deleteSpace, moveSpace, newSpace, renameSpace } from './space-actions'
   import { settings } from './settings.svelte'
   import { type Space, workspace } from './workspace.svelte'
@@ -100,6 +101,19 @@
     receiving = null
   }
 
+  /** The same menu whether it was asked for with a right click or a held
+   *  finger, so a phone is not missing what a desktop offers. */
+  function spaceMenu(space: Space): MenuEntry[] {
+    return [
+      { label: t('New note'), run: () => workspace.createNote(space.root) },
+      { label: t('Rename'), run: () => void renameSpace(space) },
+      { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
+      ...revealEntry(space.root),
+      DIVIDER,
+      { label: t('Delete space'), danger: true, run: () => void deleteSpace(space) },
+    ]
+  }
+
   function initial(name: string): string {
     return [...name.trim()][0]?.toUpperCase() ?? '·'
   }
@@ -146,15 +160,8 @@
         onclick={() => workspace.selectSpace(space.id)}
         onmouseenter={(event) => showLabel(event, space.name)}
         onmouseleave={() => (label = null)}
-        oncontextmenu={(event) =>
-          menu.show(event, [
-            { label: t('New note'), run: () => workspace.createNote(space.root) },
-            { label: t('Rename'), run: () => void renameSpace(space) },
-            { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
-            ...revealEntry(space.root),
-            DIVIDER,
-            { label: t('Delete space'), danger: true, run: () => void deleteSpace(space) },
-          ])}
+        oncontextmenu={(event) => menu.show(event, spaceMenu(space))}
+        use:longPress={(event) => menu.show(event, spaceMenu(space))}
       >
         {#if icon(space.id)}
           <svg class="glyph" viewBox="0 0 24 24">
@@ -258,6 +265,9 @@
     align-items: center;
     gap: 5px;
     min-height: 0;
+    /* Room either side for a space to grow under the pointer. Scrolling this
+       column clips whatever leaves it, so the growth has to happen inside. */
+    padding: 0 6px;
     overflow-y: auto;
     /* Nothing in here may stick out sideways. Setting one axis to `auto` makes
        the other scrollable too, and a drag near the edge would then auto-scroll

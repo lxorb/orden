@@ -72,6 +72,7 @@ const RECENT_LIMIT = 15
 const UNDO_LIMIT = 20
 const PINNED_KEY = 'nib:pinned'
 const ICONS_KEY = 'nib:icons'
+const EXPANDED_KEY = 'nib:expanded'
 const AUTO_SAVE_DELAY = 1200
 const AUTO_SAVE_DELAY_KEY = 'nib:autosave-delay'
 // Short enough that a crash costs a moment's typing, long enough that the strip
@@ -118,6 +119,15 @@ function readRecent(): string[] {
     return Array.isArray(saved) ? (saved as string[]) : []
   } catch {
     return []
+  }
+}
+
+function readExpanded(): Record<string, boolean> {
+  try {
+    const saved = JSON.parse(localStorage.getItem(EXPANDED_KEY) ?? '{}')
+    return saved && typeof saved === 'object' ? (saved as Record<string, boolean>) : {}
+  } catch {
+    return {}
   }
 }
 
@@ -199,6 +209,11 @@ class Workspace {
   tags = $state<Tag[]>([])
   pinned = $state<string[]>(readPinned())
   icons = $state<Record<string, string>>(readIcons())
+  /** Which folders are open in the tree. Kept here rather than in the tree
+   *  component: that one is rebuilt from scratch every time the folder is read
+   *  again - on every save, rename and sync - and took the open folders with
+   *  it each time. Per device, because it describes a view and not a note. */
+  expanded = $state<Record<string, boolean>>(readExpanded())
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
@@ -835,6 +850,19 @@ class Workspace {
 
     this.icons = next
     localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+  }
+
+  isExpanded(path: string): boolean {
+    return !!this.expanded[path]
+  }
+
+  toggleFolder(path: string) {
+    const next = { ...this.expanded }
+    if (next[path]) delete next[path]
+    else next[path] = true
+
+    this.expanded = next
+    localStorage.setItem(EXPANDED_KEY, JSON.stringify(next))
   }
 
   isPinned(path: string): boolean {

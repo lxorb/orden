@@ -98,6 +98,10 @@
     height: 30px;
     display: grid;
     place-items: center;
+    /* The rule for the menu rows below reaches every button in this component,
+       this one included. Its padding left a 10px box for a 15px icon, which
+       pushed the icon off the button's centre. */
+    padding: 0;
     border: none;
     border-radius: var(--radius-md);
     background: none;

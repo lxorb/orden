@@ -201,6 +201,21 @@ class Sync {
       deleted: account.deletedSpaces,
     })
 
+    // Removals come first. Adopting runs after, and adopting reuses a folder
+    // of the same name if it finds one - which would be the very folder about
+    // to be deleted. Deleting a space and making a new one of the same name
+    // has to settle in a single pass, not leave a gap.
+    for (const root of plan.remove) {
+      const space = workspace.spaces.find((one) => one.root === root)
+      delete this.mirrors[root]
+      if (space) await workspace.deleteSpace(space.id)
+    }
+
+    // Missing without a marker: not uploaded yet as far as anyone can tell, so
+    // the mirror goes and the next pass sends the folder up again.
+    for (const root of plan.detach) delete this.mirrors[root]
+    for (const root of plan.drop) delete this.mirrors[root]
+
     for (const { root, spaceId } of plan.pair) {
       this.mirrors[root] = { spaceId, root, cursor: 0, notes: {} }
     }
@@ -213,20 +228,6 @@ class Sync {
     for (const space of plan.adopt) {
       const root = await workspace.adoptSpace(space.name)
       if (root) this.mirrors[root] = { spaceId: space.id, root, cursor: 0, notes: {} }
-    }
-
-    for (const root of plan.drop) delete this.mirrors[root]
-
-    // Missing without a marker: not uploaded yet as far as anyone can tell, so
-    // the mirror goes and the next pass sends the folder up again.
-    for (const root of plan.detach) delete this.mirrors[root]
-
-    // Deleted on purpose, on another machine. This is the one case where a
-    // folder is removed here, and only because the account said so outright.
-    for (const root of plan.remove) {
-      const space = workspace.spaces.find((one) => one.root === root)
-      delete this.mirrors[root]
-      if (space) await workspace.deleteSpace(space.id)
     }
 
     // The icon belongs to the space, so it travels with it. Whatever the

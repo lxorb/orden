@@ -8,9 +8,15 @@
  *  rather than a scroll. Below this the drawer stays out of the way. */
 export const CLAIM = 12
 
-/** How close to the left edge a swipe must start to open a closed drawer.
- *  Anywhere further in belongs to the text under it. */
-export const EDGE = 32
+/** Whether something under the finger scrolls sideways itself - a wide table,
+ *  a long line of code. That gesture belongs to it, not to the drawer. */
+export function scrollsSideways(from: Element | null, stopAt: Element): boolean {
+  for (let node: Element | null = from; node && node !== stopAt; node = node.parentElement) {
+    if (node.scrollWidth > node.clientWidth + 1) return true
+  }
+
+  return false
+}
 
 /** Pixels per millisecond past which the gesture reads as a flick. */
 const FLICK = 0.5
