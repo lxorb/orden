@@ -14,7 +14,7 @@
   import { sync } from './sync.svelte'
   import { isDesktop } from './tauri'
   import { theme } from './theme.svelte'
-  import { type Field, preferences } from './preferences'
+  import { type Field, preferences, resetPane, resettable } from './preferences'
   import { readableSize, usage } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -90,6 +90,8 @@
       { section: 'account', label: account.signedIn ? t('Sign out') : t('Sign in'), text: [] },
       { section: 'appearance', label: t('Accent'), text: theme.accents.map((one) => t(one.name)) },
       { section: 'export', label: t('Page'), text: [t('Paper'), t('Orientation'), t('Margin')] },
+      { section: 'editor', label: t('Reset to defaults'), text: [] },
+      { section: 'markdown', label: t('Reset to defaults'), text: [] },
       ...exportActions().map((action) => ({ section: 'export' as Section, label: action.label, text: [] })),
     ]
 
@@ -413,6 +415,13 @@
 
     {#if settings.section === 'appearance'}
       {@render appearanceExtras()}
+    {/if}
+
+    <!-- Everything above, back to how it came. -->
+    {#if resettable(current)}
+      <div class="card">
+        <button class="action" onclick={() => resetPane(current)}>{t('Reset to defaults')}</button>
+      </div>
     {/if}
   {:else if settings.section === 'account'}
     {#if account.signedIn}

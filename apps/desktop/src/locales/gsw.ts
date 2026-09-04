@@ -342,4 +342,5 @@ export const gsw: Dictionary = {
   'Show in Explorer’s New menu': 'Im „Neu“-Menü vom Explorer zeige',
   'choose an address': 'Wähl e Adrässe',
   'use at most 60 characters': 'Höchschtens 60 Zeiche',
+  'Reset to defaults': 'Uf Standard zruggsetze',
 }

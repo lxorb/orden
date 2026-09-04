@@ -338,4 +338,5 @@ export const ja: Dictionary = {
   'Show in Explorer’s New menu': 'エクスプローラーの「新規作成」メニューに表示',
   'choose an address': 'アドレスを選んでください',
   'use at most 60 characters': '60 文字以内にしてください',
+  'Reset to defaults': '初期設定に戻す',
 }

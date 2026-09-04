@@ -340,4 +340,5 @@ export const de: Dictionary = {
   'Show in Explorer’s New menu': 'Im „Neu“-Menü des Explorers zeigen',
   'choose an address': 'Wähle eine Adresse',
   'use at most 60 characters': 'Höchstens 60 Zeichen',
+  'Reset to defaults': 'Auf Standard zurücksetzen',
 }
