@@ -3,10 +3,11 @@
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
-  import { MCP_URL } from './api'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
+  import { domainNotice } from './domain-status'
   import { message, t } from './i18n.svelte'
+  import McpSetup from './McpSetup.svelte'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
@@ -113,7 +114,7 @@
         {
           section: 'llm',
           label: t('LLM access'),
-          text: ['MCP', 'token', t('Create a token'), t('Let it write to my notes, not only read them')],
+          text: ['MCP', 'Claude', 'ChatGPT', 'token', t('Connect'), t('Create a token')],
         },
       )
     }
@@ -146,7 +147,6 @@
   /** Empty means the whole space; otherwise the one note's path in it. */
   let blogNote = $state('')
   let confirmPublic = $state(false)
-  let copied = $state(false)
   let checkTimer: ReturnType<typeof setTimeout>
 
   const blog = $derived(settings.remote?.blog)
@@ -158,6 +158,8 @@
   /** The records for a domain: fresh from publishing, or as the listing
    *  remembers them. */
   const records = $derived(settings.dns.length ? settings.dns : (blog?.dns ?? []))
+  /** What is happening with the domain, once the server has been asked. */
+  const notice = $derived(settings.domain ? domainNotice(settings.domain) : null)
 
   $effect(() => {
     if (!settings.open) return
@@ -166,6 +168,14 @@
     mode = blog?.domain ? 'domain' : 'subdomain'
     blogNote = blog?.note ?? ''
     confirmPublic = published
+  })
+
+  // Asked after while the pane shows a domain, and left alone as soon as it
+  // does not: the timer would otherwise keep going behind a closed panel.
+  $effect(() => {
+    if (!settings.open || settings.section !== 'publish' || !blog?.domain) return
+    void settings.watchDomain()
+    return () => settings.stopWatchingDomain()
   })
 
   function onSubdomain(value: string) {
@@ -212,28 +222,6 @@
     } catch (error) {
       settings.error = message(error, 'that did not work')
     }
-  }
-
-  /** What an LLM client needs to reach these notes. */
-  const snippet = $derived(
-    JSON.stringify(
-      {
-        mcpServers: {
-          nib: {
-            url: MCP_URL,
-            headers: { Authorization: `Bearer ${settings.freshToken ?? ''}` },
-          },
-        },
-      },
-      null,
-      2,
-    ),
-  )
-
-  async function copySnippet() {
-    await navigator.clipboard.writeText(snippet)
-    copied = true
-    setTimeout(() => (copied = false), 1600)
   }
 
   /** Where a slider's thumb sits, for the filled part of its track. */
@@ -602,7 +590,20 @@
                     </tbody>
                   </table>
                 </div>
-                <span class="hint">{t('Add this at your registrar, then reload the page.')}</span>
+                {#each records as record (record.name + record.type)}
+                  {#if record.note}
+                    <span class="hint">{t(record.note)}</span>
+                  {/if}
+                {/each}
+                <span class="hint">
+                  {t('Add this at your registrar. It is checked every few seconds.')}
+                </span>
+              {/if}
+              {#if notice}
+                <span class="hint" class:ok={notice.tone === 'ok'} class:bad={notice.tone === 'bad'}>
+                  {t(notice.text)}
+                  {#if notice.detail}{t(notice.detail)}{/if}
+                </span>
               {/if}
             </div>
           </div>
@@ -626,60 +627,8 @@
       {/if}
     {/if}
   {:else if settings.section === 'llm'}
-    {#if !account.signedIn}
-      <p class="note">{t('Sign in first - the connector reaches the notes in your account.')}</p>
-    {:else}
-      <div class="card">
-        {@render row({
-          kind: 'switch',
-          label: t('Let it write to my notes, not only read them'),
-          get: () => !settings.llmReadOnly,
-          set: (on) => (settings.llmReadOnly = !on),
-        })}
-      </div>
-
-      {#if settings.freshToken}
-        <!-- Shown once. There is no way to get it back afterwards. -->
-        <div class="stack" transition:slide={{ duration: 200 }}>
-          <p class="note">{t("Paste this into your LLM client's MCP settings. It is shown only once.")}</p>
-          <pre>{snippet}</pre>
-          <button class="primary" onclick={copySnippet}>{copied ? t('Copied') : t('Copy')}</button>
-        </div>
-      {:else if settings.connector?.exists}
-        <p class="note">
-          {t('A token is active.')}
-          {#if settings.connector.lastUsedAt}
-            {t('Last used {time}.', {
-              time: new Date(settings.connector.lastUsedAt).toLocaleString(),
-            })}
-          {:else}
-            {t('It has not been used yet.')}
-          {/if}
-        </p>
-
-        <div class="actions">
-          <button
-            class="primary"
-            disabled={settings.busy}
-            onclick={() => settings.createConnector(settings.llmReadOnly)}
-          >
-            {t('Replace it')}
-          </button>
-          <button class="quiet danger" onclick={() => settings.revokeConnector()}>
-            {t('Revoke')}
-          </button>
-        </div>
-      {:else}
-        <p class="note">{t('A token lets one LLM client reach every note in your account.')}</p>
-        <button
-          class="primary"
-          disabled={settings.busy}
-          onclick={() => settings.createConnector(settings.llmReadOnly)}
-        >
-          {t('Create a token')}
-        </button>
-      {/if}
-    {/if}
+    <!-- Its own component: the pane is a small guide, not a list of settings. -->
+    <McpSetup />
   {:else if settings.section === 'export'}
     <h3>{t('Page')}</h3>
     <div class="card">
@@ -1252,8 +1201,7 @@
     color: var(--danger);
   }
 
-  button.primary,
-  button.quiet {
+  button.primary {
     align-self: flex-start;
     padding: 9px 14px;
     border: none;
@@ -1278,34 +1226,10 @@
       background: var(--accent-hover);
       transform: translateY(-1px);
     }
-
-    button.quiet:hover {
-      color: var(--text);
-    }
-
-    button.quiet.danger:hover {
-      color: var(--danger);
-    }
-  }
-
-  button.quiet {
-    background: none;
-    color: var(--muted);
-    padding-left: 0;
   }
 
   button:disabled {
     opacity: 0.5;
-  }
-
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .actions .quiet {
-    padding-left: 14px;
   }
 
   /* The warning reads as a warning, and gates the controls behind it. */
@@ -1480,20 +1404,6 @@
     background: var(--surface-2);
     color: var(--muted);
     font-weight: 500;
-  }
-
-  pre {
-    width: 100%;
-    margin: 0;
-    padding: var(--space-3);
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    overflow-x: auto;
-    color: var(--muted-strong);
   }
 
   .accents {
@@ -1870,22 +1780,12 @@
       font-size: 17px;
     }
 
-    button.primary,
-    button.quiet {
+    button.primary {
       align-self: stretch;
       min-height: 48px;
       padding: 12px 16px;
       font-size: 15px;
       text-align: center;
-    }
-
-    .actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .actions .quiet {
-      padding-left: 16px;
     }
 
     .danger-check {
@@ -1912,10 +1812,6 @@
     .swatch {
       width: 36px;
       height: 36px;
-    }
-
-    pre {
-      font-size: var(--text-sm);
     }
   }
 </style>

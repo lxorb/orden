@@ -33,6 +33,7 @@ export const de: Dictionary = {
   'Close note': 'Notiz schließen',
   Close: 'Schließen',
   'Close others': 'Andere schließen',
+  'Keep open': 'Geöffnet lassen',
   Open: 'Öffnen',
   Rename: 'Umbenennen',
   Duplicate: 'Duplizieren',
@@ -85,6 +86,13 @@ export const de: Dictionary = {
   'Set the language': 'Sprache festlegen',
   'Copy code': 'Code kopieren',
   'Drag to resize': 'Zum Skalieren ziehen',
+  'Describe the image': 'Bild beschreiben',
+  'Open image': 'Bild öffnen',
+  'Copy link': 'Link kopieren',
+  'Edit markdown': 'Markdown bearbeiten',
+  'Delete image': 'Bild löschen',
+  'Reset size': 'Größe zurücksetzen',
+  'Image not found': 'Bild nicht gefunden',
   'Align left': 'Linksbündig',
   'Align center': 'Zentriert',
   'Align right': 'Rechtsbündig',
@@ -251,8 +259,8 @@ export const de: Dictionary = {
     'Jede Notiz, auch Entwürfe, ist für jeden mit der Adresse lesbar.',
   Address: 'Adresse',
   'Use a domain you own': 'Eigene Domain verwenden',
-  'Add this at your registrar, then reload the page.':
-    'Trage das bei deinem Registrar ein und lade die Seite neu.',
+  'Add this at your registrar. It is checked every few seconds.':
+    'Trage das bei deinem Registrar ein. Es wird alle paar Sekunden geprüft.',
   'Stop publishing': 'Veröffentlichung beenden',
   Type: 'Typ',
   Name: 'Name',
@@ -266,17 +274,50 @@ export const de: Dictionary = {
     'Melde dich zuerst an - der Connector greift auf die Notizen in deinem Konto zu.',
   'Let it write to my notes, not only read them':
     'Es darf meine Notizen schreiben, nicht nur lesen',
-  "Paste this into your LLM client's MCP settings. It is shown only once.":
-    'Füge das in die MCP-Einstellungen deines LLM-Clients ein. Es wird nur einmal angezeigt.',
-  'A token lets one LLM client reach every note in your account.':
-    'Ein Token lässt einen LLM-Client auf jede Notiz in deinem Konto zugreifen.',
   'Create a token': 'Token erstellen',
-  'A token is active.': 'Ein Token ist aktiv.',
-  'It has not been used yet.': 'Es wurde noch nicht verwendet.',
+  'Replace the token': 'Token ersetzen',
   'Last used {time}.': 'Zuletzt verwendet {time}.',
-  'Replace it': 'Ersetzen',
+  'Not used yet.': 'Noch nicht verwendet.',
   Revoke: 'Widerrufen',
   Copied: 'Kopiert',
+  Connected: 'Verbunden',
+  Connect: 'Verbinden',
+  'Connect another': 'Weiteres verbinden',
+  Disconnect: 'Trennen',
+  'Pasted token': 'Eingefügtes Token',
+  'Reads your notes.': 'Liest deine Notizen.',
+  'Reads and writes your notes.': 'Liest und schreibt deine Notizen.',
+  Other: 'Andere',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Ein KI-Assistent kann deine Notizen lesen - und ändern, wenn du es erlaubst. Er meldet sich mit deiner Nib-E-Mail an; nichts muss eingefügt werden.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Öffne in Claude Einstellungen → Connectors und klicke auf Eigenen Connector hinzufügen.',
+  'Open Claude’s connectors': 'Connectors in Claude öffnen',
+  'Fill in the two fields and click Add.': 'Fülle die zwei Felder aus und klicke auf Hinzufügen.',
+  'Click Connect and sign in with your Nib email.':
+    'Klicke auf Verbinden und melde dich mit deiner Nib-E-Mail an.',
+  'Using Claude Code instead?': 'Lieber Claude Code?',
+  Command: 'Befehl',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Führe ihn im Terminal aus und tippe dann in Claude Code /mcp, um dich anzumelden.',
+  'In ChatGPT, open Settings → Connectors and click Create.':
+    'Öffne in ChatGPT Einstellungen → Connectors und klicke auf Erstellen.',
+  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
+    'Kein Erstellen-Knopf? Schalte zuerst den Entwicklermodus ein, unter Einstellungen → Apps → Erweiterte Einstellungen.',
+  'Fill in the form and click Create.': 'Fülle das Formular aus und klicke auf Erstellen.',
+  'Server URL': 'Server-URL',
+  Authentication: 'Authentifizierung',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Lass die erweiterten OAuth-Einstellungen, wie sie sind, und hake „Ich verstehe und möchte fortfahren“ an.',
+  'In a chat, choose + → More → Developer mode and turn Nib on.':
+    'Wähle im Chat + → Mehr → Entwicklermodus und schalte Nib ein.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Jeder MCP-Client mit Streamable HTTP und OAuth. Gib ihm die URL: Er registriert sich selbst und öffnet die Anmeldeseite von Nib.',
+  'Show config': 'Konfiguration anzeigen',
+  'For a client that takes a JSON block instead of a URL.':
+    'Für einen Client, der statt einer URL einen JSON-Block nimmt.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Ein Client, der sich nicht anmelden kann, bekommt stattdessen ein Token. Es wird nur einmal angezeigt.',
 
   // Export
   'Export as PDF': 'Als PDF exportieren',
@@ -345,4 +386,17 @@ export const de: Dictionary = {
   Spelling: 'Rechtschreibung',
   Checking: 'Prüfung',
   Dictionary: 'Wörterbuch',
+
+  // A domain of one's own, on its way
+  'Waiting for the record to show up.': 'Wartet, bis der Eintrag sichtbar ist.',
+  'Certificate issued.': 'Zertifikat ausgestellt.',
+  'Cloudflare could not set this domain up.': 'Cloudflare konnte die Domain nicht einrichten.',
+  'This server does not hand out certificates yet.':
+    'Dieser Server stellt noch keine Zertifikate aus.',
+  'that domain is taken': 'Die Domain ist vergeben',
+  'use a domain of your own': 'Nimm eine eigene Domain',
+  'the domain no longer points here': 'Die Domain zeigt nicht mehr hierher',
+  'Cloudflare has blocked this domain': 'Cloudflare hat die Domain gesperrt',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'An der Wurzel einer Domain nimm einen ALIAS- oder ANAME-Eintrag oder CNAME-Flattening, falls dein Anbieter dort keinen CNAME erlaubt.',
 }

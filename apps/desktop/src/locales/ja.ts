@@ -32,6 +32,7 @@ export const ja: Dictionary = {
   'Close note': 'ノートを閉じる',
   Close: '閉じる',
   'Close others': '他を閉じる',
+  'Keep open': '開いたままにする',
   Open: '開く',
   Rename: '名前を変更',
   Duplicate: '複製',
@@ -84,6 +85,13 @@ export const ja: Dictionary = {
   'Set the language': '言語を設定',
   'Copy code': 'コードをコピー',
   'Drag to resize': 'ドラッグでサイズ変更',
+  'Describe the image': '画像の説明',
+  'Open image': '画像を開く',
+  'Copy link': 'リンクをコピー',
+  'Edit markdown': 'Markdownを編集',
+  'Delete image': '画像を削除',
+  'Reset size': 'サイズをリセット',
+  'Image not found': '画像が見つかりません',
   'Align left': '左揃え',
   'Align center': '中央揃え',
   'Align right': '右揃え',
@@ -250,8 +258,8 @@ export const ja: Dictionary = {
     '下書きを含むすべてのノートが、アドレスを知る人なら誰でも読めます。',
   Address: 'アドレス',
   'Use a domain you own': '自分のドメインを使う',
-  'Add this at your registrar, then reload the page.':
-    'レジストラでこれを追加してから、ページを再読み込みしてください。',
+  'Add this at your registrar. It is checked every few seconds.':
+    'レジストラでこれを追加してください。数秒ごとに確認します。',
   'Stop publishing': '公開をやめる',
   Type: '種類',
   Name: '名前',
@@ -264,17 +272,50 @@ export const ja: Dictionary = {
   'Sign in first - the connector reaches the notes in your account.':
     'まずサインインしてください - コネクタはアカウント内のノートにアクセスします。',
   'Let it write to my notes, not only read them': '読むだけでなく、書き込みも許可する',
-  "Paste this into your LLM client's MCP settings. It is shown only once.":
-    'これを LLM クライアントの MCP 設定に貼り付けてください。表示は一度きりです。',
-  'A token lets one LLM client reach every note in your account.':
-    'トークンがあれば、LLM クライアントはアカウント内のすべてのノートにアクセスできます。',
   'Create a token': 'トークンを作る',
-  'A token is active.': 'トークンが有効です。',
-  'It has not been used yet.': 'まだ使われていません。',
+  'Replace the token': 'トークンを作り直す',
   'Last used {time}.': '最終使用 {time}。',
-  'Replace it': '作り直す',
+  'Not used yet.': 'まだ使われていません。',
   Revoke: '取り消す',
   Copied: 'コピーしました',
+  Connected: '接続済み',
+  Connect: '接続する',
+  'Connect another': 'もう一つ接続する',
+  Disconnect: '接続を解除',
+  'Pasted token': '貼り付けたトークン',
+  'Reads your notes.': 'ノートを読めます。',
+  'Reads and writes your notes.': 'ノートの読み書きができます。',
+  Other: 'その他',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'AI アシスタントがノートを読めるようになります。許可すれば書き換えも可能です。Nib のメールアドレスでサインインするので、貼り付けるものはありません。',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Claude で 設定 → コネクタ を開き、「カスタムコネクタを追加」をクリックします。',
+  'Open Claude’s connectors': 'Claude のコネクタを開く',
+  'Fill in the two fields and click Add.': '二つの欄を埋めて「追加」をクリックします。',
+  'Click Connect and sign in with your Nib email.':
+    '「接続」をクリックし、Nib のメールアドレスでサインインします。',
+  'Using Claude Code instead?': 'Claude Code を使う場合は？',
+  Command: 'コマンド',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'ターミナルで実行し、Claude Code で /mcp と入力してサインインします。',
+  'In ChatGPT, open Settings → Connectors and click Create.':
+    'ChatGPT で 設定 → コネクタ を開き、「作成」をクリックします。',
+  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
+    '「作成」ボタンがない場合は、まず 設定 → アプリ → 詳細設定 で開発者モードをオンにします。',
+  'Fill in the form and click Create.': 'フォームを埋めて「作成」をクリックします。',
+  'Server URL': 'サーバー URL',
+  Authentication: '認証',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'OAuth の詳細設定はそのままにして、「理解した上で続行する」にチェックを入れます。',
+  'In a chat, choose + → More → Developer mode and turn Nib on.':
+    'チャットで + → その他 → 開発者モード を選び、Nib をオンにします。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Streamable HTTP と OAuth に対応した MCP クライアントなら何でも使えます。URL を渡すと自分で登録し、Nib のサインインページを開きます。',
+  'Show config': '設定を表示',
+  'For a client that takes a JSON block instead of a URL.':
+    'URL ではなく JSON ブロックを受け取るクライアント向けです。',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'サインインできないクライアントには、代わりにトークンを渡せます。表示は一度きりです。',
 
   // Export
   'Export as PDF': 'PDF として書き出す',
@@ -343,4 +384,16 @@ export const ja: Dictionary = {
   Spelling: 'スペルチェック',
   Checking: 'チェック',
   Dictionary: '辞書',
+
+  // A domain of one's own, on its way
+  'Waiting for the record to show up.': 'レコードが見つかるのを待っています。',
+  'Certificate issued.': '証明書を発行しました。',
+  'Cloudflare could not set this domain up.': 'Cloudflare でこのドメインを設定できませんでした。',
+  'This server does not hand out certificates yet.': 'このサーバーはまだ証明書を発行しません。',
+  'that domain is taken': 'そのドメインは使われています',
+  'use a domain of your own': '独自のドメインを使ってください',
+  'the domain no longer points here': 'ドメインはもうここを指していません',
+  'Cloudflare has blocked this domain': 'Cloudflare がこのドメインをブロックしました',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'ドメインのルートでは、プロバイダーが CNAME を許可しない場合、ALIAS か ANAME レコード、または CNAME フラット化を使ってください。',
 }

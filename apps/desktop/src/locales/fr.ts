@@ -33,6 +33,7 @@ export const fr: Dictionary = {
   'Close note': 'Fermer la note',
   Close: 'Fermer',
   'Close others': 'Fermer les autres',
+  'Keep open': 'Garder ouvert',
   Open: 'Ouvrir',
   Rename: 'Renommer',
   Duplicate: 'Dupliquer',
@@ -85,6 +86,13 @@ export const fr: Dictionary = {
   'Set the language': 'Définir le langage',
   'Copy code': 'Copier le code',
   'Drag to resize': 'Faire glisser pour redimensionner',
+  'Describe the image': "Décrire l'image",
+  'Open image': "Ouvrir l'image",
+  'Copy link': 'Copier le lien',
+  'Edit markdown': 'Modifier le Markdown',
+  'Delete image': "Supprimer l'image",
+  'Reset size': 'Réinitialiser la taille',
+  'Image not found': 'Image introuvable',
   'Align left': 'Aligner à gauche',
   'Align center': 'Centrer',
   'Align right': 'Aligner à droite',
@@ -252,8 +260,8 @@ export const fr: Dictionary = {
     "Chaque note, brouillons compris, est lisible par quiconque a l'adresse.",
   Address: 'Adresse',
   'Use a domain you own': 'Utiliser un domaine qui vous appartient',
-  'Add this at your registrar, then reload the page.':
-    'Ajoutez ceci chez votre registraire, puis rechargez la page.',
+  'Add this at your registrar. It is checked every few seconds.':
+    "Ajoutez ceci chez votre registraire. C'est vérifié toutes les quelques secondes.",
   'Stop publishing': 'Arrêter la publication',
   Type: 'Type',
   Name: 'Nom',
@@ -267,17 +275,50 @@ export const fr: Dictionary = {
     'Connectez-vous d’abord - le connecteur accède aux notes de votre compte.',
   'Let it write to my notes, not only read them':
     'Autoriser l’écriture dans mes notes, pas seulement la lecture',
-  "Paste this into your LLM client's MCP settings. It is shown only once.":
-    'Collez ceci dans les réglages MCP de votre client LLM. Affiché une seule fois.',
-  'A token lets one LLM client reach every note in your account.':
-    'Un jeton permet à un client LLM d’accéder à toutes les notes de votre compte.',
   'Create a token': 'Créer un jeton',
-  'A token is active.': 'Un jeton est actif.',
-  'It has not been used yet.': 'Il n’a pas encore été utilisé.',
+  'Replace the token': 'Remplacer le jeton',
   'Last used {time}.': 'Dernière utilisation à {time}.',
-  'Replace it': 'Le remplacer',
+  'Not used yet.': 'Pas encore utilisé.',
   Revoke: 'Révoquer',
   Copied: 'Copié',
+  Connected: 'Connecté',
+  Connect: 'Connecter',
+  'Connect another': 'En connecter un autre',
+  Disconnect: 'Déconnecter',
+  'Pasted token': 'Jeton collé',
+  'Reads your notes.': 'Lit vos notes.',
+  'Reads and writes your notes.': 'Lit et modifie vos notes.',
+  Other: 'Autre',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'Un assistant IA peut lire vos notes - et les modifier, si vous l’autorisez. Il se connecte avec votre e-mail Nib ; rien à coller.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Dans Claude, ouvrez Paramètres → Connecteurs et cliquez sur Ajouter un connecteur personnalisé.',
+  'Open Claude’s connectors': 'Ouvrir les connecteurs de Claude',
+  'Fill in the two fields and click Add.': 'Remplissez les deux champs et cliquez sur Ajouter.',
+  'Click Connect and sign in with your Nib email.':
+    'Cliquez sur Connecter et connectez-vous avec votre e-mail Nib.',
+  'Using Claude Code instead?': 'Plutôt Claude Code ?',
+  Command: 'Commande',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Lancez-la dans un terminal, puis tapez /mcp dans Claude Code pour vous connecter.',
+  'In ChatGPT, open Settings → Connectors and click Create.':
+    'Dans ChatGPT, ouvrez Paramètres → Connecteurs et cliquez sur Créer.',
+  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
+    'Pas de bouton Créer ? Activez d’abord le mode développeur, dans Paramètres → Applications → Paramètres avancés.',
+  'Fill in the form and click Create.': 'Remplissez le formulaire et cliquez sur Créer.',
+  'Server URL': 'URL du serveur',
+  Authentication: 'Authentification',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Laissez les paramètres OAuth avancés tels quels et cochez « Je comprends et je souhaite continuer ».',
+  'In a chat, choose + → More → Developer mode and turn Nib on.':
+    'Dans une discussion, choisissez + → Plus → Mode développeur et activez Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Tout client MCP qui parle Streamable HTTP avec OAuth. Donnez-lui l’URL : il s’enregistre lui-même et ouvre la page de connexion de Nib.',
+  'Show config': 'Afficher la configuration',
+  'For a client that takes a JSON block instead of a URL.':
+    'Pour un client qui prend un bloc JSON plutôt qu’une URL.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'Un client qui ne peut pas se connecter peut recevoir un jeton à la place. Il n’est affiché qu’une fois.',
 
   // Export
   'Export as PDF': 'Exporter en PDF',
@@ -346,4 +387,17 @@ export const fr: Dictionary = {
   Spelling: 'Orthographe',
   Checking: 'Vérification',
   Dictionary: 'Dictionnaire',
+
+  // A domain of one's own, on its way
+  'Waiting for the record to show up.': "En attente de l'enregistrement.",
+  'Certificate issued.': 'Certificat émis.',
+  'Cloudflare could not set this domain up.': "Cloudflare n'a pas pu configurer ce domaine.",
+  'This server does not hand out certificates yet.':
+    'Ce serveur ne délivre pas encore de certificats.',
+  'that domain is taken': 'Ce domaine est déjà pris',
+  'use a domain of your own': 'Utilisez un domaine à vous',
+  'the domain no longer points here': 'Le domaine ne pointe plus ici',
+  'Cloudflare has blocked this domain': 'Cloudflare a bloqué ce domaine',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    "À la racine d'un domaine, utilisez un enregistrement ALIAS ou ANAME, ou l'aplatissement CNAME, si votre fournisseur n'y autorise pas de CNAME.",
 }

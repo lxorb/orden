@@ -44,7 +44,19 @@ export interface DnsRecord {
   type: string
   name: string
   value: string
-  note: string
+  /** Only when there is something to say - at the root of a domain, where
+   *  a plain CNAME is not always allowed. */
+  note?: string
+}
+
+/** How far along a domain of one's own is. `none` when the space has no
+ *  domain; `unconfigured` when the server records domains but does not ask
+ *  for certificates. `detail` is Cloudflare's own words, when it has some. */
+export interface DomainStatus {
+  domain: string | null
+  state: 'none' | 'pending' | 'active' | 'error' | 'unconfigured'
+  detail: string | null
+  dns: DnsRecord[]
 }
 
 export class ApiError extends Error {
@@ -189,11 +201,27 @@ export const api = {
   unpublish: (token: string, spaceId: string) =>
     request<{ ok: true }>(`/v1/spaces/${spaceId}/blog`, { method: 'DELETE', token }),
 
-  /** Whether a connector token exists. The secret itself is never handed back. */
+  domainStatus: (token: string, spaceId: string) =>
+    request<DomainStatus>(`/v1/spaces/${spaceId}/blog/domain`, { token }),
+
+  /** The clients that signed in through the connector, and whether a pasted
+   *  token exists. The secret itself is never handed back. */
   connector: (token: string) =>
-    request<{ exists: boolean; readOnly: boolean; lastUsedAt: number | null }>('/v1/mcp/token', {
-      token,
-    }),
+    request<{
+      exists: boolean
+      readOnly: boolean
+      lastUsedAt: number | null
+      clients: {
+        id: string
+        name: string
+        readOnly: boolean
+        createdAt: number
+        lastUsedAt: number | null
+      }[]
+    }>('/v1/mcp/token', { token }),
+
+  disconnectClient: (token: string, id: string) =>
+    request<{ ok: true }>(`/v1/mcp/clients/${id}`, { method: 'DELETE', token }),
 
   issueConnector: (token: string, readOnly: boolean) =>
     request<{ token: string }>('/v1/mcp/token', { token, body: { readOnly } }),

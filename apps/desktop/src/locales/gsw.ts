@@ -35,6 +35,7 @@ export const gsw: Dictionary = {
   'Close note': 'Notiz zuemache',
   Close: 'Zuemache',
   'Close others': 'Anderi zuemache',
+  'Keep open': 'Offe laa',
   Open: 'Ufmache',
   Rename: 'Umbenänne',
   Duplicate: 'Verdopple',
@@ -87,6 +88,13 @@ export const gsw: Dictionary = {
   'Set the language': 'Sprach festlege',
   'Copy code': 'Code kopiere',
   'Drag to resize': 'Zum Grösse ändere zieh',
+  'Describe the image': 'Bild beschriibe',
+  'Open image': 'Bild öffne',
+  'Copy link': 'Link kopiere',
+  'Edit markdown': 'Markdown bearbeite',
+  'Delete image': 'Bild lösche',
+  'Reset size': 'Grössi zruggsetze',
+  'Image not found': 'Bild nöd gfunde',
   'Align left': 'Linksbündig',
   'Align center': 'Zentriert',
   'Align right': 'Rächtsbündig',
@@ -253,8 +261,8 @@ export const gsw: Dictionary = {
     'Jedi Notiz, au Entwürf, cha jede läse wo d Adrässe het.',
   Address: 'Adrässe',
   'Use a domain you own': 'E eigeni Domain bruuche',
-  'Add this at your registrar, then reload the page.':
-    'Trag das bi dim Registrar ii und lad d Site neu.',
+  'Add this at your registrar. It is checked every few seconds.':
+    'Trag das bi dim Registrar ii. Es wird alli paar Sekunde gprüeft.',
   'Stop publishing': 'Veröffentlichig beände',
   Type: 'Typ',
   Name: 'Name',
@@ -268,17 +276,50 @@ export const gsw: Dictionary = {
     'Mäld di zerscht aa - de Connector chunnt a d Notize i dim Konto.',
   'Let it write to my notes, not only read them':
     'Es dörf mini Notize schriibe, nöd nume läse',
-  "Paste this into your LLM client's MCP settings. It is shown only once.":
-    'Füeg das i d MCP-Iistellige vo dim LLM-Client ii. Es wird nume eimal zeigt.',
-  'A token lets one LLM client reach every note in your account.':
-    'Es Token lat en LLM-Client uf jedi Notiz i dim Konto zuegriife.',
   'Create a token': 'Token mache',
-  'A token is active.': 'Es Token isch aktiv.',
-  'It has not been used yet.': 'Es isch nonig bruucht worde.',
+  'Replace the token': 'Token ersetze',
   'Last used {time}.': 'Zletscht bruucht am {time}.',
-  'Replace it': 'Ersetze',
+  'Not used yet.': 'Nonig bruucht.',
   Revoke: 'Widerrüefe',
   Copied: 'Kopiert',
+  Connected: 'Verbunde',
+  Connect: 'Verbinde',
+  'Connect another': 'No eis verbinde',
+  Disconnect: 'Trenne',
+  'Pasted token': 'Iigfüegts Token',
+  'Reads your notes.': 'Liist dini Notize.',
+  'Reads and writes your notes.': 'Liist und schriibt dini Notize.',
+  Other: 'Anderi',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
+    'En KI-Assistent cha dini Notize läse - und ändere, wenn du s erlaubsch. Er mäldet sich mit dinere Nib-E-Mail aa; es muess nüt iigfüegt wärde.',
+  'In Claude, open Settings → Connectors and click Add custom connector.':
+    'Mach i Claude Iistellige → Connectors uf und klick uf Eigene Connector hinzuefüege.',
+  'Open Claude’s connectors': 'Connectors i Claude uufmache',
+  'Fill in the two fields and click Add.': 'Füll di zwei Fälder uus und klick uf Hinzuefüege.',
+  'Click Connect and sign in with your Nib email.':
+    'Klick uf Verbinde und mäld di mit dinere Nib-E-Mail aa.',
+  'Using Claude Code instead?': 'Lieber Claude Code?',
+  Command: 'Befehl',
+  'Run it in a terminal, then type /mcp in Claude Code to sign in.':
+    'Füer en im Terminal uus und tipp dänn i Claude Code /mcp, zum di aamälde.',
+  'In ChatGPT, open Settings → Connectors and click Create.':
+    'Mach i ChatGPT Iistellige → Connectors uf und klick uf Erstelle.',
+  'No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.':
+    'Kei Erstelle-Chnopf? Schalt zerscht de Entwicklermodus ii, under Iistellige → Apps → Erwiiterti Iistellige.',
+  'Fill in the form and click Create.': 'Füll s Formular uus und klick uf Erstelle.',
+  'Server URL': 'Server-URL',
+  Authentication: 'Authentifizierig',
+  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
+    'Lah di erwiiterete OAuth-Iistellige, wie si sind, und hagg „Ich verstehe und möchte fortfahren“ aa.',
+  'In a chat, choose + → More → Developer mode and turn Nib on.':
+    'Wähl im Chat + → Meh → Entwicklermodus und schalt Nib ii.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
+    'Jede MCP-Client mit Streamable HTTP und OAuth. Gib em d URL: Er registriert sich sälber und macht d Aamäldsiite vo Nib uf.',
+  'Show config': 'Konfiguration aazeige',
+  'For a client that takes a JSON block instead of a URL.':
+    'Für en Client, wo statt ere URL en JSON-Block nimmt.',
+  'A client that cannot sign in can be given a token instead. It is shown only once.':
+    'En Client, wo sich nöd cha aamälde, überchunnt statt däm es Token. Es wird nume eimal zeigt.',
 
   // Export
   'Export as PDF': 'Als PDF exportiere',
@@ -347,4 +388,16 @@ export const gsw: Dictionary = {
   Spelling: 'Rächtschriibig',
   Checking: 'Prüefig',
   Dictionary: 'Wörterbuech',
+
+  // A domain of one's own, on its way
+  'Waiting for the record to show up.': 'Wartet, bis de Iitrag sichtbar isch.',
+  'Certificate issued.': 'Zertifikat usgstellt.',
+  'Cloudflare could not set this domain up.': 'Cloudflare het d Domain nöd chöne iirichte.',
+  'This server does not hand out certificates yet.': 'De Server stellt na kei Zertifikat us.',
+  'that domain is taken': 'D Domain isch scho vergäh',
+  'use a domain of your own': 'Nimm en eigeni Domain',
+  'the domain no longer points here': 'D Domain zeigt nüme daane',
+  'Cloudflare has blocked this domain': 'Cloudflare het d Domain gsperrt',
+  'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
+    'A de Wurzle vo de Domain nimm en ALIAS- oder ANAME-Iitrag oder CNAME-Flattening, falls din Aabieter dert kei CNAME erlaubt.',
 }

@@ -31,6 +31,7 @@ const EXEMPT = [
   /^(A3|A4|A5|Letter|Legal|PDF|HTML|MCP|LLM|CSS|Nib|DNS|JSON)$/,
   // Product and file-format names, which read the same in every language.
   /^(Word|OpenOffice|RTF|ePub|LaTeX|MediaWiki|reStructuredText|Textile|OPML)$/,
+  /^(Claude|ChatGPT|OAuth)$/,
 ]
 
 const exempt = (text: string) => EXEMPT.some((pattern) => pattern.test(text.trim()))

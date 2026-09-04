@@ -1,0 +1,726 @@
+<script lang="ts">
+  /** The LLM access pane: what is connected, and how to connect one more.
+   *
+   *  A client is given one URL and signs the person in itself, so the pane is
+   *  a picker for the client, the few clicks that client needs, and a copy
+   *  button next to each value that has to be typed somewhere else. The
+   *  pasted-token way is still here for clients that cannot sign in, folded
+   *  away under Other so it does not distract anyone who does not need it. */
+  import { fly, slide } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
+  import { MCP_URL } from './api'
+  import { account } from './account.svelte'
+  import { type Client, connectors } from './connectors.svelte'
+  import { t } from './i18n.svelte'
+  import { openExternal } from './tauri'
+
+  const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors'
+  const CLAUDE_CODE = `claude mcp add --transport http nib ${MCP_URL}`
+
+  const CLIENTS = $derived<{ id: Client; label: string }[]>([
+    { id: 'claude', label: 'Claude' },
+    { id: 'chatgpt', label: 'ChatGPT' },
+    { id: 'other', label: t('Other') },
+  ])
+
+  let showCode = $state(false)
+  let showConfig = $state(false)
+
+  /** The value most recently copied, so its button can say so for a moment. */
+  let copied = $state<string | null>(null)
+  let copyTimer: ReturnType<typeof setTimeout>
+
+  async function copy(value: string) {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      // A webview without the clipboard API, or a document that is not
+      // focused: the old way through a selection still works there.
+      const scratch = document.createElement('textarea')
+      scratch.value = value
+      scratch.setAttribute('readonly', '')
+      scratch.style.position = 'fixed'
+      scratch.style.opacity = '0'
+      document.body.append(scratch)
+      scratch.select()
+      document.execCommand('copy')
+      scratch.remove()
+    }
+
+    copied = value
+    clearTimeout(copyTimer)
+    copyTimer = setTimeout(() => (copied = null), 1600)
+  }
+
+  /** What a client that takes a JSON block wants: the URL, and the token
+   *  where there is one for a client that cannot sign in. */
+  const config = (token?: string | null) =>
+    JSON.stringify(
+      {
+        mcpServers: {
+          nib: { url: MCP_URL, ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}) },
+        },
+      },
+      null,
+      2,
+    )
+
+  const when = (at: number | null) =>
+    at ? t('Last used {time}.', { time: new Date(at).toLocaleString() }) : t('Not used yet.')
+
+  const access = (readOnly: boolean) =>
+    readOnly ? t('Reads your notes.') : t('Reads and writes your notes.')
+
+  // Kept fresh while the pane shows: the moment a client has signed in, it
+  // appears under Connected without anyone reloading anything.
+  $effect(() => {
+    if (!account.signedIn) return
+    return connectors.watch()
+  })
+
+  const connected = $derived(connectors.clients.length > 0 || !!connectors.token?.exists)
+</script>
+
+{#snippet copyable(label: string, value: string)}
+  <div class="copyable">
+    <span class="label">{label}</span>
+    <code class="value">{value}</code>
+    <button class="copy" class:done={copied === value} onclick={() => copy(value)}>
+      {copied === value ? t('Copied') : t('Copy')}
+    </button>
+  </div>
+{/snippet}
+
+{#snippet chevron(open: boolean)}
+  <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
+{/snippet}
+
+<div class="llm">
+  {#if !account.signedIn}
+    <p class="note">{t('Sign in first - the connector reaches the notes in your account.')}</p>
+  {:else}
+    {#if connected}
+      <h3>{t('Connected')}</h3>
+      <div class="card">
+        {#each connectors.clients as one (one.id)}
+          <div class="row" transition:slide={{ duration: 180, easing: cubicOut }}>
+            <span class="name">
+              {one.name}
+              <small>{access(one.readOnly)} {when(one.lastUsedAt)}</small>
+            </span>
+            <button class="quiet danger" onclick={() => connectors.disconnect(one.id)}>
+              {t('Disconnect')}
+            </button>
+          </div>
+        {/each}
+
+        {#if connectors.token?.exists}
+          <div class="row" transition:slide={{ duration: 180, easing: cubicOut }}>
+            <span class="name">
+              {t('Pasted token')}
+              <small>{access(connectors.token.readOnly)} {when(connectors.token.lastUsedAt)}</small>
+            </span>
+            <button class="quiet danger" disabled={connectors.busy} onclick={() => connectors.revokeToken()}>
+              {t('Revoke')}
+            </button>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    <h3>{connected ? t('Connect another') : t('Connect')}</h3>
+    <p class="note">
+      {t('An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.')}
+    </p>
+
+    <div class="segmented" role="tablist">
+      {#each CLIENTS as one (one.id)}
+        <button
+          role="tab"
+          class:on={connectors.client === one.id}
+          aria-selected={connectors.client === one.id}
+          onclick={() => connectors.choose(one.id)}
+        >
+          {one.label}
+        </button>
+      {/each}
+    </div>
+
+    {#key connectors.client}
+      <div class="steps-wrap" in:fly={{ y: 6, duration: 180, easing: cubicOut }}>
+        {#if connectors.client === 'claude'}
+          <ol class="steps">
+            <li>
+              <p>{t('In Claude, open Settings → Connectors and click Add custom connector.')}</p>
+              <button class="link" onclick={() => void openExternal(CLAUDE_CONNECTORS)}>
+                {t('Open Claude’s connectors')}
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
+              </button>
+            </li>
+            <li>
+              <p>{t('Fill in the two fields and click Add.')}</p>
+              {@render copyable(t('Name'), 'Nib')}
+              {@render copyable('URL', MCP_URL)}
+            </li>
+            <li>
+              <p>{t('Click Connect and sign in with your Nib email.')}</p>
+            </li>
+          </ol>
+
+          <button class="disclose" aria-expanded={showCode} onclick={() => (showCode = !showCode)}>
+            {@render chevron(showCode)}
+            {t('Using Claude Code instead?')}
+          </button>
+          {#if showCode}
+            <div class="disclosed" transition:slide={{ duration: 180, easing: cubicOut }}>
+              {@render copyable(t('Command'), CLAUDE_CODE)}
+              <p class="hint">{t('Run it in a terminal, then type /mcp in Claude Code to sign in.')}</p>
+            </div>
+          {/if}
+        {:else if connectors.client === 'chatgpt'}
+          <ol class="steps">
+            <li>
+              <p>{t('In ChatGPT, open Settings → Connectors and click Create.')}</p>
+              <p class="hint">
+                {t('No Create button? Turn on developer mode first, under Settings → Apps → Advanced settings.')}
+              </p>
+            </li>
+            <li>
+              <p>{t('Fill in the form and click Create.')}</p>
+              {@render copyable(t('Name'), 'Nib')}
+              {@render copyable(t('Server URL'), MCP_URL)}
+              <div class="copyable">
+                <span class="label">{t('Authentication')}</span>
+                <span class="value plain">OAuth</span>
+              </div>
+              <p class="hint">
+                {t('Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.')}
+              </p>
+            </li>
+            <li>
+              <p>{t('Click Connect and sign in with your Nib email.')}</p>
+              <p class="hint">{t('In a chat, choose + → More → Developer mode and turn Nib on.')}</p>
+            </li>
+          </ol>
+        {:else}
+          <div class="steps-wrap">
+            <p class="note">
+              {t('Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.')}
+            </p>
+            {@render copyable(t('Server URL'), MCP_URL)}
+
+            <button class="disclose" aria-expanded={showConfig} onclick={() => (showConfig = !showConfig)}>
+              {@render chevron(showConfig)}
+              {t('Show config')}
+            </button>
+            {#if showConfig}
+              <div class="disclosed" transition:slide={{ duration: 180, easing: cubicOut }}>
+                <p class="hint">{t('For a client that takes a JSON block instead of a URL.')}</p>
+                <pre>{config()}</pre>
+                <button class="copy wide" class:done={copied === config()} onclick={() => copy(config())}>
+                  {copied === config() ? t('Copied') : t('Copy')}
+                </button>
+
+                <p class="hint spaced">
+                  {t('A client that cannot sign in can be given a token instead. It is shown only once.')}
+                </p>
+                <button
+                  class="switch"
+                  role="switch"
+                  aria-checked={!connectors.readOnly}
+                  onclick={() => connectors.setReadOnly(!connectors.readOnly)}
+                >
+                  <span class="name">{t('Let it write to my notes, not only read them')}</span>
+                  <span class="toggle" class:on={!connectors.readOnly} aria-hidden="true"></span>
+                </button>
+
+                {#if connectors.freshToken}
+                  <div class="fresh" transition:slide={{ duration: 200, easing: cubicOut }}>
+                    <pre>{config(connectors.freshToken)}</pre>
+                    <button
+                      class="copy wide"
+                      class:done={copied === config(connectors.freshToken)}
+                      onclick={() => copy(config(connectors.freshToken))}
+                    >
+                      {copied === config(connectors.freshToken) ? t('Copied') : t('Copy')}
+                    </button>
+                  </div>
+                {:else}
+                  <button class="primary" disabled={connectors.busy} onclick={() => connectors.createToken()}>
+                    {connectors.token?.exists ? t('Replace the token') : t('Create a token')}
+                  </button>
+                {/if}
+                {#if connectors.error}
+                  <p class="hint bad">{connectors.error}</p>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/if}
+      </div>
+    {/key}
+  {/if}
+</div>
+
+<style>
+  .llm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  h3 {
+    margin: var(--space-3) 0 calc(-1 * var(--space-2));
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--muted-strong);
+  }
+
+  h3:first-child {
+    margin-top: 0;
+  }
+
+  .note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
+    line-height: 1.6;
+  }
+
+  .hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .hint.bad {
+    color: var(--danger);
+  }
+
+  .hint.spaced {
+    margin-top: var(--space-3);
+  }
+
+  /* ── What is connected ─────────────────────────────────────────── */
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 44px;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--line);
+  }
+
+  .row .name,
+  .switch .name {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .row small {
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  /* ── Choosing the client ───────────────────────────────────────── */
+
+  .segmented {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+
+  .segmented button {
+    flex: 1;
+    padding: 7px 10px;
+    border: none;
+    border-radius: calc(var(--radius-md) - 3px);
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  .segmented button.on {
+    background: var(--surface);
+    color: var(--text-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .segmented button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  /* ── The steps ─────────────────────────────────────────────────── */
+
+  .steps-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .steps li {
+    position: relative;
+    padding-left: 34px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    counter-increment: step;
+  }
+
+  /* The number, drawn as a small badge so the eye finds the next step. */
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-weight: 650;
+    line-height: 22px;
+    text-align: center;
+  }
+
+  .steps li > p:first-child {
+    margin: 0;
+    min-height: 22px;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    color: var(--text);
+    line-height: 22px;
+  }
+
+  /* ── A value with its copy button ──────────────────────────────── */
+
+  .copyable {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    min-width: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .copyable .label {
+    flex: none;
+    width: 5.5rem;
+    color: var(--muted);
+  }
+
+  .copyable .value {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text-strong);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .copyable .value.plain {
+    border-color: transparent;
+    background: none;
+    padding-left: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .copy {
+    flex: none;
+    min-width: 4.4rem;
+    padding: 6px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+
+  .copy.wide {
+    align-self: flex-start;
+    min-width: 6rem;
+  }
+
+  .copy.done {
+    border-color: var(--success);
+    color: var(--success);
+  }
+
+  @media (hover: hover) {
+    .copy:hover:not(.done) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  .copy:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .copyable {
+      flex-wrap: wrap;
+    }
+
+    .copyable .label {
+      width: 100%;
+    }
+  }
+
+  /* ── Links and disclosures ─────────────────────────────────────── */
+
+  .link,
+  .disclose {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    cursor: default;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .link {
+    color: var(--accent);
+  }
+
+  .link svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .disclose {
+    color: var(--muted-strong);
+    font-weight: 550;
+  }
+
+  @media (hover: hover) {
+    .link:hover {
+      color: var(--accent-hover);
+    }
+
+    .disclose:hover {
+      color: var(--text-strong);
+    }
+  }
+
+  .link:focus-visible,
+  .disclose:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .chevron {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .chevron.open {
+    transform: rotate(90deg);
+  }
+
+  .disclosed,
+  .fresh {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-left: 17px;
+  }
+
+  .fresh {
+    padding-left: 0;
+  }
+
+  pre {
+    width: 100%;
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+    overflow-x: auto;
+    color: var(--muted-strong);
+  }
+
+  /* ── Buttons, the way the panel draws them ─────────────────────── */
+
+  button.primary,
+  button.quiet {
+    align-self: flex-start;
+    flex: none;
+    padding: 9px 14px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-spring);
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  button.quiet {
+    background: none;
+    color: var(--muted);
+    padding-right: 0;
+  }
+
+  @media (hover: hover) {
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    button.quiet:hover:not(:disabled) {
+      color: var(--text);
+    }
+
+    button.quiet.danger:hover:not(:disabled) {
+      color: var(--danger);
+    }
+  }
+
+  button:disabled {
+    opacity: 0.5;
+  }
+
+  /* The switch, drawn like the panel's so the two read as one control. */
+  .switch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 38px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    text-align: left;
+    cursor: default;
+  }
+
+  .switch:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .toggle {
+    flex: none;
+    width: 38px;
+    height: 22px;
+    border-radius: 99px;
+    background: var(--surface-3);
+    position: relative;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--muted-strong);
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  .toggle.on {
+    background: var(--accent);
+  }
+
+  .toggle.on::after {
+    background: #fff;
+    transform: translateX(16px);
+  }
+</style>

@@ -1,13 +1,14 @@
 import { setSnippets } from '@nib/editor'
-import { api, type DnsRecord, type RemoteSpace } from './api'
+import { api, type DnsRecord, type DomainStatus, type RemoteSpace } from './api'
 import { account } from './account.svelte'
+import { connectors } from './connectors.svelte'
+import { keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from './page-setup'
 import { invoke, isDesktop } from './tauri'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
 
-const STORAGE_KEY = 'nib:llm'
 const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
 
@@ -25,12 +26,6 @@ export type Section =
   | 'llm'
   | 'export'
 
-interface Connector {
-  exists: boolean
-  readOnly: boolean
-  lastUsedAt: number | null
-}
-
 class Settings {
   open = $state(false)
   section = $state<Section>('general')
@@ -39,12 +34,6 @@ class Settings {
   listing = $state(true)
   /** The version-history sheet, which is its own overlay. */
   historyOpen = $state(false)
-
-  /** LLM access is read-only until widened. */
-  llmReadOnly = $state(true)
-  connector = $state<Connector | null>(null)
-  /** Shown once, straight after minting. It is never retrievable again. */
-  freshToken = $state<string | null>(null)
 
   /** Whether pandoc is on this machine, which decides the export list. */
   pandoc = $state(false)
@@ -62,6 +51,9 @@ class Settings {
   busy = $state(false)
   error = $state<string | null>(null)
   dns = $state<DnsRecord[]>([])
+  /** How far along a domain of one's own is, kept fresh while the pane
+   *  shows it. Null until asked, or when the space has no domain. */
+  domain = $state<DomainStatus | null>(null)
   availability = $state<{ checking: boolean; available: boolean | null; reason?: string }>({
     checking: false,
     available: null,
@@ -78,12 +70,7 @@ class Settings {
   })
 
   restore() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-      this.llmReadOnly = saved.readOnly ?? true
-    } catch {
-      // Defaults are the safe ones.
-    }
+    connectors.restore()
 
     try {
       const saved = JSON.parse(localStorage.getItem(PAGE_KEY) ?? '{}')
@@ -158,51 +145,7 @@ class Settings {
     this.listing = section === undefined
     this.open = true
     this.error = null
-    this.freshToken = null
-    void this.loadConnector()
-  }
-
-  async loadConnector() {
-    if (!account.token) {
-      this.connector = null
-      return
-    }
-
-    this.connector = await api.connector(account.token).catch(() => null)
-    if (this.connector) this.llmReadOnly = this.connector.readOnly
-  }
-
-  /** Mints a token and shows it once. Any previous one stops working. */
-  async createConnector(readOnly: boolean) {
-    if (!account.token) return
-
-    this.busy = true
-    this.error = null
-
-    try {
-      const { token } = await api.issueConnector(account.token, readOnly)
-      this.freshToken = token
-      this.llmReadOnly = readOnly
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ readOnly }))
-      await this.loadConnector()
-    } catch (error) {
-      this.error = message(error, 'could not create a token')
-    } finally {
-      this.busy = false
-    }
-  }
-
-  async revokeConnector() {
-    if (!account.token) return
-
-    this.busy = true
-    try {
-      await api.revokeConnector(account.token)
-      this.freshToken = null
-      await this.loadConnector()
-    } finally {
-      this.busy = false
-    }
+    connectors.freshToken = null
   }
 
   /** Which check is the latest. Typing outruns the network, and an older
@@ -260,10 +203,49 @@ class Settings {
     try {
       await api.unpublish(account.token, space.id)
       this.dns = []
+      this.domain = null
       await account.loadSpaces()
     } finally {
       this.busy = false
     }
+  }
+
+  /** Which asking is the latest, for the same reason as `checks`: the pane
+   *  can move to another space while an answer is in flight. */
+  private askings = 0
+  private domainTimer: ReturnType<typeof setTimeout> | undefined
+
+  /** Asks how far along the domain is, now and again every ten seconds for
+   *  as long as the answer can still change. Cloudflare checks the record on
+   *  its own schedule, so this is what turns "add this record" into "it
+   *  works" without anyone reloading anything. */
+  async watchDomain() {
+    this.stopWatchingDomain()
+    const asking = ++this.askings
+
+    const space = this.remote
+    if (!space || !account.token || !space.blog.domain) {
+      this.domain = null
+      return
+    }
+
+    try {
+      const status = await api.domainStatus(account.token, space.id)
+      if (asking !== this.askings) return
+      this.domain = status
+    } catch {
+      // Left as it was: a request that failed says nothing about the domain.
+      if (asking !== this.askings) return
+    }
+
+    if (keepAsking(this.domain)) {
+      this.domainTimer = setTimeout(() => void this.watchDomain(), 10_000)
+    }
+  }
+
+  stopWatchingDomain() {
+    clearTimeout(this.domainTimer)
+    this.domainTimer = undefined
   }
 }
 
