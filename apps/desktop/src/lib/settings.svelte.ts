@@ -9,6 +9,10 @@ import { workspace } from './workspace.svelte'
 
 const STORAGE_KEY = 'nib:llm'
 const PAGE_KEY = 'nib:page'
+const APPEARANCE_KEY = 'nib:export-appearance'
+
+/** How an exported page is coloured: light, dark, or as the app looks now. */
+export type ExportAppearance = 'light' | 'dark' | 'app'
 
 export type Section =
   | 'general'
@@ -48,6 +52,10 @@ class Settings {
   /** Paper and running text for export. A note's front matter overrules it. */
   page = $state<PageSetup>({ ...DEFAULT_PAGE_SETUP })
 
+  /** Light by default: a document is read on paper, or sent to someone whose
+   *  screen is not this one. */
+  exportAppearance = $state<ExportAppearance>('light')
+
   /** Whether Explorer's "New" menu offers a markdown document. Windows only. */
   newMenu = $state(false)
 
@@ -84,6 +92,11 @@ class Settings {
       // Defaults are the safe ones.
     }
 
+    const appearance = localStorage.getItem(APPEARANCE_KEY)
+    if (appearance === 'light' || appearance === 'dark' || appearance === 'app') {
+      this.exportAppearance = appearance
+    }
+
     void import('./export').then(({ pandocAvailable }) =>
       pandocAvailable().then((found) => (this.pandoc = found)),
     )
@@ -113,6 +126,11 @@ class Settings {
   setPage(patch: Partial<PageSetup>) {
     this.page = { ...this.page, ...patch }
     localStorage.setItem(PAGE_KEY, JSON.stringify(this.page))
+  }
+
+  setExportAppearance(appearance: ExportAppearance) {
+    this.exportAppearance = appearance
+    localStorage.setItem(APPEARANCE_KEY, appearance)
   }
 
   /** Reads `snippets.json` into the editor's completion source. */

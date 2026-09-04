@@ -1,8 +1,8 @@
 import { CODE_PALETTES, type EditorView, reformatDocument, type Transaction } from '@nib/editor'
 import { account } from './account.svelte'
 import { t } from './i18n.svelte'
-import { PANDOC_FORMATS } from './export'
-import { imagePath, imageUrl } from './images'
+import { type HtmlOptions, PANDOC_FORMATS } from './export'
+import { imagePath } from './images'
 import { newSpace } from './space-actions'
 import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
@@ -27,6 +27,21 @@ async function openSnippets() {
   await workspace.open(path)
 }
 
+/** How an exported page should look: the colours chosen for export, or the
+ *  ones on screen right now, theme file and custom CSS included. */
+async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
+  const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
+  if (settings.exportAppearance !== 'app') return { ...chosen, scheme: settings.exportAppearance }
+
+  const file = theme.active.path
+  const sheets = await Promise.all([
+    file ? invoke<string>('read_theme', { path: file }).catch(() => '') : '',
+    isDesktop ? invoke<string>('read_custom_css').catch(() => '') : '',
+  ])
+
+  return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
+}
+
 /** Export entries. The pandoc formats only appear when pandoc is installed,
  *  so the list never offers something that cannot work. */
 export function exportCommands(): Command[] {
@@ -34,27 +49,26 @@ export function exportCommands(): Command[] {
   const source = () => note()?.doc ?? ''
   const name = () => note()?.name ?? 'Untitled.md'
 
-  /** PDF wants URLs the print frame can fetch; HTML wants paths it can read. */
-  const forPrint = () => ({
-    page: settings.page,
-    resolveImage: (src: string) => imageUrl(src, note()?.path, source()),
-  })
-
-  const forFile = () => ({
+  /** Everything an export needs beyond the note: paper, colours, and where
+   *  the pictures it names actually are. */
+  const options = async (): Promise<HtmlOptions> => ({
     page: settings.page,
     resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
+    ...(await look()),
   })
 
   const commands: Command[] = [
     {
       id: 'export-pdf',
       label: t('Export as PDF'),
-      run: () => import('./export').then((m) => m.exportPdf(source(), name(), forPrint())),
+      run: () =>
+        void import('./export').then(async (m) => m.exportPdf(source(), name(), await options())),
     },
     {
       id: 'export-html',
       label: t('Export as HTML'),
-      run: () => void import('./export').then((m) => m.exportHtml(source(), name(), forFile())),
+      run: () =>
+        void import('./export').then(async (m) => m.exportHtml(source(), name(), await options())),
     },
     { id: 'page-setup', label: t('Page setup for export'), run: () => settings.show('export') },
     {

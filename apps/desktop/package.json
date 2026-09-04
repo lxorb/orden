@@ -12,6 +12,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/language-data": "^6.5.2",
+    "@lezer/highlight": "^1.2.3",
     "@nib/editor": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@nib/themes": "workspace:*",
@@ -22,8 +25,10 @@
     "@tauri-apps/plugin-opener": "^2.5.5",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-updater": "^2.11.0",
+    "flowchart.js": "^1.18.0",
     "katex": "^0.18.5",
-    "lucide": "^1.40.0"
+    "lucide": "^1.40.0",
+    "mermaid": "^11.17.2"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

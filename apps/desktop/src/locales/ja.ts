@@ -211,6 +211,7 @@ export const ja: Dictionary = {
   'Version {version} is out': 'バージョン {version} が公開されました',
   Language: '言語',
   'Match the system': 'システムに合わせる',
+  'Match the app': 'アプリに合わせる',
 
   // Settings
   Settings: '設定',

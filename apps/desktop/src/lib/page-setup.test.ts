@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { DEFAULT_PAGE_SETUP, fill, length, pageCss, pageSetupFor, runningMarkup } from './page-setup'
+import {
+  DEFAULT_PAGE_SETUP,
+  fill,
+  length,
+  pageCss,
+  pageSetupFor,
+  paperInches,
+  withRunningText,
+} from './page-setup'
 
 const withMatter = (body: string) => `---\n${body}\n---\n\n# Note\n`
 
@@ -82,47 +90,72 @@ describe('running text', () => {
 
 describe('the print stylesheet', () => {
   test('states the paper and the margin', () => {
-    expect(pageCss(DEFAULT_PAGE_SETUP, 'Notes', '2026-09-03')).toBe(
-      '@page { size: A4 portrait; margin: 20mm; }',
-    )
-  })
-
-  test('adds running text only when there is some', () => {
-    const css = pageCss({ ...DEFAULT_PAGE_SETUP, footer: '${title}' }, 'Notes', '2026-09-03')
-
-    expect(css).toContain('.nib-running-footer::after')
-    expect(css).toContain('Notes')
-    expect(css).not.toContain('nib-running-header')
-  })
-
-  test('a title cannot close the string it sits in', () => {
-    const css = pageCss({ ...DEFAULT_PAGE_SETUP, header: '${title}' }, 'a" } body { x: y', '2026')
-
-    expect(css).toContain('content: "a\\" } body { x: y";')
-  })
-
-  test('a newline cannot break out of the rule', () => {
-    const css = pageCss({ ...DEFAULT_PAGE_SETUP, footer: 'one\ntwo' }, 'Notes', '2026')
-
-    expect(css).toContain('content: "one two";')
+    expect(pageCss(DEFAULT_PAGE_SETUP)).toBe('@page { size: A4 portrait; margin: 20mm; }')
   })
 
   test('falls back to the default margin rather than emitting a bad one', () => {
-    const css = pageCss({ ...DEFAULT_PAGE_SETUP, margin: 'red' }, 'Notes', '2026')
-
-    expect(css).toContain('margin: 20mm')
+    expect(pageCss({ ...DEFAULT_PAGE_SETUP, margin: 'red' })).toContain('margin: 20mm')
   })
 })
 
-describe('running markup', () => {
-  test('is empty when nothing is configured', () => {
-    expect(runningMarkup(DEFAULT_PAGE_SETUP)).toBe('')
+describe('wrapping the body in running text', () => {
+  test('leaves a plain document alone', () => {
+    expect(withRunningText('<p>x</p>', DEFAULT_PAGE_SETUP, 'Notes', '2026')).toBe('<p>x</p>')
   })
 
-  test('carries one element per configured slot', () => {
-    const markup = runningMarkup({ ...DEFAULT_PAGE_SETUP, header: 'a', footer: 'b' })
+  test('puts the header in a repeating table head', () => {
+    const html = withRunningText('<p>x</p>', { ...DEFAULT_PAGE_SETUP, header: '${title}' }, 'Notes', '2026')
 
-    expect(markup).toContain('nib-running-header')
-    expect(markup).toContain('nib-running-footer')
+    expect(html).toContain('<table class="sheet">')
+    expect(html).toContain('<thead><tr><td><div class="running-header">Notes</div>')
+    expect(html).toContain('<tbody><tr><td>\n<p>x</p></td></tr></tbody>')
+    expect(html).not.toContain('running-footer')
+  })
+
+  test('puts the footer after the table with a spacer in the foot', () => {
+    const html = withRunningText('<p>x</p>', { ...DEFAULT_PAGE_SETUP, footer: '${date}' }, 'Notes', '2026-09-03')
+
+    expect(html).toContain('<tfoot><tr><td></td></tr></tfoot>')
+    expect(html).toContain('<div class="running-footer">2026-09-03</div>')
+    expect(html).not.toContain('running-header')
+  })
+
+  test('escapes the title so it cannot become markup', () => {
+    const html = withRunningText('', { ...DEFAULT_PAGE_SETUP, header: '${title}' }, 'a <b> & "c"', '2026')
+
+    expect(html).toContain('a &lt;b&gt; &amp; &quot;c&quot;')
+  })
+})
+
+describe('paper in inches', () => {
+  test('knows the paper sizes', () => {
+    expect(paperInches(DEFAULT_PAGE_SETUP)).toEqual({
+      width: 8.27,
+      height: 11.69,
+      margin: 0.787,
+      landscape: false,
+    })
+    expect(paperInches({ ...DEFAULT_PAGE_SETUP, paper: 'Letter', margin: '1in' })).toMatchObject({
+      width: 8.5,
+      height: 11,
+      margin: 1,
+    })
+  })
+
+  test('converts every unit a margin can use', () => {
+    expect(paperInches({ ...DEFAULT_PAGE_SETUP, margin: '2.54cm' }).margin).toBe(1)
+    expect(paperInches({ ...DEFAULT_PAGE_SETUP, margin: '72pt' }).margin).toBe(1)
+    expect(paperInches({ ...DEFAULT_PAGE_SETUP, margin: '48px' }).margin).toBe(0.5)
+  })
+
+  test('keeps the sheet upright and flags landscape', () => {
+    const inches = paperInches({ ...DEFAULT_PAGE_SETUP, orientation: 'landscape' })
+
+    expect(inches.landscape).toBe(true)
+    expect(inches.width).toBeLessThan(inches.height)
+  })
+
+  test('falls back to the default margin when the setting is not a length', () => {
+    expect(paperInches({ ...DEFAULT_PAGE_SETUP, margin: 'wide' }).margin).toBe(0.787)
   })
 })

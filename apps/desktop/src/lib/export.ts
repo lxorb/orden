@@ -1,10 +1,21 @@
-import { DIAGRAM_LANGUAGES, diagramSvg } from '@nib/editor'
+import { CODE_PALETTES, DIAGRAM_LANGUAGES } from '@nib/editor'
+import { codeBlocks, documentTitle, frontMatterValue, renderMarkdown } from '@nib/markdown'
+import { exportCss, themeCss } from '@nib/themes/raw'
+import { accentTokens, DEFAULT_ACCENT } from './accents'
+import { drawDiagram } from './diagrams'
+import { highlightCode, loadParsers, paletteCss } from './highlight'
 import { key } from './i18n.svelte'
-import { documentTitle, renderMarkdown } from '@nib/markdown'
-import { katexCss, themeCss } from '@nib/themes/raw'
-import { DEFAULT_PAGE_SETUP, type PageSetup, pageCss, pageSetupFor, runningMarkup } from './page-setup'
+import { mathCss } from './math-fonts'
+import {
+  DEFAULT_PAGE_SETUP,
+  type PageSetup,
+  pageCss,
+  pageSetupFor,
+  paperInches,
+  withRunningText,
+} from './page-setup'
 import { invoke, isDesktop } from './tauri'
-import { theme } from './theme.svelte'
+import type { Scheme } from './theme.svelte'
 
 /** Formats pandoc can produce, in the order Typora lists them. The labels
  *  are product names and stay as they are; only `Presentation` is a plain
@@ -31,114 +42,152 @@ function escape(text: string): string {
   )
 }
 
+/** A fence already drawn or coloured: the HTML for the whole block, or null
+ *  to leave it as plain code. */
+export type Fence = (code: string, language: string) => string | null
+
 export interface HtmlOptions {
-  /** Leave the stylesheet out, for pasting into a site that has its own. */
+  /** Leave the stylesheet out, for pasting into a site that has its own. The
+   *  markup stays semantic: no colouring spans, and images keep the paths the
+   *  note wrote. Diagrams are still drawn, since they are content. */
   bare?: boolean
   /** Turns a path written in the note into one the filesystem understands. */
   resolveImage?: (src: string) => string
-  /** Which theme to bake in. Defaults to the one on screen. */
-  theme?: string
+  /** Light unless asked otherwise: a document is read on paper more often
+   *  than a screen, and the print stylesheet turns light regardless. */
+  scheme?: Scheme
+  /** The accent and code palette chosen in the app. */
+  accent?: string
+  codeTheme?: string
+  /** Stylesheets on top of the built-in theme: a theme file and custom.css,
+   *  when the export should look exactly as the app does. */
+  css?: string
   /** Paper and running text. The note's own front matter wins over this. */
   page?: PageSetup
   /** The date the running text prints. Passed in so a build is reproducible. */
   date?: string
+  /** Fences already prepared; see `prepareFences`. */
+  fence?: Fence
 }
 
-/** A standalone page: the note, the active theme, and nothing else. */
+function declarations(tokens: Record<string, string>): string {
+  return Object.entries(tokens)
+    .map(([token, value]) => `${token}: ${value};`)
+    .join(' ')
+}
+
+/** The accent for the scheme on screen, and its light shade on paper. */
+function accentCss(accent: string, scheme: Scheme): string {
+  return [
+    `:root { ${declarations(accentTokens(accent, scheme))} }`,
+    `@media print { :root { ${declarations(accentTokens(accent, 'light'))} } }`,
+  ].join('\n')
+}
+
+/** What the running text calls the document: the front matter's title, else
+ *  the first heading, else the file's name. */
+export function titleOf(source: string, name: string): string {
+  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? name.replace(/\.[^.]+$/, '')
+}
+
+/** A standalone page: the note, its theme, and nothing else. Pure, so it can
+ *  be tested; the fences are drawn beforehand by `prepareFences`. */
 export function buildHtml(source: string, name: string, options: HtmlOptions = {}): string {
-  const title = documentTitle(source) ?? name.replace(/\.[^.]+$/, '')
-  const body = renderMarkdown(source, { footnotes: true })
+  const title = titleOf(source, name)
+  const author = frontMatterValue(source, 'author')
+  const lang = frontMatterValue(source, 'lang') ?? 'en'
+  const body = renderMarkdown(source, { footnotes: true, toc: true, code: options.fence })
+
+  const meta = [
+    '<meta charset="utf-8">',
+    author ? `<meta name="author" content="${escape(author)}">` : '',
+    `<title>${escape(title)}</title>`,
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   if (options.bare) {
-    return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${escape(title)}</title>\n</head>\n<body>\n${body}</body>\n</html>\n`
+    return `<!doctype html>\n<html lang="${escape(lang)}">\n<head>\n${meta}\n</head>\n<body>\n${body}</body>\n</html>\n`
   }
 
-  const scheme = options.theme ?? (theme.active.path ? theme.active.scheme : theme.id)
+  const scheme = options.scheme ?? 'light'
   const setup = pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)
-  const date = options.date ?? new Date().toISOString().slice(0, 10)
+  const date = options.date ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
+  const palette =
+    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES[0]
+
+  const styles = [
+    mathCss(body),
+    themeCss,
+    accentCss(options.accent ?? DEFAULT_ACCENT, scheme),
+    exportCss,
+    paletteCss(palette),
+    pageCss(setup),
+    options.css ?? '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const page = withRunningText(`<div id="write">\n${body}</div>\n`, setup, title, date)
 
   return `<!doctype html>
-<html lang="en" data-theme="${scheme}">
+<html lang="${escape(lang)}" data-theme="${scheme}">
 <head>
-<meta charset="utf-8">
+${meta}
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escape(title)}</title>
+<meta name="generator" content="Nib">
 <style>
-${katexCss}
-${themeCss}
-/* Exported pages have no editor around them, so the writing surface is the page. */
-body { margin: 0; overflow: auto; }
-#write { padding: 3rem 1.5rem 6rem; }
-${pageCss(setup, title, date)}
-@media print {
-  html, body { background: #fff; color: #000; }
-  #write { max-width: none; padding: 0; }
-  a { color: inherit; }
-  /* Chromium repeats a fixed element on every sheet, which is the running text. */
-  .nib-running-header, .nib-running-footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    font-size: 9pt;
-    color: #666;
-    text-align: center;
-  }
-  .nib-running-header { top: 0; }
-  .nib-running-footer { bottom: 0; }
-}
-.nib-running-header, .nib-running-footer { display: none; }
-@media print { .nib-running-header, .nib-running-footer { display: block; } }
+${styles}
 </style>
 </head>
 <body>
-${runningMarkup(setup)}
-<div id="write">
-${body}</div>
-</body>
+${page}</body>
 </html>
 `
 }
 
-const FENCE = /<pre><code class="language-([a-z]+)">([\s\S]*?)<\/code><\/pre>/g
+export type Drawer = (code: string, language: string, scheme: Scheme) => Promise<string>
 
-/** Undoes the escaping marked applies inside a code fence. */
-export function unescape(text: string): string {
-  return text
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&')
-}
+/** Draws every diagram and loads a parser for every language the note uses,
+ *  so rendering can then picture and colour each fence without waiting. A
+ *  diagram that will not draw stays as code, which beats an empty space. */
+export async function prepareFences(
+  source: string,
+  scheme: Scheme,
+  options: { highlight?: boolean } = {},
+  draw: Drawer = drawDiagram,
+): Promise<Fence> {
+  const blocks = codeBlocks(source)
+  const diagrams = new Map<string, string>()
+  const languages = new Set<string>()
 
-/** The diagram fences in a page, in the order they appear. */
-export function diagramFences(html: string): { language: string; code: string }[] {
-  return [...html.matchAll(FENCE)]
-    .filter((match) => DIAGRAM_LANGUAGES.has(match[1]))
-    .map((match) => ({ language: match[1], code: unescape(match[2]) }))
-}
+  const drawings = blocks
+    .filter((block) => DIAGRAM_LANGUAGES.has(block.language))
+    .map(async (block) => {
+      const svg = await draw(block.code, block.language, scheme).catch(() => null)
+      if (svg) diagrams.set(`${block.language}\n${block.code}`, svg)
+    })
 
-/** Draws every diagram fence, so an exported page shows pictures rather than
- *  the source that would have made them. A fence that will not draw is left as
- *  code, which is more useful than an empty space. */
-export async function renderDiagrams(html: string): Promise<string> {
-  const fences = diagramFences(html)
-  if (!fences.length) return html
+  for (const block of blocks) {
+    if (block.language && !DIAGRAM_LANGUAGES.has(block.language)) languages.add(block.language)
+  }
 
-  const drawn = await Promise.all(
-    fences.map((fence) =>
-      diagramSvg(fence.code, fence.language).catch(() => null),
-    ),
-  )
+  const [parsers] = await Promise.all([
+    options.highlight === false ? new Map() : loadParsers(languages),
+    ...drawings,
+  ])
 
-  let index = 0
+  return (code, language) => {
+    if (DIAGRAM_LANGUAGES.has(language)) {
+      const svg = diagrams.get(`${language}\n${code}`)
+      return svg ? `<figure class="diagram" data-language="${language}">${svg}</figure>\n` : null
+    }
 
-  return html.replace(FENCE, (whole, language: string) => {
-    if (!DIAGRAM_LANGUAGES.has(language)) return whole
+    const parser = parsers.get(language)
+    if (!parser) return null
 
-    const svg = drawn[index++]
-    return svg ? `<figure class="nib-diagram" data-language="${language}">${svg}</figure>` : whole
-  })
+    return `<pre><code class="language-${escape(language)}">${highlightCode(code, parser)}\n</code></pre>\n`
+  }
 }
 
 /** Every `src` in the page that points at a file rather than at the network. */
@@ -177,6 +226,14 @@ export async function inlineImages(
   })
 }
 
+/** The whole document, ready to write: fences drawn, pictures inside it. */
+export async function renderNote(source: string, name: string, options: HtmlOptions = {}): Promise<string> {
+  const fence = await prepareFences(source, options.scheme ?? 'light', { highlight: !options.bare })
+  const html = buildHtml(source, name, { ...options, fence })
+
+  return options.bare || !options.resolveImage ? html : inlineImages(html, options.resolveImage)
+}
+
 async function chooseTarget(name: string, extension: string, label: string) {
   const { save } = await import('@tauri-apps/plugin-dialog')
   return save({
@@ -185,51 +242,87 @@ async function chooseTarget(name: string, extension: string, label: string) {
   })
 }
 
+/** A browser has no file dialog to offer; the file is handed to it to save. */
+function download(name: string, content: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name
+  link.click()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 export async function exportHtml(source: string, name: string, options: HtmlOptions = {}) {
-  if (!isDesktop) return
+  const file = `${name.replace(/\.[^.]+$/, '')}.html`
+
+  if (!isDesktop) {
+    download(file, await renderNote(source, name, options), 'text/html')
+    return file
+  }
 
   const target = await chooseTarget(name, 'html', 'HTML')
   if (!target) return
 
-  let content = await renderDiagrams(buildHtml(source, name, options))
-  if (options.resolveImage) content = await inlineImages(content, options.resolveImage)
-
-  await invoke('write_note', { path: target, content })
+  await invoke('write_note', { path: target, content: await renderNote(source, name, options) })
   return target
 }
 
-/** Prints the rendered note. The print dialog is where "Save as PDF" lives. */
+/** Shows the page to the browser's print dialog, which is where "Save as PDF"
+ *  lives when nothing better is available. The frame is kept until the dialog
+ *  has closed; taking it away sooner cancels the print in some engines. */
+function printInFrame(html: string): Promise<void> {
+  return new Promise((resolve) => {
+    const frame = document.createElement('iframe')
+    frame.setAttribute('aria-hidden', 'true')
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;'
+
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      frame.remove()
+      resolve()
+    }
+
+    frame.addEventListener('load', async () => {
+      const inner = frame.contentWindow
+      if (!inner) return finish()
+
+      // Fonts arrive inline but still have to be decoded before the page is measured.
+      await inner.document.fonts.ready.catch(() => undefined)
+      inner.addEventListener('afterprint', finish, { once: true })
+      inner.focus()
+      inner.print()
+      // An engine that never says afterprint would otherwise keep the frame forever.
+      window.setTimeout(finish, 5 * 60 * 1000)
+    })
+
+    frame.srcdoc = html
+    document.body.append(frame)
+  })
+}
+
+/** Writes a PDF. On a desktop whose webview can print to a file, it goes
+ *  straight to disk with the paper from the settings; elsewhere the print
+ *  dialog does the saving. Always light: it is going on paper. */
 export async function exportPdf(source: string, name: string, options: HtmlOptions = {}) {
-  // The print frame cannot read the disk, so paths become asset URLs first.
-  const built = buildHtml(source, name, options)
-  const pointed = options.resolveImage
-    ? built.replace(
-        /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
-        (whole, before, src: string, after) =>
-          /^(data:|https?:|\/\/)/i.test(src) ? whole : `${before}${options.resolveImage!(src)}${after}`,
-      )
-    : built
+  const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
+  const target = native ? await chooseTarget(name, 'pdf', 'PDF') : null
+  if (native && !target) return
 
-  const html = await renderDiagrams(pointed)
+  const html = await renderNote(source, name, { ...options, scheme: 'light' })
 
-  const frame = document.createElement('iframe')
-  frame.setAttribute('aria-hidden', 'true')
-  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;'
-  document.body.append(frame)
+  if (target) {
+    const page = paperInches(pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP))
+    try {
+      await invoke('print_pdf', { html, output: target, page })
+      return target
+    } catch {
+      // The dialog can still save the file, so the person is not left with nothing.
+    }
+  }
 
-  const doc = frame.contentDocument
-  if (!doc) return
-
-  doc.open()
-  doc.write(html)
-  doc.close()
-
-  // Give the fonts and any maths a moment before the dialog freezes the page.
-  window.setTimeout(() => {
-    frame.contentWindow?.focus()
-    frame.contentWindow?.print()
-    window.setTimeout(() => frame.remove(), 1000)
-  }, 400)
+  await printInFrame(html)
 }
 
 export async function pandocAvailable(): Promise<boolean> {

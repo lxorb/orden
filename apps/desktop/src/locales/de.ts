@@ -212,6 +212,7 @@ export const de: Dictionary = {
   'Version {version} is out': 'Version {version} ist da',
   Language: 'Sprache',
   'Match the system': 'Wie das System',
+  'Match the app': 'Wie die App',
 
   // Settings
   Settings: 'Einstellungen',

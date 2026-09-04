@@ -86,12 +86,6 @@ export function length(value: string): string | null {
   return match ? `${match[1]}${match[2] ?? 'mm'}` : null
 }
 
-/** Running text lands inside a CSS string, so a quote must not be able to close
- *  it and a newline must not be able to break out of the rule. */
-function cssString(text: string): string {
-  return `"${text.replace(/[\\"]/g, (c) => `\\${c}`).replace(/[\r\n]+/g, ' ')}"`
-}
-
 /** `${title}` and `${date}` are the only placeholders; page numbers come from
  *  the print dialog, which is the only thing that knows how many there are. */
 export function fill(template: string, title: string, date: string): string {
@@ -101,31 +95,65 @@ export function fill(template: string, title: string, date: string): string {
     .replace(/\$\{year\}/g, date.slice(0, 4))
 }
 
-/** The print half of an exported page: paper, margins, and running text.
- *  Chromium repeats fixed-position elements on every sheet, which is what
- *  makes a header and footer possible at all. */
-export function pageCss(setup: PageSetup, title: string, date: string): string {
+/** The paper half of the print stylesheet. */
+export function pageCss(setup: PageSetup): string {
   const margin = length(setup.margin) ?? DEFAULT_PAGE_SETUP.margin
-  const rules = [`@page { size: ${setup.paper} ${setup.orientation}; margin: ${margin}; }`]
-
-  for (const [role, template] of [
-    ['header', setup.header],
-    ['footer', setup.footer],
-  ] as const) {
-    if (!template) continue
-
-    const content = cssString(fill(template, title, date))
-    rules.push(`@media print { .nib-running-${role}::after { content: ${content}; } }`)
-  }
-
-  return rules.join('\n')
+  return `@page { size: ${setup.paper} ${setup.orientation}; margin: ${margin}; }`
 }
 
-/** The markup the running text hangs off. Empty when nothing is configured, so
- *  a plain export stays a plain document. */
-export function runningMarkup(setup: PageSetup): string {
-  const parts: string[] = []
-  if (setup.header) parts.push('<div class="nib-running-header" aria-hidden="true"></div>')
-  if (setup.footer) parts.push('<div class="nib-running-footer" aria-hidden="true"></div>')
-  return parts.join('\n')
+function escape(text: string): string {
+  return text.replace(
+    /[&<>"]/g,
+    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character]!,
+  )
+}
+
+/** Wraps the page body so a header repeats at the top of every sheet and a
+ *  footer sits at the bottom of each. Browsers repeat a table's head and foot
+ *  across pages and reserve their room, which is what makes running text
+ *  possible without a print engine; a plain export stays a plain document. */
+export function withRunningText(body: string, setup: PageSetup, title: string, date: string): string {
+  if (!setup.header && !setup.footer) return body
+
+  const header = setup.header
+    ? `<thead><tr><td><div class="running-header">${escape(fill(setup.header, title, date))}</div></td></tr></thead>\n`
+    : ''
+  const footer = setup.footer
+    ? `<tfoot><tr><td></td></tr></tfoot>\n<div class="running-footer">${escape(fill(setup.footer, title, date))}</div>\n`
+    : ''
+
+  return `<table class="sheet">\n${header}<tbody><tr><td>\n${body}</td></tr></tbody>\n</table>\n${footer}`
+}
+
+/** Paper in inches, the unit a native print engine takes. */
+const PAPER_INCHES: Record<Paper, [number, number]> = {
+  A3: [11.69, 16.54],
+  A4: [8.27, 11.69],
+  A5: [5.83, 8.27],
+  Letter: [8.5, 11],
+  Legal: [8.5, 14],
+}
+
+const PER_INCH: Record<string, number> = { mm: 25.4, cm: 2.54, in: 1, pt: 72, px: 96 }
+
+export interface PaperInches {
+  width: number
+  height: number
+  margin: number
+  landscape: boolean
+}
+
+/** The same setup as numbers, for the native printer on the desktop. The
+ *  sheet is given upright; the printer turns it when the page is landscape. */
+export function paperInches(setup: PageSetup): PaperInches {
+  const [width, height] = PAPER_INCHES[setup.paper]
+  const margin = length(setup.margin) ?? DEFAULT_PAGE_SETUP.margin
+  const [, amount, unit] = /^(\d+(?:\.\d+)?)(mm|cm|in|pt|px)$/.exec(margin)!
+
+  return {
+    width,
+    height,
+    margin: Math.round((Number(amount) / PER_INCH[unit]) * 1000) / 1000,
+    landscape: setup.orientation === 'landscape',
+  }
 }

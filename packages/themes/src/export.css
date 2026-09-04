@@ -1,0 +1,248 @@
+/* An exported document. Sits on top of tokens.css and base.css, which are
+   written for the editor: this undoes the parts that only make sense with an
+   app around the writing surface, styles what only an export produces, and
+   carries the print stylesheet. */
+
+/* ── A document rather than an app ──────────────────────────────── */
+
+/* The app pins the page and scrolls the editor inside it; a document scrolls
+   like any other page, and must be free to run past one screen when printed. */
+html,
+body {
+  height: auto;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+
+#write {
+  padding: var(--space-7) var(--space-5) var(--space-7);
+}
+
+/* Nothing is being typed, so nothing needs to bleed in or settle. */
+#write *,
+#write *::before,
+#write *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ── Table of contents ───────────────────────────────────────────── */
+
+#write .toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#write .toc ul ul {
+  padding-left: 1.1em;
+}
+
+#write .toc li {
+  margin: 0;
+}
+
+#write .toc li::before {
+  display: none;
+}
+
+/* ── Code ────────────────────────────────────────────────────────── */
+
+/* The colours themselves come from the code palette chosen in the app and
+   are written into the document next to this sheet. */
+#write .hl-comment {
+  font-style: italic;
+}
+
+/* ── Diagrams ────────────────────────────────────────────────────── */
+
+#write .diagram {
+  margin: 1.7em 0;
+  padding: var(--space-4);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+#write .diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Running header and footer ───────────────────────────────────── */
+
+/* Only exist on paper. On screen the document is the whole page. */
+.sheet > thead,
+.sheet > tfoot,
+.running-footer {
+  display: none;
+}
+
+/* ── Print ───────────────────────────────────────────────────────── */
+
+@media print {
+  /* Paper is white whatever the theme was. The light palette from tokens.css,
+     restated here, so a dark export still prints as ink on paper. */
+  :root,
+  [data-theme='dark'],
+  [data-theme='light'] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #f3f5f8;
+    --surface-2: #eaeef3;
+    --surface-3: #dfe5ec;
+    --line: #d5dbe3;
+    --line-strong: #b9c2ce;
+    --muted: #6f7886;
+    --muted-strong: #545c69;
+    --text: #1a1d23;
+    --text-strong: #0b0d10;
+    --danger: #c01c28;
+    --success: #1a8f5c;
+    --selection: transparent;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  /* The paper is the measure; the page margins come from @page. Type at a
+     document size rather than the screen's. */
+  #write {
+    max-width: none;
+    padding: 0;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+
+  /* Tinted surfaces are part of the design, not decoration to be dropped. */
+  #write pre,
+  #write code,
+  #write th,
+  #write mark,
+  #write .callout,
+  #write .diagram,
+  #write .task-list-item input[type='checkbox'] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* A heading stays with what follows it. */
+  #write h1,
+  #write h2,
+  #write h3,
+  #write h4,
+  #write h5,
+  #write h6 {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  #write p,
+  #write li,
+  #write dd,
+  #write pre {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Things that read as one unit are not cut across a sheet. A long code
+     block or table still breaks, between lines and between rows. */
+  #write blockquote,
+  #write .callout,
+  #write figure,
+  #write .diagram,
+  #write .math-block,
+  #write img,
+  #write tr {
+    break-inside: avoid;
+  }
+
+  #write thead {
+    display: table-header-group;
+  }
+
+  /* Paper cannot scroll: long lines wrap instead. */
+  #write pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: visible;
+    font-size: 9pt;
+  }
+
+  #write table {
+    font-size: 0.92em;
+  }
+
+  /* A picture taller than the sheet shrinks to it rather than being cut. */
+  #write img {
+    max-height: 85vh;
+    object-fit: contain;
+  }
+
+  /* Where a link's words are not its address, the address follows in small
+     type: on paper there is nothing to click. */
+  #write a[href^='http']:not(.url):not(:has(img))::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  #write .toc a::after {
+    content: none;
+  }
+
+  /* Only the sheet's own running text; browser headers are turned off. */
+  .sheet {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .sheet > thead,
+  .sheet > tfoot {
+    display: table-header-group;
+  }
+
+  .sheet > tfoot {
+    display: table-footer-group;
+  }
+
+  .sheet > thead > tr > td,
+  .sheet > tfoot > tr > td,
+  .sheet > tbody > tr > td {
+    padding: 0;
+    border: none;
+    vertical-align: top;
+  }
+
+  .sheet > thead > tr > td {
+    padding-bottom: 8mm;
+  }
+
+  /* The spacer reserves the room the fixed footer prints into. */
+  .sheet > tfoot > tr > td {
+    height: 8mm;
+  }
+
+  .running-header,
+  .running-footer {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: 8.5pt;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* Repeated on every sheet by the browser; the spacer above keeps the text
+     from landing on it. */
+  .running-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+}

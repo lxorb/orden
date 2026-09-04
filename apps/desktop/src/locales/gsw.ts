@@ -214,6 +214,7 @@ export const gsw: Dictionary = {
   'Version {version} is out': 'Version {version} isch da',
   Language: 'Sprach',
   'Match the system': 'Wie s System',
+  'Match the app': 'Wie d App',
 
   // Settings
   Settings: 'Iistellige',

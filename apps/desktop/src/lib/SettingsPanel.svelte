@@ -92,7 +92,11 @@
       { section: 'account', label: t('Storage'), text: [] },
       { section: 'account', label: account.signedIn ? t('Sign out') : t('Sign in'), text: [] },
       { section: 'appearance', label: t('Accent'), text: theme.accents.map((one) => t(one.name)) },
-      { section: 'export', label: t('Page'), text: [t('Paper'), t('Orientation'), t('Margin')] },
+      {
+        section: 'export',
+        label: t('Page'),
+        text: [t('Paper'), t('Orientation'), t('Margin'), t('Header'), t('Footer'), t('Appearance')],
+      },
       { section: 'editor', label: t('Reset to defaults'), text: [] },
       { section: 'markdown', label: t('Reset to defaults'), text: [] },
       ...exportActions().map((action) => ({ section: 'export' as Section, label: action.label, text: [] })),
@@ -712,6 +716,44 @@
           spellcheck="false"
         />
       </label>
+      <!-- Running text on every sheet. `${title}`, `${date}` and `${year}`
+           are filled in; the hint shows the shape. -->
+      <label class="setting">
+        <span class="name">{t('Header')}</span>
+        <input
+          class="inline"
+          value={settings.page.header}
+          placeholder="&#36;{'{'}title{'}'}"
+          oninput={(event) => settings.setPage({ header: event.currentTarget.value })}
+          spellcheck="false"
+        />
+      </label>
+      <label class="setting">
+        <span class="name">{t('Footer')}</span>
+        <input
+          class="inline"
+          value={settings.page.footer}
+          placeholder="&#36;{'{'}date{'}'}"
+          oninput={(event) => settings.setPage({ footer: event.currentTarget.value })}
+          spellcheck="false"
+        />
+      </label>
+      <div class="setting">
+        <span class="name">{t('Appearance')}</span>
+        <div class="pick">
+          <Select
+            value={settings.exportAppearance}
+            options={[
+              { value: 'light', label: t('Light') },
+              { value: 'dark', label: t('Dark') },
+              { value: 'app', label: t('Match the app') },
+            ]}
+            onchange={(value) => settings.setExportAppearance(value as never)}
+            label={t('Appearance')}
+            plain={viewport.phone}
+          />
+        </div>
+      </div>
     </div>
 
     <!-- The settings above only matter once something is exported, so the

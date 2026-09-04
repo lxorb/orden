@@ -14,6 +14,15 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@codemirror/language':
+        specifier: ^6.12.4
+        version: 6.12.4
+      '@codemirror/language-data':
+        specifier: ^6.5.2
+        version: 6.5.2
+      '@lezer/highlight':
+        specifier: ^1.2.3
+        version: 1.2.3
       '@nib/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -44,12 +53,18 @@ importers:
       '@tauri-apps/plugin-updater':
         specifier: ^2.11.0
         version: 2.11.0
+      flowchart.js:
+        specifier: ^1.18.0
+        version: 1.18.0
       katex:
         specifier: ^0.18.5
         version: 0.18.5
       lucide:
         specifier: ^1.40.0
         version: 1.40.0
+      mermaid:
+        specifier: ^11.17.2
+        version: 11.17.2
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.3.0
