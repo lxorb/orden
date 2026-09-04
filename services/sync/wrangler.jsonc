@@ -70,6 +70,10 @@
   // enabled on the zone (error 10022), so it is added back once that is done.
   "routes": [
     { "pattern": "nibeditor.com/*", "zone_name": "nibeditor.com" },
-    { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" }
+    { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" },
+    // A custom domain whose zone is in this Cloudflare account needs no SaaS:
+    // a proxied record plus a route here. Routes not listed are removed on
+    // every deploy, so the shortcut has to live in this file.
+    { "pattern": "blog.emilvinu.ch/*", "zone_name": "emilvinu.ch" }
   ]
 }
