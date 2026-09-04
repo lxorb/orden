@@ -641,6 +641,10 @@
         flex: 1;
         width: auto;
         min-width: 0;
+        /* The whole screen, so it is a page of its own rather than a panel
+           beside the note, and takes the note's ground rather than the
+           lighter surface a panel has next to it. */
+        background: var(--bg);
       }
     }
 
