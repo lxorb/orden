@@ -400,10 +400,20 @@
   function editorMenu(): MenuEntry[] {
     const selected = !!view && !view.state.selection.main.empty
 
-    return [
+    const clipboard: MenuEntry[] = [
       { label: t('Cut'), hint: 'Ctrl X', disabled: !selected, run: () => document.execCommand('cut') },
       { label: t('Copy'), hint: 'Ctrl C', disabled: !selected, run: () => document.execCommand('copy') },
       { label: t('Paste'), hint: 'Ctrl V', run: () => void paste() },
+    ]
+
+    // On a phone a press on the text is for the clipboard, the way it is in
+    // every other app there. The formatting lives in the bar above the
+    // keyboard and in the app menu, and sixteen rows would cover the text
+    // they are about.
+    if (viewport.phone) return clipboard
+
+    return [
+      ...clipboard,
       DIVIDER,
       { label: t('Bold'), hint: 'Ctrl B', run: () => runCommand(toggleWrap('**')) },
       { label: t('Italic'), hint: 'Ctrl I', run: () => runCommand(toggleWrap('*')) },
@@ -554,7 +564,7 @@
       <Titlebar onopennotes={() => (palette = true)} />
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="editor" oncontextmenu={(event) => menu.show(event, editorMenu())}>
+      <div class="editor" oncontextmenu={(event) => menu.show(event, editorMenu(), { near: true })}>
         {#key workspace.activeTabId}
           <Editor
             bind:view

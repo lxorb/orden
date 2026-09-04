@@ -19,10 +19,23 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
   let timer: ReturnType<typeof setTimeout> | undefined
   let startX = 0
   let startY = 0
+  /** Whether the press being held has already opened its menu. */
+  let fired = false
 
   const cancel = () => {
     clearTimeout(timer)
     timer = undefined
+  }
+
+  /** The finger lifting after a press is the end of the press, not a tap:
+   *  left to itself the browser would follow it with a click, and the click
+   *  would land on the menu's scrim and close what the press just opened. */
+  const onEnd = (event: TouchEvent) => {
+    cancel()
+    if (!fired) return
+
+    fired = false
+    if (event.cancelable) event.preventDefault()
   }
 
   const onStart = (event: TouchEvent) => {
@@ -31,9 +44,11 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
     const touch = event.touches[0]
     startX = touch.clientX
     startY = touch.clientY
+    fired = false
 
     timer = setTimeout(() => {
       timer = undefined
+      fired = true
 
       // The row is being pressed, not tapped: the browser should not also
       // select the text under it or fire a click afterwards.
@@ -61,7 +76,7 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
 
   node.addEventListener('touchstart', onStart, { passive: true })
   node.addEventListener('touchmove', onMove, { passive: true })
-  node.addEventListener('touchend', cancel)
+  node.addEventListener('touchend', onEnd)
   node.addEventListener('touchcancel', cancel)
 
   return {
@@ -72,7 +87,7 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
       cancel()
       node.removeEventListener('touchstart', onStart)
       node.removeEventListener('touchmove', onMove)
-      node.removeEventListener('touchend', cancel)
+      node.removeEventListener('touchend', onEnd)
       node.removeEventListener('touchcancel', cancel)
     },
   }

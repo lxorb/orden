@@ -136,8 +136,8 @@
           aria-expanded={workspace.isExpanded(entry.path)}
           draggable="true"
           onclick={() => workspace.toggleFolder(entry.path)}
-          oncontextmenu={(event) => menu.show(event, folderMenu(entry))}
-          use:longPress={(event) => menu.show(event, folderMenu(entry))}
+          oncontextmenu={(event) => menu.show(event, folderMenu(entry), { title: entry.name })}
+          use:longPress={(event) => menu.show(event, folderMenu(entry), { title: entry.name })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
@@ -163,8 +163,8 @@
           draggable="true"
           onclick={() => workspace.open(entry.path, { preview: true })}
           ondblclick={() => workspace.open(entry.path)}
-          oncontextmenu={(event) => menu.show(event, noteMenu(entry))}
-          use:longPress={(event) => menu.show(event, noteMenu(entry))}
+          oncontextmenu={(event) => menu.show(event, noteMenu(entry), { title: stripped(entry.name) })}
+          use:longPress={(event) => menu.show(event, noteMenu(entry), { title: stripped(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}

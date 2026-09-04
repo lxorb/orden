@@ -14,15 +14,28 @@ export interface MenuItem {
 export const DIVIDER = null
 export type MenuEntry = MenuItem | typeof DIVIDER
 
+/** How a phone shows the menu. A desktop ignores both: there it is always a
+ *  popover at the pointer. */
+export interface MenuOptions {
+  /** What the menu is about, for the sheet a phone shows, which does not
+   *  point at anything the way a popover does. */
+  title?: string
+  /** Stay by the finger as a callout instead of rising from the bottom: for
+   *  a selection in the text, which has to stay in view. */
+  near?: boolean
+}
+
 class ContextMenu {
   open = $state(false)
   x = $state(0)
   y = $state(0)
   items = $state<MenuEntry[]>([])
+  title = $state<string | null>(null)
+  near = $state(false)
 
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
-  show(event: MouseEvent, items: MenuEntry[]) {
+  show(event: MouseEvent, items: MenuEntry[], options: MenuOptions = {}) {
     event.preventDefault()
     event.stopPropagation()
 
@@ -30,6 +43,8 @@ class ContextMenu {
     if (!usable.length) return
 
     this.items = usable
+    this.title = options.title ?? null
+    this.near = !!options.near
     this.x = event.clientX
     this.y = event.clientY
     this.open = true
@@ -41,7 +56,7 @@ class ContextMenu {
 }
 
 /** Drops leading, trailing and doubled dividers. */
-function trim(items: MenuEntry[]): MenuEntry[] {
+export function trim(items: MenuEntry[]): MenuEntry[] {
   const out: MenuEntry[] = []
 
   for (const item of items) {

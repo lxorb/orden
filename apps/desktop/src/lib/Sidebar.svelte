@@ -123,6 +123,49 @@
     if (workspace.panel === 'search') void workspace.loadTags()
   })
 
+  /** The outline steps in and fades from the shallowest heading the note
+   *  has, so a note that starts at "##" is not drawn as one missing its
+   *  title. */
+  const shallowest = $derived(
+    workspace.headings.reduce((least, heading) => Math.min(least, heading.level), 6),
+  )
+
+  /** The heading the caret is under: the last one that starts on or above
+   *  the caret's line. The editor keeps the caret up to date as it moves, and
+   *  on a phone it is also the only thing that says where in the note you
+   *  were, since the drawer covers the note. */
+  const current = $derived.by(() => {
+    if (workspace.panel !== 'outline') return -1
+
+    const tab = workspace.active
+    const headings = workspace.headings
+    if (!tab || !headings.length) return -1
+
+    // Newlines before the caret are the line it sits on.
+    const at = Math.min(tab.cursor ?? 0, tab.doc.length)
+    let line = 0
+    for (let i = tab.doc.indexOf('\n'); i !== -1 && i < at; i = tab.doc.indexOf('\n', i + 1)) {
+      line++
+    }
+
+    let found = -1
+    headings.forEach((heading, index) => {
+      if (heading.line <= line) found = index
+    })
+    return found
+  })
+
+  let outline = $state<HTMLElement>()
+
+  // The caret's heading is in view the moment the panel opens and stays there
+  // as the caret moves. Nearest, so a row already showing does not pull the
+  // list around under the finger.
+  $effect(() => {
+    const list = outline
+    if (!list || current < 0) return
+    list.querySelector('.row.active')?.scrollIntoView({ block: 'nearest' })
+  })
+
   /** Which way the panel's contents come in when the space changes: from
    *  below when the new space sits lower in the rail, from above when it sits
    *  higher, so the motion agrees with the finger or the eye that chose it.
@@ -224,7 +267,8 @@
         aria-label={item.label}
         aria-current={workspace.panel === item.id}
         onclick={() => workspace.showPanel(item.id)}
-        oncontextmenu={(event) => item.id === 'tree' && menu.show(event, sortMenu())}
+        oncontextmenu={(event) =>
+          item.id === 'tree' && menu.show(event, sortMenu(), { title: item.label })}
       >
         <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
       </button>
@@ -247,11 +291,13 @@
                   onclick={() => !entry.is_dir && workspace.open(entry.path, { preview: true })}
                   ondblclick={() => !entry.is_dir && workspace.open(entry.path)}
                   oncontextmenu={(event) =>
-                    menu.show(event, [
-                      { label: t('Unpin'), run: () => workspace.togglePin(entry.path) },
-                    ])}
+                    menu.show(
+                      event,
+                      [{ label: t('Unpin'), run: () => workspace.togglePin(entry.path) }],
+                      { title: entry.is_dir ? entry.name : stripped(entry.name) },
+                    )}
                 >
-                  {entry.is_dir ? entry.name : stripped(entry.name)}
+                  <span class="label">{entry.is_dir ? entry.name : stripped(entry.name)}</span>
                 </button>
               </li>
             {/each}
@@ -273,7 +319,8 @@
         <div
           class="rest"
           class:dropping={rootDrop}
-          oncontextmenu={(event) => menu.show(event, spaceMenu())}
+          oncontextmenu={(event) =>
+            menu.show(event, spaceMenu(), { title: workspace.activeSpace?.name })}
           onclick={() => (workspace.renaming = null)}
           ondragover={overRoot}
           ondragleave={() => (rootDrop = false)}
@@ -284,16 +331,16 @@
       {/if}
     {:else if workspace.panel === 'outline'}
       {#if workspace.headings.length}
-        <ul>
+        <ul bind:this={outline}>
           {#each workspace.headings as heading, index (index)}
             <li>
               <button
                 class="row heading"
-                style:padding-left="{(heading.level - 1) * 11 + 8}px"
-                style:opacity={1 - (heading.level - 1) * 0.09}
+                class:active={index === current}
+                style:--level={heading.level - shallowest}
                 onclick={() => ongoto?.(heading.line)}
               >
-                {heading.text}
+                <span class="label">{heading.text}</span>
               </button>
             </li>
           {/each}
@@ -432,6 +479,9 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    /* A list that runs out of rows stops there, rather than handing the
+       scroll on to whatever is behind the drawer. */
+    overscroll-behavior: contain;
     padding: var(--space-1) var(--space-2) var(--space-4);
   }
 
@@ -443,6 +493,8 @@
 
   .row {
     width: 100%;
+    display: flex;
+    align-items: center;
     padding: 4px 8px;
     border: none;
     border-radius: var(--radius-sm);
@@ -451,9 +503,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -461,13 +510,40 @@
       transform var(--dur-fast) var(--ease-out);
   }
 
+  /* The words are what get cut short, not the row: a flex row leaves the
+     ellipsis to its child, which is also what lets the row centre a single
+     line in whatever height a thumb needs. */
+  .label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Each level steps in and fades a little, and that is the whole hierarchy.
+     Both hang off `--level` rather than being written inline, so a phone can
+     take a bigger step without a second set of numbers in the markup. */
+  .heading {
+    --indent: 11px;
+    padding-left: calc(8px + var(--level) * var(--indent));
+    opacity: calc(1 - var(--level) * 0.09);
+  }
+
+  .heading.active {
+    opacity: 1;
+  }
+
   .row:hover {
     background: var(--item-hover-bg-color);
     color: var(--item-hover-text-color);
   }
 
-  .row.heading:hover {
-    transform: translateX(2px);
+  /* Only where there is a pointer to hover with: on a touch screen the nudge
+     would stick to whatever was tapped last. */
+  @media (hover: hover) {
+    .row.heading:hover {
+      transform: translateX(2px);
+    }
   }
 
   .row.active {
@@ -648,6 +724,11 @@
       }
     }
 
+    /* Clear of the status bar, the way the titlebar is on the other side. */
+    .switch {
+      padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+    }
+
     .switch button {
       width: 48px;
       height: 48px;
@@ -658,13 +739,50 @@
       height: 22px;
     }
 
+    /* The last row clears the gesture bar. */
+    .body {
+      padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    }
+
     /* Same floor as the tree rows beneath them: everything in the drawer is
        something a thumb has to land on. */
     .row,
     .hit {
       min-height: 48px;
+    }
+
+    .hit {
       padding-top: 10px;
       padding-bottom: 10px;
+    }
+
+    /* The same type as the tree rows, and none of the desktop's vertical
+       padding: the row is already tall, and 12.5px words in it were mostly
+       the row. */
+    .row {
+      padding-top: 0;
+      padding-bottom: 0;
+      font-size: var(--text-base);
+    }
+
+    /* An outline is read more than it is tapped: a shorter row than the
+       tree's, still a whole line for a thumb, and a deeper step per level so
+       the hierarchy survives the larger type. */
+    .heading {
+      --indent: 14px;
+      min-height: 40px;
+    }
+
+    .empty-text {
+      margin: var(--space-3) var(--space-2) 0;
+      font-size: var(--text-base);
+    }
+
+    /* 16px is where iOS stops zooming into a focused field. */
+    .query {
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 16px;
     }
   }
 </style>

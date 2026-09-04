@@ -159,11 +159,11 @@
         ondragleave={(event) => stillInside(event) || (receiving = null)}
         ondrop={(event) => drop(event, space)}
         ondragend={stop}
-        onclick={() => workspace.selectSpace(space.id)}
+        onclick={() => workspace.showSpace(space.id)}
         onmouseenter={(event) => showLabel(event, space.name)}
         onmouseleave={() => (label = null)}
-        oncontextmenu={(event) => menu.show(event, spaceMenu(space))}
-        use:longPress={(event) => menu.show(event, spaceMenu(space))}
+        oncontextmenu={(event) => menu.show(event, spaceMenu(space), { title: space.name })}
+        use:longPress={(event) => menu.show(event, spaceMenu(space), { title: space.name })}
       >
         {#if icon(space.id)}
           <svg class="glyph" viewBox="0 0 24 24">
@@ -491,6 +491,9 @@
     nav {
       width: auto;
       padding: var(--space-3) var(--space-2);
+      /* Standalone on a phone the rail runs under the status bar, so the
+         menu button has to start below the clock and battery. */
+      padding-top: calc(var(--space-3) + env(safe-area-inset-top));
       padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
     }
 
