@@ -104,6 +104,10 @@ pub fn run_pandoc(source: String, output: String, format: String) -> Result<(), 
 
 /// The sheet a PDF is laid out on, in inches. Given upright; the printer
 /// turns it when the page is landscape.
+///
+/// Only WebView2 reads the fields; elsewhere `print_pdf` is a stub, so the
+/// Linux runner's clippy would otherwise refuse them as dead code.
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Deserialize)]
 pub struct PdfPage {
     pub width: f64,
