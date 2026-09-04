@@ -144,6 +144,11 @@
   /** Which kind of address the blog is reached by. One or the other, never
    *  both: a domain of one's own replaces the shared name. */
   let mode = $state<'subdomain' | 'domain'>('subdomain')
+  /** A domain of one's own needs Cloudflare for SaaS on the shared zone, which
+   *  is not enabled; a domain entered today would wait forever. So the choice
+   *  is only shown where a space already has a domain (set by hand, served by
+   *  a route of its own), and everyone else sees the shared name alone. */
+  const offerDomain = $derived(!!blog?.domain)
   /** Empty means the whole space; otherwise the one note's path in it. */
   let blogNote = $state('')
   let confirmPublic = $state(false)
@@ -513,6 +518,7 @@
         <!-- One address or the other. The choice is the control, so there is
              no way to end up asking for both. -->
         <h3>{t('Address')}</h3>
+        {#if offerDomain}
         <div class="segmented" role="radiogroup" aria-label={t('Address')}>
           <button
             type="button"
@@ -533,8 +539,9 @@
             {t('Your own domain')}
           </button>
         </div>
+        {/if}
 
-        {#if mode === 'subdomain'}
+        {#if !offerDomain || mode === 'subdomain'}
           <div class="card">
             <div class="stack">
               <div class="row">
