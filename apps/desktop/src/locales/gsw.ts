@@ -95,6 +95,7 @@ export const gsw: Dictionary = {
   'Delete image': 'Bild lösche',
   'Reset size': 'Grössi zruggsetze',
   'Image not found': 'Bild nöd gfunde',
+  'Delete {count} items': 'Die {count} Iiträg lösche',
   'Recently deleted': 'Zletscht glöscht',
   'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Glöschti Notize und Spaces warted da 14 Täg, dänn sind si für immer wäg.',
   'Nothing here.': 'Da isch nüt.',

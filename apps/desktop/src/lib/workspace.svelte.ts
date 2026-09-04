@@ -216,6 +216,10 @@ class Workspace {
    *  again - on every save, rename and sync - and took the open folders with
    *  it each time. Per device, because it describes a view and not a note. */
   expanded = $state<Record<string, boolean>>(readExpanded())
+  /** Rows picked in the tree with Ctrl or Shift, as paths. The anchor is
+   *  where a Shift range starts: the last row clicked without Shift. */
+  selection = $state<string[]>([])
+  private anchor: string | null = null
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
@@ -540,6 +544,7 @@ class Workspace {
 
   async selectSpace(id: string) {
     this.activeSpaceId = id
+    this.clearSelection()
     await this.loadTree()
     this.persist()
   }
@@ -624,6 +629,9 @@ class Workspace {
     } catch {
       this.tree = null
     }
+
+    // Rows that went away take themselves out of the selection.
+    if (this.selection.length) this.selection = this.selection.filter((path) => !!this.entryAt(path))
   }
 
   setSort(sort: SortKey) {
@@ -903,6 +911,97 @@ class Workspace {
 
     this.icons = next
     localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+  }
+
+  isSelected(path: string): boolean {
+    return this.selection.includes(path)
+  }
+
+  /** A plain click: that row alone. */
+  select(path: string) {
+    this.selection = [path]
+    this.anchor = path
+  }
+
+  /** Ctrl-click: in or out, leaving the rest as it is. */
+  toggleSelect(path: string) {
+    this.selection = this.isSelected(path)
+      ? this.selection.filter((one) => one !== path)
+      : [...this.selection, path]
+    this.anchor = path
+  }
+
+  /** Shift-click: from the anchor to here, in the order the rows are shown. */
+  selectRange(path: string) {
+    const order = this.visibleRows()
+    const from = this.anchor ? order.indexOf(this.anchor) : -1
+    const to = order.indexOf(path)
+    if (from < 0 || to < 0) return this.select(path)
+
+    this.selection = order.slice(Math.min(from, to), Math.max(from, to) + 1)
+  }
+
+  selectAll() {
+    const order = this.visibleRows()
+    this.selection = order
+    this.anchor = order[0] ?? null
+  }
+
+  clearSelection() {
+    this.selection = []
+    this.anchor = null
+  }
+
+  /** Every row the tree shows, top to bottom: a folder's children only while
+   *  it is open, which is what Shift-click and Ctrl+A mean by "between". */
+  visibleRows(): string[] {
+    const out: string[] = []
+    const walk = (entry: Entry) => {
+      for (const child of entry.children) {
+        out.push(child.path)
+        if (child.is_dir && this.isExpanded(child.path)) walk(child)
+      }
+    }
+    if (this.tree) walk(this.tree)
+    return out
+  }
+
+  /** What a drag from `path` carries: the whole selection when the row is part
+   *  of it, the row alone otherwise. */
+  dragPayload(path: string): string[] {
+    return this.isSelected(path) && this.selection.length > 1 ? [...this.selection] : [path]
+  }
+
+  /** The rows that are not inside another row of the same list: a folder
+   *  takes what is in it along, so those need no move or deletion of their own. */
+  private outermost(paths: string[]): string[] {
+    return paths.filter(
+      (path) => !paths.some((other) => other !== path && path.startsWith(`${other}/`)),
+    )
+  }
+
+  async moveMany(paths: string[], intoFolder: string) {
+    for (const path of this.outermost(paths)) await this.move(path, intoFolder)
+    this.clearSelection()
+  }
+
+  async removeMany(paths: string[]) {
+    for (const path of this.outermost(paths)) {
+      const entry = this.entryAt(path)
+      if (entry) await this.remove(path, entry.is_dir)
+    }
+    this.clearSelection()
+  }
+
+  private entryAt(path: string): Entry | null {
+    const walk = (entry: Entry): Entry | null => {
+      for (const child of entry.children) {
+        if (child.path === path) return child
+        if (child.is_dir && path.startsWith(`${child.path}/`)) return walk(child)
+      }
+      return null
+    }
+    return this.tree ? walk(this.tree) : null
   }
 
   isExpanded(path: string): boolean {

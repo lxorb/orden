@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dragged, isTreeDrag } from './drag-paths'
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -15,10 +16,10 @@
   let rootDrop = $state(false)
 
   function overRoot(event: DragEvent) {
-    if (!event.dataTransfer?.types.includes('text/nib-path')) return
+    if (!isTreeDrag(event.dataTransfer)) return
 
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
     rootDrop = true
   }
 
@@ -26,9 +27,9 @@
     event.preventDefault()
     rootDrop = false
 
-    const from = event.dataTransfer?.getData('text/nib-path')
+    const paths = dragged(event.dataTransfer)
     const root = workspace.activeSpace?.root
-    if (from && root) void workspace.move(from, root)
+    if (paths.length && root) void workspace.moveMany(paths, root)
   }
 
   const PANELS: { id: Panel; label: string; path: string }[] = [

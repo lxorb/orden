@@ -4,6 +4,7 @@
   import { t } from './i18n.svelte'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { longPress } from './longpress'
+  import { carry, dragged, isTreeDrag } from './drag-paths'
   import { folderOf } from './tauri'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
@@ -30,6 +31,58 @@
   }
 
   const pinLabel = (path: string) => (workspace.isPinned(path) ? t('Unpin') : t('Pin to the top'))
+
+  /** A row that is part of a selection of several stands for all of them:
+   *  its menu acts on the lot, and offers only what makes sense for a lot. */
+  function selectionMenu(entry: Entry): MenuEntry[] | null {
+    if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
+    const count = workspace.selection.length
+    return [
+      {
+        label: t('Delete {count} items', { count }),
+        danger: true,
+        run: () => workspace.removeMany(workspace.selection),
+      },
+      ...undoEntry(),
+    ]
+  }
+
+  function menuFor(entry: Entry): MenuEntry[] {
+    return selectionMenu(entry) ?? (entry.is_dir ? folderMenu(entry) : noteMenu(entry))
+  }
+
+  /** Ctrl and Shift build a selection and do nothing else; a plain click makes
+   *  the row the one selected and goes on to what it always did. Returns
+   *  whether the click was taken by the selection. */
+  function pick(event: MouseEvent, entry: Entry): boolean {
+    if (event.ctrlKey || event.metaKey) {
+      workspace.toggleSelect(entry.path)
+      return true
+    }
+    if (event.shiftKey) {
+      workspace.selectRange(entry.path)
+      return true
+    }
+    workspace.select(entry.path)
+    return false
+  }
+
+  /** Keys that act on the selection, from anywhere in the tree. */
+  function onKey(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
+      event.preventDefault()
+      workspace.selectAll()
+      return
+    }
+    if (event.key === 'Escape') {
+      workspace.clearSelection()
+      return
+    }
+    if ((event.key === 'Delete' || event.key === 'Backspace') && workspace.selection.length) {
+      event.preventDefault()
+      void workspace.removeMany(workspace.selection)
+    }
+  }
 
   /** Only offered once there is something to take back. */
   function undoEntry(): MenuEntry[] {
@@ -58,15 +111,14 @@
   }
 
   function startDrag(event: DragEvent, path: string) {
-    event.dataTransfer?.setData('text/nib-path', path)
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+    carry(event.dataTransfer, workspace.dragPayload(path))
   }
 
   function overFolder(event: DragEvent, path: string) {
-    if (!event.dataTransfer?.types.includes('text/nib-path')) return
+    if (!isTreeDrag(event.dataTransfer)) return
 
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
     dropTarget = path
   }
 
@@ -88,8 +140,8 @@
     event.preventDefault()
     dropTarget = null
 
-    const from = event.dataTransfer?.getData('text/nib-path')
-    if (from) void workspace.move(from, folder)
+    const paths = dragged(event.dataTransfer)
+    if (paths.length) void workspace.moveMany(paths, folder)
   }
 
   /** A note is a target too, standing for the folder it sits in. Without this
@@ -99,12 +151,14 @@
     event.preventDefault()
     dropTarget = null
 
-    const from = event.dataTransfer?.getData('text/nib-path')
-    if (from) void workspace.move(from, folderOf(path))
+    const paths = dragged(event.dataTransfer)
+    if (paths.length) void workspace.moveMany(paths, folderOf(path))
   }
 </script>
 
-<ul>
+<!-- Keys are read on the outermost list, where every row's keydown ends up. -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<ul onkeydown={depth === 0 ? onKey : undefined}>
   {#each entries as entry (entry.path)}
     <li>
       {#if workspace.renaming === entry.path}
@@ -132,12 +186,13 @@
         <button
           class="row folder"
           class:dropping={dropTarget === entry.path}
+          class:selected={workspace.isSelected(entry.path)}
           style:padding-left="{depth * 12 + 8}px"
           aria-expanded={workspace.isExpanded(entry.path)}
           draggable="true"
-          onclick={() => workspace.toggleFolder(entry.path)}
-          oncontextmenu={(event) => menu.show(event, folderMenu(entry), { title: entry.name })}
-          use:longPress={(event) => menu.show(event, folderMenu(entry), { title: entry.name })}
+          onclick={(event) => pick(event, entry) || workspace.toggleFolder(entry.path)}
+          oncontextmenu={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
+          use:longPress={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
@@ -159,12 +214,13 @@
           class="row note"
           class:active={workspace.active?.path === entry.path}
           class:dropping={dropTarget === entry.path}
+          class:selected={workspace.isSelected(entry.path)}
           style:padding-left="{depth * 12 + 20}px"
           draggable="true"
-          onclick={() => workspace.open(entry.path, { preview: true })}
+          onclick={(event) => pick(event, entry) || workspace.open(entry.path, { preview: true })}
           ondblclick={() => workspace.open(entry.path)}
-          oncontextmenu={(event) => menu.show(event, noteMenu(entry), { title: stripped(entry.name) })}
-          use:longPress={(event) => menu.show(event, noteMenu(entry), { title: stripped(entry.name) })}
+          oncontextmenu={(event) => menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
+          use:longPress={(event) => menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
@@ -231,6 +287,12 @@
 
   .folder {
     color: var(--muted);
+  }
+
+  /* Picked with Ctrl or Shift. The open note keeps its own look on top. */
+  .row.selected {
+    background: var(--accent-soft);
+    color: var(--text-strong);
   }
 
   .row.dropping {

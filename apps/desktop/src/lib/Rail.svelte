@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dragged, isTreeDrag } from './drag-paths'
   import { account } from './account.svelte'
   import AppMenu from './AppMenu.svelte'
   import type { EditorView } from '@nib/editor'
@@ -57,9 +58,9 @@
   /** Two drags land here. A note from the explorer goes into a space; a space
    *  goes beside one, in front of it above the middle and after it below. */
   function over(event: DragEvent, id: string, next: string | null) {
-    if (event.dataTransfer?.types.includes('text/nib-path')) {
+    if (isTreeDrag(event.dataTransfer)) {
       event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
       receiving = id
       return
     }
@@ -90,8 +91,8 @@
   function drop(event: DragEvent, space: Space) {
     event.preventDefault()
 
-    const note = event.dataTransfer?.getData('text/nib-path')
-    if (note) void workspace.move(note, space.root)
+    const notes = dragged(event.dataTransfer)
+    if (notes.length) void workspace.moveMany(notes, space.root)
     else if (dragging && gap !== undefined) void moveSpace(dragging, gap)
 
     stop()

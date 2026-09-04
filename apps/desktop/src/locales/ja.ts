@@ -92,6 +92,7 @@ export const ja: Dictionary = {
   'Delete image': '画像を削除',
   'Reset size': 'サイズをリセット',
   'Image not found': '画像が見つかりません',
+  'Delete {count} items': 'この{count}項目を削除',
   'Recently deleted': '最近削除した項目',
   'Deleted notes and spaces wait here for 14 days, then they are gone for good.': '削除したノートとスペースはここで14日間保持され、その後完全に消えます。',
   'Nothing here.': 'ここには何もありません。',

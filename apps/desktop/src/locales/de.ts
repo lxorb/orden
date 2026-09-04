@@ -93,6 +93,7 @@ export const de: Dictionary = {
   'Delete image': 'Bild löschen',
   'Reset size': 'Größe zurücksetzen',
   'Image not found': 'Bild nicht gefunden',
+  'Delete {count} items': 'Diese {count} Einträge löschen',
   'Recently deleted': 'Zuletzt gelöscht',
   'Deleted notes and spaces wait here for 14 days, then they are gone for good.': 'Gelöschte Notizen und Spaces warten hier 14 Tage, dann sind sie endgültig weg.',
   'Nothing here.': 'Hier ist nichts.',

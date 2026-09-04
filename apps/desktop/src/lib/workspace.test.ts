@@ -39,6 +39,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
+type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
 async function preview(path: string) {
@@ -130,5 +131,106 @@ describe('picking a space from the rail', () => {
     workspace.panel = 'outline'
     await workspace.showSpace('one')
     expect(workspace.panel).toBe('outline')
+  })
+})
+
+describe('selecting several rows', () => {
+  const note = (path: string): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  const folder = (path: string, children: Entry[]): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: true,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  beforeEach(() => {
+    workspace.tree = folder('/space', [
+      note('/space/a.md'),
+      folder('/space/f', [note('/space/f/b.md'), note('/space/f/c.md')]),
+      note('/space/d.md'),
+    ])
+    workspace.expanded = { '/space/f': true }
+    workspace.clearSelection()
+  })
+
+  test('the rows shown, top to bottom, follow open folders', () => {
+    expect(workspace.visibleRows()).toEqual(['/space/a.md', '/space/f', '/space/f/b.md', '/space/f/c.md', '/space/d.md'])
+    workspace.expanded = {}
+    expect(workspace.visibleRows()).toEqual(['/space/a.md', '/space/f', '/space/d.md'])
+  })
+
+  test('a plain pick replaces, ctrl toggles', () => {
+    workspace.select('/space/a.md')
+    workspace.toggleSelect('/space/d.md')
+    expect(workspace.selection).toEqual(['/space/a.md', '/space/d.md'])
+    workspace.toggleSelect('/space/a.md')
+    expect(workspace.selection).toEqual(['/space/d.md'])
+    workspace.select('/space/f')
+    expect(workspace.selection).toEqual(['/space/f'])
+  })
+
+  test('shift takes everything shown between the anchor and the row', () => {
+    workspace.select('/space/a.md')
+    workspace.selectRange('/space/f/c.md')
+    expect(workspace.selection).toEqual(['/space/a.md', '/space/f', '/space/f/b.md', '/space/f/c.md'])
+    workspace.selectRange('/space/f')
+    expect(workspace.selection).toEqual(['/space/a.md', '/space/f'])
+  })
+
+  test('shift without an anchor picks the row alone', () => {
+    workspace.selectRange('/space/d.md')
+    expect(workspace.selection).toEqual(['/space/d.md'])
+  })
+
+  test('select all and clear', () => {
+    workspace.selectAll()
+    expect(workspace.selection).toHaveLength(5)
+    workspace.clearSelection()
+    expect(workspace.selection).toEqual([])
+  })
+
+  test('a drag carries the selection only when it starts on a selected row', () => {
+    workspace.select('/space/a.md')
+    workspace.toggleSelect('/space/d.md')
+    expect(workspace.dragPayload('/space/a.md')).toEqual(['/space/a.md', '/space/d.md'])
+    expect(workspace.dragPayload('/space/f')).toEqual(['/space/f'])
+  })
+
+  test('moving several skips what a moving folder already takes along', async () => {
+    const moved: string[] = []
+    const spy = vi.spyOn(workspace, 'move').mockImplementation(async (from: string) => void moved.push(from))
+    await workspace.moveMany(['/space/f', '/space/f/b.md', '/space/a.md'], '/space/elsewhere')
+    expect(moved).toEqual(['/space/f', '/space/a.md'])
+    expect(workspace.selection).toEqual([])
+    spy.mockRestore()
+  })
+
+  test('deleting several knows which are folders', async () => {
+    const removed: [string, boolean][] = []
+    const spy = vi
+      .spyOn(workspace, 'remove')
+      .mockImplementation(async (path: string, isFolder: boolean) => void removed.push([path, isFolder]))
+    await workspace.removeMany(['/space/f', '/space/f/c.md', '/space/d.md'])
+    expect(removed).toEqual([
+      ['/space/f', true],
+      ['/space/d.md', false],
+    ])
+    spy.mockRestore()
+  })
+
+  test('the selection empties with the space', async () => {
+    workspace.select('/space/a.md')
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    await workspace.selectSpace('one')
+    expect(workspace.selection).toEqual([])
   })
 })
