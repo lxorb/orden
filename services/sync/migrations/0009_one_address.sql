@@ -3,8 +3,11 @@
 -- database refuse the other case too, so no path that writes these columns
 -- can end up with a space that answers on two hostnames.
 --
--- SQLite cannot add a CHECK to a table that exists, so the guard is a pair
--- of triggers instead of a rebuild. Any row that holds both today keeps the
+-- SQLite cannot add a CHECK to a table that exists, and D1 cannot create a
+-- trigger: its API splits a script at every semicolon, including the ones
+-- inside a trigger body, and then rejects the pieces as incomplete. So the
+-- guard is a CHECK on a column added for the purpose. The column stays null;
+-- only its constraint matters. Any row that holds both today keeps the
 -- domain, which is the same rule the API applies when it is sent both: a
 -- domain of one's own replaces the shared name.
 
@@ -12,16 +15,6 @@ update spaces
    set blog_subdomain = null
  where blog_subdomain is not null and blog_domain is not null;
 
-create trigger if not exists spaces_one_address_insert
-before insert on spaces
-when new.blog_subdomain is not null and new.blog_domain is not null
-begin
-  select raise(abort, 'a space has one address, not two');
-end;
-
-create trigger if not exists spaces_one_address_update
-before update of blog_subdomain, blog_domain on spaces
-when new.blog_subdomain is not null and new.blog_domain is not null
-begin
-  select raise(abort, 'a space has one address, not two');
-end;
+alter table spaces
+  add column one_address integer
+  check (blog_subdomain is null or blog_domain is null);

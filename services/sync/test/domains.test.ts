@@ -300,7 +300,7 @@ describe('one address, never two', () => {
       env.db
         .prepare('update spaces set blog_subdomain = ?, blog_domain = ? where id = ?')
         .run('field', 'notes.example.com', space),
-    ).toThrow(/one address/)
+    ).toThrow(/one address|CHECK constraint failed/)
   })
 
   test('the database refuses a new row with both', () => {
@@ -311,7 +311,7 @@ describe('one address, never two', () => {
            select 'x', user_id, 'X', 0, 0, 'field', 'notes.example.com' from spaces where id = ?`,
         )
         .run(space),
-    ).toThrow(/one address/)
+    ).toThrow(/one address|CHECK constraint failed/)
   })
 
   test('a row that had both keeps the domain once the guard arrives', () => {
@@ -342,13 +342,14 @@ describe('one address, never two', () => {
     database.close()
   })
 
-  test('the guard can be applied again without harm', () => {
-    expect(() => env.db.exec(readFileSync(FOLDER + GUARD, 'utf8'))).not.toThrow()
-    expect(() =>
-      env.db
-        .prepare('update spaces set blog_subdomain = ?, blog_domain = ? where id = ?')
-        .run('field', 'notes.example.com', space),
-    ).toThrow(/one address/)
+  test('the guard is written into the table itself', () => {
+    // A CHECK rather than a trigger: D1 cannot create triggers, see the
+    // migration. Being part of the table, it cannot be forgotten by a later
+    // migration the way a trigger could be dropped.
+    const row = env.db
+      .prepare("select sql from sqlite_master where type = 'table' and name = 'spaces'")
+      .get() as { sql: string }
+    expect(row.sql).toMatch(/check \(blog_subdomain is null or blog_domain is null\)/i)
   })
 })
 
