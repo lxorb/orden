@@ -31,7 +31,16 @@ export async function renameSpace(space: Space) {
     confirmLabel: key('Rename'),
   })
 
-  if (name) await workspace.renameSpace(space.id, name)
+  if (!name) return
+
+  const from = space.root
+  await workspace.renameSpace(space.id, name)
+
+  // The folder has a new path now, and the mirror is keyed by the old one.
+  // Left alone, the next pass would read this as a space the account has never
+  // seen and upload a second copy of it.
+  const { sync } = await import('./sync.svelte')
+  await sync.renamed(from, space.root, space.name)
 }
 
 export async function deleteSpace(space: Space) {
@@ -42,5 +51,13 @@ export async function deleteSpace(space: Space) {
     danger: true,
   })
 
-  if (sure) await workspace.deleteSpace(space.id)
+  if (!sure) return
+
+  const root = space.root
+  await workspace.deleteSpace(space.id)
+
+  // Deleted here means deleted from the account. Anything less and the next
+  // pass downloads it straight back, here and on every other machine.
+  const { sync } = await import('./sync.svelte')
+  await sync.forget(root)
 }

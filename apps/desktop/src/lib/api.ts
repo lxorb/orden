@@ -123,6 +123,9 @@ export const api = {
   reorderSpaces: (token: string, order: string[]) =>
     request<{ ok: true }>('/v1/spaces/order', { method: 'PUT', token, body: { order } }),
 
+  renameSpace: (token: string, id: string, name: string) =>
+    request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { name } }),
+
   deleteSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),
 

@@ -413,6 +413,27 @@ class Workspace {
 
   /** Creates a space folder under the one the app owns. The name is the only
    *  thing asked for; where it lives is not a decision worth making. */
+  /** A space the account has that this machine does not. Makes the folder and
+   *  lists it, but does not switch to it: adopting someone else's space in the
+   *  background should not move what is on screen out from under the writer. */
+  async adoptSpace(name: string): Promise<string | null> {
+    const existing = this.spaces.find((space) => space.name === name)
+    if (existing) return existing.root
+
+    const created = await invoke<{ name: string; path: string }>('create_space', {
+      name: name.trim(),
+    }).catch(() => null)
+
+    if (!created) return null
+
+    if (!this.spaces.some((space) => space.root === created.path)) {
+      this.spaces = [...this.spaces, { id: identifier(), name: created.name, root: created.path }]
+      this.persist()
+    }
+
+    return created.path
+  }
+
   async addSpace(name: string) {
     if (!name.trim()) return
 

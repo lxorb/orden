@@ -1,5 +1,6 @@
 import { api, ApiError } from './api'
 import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
+import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
 import { t } from './i18n.svelte'
 import { invoke } from './tauri'
@@ -13,6 +14,11 @@ interface Tracked {
   id: string
   version: number
   hash: string
+}
+
+interface Stored {
+  mirrors: Record<string, Mirror>
+  detached: string[]
 }
 
 /** One local space folder and the remote space it mirrors. Keyed by `root`,
@@ -52,6 +58,9 @@ class Sync {
   lastSyncedAt = $state<number | null>(null)
 
   private mirrors: Record<string, Mirror> = {}
+  /** Folders whose space was deleted from the account somewhere else. Kept so
+   *  the next pass does not read them as new and upload them all over again. */
+  private detached: string[] = []
   private timer: ReturnType<typeof setTimeout> | null = null
   private running = false
   /** Passes in a row that found nothing. Each one waits longer than the last. */
@@ -59,7 +68,9 @@ class Sync {
   private reconciledAt = 0
 
   start() {
-    this.mirrors = this.load()
+    const saved = this.load()
+    this.mirrors = saved.mirrors
+    this.detached = saved.detached
     this.quiet = 0
     this.reconciledAt = 0
 
@@ -77,6 +88,36 @@ class Sync {
     window.removeEventListener('focus', this.onReturn)
 
     this.status = 'off'
+  }
+
+  /** The folder moved. The account's copy follows it rather than the next pass
+   *  deciding this is a brand new space and uploading a second one. */
+  async renamed(from: string, to: string, name: string) {
+    const mirror = this.mirrors[from]
+    if (!mirror) return
+
+    delete this.mirrors[from]
+    mirror.root = to
+    this.mirrors[to] = mirror
+    this.save()
+
+    const token = account.token
+    if (token) await api.renameSpace(token, mirror.spaceId, name).catch(() => undefined)
+  }
+
+  /** Deleting a space here deletes it from the account too. Anything less and
+   *  the next pass downloads it straight back, on this machine and every
+   *  other one. */
+  async forget(root: string) {
+    const mirror = this.mirrors[root]
+    this.detached = this.detached.filter((one) => one !== root)
+    if (!mirror) return this.save()
+
+    delete this.mirrors[root]
+    this.save()
+
+    const token = account.token
+    if (token) await api.deleteSpace(token, mirror.spaceId).catch(() => undefined)
   }
 
   /** Something changed here, so the next pass should not wait out whatever slow
@@ -99,6 +140,10 @@ class Sync {
     if (!this.timer) return
 
     this.quiet = 0
+    // Spaces now travel both ways, so coming back to the window is the moment
+    // to ask whether the account has any this machine has not seen. One extra
+    // request, and only when someone is actually looking.
+    this.reconciledAt = 0
     this.schedule(0)
   }
 
@@ -140,25 +185,42 @@ class Sync {
       return
     }
 
-    const remoteByName = new Map(account.spaces.map((space) => [space.name, space]))
-    const roots = new Set<string>()
+    // What should happen is worked out on its own, away from the doing, so it
+    // can be tested against a plain pair of lists - see `space-plan.ts`.
+    const plan = planSpaces({
+      local: workspace.spaces.map((space) => ({ name: space.name, root: space.root })),
+      remote: account.spaces.map((space) => ({ id: space.id, name: space.name })),
+      mirrors: Object.values(this.mirrors).map((one) => ({
+        root: one.root,
+        spaceId: one.spaceId,
+      })),
+      detached: this.detached,
+    })
 
-    for (const space of workspace.spaces) {
-      roots.add(space.root)
-      if (this.mirrors[space.root]) continue
+    for (const { root, spaceId } of plan.pair) {
+      this.mirrors[root] = { spaceId, root, cursor: 0, notes: {} }
+    }
 
-      // A remote space of the same name is the same space - that is what makes
-      // a second machine adopt what the first one already uploaded.
-      const remote =
-        remoteByName.get(space.name) ?? (await api.createSpace(token, space.name)).space
-
+    for (const space of plan.upload) {
+      const { space: remote } = await api.createSpace(token, space.name)
       this.mirrors[space.root] = { spaceId: remote.id, root: space.root, cursor: 0, notes: {} }
     }
 
-    // A space deleted here stops being mirrored; the copy in the account stays.
-    for (const root of Object.keys(this.mirrors)) {
-      if (!roots.has(root)) delete this.mirrors[root]
+    for (const space of plan.adopt) {
+      const root = await workspace.adoptSpace(space.name)
+      if (root) this.mirrors[root] = { spaceId: space.id, root, cursor: 0, notes: {} }
     }
+
+    for (const root of plan.drop) delete this.mirrors[root]
+
+    for (const root of plan.detach) {
+      delete this.mirrors[root]
+      if (!this.detached.includes(root)) this.detached.push(root)
+    }
+
+    // A folder that is gone has nothing left to remember about it.
+    const here = new Set(workspace.spaces.map((space) => space.root))
+    this.detached = this.detached.filter((root) => here.has(root))
 
     // The account already lists spaces in the order it holds them, so adopting
     // that order is what makes a second machine look like the first.
@@ -340,16 +402,26 @@ class Sync {
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
   }
 
-  private load(): Record<string, Mirror> {
+  private load(): { mirrors: Record<string, Mirror>; detached: string[] } {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Record<string, Mirror>
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<Stored> &
+        Record<string, Mirror>
+
+      // Written before `detached` existed, when the file was the mirrors alone.
+      if (!saved.mirrors) {
+        const { mirrors: _, detached: __, ...rest } = saved
+        return { mirrors: rest as Record<string, Mirror>, detached: [] }
+      }
+
+      return { mirrors: saved.mirrors, detached: saved.detached ?? [] }
     } catch {
-      return {}
+      return { mirrors: {}, detached: [] }
     }
   }
 
   private save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mirrors))
+    const stored: Stored = { mirrors: this.mirrors, detached: this.detached }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
   }
 }
 
