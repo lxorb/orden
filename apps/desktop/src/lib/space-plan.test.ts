@@ -6,7 +6,7 @@ const remote = (name: string, id = `id-${name}`) => ({ id, name })
 const mirror = (name: string, id = `id-${name}`) => ({ root: `/spaces/${name}`, spaceId: id })
 
 const plan = (input: Partial<Parameters<typeof planSpaces>[0]>) =>
-  planSpaces({ local: [], remote: [], mirrors: [], ...input })
+  planSpaces({ local: [], remote: [], mirrors: [], deleted: [], ...input })
 
 describe('a machine that is already in step', () => {
   test('has nothing to do', () => {
@@ -16,7 +16,7 @@ describe('a machine that is already in step', () => {
       mirrors: [mirror('Work')],
     })
 
-    expect(result).toEqual({ pair: [], upload: [], adopt: [], drop: [], detach: [] })
+    expect(result).toEqual({ pair: [], upload: [], adopt: [], drop: [], detach: [], remove: [] })
   })
 })
 
@@ -89,11 +89,44 @@ describe('a space deleted from the account elsewhere', () => {
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
 
-  test('never removes the folder, whatever the account says', () => {
+  test('is not removed on a gap alone', () => {
+    // Missing is indistinguishable from never uploaded, and guessing wrong
+    // here costs someone their writing.
     const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
+    expect(result.remove).toEqual([])
+  })
+})
 
-    expect(result).not.toHaveProperty('remove')
-    expect(result.upload.concat(result.adopt as never)).toBeDefined()
+describe('a space the account says was deleted', () => {
+  test('is removed here too, so the deletion wins', () => {
+    const result = plan({
+      local: [local('Work')],
+      mirrors: [mirror('Work')],
+      deleted: ['id-Work'],
+    })
+
+    expect(result.remove).toEqual(['/spaces/Work'])
+    expect(result.upload).toEqual([])
+  })
+
+  test('is not uploaded again by a machine that was offline', () => {
+    const result = plan({
+      local: [local('Work')],
+      mirrors: [mirror('Work')],
+      deleted: ['id-Work'],
+    })
+
+    expect(result.upload).toEqual([])
+    expect(result.detach).toEqual([])
+  })
+
+  test('leaves a folder that was never mirrored alone', () => {
+    // Same name, but this machine never had it paired with that space, so
+    // there is nothing saying this folder is the one that was deleted.
+    const result = plan({ local: [local('Work')], deleted: ['id-Work'] })
+
+    expect(result.remove).toEqual([])
+    expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
 })
 

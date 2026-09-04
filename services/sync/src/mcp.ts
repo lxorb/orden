@@ -151,7 +151,7 @@ const TOOLS = [
 
 async function spacesFor(env: Env, userId: string) {
   const { results } = await env.DB.prepare(
-    'select id, name from spaces where user_id = ? order by name',
+    'select id, name from spaces where user_id = ? and deleted = 0 order by name',
   )
     .bind(userId)
     .all<{ id: string; name: string }>()

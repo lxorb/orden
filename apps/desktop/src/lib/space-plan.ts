@@ -8,9 +8,9 @@
  *  The decision is separated from the doing so it can be tested against a plain
  *  list of spaces, which is how that gap would have been caught.
  *
- *  Nothing here ever removes a folder. A space the account no longer has is
- *  uploaded again rather than deleted: the worst that costs is a redundant
- *  upload, where the other way round costs someone their writing. */
+ *  A folder is only ever removed when the account says outright that the space
+ *  was deleted. Merely missing is not enough: that is indistinguishable from
+ *  never uploaded, and acting on it would cost someone their writing. */
 
 export interface LocalSpace {
   name: string
@@ -36,24 +36,28 @@ export interface Plan {
   adopt: RemoteSpace[]
   /** Mirrors whose folder is gone from this machine. */
   drop: string[]
-  /** Mirrors whose space is gone from the account. The folder is uploaded
-   *  again on the next pass rather than being stranded here. */
+  /** Mirrors whose space is missing from the account without a marker saying
+   *  it was deleted. The folder is uploaded again rather than stranded. */
   detach: string[]
+  /** Folders whose space the account says was deleted. These go. */
+  remove: string[]
 }
 
 export function planSpaces(input: {
   local: LocalSpace[]
   remote: RemoteSpace[]
   mirrors: Pairing[]
+  /** Ids the account says were deleted, which is a fact rather than a gap. */
+  deleted?: string[]
 }): Plan {
-  const { local, remote, mirrors } = input
+  const { local, remote, mirrors, deleted = [] } = input
 
   const mirrorByRoot = new Map(mirrors.map((one) => [one.root, one]))
   const remoteById = new Map(remote.map((one) => [one.id, one]))
   const remoteByName = new Map(remote.map((one) => [one.name, one]))
   const roots = new Set(local.map((one) => one.root))
 
-  const plan: Plan = { pair: [], upload: [], adopt: [], drop: [], detach: [] }
+  const plan: Plan = { pair: [], upload: [], adopt: [], drop: [], detach: [], remove: [] }
   const spoken = new Set(
     mirrors.filter((one) => roots.has(one.root)).map((one) => one.spaceId),
   )
@@ -79,8 +83,18 @@ export function planSpaces(input: {
     spoken.add(space.id)
   }
 
+  const gone = new Set(deleted)
+
   for (const mirror of mirrors) {
-    if (!roots.has(mirror.root)) plan.drop.push(mirror.root)
+    if (!roots.has(mirror.root)) {
+      plan.drop.push(mirror.root)
+      continue
+    }
+
+    // Deleted on purpose, somewhere else. A marker is a fact, not the absence
+    // of one, so it is safe to act on - which is what lets a deletion win
+    // instead of being undone by whichever machine was offline at the time.
+    if (gone.has(mirror.spaceId)) plan.remove.push(mirror.root)
     else if (!remoteById.has(mirror.spaceId)) plan.detach.push(mirror.root)
   }
 

@@ -198,6 +198,7 @@ class Sync {
         root: one.root,
         spaceId: one.spaceId,
       })),
+      deleted: account.deletedSpaces,
     })
 
     for (const { root, spaceId } of plan.pair) {
@@ -216,9 +217,17 @@ class Sync {
 
     for (const root of plan.drop) delete this.mirrors[root]
 
-    // Its space is gone from the account. The mirror goes with it and the next
-    // pass uploads the folder afresh, so the two sides agree again.
+    // Missing without a marker: not uploaded yet as far as anyone can tell, so
+    // the mirror goes and the next pass sends the folder up again.
     for (const root of plan.detach) delete this.mirrors[root]
+
+    // Deleted on purpose, on another machine. This is the one case where a
+    // folder is removed here, and only because the account said so outright.
+    for (const root of plan.remove) {
+      const space = workspace.spaces.find((one) => one.root === root)
+      delete this.mirrors[root]
+      if (space) await workspace.deleteSpace(space.id)
+    }
 
     // The icon belongs to the space, so it travels with it. Whatever the
     // account holds wins: it is the one copy every machine can see.

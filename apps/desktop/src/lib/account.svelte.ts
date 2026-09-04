@@ -8,6 +8,9 @@ class Session {
   token = $state<string | null>(null)
   user = $state<Account | null>(null)
   spaces = $state<RemoteSpace[]>([])
+  /** Ids the account says were deleted, so a machine that was away can tell
+   *  that apart from a space it has simply not uploaded yet. */
+  deletedSpaces = $state<string[]>([])
 
   /** Sign-in dialog state. One surface serves both signing in and signing up. */
   open = $state(false)
@@ -84,7 +87,9 @@ class Session {
 
   async loadSpaces() {
     if (!this.token) return
-    this.spaces = (await api.listSpaces(this.token)).spaces
+    const listed = await api.listSpaces(this.token)
+    this.spaces = listed.spaces
+    this.deletedSpaces = listed.deleted ?? []
   }
 
   private forget() {
@@ -92,6 +97,7 @@ class Session {
     this.token = null
     this.user = null
     this.spaces = []
+    this.deletedSpaces = []
   }
 
   private startResendTimer(seconds: number) {

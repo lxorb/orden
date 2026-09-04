@@ -39,6 +39,8 @@ export interface Space {
   position: number
   /** The name of the icon the rail shows, if one was chosen. */
   icon: string | null
+  /** A deleted space stays as a marker, so every machine learns it went. */
+  deleted: number
   created_at: number
   updated_at: number
   blog_enabled: number

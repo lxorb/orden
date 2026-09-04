@@ -98,7 +98,8 @@ export const api = {
 
   me: (token: string) => request<{ user: Account }>('/v1/me', { token }),
 
-  listSpaces: (token: string) => request<{ spaces: RemoteSpace[] }>('/v1/spaces', { token }),
+  listSpaces: (token: string) =>
+    request<{ spaces: RemoteSpace[]; deleted: string[] }>('/v1/spaces', { token }),
 
   createSpace: (token: string, name: string) =>
     request<{ space: RemoteSpace }>('/v1/spaces', { token, body: { name } }),

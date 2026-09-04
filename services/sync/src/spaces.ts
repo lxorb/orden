@@ -17,7 +17,9 @@ const RESERVED = new Set([
 ])
 
 export async function ownedSpace(env: Env, userId: string, spaceId: string): Promise<Space | null> {
-  const space = await env.DB.prepare('select * from spaces where id = ? and user_id = ?')
+  const space = await env.DB.prepare(
+    'select * from spaces where id = ? and user_id = ? and deleted = 0',
+  )
     .bind(spaceId, userId)
     .first<Space>()
 
@@ -29,12 +31,23 @@ export const spaces = new Hono<{ Bindings: Env; Variables: Variables }>()
 spaces.get('/', async (context) => {
   const user = context.get('user')
   const { results } = await context.env.DB.prepare(
-    'select * from spaces where user_id = ? order by position, created_at',
+    'select * from spaces where user_id = ? and deleted = 0 order by position, created_at',
   )
     .bind(user.id)
     .all<Space>()
 
-  return context.json({ spaces: results.map(present) })
+  // The markers go too. A machine that has been away needs them to tell a
+  // space that was deleted from one it has simply not uploaded yet.
+  const gone = await context.env.DB.prepare(
+    'select id from spaces where user_id = ? and deleted = 1',
+  )
+    .bind(user.id)
+    .all<{ id: string }>()
+
+  return context.json({
+    spaces: results.map(present),
+    deleted: gone.results.map((one) => one.id),
+  })
 })
 
 spaces.post('/', async (context) => {
@@ -45,7 +58,7 @@ spaces.post('/', async (context) => {
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
   const last = await context.env.DB.prepare(
-    'select max(position) as last from spaces where user_id = ?',
+    'select max(position) as last from spaces where user_id = ? and deleted = 0',
   )
     .bind(user.id)
     .first<{ last: number | null }>()
@@ -56,6 +69,7 @@ spaces.post('/', async (context) => {
     name: label,
     position: (last?.last ?? -1) + 1,
     icon: null,
+    deleted: 0,
     created_at: now(),
     updated_at: now(),
     blog_enabled: 0,
@@ -82,7 +96,9 @@ spaces.put('/order', async (context) => {
   const { order } = await context.req.json<{ order?: string[] }>()
   if (!Array.isArray(order)) return context.json({ error: 'send an order' }, 400)
 
-  const { results } = await context.env.DB.prepare('select id from spaces where user_id = ?')
+  const { results } = await context.env.DB.prepare(
+    'select id from spaces where user_id = ? and deleted = 0',
+  )
     .bind(user.id)
     .all<{ id: string }>()
 
@@ -146,7 +162,17 @@ spaces.delete('/:id', async (context) => {
 
   await Promise.all(results.map((note) => context.env.NOTES.delete(`spaces/${space.id}/${note.id}`)))
   await context.env.DB.prepare('delete from notes where space_id = ?').bind(space.id).run()
-  await context.env.DB.prepare('delete from spaces where id = ?').bind(space.id).run()
+
+  // The notes are gone for good; the row stays as the marker. Its published
+  // address is released, or nobody could ever claim that name again.
+  await context.env.DB.prepare(
+    `update spaces
+        set deleted = 1, blog_enabled = 0, blog_subdomain = null, blog_domain = null,
+            blog_note = null, updated_at = ?
+      where id = ?`,
+  )
+    .bind(now(), space.id)
+    .run()
 
   return context.json({ ok: true })
 })

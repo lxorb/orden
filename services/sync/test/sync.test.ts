@@ -62,6 +62,51 @@ describe('spaces', () => {
   })
 })
 
+describe('deleting a space', () => {
+  test('takes it out of the list', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(listed.json.spaces).toEqual([])
+  })
+
+  test('leaves a marker, so a machine that was away learns it went', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(listed.json.deleted).toEqual([space])
+  })
+
+  test('is not reachable afterwards', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+
+    const changes = await call(env, `/v1/spaces/${space}/changes`, { token })
+    expect(changes.status).toBe(404)
+  })
+
+  test('releases its published address for someone else', async () => {
+    await call(env, `/v1/spaces/${space}/blog`, { token, method: 'PUT', body: { subdomain: 'mine' } })
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+
+    const other = await call(env, '/v1/spaces', { token, body: { name: 'Second' } })
+    const claim = await call(env, `/v1/spaces/${other.json.space.id}/blog`, {
+      token,
+      method: 'PUT',
+      body: { subdomain: 'mine' },
+    })
+
+    expect(claim.status).toBe(200)
+  })
+
+  test('keeps the markers to the account that owns them', async () => {
+    const other = await signIn(env, 'other@b.dev')
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+
+    const theirs = await call(env, '/v1/spaces', { token: other })
+    expect(theirs.json.deleted).toEqual([])
+  })
+})
+
 describe("a space's icon", () => {
   test('starts unset', async () => {
     const listed = await call(env, '/v1/spaces', { token })
