@@ -140,7 +140,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
     let dir = trash_dir(&app)?;
     let mut entries = read_manifest(&dir);
-    entries.sort_by(|a, b| b.trashed_at.cmp(&a.trashed_at));
+    entries.sort_by_key(|entry| std::cmp::Reverse(entry.trashed_at));
     Ok(entries)
 }
 
