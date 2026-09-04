@@ -33,14 +33,41 @@
   // domain, so SPF, DKIM, DMARC and bounce handling are already in place.
   "send_email": [{ "name": "EMAIL" }],
 
+  // Domains people bring are served through Cloudflare for SaaS: the owner
+  // CNAMEs their domain to BLOG_CNAME_TARGET, and the Worker asks the zone for
+  // a "custom hostname" so the edge has a certificate to answer with. That
+  // needs, once, in the dashboard for nibeditor.com:
+  //   1. SSL/TLS > Custom Hostnames: enable Cloudflare for SaaS (a payment
+  //      method is asked for; the first hundred hostnames are free).
+  //   2. A proxied DNS record for the target, with nothing behind it:
+  //      cname.nibeditor.com  AAAA  100::
+  //   3. Set that name as the fallback origin on the same page.
+  //   4. `wrangler secret put CF_API_TOKEN`: a token with "Zone > SSL and
+  //      Certificates > Edit" on nibeditor.com and nothing else.
+  // CF_ZONE_ID is the zone's id, and not a secret. Without both, a domain is
+  // recorded and no certificate is asked for; the status endpoint says so.
+  //
+  // A domain whose zone is in this same Cloudflare account needs none of
+  // that: a proxied CNAME to the target in its own zone plus a Worker route
+  // `<host>/*` -> nib-sync added there serves it under that zone's own
+  // certificate (blog.emilvinu.ch is set up this way). The status endpoint
+  // cannot see such a route and reports the domain as unconfigured or
+  // pending even while it serves; that is a known blind spot, not a fault.
   "vars": {
     "BLOG_ROOT": "nibeditor.com",
+    "BLOG_CNAME_TARGET": "cname.nibeditor.com",
+    "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
     "APP_ORIGIN": "https://nibeditor.com",
     "MAIL_FROM": "Nib <nib@nibeditor.com>"
   },
 
+  // The catch-all is what lets a custom hostname reach the Worker: a request
+  // for notes.example.org enters this zone through its CNAME, and matches
+  // neither of the named patterns. The two stay as documentation of what the
+  // zone itself answers on.
   "routes": [
     { "pattern": "nibeditor.com/*", "zone_name": "nibeditor.com" },
-    { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" }
+    { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" },
+    { "pattern": "*/*", "zone_name": "nibeditor.com" }
   ]
 }

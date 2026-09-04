@@ -5,6 +5,7 @@ import { blobs, publicBlobs } from './blobs'
 import { serveBlog, spaceForHost } from './blog'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
+import { oauth, oauthMetadata } from './oauth'
 import { spaces } from './spaces'
 import { QUOTA, usedBytes } from './storage'
 import type { Env, Variables } from './types'
@@ -36,8 +37,21 @@ app.route('/v1/auth', auth)
 app.route('/i', publicBlobs)
 
 // The connector carries its own token, so it sits outside the session guard.
-app.use('/mcp', cors({ origin: '*', allowHeaders: ['authorization', 'content-type'] }))
+// Open to every origin: LLM clients run anywhere, some of them in a browser.
+const anyOrigin = cors({
+  origin: '*',
+  allowHeaders: ['authorization', 'content-type', 'mcp-protocol-version', 'mcp-session-id'],
+  exposeHeaders: ['www-authenticate', 'mcp-protocol-version', 'mcp-session-id'],
+})
+app.use('/mcp', anyOrigin)
 app.route('/mcp', mcp)
+
+// How a client finds the sign-in, and the sign-in itself. Registered ahead of
+// the catch-all, which would otherwise answer with the web app's HTML.
+app.use('/.well-known/*', anyOrigin)
+app.route('/.well-known', oauthMetadata)
+app.use('/oauth/*', anyOrigin)
+app.route('/oauth', oauth)
 
 /** Everything past this point needs a session. */
 app.use('/v1/*', async (context, next) => {
@@ -58,8 +72,13 @@ app.patch('/v1/me', async (context) => {
   const user = context.get('user')
   const body = await context.req.json<{ name?: string }>()
 
-  // Inner runs of whitespace go too: a name is words, not layout.
-  const name = (body.name ?? '').trim().replace(/\s+/g, ' ')
+  // Inner runs of whitespace go too: a name is words, not layout. So do the
+  // other control characters, which nothing can show and which would only
+  // ever arrive by accident or on purpose.
+  const name = (body.name ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/\p{Cc}/gu, '')
+    .trim()
   if (name.length > NAME_LIMIT) {
     return context.json({ error: `use at most ${NAME_LIMIT} characters` }, 400)
   }
@@ -78,7 +97,7 @@ app.get('/v1/usage', async (context) => {
 
 app.route('/v1/blobs', blobs)
 app.route('/v1/spaces', spaces)
-app.route('/v1/mcp/token', mcpAdmin)
+app.route('/v1/mcp', mcpAdmin)
 app.route('/v1', notes)
 
 app.get('/health', (context) => context.json({ ok: true }))

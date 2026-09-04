@@ -129,9 +129,10 @@ describe('publishing', () => {
     expect(response.json.dns[0].value).toMatch(/\.nibeditor\.com$/)
   })
 
-  test('an apex domain needs an A record instead', async () => {
+  test('an apex domain gets a CNAME too, never a placeholder address', async () => {
     const response = await publish({ domain: 'example.com' })
-    expect(response.json.dns[0].type).toBe('A')
+    expect(response.json.dns[0].type).toBe('CNAME')
+    expect(response.json.dns[0].value).not.toMatch(/^192\.0\.2\./)
   })
 
   test('the listing carries the records too, for the next time the pane opens', async () => {
@@ -243,7 +244,11 @@ describe('one address, not two', () => {
 describe('choosing a subdomain', () => {
   test('reserved names are refused', async () => {
     expect((await publish({ subdomain: 'www' })).status).toBe(409)
-    expect((await publish({ subdomain: 'api' })).status).toBe(409)
+    expect((await publish({ subdomain: 'mail' })).status).toBe(409)
+  })
+
+  test('a name that is merely plausible is not reserved', async () => {
+    expect((await publish({ subdomain: 'blog' })).status).toBe(200)
   })
 
   test('malformed names are refused', async () => {
@@ -330,6 +335,163 @@ describe('the author', () => {
     const index = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(index.text).not.toContain('<b>Ada</b>')
     expect(index.text).toContain('&lt;b&gt;Ada&lt;/b&gt;')
+  })
+
+  test('has a byline right under the title of a note', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada Lovelace' } })
+    await publish({ subdomain: 'field' })
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    const title = note.text.indexOf('<h1>Hello world</h1>')
+    const byline = note.text.indexOf('<p class="by">by Ada Lovelace</p>')
+
+    expect(title).toBeGreaterThan(-1)
+    expect(byline).toBeGreaterThan(title)
+    expect(note.text.slice(title, byline)).toBe('<h1>Hello world</h1>')
+    expect(note.text).toContain('<meta name="author" content="Ada Lovelace">')
+  })
+
+  test('puts the byline first when a note does not start with a heading', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+    await addNote('plain.md', 'Just a paragraph.\n\n# Later\n')
+    await publish({ subdomain: 'field' })
+
+    const note = await call(env, '/plain', { host: 'field.nibeditor.com' })
+    const byline = note.text.indexOf('<p class="by">by Ada</p>')
+
+    expect(byline).toBeGreaterThan(-1)
+    expect(byline).toBeLessThan(note.text.indexOf('Just a paragraph.'))
+    expect(byline).toBeLessThan(note.text.indexOf('<h1>Later</h1>'))
+  })
+
+  test('is named under the title of a note published on its own', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+    await addNote('home.md', '# Home\n\nMy page.\n')
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.text.indexOf('<h1>Home</h1>')).toBeLessThan(root.text.indexOf('by Ada'))
+  })
+
+  test('leaves a note without a byline until there is a name', async () => {
+    await publish({ subdomain: 'field' })
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    expect(note.text).not.toContain('class="by"')
+    expect(note.text).not.toContain('name="author"')
+  })
+
+  test('is escaped in the byline of a note too', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: '<b>Ada</b>' } })
+    await publish({ subdomain: 'field' })
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    expect(note.text).not.toContain('<b>Ada</b>')
+    expect(note.text).toContain('by &lt;b&gt;Ada&lt;/b&gt;')
+  })
+
+})
+
+/** Every public surface, rendered for an account whose address is known, and
+ *  searched for it. The blog is one, but so is anything that answers without
+ *  a session; a new public route belongs in this list. */
+describe('nothing public carries the email address', () => {
+  const EMAIL = 'a@b.dev'
+  const PUBLIC = [
+    '/',
+    '/hello-world',
+    '/no-such-note',
+    '/feed.xml',
+    '/rss.xml',
+    '/atom.xml',
+    '/sitemap.xml',
+    '/robots.txt',
+  ]
+
+  async function everywhere(host: string) {
+    const seen: string[] = []
+    for (const path of PUBLIC) {
+      const response = await call(env, path, { host })
+      seen.push(`${path}: ${[...response.headers.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`)
+      seen.push(`${path}: ${response.text}`)
+    }
+
+    // Pages really were rendered, or the search below would prove nothing.
+    const text = seen.join('\n')
+    expect(text).toContain('Published with')
+    return text
+  }
+
+  test('not a published space, with a name or without', async () => {
+    await publish({ subdomain: 'field' })
+    expect(await everywhere('field.nibeditor.com')).not.toContain(EMAIL)
+
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+    expect(await everywhere('field.nibeditor.com')).not.toContain(EMAIL)
+  })
+
+  test('not a note published on its own', async () => {
+    await addNote('home.md', '# Home\n')
+    await publish({ subdomain: 'me', note: 'home.md' })
+    expect(await everywhere('me.nibeditor.com')).not.toContain(EMAIL)
+  })
+
+  test('not a domain of their own', async () => {
+    await publish({ domain: 'notes.example.com' })
+    expect(await everywhere('notes.example.com')).not.toContain(EMAIL)
+  })
+
+  test('not the unauthenticated endpoints of the app itself', async () => {
+    await publish({ subdomain: 'field' })
+
+    for (const path of [
+      '/health',
+      '/.well-known/oauth-authorization-server',
+      '/.well-known/oauth-protected-resource/mcp',
+      '/mcp',
+      '/oauth/authorize',
+      '/v1/me',
+      '/v1/spaces',
+      '/v1/spaces/available/field',
+    ]) {
+      const response = await call(env, path)
+      expect(response.text, path).not.toContain(EMAIL)
+    }
+  })
+})
+
+describe('the way back to the index', () => {
+  test('sits above the title of a note', async () => {
+    await publish({ subdomain: 'field' })
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    const back = note.text.indexOf('<a href="/">← Field notes</a>')
+
+    expect(back).toBeGreaterThan(-1)
+    expect(back).toBeLessThan(note.text.indexOf('<h1>Hello world</h1>'))
+  })
+
+  test('comes before the byline as well', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+    await publish({ subdomain: 'field' })
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    expect(note.text.indexOf('← Field notes')).toBeLessThan(note.text.indexOf('by Ada'))
+  })
+
+  test('names the blog, escaped', async () => {
+    await publish({ subdomain: 'field', title: 'Notes <3' })
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    expect(note.text).toContain('← Notes &lt;3')
+  })
+
+  test('is not offered on a note published on its own, which has no index', async () => {
+    await addNote('home.md', '# Home\n')
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const root = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(root.text).not.toContain('<a href="/">')
   })
 })
 

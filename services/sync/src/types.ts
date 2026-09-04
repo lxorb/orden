@@ -4,7 +4,18 @@ export interface Env {
 
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
+  /** The host a domain of one's own is CNAMEd to. One fixed name inside
+   *  BLOG_ROOT that publishes nothing itself; its label is reserved. Also the
+   *  zone's fallback origin for Cloudflare for SaaS. */
+  BLOG_CNAME_TARGET: string
   APP_ORIGIN: string
+
+  /** Cloudflare for SaaS, which issues certificates for domains people bring:
+   *  the zone that holds the custom hostnames, and a token allowed to edit
+   *  them. Absent in tests and local development, where a domain is recorded
+   *  and no certificate is asked for. */
+  CF_ZONE_ID?: string
+  CF_API_TOKEN?: string
 
   /** The built web app. Absent in tests, which never ask for it. */
   ASSETS?: { fetch(request: Request): Promise<Response> }

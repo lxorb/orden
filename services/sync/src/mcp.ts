@@ -7,6 +7,7 @@
 import { Hono } from 'hono'
 import { newId, now, randomToken, sha256 } from './crypto'
 import { cleanPath } from './notes'
+import { challenge, grantForToken } from './oauth'
 import type { Env, Variables } from './types'
 
 const PROTOCOL = '2025-06-18'
@@ -37,9 +38,14 @@ export async function issueToken(env: Env, userId: string, readOnly: boolean): P
   return token
 }
 
+/** The caller, by the token it sent: one a client got by signing the person
+ *  in, or one the person copied out of the settings. */
 async function bearer(env: Env, header: string | undefined): Promise<TokenRow | null> {
   const token = header?.replace(/^Bearer\s+/i, '').trim()
   if (!token) return null
+
+  const grant = await grantForToken(env, token)
+  if (grant) return { token_hash: '', ...grant }
 
   const row = await env.DB.prepare(
     'select token_hash, user_id, read_only from mcp_tokens where token_hash = ?',
@@ -56,15 +62,31 @@ async function bearer(env: Env, header: string | undefined): Promise<TokenRow | 
   return row ?? null
 }
 
-/** The token management the app calls, behind the ordinary session. */
+/** What the settings show, behind the ordinary session: the clients that
+ *  signed in through OAuth, and the pasted token if there is one. */
 export const mcpAdmin = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-mcpAdmin.get('/', async (context) => {
+mcpAdmin.get('/token', async (context) => {
+  const userId = context.get('user').id
+
   const row = await context.env.DB.prepare(
     'select read_only, created_at, last_used_at from mcp_tokens where user_id = ?',
   )
-    .bind(context.get('user').id)
+    .bind(userId)
     .first<{ read_only: number; created_at: number; last_used_at: number | null }>()
+
+  const { results } = await context.env.DB.prepare(
+    `select id, client_name, read_only, created_at, last_used_at from oauth_grants
+      where user_id = ? order by created_at desc`,
+  )
+    .bind(userId)
+    .all<{
+      id: string
+      client_name: string
+      read_only: number
+      created_at: number
+      last_used_at: number | null
+    }>()
 
   return context.json({
     // The secret itself is never returned again; only that one exists.
@@ -72,10 +94,17 @@ mcpAdmin.get('/', async (context) => {
     readOnly: row ? !!row.read_only : true,
     createdAt: row?.created_at ?? null,
     lastUsedAt: row?.last_used_at ?? null,
+    clients: (results ?? []).map((grant) => ({
+      id: grant.id,
+      name: grant.client_name,
+      readOnly: !!grant.read_only,
+      createdAt: grant.created_at,
+      lastUsedAt: grant.last_used_at,
+    })),
   })
 })
 
-mcpAdmin.post('/', async (context) => {
+mcpAdmin.post('/token', async (context) => {
   const body = await context.req
     .json<{ readOnly?: boolean }>()
     .catch((): { readOnly?: boolean } => ({}))
@@ -85,9 +114,19 @@ mcpAdmin.post('/', async (context) => {
   return context.json({ token })
 })
 
-mcpAdmin.delete('/', async (context) => {
+mcpAdmin.delete('/token', async (context) => {
   await context.env.DB.prepare('delete from mcp_tokens where user_id = ?')
     .bind(context.get('user').id)
+    .run()
+
+  return context.json({ ok: true })
+})
+
+/** Disconnects one client. Its tokens stop working at once; it has to sign
+ *  the person in again to come back. */
+mcpAdmin.delete('/clients/:id', async (context) => {
+  await context.env.DB.prepare('delete from oauth_grants where id = ? and user_id = ?')
+    .bind(context.req.param('id'), context.get('user').id)
     .run()
 
   return context.json({ ok: true })
@@ -282,10 +321,24 @@ async function call(env: Env, token: TokenRow, name: string, args: Record<string
 
 export const mcp = new Hono<{ Bindings: Env }>()
 
+// Streamable HTTP lets a client open a stream with GET; there is none here,
+// and saying so is what stops the client waiting for one. Without this the
+// request would fall through to the web app's HTML.
+mcp.get('/', (context) => context.body(null, 405, { allow: 'POST' }))
+mcp.delete('/', (context) => context.body(null, 405, { allow: 'POST' }))
+
 /** Streamable HTTP: one endpoint, JSON-RPC in, JSON-RPC out. */
 mcp.post('/', async (context) => {
-  const token = await bearer(context.env, context.req.header('authorization'))
-  if (!token) return context.json({ error: 'sign in first' }, 401)
+  const header = context.req.header('authorization')
+  const token = await bearer(context.env, header)
+
+  // The refusal says where to sign in (RFC 9728), which is how a client that
+  // was only given the URL finds the OAuth server on its own.
+  if (!token) {
+    return context.json({ error: 'sign in first' }, 401, {
+      'www-authenticate': challenge(context.env, !!header),
+    })
+  }
 
   const request = await context.req.json<Rpc>().catch(() => null)
   if (!request?.method) return context.json({ error: 'not a request' }, 400)

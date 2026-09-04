@@ -31,30 +31,29 @@ export async function requireUser(
   return token ? userForToken(env, token) : null
 }
 
-export const auth = new Hono<{ Bindings: Env; Variables: Variables }>()
+/** Sends a sign-in code, or says how long until another may go. Always
+ *  answers the same way for an address it has never seen, so it cannot be
+ *  used to discover which addresses have accounts. The OAuth consent page
+ *  signs people in with the same code as the app, which is why this is not
+ *  written straight into the route. */
+export async function sendCode(
+  env: Env,
+  address: string,
+): Promise<{ ok: true; resendIn: number } | { error: string }> {
+  if (!isEmail(address)) return { error: 'enter a valid email address' }
 
-/** Step one. Always answers the same way, so it cannot be used to discover
- *  which addresses have accounts. */
-auth.post('/code', async (context) => {
-  const { email } = await context.req.json<{ email?: string }>()
-  const address = normaliseEmail(email ?? '')
-
-  if (!isEmail(address)) return context.json({ error: 'enter a valid email address' }, 400)
-
-  const existing = await context.env.DB.prepare(
-    'select sent_at from login_codes where email = ?',
-  )
+  const existing = await env.DB.prepare('select sent_at from login_codes where email = ?')
     .bind(address)
     .first<{ sent_at: number }>()
 
   if (existing && now() - existing.sent_at < RESEND_GAP) {
-    return context.json({ ok: true, resendIn: Math.ceil((RESEND_GAP - (now() - existing.sent_at)) / 1000) })
+    return { ok: true, resendIn: Math.ceil((RESEND_GAP - (now() - existing.sent_at)) / 1000) }
   }
 
   const code = randomCode()
   const salt = randomToken()
 
-  await context.env.DB.prepare(
+  await env.DB.prepare(
     `insert into login_codes (email, code_hash, salt, expires_at, attempts, sent_at)
      values (?, ?, ?, ?, 0, ?)
      on conflict(email) do update set
@@ -68,60 +67,79 @@ auth.post('/code', async (context) => {
     .run()
 
   const message = codeMessage(code)
-  await mailer(context.env).send(address, message.subject, message)
+  await mailer(env).send(address, message.subject, message)
 
-  return context.json({ ok: true, resendIn: RESEND_GAP / 1000 })
-})
+  return { ok: true, resendIn: RESEND_GAP / 1000 }
+}
 
-/** Step two. Signing in and signing up are the same request. */
-auth.post('/verify', async (context) => {
-  const { email, code } = await context.req.json<{ email?: string; code?: string }>()
-  const address = normaliseEmail(email ?? '')
-  const entered = (code ?? '').replace(/\D/g, '')
+/** Checks a code and hands back the account, made on the spot for an address
+ *  seen for the first time: signing in and signing up are the same thing. */
+export async function verifyCode(
+  env: Env,
+  address: string,
+  code: string,
+): Promise<{ user: User } | { error: string; status: 400 | 429 }> {
+  const entered = code.replace(/\D/g, '')
 
   if (!isEmail(address) || entered.length !== 6) {
-    return context.json({ error: 'that code is not right' }, 400)
+    return { error: 'that code is not right', status: 400 }
   }
 
-  const pending = await context.env.DB.prepare(
+  const pending = await env.DB.prepare(
     'select code_hash, salt, expires_at, attempts from login_codes where email = ?',
   )
     .bind(address)
     .first<{ code_hash: string; salt: string; expires_at: number; attempts: number }>()
 
   if (!pending || pending.expires_at < now()) {
-    return context.json({ error: 'that code has expired - ask for a new one' }, 400)
+    return { error: 'that code has expired - ask for a new one', status: 400 }
   }
 
   if (pending.attempts >= MAX_ATTEMPTS) {
-    return context.json({ error: 'too many tries - ask for a new code' }, 429)
+    return { error: 'too many tries - ask for a new code', status: 429 }
   }
 
   if (!equals(await sha256(pending.salt + entered), pending.code_hash)) {
-    await context.env.DB.prepare(
-      'update login_codes set attempts = attempts + 1 where email = ?',
-    )
+    await env.DB.prepare('update login_codes set attempts = attempts + 1 where email = ?')
       .bind(address)
       .run()
-    return context.json({ error: 'that code is not right' }, 400)
+    return { error: 'that code is not right', status: 400 }
   }
 
-  await context.env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
+  await env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
 
-  let user = await context.env.DB.prepare(
-    'select id, email, name, created_at from users where email = ?',
-  )
+  let user = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
     .bind(address)
     .first<User>()
 
   if (!user) {
     user = { id: newId(), email: address, name: null, created_at: now() }
-    await context.env.DB.prepare(
-      'insert into users (id, email, created_at) values (?, ?, ?)',
-    )
+    await env.DB.prepare('insert into users (id, email, created_at) values (?, ?, ?)')
       .bind(user.id, user.email, user.created_at)
       .run()
   }
+
+  return { user }
+}
+
+export const auth = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+/** Step one. */
+auth.post('/code', async (context) => {
+  const { email } = await context.req.json<{ email?: string }>()
+  const sent = await sendCode(context.env, normaliseEmail(email ?? ''))
+
+  if ('error' in sent) return context.json({ error: sent.error }, 400)
+  return context.json(sent)
+})
+
+/** Step two. */
+auth.post('/verify', async (context) => {
+  const { email, code } = await context.req.json<{ email?: string; code?: string }>()
+  const verified = await verifyCode(context.env, normaliseEmail(email ?? ''), code ?? '')
+
+  if ('error' in verified) return context.json({ error: verified.error }, verified.status)
+  const { user } = verified
 
   const token = randomToken()
   await context.env.DB.prepare(

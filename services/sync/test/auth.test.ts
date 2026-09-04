@@ -180,6 +180,30 @@ describe('a display name', () => {
     expect(cleared.json.user.name).toBeNull()
   })
 
+  test('control characters are dropped from a name', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    const set = await call(env, '/v1/me', {
+      method: 'PATCH',
+      token,
+      body: { name: 'Ada\u0000 Love\u001blace\u007f' },
+    })
+
+    expect(set.status).toBe(200)
+    expect(set.json.user.name).toBe('Ada Lovelace')
+  })
+
+  test('a name of nothing but control characters clears it', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+    const cleared = await call(env, '/v1/me', {
+      method: 'PATCH',
+      token,
+      body: { name: '\u0001\u0002' },
+    })
+
+    expect(cleared.json.user.name).toBeNull()
+  })
+
   test('a name longer than sixty characters is refused', async () => {
     const token = await signIn(env, 'a@b.dev')
     const response = await call(env, '/v1/me', {

@@ -30,6 +30,10 @@ export async function spaceForHost(env: Env, host: string): Promise<Space | null
     )
   }
 
+  // The shared domain itself is the app, whatever any row might say. The
+  // API refuses such a row; this is for the day something else writes one.
+  if (hostname === env.BLOG_ROOT) return null
+
   return (
     (await env.DB.prepare('select * from spaces where blog_domain = ? and blog_enabled = 1')
       .bind(hostname)
@@ -66,6 +70,21 @@ function escape(text: string): string {
   )
 }
 
+/** The author's name under the note's own heading when it opens with one,
+ *  and above the text when it does not: a name reads as a byline under a
+ *  title, and as a header line over prose that has none. Nothing at all
+ *  when there is no name - no placeholder, and never the email. */
+function withByline(html: string, author: string | null): string {
+  if (!author) return html
+
+  const byline = `<p class="by">by ${escape(author)}</p>`
+  const heading = /^\s*<h1\b[^>]*>[\s\S]*?<\/h1>/.exec(html)
+
+  return heading
+    ? html.slice(0, heading[0].length) + byline + html.slice(heading[0].length)
+    : byline + html
+}
+
 const STYLE = `
 :root{--bg:#fbfcfd;--fg:#1a1d23;--muted:#8a93a2;--line:#e1e6ed;--accent:#5b4be0;--surface:#f3f5f8;--scrollbar:#c3cbd6}
 @media (prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#dde2ea;--muted:#767e8c;--line:#232830;--accent:#7c6bf5;--surface:#14171c;--scrollbar:#39404d}}
@@ -95,6 +114,9 @@ ul.index a:hover{color:var(--accent)}
 ul.index time{color:var(--muted);font-size:.85em;flex:none}
 footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.82em}
 .by{margin:-.4em 0 2.2em;color:var(--muted);font-size:.94em}
+.back{margin:0 0 1.6em;font-size:.88em}
+.back a{color:var(--muted);border:0}
+.back a:hover{color:var(--accent)}
 `
 
 /** The author's name, when they have given one: in the head for machines,
@@ -148,7 +170,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
 
     return page(
       title(only, source),
-      renderMarkdown(source, { footnotes: true, escapeHtml: true }),
+      withByline(renderMarkdown(source, { footnotes: true, escapeHtml: true }), author),
       env,
       author,
     )
@@ -182,9 +204,11 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   // A published note is public: its raw HTML is shown, never run.
   const rendered = renderMarkdown(source, { footnotes: true, escapeHtml: true })
 
+  // The way back sits above the note, where a reader who came from the
+  // index looks for it, and the author right under the title.
   return page(
     title(note, source),
-    `${rendered}<p><a href="/">← ${escape(heading)}</a></p>`,
+    `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}`,
     env,
     author,
   )

@@ -78,6 +78,7 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
     DB: d1(database) as unknown as D1Database,
     NOTES: bucket() as unknown as R2Bucket,
     BLOG_ROOT: 'nibeditor.com',
+    BLOG_CNAME_TARGET: 'cname.nibeditor.com',
     APP_ORIGIN: 'https://nibeditor.com',
     ...overrides,
     db: database,
