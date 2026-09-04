@@ -75,23 +75,29 @@
   }
 
   /** Signing in on a machine that already holds notes needs an answer: they
-   *  either join the account or they go. Nothing is deleted without one. */
+   *  either join the account or they go. Nothing is deleted without one, and
+   *  syncing waits for it - a first pass would otherwise send up what is about
+   *  to be erased, and bring the account's spaces down into the erase. */
   async function settleLocalNotes() {
-    if (!(await workspace.hasLocalContent())) return
+    try {
+      if (!(await workspace.hasLocalContent())) return
 
-    const answer = await prompt.choose({
-      title: t('You already have notes on this computer.'),
-      detail: t(
-        'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.',
-      ),
-      options: [
-        { id: 'keep', label: t('Keep them'), primary: true },
-        { id: 'erase', label: t('Erase them'), danger: true },
-      ],
-    })
+      const answer = await prompt.choose({
+        title: t('You already have notes on this computer.'),
+        detail: t(
+          'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.',
+        ),
+        options: [
+          { id: 'keep', label: t('Keep them'), primary: true },
+          { id: 'erase', label: t('Erase them'), danger: true },
+        ],
+      })
 
-    // Dismissing the question keeps them, which is the answer that loses nothing.
-    if (answer === 'erase') await workspace.eraseLocalSpaces()
+      // Dismissing the question keeps them, which is the answer that loses nothing.
+      if (answer === 'erase') await workspace.eraseLocalSpaces()
+    } finally {
+      account.settled()
+    }
   }
 
   function close() {

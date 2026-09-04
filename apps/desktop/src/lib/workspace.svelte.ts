@@ -434,7 +434,10 @@ class Workspace {
    *  thing asked for; where it lives is not a decision worth making. */
   /** A space the account has that this machine does not. Makes the folder and
    *  lists it, but does not switch to it: adopting someone else's space in the
-   *  background should not move what is on screen out from under the writer. */
+   *  background should not move what is on screen out from under the writer.
+   *  Unless nothing is on screen - a machine that has just erased its notes,
+   *  or never had any, would otherwise list the account's spaces and show
+   *  none of them. */
   async adoptSpace(name: string): Promise<string | null> {
     const existing = this.spaces.find((space) => space.name === name)
     if (existing) return existing.root
@@ -446,8 +449,11 @@ class Workspace {
     if (!created) return null
 
     if (!this.spaces.some((space) => space.root === created.path)) {
-      this.spaces = [...this.spaces, { id: identifier(), name: created.name, root: created.path }]
-      this.persist()
+      const space: Space = { id: identifier(), name: created.name, root: created.path }
+      this.spaces = [...this.spaces, space]
+
+      if (this.activeSpaceId) this.persist()
+      else await this.selectSpace(space.id)
     }
 
     return created.path
@@ -568,6 +574,11 @@ class Workspace {
     this.activeSpaceId = null
     await this.loadSpaces()
     if (this.activeSpaceId) await this.loadTree()
+
+    // What the account holds lands in the tree, so the tree is brought up to
+    // show it arriving. A blank page with no sign of anything on its way
+    // reads as the notes being gone for good.
+    this.panel = 'tree'
     this.persist()
   }
 

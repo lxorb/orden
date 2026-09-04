@@ -291,9 +291,10 @@
     }
   })
 
-  // Syncing only runs while there is an account behind it.
+  // Syncing only runs while there is an account behind it - and not before a
+  // fresh sign-in has settled what happens to the notes already here.
   $effect(() => {
-    if (account.signedIn) {
+    if (account.syncable) {
       sync.start()
       void usage.refresh()
     } else {

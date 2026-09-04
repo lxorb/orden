@@ -160,15 +160,20 @@ class Sync {
     return pollDelay(this.quiet, document.hidden)
   }
 
-  /** Pairs every local space with a remote one, then syncs. */
   private async tick() {
-    await this.reconcile()
-    const moved = await this.run()
+    const moved = await this.pass()
 
     // Eight doublings is far past either cap; stopping there keeps the shift
     // from overflowing on a client left open for days.
     this.quiet = moved ? 0 : Math.min(this.quiet + 1, 8)
     this.schedule()
+  }
+
+  /** One pass: pairs every local space with a remote one, then syncs. What
+   *  the loop does on every tick, on its own so it can be driven by hand. */
+  async pass(): Promise<boolean> {
+    await this.reconcile()
+    return this.run()
   }
 
   private async reconcile() {
@@ -279,12 +284,26 @@ class Sync {
     this.status = 'syncing'
     this.lastError = null
     let moved = false
+    /** Whether something landed in the space on screen. */
+    let shown = false
 
     try {
       for (const mirror of Object.values(this.mirrors)) {
-        if (await this.pull(mirror)) moved = true
+        // A folder the workspace no longer lists is left alone until the next
+        // reconcile decides what becomes of its mirror. Syncing it would read
+        // every note as deleted here, and delete them from the account.
+        if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
+
+        if (await this.pull(mirror)) {
+          moved = true
+          if (mirror.root === workspace.activeSpace?.root) shown = true
+        }
         if (await this.push(mirror)) moved = true
       }
+
+      // Nothing else re-reads the folder for notes that arrived from another
+      // machine, so they would otherwise sit there unseen until the next save.
+      if (shown) await workspace.loadTree()
 
       this.save()
       this.lastSyncedAt = Date.now()
