@@ -72,7 +72,10 @@ function walk(node: SyntaxNode, source: string, from: number, to: number): Inlin
     // Whatever sits between the previous node and this one is plain text.
     if (child.from > at) out.push({ text: source.slice(at, child.from) })
 
-    if (!HIDDEN.has(child.name)) {
+    if (child.name === 'Escape') {
+      // The backslash is syntax; the character it protects is the content.
+      out.push({ text: source.slice(child.from + 1, child.to) })
+    } else if (!HIDDEN.has(child.name)) {
       const children = walk(child, source, child.from, child.to)
       const tag = TAGS[child.name]
 

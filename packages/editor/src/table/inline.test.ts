@@ -60,6 +60,10 @@ describe('a table cell', () => {
   test('keeps text that only looks like markup as text', () => {
     expect(parseInline('a < b & c')).toEqual([{ text: 'a < b & c' }])
   })
+
+  test('shows an escaped pipe as the pipe, which is how a cell has to spell one', () => {
+    expect(html('a \\| b')).toBe('a | b')
+  })
 })
 
 describe('links in a cell', () => {
