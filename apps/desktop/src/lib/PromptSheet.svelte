@@ -4,16 +4,8 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
+  import { selectAll } from './select-all'
   import Select from './Select.svelte'
-
-  let field = $state<HTMLInputElement>()
-
-  $effect(() => {
-    if (prompt.open && prompt.mode === 'text') {
-      // Selected, so a rename can be typed straight over.
-      setTimeout(() => field?.select(), 40)
-    }
-  })
 
   // Back answers the question with nothing, the same as tapping away.
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
@@ -33,12 +25,13 @@
       <p class="title">{prompt.title}</p>
 
       {#if prompt.mode === 'text'}
+        <!-- Selected, so a rename can be typed straight over. -->
         <input
-          bind:this={field}
           bind:value={prompt.value}
           placeholder={prompt.placeholder}
           spellcheck="false"
           onkeydown={(event) => event.key === 'Escape' && prompt.dismiss()}
+          use:selectAll
         />
 
         <!-- Only worth asking when there is more than one answer. -->

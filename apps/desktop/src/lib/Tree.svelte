@@ -4,6 +4,7 @@
   import { t } from './i18n.svelte'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { longPress } from './longpress'
+  import { selectAll } from './select-all'
   import { carry, dragged, isTreeDrag } from './drag-paths'
   import { folderOf } from './tauri'
   import type { Entry } from './workspace.svelte'
@@ -166,14 +167,12 @@
              renaming usually replaces the name rather than adding to it. The
              value already leaves the extension off, so this selects the name
              and nothing else. -->
-        <!-- svelte-ignore a11y_autofocus -->
         <input
           class="rename"
           style:padding-left="{depth * 12 + 8}px"
           value={entry.is_dir ? entry.name : stripped(entry.name)}
-          autofocus
           spellcheck="false"
-          onfocus={(event) => event.currentTarget.select()}
+          use:selectAll
           onblur={(event) => commit(entry.path, fullName(entry, event.currentTarget.value))}
           onkeydown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur()
