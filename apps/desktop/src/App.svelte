@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { flushSync, untrack } from 'svelte'
+  import { flushSync, untrack, onDestroy } from 'svelte'
   import { i18n, key, message, t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
@@ -42,6 +42,7 @@
   import { account } from './lib/account.svelte'
   import { settings } from './lib/settings.svelte'
   import { sync } from './lib/sync.svelte'
+  import { trash } from './lib/trash.svelte'
   import StatusBar from './lib/StatusBar.svelte'
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes.svelte'
@@ -81,6 +82,11 @@
   modes.restore()
   settings.restore()
   void workspace.restore().then(openLaunchFiles)
+  // Recently deleted on this device is swept at start and once a day after;
+  // the account's is swept on the server.
+  void trash.sweep()
+  const sweeper = setInterval(() => void trash.sweep(), 24 * 60 * 60 * 1000)
+  onDestroy(() => clearInterval(sweeper))
   void guardClose()
   /** The version waiting to be installed, once one has been downloaded. */
   let updateReady = $state<string | null>(null)

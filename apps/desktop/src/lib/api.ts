@@ -40,6 +40,19 @@ export interface RemoteNote {
   hash: string
 }
 
+/** What Recently deleted holds on the account. */
+export interface TrashListing {
+  spaces: { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[]
+  notes: {
+    id: string
+    spaceId: string
+    spaceName: string
+    path: string
+    deletedAt: number
+    purgeAt: number
+  }[]
+}
+
 export interface DnsRecord {
   type: string
   name: string
@@ -178,6 +191,18 @@ export const api = {
 
   deleteNote: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/notes/${id}`, { method: 'DELETE', token }),
+
+  // Recently deleted.
+  trash: (token: string) => request<TrashListing>('/v1/trash', { token }),
+  restoreNote: (token: string, id: string) =>
+    request<{ note: RemoteNote }>(`/v1/trash/notes/${id}/restore`, { method: 'POST', token }),
+  restoreSpace: (token: string, id: string) =>
+    request<{ space: RemoteSpace }>(`/v1/trash/spaces/${id}/restore`, { method: 'POST', token }),
+  purgeNote: (token: string, id: string) =>
+    request<{ ok: true }>(`/v1/trash/notes/${id}`, { method: 'DELETE', token }),
+  purgeSpace: (token: string, id: string) =>
+    request<{ ok: true }>(`/v1/trash/spaces/${id}`, { method: 'DELETE', token }),
+  emptyTrash: (token: string) => request<{ ok: true }>('/v1/trash', { method: 'DELETE', token }),
 
   /** `space` is the one being published: a name it already holds is free for
    *  it, and would otherwise read as taken by itself. */

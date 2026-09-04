@@ -78,7 +78,9 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
         .unwrap_or_default();
 
     let (stem, extension) = match file_name.rfind('.') {
-        Some(dot) if is_file && dot > 0 => (file_name[..dot].to_string(), file_name[dot..].to_string()),
+        Some(dot) if is_file && dot > 0 => {
+            (file_name[..dot].to_string(), file_name[dot..].to_string())
+        }
         _ => (file_name.clone(), String::new()),
     };
 

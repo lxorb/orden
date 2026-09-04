@@ -8,6 +8,7 @@
   import { domainNotice } from './domain-status'
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
+  import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
@@ -68,7 +69,10 @@
           ]
         : []),
     ],
-    [{ id: 'export', label: t('Export') }],
+    [
+      { id: 'trash', label: t('Recently deleted') },
+      { id: 'export', label: t('Export') },
+    ],
   ])
 
   const SECTIONS = $derived(GROUPS.flat())
@@ -636,6 +640,9 @@
   {:else if settings.section === 'llm'}
     <!-- Its own component: the pane is a small guide, not a list of settings. -->
     <McpSetup />
+  {:else if settings.section === 'trash'}
+    <h2>{t('Recently deleted')}</h2>
+    <RecentlyDeleted />
   {:else if settings.section === 'export'}
     <h3>{t('Page')}</h3>
     <div class="card">

@@ -24,6 +24,7 @@ export type Section =
   | 'account'
   | 'publish'
   | 'llm'
+  | 'trash'
   | 'export'
 
 class Settings {

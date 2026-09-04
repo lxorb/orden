@@ -1,4 +1,5 @@
 import { flushTableEdits } from '@nib/editor'
+import { account } from './account.svelte'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
 import { folderOf, invoke, isDesktop, joinPath } from './tauri'
@@ -45,7 +46,7 @@ export type Panel = 'tree' | 'outline' | 'search'
 /** A file operation that can be put back. */
 export type FileAction =
   | { kind: 'move' | 'rename'; from: string; to: string }
-  | { kind: 'delete'; path: string; content: string }
+  | { kind: 'delete'; path: string; content: string; trashId?: string }
 
 export interface Hit {
   path: string
@@ -589,7 +590,12 @@ class Workspace {
     if (!space) return
 
     {
-      const gone = await invoke('delete_space', { path: space.root })
+      // The account keeps a deleted space for 14 days; signed out, this device
+      // keeps it in its trash folder instead (see trash.svelte.ts).
+      const gone = await (account.signedIn
+        ? invoke('delete_space', { path: space.root })
+        : invoke('trash_item', { path: space.root, kind: 'space' })
+      )
         .then(() => true)
         .catch(() => false)
 
@@ -1033,7 +1039,18 @@ class Workspace {
       this.recordFileAction({ kind:'delete', path, content })
     }
 
-    await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
+    // Signed in, the account keeps a copy for 14 days; signed out, this
+    // device does, in its own trash folder (see trash.svelte.ts).
+    if (account.signedIn) {
+      await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
+    } else {
+      const entry = await invoke<{ id: string }>('trash_item', {
+        path,
+        kind: isFolder ? 'folder' : 'note',
+      })
+      const last = this.undoable.at(-1)
+      if (last?.kind === 'delete' && last.path === path) last.trashId = entry.id
+    }
 
     for (const tab of this.tabs.filter((entry) => entry.path?.startsWith(path))) {
       this.close(tab.id)
@@ -1057,7 +1074,10 @@ class Workspace {
 
     try {
       if (action.kind === 'delete') {
-        await invoke('write_note', { path: action.path, content: action.content })
+        // Out of the device's trash when it went there, or back from the
+        // snapshot when the account holds the copy.
+        if (action.trashId) await invoke('restore_trash', { id: action.trashId })
+        else await invoke('write_note', { path: action.path, content: action.content })
       } else {
         await invoke('rename_note', { from: action.to, to: action.from })
 
