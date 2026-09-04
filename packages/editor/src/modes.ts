@@ -7,6 +7,7 @@ import { livePreview } from './live-preview'
 import { mermaidDescription } from './mermaid'
 import { numberEquations } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
+import { closeBrackets } from '@codemirror/autocomplete'
 import { smartPunctuation } from './typography'
 
 /** Each mode lives in its own compartment so it can be swapped at runtime
@@ -17,6 +18,8 @@ const typewriter = new Compartment()
 const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
+const spelling = new Compartment()
+const brackets = new Compartment()
 
 /** Strict mode drops GFM and the Typora extensions, leaving plain CommonMark -
  *  useful when a document has to render the same everywhere. */
@@ -101,6 +104,8 @@ export function modeExtensions(): Extension {
     typewriter.of([]),
     punctuation.of(smartPunctuation()),
     equations.of(numberEquations.of(false)),
+    spelling.of(EditorView.contentAttributes.of({ spellcheck: 'true' })),
+    brackets.of(closeBrackets()),
   ]
 }
 
@@ -155,6 +160,19 @@ export function setLineHeight(view: EditorView, height: number) {
 }
 
 /** Right-to-left writing, for Arabic and Hebrew. */
+/** The browser's own spell checker, over the writing surface. */
+export function setSpellcheck(view: EditorView, on: boolean) {
+  view.dispatch({
+    effects: spelling.reconfigure(
+      EditorView.contentAttributes.of({ spellcheck: on ? 'true' : 'false' }),
+    ),
+  })
+}
+
+export function setCloseBrackets(view: EditorView, on: boolean) {
+  view.dispatch({ effects: brackets.reconfigure(on ? closeBrackets() : []) })
+}
+
 export function setRightToLeft(view: EditorView, on: boolean) {
   view.contentDOM.setAttribute('dir', on ? 'rtl' : 'ltr')
   view.dom.classList.toggle('nib-rtl', on)

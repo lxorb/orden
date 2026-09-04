@@ -1,4 +1,5 @@
 import {
+  setCloseBrackets,
   setCodeLineNumbers,
   setCodeTheme,
   setFocusMode,
@@ -9,6 +10,7 @@ import {
   setEquationNumbers,
   setSmartPunctuation,
   setSourceMode,
+  setSpellcheck,
   setStrictMode,
   setTypewriterMode,
   type EditorView,
@@ -35,6 +37,13 @@ interface Saved {
   zoom: number
   width: number
   lineHeight: number
+  spellcheck?: boolean
+  closeBrackets?: boolean
+}
+
+/** Nearest of the steps the keyboard uses, so both routes agree. */
+function clamp(value: number, steps: readonly number[]): number {
+  return steps.reduce((best, one) => (Math.abs(one - value) < Math.abs(best - value) ? one : best))
 }
 
 class Modes {
@@ -51,6 +60,8 @@ class Modes {
   zoom = $state(1)
   width = $state(42)
   lineHeight = $state(1.72)
+  spellcheck = $state(true)
+  closeBrackets = $state(true)
 
   restore() {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -70,6 +81,8 @@ class Modes {
         this.zoom = state.zoom || 1
         this.width = state.width || 42
         this.lineHeight = state.lineHeight || 1.72
+        this.spellcheck = state.spellcheck ?? true
+        this.closeBrackets = state.closeBrackets ?? true
       } catch {
         // A corrupt entry just means defaults.
       }
@@ -91,6 +104,8 @@ class Modes {
     setEquationNumbers(view, this.equationNumbers)
     setMeasure(view, this.width)
     setLineHeight(view, this.lineHeight)
+    setSpellcheck(view, this.spellcheck)
+    setCloseBrackets(view, this.closeBrackets)
   }
 
   toggleSource(view?: EditorView) {
@@ -137,6 +152,18 @@ class Modes {
     this.persist()
   }
 
+  toggleSpellcheck(view?: EditorView) {
+    this.spellcheck = !this.spellcheck
+    if (view) setSpellcheck(view, this.spellcheck)
+    this.persist()
+  }
+
+  toggleCloseBrackets(view?: EditorView) {
+    this.closeBrackets = !this.closeBrackets
+    if (view) setCloseBrackets(view, this.closeBrackets)
+    this.persist()
+  }
+
   toggleStrict(view?: EditorView) {
     this.strict = !this.strict
     if (view) setStrictMode(view, this.strict)
@@ -152,6 +179,26 @@ class Modes {
   toggleRightToLeft(view?: EditorView) {
     this.rtl = !this.rtl
     if (view) setRightToLeft(view, this.rtl)
+    this.persist()
+  }
+
+  /** The sliders in preferences set a value outright; the keyboard steps
+   *  through the same range. Both land in the same place. */
+  setZoom(value: number) {
+    this.zoom = clamp(value, ZOOM_STEPS)
+    this.applyZoom()
+    this.persist()
+  }
+
+  setWidth(value: number, view?: EditorView) {
+    this.width = Math.round(value)
+    if (view) setMeasure(view, this.width)
+    this.persist()
+  }
+
+  setLineSpacing(value: number, view?: EditorView) {
+    this.lineHeight = Math.round(value * 100) / 100
+    if (view) setLineHeight(view, this.lineHeight)
     this.persist()
   }
 
@@ -211,6 +258,8 @@ class Modes {
       zoom: this.zoom,
       width: this.width,
       lineHeight: this.lineHeight,
+      spellcheck: this.spellcheck,
+      closeBrackets: this.closeBrackets,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }

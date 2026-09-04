@@ -10,7 +10,15 @@ import { workspace } from './workspace.svelte'
 const STORAGE_KEY = 'nib:llm'
 const PAGE_KEY = 'nib:page'
 
-export type Section = 'account' | 'publish' | 'llm' | 'appearance' | 'export'
+export type Section =
+  | 'general'
+  | 'editor'
+  | 'markdown'
+  | 'appearance'
+  | 'account'
+  | 'publish'
+  | 'llm'
+  | 'export'
 
 interface Connector {
   exists: boolean

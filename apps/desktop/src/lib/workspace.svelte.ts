@@ -73,6 +73,7 @@ const UNDO_LIMIT = 20
 const PINNED_KEY = 'nib:pinned'
 const ICONS_KEY = 'nib:icons'
 const AUTO_SAVE_DELAY = 1200
+const AUTO_SAVE_DELAY_KEY = 'nib:autosave-delay'
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
 const SESSION_DELAY = 400
@@ -189,6 +190,8 @@ class Workspace {
   /** Path of the tree row currently being renamed in place. */
   renaming = $state<string | null>(null)
   autoSave = $state(localStorage.getItem(AUTO_SAVE_KEY) !== 'false')
+  /** How long to wait after the last keystroke before writing. */
+  autoSaveDelay = $state(Number(localStorage.getItem(AUTO_SAVE_DELAY_KEY)) || AUTO_SAVE_DELAY)
   treeOptions = $state<TreeOptions>(readTreeOptions())
   recent = $state<string[]>(readRecent())
   /** Not persisted: putting a file back only makes sense while it is fresh. */
@@ -706,7 +709,12 @@ class Workspace {
     if (!this.autoSave || !this.active?.path) return
 
     clearTimeout(this.saveTimer)
-    this.saveTimer = setTimeout(() => void this.save(), AUTO_SAVE_DELAY)
+    this.saveTimer = setTimeout(() => void this.save(), this.autoSaveDelay)
+  }
+
+  setAutoSaveDelay(ms: number) {
+    this.autoSaveDelay = ms
+    localStorage.setItem(AUTO_SAVE_DELAY_KEY, String(ms))
   }
 
   setAutoSave(on: boolean) {

@@ -2,19 +2,34 @@
   import { closeOnBack } from './backstack.svelte'
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { CODE_PALETTES, type EditorView } from '@nib/editor'
+  import type { EditorView } from '@nib/editor'
   import { MCP_URL } from './api'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
-  import { i18n, LANGUAGES, t } from './i18n.svelte'
-  import { modes } from './modes.svelte'
+  import { t } from './i18n.svelte'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import { settings, type Section } from './settings.svelte'
   import { sync } from './sync.svelte'
   import { isDesktop } from './tauri'
   import { theme } from './theme.svelte'
+  import { type Field, matches, preferences } from './preferences'
   import { readableSize, usage } from './usage.svelte'
   import { workspace } from './workspace.svelte'
+
+  let { view }: { view?: EditorView } = $props()
+
+  /** A line drawing each, so the list reads at a glance rather than as a
+   *  column of words. */
+  const ICONS: Record<string, string> = {
+    general: 'M8 5.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2zM8 1.5v1.4M8 13.1v1.4M3.4 3.4l1 1M11.6 11.6l1 1M1.5 8h1.4M13.1 8h1.4M3.4 12.6l1-1M11.6 4.4l1-1',
+    editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
+    markdown: 'M2.5 3.5h11v9h-11zM4.5 10.5V6l2 2.4L8.5 6v4.5M10.5 6v4.5M9 9l1.5 1.5L12 9',
+    appearance: 'M8 1.8a6.2 6.2 0 1 0 0 12.4c.9 0 1.4-.6 1.4-1.3 0-.8-.7-1.2-.7-1.9 0-.5.4-.9 1-.9h1.1a3.4 3.4 0 0 0 3.4-3.4c0-2.8-2.8-4.9-6.2-4.9zM5 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM8 5.6a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM11 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z',
+    account: 'M8 8.4a2.9 2.9 0 1 0 0-5.8 2.9 2.9 0 0 0 0 5.8zM2.6 14a5.4 5.4 0 0 1 10.8 0',
+    publish: 'M8 1.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 8 1.8zM1.8 8h12.4M8 1.8c1.6 1.8 2.4 3.9 2.4 6.2S9.6 12.4 8 14.2C6.4 12.4 5.6 10.3 5.6 8S6.4 3.6 8 1.8z',
+    llm: 'M5 2.5h6a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5.5 14v-2.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
+    export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
+  }
 
   /** Publishing and the LLM connector are both things an account owns, and
    *  both are off until deliberately turned on. Until there is an account they
@@ -22,6 +37,10 @@
    *  the list rather than sitting there offering nothing. */
   const SECTIONS = $derived(
     [
+      { id: 'general' as Section, label: t('General') },
+      { id: 'editor' as Section, label: t('Editor') },
+      { id: 'markdown' as Section, label: t('Markdown') },
+      { id: 'appearance' as Section, label: t('Appearance') },
       { id: 'account' as Section, label: t('Account') },
       ...(account.signedIn
         ? [
@@ -29,17 +48,33 @@
             { id: 'llm' as Section, label: t('LLM access') },
           ]
         : []),
-      { id: 'appearance' as Section, label: t('Appearance') },
       { id: 'export' as Section, label: t('Export') },
     ],
+  )
+
+  let query = $state('')
+
+  /** The generated panes, rebuilt as things change so every control shows the
+   *  value it actually has. */
+  const panes = $derived(preferences(view))
+  const current = $derived(panes.find((one) => one.id === settings.section))
+
+  /** Searching looks across every pane at once: nobody knows which one holds
+   *  the thing they are after, which is the reason for the box. */
+  const found = $derived(
+    query.trim()
+      ? panes.flatMap((pane) =>
+          pane.groups.flatMap((group) =>
+            group.fields.filter((field) => matches(field, query)).map((field) => ({ pane, field })),
+          ),
+        )
+      : [],
   )
 
   // Signing out while one of them is open would leave a pane with nothing in it.
   $effect(() => {
     if (!SECTIONS.some((one) => one.id === settings.section)) settings.section = 'account'
   })
-
-  let { view }: { view?: EditorView } = $props()
 
   let subdomain = $state('')
   let domain = $state('')
@@ -117,15 +152,64 @@
 
   <div class="sheet" transition:scale={{ duration: 200, start: 0.97, easing: cubicOut }}>
     <nav>
+      <h1>{t('Settings')}</h1>
+
+      <label class="search">
+        <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
+        <input bind:value={query} placeholder={t('Search settings')} spellcheck="false" />
+      </label>
+
       {#each SECTIONS as item (item.id)}
-        <button class:active={settings.section === item.id} onclick={() => (settings.section = item.id)}>
+        <button
+          class:active={!query && settings.section === item.id}
+          onclick={() => {
+            query = ''
+            settings.section = item.id
+          }}
+        >
+          <svg viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
           {item.label}
         </button>
       {/each}
     </nav>
 
     <div class="body">
-      {#if settings.section === 'account'}
+      {#if query}
+        <div class="pane">
+          <h2>{t('Search settings')}</h2>
+
+          {#if found.length}
+            {#each found as hit (hit.pane.id + hit.field.label)}
+              <div class="setting">
+                <span class="name">{hit.field.label}</span>
+                {@render control(hit.field)}
+              </div>
+              <p class="where">{hit.pane.label}</p>
+            {/each}
+          {:else}
+            <p class="note">{t('Nothing matches.')}</p>
+          {/if}
+        </div>
+      {:else if current}
+        <div class="pane" in:fly={{ y: 8, duration: 180, easing: cubicOut }}>
+          <h2>{current.label}</h2>
+
+          {#each current.groups as group (group.title)}
+            <h3>{group.title}</h3>
+
+            {#each group.fields as field (field.label)}
+              <div class="setting">
+                <span class="name">{field.label}</span>
+                {@render control(field)}
+              </div>
+            {/each}
+          {/each}
+
+          {#if settings.section === 'appearance'}
+            {@render appearanceExtras()}
+          {/if}
+        </div>
+      {:else if settings.section === 'account'}
         <div class="pane" in:fly={{ y: 8, duration: 180, easing: cubicOut }}>
           {#if account.signedIn}
             <p class="lead">{account.user?.email}</p>
@@ -366,80 +450,6 @@
             {/each}
           </div>
         </div>
-      {:else}
-        <div class="pane" in:fly={{ y: 8, duration: 180, easing: cubicOut }}>
-          <div class="themes">
-            {#each theme.all as item (item.id)}
-              <button
-                class="theme"
-                class:active={theme.id === item.id}
-                data-scheme={item.scheme}
-                onclick={() => theme.select(item.id)}
-              >
-                {t(item.name)}
-              </button>
-            {/each}
-          </div>
-
-          <label class="field">
-            <span class="label">{t('Accent')}</span>
-            <div class="accents">
-              {#each theme.accents as swatch (swatch.id)}
-                <button
-                  class="swatch"
-                  class:active={theme.accent === swatch.id}
-                  title={t(swatch.name)}
-                  aria-label={t(swatch.name)}
-                  aria-pressed={theme.accent === swatch.id}
-                  style:--swatch={swatch[theme.current]}
-                  onclick={() => theme.setAccent(swatch.id)}
-                ></button>
-              {/each}
-            </div>
-          </label>
-          <label class="field">
-            <span class="label">{t('Language')}</span>
-            <select value={i18n.choice} onchange={(event) => i18n.select(event.currentTarget.value)}>
-              {#each LANGUAGES as language (language.id)}
-                <option value={language.id}>{t(language.name)}</option>
-              {/each}
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="label">{t('Code')}</span>
-            <select
-              value={modes.codeTheme}
-              onchange={(event) => modes.setCodeTheme(event.currentTarget.value, view)}
-            >
-              {#each CODE_PALETTES as palette (palette.id)}
-                <option value={palette.id}>{palette.name}</option>
-              {/each}
-            </select>
-          </label>
-
-          <button class="quiet" onclick={() => theme.reload()}>{t('Reload themes and custom CSS')}</button>
-
-          <label class="switch">
-            <input
-              type="checkbox"
-              checked={workspace.autoSave}
-              onchange={(event) => workspace.setAutoSave(event.currentTarget.checked)}
-            />
-            <span>{t('Save notes as I type')}</span>
-          </label>
-
-          {#if isWindows}
-            <label class="switch">
-              <input
-                type="checkbox"
-                checked={settings.newMenu}
-                onchange={(event) => settings.setNewMenu(event.currentTarget.checked)}
-              />
-              <span>{t('Offer a markdown document in Explorer’s New menu')}</span>
-            </label>
-          {/if}
-        </div>
       {/if}
 
       {#if settings.error}
@@ -448,6 +458,77 @@
     </div>
   </div>
 {/if}
+
+{#snippet control(field: Field)}
+  {#if field.kind === 'switch'}
+    <button
+      class="toggle"
+      class:on={field.get()}
+      role="switch"
+      aria-checked={field.get()}
+      aria-label={field.label}
+      onclick={() => field.set(!field.get())}
+    ></button>
+  {:else if field.kind === 'slider'}
+    <span class="value">{field.get()}{field.unit ?? ''}</span>
+    <input
+      class="slider"
+      type="range"
+      min={field.min}
+      max={field.max}
+      step={field.step}
+      value={field.get()}
+      aria-label={field.label}
+      oninput={(event) => field.set(Number(event.currentTarget.value))}
+    />
+  {:else}
+    <select
+      value={field.get()}
+      aria-label={field.label}
+      onchange={(event) => field.set(event.currentTarget.value)}
+    >
+      {#each field.options as option (option.value)}
+        <option value={option.value}>{option.label}</option>
+      {/each}
+    </select>
+  {/if}
+{/snippet}
+
+{#snippet appearanceExtras()}
+  <h3>{t('Accent')}</h3>
+
+  <div class="accents">
+    {#each theme.accents as swatch (swatch.id)}
+      <button
+        class="swatch"
+        class:active={theme.accent === swatch.id}
+        title={t(swatch.name)}
+        aria-label={t(swatch.name)}
+        aria-pressed={theme.accent === swatch.id}
+        style:--swatch={swatch[theme.current]}
+        onclick={() => theme.setAccent(swatch.id)}
+      ></button>
+    {/each}
+  </div>
+
+  <h3>{t('Custom')}</h3>
+
+  <button class="quiet" onclick={() => theme.reload()}>{t('Reload themes and custom CSS')}</button>
+
+  {#if isWindows}
+    <div class="setting">
+      <span class="name">{t('Show in Explorer’s New menu')}</span>
+      <button
+        class="toggle"
+        class:on={settings.newMenu}
+        role="switch"
+        aria-checked={settings.newMenu}
+        aria-label={t('Show in Explorer’s New menu')}
+        onclick={() => settings.setNewMenu(!settings.newMenu)}
+      ></button>
+    </div>
+  {/if}
+{/snippet}
 
 <style>
   .scrim {
@@ -460,14 +541,15 @@
 
   .sheet {
     position: fixed;
-    top: 12vh;
+    top: 10vh;
     left: 50%;
     translate: -50% 0;
-    width: min(38rem, calc(100vw - 3rem));
-    max-height: 74vh;
+    width: min(56rem, calc(100vw - 3rem));
+    height: 76vh;
     z-index: 41;
-    display: flex;
-    flex-direction: column;
+    /* Two columns: the list of panes, and the pane. */
+    display: grid;
+    grid-template-columns: 14rem 1fr;
     background: var(--surface);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-lg);
@@ -477,19 +559,26 @@
 
   nav {
     display: flex;
+    flex-direction: column;
     gap: 2px;
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--line);
+    padding: var(--space-4) var(--space-3);
+    border-right: 1px solid var(--line);
+    background: var(--bg);
+    overflow-y: auto;
   }
 
   nav button {
-    padding: 6px 11px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 8px 10px;
     border: none;
     border-radius: var(--radius-sm);
     background: none;
-    color: var(--muted);
+    color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
+    text-align: left;
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -507,7 +596,7 @@
   }
 
   .body {
-    padding: var(--space-5);
+    padding: var(--space-5) var(--space-6);
     overflow-y: auto;
     scrollbar-width: thin;
   }
@@ -799,37 +888,12 @@
     color: var(--muted-strong);
   }
 
-  .themes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-    gap: var(--space-2);
-    width: 100%;
-  }
-
-  .theme {
-    padding: var(--space-3);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: default;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  .theme:hover {
-    transform: translateY(-1px);
-  }
-
-  .theme.active {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
+  
+  
+  
+  
+  /* A phone has no room for two columns, so the list of panes becomes a strip
+     across the top and the pane fills the rest. */
   @media (max-width: 720px) {
     .sheet {
       top: auto;
@@ -837,9 +901,202 @@
       left: 0;
       translate: none;
       width: 100%;
-      max-height: 88dvh;
+      height: 88dvh;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
     }
+
+    nav {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    nav h1 {
+      display: none;
+    }
+
+    .search {
+      order: -1;
+      flex: none;
+      width: 11rem;
+      margin: 0;
+    }
+
+    nav button {
+      flex: none;
+      min-height: 44px;
+    }
+
+    .body {
+      padding: var(--space-4);
+    }
+
+    .setting {
+      min-height: 44px;
+    }
+  }
+  /* ── Preferences ─────────────────────────────────────────────── */
+
+  nav h1 {
+    margin: 0 0 var(--space-3);
+    padding: 0 10px;
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    font-weight: 620;
+    color: var(--text-strong);
+  }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--space-3);
+    padding: 0 10px;
+    height: 32px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+  }
+
+  .search svg {
+    width: 13px;
+    height: 13px;
+    flex: none;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.4;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  nav button svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .pane h2 {
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-ui);
+    font-size: 1.15em;
+    font-weight: 620;
+    color: var(--text-strong);
+  }
+
+  .pane h3 {
+    margin: var(--space-5) 0 var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--muted-strong);
+  }
+
+  .pane h3:first-of-type {
+    margin-top: 0;
+  }
+
+  /* Name on the left, control on the right, one line each. */
+  .setting {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 38px;
+  }
+
+  .setting .name {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+
+  .setting select {
+    flex: none;
+    width: 12rem;
+  }
+
+  .setting .value {
+    flex: none;
+    width: 4.5rem;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .where {
+    margin: -2px 0 var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .toggle {
+    flex: none;
+    width: 38px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 99px;
+    background: var(--surface-3);
+    cursor: default;
+    position: relative;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--muted-strong);
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  .toggle.on {
+    background: var(--accent);
+  }
+
+  .toggle.on::after {
+    background: #fff;
+    transform: translateX(16px);
+  }
+
+  .slider {
+    flex: none;
+    width: 11rem;
+    accent-color: var(--accent);
+  }
+
+  .accents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
   }
 </style>

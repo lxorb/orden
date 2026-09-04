@@ -1,4 +1,4 @@
-import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
+import { closeBracketsKeymap } from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
@@ -38,13 +38,12 @@ export function createEditor(options: EditorOptions): EditorView {
         dropCursor(),
         indentOnInput(),
         bracketMatching(),
-        closeBrackets(),
         highlightActiveLine(),
         highlightSelectionMatches(),
         EditorView.lineWrapping,
         // The writing surface carries Typora's `#write` id, so Typora themes
         // that target `#write` style our editor directly.
-        EditorView.contentAttributes.of({ id: 'write', spellcheck: 'true' }),
+        EditorView.contentAttributes.of({ id: 'write' }),
         syntaxHighlighting(nibHighlightStyle),
         codeThemeExtension(options.codeTheme),
         modeExtensions(),

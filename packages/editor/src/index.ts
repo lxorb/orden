@@ -26,6 +26,7 @@ export { imageResolver, type ImageSink } from './images'
 export { setSnippets, snippets } from './snippets'
 export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {
+  setCloseBrackets,
   setCodeLineNumbers,
   setEquationNumbers,
   setFocusMode,
@@ -35,6 +36,7 @@ export {
   setRightToLeft,
   setSmartPunctuation,
   setSourceMode,
+  setSpellcheck,
   setStrictMode,
   setTypewriterMode,
 } from './modes'
