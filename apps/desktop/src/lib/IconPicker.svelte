@@ -120,7 +120,6 @@
     gap: 4px;
     max-height: 46vh;
     overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   .grid button {

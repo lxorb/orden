@@ -309,7 +309,6 @@
     flex-direction: column;
     overflow-y: auto;
     padding: var(--space-1) var(--space-2) var(--space-4);
-    scrollbar-width: thin;
   }
 
   ul {

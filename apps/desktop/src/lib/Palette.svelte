@@ -150,7 +150,6 @@
     padding: var(--space-1);
     max-height: 46vh;
     overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   button {

@@ -598,7 +598,6 @@
   .body {
     padding: var(--space-5) var(--space-6);
     overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   .pane {

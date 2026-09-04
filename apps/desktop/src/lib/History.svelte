@@ -134,7 +134,6 @@
     list-style: none;
     overflow-y: auto;
     border-right: 1px solid var(--line);
-    scrollbar-width: thin;
   }
 
   .versions button {
