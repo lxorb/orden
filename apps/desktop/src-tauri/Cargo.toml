@@ -32,6 +32,10 @@ windows = { version = "0.58", features = [
   "Win32_Foundation",
   "Win32_System_Registry",
 ] }
+# PDF export talks to WebView2's print engine directly. The versions are the
+# ones tauri itself is built against, so the handles it hands out line up.
+webview2-com = "0.38"
+windows-core = "0.61"
 
 [profile.release]
 codegen-units = 1

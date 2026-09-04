@@ -56,6 +56,8 @@ pub fn run() {
             export::has_pandoc,
             export::run_pandoc,
             export::import_document,
+            export::pdf_supported,
+            export::print_pdf,
             launch::take_startup_files,
             launch::new_window,
             history::snapshot_note,
