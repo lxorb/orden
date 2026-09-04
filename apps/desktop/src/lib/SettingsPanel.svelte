@@ -144,17 +144,17 @@
   /** Which kind of address the blog is reached by. One or the other, never
    *  both: a domain of one's own replaces the shared name. */
   let mode = $state<'subdomain' | 'domain'>('subdomain')
-  /** A domain of one's own needs Cloudflare for SaaS on the shared zone, which
-   *  is not enabled; a domain entered today would wait forever. So the choice
-   *  is only shown where a space already has a domain (set by hand, served by
-   *  a route of its own), and everyone else sees the shared name alone. */
-  const offerDomain = $derived(!!blog?.domain)
   /** Empty means the whole space; otherwise the one note's path in it. */
   let blogNote = $state('')
   let confirmPublic = $state(false)
   let checkTimer: ReturnType<typeof setTimeout>
 
   const blog = $derived(settings.remote?.blog)
+  /** A domain of one's own needs Cloudflare for SaaS on the shared zone, which
+   *  is not enabled; a domain entered today would wait forever. So the choice
+   *  is only shown where a space already has a domain (set by hand, served by
+   *  a route of its own), and everyone else sees the shared name alone. */
+  const offerDomain = $derived(!!blog?.domain)
   const published = $derived(!!blog?.enabled)
   /** Wherever the blog answers, for the link under the button. */
   const liveAt = $derived(
