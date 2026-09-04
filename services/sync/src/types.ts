@@ -28,6 +28,8 @@ export interface EmailSender {
 export interface User {
   id: string
   email: string
+  /** Shown on anything the account publishes. Null until chosen. */
+  name: string | null
   created_at: number
 }
 

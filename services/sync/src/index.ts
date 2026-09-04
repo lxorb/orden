@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { auth, requireUser } from './auth'
+import { auth, presentUser, requireUser } from './auth'
 import { blobs, publicBlobs } from './blobs'
 import { serveBlog, spaceForHost } from './blog'
 import { mcp, mcpAdmin } from './mcp'
@@ -48,9 +48,27 @@ app.use('/v1/*', async (context, next) => {
   await next()
 })
 
-app.get('/v1/me', (context) => {
+app.get('/v1/me', (context) => context.json({ user: presentUser(context.get('user')) }))
+
+/** Long enough for any name, short enough that a blog footer stays a footer. */
+const NAME_LIMIT = 60
+
+/** The one thing about an account that can be changed: what to call it. */
+app.patch('/v1/me', async (context) => {
   const user = context.get('user')
-  return context.json({ user: { id: user.id, email: user.email } })
+  const body = await context.req.json<{ name?: string }>()
+
+  // Inner runs of whitespace go too: a name is words, not layout.
+  const name = (body.name ?? '').trim().replace(/\s+/g, ' ')
+  if (name.length > NAME_LIMIT) {
+    return context.json({ error: `use at most ${NAME_LIMIT} characters` }, 400)
+  }
+
+  await context.env.DB.prepare('update users set name = ? where id = ?')
+    .bind(name || null, user.id)
+    .run()
+
+  return context.json({ user: presentUser({ ...user, name: name || null }) })
 })
 
 app.get('/v1/usage', async (context) => {
@@ -72,6 +90,13 @@ app.all('*', async (context) => {
   const space = await spaceForHost(context.env, url.host)
 
   if (space) return serveBlog(context.env, space, url)
+
+  // A name on the shared domain that nobody publishes under has nothing to
+  // show, and the editor does not live there either. Temporary, because the
+  // name may be taken tomorrow.
+  if (url.hostname.endsWith(`.${context.env.BLOG_ROOT}`)) {
+    return context.redirect(context.env.APP_ORIGIN, 302)
+  }
 
   // The web build of the editor. It stores notes in the browser until someone
   // signs in, so it is served to anyone who asks.

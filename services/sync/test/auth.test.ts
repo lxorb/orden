@@ -142,3 +142,57 @@ describe('sessions', () => {
     expect((await call(env, '/v1/me', { token })).status).toBe(401)
   })
 })
+
+describe('a display name', () => {
+  test('starts empty', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    const me = await call(env, '/v1/me', { token })
+    expect(me.json.user.name).toBeNull()
+  })
+
+  test('can be set, and comes back with the account', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    const set = await call(env, '/v1/me', {
+      method: 'PATCH',
+      token,
+      body: { name: '  Ada   Lovelace ' },
+    })
+
+    expect(set.status).toBe(200)
+    expect(set.json.user.name).toBe('Ada Lovelace')
+    expect((await call(env, '/v1/me', { token })).json.user.name).toBe('Ada Lovelace')
+  })
+
+  test('comes back on the next sign-in as well', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+
+    const code = await requestCode('a@b.dev')
+    const again = await call(env, '/v1/auth/verify', { body: { email: 'a@b.dev', code } })
+    expect(again.json.user.name).toBe('Ada')
+  })
+
+  test('an empty name clears it', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
+    const cleared = await call(env, '/v1/me', { method: 'PATCH', token, body: { name: '   ' } })
+
+    expect(cleared.json.user.name).toBeNull()
+  })
+
+  test('a name longer than sixty characters is refused', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    const response = await call(env, '/v1/me', {
+      method: 'PATCH',
+      token,
+      body: { name: 'x'.repeat(61) },
+    })
+
+    expect(response.status).toBe(400)
+  })
+
+  test('needs a session', async () => {
+    const response = await call(env, '/v1/me', { method: 'PATCH', body: { name: 'Ada' } })
+    expect(response.status).toBe(401)
+  })
+})

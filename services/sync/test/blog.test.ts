@@ -44,16 +44,35 @@ describe('slugs', () => {
 })
 
 describe('while a space is private', () => {
-  test('its subdomain serves nothing', async () => {
+  test('its subdomain sends the visitor to the app', async () => {
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
-    expect(response.status).toBe(404)
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('https://nibeditor.com')
   })
 
   test('a disabled blog stops serving', async () => {
     await publish({ subdomain: 'field' })
     await call(env, `/v1/spaces/${space}/blog`, { method: 'DELETE', token })
 
-    expect((await call(env, '/', { host: 'field.nibeditor.com' })).status).toBe(404)
+    expect((await call(env, '/', { host: 'field.nibeditor.com' })).status).toBe(302)
+  })
+})
+
+describe('a name nobody has taken', () => {
+  test('forwards to the app, whatever the path', async () => {
+    const response = await call(env, '/some/note', { host: 'unused.nibeditor.com' })
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('https://nibeditor.com')
+  })
+
+  test('the root itself is not forwarded', async () => {
+    const response = await call(env, '/', { host: 'nibeditor.com' })
+    expect(response.status).not.toBe(302)
+  })
+
+  test('a domain of someone else is not forwarded', async () => {
+    const response = await call(env, '/', { host: 'notes.example.com' })
+    expect(response.status).not.toBe(302)
   })
 })
 
@@ -94,8 +113,8 @@ describe('publishing', () => {
     expect(response.text).toContain('Body text.')
   })
 
-  test('a custom domain is served too', async () => {
-    await publish({ subdomain: 'field', domain: 'notes.example.com' })
+  test('a custom domain is served', async () => {
+    await publish({ domain: 'notes.example.com' })
 
     const response = await call(env, '/', { host: 'notes.example.com' })
     expect(response.status).toBe(200)
@@ -103,16 +122,25 @@ describe('publishing', () => {
   })
 
   test('a custom domain comes back with the record to add', async () => {
-    const response = await publish({ subdomain: 'field', domain: 'notes.example.com' })
+    const response = await publish({ domain: 'notes.example.com' })
 
     expect(response.json.dns).toHaveLength(1)
     expect(response.json.dns[0].type).toBe('CNAME')
-    expect(response.json.dns[0].value).toBe('field.nibeditor.com')
+    expect(response.json.dns[0].value).toMatch(/\.nibeditor\.com$/)
   })
 
   test('an apex domain needs an A record instead', async () => {
-    const response = await publish({ subdomain: 'field', domain: 'example.com' })
+    const response = await publish({ domain: 'example.com' })
     expect(response.json.dns[0].type).toBe('A')
+  })
+
+  test('the listing carries the records too, for the next time the pane opens', async () => {
+    await publish({ domain: 'notes.example.com' })
+
+    const listed = await call(env, '/v1/spaces', { token })
+    const mine = listed.json.spaces.find((one: { id: string }) => one.id === space)
+    expect(mine.blog.dns).toHaveLength(1)
+    expect(mine.blog.dns[0].type).toBe('CNAME')
   })
 
   test('a custom title replaces the space name', async () => {
@@ -161,6 +189,57 @@ describe('a published note cannot script the reader', () => {
   })
 })
 
+describe('one address, not two', () => {
+  test('a domain of your own gives the name up', async () => {
+    await publish({ subdomain: 'field' })
+    const response = await publish({ domain: 'notes.example.com' })
+
+    expect(response.json.space.blog.subdomain).toBeNull()
+    expect(response.json.space.blog.domain).toBe('notes.example.com')
+    expect((await call(env, '/', { host: 'field.nibeditor.com' })).status).toBe(302)
+  })
+
+  test('the name given up is free for someone else', async () => {
+    await publish({ subdomain: 'field' })
+    await publish({ domain: 'notes.example.com' })
+
+    expect((await call(env, '/v1/spaces/available/field', { token })).json.available).toBe(true)
+  })
+
+  test('choosing a name again lets the domain go', async () => {
+    await publish({ domain: 'notes.example.com' })
+    const response = await publish({ subdomain: 'field' })
+
+    expect(response.json.space.blog.domain).toBeNull()
+    expect(response.json.space.blog.subdomain).toBe('field')
+    expect((await call(env, '/', { host: 'notes.example.com' })).status).not.toBe(200)
+  })
+
+  test('a domain and a name together keep only the domain', async () => {
+    const response = await publish({ subdomain: 'field', domain: 'notes.example.com' })
+
+    expect(response.json.space.blog.subdomain).toBeNull()
+    expect(response.json.space.blog.domain).toBe('notes.example.com')
+  })
+
+  test('changing only the note keeps the address', async () => {
+    await addNote('home.md', '# Hello\n')
+    await publish({ subdomain: 'field' })
+    const response = await publish({ note: 'home.md' })
+
+    expect(response.status).toBe(200)
+    expect(response.json.space.blog.subdomain).toBe('field')
+    expect(response.json.space.blog.note).toBe('home.md')
+  })
+
+  test('refuses to publish with no address at all', async () => {
+    const response = await publish({})
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('choose an address')
+  })
+})
+
 describe('choosing a subdomain', () => {
   test('reserved names are refused', async () => {
     expect((await publish({ subdomain: 'www' })).status).toBe(409)
@@ -192,6 +271,37 @@ describe('choosing a subdomain', () => {
     await publish({ subdomain: 'taken-name' })
     expect((await call(env, '/v1/spaces/available/taken-name', { token })).json.available).toBe(false)
     expect((await call(env, '/v1/spaces/available/www', { token })).json.available).toBe(false)
+  })
+})
+
+describe('the author', () => {
+  test('is named on the index and in the footer once they have a name', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada Lovelace' } })
+    await publish({ subdomain: 'field' })
+
+    const index = await call(env, '/', { host: 'field.nibeditor.com' })
+    expect(index.text).toContain('by Ada Lovelace')
+    expect(index.text).toContain('<meta name="author" content="Ada Lovelace">')
+
+    const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    expect(note.text).toContain('Ada Lovelace')
+  })
+
+  test('is left out until there is a name', async () => {
+    await publish({ subdomain: 'field' })
+
+    const index = await call(env, '/', { host: 'field.nibeditor.com' })
+    expect(index.text).not.toContain('by ')
+    expect(index.text).not.toContain('name="author"')
+  })
+
+  test('cannot smuggle markup through the name', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token, body: { name: '<b>Ada</b>' } })
+    await publish({ subdomain: 'field' })
+
+    const index = await call(env, '/', { host: 'field.nibeditor.com' })
+    expect(index.text).not.toContain('<b>Ada</b>')
+    expect(index.text).toContain('&lt;b&gt;Ada&lt;/b&gt;')
   })
 })
 

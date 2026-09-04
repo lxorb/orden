@@ -12,7 +12,7 @@ export async function userForToken(env: Env, token: string): Promise<User | null
   const hash = await sha256(token)
 
   const row = await env.DB.prepare(
-    `select u.id, u.email, u.created_at
+    `select u.id, u.email, u.name, u.created_at
        from sessions s join users u on u.id = s.user_id
       where s.token_hash = ? and s.expires_at > ?`,
   )
@@ -109,13 +109,13 @@ auth.post('/verify', async (context) => {
   await context.env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
 
   let user = await context.env.DB.prepare(
-    'select id, email, created_at from users where email = ?',
+    'select id, email, name, created_at from users where email = ?',
   )
     .bind(address)
     .first<User>()
 
   if (!user) {
-    user = { id: newId(), email: address, created_at: now() }
+    user = { id: newId(), email: address, name: null, created_at: now() }
     await context.env.DB.prepare(
       'insert into users (id, email, created_at) values (?, ?, ?)',
     )
@@ -130,8 +130,13 @@ auth.post('/verify', async (context) => {
     .bind(await sha256(token), user.id, now(), now() + SESSION_TTL)
     .run()
 
-  return context.json({ token, user: { id: user.id, email: user.email } })
+  return context.json({ token, user: presentUser(user) })
 })
+
+/** The account as the app sees it: never the session, never the timestamps. */
+export function presentUser(user: User) {
+  return { id: user.id, email: user.email, name: user.name }
+}
 
 auth.post('/signout', async (context) => {
   const header = context.req.header('authorization')

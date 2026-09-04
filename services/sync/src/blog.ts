@@ -94,17 +94,20 @@ ul.index a{display:flex;justify-content:space-between;gap:1rem;padding:.85rem 0;
 ul.index a:hover{color:var(--accent)}
 ul.index time{color:var(--muted);font-size:.85em;flex:none}
 footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.82em}
+.by{margin:-.4em 0 2.2em;color:var(--muted);font-size:.94em}
 `
 
-function page(heading: string, body: string, env: Env): Response {
+/** The author's name, when they have given one: in the head for machines,
+ *  in the footer for readers. */
+function page(heading: string, body: string, env: Env, author: string | null): Response {
   const html = `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(heading)}</title>
-<link rel="stylesheet" href="${KATEX_CSS}">
+${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${KATEX_CSS}">
 <style>${STYLE}</style>
 </head><body><main>${body}
-<footer>Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
+<footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
 </main></body></html>`
 
   return new Response(html, {
@@ -128,12 +131,17 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
 
+  const owner = await env.DB.prepare('select name from users where id = ?')
+    .bind(space.user_id)
+    .first<{ name: string | null }>()
+  const author = owner?.name ?? null
+
   // One note published on its own is the whole site: it sits at the root with
   // no index above it, and nothing else in the space is reachable.
   if (space.blog_note) {
     const only = results.find((entry) => entry.path === space.blog_note)
-    if (!only) return page('Not found', '<h1>Not found</h1>', env)
-    if (slug) return page('Not found', '<h1>Not found</h1>', env)
+    if (!only) return page('Not found', '<h1>Not found</h1>', env, author)
+    if (slug) return page('Not found', '<h1>Not found</h1>', env, author)
 
     const object = await env.NOTES.get(`spaces/${space.id}/${only.id}`)
     const source = object ? await object.text() : ''
@@ -142,6 +150,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
       title(only, source),
       renderMarkdown(source, { footnotes: true, escapeHtml: true }),
       env,
+      author,
     )
   }
 
@@ -154,15 +163,18 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
       })
       .join('')
 
+    const byline = author ? `<p class="by">by ${escape(author)}</p>` : ''
+
     return page(
       heading,
-      `<h1>${escape(heading)}</h1><ul class="index">${items}</ul>`,
+      `<h1>${escape(heading)}</h1>${byline}<ul class="index">${items}</ul>`,
       env,
+      author,
     )
   }
 
   const note = results.find((entry) => slugFor(entry.path) === slug)
-  if (!note) return page('Not found', '<h1>Not found</h1>', env)
+  if (!note) return page('Not found', '<h1>Not found</h1>', env, author)
 
   const object = await env.NOTES.get(`spaces/${space.id}/${note.id}`)
   const source = object ? await object.text() : ''
@@ -170,5 +182,10 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   // A published note is public: its raw HTML is shown, never run.
   const rendered = renderMarkdown(source, { footnotes: true, escapeHtml: true })
 
-  return page(title(note, source), `${rendered}<p><a href="/">← ${escape(heading)}</a></p>`, env)
+  return page(
+    title(note, source),
+    `${rendered}<p><a href="/">← ${escape(heading)}</a></p>`,
+    env,
+    author,
+  )
 }

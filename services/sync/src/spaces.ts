@@ -45,7 +45,7 @@ spaces.get('/', async (context) => {
     .all<{ id: string }>()
 
   return context.json({
-    spaces: results.map(present),
+    spaces: results.map((one) => present(one, context.env)),
     deleted: gone.results.map((one) => one.id),
   })
 })
@@ -85,7 +85,7 @@ spaces.post('/', async (context) => {
     .bind(space.id, space.user_id, space.name, space.position, space.created_at, space.updated_at)
     .run()
 
-  return context.json({ space: present(space) }, 201)
+  return context.json({ space: present(space, context.env) }, 201)
 })
 
 /** The whole rail order in one go: ids in the order they should appear.
@@ -148,7 +148,7 @@ spaces.patch('/:id', async (context) => {
     .bind(label, icon, now(), space.id)
     .run()
 
-  return context.json({ space: present({ ...space, name: label, icon }) })
+  return context.json({ space: present({ ...space, name: label, icon }, context.env) })
 })
 
 spaces.delete('/:id', async (context) => {
@@ -211,6 +211,20 @@ spaces.put('/:id/blog', async (context) => {
     return context.json({ error: 'that does not look like a domain' }, 400)
   }
 
+  // One address, not two. A domain of their own replaces the shared name, so
+  // the name goes back into the pool; choosing a name lets the domain go. A
+  // request that names neither is changing something else and keeps what
+  // the space had.
+  const address = domain
+    ? { subdomain: null, domain }
+    : subdomain !== undefined
+      ? { subdomain, domain: null }
+      : { subdomain: space.blog_subdomain, domain: space.blog_domain }
+
+  if (!address.subdomain && !address.domain) {
+    return context.json({ error: 'choose an address' }, 400)
+  }
+
   // A note path publishes that one note at the root; null publishes the space.
   const note = body.note === undefined ? space.blog_note : (cleanPath(body.note ?? '') ?? null)
 
@@ -226,18 +240,21 @@ spaces.put('/:id/blog', async (context) => {
 
   await context.env.DB.prepare(
     `update spaces set blog_enabled = 1,
-                       blog_subdomain = coalesce(?, blog_subdomain),
+                       blog_subdomain = ?,
                        blog_domain = ?,
                        blog_title = coalesce(?, blog_title),
                        blog_note = ?,
                        updated_at = ?
       where id = ?`,
   )
-    .bind(subdomain ?? null, domain || null, body.title?.trim() || null, note, now(), space.id)
+    .bind(address.subdomain, address.domain, body.title?.trim() || null, note, now(), space.id)
     .run()
 
   const updated = await ownedSpace(context.env, user.id, space.id)
-  return context.json({ space: present(updated!), dns: dnsRecords(context.env, updated!) })
+  return context.json({
+    space: present(updated!, context.env),
+    dns: dnsRecords(context.env, updated!),
+  })
 })
 
 spaces.delete('/:id/blog', async (context) => {
@@ -287,7 +304,7 @@ export function dnsRecords(env: Env, space: Space) {
   ]
 }
 
-function present(space: Space) {
+function present(space: Space, env: Env) {
   return {
     id: space.id,
     name: space.name,
@@ -301,6 +318,9 @@ function present(space: Space) {
       domain: space.blog_domain,
       title: space.blog_title,
       note: space.blog_note,
+      // Carried on the listing as well, so the pane can show what to add at
+      // the registrar after a reload and not only right after publishing.
+      dns: dnsRecords(env, space),
     },
   }
 }
