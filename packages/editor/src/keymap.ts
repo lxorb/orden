@@ -8,7 +8,6 @@ import {
   insertImage,
   insertLink,
   insertMathBlock,
-  insertTable,
   setHeading,
   shiftHeading,
   toggleBulletList,
@@ -17,6 +16,7 @@ import {
   toggleWrap,
 } from './commands'
 import { copyMarkdown, pastePlain } from './paste'
+import { insertTableToEdit } from './table/keymap'
 
 const WORD = /[\p{L}\p{N}_]/u
 
@@ -62,7 +62,7 @@ export const nibKeymap: KeyBinding[] = [
   { key: 'Mod-=', run: shiftHeading(1), preventDefault: true },
   { key: 'Mod--', run: shiftHeading(-1), preventDefault: true },
 
-  { key: 'Mod-t', run: insertTable(), preventDefault: true },
+  { key: 'Mod-t', run: insertTableToEdit, preventDefault: true },
   { key: 'Mod-Shift-k', run: insertCodeFence, preventDefault: true },
   { key: 'Mod-Shift-m', run: insertMathBlock, preventDefault: true },
   { key: 'Mod-Shift-q', run: toggleQuote, preventDefault: true },

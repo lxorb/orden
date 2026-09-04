@@ -417,36 +417,57 @@
   color: var(--line-strong);
 }
 
-/* Rendered, editable table. The padding is not spacing but room for the
-   controls that hang over the header and beside the rows. The negative
-   margins put that room in the page's own gutters, so the table starts where
-   the text does and can run into the right-hand gutter before its cells have
-   to wrap: a table that nearly fits the column should not fold for the sake
-   of an inset. Wider than that and it scrolls. */
+/* Rendered, editable table. The widget is exactly as tall as the table: the
+   controls that hang over the header and beside the rows sit in the page's
+   gutters and over the line above, so a reader pays no room for them. The
+   scrolling part is a box of its own, because a scroll container clips in
+   both directions and would cut off anything hanging outside it. */
 .nib-table-wrap {
   position: relative;
-  margin-left: -26px;
-  margin-right: calc(-1 * var(--space-5));
-  padding: 18px 0 0.15em 26px;
-  overflow-x: auto;
   animation: settle-in var(--dur-base) var(--ease-out);
 }
 
-.nib-table {
+/* Starts in the left gutter, which is where the row controls sit, and can
+   run into the right-hand gutter before its cells have to wrap: a table that
+   nearly fits the column should not fold for the sake of an inset. Wider
+   than that and it scrolls. */
+.nib-table-scroll {
+  margin-left: -40px;
+  margin-right: calc(-1 * var(--space-5));
+  padding-left: 40px;
+  overflow-x: auto;
+}
+
+/* The export stylesheet reaches the editor too - the writing surface is
+   `#write` - and gives every table a margin, the full width and, on a phone,
+   a scrolling box of its own. Named by id here to outrank it: the widget's
+   spacing is the lines around it, its width is its content's, and the
+   scrolling is done by the box above. */
+#write .nib-table {
+  display: table;
+  width: auto;
+  min-width: 60%;
+  max-width: none;
+  margin: 0;
+  overflow: visible;
   border-collapse: collapse;
   font-family: var(--font-content);
   font-size: 0.94em;
-  min-width: 60%;
 }
 
-.nib-table th,
-.nib-table td {
+/* Words wrap at spaces, as they do in any table. The editor's own line
+   wrapping breaks them anywhere, which would fold a wide table into tall,
+   shattered cells rather than letting it scroll. */
+#write .nib-table th,
+#write .nib-table td {
   position: relative;
   border: 1px solid var(--table-border-color);
   padding: 0.44em 0.7em;
   min-width: 3.5em;
   text-align: left;
   vertical-align: top;
+  word-break: normal;
+  overflow-wrap: normal;
   outline: none;
   transition: background var(--dur-fast) var(--ease-out);
 }
@@ -481,7 +502,7 @@
   padding: 0.05em 0.2em;
 }
 
-.nib-table th {
+#write .nib-table th {
   background: var(--surface);
   font-weight: 620;
   color: var(--text-strong);
@@ -501,10 +522,15 @@
   background: var(--accent-soft);
 }
 
+/* The editor paints its own selection and hides the browser's, which is the
+   only one a cell has. */
+.cm-content .nib-table ::selection {
+  background: var(--selection);
+}
+
 /* Controls stay out of the way until the cell they belong to is engaged. */
-.nib-table-controls,
+.nib-table-columns,
 .nib-table-grip {
-  display: flex;
   gap: 1px;
   opacity: 0;
   pointer-events: none;
@@ -513,32 +539,40 @@
     transform var(--dur-base) var(--ease-out);
 }
 
-.nib-table-controls {
+/* One bar for the whole table, moved over whichever header cell is hovered
+   or holds the caret. It hangs above the table, over the line before it. */
+.nib-table-columns {
   position: absolute;
-  bottom: 100%;
-  left: -1px;
+  top: 0;
+  left: 0;
+  display: flex;
   padding-bottom: 3px;
-  transform: translateY(4px);
+  transform: translateY(calc(-100% + 4px));
 }
 
+.nib-table-columns.is-shown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-100%);
+}
+
+/* Two by two, wholly to the left of the row: a strip of four would reach
+   into the first cell and sit on its text. */
 .nib-table-grip {
   position: absolute;
-  left: -26px;
-  top: 0;
-  height: 100%;
-  align-items: center;
-  border: none;
-  padding: 0;
-  transform: translateX(4px);
+  right: 100%;
+  top: 50%;
+  margin-right: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 17px);
+  transform: translate(4px, -50%);
 }
 
-.nib-table th:hover .nib-table-controls,
-.nib-table th:focus-within .nib-table-controls,
 .nib-table tr:hover .nib-table-grip,
 .nib-table tr:focus-within .nib-table-grip {
   opacity: 1;
   pointer-events: auto;
-  transform: none;
+  transform: translate(0, -50%);
 }
 
 .nib-table-btn {
@@ -556,6 +590,12 @@
     background var(--dur-instant) var(--ease-out),
     color var(--dur-instant) var(--ease-out),
     transform var(--dur-fast) var(--ease-spring);
+}
+
+.nib-table-btn.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
 }
 
 .nib-table-btn:hover {
@@ -588,6 +628,12 @@
   height: 100%;
   cursor: col-resize;
   z-index: 1;
+}
+
+/* Kept inside the last cell: a handle past the table's edge is overflow,
+   and overflow is a scrollbar under every table. */
+.nib-table th:last-child .nib-table-resize {
+  right: 0;
 }
 
 .nib-table-resize::after {

@@ -8,6 +8,7 @@ import { mermaidDescription } from './mermaid'
 import { numberEquations } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { closeBrackets } from '@codemirror/autocomplete'
+import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 
 /** Each mode lives in its own compartment so it can be swapped at runtime
@@ -112,6 +113,8 @@ export function modeExtensions(): Extension {
 }
 
 export function setStrictMode(view: EditorView, on: boolean) {
+  // Strict mode has no tables; a cell still being typed in would go with them.
+  flushTableEdits()
   view.dispatch({ effects: language.reconfigure(markdownFor(on)) })
 }
 
@@ -122,6 +125,7 @@ export function setEquationNumbers(view: EditorView, on: boolean) {
 
 /** Source mode shows the markdown as written, with no syntax hidden. */
 export function setSourceMode(view: EditorView, on: boolean) {
+  flushTableEdits()
   view.dispatch({ effects: preview.reconfigure(on ? [] : livePreview()) })
 }
 

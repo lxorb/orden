@@ -11,6 +11,7 @@ import { closeFence } from './commands'
 import { nibKeymap } from './keymap'
 import { richPaste } from './paste'
 import { modeExtensions } from './modes'
+import { tableKeymap } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
 
 export interface EditorOptions {
@@ -58,6 +59,9 @@ export function createEditor(options: EditorOptions): EditorView {
         // a quote and would otherwise take the key on a fence inside one.
         Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
         keymap.of([
+          // Arrow keys beside a table walk into it; the defaults would step
+          // over it. These give way whenever no table is in the way.
+          ...tableKeymap,
           // Markdown bindings come first so they win over the defaults.
           ...nibKeymap,
           ...closeBracketsKeymap,

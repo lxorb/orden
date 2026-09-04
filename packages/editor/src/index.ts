@@ -42,6 +42,7 @@ export {
   setTypewriterMode,
 } from './modes'
 export { flushTableEdits } from './table/widget'
+export { insertTableToEdit } from './table/keymap'
 export { EditorView } from '@codemirror/view'
 export { EditorState } from '@codemirror/state'
 export type { StateCommand, Transaction } from '@codemirror/state'
