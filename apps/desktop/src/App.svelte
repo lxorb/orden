@@ -25,6 +25,8 @@
     toggleOrderedList,
     toggleQuote,
     toggleWrap,
+    showLine,
+    topLine,
   } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import Editor from './lib/Editor.svelte'
@@ -115,35 +117,63 @@
   $effect(() => {
     const current = view
     const id = workspace.activeTabId
+    // A preview tab moves on to another note without becoming another tab,
+    // so the note's own place has to be read again when that happens.
+    const path = workspace.active?.path ?? null
     if (!current || !id) return
 
     const tab = untrack(() => workspace.tabs.find((one) => one.id === id))
-    const at = Math.min(untrack(() => tab?.cursor ?? 0), current.state.doc.length)
+    const cursor = untrack(() => tab?.cursor ?? 0)
     const top = untrack(() => tab?.scroll ?? 0)
-
-    // The caret needs no layout, so it goes back now, and recording starts the
-    // moment it has. Waiting would let the fresh view's caret at 0 be written
-    // down as the real one.
-    current.dispatch({ selection: { anchor: at } })
-    placed = id
-
-    // The scroll offset does need layout, and there is none until a frame has
-    // been drawn.
-    const frame = requestAnimationFrame(() => {
-      current.scrollDOM.scrollTop = top
-    })
+    const anchor = untrack(() => tab?.anchor)
 
     const remember = () => {
       if (placed !== id) return
-      workspace.noteView(id, current.state.selection.main.head, current.scrollDOM.scrollTop)
+      // What the view shows belongs to the note the tab is on now; if that is
+      // no longer this one, this run has nothing true to say about it.
+      const now = untrack(() => workspace.tabs.find((one) => one.id === id)?.path ?? null)
+      if (now !== path) return
+      workspace.noteView(
+        id,
+        current.state.selection.main.head,
+        current.scrollDOM.scrollTop,
+        topLine(current),
+      )
     }
 
-    current.scrollDOM.addEventListener('scroll', remember, { passive: true })
+    // Placed once a frame has laid the note out: the caret needs the text to
+    // be in, the offset needs a height, and a view that has just been made
+    // has neither. Recording starts only then, so nothing gets written down
+    // about a view that is still settling.
+    const frame = requestAnimationFrame(() => {
+      const at = Math.min(cursor, current.state.doc.length)
+      current.dispatch({ selection: { anchor: at } })
+
+      // The line that was at the top goes back to the top. Only a session
+      // written by an older build has no line, and keeps its pixel offset -
+      // with one more pass after the measure, since the estimate can put the
+      // same offset on a different line.
+      if (anchor !== undefined) showLine(current, anchor)
+      else {
+        current.scrollDOM.scrollTop = top
+        current.requestMeasure({
+          read: () => null,
+          write: () => {
+            if (placed === id) current.scrollDOM.scrollTop = top
+          },
+        })
+      }
+
+      placed = id
+      current.scrollDOM.addEventListener('scroll', remember, { passive: true })
+    })
 
     return () => {
       cancelAnimationFrame(frame)
       current.scrollDOM.removeEventListener('scroll', remember)
-      remember()
+      // A view that has already left the page reads as scrolled to the top,
+      // which is not where the note was: what was recorded as it moved stands.
+      if (current.scrollDOM.isConnected) remember()
       placed = null
     }
   })
@@ -583,7 +613,12 @@
             onselection={(current) => {
               formatBar?.follow(current)
               if (placed && placed === workspace.activeTabId) {
-                workspace.noteView(placed, current.state.selection.main.head, current.scrollDOM.scrollTop)
+                workspace.noteView(
+                  placed,
+                  current.state.selection.main.head,
+                  current.scrollDOM.scrollTop,
+                  topLine(current),
+                )
               }
             }}
           />

@@ -234,3 +234,53 @@ describe('selecting several rows', () => {
     expect(workspace.selection).toEqual([])
   })
 })
+
+describe('where a note was last looked at', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.previewTabId = null
+    workspace.setAutoSave(false)
+  })
+
+  test('a closed note reopens where it was', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.tabs.find((one) => one.path === '/space/a.md')!
+    workspace.noteView(tab.id, 3, 420, 12)
+    workspace.close(tab.id)
+    expect(workspace.tabs.some((one) => one.path === '/space/a.md')).toBe(false)
+
+    await workspace.open('/space/a.md')
+    const again = workspace.tabs.find((one) => one.path === '/space/a.md')!
+    expect(again.cursor).toBe(3)
+    expect(again.scroll).toBe(420)
+    expect(again.anchor).toBe(12)
+  })
+
+  test('a preview tab moving on to another note takes that note’s place', async () => {
+    await workspace.open('/space/a.md', { preview: true })
+    const tab = workspace.tabs.find((one) => one.path === '/space/a.md')!
+    workspace.noteView(tab.id, 2, 100)
+
+    await workspace.open('/space/b.md', { preview: true })
+    expect(tab.path).toBe('/space/b.md')
+    expect(tab.scroll).toBeUndefined()
+
+    await workspace.open('/space/a.md', { preview: true })
+    expect(tab.path).toBe('/space/a.md')
+    expect(tab.scroll).toBe(100)
+    expect(tab.cursor).toBe(2)
+  })
+
+  test('the places survive a restart', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.tabs.find((one) => one.path === '/space/a.md')!
+    workspace.noteView(tab.id, 1, 77)
+    workspace.close(tab.id)
+
+    const saved = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+      positions?: Record<string, { cursor: number; scroll: number }>
+    }
+    expect(saved.positions?.['/space/a.md']).toMatchObject({ cursor: 1, scroll: 77 })
+  })
+})

@@ -35,10 +35,12 @@ export interface Tab {
   name: string
   doc: string
   dirty: boolean
-  /** Offset of the caret and pixels scrolled, so a note reopens where it was
-   *  left rather than at the top. */
+  /** Offset of the caret, pixels scrolled, and the position of the line at the
+   *  top, so a note reopens where it was left rather than at the top. The
+   *  line is what is put back; the pixels serve sessions from older builds. */
   cursor?: number
   scroll?: number
+  anchor?: number
 }
 
 export type Panel = 'tree' | 'outline' | 'search'
@@ -92,12 +94,26 @@ interface Draft {
   dirty: boolean
   cursor: number
   scroll: number
+  anchor?: number
 }
+
+/** Where a note was last looked at on this device. Kept after its tab has
+ *  closed, so the note opens there again rather than at the top. */
+interface Position {
+  cursor: number
+  scroll: number
+  anchor?: number
+  at: number
+}
+
+/** Enough for every note anyone comes back to, small enough for storage. */
+const POSITIONS_KEPT = 300
 
 interface Persisted {
   spaces: Space[]
   activeSpace: string | null
   tabs?: Draft[]
+  positions?: Record<string, Position>
   /** Index into `tabs`, not an id: ids are handed out fresh on every run. */
   active?: number
   /** Written by versions before drafts existed. Still read, so an update
@@ -223,6 +239,7 @@ class Workspace {
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
+  private positions: Record<string, Position> = {}
 
   readonly activeSpace = $derived(this.spaces.find((space) => space.id === this.activeSpaceId) ?? null)
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
@@ -286,6 +303,7 @@ class Workspace {
     }
 
     this.spaces = state.spaces ?? []
+    this.positions = state.positions ?? {}
     // The sidebar comes back the way it was left.
     this.panel = state.panel ?? null
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
@@ -332,6 +350,7 @@ class Workspace {
         dirty: draft.dirty,
         cursor: draft.cursor,
         scroll: draft.scroll,
+        anchor: draft.anchor,
       })
     }
 
@@ -352,9 +371,11 @@ class Workspace {
         dirty: tab.dirty,
         cursor: tab.cursor ?? 0,
         scroll: tab.scroll ?? 0,
+        anchor: tab.anchor,
       })),
       active: Math.max(0, this.tabs.findIndex((tab) => tab.id === this.activeTabId)),
       panel: this.panel,
+      positions: this.positions,
     }
 
     this.write(state)
@@ -393,13 +414,38 @@ class Workspace {
 
   /** Where the caret and the scroll are. Recorded as they move, because after
    *  a crash there is no chance to write them down on the way out. */
-  noteView(id: string, cursor: number, scroll: number) {
+  noteView(id: string, cursor: number, scroll: number, anchor?: number) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (!tab || (tab.cursor === cursor && tab.scroll === scroll)) return
+    if (!tab || (tab.cursor === cursor && tab.scroll === scroll && tab.anchor === anchor)) return
 
     tab.cursor = cursor
     tab.scroll = scroll
+    tab.anchor = anchor
+    if (tab.path) this.rememberPlace(tab.path, cursor, scroll, anchor)
     this.scheduleSession()
+  }
+
+  private rememberPlace(path: string, cursor: number, scroll: number, anchor?: number) {
+    this.positions[path] = { cursor, scroll, anchor, at: Date.now() }
+
+    const paths = Object.keys(this.positions)
+    if (paths.length <= POSITIONS_KEPT) return
+    paths.sort((a, b) => this.positions[a].at - this.positions[b].at)
+    for (const old of paths.slice(0, paths.length - POSITIONS_KEPT)) delete this.positions[old]
+  }
+
+  /** Where a note was last looked at, for a tab that opens it afresh. */
+  private placeOf(path: string): { cursor?: number; scroll?: number; anchor?: number } {
+    const known = this.positions[path]
+    return known ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor } : {}
+  }
+
+  /** A note that moves takes its place along. */
+  private movePlace(from: string, to: string) {
+    const known = this.positions[from]
+    if (!known) return
+    delete this.positions[from]
+    this.positions[to] = known
   }
 
   openBlank(name = UNTITLED, doc = '') {
@@ -659,6 +705,7 @@ class Workspace {
     if (target === from || intoFolder.startsWith(from)) return
 
     await invoke('rename_note', { from, to: target })
+    this.movePlace(from, target)
     this.recordFileAction({ kind:'move', from, to: target })
 
     for (const tab of this.tabs.filter((entry) => entry.path === from)) {
@@ -705,10 +752,14 @@ class Workspace {
       options.preview && this.tabs.find((tab) => tab.id === this.previewTabId && !tab.dirty)
 
     if (reusable) {
+      const place = this.placeOf(path)
       reusable.path = path
       reusable.name = basename(path)
       reusable.doc = doc
       reusable.dirty = false
+      reusable.cursor = place.cursor
+      reusable.scroll = place.scroll
+      reusable.anchor = place.anchor
 
       if (options.activate !== false) {
         this.activeTabId = reusable.id
@@ -719,7 +770,7 @@ class Workspace {
       return
     }
 
-    const tab: Tab = { id: identifier(), path, name: basename(path), doc, dirty: false }
+    const tab: Tab = { id: identifier(), path, name: basename(path), doc, dirty: false, ...this.placeOf(path) }
     this.tabs = [...this.tabs, tab]
     if (options.activate !== false) {
       this.activeTabId = tab.id
@@ -1110,6 +1161,7 @@ class Workspace {
     if (target === path) return
 
     await invoke('rename_note', { from: path, to: target })
+    this.movePlace(path, target)
     this.recordFileAction({ kind:'rename', from: path, to: target })
 
     const tab = this.tabs.find((entry) => entry.path === path)
@@ -1179,6 +1231,7 @@ class Workspace {
         else await invoke('write_note', { path: action.path, content: action.content })
       } else {
         await invoke('rename_note', { from: action.to, to: action.from })
+        this.movePlace(action.to, action.from)
 
         for (const tab of this.tabs.filter((entry) => entry.path === action.to)) {
           tab.path = action.from
