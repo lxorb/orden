@@ -134,10 +134,15 @@
    leaves light text white on a dark page, multiply leaves dark text black on
    a light one, and over a plain background either comes out the same shade
    the layer had underneath. CodeMirror writes the layer's depth onto the
-   element itself, which only an important declaration outranks. */
+   element itself, which only an important declaration outranks.
+
+   Being above the text, the layer would take every click aimed at selected
+   text, and a click inside a selection - which should collapse it to a caret
+   there - would never reach the editor. So it lets the pointer through. */
 .cm-editor .cm-selectionLayer {
   z-index: 1 !important;
   mix-blend-mode: screen;
+  pointer-events: none;
 }
 
 [data-theme='light'] .cm-editor .cm-selectionLayer {
