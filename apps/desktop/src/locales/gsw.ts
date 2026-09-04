@@ -323,4 +323,23 @@ export const gsw: Dictionary = {
   'could not publish': 'Veröffentliche het nöd klappt',
   'could not create a token': 'Token mache het nöd klappt',
   'that did not work': 'Das het nöd klappt',
+
+  // Settings on a phone, display names, one blog address
+  Back: 'Zrugg',
+  'Display name': 'Aazeigname',
+  'Your name': 'Din Name',
+  'Shown on anything you publish.': 'Staht uf allem, wo du veröffentlichsch.',
+  Email: 'E-Mail',
+  'On nibeditor.com': 'Uf nibeditor.com',
+  'Your own domain': 'Eigeni Domain',
+  'Switching gives up {name}.': 'Bim Wächsle gisch du {name} uf.',
+  Page: 'Siite',
+  'This note': 'Die Notiz',
+  'Source code': 'Quellcode',
+  Minimize: 'Minimiere',
+  Maximize: 'Maximiere',
+  Restore: 'Wiederhärstelle',
+  'Show in Explorer’s New menu': 'Im „Neu“-Menü vom Explorer zeige',
+  'choose an address': 'Wähl e Adrässe',
+  'use at most 60 characters': 'Höchschtens 60 Zeiche',
 }

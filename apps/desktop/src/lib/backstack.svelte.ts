@@ -10,6 +10,12 @@ class BackStack {
   private layers: { id: number; close: () => void }[] = []
   private next = 1
   private listening = false
+  /** Entries given back with `history.back()` that the browser has not yet
+   *  answered with a popstate. The call is asynchronous, so two layers closing
+   *  in one go - a settings pane and the sheet holding it - would otherwise
+   *  each find the other's entry still on top and leave one behind. Counting
+   *  what is owed keeps the history and the open layers in step. */
+  private pending = 0
 
   /** Registers a layer that is now open. Returns the function to call when it
    *  closes, whichever way that happened. */
@@ -26,7 +32,8 @@ class BackStack {
       if (at < 0) return
 
       this.layers.splice(at, 1)
-      if (history.state?.nibLayer === layer.id) history.back()
+      this.pending++
+      history.back()
     }
   }
 
@@ -35,6 +42,12 @@ class BackStack {
     this.listening = true
 
     window.addEventListener('popstate', () => {
+      // An entry a layer gave back on closing: nothing is left to close.
+      if (this.pending > 0) {
+        this.pending--
+        return
+      }
+
       // Popped before closing: the layer's own cleanup then finds nothing to
       // do, instead of trying to give back an entry that is already spent.
       const layer = this.layers.pop()

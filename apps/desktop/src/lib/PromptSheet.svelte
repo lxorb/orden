@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
+  import Select from './Select.svelte'
 
   let field = $state<HTMLInputElement>()
 
@@ -42,14 +43,15 @@
 
         <!-- Only worth asking when there is more than one answer. -->
         {#if prompt.spaces.length > 1}
-          <label class="field">
+          <div class="field">
             <span class="label">{t('Space')}</span>
-            <select bind:value={prompt.space}>
-              {#each prompt.spaces as option (option.id)}
-                <option value={option.id}>{option.name}</option>
-              {/each}
-            </select>
-          </label>
+            <Select
+              value={prompt.space ?? ''}
+              options={prompt.spaces.map((one) => ({ value: one.id, label: one.name }))}
+              onchange={(id) => (prompt.space = id)}
+              label={t('Space')}
+            />
+          </div>
         {/if}
       {:else if prompt.detail}
         <p class="detail">{prompt.detail}</p>

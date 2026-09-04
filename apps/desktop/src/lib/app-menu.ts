@@ -24,9 +24,13 @@ import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
 import { newSpace } from './space-actions'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop, openExternal } from './tauri'
 import { stageUpdate } from './updater'
 import { workspace } from './workspace.svelte'
+
+/** Where the app is developed, which is the whole of "about" for an open
+ *  source editor. */
+const SOURCE_URL = 'https://github.com/lxorb/nib'
 
 export interface MenuAction {
   label: string
@@ -263,7 +267,7 @@ export function appMenu(context: Context): MenuGroup[] {
         ...(isDesktop
           ? [{ label: t('Check for updates'), run: () => void stageUpdate() }]
           : []),
-        { label: t('About Nib'), run: () => settings.show('account') },
+        { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
       ],
     },
   ]

@@ -322,4 +322,23 @@ export const fr: Dictionary = {
   'could not publish': 'La publication a échoué',
   'could not create a token': 'La création du jeton a échoué',
   'that did not work': "Cela n'a pas fonctionné",
+
+  // Settings on a phone, display names, one blog address
+  Back: 'Retour',
+  'Display name': "Nom d'affichage",
+  'Your name': 'Votre nom',
+  'Shown on anything you publish.': 'Affiché sur tout ce que vous publiez.',
+  Email: 'E-mail',
+  'On nibeditor.com': 'Sur nibeditor.com',
+  'Your own domain': 'Votre propre domaine',
+  'Switching gives up {name}.': 'Changer abandonne {name}.',
+  Page: 'Page',
+  'This note': 'Cette note',
+  'Source code': 'Code source',
+  Minimize: 'Réduire',
+  Maximize: 'Agrandir',
+  Restore: 'Restaurer',
+  'Show in Explorer’s New menu': "Afficher dans le menu Nouveau de l'Explorateur",
+  'choose an address': 'Choisissez une adresse',
+  'use at most 60 characters': '60 caractères au maximum',
 }

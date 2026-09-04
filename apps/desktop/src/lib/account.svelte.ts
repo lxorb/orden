@@ -85,6 +85,13 @@ class Session {
     if (token) await api.signOut(token).catch(() => undefined)
   }
 
+  /** The name shown on anything the account publishes. Throws on refusal,
+   *  so the pane asking can say why. */
+  async rename(name: string) {
+    if (!this.token) return
+    this.user = (await api.rename(this.token, name)).user
+  }
+
   async loadSpaces() {
     if (!this.token) return
     const listed = await api.listSpaces(this.token)

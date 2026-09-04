@@ -20,6 +20,9 @@ const STORAGE_KEY = 'nib:theme'
 const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
+/** Not a theme of its own: whichever built-in the system asks for, live. */
+export const SYSTEM = 'system'
+
 // Two schemes, and a colour of your own on top. More built-in themes only
 // asked people to choose between things that were nearly the same.
 const BUILT_IN: ThemeInfo[] = [
@@ -29,24 +32,40 @@ const BUILT_IN: ThemeInfo[] = [
 
 const ACCENT_KEY = 'nib:accent'
 
-function systemScheme(): Scheme {
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
-}
+const LIGHT = '(prefers-color-scheme: light)'
 
 class Themes {
-  id = $state<string>('dark')
+  id = $state<string>(SYSTEM)
   accent = $state<string>(DEFAULT_ACCENT)
   files = $state<ThemeInfo[]>([])
+  /** What the system currently prefers. Kept up to date, so following it
+   *  means following it through the day and not only at launch. */
+  private preferred = $state<Scheme>('dark')
 
   readonly accents = ACCENTS
 
-  readonly all = $derived([...BUILT_IN, ...this.files])
-  readonly active = $derived(this.all.find((theme) => theme.id === this.id) ?? BUILT_IN[0])
+  /** The choice at the top is to follow the system; the rest are themes. */
+  readonly all = $derived<ThemeInfo[]>([
+    { id: SYSTEM, name: 'Match the system', scheme: this.preferred },
+    ...BUILT_IN,
+    ...this.files,
+  ])
+  readonly active = $derived.by((): ThemeInfo => {
+    if (this.id === SYSTEM) return BUILT_IN.find((one) => one.scheme === this.preferred)!
+    return this.all.find((theme) => theme.id === this.id) ?? BUILT_IN[0]
+  })
   readonly current = $derived(this.active.scheme)
 
   init() {
+    const light = window.matchMedia(LIGHT)
+    this.preferred = light.matches ? 'light' : 'dark'
+    light.addEventListener('change', (event) => {
+      this.preferred = event.matches ? 'light' : 'dark'
+      if (this.id === SYSTEM) this.apply()
+    })
+
     const saved = localStorage.getItem(STORAGE_KEY)
-    this.id = saved && saved !== 'null' ? saved : systemScheme()
+    this.id = saved && saved !== 'null' ? saved : SYSTEM
     this.accent = localStorage.getItem(ACCENT_KEY) ?? DEFAULT_ACCENT
     this.apply()
     void this.reload()
@@ -74,7 +93,7 @@ class Themes {
     }
 
     // A theme file may have been deleted while it was selected.
-    if (!this.all.some((theme) => theme.id === this.id)) this.select(systemScheme())
+    if (!this.all.some((theme) => theme.id === this.id)) this.select(SYSTEM)
 
     await this.loadCustom()
   }
@@ -121,11 +140,12 @@ class Themes {
     }
   }
 
-  /** The rail's one-click switch: jump to the counterpart scheme. */
+  /** The rail's one-click switch: jump to the counterpart scheme. An explicit
+   *  choice, so it stops following the system until that is chosen again. */
   toggle() {
     const wanted: Scheme = this.current === 'dark' ? 'light' : 'dark'
-    const preferred = this.all.find((theme) => theme.id === wanted)
-    const fallback = this.all.find((theme) => theme.scheme === wanted)
+    const preferred = BUILT_IN.find((theme) => theme.id === wanted)
+    const fallback = this.files.find((theme) => theme.scheme === wanted)
     this.select((preferred ?? fallback ?? BUILT_IN[0]).id)
   }
 

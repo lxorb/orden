@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
+  import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
   import { appMenu, type MenuGroup, SPLIT } from './app-menu'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
+  import { viewport } from './viewport.svelte'
 
   let {
     view,
@@ -24,6 +25,19 @@
   }
 
   const shown = $derived(groups.find((one) => one.id === current))
+
+  /** A popover that grows out of the button on a desktop; a sheet from the
+   *  bottom on a phone, where the thumb is. */
+  function arrive(node: Element) {
+    if (viewport.phone) return fly(node, { y: 40, duration: 220, easing: cubicOut })
+
+    return {
+      duration: 220,
+      easing: cubicOut,
+      css: (t: number) =>
+        `opacity: ${t}; transform: translate(${(t - 1) * 6}px, ${(t - 1) * 6}px) scale(${0.96 + 0.04 * t}); transform-origin: top left`,
+    }
+  }
 
   $effect(() => closeOnBack(open, () => (open = false)))
 </script>
@@ -46,11 +60,16 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" onclick={() => (open = false)}></div>
+  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => (open = false)}></div>
 
-  <div class="menu" transition:fly={{ x: -8, duration: 160, easing: cubicOut }}>
+  <div class="menu" class:phone={viewport.phone} transition:arrive>
+    {#if viewport.phone}
+      <div class="grip" aria-hidden="true"></div>
+    {/if}
+
     <!-- The groups on the left, whatever is chosen on the right, the way a
-         menu bar reads once it has nowhere along the top to live. -->
+         menu bar reads once it has nowhere along the top to live. On a phone
+         the groups are a row of chips instead, above the rows. -->
     <ul class="groups">
       {#each groups as group (group.id)}
         <li>
@@ -110,14 +129,16 @@
     transition: background var(--dur-fast) var(--ease-out);
   }
 
-  .hamburger:hover {
-    background: var(--surface-2);
-    color: var(--text-strong);
+  @media (hover: hover) {
+    .hamburger:hover {
+      background: var(--surface-2);
+      color: var(--text-strong);
+    }
   }
 
   .hamburger svg {
-    width: 15px;
-    height: 15px;
+    width: 17px;
+    height: 17px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
@@ -210,28 +231,120 @@
     background: var(--line);
   }
 
-  /* On a phone the drawer is already the width of the screen, so the menu
-     takes it over rather than sitting beside a rail that is not there. */
+  /* ── On a phone ────────────────────────────────────────────────── */
+
   @media (max-width: 720px) {
     .hamburger {
       width: 48px;
       height: 48px;
     }
 
-    .menu {
+    .hamburger svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Dimmed here, where the sheet is a layer over the app rather than a
+       popover beside a button. */
+    .scrim {
+      background: color-mix(in srgb, var(--bg) 55%, transparent);
+      backdrop-filter: blur(2px);
+    }
+
+    /* Anchored to the bottom, the full width, and tall enough for the longest
+       group without ever covering the whole screen. */
+    .menu.phone {
       top: auto;
-      left: max(var(--space-2), env(safe-area-inset-left));
-      right: max(var(--space-2), env(safe-area-inset-right));
-      bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
-      max-height: 70vh;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      flex-direction: column;
+      max-height: 72dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+      border: none;
+      border-top: 1px solid var(--line-strong);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      background: var(--surface);
     }
 
-    .groups {
-      width: 7.5rem;
+    .grip {
+      flex: none;
+      width: 36px;
+      height: 4px;
+      margin: 8px auto 2px;
+      border-radius: 2px;
+      background: var(--line-strong);
     }
 
-    button {
-      min-height: 44px;
+    /* The groups as chips that wrap, so all of them are in view at once
+       rather than some of them off the edge of a strip. */
+    .phone .groups {
+      flex: none;
+      width: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 14px 10px;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      overflow: visible;
+    }
+
+    .phone .groups button {
+      width: auto;
+      min-height: 36px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: var(--surface-2);
+      color: var(--muted-strong);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .phone .groups button.on {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .phone .rows {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      padding: 6px 8px 8px;
+      overflow-y: auto;
+    }
+
+    .phone .row {
+      min-height: 48px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+    }
+
+    .phone .row:active:not(:disabled) {
+      background: var(--surface-2);
+    }
+
+    /* Hover has no meaning under a finger; the lit row would just stick. */
+    .phone .row:hover:not(:disabled) {
+      background: none;
+      color: var(--text);
+    }
+
+    /* The tick at the trailing edge, where a phone puts what is on, and no
+       room held for it where there is none. */
+    .phone .tick {
+      order: 2;
+      width: auto;
+      margin-left: auto;
+    }
+
+    .phone .hint {
+      display: none;
+    }
+
+    .phone .split {
+      margin: 6px 12px;
     }
   }
 </style>

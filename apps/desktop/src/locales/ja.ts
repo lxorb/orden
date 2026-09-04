@@ -319,4 +319,23 @@ export const ja: Dictionary = {
   'could not publish': '公開できませんでした',
   'could not create a token': 'トークンを作成できませんでした',
   'that did not work': 'うまくいきませんでした',
+
+  // Settings on a phone, display names, one blog address
+  Back: '戻る',
+  'Display name': '表示名',
+  'Your name': 'あなたの名前',
+  'Shown on anything you publish.': '公開するものすべてに表示されます。',
+  Email: 'メール',
+  'On nibeditor.com': 'nibeditor.com 上',
+  'Your own domain': '独自ドメイン',
+  'Switching gives up {name}.': '切り替えると {name} を手放します。',
+  Page: 'ページ',
+  'This note': 'このノート',
+  'Source code': 'ソースコード',
+  Minimize: '最小化',
+  Maximize: '最大化',
+  Restore: '元に戻す',
+  'Show in Explorer’s New menu': 'エクスプローラーの「新規作成」メニューに表示',
+  'choose an address': 'アドレスを選んでください',
+  'use at most 60 characters': '60 文字以内にしてください',
 }

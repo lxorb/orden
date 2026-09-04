@@ -321,4 +321,23 @@ export const de: Dictionary = {
   'could not publish': 'Veröffentlichen ging nicht',
   'could not create a token': 'Token erstellen ging nicht',
   'that did not work': 'Das hat nicht geklappt',
+
+  // Settings on a phone, display names, one blog address
+  Back: 'Zurück',
+  'Display name': 'Anzeigename',
+  'Your name': 'Dein Name',
+  'Shown on anything you publish.': 'Steht auf allem, was du veröffentlichst.',
+  Email: 'E-Mail',
+  'On nibeditor.com': 'Auf nibeditor.com',
+  'Your own domain': 'Eigene Domain',
+  'Switching gives up {name}.': 'Beim Wechsel gibst du {name} auf.',
+  Page: 'Seite',
+  'This note': 'Diese Notiz',
+  'Source code': 'Quellcode',
+  Minimize: 'Minimieren',
+  Maximize: 'Maximieren',
+  Restore: 'Wiederherstellen',
+  'Show in Explorer’s New menu': 'Im „Neu“-Menü des Explorers zeigen',
+  'choose an address': 'Wähle eine Adresse',
+  'use at most 60 characters': 'Höchstens 60 Zeichen',
 }

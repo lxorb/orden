@@ -85,3 +85,15 @@ export function joinPath(dir: string, relative: string): string {
   const separator = dir.includes('\\') ? '\\' : '/'
   return `${dir}${separator}${relative.split('/').join(separator)}`
 }
+
+/** A link to somewhere outside the app: the system browser on a desktop, a
+ *  new tab in a browser. */
+export async function openExternal(url: string): Promise<void> {
+  if (!isDesktop) {
+    window.open(url, '_blank', 'noopener')
+    return
+  }
+
+  const { openUrl } = await import('@tauri-apps/plugin-opener')
+  await openUrl(url)
+}

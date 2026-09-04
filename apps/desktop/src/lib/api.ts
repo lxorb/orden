@@ -6,6 +6,8 @@ export const BASE = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
 export interface Account {
   id: string
   email: string
+  /** Shown on anything the account publishes. Null until chosen. */
+  name: string | null
 }
 
 export interface RemoteSpace {
@@ -22,6 +24,8 @@ export interface RemoteSpace {
     domain: string | null
     title: string | null
     note: string | null
+    /** What to add at the registrar for a domain of one's own. Empty otherwise. */
+    dns: DnsRecord[]
   }
 }
 
@@ -97,6 +101,10 @@ export const api = {
   signOut: (token: string) => request<{ ok: true }>('/v1/auth/signout', { method: 'POST', token }),
 
   me: (token: string) => request<{ user: Account }>('/v1/me', { token }),
+
+  /** An empty name takes it away again. */
+  rename: (token: string, name: string) =>
+    request<{ user: Account }>('/v1/me', { method: 'PATCH', token, body: { name } }),
 
   listSpaces: (token: string) =>
     request<{ spaces: RemoteSpace[]; deleted: string[] }>('/v1/spaces', { token }),

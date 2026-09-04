@@ -28,7 +28,10 @@ interface Connector {
 
 class Settings {
   open = $state(false)
-  section = $state<Section>('account')
+  section = $state<Section>('general')
+  /** On a phone the panes are a list first and a page second: this is whether
+   *  the list is showing rather than one of them. A desktop shows both. */
+  listing = $state(true)
   /** The version-history sheet, which is its own overlay. */
   historyOpen = $state(false)
 
@@ -129,8 +132,11 @@ class Settings {
     }
   }
 
-  show(section: Section = 'account') {
-    this.section = section
+  /** Opens on General, or on the list of panes where the screen is a phone's.
+   *  Asked for by name, a pane opens straight away on both. */
+  show(section?: Section) {
+    this.section = section ?? 'general'
+    this.listing = section === undefined
     this.open = true
     this.error = null
     this.freshToken = null
