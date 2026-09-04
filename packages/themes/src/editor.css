@@ -91,30 +91,34 @@
   box-decoration-break: clone;
 }
 
+/* A block is a run of lines, so it is drawn line by line: a filled band on
+   each, with the first and last carrying the corners. The room above and
+   below is a transparent border rather than a margin, which CodeMirror's line
+   measuring would not see. A border eats into the radius of the padding box,
+   which is the edge the fill is clipped to, so the outer radius is made taller
+   by the border's width: what shows is a corner the size it was meant to be,
+   not a square one. */
 .cm-line.nib-code {
   font-family: var(--font-mono);
   font-size: 0.86em;
   line-height: 1.62;
   background: var(--code-block-bg-color);
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
+  background-clip: padding-box;
   padding: 0 var(--space-4);
 }
 
 .cm-line.nib-code-open {
-  box-shadow: inset 0 1px 0 var(--line);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
   padding-top: var(--space-3);
   border-top: 1.1em solid transparent;
-  background-clip: padding-box;
+  border-top-left-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
+  border-top-right-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
 }
 
 .cm-line.nib-code-close {
-  box-shadow: inset 0 -1px 0 var(--line);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
   padding-bottom: var(--space-3);
   border-bottom: 1.1em solid transparent;
-  background-clip: padding-box;
+  border-bottom-left-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
+  border-bottom-right-radius: var(--radius-md) calc(var(--radius-md) + 1.1em);
 }
 
 /* The fence's own line carries its language and a copy button.
@@ -192,27 +196,42 @@
   opacity: 0.65;
 }
 
-/* Always there: a control you have to hover to discover is one most people
-   never find. */
+/* No box of its own, and only there while the pointer is over the block -
+   the header adds `nib-fence-hover` for that - or once something has been
+   copied, so the tick is seen. A touch screen has no hover, so it stays. */
 .nib-fence-copy {
   display: grid;
   place-items: center;
   width: 22px;
   height: 22px;
   padding: 0;
-  border: 1px solid var(--line);
+  border: none;
   border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  background: none;
   color: var(--muted);
+  opacity: 0;
   cursor: default;
   transition:
-    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
 }
 
+.nib-fence-header.nib-fence-hover .nib-fence-copy,
+.nib-fence-header:hover .nib-fence-copy,
+.nib-fence-copy:focus-visible,
+.nib-fence-copy.nib-fence-copied {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .nib-fence-copy {
+    opacity: 1;
+  }
+}
+
 .nib-fence-copy svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.4;
@@ -221,15 +240,11 @@
 }
 
 .nib-fence-copy:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .nib-fence-copy.nib-fence-copied {
-  background: var(--success);
-  border-color: var(--success);
-  color: #fff;
+  color: var(--success);
 }
 
 /* ── Lists ───────────────────────────────────────────────────────── */

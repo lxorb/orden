@@ -87,6 +87,10 @@ export class CalloutWidget extends NibWidget {
 }
 
 /** Sits on a code fence's top line: what language it is, and a way to take it. */
+/** What each header registered on the editor, to take down with the header.
+ *  Keyed by the element, since one widget can be drawn more than once. */
+const LISTENERS = new WeakMap<HTMLElement, () => void>()
+
 export class FenceHeaderWidget extends NibWidget {
   constructor(
     private readonly language: string,
@@ -171,7 +175,45 @@ export class FenceHeaderWidget extends NibWidget {
     })
 
     bar.append(copy)
+
+    // The button shows while the pointer is anywhere over the block. The block
+    // is a run of sibling lines rather than one element, so no CSS selector
+    // can see that; the content element is watched instead, and a hovered
+    // line counts when it sits between this header's line and the closing
+    // line of the same block.
+    const over = (event: Event) => {
+      const line = (event.target as Element | null)?.closest?.('.cm-line') ?? null
+      bar.classList.toggle('nib-fence-hover', !!line && FenceHeaderWidget.holds(bar, line))
+    }
+    const leave = () => bar.classList.remove('nib-fence-hover')
+
+    view.contentDOM.addEventListener('mouseover', over)
+    view.contentDOM.addEventListener('mouseleave', leave)
+    LISTENERS.set(bar, () => {
+      view.contentDOM.removeEventListener('mouseover', over)
+      view.contentDOM.removeEventListener('mouseleave', leave)
+    })
+
     return bar
+  }
+
+  destroy(dom: HTMLElement) {
+    LISTENERS.get(dom)?.()
+    LISTENERS.delete(dom)
+    super.destroy(dom)
+  }
+
+  /** Whether `line` is one of the lines of the block this header sits on. */
+  private static holds(bar: Element, line: Element): boolean {
+    let current: Element | null = bar.closest('.cm-line')
+
+    while (current?.classList.contains('nib-code')) {
+      if (current === line) return true
+      if (current.classList.contains('nib-code-close')) break
+      current = current.nextElementSibling
+    }
+
+    return false
   }
 
   /** Turns the label into a field, and writes the name straight into the fence. */
