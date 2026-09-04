@@ -102,6 +102,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     version: 1,
     updated_at: now(),
     deleted: 0,
+    deleted_at: null,
     size: content.length,
     hash: await sha256(content),
   }
@@ -222,7 +223,9 @@ notes.put('/notes/:id', async (context) => {
   return context.json({ note: present(updated) })
 })
 
-/** Soft delete: the tombstone is what tells other devices to remove it. */
+/** Soft delete: the tombstone is what tells other devices to remove it. The
+ *  content stays, with its size and hash, so the note can be put back from
+ *  Recently deleted; the purge in trash.ts takes it away after 14 days. */
 notes.delete('/notes/:id', async (context) => {
   const note = await noteForUser({
     env: context.env,
@@ -232,11 +235,11 @@ notes.delete('/notes/:id', async (context) => {
 
   if (!note) return context.json({ error: 'no such note' }, 404)
 
-  await context.env.NOTES.delete(key(note.space_id, note.id))
+  const at = now()
   await context.env.DB.prepare(
-    'update notes set deleted = 1, seq = ?, version = version + 1, updated_at = ?, size = 0, hash = ? where id = ?',
+    'update notes set deleted = 1, deleted_at = ?, seq = ?, version = version + 1, updated_at = ? where id = ?',
   )
-    .bind(await nextSeq(context.env, note.space_id), now(), '', note.id)
+    .bind(at, await nextSeq(context.env, note.space_id), at, note.id)
     .run()
 
   return context.json({ ok: true })

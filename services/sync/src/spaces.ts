@@ -86,6 +86,7 @@ spaces.post('/', async (context) => {
     position: (last?.last ?? -1) + 1,
     icon: null,
     deleted: 0,
+    deleted_at: null,
     created_at: now(),
     updated_at: now(),
     blog_enabled: 0,
@@ -172,22 +173,17 @@ spaces.delete('/:id', async (context) => {
   const space = await ownedSpace(context.env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'no such space' }, 404)
 
-  const { results } = await context.env.DB.prepare('select id from notes where space_id = ?')
-    .bind(space.id)
-    .all<{ id: string }>()
-
-  await Promise.all(results.map((note) => context.env.NOTES.delete(`spaces/${space.id}/${note.id}`)))
-  await context.env.DB.prepare('delete from notes where space_id = ?').bind(space.id).run()
-
-  // The notes are gone for good; the row stays as the marker. Its published
-  // address is released, or nobody could ever claim that name again.
+  // The notes stay with it, so the space can be put back whole from Recently
+  // deleted; the purge in trash.ts empties it after 14 days. Its published
+  // address is released now, or nobody could claim that name meanwhile.
+  const at = now()
   await context.env.DB.prepare(
     `update spaces
-        set deleted = 1, blog_enabled = 0, blog_subdomain = null, blog_domain = null,
+        set deleted = 1, deleted_at = ?, blog_enabled = 0, blog_subdomain = null, blog_domain = null,
             blog_note = null, updated_at = ?
       where id = ?`,
   )
-    .bind(now(), space.id)
+    .bind(at, at, space.id)
     .run()
 
   if (space.blog_domain) await releaseDomain(context.env, space.blog_domain)

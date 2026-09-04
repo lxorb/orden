@@ -62,6 +62,8 @@ export interface Space {
   blog_title: string | null
   /** When set, the only note published, shown at the root. */
   blog_note: string | null
+  /** When it went to Recently deleted; null while alive, and again once purged. */
+  deleted_at: number | null
 }
 
 export interface Note {
@@ -72,6 +74,8 @@ export interface Note {
   version: number
   updated_at: number
   deleted: number
+  /** When it went to Recently deleted; null while alive, and again once purged. */
+  deleted_at: number | null
   size: number
   hash: string
 }
