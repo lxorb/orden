@@ -1,6 +1,7 @@
 {
   "name": "nib",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "packageManager": "pnpm@10.28.1",
   "scripts": {
