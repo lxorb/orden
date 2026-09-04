@@ -5,12 +5,15 @@
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from './i18n.svelte'
+  import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
 
   const DAY = 24 * 60 * 60 * 1000
 
+  // Read afresh each time the pane comes into view, not only when it is
+  // first made: the panel keeps it around while it is closed.
   $effect(() => {
-    void trash.load()
+    if (settings.open && settings.section === 'trash') void trash.load()
   })
 
   const spaces = $derived(trash.items.filter((item) => item.kind === 'space'))
