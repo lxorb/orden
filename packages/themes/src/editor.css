@@ -79,7 +79,14 @@
   background: var(--surface-2);
   border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
   border-radius: var(--radius-sm);
-  padding: 0.08em 0.26em;
+  /* The chip has to carry the same font as the code inside it. Left to inherit
+     the prose font, its box is drawn from those metrics while the glyphs are
+     smaller, which leaves a band of empty space above the text and almost none
+     below it. */
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  /* A shade more below than above: what is left of the font ascent. */
+  padding: 0.1em 0.3em 0.14em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
