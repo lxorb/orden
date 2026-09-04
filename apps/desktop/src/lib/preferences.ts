@@ -35,6 +35,21 @@ export interface Group {
   fields: Field[]
 }
 
+/** Dictionaries the browser's checker can be pointed at, named the way their
+ *  speakers name them, so they read the same whatever the app's language.
+ *  `system` leaves the choice to the browser. */
+const DICTIONARIES = [
+  { id: 'system', name: 'Match the system' },
+  { id: 'en', name: 'English' },
+  { id: 'de', name: 'Deutsch' },
+  { id: 'fr', name: 'Français' },
+  { id: 'es', name: 'Español' },
+  { id: 'it', name: 'Italiano' },
+  { id: 'nl', name: 'Nederlands' },
+  { id: 'pt', name: 'Português' },
+  { id: 'ja', name: '日本語' },
+] as const
+
 /** The panes that are only about settings. Account, publishing and the LLM
  *  connector are their own thing and stay written out by hand. */
 export type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance'
@@ -197,23 +212,13 @@ export function preferences(view?: EditorView): Pane[] {
         {
           // The browser checks against the dictionary the surface's language
           // names, so this is the one setting that decides whose words are
-          // wrong. The names are the languages' own, which need no translating.
+          // wrong.
           title: t('Dictionary'),
           fields: [
             {
               kind: 'select',
               label: t('Language'),
-              options: [
-                { value: 'system', label: t('Match the system') },
-                { value: 'en', label: 'English' },
-                { value: 'de', label: 'Deutsch' },
-                { value: 'fr', label: 'Français' },
-                { value: 'es', label: 'Español' },
-                { value: 'it', label: 'Italiano' },
-                { value: 'nl', label: 'Nederlands' },
-                { value: 'pt', label: 'Português' },
-                { value: 'ja', label: '日本語' },
-              ],
+              options: DICTIONARIES.map((one) => ({ value: one.id, label: t(one.name) })),
               initial: 'system',
               get: () => modes.spellLanguage,
               set: (value) => modes.setSpellLanguage(value, view),
