@@ -1,7 +1,5 @@
 <script lang="ts">
   import { flushSync, untrack } from 'svelte'
-  import { fly } from 'svelte/transition'
-  import { cubicOut } from 'svelte/easing'
   import { i18n, key, message, t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
@@ -557,27 +555,20 @@
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="editor" oncontextmenu={(event) => menu.show(event, editorMenu())}>
-        <!-- A new space brings a new document in with a small rise, so the
-             switch reads as going somewhere. A new tab in the same space
-             swaps the editor without the ceremony. -->
-        {#key workspace.activeSpaceId}
-          <div class="page" in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
-            {#key workspace.activeTabId}
-              <Editor
-                bind:view
-                doc={workspace.active?.doc ?? ''}
-                onchange={(value) => workspace.edit(value)}
-                onimage={saveImage}
-                resolveimage={resolveImage}
-                onselection={(current) => {
-                  formatBar?.follow(current)
-                  if (placed && placed === workspace.activeTabId) {
-                    workspace.noteView(placed, current.state.selection.main.head, current.scrollDOM.scrollTop)
-                  }
-                }}
-              />
-            {/key}
-          </div>
+        {#key workspace.activeTabId}
+          <Editor
+            bind:view
+            doc={workspace.active?.doc ?? ''}
+            onchange={(value) => workspace.edit(value)}
+            onimage={saveImage}
+            resolveimage={resolveImage}
+            onselection={(current) => {
+              formatBar?.follow(current)
+              if (placed && placed === workspace.activeTabId) {
+                workspace.noteView(placed, current.state.selection.main.head, current.scrollDOM.scrollTop)
+              }
+            }}
+          />
         {/key}
       </div>
 
@@ -646,13 +637,6 @@
 
   .editor {
     flex: 1;
-    min-height: 0;
-    display: flex;
-  }
-
-  .page {
-    flex: 1;
-    min-width: 0;
     min-height: 0;
     display: flex;
   }
