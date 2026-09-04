@@ -30,7 +30,7 @@ import { workspace } from './workspace.svelte'
 
 /** Where the app is developed, which is the whole of "about" for an open
  *  source editor. */
-const SOURCE_URL = 'https://github.com/lxorb/nib'
+export const SOURCE_URL = 'https://github.com/lxorb/nib'
 
 export interface MenuAction {
   label: string
