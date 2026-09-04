@@ -20,10 +20,20 @@
   vertical-align: text-top;
 }
 
+/* CodeMirror sizes a selection's full-line rectangles from this element's
+   box, so the box has to be the text column itself: the gutters are margins,
+   not padding. As padding they were inside the box, and the rectangles ran
+   a gutter's width past the text on either side - out over the edge of a
+   code block. Declaring the padding on the first line instead, for CodeMirror
+   to read back, did not hold up: a table, a diagram or the unrendered top of
+   a long note comes before the first line, and a fence or a list as the first
+   line has padding of its own. The margin is the gutter plus half of whatever
+   room is left beyond the measure, which centres the column and keeps the
+   gutter on a narrow screen. */
 .cm-editor #write {
-  max-width: var(--measure);
-  margin: 0 auto;
-  padding: var(--space-7) var(--space-5) 45vh;
+  max-width: calc(var(--measure) - 2 * var(--space-5));
+  margin: 0 max(var(--space-5), calc(50% - var(--measure) / 2 + var(--space-5)));
+  padding: var(--space-7) 0 45vh;
 }
 
 /* ── Headings ────────────────────────────────────────────────────── */
@@ -91,18 +101,21 @@
   box-decoration-break: clone;
 }
 
-/* CodeMirror sizes a selection's full-line rectangles from the content box,
-   less whatever padding its first line has. The writing surface keeps its
-   margins on the content element, so those rectangles ran out into the
-   margins - past the edge of a code block, which made a selection in one
-   look torn. Giving the first line the same padding, pulled back by a
-   negative margin so nothing on it moves, tells CodeMirror where the text
-   column really is. */
-.cm-content > .cm-line:first-child {
-  padding-left: var(--space-5);
-  padding-right: var(--space-5);
-  margin-left: calc(-1 * var(--space-5));
-  margin-right: calc(-1 * var(--space-5));
+/* The selection is a layer of rectangles. CodeMirror keeps it beneath the
+   text, so anything with a background of its own - an inline code chip, a
+   front matter line - sat on top of it and hid the selection. It is lifted
+   above the text here and blended, so the words keep their colour: screen
+   leaves light text white on a dark page, multiply leaves dark text black on
+   a light one, and over a plain background either comes out the same shade
+   the layer had underneath. CodeMirror writes the layer's depth onto the
+   element itself, which only an important declaration outranks. */
+.cm-editor .cm-selectionLayer {
+  z-index: 1 !important;
+  mix-blend-mode: screen;
+}
+
+[data-theme='light'] .cm-editor .cm-selectionLayer {
+  mix-blend-mode: multiply;
 }
 
 /* A block is a run of lines, so it is drawn line by line: a filled band on
@@ -110,12 +123,14 @@
    below is a transparent border rather than a margin, which CodeMirror's line
    measuring would not see.
 
-   The fill is a pseudo-element beneath the line rather than the line's own
-   background, and below the selection layer: CodeMirror paints selections
-   behind the content, so a background on the line itself covered them, and
-   all that showed of a selection in a block were the ends of its rectangles
-   poking out either side. The pseudo-element's box is the padding box, which
-   is exactly the part inside the transparent borders. */
+   The fill is a pseudo-element beneath the text rather than the line's own
+   background: a background clipped to the padding box loses its corners, as
+   the radius belongs to the border box and the tall border eats it. The
+   pseudo-element's box is the padding box - exactly the part inside the
+   transparent borders - and carries a radius of its own. Its width is the
+   text column, which is also what the selection's rectangles are sized from
+   (see the writing surface above), so a selection in a block ends where the
+   block does. */
 .cm-line.nib-code {
   position: relative;
   font-family: var(--font-mono);
@@ -128,7 +143,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  z-index: -3;
+  z-index: -1;
   background: var(--code-block-bg-color);
   pointer-events: none;
 }
@@ -1002,13 +1017,21 @@
 
 /* ── Front matter and footnotes ──────────────────────────────────── */
 
+/* Front matter opens the note, so its first line is the one CodeMirror reads
+   the text column from (see the writing surface at the top). The inset is a
+   transparent border, which CodeMirror does not count, and the rule down the
+   left is painted as a background so the border can stay transparent. */
 .cm-line.nib-frontmatter {
   font-family: var(--font-mono);
   font-size: 0.82em;
   color: var(--muted);
-  background: var(--surface);
-  border-left: 2px solid var(--line-strong);
-  padding: 0 var(--space-4);
+  background:
+    linear-gradient(var(--line-strong), var(--line-strong)) 0 0 / 2px 100% no-repeat,
+    var(--surface);
+  background-origin: border-box;
+  border-left: calc(var(--space-4) + 2px) solid transparent;
+  border-right: var(--space-4) solid transparent;
+  padding: 0;
 }
 
 .cm-line.nib-footnote {
@@ -1062,41 +1085,313 @@
 
 /* ── Images ──────────────────────────────────────────────────────── */
 
+/* How a picture behaves is described at the top of image.ts. What follows is
+   how it looks: the frame holds the room above and below, the box is the
+   picture's own edge, and handles, badge and toolbar all hang off the box. */
+
+/* The room is padding on the frame rather than on the picture, so the corner
+   radius clips the picture itself. */
 .nib-image-frame {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.35em 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* `line-height: 0` keeps the box exactly the picture's height. */
+.nib-image-box {
   position: relative;
   display: inline-block;
   max-width: 100%;
+  line-height: 0;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px transparent;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
 }
 
-.nib-image {
+.nib-image-frame:hover .nib-image-box {
+  box-shadow: 0 0 0 1px var(--accent-line);
+}
+
+/* The selection layer sits above the text (see the top of this file) and
+   would tint the picture too. Inside a wider selection that is right; when
+   the picture itself is what is selected, the frame says so and the picture
+   is lifted above the layer to stay clean. */
+.nib-image-frame.is-selected {
+  position: relative;
+  z-index: 2;
+  /* The frame's own room above and below would still show the layer through
+     it; the page's ground fills it, so the ring alone marks the selection. */
+  background: var(--bg);
+}
+
+.nib-image-frame.is-selected .nib-image-box {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Written against `#write` because base.css styles `#write img` for exported
+   and published pages, and an id outranks any number of classes: without it
+   the picture would keep that rule's margin, and a broken one its box. */
+#write img.nib-image {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 auto;
-  padding: 0.6em 0;
+  margin: 0;
   border-radius: var(--radius-md);
-  cursor: zoom-in;
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+.nib-image-frame.is-resizing .nib-image {
+  transition: none;
+}
+
+/* Room is kept while a picture loads, so the text below it does not jump
+   when it arrives. Where the size is already known the room is exact. */
+.nib-image-frame.is-loading .nib-image {
+  min-width: 6em;
+  min-height: 3em;
+  background: var(--surface-2);
+}
+
+/* Only a picture seen for the first time develops into view; one rebuilt
+   after an edit simply appears where its room was kept. */
+.nib-image-frame.is-fresh .nib-image {
   animation: develop var(--dur-slower) var(--ease-out);
 }
 
-/* A corner grip, out of the way until the image is pointed at. */
-.nib-image-handle {
-  position: absolute;
-  right: -3px;
-  bottom: 3px;
+/* A path that did not load: the path itself, so it can be fixed. */
+.nib-image-missing {
+  display: none;
+  align-items: center;
+  gap: 0.5em;
+  max-width: 100%;
+  padding: 0.55em 0.8em;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 0.86em;
+  line-height: 1.3;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#write .nib-image-frame.is-broken img.nib-image {
+  display: none;
+}
+
+.nib-image-frame.is-broken .nib-image-missing {
+  display: inline-flex;
+}
+
+.nib-image-missing svg {
+  flex: none;
   width: 14px;
   height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nib-image-missing > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Corner grips, there once the picture is selected. */
+.nib-image-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
   border: 2px solid var(--accent);
-  border-top: none;
-  border-left: none;
-  border-radius: 0 0 var(--radius-sm) 0;
-  cursor: nwse-resize;
+  border-radius: 3px;
+  background: var(--bg);
   opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.nib-image-handle[data-corner='nw'] {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+.nib-image-handle[data-corner='ne'] {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+.nib-image-handle[data-corner='sw'] {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+.nib-image-handle[data-corner='se'] {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
+
+.nib-image-frame.is-selected .nib-image-handle {
+  opacity: 1;
+  transform: none;
+}
+
+/* The size, read out beside whichever corner is being dragged. */
+.nib-image-badge {
+  position: absolute;
+  padding: 3px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--text);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
-.nib-image-frame:hover .nib-image-handle {
+.nib-image-frame[data-corner$='w'] .nib-image-badge {
+  left: 10px;
+}
+.nib-image-frame[data-corner$='e'] .nib-image-badge {
+  right: 10px;
+}
+.nib-image-frame[data-corner^='n'] .nib-image-badge {
+  top: 10px;
+}
+.nib-image-frame[data-corner^='s'] .nib-image-badge {
+  bottom: 10px;
+}
+
+.nib-image-frame.is-resizing .nib-image-badge {
   opacity: 1;
+}
+
+/* The toolbar hangs above the picture, centred, and flips below when the
+   picture is at the top of the view. Sized in rem like the fence controls,
+   so it stays put while the text is zoomed. */
+.nib-image-tools {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  line-height: 1;
+  color: var(--muted-strong);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(calc(-50% + var(--nib-tools-shift, 0px)), 4px);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.nib-image-frame.is-flipped .nib-image-tools {
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform: translate(calc(-50% + var(--nib-tools-shift, 0px)), -4px);
+}
+
+.nib-image-frame.is-selected .nib-image-tools {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(calc(-50% + var(--nib-tools-shift, 0px)), 0);
+}
+
+.nib-image-alt {
+  width: 11em;
+  height: 24px;
+  padding: 0 7px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  transition: background var(--dur-instant) var(--ease-out);
+}
+
+.nib-image-alt::placeholder {
+  color: var(--muted);
+}
+
+.nib-image-alt:hover,
+.nib-image-alt:focus {
+  background: var(--surface-2);
+}
+
+.nib-image-tools-gap {
+  width: 1px;
+  height: 14px;
+  margin: 0 3px;
+  background: var(--line-strong);
+}
+
+.nib-image-tool {
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted-strong);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+  transition:
+    background var(--dur-instant) var(--ease-out),
+    color var(--dur-instant) var(--ease-out);
+}
+
+.nib-image-tool:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.nib-image-tool:disabled {
+  color: var(--muted);
+}
+
+.nib-image-tool svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nib-image-tool.is-copied {
+  color: var(--success);
+}
+
+.nib-image-delete:hover {
+  background: var(--danger);
 }
 
 .nib-lightbox {
@@ -1112,16 +1407,59 @@
   animation: fade-in var(--dur-base) var(--ease-out);
 }
 
+.nib-lightbox.is-closing {
+  animation: fade-out var(--dur-fast) var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+.nib-lightbox-figure {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 100%;
+  margin: 0;
+  animation: settle-in var(--dur-base) var(--ease-out);
+}
+
 .nib-lightbox img {
   max-width: 100%;
-  max-height: 92vh;
+  max-height: 88vh;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  animation: settle-in var(--dur-base) var(--ease-out);
+  cursor: default;
+}
+
+.nib-lightbox figcaption {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--muted-strong);
+  text-align: center;
+}
+
+/* A picture larger than the window can be seen at its own size. */
+.nib-lightbox.can-zoom img {
+  cursor: zoom-in;
+}
+
+.nib-lightbox.is-actual {
+  place-items: start;
+  overflow: auto;
+}
+
+.nib-lightbox.is-actual img {
+  max-width: none;
+  max-height: none;
+  cursor: zoom-out;
 }
 
 @keyframes fade-in {
   from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
     opacity: 0;
   }
 }

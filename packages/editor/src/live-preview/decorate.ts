@@ -13,13 +13,13 @@ import { dragging } from './dragging'
 import { lineRevealed, overlaps, revealed } from './reveal'
 import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
+import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import {
   BulletWidget,
   CalloutWidget,
   CheckboxWidget,
   EmojiWidget,
   FenceHeaderWidget,
-  ImageWidget,
   PageBreakWidget,
   RuleWidget,
 } from './widgets'
@@ -28,7 +28,7 @@ const hide = Decoration.replace({})
 const meta = Decoration.mark({ class: 'md-meta' })
 
 /** Syntax characters that vanish unless the caret is inside their construct. */
-const INLINE_MARKS = new Set([
+export const INLINE_MARKS = new Set([
   'EmphasisMark',
   'StrikethroughMark',
   'SubscriptMark',
@@ -266,23 +266,15 @@ class Decorator {
     if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'nib-task-done')
   }
 
+  /** A picture stays a picture while the caret is beside it, or selects it;
+   *  only a caret inside the markup shows the markup. image.ts has the rest. */
   private image(node: SyntaxNode): boolean | void {
-    if (revealed(this.state, node)) return
+    if (imageRevealed(this.state, node.from, node.to)) return
 
-    const url = node.getChild('URL')
-    if (!url) return
+    const image = imageOfNode(this.state, node)
+    if (!image) return
 
-    const src = this.state.doc.sliceString(url.from, url.to)
-    // The parser leaves alt text as bare text between `![` and `]`.
-    const open = node.firstChild
-    const close = open?.nextSibling
-    const alt = open && close ? this.state.doc.sliceString(open.to, close.from) : ''
-
-    this.inlineWidget(
-      node,
-      new ImageWidget({ src, alt, zoom: 100, from: node.from, to: node.to }),
-      false,
-    )
+    this.inlineWidget(node, new ImageWidget(image), false)
     // Its marks live inside the replacement now; decorating them would overlap.
     return false
   }
@@ -290,35 +282,17 @@ class Decorator {
   /** Two pieces of HTML get rendered rather than shown: a resized image, which
    *  is how a size is recorded, and a page break, which has no markdown form. */
   private htmlImage(node: SyntaxNode): boolean | void {
-    // Its own range, not its parent's: a block-level tag's parent is the whole
-    // document, which the caret always overlaps.
-    if (overlaps(this.state, node.from, node.to)) return
-
     const tag = this.state.doc.sliceString(node.from, node.to)
 
     if (/page-break-(after|before)\s*:\s*always/i.test(tag)) {
+      // Its own range, not its parent's: a block-level tag's parent is the
+      // whole document, which the caret always overlaps.
+      if (overlaps(this.state, node.from, node.to)) return
       this.inlineWidget(node, new PageBreakWidget(), false)
       return false
     }
 
-    const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(tag)
-    if (!src) return
-
-    const alt = /\balt\s*=\s*["']([^"']*)["']/i.exec(tag)
-    const zoom = /zoom\s*:\s*(\d+(?:\.\d+)?)\s*%/i.exec(tag)
-
-    this.inlineWidget(
-      node,
-      new ImageWidget({
-        src: src[1],
-        alt: (alt?.[1] ?? '').replace(/&quot;/g, '"'),
-        zoom: zoom ? Number(zoom[1]) : 100,
-        from: node.from,
-        to: node.to,
-      }),
-      false,
-    )
-    return false
+    return this.image(node)
   }
 
   private emoji(node: SyntaxNode): boolean | void {

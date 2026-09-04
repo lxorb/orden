@@ -19,21 +19,26 @@ export const dragging = StateField.define<boolean>({
   },
 })
 
-/** Watches the mouse. The release is listened for on the document, because a
- *  drag very often ends past the edge of the editor. */
+/** Watches the mouse. The release is listened for on the window, because a
+ *  drag very often ends past the edge of the editor - and because CodeMirror
+ *  listens on the document. On mouseup it reads the pointer position one last
+ *  time and moves the caret there, so the reveal has to wait until that read is
+ *  done: revealing first reflows the line and the final read lands the caret a
+ *  character or two from where the click was. Window listeners run after
+ *  document listeners, whatever order they were added in. */
 const watcher = ViewPlugin.fromClass(
   class {
     private readonly release: () => void
 
     constructor(private readonly view: EditorView) {
       this.release = () => this.end()
-      document.addEventListener('mouseup', this.release)
+      window.addEventListener('mouseup', this.release)
       // A drag interrupted by the window losing focus never gets a mouseup.
       window.addEventListener('blur', this.release)
     }
 
     destroy() {
-      document.removeEventListener('mouseup', this.release)
+      window.removeEventListener('mouseup', this.release)
       window.removeEventListener('blur', this.release)
     }
 

@@ -1,7 +1,10 @@
+import { TreeFragment, type Input, type PartialParse } from '@lezer/common'
 import { Tag, tags } from '@lezer/highlight'
-import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
+import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from '@lezer/markdown'
 
 const DOLLAR = 36
+const BACKTICK = 96
+const TILDE = 126
 const EQUALS = 61
 const BRACKET_OPEN = 91
 const BRACKET_CLOSE = 93
@@ -270,6 +273,242 @@ export const Abbreviation: MarkdownConfig = {
   ],
 }
 
+/** Where a line's opening fence ends, or -1 if it does not open one: three
+ *  or more backticks or tildes, and for backticks an info string without any
+ *  backtick in it. The same test the built-in parser uses. */
+function fenceEnd(line: Line): number {
+  if (line.next !== BACKTICK && line.next !== TILDE) return -1
+
+  let pos = line.pos + 1
+  while (pos < line.text.length && line.text.charCodeAt(pos) === line.next) pos++
+  if (pos < line.pos + 3) return -1
+  if (line.next === BACKTICK && line.text.indexOf('`', pos) >= 0) return -1
+  return pos
+}
+
+/** Where a line's closing fence ends, or -1: the opener's character, at least
+ *  as many of them, at most three spaces in, and nothing else on the line. */
+function closerEnd(line: Line, mark: number, length: number): number {
+  let pos = line.pos
+  if (line.indent - line.baseIndent < 4) {
+    while (pos < line.text.length && line.text.charCodeAt(pos) === mark) pos++
+  }
+  return pos - line.pos >= length && line.skipSpace(pos) === line.text.length ? pos : -1
+}
+
+/** Whether the current line is still inside every block the fence opened in.
+ *  The line's depth is not part of lezer-markdown's public types, but it is
+ *  the only record of a container ending, and the built-in parser reads it
+ *  the same way. */
+function insideContainers(cx: BlockContext, line: Line): boolean {
+  return (line as Line & { depth: number }).depth >= cx.depth
+}
+
+/** The private state `nextLine` writes to: the context's own position
+ *  bookkeeping, the one `Line` object it fills in, and the `end` of each
+ *  open container block on its stack. */
+interface LineReadingState {
+  line: Line
+  stack: object[]
+}
+
+/** Whether a closing fence follows before the enclosing block ends.
+ *
+ *  A block parser can only read forward, and `peekLine` reaches one line
+ *  ahead, so this walks ahead with `nextLine` and afterwards puts back
+ *  everything it moved. Doing it with the parser's own line reader is what
+ *  keeps the container rules exact: a fence in a list item or a blockquote
+ *  ends where the item or quote ends, and that is decided by lezer-markdown's
+ *  markup skipping, which is not something to reimplement here. */
+function closerAhead(cx: BlockContext, line: Line, mark: number, length: number): boolean {
+  const state = cx as unknown as LineReadingState
+  const context = { ...state }
+  const { markers, ...fields } = state.line
+  const savedMarkers = markers.slice()
+  const blocks = state.stack.map((block) => ({ ...block }))
+
+  try {
+    while (cx.nextLine() && insideContainers(cx, line)) {
+      if (closerEnd(line, mark, length) >= 0) return true
+    }
+    return false
+  } finally {
+    Object.assign(state, context)
+    Object.assign(state.line, fields)
+    state.line.markers.length = 0
+    state.line.markers.push(...savedMarkers)
+    blocks.forEach((block, i) => Object.assign(state.stack[i], block))
+  }
+}
+
+/** Adds code text, stretching the previous piece when it touches this one. */
+function addCodeText(cx: BlockContext, marks: Element[], from: number, to: number) {
+  const last = marks[marks.length - 1]
+  if (last && last.to === from && cx.parser.nodeSet.types[last.type].name === 'CodeText') {
+    marks[marks.length - 1] = cx.elt('CodeText', last.from, to)
+  } else {
+    marks.push(cx.elt('CodeText', from, to))
+  }
+}
+
+/** Whether a block's first characters open a fence. */
+function opensFence(node: { from: number; to: number }, input: Input): boolean {
+  if (node.to - node.from < 3) return false
+  const start = input.read(node.from, node.from + 3)
+  return start === '```' || start === '~~~'
+}
+
+/** The fragments of an earlier parse, cut so that no block which opens a
+ *  fence without being fenced code is kept from it.
+ *
+ *  An edit re-parses only what it touched; the blocks around it come back
+ *  from the previous tree. That is sound as long as a block's parse depends
+ *  on nothing beyond its own end, and a fence line nothing closed is the one
+ *  block that breaks the rule: it became a paragraph because of what was not
+ *  below it, so typing its closer far down would leave the paragraph in
+ *  place, reused, with no way for the parser to know. Leaving such blocks
+ *  out of the fragments makes the parser look at them again every time,
+ *  which is cheap - there is rarely more than the one being typed. */
+function withoutUnclosedFences(fragments: readonly TreeFragment[], input: Input): readonly TreeFragment[] {
+  const out: TreeFragment[] = []
+  let changed = false
+
+  for (const fragment of fragments) {
+    const { tree, offset } = fragment
+    let from = fragment.from
+
+    tree.iterate({
+      from: fragment.from + offset,
+      to: fragment.to + offset,
+      enter(node) {
+        if (!node.type.is('Block')) return false
+        if (!node.type.is('LeafBlock')) return true
+
+        // Tree positions are the document's plus the offset.
+        const nodeFrom = node.from - offset
+        const nodeTo = node.to - offset
+        if (nodeFrom < from || nodeTo > fragment.to) return false
+        if (node.name === 'FencedCode' || node.name === 'CodeBlock') return false
+        if (!opensFence({ from: nodeFrom, to: nodeTo }, input)) return false
+
+        if (nodeFrom > from) {
+          out.push(new TreeFragment(from, nodeFrom, tree, offset, from === fragment.from && fragment.openStart, true))
+        }
+        from = nodeTo
+        changed = true
+        return false
+      },
+    })
+
+    if (from === fragment.from) out.push(fragment)
+    else if (from < fragment.to) out.push(new TreeFragment(from, fragment.to, tree, offset, true, fragment.openEnd))
+  }
+
+  return changed ? out : fragments
+}
+
+/** The block parser behind a parse. `wrap` is handed the parse after
+ *  lang-markdown's nested-language wrapper has been put around it, and that
+ *  wrapper keeps the block parser as its `baseParse`; a parse without either
+ *  cannot be rebuilt, and is left as it is. */
+function parserOf(parse: PartialParse): MarkdownParser | null {
+  const own = (parse as { parser?: MarkdownParser }).parser
+  if (own) return own
+  return (parse as { baseParse?: { parser?: MarkdownParser } }).baseParse?.parser ?? null
+}
+
+/** Fragment lists this module already cut, so rebuilding a parse with them
+ *  does not cut them again. */
+const alreadyCut = new WeakSet<readonly TreeFragment[]>()
+
+/** Fenced code, with one deliberate departure from CommonMark: a fence that
+ *  nothing closes is not a fence.
+ *
+ *  CommonMark runs an unclosed fence to the end of its container, so the
+ *  moment the third backtick is typed the whole rest of the note turns into
+ *  code. The headings, emphasis and images below do not merely lose their
+ *  styling, they lose their nodes, so the live preview cannot paper over it;
+ *  the fix has to be in the parser. This takes the slot of lezer-markdown's
+ *  built-in `FencedCode` (a `parseBlock` entry with the same name replaces
+ *  it) and looks ahead for a closing fence before committing. Finding none it
+ *  declines, and the line is an ordinary paragraph until a closer is typed
+ *  below, or Enter puts one there (`closeFence` in commands.ts).
+ *
+ *  The same holds inside list items and blockquotes, where CommonMark would
+ *  let the container's end close the fence: here such a fence stays a
+ *  paragraph until it is closed within the container. Everything else - the
+ *  fence characters, the indent allowed, the info string, where a container
+ *  ends, and the nodes produced - follows the built-in parser line by line,
+ *  so nested language highlighting and the fence rendering keep working. */
+export const FencedCode: MarkdownConfig = {
+  // Rebuilds a parse that would reuse an unclosed fence line from before an
+  // edit; see `withoutUnclosedFences`. A parse is created and wrapped before
+  // this sees it, so a cut fragment list means starting the parse over.
+  wrap(inner, input, fragments, ranges) {
+    if (fragments.length === 0 || alreadyCut.has(fragments)) return inner
+
+    const cut = withoutUnclosedFences(fragments, input)
+    if (cut === fragments) return inner
+
+    const parser = parserOf(inner)
+    if (!parser) return inner
+
+    alreadyCut.add(cut)
+    return parser.startParse(input, cut, ranges)
+  },
+  parseBlock: [
+    {
+      name: 'FencedCode',
+      parse(cx: BlockContext, line: Line) {
+        const end = fenceEnd(line)
+        if (end < 0) return false
+
+        const mark = line.next
+        const length = end - line.pos
+        if (!closerAhead(cx, line, mark, length)) return false
+
+        const from = cx.lineStart + line.pos
+        const infoFrom = line.skipSpace(end)
+        let infoTo = line.text.length
+        while (infoTo > infoFrom && isSpace(line.text.charCodeAt(infoTo - 1))) infoTo--
+
+        const marks: Element[] = [cx.elt('CodeMark', from, from + length)]
+        if (infoFrom < infoTo) marks.push(cx.elt('CodeInfo', cx.lineStart + infoFrom, cx.lineStart + infoTo))
+
+        // The line breaks between code lines are code text too, the one after
+        // the opener is not, and a block of nothing but blank lines still gets
+        // one piece of code text - as the built-in parser has it.
+        for (let first = true, empty = true, hasLine = false; cx.nextLine() && insideContainers(cx, line); first = false) {
+          const closer = closerEnd(line, mark, length)
+          if (closer >= 0) {
+            marks.push(...line.markers)
+            if (empty && hasLine) addCodeText(cx, marks, cx.lineStart - 1, cx.lineStart)
+            marks.push(cx.elt('CodeMark', cx.lineStart + line.pos, cx.lineStart + closer))
+            cx.nextLine()
+            break
+          }
+
+          hasLine = true
+          if (!first) {
+            addCodeText(cx, marks, cx.lineStart - 1, cx.lineStart)
+            empty = false
+          }
+          marks.push(...line.markers)
+          const textFrom = cx.lineStart + line.basePos
+          const textTo = cx.lineStart + line.text.length
+          if (textFrom < textTo) {
+            addCodeText(cx, marks, textFrom, textTo)
+            empty = false
+          }
+        }
+
+        cx.addElement(cx.elt('FencedCode', from, cx.prevLineEnd(), marks))
+        return true
+      },
+    },
+  ],
+}
+
 export const nibMarkdownExtensions = [
   Highlight,
   InlineMath,
@@ -278,4 +517,5 @@ export const nibMarkdownExtensions = [
   FrontMatter,
   DefinitionList,
   Abbreviation,
+  FencedCode,
 ]

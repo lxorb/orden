@@ -2,6 +2,7 @@
   import {
     clearFormatting,
     insertLink,
+    selectedImage,
     setHeading,
     toggleQuote,
     toggleWrap,
@@ -21,11 +22,12 @@
    *  exists rather than after it. */
   const docked = $derived(viewport.phone && viewport.keyboard > KEYBOARD_THRESHOLD)
 
-  /** Follows the selection, and hides the moment there is nothing selected. */
+  /** Follows the selection, and hides the moment there is nothing selected.
+   *  A selected picture has a toolbar of its own, in the same place. */
   export function follow(current: EditorView) {
     const range = current.state.selection.main
 
-    if (range.empty || !current.hasFocus) {
+    if (range.empty || !current.hasFocus || selectedImage(current.state)) {
       at = null
       return
     }

@@ -65,6 +65,17 @@ function marked(doc: string, className: string, cursor?: number): string[] {
   return out
 }
 
+/** Every class given to a whole line, in document order. */
+function lineClasses(doc: string): string[] {
+  const full = doc + PARK
+  const out: string[] = []
+  buildDecorations(state(full, full.length)).decorations.between(0, full.length, (from, to, value) => {
+    // Line decorations are the only empty ranges that carry no widget.
+    if (from === to && !value.spec.widget && value.spec.class) out.push(...value.spec.class.split(' '))
+  })
+  return out
+}
+
 describe('headings', () => {
   test('hides the hash and its trailing space when the caret is elsewhere', () => {
     expect(concealed('# Title')).toEqual(['# '])
@@ -186,6 +197,26 @@ describe('images', () => {
   test('shows the source once the caret enters it', () => {
     expect(concealed('![alt](pic.png)', 3)).toEqual([])
     expect(revealedMeta('![alt](pic.png)', 3)).toEqual(['![', ']', '(', 'pic.png', ')'])
+  })
+
+  test('stays a picture with the caret beside it', () => {
+    expect(concealed('![alt](pic.png)', 0)).toEqual(['![alt](pic.png)'])
+    expect(concealed('![alt](pic.png)', 15)).toEqual(['![alt](pic.png)'])
+  })
+
+  test('stays a picture while it is selected', () => {
+    const doc = '![alt](pic.png)'
+    const selected = EditorState.create({
+      doc,
+      selection: EditorSelection.range(0, doc.length),
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+    })
+
+    const out: string[] = []
+    buildDecorations(selected).atomic.between(0, doc.length, (from, to) => {
+      out.push(doc.slice(from, to))
+    })
+    expect(out).toEqual([doc])
   })
 
   test('renders a resized image written as an img tag', () => {
@@ -314,5 +345,23 @@ describe('inline code', () => {
 
   test('still hides its backticks when the caret is away', () => {
     expect(concealed('a `code` b')).toEqual(['`', '`'])
+  })
+})
+
+describe('an unclosed fence', () => {
+  const doc = '```\n# Title\n\n**bold**'
+
+  test('conceals nothing of its own', () => {
+    expect(concealed(doc)).toEqual(['# ', '**', '**'])
+  })
+
+  test('does not restyle the lines below it as code', () => {
+    expect(lineClasses(doc)).not.toContain('nib-code')
+    expect(lineClasses(doc)).toContain('nib-h1')
+  })
+
+  test('is styled as code once closed', () => {
+    expect(lineClasses('```\n# Title\n```')).toContain('nib-code')
+    expect(lineClasses('```\n# Title\n```')).not.toContain('nib-h1')
   })
 })

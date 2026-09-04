@@ -186,11 +186,13 @@ function closes(text: string, mark: string): boolean {
 }
 
 /** Enter at the end of an opening fence closes the fence as well, with the
- *  caret on the blank line between. Without this a fence typed by hand takes
- *  everything below it until a closing one is typed too, and the rest of the
- *  note turns into code from one keystroke to the next. Only a fence nothing
- *  later closes gets this; Enter on a closed one, or on the closing line of a
- *  block, is left to the ordinary handler. */
+ *  caret on the blank line between. The parser treats a fence nothing closes
+ *  as plain text (see `FencedCode` in markdown/extensions.ts), so this is
+ *  what turns a typed ``` into a code block: typing it does nothing, Enter
+ *  makes the block. Only a fence nothing later closes gets this; Enter on a
+ *  closed one, or on the closing line of a block, is left to the ordinary
+ *  handler. This reads the lines, not the tree, so it does not wait on a
+ *  parse. */
 export const closeFence: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
