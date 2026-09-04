@@ -28,6 +28,18 @@
   function daysLeft(item: TrashItem): number {
     return Math.max(1, Math.ceil((item.purgeAt - Date.now()) / DAY))
   }
+
+  /** One line under the name: where it was, when it went, when it goes. */
+  function meta(item: TrashItem): string {
+    return [
+      item.detail,
+      t('deleted {when}', { when: ago(item.deletedAt) }),
+      t('gone in {days} days', { days: daysLeft(item) }),
+      item.source === 'device' ? t('on this device') : '',
+    ]
+      .filter(Boolean)
+      .join(' · ')
+  }
 </script>
 
 {#snippet rows(items: TrashItem[])}
@@ -36,11 +48,7 @@
       <div class="row" transition:slide={{ duration: 180, easing: cubicOut }}>
         <div class="name">
           <span class="title">{item.name}</span>
-          <small>
-            {#if item.detail}{item.detail} · {/if}{t('deleted {when}', { when: ago(item.deletedAt) })}
-            · {t('gone in {days} days', { days: daysLeft(item) })}
-            {#if item.source === 'device'} · {t('on this device')}{/if}
-          </small>
+          <small>{meta(item)}</small>
         </div>
         <button class="quiet" disabled={trash.busy} onclick={() => void trash.restore(item)}>
           {t('Restore')}
