@@ -315,9 +315,45 @@ class Decorator {
     return false
   }
 
+  /** `<u>text</u>` is how markdown underlines, and Ctrl+U writes it. The
+   *  pair reads as the underline it means: tags hidden until the caret is
+   *  between them, the text between drawn underlined. The parser hands out
+   *  each tag on its own, so the closer is looked for among the siblings,
+   *  minding nested pairs, and claimed so its own visit leaves it alone. */
+  private underline(node: SyntaxNode): boolean {
+    if (!/^<u\s*>$/i.test(this.state.doc.sliceString(node.from, node.to))) return false
+
+    let depth = 0
+    for (let next = node.nextSibling; next; next = next.nextSibling) {
+      if (next.name !== 'HTMLTag') continue
+      const tag = this.state.doc.sliceString(next.from, next.to)
+      if (/^<u\s*>$/i.test(tag)) depth++
+      if (!/^<\/u\s*>$/i.test(tag)) continue
+      if (depth > 0) {
+        depth--
+        continue
+      }
+
+      const shown = overlaps(this.state, node.from, next.to)
+      this.conceal(node.from, node.to, shown)
+      this.conceal(next.from, next.to, shown)
+      // Claimed after its own concealment, which the claim would otherwise skip.
+      this.claimed.push({ from: next.from, to: next.to })
+      if (node.to < next.from) {
+        this.marks.push(Decoration.mark({ class: 'nib-underline' }).range(node.to, next.from))
+      }
+      return true
+    }
+    return false
+  }
+
   /** Two pieces of HTML get rendered rather than shown: a resized image, which
    *  is how a size is recorded, and a page break, which has no markdown form. */
   private htmlImage(node: SyntaxNode): boolean | void {
+    // A closing tag already paired up by its opener.
+    if (this.isClaimed(node.from, node.to)) return
+    if (node.name === 'HTMLTag' && this.underline(node)) return
+
     const tag = this.state.doc.sliceString(node.from, node.to)
 
     if (/page-break-(after|before)\s*:\s*always/i.test(tag)) {

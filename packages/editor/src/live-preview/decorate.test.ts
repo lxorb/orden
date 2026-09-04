@@ -225,7 +225,7 @@ describe('images', () => {
   })
 
   test('leaves other inline HTML alone', () => {
-    expect(concealed('text <u>underlined</u> more')).toEqual([])
+    expect(concealed('text <span>plain</span> more')).toEqual([])
   })
 
   test('renders a page break', () => {
@@ -400,5 +400,31 @@ describe('links', () => {
 
   test('a note-relative target is styled but not a browser link', () => {
     expect(linkMarks('see [other](notes/other.md) now')).toEqual([{ text: 'other', href: null }])
+  })
+})
+
+describe('underline', () => {
+  test('hides both tags and underlines the text between them', () => {
+    expect(concealed('a <u>under lined</u> b')).toEqual(['<u>', '</u>'])
+    expect(marked('a <u>under lined</u> b', 'nib-underline')).toEqual(['under lined'])
+  })
+
+  test('shows the tags while the caret is between them', () => {
+    expect(concealed('a <u>under lined</u> b', 8)).toEqual([])
+    expect(revealedMeta('a <u>under lined</u> b', 8)).toEqual(['<u>', '</u>'])
+  })
+
+  test('pairs nested underlines from the inside out', () => {
+    expect(concealed('<u>a <u>b</u> c</u>')).toEqual(['<u>', '<u>', '</u>', '</u>'])
+    expect(marked('<u>a <u>b</u> c</u>', 'nib-underline')).toEqual(['a <u>b</u> c', 'b'])
+  })
+
+  test('leaves an opener without a closer alone', () => {
+    expect(concealed('a <u>open b')).toEqual([])
+    expect(marked('a <u>open b', 'nib-underline')).toEqual([])
+  })
+
+  test('leaves other inline tags alone', () => {
+    expect(concealed('a <b>bold</b> b')).toEqual([])
   })
 })

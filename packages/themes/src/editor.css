@@ -105,6 +105,12 @@
   cursor: pointer;
 }
 
+/* `<u>text</u>`, with the tags hidden the way `**` is. */
+.nib-underline {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
 .nib-inline-code {
   background: var(--surface-2);
   border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
