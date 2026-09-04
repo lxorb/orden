@@ -548,9 +548,14 @@
   }
 
   .row.active {
-    background: var(--active-file-bg-color);
     color: var(--active-file-text-color);
     font-weight: 550;
+  }
+
+  /* The heading the caret is under is a place, not a pick, so it may be
+     shown the way a pick is. A pinned note that is open is not. */
+  .row.heading.active {
+    background: var(--active-file-bg-color);
   }
 
   .row:focus-visible {

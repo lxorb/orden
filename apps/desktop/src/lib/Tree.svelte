@@ -278,8 +278,10 @@
     outline-offset: -2px;
   }
 
+  /* The open note is told apart by weight and colour alone. A background
+     would read as a selection, which it is not: switching tabs picks nothing
+     in the list, the way a click in the list does. */
   .note.active {
-    background: var(--active-file-bg-color);
     color: var(--active-file-text-color);
     font-weight: 550;
   }
