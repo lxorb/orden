@@ -6,7 +6,11 @@
  *  indefinitely, which is not something syncing is allowed to do.
  *
  *  The decision is separated from the doing so it can be tested against a plain
- *  list of spaces, which is how that gap would have been caught. */
+ *  list of spaces, which is how that gap would have been caught.
+ *
+ *  Nothing here ever removes a folder. A space the account no longer has is
+ *  uploaded again rather than deleted: the worst that costs is a redundant
+ *  upload, where the other way round costs someone their writing. */
 
 export interface LocalSpace {
   name: string
@@ -32,7 +36,8 @@ export interface Plan {
   adopt: RemoteSpace[]
   /** Mirrors whose folder is gone from this machine. */
   drop: string[]
-  /** Mirrors whose space is gone from the account, deleted elsewhere. */
+  /** Mirrors whose space is gone from the account. The folder is uploaded
+   *  again on the next pass rather than being stranded here. */
   detach: string[]
 }
 
@@ -40,9 +45,8 @@ export function planSpaces(input: {
   local: LocalSpace[]
   remote: RemoteSpace[]
   mirrors: Pairing[]
-  detached: string[]
 }): Plan {
-  const { local, remote, mirrors, detached } = input
+  const { local, remote, mirrors } = input
 
   const mirrorByRoot = new Map(mirrors.map((one) => [one.root, one]))
   const remoteById = new Map(remote.map((one) => [one.id, one]))
@@ -56,9 +60,6 @@ export function planSpaces(input: {
 
   for (const space of local) {
     if (mirrorByRoot.has(space.root)) continue
-    // Detached on purpose: its space was deleted from the account somewhere
-    // else, and uploading it again would undo that for everyone.
-    if (detached.includes(space.root)) continue
 
     const match = remoteByName.get(space.name)
     if (match && !spoken.has(match.id)) {
@@ -72,7 +73,7 @@ export function planSpaces(input: {
   for (const space of remote) {
     if (spoken.has(space.id)) continue
     // A folder of that name is about to be paired with it, or already is.
-    if (local.some((one) => one.name === space.name && !detached.includes(one.root))) continue
+    if (local.some((one) => one.name === space.name)) continue
 
     plan.adopt.push(space)
     spoken.add(space.id)

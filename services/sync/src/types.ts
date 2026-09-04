@@ -37,6 +37,8 @@ export interface Space {
   name: string
   /** Where it sits in the rail. Ties are broken by created_at. */
   position: number
+  /** The name of the icon the rail shows, if one was chosen. */
+  icon: string | null
   created_at: number
   updated_at: number
   blog_enabled: number

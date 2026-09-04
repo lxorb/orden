@@ -55,6 +55,7 @@ spaces.post('/', async (context) => {
     user_id: user.id,
     name: label,
     position: (last?.last ?? -1) + 1,
+    icon: null,
     created_at: now(),
     updated_at: now(),
     blog_enabled: 0,
@@ -109,15 +110,29 @@ spaces.patch('/:id', async (context) => {
   const space = await ownedSpace(context.env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'no such space' }, 404)
 
-  const { name } = await context.req.json<{ name?: string }>()
-  const label = (name ?? '').trim().slice(0, NAME_LIMIT)
+  const body = await context.req.json<{ name?: string; icon?: string | null }>()
+
+  const label = body.name === undefined ? space.name : body.name.trim().slice(0, NAME_LIMIT)
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
-  await context.env.DB.prepare('update spaces set name = ?, updated_at = ? where id = ?')
-    .bind(label, now(), space.id)
+  // An icon is a name from the set the app ships, so it needs no more than a
+  // sane length and no surprises in it.
+  const icon =
+    body.icon === undefined
+      ? space.icon
+      : body.icon === null
+        ? null
+        : /^[A-Za-z0-9]{1,64}$/.test(body.icon)
+          ? body.icon
+          : space.icon
+
+  await context.env.DB.prepare(
+    'update spaces set name = ?, icon = ?, updated_at = ? where id = ?',
+  )
+    .bind(label, icon, now(), space.id)
     .run()
 
-  return context.json({ space: present({ ...space, name: label }) })
+  return context.json({ space: present({ ...space, name: label, icon }) })
 })
 
 spaces.delete('/:id', async (context) => {
@@ -251,6 +266,7 @@ function present(space: Space) {
     id: space.id,
     name: space.name,
     position: space.position,
+    icon: space.icon,
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

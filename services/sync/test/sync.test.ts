@@ -62,6 +62,69 @@ describe('spaces', () => {
   })
 })
 
+describe("a space's icon", () => {
+  test('starts unset', async () => {
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(listed.json.spaces[0].icon).toBe(null)
+  })
+
+  test('is remembered, so every machine shows the same one', async () => {
+    const response = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { icon: 'Briefcase' },
+    })
+
+    expect(response.json.space.icon).toBe('Briefcase')
+
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(listed.json.spaces[0].icon).toBe('Briefcase')
+  })
+
+  test('can be taken off again', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body: { icon: 'Briefcase' } })
+    const cleared = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { icon: null },
+    })
+
+    expect(cleared.json.space.icon).toBe(null)
+  })
+
+  test('survives a rename that says nothing about it', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body: { icon: 'Book' } })
+    const renamed = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { name: 'Renamed' },
+    })
+
+    expect(renamed.json.space.name).toBe('Renamed')
+    expect(renamed.json.space.icon).toBe('Book')
+  })
+
+  test('keeps the name when only the icon is sent', async () => {
+    const response = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { icon: 'Book' },
+    })
+
+    expect(response.json.space.name).toBe('Work')
+  })
+
+  test('refuses anything that is not an icon name', async () => {
+    const response = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { icon: '../../etc/passwd' },
+    })
+
+    expect(response.json.space.icon).toBe(null)
+  })
+})
+
 describe('the order spaces appear in', () => {
   /** Names as the account lists them, which is the rail order. */
   async function order(): Promise<string[]> {

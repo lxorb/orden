@@ -13,6 +13,7 @@ export interface RemoteSpace {
   name: string
   /** Where it sits in the rail, shared across machines. */
   position: number
+  icon: string | null
   createdAt: number
   updatedAt: number
   blog: {
@@ -125,6 +126,9 @@ export const api = {
 
   renameSpace: (token: string, id: string, name: string) =>
     request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { name } }),
+
+  setSpaceIcon: (token: string, id: string, icon: string | null) =>
+    request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { icon } }),
 
   deleteSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),

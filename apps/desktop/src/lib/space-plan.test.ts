@@ -6,7 +6,7 @@ const remote = (name: string, id = `id-${name}`) => ({ id, name })
 const mirror = (name: string, id = `id-${name}`) => ({ root: `/spaces/${name}`, spaceId: id })
 
 const plan = (input: Partial<Parameters<typeof planSpaces>[0]>) =>
-  planSpaces({ local: [], remote: [], mirrors: [], detached: [], ...input })
+  planSpaces({ local: [], remote: [], mirrors: [], ...input })
 
 describe('a machine that is already in step', () => {
   test('has nothing to do', () => {
@@ -76,30 +76,24 @@ describe('a folder that is gone from this machine', () => {
 })
 
 describe('a space deleted from the account elsewhere', () => {
-  test('detaches rather than being uploaded again', () => {
+  test('lets go of the mirror', () => {
+    const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
+    expect(result.detach).toEqual(['/spaces/Work'])
+  })
+
+  test('is uploaded again on the pass after, rather than stranded here', () => {
+    // A folder kept out of the account forever is the one thing worse than an
+    // extra upload: the two machines never agree again.
+    const result = plan({ local: [local('Work')] })
+
+    expect(result.upload.map((one) => one.name)).toEqual(['Work'])
+  })
+
+  test('never removes the folder, whatever the account says', () => {
     const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
 
-    expect(result.detach).toEqual(['/spaces/Work'])
-    expect(result.upload).toEqual([])
-  })
-
-  test('stays detached on the pass after, instead of coming back', () => {
-    // The whole point: without this the folder reads as new every time and
-    // the deletion would be undone on every machine.
-    const result = plan({ local: [local('Work')], detached: ['/spaces/Work'] })
-
-    expect(result.upload).toEqual([])
-    expect(result.pair).toEqual([])
-  })
-
-  test('does not block a fresh space of the same name from the account', () => {
-    const result = plan({
-      local: [local('Work')],
-      remote: [remote('Work', 'id-new')],
-      detached: ['/spaces/Work'],
-    })
-
-    expect(result.adopt.map((one) => one.id)).toEqual(['id-new'])
+    expect(result).not.toHaveProperty('remove')
+    expect(result.upload.concat(result.adopt as never)).toBeDefined()
   })
 })
 

@@ -795,6 +795,18 @@ class Workspace {
     return space ? (this.icons[space.root] ?? null) : null
   }
 
+  /** An icon that came from the account rather than from this machine. */
+  applyIcon(root: string, name: string | null) {
+    if ((this.icons[root] ?? null) === name) return
+
+    const next = { ...this.icons }
+    if (name) next[root] = name
+    else delete next[root]
+
+    this.icons = next
+    localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+  }
+
   setIcon(spaceId: string, name: string | null) {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     if (!space) return
@@ -805,6 +817,10 @@ class Workspace {
 
     this.icons = next
     localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+
+    // Imported here rather than at the top: syncing reads the workspace, and
+    // the two would import each other.
+    void import('./sync.svelte').then(({ sync }) => sync.pushIcon(space.root, name))
   }
 
   /** Carries a chosen icon over to a renamed folder. Without this a rename
