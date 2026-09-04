@@ -33,6 +33,7 @@ export {
   setHeadingNumbers,
   setLineHeight,
   setMeasure,
+  remeasure,
   setRightToLeft,
   setSmartPunctuation,
   setSourceMode,

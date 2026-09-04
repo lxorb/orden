@@ -152,11 +152,26 @@ export function setCodeLineNumbers(view: EditorView, on: boolean) {
 /** Widens or narrows the writing column. */
 export function setMeasure(view: EditorView, rem: number) {
   view.dom.style.setProperty('--measure', `${rem}rem`)
+  remeasure(view)
 }
 
 /** Line height for the writing surface. */
 export function setLineHeight(view: EditorView, height: number) {
   view.dom.style.setProperty('--leading-content', String(height))
+  remeasure(view)
+}
+
+/** Tells the editor its text has changed shape.
+ *
+ *  Every one of these settings works by writing a CSS custom property, and a
+ *  custom property is invisible to CodeMirror: it caches the line height and
+ *  character width it measured once and goes on trusting them. The cached
+ *  numbers are what place the caret and decide which line a click lands on, so
+ *  a stale one puts every position slightly out - and the error adds up with
+ *  every line down the document. */
+export function remeasure(view: EditorView) {
+  // A view torn down between the change and this call has nothing to measure.
+  if (view.dom.isConnected) view.requestMeasure()
 }
 
 /** Right-to-left writing, for Arabic and Hebrew. */

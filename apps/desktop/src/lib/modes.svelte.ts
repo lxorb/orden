@@ -9,6 +9,7 @@ import {
   setRightToLeft,
   setEquationNumbers,
   setSmartPunctuation,
+  remeasure,
   setSourceMode,
   setSpellcheck,
   setStrictMode,
@@ -90,8 +91,14 @@ class Modes {
     this.applyZoom()
   }
 
+  /** The view on screen, so a zoom from the keyboard or the menu can tell it
+   *  to measure again. */
+  private view: EditorView | undefined
+
   /** Re-applies every mode to a freshly created view. */
   apply(view: EditorView) {
+    this.view = view
+
     setSourceMode(view, this.source)
     setFocusMode(view, this.focus)
     setTypewriterMode(view, this.typewriter)
@@ -239,8 +246,13 @@ class Modes {
     this.persist()
   }
 
+  /** Zoom is the one metric that cannot live on the view: `--text-content` is
+   *  worked out at the root, so `--zoom` has to be set there too. Which means
+   *  nothing tells the editor its text just changed size - hence the view kept
+   *  above, and this. */
   private applyZoom() {
     document.documentElement.style.setProperty('--zoom', String(this.zoom))
+    if (this.view) remeasure(this.view)
   }
 
   private persist() {

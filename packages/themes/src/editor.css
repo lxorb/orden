@@ -35,19 +35,26 @@
   line-height: 1.3;
 }
 
+/* CodeMirror measures every line and block widget with getBoundingClientRect,
+   which does not include margins. A margin here is therefore space the editor
+   cannot see: it lays the caret out as if the gap were not there, and clicks
+   land further and further from the pointer the more of them are above. So
+   nothing below sets a vertical margin - the space is padding, or a transparent
+   border where a background must not stretch into it. */
+
 .cm-line.nib-h1 {
-  margin: 0.85em 0 0.35em;
+  padding: 0.85em 0 0.35em;
   letter-spacing: -0.023em;
 }
 .cm-line.nib-h2 {
-  margin: 0.95em 0 0.35em;
+  padding: 0.95em 0 0.35em;
   letter-spacing: -0.018em;
 }
 .cm-line.nib-h3,
 .cm-line.nib-h4,
 .cm-line.nib-h5,
 .cm-line.nib-h6 {
-  margin: 1em 0 0.3em;
+  padding: 1em 0 0.3em;
 }
 
 /* ── Blockquote ──────────────────────────────────────────────────── */
@@ -88,17 +95,19 @@
 }
 
 .cm-line.nib-code-open {
-  border-top: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 var(--line);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   padding-top: var(--space-3);
-  margin-top: 1.1em;
+  border-top: 1.1em solid transparent;
+  background-clip: padding-box;
 }
 
 .cm-line.nib-code-close {
-  border-bottom: 1px solid var(--line);
+  box-shadow: inset 0 -1px 0 var(--line);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   padding-bottom: var(--space-3);
-  margin-bottom: 1.1em;
+  border-bottom: 1.1em solid transparent;
+  background-clip: padding-box;
 }
 
 /* The fence's own line carries its language and a copy button.
@@ -346,8 +355,8 @@
   /* The padding above is not spacing, it is room for the column controls that
      hang over the header, so the margin can be small without the table
      crowding the text around it. */
-  margin: 0.15em 0;
-  padding: 18px 0 0 26px;
+  padding: 0.15em 0 0.15em 26px;
+  padding-top: 18px;
   overflow-x: auto;
   animation: settle-in var(--dur-base) var(--ease-out);
 }
@@ -548,7 +557,9 @@
   position: relative;
   display: block;
   height: 1px;
-  margin: 1.8em 0;
+  border-top: 1.8em solid transparent;
+  border-bottom: 1.8em solid transparent;
+  background-clip: padding-box;
   background: repeating-linear-gradient(
     to right,
     var(--line-strong) 0 6px,
@@ -704,8 +715,7 @@
 
 .nib-toc {
   display: block;
-  margin: 1.6em 0;
-  padding-left: 1.15em;
+  padding: 1.6em 0 1.6em 1.15em;
   border-left: 2px solid var(--line);
   font-family: var(--font-ui);
   font-size: 0.94em;
@@ -816,8 +826,7 @@
 .nib-math-block {
   position: relative;
   display: block;
-  margin: 1.4em 0;
-  padding: var(--space-3) 0;
+  padding: calc(1.4em + var(--space-3)) 0;
   text-align: center;
   overflow-x: auto;
   animation: settle-in var(--dur-base) var(--ease-out);
@@ -843,8 +852,10 @@
 
 .nib-diagram {
   display: block;
-  margin: 1.5em 0;
   padding: var(--space-4);
+  border-top: 1.5em solid transparent;
+  border-bottom: 1.5em solid transparent;
+  background-clip: padding-box;
   text-align: center;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -944,7 +955,8 @@
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0.6em auto;
+  margin: 0 auto;
+  padding: 0.6em 0;
   border-radius: var(--radius-md);
   cursor: zoom-in;
   animation: develop var(--dur-slower) var(--ease-out);
