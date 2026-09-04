@@ -265,6 +265,34 @@ describe('choosing a subdomain', () => {
     expect(response.status).toBe(409)
   })
 
+  test('a name the space already holds is free for that space', async () => {
+    await publish({ subdomain: 'field' })
+
+    const mine = await call(env, `/v1/spaces/available/field?space=${space}`, { token })
+    expect(mine.json.available).toBe(true)
+
+    const bare = await call(env, '/v1/spaces/available/field', { token })
+    expect(bare.json.available).toBe(false)
+  })
+
+  test('a name held by one space is not free for another', async () => {
+    await publish({ subdomain: 'field' })
+    const second = await call(env, '/v1/spaces', { token, body: { name: 'Second' } })
+
+    const response = await call(env, `/v1/spaces/available/field?space=${second.json.space.id}`, {
+      token,
+    })
+    expect(response.json.available).toBe(false)
+  })
+
+  test('naming a space that is not yours does not free its name', async () => {
+    await publish({ subdomain: 'field' })
+
+    const other = await signIn(env, 'other@b.dev')
+    const response = await call(env, `/v1/spaces/available/field?space=${space}`, { token: other })
+    expect(response.json.available).toBe(false)
+  })
+
   test('availability can be checked before committing', async () => {
     expect((await call(env, '/v1/spaces/available/free-name', { token })).json.available).toBe(true)
 

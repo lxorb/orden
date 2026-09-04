@@ -271,17 +271,26 @@ spaces.delete('/:id/blog', async (context) => {
   return context.json({ ok: true })
 })
 
-/** Whether a subdomain is free - drives the live check while typing. */
+/** Whether a subdomain is free - drives the live check while typing.
+ *
+ *  `?space=` names the space being published: a name it already holds is
+ *  free for it, and would otherwise read as taken by itself. Only the
+ *  caller's own space counts, or anyone could clear a name by naming the
+ *  space that holds it. */
 spaces.get('/available/:subdomain', async (context) => {
+  const user = context.get('user')
   const subdomain = context.req.param('subdomain').toLowerCase()
+  const except = context.req.query('space') ?? ''
 
   if (!SUBDOMAIN.test(subdomain)) {
     return context.json({ available: false, reason: 'use 2–32 letters, numbers or hyphens' })
   }
   if (RESERVED.has(subdomain)) return context.json({ available: false, reason: 'that name is taken' })
 
-  const taken = await context.env.DB.prepare('select id from spaces where blog_subdomain = ?')
-    .bind(subdomain)
+  const taken = await context.env.DB.prepare(
+    'select id from spaces where blog_subdomain = ? and not (id = ? and user_id = ?)',
+  )
+    .bind(subdomain, except, user.id)
     .first()
 
   return context.json(

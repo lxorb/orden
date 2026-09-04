@@ -186,7 +186,14 @@ class Settings {
     }
   }
 
+  /** Which check is the latest. Typing outruns the network, and an older
+   *  answer landing after a newer one would describe a name no longer in the
+   *  box. */
+  private checks = 0
+
   async checkSubdomain(value: string) {
+    const check = ++this.checks
+
     if (!account.token || value.length < 2) {
       this.availability = { checking: false, available: null }
       return
@@ -194,9 +201,11 @@ class Settings {
 
     this.availability = { checking: true, available: null }
     try {
-      const result = await api.subdomainAvailable(account.token, value)
+      const result = await api.subdomainAvailable(account.token, value, this.remote?.id)
+      if (check !== this.checks) return
       this.availability = { checking: false, available: result.available, reason: result.reason }
     } catch {
+      if (check !== this.checks) return
       this.availability = { checking: false, available: null }
     }
   }

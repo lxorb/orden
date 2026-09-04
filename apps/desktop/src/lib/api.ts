@@ -167,8 +167,13 @@ export const api = {
   deleteNote: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/notes/${id}`, { method: 'DELETE', token }),
 
-  subdomainAvailable: (token: string, subdomain: string) =>
-    request<{ available: boolean; reason?: string }>(`/v1/spaces/available/${subdomain}`, { token }),
+  /** `space` is the one being published: a name it already holds is free for
+   *  it, and would otherwise read as taken by itself. */
+  subdomainAvailable: (token: string, subdomain: string, space?: string) =>
+    request<{ available: boolean; reason?: string }>(
+      `/v1/spaces/available/${subdomain}${space ? `?space=${encodeURIComponent(space)}` : ''}`,
+      { token },
+    ),
 
   publish: (
     token: string,
