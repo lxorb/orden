@@ -17,6 +17,8 @@ import {
   setTypewriterMode,
   type EditorView,
 } from '@nib/editor'
+import { account } from './account.svelte'
+import { api, type AccountSettings } from './api'
 
 const STORAGE_KEY = 'nib:modes'
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
@@ -68,8 +70,9 @@ class Modes {
   /** The dictionary to check against; `system` leaves it to the browser. */
   spellLanguage = $state('system')
   closeBrackets = $state(true)
-  /** `->` shown as an arrow, `<=` as a sign, and so on. */
-  ligatures = $state(true)
+  /** `->` shown as an arrow, `<=` as a sign, and so on. Off until chosen;
+   *  the choice follows the account. */
+  ligatures = $state(false)
 
   restore() {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -92,7 +95,7 @@ class Modes {
         this.spellcheck = state.spellcheck ?? false
         this.spellLanguage = state.spellLanguage || 'system'
         this.closeBrackets = state.closeBrackets ?? true
-        this.ligatures = state.ligatures ?? true
+        this.ligatures = state.ligatures ?? false
       } catch {
         // A corrupt entry just means defaults.
       }
@@ -191,6 +194,33 @@ class Modes {
     this.ligatures = !this.ligatures
     if (view) setLigatures(view, this.ligatures)
     this.persist()
+    this.share({ ligatures: this.ligatures })
+  }
+
+  /** Takes over the account's settings: signing in on a new machine brings
+   *  them along, and a change made on another shows up at the next start.
+   *  What the account has not decided stays as this machine had it. */
+  async adopt(token: string) {
+    let remote: AccountSettings
+    try {
+      remote = (await api.settings(token)).settings
+    } catch {
+      return
+    }
+
+    if (typeof remote.ligatures === 'boolean' && remote.ligatures !== this.ligatures) {
+      this.ligatures = remote.ligatures
+      if (this.view) setLigatures(this.view, this.ligatures)
+      this.persist()
+    }
+  }
+
+  /** Tells the account, when there is one. A machine that is offline keeps
+   *  its own choice; the next change made online carries it up. */
+  private share(patch: AccountSettings) {
+    const token = account.token
+    if (!token) return
+    void api.saveSettings(token, patch).catch(() => undefined)
   }
 
   toggleCloseBrackets(view?: EditorView) {

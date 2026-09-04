@@ -171,7 +171,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Ligatures'),
-              initial: true,
+              initial: false,
               get: () => modes.ligatures,
               set: () => modes.toggleLigatures(view),
             },

@@ -773,6 +773,16 @@
   pointer-events: none;
 }
 
+/* The code font may bring ligatures of its own - iA Writer Mono draws `->`
+   as an arrow by itself - and shows them only while the setting is on, so
+   that off means off. Prose is left to its font: fi and fl are not what is
+   being asked about. */
+.cm-editor:not(.nib-ligatures) .nib-inline-code,
+.cm-editor:not(.nib-ligatures) .cm-line.nib-code {
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0;
+}
+
 /* ── Find and replace ────────────────────────────────────────────── */
 
 .cm-panels {

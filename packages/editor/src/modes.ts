@@ -111,7 +111,8 @@ export function modeExtensions(): Extension {
     // its dictionary's language are noise, and most notes start that way.
     spelling.of(EditorView.contentAttributes.of({ spellcheck: 'false' })),
     brackets.of(closeBrackets()),
-    glyphs.of(ligatures()),
+    // Off until asked for: a note reads as typed unless someone chose otherwise.
+    glyphs.of([]),
   ]
 }
 
@@ -143,10 +144,12 @@ export function setTypewriterMode(view: EditorView, on: boolean) {
   view.dom.classList.toggle('nib-typewriter-mode', on)
 }
 
-/** Shows `->`, `<=` and their kind as the arrow or sign they stand for. On
- *  by default; the text underneath stays as typed. */
+/** Shows `->`, `<=` and their kind as the arrow or sign they stand for; the
+ *  text underneath stays as typed. The class lets the stylesheet hold back
+ *  the code font's own ligatures while this is off, so that off means off. */
 export function setLigatures(view: EditorView, on: boolean) {
   view.dispatch({ effects: glyphs.reconfigure(on ? ligatures() : []) })
+  view.dom.classList.toggle('nib-ligatures', on)
 }
 
 /** Curly quotes, en and em dashes, ellipsis - on by default, like Typora. */

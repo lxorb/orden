@@ -6,6 +6,7 @@ import { serveBlog, spaceForHost } from './blog'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
+import { settings } from './settings'
 import { spaces } from './spaces'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
@@ -99,6 +100,7 @@ app.get('/v1/usage', async (context) => {
 app.route('/v1/blobs', blobs)
 app.route('/v1/spaces', spaces)
 app.route('/v1/trash', trash)
+app.route('/v1/settings', settings)
 app.route('/v1/mcp', mcpAdmin)
 app.route('/v1', notes)
 

@@ -53,6 +53,12 @@ export interface TrashListing {
   }[]
 }
 
+/** The settings that follow the account from machine to machine. Each is
+ *  there once chosen; a missing one means the machine's own choice stands. */
+export interface AccountSettings {
+  ligatures?: boolean
+}
+
 export interface DnsRecord {
   type: string
   name: string
@@ -138,6 +144,10 @@ export const api = {
     request<{ space: RemoteSpace }>('/v1/spaces', { token, body: { name } }),
 
   usage: (token: string) => request<{ used: number; limit: number }>('/v1/usage', { token }),
+
+  settings: (token: string) => request<{ settings: AccountSettings }>('/v1/settings', { token }),
+  saveSettings: (token: string, patch: AccountSettings) =>
+    request<{ settings: AccountSettings }>('/v1/settings', { method: 'PATCH', token, body: patch }),
 
   /** Named by its own hash, so a repeat costs one request and no storage. */
   putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {

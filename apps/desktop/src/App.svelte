@@ -98,6 +98,13 @@
   void stageUpdate().then((version) => (updateReady = version))
   void account.restore()
 
+  // The account's settings come along with the account: when the session is
+  // restored at start, and again on signing in.
+  $effect(() => {
+    const token = account.token
+    if (token) void modes.adopt(token)
+  })
+
   // A new view starts with no modes applied, so re-apply on every swap.
   $effect(() => {
     if (view) modes.apply(view)
