@@ -26,6 +26,17 @@ body {
   transition: none !important;
 }
 
+/* ── Task lists ──────────────────────────────────────────────────── */
+
+/* The renderer's checkbox is a real input, which does not inherit the text
+   size the theme measures its offset in; given the size, it sits in the
+   list's gutter the way the editor draws it. */
+#write .task-list-item input[type='checkbox'] {
+  font-size: inherit;
+  left: -1.45em;
+  top: 0.4em;
+}
+
 /* ── Table of contents ───────────────────────────────────────────── */
 
 #write .toc ul {
@@ -73,7 +84,23 @@ body {
 
 /* ── Running header and footer ───────────────────────────────────── */
 
-/* Only exist on paper. On screen the document is the whole page. */
+/* The sheet is a table so a browser will repeat its head and foot on every
+   page. It must be as wide as the page even on screen, or it shrinks to its
+   content and the text no longer sits in the middle. */
+.sheet {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sheet > thead > tr > td,
+.sheet > tfoot > tr > td,
+.sheet > tbody > tr > td {
+  padding: 0;
+  border: none;
+  vertical-align: top;
+}
+
+/* Running text only exists on paper. On screen the document is the whole page. */
 .sheet > thead,
 .sheet > tfoot,
 .running-footer {
@@ -197,26 +224,12 @@ body {
   }
 
   /* Only the sheet's own running text; browser headers are turned off. */
-  .sheet {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .sheet > thead,
-  .sheet > tfoot {
+  .sheet > thead {
     display: table-header-group;
   }
 
   .sheet > tfoot {
     display: table-footer-group;
-  }
-
-  .sheet > thead > tr > td,
-  .sheet > tfoot > tr > td,
-  .sheet > tbody > tr > td {
-    padding: 0;
-    border: none;
-    vertical-align: top;
   }
 
   .sheet > thead > tr > td {

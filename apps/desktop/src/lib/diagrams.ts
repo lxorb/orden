@@ -36,19 +36,27 @@ async function drawMermaid(code: string, scheme: Scheme): Promise<string> {
   return svg
 }
 
-/** Typora's legacy ` ```flow ` fences. */
+/** Typora's legacy ` ```flow ` fences. flowchart.js measures its labels as
+ *  it draws, which only works on a page: drawn into a loose element every
+ *  word comes out zero wide. So it draws into a corner nobody can see. */
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
   const flowchart = (await import('flowchart.js')).default
   const host = document.createElement('div')
+  host.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;'
+  document.body.append(host)
 
-  flowchart.parse(code).drawSVG(host, {
-    'line-width': 1.5,
-    'font-family': FONT,
-    'font-size': 13,
-    ...FLOW[scheme],
-    'yes-text': 'yes',
-    'no-text': 'no',
-  })
+  try {
+    flowchart.parse(code).drawSVG(host, {
+      'line-width': 1.5,
+      'font-family': FONT,
+      'font-size': 13,
+      ...FLOW[scheme],
+      'yes-text': 'yes',
+      'no-text': 'no',
+    })
 
-  return host.innerHTML
+    return host.innerHTML
+  } finally {
+    host.remove()
+  }
 }
