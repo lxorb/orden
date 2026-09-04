@@ -18,13 +18,13 @@ export function cleanPath(input: string): string | null {
   return path
 }
 
-function key(spaceId: string, noteId: string): string {
+export function key(spaceId: string, noteId: string): string {
   return `spaces/${spaceId}/${noteId}`
 }
 
 /** The next cursor value for a space. Strictly increasing, so a client can ask
  *  for "everything after N" and never miss a write that shared a millisecond. */
-async function nextSeq(env: Env, spaceId: string): Promise<number> {
+export async function nextSeq(env: Env, spaceId: string): Promise<number> {
   const row = await env.DB.prepare(
     `insert into space_cursor (space_id, next) values (?, 2)
      on conflict(space_id) do update set next = next + 1
@@ -36,7 +36,7 @@ async function nextSeq(env: Env, spaceId: string): Promise<number> {
   return row?.seq ?? 1
 }
 
-function present(note: Note) {
+export function presentNote(note: Note) {
   return {
     id: note.id,
     path: note.path,
@@ -66,7 +66,7 @@ notes.get('/spaces/:spaceId/changes', async (context) => {
     .all<Note>()
 
   const cursor = results.length ? results[results.length - 1].seq : since
-  return context.json({ notes: results.map(present), cursor, more: results.length === 1000 })
+  return context.json({ notes: results.map(presentNote), cursor, more: results.length === 1000 })
 })
 
 notes.post('/spaces/:spaceId/notes', async (context) => {
@@ -87,7 +87,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     .bind(space.id, path)
     .first<Note>()
 
-  if (existing) return context.json({ error: 'a note already lives there', note: present(existing) }, 409)
+  if (existing) return context.json({ error: 'a note already lives there', note: presentNote(existing) }, 409)
 
   // A limit nobody enforces is a number on a settings page.
   if (!(await fits(context.env, user.id, content.length))) {
@@ -124,7 +124,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     )
     .run()
 
-  return context.json({ note: present(note) }, 201)
+  return context.json({ note: presentNote(note) }, 201)
 })
 
 async function noteForUser(context: {
@@ -152,7 +152,7 @@ notes.get('/notes/:id', async (context) => {
   if (!note) return context.json({ error: 'no such note' }, 404)
 
   const object = await context.env.NOTES.get(key(note.space_id, note.id))
-  return context.json({ note: present(note), content: object ? await object.text() : '' })
+  return context.json({ note: presentNote(note), content: object ? await object.text() : '' })
 })
 
 /** Optimistic concurrency: send the version you edited. A mismatch comes back
@@ -178,7 +178,7 @@ notes.put('/notes/:id', async (context) => {
     return context.json(
       {
         error: 'this note changed elsewhere',
-        note: present(note),
+        note: presentNote(note),
         content: object ? await object.text() : '',
       },
       409,
@@ -186,7 +186,7 @@ notes.put('/notes/:id', async (context) => {
   }
 
   const hash = await sha256(content)
-  if (hash === note.hash && path === note.path) return context.json({ note: present(note) })
+  if (hash === note.hash && path === note.path) return context.json({ note: presentNote(note) })
 
   // The note's current bytes come back as it is replaced, so editing a large
   // note that stays the same size is never refused.
@@ -220,7 +220,7 @@ notes.put('/notes/:id', async (context) => {
     )
     .run()
 
-  return context.json({ note: present(updated) })
+  return context.json({ note: presentNote(updated) })
 })
 
 /** Soft delete: the tombstone is what tells other devices to remove it. The

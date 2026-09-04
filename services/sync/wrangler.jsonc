@@ -68,6 +68,8 @@
   // A third route, "*/*", is what lets the Worker answer for custom hostnames
   // (Cloudflare for SaaS). The routes API refuses a wildcard host until SaaS is
   // enabled on the zone (error 10022), so it is added back once that is done.
+  // Recently deleted is emptied once a day; see purgeExpired in trash.ts.
+  "triggers": { "crons": ["0 3 * * *"] },
   "routes": [
     { "pattern": "nibeditor.com/*", "zone_name": "nibeditor.com" },
     { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" },

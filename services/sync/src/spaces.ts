@@ -61,7 +61,7 @@ spaces.get('/', async (context) => {
     .all<{ id: string }>()
 
   return context.json({
-    spaces: results.map((one) => present(one, context.env)),
+    spaces: results.map((one) => presentSpace(one, context.env)),
     deleted: gone.results.map((one) => one.id),
   })
 })
@@ -102,7 +102,7 @@ spaces.post('/', async (context) => {
     .bind(space.id, space.user_id, space.name, space.position, space.created_at, space.updated_at)
     .run()
 
-  return context.json({ space: present(space, context.env) }, 201)
+  return context.json({ space: presentSpace(space, context.env) }, 201)
 })
 
 /** The whole rail order in one go: ids in the order they should appear.
@@ -165,7 +165,7 @@ spaces.patch('/:id', async (context) => {
     .bind(label, icon, now(), space.id)
     .run()
 
-  return context.json({ space: present({ ...space, name: label, icon }, context.env) })
+  return context.json({ space: presentSpace({ ...space, name: label, icon }, context.env) })
 })
 
 spaces.delete('/:id', async (context) => {
@@ -297,7 +297,7 @@ spaces.put('/:id/blog', async (context) => {
 
   const updated = await ownedSpace(context.env, user.id, space.id)
   return context.json({
-    space: present(updated!, context.env),
+    space: presentSpace(updated!, context.env),
     dns: dnsRecords(context.env, updated!),
   })
 })
@@ -399,7 +399,7 @@ export function dnsRecords(env: Env, space: Space): { type: string; name: string
   ]
 }
 
-function present(space: Space, env: Env) {
+export function presentSpace(space: Space, env: Env) {
   return {
     id: space.id,
     name: space.name,

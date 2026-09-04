@@ -7,6 +7,7 @@ import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
 import { spaces } from './spaces'
+import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
 import type { Env, Variables } from './types'
 
@@ -97,6 +98,7 @@ app.get('/v1/usage', async (context) => {
 
 app.route('/v1/blobs', blobs)
 app.route('/v1/spaces', spaces)
+app.route('/v1/trash', trash)
 app.route('/v1/mcp', mcpAdmin)
 app.route('/v1', notes)
 
@@ -125,4 +127,9 @@ app.all('*', async (context) => {
   return context.text('Not found', 404)
 })
 
-export default app
+/** The daily job: what has waited its 14 days in Recently deleted goes. */
+async function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
+  context.waitUntil(purgeExpired(env, Date.now()))
+}
+
+export default { fetch: app.fetch, scheduled }
