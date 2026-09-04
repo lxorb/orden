@@ -37,23 +37,6 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
   </a>
 </p>
 
-Every file on the [releases page](https://github.com/lxorb/nib/releases/latest) says which
-system it is for, so pick the one that matches:
-
-| Platform | Download | Also available |
-| --- | --- | --- |
-| Windows 10/11 · x64 | `…-windows-x64-setup.exe` | `.msi` |
-| Windows 10/11 · arm64 | `…-windows-arm64-setup.exe` | `.msi` |
-| macOS 11+ · Intel and Apple silicon | `…-macos-universal.dmg` | |
-| Linux · x64 | `…-linux-x64.AppImage` | `.deb`, `.rpm` |
-| Anything else | [nibeditor.com](https://nibeditor.com) - nothing to install | |
-
-Nib updates itself. New versions download quietly in the background and are offered
-with a restart, so this is the only time you need this page.
-
-The builds are not code signed yet, so the first launch needs a nudge: on Windows choose
-**More info → Run anyway**, and on macOS right-click the app and choose **Open**.
-
 ## Why Nib?
 
 | | Free | Platform independent | Inline preview | Open source | Sync | MCP | Publish |
@@ -69,3 +52,12 @@ The builds are not code signed yet, so the first launch needs a nudge: on Window
 | Bear | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | VS Code | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
 | Sublime Text | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+## Features
+
+- A **clean** and **modern** UI
+- **Syncing** across different devices
+- An **MCP** to allow LLM read and write access
+- **Publish** your markdown files as an online blog with a single click (with custom domain support)
+- **Realtime preview** (WYSIWYG)
+- Paste **Images from Clipboard**
