@@ -24,7 +24,7 @@ pub struct Space {
 
 /// `Documents/Nib`, so notes sit where a person would look for them rather than
 /// buried in application data. Falls back to the home folder.
-fn root(app: &AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
         .document_dir()

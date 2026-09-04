@@ -7,6 +7,7 @@ mod recent;
 mod shell_menu;
 mod spaces;
 mod themes;
+mod trash;
 
 use launch::{markdown_paths, Pending};
 use tauri::{Emitter, Manager};
@@ -74,6 +75,11 @@ pub fn run() {
             spaces::create_space,
             spaces::rename_space,
             spaces::delete_space,
+            trash::trash_item,
+            trash::list_trash,
+            trash::restore_trash,
+            trash::purge_trash,
+            trash::purge_trash_older_than,
         ])
         .setup(|app| {
             let files = markdown_paths(std::env::args());

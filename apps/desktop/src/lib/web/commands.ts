@@ -126,13 +126,97 @@ async function removeFolder(path: string) {
   for (const row of rows) await files.remove(row.path)
 }
 
+/** Recently deleted, the browser's way: rows move under `/.trash/<id>/` and a
+ *  manifest in the meta store says what each was and where it came from.
+ *  The same commands as the desktop's trash.rs, so the app never branches. */
+const TRASH = '/.trash'
+
+interface TrashEntry {
+  id: string
+  kind: string
+  name: string
+  from: string
+  trashedAt: number
+}
+
+let trashCounter = 0
+
+async function trashEntries(): Promise<TrashEntry[]> {
+  const raw = await meta.get('trash')
+  return raw ? (JSON.parse(raw) as TrashEntry[]) : []
+}
+
+async function saveTrash(entries: TrashEntry[]) {
+  await meta.put('trash', JSON.stringify(entries))
+}
+
+async function occupied(path: string): Promise<boolean> {
+  if (await files.get(path)) return true
+  return (await files.all()).some((row) => row.path.startsWith(`${path}/`))
+}
+
+/** `path` if nothing is there, else `name 2`, `name 3`... - before the
+ *  extension for a note, after the name for a folder or a space. */
+async function freeSpot(path: string, isFile: boolean): Promise<string> {
+  if (!(await occupied(path))) return path
+
+  const folder = parent(path)
+  const file = basename(path)
+  const dot = file.lastIndexOf('.')
+  const stem = isFile && dot > 0 ? file.slice(0, dot) : file
+  const extension = isFile && dot > 0 ? file.slice(dot) : ''
+
+  for (let counter = 2; ; counter++) {
+    const candidate = join(folder, `${stem} ${counter}${extension}`)
+    if (!(await occupied(candidate))) return candidate
+  }
+}
+
+async function trashItem(path: string, kind: string): Promise<TrashEntry> {
+  const source = normalise(path)
+  if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
+  if (!(await occupied(source))) throw new Error('nothing is there')
+
+  const id = `${now()}-${trashCounter++}`
+  const name = basename(source)
+  await renameNote(source, `${TRASH}/${id}/${name}`)
+
+  const entry = { id, kind, name, from: source, trashedAt: now() }
+  await saveTrash([...(await trashEntries()), entry])
+  return entry
+}
+
+async function restoreTrash(id: string): Promise<string> {
+  const entries = await trashEntries()
+  const entry = entries.find((one) => one.id === id)
+  if (!entry) throw new Error('nothing to restore')
+
+  const held = `${TRASH}/${entry.id}/${entry.name}`
+  const rest = entries.filter((one) => one.id !== id)
+  if (!(await occupied(held))) {
+    await saveTrash(rest)
+    throw new Error('it is already gone')
+  }
+
+  const target = await freeSpot(entry.from, entry.kind === 'note')
+  await renameNote(held, target)
+  await saveTrash(rest)
+  return target
+}
+
+async function purgeTrash(id: string) {
+  await removeFolder(`${TRASH}/${id}`)
+  await saveTrash((await trashEntries()).filter((one) => one.id !== id))
+}
+
 async function spaceList() {
   const rows = await files.all()
   const names = new Set<string>()
 
   for (const row of rows) {
     const space = spaceOf(row.path)
-    if (space !== '/') names.add(space)
+    // A dot folder is the app's own, not a space: Recently deleted lives in one.
+    if (space !== '/' && !basename(space).startsWith('.')) names.add(space)
   }
 
   return [...names]
@@ -306,6 +390,26 @@ export async function webInvoke<T>(command: string, args: Record<string, unknown
     case 'delete_space':
       await removeFolder(path)
       return undefined as T
+
+    case 'trash_item':
+      return (await trashItem(path, args.kind as string)) as T
+
+    case 'list_trash':
+      return (await trashEntries()).sort((a, b) => b.trashedAt - a.trashedAt) as T
+
+    case 'restore_trash':
+      return (await restoreTrash(args.id as string)) as T
+
+    case 'purge_trash':
+      await purgeTrash(args.id as string)
+      return undefined as T
+
+    case 'purge_trash_older_than': {
+      const cutoff = now() - (args.age as number)
+      const old = (await trashEntries()).filter((one) => one.trashedAt < cutoff)
+      for (const one of old) await purgeTrash(one.id)
+      return old.length as T
+    }
 
     case 'save_asset': {
       const bytes = args.bytes as number[]
