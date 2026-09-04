@@ -707,6 +707,36 @@
       transform: none;
     }
 
+    /* The finger is the animation while it is down; CSS takes over on release
+       and eases the drawer the rest of the way. */
+    .panels.dragging,
+    .scrim.dragging {
+      transition: none;
+      animation: none;
+    }
+
+    /* After a drag: as long as the distance left asks for, on a curve that
+       starts at the finger's pace and eases to a stop rather than snapping. */
+    .panels.settling {
+      transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 29;
+      background: color-mix(in srgb, var(--bg) 55%, transparent);
+      backdrop-filter: blur(2px);
+      animation: scrim-in var(--dur-fast) var(--ease-out);
+    }
+
+    @keyframes scrim-in {
+      from {
+        opacity: 0;
+      }
+    }
+
     /* Full width rather than leaving a sliver of the document showing - and
        once it covers everything it is no longer a drawer over the note but
        the layer beneath it. So here the note is what slides: off to the right
@@ -747,36 +777,6 @@
       /* Nothing to dim: the note is either over the list or off the screen. */
       .scrim {
         display: none;
-      }
-    }
-
-    /* The finger is the animation while it is down; CSS takes over on release
-       and eases the drawer the rest of the way. */
-    .panels.dragging,
-    .scrim.dragging {
-      transition: none;
-      animation: none;
-    }
-
-    /* After a drag: as long as the distance left asks for, on a curve that
-       starts at the finger's pace and eases to a stop rather than snapping. */
-    .panels.settling {
-      transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    .scrim {
-      display: block;
-      position: fixed;
-      inset: 0;
-      z-index: 29;
-      background: color-mix(in srgb, var(--bg) 55%, transparent);
-      backdrop-filter: blur(2px);
-      animation: scrim-in var(--dur-fast) var(--ease-out);
-    }
-
-    @keyframes scrim-in {
-      from {
-        opacity: 0;
       }
     }
   }
