@@ -37,7 +37,7 @@ export interface Group {
 
 /** The panes that are only about settings. Account, publishing and the LLM
  *  connector are their own thing and stay written out by hand. */
-export type PaneId = 'general' | 'editor' | 'markdown' | 'appearance'
+export type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance'
 
 export interface Pane {
   id: PaneId
@@ -141,13 +141,6 @@ export function preferences(view?: EditorView): Pane[] {
             },
             {
               kind: 'switch',
-              label: t('Check spelling'),
-              initial: true,
-              get: () => modes.spellcheck,
-              set: () => modes.toggleSpellcheck(view),
-            },
-            {
-              kind: 'switch',
               label: t('Typewriter mode'),
               initial: false,
               get: () => modes.typewriter,
@@ -179,6 +172,51 @@ export function preferences(view?: EditorView): Pane[] {
               initial: false,
               get: () => modes.lineNumbers,
               set: () => modes.toggleLineNumbers(view),
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      id: 'spelling',
+      label: t('Spelling'),
+      groups: [
+        {
+          title: t('Checking'),
+          fields: [
+            {
+              kind: 'switch',
+              label: t('Check spelling'),
+              initial: false,
+              get: () => modes.spellcheck,
+              set: () => modes.toggleSpellcheck(view),
+            },
+          ],
+        },
+        {
+          // The browser checks against the dictionary the surface's language
+          // names, so this is the one setting that decides whose words are
+          // wrong. The names are the languages' own, which need no translating.
+          title: t('Dictionary'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('Language'),
+              options: [
+                { value: 'system', label: t('Match the system') },
+                { value: 'en', label: 'English' },
+                { value: 'de', label: 'Deutsch' },
+                { value: 'fr', label: 'Français' },
+                { value: 'es', label: 'Español' },
+                { value: 'it', label: 'Italiano' },
+                { value: 'nl', label: 'Nederlands' },
+                { value: 'pt', label: 'Português' },
+                { value: 'ja', label: '日本語' },
+              ],
+              initial: 'system',
+              get: () => modes.spellLanguage,
+              set: (value) => modes.setSpellLanguage(value, view),
             },
           ],
         },

@@ -39,6 +39,7 @@ interface Saved {
   width: number
   lineHeight: number
   spellcheck?: boolean
+  spellLanguage?: string
   closeBrackets?: boolean
 }
 
@@ -61,7 +62,9 @@ class Modes {
   zoom = $state(1)
   width = $state(42)
   lineHeight = $state(1.72)
-  spellcheck = $state(true)
+  spellcheck = $state(false)
+  /** The dictionary to check against; `system` leaves it to the browser. */
+  spellLanguage = $state('system')
   closeBrackets = $state(true)
 
   restore() {
@@ -82,7 +85,8 @@ class Modes {
         this.zoom = state.zoom || 1
         this.width = state.width || 42
         this.lineHeight = state.lineHeight || 1.72
-        this.spellcheck = state.spellcheck ?? true
+        this.spellcheck = state.spellcheck ?? false
+        this.spellLanguage = state.spellLanguage || 'system'
         this.closeBrackets = state.closeBrackets ?? true
       } catch {
         // A corrupt entry just means defaults.
@@ -111,7 +115,7 @@ class Modes {
     setEquationNumbers(view, this.equationNumbers)
     setMeasure(view, this.width)
     setLineHeight(view, this.lineHeight)
-    setSpellcheck(view, this.spellcheck)
+    setSpellcheck(view, this.spellcheck, this.dictionary)
     setCloseBrackets(view, this.closeBrackets)
   }
 
@@ -161,7 +165,19 @@ class Modes {
 
   toggleSpellcheck(view?: EditorView) {
     this.spellcheck = !this.spellcheck
-    if (view) setSpellcheck(view, this.spellcheck)
+    if (view) setSpellcheck(view, this.spellcheck, this.dictionary)
+    this.persist()
+  }
+
+  /** What the checker reads against: a tag when one was chosen, nothing when
+   *  the browser is to pick. */
+  private get dictionary(): string | undefined {
+    return this.spellLanguage === 'system' ? undefined : this.spellLanguage
+  }
+
+  setSpellLanguage(value: string, view?: EditorView) {
+    this.spellLanguage = value
+    if (view) setSpellcheck(view, this.spellcheck, this.dictionary)
     this.persist()
   }
 
@@ -271,6 +287,7 @@ class Modes {
       width: this.width,
       lineHeight: this.lineHeight,
       spellcheck: this.spellcheck,
+      spellLanguage: this.spellLanguage,
       closeBrackets: this.closeBrackets,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))

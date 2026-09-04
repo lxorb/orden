@@ -104,7 +104,9 @@ export function modeExtensions(): Extension {
     typewriter.of([]),
     punctuation.of(smartPunctuation()),
     equations.of(numberEquations.of(false)),
-    spelling.of(EditorView.contentAttributes.of({ spellcheck: 'true' })),
+    // Off until asked for: a checker's wavy lines under prose that is not in
+    // its dictionary's language are noise, and most notes start that way.
+    spelling.of(EditorView.contentAttributes.of({ spellcheck: 'false' })),
     brackets.of(closeBrackets()),
   ]
 }
@@ -175,11 +177,16 @@ export function remeasure(view: EditorView) {
 }
 
 /** Right-to-left writing, for Arabic and Hebrew. */
-/** The browser's own spell checker, over the writing surface. */
-export function setSpellcheck(view: EditorView, on: boolean) {
+/** The browser's own spell checker, over the writing surface. `language` is
+ *  the dictionary to check against, as a language tag; the browser reads it
+ *  off the surface's `lang`. Without one it falls back to its own choice. */
+export function setSpellcheck(view: EditorView, on: boolean, language?: string) {
   view.dispatch({
     effects: spelling.reconfigure(
-      EditorView.contentAttributes.of({ spellcheck: on ? 'true' : 'false' }),
+      EditorView.contentAttributes.of({
+        spellcheck: on ? 'true' : 'false',
+        ...(language ? { lang: language } : {}),
+      }),
     ),
   })
 }

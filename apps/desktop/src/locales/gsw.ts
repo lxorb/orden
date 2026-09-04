@@ -343,4 +343,7 @@ export const gsw: Dictionary = {
   'choose an address': 'Wähl e Adrässe',
   'use at most 60 characters': 'Höchschtens 60 Zeiche',
   'Reset to defaults': 'Uf Standard zruggsetze',
+  Spelling: 'Rächtschriibig',
+  Checking: 'Prüefig',
+  Dictionary: 'Wörterbuech',
 }

@@ -342,4 +342,7 @@ export const fr: Dictionary = {
   'choose an address': 'Choisissez une adresse',
   'use at most 60 characters': '60 caractères au maximum',
   'Reset to defaults': 'Rétablir les valeurs par défaut',
+  Spelling: 'Orthographe',
+  Checking: 'Vérification',
+  Dictionary: 'Dictionnaire',
 }

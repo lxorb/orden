@@ -339,4 +339,7 @@ export const ja: Dictionary = {
   'choose an address': 'アドレスを選んでください',
   'use at most 60 characters': '60 文字以内にしてください',
   'Reset to defaults': '初期設定に戻す',
+  Spelling: 'スペルチェック',
+  Checking: 'チェック',
+  Dictionary: '辞書',
 }

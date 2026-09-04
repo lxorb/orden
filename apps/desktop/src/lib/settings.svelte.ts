@@ -13,6 +13,7 @@ const PAGE_KEY = 'nib:page'
 export type Section =
   | 'general'
   | 'editor'
+  | 'spelling'
   | 'markdown'
   | 'appearance'
   | 'account'

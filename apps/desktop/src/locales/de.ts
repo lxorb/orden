@@ -341,4 +341,7 @@ export const de: Dictionary = {
   'choose an address': 'Wähle eine Adresse',
   'use at most 60 characters': 'Höchstens 60 Zeichen',
   'Reset to defaults': 'Auf Standard zurücksetzen',
+  Spelling: 'Rechtschreibung',
+  Checking: 'Prüfung',
+  Dictionary: 'Wörterbuch',
 }
