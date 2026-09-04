@@ -196,6 +196,7 @@ export const gsw: Dictionary = {
   'Syntax': 'Syntax',
   'Strict CommonMark': 'Strikts CommonMark',
   'Smart punctuation': 'Typografischi Zeiche',
+  Ligatures: 'Ligature',
   'Numbering': 'Nummerierig',
   'Right to left': 'Vo rächts nach links',
   'Direction': 'Richtig',

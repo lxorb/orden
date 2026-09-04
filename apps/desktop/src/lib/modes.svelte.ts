@@ -4,6 +4,7 @@ import {
   setCodeTheme,
   setFocusMode,
   setHeadingNumbers,
+  setLigatures,
   setLineHeight,
   setMeasure,
   setRightToLeft,
@@ -41,6 +42,7 @@ interface Saved {
   spellcheck?: boolean
   spellLanguage?: string
   closeBrackets?: boolean
+  ligatures?: boolean
 }
 
 /** Nearest of the steps the keyboard uses, so both routes agree. */
@@ -66,6 +68,8 @@ class Modes {
   /** The dictionary to check against; `system` leaves it to the browser. */
   spellLanguage = $state('system')
   closeBrackets = $state(true)
+  /** `->` shown as an arrow, `<=` as a sign, and so on. */
+  ligatures = $state(true)
 
   restore() {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -88,6 +92,7 @@ class Modes {
         this.spellcheck = state.spellcheck ?? false
         this.spellLanguage = state.spellLanguage || 'system'
         this.closeBrackets = state.closeBrackets ?? true
+        this.ligatures = state.ligatures ?? true
       } catch {
         // A corrupt entry just means defaults.
       }
@@ -117,6 +122,7 @@ class Modes {
     setLineHeight(view, this.lineHeight)
     setSpellcheck(view, this.spellcheck, this.dictionary)
     setCloseBrackets(view, this.closeBrackets)
+    setLigatures(view, this.ligatures)
   }
 
   toggleSource(view?: EditorView) {
@@ -178,6 +184,12 @@ class Modes {
   setSpellLanguage(value: string, view?: EditorView) {
     this.spellLanguage = value
     if (view) setSpellcheck(view, this.spellcheck, this.dictionary)
+    this.persist()
+  }
+
+  toggleLigatures(view?: EditorView) {
+    this.ligatures = !this.ligatures
+    if (view) setLigatures(view, this.ligatures)
     this.persist()
   }
 
@@ -289,6 +301,7 @@ class Modes {
       spellcheck: this.spellcheck,
       spellLanguage: this.spellLanguage,
       closeBrackets: this.closeBrackets,
+      ligatures: this.ligatures,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }

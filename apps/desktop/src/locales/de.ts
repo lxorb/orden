@@ -194,6 +194,7 @@ export const de: Dictionary = {
   'Syntax': 'Syntax',
   'Strict CommonMark': 'Striktes CommonMark',
   'Smart punctuation': 'Typografische Zeichen',
+  Ligatures: 'Ligaturen',
   'Numbering': 'Nummerierung',
   'Right to left': 'Von rechts nach links',
   'Direction': 'Richtung',

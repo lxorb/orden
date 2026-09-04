@@ -194,6 +194,7 @@ export const fr: Dictionary = {
   'Syntax': 'Syntaxe',
   'Strict CommonMark': 'CommonMark strict',
   'Smart punctuation': 'Ponctuation typographique',
+  Ligatures: 'Ligatures',
   'Numbering': 'Numérotation',
   'Right to left': 'De droite à gauche',
   'Direction': 'Direction',

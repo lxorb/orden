@@ -54,6 +54,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Highlight `==text==`
 - [x] Underline via `<u>`
 - [x] Smart punctuation (curly quotes, en/em dashes, ellipsis)
+- [x] Ligatures: `->`, `<=`, `!=` and the like shown as arrows and signs, in prose and code, text untouched (toggleable)
 
 ## 3. HTML support
 

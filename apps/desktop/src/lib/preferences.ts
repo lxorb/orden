@@ -168,6 +168,13 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => modes.focus,
               set: () => modes.toggleFocus(view),
             },
+            {
+              kind: 'switch',
+              label: t('Ligatures'),
+              initial: true,
+              get: () => modes.ligatures,
+              set: () => modes.toggleLigatures(view),
+            },
           ],
         },
         {

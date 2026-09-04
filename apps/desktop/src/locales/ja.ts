@@ -193,6 +193,7 @@ export const ja: Dictionary = {
   'Syntax': '構文',
   'Strict CommonMark': '厳密な CommonMark',
   'Smart punctuation': 'スマート約物',
+  Ligatures: '合字',
   'Numbering': '番号付け',
   'Right to left': '右から左',
   'Direction': '文字方向',

@@ -747,6 +747,32 @@
   line-height: 1;
 }
 
+/* ── Ligatures ──────────────────────────────────────────────────── */
+
+/* `->` and its kind, drawn as a font would draw a ligature: the characters
+   stay where they are, invisible, and the glyph is painted over the room
+   they take. Centred on the run's own box, which is the run's width in any
+   font, so columns in code still line up and nothing moves when the caret
+   goes in and the characters show again. A run must not break across
+   lines, or the glyph would sit on one of them. */
+.nib-lig {
+  position: relative;
+  white-space: nowrap;
+  -webkit-text-fill-color: transparent;
+}
+
+.nib-lig::after {
+  content: attr(data-glyph);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  -webkit-text-fill-color: currentcolor;
+  pointer-events: none;
+}
+
 /* ── Find and replace ────────────────────────────────────────────── */
 
 .cm-panels {

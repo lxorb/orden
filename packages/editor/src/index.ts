@@ -33,6 +33,7 @@ export {
   setEquationNumbers,
   setFocusMode,
   setHeadingNumbers,
+  setLigatures,
   setLineHeight,
   setMeasure,
   remeasure,

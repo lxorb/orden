@@ -10,6 +10,7 @@ import { nibMarkdownExtensions } from './markdown/extensions'
 import { closeBrackets } from '@codemirror/autocomplete'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
+import { ligatures } from './ligatures'
 
 /** Each mode lives in its own compartment so it can be swapped at runtime
  *  without rebuilding the editor state. */
@@ -21,6 +22,7 @@ const language = new Compartment()
 const equations = new Compartment()
 const spelling = new Compartment()
 const brackets = new Compartment()
+const glyphs = new Compartment()
 
 /** Strict mode drops GFM and the Typora extensions, leaving plain CommonMark -
  *  useful when a document has to render the same everywhere. */
@@ -109,6 +111,7 @@ export function modeExtensions(): Extension {
     // its dictionary's language are noise, and most notes start that way.
     spelling.of(EditorView.contentAttributes.of({ spellcheck: 'false' })),
     brackets.of(closeBrackets()),
+    glyphs.of(ligatures()),
   ]
 }
 
@@ -138,6 +141,12 @@ export function setTypewriterMode(view: EditorView, on: boolean) {
   view.dispatch({ effects: typewriter.reconfigure(on ? typewriterPlugin : []) })
   // Extra room below the last line, so the caret can still reach the middle.
   view.dom.classList.toggle('nib-typewriter-mode', on)
+}
+
+/** Shows `->`, `<=` and their kind as the arrow or sign they stand for. On
+ *  by default; the text underneath stays as typed. */
+export function setLigatures(view: EditorView, on: boolean) {
+  view.dispatch({ effects: glyphs.reconfigure(on ? ligatures() : []) })
 }
 
 /** Curly quotes, en and em dashes, ellipsis - on by default, like Typora. */
