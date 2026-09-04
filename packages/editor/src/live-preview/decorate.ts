@@ -13,6 +13,7 @@ import { dragging } from './dragging'
 import { lineRevealed, overlaps, revealed } from './reveal'
 import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
+import { hrefOf, linkTitle } from '../links'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import {
   BulletWidget,
@@ -43,6 +44,14 @@ export const INLINE_MARKS = new Set([
   'URL',
   'LinkTitle',
 ])
+
+/** Whether a node is syntax the preview hides, as opposed to text it shows.
+ *  A URL is syntax inside a link or an image, where the label stands for it;
+ *  on its own, or between the `<` `>` of an autolink, it is the text. */
+export function concealable(node: SyntaxNode): boolean {
+  if (node.name === 'URL') return node.parent?.name === 'Link' || node.parent?.name === 'Image'
+  return INLINE_MARKS.has(node.name)
+}
 
 const HEADING = /^(?:ATX|Setext)Heading(\d)$/
 const CALLOUT = /^>\s*\[!(note|tip|important|warning|caution)\]/i
@@ -139,13 +148,40 @@ class Decorator {
         return void this.marks.push(
           Decoration.mark({ class: 'nib-inline-code' }).range(node.from, node.to),
         )
+      case 'Link':
+        return this.link(node)
+      case 'URL':
+        if (concealable(node)) return this.conceal(node.from, node.to, revealed(this.state, node))
+        // A bare address, or one between the `<` `>` of an autolink: shown as
+        // itself, and it is the link.
+        return this.linkText(node.from, node.to, this.state.doc.sliceString(node.from, node.to))
       case 'Subscript':
         return void this.marks.push(Decoration.mark({ class: 'nib-sub' }).range(node.from, node.to))
       case 'Superscript':
         return void this.marks.push(Decoration.mark({ class: 'nib-sup' }).range(node.from, node.to))
       default:
-        if (INLINE_MARKS.has(name)) this.conceal(node.from, node.to, revealed(this.state, node))
+        if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
     }
+  }
+
+  /** The label of `[label](target)` reads as a link: coloured, underlined, and
+   *  the target in its tooltip, which a modifier-click follows (see links.ts).
+   *  The marks around it conceal themselves as usual on the walk below. */
+  private link(node: SyntaxNode) {
+    const open = node.firstChild
+    const close = open?.nextSibling
+    if (!open || !close || open.name !== 'LinkMark' || close.name !== 'LinkMark') return
+
+    const url = node.getChild('URL')
+    const target = url ? this.state.doc.sliceString(url.from, url.to) : ''
+    this.linkText(open.to, close.from, target)
+  }
+
+  private linkText(from: number, to: number, target: string) {
+    if (from >= to) return
+    const href = hrefOf(target)
+    const attributes = href ? { 'data-href': href, title: linkTitle(href) } : undefined
+    this.marks.push(Decoration.mark({ class: 'nib-link', attributes }).range(from, to))
   }
 
   private isClaimed(from: number, to: number): boolean {

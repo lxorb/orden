@@ -92,6 +92,8 @@ export const ja: Dictionary = {
   'Delete image': '画像を削除',
   'Reset size': 'サイズをリセット',
   'Image not found': '画像が見つかりません',
+  'Ctrl+Click to open the link': 'Ctrl+クリックでリンクを開きます',
+  '⌘-click to open the link': '⌘クリックでリンクを開きます',
   'Align left': '左揃え',
   'Align center': '中央揃え',
   'Align right': '右揃え',

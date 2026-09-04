@@ -13,6 +13,8 @@ const DEFAULTS = {
   deleteImage: 'Delete image',
   resetSize: 'Reset size',
   imageNotFound: 'Image not found',
+  openLink: 'Ctrl+Click to open the link',
+  openLinkMac: '⌘-click to open the link',
   alignLeft: 'Align left',
   alignCenter: 'Align center',
   alignRight: 'Align right',

@@ -52,7 +52,7 @@
   import { prompt } from './lib/prompt.svelte'
   import { newSpace } from './lib/space-actions'
   import { installStaged, ready, stageUpdate } from './lib/updater'
-  import { currentWindow, invoke, isDesktop } from './lib/tauri'
+  import { currentWindow, invoke, isDesktop, openExternal } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { workspace } from './lib/workspace.svelte'
 
@@ -573,6 +573,7 @@
             onchange={(value) => workspace.edit(value)}
             onimage={saveImage}
             resolveimage={resolveImage}
+            openlink={(href) => void openExternal(href)}
             onselection={(current) => {
               formatBar?.follow(current)
               if (placed && placed === workspace.activeTabId) {

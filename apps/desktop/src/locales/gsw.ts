@@ -95,6 +95,8 @@ export const gsw: Dictionary = {
   'Delete image': 'Bild lösche',
   'Reset size': 'Grössi zruggsetze',
   'Image not found': 'Bild nöd gfunde',
+  'Ctrl+Click to open the link': 'Strg+Klick macht de Link uf',
+  '⌘-click to open the link': '⌘-Klick macht de Link uf',
   'Align left': 'Linksbündig',
   'Align center': 'Zentriert',
   'Align right': 'Rächtsbündig',

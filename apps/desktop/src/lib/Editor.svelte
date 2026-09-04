@@ -7,6 +7,7 @@
     onchange,
     onimage,
     resolveimage,
+    openlink,
     onselection,
     view = $bindable(),
   }: {
@@ -14,6 +15,7 @@
     onchange?: (value: string) => void
     onimage?: (file: File) => Promise<string | null>
     resolveimage?: (src: string) => string
+    openlink?: (href: string) => void
     onselection?: (view: EditorView) => void
     view?: EditorView
   } = $props()
@@ -29,6 +31,7 @@
       onChange: onchange,
       onImage: onimage,
       resolveImage: resolveimage,
+      openLink: openlink,
       onSelection: onselection,
     })
     view = created

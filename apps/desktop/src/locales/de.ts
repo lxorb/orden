@@ -93,6 +93,8 @@ export const de: Dictionary = {
   'Delete image': 'Bild löschen',
   'Reset size': 'Größe zurücksetzen',
   'Image not found': 'Bild nicht gefunden',
+  'Ctrl+Click to open the link': 'Strg+Klick öffnet den Link',
+  '⌘-click to open the link': '⌘-Klick öffnet den Link',
   'Align left': 'Linksbündig',
   'Align center': 'Zentriert',
   'Align right': 'Rechtsbündig',

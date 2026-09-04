@@ -6,6 +6,7 @@ import { EditorState, Prec } from '@codemirror/state'
 import { EditorView, drawSelection, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
 import { editorCompletion } from './emoji'
 import { imageHandling, imageResolver, type ImageSink } from './images'
+import { linkClicks, linkOpener } from './links'
 import { codeThemeExtension } from './code-theme'
 import { closeFence } from './commands'
 import { nibKeymap } from './keymap'
@@ -26,10 +27,12 @@ export interface EditorOptions {
   onSelection?: (view: EditorView) => void
   /** Which palette colours code fences. Defaults to following the app theme. */
   codeTheme?: string
+  /** Follows a link the reader modifier-clicked. Defaults to a browser tab. */
+  openLink?: (href: string) => void
 }
 
 export function createEditor(options: EditorOptions): EditorView {
-  const { parent, doc = '', onChange, onImage, resolveImage, onSelection } = options
+  const { parent, doc = '', onChange, onImage, resolveImage, onSelection, openLink } = options
   return new EditorView({
     parent,
     state: EditorState.create({
@@ -54,6 +57,8 @@ export function createEditor(options: EditorOptions): EditorView {
         ...(onImage ? [imageHandling(onImage)] : []),
         richPaste(),
         ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
+        linkClicks,
+        ...(openLink ? [linkOpener.of(openLink)] : []),
         nibTheme,
         // Above the markdown language's own Enter, which continues a list or
         // a quote and would otherwise take the key on a fence inside one.

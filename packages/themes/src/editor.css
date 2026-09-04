@@ -85,6 +85,26 @@
 /* The same box the exported HTML gives inline code, so `a` is never mistaken
    for a. Cloned across a line break rather than one long box with the ends
    dangling. */
+/* A link reads as one: the accent, and an underline that firms up under the
+   pointer. The caret still goes where a click lands; the modifier turns the
+   pointer into a hand and the click into a jump (links.ts). */
+/* The highlighter paints a bare address in the muted tone it gives a link's
+   target; here the address is the link, so the accent reaches inside. */
+.nib-link,
+.nib-link * {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+.nib-link:hover {
+  text-decoration-color: var(--accent);
+}
+.cm-content.nib-modifier .nib-link {
+  cursor: pointer;
+}
+
 .nib-inline-code {
   background: var(--surface-2);
   border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);

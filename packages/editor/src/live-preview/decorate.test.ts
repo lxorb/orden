@@ -365,3 +365,40 @@ describe('an unclosed fence', () => {
     expect(lineClasses('```\n# Title\n```')).not.toContain('nib-h1')
   })
 })
+
+describe('links', () => {
+  function linkMarks(doc: string, cursor?: number): { text: string; href: string | null }[] {
+    const full = cursor === undefined ? doc + PARK : doc
+    const out: { text: string; href: string | null }[] = []
+    buildDecorations(state(full, cursor ?? full.length)).decorations.between(0, full.length, (from, to, value) => {
+      if (value.spec.class === 'nib-link') {
+        out.push({ text: full.slice(from, to), href: value.spec.attributes?.['data-href'] ?? null })
+      }
+    })
+    return out
+  }
+
+  test('the label of a link carries its target', () => {
+    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([{ text: 'docs', href: 'https://x.dev' }])
+  })
+
+  test('a bare address stays visible and is the link', () => {
+    const doc = 'go to https://bare.dev/p?q=1 now'
+    expect(concealed(doc)).toEqual([])
+    expect(linkMarks(doc)).toEqual([{ text: 'https://bare.dev/p?q=1', href: 'https://bare.dev/p?q=1' }])
+  })
+
+  test('an autolink hides its brackets and shows the address', () => {
+    const doc = 'see <https://angle.dev> now'
+    expect(concealed(doc)).toEqual(['<', '>'])
+    expect(linkMarks(doc)).toEqual([{ text: 'https://angle.dev', href: 'https://angle.dev' }])
+  })
+
+  test('a www address gets its scheme', () => {
+    expect(linkMarks('see www.w.dev now')).toEqual([{ text: 'www.w.dev', href: 'https://www.w.dev' }])
+  })
+
+  test('a note-relative target is styled but not a browser link', () => {
+    expect(linkMarks('see [other](notes/other.md) now')).toEqual([{ text: 'other', href: null }])
+  })
+})

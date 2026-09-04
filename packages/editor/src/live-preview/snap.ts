@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import type { SyntaxNode, Tree } from '@lezer/common'
-import { INLINE_MARKS } from './decorate'
+import { concealable } from './decorate'
 import { revealed } from './reveal'
 
 /** Where a click lands next to concealed syntax.
@@ -29,7 +29,7 @@ const BLOCK_PARENTS = new Set(['FrontMatter', 'FootnoteDef', 'DefinitionDetail',
 function inlineMark(node: SyntaxNode): boolean {
   const parent = node.parent?.name ?? ''
   if (BLOCK_PARENTS.has(parent)) return false
-  if (INLINE_MARKS.has(node.name)) return true
+  if (concealable(node)) return true
   return node.name === 'CodeMark' && parent === 'InlineCode'
 }
 

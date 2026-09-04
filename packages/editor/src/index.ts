@@ -24,6 +24,7 @@ export { nibHighlightStyle, nibTheme } from './theme'
 export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'
 export { imageResolver, type ImageSink } from './images'
+export { hrefOf, linkOpener } from './links'
 export { setSnippets, snippets } from './snippets'
 export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {
