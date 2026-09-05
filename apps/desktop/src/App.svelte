@@ -468,7 +468,7 @@
       { label: t('Quote'), run: () => runCommand(toggleQuote) },
       { label: t('Bulleted list'), run: () => runCommand(toggleBulletList) },
       { label: t('Numbered list'), run: () => runCommand(toggleOrderedList) },
-      { label: t('Table'), hint: 'Ctrl T', run: () => view && insertTableToEdit(view) },
+      { label: t('Table'), hint: 'Ctrl Alt T', run: () => view && insertTableToEdit(view) },
       { label: t('Code block'), run: () => runCommand(insertCodeFence) },
       { label: t('Horizontal rule'), run: () => runCommand(insertHorizontalRule) },
       { label: t('Page break'), run: () => runCommand(insertPageBreak) },
@@ -530,6 +530,7 @@
     if (key === '/') return act(event, () => modes.toggleSource(view))
     if (key === 's' && !shift) return act(event, () => void workspace.save())
     if (key === 'n' && !shift) return act(event, () => workspace.openBlank())
+    if (key === 't' && !shift) return act(event, () => workspace.openBlank())
     if (key === 'o' && !shift) return act(event, () => void openFile())
     if (key === 'w') return act(event, () => workspace.activeTabId && workspace.close(workspace.activeTabId))
     if (key === 'tab') return act(event, () => cycleTab(shift ? -1 : 1))

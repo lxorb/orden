@@ -62,7 +62,9 @@ export const nibKeymap: KeyBinding[] = [
   { key: 'Mod-=', run: shiftHeading(1), preventDefault: true },
   { key: 'Mod--', run: shiftHeading(-1), preventDefault: true },
 
-  { key: 'Mod-t', run: insertTableToEdit, preventDefault: true },
+  // Ctrl+T opens a new note, the way it opens a tab anywhere else; the table
+  // keeps a chord of its own.
+  { key: 'Mod-Alt-t', run: insertTableToEdit, preventDefault: true },
   { key: 'Mod-Shift-k', run: insertCodeFence, preventDefault: true },
   { key: 'Mod-Shift-m', run: insertMathBlock, preventDefault: true },
   { key: 'Mod-Shift-q', run: toggleQuote, preventDefault: true },

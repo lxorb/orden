@@ -179,7 +179,7 @@ export function appMenu(context: Context): MenuGroup[] {
         SPLIT,
         // Not through `run`: the new table takes the focus into its first cell,
         // and focusing the editor afterwards would take it straight back out.
-        { label: t('Table'), hint: 'Ctrl T', disabled: !view, run: () => view && insertTableToEdit(view) },
+        { label: t('Table'), hint: 'Ctrl Alt T', disabled: !view, run: () => view && insertTableToEdit(view) },
         { label: t('Code block'), disabled: !view, run: () => run(view, insertCodeFence) },
         { label: t('Quote'), disabled: !view, run: () => run(view, toggleQuote) },
         { label: t('Math block'), disabled: !view, run: () => run(view, insertMathBlock) },
