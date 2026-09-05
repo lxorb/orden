@@ -63,5 +63,3 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 ## License
 
 Nib is free software under the [GNU Affero General Public License v3.0](LICENSE). You can use, study, change and share it; if you run a modified Nib for others, over a network too, you must publish your changes under the same license.
-
-© 2026 Emil Vinu
