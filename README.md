@@ -37,19 +37,19 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 ## Why Nib?
 
-|  | Open source | Platform independent | Inline preview | Sync | MCP | Publish |
+|  | Open source | MCP | Platform independent | Inline preview | Sync | Publish |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: |
 | **Nib** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typora | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| MarkText | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Obsidian | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Zettlr | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Joplin | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Logseq | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Typora | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| MarkText | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Obsidian | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Zettlr | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Joplin | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
+| Logseq | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ |
 | iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Bear | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| VS Code | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Sublime Text | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Sublime Text | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 ## Features
 
