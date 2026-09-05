@@ -1,0 +1,227 @@
+name: publish
+
+# Where Nib goes once it is released: the package managers that carry it. One
+# job per manager, none depending on another, so a rate-limited push or a
+# rejected pull request never holds up the rest.
+#
+# Every push to main replaces a rolling `edge` pre-release, and that fires this
+# same event. None of it should run for those: a package manager wants the
+# release people install, not the build that follows main. The gate below is
+# where that is decided, once, instead of in every job.
+on:
+  release:
+    types: [published]
+  # A release published before this workflow existed, or one whose push failed
+  # on a bad token, can be sent through again by hand.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to publish, for example v0.4.0
+        required: true
+
+# Two releases published minutes apart would race for the same branch of the
+# bucket and the tap, so they queue instead.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.release.outputs.publish }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      winget: ${{ steps.tokens.outputs.winget }}
+      packaging: ${{ steps.tokens.outputs.packaging }}
+      chocolatey: ${{ steps.tokens.outputs.chocolatey }}
+    steps:
+      - id: release
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          if [[ "$TAG" == v*.*.* && "$TAG" != *-* && "$PRERELEASE" != 'true' ]]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG is not a released version tag - nothing to publish."
+          fi
+
+      # A job cannot ask `if: secrets.X != ''`, so which tokens are configured
+      # is settled here and passed down as plain booleans. A manager whose
+      # token is missing is skipped rather than failed: the point of this file
+      # is that a release with no secrets at all still publishes fine.
+      - id: tokens
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          {
+            echo "winget=$([[ -n $WINGET_TOKEN ]] && echo true || echo false)"
+            echo "packaging=$([[ -n $PACKAGING_TOKEN ]] && echo true || echo false)"
+            echo "chocolatey=$([[ -n $CHOCOLATEY_API_KEY ]] && echo true || echo false)"
+          } >> "$GITHUB_OUTPUT"
+
+  # winget-pkgs is a pull request, not a push, so this opens one and a Microsoft
+  # bot merges it. The action needs lxorb.Nib to exist there already - it
+  # refuses to create a package from nothing - so the first version was
+  # submitted by hand from packaging/winget.
+  winget:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.winget == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: lxorb.Nib
+          version: ${{ needs.gate.outputs.version }}
+          release-tag: ${{ needs.gate.outputs.tag }}
+          # The NSIS setup is the installer winget offers. The MSI is a
+          # per-machine install of the same thing and would only be a second
+          # entry saying the same.
+          installers-regex: '-setup\.exe$'
+          fork-user: lxorb
+          max-versions-to-keep: 5
+          # A classic PAT with `public_repo`; the action cannot use a
+          # fine-grained one.
+          token: ${{ secrets.WINGET_TOKEN }}
+
+  # lxorb/scoop-bucket is ours, so this is a commit rather than a pull request.
+  scoop:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.gate.outputs.tag }}
+      VERSION: ${{ needs.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: lxorb/scoop-bucket
+          token: ${{ secrets.PACKAGING_TOKEN }}
+
+      - name: Bump nib
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl \
+            --pattern "Nib-$VERSION-windows-x64-setup.exe" \
+            --pattern "Nib-$VERSION-windows-arm64-setup.exe"
+
+          base="${{ github.server_url }}/$GITHUB_REPOSITORY/releases/download/$TAG"
+          # Scoop reads the extension to pick an extractor, and an NSIS setup
+          # is a 7-Zip archive as far as that goes; the fragment renames the
+          # download so it is unpacked instead of run.
+          jq --indent 4 \
+            --arg version "$VERSION" \
+            --arg x64url "$base/Nib-$VERSION-windows-x64-setup.exe#/dl.7z" \
+            --arg x64hash "$(sha256sum "dl/Nib-$VERSION-windows-x64-setup.exe" | cut -d' ' -f1)" \
+            --arg armurl "$base/Nib-$VERSION-windows-arm64-setup.exe#/dl.7z" \
+            --arg armhash "$(sha256sum "dl/Nib-$VERSION-windows-arm64-setup.exe" | cut -d' ' -f1)" \
+            '.version = $version
+             | .architecture["64bit"].url = $x64url
+             | .architecture["64bit"].hash = $x64hash
+             | .architecture.arm64.url = $armurl
+             | .architecture.arm64.hash = $armhash' \
+            bucket/nib.json > bucket/nib.json.next
+          mv bucket/nib.json.next bucket/nib.json
+          rm -r dl
+
+      - name: Commit
+        run: |
+          git config user.name lxorb
+          git config user.email 101118850+lxorb@users.noreply.github.com
+          git add bucket/nib.json
+          git diff --quiet --cached || git commit -m "feat: nib $VERSION"
+          git push
+
+  # lxorb/homebrew-tap, likewise ours. Homebrew/homebrew-cask is not: it has a
+  # notability bar Nib has not cleared, so there is nothing to send there yet.
+  homebrew:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.packaging == 'true'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.gate.outputs.tag }}
+      VERSION: ${{ needs.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: lxorb/homebrew-tap
+          token: ${{ secrets.PACKAGING_TOKEN }}
+
+      - name: Bump nib
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dmg="Nib-$VERSION-macos-universal.dmg"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "$dmg"
+          sha=$(sha256sum "dl/$dmg" | cut -d' ' -f1)
+          rm -r dl
+
+          # The cask builds its own URL out of the version, so only these two
+          # lines ever change.
+          sed -i -E "s|^(  version )\".*\"$|\\1\"$VERSION\"|" Casks/nib.rb
+          sed -i -E "s|^(  sha256 )\".*\"$|\\1\"$sha\"|" Casks/nib.rb
+          grep -E '^  (version|sha256) ' Casks/nib.rb
+
+      - name: Commit
+        run: |
+          git config user.name lxorb
+          git config user.email 101118850+lxorb@users.noreply.github.com
+          git add Casks/nib.rb
+          git diff --quiet --cached || git commit -m "feat: nib $VERSION"
+          git push
+
+  # Chocolatey is a push of a built package, and the only one of the four that
+  # needs Windows, because `choco` is what builds it.
+  chocolatey:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.chocolatey == 'true'
+    runs-on: windows-latest
+    env:
+      TAG: ${{ needs.gate.outputs.tag }}
+      VERSION: ${{ needs.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      # Chocolatey installs for the whole machine, so this package carries the
+      # MSI rather than the per-user NSIS setup. The install script takes its
+      # version from Chocolatey itself; the checksums are all that is rewritten.
+      - name: Bump nib
+        shell: bash
+        working-directory: packaging/chocolatey
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl \
+            --pattern "Nib-$VERSION-windows-x64.msi" \
+            --pattern "Nib-$VERSION-windows-arm64.msi"
+
+          for arch in x64 arm64; do
+            sum=$(sha256sum "dl/Nib-$VERSION-windows-$arch.msi" | cut -d' ' -f1 | tr 'a-f' 'A-F')
+            sed -i -E "s|('$arch' *= *')[0-9A-Fa-f]{64}'|\\1$sum'|" tools/chocolateyinstall.ps1
+          done
+          rm -r dl
+
+          sed -i -E "s|<version>.*</version>|<version>$VERSION</version>|" nib.nuspec
+          sed -i -E "s|(nib@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
+          sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" nib.nuspec
+          grep -E "'(x64|arm64)' *=" tools/chocolateyinstall.ps1
+          grep -E '<version>|nib@v|releases/tag' nib.nuspec
+
+      - name: Pack and push
+        shell: pwsh
+        working-directory: packaging/chocolatey
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          choco pack nib.nuspec
+          choco push "nib.$env:VERSION.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
