@@ -253,6 +253,19 @@ describe('fenced code while editing', () => {
     return namesOf(state.update({ changes: { from, to, insert } }).state)
   }
 
+  /** The nodes after a run of edits, each parsed before the next arrives -
+   *  which is what typing is, and the only way the parse of an earlier tree
+   *  gets to be reused several times over. */
+  function typed(doc: string, inserts: string[]): string[] {
+    let state = stateFor(doc)
+    for (const insert of inserts) {
+      syntaxTree(state)
+      state = state.update({ changes: { from: state.doc.length, insert } }).state
+    }
+    syntaxTree(state)
+    return namesOf(state)
+  }
+
   test('becomes a fence once a closer is typed well below it', () => {
     const doc = '```js\n\n' + padding
     const found = edited(doc, doc.length, doc.length, '```')
@@ -276,5 +289,44 @@ describe('fenced code while editing', () => {
     const doc = item + '\nx\n  ```'
     expect(names(doc)).not.toContain('FencedCode')
     expect(edited(doc, item.length + 1, item.length + 3, '')).toContain('FencedCode')
+  })
+
+  // The blocks a keystroke leaves alone come back from the tree before it, and
+  // the fence line above is the one that must not: these type the closer a
+  // character at a time, so the same paragraph is carried forward and looked
+  // at again on every one of them.
+  test('becomes a fence on the third backtick of a closer typed key by key', () => {
+    const doc = '```js\n\n' + padding
+    expect(typed(doc, ['`', '`'])).not.toContain('FencedCode')
+    const found = typed(doc, ['`', '`', '`'])
+    expect(found).toContain('FencedCode')
+    expect(found).not.toContain('ATXHeading1')
+  })
+
+  test('stays a paragraph through prose typed below it', () => {
+    const doc = '```js\n\n' + padding
+    const found = typed(doc, ['more', ' prose', ' still', ' no', ' closer'])
+    expect(found).not.toContain('FencedCode')
+    expect(found).toContain('ATXHeading1')
+  })
+
+  test('a closer typed long after the last edit still closes it', () => {
+    const doc = '```js\n\n' + padding
+    const found = typed(doc, ['one\n\n', 'two\n\n', 'three\n\n', '```'])
+    expect(found).toContain('FencedCode')
+  })
+
+  test('a fence inside a list item closes after edits elsewhere', () => {
+    const doc = '- ~~~\n  ' + 'a'.repeat(200) + '\n'
+    expect(typed(doc, ['\ntext\n\n'])).not.toContain('FencedCode')
+    expect(typed(doc, ['  ~~~\n'])).toContain('FencedCode')
+  })
+
+  test('two unclosed fences, and the first one closes on its own', () => {
+    const doc = '```js\n\n' + padding + '~~~\n\ntail\n'
+    const found = typed(doc, ['```\n'])
+    expect(found).toContain('FencedCode')
+    // The tildes are inside the fence the backticks just closed.
+    expect(found.filter((name) => name === 'FencedCode')).toHaveLength(1)
   })
 })

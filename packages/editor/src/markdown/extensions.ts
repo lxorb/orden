@@ -1,4 +1,4 @@
-import { TreeFragment, type Input, type PartialParse } from '@lezer/common'
+import { TreeFragment, type Input, type PartialParse, type Tree } from '@lezer/common'
 import { Tag, tags } from '@lezer/highlight'
 import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from '@lezer/markdown'
 
@@ -358,6 +358,76 @@ function opensFence(node: { from: number; to: number }, input: Input): boolean {
   return start === '```' || start === '~~~'
 }
 
+/** Where a parse turned down a fence for want of a closer, by the tree that
+ *  parse produced. Those lines are the only blocks a later edit can turn into
+ *  fenced code, so knowing them means never having to look for them: reading
+ *  every block of a tree costs as much as the size of the note, on a keystroke
+ *  that changed one character. A tree that was parsed before this was recorded
+ *  - the first one, or one from a parse configured elsewhere - is walked once
+ *  and remembered here as well. */
+const openFences = new WeakMap<Tree, readonly number[]>()
+
+/** The parse currently advancing, or null between parses. Set around each
+ *  `advance` rather than for the parse's lifetime, because parses of different
+ *  documents take turns in idle time. */
+let declining: number[] | null = null
+
+/** Follows a parse so that what it turned down can be filed under the tree it
+ *  ends up producing. */
+function watchDeclines(parse: PartialParse): PartialParse {
+  const found: number[] = []
+
+  return {
+    get parsedPos() {
+      return parse.parsedPos
+    },
+    get stoppedAt() {
+      return parse.stoppedAt
+    },
+    stopAt(pos: number) {
+      parse.stopAt(pos)
+    },
+    advance() {
+      const outer = declining
+      declining = found
+      try {
+        const tree = parse.advance()
+        if (tree) openFences.set(tree, found)
+        return tree
+      } finally {
+        declining = outer
+      }
+    },
+  }
+}
+
+/** Every block of `tree` that opens a fence without being fenced code, for a
+ *  tree whose own parse did not say. */
+function scanForOpenFences(tree: Tree, input: Input): readonly number[] {
+  const found: number[] = []
+
+  tree.iterate({
+    enter(node) {
+      if (!node.type.is('Block')) return false
+      if (!node.type.is('LeafBlock')) return true
+      if (node.name === 'FencedCode' || node.name === 'CodeBlock') return false
+      if (opensFence(node, input)) found.push(node.from)
+      return false
+    },
+  })
+
+  openFences.set(tree, found)
+  return found
+}
+
+/** The leaf block holding `pos`, so a fragment can be cut around the whole of
+ *  it rather than at the line it starts on. */
+function leafBlockAt(tree: Tree, pos: number): { from: number; to: number } {
+  let node = tree.resolveInner(pos, 1)
+  while (!node.type.is('LeafBlock') && node.parent) node = node.parent
+  return { from: node.from, to: node.to }
+}
+
 /** The fragments of an earlier parse, cut so that no block which opens a
  *  fence without being fenced code is kept from it.
  *
@@ -375,30 +445,22 @@ function withoutUnclosedFences(fragments: readonly TreeFragment[], input: Input)
 
   for (const fragment of fragments) {
     const { tree, offset } = fragment
+    const open = openFences.get(tree) ?? scanForOpenFences(tree, input)
     let from = fragment.from
 
-    tree.iterate({
-      from: fragment.from + offset,
-      to: fragment.to + offset,
-      enter(node) {
-        if (!node.type.is('Block')) return false
-        if (!node.type.is('LeafBlock')) return true
+    for (const position of open) {
+      const block = leafBlockAt(tree, position)
+      // Tree positions are the document's plus the offset.
+      const blockFrom = block.from - offset
+      const blockTo = block.to - offset
+      if (blockFrom < from || blockTo > fragment.to) continue
 
-        // Tree positions are the document's plus the offset.
-        const nodeFrom = node.from - offset
-        const nodeTo = node.to - offset
-        if (nodeFrom < from || nodeTo > fragment.to) return false
-        if (node.name === 'FencedCode' || node.name === 'CodeBlock') return false
-        if (!opensFence({ from: nodeFrom, to: nodeTo }, input)) return false
-
-        if (nodeFrom > from) {
-          out.push(new TreeFragment(from, nodeFrom, tree, offset, from === fragment.from && fragment.openStart, true))
-        }
-        from = nodeTo
-        changed = true
-        return false
-      },
-    })
+      if (blockFrom > from) {
+        out.push(new TreeFragment(from, blockFrom, tree, offset, from === fragment.from && fragment.openStart, true))
+      }
+      from = blockTo
+      changed = true
+    }
 
     if (from === fragment.from) out.push(fragment)
     else if (from < fragment.to) out.push(new TreeFragment(from, fragment.to, tree, offset, true, fragment.openEnd))
@@ -445,16 +507,17 @@ export const FencedCode: MarkdownConfig = {
   // edit; see `withoutUnclosedFences`. A parse is created and wrapped before
   // this sees it, so a cut fragment list means starting the parse over.
   wrap(inner, input, fragments, ranges) {
-    if (fragments.length === 0 || alreadyCut.has(fragments)) return inner
+    if (alreadyCut.has(fragments)) return inner
+    if (fragments.length === 0) return watchDeclines(inner)
 
     const cut = withoutUnclosedFences(fragments, input)
-    if (cut === fragments) return inner
+    if (cut === fragments) return watchDeclines(inner)
 
     const parser = parserOf(inner)
-    if (!parser) return inner
+    if (!parser) return watchDeclines(inner)
 
     alreadyCut.add(cut)
-    return parser.startParse(input, cut, ranges)
+    return watchDeclines(parser.startParse(input, cut, ranges))
   },
   parseBlock: [
     {
@@ -465,7 +528,14 @@ export const FencedCode: MarkdownConfig = {
 
         const mark = line.next
         const length = end - line.pos
-        if (!closerAhead(cx, line, mark, length)) return false
+        if (!closerAhead(cx, line, mark, length)) {
+          // Turned down for want of a closer, which makes this the one line an
+          // edit anywhere below could still turn into a fence. Written down so
+          // the next parse can cut its fragments here without having to read
+          // every block of the note looking for lines like it.
+          declining?.push(cx.lineStart + line.pos)
+          return false
+        }
 
         const from = cx.lineStart + line.pos
         const infoFrom = line.skipSpace(end)
