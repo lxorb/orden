@@ -965,6 +965,10 @@
   top: 50%;
   transform: translateY(-50%);
   text-align: center;
+  /* A positioned box starts a line of its own, and a line inherits the
+     paragraph's indent: in a list item, whose lines hang by 1.5em, that put
+     the glyph 1.5em to the left of its run. */
+  text-indent: 0;
   -webkit-text-fill-color: currentcolor;
   pointer-events: none;
 }
