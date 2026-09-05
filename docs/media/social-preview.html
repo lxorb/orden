@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Nib social preview</title>
+<!--
+  Source for docs/media/social-preview.png (GitHub social preview, 1280x640).
+  Self-contained: no network requests, no external assets.
+  Regenerate: open this file in Chrome and run `await window.renderPNG()` in the
+  console; it returns a data: URL for a 1280x640 PNG of the card below.
+-->
+<style id="sheet">
+  .nib-card * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  .nib-card {
+    position: relative;
+    width: 1280px;
+    height: 640px;
+    overflow: hidden;
+    background: #0b0d11;
+    font-family: 'Geist', 'Segoe UI Variable Display', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    -webkit-font-smoothing: antialiased;
+    color: #dde2ea;
+  }
+
+  /* ink on glass: cool light, no warm paper */
+  .nib-card .wash {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(520px 380px at 12% 26%, rgba(124, 107, 245, 0.20), rgba(124, 107, 245, 0) 70%),
+      radial-gradient(700px 540px at 86% 74%, rgba(124, 107, 245, 0.13), rgba(124, 107, 245, 0) 68%),
+      radial-gradient(1000px 560px at 50% -12%, rgba(154, 163, 178, 0.05), rgba(154, 163, 178, 0) 72%);
+  }
+  .nib-card .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(118% 96% at 50% 46%, rgba(0, 0, 0, 0) 46%, rgba(0, 0, 0, 0.55) 100%);
+  }
+  .nib-card .hair {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(124,107,245,0) 0%, rgba(124,107,245,0.45) 28%, rgba(221,226,234,0.16) 62%, rgba(124,107,245,0) 100%);
+  }
+
+  /* ---------- left: identity ---------- */
+  .nib-card .left {
+    position: absolute;
+    left: 88px;
+    top: 0;
+    bottom: 0;
+    width: 486px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .nib-card .brand { display: flex; align-items: center; gap: 24px; }
+
+  .nib-card .tile {
+    width: 92px;
+    height: 92px;
+    border-radius: 24px;
+    background: linear-gradient(150deg, #9184f8 0%, #7c6bf5 46%, #6553ee 100%);
+    box-shadow:
+      0 20px 60px -14px rgba(124, 107, 245, 0.62),
+      0 2px 10px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .nib-card .tile svg { display: block; }
+
+  .nib-card .wordmark {
+    font-size: 82px;
+    font-weight: 600;
+    letter-spacing: -0.038em;
+    line-height: 1;
+    color: #f4f7fb;
+    padding-bottom: 6px;
+  }
+
+  .nib-card .tag {
+    margin-top: 34px;
+    max-width: 460px;
+    font-family: 'iA Writer Quattro', 'Segoe UI Variable Text', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+    font-size: 29px;
+    line-height: 1.34;
+    letter-spacing: -0.012em;
+    color: #dde2ea;
+  }
+  .nib-card .tag .lit { color: #f4f7fb; font-weight: 600; }
+
+  .nib-card .meta {
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #767e8c;
+  }
+  .nib-card .meta .dot {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: #3f4655;
+    flex: none;
+  }
+
+  .nib-card .foot {
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 17px;
+    letter-spacing: -0.005em;
+  }
+  .nib-card .foot .url { color: #9184f8; }
+  .nib-card .foot .sep { width: 4px; height: 4px; border-radius: 50%; background: #2f3641; }
+  .nib-card .foot .lic { color: #767e8c; }
+
+  /* ---------- right: the editor ---------- */
+  .nib-card .stage {
+    position: absolute;
+    left: 636px;
+    top: 0;
+    bottom: 0;
+    width: 556px;
+    display: flex;
+    align-items: center;
+  }
+  .nib-card .stage .halo {
+    position: absolute;
+    left: -84px; right: -84px; top: 56px; bottom: 56px;
+    background: radial-gradient(closest-side, rgba(124, 107, 245, 0.32), rgba(124, 107, 245, 0) 100%);
+  }
+
+  .nib-card .app {
+    position: relative;
+    width: 100%;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #171b21 0%, #101318 100%);
+    border: 1px solid #262c36;
+    box-shadow:
+      0 44px 90px -24px rgba(0, 0, 0, 0.86),
+      0 6px 18px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+
+  .nib-card .bar {
+    height: 40px;
+    display: flex;
+    align-items: stretch;
+    padding-left: 16px;
+    gap: 4px;
+    border-bottom: 1px solid #1e232b;
+    background: #12151a;
+  }
+  .nib-card .bar .tab {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 12.5px;
+    letter-spacing: 0.005em;
+    color: #767e8c;
+  }
+  .nib-card .bar .tab.on {
+    color: #f4f7fb;
+    box-shadow: inset 0 -2px 0 0 #7c6bf5;
+  }
+
+  .nib-card .doc {
+    padding: 30px 34px 32px 34px;
+    font-family: 'iA Writer Quattro', 'Segoe UI Variable Text', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .nib-card .mk { color: rgba(124, 107, 245, 0.62); font-weight: 400; }
+
+  .nib-card .h1 {
+    font-size: 33px;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    color: #f4f7fb;
+    line-height: 1.15;
+  }
+  .nib-card .h1 .mk { margin-right: 12px; font-weight: 400; }
+
+  .nib-card .p {
+    margin-top: 20px;
+    font-size: 17px;
+    line-height: 1.68;
+    color: #dde2ea;
+  }
+  .nib-card .p b { font-weight: 700; color: #f4f7fb; }
+  .nib-card .p i { font-style: italic; }
+  .nib-card .caret {
+    display: inline-block;
+    width: 2px;
+    height: 19px;
+    background: #7c6bf5;
+    vertical-align: -4px;
+    margin-left: 1px;
+    box-shadow: 0 0 10px rgba(124, 107, 245, 0.9);
+  }
+
+  .nib-card .task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16.5px;
+    line-height: 1.5;
+    color: #dde2ea;
+  }
+  .nib-card .tasks { margin-top: 22px; display: flex; flex-direction: column; gap: 12px; }
+  .nib-card .box {
+    width: 17px; height: 17px;
+    border-radius: 5px;
+    border: 1.5px solid #39404d;
+    flex: none;
+  }
+  .nib-card .box.done {
+    border-color: #7c6bf5;
+    background: #7c6bf5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 14px rgba(124, 107, 245, 0.45);
+  }
+  .nib-card .task.done span { color: #767e8c; }
+
+  .nib-card .code {
+    margin-top: 24px;
+    background: #1a1e25;
+    border: 1px solid #242a33;
+    border-radius: 10px;
+    padding: 15px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'iA Writer Mono S', ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 14.5px;
+    letter-spacing: -0.005em;
+    color: #dde2ea;
+  }
+  .nib-card .code .kw { color: #9184f8; }
+  .nib-card .code .str { color: #3fcf8e; }
+  .nib-card .code .lang { font-size: 11px; color: #545c69; letter-spacing: 0.06em; }
+</style>
+</head>
+<body style="margin:0;background:#07080a;display:flex;align-items:center;justify-content:center;min-height:100vh">
+
+<div class="nib-card" id="card">
+  <div class="wash"></div>
+  <div class="vignette"></div>
+  <div class="hair"></div>
+
+  <div class="left">
+    <div class="brand">
+      <div class="tile">
+        <svg width="92" height="92" viewBox="0 0 512 512">
+          <path fill="#ffffff" fill-rule="evenodd" d="M148 118 H363 L255.5 402.5 Z M227 214.5 a28.5 28.5 0 1 0 57 0 a28.5 28.5 0 1 0 -57 0 Z M248.5 243 h14 v170 h-14 Z" />
+        </svg>
+      </div>
+      <div class="wordmark">Nib</div>
+    </div>
+
+    <div class="tag">The markdown editor that<br /><span class="lit">renders as you type</span>.</div>
+
+    <div class="meta">
+      <span>Desktop</span><span class="dot"></span>
+      <span>Web</span><span class="dot"></span>
+      <span>Sync</span><span class="dot"></span>
+      <span>Publish</span><span class="dot"></span>
+      <span>MCP</span>
+    </div>
+
+    <div class="foot">
+      <span class="url">nibeditor.com</span>
+      <span class="sep"></span>
+      <span class="lic">Open source, AGPL-3.0</span>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="halo"></div>
+    <div class="app">
+      <div class="bar">
+        <div class="tab on">weekly-notes.md</div>
+        <div class="tab">drafts.md</div>
+      </div>
+      <div class="doc">
+        <div class="h1"><span class="mk">#</span>Weekly notes</div>
+
+        <div class="p">Headings, <span class="mk">**</span><b>bold</b><span class="mk">**</span><span class="caret"></span>, lists and code, formatted in place.</div>
+
+        <div class="tasks">
+          <div class="task done">
+            <div class="box done">
+              <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2.5 6.3 L4.8 8.6 L9.5 3.6" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </div>
+            <span>Draft the release notes</span>
+          </div>
+          <div class="task">
+            <div class="box"></div>
+            <span>Publish to the web</span>
+          </div>
+        </div>
+
+        <div class="code">
+          <span><span class="kw">const</span> nib = <span class="str">'markdown, live'</span></span>
+          <span class="lang">js</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Rasterise the card to a 1280x640 PNG without any external library:
+  // serialise it into an SVG <foreignObject>, then paint that onto a canvas.
+  window.renderPNG = async function () {
+    const card = document.getElementById('card');
+    const xhtml = 'http://www.w3.org/1999/xhtml';
+    const wrap = document.createElementNS(xhtml, 'div');
+    wrap.setAttribute('xmlns', xhtml);
+    const style = document.createElementNS(xhtml, 'style');
+    style.textContent = document.getElementById('sheet').textContent;
+    wrap.appendChild(style);
+    wrap.appendChild(card.cloneNode(true));
+    const body = new XMLSerializer().serializeToString(wrap);
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640">' +
+      '<foreignObject x="0" y="0" width="1280" height="640">' + body + '</foreignObject></svg>';
+
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await img.decode();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280;
+    canvas.height = 640;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, 1280, 640);
+    return canvas.toDataURL('image/png');
+  };
+</script>
+</body>
+</html>
