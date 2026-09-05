@@ -39,21 +39,6 @@ How much does it cost? Well, it's free.
 
 See for yourself: [nibeditor.com](https://nibeditor.com)
 
-## Install
-
-Download an installer from the [latest release](https://github.com/lxorb/nib/releases/latest), open [nibeditor.com](https://nibeditor.com) in a browser, or use a package manager:
-
-| | |
-| --- | --- |
-| Windows, Scoop | `scoop bucket add lxorb https://github.com/lxorb/scoop-bucket` then `scoop install nib` |
-| macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
-| Nix | `nix profile install github:lxorb/nib?dir=packaging/nix` |
-| Debian, Ubuntu | `sudo apt install ./Nib-<version>-linux-x64.deb` |
-| Fedora, openSUSE | `sudo dnf install ./Nib-<version>-linux-x64.rpm` |
-| Any Linux | `chmod +x Nib-<version>-linux-x64.AppImage && ./Nib-<version>-linux-x64.AppImage` |
-
-Linux builds also come as `-linux-arm64`. winget, Chocolatey, the AUR, Snap and Flathub are on the way; the manifests live in [`packaging/`](packaging/).
-
 ## Why Nib?
 
 |  | Open source | MCP | Platform independent | Inline preview | Sync | Publish |
@@ -78,3 +63,16 @@ Linux builds also come as `-linux-arm64`. winget, Chocolatey, the AUR, Snap and 
 - An **MCP** to allow LLM read and write access
 - **Paste Images** from Clipboard
 - **Publish** your markdown files as an online blog with a single click
+
+## Install
+
+Download an installer from the [latest release](https://github.com/lxorb/nib/releases/latest), open [nibeditor.com](https://nibeditor.com) in a browser, or use a package manager:
+
+| | |
+| --- | --- |
+| Windows, Scoop | `scoop bucket add lxorb https://github.com/lxorb/scoop-bucket` then `scoop install nib` |
+| macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/nib` |
+| Nix | `nix profile install github:lxorb/nib?dir=packaging/nix` |
+| Debian, Ubuntu | `sudo apt install ./Nib-<version>-linux-x64.deb` |
+| Fedora, openSUSE | `sudo dnf install ./Nib-<version>-linux-x64.rpm` |
+| Any Linux | `chmod +x Nib-<version>-linux-x64.AppImage && ./Nib-<version>-linux-x64.AppImage` |
