@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
+  import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
@@ -38,6 +38,15 @@
 
   const showMenu = (event: MouseEvent, tab: Tab) =>
     menu.show(event, tabMenu(tab), { title: stripped(tab.name) })
+
+  /** The dot says one of three things, and says it in words to a reader who
+   *  cannot see it. */
+  function saveLabel(tab: Tab): string {
+    const state = workspace.saveState[tab.id]
+    if (state === 'saving') return t('Saving')
+    if (state === 'saved') return t('Saved')
+    return t('Unsaved')
+  }
 </script>
 
 <div class="tabs">
@@ -60,7 +69,16 @@
         use:longPress={(event) => showMenu(event, tab)}
       >
         {stripped(tab.name)}
-        {#if tab.dirty}<span class="dot" aria-label={t('Unsaved')}></span>{/if}
+        {#if tab.dirty || workspace.saveState[tab.id]}
+          <span
+            class="dot"
+            class:writing={workspace.saveState[tab.id] === 'saving'}
+            class:down={workspace.saveState[tab.id] === 'saved'}
+            aria-label={saveLabel(tab)}
+            title={saveLabel(tab)}
+            transition:fade={{ duration: 190 }}
+          ></span>
+        {/if}
       </button>
       <button class="shut" title={t('Close')} aria-label={t('Close')} onclick={() => workspace.close(tab.id)}>
         <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
@@ -102,6 +120,11 @@
     color: var(--text-strong);
   }
 
+  .new:active {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
   .new svg {
     width: 12px;
     height: 12px;
@@ -124,6 +147,12 @@
 
   .tab:hover {
     background: var(--surface-2);
+  }
+
+  /* The tab answers the click itself, before the note it holds has been laid
+     out - which on a large note is the difference between prompt and slow. */
+  .tab:active {
+    background: var(--press);
   }
 
   /* The active tab is marked by a line that slides in, not by a label. */
@@ -173,12 +202,41 @@
     font-style: italic;
   }
 
+  /* The whole report on saving: unwritten, going down, down. Colour and a
+     breath of movement rather than a spinner - it is ambient, not an event. */
   .dot {
     width: 5px;
     height: 5px;
     flex: none;
     border-radius: 50%;
     background: var(--accent);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .dot.writing {
+    animation: breathe 900ms var(--ease-in-out) infinite;
+  }
+
+  .dot.down {
+    background: var(--success);
+    transform: scale(0.8);
+  }
+
+  @keyframes breathe {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  /* Movement is a preference, and a dot that pulses forever is exactly what
+     it is about. The colour still says which state it is in. */
+  @media (prefers-reduced-motion: reduce) {
+    .dot.writing {
+      animation: none;
+      opacity: 0.55;
+    }
   }
 
   .shut {
@@ -198,6 +256,10 @@
 
   .shut:hover {
     color: var(--danger);
+  }
+
+  .shut:active {
+    color: color-mix(in srgb, var(--danger) 78%, black);
   }
 
   button:focus-visible {

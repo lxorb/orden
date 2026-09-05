@@ -3,6 +3,7 @@ import { account } from './account.svelte'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
 import { scanHeadings } from './outline'
+import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
 
@@ -90,6 +91,8 @@ const PINNED_KEY = 'nib:pinned'
 const ICONS_KEY = 'nib:icons'
 const EXPANDED_KEY = 'nib:expanded'
 const AUTO_SAVE_DELAY = 1200
+/** How long the dot stays as a tick once the note is down, in milliseconds. */
+const SAVED_SHOWN = 1400
 const AUTO_SAVE_DELAY_KEY = 'nib:autosave-delay'
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
@@ -250,7 +253,14 @@ class Workspace {
   /** Rows picked in the tree with Ctrl or Shift, as paths. The anchor is
    *  where a Shift range starts: the last row clicked without Shift. */
   selection = $state<string[]>([])
+  /** Which tabs are being written, and which have just been. The dot beside a
+   *  note's name is the whole report on saving, so it has three things to say:
+   *  there is something unwritten, it is going down now, it is down. Held by id
+   *  rather than on the tab, because "just saved" is about this moment and not
+   *  about the note. */
+  saveState = $state<Record<string, 'saving' | 'saved'>>({})
   private anchor: string | null = null
+  private savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
@@ -729,6 +739,9 @@ class Workspace {
 
     if (target === from || intoFolder.startsWith(from)) return
 
+    // The row is in its new folder as soon as the drop lands.
+    this.showMove(from, target)
+
     await invoke('rename_note', { from, to: target })
     this.movePlace(from, target)
     this.recordFileAction({ kind:'move', from, to: target })
@@ -905,6 +918,28 @@ class Workspace {
     this.saveTimer = setTimeout(() => void this.save(), this.autoSaveDelay)
   }
 
+  /** The dot's three states. `saved` stands for a moment and then goes: it is
+   *  a confirmation, not a status, and a note with nothing to write should not
+   *  wear a mark forever. */
+  private markSaving(id: string) {
+    clearTimeout(this.savedTimers[id])
+    delete this.savedTimers[id]
+    this.saveState = { ...this.saveState, [id]: 'saving' }
+  }
+
+  private markSaved(id: string) {
+    this.saveState = { ...this.saveState, [id]: 'saved' }
+    this.savedTimers[id] = setTimeout(() => this.clearSaveState(id), SAVED_SHOWN)
+  }
+
+  private clearSaveState(id: string) {
+    clearTimeout(this.savedTimers[id])
+    delete this.savedTimers[id]
+    const { [id]: gone, ...rest } = this.saveState
+    void gone
+    this.saveState = rest
+  }
+
   setAutoSaveDelay(ms: number) {
     this.autoSaveDelay = ms
     localStorage.setItem(AUTO_SAVE_DELAY_KEY, String(ms))
@@ -948,16 +983,24 @@ class Workspace {
       path = picked
     }
 
-    // Keep the version that is about to be replaced, before replacing it.
-    if (tab.path) {
-      await invoke('snapshot_note', { path, content: tab.doc }).catch(() => undefined)
-    }
+    this.markSaving(tab.id)
 
-    await invoke('write_note', { path, content: tab.doc })
+    try {
+      // Keep the version that is about to be replaced, before replacing it.
+      if (tab.path) {
+        await invoke('snapshot_note', { path, content: tab.doc }).catch(() => undefined)
+      }
+
+      await invoke('write_note', { path, content: tab.doc })
+    } catch (error) {
+      this.clearSaveState(tab.id)
+      throw error
+    }
 
     tab.path = path
     tab.name = basename(path)
     tab.dirty = false
+    this.markSaved(tab.id)
 
     // Editing the config files in Nib should take effect on save.
     if (/custom\.css$|snippets\.json$/.test(path)) {
@@ -1119,14 +1162,40 @@ class Workspace {
   }
 
   private entryAt(path: string): Entry | null {
-    const walk = (entry: Entry): Entry | null => {
-      for (const child of entry.children) {
-        if (child.path === path) return child
-        if (child.is_dir && path.startsWith(`${child.path}/`)) return walk(child)
-      }
-      return null
+    const found = entryAt(this.tree, path)
+    return found && found.path !== this.tree?.path ? found : null
+  }
+
+  /** A row put into the tree, taken out of it, or moved within it, before the
+   *  filesystem has been asked. The listing that follows every one of these
+   *  operations is what the tree really is; this is so the click is answered in
+   *  the same frame it happened, rather than after a round trip and a re-read
+   *  of the whole folder. An operation that fails undoes itself when the
+   *  listing arrives. */
+  private showEntry(entry: Entry) {
+    if (this.tree) this.tree = withEntry(this.tree, entry, this.treeOptions)
+  }
+
+  private hideEntry(path: string) {
+    if (this.tree) this.tree = withoutEntry(this.tree, path)
+  }
+
+  private showMove(from: string, to: string) {
+    if (this.tree) this.tree = withMove(this.tree, from, to, this.treeOptions)
+  }
+
+  /** A row for something that is about to exist. The times are now, which is
+   *  what sorting by "created" or "modified" would put it under anyway. */
+  private freshEntry(path: string, isFolder: boolean): Entry {
+    const at = Date.now()
+    return {
+      name: basename(path),
+      path,
+      is_dir: isFolder,
+      modified: at,
+      created: at,
+      children: [],
     }
-    return this.tree ? walk(this.tree) : null
   }
 
   isExpanded(path: string): boolean {
@@ -1184,10 +1253,26 @@ class Workspace {
     // Opens with its own name as the title, so there is something to write
     // under rather than an empty page.
     const path = joinPath(dir, name)
-    await invoke('write_note', { path, content: `# ${name.replace(MARKDOWN, '')}\n\n` })
-    await this.loadTree()
-    await this.open(path)
+    const content = `# ${name.replace(MARKDOWN, '')}\n\n`
+
+    // The row, the tab and the caret are all there before the file is. Making
+    // a note is the one thing that should never feel like waiting for a disk,
+    // and everything below knows what the note will say.
+    this.showEntry(this.freshEntry(path, false))
+    if (dir !== this.activeSpace?.root) this.expanded = { ...this.expanded, [dir]: true }
+
+    const tab: Tab = { id: identifier(), path, name: basename(path), doc: content, dirty: false }
+    this.tabs = [...this.tabs, tab]
+    this.activeTabId = tab.id
+    this.showNote()
+    this.remember(path)
+    // A blank untouched tab is scaffolding, not something worth keeping around.
+    this.tabs = this.tabs.filter((other) => other.id === tab.id || other.path || other.dirty)
     this.startRenaming(path)
+
+    await invoke('write_note', { path, content })
+    await this.loadTree()
+    this.persist()
   }
 
   async createFolder(parent?: string) {
@@ -1201,9 +1286,11 @@ class Workspace {
     while (taken.has(joinPath(dir, name))) name = `New folder ${counter++}`
 
     const path = joinPath(dir, name)
+    this.showEntry(this.freshEntry(path, true))
+    this.startRenaming(path)
+
     await invoke('create_folder', { path })
     await this.loadTree()
-    this.startRenaming(path)
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
@@ -1234,6 +1321,11 @@ class Workspace {
     const target = joinPath(folderOf(path), clean)
     if (target === path) return
 
+    // The new name is on the row before the rename has happened; the listing
+    // that follows is what settles it.
+    this.showMove(path, target)
+    this.renaming = null
+
     await invoke('rename_note', { from: path, to: target })
     this.movePlace(path, target)
     this.recordFileAction({ kind:'rename', from: path, to: target })
@@ -1260,6 +1352,11 @@ class Workspace {
   }
 
   async remove(path: string, isFolder: boolean) {
+    // Gone from the tree before the snapshot has been taken and the file has
+    // been moved: three round trips is a long time for a row to sit there
+    // looking as though the delete had not registered.
+    this.hideEntry(path)
+
     // A deleted note keeps one last snapshot, so the delete is recoverable.
     if (!isFolder) {
       const content = await invoke<string>('read_note', { path }).catch(() => '')

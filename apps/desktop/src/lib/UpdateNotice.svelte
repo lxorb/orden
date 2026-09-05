@@ -85,6 +85,10 @@
     background: var(--accent-hover);
   }
 
+  .primary:active:not(:disabled) {
+    background: var(--accent-press);
+  }
+
   .primary:disabled {
     opacity: 0.6;
   }

@@ -10,6 +10,7 @@
   import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { deleteSpace, moveSpace, newSpace, renameSpace } from './space-actions'
   import { settings } from './settings.svelte'
+  import { sync } from './sync.svelte'
   import { SOURCE_URL } from './app-menu'
   import { openExternal } from './tauri'
   import { type Space, workspace } from './workspace.svelte'
@@ -22,6 +23,14 @@
   }: { view?: EditorView; onpalette: () => void; onhistory: () => void } = $props()
 
   let picker = $state<IconPicker>()
+
+  /** The settings button doubles as the sync light, so its tooltip says what
+   *  the light means rather than leaving a colour to be guessed at. */
+  function syncTitle(): string {
+    if (sync.status === 'syncing') return t('Syncing')
+    if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
+    return t('Settings')
+  }
   /** Filled once any space has an icon, so the rail can draw them. */
   let library = $state<Record<string, IconNode>>({})
 
@@ -194,7 +203,17 @@
          Signing in comes first, so the rail offers nothing else until then;
          Ctrl+, still opens settings for anyone who wants them sooner. -->
     {#if account.signedIn}
-      <button class="add" title={t('Settings')} aria-label={t('Settings')} onclick={() => settings.show()}>
+      <!-- Syncing happens on its own and mostly wants no attention, so its
+           only ambient sign is a mark on the button that leads to it: lit
+           while a pass is running, red when the last one failed. -->
+      <button
+        class="add"
+        class:syncing={sync.status === 'syncing'}
+        class:failed={sync.status === 'error'}
+        title={syncTitle()}
+        aria-label={t('Settings')}
+        onclick={() => settings.show()}
+      >
         <!-- An actual gear: eight teeth around a hub. -->
         <svg viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3.2" />
@@ -336,6 +355,14 @@
     }
   }
 
+  /* Reading a whole folder is what picking a space costs, so the button gives
+     under the pointer rather than waiting for the listing. */
+  .space:active {
+    background: var(--press);
+    color: var(--text-strong);
+    transform: scale(0.94);
+  }
+
   /* Dragged spaces get out of the way of the line showing where they land. */
   .space.dragging {
     opacity: 0.4;
@@ -423,6 +450,7 @@
   }
 
   .add {
+    position: relative;
     width: 30px;
     height: 30px;
     border-radius: var(--radius-md);
@@ -440,6 +468,41 @@
     }
   }
 
+  /* A dot in the corner, not a badge: it is there to be noticed out of the
+     corner of an eye and otherwise ignored. */
+  .add.syncing::after,
+  .add.failed::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .add.syncing::after {
+    animation: breathe 1100ms var(--ease-in-out) infinite;
+  }
+
+  .add.failed::after {
+    background: var(--danger);
+  }
+
+  @keyframes breathe {
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .add.syncing::after {
+      animation: none;
+      opacity: 0.6;
+    }
+  }
+
   .foot {
     /* Pushed to the bottom now that the menu holds the top. */
     margin-top: auto;
@@ -451,6 +514,13 @@
 
   .foot .add:hover {
     transform: none;
+  }
+
+  .add:active,
+  .foot .add:active {
+    background: var(--press);
+    color: var(--text-strong);
+    transform: scale(0.9);
   }
 
   .glyph {

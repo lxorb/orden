@@ -204,6 +204,11 @@
     color: var(--text-strong);
   }
 
+  .groups button:active:not(:disabled) {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
   button:disabled {
     color: var(--muted);
   }

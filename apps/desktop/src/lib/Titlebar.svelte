@@ -143,6 +143,13 @@
     }
   }
 
+  /* Answered under the finger, not when the sidebar has finished moving. */
+  .toggle:active,
+  .more:active {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
   .toggle.on {
     color: var(--accent);
   }
@@ -193,6 +200,16 @@
       background: var(--danger);
       color: #fff;
     }
+  }
+
+  .controls button:active {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
+  .controls button.close:active {
+    background: color-mix(in srgb, var(--danger) 82%, black);
+    color: #fff;
   }
 
   button:focus-visible {

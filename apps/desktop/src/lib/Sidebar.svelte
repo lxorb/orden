@@ -449,6 +449,11 @@
     color: var(--text);
   }
 
+  .switch button:active {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
   .switch button.active {
     background: var(--surface-3);
     color: var(--accent);
@@ -530,6 +535,12 @@
   .row:hover {
     background: var(--item-hover-bg-color);
     color: var(--item-hover-text-color);
+  }
+
+  .row:active,
+  .hit:active {
+    background: var(--press);
+    color: var(--text-strong);
   }
 
   /* Only where there is a pointer to hover with: on a touch screen the nudge
@@ -649,6 +660,11 @@
     color: var(--text-strong);
   }
 
+  .tag:active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+
   .count {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
@@ -684,6 +700,12 @@
 
   .empty:hover {
     border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .empty:active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
     color: var(--accent);
   }
 

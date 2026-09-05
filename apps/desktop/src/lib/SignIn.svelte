@@ -249,6 +249,13 @@
     transform: translateY(-1px);
   }
 
+  /* Signing in is a round trip to a server: the button has to look pressed
+     before it looks busy. */
+  button:active:not(:disabled) {
+    background: var(--accent-press);
+    transform: translateY(0);
+  }
+
   button:disabled {
     opacity: 0.55;
   }

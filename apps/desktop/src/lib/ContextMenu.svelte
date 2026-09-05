@@ -206,6 +206,11 @@
     color: var(--text-strong);
   }
 
+  button:active:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 26%, transparent);
+    color: var(--text-strong);
+  }
+
   button.danger:hover:not(:disabled) {
     background: color-mix(in srgb, var(--danger) 16%, transparent);
     color: var(--danger);

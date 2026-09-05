@@ -27,6 +27,12 @@
   --radius-md: 9px;
   --radius-lg: 14px;
 
+  /* A press gets its own step past hover: hover says a thing is there, this
+     says the click landed - which is what matters where the answer takes a
+     moment to arrive. Quiet surfaces deepen by one step; anything wearing the
+     accent goes to `--accent-press`. Set per theme below, where the surfaces
+     are, so "deeper" means darker on light and lighter on dark. */
+
   --rail-width: 46px;
   --sidebar-width: 244px;
   --titlebar-height: 38px;
@@ -52,6 +58,7 @@
   --surface: #14171c;
   --surface-2: #1a1e25;
   --surface-3: #222831;
+  --press: #2a313c;
   --line: #232830;
   --line-strong: #2f3641;
   --muted: #767e8c;
@@ -60,6 +67,7 @@
   --text-strong: #f4f7fb;
   --accent: #7c6bf5;
   --accent-hover: #8d7ef7;
+  --accent-press: #6a58ef;
   --accent-soft: rgb(124 107 245 / 0.15);
   --accent-line: rgb(124 107 245 / 0.42);
   --danger: #f2555a;
@@ -79,6 +87,7 @@
   --surface: #f3f5f8;
   --surface-2: #eaeef3;
   --surface-3: #dfe5ec;
+  --press: #d3dbe5;
   --line: #e1e6ed;
   --line-strong: #ccd4de;
   --muted: #8a93a2;
@@ -87,6 +96,7 @@
   --text-strong: #0b0d10;
   --accent: #5b4be0;
   --accent-hover: #4e3ed6;
+  --accent-press: #4131c2;
   --accent-soft: rgb(91 75 224 / 0.1);
   --accent-line: rgb(91 75 224 / 0.38);
   --danger: #d92b34;

@@ -183,6 +183,10 @@
     background: var(--accent-hover);
   }
 
+  .primary:active:not(:disabled) {
+    background: var(--accent-press);
+  }
+
   .danger {
     background: var(--danger);
     color: #fff;
@@ -204,6 +208,16 @@
   .quiet:hover {
     background: var(--surface-2);
     color: var(--text-strong);
+  }
+
+  .quiet:active {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
+  .danger:active {
+    background: color-mix(in srgb, var(--danger) 82%, black);
+    filter: none;
   }
 
   @media (max-width: 720px) {

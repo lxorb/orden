@@ -157,6 +157,12 @@
     background: var(--item-hover-bg-color);
   }
 
+  /* Each version has to be read off disk before it can be shown, so the row
+     answers first. */
+  .versions button:active {
+    background: var(--press);
+  }
+
   .versions button.active {
     background: var(--accent-soft);
     color: var(--text-strong);
@@ -211,6 +217,11 @@
   .primary:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
+  }
+
+  .primary:active {
+    background: var(--accent-press);
+    transform: translateY(0);
   }
 
   @media (max-width: 720px) {

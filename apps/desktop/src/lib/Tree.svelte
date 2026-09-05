@@ -273,6 +273,13 @@
     color: var(--item-hover-text-color);
   }
 
+  /* Opening a note, folding a folder and renaming all wait on a file, so the
+     row itself says the click landed. */
+  .row:active {
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
   .row:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;

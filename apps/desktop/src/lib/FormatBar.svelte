@@ -166,4 +166,9 @@
     background: var(--accent);
     color: #fff;
   }
+
+  button:active {
+    background: var(--accent-press);
+    color: #fff;
+  }
 </style>
