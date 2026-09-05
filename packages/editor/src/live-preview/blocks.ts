@@ -1,5 +1,13 @@
 import { syntaxTree } from '@codemirror/language'
-import { type EditorState, Facet, type Range, type SelectionRange, StateField } from '@codemirror/state'
+import {
+  type ChangeDesc,
+  type EditorState,
+  Facet,
+  type Range,
+  type SelectionRange,
+  StateField,
+  type Transaction,
+} from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { TableWidget } from '../table/widget'
 import { lineRevealed, overlaps } from './reveal'
@@ -58,11 +66,16 @@ function collectEquationLabels(state: EditorState): Map<number, number> {
 interface Blocks {
   decorations: DecorationSet
   spans: readonly { from: number; to: number }[]
+  /** Whether a `[toc]` is among them. What one shows is every heading in the
+   *  note, so it is the one construct that changes when a line far from it
+   *  does, and the one that rules out the shortcut below. */
+  toc: boolean
 }
 
 function buildBlocks(state: EditorState): Blocks {
   const ranges: Range<Decoration>[] = []
   const spans: { from: number; to: number }[] = []
+  let toc = false
   const doc = state.doc
   const numbered = state.facet(numberEquations)
   const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
@@ -123,6 +136,7 @@ function buildBlocks(state: EditorState): Blocks {
           if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
 
           spans.push({ from: line.from, to: line.to })
+          toc = true
           if (lineRevealed(state, node.from)) return false
 
           ranges.push(
@@ -159,7 +173,7 @@ function buildBlocks(state: EditorState): Blocks {
     },
   })
 
-  return { decorations: Decoration.set(ranges, true), spans }
+  return { decorations: Decoration.set(ranges, true), spans, toc }
 }
 
 /** Exposed for tests: the block decorations a state would get. */
@@ -178,6 +192,46 @@ function crosses(spans: readonly { from: number; to: number }[], ranges: readonl
   )
 }
 
+/** Characters no block construct here is made of: not a fence's backtick or
+ *  tilde, not a table's bar, not a display equation's dollar, not the brackets
+ *  of `[toc]`, and not a line break. Writing these into a line that is not
+ *  part of one of those constructs cannot make one, unmake one, or move an end
+ *  of one - it can only shift what comes after, which the decorations follow
+ *  on their own. Deliberately a short list rather than a list of what to
+ *  distrust: anything unaccounted for is looked at properly. */
+const PROSE = /^[\p{L}\p{N} ,;'"?]*$/u
+
+/** Whether `transaction` is prose typed clear of every construct found last
+ *  time - the ordinary case, and the one worth not walking the note for. */
+function onlyProse(transaction: Transaction, value: Blocks): boolean {
+  if (value.toc) return false
+
+  const before = transaction.startState
+  const changes = transaction.changes
+  let ordinary = true
+
+  changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
+    if (!ordinary) return
+    // A line either side, so a change that ends where a construct begins is
+    // still looked at properly.
+    const from = before.doc.lineAt(fromA).from - 1
+    const to = before.doc.lineAt(Math.min(toA, before.doc.length)).to + 1
+    if (value.spans.some((span) => from <= span.to && to >= span.from)) ordinary = false
+    else if (!PROSE.test(before.doc.sliceString(fromA, toA))) ordinary = false
+    else if (!PROSE.test(inserted.toString())) ordinary = false
+  })
+
+  return ordinary
+}
+
+/** The same spans, where the change left them. */
+function mapSpans(spans: readonly { from: number; to: number }[], changes: ChangeDesc) {
+  return spans.map((span) => ({
+    from: changes.mapPos(span.from, 1),
+    to: changes.mapPos(span.to, -1),
+  }))
+}
+
 export const blockDecorations = StateField.define<Blocks>({
   create: buildBlocks,
   update(value, transaction) {
@@ -186,10 +240,29 @@ export const blockDecorations = StateField.define<Blocks>({
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
 
+    const was = transaction.startState.selection.ranges
+    const now = transaction.state.selection.ranges
+
     if (!transaction.docChanged && !reparsed) {
-      const was = transaction.startState.selection.ranges
-      const now = transaction.state.selection.ranges
       if (!crosses(value.spans, was) && !crosses(value.spans, now)) return value
+    }
+
+    // Prose typed away from every construct: the same constructs, further
+    // along. The parse has to be no further along than the document, or a
+    // block it has only just reached would be missed.
+    const parsedOn =
+      syntaxTree(transaction.state).length - syntaxTree(transaction.startState).length ===
+      transaction.state.doc.length - transaction.startState.doc.length
+    if (
+      transaction.docChanged &&
+      parsedOn &&
+      !crosses(value.spans, was) &&
+      onlyProse(transaction, value)
+    ) {
+      const spans = mapSpans(value.spans, transaction.changes)
+      if (!crosses(spans, now)) {
+        return { decorations: value.decorations.map(transaction.changes), spans, toc: false }
+      }
     }
 
     return buildBlocks(transaction.state)

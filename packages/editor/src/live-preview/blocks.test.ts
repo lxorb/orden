@@ -63,11 +63,77 @@ describe('block decorations', () => {
     expect(is.decorations.size).toBe(1)
   })
 
-  test('an edit always rebuilds', () => {
-    const doc = `${PROSE}${TABLE}`
-    const before = state(doc, 0)
-    const was = before.field(blockDecorations)
-    const now = before.update({ changes: { from: 0, insert: 'x' } }).state
-    expect(now.field(blockDecorations)).not.toBe(was)
+})
+
+/** What the field made of typing `insert` at `at`, and what it had before. */
+function afterTyping(doc: string, at: number, insert: string, to = at) {
+  const before = state(doc, at)
+  const was = before.field(blockDecorations)
+  const now = before.update({
+    changes: { from: at, to, insert },
+    selection: { anchor: at + insert.length },
+  }).state
+  return { was, is: now.field(blockDecorations), state: now }
+}
+
+/** Where the field says a construct is, as text of the state it belongs to. */
+function drawn(blocks: { decorations: { between: unknown } }, doc: string): string[] {
+  const out: string[] = []
+  ;(blocks.decorations as import('@codemirror/view').DecorationSet).between(
+    0,
+    doc.length,
+    (from, to) => {
+      out.push(doc.slice(from, to))
+    },
+  )
+  return out
+}
+
+describe('prose typed away from every construct', () => {
+  const doc = `${PROSE}${TABLE}`
+
+  test('moves the constructs along without looking for them again', () => {
+    const { was, is, state: after } = afterTyping(doc, 4, 'word')
+    expect(is.spans).not.toBe(was.spans)
+    expect(drawn(is, after.doc.toString())).toEqual([TABLE])
+  })
+
+  test('a line break is not prose: it is looked at properly', () => {
+    const { was, is } = afterTyping(doc, 4, '\n')
+    expect(is.spans).not.toEqual(was.spans)
+    expect(is.decorations.size).toBe(1)
+  })
+
+  test('a bar could make a table row, so it is looked at properly', () => {
+    const found = afterTyping(`${PROSE}| a | b |\n| - | - |\n`, 0, '| c |\n')
+    expect(found.is.decorations.size).toBe(1)
+  })
+
+  test('a construct typed into is rebuilt, not shifted', () => {
+    const at = doc.length - 2
+    const { is } = afterTyping(doc, at, 'z')
+    expect(is.decorations.size).toBe(0)
+  })
+
+  test('dollars are not prose either', () => {
+    // An unclosed `$$` runs to the end of the note; closing it has to shorten
+    // the equation, which only looking again can do.
+    const opened = `${PROSE}$$\nx\n\nmore prose after it\n`
+    const at = opened.indexOf('\n\nmore')
+    const { was, is } = afterTyping(opened, at + 1, '$$\n')
+    expect(was.spans[0].to).toBe(opened.length)
+    expect(is.spans[0].to).toBe(at + 3)
+  })
+
+  test('a note with a toc is always looked at again: a heading elsewhere changes it', () => {
+    const withToc = `[toc]\n\n# One\n\nsome prose here\n`
+    const at = withToc.indexOf('# One') + 2
+    const { is, state: after } = afterTyping(withToc, at, 'Two ')
+    expect(drawn(is, after.doc.toString())).toEqual(['[toc]'])
+  })
+
+  test('deleting prose shifts the constructs too', () => {
+    const { is, state: after } = afterTyping(doc, 4, '', 8)
+    expect(drawn(is, after.doc.toString())).toEqual([TABLE])
   })
 })
