@@ -43,6 +43,8 @@
   import StorageWarning from './lib/StorageWarning.svelte'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
+  import { busy } from './lib/busy.svelte'
+  import Progress from './lib/Progress.svelte'
   import { settings } from './lib/settings.svelte'
   import { sync } from './lib/sync.svelte'
   import { trash } from './lib/trash.svelte'
@@ -505,10 +507,14 @@
     ]
   }
 
-  /** A pasted or dropped image, stored once however often it is pasted. */
+  /** A pasted or dropped image, stored once however often it is pasted. A large
+   *  screenshot takes a moment to hash and write, and nothing appears in the
+   *  note until it has, so the line at the top says so meanwhile. */
   async function saveImage(file: File): Promise<string | null> {
     try {
-      const src = await storeImage(file, workspace.active?.path ?? null)
+      const src = await busy.run(t('Storing the image'), () =>
+        storeImage(file, workspace.active?.path ?? null),
+      )
       void usage.refresh()
       return src
     } catch (error) {
@@ -634,6 +640,9 @@
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="editor" oncontextmenu={(event) => menu.show(event, editorMenu(), { near: true })}>
+        <!-- Anything slow enough to be waited for draws a line along the top
+             of the document, just under the tabs. -->
+        <Progress />
         {#key workspace.activeTabId}
           <Editor
             bind:view
@@ -715,6 +724,7 @@
   }
 
   .editor {
+    position: relative;
     flex: 1;
     min-height: 0;
     display: flex;

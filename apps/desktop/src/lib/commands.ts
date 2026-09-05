@@ -1,5 +1,6 @@
 import { CODE_PALETTES, type EditorView, reformatDocument, type Transaction } from '@nib/editor'
 import { account } from './account.svelte'
+import { busy } from './busy.svelte'
 import { t } from './i18n.svelte'
 import type { HtmlOptions } from './export'
 import { PANDOC_FORMATS } from './export-formats'
@@ -64,24 +65,37 @@ export function exportCommands(): Command[] {
     ...(await look()),
   })
 
+  // Rendering a note and handing it to the system takes a moment with nothing
+  // on screen to show for it, so each of these runs behind the line at the top
+  // of the document. See busy.svelte.ts.
   const commands: Command[] = [
     {
       id: 'export-pdf',
       label: t('Export as PDF'),
       run: () =>
-        void import('./export').then(async (m) => m.exportPdf(source(), name(), await options())),
+        busy.start(t('Exporting'), async () => {
+          const m = await import('./export')
+          await m.exportPdf(source(), name(), await options())
+        }),
     },
     {
       id: 'export-html',
       label: t('Export as HTML'),
       run: () =>
-        void import('./export').then(async (m) => m.exportHtml(source(), name(), await options())),
+        busy.start(t('Exporting'), async () => {
+          const m = await import('./export')
+          await m.exportHtml(source(), name(), await options())
+        }),
     },
     { id: 'page-setup', label: t('Page setup for export'), run: () => settings.show('export') },
     {
       id: 'export-html-bare',
       label: t('Export as HTML without styles'),
-      run: () => void import('./export').then((m) => m.exportHtml(source(), name(), { bare: true })),
+      run: () =>
+        busy.start(t('Exporting'), async () => {
+          const m = await import('./export')
+          await m.exportHtml(source(), name(), { bare: true })
+        }),
     },
   ]
 
@@ -91,7 +105,8 @@ export function exportCommands(): Command[] {
     id: 'import',
     label: t('Import a document'),
     run: () =>
-      void import('./export').then(async (m) => {
+      busy.start(t('Importing'), async () => {
+        const m = await import('./export')
         const imported = await m.importDocument()
         if (imported) workspace.openBlank(imported.name, imported.markdown)
       }),
@@ -101,7 +116,11 @@ export function exportCommands(): Command[] {
     commands.push({
       id: `export-${format.id}`,
       label: t('Export as {format}', { format: t(format.label) }),
-      run: () => void import('./export').then((m) => m.exportPandoc(source(), name(), format.id)),
+      run: () =>
+        busy.start(t('Exporting'), async () => {
+          const m = await import('./export')
+          await m.exportPandoc(source(), name(), format.id)
+        }),
     })
   }
 
