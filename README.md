@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <img alt="Nib rendering markdown as you type: a heading, inline formatting, a task list and a code block" src="docs/media/live-preview.gif" width="800">
+  <img alt="Nib: typing markdown that renders as you type, then a look around the tabs, the file tree and four spaces" src="docs/media/live-preview.gif">
 </p>
 
 If you're also annoyed by all the other Markdown Editors out there, you sould probably just use Nib. 
