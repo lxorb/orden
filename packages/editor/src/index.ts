@@ -1,4 +1,4 @@
-export { createEditor, type EditorOptions } from './editor'
+export { createEditor, type EditorOptions, replaceDoc } from './editor'
 export {
   clearFormatting,
   insertCodeFence,
@@ -46,7 +46,7 @@ export {
 } from './modes'
 export { flushTableEdits } from './table/widget'
 export { insertTableToEdit } from './table/keymap'
-export { showLine, topLine } from './scroll'
+export { caretLine, showLine, topLine } from './scroll'
 export { EditorView } from '@codemirror/view'
 export { EditorState } from '@codemirror/state'
-export type { StateCommand, Transaction } from '@codemirror/state'
+export type { StateCommand, Text, Transaction } from '@codemirror/state'

@@ -2,6 +2,7 @@ import { flushTableEdits } from '@nib/editor'
 import { account } from './account.svelte'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
+import { scanHeadings } from './outline'
 import { folderOf, invoke, isDesktop, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
 
@@ -41,6 +42,21 @@ export interface Tab {
   cursor?: number
   scroll?: number
   anchor?: number
+  /** Which line the caret is on. The editor knows it without counting, and the
+   *  outline would otherwise walk the note's newlines to work it out again. */
+  line?: number
+  /** Bumped whenever the text is replaced from outside the editor: a note
+   *  loaded from disk, a version restored, a rename that rewrote the title.
+   *  Typing never bumps it, which is what keeps the view from comparing the
+   *  whole document against itself on every keystroke. */
+  pushed?: number
+}
+
+/** As much of CodeMirror's rope as the workspace needs. A plain string is one
+ *  too, which is what the tests and every other caller hand over. */
+export interface DocText {
+  readonly length: number
+  toString(): string
 }
 
 export type Panel = 'tree' | 'outline' | 'search'
@@ -62,11 +78,7 @@ export interface Tag {
   count: number
 }
 
-export interface Heading {
-  level: number
-  text: string
-  line: number
-}
+export type { Heading } from './outline'
 
 const STORAGE_KEY = 'nib:workspace'
 const AUTO_SAVE_KEY = 'nib:autosave'
@@ -244,26 +256,23 @@ class Workspace {
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
   private positions: Record<string, Position> = {}
 
+  /** The text the editor holds for the note being typed in, before anything
+   *  has turned it into a string. Turning half a megabyte of rope into a
+   *  string costs the same on every keystroke however small the keystroke is,
+   *  and that alone made a large note feel heavy. So `tab.doc` is allowed to
+   *  lag behind by one pause in the typing: `flush` brings it forward, and
+   *  everything that reads the text - saving, the session, an export - goes
+   *  through it first. */
+  private live: { id: string; text: DocText } | null = null
+
   readonly activeSpace = $derived(this.spaces.find((space) => space.id === this.activeSpaceId) ?? null)
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
 
-  readonly headings = $derived.by((): Heading[] => {
-    const doc = this.active?.doc
-    if (!doc) return []
-
-    const found: Heading[] = []
-    let fenced = false
-
-    doc.split('\n').forEach((text, index) => {
-      if (/^\s*(```|~~~)/.test(text)) fenced = !fenced
-      if (fenced) return
-
-      const match = /^(#{1,6})\s+(.*)$/.exec(text)
-      if (match) found.push({ level: match[1].length, text: match[2].trim(), line: index })
-    })
-
-    return found
-  })
+  /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
+   *  not the editor: that one only catches up when the typing pauses, which is
+   *  as often as an outline needs to move. Lazy as every derived is, so a
+   *  closed outline panel costs nothing at all. */
+  readonly headings = $derived.by(() => scanHeadings(this.active?.doc ?? ''))
 
   /** Every note in the space, flattened - the Articles panel and quick open. */
   readonly notes = $derived.by((): Entry[] => {
@@ -363,6 +372,7 @@ class Workspace {
 
   private persist() {
     clearTimeout(this.sessionTimer)
+    this.flush()
 
     const state: Persisted = {
       spaces: this.spaces,
@@ -370,7 +380,11 @@ class Workspace {
       tabs: this.tabs.map((tab) => ({
         path: tab.path,
         name: tab.name,
-        doc: tab.doc,
+        // Only unsaved words are worth writing down: a note that is on disk is
+        // re-read from there on the way back in (see `restoreTabs`), so its
+        // copy here would never be looked at, and copying a large one every
+        // time the typing pauses is not free.
+        doc: tab.dirty ? tab.doc : '',
         dirty: tab.dirty,
         cursor: tab.cursor ?? 0,
         scroll: tab.scroll ?? 0,
@@ -385,8 +399,12 @@ class Workspace {
   }
 
   /** Storage is finite. Unsaved work is what has to survive a full one, so the
-   *  saved notes give up their copies first - they are still on disk, and get
-   *  re-read on the way back in. */
+   *  notes that live somewhere else give up their copies first: `persist`
+   *  already leaves out the saved ones, and if that still does not fit, the
+   *  edited ones that have a file give up theirs too - the file is an older
+   *  version of the same note, which is a far better place to come back to
+   *  than none. A note that has never been saved exists nowhere but here, so
+   *  its words are the last thing to go. */
   private write(state: Persisted) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
@@ -397,7 +415,9 @@ class Workspace {
 
     const lean = {
       ...state,
-      tabs: state.tabs?.map((draft) => (draft.dirty ? draft : { ...draft, doc: '' })),
+      tabs: state.tabs?.map((draft) =>
+        draft.path && draft.doc ? { ...draft, doc: '', dirty: false } : draft,
+      ),
     }
 
     try {
@@ -417,9 +437,11 @@ class Workspace {
 
   /** Where the caret and the scroll are. Recorded as they move, because after
    *  a crash there is no chance to write them down on the way out. */
-  noteView(id: string, cursor: number, scroll: number, anchor?: number) {
+  noteView(id: string, cursor: number, scroll: number, anchor?: number, line?: number) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (!tab || (tab.cursor === cursor && tab.scroll === scroll && tab.anchor === anchor)) return
+    if (!tab) return
+    if (tab.line !== line) tab.line = line
+    if (tab.cursor === cursor && tab.scroll === scroll && tab.anchor === anchor) return
 
     tab.cursor = cursor
     tab.scroll = scroll
@@ -759,6 +781,9 @@ class Workspace {
       reusable.path = path
       reusable.name = basename(path)
       reusable.doc = doc
+      // The tab stays, but the note in it is another one: the view has to be
+      // told, since nothing was typed.
+      reusable.pushed = (reusable.pushed ?? 0) + 1
       reusable.dirty = false
       reusable.cursor = place.cursor
       reusable.scroll = place.scroll
@@ -817,11 +842,16 @@ class Workspace {
     this.persist()
   }
 
-  edit(doc: string) {
+  /** What the editor reports on every keystroke. Nothing here touches the text:
+   *  the rope is held onto as it is and `flush` turns it into a string later,
+   *  so the cost of a keystroke does not grow with the size of the note. What
+   *  does happen at once is the dirty mark, because that is what the writer
+   *  is looking at. */
+  edit(text: DocText) {
     const tab = this.active
-    if (!tab || tab.doc === doc) return
+    if (!tab) return
 
-    tab.doc = doc
+    this.live = { id: tab.id, text }
     tab.dirty = true
 
     // Typing in a note you were only previewing is what makes it yours.
@@ -830,6 +860,39 @@ class Workspace {
     this.scheduleSave()
     // Auto-save may be off, or the note may have nowhere to be saved to yet.
     // Either way the words themselves are written down.
+    this.scheduleSession()
+  }
+
+  /** Brings `tab.doc` up to what the editor holds. Everything that reads the
+   *  text of a note calls this first; it costs one pass over the note, and
+   *  nothing at all when there is nothing waiting. */
+  flush() {
+    const live = this.live
+    if (!live) return
+
+    this.live = null
+    const tab = this.tabs.find((one) => one.id === live.id)
+    if (!tab) return
+
+    const text = live.text.toString()
+    if (tab.doc !== text) tab.doc = text
+  }
+
+  /** Text put into a note from somewhere other than the editor: a version
+   *  restored from the history, a note pulled in by a sync. `pushed` is what
+   *  tells the view to take it, so this is the only way text arrives without
+   *  the writer having typed it. */
+  replace(text: string, target?: Tab) {
+    const tab = target ?? this.active
+    if (!tab) return
+
+    // Whatever the editor was holding is what this replaces.
+    if (this.live?.id === tab.id) this.live = null
+
+    tab.doc = text
+    tab.dirty = true
+    tab.pushed = (tab.pushed ?? 0) + 1
+    this.scheduleSave()
     this.scheduleSession()
   }
 
@@ -856,6 +919,7 @@ class Workspace {
   /** Notes holding work that is not on disk. Whitespace-only scratch does not
    *  count - nobody wants to be asked about an empty note. */
   get unsaved(): Tab[] {
+    this.flush()
     return this.tabs.filter((tab) => tab.dirty && tab.doc.trim().length > 0)
   }
 
@@ -866,6 +930,8 @@ class Workspace {
   async save(target?: Tab) {
     // A table cell holds its text until it loses focus; make sure it landed.
     flushTableEdits()
+    // And the keystrokes since the last pause, which are still only a rope.
+    this.flush()
 
     const tab = target ?? this.active
     if (!tab) return
@@ -1174,12 +1240,15 @@ class Workspace {
 
     const tab = this.tabs.find((entry) => entry.path === path)
     if (tab) {
+      this.flush()
       // A new note is written with its own name as the heading, so renaming it
       // straight afterwards would otherwise leave `# Untitled` at the top. Only
       // while the heading still is the old name; an edited one is the author's.
       const was = `# ${basename(path).replace(MARKDOWN, '')}`
       if (tab.doc === was || tab.doc.startsWith(was + '\n')) {
         tab.doc = `# ${clean.replace(MARKDOWN, '')}${tab.doc.slice(was.length)}`
+        // Nobody typed this, so the view has to be told to take it.
+        tab.pushed = (tab.pushed ?? 0) + 1
       }
 
       tab.path = target

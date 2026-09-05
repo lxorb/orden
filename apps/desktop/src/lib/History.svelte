@@ -56,8 +56,7 @@
   function restore() {
     if (!preview || !workspace.active) return
 
-    workspace.active.doc = preview
-    workspace.active.dirty = true
+    workspace.replace(preview)
     open = false
   }
 

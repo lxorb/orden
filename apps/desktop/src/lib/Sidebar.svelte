@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { newSpace } from './space-actions'
+  import { headingAt, lineOf } from './outline'
   import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import type { Entry, Hit, Panel, SortKey } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
@@ -142,18 +143,10 @@
     const headings = workspace.headings
     if (!tab || !headings.length) return -1
 
-    // Newlines before the caret are the line it sits on.
-    const at = Math.min(tab.cursor ?? 0, tab.doc.length)
-    let line = 0
-    for (let i = tab.doc.indexOf('\n'); i !== -1 && i < at; i = tab.doc.indexOf('\n', i + 1)) {
-      line++
-    }
-
-    let found = -1
-    headings.forEach((heading, index) => {
-      if (heading.line <= line) found = index
-    })
-    return found
+    // The editor says which line the caret is on; only a session written by an
+    // older build has to have it worked out from the newlines before it.
+    const line = tab.line ?? lineOf(tab.doc, tab.cursor ?? 0)
+    return headingAt(headings, line)
   })
 
   let outline = $state<HTMLElement>()

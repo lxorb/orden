@@ -27,6 +27,7 @@
     toggleWrap,
     showLine,
     topLine,
+    caretLine,
   } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import Editor from './lib/Editor.svelte'
@@ -119,6 +120,11 @@
    *  render loop - which looked like tabs that only switched after a reload. */
   let placed: string | null = null
 
+  /** Asks for the caret and scroll of the tab on show to be written down, at
+   *  the next frame. Set by the effect below, which owns the measurement; not
+   *  reactive, for the same reason `placed` is not. */
+  let rememberSoon: (() => void) | null = null
+
   // Reopening a note lands where it was left, and keeps saying where that is,
   // because a crash gives no chance to write it down on the way out.
   $effect(() => {
@@ -145,8 +151,24 @@
         current.state.selection.main.head,
         current.scrollDOM.scrollTop,
         topLine(current),
+        caretLine(current),
       )
     }
+
+    // `topLine` measures the view, and a measurement taken straight after the
+    // editor has written to the DOM makes the browser lay the document out
+    // again there and then - on every keystroke, over a document that may be
+    // thousands of lines. Once a frame instead: by then the layout is the one
+    // on screen, and a burst of keystrokes asks for it once.
+    let scheduled = 0
+    const soon = () => {
+      if (scheduled) return
+      scheduled = requestAnimationFrame(() => {
+        scheduled = 0
+        remember()
+      })
+    }
+    rememberSoon = soon
 
     // Placed once a frame has laid the note out: the caret needs the text to
     // be in, the offset needs a height, and a view that has just been made
@@ -172,16 +194,18 @@
       }
 
       placed = id
-      current.scrollDOM.addEventListener('scroll', remember, { passive: true })
+      current.scrollDOM.addEventListener('scroll', soon, { passive: true })
     })
 
     return () => {
       cancelAnimationFrame(frame)
-      current.scrollDOM.removeEventListener('scroll', remember)
+      cancelAnimationFrame(scheduled)
+      current.scrollDOM.removeEventListener('scroll', soon)
       // A view that has already left the page reads as scrolled to the top,
       // which is not where the note was: what was recorded as it moved stands.
       if (current.scrollDOM.isConnected) remember()
       placed = null
+      if (rememberSoon === soon) rememberSoon = null
     }
   })
 
@@ -614,20 +638,14 @@
           <Editor
             bind:view
             doc={workspace.active?.doc ?? ''}
-            onchange={(value) => workspace.edit(value)}
+            pushed={workspace.active?.pushed ?? 0}
+            onchange={(text) => workspace.edit(text)}
             onimage={saveImage}
             resolveimage={resolveImage}
             openlink={(href) => void openExternal(href)}
             onselection={(current) => {
               formatBar?.follow(current)
-              if (placed && placed === workspace.activeTabId) {
-                workspace.noteView(
-                  placed,
-                  current.state.selection.main.head,
-                  current.scrollDOM.scrollTop,
-                  topLine(current),
-                )
-              }
+              rememberSoon?.()
             }}
           />
         {/key}

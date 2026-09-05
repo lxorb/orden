@@ -10,6 +10,13 @@ export function topLine(view: EditorView): number {
   return view.lineBlockAtHeight(Math.max(0, top)).from
 }
 
+/** Which line the caret is on, counting from zero. The document knows this
+ *  without reading itself: counting newlines up to the caret is a pass over
+ *  the note, and the outline used to do exactly that on every keystroke. */
+export function caretLine(view: EditorView): number {
+  return view.state.doc.lineAt(view.state.selection.main.head).number - 1
+}
+
 /** Scrolls so that the line holding `pos` starts at the top. Applied by the
  *  view after it has measured itself, so it needs no frame of its own. */
 export function showLine(view: EditorView, pos: number) {

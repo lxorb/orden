@@ -2,7 +2,7 @@ import { closeBracketsKeymap } from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
-import { EditorState, Prec } from '@codemirror/state'
+import { Annotation, EditorState, Prec, type Text } from '@codemirror/state'
 import { EditorView, drawSelection, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
 import { editorCompletion } from './emoji'
 import { imageHandling, imageResolver, type ImageSink } from './images'
@@ -15,10 +15,28 @@ import { modeExtensions } from './modes'
 import { tableKeymap } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
 
+/** Marks a change as content put into the view from outside - a note being
+ *  loaded, a version restored - rather than something anyone typed. */
+const external = Annotation.define<boolean>()
+
+/** Puts a whole document into a view without it being read back as an edit.
+ *  The alternative, comparing what came in against what is already there, is
+ *  a pass over the whole note, and the reason a large one felt heavy to type
+ *  in: every keystroke changed the text the surrounding app held, and the app
+ *  handed it straight back. */
+export function replaceDoc(view: EditorView, doc: string) {
+  view.dispatch({
+    changes: { from: 0, to: view.state.doc.length, insert: doc },
+    annotations: external.of(true),
+  })
+}
+
 export interface EditorOptions {
   parent: HTMLElement
   doc?: string
-  onChange?: (doc: string) => void
+  /** Called with the editor's own text - CodeMirror's rope, not a string, so
+   *  turning it into one is the caller's decision and can wait. */
+  onChange?: (doc: Text) => void
   /** Called when an image is pasted or dropped; returns the path to insert. */
   onImage?: ImageSink
   /** Maps a document-relative image path to a URL the view can load. */
@@ -76,7 +94,9 @@ export function createEditor(options: EditorOptions): EditorView {
           indentWithTab,
         ]),
         EditorView.updateListener.of((update) => {
-          if (update.docChanged) onChange?.(update.state.doc.toString())
+          // Text this view was handed is not news to whoever handed it over.
+          const pushed = update.transactions.some((one) => one.annotation(external))
+          if (update.docChanged && !pushed) onChange?.(update.state.doc)
           if (update.selectionSet || update.docChanged || update.focusChanged) {
             onSelection?.(update.view)
           }

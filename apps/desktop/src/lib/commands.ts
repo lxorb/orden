@@ -48,7 +48,12 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
  *  so the list never offers something that cannot work. */
 export function exportCommands(): Command[] {
   const note = () => workspace.active
-  const source = () => note()?.doc ?? ''
+  // Flushed first: the editor's last few keystrokes are still a rope until
+  // something asks for them as text, and an export is asking.
+  const source = () => {
+    workspace.flush()
+    return note()?.doc ?? ''
+  }
   const name = () => note()?.name ?? 'Untitled.md'
 
   /** Everything an export needs beyond the note: paper, colours, and where
