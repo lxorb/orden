@@ -6,6 +6,7 @@ export const gsw: Dictionary = {
   // Files and notes
   Save: 'Spichere',
   'New note': 'Nöii Notiz',
+  'Open file': 'Datei öffne',
   'New folder': 'Nöii Mappe',
   'New window': 'Nöis Fänschter',
   New: 'Nöi',

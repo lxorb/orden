@@ -179,18 +179,21 @@ function readTreeOptions(): TreeOptions {
 
 /** Where a note that has never been saved should go. The desktop asks the
  *  system; the browser has no file dialog, so it asks for a name and puts the
- *  note in the space that is open. Either way the first line is the suggestion. */
+ *  note in the space that is open. A note that came in with a name of its own
+ *  - a file opened in the browser - keeps it as the suggestion; otherwise the
+ *  first line is. */
 async function pickSavePath(
   spaces: Space[],
   activeId: string | null,
   doc = '',
+  name = UNTITLED,
 ): Promise<string | null> {
   if (!spaces.length) return null
 
   const { prompt } = await import('./prompt.svelte')
   const answer = await prompt.askName({
     title: t('Name the note'),
-    value: nameFromContent(doc) ?? UNTITLED,
+    value: (name !== UNTITLED ? name : null) ?? nameFromContent(doc) ?? UNTITLED,
     placeholder: t('Untitled'),
     confirmLabel: key('Save'),
     spaces: spaces.map((space) => ({ id: space.id, name: space.name })),
@@ -874,7 +877,7 @@ class Workspace {
 
     let path = tab.path
     if (!path) {
-      const picked = await pickSavePath(this.spaces, this.activeSpaceId, tab.doc)
+      const picked = await pickSavePath(this.spaces, this.activeSpaceId, tab.doc, tab.name)
       if (!picked) return
       path = picked
     }

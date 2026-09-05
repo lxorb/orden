@@ -5,6 +5,7 @@
   import { currentWindow, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
+  import { openFile } from './open-file'
 
   let { onopennotes }: { onopennotes?: () => void } = $props()
 
@@ -24,6 +25,7 @@
   function overflow(event: MouseEvent) {
     menu.show(event, [
       { label: t('New note'), run: () => void workspace.createNote() },
+      { label: t('Open file'), run: () => void openFile() },
       { label: t('Open notes'), run: () => onopennotes?.() },
       DIVIDER,
       { label: t('Save'), disabled: !workspace.active?.dirty, run: () => void workspace.save() },

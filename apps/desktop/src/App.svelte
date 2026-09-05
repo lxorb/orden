@@ -53,11 +53,11 @@
   import { usage } from './lib/usage.svelte'
   import { collectErrors } from './lib/log'
   import { prompt } from './lib/prompt.svelte'
-  import { newSpace } from './lib/space-actions'
   import { installStaged, ready, stageUpdate } from './lib/updater'
   import { currentWindow, invoke, isDesktop, openExternal } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { workspace } from './lib/workspace.svelte'
+  import { openFile } from './lib/open-file'
 
   let view = $state<EditorView>()
   let palette = $state(false)
@@ -530,7 +530,7 @@
     if (key === '/') return act(event, () => modes.toggleSource(view))
     if (key === 's' && !shift) return act(event, () => void workspace.save())
     if (key === 'n' && !shift) return act(event, () => workspace.openBlank())
-    if (key === 'o' && !shift) return act(event, () => void newSpace())
+    if (key === 'o' && !shift) return act(event, () => void openFile())
     if (key === 'w') return act(event, () => workspace.activeTabId && workspace.close(workspace.activeTabId))
     if (key === 'tab') return act(event, () => cycleTab(shift ? -1 : 1))
 

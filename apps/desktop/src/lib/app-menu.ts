@@ -27,6 +27,7 @@ import { newSpace } from './space-actions'
 import { invoke, isDesktop, openExternal } from './tauri'
 import { stageUpdate } from './updater'
 import { workspace } from './workspace.svelte'
+import { openFile } from './open-file'
 
 /** Where the app is developed, which is the whole of "about" for an open
  *  source editor. */
@@ -88,6 +89,7 @@ export function appMenu(context: Context): MenuGroup[] {
       label: t('File'),
       rows: [
         { label: t('New note'), hint: 'Ctrl N', run: () => workspace.openBlank() },
+        { label: t('Open file'), hint: 'Ctrl O', run: () => void openFile() },
         { label: t('New space'), run: () => void newSpace() },
         ...(isDesktop
           ? [

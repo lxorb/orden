@@ -4,6 +4,7 @@ export const de: Dictionary = {
   // Files and notes
   Save: 'Speichern',
   'New note': 'Neue Notiz',
+  'Open file': 'Datei öffnen',
   'New folder': 'Neuer Ordner',
   'New window': 'Neues Fenster',
   New: 'Neu',

@@ -11,6 +11,7 @@ import { settings } from './settings.svelte'
 import { invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
 import { workspace } from './workspace.svelte'
+import { openFile } from './open-file'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
@@ -134,6 +135,7 @@ export function appCommands(view?: EditorView): Command[] {
   return [
     { id: 'save', label: t('Save'), hint: 'Ctrl S', run: () => void workspace.save() },
     { id: 'new', label: t('New note'), hint: 'Ctrl N', run: () => workspace.openBlank() },
+    { id: 'open', label: t('Open file'), hint: 'Ctrl O', run: () => void openFile() },
     {
       id: 'close',
       label: t('Close note'),
