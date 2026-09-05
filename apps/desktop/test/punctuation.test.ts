@@ -5,7 +5,10 @@ import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 
-const SKIP = new Set(['node_modules', 'dist', 'target', '.git', '.svelte-kit', 'gen'])
+// `.claude` holds tooling state, including whole copies of this repo checked
+// out for an agent to work in, which would otherwise be read as second copies
+// of every file here.
+const SKIP = new Set(['node_modules', 'dist', 'target', '.git', '.svelte-kit', 'gen', '.claude'])
 const EXTENSIONS = ['.ts', '.svelte', '.rs', '.css', '.json', '.jsonc', '.md', '.mjs', '.yml']
 
 /** Smart punctuation turns what someone types into an em dash. That is their

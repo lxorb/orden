@@ -17,3 +17,6 @@ services/mcp/target/
 # The MCP connector is staged here at build time
 apps/desktop/src-tauri/binaries/*
 !apps/desktop/src-tauri/binaries/.gitkeep
+
+# Claude Code worktrees of this repo
+.claude/worktrees/

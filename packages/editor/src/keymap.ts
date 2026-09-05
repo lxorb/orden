@@ -16,6 +16,7 @@ import {
   toggleWrap,
 } from './commands'
 import { copyMarkdown, pastePlain } from './paste'
+import { runFenceAtCursor } from './run/run'
 import { insertTableToEdit } from './table/keymap'
 
 const WORD = /[\p{L}\p{N}_]/u
@@ -74,6 +75,10 @@ export const nibKeymap: KeyBinding[] = [
 
   { key: 'Mod-[', run: indentMore, preventDefault: true },
   { key: 'Mod-]', run: indentLess, preventDefault: true },
+
+  // Runs the code fence the caret is in. Falls through to the default when the
+  // caret is anywhere else, or the fence is not JavaScript.
+  { key: 'Mod-Enter', run: runFenceAtCursor },
 
   { key: 'Mod-d', run: selectWord, preventDefault: true },
   { key: 'Mod-l', run: selectLine, preventDefault: true },

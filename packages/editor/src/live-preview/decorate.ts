@@ -250,6 +250,8 @@ class Decorator {
           text ? doc.sliceString(text.from, text.to) : '',
           infoFrom,
           info ? info.to : infoFrom,
+          open.from,
+          doc.lineAt(node.to).to,
         ),
         side: 1,
       }).range(open.to),

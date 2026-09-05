@@ -339,6 +339,197 @@
   color: var(--success);
 }
 
+/* ── Running a code block ────────────────────────────────────────── */
+
+/* Beside the copy button, and it comes and goes with it. Filled rather than
+   drawn in outline: a play triangle is read as a solid shape. */
+.nib-fence-run {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  opacity: 0;
+  cursor: default;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.nib-fence-header.nib-fence-hover .nib-fence-run,
+.nib-fence-controls:hover .nib-fence-run,
+.nib-fence-run:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .nib-fence-run {
+    opacity: 1;
+  }
+}
+
+.nib-fence-run svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.nib-fence-run:hover {
+  color: var(--accent);
+}
+
+/* The output of a run, which is a widget and not a word of the note: it sits
+   under the block, styled like the block, and is gone when the note is saved,
+   exported or reopened. */
+.nib-run-panel {
+  display: block;
+  margin: 0 0 1.2em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--code-block-bg-color);
+  overflow: hidden;
+  animation: settle-in var(--dur-base) var(--ease-out);
+}
+
+.nib-run-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  user-select: none;
+}
+
+/* Nothing came out, so the rule under the bar would be a line to nowhere. */
+.nib-run-panel:has(.nib-run-output:empty) .nib-run-bar {
+  border-bottom: none;
+}
+
+.nib-run-output:empty {
+  display: none;
+}
+
+.nib-run-panel[data-status='running'] .nib-run-state {
+  color: var(--accent);
+}
+
+.nib-run-panel[data-status='timeout'] .nib-run-state {
+  color: var(--danger);
+}
+
+/* Pushes the buttons to the far edge, and stays put whether or not there is a
+   word to its left. */
+.nib-run-time {
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.nib-run-stop {
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted-strong);
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: default;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.nib-run-stop:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.nib-run-dismiss {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  cursor: default;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.nib-run-dismiss:hover {
+  color: var(--text-strong);
+}
+
+.nib-run-dismiss svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.nib-run-output {
+  max-height: 24em;
+  padding: var(--space-2) var(--space-3);
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  line-height: 1.62;
+  color: var(--text);
+  /* Output is there to be read and taken, and a logged line can be long. */
+  user-select: text;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.nib-run-line[data-level='debug'] {
+  color: var(--muted-strong);
+}
+
+.nib-run-line[data-level='warn'] {
+  color: var(--callout-warning);
+}
+
+.nib-run-line[data-level='error'],
+.nib-run-line[data-level='exception'] {
+  color: var(--danger);
+}
+
+.nib-run-line[data-level='result'] {
+  color: var(--text-strong);
+}
+
+/* The one line that is a value rather than something the code said. */
+.nib-run-tag {
+  margin-right: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  user-select: none;
+}
+
+.nib-run-note {
+  margin-top: var(--space-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
 /* ── Lists ───────────────────────────────────────────────────────── */
 
 .cm-line.nib-li {

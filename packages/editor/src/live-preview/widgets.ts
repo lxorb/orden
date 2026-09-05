@@ -2,6 +2,7 @@ import { NibWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 // Aliased: `label` is already a local variable in more than one widget here.
 import { label as uiLabel } from '../labels'
+import { isRunnableLanguage, runFence } from '../run/run'
 
 export class BulletWidget extends NibWidget {
   constructor(private readonly depth: number) {
@@ -97,6 +98,9 @@ export class FenceHeaderWidget extends NibWidget {
     /** Where the language name lives in the document, so it can be retyped. */
     private readonly infoFrom: number,
     private readonly infoTo: number,
+    /** The block's own lines, first to last, which is what a run is keyed by. */
+    private readonly blockFrom: number,
+    private readonly blockTo: number,
   ) {
     super()
   }
@@ -105,7 +109,9 @@ export class FenceHeaderWidget extends NibWidget {
     return (
       other.language === this.language &&
       other.code === this.code &&
-      other.infoFrom === this.infoFrom
+      other.infoFrom === this.infoFrom &&
+      other.blockFrom === this.blockFrom &&
+      other.blockTo === this.blockTo
     )
   }
 
@@ -137,6 +143,8 @@ export class FenceHeaderWidget extends NibWidget {
     })
 
     controls.append(label)
+
+    if (isRunnableLanguage(this.language)) controls.append(this.runButton(view))
 
     const copy = document.createElement('button')
     copy.className = 'nib-fence-copy'
@@ -222,6 +230,31 @@ export class FenceHeaderWidget extends NibWidget {
     }
 
     return false
+  }
+
+  /** Runs the block's code in a sandbox, with the output below it. Only on the
+   *  languages that are JavaScript; see run/run.ts for which and for why. */
+  private runButton(view: EditorView): HTMLElement {
+    const run = document.createElement('button')
+    run.className = 'nib-fence-run'
+    run.type = 'button'
+    run.title = uiLabel('run')
+    run.setAttribute('aria-label', uiLabel('runCode'))
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('viewBox', '0 0 14 14')
+    const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    triangle.setAttribute('d', 'M4 2.6l7 4.4-7 4.4z')
+    svg.append(triangle)
+    run.append(svg)
+
+    run.addEventListener('mousedown', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      runFence(view, { from: this.blockFrom, to: this.blockTo, code: this.code })
+    })
+
+    return run
   }
 
   /** Turns the label into a field, and writes the name straight into the fence. */
