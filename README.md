@@ -27,6 +27,10 @@
   </a>
 </p>
 
+<p align="center">
+  <img alt="Nib rendering markdown as you type: a heading, inline formatting, a task list and a code block" src="docs/media/live-preview.gif" width="800">
+</p>
+
 A simple, lightweight markdown editor offering all the features you could ever need. 
 
 See for yourself: [nibeditor.com](https://nibeditor.com)
