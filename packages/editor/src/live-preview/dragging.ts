@@ -35,11 +35,16 @@ const watcher = ViewPlugin.fromClass(
       window.addEventListener('mouseup', this.release)
       // A drag interrupted by the window losing focus never gets a mouseup.
       window.addEventListener('blur', this.release)
+      // Neither does a selection or an image carried off as a drag and drop:
+      // the browser stops sending mouse events once the drag begins, and
+      // says so with dragend instead.
+      window.addEventListener('dragend', this.release)
     }
 
     destroy() {
       window.removeEventListener('mouseup', this.release)
       window.removeEventListener('blur', this.release)
+      window.removeEventListener('dragend', this.release)
     }
 
     private end() {

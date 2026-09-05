@@ -447,7 +447,11 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       // - except mid-drag, when reflowing the line would move the text out from
       // under the pointer.
       const settled = update.selectionSet && !held
-      if (update.docChanged || update.viewportChanged || settled || released) {
+      // A note just opened is parsed a little at a time, and the rest of the
+      // tree arrives in updates of its own. Without this the part that was
+      // not parsed yet stays raw until something else - a click - rebuilds.
+      const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
+      if (update.docChanged || update.viewportChanged || settled || released || reparsed) {
         const built = buildDecorations(update.view.state, update.view.visibleRanges)
         this.decorations = built.decorations
         this.atomic = built.atomic

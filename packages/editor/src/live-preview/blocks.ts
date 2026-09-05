@@ -132,7 +132,10 @@ export function buildBlockDecorations(state: EditorState): DecorationSet {
 export const blockDecorations = StateField.define<DecorationSet>({
   create: buildBlockDecorations,
   update(value, transaction) {
-    if (!transaction.docChanged && !transaction.selection) return value
+    // The parse of a note just opened finishes in transactions of its own;
+    // a block it found late has to be drawn then, not at the next click.
+    const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
+    if (!transaction.docChanged && !transaction.selection && !reparsed) return value
     return buildBlockDecorations(transaction.state)
   },
   provide: (field) => [
