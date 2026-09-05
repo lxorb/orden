@@ -54,11 +54,11 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 ## Features
 
 - A **clean** and **modern** UI
+- **Realtime preview** (WYSIWYG)
 - **Syncing** across different devices
 - An **MCP** to allow LLM read and write access
+- **Paste Images** from Clipboard
 - **Publish** your markdown files as an online blog with a single click (with custom domain support)
-- **Realtime preview** (WYSIWYG)
-- Paste **Images from Clipboard**
 
 ## License
 
