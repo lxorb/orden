@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Nib
+GenericName=Markdown Editor
+Comment=Write markdown and see it as you type
+Exec=nib %F
+Icon=nib
+Terminal=false
+Categories=Office;TextEditor;Utility;
+MimeType=text/markdown;text/x-markdown;
+Keywords=markdown;md;editor;notes;writing;wysiwyg;
+StartupWMClass=nib
+StartupNotify=true

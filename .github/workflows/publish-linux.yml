@@ -1,0 +1,150 @@
+name: publish-linux
+
+# Pushes a finished release out to the Linux package managers that take an
+# upload. Each job is a no-op until its credentials exist as repository
+# secrets, so this can sit here doing nothing until an account is made -
+# packaging/linux.md has the steps for each one.
+#
+# Not here on purpose:
+#   Flathub  - updates arrive as a pull request from Flathub's own
+#              flatpak-external-data-checker, which reads the x-checker-data in
+#              packaging/flathub/ch.emilvinu.nib.yml. Nothing to push.
+#   AppImage - the release page is the distribution channel.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to publish (e.g. v0.4.0)
+        required: true
+
+jobs:
+  aur:
+    name: AUR (nib-bin)
+    runs-on: ubuntu-latest
+    # `edge` is remade on every push to main and is not a release anyone should
+    # be installing from a package manager.
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      HAS_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Point the PKGBUILD at this release
+        working-directory: packaging/aur/nib-bin
+        run: |
+          version="${TAG#v}"
+          base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+
+          # Both architectures at once: updpkgsums would only ever fix the sums
+          # for the machine it runs on and would quietly leave the other wrong.
+          sum() { curl -fsSL "$1" | sha256sum | cut -d' ' -f1; }
+          x64=$(sum "$base/Nib-$version-linux-x64.deb")
+          arm64=$(sum "$base/Nib-$version-linux-arm64.deb")
+          desktop=$(sha256sum nib.desktop | cut -d' ' -f1)
+
+          sed -i \
+            -e "s/^pkgver=.*/pkgver=$version/" \
+            -e "s/^pkgrel=.*/pkgrel=1/" \
+            -e "s/^sha256sums=.*/sha256sums=('$desktop')/" \
+            -e "s/^sha256sums_x86_64=.*/sha256sums_x86_64=('$x64')/" \
+            -e "s/^sha256sums_aarch64=.*/sha256sums_aarch64=('$arm64')/" \
+            PKGBUILD
+          cat PKGBUILD
+
+      - name: Check it still builds, before anything is pushed
+        run: |
+          cat > /tmp/aur.sh <<'SH'
+          set -euo pipefail
+          pacman -Syu --noconfirm --needed namcap sudo
+          useradd -m builduser
+          echo 'builduser ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builduser
+          chmod 440 /etc/sudoers.d/builduser
+          install -d /build && cp -r /repo/packaging/aur/nib-bin/. /build/
+          chown -R builduser: /build
+          cd /build
+          sudo -u builduser makepkg --printsrcinfo > .SRCINFO
+          cat .SRCINFO
+          sudo -u builduser makepkg -f --noconfirm --syncdeps --noprogressbar
+          namcap ./*.pkg.tar.zst
+          SH
+          docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh archlinux:base-devel bash /aur.sh
+
+      # Generates .SRCINFO itself and pushes to ssh://aur@aur.archlinux.org.
+      - name: Push to the AUR
+        if: env.HAS_KEY == 'true'
+        uses: KSXGitHub/github-actions-deploy-aur@v4.2.0
+        with:
+          pkgname: nib-bin
+          pkgbuild: packaging/aur/nib-bin/PKGBUILD
+          assets: packaging/aur/nib-bin/nib.desktop
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: nib ${{ env.TAG }}
+
+      - name: No AUR key yet
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "### AUR not published" >> "$GITHUB_STEP_SUMMARY"
+          echo "The PKGBUILD builds, but AUR_SSH_PRIVATE_KEY is not set, so nothing was pushed." >> "$GITHUB_STEP_SUMMARY"
+          echo "See packaging/linux.md for how to create the account and add the secrets." >> "$GITHUB_STEP_SUMMARY"
+
+  snap:
+    name: Snap Store (${{ matrix.arch }})
+    # One snap per architecture, each built on a runner of that architecture:
+    # snapcraft cross-builds nothing here, it only unpacks the matching .deb.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      HAS_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS != '' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Point snapcraft.yaml at this release
+        working-directory: packaging/snap
+        run: |
+          version="${TAG#v}"
+          sed -i \
+            -e "s/^version: .*/version: '$version'/" \
+            -e "s|/download/v[0-9][^/]*/Nib-[0-9][^-]*-linux-|/download/$TAG/Nib-$version-linux-|g" \
+            snapcraft.yaml
+          grep -nE "^version:|releases/download" snapcraft.yaml
+
+      - uses: snapcore/action-build@v1
+        id: build
+        with:
+          path: packaging/snap
+
+      - uses: snapcore/action-publish@v1
+        if: env.HAS_CREDENTIALS == 'true'
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.build.outputs.snap }}
+          release: stable
+
+      - name: No Snapcraft credentials yet
+        if: env.HAS_CREDENTIALS != 'true'
+        run: |
+          echo "### Snap not published" >> "$GITHUB_STEP_SUMMARY"
+          echo "The snap builds, but SNAPCRAFT_STORE_CREDENTIALS is not set, so nothing was uploaded." >> "$GITHUB_STEP_SUMMARY"
+          echo "See packaging/linux.md for how to register the name and add the secret." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snap-${{ matrix.arch }}
+          path: packaging/snap/*.snap
+          if-no-files-found: warn

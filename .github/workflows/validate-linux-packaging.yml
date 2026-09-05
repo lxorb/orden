@@ -1,0 +1,284 @@
+name: validate-linux-packaging
+
+# Everything under packaging/ that targets Linux, built the way the package
+# managers themselves build it: makepkg in an Arch container, flatpak-builder
+# and flatpak-builder-lint against the Flathub runtime, snapcraft in LXD, and
+# `nix build`. Run by hand, because it only matters when a release moves.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The released version to package
+        default: '0.4.0'
+  # workflow_dispatch alone only fires for files that are on the default
+  # branch, so a branch validating packaging has to run itself on push.
+  push:
+    branches: ['validate-linux-packaging']
+
+env:
+  VERSION: ${{ inputs.version || '0.4.0' }}
+
+jobs:
+  # What Tauri actually put in the .deb, since every Linux package unpacks it.
+  deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - run: sudo apt-get update && sudo apt-get install -y desktop-file-utils
+
+      - name: Fetch the release .debs
+        run: |
+          mkdir -p dl
+          for arch in x64 arm64; do
+            curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
+              "https://github.com/lxorb/nib/releases/download/v$VERSION/Nib-$VERSION-linux-$arch.deb"
+          done
+          sha256sum dl/*.deb
+
+      - name: What is inside
+        run: |
+          for f in dl/*.deb; do
+            echo "::group::$f"
+            dpkg-deb -I "$f"
+            dpkg-deb -c "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Tauri's own .desktop entry
+        run: |
+          dpkg-deb -x "dl/Nib-$VERSION-linux-x64.deb" x
+          cat x/usr/share/applications/Nib.desktop
+          # Not a gate: this is the file the packaging replaces, and it is
+          # expected to be thin. Reported so a regression stays visible.
+          desktop-file-validate x/usr/share/applications/Nib.desktop && echo 'valid' || echo 'invalid'
+          file x/usr/bin/nib
+          objdump -p x/usr/bin/nib | grep NEEDED
+
+      - name: What the AppImage bundles, in case Flathub cannot use the .deb
+        run: |
+          curl -fsSL -o Nib.AppImage \
+            "https://github.com/lxorb/nib/releases/download/v$VERSION/Nib-$VERSION-linux-x64.AppImage"
+          chmod +x Nib.AppImage
+          ./Nib.AppImage --appimage-extract >/dev/null
+          echo "::group::AppDir"
+          find squashfs-root -maxdepth 4 -printf '%y %p\n' | sort | head -60
+          echo "::endgroup::"
+          find squashfs-root -name '*webkit*' -o -name '*javascriptcore*' -o -name 'WebKit*'
+
+      - name: The .desktop entries the packaging ships instead
+        run: |
+          desktop-file-validate packaging/aur/nib-bin/nib.desktop
+          desktop-file-validate packaging/nix/nib.desktop
+          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
+
+  aur:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: makepkg in an archlinux container
+        run: |
+          mkdir -p out
+          cat > /tmp/aur.sh <<'SH'
+          set -euo pipefail
+          pacman -Syu --noconfirm --needed namcap sudo desktop-file-utils
+          useradd -m builduser
+          echo 'builduser ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builduser
+          chmod 440 /etc/sudoers.d/builduser
+          install -d /build
+          cp -r /repo/packaging/aur/nib-bin/. /build/
+          chown -R builduser: /build
+          cd /build
+
+          echo "::group::.SRCINFO"
+          sudo -u builduser makepkg --printsrcinfo | tee /repo/out/SRCINFO
+          echo "::endgroup::"
+
+          echo "::group::makepkg"
+          sudo -u builduser makepkg -f --noconfirm --syncdeps --noprogressbar
+          echo "::endgroup::"
+
+          echo "::group::namcap"
+          namcap PKGBUILD
+          namcap ./*.pkg.tar.zst
+          echo "::endgroup::"
+
+          echo "::group::package contents"
+          bsdtar -tf ./*.pkg.tar.zst
+          echo "::endgroup::"
+
+          # The repairs the PKGBUILD makes have to have landed.
+          install -d /check
+          bsdtar -xf ./*.pkg.tar.zst -C /check
+          test -f /check/usr/share/applications/nib.desktop
+          test ! -e /check/usr/share/applications/Nib.desktop
+          test -f /check/usr/share/icons/hicolor/256x256/apps/nib.png
+          test ! -e /check/usr/share/icons/hicolor/256x256@2
+          test -x /check/usr/bin/nib
+          desktop-file-validate /check/usr/share/applications/nib.desktop
+          echo 'installed layout ok'
+
+          # The committed .SRCINFO has to be the one makepkg generates.
+          diff -u /repo/packaging/aur/nib-bin/.SRCINFO /repo/out/SRCINFO
+          echo '.SRCINFO is current'
+          SH
+          docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh archlinux:base-devel bash /aur.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: srcinfo
+          path: out/SRCINFO
+          if-no-files-found: warn
+
+  flatpak:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: flatpak, appstream and the Flathub builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak appstream desktop-file-utils dbus
+          # Ubuntu 24.04 blocks unprivileged user namespaces, which bubblewrap
+          # needs; the Flathub builder cannot run a build without it.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub org.flatpak.Builder
+
+      - name: AppStream and desktop entry on their own
+        run: |
+          appstreamcli validate --explain packaging/flathub/ch.emilvinu.nib.metainfo.xml
+          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
+
+      - name: flatpak-builder-lint on the manifest
+        run: flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest packaging/flathub/ch.emilvinu.nib.yml
+
+      # A copy on the host as well as the one the builder installs for
+      # itself, so the next step can look inside the runtime's own files.
+      - name: The runtime the manifest asks for
+        run: flatpak install --user -y --noninteractive flathub org.gnome.Platform//50 org.gnome.Sdk//50
+
+      # The builder runs in a sandbox with a flatpak installation of its
+      # own, invisible to the host, so it has to install the runtime again
+      # for itself - which it cannot do without a session bus to ask.
+      - name: Build, the way Flathub builds it
+        working-directory: packaging/flathub
+        run: >-
+          dbus-run-session -- flatpak run org.flatpak.Builder --force-clean --sandbox --user
+          --install-deps-from=flathub --ccache
+          --mirror-screenshots-url=https://dl.flathub.org/media/
+          --repo=repo builddir ch.emilvinu.nib.yml
+
+      - name: Install it out of the repo it just wrote
+        run: |
+          flatpak remote-add --user --no-gpg-verify nib-local packaging/flathub/repo
+          flatpak install --user -y --noninteractive nib-local ch.emilvinu.nib
+
+      - name: Does the runtime carry webkit2gtk-4.1 at all
+        run: |
+          echo "::group::org.gnome.Platform libraries matching webkit/javascriptcore/soup"
+          find ~/.local/share/flatpak/runtime/org.gnome.Platform -maxdepth 8 \
+            \( -name '*webkit*' -o -name '*javascriptcore*' -o -name 'libsoup*' \) -printf '%p\n' | sort
+          echo "::endgroup::"
+          # The real gate: every library the binary asks for has to resolve
+          # inside the sandbox.
+          flatpak run --devel --command=ldd ch.emilvinu.nib /app/bin/nib | tee ldd.txt
+          if grep -q 'not found' ldd.txt; then
+            echo "::error::unresolved libraries in the sandbox"
+            grep 'not found' ldd.txt
+            exit 1
+          fi
+          echo 'every library resolves'
+
+      - name: What the build made of the screenshot
+        working-directory: packaging/flathub
+        run: |
+          find builddir/files/share/app-info -type f | sort
+          du -sh builddir/files/share/app-info
+          for f in builddir/files/share/app-info/xmls/*; do
+            echo "::group::$f"
+            zcat "$f" 2>/dev/null || cat "$f"
+            echo "::endgroup::"
+          done
+
+      - name: flatpak-builder-lint on the built repo
+        working-directory: packaging/flathub
+        run: |
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo repo > lint.json || true
+          cat lint.json
+          # Everything the catalogue needs is in it - the screenshot is
+          # fetched and scaled, the icons are cached and remote - but the
+          # paths stay relative to media_baseurl until Flathub's own build
+          # service rewrites them absolute. The linter skips both mirror
+          # checks inside that pipeline; outside it they are the only two
+          # errors allowed to fire.
+          jq -r '.errors[]?' lint.json
+          jq -e '(.errors // []) - ["appstream-external-screenshot-url", "appstream-remote-icon-not-mirrored"] | length == 0' lint.json
+
+  snap:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      # The snap stages no WebKitGTK of its own, so the platform snap the
+      # gnome extension pulls in has to be the one carrying it.
+      - name: What the gnome platform snap carries
+        run: |
+          snap download gnome-46-2404 --basename=gnome-platform
+          unsquashfs -l gnome-platform.snap | grep -E "libwebkit2gtk-4[.]1|libjavascriptcoregtk-4[.]1|libsoup-3" | tee webkit.txt
+          grep -q "libwebkit2gtk-4[.]1[.]so[.]0$" webkit.txt
+          echo "webkit2gtk-4.1 comes from the platform snap"
+
+      - uses: snapcore/action-build@v1
+        id: build
+        with:
+          path: packaging/snap
+      - name: What came out
+        run: |
+          ls -la "${{ steps.build.outputs.snap }}"
+          unsquashfs -l "${{ steps.build.outputs.snap }}" | head -40
+          unsquashfs -d /tmp/snapx "${{ steps.build.outputs.snap }}" >/dev/null
+          cat /tmp/snapx/meta/snap.yaml
+          test -f /tmp/snapx/usr/share/applications/nib.desktop
+          test ! -e /tmp/snapx/usr/share/applications/Nib.desktop
+          ls /tmp/snapx/meta/gui/ || true
+          find /tmp/snapx -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head
+
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: nix build
+        run: |
+          nix build --print-build-logs "path:$PWD/packaging/nix#nib"
+          ls -la result/bin result/share/applications result/share/icons/hicolor/*/apps
+      # Nib has no --version to ask, so this is a launch: what matters is
+      # that the FHS environment resolves every library the AppImage needs.
+      - name: Nothing is missing from the wrapper
+        run: |
+          sudo apt-get update && sudo apt-get install -y xvfb
+          # appimageTools wraps the app in a bubblewrap FHS environment, and
+          # Ubuntu 24.04 blocks unprivileged user namespaces by default.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          timeout 20 xvfb-run -a ./result/bin/nib > nib.log 2>&1 || true
+          cat nib.log
+          ! grep -qiE "error while loading shared libraries|cannot open shared object" nib.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flake-lock
+          path: packaging/nix/flake.lock
+          if-no-files-found: warn

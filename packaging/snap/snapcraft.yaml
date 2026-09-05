@@ -1,0 +1,108 @@
+# Nib for the Snap Store.
+#
+# Like the AUR and Flathub packaging, this unpacks the official .deb instead of
+# rebuilding the app. Nothing is staged from the Ubuntu archive: the gnome
+# extension's platform snap carries GTK, WebKitGTK 4.1 and libsoup3, and its
+# layout binds the webkit2gtk-4.1 helper directory in from there. Staging a
+# second copy of the library would pair a WebKit UI process with web process
+# helpers built from a different WebKit, which is how a Tauri window ends up
+# blank.
+#
+# Build with `snapcraft` from this directory. Publishing needs a Snapcraft
+# account and `snapcraft upload --release=stable nib_0.4.0_amd64.snap`; see
+# packaging/README.md.
+name: nib
+title: Nib
+base: core24
+version: '0.4.0'
+summary: Markdown editor with live preview
+description: |
+  Nib is a small markdown editor that formats what you write as you write it.
+
+  There is no split screen and no preview pane: headings, emphasis, lists,
+  tables, code and math take their final shape in the same window you type in,
+  and the markdown underneath stays plain text you can open anywhere.
+
+  * Realtime inline preview, so the document always looks the way it will read
+  * Notes that sync across your devices
+  * An MCP server, so a language model can read and write your notes
+  * Paste images straight from the clipboard
+  * Publish a file as a page on the web, with a custom domain if you have one
+  * Export to PDF and HTML
+
+  Nib is free software under the GNU Affero General Public License. The same
+  editor also runs in a browser at nibeditor.com.
+license: AGPL-3.0-only
+website: https://nibeditor.com
+source-code: https://github.com/lxorb/nib
+issues: https://github.com/lxorb/nib/issues
+contact: https://github.com/lxorb/nib/issues
+
+grade: stable
+# Nothing here needs to reach outside the sandbox: documents come through the
+# home and removable-media interfaces, everything else is the desktop stack.
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  nib:
+    command: usr/bin/nib
+    desktop: usr/share/applications/nib.desktop
+    extensions: [gnome]
+    common-id: ch.emilvinu.nib
+    plugs:
+      - home
+      - removable-media
+      - network
+      - network-bind
+      - opengl
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - unity7
+      - browser-support
+    environment:
+      # WebKitGTK's DMA-BUF renderer cannot reach the host's DRM nodes the way
+      # it expects from inside strict confinement, and gives a blank window.
+      WEBKIT_DISABLE_DMABUF_RENDERER: '1'
+
+parts:
+  nib:
+    plugin: dump
+    source-type: deb
+    source:
+      - on amd64: https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-arm64.deb
+    override-build: |
+      craftctl default
+
+      # Tauri writes a .desktop entry with no categories, no MIME types and no
+      # comment, and files a 256x256 icon under a scale-2 directory. Both are
+      # replaced here, the same way the AUR and Flathub packaging does.
+      rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop"
+      install -d "${CRAFT_PART_INSTALL}/usr/share/applications"
+      cat > "${CRAFT_PART_INSTALL}/usr/share/applications/nib.desktop" <<'DESKTOP'
+      [Desktop Entry]
+      Type=Application
+      Name=Nib
+      GenericName=Markdown Editor
+      Comment=Write markdown and see it as you type
+      Exec=nib %F
+      Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/nib.png
+      Terminal=false
+      Categories=Office;TextEditor;Utility;
+      MimeType=text/markdown;text/x-markdown;
+      Keywords=markdown;md;editor;notes;writing;wysiwyg;
+      StartupWMClass=nib
+      StartupNotify=true
+      DESKTOP
+
+      icons="${CRAFT_PART_INSTALL}/usr/share/icons/hicolor"
+      if [ -f "${icons}/256x256@2/apps/nib.png" ]; then
+        install -Dm644 "${icons}/256x256@2/apps/nib.png" "${icons}/256x256/apps/nib.png"
+        rm -rf "${icons}/256x256@2"
+      fi

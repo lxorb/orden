@@ -1,0 +1,82 @@
+# Nib for Flathub.
+#
+# The app is a Tauri 2 binary linked against webkit2gtk-4.1, which the GNOME
+# runtime provides, so this manifest unpacks the official .deb rather than
+# rebuilding: a from-source Flatpak build would have to vendor the whole Cargo
+# and npm dependency trees offline, and the .deb is the same artifact everyone
+# else on Linux installs. Both architectures come from the same release.
+#
+# Tauri's .desktop entry and icon layout are not reused - the entry it writes
+# has no categories, no MIME types and no comment, and its 256x256 icon is
+# filed under a scale-2 directory. The two files next to this manifest replace
+# them, named after the app ID the way Flatpak requires.
+id: ch.emilvinu.nib
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: nib
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Syncing, publishing and the MCP server all talk to the network.
+  - --share=network
+  # Anything the person picks in a file dialog arrives through the document
+  # portal, which needs no permission at all. Documents get a standing one so
+  # that reopening what was last edited works without a fresh dialog; wider
+  # access than that is a sandbox hole Flathub's linter rejects outright.
+  - --filesystem=xdg-documents
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /share/man
+
+modules:
+  - name: nib
+    buildsystem: simple
+    build-commands:
+      - ar x nib.deb
+      - tar -xf data.tar.gz
+      - install -Dm755 usr/bin/nib /app/bin/nib
+      - install -Dm644 ch.emilvinu.nib.desktop /app/share/applications/ch.emilvinu.nib.desktop
+      - install -Dm644 ch.emilvinu.nib.metainfo.xml /app/share/metainfo/ch.emilvinu.nib.metainfo.xml
+      - |
+        for size in 32 128; do
+          install -Dm644 "usr/share/icons/hicolor/${size}x${size}/apps/nib.png" \
+            "/app/share/icons/hicolor/${size}x${size}/apps/ch.emilvinu.nib.png"
+        done
+      # A plain 256x256 image that Tauri files under a scale-2 directory.
+      - install -Dm644 usr/share/icons/hicolor/256x256@2/apps/nib.png
+          /app/share/icons/hicolor/256x256/apps/ch.emilvinu.nib.png
+    sources:
+      - type: file
+        only-arches: [x86_64]
+        url: https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-x64.deb
+        sha256: 937b71072e50b0776497dd0a0031b32ed5947373c30558fdf2a8fad3bc88ec05
+        dest-filename: nib.deb
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/lxorb/nib/releases/latest
+          version-query: .tag_name | sub("^v"; "")
+          url-query: >-
+            .assets[] | select(.name == "Nib-" + $version + "-linux-x64.deb")
+            | .browser_download_url
+      - type: file
+        only-arches: [aarch64]
+        url: https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-arm64.deb
+        sha256: 11a235a343f809acea06dc4cdd98c3b72d4100fc1459a3a1664fea27fbed8d2d
+        dest-filename: nib.deb
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/lxorb/nib/releases/latest
+          version-query: .tag_name | sub("^v"; "")
+          url-query: >-
+            .assets[] | select(.name == "Nib-" + $version + "-linux-arm64.deb")
+            | .browser_download_url
+      - type: file
+        path: ch.emilvinu.nib.desktop
+      - type: file
+        path: ch.emilvinu.nib.metainfo.xml

@@ -1,0 +1,49 @@
+# Maintainer: Emil Vinu <me@emilvinu.de>
+
+# Nib ships an official .deb for both architectures, so this package unpacks
+# that rather than rebuilding the app: no Rust or Node toolchain is pulled in
+# to install an editor. What comes out of the .deb is repaired on the way in -
+# Tauri's own .desktop entry carries no categories, no MIME types and no
+# comment, and its 256x256 icon is filed under a scale-2 directory.
+
+pkgname=nib-bin
+_pkgname=nib
+pkgver=0.4.0
+pkgrel=1
+pkgdesc="Lightweight markdown editor with realtime inline preview"
+arch=('x86_64' 'aarch64')
+url="https://nibeditor.com"
+license=('AGPL-3.0-only')
+depends=('gtk3' 'webkit2gtk-4.1' 'hicolor-icon-theme')
+optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
+            'xdg-utils: open links and attachments in the desktop default application')
+provides=("${_pkgname}=${pkgver}")
+conflicts=("${_pkgname}")
+options=('!strip' '!debug' '!emptydirs')
+
+_url="https://github.com/lxorb/nib/releases/download/v${pkgver}"
+source=('nib.desktop')
+# One name for both, since only the running architecture is fetched.
+source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
+source_aarch64=("nib.deb::${_url}/Nib-${pkgver}-linux-arm64.deb")
+noextract=('nib.deb')
+sha256sums=('8c6919dae22daa47d0da8f1089bc19a1f4304fa95363d50eff156c4751326915')
+sha256sums_x86_64=('937b71072e50b0776497dd0a0031b32ed5947373c30558fdf2a8fad3bc88ec05')
+sha256sums_aarch64=('11a235a343f809acea06dc4cdd98c3b72d4100fc1459a3a1664fea27fbed8d2d')
+
+package() {
+  bsdtar -O -xf "${srcdir}/nib.deb" data.tar.gz |
+    bsdtar -xf - -C "${pkgdir}" usr
+
+  install -Dm644 "${srcdir}/nib.desktop" \
+    "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
+  rm -f "${pkgdir}/usr/share/applications/Nib.desktop"
+
+  # The file in 256x256@2 is a plain 256x256 image, so it belongs in the
+  # unscaled directory; left where it is, every theme lookup scales it wrong.
+  install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/${_pkgname}.png" \
+    "${pkgdir}/usr/share/icons/hicolor/256x256/apps/${_pkgname}.png"
+  rm -rf "${pkgdir}/usr/share/icons/hicolor/256x256@2"
+}
+
+# AGPL-3.0-only lives in /usr/share/licenses/common/AGPL3, so no copy is shipped.

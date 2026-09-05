@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>ch.emilvinu.nib</id>
+
+  <name>Nib</name>
+  <summary>Markdown editor with live preview</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+
+  <developer id="ch.emilvinu">
+    <name>Emil Vinu</name>
+  </developer>
+
+  <description>
+    <p>
+      Nib is a small markdown editor that formats what you write as you write it.
+      There is no split screen and no preview pane: headings, emphasis, lists,
+      tables, code and math take their final shape in the same window you type
+      in, and the markdown underneath stays plain text you can open anywhere.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Realtime inline preview, so the document always looks the way it will read</li>
+      <li>Notes that sync across your devices</li>
+      <li>An MCP server, so a language model can read and write your notes with your permission</li>
+      <li>Paste images straight from the clipboard</li>
+      <li>Publish a file as a page on the web, with a custom domain if you have one</li>
+      <li>Export to PDF and HTML</li>
+    </ul>
+    <p>
+      Nib is free software under the GNU Affero General Public License. The same
+      editor also runs in a browser at nibeditor.com.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">ch.emilvinu.nib.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://github.com/user-attachments/assets/0d3c6eac-9d6b-4581-a405-0ac1b746d9d8</image>
+      <caption>A document being edited, formatted as it is typed</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://nibeditor.com</url>
+  <url type="bugtracker">https://github.com/lxorb/nib/issues</url>
+  <url type="vcs-browser">https://github.com/lxorb/nib</url>
+
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>markdown</keyword>
+    <keyword>editor</keyword>
+    <keyword>notes</keyword>
+    <keyword>writing</keyword>
+    <keyword>wysiwyg</keyword>
+  </keywords>
+
+  <provides>
+    <binary>nib</binary>
+  </provides>
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+
+  <recommends>
+    <display_length compare="ge">768</display_length>
+  </recommends>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.4.0" date="2026-09-04">
+      <url type="details">https://github.com/lxorb/nib/releases/tag/v0.4.0</url>
+      <description>
+        <p>Sync across devices, publishing, and an MCP server for language model access.</p>
+      </description>
+    </release>
+  </releases>
+</component>

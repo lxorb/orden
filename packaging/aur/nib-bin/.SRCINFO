@@ -1,0 +1,27 @@
+pkgbase = nib-bin
+	pkgdesc = Lightweight markdown editor with realtime inline preview
+	pkgver = 0.4.0
+	pkgrel = 1
+	url = https://nibeditor.com
+	arch = x86_64
+	arch = aarch64
+	license = AGPL-3.0-only
+	depends = gtk3
+	depends = webkit2gtk-4.1
+	depends = hicolor-icon-theme
+	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
+	optdepends = xdg-utils: open links and attachments in the desktop default application
+	provides = nib=0.4.0
+	conflicts = nib
+	noextract = nib.deb
+	options = !strip
+	options = !debug
+	options = !emptydirs
+	source = nib.desktop
+	sha256sums = 8c6919dae22daa47d0da8f1089bc19a1f4304fa95363d50eff156c4751326915
+	source_x86_64 = nib.deb::https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-x64.deb
+	sha256sums_x86_64 = 937b71072e50b0776497dd0a0031b32ed5947373c30558fdf2a8fad3bc88ec05
+	source_aarch64 = nib.deb::https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-arm64.deb
+	sha256sums_aarch64 = 11a235a343f809acea06dc4cdd98c3b72d4100fc1459a3a1664fea27fbed8d2d
+
+pkgname = nib-bin
