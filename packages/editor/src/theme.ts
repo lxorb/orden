@@ -57,12 +57,15 @@ export const nibTheme = EditorView.theme({
 })
 
 export const nibHighlightStyle = HighlightStyle.define([
-  { tag: tags.heading1, fontSize: '1.92em', fontWeight: '620', lineHeight: '1.28' },
-  { tag: tags.heading2, fontSize: '1.5em', fontWeight: '620', lineHeight: '1.3' },
-  { tag: tags.heading3, fontSize: '1.22em', fontWeight: '620' },
-  { tag: tags.heading4, fontSize: '1.06em', fontWeight: '620' },
-  { tag: tags.heading5, fontSize: '1em', fontWeight: '620' },
-  { tag: tags.heading6, fontSize: '0.94em', fontWeight: '620', color: 'var(--muted-strong)' },
+  // Size and leading belong to the line (see editor.css), not to the heading's
+  // token: inline code in a heading is a token of its own, and a size set here
+  // would leave it at paragraph size inside a title.
+  { tag: tags.heading1, fontWeight: '620' },
+  { tag: tags.heading2, fontWeight: '620' },
+  { tag: tags.heading3, fontWeight: '620' },
+  { tag: tags.heading4, fontWeight: '620' },
+  { tag: tags.heading5, fontWeight: '620' },
+  { tag: tags.heading6, fontWeight: '620', color: 'var(--muted-strong)' },
   { tag: tags.strong, fontWeight: '650', color: 'var(--text-strong)' },
   { tag: tags.emphasis, fontStyle: 'italic' },
   { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--muted)' },

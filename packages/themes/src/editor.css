@@ -52,19 +52,35 @@
    nothing below sets a vertical margin - the space is padding, or a transparent
    border where a background must not stretch into it. */
 
+/* The size is the line's, so that everything on it - inline code, emphasis,
+   a ligature glyph - is measured against the heading and not the paragraph.
+   The paddings are the same distances as before, written against the new
+   size. */
 .cm-line.nib-h1 {
-  padding: 0.85em 0 0.35em;
+  font-size: 1.92em;
+  line-height: 1.28;
+  padding: 0.44em 0 0.18em;
   letter-spacing: -0.023em;
 }
 .cm-line.nib-h2 {
-  padding: 0.95em 0 0.35em;
+  font-size: 1.5em;
+  padding: 0.63em 0 0.23em;
   letter-spacing: -0.018em;
 }
-.cm-line.nib-h3,
-.cm-line.nib-h4,
-.cm-line.nib-h5,
-.cm-line.nib-h6 {
+.cm-line.nib-h3 {
+  font-size: 1.22em;
+  padding: 0.82em 0 0.25em;
+}
+.cm-line.nib-h4 {
+  font-size: 1.06em;
+  padding: 0.94em 0 0.28em;
+}
+.cm-line.nib-h5 {
   padding: 1em 0 0.3em;
+}
+.cm-line.nib-h6 {
+  font-size: 0.94em;
+  padding: 1.06em 0 0.32em;
 }
 
 /* ── Blockquote ──────────────────────────────────────────────────── */
