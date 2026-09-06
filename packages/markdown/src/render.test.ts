@@ -426,6 +426,15 @@ describe('what a note cannot do to the page around it', () => {
     expect(published('![a](data:image/png;base64,iVBORw0KGgo=)')).toContain('src="data:image/png')
   })
 
+  test('a link with no target yet is words, not a link to this page', () => {
+    // `insertLink` writes `[label]()` and puts the caret in the empty target, so
+    // a note saved mid-edit has one. An `href=""` points at the page it is on,
+    // which is a worse answer than showing the label.
+    const html = published('[label]()')
+    expect(html).toContain('label')
+    expect(html).not.toContain('href')
+  })
+
   test('an ampersand in a URL is written as one entity', () => {
     const html = published('[a](https://x.dev/?a=1&b=2)')
     expect(html).toContain('href="https://x.dev/?a=1&amp;b=2"')
