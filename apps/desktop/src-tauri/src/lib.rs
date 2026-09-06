@@ -1,3 +1,6 @@
+//! Nib, the desktop app: the plugins it runs with, the commands the window may
+//! call, and the window itself.
+
 mod export;
 mod history;
 mod launch;
