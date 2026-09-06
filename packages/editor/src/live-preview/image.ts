@@ -11,6 +11,7 @@ import {
 import type { SyntaxNode } from '@lezer/common'
 import { imageResolver } from '../images'
 import { label as uiLabel } from '../labels'
+import { noReveal } from './reveal'
 import { NibWidget } from './widget'
 
 /** Images in the live preview.
@@ -198,6 +199,7 @@ const inside = (pos: number, from: number, to: number) => pos > from && pos < to
 /** Only a caret strictly inside the markup reveals it; touching an end does
  *  not, and neither does a selection covering it. */
 export function imageRevealed(state: EditorState, from: number, to: number): boolean {
+  if (state.facet(noReveal)) return false
   return state.selection.ranges.some(
     (range) => inside(range.from, from, to) || inside(range.to, from, to),
   )

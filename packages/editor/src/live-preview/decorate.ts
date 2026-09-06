@@ -10,7 +10,7 @@ import {
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import { dragging } from './dragging'
-import { lineRevealed, overlaps, revealed } from './reveal'
+import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
 import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
 import { hrefOf, linkTitle } from '../links'
@@ -453,7 +453,11 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       // tree arrives in updates of its own. Without this the part that was
       // not parsed yet stays raw until something else - a click - rebuilds.
       const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
-      if (update.docChanged || update.viewportChanged || settled || released || reparsed) {
+      // Reading mode holds every reveal shut, and it comes on in a transaction
+      // that moves neither the document nor the caret - so it has to say so
+      // itself, or the syntax around the caret would stay showing.
+      const sealed = update.startState.facet(noReveal) !== update.state.facet(noReveal)
+      if (update.docChanged || update.viewportChanged || settled || released || reparsed || sealed) {
         const built = buildDecorations(update.view.state, update.view.visibleRanges)
         this.decorations = built.decorations
         this.atomic = built.atomic

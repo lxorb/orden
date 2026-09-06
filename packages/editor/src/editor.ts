@@ -2,9 +2,10 @@ import { closeBracketsKeymap } from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
-import { Annotation, EditorState, Prec, type Text } from '@codemirror/state'
+import { EditorState, Prec, type Text } from '@codemirror/state'
 import { EditorView, drawSelection, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
 import { editorCompletion } from './emoji'
+import { external } from './external'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
 import { codeThemeExtension } from './code-theme'
@@ -14,10 +15,6 @@ import { richPaste } from './paste'
 import { modeExtensions } from './modes'
 import { tableKeymap } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
-
-/** Marks a change as content put into the view from outside - a note being
- *  loaded, a version restored - rather than something anyone typed. */
-const external = Annotation.define<boolean>()
 
 /** Puts a whole document into a view without it being read back as an edit.
  *  The alternative, comparing what came in against what is already there, is

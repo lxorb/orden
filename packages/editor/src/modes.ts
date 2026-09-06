@@ -1,9 +1,11 @@
-import { Compartment, type Extension } from '@codemirror/state'
+import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { isExternal } from './external'
 import { fenceLanguages } from './languages'
 import { livePreview } from './live-preview'
+import { noReveal } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { closeBrackets } from '@codemirror/autocomplete'
@@ -22,6 +24,7 @@ const equations = new Compartment()
 const spelling = new Compartment()
 const brackets = new Compartment()
 const glyphs = new Compartment()
+const reading = new Compartment()
 
 /** Strict mode drops GFM and the Typora extensions, leaving plain CommonMark -
  *  useful when a document has to render the same everywhere. */
@@ -112,6 +115,7 @@ export function modeExtensions(): Extension {
     brackets.of(closeBrackets()),
     // Off until asked for: a note reads as typed unless someone chose otherwise.
     glyphs.of([]),
+    reading.of([]),
   ]
 }
 
@@ -129,7 +133,60 @@ export function setEquationNumbers(view: EditorView, on: boolean) {
 /** Source mode shows the markdown as written, with no syntax hidden. */
 export function setSourceMode(view: EditorView, on: boolean) {
   flushTableEdits()
-  view.dispatch({ effects: preview.reconfigure(on ? [] : livePreview()) })
+  // Turning it on leaves reading mode: the two are opposite answers to the
+  // same question, and the markdown as written is the writer's answer. See
+  // setReadingMode below.
+  view.dispatch({
+    effects: on
+      ? [preview.reconfigure([]), reading.reconfigure([])]
+      : preview.reconfigure(livePreview()),
+  })
+  if (on) view.dom.classList.remove('nib-reading-mode')
+}
+
+/** What reading mode puts over the editor while it is on.
+ *
+ *  Three locks, because a document can be written to through three different
+ *  doors. `editable` takes the contenteditable off the writing surface, so the
+ *  browser stops offering it as somewhere to type and stops drawing a caret in
+ *  it. `readOnly` is what CodeMirror's own handlers and every command in
+ *  @codemirror/commands ask before they write - it is how Backspace, Enter and
+ *  undo come to refuse. And the change filter has the last word: a widget - a
+ *  checkbox, a cell of a rendered table, the language on a fence - dispatches
+ *  its change straight at the view and asks nobody's permission. Only a change
+ *  from outside the editor gets through, so a note being loaded, a version
+ *  restored or a sync arriving still lands under the reader's eyes. */
+function readingExtensions(): Extension {
+  return [
+    EditorView.editable.of(false),
+    EditorState.readOnly.of(true),
+    // Nothing reveals: see live-preview/reveal.ts.
+    noReveal.of(true),
+    // A surface that is not editable is not focusable either, and a page
+    // nothing can focus cannot be scrolled, searched or selected from the
+    // keyboard. So it keeps its place in the tab order; the caret that would
+    // otherwise blink in it is taken away in the stylesheet.
+    EditorView.contentAttributes.of({ tabindex: '0' }),
+    EditorState.changeFilter.of(isExternal),
+  ]
+}
+
+/** Reading mode: the note as it reads, with nothing that writes to it.
+ *
+ *  Source mode is its opposite, so the two are never both on - turning either
+ *  one on turns the other off. Reading raw markdown is a contradiction: source
+ *  mode is for seeing what you are about to type, and this is for the note
+ *  once it is typed. */
+export function setReadingMode(view: EditorView, on: boolean) {
+  // A cell may be holding an edit that has not reached the document yet, and
+  // once this is on nothing can put it there.
+  flushTableEdits()
+  view.dispatch({
+    effects: on
+      ? [reading.reconfigure(readingExtensions()), preview.reconfigure(livePreview())]
+      : reading.reconfigure([]),
+  })
+  view.dom.classList.toggle('nib-reading-mode', on)
 }
 
 export function setFocusMode(view: EditorView, on: boolean) {

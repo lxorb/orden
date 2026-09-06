@@ -10,7 +10,7 @@ import {
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { TableWidget } from '../table/widget'
-import { lineRevealed, overlaps } from './reveal'
+import { lineRevealed, noReveal, overlaps } from './reveal'
 import {
   DIAGRAM_LANGUAGES,
   DiagramWidget,
@@ -235,6 +235,13 @@ function mapSpans(spans: readonly { from: number; to: number }[], changes: Chang
 export const blockDecorations = StateField.define<Blocks>({
   create: buildBlocks,
   update(value, transaction) {
+    // Reading mode holds every reveal shut: a table or a display equation with
+    // the caret in it goes back to being rendered the moment it comes on, and
+    // that transaction changes neither the document nor the selection.
+    if (transaction.startState.facet(noReveal) !== transaction.state.facet(noReveal)) {
+      return buildBlocks(transaction.state)
+    }
+
     // The parse of a note just opened finishes in transactions of its own;
     // a block it found late has to be drawn then, not at the next click.
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)

@@ -38,6 +38,7 @@ export {
   setLineHeight,
   setMeasure,
   remeasure,
+  setReadingMode,
   setRightToLeft,
   setSmartPunctuation,
   setSourceMode,
