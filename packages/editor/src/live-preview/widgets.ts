@@ -42,6 +42,10 @@ export class CheckboxWidget extends NibWidget {
 
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()
+      // Ticking a box writes `[x]` into the note, which is an edit like any
+      // other: while the note is only being read, the box says what the
+      // document says. The stylesheet takes the hover off it to match.
+      if (view.state.readOnly) return
       view.dispatch({
         changes: { from: this.from, to: this.to, insert: this.checked ? '[ ]' : '[x]' },
       })

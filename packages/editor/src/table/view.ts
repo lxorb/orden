@@ -101,6 +101,11 @@ export class TableView {
   /** The column whose controls are up. */
   private barColumn = -1
 
+  /** Whether the cells were drawn as fields. Reading mode takes that away, and
+   *  the table has to be redrawn for it: a cell is contenteditable in the DOM,
+   *  which no stylesheet can undo. */
+  private editable: boolean
+
   constructor(
     readonly editor: EditorView,
     text: TableSource,
@@ -111,6 +116,7 @@ export class TableView {
     this.from = text.from
     this.to = text.to
     this.widths = model.header.map(() => null)
+    this.editable = !editor.state.readOnly
 
     this.dom = element('div', 'nib-table-wrap')
     // Outside the editor's editable region: the cells opt back in one by one.
@@ -150,10 +156,11 @@ export class TableView {
     this.source = text.source
     this.model = model
 
-    if (shown) {
+    if (shown && this.editable === !this.editor.state.readOnly) {
       this.focusAfter = null
       return
     }
+    this.editable = !this.editor.state.readOnly
     this.clearPending()
     this.render()
   }
@@ -179,6 +186,11 @@ export class TableView {
   /** Puts the caret in a cell. The cell swaps to its markdown as it takes
    *  focus, so the caret is placed after that, into the source text. */
   focusCell(at: CellAddress, placement: Placement | number): boolean {
+    // A rendered table is something to read like any other block while reading
+    // mode is on; its cells are not fields. The key that asked to walk in gets
+    // its answer back and steps over the table instead.
+    if (this.editor.state.readOnly) return false
+
     // The cell may be gone - an undo can take the column it was in - so the
     // nearest one that exists takes the caret instead.
     const { model } = this
@@ -240,6 +252,14 @@ export class TableView {
   /** Writes a model into the document. The new widget then adopts this DOM,
    *  which is where `focusAfter` is acted on. */
   private commit(next: TableModel, focus?: CellAddress) {
+    // Every edit a table makes comes through here, so this is where reading
+    // mode stops them - the buttons in the margins and the idle timer of a
+    // cell that was being typed in when the mode came on, both.
+    if (this.editor.state.readOnly) {
+      this.clearPending()
+      return
+    }
+
     window.clearTimeout(this.idle)
     this.focusAfter = focus ? { at: focus, offset: 0 } : null
 
@@ -322,7 +342,7 @@ export class TableView {
 
   private cell(text: string, at: CellAddress, tag: 'th' | 'td', editing: boolean) {
     const cell = element(tag)
-    cell.contentEditable = 'true'
+    cell.contentEditable = this.editable ? 'true' : 'false'
     cell.spellcheck = true
     cell.dataset.row = String(at.row)
     cell.dataset.column = String(at.column)
@@ -342,6 +362,9 @@ export class TableView {
     // click changes as the cell takes focus and shows its markdown. So the
     // caret is placed by hand, once the markdown is up.
     cell.addEventListener('mousedown', (event) => {
+      // Not a caret to place while reading, and not preventDefault either:
+      // dragging a selection across the table is how a reader copies it.
+      if (this.editor.state.readOnly) return
       if (event.button !== 0 || document.activeElement === cell) return
       event.preventDefault()
       cell.focus()
@@ -359,6 +382,14 @@ export class TableView {
   }
 
   private edited(cell: HTMLElement, at: CellAddress) {
+    // Reading mode can arrive with the caret already in a cell. What is typed
+    // after that has nowhere to go, so the cell hands the caret back and shows
+    // the document again.
+    if (this.editor.state.readOnly) {
+      cell.blur()
+      return
+    }
+
     this.pending = { at, value: cell.textContent ?? '' }
     active = this
 

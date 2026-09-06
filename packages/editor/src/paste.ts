@@ -87,6 +87,11 @@ function insert(view: EditorView, text: string) {
 export function richPaste(): Extension {
   return EditorView.domEventHandlers({
     paste(event, view) {
+      // Handed back to CodeMirror, which refuses it too while the document is
+      // read-only. Turning a web page into markdown first would be work done
+      // for a change that is not going to land.
+      if (view.state.readOnly) return false
+
       const data = event.clipboardData
       if (!data || data.files.length) return false
 
@@ -116,6 +121,8 @@ export const pastePlain: KeyBinding = {
   key: 'Mod-Shift-v',
   preventDefault: true,
   run(view) {
+    if (view.state.readOnly) return false
+
     void navigator.clipboard.readText().then((text) => {
       if (text) insert(view, text)
     })

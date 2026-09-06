@@ -41,6 +41,11 @@ async function insert(view: EditorView, files: File[], sink: ImageSink, at?: num
 export function imageHandling(sink: ImageSink): Extension {
   return EditorView.domEventHandlers({
     paste(event, view) {
+      // Nothing is stored while the document is read-only: the sink writes the
+      // picture into the note's folder before any markdown is inserted, and a
+      // file left behind by an insertion that was refused is litter.
+      if (view.state.readOnly) return false
+
       const files = [...(event.clipboardData?.files ?? [])]
       if (!files.some(isImage)) return false
 
@@ -50,6 +55,8 @@ export function imageHandling(sink: ImageSink): Extension {
     },
 
     drop(event, view) {
+      if (view.state.readOnly) return false
+
       const files = [...(event.dataTransfer?.files ?? [])]
       if (!files.some(isImage)) return false
 
@@ -59,8 +66,11 @@ export function imageHandling(sink: ImageSink): Extension {
       return true
     },
 
-    dragover(event) {
-      // Without this the browser refuses the drop.
+    dragover(event, view) {
+      // Without this the browser refuses the drop - which is what should
+      // happen while the document is read-only, so there it is left unsaid.
+      if (view.state.readOnly) return false
+
       if ([...(event.dataTransfer?.items ?? [])].some((item) => item.kind === 'file')) {
         event.preventDefault()
       }

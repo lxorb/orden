@@ -32,10 +32,13 @@ function modifier(event: MouseEvent | KeyboardEvent): boolean {
 
 /** A click on a link places the caret, as anywhere else in the text; with the
  *  modifier held it follows the link instead, Typora's way. While the modifier
- *  is down the pointer says so over links. */
+ *  is down the pointer says so over links.
+ *
+ *  Reading mode has no caret to place, so there the plain click is not
+ *  ambiguous and follows the link, the way it would on a page. */
 export const linkClicks = EditorView.domEventHandlers({
   mousedown(event, view) {
-    if (event.button !== 0 || !modifier(event)) return false
+    if (event.button !== 0 || !(modifier(event) || view.state.readOnly)) return false
 
     const target = event.target as HTMLElement | null
     const href = target?.closest?.('.nib-link')?.getAttribute('data-href')
