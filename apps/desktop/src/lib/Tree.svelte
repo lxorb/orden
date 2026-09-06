@@ -29,14 +29,14 @@
 
   function folderMenu(entry: Entry): MenuEntry[] {
     return [
-      { label: t('New note'), run: () => workspace.createNote(entry.path) },
-      { label: t('New folder'), run: () => workspace.createFolder(entry.path) },
+      { label: t('New note'), run: () => void workspace.createNote(entry.path) },
+      { label: t('New folder'), run: () => void workspace.createFolder(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => (workspace.renaming = entry.path) },
       { label: pinLabel(entry.path), run: () => workspace.togglePin(entry.path) },
       ...revealEntry(entry.path),
       DIVIDER,
-      { label: t('Delete'), danger: true, run: () => workspace.remove(entry.path, true) },
+      { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, true) },
       ...undoEntry(),
     ]
   }
@@ -52,7 +52,7 @@
       {
         label: t('Delete {count} items', { count }),
         danger: true,
-        run: () => workspace.removeMany(workspace.selection),
+        run: () => void workspace.removeMany(workspace.selection),
       },
       ...undoEntry(),
     ]
@@ -104,20 +104,20 @@
   /** Only offered once there is something to take back. */
   function undoEntry(): MenuEntry[] {
     const label = workspace.undoLabel
-    return label ? [DIVIDER, { label, run: () => workspace.undoFileAction() }] : []
+    return label ? [DIVIDER, { label, run: () => void workspace.undoFileAction() }] : []
   }
 
   function noteMenu(entry: Entry): MenuEntry[] {
     return [
-      { label: t('Open'), run: () => workspace.open(entry.path) },
+      { label: t('Open'), run: () => void workspace.open(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => (workspace.renaming = entry.path) },
       { label: pinLabel(entry.path), run: () => workspace.togglePin(entry.path) },
-      { label: t('Duplicate'), run: () => workspace.duplicate(entry.path) },
+      { label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) },
       ...copyPathEntry(entry.path),
       ...revealEntry(entry.path),
       DIVIDER,
-      { label: t('Delete'), danger: true, run: () => workspace.remove(entry.path, false) },
+      { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, false) },
       ...undoEntry(),
     ]
   }

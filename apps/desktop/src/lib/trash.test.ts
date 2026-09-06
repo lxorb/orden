@@ -14,6 +14,10 @@ interface Entry {
   trashedAt: number
 }
 
+/** What an invoke was given, when it is the kind of value it should be:
+ *  `args` is a bag of unknowns. */
+const text = (value: unknown) => (typeof value === 'string' ? value : '')
+
 const notes = new Map<string, string>()
 let deviceTrash: Entry[] = []
 
@@ -32,13 +36,13 @@ vi.mock('./tauri', async (importOriginal) => ({
   isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     calls.push(command)
-    const path = String(args?.path ?? '')
+    const path = text(args?.path)
     switch (command) {
       case 'read_note':
         return notes.get(path) ?? ''
       case 'snapshot_note':
       case 'write_note':
-        if (command === 'write_note') notes.set(path, String(args?.content ?? ''))
+        if (command === 'write_note') notes.set(path, text(args?.content))
         return undefined
       case 'read_tree':
         return {
@@ -138,7 +142,7 @@ function memoryStorage(): Storage {
     },
     key: (index) => [...store.keys()][index] ?? null,
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, String(value)),
+    setItem: (key, value) => void store.set(key, value),
     removeItem: (key) => void store.delete(key),
     clear: () => store.clear(),
   }

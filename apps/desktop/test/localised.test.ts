@@ -42,7 +42,7 @@ function sources(dir: string, found: string[] = []): string[] {
 
     const path = join(dir, name)
     if (statSync(path).isDirectory()) sources(path, found)
-    else if (/\.(svelte|ts)$/.test(name) && !name.endsWith(".test.ts")) found.push(path)
+    else if (/\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts')) found.push(path)
   }
 
   return found

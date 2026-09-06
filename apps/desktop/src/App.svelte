@@ -40,7 +40,8 @@
 
   let view = $state<EditorView>()
   let palette = $state(false)
-  let formatBar = $state<FormatBar>()
+  /** The formatting bar, once it is on the page. */
+  let formatBar = $state<{ follow(view: EditorView): void }>()
   /** The element holding both layers, which is what the drawer gesture
    *  listens on. */
   let middle = $state<HTMLElement>()

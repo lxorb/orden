@@ -81,29 +81,34 @@ const fake = vi.hoisted(() => {
     return folders.get(root)!
   }
 
+  /** What an invoke was given, when it is the kind of value it should be:
+   *  `args` is a bag of unknowns. */
+  const text = (value: unknown) => (typeof value === 'string' ? value : '')
+
   async function invoke<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
-    const path = String(args.path ?? '')
+    const path = text(args.path)
 
     switch (command) {
       case 'list_spaces':
         return spaces().map((root) => ({ name: basename(root), path: root })) as T
       case 'create_space': {
-        const root = `/${String(args.name)}`
+        const name = text(args.name)
+        const root = `/${name}`
         disk.set(`${root}/.keep`, '')
-        return { name: String(args.name), path: root } as T
+        return { name, path: root } as T
       }
       case 'delete_space':
         for (const key of [...disk.keys()]) if (key.startsWith(`${path}/`)) disk.delete(key)
         return undefined as T
       case 'read_tree':
-        return tree(String(args.root)) as T
+        return tree(text(args.root)) as T
       case 'read_note': {
         const doc = disk.get(path)
         if (doc === undefined) throw new Error(`no such note: ${path}`)
         return doc as T
       }
       case 'write_note':
-        disk.set(path, String(args.content))
+        disk.set(path, text(args.content))
         return undefined as T
       case 'delete_note':
         disk.delete(path)
@@ -255,7 +260,7 @@ function memoryStorage(): Storage {
     },
     key: (index) => [...store.keys()][index] ?? null,
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, String(value)),
+    setItem: (key, value) => void store.set(key, value),
     removeItem: (key) => void store.delete(key),
     clear: () => store.clear(),
   }

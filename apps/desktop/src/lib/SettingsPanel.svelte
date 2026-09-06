@@ -121,17 +121,17 @@
       { section: 'editor', label: t('Reset to defaults'), text: [] },
       // Every shortcut by name, so searching the settings for "Bold" lands on
       // the key that runs it as well as on the button that does.
-      ...SHORTCUTS.map(
-        (one): Place => ({
-          section: 'shortcuts',
-          label: one.label(),
-          text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
-        }),
-      ),
+      ...SHORTCUTS.map((one): Place => ({
+        section: 'shortcuts',
+        label: one.label(),
+        text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
+      })),
       { section: 'markdown', label: t('Reset to defaults'), text: [] },
-      ...exportActions().map(
-        (action): Place => ({ section: 'export', label: action.label, text: [] }),
-      ),
+      ...exportActions().map((action): Place => ({
+        section: 'export',
+        label: action.label,
+        text: [],
+      })),
     ]
 
     if (isDesktop) {
@@ -225,7 +225,7 @@
   function onSubdomain(value: string) {
     subdomain = value.toLowerCase().replace(/[^a-z0-9-]/g, '')
     clearTimeout(checkTimer)
-    checkTimer = setTimeout(() => settings.checkSubdomain(subdomain), 260)
+    checkTimer = setTimeout(() => void settings.checkSubdomain(subdomain), 260)
   }
 
   /** Only the chosen address goes up; the server lets the other one go. */
@@ -550,7 +550,7 @@
         <Select
           value={field.get()}
           options={field.options}
-          onchange={(value) => field.set(value)}
+          onchange={(value: string) => field.set(value)}
           label={field.label}
           plain={viewport.phone}
         />
@@ -670,7 +670,9 @@
               <Select
                 value={blogNote}
                 options={noteChoices}
-                onchange={(value) => (blogNote = value)}
+                onchange={(value: string) => {
+                  blogNote = value
+                }}
                 label={t('What to publish')}
                 plain={viewport.phone}
               />

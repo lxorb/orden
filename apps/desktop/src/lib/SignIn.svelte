@@ -9,7 +9,11 @@
 
   const LENGTH = 6
 
-  let digits = $state<string[]>(Array(LENGTH).fill(''))
+  /** An empty row of boxes. `Array.fill` answers `any[]`, which is how an
+   *  unchecked value would reach the markup. */
+  const blank = () => Array.from({ length: LENGTH }, () => '')
+
+  let digits = $state<string[]>(blank())
   const boxes = $state<HTMLInputElement[]>([])
   let emailField = $state<HTMLInputElement>()
 
@@ -25,7 +29,7 @@
 
   $effect(() => {
     if (account.step === 'code') {
-      digits = Array(LENGTH).fill('')
+      digits = blank()
       submitted = ''
       setTimeout(() => boxes[0]?.focus(), 60)
     }
@@ -37,10 +41,13 @@
     if (entered.length !== LENGTH || entered === submitted) return
 
     submitted = entered
-    account.verify(entered).then((accepted) => {
-      if (accepted) return void settleLocalNotes()
+    void account.verify(entered).then((accepted) => {
+      if (accepted) {
+        void settleLocalNotes()
+        return
+      }
 
-      digits = Array(LENGTH).fill('')
+      digits = blank()
       submitted = ''
       setTimeout(() => boxes[0]?.focus(), 0)
     })
@@ -120,7 +127,7 @@
         in:fly={{ x: -14, duration: 200, easing: cubicOut }}
         onsubmit={(event) => {
           event.preventDefault()
-          account.requestCode()
+          void account.requestCode()
         }}
       >
         <input

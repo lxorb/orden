@@ -65,16 +65,16 @@
         run: () => workspace.toggleHidden(),
       },
       DIVIDER,
-      { label: t('New note'), run: () => workspace.createNote() },
-      { label: t('New folder'), run: () => workspace.createFolder() },
+      { label: t('New note'), run: () => void workspace.createNote() },
+      { label: t('New folder'), run: () => void workspace.createFolder() },
     ]
   }
 
   /** What the space itself offers, wherever in the panel you ask for it. */
   function spaceMenu(): MenuEntry[] {
     return [
-      { label: t('New note'), run: () => workspace.createNote() },
-      { label: t('New folder'), run: () => workspace.createFolder() },
+      { label: t('New note'), run: () => void workspace.createNote() },
+      { label: t('New folder'), run: () => void workspace.createFolder() },
       DIVIDER,
       // Nothing to reveal when no space is open, and `revealEntry` says so.
       ...revealEntry(workspace.activeSpace?.root),
@@ -103,10 +103,12 @@
     }
 
     searching = true
-    debounce = setTimeout(async () => {
-      hits = await workspace.search(value)
-      searching = false
-    }, 220)
+    debounce = setTimeout(() => void run(value), 220)
+  }
+
+  async function run(query: string) {
+    hits = await workspace.search(query)
+    searching = false
   }
 
   async function openHit(hit: Hit) {
@@ -117,12 +119,13 @@
   /** Pinned entries, in the order they were pinned. One that has since been
    *  deleted simply does not appear. */
   const pinned = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const byPath = new Map<string, Entry>()
 
     const walk = (entries: Entry[]) => {
       for (const entry of entries) {
         byPath.set(entry.path, entry)
-        if (entry.children?.length) walk(entry.children)
+        if (entry.children.length) walk(entry.children)
       }
     }
 
@@ -370,7 +373,7 @@
 
         {#if hits.length}
           <ul>
-            {#each hits as hit, index (hit.path + hit.line + index)}
+            {#each hits as hit, index (`${hit.path}:${hit.line}:${index}`)}
               <li>
                 <button class="hit" onclick={() => openHit(hit)}>
                   <span class="hit-note">{stripped(hit.name)}</span>

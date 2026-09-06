@@ -3,6 +3,13 @@
    *  editor is rebuilt for every tab, and replaying the entrance on each
    *  switch reads as a flicker rather than as a note arriving. */
   let opened = false
+
+  /** True the first time it is asked, and false ever after. */
+  function firstOfTheSession(): boolean {
+    const first = !opened
+    opened = true
+    return first
+  }
 </script>
 
 <script lang="ts">
@@ -10,6 +17,7 @@
   import { createEditor, type EditorView, replaceDoc, type Text } from '@nib/editor'
   import { shortcuts } from './shortcuts.svelte'
 
+  /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
   let {
     doc = '',
     pushed = 0,
@@ -34,10 +42,10 @@
     /** Bound back out: undefined until the view has been made. */
     view?: EditorView | undefined
   } = $props()
+  /* eslint-enable prefer-const */
 
   let host: HTMLDivElement
-  const rise = !opened
-  opened = true
+  const rise = firstOfTheSession()
 
   // Built once. Reading `doc` reactively here would tear the editor down and
   // rebuild it on every keystroke, losing the caret each time.

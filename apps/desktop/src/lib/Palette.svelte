@@ -7,6 +7,7 @@
   import { rank } from './fuzzy'
   import { workspace, type Entry } from './workspace.svelte'
 
+  // eslint-disable-next-line prefer-const -- `open` is bindable, and a $props() pattern cannot be split
   let { open = $bindable(false), view }: { open?: boolean; view?: EditorView | undefined } =
     $props()
 
@@ -26,8 +27,14 @@
 
   const label = (item: Command | Entry) => ('label' in item ? item.label : stripped(item.name))
 
+  /** Reads a value for its own sake, so the effect around it follows that
+   *  value. Nothing wants the value itself. */
+  const follows = (_value: unknown) => undefined
+
+  // A fresh set of results starts at the top: the row the cursor pointed at is
+  // no longer the one under it.
   $effect(() => {
-    results
+    follows(results)
     cursor = 0
   })
 
@@ -88,7 +95,7 @@
 
     {#if results.length}
       <ul>
-        {#each results as item, index (label(item) + index)}
+        {#each results as item, index (`${label(item)}:${index}`)}
           <li>
             <button
               class:selected={index === cursor}

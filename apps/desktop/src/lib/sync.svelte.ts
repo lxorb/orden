@@ -1,4 +1,6 @@
 import { api, ApiError } from './api'
+import { without } from './records'
+import { isRecord, isString, parsed } from './stored'
 import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
@@ -14,11 +16,6 @@ interface Tracked {
   id: string
   version: number
   hash: string
-}
-
-/** Only read now, to understand what an older version wrote. */
-interface Stored {
-  mirrors: Record<string, Mirror>
 }
 
 /** One local space folder and the remote space it mirrors. Keyed by `root`,
@@ -94,9 +91,8 @@ class Sync {
     const mirror = this.mirrors[from]
     if (!mirror) return
 
-    delete this.mirrors[from]
     mirror.root = to
-    this.mirrors[to] = mirror
+    this.mirrors = { ...without(this.mirrors, from), [to]: mirror }
     this.save()
 
     const token = account.token
@@ -110,7 +106,7 @@ class Sync {
     const mirror = this.mirrors[root]
     if (!mirror) return
 
-    delete this.mirrors[root]
+    this.mirrors = without(this.mirrors, root)
     this.save()
 
     const token = account.token
@@ -215,14 +211,15 @@ class Sync {
     // has to settle in a single pass, not leave a gap.
     for (const root of plan.remove) {
       const space = workspace.spaces.find((one) => one.root === root)
-      delete this.mirrors[root]
+      this.mirrors = without(this.mirrors, root)
       if (space) await workspace.deleteSpace(space.id)
     }
 
     // Missing without a marker: not uploaded yet as far as anyone can tell, so
     // the mirror goes and the next pass sends the folder up again.
-    for (const root of plan.detach) delete this.mirrors[root]
-    for (const root of plan.drop) delete this.mirrors[root]
+    for (const root of [...plan.detach, ...plan.drop]) {
+      this.mirrors = without(this.mirrors, root)
+    }
 
     for (const { root, spaceId } of plan.pair) {
       this.mirrors[root] = { spaceId, root, cursor: 0, notes: {} }
@@ -337,7 +334,7 @@ class Sync {
         if (remote.deleted) {
           if (mirror.notes[remote.path]) {
             await invoke('delete_note', { path: target }).catch(() => undefined)
-            delete mirror.notes[remote.path]
+            mirror.notes = without(mirror.notes, remote.path)
           }
           continue
         }
@@ -378,6 +375,7 @@ class Sync {
     const tree = await invoke<Entry>('read_tree', { root: mirror.root }).catch(() => null)
     if (!tree) return false
 
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one pass; nothing renders from it
     const seen = new Set<string>()
     let moved = false
 
@@ -413,7 +411,7 @@ class Sync {
       if (seen.has(path)) continue
 
       await api.deleteNote(token, tracked.id).catch(() => undefined)
-      delete mirror.notes[path]
+      mirror.notes = without(mirror.notes, path)
       moved = true
     }
 
@@ -425,38 +423,72 @@ class Sync {
     const token = account.token
     if (!token) return
 
-    const server = conflict as { note?: { version: number; hash: string }; content?: string }
-    if (!server?.note) return
+    // The body of a 409 is whatever the server sent; only a real version to
+    // base the next write on makes this worth doing at all.
+    const server = isRecord(conflict) ? conflict : {}
+    const theirs = isRecord(server.note) ? server.note : null
+    if (typeof theirs?.version !== 'number') return
 
     await invoke('write_note', {
       path: conflictPath(join(mirror.root, path)),
-      content: server.content ?? '',
+      content: isString(server.content) ? server.content : '',
     })
 
     // Our version is now the newer one; write it over the server's.
     const ours = await invoke<string>('read_note', { path: join(mirror.root, path) })
-    const { note } = await api.writeNote(token, tracked.id, path, ours, server.note.version)
+    const { note } = await api.writeNote(token, tracked.id, path, ours, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
   }
 
   private load(): Record<string, Mirror> {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Record<
-        string,
-        Mirror
-      > &
-        Partial<Stored>
+    const saved = parsed(localStorage.getItem(STORAGE_KEY))
+    if (!isRecord(saved)) return {}
 
-      // Written while the mirrors were wrapped in an object of their own.
-      return saved.mirrors ?? saved
-    } catch {
-      return {}
+    // An older version wrapped the mirrors in an object of their own.
+    const held = isRecord(saved.mirrors) ? saved.mirrors : saved
+
+    const out: Record<string, Mirror> = {}
+    for (const [root, one] of Object.entries(held)) {
+      const mirror = readMirror(root, one)
+      if (mirror) out[root] = mirror
     }
+
+    return out
   }
 
   private save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mirrors))
   }
+}
+
+/** One mirror as it was written down, once it reads as one. A mirror with no
+ *  space to point at is worse than none: the next pass would sync a folder
+ *  against nothing and read every note in it as deleted. */
+function readMirror(root: string, value: unknown): Mirror | null {
+  if (!isRecord(value) || !isString(value.spaceId)) return null
+
+  return {
+    spaceId: value.spaceId,
+    // The key is the folder; an older entry that disagrees with itself takes
+    // the key, which is what every lookup goes through.
+    root,
+    cursor: typeof value.cursor === 'number' ? value.cursor : 0,
+    notes: readTracked(value.notes),
+  }
+}
+
+function readTracked(value: unknown): Record<string, Tracked> {
+  if (!isRecord(value)) return {}
+
+  const out: Record<string, Tracked> = {}
+  for (const [path, one] of Object.entries(value)) {
+    if (!isRecord(one) || !isString(one.id) || !isString(one.hash)) continue
+    if (typeof one.version !== 'number') continue
+
+    out[path] = { id: one.id, version: one.version, hash: one.hash }
+  }
+
+  return out
 }
 
 function flatten(entry: Entry): Entry[] {

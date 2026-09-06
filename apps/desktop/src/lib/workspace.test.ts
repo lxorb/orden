@@ -10,13 +10,18 @@ const notes: Record<string, string> = {
   '/space/b.md': '# b',
 }
 
+/** The path an invoke was given, or an empty one: `args` is a bag of unknowns
+ *  and a path that is not a string is not a path. */
+const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'string' ? args.path : '')
+
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
     if (command !== 'read_note') return undefined
 
-    const doc = notes[String(args?.path)]
-    if (doc === undefined) throw new Error(`no such note: ${String(args?.path)}`)
+    const path = pathOf(args)
+    const doc = notes[path]
+    if (doc === undefined) throw new Error(`no such note: ${path}`)
     return doc
   },
 }))
@@ -30,7 +35,7 @@ function memoryStorage(): Storage {
     },
     key: (index) => [...store.keys()][index] ?? null,
     getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, String(value)),
+    setItem: (key, value) => void store.set(key, value),
     removeItem: (key) => void store.delete(key),
     clear: () => store.clear(),
   }

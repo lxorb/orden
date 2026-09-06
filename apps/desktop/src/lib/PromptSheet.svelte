@@ -41,7 +41,9 @@
             <Select
               value={prompt.space ?? ''}
               options={prompt.spaces.map((one) => ({ value: one.id, label: one.name }))}
-              onchange={(id) => (prompt.space = id)}
+              onchange={(id: string) => {
+                prompt.space = id
+              }}
               label={t('Space')}
             />
           </div>

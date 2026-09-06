@@ -49,7 +49,9 @@ describe('the look of things the browser also has an opinion about', () => {
       .filter((one) => /scrollbar-width:\s*(thin|auto)/.test(one.text))
       .map((one) => one.name)
 
-    expect(offenders, `these would show the browser's scrollbar: ${offenders}`).toEqual([])
+    expect(offenders, `these would show the browser's scrollbar: ${offenders.join(', ')}`).toEqual(
+      [],
+    )
   })
 
   test('no component restyles a dropdown on its own', () => {
@@ -65,6 +67,9 @@ describe('the look of things the browser also has an opinion about', () => {
       )
       .map((one) => one.name)
 
-    expect(offenders, `these would diverge from the themed dropdown: ${offenders}`).toEqual([])
+    expect(
+      offenders,
+      `these would diverge from the themed dropdown: ${offenders.join(', ')}`,
+    ).toEqual([])
   })
 })

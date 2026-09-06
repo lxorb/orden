@@ -22,7 +22,8 @@
     onhistory,
   }: { view?: EditorView | undefined; onpalette: () => void; onhistory: () => void } = $props()
 
-  let picker = $state<IconPicker>()
+  /** The icon sheet, once it is on the page. */
+  let picker = $state<{ choose(id: string): Promise<void> }>()
 
   /** The settings button doubles as the sync light, so its tooltip says what
    *  the light means rather than leaving a colour to be guessed at. */
@@ -117,7 +118,7 @@
    *  finger, so a phone is not missing what a desktop offers. */
   function spaceMenu(space: Space): MenuEntry[] {
     return [
-      { label: t('New note'), run: () => workspace.createNote(space.root) },
+      { label: t('New note'), run: () => void workspace.createNote(space.root) },
       { label: t('Rename'), run: () => void renameSpace(space) },
       { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
       ...revealEntry(space.root),
@@ -127,7 +128,8 @@
   }
 
   function initial(name: string): string {
-    return [...name.trim()][0]?.toUpperCase() ?? '·'
+    const first = name.trim().codePointAt(0)
+    return first === undefined ? '·' : String.fromCodePoint(first).toUpperCase()
   }
 
   const icon = (id: string) => {
@@ -152,6 +154,7 @@
 
   <div class="spaces">
     {#each workspace.spaces as space, index (space.id)}
+      {@const glyph = icon(space.id)}
       <button
         class="space"
         class:active={space.id === workspace.activeSpaceId}
@@ -174,9 +177,9 @@
         oncontextmenu={(event) => menu.show(event, spaceMenu(space), { title: space.name })}
         use:longPress={(event) => menu.show(event, spaceMenu(space), { title: space.name })}
       >
-        {#if icon(space.id)}
+        {#if glyph}
           <svg class="glyph" viewBox="0 0 24 24">
-            {#each icon(space.id)! as [tag, attrs] (JSON.stringify(attrs))}
+            {#each glyph as [tag, attrs] (JSON.stringify(attrs))}
               <svelte:element this={tag} {...attrs} />
             {/each}
           </svg>

@@ -11,7 +11,7 @@ export interface Place {
 }
 
 export type Hit =
-  | { kind: 'field'; pane: Pane; group: Group; field: Field }
+  | { kind: 'field'; section: Section; pane: Pane; group: Group; field: Field }
   | { kind: 'place'; section: Section; label: string }
 
 /** Nobody remembers which pane holds a setting, and often not its exact name
@@ -29,7 +29,9 @@ export function search(query: string, panes: Pane[], places: Place[]): Hit[] {
   for (const pane of panes) {
     for (const group of pane.groups) {
       for (const field of group.fields) {
-        if (words(field, group, pane).some(has)) hits.push({ kind: 'field', pane, group, field })
+        if (words(field, group, pane).some(has)) {
+          hits.push({ kind: 'field', section: pane.id, pane, group, field })
+        }
       }
     }
   }

@@ -45,7 +45,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
     return entry
   }
 
-  make(base)
+  const top = make(base)
 
   for (const row of rows) {
     if (basename(row.path) === KEEP) {
@@ -82,8 +82,8 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
     entry.children.forEach(sort)
   }
 
-  sort(folders.get(base)!)
-  return folders.get(base)!
+  sort(top)
+  return top
 }
 
 async function writeNote(path: string, content: string) {
@@ -355,7 +355,11 @@ export async function webInvoke<T>(
       return (await tree(root, args.options ?? {})) as T
 
     case 'search_space':
-      return (await search(root, args.query as string, (args.limit as number) ?? 100)) as T
+      return (await search(
+        root,
+        args.query as string,
+        (args.limit as number | undefined) ?? 100,
+      )) as T
 
     case 'space_tags':
       return (await spaceTags(root)) as T

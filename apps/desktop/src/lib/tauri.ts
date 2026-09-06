@@ -52,13 +52,15 @@ const browserWindow: WindowLike = {
   // dialog. The handler is still run so unsaved work can be written first.
   onCloseRequested: (handler) => {
     const listener = (event: BeforeUnloadEvent) => {
-      let prevented = false
+      // Written inside the handler's own callback, so it is read back through a
+      // holder the compiler can see changing.
+      const asked = { prevent: false }
       handler({
         preventDefault: () => {
-          prevented = true
+          asked.prevent = true
         },
       })
-      if (prevented) event.preventDefault()
+      if (asked.prevent) event.preventDefault()
     }
 
     window.addEventListener('beforeunload', listener)

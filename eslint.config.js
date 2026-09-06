@@ -39,16 +39,6 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.svelte'],
-    rules: {
-      // `{@render snippet()}` is a statement in the markup, but the parser hands
-      // it over as an expression, so the rule reads every one of them as a void
-      // call in the wrong place. Nothing a component can be written differently
-      // to avoid, and the rule still applies to every `.ts` file.
-      '@typescript-eslint/no-confusing-void-expression': 'off',
-    },
-  },
-  {
     rules: {
       // A promise that nobody awaits or catches is a bug that surfaces as a
       // silent failure; `void promise` says the drop is meant.
@@ -79,6 +69,16 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.svelte'],
+    rules: {
+      // `{@render snippet()}` is a statement in the markup, but the parser hands
+      // it over as an expression, so the rule reads every one of them as a void
+      // call in the wrong place. Nothing a component can be written differently
+      // to avoid, and the rule still holds for every `.ts` file.
+      '@typescript-eslint/no-confusing-void-expression': 'off',
+    },
+  },
+  {
     // Build and tool configuration sits outside every tsconfig, so the rules
     // that need type information cannot see it; the plain rules still apply.
     files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs}'],
@@ -92,6 +92,9 @@ export default tseslint.config(
   {
     files: ['**/*.test.ts', '**/test/**/*.ts'],
     rules: {
+      // A stub standing in for a promise-returning API is written `async`
+      // because that is what it answers, not because it waits for anything.
+      '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',

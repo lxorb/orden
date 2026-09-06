@@ -33,7 +33,7 @@
   }
 
   async function minimize() {
-    if (isDesktop) (await currentWindow()).minimize()
+    if (isDesktop) await (await currentWindow()).minimize()
   }
 
   async function toggleMaximize() {
@@ -44,7 +44,7 @@
   }
 
   async function close() {
-    if (isDesktop) (await currentWindow()).close()
+    if (isDesktop) await (await currentWindow()).close()
   }
 </script>
 
