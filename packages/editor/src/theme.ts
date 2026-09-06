@@ -1,7 +1,7 @@
 import { HighlightStyle } from '@codemirror/language'
 import { EditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
-import { markTags } from './markdown/extensions'
+import { markTags } from './markdown/tags'
 
 /** Chrome for the editor itself. Everything visual reads from the theme tokens,
  *  so swapping a theme restyles the editor without touching this file. */
