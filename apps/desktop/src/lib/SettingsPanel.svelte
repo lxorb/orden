@@ -868,7 +868,7 @@
             {entry.label()}
             {#if entry.alias}<small>{t('Second key')}</small>{/if}
             {#if entry.why}<small>{entry.why()}</small>{/if}
-            {#if warning}<small class="warn">{warning}</small>{/if}
+            {#if warning}<small class="caution">{warning}</small>{/if}
             {#if turnedDown?.id === entry.id}<small class="warn">{turnedDown.reason}</small>{/if}
           </span>
 
@@ -1397,7 +1397,15 @@
     color: #fff;
   }
 
-  /* A key that may never arrive, or one that was turned down. */
+  /* A key that may never arrive. Softened rather than red: on a browser
+     several of the defaults carry one of these, and a column of alarms about
+     something nobody has done yet reads as breakage. */
+  .setting .name small.caution {
+    color: color-mix(in srgb, var(--danger) 55%, var(--muted));
+  }
+
+  /* A key that was turned down, which is an answer to something the reader
+     just did and belongs in the colour of a refusal. */
   .setting .name small.warn {
     color: var(--danger);
   }

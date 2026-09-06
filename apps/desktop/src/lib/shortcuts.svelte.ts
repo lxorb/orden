@@ -628,7 +628,13 @@ class Shortcuts {
    *  neither of them chose. */
   receive(remote: AccountSettings) {
     const theirs = remote.shortcuts
-    if (!theirs || typeof theirs !== 'object') return
+    // An account that has never been told anything about keys takes this
+    // machine's, which is how a choice made before signing in follows the
+    // account afterwards rather than being lost at the door.
+    if (!theirs || typeof theirs !== 'object') {
+      if (Object.keys(this.overrides).length) this.share()
+      return
+    }
 
     const usableOnes = usable(theirs)
     if (JSON.stringify(usableOnes) === JSON.stringify(this.overrides)) return

@@ -229,6 +229,8 @@ describe('what is written down', () => {
     shortcuts.set('format.bold', 'Mod-Alt-b')
     shortcuts.receive({ ligatures: true })
 
+    // Signing in with a choice already made keeps it, and the account is
+    // told: nothing chosen before signing in is lost at the door.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
   })
 })
