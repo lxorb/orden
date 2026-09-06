@@ -1,8 +1,10 @@
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
+import { parseWikilink, shownSpan } from '@nib/markdown/links'
 import { markTags } from './tags'
 import {
   BACKSLASH,
+  BANG,
   BRACKET_CLOSE,
   BRACKET_OPEN,
   CARET,
@@ -14,7 +16,7 @@ import {
 
 /** The constructs Typora writes that CommonMark and GFM do not have: a
  *  highlight, inline and display maths, footnotes, YAML front matter, a
- *  definition list and an abbreviation definition.
+ *  definition list, an abbreviation definition, and Obsidian's wikilinks.
  *
  *  Each is a `MarkdownConfig` naming the nodes it defines and one parser for
  *  them, which is all lezer-markdown needs to be taught a construct. Fenced code
@@ -41,6 +43,60 @@ const Highlight: MarkdownConfig = {
       parse(cx, next, pos) {
         if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1
         return cx.addDelimiter(HIGHLIGHT_DELIMITER, pos, pos + 2, true, true)
+      },
+    },
+  ],
+}
+
+/** `[[Note]]`, `[[Note|shown text]]`, `[[Note#Heading]]`, `[[Note#^blockid]]`,
+ *  and `![[Note]]` for the note's content rather than a link to it.
+ *
+ *  Two marks and nothing between them, on purpose: the first covers everything
+ *  ahead of the words a reader sees - the brackets, the target and the bar of an
+ *  aliased link - and the second covers everything after. So the preview hides
+ *  both the way it hides any other syntax mark, the text left showing is exactly
+ *  what the link says, and a click beside it snaps outside the whole link
+ *  (see live-preview/snap.ts). Where the shown part starts and ends is decided
+ *  by `shownSpan`, which is also what the renderer reads: one grammar. */
+const Wikilink: MarkdownConfig = {
+  defineNodes: [{ name: 'Wikilink' }, { name: 'WikilinkMark', style: tags.processingInstruction }],
+  parseInline: [
+    {
+      name: 'Wikilink',
+      // Ahead of `Link` and of `Image`, either of which would otherwise claim
+      // the brackets and leave a link inside a link.
+      before: 'Link',
+      parse(cx, next, pos) {
+        const embed = next === BANG
+        if (!embed && next !== BRACKET_OPEN) return -1
+
+        const open = embed ? pos + 1 : pos
+        if (cx.char(open) !== BRACKET_OPEN || cx.char(open + 1) !== BRACKET_OPEN) return -1
+
+        for (let i = open + 2; i < cx.end; i++) {
+          const code = cx.char(i)
+          // A link holds one line and no brackets of its own, which is where
+          // Obsidian ends one too.
+          if (code === NEWLINE || code === BRACKET_OPEN) return -1
+          if (code !== BRACKET_CLOSE) continue
+          if (cx.char(i + 1) !== BRACKET_CLOSE) return -1
+
+          const from = open + 2
+          const inner = cx.slice(from, i)
+          if (!parseWikilink(inner, embed)) return -1
+
+          const shown = shownSpan(inner)
+          const to = i + 2
+
+          return cx.addElement(
+            cx.elt('Wikilink', pos, to, [
+              cx.elt('WikilinkMark', pos, from + shown.from),
+              cx.elt('WikilinkMark', from + shown.to, to),
+            ]),
+          )
+        }
+
+        return -1
       },
     },
   ],
@@ -277,4 +333,13 @@ const Abbreviation: MarkdownConfig = {
   ],
 }
 
-export { Abbreviation, BlockMath, DefinitionList, Footnote, FrontMatter, Highlight, InlineMath }
+export {
+  Abbreviation,
+  BlockMath,
+  DefinitionList,
+  Footnote,
+  FrontMatter,
+  Highlight,
+  InlineMath,
+  Wikilink,
+}

@@ -21,7 +21,7 @@ export function hrefOf(target: string): string | null {
 /** Read from the user agent string rather than `navigator.platform`, which is
  *  deprecated, and from the string rather than `userAgentData`, which only
  *  Chromium has. All this decides is whether the modifier is Cmd or Ctrl. */
-const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
+export const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
 /** The tooltip on a link: where it goes, and how to get there without moving
  *  the caret. */
@@ -29,7 +29,9 @@ export function linkTitle(href: string): string {
   return `${href}\n${label(MAC ? 'openLinkMac' : 'openLink')}`
 }
 
-function modifier(event: MouseEvent | KeyboardEvent): boolean {
+/** Whether the key that turns a click into a jump is down. Exported because
+ *  links between notes are followed the same way; see wikilink/follow.ts. */
+export function modifier(event: MouseEvent | KeyboardEvent): boolean {
   return MAC ? event.metaKey : event.ctrlKey
 }
 

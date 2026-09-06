@@ -17,6 +17,11 @@ import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
 import { fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
+import { linkTarget } from '@nib/markdown/links'
+import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
+import { embedOfBlock, EmbedImageWidget, isImageTarget } from '../wikilink/embed'
+import { noteLinkTitle } from '../wikilink/follow'
+import { noteIndex, resolves } from '../wikilink/notes'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import {
   BulletWidget,
@@ -143,6 +148,8 @@ class Decorator {
       case 'Link':
         this.link(node)
         return true
+      case 'Wikilink':
+        return this.wikilink(node)
       case 'URL':
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
         // A bare address, or one between the `<` `>` of an autolink: shown as
@@ -163,15 +170,75 @@ class Decorator {
 
   /** The label of `[label](target)` reads as a link: coloured, underlined, and
    *  the target in its tooltip, which a modifier-click follows (see links.ts).
-   *  The marks around it conceal themselves as usual on the walk below. */
+   *  The marks around it conceal themselves as usual on the walk below.
+   *
+   *  A target that names a note in the space rather than a page on the web is a
+   *  link between notes, and reads as one: `[the plan](ideas/Plan.md)` follows
+   *  and previews exactly as `[[ideas/Plan]]` does. */
   private link(node: SyntaxNode) {
     const open = node.firstChild
     const close = open?.nextSibling
     if (!open || !close || open.name !== 'LinkMark' || close.name !== 'LinkMark') return
 
+    const note = noteLinkOfNode(this.state, node)
+    if (note) {
+      this.noteLink(note, open.to, close.from)
+      return
+    }
+
     const url = node.getChild('URL')
     const target = url ? this.state.doc.sliceString(url.from, url.to) : ''
     this.linkText(open.to, close.from, target)
+  }
+
+  /** `[[Note]]` reads as a link to the note, with its brackets - and the target
+   *  of an aliased link - concealed like any other syntax.
+   *
+   *  An embed alone on its line is drawn as the note's content instead, by
+   *  blocks.ts; inline, or while the caret is inside it, it stays a link, so the
+   *  markup is always reachable. */
+  private wikilink(node: SyntaxNode): boolean {
+    const link = wikilinkOfNode(this.state, node)
+    if (!link) return true
+
+    const shown = overlaps(this.state, node.from, node.to)
+
+    if (link.embed && !shown) {
+      // A picture is a picture wherever it is written; a note is drawn whole by
+      // blocks.ts, and only when it has a line to itself.
+      if (isImageTarget(link.target)) {
+        this.inlineWidget(node, new EmbedImageWidget(link), false)
+        return false
+      }
+      // Its own marks are part of what blocks.ts replaces.
+      if (embedOfBlock(this.state, node.from, node.to)) return false
+    }
+
+    const open = node.firstChild
+    const close = open?.nextSibling
+    if (!open || !close) return true
+
+    this.conceal(open.from, open.to, shown)
+    this.conceal(close.from, close.to, shown)
+    this.noteLink(link, open.to, close.from)
+
+    // Its marks are decorated here; the walk has nothing left to visit.
+    return false
+  }
+
+  /** A link to another note, however it was written. Coloured like any link,
+   *  muted when the space holds no such note - a click on that one makes it -
+   *  and marked `data-note` so follow.ts and the hover preview know what it is. */
+  private noteLink(link: LinkSpan, from: number, to: number) {
+    if (from >= to) return
+
+    const missing = !resolves(this.state.facet(noteIndex), link, link.kind)
+    this.marks.push(
+      Decoration.mark({
+        class: missing ? 'nib-link nib-link-missing' : 'nib-link',
+        attributes: { 'data-note': linkTarget(link), title: noteLinkTitle(link, missing) },
+      }).range(from, to),
+    )
   }
 
   private linkText(from: number, to: number, target: string) {
@@ -465,9 +532,15 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       // Numbering is here as well as in blocks.ts: an inline `\eqref` resolves to
       // the number a display equation was given, so turning the numbers off has
       // to redraw the references too.
+      //
+      // The note index belongs here for the same reason: whether a `[[link]]`
+      // points at a note that exists is what decides how it is drawn, and the
+      // answer changes when a note is saved, made or renamed - none of which
+      // touches this document.
       const sealed =
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
-        update.startState.facet(numberEquations) !== update.state.facet(numberEquations)
+        update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
+        update.startState.facet(noteIndex) !== update.state.facet(noteIndex)
       if (
         update.docChanged ||
         update.viewportChanged ||

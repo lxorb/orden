@@ -6,6 +6,7 @@ import {
 import type { Extension } from '@codemirror/state'
 import { get, search } from 'node-emoji'
 import { snippetCompletions } from './snippets'
+import { wikilinkCompletions } from './wikilink/complete'
 
 /** `:smile:` → 😄, or null when the name is not one. */
 export function emojiFor(shortcode: string): string | null {
@@ -32,7 +33,12 @@ function completions(context: CompletionContext): CompletionResult | null {
   }
 }
 
-/** Emoji shortcodes and user snippets share one popup. */
+/** Emoji shortcodes, user snippets and the notes a `[[` link can name all share
+ *  one popup: each source answers for the characters that open it, so only one
+ *  of them ever has anything to say. */
 export function editorCompletion(): Extension {
-  return autocompletion({ override: [completions, snippetCompletions], icons: false })
+  return autocompletion({
+    override: [completions, snippetCompletions, wikilinkCompletions],
+    icons: false,
+  })
 }

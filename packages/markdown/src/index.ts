@@ -1,6 +1,7 @@
 import { Marked, Renderer } from 'marked'
 import type { Tokens } from 'marked'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
+import { slugify } from './links'
 import {
   abbreviations,
   callouts,
@@ -49,18 +50,6 @@ function plainText(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .trim()
-}
-
-/** The id a heading gets, the way GitHub forms them: lowercase words joined
- *  with hyphens, letters of any script kept. */
-export function slugify(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/[^\p{L}\p{N}\s_-]/gu, '')
-      .replace(/\s+/g, '-') || 'section'
-  )
 }
 
 /** The default renderer's own methods, which an override calls to add a class or
@@ -339,3 +328,22 @@ export {
   maths,
   scripts,
 } from './extensions'
+// The link grammar is its own module - `@nib/markdown/links` - so the editor can
+// have it without the renderer that stands on it. Passed on from here too, for
+// everything that already reads this package.
+export {
+  blockIdOf,
+  blockIds,
+  findLinks,
+  type FoundLink,
+  formatWikilink,
+  isNoteTarget,
+  type LinkKind,
+  linkTarget,
+  parseWikilink,
+  sectionOf,
+  shownSpan,
+  shownText,
+  slugify,
+  type Wikilink,
+} from './links'

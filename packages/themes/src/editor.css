@@ -121,6 +121,21 @@
   cursor: pointer;
 }
 
+/* A link to a note the space has not got. Muted rather than marked wrong: the
+   note may simply not be written yet, and a click is what writes it. The dotted
+   underline is the only difference, which is enough to read at a glance. */
+.nib-link-missing,
+.nib-link-missing * {
+  color: var(--muted-strong);
+  text-decoration-style: dotted;
+  text-decoration-color: var(--muted);
+}
+.nib-link-missing:hover,
+.nib-link-missing:hover * {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
 /* `<u>text</u>`, with the tags hidden the way `**` is. */
 .nib-underline {
   text-decoration: underline;
@@ -1794,4 +1809,146 @@
     filter: blur(6px);
     transform: scale(0.99);
   }
+}
+
+/* ── Embedded notes ──────────────────────────────────────────────── */
+
+/* `![[Note]]` on a line of its own: the note itself, framed, with its name
+   along the bottom. The frame is the whole of what says "this is somewhere
+   else" - no heading, no icon, no sentence. */
+.nib-embed {
+  display: block;
+  margin: 0.6em 0 1.2em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  overflow: hidden;
+  animation: settle-in var(--dur-base) var(--ease-out);
+}
+
+.nib-embed-body {
+  /* An embed of a long note scrolls inside its frame rather than pushing the
+     note being written off the screen. */
+  max-height: 22em;
+  padding: 0.2em var(--space-4) 0.4em;
+  overflow: auto;
+  /* Smaller than the note around it, so the two are never confused and the
+     first heading inside does not shout over the writing. */
+  font-size: 0.94em;
+}
+
+.nib-embed-body > :first-child {
+  margin-top: 0.6em;
+}
+
+.nib-embed-body > :last-child {
+  margin-bottom: 0.4em;
+}
+
+/* The name is a button because it opens the note; it reads as a caption. */
+.nib-embed-name {
+  display: block;
+  width: 100%;
+  padding: 5px var(--space-4) 6px;
+  border: none;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.nib-embed-name:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.nib-embed-name:active {
+  background: var(--press);
+}
+
+/* Nothing to show yet, or nothing to show at all. Both keep the frame, so the
+   markup behind it is still where the writer left it. */
+.nib-embed-loading .nib-embed-body,
+.nib-embed-missing .nib-embed-body {
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.nib-embed-missing {
+  border-style: dashed;
+}
+
+/* `![[picture.png]]`: a picture, and nothing around it. The frame, the handles
+   and the toolbar belong to `![](…)`, which is the note's own image. */
+.nib-embed-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  vertical-align: middle;
+}
+
+/* ── The note behind a link ──────────────────────────────────────── */
+
+/* Ctrl+hover over a link between notes. A card the size of a glance: the name
+   at the top, the note under it, gone when the pointer moves away. */
+.cm-tooltip.cm-tooltip-hover:has(.nib-note-preview) {
+  border: none;
+  background: none;
+}
+
+.nib-note-preview {
+  width: min(30rem, 78vw);
+  max-height: 20em;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  animation: settle-in var(--dur-fast) var(--ease-out);
+}
+
+.nib-note-preview-name {
+  padding: 6px var(--space-3) 5px;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.nib-note-preview-body {
+  max-height: 17em;
+  padding: 0 var(--space-3);
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.9em;
+  /* The note runs out under a fade rather than at a hard edge, which says
+     there is more of it without a word. */
+  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+
+.nib-note-preview-body > :first-child {
+  margin-top: 0.7em;
+}
+
+/* Before it has arrived, or when there is nothing to show: one line of words,
+   which wants the padding the note's own paragraphs bring with them. */
+.nib-note-preview-body:not(:has(*)) {
+  padding: var(--space-3);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  mask-image: none;
 }

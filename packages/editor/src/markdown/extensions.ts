@@ -6,6 +6,7 @@ import {
   FrontMatter,
   Highlight,
   InlineMath,
+  Wikilink,
 } from './constructs'
 import { FencedCode } from './fences'
 
@@ -19,6 +20,9 @@ import { FencedCode } from './fences'
  *  The constructs themselves are in constructs.ts, fenced code in fences.ts,
  *  the characters and tags they are written with in syntax.ts and tags.ts. */
 export const nibMarkdownExtensions = [
+  // First, so `[[…]]` and `![[…]]` are one link rather than a link or an image
+  // wrapped around another one.
+  Wikilink,
   Highlight,
   InlineMath,
   BlockMath,

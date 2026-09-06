@@ -413,8 +413,13 @@ describe('links', () => {
     ])
   })
 
-  test('a note-relative target is styled but not a browser link', () => {
-    expect(linkMarks('see [other](notes/other.md) now')).toEqual([{ text: 'other', href: null }])
+  test('an anchor in the same document is styled but is not a browser link', () => {
+    expect(linkMarks('see [below](#heading) now')).toEqual([{ text: 'below', href: null }])
+  })
+
+  test('a target inside the space is a link between notes, not a browser link', () => {
+    // Which is `data-note` rather than `data-href`; see the wikilink tests.
+    expect(linkMarks('see [other](notes/other.md) now')).toEqual([])
   })
 })
 

@@ -13,6 +13,9 @@ import { editorCompletion } from './emoji'
 import { external } from './external'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
+import { wikilinks } from './wikilink'
+import { blockNamer } from './wikilink/complete'
+import { type NoteIndex, noteIndexExtension, type NoteJump, noteOpener } from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
 import { closeFence } from './commands'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
@@ -53,10 +56,19 @@ export interface EditorOptions {
   /** Keys the reader chose, as differences from the defaults. Changed later
    *  through `setShortcutKeys`; this is only what the editor opens with. */
   shortcuts?: KeyOverrides
+  /** The space around this note: which notes exist and what they say, so
+   *  `[[wikilinks]]` can be drawn, completed, followed and previewed. Set later
+   *  through `setNoteIndex`; this is only what the editor opens with. */
+  notes?: NoteIndex
+  /** Follows a link between notes: opens it, or makes it when there is none. */
+  openNote?: (jump: NoteJump) => void
+  /** Names a block of another note, so a link can point at the block. */
+  nameBlock?: (path: string, line: number) => Promise<string | null>
 }
 
 export function createEditor(options: EditorOptions): EditorView {
-  const { parent, doc = '', onChange, onImage, resolveImage, onSelection, openLink } = options
+  const { parent, doc = '', onChange, onImage, resolveImage, onSelection } = options
+  const { openLink, openNote, nameBlock } = options
   return new EditorView({
     parent,
     state: EditorState.create({
@@ -83,6 +95,12 @@ export function createEditor(options: EditorOptions): EditorView {
         ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
         linkClicks,
         ...(openLink ? [linkOpener.of(openLink)] : []),
+        // Links between notes: drawn, followed, completed and previewed. What
+        // notes there are comes from the app; see wikilink/index.ts.
+        wikilinks(),
+        noteIndexExtension(options.notes),
+        ...(openNote ? [noteOpener.of(openNote)] : []),
+        ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
         nibTheme,
         // Above the markdown language's own Enter, which continues a list or
         // a quote and would otherwise take the key on a fence inside one.

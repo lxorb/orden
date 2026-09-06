@@ -1,0 +1,339 @@
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
+import { EditorSelection, EditorState } from '@codemirror/state'
+import { describe, expect, test } from 'vitest'
+import { nibMarkdownExtensions } from '../markdown/extensions'
+import { buildBlockDecorations } from '../live-preview/blocks'
+import { buildDecorations } from '../live-preview/decorate'
+import { linkAt } from './at'
+import { embedOfBlock, isImageTarget } from './embed'
+import {
+  jumpFor,
+  type NoteIndex,
+  noteIndex,
+  type NoteRef,
+  resolveNote,
+  resolveRelative,
+  resolves,
+} from './notes'
+
+/** Somewhere to park the caret that is outside every construct under test. */
+const PARK = '\n\nx'
+
+function note(path: string, headings: string[] = [], blocks: string[] = []): NoteRef {
+  return {
+    path,
+    name: (path.split('/').pop() ?? path).replace(/\.[^.]+$/, ''),
+    headings,
+    blocks,
+  }
+}
+
+function index(notes: NoteRef[], path: string | null = null, bodies: Record<string, string> = {}) {
+  const built: NoteIndex = {
+    notes,
+    path,
+    read: (wanted) => Promise.resolve(bodies[wanted] ?? null),
+  }
+  return built
+}
+
+const SPACE = index(
+  [note('Plan.md', ['Today', 'Later']), note('ideas/Plan.md'), note('ideas/Spark.md')],
+  'Plan.md',
+)
+
+function state(doc: string, cursor: number, notes = SPACE) {
+  return EditorState.create({
+    doc,
+    selection: EditorSelection.cursor(cursor),
+    extensions: [
+      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+      noteIndex.of(notes),
+    ],
+  })
+}
+
+/** Every node of one name in a document, as the text it covers. */
+function nodes(doc: string, name: string): string[] {
+  const out: string[] = []
+  const tree = syntaxTree(state(doc, 0))
+  tree.iterate({
+    enter: (node) => {
+      if (node.name === name) out.push(doc.slice(node.from, node.to))
+    },
+  })
+  return out
+}
+
+describe('the parser sees a wikilink', () => {
+  test('in every spelling', () => {
+    expect(nodes('a [[Note]] b', 'Wikilink')).toEqual(['[[Note]]'])
+    expect(nodes('[[Note|shown]]', 'Wikilink')).toEqual(['[[Note|shown]]'])
+    expect(nodes('[[Note#Heading]]', 'Wikilink')).toEqual(['[[Note#Heading]]'])
+    expect(nodes('[[Note#^abc]]', 'Wikilink')).toEqual(['[[Note#^abc]]'])
+    expect(nodes('![[Note]]', 'Wikilink')).toEqual(['![[Note]]'])
+    expect(nodes('[[folder/A Note.md]]', 'Wikilink')).toEqual(['[[folder/A Note.md]]'])
+  })
+
+  test('with the marks around the words a reader sees', () => {
+    expect(nodes('[[Note]]', 'WikilinkMark')).toEqual(['[[', ']]'])
+    expect(nodes('[[Note|shown]]', 'WikilinkMark')).toEqual(['[[Note|', ']]'])
+    expect(nodes('![[Note]]', 'WikilinkMark')).toEqual(['![[', ']]'])
+    expect(nodes('[[ Note ]]', 'WikilinkMark')).toEqual(['[[ ', ' ]]'])
+    // An alias that is only space is no alias, so the target is what shows.
+    expect(nodes('[[Note| ]]', 'WikilinkMark')).toEqual(['[[', '| ]]'])
+  })
+
+  test('and does not see one where there is none', () => {
+    expect(nodes('[[]]', 'Wikilink')).toEqual([])
+    expect(nodes('[[a]b]]', 'Wikilink')).toEqual([])
+    expect(nodes('[[a\nb]]', 'Wikilink')).toEqual([])
+    expect(nodes('[single]', 'Wikilink')).toEqual([])
+  })
+
+  test('a backslash makes it text, as it does for any bracket', () => {
+    expect(nodes('\\[[Note]]', 'Wikilink')).toEqual([])
+  })
+
+  test('code holds no links', () => {
+    expect(nodes('`[[Note]]`', 'Wikilink')).toEqual([])
+    expect(nodes('```\n[[Note]]\n```', 'Wikilink')).toEqual([])
+  })
+
+  test('the brackets are not read as a link or an image as well', () => {
+    expect(nodes('[[Note]]', 'Link')).toEqual([])
+    expect(nodes('![[pic.png]]', 'Image')).toEqual([])
+  })
+})
+
+/** The link marks a document gets: the words shown, the target, and whether the
+ *  space could answer for it. */
+function linkMarks(doc: string, cursor?: number, notes = SPACE) {
+  const full = cursor === undefined ? doc + PARK : doc
+  const out: { text: string; note: string | null; missing: boolean }[] = []
+
+  buildDecorations(state(full, cursor ?? full.length, notes)).decorations.between(
+    0,
+    full.length,
+    (from, to, value) => {
+      const classes = String(value.spec.class ?? '')
+      if (!classes.includes('nib-link')) return
+
+      out.push({
+        text: full.slice(from, to),
+        note: value.spec.attributes?.['data-note'] ?? null,
+        missing: classes.includes('nib-link-missing'),
+      })
+    },
+  )
+
+  return out
+}
+
+/** Text the reader never sees. */
+function concealed(doc: string, cursor?: number): string[] {
+  const full = cursor === undefined ? doc + PARK : doc
+  const out: string[] = []
+  buildDecorations(state(full, cursor ?? full.length)).atomic.between(
+    0,
+    full.length,
+    (from, to) => {
+      out.push(full.slice(from, to))
+    },
+  )
+  return out
+}
+
+describe('a wikilink in the live preview', () => {
+  test('shows the target and hides the brackets', () => {
+    expect(linkMarks('see [[Plan]] now')).toEqual([{ text: 'Plan', note: 'Plan', missing: false }])
+    expect(concealed('see [[Plan]] now')).toEqual(['[[', ']]'])
+  })
+
+  test('shows the alias and hides the target with it', () => {
+    expect(linkMarks('see [[Plan|the plan]] now')).toEqual([
+      { text: 'the plan', note: 'Plan', missing: false },
+    ])
+    expect(concealed('see [[Plan|the plan]] now')).toEqual(['[[Plan|', ']]'])
+  })
+
+  test('keeps a heading and a block in what it shows', () => {
+    expect(linkMarks('[[Plan#Today]]')).toEqual([
+      { text: 'Plan#Today', note: 'Plan#Today', missing: false },
+    ])
+    expect(linkMarks('[[Plan#^abc]]')).toEqual([
+      { text: 'Plan#^abc', note: 'Plan#^abc', missing: false },
+    ])
+  })
+
+  test('a name nothing answers to is drawn muted', () => {
+    expect(linkMarks('[[Nowhere]]')).toEqual([{ text: 'Nowhere', note: 'Nowhere', missing: true }])
+  })
+
+  test('a link into this note is never missing', () => {
+    expect(linkMarks('[[#Today]]')).toEqual([{ text: '#Today', note: '#Today', missing: false }])
+  })
+
+  test('the caret inside shows the whole link as source', () => {
+    const doc = 'see [[Plan|the plan]] now'
+    expect(concealed(doc, 10)).toEqual([])
+  })
+
+  test('a markdown link into the space reads as a link between notes', () => {
+    expect(linkMarks('see [the plan](ideas/Plan.md) now')).toEqual([
+      { text: 'the plan', note: 'ideas/Plan.md', missing: false },
+    ])
+  })
+
+  test('a markdown link out at the web is left to links.ts', () => {
+    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([
+      { text: 'docs', note: null, missing: false },
+    ])
+  })
+
+  test('unicode and spaces in a name survive', () => {
+    const notes = index([note('Mémo für Späteres.md'), note('日本語のノート.md')])
+    expect(linkMarks('[[Mémo für Späteres]]', undefined, notes)[0]).toMatchObject({
+      text: 'Mémo für Späteres',
+      missing: false,
+    })
+    expect(linkMarks('[[日本語のノート]]', undefined, notes)[0]).toMatchObject({ missing: false })
+  })
+})
+
+describe('which note a name means', () => {
+  test('a whole path wins over the end of one', () => {
+    expect(resolveNote(SPACE, 'ideas/Plan')?.path).toBe('ideas/Plan.md')
+    expect(resolveNote(SPACE, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
+  })
+
+  test('a bare name finds a note wherever it lives', () => {
+    expect(resolveNote(index([note('deep/down/Spark.md')]), 'Spark')?.path).toBe(
+      'deep/down/Spark.md',
+    )
+  })
+
+  test('case does not matter', () => {
+    expect(resolveNote(SPACE, 'sPaRk')?.path).toBe('ideas/Spark.md')
+  })
+
+  test('two notes of one name: the one beside the note that links to it', () => {
+    const here = index([note('Plan.md'), note('ideas/Plan.md')], 'ideas/Notes.md')
+    expect(resolveNote(here, 'Plan')?.path).toBe('ideas/Plan.md')
+
+    const top = index([note('deep/Plan.md'), note('Plan.md')], 'Elsewhere.md')
+    expect(resolveNote(top, 'Plan')?.path).toBe('Plan.md')
+  })
+
+  test('nothing at all is nothing', () => {
+    expect(resolveNote(SPACE, 'Nowhere')).toBeNull()
+    expect(resolveNote(SPACE, '   ')).toBeNull()
+  })
+
+  test('a relative markdown target folds against the note it was written in', () => {
+    const here = index([note('ideas/Spark.md'), note('Plan.md')], 'ideas/Deep/Note.md')
+    expect(resolveRelative(here, '../Spark.md')?.path).toBe('ideas/Spark.md')
+    expect(resolveRelative(here, '../../Plan.md')?.path).toBe('Plan.md')
+    expect(resolveRelative(here, './Nothing.md')).toBeNull()
+  })
+})
+
+describe('where a link goes', () => {
+  const wiki = (target: string, heading: string | null = null, block: string | null = null) => ({
+    target,
+    heading,
+    block,
+    alias: null,
+    embed: false,
+  })
+
+  test('to the note it names, with the heading it names', () => {
+    expect(jumpFor(SPACE, wiki('ideas/Spark', 'Later'), 'wikilink')).toEqual({
+      path: 'ideas/Spark.md',
+      target: 'ideas/Spark',
+      heading: 'Later',
+      block: null,
+    })
+  })
+
+  test('to nowhere for a name nothing answers to, which is the cue to make it', () => {
+    expect(jumpFor(SPACE, wiki('Nowhere'), 'wikilink').path).toBeNull()
+    expect(resolves(SPACE, wiki('Nowhere'), 'wikilink')).toBe(false)
+  })
+
+  test('to this note for a link with no target', () => {
+    expect(jumpFor(SPACE, wiki('', 'Today'), 'wikilink').path).toBe('Plan.md')
+  })
+})
+
+describe('the link under a position', () => {
+  test('is found from inside it and from either edge', () => {
+    const doc = 'see [[Plan#Today]] now'
+    for (const at of [4, 8, 18]) {
+      expect(linkAt(state(doc, 0), at)).toMatchObject({ target: 'Plan', heading: 'Today' })
+    }
+  })
+
+  test('is nothing where there is no link', () => {
+    expect(linkAt(state('plain words', 0), 3)).toBeNull()
+  })
+
+  test('reads a markdown link as well', () => {
+    expect(linkAt(state('[a](ideas/Plan.md)', 0), 2)).toMatchObject({
+      kind: 'markdown',
+      target: 'ideas/Plan.md',
+      alias: 'a',
+    })
+  })
+})
+
+/** Whole-line constructs replaced by a rendered block. */
+function blocks(doc: string, cursor?: number): string[] {
+  const full = cursor === undefined ? doc + PARK : doc
+  const out: string[] = []
+  buildBlockDecorations(state(full, cursor ?? full.length)).between(0, full.length, (from, to) => {
+    out.push(full.slice(from, to))
+  })
+  return out
+}
+
+describe('an embed', () => {
+  test('alone between blank lines is drawn as the note', () => {
+    expect(blocks('one\n\n![[Plan]]\n\ntwo')).toEqual(['![[Plan]]'])
+  })
+
+  test('with words beside it stays a link', () => {
+    expect(blocks('see ![[Plan]] here')).toEqual([])
+    expect(linkMarks('see ![[Plan]] here')).toEqual([
+      { text: 'Plan', note: 'Plan', missing: false },
+    ])
+  })
+
+  test('on a line inside a paragraph stays a link', () => {
+    expect(blocks('one\n![[Plan]]\ntwo')).toEqual([])
+  })
+
+  test('is source again while the caret is in it', () => {
+    expect(blocks('one\n\n![[Plan]]\n\ntwo', 8)).toEqual([])
+  })
+
+  test('a picture is a picture wherever it is written', () => {
+    expect(blocks('one\n\n![[pic.png]]\n\ntwo')).toEqual([])
+    expect(concealed('one\n\n![[pic.png]]\n\ntwo')).toEqual(['![[pic.png]]'])
+  })
+
+  test('which targets are pictures', () => {
+    expect(isImageTarget('a/b/pic.PNG')).toBe(true)
+    expect(isImageTarget('drawing.svg')).toBe(true)
+    expect(isImageTarget('Note.md')).toBe(false)
+    expect(isImageTarget('Note')).toBe(false)
+  })
+
+  test('the block reading and the inline reading agree', () => {
+    const doc = 'one\n\n![[Plan]]\n\ntwo'
+    const found = embedOfBlock(state(doc, 0), 5, 14)
+    expect(found).toMatchObject({ target: 'Plan', embed: true })
+    expect(embedOfBlock(state('x ![[Plan]]', 0), 2, 11)).toBeNull()
+  })
+})

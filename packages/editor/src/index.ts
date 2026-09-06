@@ -26,6 +26,13 @@ export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'
 export { imageResolver, type ImageSink } from './images'
 export { hrefOf, linkOpener } from './links'
+export {
+  type NoteIndex,
+  type NoteJump,
+  type NoteRef,
+  resolveNote,
+  setNoteIndex,
+} from './wikilink/notes'
 export { setSnippets, snippets } from './snippets'
 export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {

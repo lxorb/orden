@@ -11,6 +11,8 @@ import {
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
+import { embedOfBlock, embedWidget, isImageTarget } from '../wikilink/embed'
+import { noteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { lineRevealed, noReveal, overlaps } from './reveal'
@@ -155,6 +157,27 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
         }
 
         case 'Paragraph': {
+          // `![[Note]]` alone between blank lines shows the note itself. Asked
+          // first because such a paragraph is nothing else, and asked of the
+          // paragraph rather than of the link inside it: walking into every
+          // one-line paragraph of a note to find the link would cost more than
+          // every other construct here put together. Anywhere but on a line of
+          // its own an embed stays a link, and a picture is drawn inline
+          // whichever it is; live-preview/decorate.ts draws both of those.
+          const embed = embedOfBlock(state, node.from, node.to)
+          if (embed && !isImageTarget(embed.target)) {
+            const span = found(node.from, node.to)
+            if (revealed(node.from, node.to)) return false
+
+            ranges.push(
+              Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
+                span.from,
+                span.to,
+              ),
+            )
+            return false
+          }
+
           // `[toc]` on its own line renders the document's headings. Anything
           // longer than that cannot be one, and is dismissed without reading
           // the line out of the document at all.
@@ -286,7 +309,10 @@ function settingsChanged(transaction: Transaction): boolean {
   const after = transaction.state
   return (
     before.facet(noReveal) !== after.facet(noReveal) ||
-    before.facet(numberEquations) !== after.facet(numberEquations)
+    before.facet(numberEquations) !== after.facet(numberEquations) ||
+    // An embed shows another note, so what that note says decides what is drawn
+    // here even though nothing in this document moved.
+    before.facet(noteIndex) !== after.facet(noteIndex)
   )
 }
 
