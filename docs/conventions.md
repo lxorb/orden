@@ -3,6 +3,22 @@
 What the code is held to, and how to check it before a commit. CI runs the
 same commands on every push to `main`.
 
+## Product
+
+- As little text as it gets. No explanatory copy; a shape, a position or a
+  short word says it. Nobody should have to learn the app: it behaves the way
+  a person would guess, following file-manager, browser-tab and Typora habits.
+- One design everywhere. The tokens in `packages/themes/src/tokens.css` are
+  the only colours, spacings, radii and durations; a new surface reuses an
+  existing component shape before it invents one.
+- It answers at once and it moves. Every click has a pressed state, changes
+  show optimistically, and state changes are eased with the short transitions
+  already in use (100 to 190 ms). Editing a note should feel really nice.
+- Fast is a feature. Nothing done per keystroke may scale with the document;
+  measure before and after, and keep the numbers in the commit message.
+- Well-written code is a requirement: DRY, one responsibility per file, small
+  functions with names that say what they return.
+
 ## Layout
 
 | Package | What it owns |
