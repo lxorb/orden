@@ -1,0 +1,365 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  type BindingSpec,
+  defaultKeyFor,
+  imageBindings,
+  nibBindings,
+  nibKeymap,
+  standardBindings,
+  tableBindings,
+} from '@nib/editor'
+import { sameCombination } from './keys'
+
+/** The store writes to the browser's storage and asks the browser what kind
+ *  of machine this is, and there is neither under node. */
+function memoryStorage(): Storage {
+  const store = new Map<string, string>()
+
+  return {
+    get length() {
+      return store.size
+    },
+    key: (index) => [...store.keys()][index] ?? null,
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => void store.set(key, String(value)),
+    removeItem: (key) => void store.delete(key),
+    clear: () => store.clear(),
+  }
+}
+
+vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+
+let registry: typeof import('./shortcuts.svelte')
+
+/** The store as a fresh start of the app would find it. */
+async function restarted() {
+  vi.resetModules()
+  const module = await import('./shortcuts.svelte')
+  module.shortcuts.restore()
+  return module
+}
+
+beforeEach(async () => {
+  localStorage.clear()
+  registry = await restarted()
+})
+
+/** A keystroke, as the window would hand one over. */
+function press(key: string, held: { code?: string; ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
+  return {
+    key,
+    code: held.code,
+    ctrlKey: !!held.ctrl,
+    metaKey: false,
+    altKey: !!held.alt,
+    shiftKey: !!held.shift,
+    preventDefault: () => undefined,
+  } as unknown as KeyboardEvent
+}
+
+const PLATFORMS = ['mac', 'win', 'linux'] as const
+
+describe('every shortcut there is', () => {
+  test('has an id nothing else has', () => {
+    const ids = registry.SHORTCUTS.map((one) => one.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  /** This is the guard the whole thing hangs on: a binding added to the
+   *  editor package without a name and a place in the settings would be a
+   *  shortcut nobody can find or change, which is the one thing this is meant
+   *  to make impossible. */
+  test.each([
+    ['the markdown bindings', nibBindings],
+    ['the ones taken over from CodeMirror', standardBindings],
+    ['the table bindings', tableBindings],
+    ['the picture bindings', imageBindings],
+  ])('covers %s', (_name, specs: BindingSpec[]) => {
+    const missing = specs.filter((spec) => !registry.SHORTCUTS.some((one) => one.id === spec.id))
+    expect(missing.map((spec) => spec.id)).toEqual([])
+  })
+
+  test('gives every one of them a name of its own rather than its id', () => {
+    const unnamed = registry.SHORTCUTS.filter((one) => one.label() === one.id)
+    expect(unnamed.map((one) => one.id)).toEqual([])
+  })
+
+  test('starts each on the key the editor installs it with', () => {
+    for (const spec of [...nibBindings, ...standardBindings, ...tableBindings, ...imageBindings]) {
+      const entry = registry.SHORTCUTS.find((one) => one.id === spec.id)!
+      for (const platform of PLATFORMS) {
+        expect(defaultKeyFor(entry, platform), spec.id).toBe(defaultKeyFor(spec, platform))
+      }
+    }
+  })
+
+  test('holds a key for everything nibKeymap binds', () => {
+    const listed = registry.SHORTCUTS.map((one) => one.key)
+    for (const binding of nibKeymap) expect(listed, binding.key).toContain(binding.key)
+  })
+
+  /** Two entries on one key means one of them never fires. The contextual
+   *  ones are the exception by design: they look for a table or a picture and
+   *  give way when there is none, which is how six of them sit on the arrow
+   *  keys without taking them. */
+  test.each(PLATFORMS)('starts nothing on a key something else starts on (%s)', (platform) => {
+    const held = new Map<string, string>()
+    const clashes: string[] = []
+
+    for (const entry of registry.SHORTCUTS) {
+      if (entry.contextual) continue
+
+      const key = defaultKeyFor(entry, platform)
+      if (!key) continue
+
+      for (const [taken, by] of held) {
+        if (sameCombination(taken, key, platform)) clashes.push(`${entry.id} and ${by} both start on ${key}`)
+      }
+      held.set(key, entry.id)
+    }
+
+    expect(clashes).toEqual([])
+  })
+})
+
+describe('choosing a key', () => {
+  test('wins over the default', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+  })
+
+  test('can be no key at all', () => {
+    const { shortcuts } = registry
+    shortcuts.set('format.bold', null)
+    expect(shortcuts.keyFor('format.bold')).toBeNull()
+    expect(shortcuts.hint('format.bold')).toBeUndefined()
+  })
+
+  test('is put back by resetting it', () => {
+    const { shortcuts } = registry
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+    shortcuts.reset('format.bold')
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    expect(shortcuts.changed('format.bold')).toBe(false)
+  })
+
+  test('and by resetting all of them', () => {
+    const { shortcuts } = registry
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+    shortcuts.set('app.save', null)
+    shortcuts.resetAll()
+
+    expect(shortcuts.overrides).toEqual({})
+    expect(shortcuts.keyFor('app.save')).toBe('Mod-s')
+  })
+
+  test('is refused where it would fire while typing', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.refuse('k')).not.toBeNull()
+    expect(shortcuts.refuse('Shift-k')).not.toBeNull()
+    // A key with no character of its own is fine on its own.
+    expect(shortcuts.refuse('F7')).toBeNull()
+    expect(shortcuts.refuse('Mod-k')).toBeNull()
+  })
+
+  test('is warned about when the machine underneath usually keeps it', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.warning('Alt-F4')).not.toBeNull()
+    expect(shortcuts.warning('Mod-Alt-b')).toBeNull()
+    expect(shortcuts.warning(null)).toBeNull()
+  })
+})
+
+describe('what is written down', () => {
+  test('is only what differs from the defaults', async () => {
+    const { shortcuts } = registry
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+
+    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({ 'format.bold': 'Mod-Alt-b' })
+  })
+
+  /** The reason only the differences are kept: a full dump would freeze
+   *  today's defaults into the file, and the day a default changes nobody
+   *  would ever see the new one. */
+  test('lets a default that changed later reach the reader', async () => {
+    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
+    const { shortcuts } = await restarted()
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+    // Everything else follows whatever the app says today.
+    expect(shortcuts.keyFor('format.italic')).toBe(defaultKeyFor(nibBindings[1], 'win'))
+  })
+
+  test('keeps an id this version has never heard of', async () => {
+    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'from.the.future': 'Mod-9' }))
+    const { shortcuts } = await restarted()
+
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({
+      'from.the.future': 'Mod-9',
+      'format.bold': 'Mod-Alt-b',
+    })
+  })
+
+  test('survives a file that is nonsense', async () => {
+    localStorage.setItem('nib:shortcuts', '{{{')
+    expect((await restarted()).shortcuts.keyFor('format.bold')).toBe('Mod-b')
+
+    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 42, 'app.save': null }))
+    const { shortcuts } = await restarted()
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    expect(shortcuts.keyFor('app.save')).toBeNull()
+  })
+
+  test('comes back from the account', () => {
+    const { shortcuts } = registry
+    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({ 'format.bold': 'Mod-Alt-b' })
+  })
+
+  test('is left alone by an account that carries none', () => {
+    const { shortcuts } = registry
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+    shortcuts.receive({ ligatures: true })
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+  })
+})
+
+describe('two shortcuts on one key', () => {
+  test('is a conflict, and says whose key it is', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('app.save', 'Mod-o').map((one) => one.id)).toEqual(['app.open'])
+  })
+
+  test('counts across the app and the editor, which cannot share one', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('app.save', 'Mod-b').map((one) => one.id)).toEqual(['format.bold'])
+  })
+
+  test('is not a conflict when nothing else is on the key', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('app.save', 'Mod-Alt-9')).toEqual([])
+  })
+
+  test('follows the keys as they are now, not as they started', () => {
+    const { shortcuts } = registry
+    shortcuts.set('app.open', 'Mod-Alt-o')
+
+    expect(shortcuts.conflicts('app.save', 'Mod-o')).toEqual([])
+    expect(shortcuts.conflicts('app.save', 'Mod-Alt-o').map((one) => one.id)).toEqual(['app.open'])
+  })
+
+  test('leaves the contextual ones out, which is how they share the arrows', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.conflicts('table.below', 'ArrowUp')).toEqual([])
+    expect(shortcuts.conflicts('app.save', 'ArrowDown')).toEqual([])
+  })
+
+  test('is resolved by taking the key, which leaves the other with none', () => {
+    const { shortcuts } = registry
+    shortcuts.set('app.open', null)
+    shortcuts.set('app.save', 'Mod-o')
+
+    expect(shortcuts.keyFor('app.open')).toBeNull()
+    expect(shortcuts.keyFor('app.save')).toBe('Mod-o')
+    expect(shortcuts.conflicts('app.save', 'Mod-o')).toEqual([])
+  })
+
+  test('names the fixed key a combination would land on', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.fixedHolder('Mod-x')?.id).toBe('fixed.cut')
+    expect(shortcuts.fixedHolder('Mod-Alt-9')).toBeUndefined()
+  })
+})
+
+describe('the keyboard', () => {
+  test('runs what the key is bound to', () => {
+    const { shortcuts } = registry
+    let opened = 0
+
+    const ran = shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), {
+      palette: () => opened++,
+      fullscreen: () => undefined,
+    })
+
+    expect(ran).toBe(true)
+    expect(opened).toBe(1)
+  })
+
+  test('follows a rebind straight away', () => {
+    const { shortcuts } = registry
+    let opened = 0
+    const context = { palette: () => opened++, fullscreen: () => undefined }
+
+    shortcuts.set('app.palette', 'Mod-Alt-9')
+
+    expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(false)
+    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(true)
+    expect(opened).toBe(1)
+  })
+
+  test('leaves a key nothing is bound to alone', () => {
+    const { shortcuts } = registry
+    shortcuts.set('app.palette', null)
+
+    const ran = shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), {
+      palette: () => undefined,
+      fullscreen: () => undefined,
+    })
+
+    expect(ran).toBe(false)
+  })
+})
+
+describe('what a reader is shown', () => {
+  test('is the key written the way this machine writes it', () => {
+    expect(registry.shortcuts.hint('app.save')).toBe('Ctrl+S')
+    expect(registry.shortcuts.hint('paragraph.heading-1')).toBe('Ctrl+1')
+  })
+
+  test('and follows a rebind', () => {
+    const { shortcuts } = registry
+    shortcuts.set('app.save', 'Mod-Alt-s')
+    expect(shortcuts.hint('app.save')).toBe('Ctrl+Alt+S')
+  })
+
+  test('reaches the menus and the palette', async () => {
+    const { shortcuts } = registry
+    shortcuts.set('app.save', 'Mod-Alt-s')
+
+    const { appCommands } = await import('./commands')
+    const { appMenu } = await import('./app-menu')
+
+    const command = appCommands().find((one) => one.id === 'save')
+    expect(command?.hint).toBe('Ctrl+Alt+S')
+
+    const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
+      (group) => group.id === 'file',
+    )
+    const row = file?.rows.find((one) => one !== null && one.label === command?.label)
+    expect(row && row.hint).toBe('Ctrl+Alt+S')
+  })
+})
+
+describe('on a Mac', () => {
+  test('the keys are written as a Mac writes them', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
+    const { shortcuts } = await restarted()
+
+    expect(shortcuts.platform).toBe('mac')
+    expect(shortcuts.hint('app.save')).toBe('⌘S')
+    expect(shortcuts.hint('paragraph.code-block')).toBe('⇧⌘K')
+    // Cmd+Tab never reaches a window there, so the note switcher is Ctrl+Tab.
+    expect(shortcuts.keyFor('app.next-note')).toBe('Ctrl-Tab')
+
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+  })
+})
