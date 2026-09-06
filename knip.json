@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": [
+    "packaging/**",
+    "docs/**",
+    ".claude/**",
+    "apps/desktop/src-tauri/**"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/**/*.{ts,js,mjs}"
+      ]
+    },
+    "packages/editor": {},
+    "packages/markdown": {},
+    "apps/desktop": {
+      "entry": [
+        "src/**/*.svelte",
+        "index.html"
+      ],
+      "ignoreDependencies": [
+        "katex"
+      ]
+    },
+    "services/sync": {},
+    "packages/themes": {
+      "entry": [
+        "src/raw.ts"
+      ]
+    }
+  }
+}

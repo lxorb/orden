@@ -9,17 +9,42 @@
     "web": "pnpm --filter @nib/desktop dev",
     "build": "pnpm --filter @nib/desktop app:build",
     "check": "pnpm -r --no-bail check",
-    "test": "pnpm -r --no-bail test"
+    "test": "pnpm -r --no-bail test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^5.0.0",
+    "eslint": "^10.10.0",
+    "eslint-plugin-svelte": "^3.23.0",
+    "globals": "^17.12.0",
+    "knip": "^6.34.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-svelte": "^4.1.1",
+    "svelte-eslint-parser": "^1.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.69.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "workerd"],
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ],
     "comment": "workerd ships no win32-arm64 binary; pull the x64 one so wrangler runs under emulation.",
     "supportedArchitectures": {
-      "os": ["current", "win32", "linux"],
-      "cpu": ["current", "x64", "arm64"]
+      "os": [
+        "current",
+        "win32",
+        "linux"
+      ],
+      "cpu": [
+        "current",
+        "x64",
+        "arm64"
+      ]
     }
   }
 }

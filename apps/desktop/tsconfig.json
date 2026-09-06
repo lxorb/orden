@@ -1,23 +1,22 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["svelte", "vite/client"],
-    "strict": true,
-    "noUnusedLocals": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "svelte",
+      "vite/client"
+    ],
     "resolveJsonModule": true,
-    "allowJs": true,
-    "noEmit": true
+    "allowJs": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.svelte",
-    // The editor package declares the modules that ship without types.
-    "../../packages/editor/src/env.d.ts"
+    "../../packages/editor/src/env.d.ts",
+    "test/**/*.ts"
   ]
 }
