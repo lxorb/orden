@@ -95,20 +95,20 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
 
 /* ── What the routes answer with ──────────────────────────────────────── */
 
-export interface UserView {
+interface UserView {
   id: string
   email: string
   name: string | null
 }
 
-export interface DnsRecord {
+interface DnsRecord {
   type: string
   name: string
   value: string
   note?: string
 }
 
-export interface SpaceView {
+interface SpaceView {
   id: string
   name: string
   position: number
@@ -125,7 +125,7 @@ export interface SpaceView {
   }
 }
 
-export interface NoteView {
+interface NoteView {
   id: string
   path: string
   seq: number
@@ -136,7 +136,7 @@ export interface NoteView {
   hash: string
 }
 
-export interface ClientView {
+interface ClientView {
   id: string
   name: string
   readOnly: boolean

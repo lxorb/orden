@@ -16,7 +16,7 @@ import type { Env } from './types'
 
 const API = 'https://api.cloudflare.com/client/v4'
 
-export type DomainState = 'pending' | 'active' | 'error' | 'unconfigured'
+type DomainState = 'pending' | 'active' | 'error' | 'unconfigured'
 
 export interface DomainStatus {
   state: DomainState

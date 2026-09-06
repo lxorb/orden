@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { now } from './crypto'
-import { key, nextSeq, presentNote } from './notes'
+import { nextSeq, noteKey, presentNote } from './notes'
 import { presentSpace } from './spaces'
 import type { Env, Note, Space, Variables } from './types'
 
 /** How long Recently deleted holds on to something. */
-export const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
+const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 
 /** `wanted` if nobody has it, else the first free `wanted 2`, `wanted 3`... -
  *  the numbering the app gives a new space whose name is taken. */
@@ -86,8 +86,8 @@ async function deletedNote(
 
 /** Takes a note's content away for good. The row stays as the tombstone the
  *  change feed relies on, and stops being listed. */
-export async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
-  await env.NOTES.delete(key(note.space_id, note.id))
+async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
+  await env.NOTES.delete(noteKey(note.space_id, note.id))
   await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
     .bind(note.id)
     .run()
@@ -95,11 +95,11 @@ export async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
 
 /** Empties a space for good. The row stays as the marker a machine that was
  *  away reads, and stops being listed. */
-export async function purgeSpace(env: Env, space: Pick<Space, 'id'>) {
+async function purgeSpace(env: Env, space: Pick<Space, 'id'>) {
   const { results } = await env.DB.prepare('select id from notes where space_id = ?')
     .bind(space.id)
     .all<{ id: string }>()
-  await Promise.all(results.map((note) => env.NOTES.delete(key(space.id, note.id))))
+  await Promise.all(results.map((note) => env.NOTES.delete(noteKey(space.id, note.id))))
   await env.DB.prepare('delete from notes where space_id = ?').bind(space.id).run()
   await env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id).run()
 }

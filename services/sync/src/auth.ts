@@ -17,7 +17,7 @@ const RESEND_GAP = 30 * 1000
 const MAX_ATTEMPTS = 5
 const SESSION_TTL = 90 * 24 * 60 * 60 * 1000
 
-export async function userForToken(env: Env, token: string): Promise<User | null> {
+async function userForToken(env: Env, token: string): Promise<User | null> {
   const hash = await sha256(token)
 
   const row = await env.DB.prepare(

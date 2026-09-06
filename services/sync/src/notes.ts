@@ -4,8 +4,11 @@ import { newId, now, sha256 } from './crypto'
 import { ownedSpace } from './spaces'
 import type { Env, Note, Variables } from './types'
 
-const MAX_BYTES = 4 * 1024 * 1024
-const PATH_LIMIT = 400
+/** The largest note the API will take. R2 would hold more; a note this size
+ *  is already a file that wants to be split, and the ceiling keeps one
+ *  request from spending a tenth of an account on itself. */
+export const MAX_NOTE_BYTES = 4 * 1024 * 1024
+export const PATH_LIMIT = 400
 
 /** Paths are relative, forward-slashed and end in `.md`. Nothing escapes the space. */
 export function cleanPath(input: string): string | null {
@@ -18,7 +21,7 @@ export function cleanPath(input: string): string | null {
   return path
 }
 
-export function key(spaceId: string, noteId: string): string {
+export function noteKey(spaceId: string, noteId: string): string {
   return `spaces/${spaceId}/${noteId}`
 }
 
@@ -79,7 +82,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
   const content = body.content ?? ''
 
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
-  if (content.length > MAX_BYTES) return context.json({ error: 'that note is too large' }, 413)
+  if (content.length > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
 
   const existing = await context.env.DB.prepare(
     'select * from notes where space_id = ? and path = ? and deleted = 0',
@@ -108,7 +111,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     hash: await sha256(content),
   }
 
-  await context.env.NOTES.put(key(space.id, note.id), content)
+  await context.env.NOTES.put(noteKey(space.id, note.id), content)
   await context.env.DB.prepare(
     `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
      values (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
@@ -152,7 +155,7 @@ notes.get('/notes/:id', async (context) => {
 
   if (!note) return context.json({ error: 'no such note' }, 404)
 
-  const object = await context.env.NOTES.get(key(note.space_id, note.id))
+  const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
   return context.json({ note: presentNote(note), content: object ? await object.text() : '' })
 })
 
@@ -169,13 +172,13 @@ notes.put('/notes/:id', async (context) => {
 
   const body = await context.req.json<{ path?: string; content?: string; baseVersion?: number }>()
   const content = body.content ?? ''
-  if (content.length > MAX_BYTES) return context.json({ error: 'that note is too large' }, 413)
+  if (content.length > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
 
   const path = body.path === undefined ? note.path : cleanPath(body.path)
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
 
   if (body.baseVersion !== undefined && body.baseVersion !== note.version) {
-    const object = await context.env.NOTES.get(key(note.space_id, note.id))
+    const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
     return context.json(
       {
         error: 'this note changed elsewhere',
@@ -206,7 +209,7 @@ notes.put('/notes/:id', async (context) => {
     hash,
   }
 
-  await context.env.NOTES.put(key(note.space_id, note.id), content)
+  await context.env.NOTES.put(noteKey(note.space_id, note.id), content)
   await context.env.DB.prepare(
     'update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?, hash = ? where id = ?',
   )

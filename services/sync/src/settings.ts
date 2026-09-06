@@ -89,9 +89,9 @@ function shortcutMap(value: unknown): string | null {
   return null
 }
 
-export type AccountSettings = Record<string, unknown>
+type AccountSettings = Record<string, unknown>
 
-export async function settingsOf(env: Env, userId: string): Promise<AccountSettings> {
+async function settingsOf(env: Env, userId: string): Promise<AccountSettings> {
   const row = await env.DB.prepare('select settings from users where id = ?')
     .bind(userId)
     .first<{ settings: string }>()
