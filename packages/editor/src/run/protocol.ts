@@ -28,6 +28,16 @@ const KIND = 'nib-run'
 
 const LEVELS: readonly string[] = ['log', 'info', 'warn', 'error', 'debug', 'result', 'exception']
 
+/** The longest line the panel will keep.
+ *
+ *  The sandbox clips each *value* it describes, but one call can carry ten
+ *  thousand of them, and a message the frame builds by hand goes through no
+ *  formatter at all. `MAX_RUN_LINES` caps how many lines are kept, not how big
+ *  one is, so without this a note could put megabytes into the editor's state
+ *  and keep them there. Clipped on this side because this is the side that has
+ *  to hold it. */
+const MAX_LINE = 2_000
+
 /** Reads a message from the sandbox, or nothing if it is not one of ours, not
  *  the shape we send, or belongs to a run that has been replaced. */
 export function parseRunMessage(data: unknown, run: number): RunMessage | null {
@@ -43,7 +53,12 @@ export function parseRunMessage(data: unknown, run: number): RunMessage | null {
     const line = entry as Record<string, unknown>
     if (typeof line.text !== 'string') return null
     if (typeof line.level !== 'string' || !LEVELS.includes(line.level)) return null
-    lines.push({ level: line.level as RunLevel, text: line.text })
+
+    const text = line.text
+    lines.push({
+      level: line.level as RunLevel,
+      text: text.length > MAX_LINE ? `${text.slice(0, MAX_LINE)}…` : text,
+    })
   }
 
   return { run, lines, ready: message.ready === true, done: message.done === true }
@@ -134,17 +149,19 @@ export function runnerDocument(code: string, run: number): string {
   console.dir = console.log
   console.trace = console.log
 
+  // Neither of these flushes on the spot. \`add\` has already asked the channel
+  // for a drain, and sending here as well would make one message - and so one
+  // editor transaction - per error: a loop that rejects a promise each time is
+  // exactly what the batching above is for.
   window.onerror = function (message, source, line, column, error) {
     if (error) report(error)
     else add('exception', String(message))
-    send(false)
     return true
   }
 
   window.addEventListener('unhandledrejection', function (event) {
     event.preventDefault()
     report(event.reason)
-    send(false)
   })
 
   function done(value, hasValue) {

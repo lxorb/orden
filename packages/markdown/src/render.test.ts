@@ -441,3 +441,77 @@ describe('what a note cannot do to the page around it', () => {
     expect(html).not.toContain('&amp;amp;')
   })
 })
+
+/** Every construct that can put a target or a piece of markup into the page,
+ *  each with something hostile in it, and one check applied to all of them. A
+ *  sweep rather than a case: it says nothing about what the output looks like,
+ *  only that nothing in it can run. New constructs belong on this list. */
+const HOSTILE = [
+  '[a](javascript:alert(1))',
+  '[a](  javascript:alert(1))',
+  '[a](JAVASCRIPT:alert(1))',
+  '[a](vbscript:msgbox(1))',
+  '[a](data:text/html,BODY)',
+  '<javascript:alert(1)>',
+  '![a](javascript:alert(1))',
+  '![a"onerror=alert(1)](x.png)',
+  '![a](x.png "t\\"onerror=alert(1)")',
+  '[a](x.md "t\\"onmouseover=alert(1)")',
+  'H~IMG~O',
+  'X^IMG^',
+  '==IMG==',
+  'a[^IMG]b',
+  'a[^x"onmouseover=alert(1)]b',
+  '[^x"onmouseover=alert(1)]: note',
+  '# a"onmouseover=alert(1) b',
+  '[toc]\n\n# a"onmouseover=alert(1) b',
+  '*[X]: a"onmouseover=alert(1)\n\nX here.\n',
+  'Term\n: IMG\n',
+  '> [!note]\n> IMG\n',
+  '$\\href{javascript:alert(1)}{x}$',
+  '$\\htmlId{a"onmouseover=alert(1)}{x}$',
+  '| a | b |\n| - | - |\n| IMG | x |',
+  ':IMG:',
+]
+
+/** What `IMG` in the list above stands for. Written as a placeholder so the
+ *  list can also be run through the trusting renderer, which passes raw HTML
+ *  through on purpose - a source that carries a tag proves nothing there. */
+const IMG = '<img src=x onerror=alert(1)>'
+
+/** No element carries an event handler, and no target names a scheme a browser
+ *  would run. */
+function running(html: string): string[] {
+  const found: string[] = []
+  if (/<[a-z]+[^>]*\son[a-z]+\s*=/i.test(html)) found.push('an element with an event handler')
+  if (/(?:href|src)="[^"]*(?:javascript|vbscript|data:text|svg\+xml)/i.test(html)) {
+    found.push('a target that would run')
+  }
+  return found
+}
+
+describe('the whole sweep', () => {
+  test('nothing a note writes can run, when publishing', () => {
+    for (const source of HOSTILE) {
+      const html = renderMarkdown(source.replaceAll('IMG', IMG), {
+        escapeHtml: true,
+        footnotes: true,
+        toc: true,
+      })
+      expect(running(html), source).toEqual([])
+    }
+  })
+
+  test('nor when rendering for a local export, raw HTML aside', () => {
+    // Raw HTML passes through here by design, so `IMG` stands for words instead:
+    // what is left under test is every construct that builds its own markup, and
+    // none of those has raw HTML as an excuse.
+    for (const source of HOSTILE) {
+      const html = renderMarkdown(source.replaceAll('IMG', 'plain words'), {
+        footnotes: true,
+        toc: true,
+      })
+      expect(running(html), source).toEqual([])
+    }
+  })
+})

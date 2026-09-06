@@ -1,5 +1,5 @@
 import {
-  type ChangeDesc,
+  type Transaction,
   type EditorState,
   type Range,
   StateEffect,
@@ -52,14 +52,23 @@ export const closeRun = StateEffect.define<{ run: number; status: RunStatus; ela
 /** Takes the panel away, and the sandbox with it. */
 export const dropRun = StateEffect.define<number>()
 
-/** An opening fence, indented by up to three spaces the way CommonMark allows.
+/** A line that opens a fence, whatever comes before it.
+ *
  *  Used to notice that the block a panel belongs to is no longer a code block:
  *  positions can be mapped through any edit, but a fence whose backticks were
- *  deleted should not keep an output panel hanging under it. */
-const FENCE = /^ {0,3}(?:`{3,}|~{3,})/
+ *  deleted should not keep an output panel hanging under it.
+ *
+ *  Whitespace and `>` are allowed ahead of the backticks because `panel.from` is
+ *  the start of the *line*, and a fence indented into a list item or sitting in
+ *  a blockquote has the item's indent or the quote's mark there. Matching only
+ *  CommonMark's three spaces dropped the panel of every such fence on the next
+ *  keystroke anywhere in the note. Read from the line rather than from the tree
+ *  on purpose: the answer has to hold while a parse is still catching up. */
+const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
 
-function mapPanels(panels: readonly RunPanel[], changes: ChangeDesc): RunPanel[] {
+function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPanel[] {
   const out: RunPanel[] = []
+  const changes = transaction.changes
 
   for (const panel of panels) {
     // A change that swallows the whole block takes its panel with it.
@@ -67,7 +76,13 @@ function mapPanels(panels: readonly RunPanel[], changes: ChangeDesc): RunPanel[]
 
     // The start leans right and the end leans left, so text typed at either
     // edge of the block reads as text outside it and the panel stays put.
-    const from = changes.mapPos(panel.from, 1)
+    // Then back to the start of whatever line that landed on: `from` is what
+    // says which block this panel belongs to, and it is compared against a line
+    // start every time it is used. Text typed at the very start of the fence
+    // line would otherwise push it one character along, after which a second
+    // run of the same block was read as a different block - two panels, and two
+    // sandboxes running at once.
+    const from = transaction.state.doc.lineAt(changes.mapPos(panel.from, 1)).from
     const to = changes.mapPos(panel.to, -1)
     if (to <= from) continue
 
@@ -131,7 +146,7 @@ export const runPanels = StateField.define<readonly RunPanel[]>({
     let panels = value
 
     if (transaction.docChanged) {
-      panels = mapPanels(panels, transaction.changes).filter((panel) =>
+      panels = mapPanels(panels, transaction).filter((panel) =>
         stillFenced(transaction.state, panel),
       )
     }

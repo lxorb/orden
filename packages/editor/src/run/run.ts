@@ -2,6 +2,7 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState, StateEffect } from '@codemirror/state'
 import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
+import { fenceCode, fenceLanguage } from '../fence'
 import { addRunLines, closeRun, dropRun, openRun, runPanels } from './panel'
 import { parseRunMessage, runnerDocument } from './protocol'
 
@@ -46,16 +47,12 @@ export function runnableFenceAt(state: EditorState, pos: number): RunnableFence 
 
   for (; node; node = node.parent) {
     if (node.name !== 'FencedCode') continue
+    if (!isRunnableLanguage(fenceLanguage(state, node))) return null
 
-    const info = node.getChild('CodeInfo')
-    const language = info ? state.doc.sliceString(info.from, info.to) : ''
-    if (!isRunnableLanguage(language)) return null
-
-    const text = node.getChild('CodeText')
     return {
       from: state.doc.lineAt(node.from).from,
       to: state.doc.lineAt(Math.min(node.to, state.doc.length)).to,
-      code: text ? state.doc.sliceString(text.from, text.to) : '',
+      code: fenceCode(state, node),
     }
   }
 
@@ -70,6 +67,15 @@ interface Sandbox {
   /** Rearmed once the code starts; see RUN_TIME_LIMIT. */
   timer: number
   listener: (event: MessageEvent) => void
+  /** Whether the sandbox has said it is starting. Recorded so it can only say
+   *  so once: `ready` moves the deadline, and the code inside can post one of
+   *  its own. It cannot reach another block's panel - the run number is
+   *  checked - but it could keep its own frame alive for as long as it liked. */
+  started: boolean
+  /** Whether the code finished on its own. Such a sandbox is kept for a while
+   *  on purpose, so a timer or a promise it left behind can still reach the
+   *  panel; the sweep below has to know not to take it away early. */
+  finished: boolean
 }
 
 const live = new Map<number, Sandbox>()
@@ -123,7 +129,14 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
     if (!message) return
 
     const sandbox = live.get(run)
-    if (message.ready && sandbox) {
+    if (!sandbox) return
+
+    // Honoured once. The startup allowance is generous because a browser may be
+    // starting a process; the run's own allowance begins the moment it says so,
+    // and a second `ready` would push it out again for as long as the code cared
+    // to keep saying it.
+    if (message.ready && !sandbox.started) {
+      sandbox.started = true
       window.clearTimeout(sandbox.timer)
       sandbox.timer = window.setTimeout(expire(RUN_TIME_LIMIT), RUN_TIME_LIMIT)
     }
@@ -131,6 +144,7 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
     const effects: StateEffect<unknown>[] = []
     if (message.lines.length) effects.push(addRunLines.of({ run, lines: message.lines }))
     if (message.done) {
+      sandbox.finished = true
       effects.push(closeRun.of({ run, status: 'done', elapsed: Date.now() - startedAt }))
     }
     if (effects.length) view.dispatch({ effects })
@@ -143,6 +157,8 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
     frame,
     listener,
     timer: window.setTimeout(expire(RUN_START_LIMIT), RUN_START_LIMIT),
+    started: false,
+    finished: false,
   })
 
   // The document is set before the frame joins the page, so the frame has it to
@@ -175,19 +191,36 @@ export function runFenceAtCursor(view: EditorView): boolean {
   return runFence(view, fence)
 }
 
-/** Watches for a run being cut short or its panel dismissed, and takes the
- *  sandbox down with it. A run that finished on its own keeps its sandbox until
- *  the time limit, so a promise it left pending still reaches the panel.
+/** Watches for a run losing its panel, and takes the sandbox down with it. A run
+ *  that finished on its own keeps its sandbox until the time limit, so a promise
+ *  it left pending still reaches the panel.
  *
  *  Kept out of the panel's own DOM so that the state stays the single account of
- *  what is running: the buttons dispatch, and this reacts. */
+ *  what is running: the buttons dispatch, and this reacts.
+ *
+ *  The panels are compared rather than the effects watched, because a panel can
+ *  go without any effect saying so: deleting the block, or deleting its fence
+ *  characters, drops it in `runPanels.update` (see panel.ts). Watching only the
+ *  effects left the frame, the timer and the message listener behind, with the
+ *  code still running and no Stop button anywhere - and a later run of the same
+ *  block then started alongside it. */
 const runSandboxes = ViewPlugin.define((view) => ({
   update(update: ViewUpdate) {
     for (const transaction of update.transactions) {
       for (const effect of transaction.effects) {
+        // Said out loud rather than left to the sweep: a run cut short goes now,
+        // whether or not its panel is still on screen.
         if (effect.is(dropRun)) teardown(effect.value)
         else if (effect.is(closeRun) && effect.value.status !== 'done') teardown(effect.value.run)
       }
+    }
+
+    const panels = update.state.field(runPanels, false)
+    if (!panels || panels === update.startState.field(runPanels, false)) return
+
+    const shown = new Set(panels.map((panel) => panel.run))
+    for (const [run, sandbox] of [...live]) {
+      if (sandbox.view === view && !sandbox.finished && !shown.has(run)) teardown(run)
     }
   },
 

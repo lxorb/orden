@@ -9,7 +9,9 @@ import {
   type Transaction,
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
-import { tableStandsAlone } from '../table/navigation'
+import { isExternal } from '../external'
+import { fenceCode, fenceLanguage } from '../fence'
+import { standsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { lineRevealed, noReveal, overlaps } from './reveal'
 import {
@@ -71,12 +73,23 @@ interface Blocks {
   toc: boolean
 }
 
-function buildBlocks(state: EditorState): Blocks {
+/** Builds every block decoration a state gets.
+ *
+ *  `reveals` is false for the very first build of a state, and only then. A state
+ *  is created with a caret at 0 unless someone says otherwise, and 0 is the start
+ *  of the document's first block - so a note whose first thing is a table, a
+ *  display equation, a diagram or a `[toc]` opened showing its markdown, on every
+ *  open and every switch between notes. Nobody put the caret there on purpose, so
+ *  nothing is revealed for it. From the first transaction on, the caret's
+ *  position is somebody's decision and the ordinary rules apply. */
+function buildBlocks(state: EditorState, reveals = true): Blocks {
   const ranges: Range<Decoration>[] = []
   const spans: { from: number; to: number }[] = []
   let toc = false
   const doc = state.doc
   const numbered = state.facet(numberEquations)
+  const revealed = (from: number, to: number) => reveals && overlaps(state, from, to)
+  const lineRevealedAt = (pos: number) => reveals && lineRevealed(state, pos)
   // The labels belong to this document, so they are dropped whether or not
   // numbering is on. With it off there is nothing for `\eqref` to resolve to,
   // and it must not answer with a number left over from another note.
@@ -100,8 +113,13 @@ function buildBlocks(state: EditorState): Blocks {
     enter: (node) => {
       switch (node.name) {
         case 'BlockMath': {
+          // Quoted or indented, the `> ` or the indent would be swallowed by the
+          // replacement and handed to the renderer as if it were maths; see
+          // `standsAlone`.
+          if (!standsAlone(state, node.from)) return true
+
           const span = found(node.from, node.to)
-          if (overlaps(state, node.from, node.to)) return false
+          if (revealed(node.from, node.to)) return false
           const tex = doc.sliceString(doc.lineAt(node.from).to, doc.lineAt(node.to).from).trim()
           ranges.push(
             Decoration.replace({
@@ -113,17 +131,23 @@ function buildBlocks(state: EditorState): Blocks {
         }
 
         case 'FencedCode': {
-          const info = node.node.getChild('CodeInfo')
-          const language = info ? doc.sliceString(info.from, info.to).trim() : ''
-          if (!DIAGRAM_LANGUAGES.has(language)) return false
-
+          // Recorded before the language is looked at, because the language is
+          // what decides whether this is drawn - and a language typed into a
+          // plain fence is letters, which `onlyProse` below reads as prose and
+          // maps past. Without a span here the fence lost its diagram *and* its
+          // code styling, and stayed that way until something else rebuilt.
+          if (!standsAlone(state, node.from)) return true
           const span = found(node.from, node.to)
-          if (overlaps(state, node.from, node.to)) return false
 
-          const text = node.node.getChild('CodeText')
+          if (!DIAGRAM_LANGUAGES.has(fenceLanguage(state, node.node))) return false
+          if (revealed(node.from, node.to)) return false
+
           ranges.push(
             Decoration.replace({
-              widget: new DiagramWidget(text ? doc.sliceString(text.from, text.to) : '', language),
+              widget: new DiagramWidget(
+                fenceCode(state, node.node),
+                fenceLanguage(state, node.node),
+              ),
               block: true,
             }).range(span.from, span.to),
           )
@@ -136,11 +160,17 @@ function buildBlocks(state: EditorState): Blocks {
           // the line out of the document at all.
           if (node.to - node.from > TOC_MAX) return false
           const line = doc.lineAt(node.from)
+          if (!/\[toc\]/i.test(line.text)) return false
+
+          // Recorded whether or not the line reads as a toc *right now*. A line
+          // of `[toc] draft` becomes one by deleting the word after it, and a
+          // deletion of letters is prose to `onlyProse` below - so without a span
+          // here that edit mapped past and the contents were never drawn.
+          spans.push({ from: line.from, to: line.to })
           if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
 
-          spans.push({ from: line.from, to: line.to })
           toc = true
-          if (lineRevealed(state, node.from)) return false
+          if (lineRevealedAt(node.from)) return false
 
           ranges.push(
             Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
@@ -153,14 +183,14 @@ function buildBlocks(state: EditorState): Blocks {
 
         case 'Table': {
           // A table with something before its pipes - indented into a list item,
-          // or inside a blockquote - is left as source; see `tableStandsAlone`.
-          if (!tableStandsAlone(state, node.from)) return true
+          // or inside a blockquote - is left as source; see `standsAlone`.
+          if (!standsAlone(state, node.from)) return true
 
           // Clicks inside the widget do not move CodeMirror's selection, so the
           // rendered table stays up while its cells are edited. Source only
           // shows while the caret is genuinely in the table's text.
           const span = found(node.from, node.to)
-          if (overlaps(state, node.from, node.to)) return true
+          if (revealed(node.from, node.to)) return true
 
           ranges.push(
             Decoration.replace({
@@ -247,15 +277,35 @@ function mapSpans(spans: readonly { from: number; to: number }[], changes: Chang
   }))
 }
 
+/** Whether a facet that decides what is drawn, rather than where the caret is,
+ *  has changed. Such a transaction moves neither the document nor the selection,
+ *  so it has to say so itself or the shortcuts below would return the old
+ *  decorations and the setting would appear to do nothing until the next edit. */
+function settingsChanged(transaction: Transaction): boolean {
+  const before = transaction.startState
+  const after = transaction.state
+  return (
+    before.facet(noReveal) !== after.facet(noReveal) ||
+    before.facet(numberEquations) !== after.facet(numberEquations)
+  )
+}
+
 export const blockDecorations = StateField.define<Blocks>({
-  create: buildBlocks,
+  // Nothing revealed on the first build; see `buildBlocks`.
+  create: (state) => buildBlocks(state, false),
+
   update(value, transaction) {
-    // Reading mode holds every reveal shut: a table or a display equation with
-    // the caret in it goes back to being rendered the moment it comes on, and
-    // that transaction changes neither the document nor the selection.
-    if (transaction.startState.facet(noReveal) !== transaction.state.facet(noReveal)) {
-      return buildBlocks(transaction.state)
-    }
+    // Reading mode holds every reveal shut, and equation numbering changes what
+    // every display equation says. Either way the transaction changes neither
+    // the document nor the selection.
+    if (settingsChanged(transaction)) return buildBlocks(transaction.state)
+
+    // Content from outside - a note being opened, a version restored, a sync
+    // arriving - brings a caret with it that nobody chose: whatever the old
+    // selection mapped to, which for a note opened from the top is 0. And 0 is
+    // the start of the document's first block, so a note beginning with a table,
+    // an equation, a diagram or a `[toc]` used to open showing its markdown.
+    if (isExternal(transaction)) return buildBlocks(transaction.state, false)
 
     // The parse of a note just opened finishes in transactions of its own;
     // a block it found late has to be drawn then, not at the next click.

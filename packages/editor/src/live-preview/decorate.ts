@@ -10,10 +10,12 @@ import {
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import { concealable, hide, meta } from './conceal'
+import { numberEquations } from './blocks'
 import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
 import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
+import { fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import {
@@ -223,8 +225,7 @@ class Decorator {
   }
 
   private fence(node: SyntaxNode): boolean {
-    const info = node.getChild('CodeInfo')
-    const language = info ? this.state.doc.sliceString(info.from, info.to).trim() : ''
+    const language = fenceLanguage(this.state, node)
 
     // Rendered diagrams are block replacements, which only a state field may
     // provide - see blocks.ts. Skip the subtree so nothing double-decorates it.
@@ -238,7 +239,7 @@ class Decorator {
 
     // The opening line reads as empty once its fence is hidden, which leaves
     // room for the language and a copy button.
-    const text = node.getChild('CodeText')
+    const info = node.getChild('CodeInfo')
     const mark = node.firstChild
     const infoFrom = info ? info.from : (mark?.to ?? open.to)
 
@@ -246,7 +247,7 @@ class Decorator {
       Decoration.widget({
         widget: new FenceHeaderWidget(
           language,
-          text ? doc.sliceString(text.from, text.to) : '',
+          fenceCode(this.state, node),
           infoFrom,
           info ? info.to : infoFrom,
           open.from,
@@ -258,8 +259,12 @@ class Decorator {
     return true
   }
 
+  /** Its own range and not its parent's, unlike a syntax mark: `revealed` looks
+   *  at the parent because a mark's construct is what owns it, and maths *is* a
+   *  construct - so asking about its parent asked about the whole paragraph, and
+   *  a caret anywhere in a paragraph turned every equation in it back to source. */
   private inlineMath(node: SyntaxNode): boolean {
-    if (revealed(this.state, node)) return true
+    if (overlaps(this.state, node.from, node.to)) return true
 
     const tex = this.state.doc.sliceString(node.from + 1, node.to - 1)
     this.inlineWidget(node, new MathWidget(tex, false), false)
@@ -369,8 +374,9 @@ class Decorator {
     return this.image(node)
   }
 
+  /** Its own range, for the same reason as `inlineMath` above. */
   private emoji(node: SyntaxNode): boolean {
-    if (revealed(this.state, node)) return true
+    if (overlaps(this.state, node.from, node.to)) return true
 
     const shortcode = this.state.doc.sliceString(node.from + 1, node.to - 1)
     const character = emojiFor(shortcode)
@@ -456,7 +462,12 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       // Reading mode holds every reveal shut, and it comes on in a transaction
       // that moves neither the document nor the caret - so it has to say so
       // itself, or the syntax around the caret would stay showing.
-      const sealed = update.startState.facet(noReveal) !== update.state.facet(noReveal)
+      // Numbering is here as well as in blocks.ts: an inline `\eqref` resolves to
+      // the number a display equation was given, so turning the numbers off has
+      // to redraw the references too.
+      const sealed =
+        update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
+        update.startState.facet(numberEquations) !== update.state.facet(numberEquations)
       if (
         update.docChanged ||
         update.viewportChanged ||

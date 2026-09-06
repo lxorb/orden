@@ -68,6 +68,21 @@ describe('finding the fence the caret is in', () => {
     const many = '```js\nlet a = 1\na += 1\na\n```\n'
     expect(runnableFenceAt(state(many), many.indexOf('a += 1'))?.code).toBe('let a = 1\na += 1\na')
   })
+
+  test('reads a fence inside a list item whole, prefix and all', () => {
+    // A fence whose lines carry a prefix has the prefix outside its node, so the
+    // parser hands out one piece of code text per line. Reading the first alone
+    // ran the first line of such a block and dropped the rest without a word.
+    const inList = '- item\n\n  ```js\n  let a = 1\n  a += 1\n  a\n  ```\n'
+    expect(runnableFenceAt(state(inList), inList.indexOf('a += 1'))?.code).toBe(
+      'let a = 1\na += 1\na',
+    )
+  })
+
+  test('reads a fence inside a blockquote whole', () => {
+    const quoted = '> ```js\n> let a = 1\n> a += 1\n> ```\n'
+    expect(runnableFenceAt(state(quoted), quoted.indexOf('a += 1'))?.code).toBe('let a = 1\na += 1')
+  })
 })
 
 /** A run started on the fence in `FENCED`. */
@@ -108,6 +123,50 @@ describe('the panel state', () => {
     }).state
     const after = withLines.update({ changes: { from: 0, insert: 'x\n' } }).state
     expect(only(after)?.lines).toEqual([{ level: 'log', text: 'hi' }])
+  })
+
+  test('stays on a fence that is indented into a list item', () => {
+    // `from` is the start of the *line*, so a fence in a list item or a
+    // blockquote has the indent or the quote mark ahead of its backticks. A
+    // stricter reading dropped the panel on the next keystroke anywhere.
+    const inList = '- item\n\n  ```js\n  console.log(1)\n  ```\n\ntail\n'
+    const from = inList.indexOf('  ```js')
+    const begun = state(inList).update({
+      effects: openRun.of({ run: 1, from, to: inList.indexOf('  ```\n\ntail') + 5, startedAt: 1 }),
+    }).state
+
+    const after = begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state
+    expect(after.field(runPanels)).toHaveLength(1)
+  })
+
+  test('stays on a fence inside a blockquote', () => {
+    const quoted = '> ```js\n> console.log(1)\n> ```\n\ntail\n'
+    const begun = state(quoted).update({
+      effects: openRun.of({ run: 1, from: 0, to: quoted.indexOf('> ```\n') + 5, startedAt: 1 }),
+    }).state
+
+    const after = begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state
+    expect(after.field(runPanels)).toHaveLength(1)
+  })
+
+  test('keeps naming the same block when text is typed at the fence line start', () => {
+    // `from` says which block a panel belongs to, and it is compared against a
+    // line start. Left one character along, a second run of the same block read
+    // as a different block: two panels, and two sandboxes running at once.
+    const doc = '```js\nconsole.log(1)\n```\n\ntail\n'
+    const to = doc.indexOf('```\n\ntail') + 3
+    const begun = state(doc).update({
+      effects: openRun.of({ run: 1, from: 0, to, startedAt: 1 }),
+    }).state
+
+    const indented = begun.update({ changes: { from: 0, insert: ' ' } }).state
+    expect(only(indented)?.from).toBe(0)
+
+    const again = indented.update({
+      effects: openRun.of({ run: 2, from: 0, to: to + 1, startedAt: 2 }),
+    }).state
+    expect(again.field(runPanels)).toHaveLength(1)
+    expect(only(again)?.run).toBe(2)
   })
 
   test('goes when the block it belongs to is deleted', () => {

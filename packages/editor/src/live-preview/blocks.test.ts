@@ -2,6 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
+import { external } from '../external'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 
 function state(doc: string, cursor = 0) {
@@ -41,8 +42,17 @@ describe('block decorations', () => {
     expect(spans('[toc]')).toEqual(['[toc]'])
   })
 
-  test('prose and plain fences are not places the caret changes anything', () => {
-    expect(spans(`${PROSE}\`\`\`js\nlet x = 1\n\`\`\``)).toEqual([])
+  test('prose is not a place the caret changes anything', () => {
+    expect(spans(PROSE)).toEqual([])
+  })
+
+  test('every fence is a place worth looking at again, whatever its language', () => {
+    // A plain fence draws nothing, but the language *decides* whether it draws
+    // anything - and a language is letters, which the prose shortcut below maps
+    // past. Recording the span is what makes typing `mermaid` into a plain fence
+    // reach the walk instead of being read as prose typed nowhere in particular.
+    const fence = '```js\nlet x = 1\n```'
+    expect(spans(`${PROSE}${fence}`)).toEqual([fence])
   })
 
   test('a table with something before its pipes is left as source', () => {
@@ -60,6 +70,51 @@ describe('block decorations', () => {
 
   test('a table of its own still renders', () => {
     expect(state(`${PROSE}${TABLE}`).field(blockDecorations).decorations.size).toBe(1)
+  })
+
+  test('an equation or a diagram with something before it is left as source too', () => {
+    // The replacement covers whole lines, and neither the equation nor the
+    // diagram knows a prefix exists: a quoted `$$` handed `> x` to the renderer
+    // as if the marker were part of the maths.
+    for (const doc of [
+      '> $$\n> x = 1\n> $$\n',
+      '- item\n\n  $$\n  x = 1\n  $$\n',
+      '> ```mermaid\n> graph TD\n> ```\n',
+      '- item\n\n  ```mermaid\n  graph TD\n  ```\n',
+    ]) {
+      expect(state(doc, doc.length - 1).field(blockDecorations).decorations.size, doc).toBe(0)
+    }
+  })
+
+  test('nothing is revealed by the caret a document opens with', () => {
+    // A state is created with a caret at 0 unless someone says otherwise, and 0
+    // is the start of the first block - so a note beginning with one of these
+    // used to open showing its markdown, every time.
+    for (const doc of [
+      `${TABLE}\n\ntail\n`,
+      '$$\nx = 1\n$$\n\ntail\n',
+      '```mermaid\ngraph TD\n```\n\ntail\n',
+      '[toc]\n\n# One\n',
+    ]) {
+      expect(state(doc).field(blockDecorations).decorations.size, doc).toBe(1)
+    }
+  })
+
+  test('nor by the caret that arrives with a note being opened', () => {
+    // Which is the path that matters: the app replaces the whole document for
+    // each note, and the caret it maps to is 0 again.
+    const opened = state('x\n').update({
+      changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+      annotations: external.of(true),
+    }).state
+
+    expect(opened.field(blockDecorations).decorations.size).toBe(1)
+  })
+
+  test('but the caret does reveal once it has been put somewhere', () => {
+    const doc = `${TABLE}\n\ntail\n`
+    const moved = state(doc).update({ selection: EditorSelection.cursor(3) }).state
+    expect(moved.field(blockDecorations).decorations.size).toBe(0)
   })
 
   test('a caret that stays clear of them all rebuilds nothing', () => {
@@ -153,5 +208,31 @@ describe('prose typed away from every construct', () => {
   test('deleting prose shifts the constructs too', () => {
     const { is, state: after } = afterTyping(doc, 4, '', 8)
     expect(drawn(is, after.doc.toString())).toEqual([TABLE])
+  })
+
+  test('a language written into a plain fence is not prose written nowhere', () => {
+    // Written by the fence header's own language field, which dispatches the
+    // change and leaves the caret where it was - so nothing reveals the block and
+    // the diagram is what should appear. `mermaid` is letters, so it read as prose
+    // typed far from anything, and the fence lost its diagram and, since the
+    // viewport plugin steps aside for one, every other decoration with it.
+    const plain = 'intro\n\n```\ngraph TD\n```\n\ntail\n'
+    const at = plain.indexOf('```') + 3
+    const after = state(plain).update({ changes: { from: at, insert: 'mermaid' } }).state
+
+    expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual([
+      '```mermaid\ngraph TD\n```',
+    ])
+  })
+
+  test('a toc completed by deleting the words after it is drawn', () => {
+    // A construct is decided by what remains, not by what moved: deleting `draft`
+    // is a prose deletion, and it makes the line a toc. Written the way the search
+    // panel's replace-all writes it, with the caret left alone.
+    const draft = 'intro\n\n[toc] draft\n\n# One\n'
+    const from = draft.indexOf('[toc]') + '[toc]'.length
+    const after = state(draft).update({ changes: { from, to: from + ' draft'.length } }).state
+
+    expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual(['[toc]'])
   })
 })

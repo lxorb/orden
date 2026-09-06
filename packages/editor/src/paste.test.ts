@@ -60,7 +60,15 @@ describe('pasting spreadsheet cells', () => {
   })
 
   test('comma-separated rows work too', () => {
-    expect(delimitedToTable('a,b\n1,2')).toContain('| a | b |')
+    expect(delimitedToTable('a,b,c\n1,2,3')).toContain('| a | b | c |')
+  })
+
+  test('two sentences that happen to have a comma each are not a table', () => {
+    // One comma per line is a sentence, and pasting prose was turning it into a
+    // two-column table. A spreadsheet's tabs still settle it outright.
+    expect(delimitedToTable('Hello, world\nGoodbye, world')).toBeNull()
+    expect(delimitedToTable('Yes, it is\nNo, it is not')).toBeNull()
+    expect(delimitedToTable('a\tb\n1\t2')).toContain('| a | b |')
   })
 
   test('a pipe inside a cell is escaped', () => {

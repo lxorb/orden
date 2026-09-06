@@ -13,6 +13,7 @@ import { buildDecorations } from './live-preview/decorate'
 import {
   modeExtensions,
   setCodeLineNumbers,
+  setEquationNumbers,
   setFocusMode,
   setHeadingNumbers,
   setLigatures,
@@ -138,9 +139,28 @@ describe('what the reader sees', () => {
     expect(concealed(view.state)).toEqual(['# '])
   })
 
+  test('turning equation numbers on takes effect at once', () => {
+    // The transaction moves neither the document nor the caret, so the block
+    // field has to be told that what it draws has changed. Without that the
+    // setting did nothing until the next edit or click.
+    const { view } = surface('$$\nx = 1\n$$\n\ntail\n')
+    const before = view.state.field(blockDecorations)
+
+    setEquationNumbers(view, true)
+    expect(view.state.field(blockDecorations)).not.toBe(before)
+
+    const numbered = view.state.field(blockDecorations)
+    setEquationNumbers(view, false)
+    expect(view.state.field(blockDecorations)).not.toBe(numbered)
+  })
+
   test('a table with the caret in it goes back to being a table', () => {
     const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |'
-    const { view } = surface(doc, 3)
+    const { view } = surface(doc)
+
+    // Moved in rather than started there: a state is built with nothing revealed,
+    // because the caret it opens with is nobody's decision. See blocks.ts.
+    view.dispatch({ selection: { anchor: 3 } })
     expect(rendered(view.state)).toEqual([])
 
     setReadingMode(view, true)

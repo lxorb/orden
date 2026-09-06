@@ -27,14 +27,22 @@ function tableSpan(state: EditorState, from: number, to: number): TableSpan {
   return { from: state.doc.lineAt(from).from, to: state.doc.lineAt(to).to }
 }
 
-/** Whether a table's lines hold the table and nothing else.
+/** Whether a block construct's lines hold the construct and nothing else.
  *
- *  A table indented into a list item, or one inside a blockquote, carries a
- *  prefix before the first pipe of every line. The rendered widget replaces
- *  whole lines and the model knows nothing of a prefix, so writing an edit back
- *  would drop it and lift the table out of whatever it was in. Those tables stay
- *  as source instead, which reads well enough with the pipes dimmed. */
-export function tableStandsAlone(state: EditorState, from: number): boolean {
+ *  A table, a display equation or a diagram fence indented into a list item, or
+ *  sitting in a blockquote, has a prefix before its own first character on every
+ *  line - the item's indent, or the quote's `> `. Every one of these is drawn by
+ *  replacing whole lines, and none of the three knows a prefix exists: a table
+ *  would write its edit back without one and lift itself out of the list item, a
+ *  quoted equation would hand `> x` to the renderer as if the marker were part of
+ *  the maths, and a diagram would do the same with its source.
+ *
+ *  So those stay as source, which reads well enough - a table with its pipes
+ *  dimmed, an equation and a diagram with their fences shown.
+ *
+ *  Lives here because navigation is the other thing that has to agree: a table
+ *  nothing rendered is not a table the arrow keys walk into. */
+export function standsAlone(state: EditorState, from: number): boolean {
   return state.doc.lineAt(from).from === from
 }
 
@@ -44,7 +52,7 @@ export function renderedTables(state: EditorState): TableSpan[] {
   syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== 'Table') return true
-      if (!tableStandsAlone(state, node.from)) return false
+      if (!standsAlone(state, node.from)) return false
 
       const span = tableSpan(state, node.from, node.to)
       if (!overlaps(state, span.from, span.to)) spans.push(span)

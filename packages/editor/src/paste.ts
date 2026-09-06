@@ -60,11 +60,13 @@ export function delimitedToTable(text: string): string | null {
   const [firstLine] = lines
   if (firstLine === undefined || lines.length < 2) return null
 
-  // A tab on the first line settles it; a comma has to be on every line, since
-  // one comma in a sentence is not a column.
+  // A tab on the first line settles it: nothing but a spreadsheet puts tabs on
+  // the clipboard. A comma has to be on every line *twice* - `Hello, world` and
+  // `Goodbye, world` are two sentences, and one comma each was enough to turn
+  // them into a two-column table.
   const separator = firstLine.includes('\t')
     ? '\t'
-    : lines.every((l) => l.includes(','))
+    : lines.every((line) => line.split(',').length > 2)
       ? ','
       : null
   if (!separator) return null
