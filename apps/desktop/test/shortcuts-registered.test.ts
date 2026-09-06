@@ -48,3 +48,30 @@ describe('the editor package', () => {
     expect(named.sort()).toEqual(['editor.ts', 'live-preview/image.ts', 'shortcuts.ts'])
   })
 })
+
+const APP = fileURLToPath(new URL('../src/', import.meta.url))
+
+function markup(dir: string, found: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name)
+    if (statSync(path).isDirectory()) markup(path, found)
+    else if ((name.endsWith('.ts') || name.endsWith('.svelte')) && !name.endsWith('.test.ts')) found.push(path)
+  }
+  return found
+}
+
+describe('the menus and the palette', () => {
+  /** A hint typed out by hand is a promise the app stops keeping the moment
+   *  someone rebinds the key: the menu still says Ctrl B while Ctrl+Alt+B is
+   *  what works. Six rows of the editor's context menu, one tab menu row and
+   *  the whole palette read that way until the registry arrived. Every hint
+   *  therefore comes from `shortcuts.hint(id)`, and this is what says so. */
+  test('never spell a shortcut out by hand', () => {
+    const guilty = markup(APP)
+      .map((path) => ({ name: path.slice(APP.length).replace(/\\/g, '/'), text: readFileSync(path, 'utf8') }))
+      .filter((one) => /hint: '[^']/.test(one.text))
+      .map((one) => one.name)
+
+    expect(guilty).toEqual([])
+  })
+})

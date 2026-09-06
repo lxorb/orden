@@ -4,6 +4,7 @@
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import { shortcuts } from './shortcuts.svelte'
   import { workspace, type Tab } from './workspace.svelte'
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
@@ -18,7 +19,7 @@
 
   function tabMenu(tab: Tab): MenuEntry[] {
     return [
-      { label: t('Close'), hint: 'Ctrl W', run: () => workspace.close(tab.id) },
+      { label: t('Close'), hint: shortcuts.hint('app.close'), run: () => workspace.close(tab.id) },
       {
         label: t('Close others'),
         disabled: workspace.tabs.length < 2,
