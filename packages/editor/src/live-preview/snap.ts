@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import type { SyntaxNode, Tree } from '@lezer/common'
-import { concealable } from './decorate'
+import { concealable } from './conceal'
 import { revealed } from './reveal'
 
 /** Where a click lands next to concealed syntax.
@@ -24,7 +24,7 @@ import { revealed } from './reveal'
  *  the heading rule: the caret stays with the text. */
 const BLOCK_PARENTS = new Set(['FrontMatter', 'FootnoteDef', 'DefinitionDetail', 'AbbrevDef'])
 
-/** Marks that conceal themselves per construct (see decorate.ts). A fence's
+/** Marks that conceal themselves per construct (see conceal.ts). A fence's
  *  backticks sit on their own lines and never neighbour a click this way. */
 function inlineMark(node: SyntaxNode): boolean {
   const parent = node.parent?.name ?? ''

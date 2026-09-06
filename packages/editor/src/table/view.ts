@@ -3,6 +3,16 @@ import { EditorSelection, type StateCommand } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { label, type LabelKey } from '../labels'
 import {
+  attached,
+  button,
+  collapsedAt,
+  element,
+  posOnRow,
+  sameCell,
+  showRendered,
+  showSource,
+} from './cells'
+import {
   caretAtEdge,
   caretOffset,
   caretRect,
@@ -11,19 +21,7 @@ import {
   selectionIn,
   textRows,
 } from './caret'
-import { renderInline } from './inline'
-import {
-  type TableModel,
-  insertColumn,
-  insertRow,
-  moveColumn,
-  moveRow,
-  removeColumn,
-  removeRow,
-  serializeTable,
-  setAlign,
-  setCell,
-} from './model'
+import { type Align, type TableModel, serializeTable, setCell } from './model'
 import {
   type CellAddress,
   type Side,
@@ -37,6 +35,17 @@ import {
   type TableSpan,
   tableAt,
 } from './navigation'
+import {
+  alignedColumn,
+  type Edit,
+  type Focus,
+  insertedColumn,
+  insertedRow,
+  movedColumn,
+  movedRow,
+  removedColumn,
+  removedRow,
+} from './edits'
 import { inlineShortcut, runInCell } from './shortcuts'
 
 /** What a table's widget knows: the text it renders, and where that text is. */
@@ -53,13 +62,6 @@ export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bo
 /** Where the caret goes when it steps out: an end of the line, or the spot
  *  nearest to where it was. */
 export type Landing = 'start' | 'end' | { x: number }
-
-/** A cell and how far into its text the caret sits. Carried through a commit so
- *  a table that is rewritten around the caret does not move it. */
-interface Focus {
-  at: CellAddress
-  offset: number
-}
 
 /** How long a cell may sit untouched before its edit is written out anyway.
  *  Blur is the primary trigger; this is the safety net for when focus never
@@ -564,7 +566,7 @@ export class TableView {
 
   private growBelow(column: number) {
     const rows = this.model.rows.length
-    this.commit(insertRow(this.current(), rows), { at: { row: rows, column }, offset: 0 })
+    this.apply(insertedRow(this.current(), rows - 1, column))
   }
 
   /** Undo and redo are the editor's, not the browser's: a cell's edits live
@@ -622,112 +624,48 @@ export class TableView {
     this.edited(cell, at)
   }
 
-  /** Alignment changes nothing about the text, so the caret does not move: not
-   *  to the start of its cell either, which is what passing no offset did. */
-  private toggleAlign(column: number, align: 'left' | 'center' | 'right') {
-    const base = this.current()
-    const next = setAlign(base, column, align === base.align[column] ? null : align)
-    this.commit(next, this.focusedCell() ?? undefined)
-  }
-
-  /** The caret follows its own text through a move or a removal rather than
-   *  staying at an index. Anywhere it lands is clamped to what is left. */
-  private followingColumn(next: TableModel, was: number, now: number): Focus | undefined {
-    const focused = this.focusedCell()
-    if (!focused) return undefined
-
-    const column = focused.at.column === was ? now : focused.at.column
-    return {
-      at: { row: focused.at.row, column: Math.max(0, Math.min(column, next.header.length - 1)) },
-      offset: focused.offset,
-    }
+  private toggleAlign(column: number, align: NonNullable<Align>) {
+    this.apply(alignedColumn(this.current(), column, align, this.focusedCell() ?? undefined))
   }
 
   private moveColumnBy(column: number, step: number) {
-    const base = this.current()
-    const next = moveColumn(base, column, column + step)
-    if (next === base) return
+    const edit = movedColumn(this.current(), column, step, this.focusedCell() ?? undefined)
+    if (edit.next === this.current()) return
 
+    // A width is the view's own, so it travels with the column here.
     const [width] = this.widths.splice(column, 1)
     this.widths.splice(column + step, 0, width ?? null)
-
-    this.commit(next, this.followingColumn(next, column, column + step))
+    this.apply(edit)
   }
 
   private insertColumnAfter(column: number) {
     this.widths.splice(column + 1, 0, null)
-    this.commit(insertColumn(this.current(), column + 1), {
-      at: { row: -1, column: column + 1 },
-      offset: 0,
-    })
+    this.apply(insertedColumn(this.current(), column))
   }
 
   private deleteColumn(column: number) {
-    const base = this.current()
-    const next = removeColumn(base, column)
-    if (next === base) return
+    const edit = removedColumn(this.current(), column, this.focusedCell() ?? undefined)
+    if (edit.next === this.current()) return
 
     this.widths.splice(column, 1)
-    const focused = this.focusedCell()
-    this.commit(
-      next,
-      focused
-        ? {
-            at: {
-              row: focused.at.row,
-              column: Math.max(0, afterRemoval(focused.at.column, column, next.header.length)),
-            },
-            offset: focused.offset,
-          }
-        : undefined,
-    )
+    this.apply(edit)
   }
 
   private moveRowBy(row: number, step: number) {
-    const base = this.current()
-    const next = moveRow(base, row, row + step)
-    if (next === base) return
-
-    const focused = this.focusedCell()
-    // Only a caret that was in the row that moved goes with it.
-    this.commit(
-      next,
-      focused
-        ? {
-            at: {
-              row: focused.at.row === row ? row + step : focused.at.row,
-              column: focused.at.column,
-            },
-            offset: focused.offset,
-          }
-        : undefined,
-    )
+    this.apply(movedRow(this.current(), row, step, this.focusedCell() ?? undefined))
   }
 
   private insertRowAfter(row: number) {
-    this.commit(insertRow(this.current(), row + 1), { at: { row: row + 1, column: 0 }, offset: 0 })
+    this.apply(insertedRow(this.current(), row))
   }
 
   private deleteRow(row: number) {
-    const base = this.current()
-    const next = removeRow(base, row)
-    if (next === base) return
+    this.apply(removedRow(this.current(), row, this.focusedCell() ?? undefined))
+  }
 
-    const focused = this.focusedCell()
-    // A row left with nothing below it clamps to -1, the header, which is the
-    // one row a table always has.
-    this.commit(
-      next,
-      focused
-        ? {
-            at: {
-              row: afterRemoval(focused.at.row, row, next.rows.length),
-              column: focused.at.column,
-            },
-            offset: focused.offset,
-          }
-        : undefined,
-    )
+  /** Writes what one of the margin controls decided; see edits.ts. */
+  private apply(edit: Edit) {
+    this.commit(edit.next, edit.focus)
   }
 
   private rowGrip(row: number): HTMLElement {
@@ -895,80 +833,4 @@ export class TableView {
     const { model } = this
     return (at.row < 0 ? model.header[at.column] : model.rows[at.row]?.[at.column]) ?? ''
   }
-}
-
-/** The position on a line nearest to an x coordinate: on its last visual row
- *  when arriving from below, its first when arriving from above. */
-function posOnRow(view: EditorView, line: { from: number; to: number }, side: Side, x: number) {
-  const anchor = side === 'above' ? view.coordsAtPos(line.to, -1) : view.coordsAtPos(line.from, 1)
-  if (!anchor) return side === 'above' ? line.to : line.from
-
-  const pos = view.posAtCoords({ x, y: (anchor.top + anchor.bottom) / 2 })
-  return pos === null ? line.from : Math.max(line.from, Math.min(line.to, pos))
-}
-
-/** What the cell says when it is not being edited. */
-function showRendered(cell: HTMLElement) {
-  cell.replaceChildren(renderInline(cell.dataset.source ?? ''))
-}
-
-/** What it says when it is. An empty text node rather than nothing, so there
- *  is somewhere for the caret to sit in an empty cell. */
-function showSource(cell: HTMLElement) {
-  cell.replaceChildren(document.createTextNode(cell.dataset.source ?? ''))
-}
-
-/** Where a caret at `index` belongs once the one at `removed` has gone: one
- *  place earlier when it was after the removal, the same place otherwise, and
- *  never past the end of what is left. The caret follows its own text rather
- *  than staying at a number, which is what asking about the removed one instead
- *  of the focused one used to do. */
-function afterRemoval(index: number, removed: number, left: number): number {
-  return Math.min(index > removed ? index - 1 : index, left - 1)
-}
-
-/** Whether the caret, and nothing selected, sits at an offset in a cell. */
-function collapsedAt(cell: HTMLElement, offset: number): boolean {
-  const selection = selectionIn(cell)
-  return selection !== null && selection.from === offset && selection.to === offset
-}
-
-/** Whether a node is still in the document. */
-function attached(node: Node): boolean {
-  return node.isConnected
-}
-
-function sameCell(a: CellAddress, b: CellAddress | undefined): boolean {
-  return a.row === b?.row && a.column === b.column
-}
-
-function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string) {
-  const node = document.createElement(tag)
-  if (className) node.className = className
-  return node
-}
-
-function icon(path: string): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 10 10')
-  const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  shape.setAttribute('d', path)
-  svg.append(shape)
-  return svg
-}
-
-function button(className: string, key: LabelKey, path: string, onPress: () => void) {
-  const node = document.createElement('button')
-  node.className = className
-  node.type = 'button'
-  node.title = label(key)
-  node.setAttribute('aria-label', label(key))
-  node.append(icon(path))
-  // On mousedown, and with the default stopped, so the caret stays in
-  // whichever cell holds it while the button acts.
-  node.addEventListener('mousedown', (event) => {
-    event.preventDefault()
-    onPress()
-  })
-  return node
 }

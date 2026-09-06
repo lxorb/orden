@@ -9,6 +9,7 @@ import {
   type WidgetType,
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
+import { concealable, hide, meta } from './conceal'
 import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
 import { DIAGRAM_LANGUAGES, MathWidget } from './render'
@@ -24,34 +25,6 @@ import {
   PageBreakWidget,
   RuleWidget,
 } from './widgets'
-
-const hide = Decoration.replace({})
-const meta = Decoration.mark({ class: 'md-meta' })
-
-/** Syntax characters that vanish unless the caret is inside their construct. */
-const INLINE_MARKS = new Set([
-  'EmphasisMark',
-  'StrikethroughMark',
-  'SubscriptMark',
-  'SuperscriptMark',
-  'HighlightMark',
-  'MathMark',
-  'FootnoteMark',
-  'DefinitionMark',
-  'AbbrevMark',
-  'FrontMatterMark',
-  'LinkMark',
-  'URL',
-  'LinkTitle',
-])
-
-/** Whether a node is syntax the preview hides, as opposed to text it shows.
- *  A URL is syntax inside a link or an image, where the label stands for it;
- *  on its own, or between the `<` `>` of an autolink, it is the text. */
-export function concealable(node: SyntaxNode): boolean {
-  if (node.name === 'URL') return node.parent?.name === 'Link' || node.parent?.name === 'Image'
-  return INLINE_MARKS.has(node.name)
-}
 
 const HEADING = /^(?:ATX|Setext)Heading(\d)$/
 const CALLOUT = /^>\s*\[!(note|tip|important|warning|caution)\]/i
