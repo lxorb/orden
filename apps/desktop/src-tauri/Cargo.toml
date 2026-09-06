@@ -10,18 +10,31 @@ name = "nib_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [lints.rust]
+# Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
+# There is unsafe here, in three places: the shell's recent documents list, the
+# registry key behind Explorer's New menu, and WebView2's print engine. All three
+# are Windows calls with no safe wrapper, so this cannot be forbidden - but any
+# new one has to be written as a block that says why it is sound.
+unsafe_op_in_unsafe_fn = "deny"
 
+# Pedantic as the floor, so CI's plain `cargo clippy -- -D warnings` enforces it.
+# Anything allowed below is a lint that fights the shape of a Tauri app rather
+# than a lint the code fails to meet.
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
+# A command's arguments arrive deserialised and owned; that is the signature Tauri
+# generates against, and taking them by reference is not an option.
+needless_pass_by_value = "allow"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+# `protocol-asset` is what lets the webview load a picture from disk. Without it
+# every local image in a note is a broken image.
+tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-process = "2"
 
@@ -43,6 +56,11 @@ windows = { version = "0.58", features = [
 # ones tauri itself is built against, so the handles it hands out line up.
 webview2-com = "0.38"
 windows-core = "0.61"
+
+[dev-dependencies]
+# The tests that touch the disk do it in a folder that cleans itself up. Already
+# in the lock file as something tauri builds with, so this costs nothing new.
+tempfile = "3"
 
 [profile.release]
 codegen-units = 1
