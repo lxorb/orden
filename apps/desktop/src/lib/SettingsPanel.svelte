@@ -12,6 +12,8 @@
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
+  import { CATEGORIES, type Shortcut, SHORTCUTS, shortcuts } from './shortcuts.svelte'
+  import { readCombination, showCombination } from './keys'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
   import { isDesktop } from './tauri'
@@ -31,6 +33,8 @@
     general:
       'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
     editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
+    // A keyboard: the row of keys is the shortcut, not the writing.
+    shortcuts: 'M2 4.5h12v7H2zM4.4 7h.01M6.9 7h.01M9.4 7h.01M11.9 7h.01M5.4 9.4h5.2',
     // A word under the checker's wavy line, with the tick it earns.
     spelling: 'M2 11.5L5.6 3l3.6 8.5M3.4 8.6h4.4M9.6 12.8l1.8 1.7 3.1-3.5',
     markdown: 'M2.5 3.5h11v9h-11zM4.5 10.5V6l2 2.4L8.5 6v4.5M10.5 6v4.5M9 9l1.5 1.5L12 9',
@@ -57,6 +61,7 @@
     [
       { id: 'general', label: t('General') },
       { id: 'editor', label: t('Editor') },
+      { id: 'shortcuts', label: t('Shortcuts') },
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
@@ -104,6 +109,13 @@
         text: [t('Paper'), t('Orientation'), t('Margin'), t('Header'), t('Footer'), t('Appearance')],
       },
       { section: 'editor', label: t('Reset to defaults'), text: [] },
+      // Every shortcut by name, so searching the settings for "Bold" lands on
+      // the key that runs it as well as on the button that does.
+      ...SHORTCUTS.map((one) => ({
+        section: 'shortcuts' as Section,
+        label: one.label(),
+        text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
+      })),
       { section: 'markdown', label: t('Reset to defaults'), text: [] },
       ...exportActions().map((action) => ({ section: 'export' as Section, label: action.label, text: [] })),
     ]
@@ -237,6 +249,108 @@
   /** Where a slider's thumb sits, for the filled part of its track. */
   const fraction = (field: Extract<Field, { kind: 'slider' }>) =>
     ((field.get() - field.min) / (field.max - field.min)) * 100
+
+  // ── Shortcuts ───────────────────────────────────────────────────
+
+  /** Which entry is listening for a key, if any. */
+  let listening = $state<string | null>(null)
+  /** A key that lands on something else: what was pressed, and who holds it.
+   *  Nothing is written until this is answered one way or the other. */
+  let clash = $state<{ id: string; key: string; holders: Shortcut[] } | null>(null)
+  /** Why the last keystroke was not taken, for the row that was listening. */
+  let turnedDown = $state<{ id: string; reason: string } | null>(null)
+  let keyFilter = $state('')
+
+  const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
+
+  /** The list, grouped the way the menus group the same commands, and cut
+   *  down to what was typed in the box above it. A shortcut is looked for by
+   *  its name or by the key it is on, so both count. */
+  const keyGroups = $derived.by(() => {
+    const needle = keyFilter.trim().toLowerCase()
+    const has = (text: string | null) => !!text && text.toLowerCase().includes(needle)
+
+    return CATEGORIES.map((category) => ({
+      id: category.id,
+      label: category.label(),
+      rows: SHORTCUTS.filter((one) => one.category === category.id).filter(
+        (one) => !needle || has(one.label()) || has(shown(shortcuts.keyFor(one.id))) || has(category.label()),
+      ),
+    })).filter((group) => group.rows.length)
+  })
+
+  function listen(id: string) {
+    listening = listening === id ? null : id
+    clash = null
+    turnedDown = null
+  }
+
+  /** Takes the key over: whoever held it is left with none, and the reader
+   *  can put that back from the row it came from. */
+  function takeOver() {
+    if (!clash) return
+
+    for (const holder of clash.holders) shortcuts.set(holder.id, null)
+    shortcuts.set(clash.id, clash.key)
+    clash = null
+  }
+
+  /** Reads the next keystroke for whichever row is listening.
+   *
+   *  On the way down rather than up, and before anything else sees it: the
+   *  app's own keys are on the window too, and Ctrl+S while recording is a
+   *  key being chosen, not a note being saved. */
+  $effect(() => {
+    const id = listening
+    if (!id) return
+
+    const record = (event: KeyboardEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      // Escape steps out of recording and Backspace takes the key away, the
+      // way every other shortcut editor does it. Escape and Backspace as
+      // shortcuts of their own are in the fixed list.
+      if (event.key === 'Escape') {
+        listening = null
+        return
+      }
+
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        shortcuts.set(id, null)
+        listening = null
+        return
+      }
+
+      const key = readCombination(event, shortcuts.platform)
+      // Still only modifiers down: keep waiting for the key itself.
+      if (!key) return
+
+      const reason = shortcuts.refuse(key)
+      if (reason) {
+        turnedDown = { id, reason }
+        listening = null
+        return
+      }
+
+      const holders = shortcuts.conflicts(id, key)
+      listening = null
+      if (holders.length) clash = { id, key, holders }
+      else shortcuts.set(id, key)
+    }
+
+    window.addEventListener('keydown', record, true)
+    return () => window.removeEventListener('keydown', record, true)
+  })
+
+  // Nothing is left listening behind a closed panel or a pane that moved on.
+  $effect(() => {
+    if (!settings.open || settings.section !== 'shortcuts') {
+      listening = null
+      clash = null
+      turnedDown = null
+    }
+  })
 
   /** A window that grows into place on a desktop; a page that rises from the
    *  bottom on a phone. */
@@ -638,6 +752,8 @@
         </div>
       {/if}
     {/if}
+  {:else if settings.section === 'shortcuts'}
+    {@render keyboard()}
   {:else if settings.section === 'llm'}
     <!-- Its own component: the pane is a small guide, not a list of settings. -->
     <McpSetup />
@@ -730,6 +846,80 @@
       {/each}
     </div>
   {/if}
+{/snippet}
+
+<!-- Every shortcut there is, grouped the way the menus group the same
+     commands. A row is its name, the key it is on, and a way back to the key
+     it started on; the ones that cannot be changed say why instead. -->
+{#snippet keyboard()}
+  <label class="search">
+    <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
+    <input bind:value={keyFilter} placeholder={t('Search shortcuts')} spellcheck="false" />
+  </label>
+
+  {#each keyGroups as group (group.id)}
+    <h3>{group.label}</h3>
+    <div class="card">
+      {#each group.rows as entry (entry.id)}
+        {@const key = shortcuts.keyFor(entry.id)}
+        {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
+        <div class="setting shortcut">
+          <span class="name">
+            {entry.label()}
+            {#if entry.alias}<small>{t('Second key')}</small>{/if}
+            {#if entry.why}<small>{entry.why()}</small>{/if}
+            {#if warning}<small class="warn">{warning}</small>{/if}
+            {#if turnedDown?.id === entry.id}<small class="warn">{turnedDown.reason}</small>{/if}
+          </span>
+
+          {#if entry.scope === 'fixed'}
+            <span class="key held">{shown(key) ?? '–'}</span>
+          {:else}
+            <button
+              class="key"
+              class:listening={listening === entry.id}
+              class:none={!key}
+              onclick={() => listen(entry.id)}
+            >
+              {listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
+            </button>
+            <button
+              class="revert"
+              disabled={!shortcuts.changed(entry.id)}
+              title={t('Reset')}
+              aria-label={t('Reset')}
+              onclick={() => shortcuts.reset(entry.id)}
+            >
+              <svg viewBox="0 0 16 16">
+                <path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.6v2.6h2.6" />
+              </svg>
+            </button>
+          {/if}
+        </div>
+
+        {#if clash?.id === entry.id}
+          <div class="clash" transition:slide={{ duration: 160 }}>
+            <span>
+              {t('{key} already runs {name}.', {
+                key: shown(clash.key) ?? '',
+                name: clash.holders.map((one) => one.label()).join(', '),
+              })}
+            </span>
+            <button class="take" onclick={takeOver}>{t('Take it over')}</button>
+            <button class="give" onclick={() => (clash = null)}>{t('Cancel')}</button>
+          </div>
+        {/if}
+      {/each}
+    </div>
+  {:else}
+    <p class="note">{t('Nothing matches.')}</p>
+  {/each}
+
+  <p class="hint">{t('Esc stops recording, Backspace takes the key away.')}</p>
+
+  <div class="card">
+    <button class="action" onclick={() => shortcuts.resetAll()}>{t('Reset all shortcuts')}</button>
+  </div>
 {/snippet}
 
 {#snippet appearanceExtras()}
@@ -1074,6 +1264,142 @@
 
   .action:disabled {
     opacity: 0.5;
+  }
+
+  /* ── A shortcut and its key ────────────────────────────────────── */
+
+  .setting.shortcut {
+    gap: var(--space-2);
+  }
+
+  /* The key itself is the button that changes it: nothing else to aim at,
+     and what it shows now is what it will show after. */
+  .key {
+    flex: none;
+    min-width: 7rem;
+    padding: 5px 9px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--muted-strong);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.02em;
+    text-align: center;
+    cursor: default;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    button.key:hover {
+      border-color: var(--line-strong);
+      color: var(--text-strong);
+    }
+  }
+
+  button.key:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Listening: the ring says the next keystroke goes in here rather than
+     wherever it usually goes. */
+  .key.listening {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .key.none {
+    color: var(--muted);
+  }
+
+  /* A key that cannot be changed is written down but is not a button. */
+  .key.held {
+    background: none;
+    color: var(--muted);
+  }
+
+  /* Back to the key it came with. Present only once it is not on it, so the
+     row stays quiet until something was actually changed. */
+  .revert {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    cursor: default;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .revert:disabled {
+    visibility: hidden;
+  }
+
+  @media (hover: hover) {
+    .revert:hover:not(:disabled) {
+      color: var(--text-strong);
+    }
+  }
+
+  .revert svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* What is in the way, and the two ways out of it. Nothing is written until
+     one of them is pressed. */
+  .clash {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 10px 0;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
+    line-height: 1.5;
+  }
+
+  .clash span {
+    flex: 1;
+    min-width: 12rem;
+  }
+
+  .clash button {
+    flex: none;
+    padding: 5px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    cursor: default;
+  }
+
+  .clash .take {
+    border-color: transparent;
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* A key that may never arrive, or one that was turned down. */
+  .setting .name small.warn {
+    color: var(--danger);
   }
 
   .toggle {
@@ -1741,6 +2067,21 @@
 
     .action:active:not(:disabled) {
       background: var(--surface-2);
+    }
+
+    .key {
+      min-width: 5.5rem;
+      padding: 7px 10px;
+      font-size: var(--text-sm);
+    }
+
+    .revert {
+      width: 34px;
+      height: 34px;
+    }
+
+    .clash {
+      padding: 10px 14px;
     }
 
     .toggle {
