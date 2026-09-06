@@ -11,11 +11,16 @@ const highlighter = tagHighlighter([
   { tag: [tags.string, tags.special(tags.string)], class: 'hl-string' },
   { tag: [tags.number, tags.bool, tags.null], class: 'hl-number' },
   { tag: [tags.comment, tags.lineComment, tags.blockComment], class: 'hl-comment' },
+  // The key in a key=value fence, and a name where it is given - above the
+  // function rule so a function's name stays a function; see code-theme.ts.
+  { tag: tags.definition(tags.variableName), class: 'hl-property' },
   { tag: [tags.function(tags.variableName), tags.labelName], class: 'hl-function' },
   { tag: [tags.typeName, tags.className, tags.namespace], class: 'hl-type' },
   { tag: [tags.operator, tags.punctuation], class: 'hl-punctuation' },
   { tag: tags.propertyName, class: 'hl-property' },
   { tag: tags.invalid, class: 'hl-invalid' },
+  { tag: tags.inserted, class: 'hl-inserted' },
+  { tag: tags.deleted, class: 'hl-deleted' },
 ])
 
 function escape(text: string): string {
@@ -75,6 +80,9 @@ export function paletteCss(palette: CodePalette): string {
     ['punctuation', palette.punctuation],
     ['property', palette.property],
     ['invalid', 'var(--danger)'],
+    // What a diff means, not what a palette makes of it - see code-theme.ts.
+    ['inserted', 'var(--success)'],
+    ['deleted', 'var(--danger)'],
   ]
 
   return colours.map(([name, colour]) => `#write .hl-${name} { color: ${colour}; }`).join('\n')

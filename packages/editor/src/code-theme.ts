@@ -94,11 +94,26 @@ export function codeHighlightStyle(palette: CodePalette) {
       color: palette.comment,
       fontStyle: 'italic',
     },
+    // A name where it is given, which in a key=value fence is the key: the
+    // properties mode calls it `def`, and CodeMirror reads that as a defined
+    // variable. Measured on 06.09.2026 against real fences: in a `.env`,
+    // `.conf` or `.gitconfig` the value was coloured and the key was not,
+    // because nothing here reached this tag. It also tints the name in
+    // `const total` or a parameter list, which is the same thing said in a
+    // language that has more to say. It stands above the function rule on
+    // purpose: a function's name is given too, and it stays a function.
+    { tag: tags.definition(tags.variableName), color: palette.property },
     { tag: [tags.function(tags.variableName), tags.labelName], color: palette.function },
     { tag: [tags.typeName, tags.className, tags.namespace], color: palette.type },
     { tag: [tags.operator, tags.punctuation], color: palette.punctuation },
     { tag: tags.propertyName, color: palette.property },
     { tag: tags.invalid, color: 'var(--danger)' },
+    // A diff says added and removed, not keyword and string, so these two take
+    // the theme's own words for it rather than a palette entry: green and red
+    // are what the fence means, in every palette. Until now they were the one
+    // fence a code theme left entirely grey.
+    { tag: tags.inserted, color: 'var(--success)' },
+    { tag: tags.deleted, color: 'var(--danger)' },
   ])
 }
 

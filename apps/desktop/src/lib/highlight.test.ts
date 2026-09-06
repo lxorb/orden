@@ -37,6 +37,26 @@ describe('highlighting', () => {
     expect(html).not.toContain('<span class="hl-punctuation">&lt;</span><')
   })
 
+  /** The two an exported diff used to lose: added and removed carry the
+   *  document's own green and red rather than a palette entry, because that is
+   *  what the fence means - see code-theme.ts. */
+  test('colours a diff added and removed', async () => {
+    const parsers = await loadParsers(['diff'])
+    const html = highlightCode('--- a/file@@+++ b/file@@-old line@@+new line'.split('@@').join('\n'), parsers.get('diff')!)
+
+    expect(html).toContain('<span class="hl-inserted">+new line</span>')
+    expect(html).toContain('<span class="hl-deleted">-old line</span>')
+  })
+
+  /** The key of a key=value file, which the palette reached past until the
+   *  definition tag was painted. */
+  test('colours the key of an env fence', async () => {
+    const parsers = await loadParsers(['env'])
+    const html = highlightCode('API_KEY=secret', parsers.get('env')!)
+
+    expect(html).toContain('<span class="hl-property">API_KEY</span>')
+  })
+
   test('colours a function name', async () => {
     const parsers = await loadParsers(['js'])
     expect(highlightCode('greet(1)', parsers.get('js')!)).toContain('<span class="hl-function">greet</span>')

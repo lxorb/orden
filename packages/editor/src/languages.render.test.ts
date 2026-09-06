@@ -13,10 +13,13 @@ const highlighter = tagHighlighter([
   { tag: [tags.string, tags.special(tags.string)], class: 'string' },
   { tag: [tags.number, tags.bool, tags.null], class: 'number' },
   { tag: [tags.comment, tags.lineComment, tags.blockComment], class: 'comment' },
+  { tag: tags.definition(tags.variableName), class: 'property' },
   { tag: [tags.function(tags.variableName), tags.labelName], class: 'function' },
   { tag: [tags.typeName, tags.className, tags.namespace], class: 'type' },
   { tag: [tags.operator, tags.punctuation], class: 'punctuation' },
   { tag: tags.propertyName, class: 'property' },
+  { tag: tags.inserted, class: 'inserted' },
+  { tag: tags.deleted, class: 'deleted' },
 ])
 
 /** What the editor makes of one fence: which of those groups it found, and how
@@ -78,6 +81,12 @@ const fences: [string, string, string[]][] = [
   ['jsonc', '{\n  "name": "nib"\n}', ['property', 'string']],
   ['helm', 'metadata:\n  name: nib\n  replicas: 3', ['property']],
   ['proto', 'message Note {\n  string id = 1;\n}', ['keyword', 'number']],
+  // The three the palette used to leave grey. A key=value file says its key
+  // the way a language says a name it is defining, and a diff says added and
+  // removed rather than keyword and string; see code-theme.ts.
+  ['env', 'API_KEY=secret\n# a note\nPORT=8080', ['comment', 'property']],
+  ['ini', '[server]\nhost = localhost\nport = 8080', ['property']],
+  ['diff', '--- a/file\n+++ b/file\n@@ -1 +1 @@\n-old line\n+new line', ['deleted', 'inserted']],
 ]
 
 describe('a fence, coloured the way the editor colours it', () => {
