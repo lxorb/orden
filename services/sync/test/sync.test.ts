@@ -374,6 +374,67 @@ describe('notes', () => {
   })
 })
 
+describe('what a note is made of', () => {
+  test('a path or a body that is not text is refused', async () => {
+    const bad = [
+      { path: 5, content: 'x' },
+      { path: 'a.md', content: {} },
+      { path: ['a.md'], content: 'x' },
+    ]
+
+    for (const body of bad) {
+      const response = await call(env, `/v1/spaces/${space}/notes`, { token, body })
+      expect(response.status, JSON.stringify(body)).toBe(400)
+      expect(response.json.error).toContain('must be text')
+    }
+  })
+
+  test('a body that is not JSON is refused', async () => {
+    const response = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      raw: 'nonsense',
+      headers: { 'content-type': 'application/json' },
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('send a JSON object')
+  })
+
+  test('a version to write against has to be a number', async () => {
+    const created = await addNote('a.md', 'one')
+    const response = await call(env, `/v1/notes/${created.json.note.id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'two', baseVersion: '1' },
+    })
+
+    expect(response.status).toBe(400)
+  })
+
+  test('a space name has to be text', async () => {
+    expect((await call(env, '/v1/spaces', { token, body: { name: 7 } })).status).toBe(400)
+  })
+
+  test('an order has to be a list of ids', async () => {
+    const response = await call(env, '/v1/spaces/order', {
+      method: 'PUT',
+      token,
+      body: { order: [1, 2] },
+    })
+
+    expect(response.status).toBe(400)
+  })
+
+  /** The quota is in bytes, so what is counted has to be bytes. Counting
+   *  characters let an account keep four times what it was allowed. */
+  test('what a note costs is its bytes, not its characters', async () => {
+    const created = await addNote('emoji.md', '🙂')
+
+    expect(created.json.note.size).toBe(4)
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(4)
+  })
+})
+
 describe('catching up', () => {
   test('writes in the same millisecond both reach the cursor', async () => {
     await addNote('one.md', '1')

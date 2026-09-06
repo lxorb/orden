@@ -8,6 +8,13 @@ export function newId(): string {
   return crypto.randomUUID()
 }
 
+/** What a string costs to store, which is what the quota counts. Its length in
+ *  characters is not that: one emoji is a single character and four bytes, and
+ *  counting characters let an account keep several times what it was allowed. */
+export function byteLength(text: string): number {
+  return encoder.encode(text).length
+}
+
 export async function sha256(text: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', encoder.encode(text))
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')

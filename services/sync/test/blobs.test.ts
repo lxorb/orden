@@ -112,6 +112,33 @@ describe('giving an image back', () => {
   })
 })
 
+describe('a name that is not a hash', () => {
+  test('cannot be given back either', async () => {
+    // The name becomes an object key, so one that could never have been stored
+    // has no business reaching the bucket.
+    const response = await call(env, '/v1/blobs/%2e%2e%2fspaces%2fsomebody-else', {
+      method: 'DELETE',
+      token,
+    })
+
+    expect(response.status).toBe(400)
+    expect((await call(env, '/v1/blobs/not-a-hash', { method: 'DELETE', token })).status).toBe(400)
+  })
+})
+
+describe('an upload that is too big', () => {
+  test('is turned away on what it says, before its body is read', async () => {
+    const response = await call(env, `/v1/blobs/${HASH}`, {
+      method: 'PUT',
+      token,
+      raw: new Uint8Array(8),
+      headers: { 'content-type': 'image/png', 'content-length': String(64 * 1024 * 1024) },
+    })
+
+    expect(response.status).toBe(413)
+  })
+})
+
 describe('the quota', () => {
   test('counts notes as well as images', async () => {
     const space = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })

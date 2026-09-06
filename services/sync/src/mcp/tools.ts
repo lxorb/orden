@@ -6,7 +6,7 @@
  *  argument's type - a model sends what it likes - so each is checked before
  *  it reaches a query. */
 
-import { newId, now, sha256 } from '../crypto'
+import { byteLength, newId, now, sha256 } from '../crypto'
 import { cleanPath, MAX_NOTE_BYTES, nextSeq, noteKey } from '../notes'
 import { fits } from '../storage'
 import type { Env } from '../types'
@@ -199,7 +199,8 @@ async function writeNote(
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
   const content = asked ?? ''
-  if (content.length > MAX_NOTE_BYTES) return 'That note is too large.'
+  const size = byteLength(content)
+  if (size > MAX_NOTE_BYTES) return 'That note is too large.'
 
   const existing = await env.DB.prepare(
     'select id, size from notes where space_id = ? and path = ? and deleted = 0',
@@ -207,7 +208,7 @@ async function writeNote(
     .bind(space.id, path)
     .first<{ id: string; size: number }>()
 
-  if (!(await fits(env, userId, content.length, existing?.size ?? 0))) {
+  if (!(await fits(env, userId, size, existing?.size ?? 0))) {
     return 'This account is out of space.'
   }
 
@@ -222,14 +223,14 @@ async function writeNote(
       `update notes set version = version + 1, seq = ?, updated_at = ?, size = ?, hash = ?
        where id = ?`,
     )
-      .bind(seq, now(), content.length, hash, id)
+      .bind(seq, now(), size, hash, id)
       .run()
   } else {
     await env.DB.prepare(
       `insert into notes (id, space_id, path, seq, version, updated_at, size, hash)
        values (?, ?, ?, ?, 1, ?, ?, ?)`,
     )
-      .bind(id, space.id, path, seq, now(), content.length, hash)
+      .bind(id, space.id, path, seq, now(), size, hash)
       .run()
   }
 

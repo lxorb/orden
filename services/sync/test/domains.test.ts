@@ -184,6 +184,33 @@ describe("a domain of one's own", () => {
     expect((await publish({ domain: 'www.nibeditor.com' })).status).toBe(400)
   })
 
+  test('cannot be the shared domain with a trailing dot', async () => {
+    // The same host, written the way a resolver writes it. Left as it was, the
+    // name got past the check and a certificate was asked for inside the zone.
+    expect((await publish({ domain: 'nibeditor.com.' })).status).toBe(400)
+    expect((await publish({ domain: 'EVIL.NIBEDITOR.COM.' })).status).toBe(400)
+    expect(cloudflare.hostnames.size).toBe(0)
+  })
+
+  test('cannot be longer than a domain name may be', async () => {
+    // Every label is legal on its own; the whole is past what DNS carries, and
+    // a name that can never resolve is not an address.
+    const long = `${Array.from({ length: 4 }, () => 'a'.repeat(63)).join('.')}.com`
+    expect(long.length).toBeGreaterThan(253)
+
+    const response = await publish({ domain: long })
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('that does not look like a domain')
+    expect(cloudflare.hostnames.size).toBe(0)
+  })
+
+  test('takes a scheme and a path off what was pasted', async () => {
+    const response = await publish({ domain: ' HTTPS://Notes.Example.com/blog ' })
+
+    expect(response.status).toBe(200)
+    expect(response.json.space.blog.domain).toBe('notes.example.com')
+  })
+
   test('is never served on the shared domain, whatever the row says', async () => {
     // Belt and braces: a row that somehow names the app's own host must not
     // put a blog in front of the app for everyone.

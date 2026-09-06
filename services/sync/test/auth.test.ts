@@ -118,6 +118,48 @@ describe('verifying a code', () => {
   })
 })
 
+/** A client sends what it likes. None of it may reach a `.trim()` or a query
+ *  and come back as a 500: the answer is 400 and a sentence saying what. */
+describe('a body that is not what it should be', () => {
+  const JSON_TYPE = { 'content-type': 'application/json' }
+
+  test('is refused where an address was expected', async () => {
+    expect((await call(env, '/v1/auth/code', { body: { email: 12 } })).status).toBe(400)
+    expect((await call(env, '/v1/auth/code', { body: { email: { at: 'b.dev' } } })).status).toBe(
+      400,
+    )
+    expect((await call(env, '/v1/auth/code', { body: [] })).status).toBe(400)
+    expect((await call(env, '/v1/auth/code', { body: null })).status).toBe(400)
+  })
+
+  test('is refused when it is not JSON at all', async () => {
+    const response = await call(env, '/v1/auth/code', { raw: 'not json', headers: JSON_TYPE })
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('send a JSON object')
+  })
+
+  test('is refused where a code was expected', async () => {
+    const response = await call(env, '/v1/auth/verify', {
+      body: { email: 'a@b.dev', code: 123456 },
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toContain('must be text')
+  })
+
+  test('is refused where a name was expected', async () => {
+    const token = await signIn(env, 'a@b.dev')
+
+    expect((await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 5 } })).status).toBe(
+      400,
+    )
+    expect(
+      (await call(env, '/v1/me', { method: 'PATCH', token, raw: '{', headers: JSON_TYPE })).status,
+    ).toBe(400)
+  })
+})
+
 describe('sessions', () => {
   test('a token opens the account', async () => {
     const token = await signIn(env, 'a@b.dev')

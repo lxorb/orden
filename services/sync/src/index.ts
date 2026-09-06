@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { auth, presentUser, requireUser } from './auth'
+import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
-import { serveBlog, spaceForHost } from './blog'
+import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
@@ -72,12 +73,16 @@ const NAME_LIMIT = 60
 /** The one thing about an account that can be changed: what to call it. */
 app.patch('/v1/me', async (context) => {
   const user = context.get('user')
-  const body = await context.req.json<{ name?: string }>()
+  const body = await readBody(context)
+  // Read with room to spare, because what is measured is the name that comes
+  // out of the cleaning below rather than what arrived.
+  const given = body.text('name', NAME_LIMIT * 8)
+  if (body.problem) return context.json({ error: body.problem }, 400)
 
   // Inner runs of whitespace go too: a name is words, not layout. So do the
   // other control characters, which nothing can show and which would only
   // ever arrive by accident or on purpose.
-  const name = (body.name ?? '')
+  const name = (given ?? '')
     .replace(/\s+/g, ' ')
     .replace(/\p{Cc}/gu, '')
     .trim()
@@ -116,8 +121,9 @@ app.all('*', async (context) => {
 
   // A name on the shared domain that nobody publishes under has nothing to
   // show, and the editor does not live there either. Temporary, because the
-  // name may be taken tomorrow.
-  if (url.hostname.endsWith(`.${context.env.BLOG_ROOT}`)) {
+  // name may be taken tomorrow. Read through the same normalising as above, so
+  // one spelling of a host cannot be a blog and another the app.
+  if (hostnameOf(url.host).endsWith(`.${context.env.BLOG_ROOT}`)) {
     return context.redirect(context.env.APP_ORIGIN, 302)
   }
 

@@ -25,6 +25,11 @@ blobs.put('/:hash', async (context) => {
   const type = context.req.header('content-type') ?? ''
   if (!TYPES.has(type)) return context.json({ error: 'images only' }, 415)
 
+  // Read before the body is: a request that says it is bringing a hundred
+  // megabytes is turned away without spending the memory to find out.
+  const declared = Number(context.req.header('content-length') ?? 0)
+  if (declared > MAX_BLOB) return context.json({ error: 'that image is too big' }, 413)
+
   const already = await context.env.DB.prepare(
     'select hash from blobs where hash = ? and user_id = ?',
   )
@@ -58,6 +63,9 @@ blobs.put('/:hash', async (context) => {
 blobs.delete('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
+  // Checked as it is on the way in, so a name that could never have been
+  // stored cannot become a delete against the bucket.
+  if (!HASH.test(hash)) return context.json({ error: 'that is not a hash' }, 400)
 
   await context.env.DB.prepare('delete from blobs where hash = ? and user_id = ?')
     .bind(hash, user.id)

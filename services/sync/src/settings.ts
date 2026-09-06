@@ -124,7 +124,9 @@ settings.patch('/', async (context) => {
   }
 
   for (const [name, value] of Object.entries(body as Record<string, unknown>)) {
-    const check = KNOWN[name]
+    // Asked of the map itself, never through it: `KNOWN['__proto__']` reaches
+    // Object's own and would be called as though it were a check.
+    const check = Object.hasOwn(KNOWN, name) ? KNOWN[name] : undefined
     if (!check) return context.json({ error: `unknown setting ${name}` }, 400)
 
     const wrong = check(value)

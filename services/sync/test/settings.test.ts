@@ -52,6 +52,37 @@ describe('account settings', () => {
   })
 })
 
+describe('a name that is not a setting', () => {
+  /** `KNOWN[name]` reaches Object's own properties for these, and what came
+   *  back was called as though it were a check: a 500 from a body a client is
+   *  free to send. Asked of the map itself, they are simply unknown. */
+  test('is refused even when Object has one of its own', async () => {
+    for (const name of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+      const response = await call(env, '/v1/settings', {
+        method: 'PATCH',
+        token,
+        raw: JSON.stringify({ [name]: true }),
+        headers: { 'content-type': 'application/json' },
+      })
+
+      expect(response.status, name).toBe(400)
+      expect(response.json.error, name).toContain('unknown setting')
+    }
+  })
+
+  test('leaves the settings as they were', async () => {
+    await patch({ ligatures: true })
+    await call(env, '/v1/settings', {
+      method: 'PATCH',
+      token,
+      raw: '{"__proto__":{"ligatures":false}}',
+      headers: { 'content-type': 'application/json' },
+    })
+
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
+  })
+})
+
 describe('the shortcuts an account carries', () => {
   test('keep a map of keys', async () => {
     const set = await patch({ shortcuts: { 'format.bold': 'Mod-Alt-b', 'app.save': 'F2' } })

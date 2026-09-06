@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { readBody } from './body'
 import {
   equals,
   isEmail,
@@ -130,9 +131,18 @@ export async function verifyCode(
 
 export const auth = new Hono<{ Bindings: Env; Variables: Variables }>()
 
+/** What an address and a code may be before either is looked at. The address
+ *  is checked properly by `isEmail`; this is only the outer bound, so nothing
+ *  absurd reaches a query or a mail. */
+const EMAIL_LIMIT = 320
+const CODE_LIMIT = 16
+
 /** Step one. */
 auth.post('/code', async (context) => {
-  const { email } = await context.req.json<{ email?: string }>()
+  const body = await readBody(context)
+  const email = body.text('email', EMAIL_LIMIT)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+
   const sent = await sendCode(context.env, normaliseEmail(email ?? ''))
 
   if ('error' in sent) return context.json({ error: sent.error }, 400)
@@ -141,11 +151,19 @@ auth.post('/code', async (context) => {
 
 /** Step two. */
 auth.post('/verify', async (context) => {
-  const { email, code } = await context.req.json<{ email?: string; code?: string }>()
+  const body = await readBody(context)
+  const email = body.text('email', EMAIL_LIMIT)
+  const code = body.text('code', CODE_LIMIT)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+
   const verified = await verifyCode(context.env, normaliseEmail(email ?? ''), code ?? '')
 
   if ('error' in verified) return context.json({ error: verified.error }, verified.status)
   const { user } = verified
+
+  // Sessions that ran out are cleared as new ones arrive: nothing else would
+  // ever take them away, and a row nobody can use is only a row.
+  await context.env.DB.prepare('delete from sessions where expires_at < ?').bind(now()).run()
 
   const token = randomToken()
   await context.env.DB.prepare(

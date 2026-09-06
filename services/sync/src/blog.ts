@@ -15,14 +15,17 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join('; ')
 
-/** Which space, if any, a hostname publishes.
- *
- *  The name is taken apart here rather than trusted as it arrives: the port
- *  goes, the case goes, and so does the trailing dot that a fully qualified
- *  name may carry - `Field.Nibeditor.com.` is the same host as
- *  `field.nibeditor.com` and must not read as a domain of someone's own. */
+/** The host a request names, as a name to compare: the port goes, the case
+ *  goes, and so does the trailing dot that a fully qualified name may carry.
+ *  `Field.Nibeditor.com.` is the same host as `field.nibeditor.com` and must
+ *  not read as a domain of someone's own. */
+export function hostnameOf(host: string): string {
+  return (host.toLowerCase().split(':')[0] ?? '').replace(/\.$/, '')
+}
+
+/** Which space, if any, a hostname publishes. */
 export async function spaceForHost(env: Env, host: string): Promise<Space | null> {
-  const hostname = (host.toLowerCase().split(':')[0] ?? '').replace(/\.$/, '')
+  const hostname = hostnameOf(host)
   if (!hostname) return null
 
   if (hostname.endsWith(`.${env.BLOG_ROOT}`)) {
@@ -155,11 +158,15 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
   })
 }
 
+/** How many notes an index lists. Well past any blog anyone writes, and a
+ *  ceiling so that one hostname cannot ask for an unbounded page. */
+const MOST_LISTED = 2000
+
 export async function serveBlog(env: Env, space: Space, url: URL): Promise<Response> {
   const { results } = await env.DB.prepare(
-    'select * from notes where space_id = ? and deleted = 0 order by path',
+    'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
   )
-    .bind(space.id)
+    .bind(space.id, MOST_LISTED)
     .all<Note>()
 
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')

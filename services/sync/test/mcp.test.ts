@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { QUOTA } from '../src/storage'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -146,6 +147,53 @@ describe('reading notes through it', () => {
   })
 })
 
+/** A model sends what it likes. Every one of these used to reach a `null.id` or
+ *  a `String({})` and come back as a message about a property of undefined. */
+describe('what a tool is given', () => {
+  test('a space nobody named is asked for in words', async () => {
+    const key = await connector()
+
+    expect(await tool(key, 'list_notes')).toContain('Which space')
+    expect(await tool(key, 'read_note', { path: 'plan.md' })).toContain('Which space')
+    expect(await tool(key, 'list_notes', { space: '  ' })).toContain('Which space')
+  })
+
+  test('an argument of the wrong kind is said to be one', async () => {
+    const key = await connector()
+
+    expect(await tool(key, 'list_notes', { space: 5 })).toContain('name or an id')
+    expect(await tool(key, 'read_note', { space: 'Work', path: { a: 1 } })).toContain(
+      'not a note path',
+    )
+    expect(await tool(key, 'search_notes', { query: [] })).toContain('has to be text')
+  })
+
+  test('a tool nobody has is named back', async () => {
+    expect(await tool(await connector(), 'drop_everything')).toContain('No tool called')
+  })
+
+  test('a request that is not one is refused', async () => {
+    const key = await connector()
+
+    expect((await call(env, '/mcp', { token: key, body: [] })).status).toBe(400)
+    expect((await call(env, '/mcp', { token: key, body: null })).status).toBe(400)
+    expect((await call(env, '/mcp', { token: key, body: { jsonrpc: '2.0', id: 1 } })).status).toBe(
+      400,
+    )
+  })
+
+  test('an id that is not one is answered as none', async () => {
+    const response = await rpc(await connector(), 'ping')
+    expect(response.json.id).toBe(1)
+
+    const odd = await call<RpcView>(env, '/mcp', {
+      token: await connector(),
+      body: { jsonrpc: '2.0', id: { nested: true }, method: 'ping' },
+    })
+    expect(odd.json.id).toBeNull()
+  })
+})
+
 describe('writing through it', () => {
   test('is refused while the token is read-only', async () => {
     const text = await tool(await connector(true), 'write_note', {
@@ -181,6 +229,36 @@ describe('writing through it', () => {
     const paths = changes.json.notes.map((note: { path: string }) => note.path)
 
     expect(paths).toContain('fresh.md')
+  })
+
+  /** The connector is a second door onto the same notes, so it has to hold the
+   *  same limits. It used to hold neither: a model could write past the quota
+   *  and past the size a note may be. */
+  test('is refused once the account is full', async () => {
+    const key = await connector(false)
+    const owner = env.db.prepare('select id from users limit 1').get() as { id: string }
+    env.db
+      .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
+      .run('a'.repeat(64), owner.id, QUOTA, 'image/png', 1)
+
+    const text = await tool(key, 'write_note', {
+      space: 'Work',
+      path: 'big.md',
+      content: 'x'.repeat(100),
+    })
+
+    expect(text).toContain('out of space')
+    expect(await tool(key, 'list_notes', { space: 'Work' })).not.toContain('big.md')
+  })
+
+  test('counts what it writes in bytes', async () => {
+    const key = await connector(false)
+    await tool(key, 'write_note', { space: 'Work', path: 'emoji.md', content: '🙂' })
+
+    const row = env.db.prepare('select size from notes where path = ?').get('emoji.md') as {
+      size: number
+    }
+    expect(row.size).toBe(4)
   })
 
   test('one account cannot reach another', async () => {

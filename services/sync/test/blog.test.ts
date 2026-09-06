@@ -152,6 +152,80 @@ describe('publishing', () => {
   })
 })
 
+/** The hostname decides which account's notes are served, so it is taken apart
+ *  rather than trusted: the port, the case and the trailing dot of a fully
+ *  qualified name are all names for the same host. */
+describe('the hostname a blog answers on', () => {
+  test('is the same host with a trailing dot', async () => {
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/', { host: 'field.nibeditor.com.' })
+    expect(response.status).toBe(200)
+    expect(response.text).toContain('Field notes')
+  })
+
+  test('is not read as a domain of someone else when it carries one', async () => {
+    // With the dot left on, the name did not end in `.nibeditor.com` and was
+    // looked up as a domain somebody had brought.
+    await publish({ subdomain: 'field' })
+    env.db
+      .prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?')
+      .run('field.nibeditor.com.', space)
+
+    const response = await call(env, '/', { host: 'field.nibeditor.com.' })
+    expect(response.status).toBe(302)
+  })
+
+  test('is the same host in any case', async () => {
+    await publish({ subdomain: 'field' })
+    expect((await call(env, '/', { host: 'FIELD.NIBEDITOR.COM' })).status).toBe(200)
+  })
+
+  test('is not the apex, however it is written', async () => {
+    await publish({ subdomain: 'field' })
+
+    for (const host of ['nibeditor.com', 'nibeditor.com.', 'NIBEDITOR.COM']) {
+      expect((await call(env, '/', { host })).status, host).not.toBe(200)
+    }
+  })
+})
+
+describe('what publishing is sent', () => {
+  test('has to be text', async () => {
+    expect((await publish({ subdomain: 5 })).status).toBe(400)
+    expect((await publish({ domain: {} })).status).toBe(400)
+    expect((await publish({ subdomain: 'field', title: ['x'] })).status).toBe(400)
+    expect((await publish({ subdomain: 'field', note: 7 })).status).toBe(400)
+  })
+
+  test('cannot carry a title larger than a title', async () => {
+    const response = await publish({ subdomain: 'field', title: 'x'.repeat(201) })
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toContain('title')
+  })
+
+  test('takes a title of the length a title has', async () => {
+    expect((await publish({ subdomain: 'field', title: 'x'.repeat(200) })).status).toBe(200)
+  })
+
+  test('refuses a note path that is not one, rather than publishing everything', async () => {
+    const response = await publish({ subdomain: 'field', note: 'not-a-note' })
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('that path is not usable')
+  })
+
+  test('still clears the published note with an empty path', async () => {
+    await addNote('home.md', '# Hello\n')
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const cleared = await publish({ note: '' })
+    expect(cleared.status).toBe(200)
+    expect(cleared.json.space.blog.note).toBeNull()
+  })
+})
+
 describe('a published note cannot script the reader', () => {
   test('raw HTML in a note is shown, not run', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {

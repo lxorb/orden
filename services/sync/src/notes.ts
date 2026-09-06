@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
+import { readBody } from './body'
 import { fits } from './storage'
-import { newId, now, sha256 } from './crypto'
-import { ownedSpace } from './spaces'
+import { byteLength, newId, now, sha256 } from './crypto'
+import { ownedSpace } from './spaces/space'
 import type { Env, Note, Variables } from './types'
 
 /** The largest note the API will take. R2 would hold more; a note this size
@@ -77,12 +78,17 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
   const space = await ownedSpace(context.env, user.id, context.req.param('spaceId'))
   if (!space) return context.json({ error: 'no such space' }, 404)
 
-  const body = await context.req.json<{ path?: string; content?: string }>()
-  const path = cleanPath(body.path ?? '')
-  const content = body.content ?? ''
+  const body = await readBody(context)
+  const given = body.text('path', PATH_LIMIT)
+  const sent = body.text('content', MAX_NOTE_BYTES)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+
+  const path = cleanPath(given ?? '')
+  const content = sent ?? ''
+  const size = byteLength(content)
 
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
-  if (content.length > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
+  if (size > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
 
   const existing = await context.env.DB.prepare(
     'select * from notes where space_id = ? and path = ? and deleted = 0',
@@ -94,7 +100,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     return context.json({ error: 'a note already lives there', note: presentNote(existing) }, 409)
 
   // A limit nobody enforces is a number on a settings page.
-  if (!(await fits(context.env, user.id, content.length))) {
+  if (!(await fits(context.env, user.id, size))) {
     return context.json({ error: 'out of space' }, 507)
   }
 
@@ -107,7 +113,7 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     updated_at: now(),
     deleted: 0,
     deleted_at: null,
-    size: content.length,
+    size,
     hash: await sha256(content),
   }
 
@@ -170,14 +176,20 @@ notes.put('/notes/:id', async (context) => {
 
   if (!note) return context.json({ error: 'no such note' }, 404)
 
-  const body = await context.req.json<{ path?: string; content?: string; baseVersion?: number }>()
-  const content = body.content ?? ''
-  if (content.length > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
+  const body = await readBody(context)
+  const given = body.text('path', PATH_LIMIT)
+  const sent = body.text('content', MAX_NOTE_BYTES)
+  const baseVersion = body.count('baseVersion')
+  if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const path = body.path === undefined ? note.path : cleanPath(body.path)
+  const content = sent ?? ''
+  const size = byteLength(content)
+  if (size > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
+
+  const path = given === undefined ? note.path : cleanPath(given)
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
 
-  if (body.baseVersion !== undefined && body.baseVersion !== note.version) {
+  if (baseVersion !== undefined && baseVersion !== note.version) {
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
     return context.json(
       {
@@ -194,7 +206,7 @@ notes.put('/notes/:id', async (context) => {
 
   // The note's current bytes come back as it is replaced, so editing a large
   // note that stays the same size is never refused.
-  if (!(await fits(context.env, context.get('user').id, content.length, note.size))) {
+  if (!(await fits(context.env, context.get('user').id, size, note.size))) {
     return context.json({ error: 'out of space' }, 507)
   }
 
@@ -205,7 +217,7 @@ notes.put('/notes/:id', async (context) => {
     version: note.version + 1,
     updated_at: now(),
     deleted: 0,
-    size: content.length,
+    size,
     hash,
   }
 

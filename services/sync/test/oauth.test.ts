@@ -382,6 +382,103 @@ describe('asking for consent', () => {
   })
 })
 
+/** Everything in an authorization request arrives from a stranger's query
+ *  string or from a hand-made form post. What may be sent anywhere is settled
+ *  before anything is, and each field is what it says it is or the request
+ *  stops on a page. */
+describe('what an authorization request may carry', () => {
+  test('a challenge that is not an S256 digest is turned down', async () => {
+    const { client_id } = (await register()).json
+
+    for (const code_challenge of ['short', 'x'.repeat(42), 'x'.repeat(44), 'not+base64url/=']) {
+      const response = await call(env, authorizeUrl({ client_id, code_challenge }))
+
+      expect(response.status, code_challenge).toBe(302)
+      const sentTo = new URL(response.headers.get('location')!)
+      expect(sentTo.searchParams.get('error'), code_challenge).toBe('invalid_request')
+    }
+  })
+
+  test('a field longer than that field ever is stays on a page', async () => {
+    const { client_id } = (await register()).json
+    const { challenge } = await pkce()
+
+    const response = await call(
+      env,
+      authorizeUrl({ client_id, code_challenge: challenge, state: 'x'.repeat(2000) }),
+    )
+
+    expect(response.status).toBe(400)
+    expect(response.headers.get('location')).toBeNull()
+  })
+
+  test('a consent post cannot smuggle a scope past the first step', async () => {
+    const { client_id } = (await register()).json
+    const { challenge } = await pkce()
+
+    const response = await submit({
+      client_id,
+      redirect_uri: CHATGPT,
+      code_challenge: challenge,
+      scope: 'notes:read notes:everything',
+      action: 'send',
+      email: 'a@b.dev',
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.text).toContain('not complete')
+  })
+
+  test('a consent post cannot bring a challenge the first step would refuse', async () => {
+    const { client_id } = (await register()).json
+
+    const response = await submit({
+      client_id,
+      redirect_uri: CHATGPT,
+      code_challenge: 'short',
+      action: 'send',
+      email: 'a@b.dev',
+    })
+
+    expect(response.status).toBe(400)
+  })
+})
+
+describe('a client id that is a URL', () => {
+  test('is not fetched when it names this machine or an address', async () => {
+    const reached = vi.fn(() => Promise.resolve(new Response('{}')))
+    vi.stubGlobal('fetch', reached)
+
+    const { challenge } = await pkce()
+    for (const client_id of [
+      'https://127.0.0.1/metadata',
+      'https://localhost/metadata',
+      'https://[::1]/metadata',
+      'https://10.0.0.1/metadata',
+    ]) {
+      const response = await call(env, authorizeUrl({ client_id, code_challenge: challenge }))
+      expect(response.status, client_id).toBe(400)
+    }
+
+    expect(reached).not.toHaveBeenCalled()
+  })
+})
+
+describe('registering more than a client has', () => {
+  test('is refused rather than written into the row', async () => {
+    const many = Array.from({ length: 21 }, (_, index) => `https://claude.ai/cb/${index}`)
+    const response = await register(many)
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('invalid_redirect_uri')
+  })
+
+  test('twenty is still taken', async () => {
+    const many = Array.from({ length: 20 }, (_, index) => `https://claude.ai/cb/${index}`)
+    expect((await register(many)).status).toBe(201)
+  })
+})
+
 describe('connecting', () => {
   test('ends with a token that reaches the notes', async () => {
     const { tokens, sentTo } = await connect()
@@ -508,6 +605,26 @@ describe('connecting', () => {
       resource: 'https://other.example',
     })
     expect(tokens.json.error).toBe('invalid_target')
+  })
+})
+
+describe('codes nobody redeemed', () => {
+  test('are cleared away as the next one is written', async () => {
+    await signIn(env, 'a@b.dev')
+    const owner = env.db.prepare('select id from users limit 1').get() as { id: string }
+    env.db
+      .prepare(
+        `insert into oauth_codes (code_hash, client_id, user_id, redirect_uri, challenge, read_only, expires_at)
+         values ('stale', 'someone', ?, 'https://chatgpt.com/cb', 'x', 1, 1)`,
+      )
+      .run(owner.id)
+
+    await connect()
+
+    const left = env.db.prepare('select count(*) as held from oauth_codes').get() as {
+      held: number
+    }
+    expect(left.held).toBe(0)
   })
 })
 
