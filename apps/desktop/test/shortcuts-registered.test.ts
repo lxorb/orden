@@ -45,7 +45,7 @@ describe('the editor package', () => {
   test('builds every other keymap from bindings that have a name', () => {
     const named = files.filter((one) => one.text.includes('boundKeymap(')).map((one) => one.name)
 
-    expect(named.sort()).toEqual(['editor.ts', 'live-preview/image.ts', 'shortcuts.ts'])
+    expect(named.sort()).toEqual(['editor.ts', 'live-preview/image/index.ts', 'shortcuts.ts'])
   })
 })
 
