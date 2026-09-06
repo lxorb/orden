@@ -1,9 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { LanguageDescription } from '@codemirror/language'
+import { LanguageDescription, StringStream, type StreamParser } from '@codemirror/language'
+import { tags } from '@lezer/highlight'
 import { languages as stock } from '@codemirror/language-data'
 import { fenceLanguages, SPELLINGS } from './languages'
 import { DIAGRAM_LANGUAGES } from './live-preview/render'
 import { isRunnableLanguage } from './run/run'
+import { graphqlParser } from './graphql'
+import { makefileParser } from './makefile'
+import { mermaidParser } from './mermaid'
+import { prismaParser } from './prisma'
 
 /** What a fence saying this word opens, the way `markdown()` asks it. */
 const languageFor = (word: string) =>
@@ -103,6 +108,11 @@ describe('the word a fence is opened with', () => {
     terraform: 'Terraform',
     hcl: 'Terraform',
     nix: 'Nix',
+    make: 'Makefile',
+    makefile: 'Makefile',
+    graphql: 'GraphQL',
+    gql: 'GraphQL',
+    prisma: 'Prisma',
     dockerfile: 'Dockerfile',
     docker: 'Dockerfile',
     proto: 'ProtoBuf',
@@ -226,6 +236,9 @@ describe('loading a language', () => {
     'svelte',
     'solidity',
     'terraform',
+    'makefile',
+    'graphql',
+    'prisma',
     'plaintext',
     'mermaid',
   ]
@@ -236,6 +249,54 @@ describe('loading a language', () => {
       const support = await description.load()
 
       expect(support.language.parser.parse('x')).toBeTruthy()
+    })
+  }
+})
+
+describe('the token types this repo names itself', () => {
+  /** A token type CodeMirror has no tag for is not an error. It is one
+   *  `console.warn` at startup and a token with no colour for ever after,
+   *  which is exactly the kind of thing that goes unnoticed for a year. */
+  const known = (type: string) =>
+    type
+      .split('.')
+      .every((part, index) =>
+        index === 0
+          ? typeof (tags as Record<string, unknown>)[part] === 'object'
+          : typeof (tags as Record<string, unknown>)[part] === 'function',
+      )
+
+  const samples: [string, StreamParser<never>, string][] = [
+    ['mermaid', mermaidParser as StreamParser<never>, 'graph TD\n  A["a"] --> B\n  %% a note'],
+    [
+      'makefile',
+      makefileParser as StreamParser<never>,
+      '# build\nCC := gcc\nall: $(OBJ)\n\t$(CC) -o "app" main.c\nifeq ($(OS),nt)\nendif',
+    ],
+    [
+      'graphql',
+      graphqlParser as StreamParser<never>,
+      '# a schema\n"""doc"""\ntype User {\n  id: ID!\n  posts(n: 10): [Post!]! @cache\n}\nquery H($id: ID) { user }',
+    ],
+    [
+      'prisma',
+      prismaParser as StreamParser<never>,
+      '// a schema\ndatasource db {\n  url = env("DB")\n}\nmodel User {\n  id Int @id @default(3)\n  posts Post[]\n}',
+    ],
+  ]
+
+  for (const [name, parser, sample] of samples) {
+    test(`${name} names only tags CodeMirror knows`, () => {
+      const state = parser.startState!(2)
+
+      for (const line of sample.split('\n')) {
+        const stream = new StringStream(line, 2, 2)
+
+        while (!stream.eol()) {
+          const type = parser.token(stream, state)
+          expect(type === null || known(type), `${name}: ${type}`).toBe(true)
+        }
+      }
     })
   }
 })

@@ -139,11 +139,12 @@ const spelled = stock.map((description) => {
   })
 })
 
-/** A CodeMirror 5 mode from `@codemirror/legacy-modes`, as a language a fence
- *  can name. The import sits inside `load`, so the mode is fetched the first
- *  time someone opens such a fence and never before - the same bargain the
- *  stock list makes for all 143 of its own. */
-function legacyMode(spec: {
+/** A stream tokenizer as a language a fence can name - one of the CodeMirror 5
+ *  modes in `@codemirror/legacy-modes`, or one of this repo's own. The import
+ *  sits inside `load`, so the tokenizer is fetched the first time someone opens
+ *  such a fence and never before - the same bargain the stock list makes for
+ *  all 143 of its own. */
+function streamMode(spec: {
   name: string
   alias: string[]
   extensions?: string[]
@@ -180,7 +181,7 @@ function cLike(spec: {
   builtin?: string
   hooks?: Record<string, (stream: { skipToEnd(): void }) => string>
 }): LanguageDescription {
-  return legacyMode({
+  return streamMode({
     name: spec.name,
     alias: spec.alias,
     extensions: spec.extensions,
@@ -252,7 +253,7 @@ const plainTextDescription = LanguageDescription.of({
 const ADDED: LanguageDescription[] = [
   // Shaders: one mode covers GLSL and HLSL, which differ in their builtins
   // rather than in their shape.
-  legacyMode({
+  streamMode({
     name: 'GLSL',
     alias: ['glsl', 'hlsl', 'shader', 'shaderlab', 'opengl'],
     extensions: ['glsl', 'frag', 'vert', 'geom', 'comp'],
@@ -260,19 +261,19 @@ const ADDED: LanguageDescription[] = [
   }),
   // Two more that ride along in the same file the shaders come from, so
   // registering them costs a line and no bytes at all.
-  legacyMode({
+  streamMode({
     name: 'nesC',
     alias: ['nesc'],
     extensions: ['nc'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/clike')).nesC,
   }),
-  legacyMode({
+  streamMode({
     name: 'Ceylon',
     alias: ['ceylon'],
     extensions: ['ceylon'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/clike')).ceylon,
   }),
-  legacyMode({
+  streamMode({
     name: 'PEG.js',
     alias: ['pegjs', 'peg'],
     extensions: ['pegjs', 'peg'],
@@ -281,13 +282,13 @@ const ADDED: LanguageDescription[] = [
 
   // Two SQL dialects the stock list skips, both of them what a data note is
   // usually written in.
-  legacyMode({
+  streamMode({
     name: 'Hive SQL',
     alias: ['hive', 'hiveql'],
     extensions: ['hql'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/sql')).hive,
   }),
-  legacyMode({
+  streamMode({
     name: 'Spark SQL',
     alias: ['sparksql', 'spark-sql'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/sql')).sparkSQL,
@@ -329,6 +330,27 @@ const ADDED: LanguageDescription[] = [
     alias: ['terraform', 'tf', 'tfvars', 'hcl', 'nomad', 'packer'],
     extensions: ['tf', 'tfvars', 'hcl'],
     load: async () => (await import('codemirror-lang-hcl')).hcl(),
+  }),
+
+  // Three that nobody has ported at all, tokenized here. Each file says what
+  // it knows and how it knows it.
+  streamMode({
+    name: 'Makefile',
+    alias: ['makefile', 'make', 'mk', 'gnumakefile', 'bsdmake', 'justfile'],
+    extensions: ['mk', 'mak'],
+    parser: async () => (await import('./makefile')).makefileParser,
+  }),
+  streamMode({
+    name: 'GraphQL',
+    alias: ['graphql', 'gql'],
+    extensions: ['graphql', 'gql', 'graphqls'],
+    parser: async () => (await import('./graphql')).graphqlParser,
+  }),
+  streamMode({
+    name: 'Prisma',
+    alias: ['prisma'],
+    extensions: ['prisma'],
+    parser: async () => (await import('./prisma')).prismaParser,
   }),
 
   // Nobody has ported these three, and all three are C-shaped enough that the
