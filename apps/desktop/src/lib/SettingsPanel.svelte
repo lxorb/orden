@@ -12,8 +12,11 @@
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
-  import { CATEGORIES, type Shortcut, SHORTCUTS, shortcuts } from './shortcuts.svelte'
-  import { readCombination, showCombination } from './keys'
+  import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
+  import { showCombination } from './keys'
+  import { Publishing, relativeToSpace } from './settings/publishing.svelte'
+  import { Rebind } from './settings/rebind.svelte'
+  import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
   import { isDesktop } from './tauri'
@@ -25,64 +28,7 @@
 
   const { view }: { view?: EditorView | undefined } = $props()
 
-  /** A line drawing each, so the list reads at a glance rather than as a
-   *  column of words. */
-  const ICONS: Record<string, string> = {
-    // Sliders, not a sun with rays: the rail's theme button is already a sun,
-    // and adjusting things is what this pane is for.
-    general:
-      'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
-    editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
-    // A keyboard: the row of keys is the shortcut, not the writing.
-    shortcuts: 'M2 4.5h12v7H2zM4.4 7h.01M6.9 7h.01M9.4 7h.01M11.9 7h.01M5.4 9.4h5.2',
-    // A word under the checker's wavy line, with the tick it earns.
-    spelling: 'M2 11.5L5.6 3l3.6 8.5M3.4 8.6h4.4M9.6 12.8l1.8 1.7 3.1-3.5',
-    markdown: 'M2.5 3.5h11v9h-11zM4.5 10.5V6l2 2.4L8.5 6v4.5M10.5 6v4.5M9 9l1.5 1.5L12 9',
-    appearance:
-      'M8 1.8a6.2 6.2 0 1 0 0 12.4c.9 0 1.4-.6 1.4-1.3 0-.8-.7-1.2-.7-1.9 0-.5.4-.9 1-.9h1.1a3.4 3.4 0 0 0 3.4-3.4c0-2.8-2.8-4.9-6.2-4.9zM5 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM8 5.6a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM11 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z',
-    account: 'M8 8.4a2.9 2.9 0 1 0 0-5.8 2.9 2.9 0 0 0 0 5.8zM2.6 14a5.4 5.4 0 0 1 10.8 0',
-    publish:
-      'M8 1.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 8 1.8zM1.8 8h12.4M8 1.8c1.6 1.8 2.4 3.9 2.4 6.2S9.6 12.4 8 14.2C6.4 12.4 5.6 10.3 5.6 8S6.4 3.6 8 1.8z',
-    llm: 'M5 2.5h6a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5.5 14v-2.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
-    trash:
-      'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
-    export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
-  }
-
-  interface Item {
-    id: Section
-    label: string
-  }
-
-  /** The panes, in the groups a phone shows them in: the preferences, the
-   *  things an account owns, and getting a note out. Publishing and the LLM
-   *  connector are both things an account owns, and both are off until
-   *  deliberately turned on. Until there is an account they have nothing to
-   *  show but an instruction to sign in, so they stay out of the list rather
-   *  than sitting there offering nothing. */
-  const GROUPS = $derived<Item[][]>([
-    [
-      { id: 'general', label: t('General') },
-      { id: 'editor', label: t('Editor') },
-      { id: 'shortcuts', label: t('Shortcuts') },
-      { id: 'spelling', label: t('Spelling') },
-      { id: 'markdown', label: t('Markdown') },
-      { id: 'appearance', label: t('Appearance') },
-    ],
-    [
-      { id: 'account', label: t('Account') },
-      ...(account.signedIn
-        ? [
-            { id: 'publish' as Section, label: t('Publish') },
-            { id: 'llm' as Section, label: t('LLM access') },
-          ]
-        : []),
-    ],
-    [
-      { id: 'trash', label: t('Recently deleted') },
-      { id: 'export', label: t('Export') },
-    ],
-  ])
+  const GROUPS = $derived(sectionGroups())
 
   const SECTIONS = $derived(GROUPS.flat())
   const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
@@ -178,15 +124,7 @@
     settings.listing = false
   }
 
-  let subdomain = $state('')
-  let domain = $state('')
-  /** Which kind of address the blog is reached by. One or the other, never
-   *  both: a domain of one's own replaces the shared name. */
-  let mode = $state<'subdomain' | 'domain'>('subdomain')
-  /** Empty means the whole space; otherwise the one note's path in it. */
-  let blogNote = $state('')
-  let confirmPublic = $state(false)
-  let checkTimer: ReturnType<typeof setTimeout>
+  const publishing = new Publishing()
 
   const blog = $derived(settings.remote?.blog)
   /** A domain of one's own needs Cloudflare for SaaS on the shared zone, which
@@ -207,11 +145,8 @@
 
   $effect(() => {
     if (!settings.open) return
-    subdomain = blog?.subdomain ?? ''
-    domain = blog?.domain ?? ''
-    mode = blog?.domain ? 'domain' : 'subdomain'
-    blogNote = blog?.note ?? ''
-    confirmPublic = published
+    publishing.fill(blog)
+    publishing.confirmed = published
   })
 
   // Asked after while the pane shows a domain, and left alone as soon as it
@@ -222,39 +157,16 @@
     return () => settings.stopWatchingDomain()
   })
 
-  function onSubdomain(value: string) {
-    subdomain = value.toLowerCase().replace(/[^a-z0-9-]/g, '')
-    clearTimeout(checkTimer)
-    checkTimer = setTimeout(() => void settings.checkSubdomain(subdomain), 260)
-  }
-
-  /** Only the chosen address goes up; the server lets the other one go. */
-  function publish() {
-    const note = blogNote || null
-    void settings.publish(mode === 'subdomain' ? { subdomain, note } : { domain, note })
-  }
-
-  const canPublish = $derived(!settings.busy && (mode === 'subdomain' ? !!subdomain : !!domain))
-
   /** The entry goes in Windows Explorer's own registry, so a browser cannot
    *  offer it however Windows the machine running the browser happens to be. */
   const isWindows = isDesktop && navigator.userAgent.includes('Windows')
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
-  /** The path the server knows a note by: relative to its space, forward slashed. */
-  function relativeTo(path: string): string {
-    const root = workspace.activeSpace?.root ?? ''
-    return path
-      .slice(root.length)
-      .replace(/^[\\/]+/, '')
-      .replace(/\\/g, '/')
-  }
-
   const noteChoices = $derived([
     { value: '', label: t('The whole space') },
     ...workspace.notes.map((note) => ({
-      value: relativeTo(note.path),
+      value: relativeToSpace(note.path),
       label: t('Only {name}', { name: stripped(note.name) }),
     })),
   ])
@@ -274,13 +186,7 @@
 
   // ── Shortcuts ───────────────────────────────────────────────────
 
-  /** Which entry is listening for a key, if any. */
-  let listening = $state<string | null>(null)
-  /** A key that lands on something else: what was pressed, and who holds it.
-   *  Nothing is written until this is answered one way or the other. */
-  let clash = $state<{ id: string; key: string; holders: Shortcut[] } | null>(null)
-  /** Why the last keystroke was not taken, for the row that was listening. */
-  let turnedDown = $state<{ id: string; reason: string } | null>(null)
+  const rebind = new Rebind()
   let keyFilter = $state('')
 
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
@@ -305,64 +211,18 @@
     })).filter((group) => group.rows.length)
   })
 
-  function listen(id: string) {
-    listening = listening === id ? null : id
-    clash = null
-    turnedDown = null
-  }
-
-  /** Takes the key over: whoever held it is left with none, and the reader
-   *  can put that back from the row it came from. */
-  function takeOver() {
-    if (!clash) return
-
-    for (const holder of clash.holders) shortcuts.set(holder.id, null)
-    shortcuts.set(clash.id, clash.key)
-    clash = null
-  }
-
-  /** Reads the next keystroke for whichever row is listening.
+  /** The next keystroke goes to whichever row is listening.
    *
    *  On the way down rather than up, and before anything else sees it: the
-   *  app's own keys are on the window too, and Ctrl+S while recording is a
-   *  key being chosen, not a note being saved. */
+   *  app's own keys are on the window too, and Ctrl+S while recording is a key
+   *  being chosen, not a note being saved. */
   $effect(() => {
-    const id = listening
-    if (!id) return
+    if (!rebind.listening) return
 
     const record = (event: KeyboardEvent) => {
       event.preventDefault()
       event.stopPropagation()
-
-      // Escape steps out of recording and Backspace takes the key away, the
-      // way every other shortcut editor does it. Escape and Backspace as
-      // shortcuts of their own are in the fixed list.
-      if (event.key === 'Escape') {
-        listening = null
-        return
-      }
-
-      if (event.key === 'Backspace' || event.key === 'Delete') {
-        shortcuts.set(id, null)
-        listening = null
-        return
-      }
-
-      const key = readCombination(event, shortcuts.platform)
-      // Still only modifiers down: keep waiting for the key itself.
-      if (!key) return
-
-      const reason = shortcuts.refuse(key)
-      if (reason) {
-        turnedDown = { id, reason }
-        listening = null
-        return
-      }
-
-      const holders = shortcuts.conflicts(id, key)
-      listening = null
-      if (holders.length) clash = { id, key, holders }
-      else shortcuts.set(id, key)
+      rebind.record(event)
     }
 
     window.addEventListener('keydown', record, true)
@@ -371,11 +231,7 @@
 
   // Nothing is left listening behind a closed panel or a pane that moved on.
   $effect(() => {
-    if (!settings.open || settings.section !== 'shortcuts') {
-      listening = null
-      clash = null
-      turnedDown = null
-    }
+    if (!settings.open || settings.section !== 'shortcuts') rebind.forget()
   })
 
   /** A window that grows into place on a desktop; a page that rises from the
@@ -655,23 +511,23 @@
     {:else}
       <!-- The consequence comes before the switch, not after it. -->
       <label class="danger-check">
-        <input type="checkbox" bind:checked={confirmPublic} disabled={published} />
+        <input type="checkbox" bind:checked={publishing.confirmed} disabled={published} />
         <span>
           <strong>{t('Everything in this space becomes public.')}</strong>
           {t('Every note, including drafts, is readable by anyone with the address.')}
         </span>
       </label>
 
-      <fieldset disabled={!confirmPublic}>
+      <fieldset disabled={!publishing.confirmed}>
         <div class="card">
           <div class="setting">
             <span class="name">{t('What to publish')}</span>
             <div class="pick wide">
               <Select
-                value={blogNote}
+                value={publishing.note}
                 options={noteChoices}
                 onchange={(value: string) => {
-                  blogNote = value
+                  publishing.note = value
                 }}
                 label={t('What to publish')}
                 plain={viewport.phone}
@@ -688,31 +544,31 @@
             <button
               type="button"
               role="radio"
-              aria-checked={mode === 'subdomain'}
-              class:on={mode === 'subdomain'}
-              onclick={() => (mode = 'subdomain')}
+              aria-checked={publishing.address === 'subdomain'}
+              class:on={publishing.address === 'subdomain'}
+              onclick={() => (publishing.address = 'subdomain')}
             >
               {t('On nibeditor.com')}
             </button>
             <button
               type="button"
               role="radio"
-              aria-checked={mode === 'domain'}
-              class:on={mode === 'domain'}
-              onclick={() => (mode = 'domain')}
+              aria-checked={publishing.address === 'domain'}
+              class:on={publishing.address === 'domain'}
+              onclick={() => (publishing.address = 'domain')}
             >
               {t('Your own domain')}
             </button>
           </div>
         {/if}
 
-        {#if !offerDomain || mode === 'subdomain'}
+        {#if !offerDomain || publishing.address === 'subdomain'}
           <div class="card">
             <div class="stack">
               <div class="row">
                 <input
-                  value={subdomain}
-                  oninput={(event) => onSubdomain(event.currentTarget.value)}
+                  value={publishing.subdomain}
+                  oninput={(event) => publishing.typeSubdomain(event.currentTarget.value)}
                   placeholder="your-name"
                   spellcheck="false"
                   autocapitalize="off"
@@ -735,7 +591,7 @@
           <div class="card">
             <div class="stack">
               <input
-                bind:value={domain}
+                bind:value={publishing.domain}
                 placeholder="notes.example.com"
                 spellcheck="false"
                 autocapitalize="off"
@@ -785,7 +641,7 @@
           </div>
         {/if}
 
-        <button class="primary" disabled={!canPublish} onclick={publish}>
+        <button class="primary" disabled={!publishing.ready} onclick={() => publishing.publish()}>
           {published ? t('Update') : t('Publish')}
         </button>
       </fieldset>
@@ -919,7 +775,9 @@
             {#if entry.alias}<small>{t('Second key')}</small>{/if}
             {#if entry.why}<small>{entry.why()}</small>{/if}
             {#if warning}<small class="caution">{warning}</small>{/if}
-            {#if turnedDown?.id === entry.id}<small class="warn">{turnedDown.reason}</small>{/if}
+            {#if rebind.turnedDown?.id === entry.id}<small class="warn"
+                >{rebind.turnedDown.reason}</small
+              >{/if}
           </span>
 
           {#if entry.scope === 'fixed'}
@@ -927,11 +785,11 @@
           {:else}
             <button
               class="key"
-              class:listening={listening === entry.id}
+              class:listening={rebind.listening === entry.id}
               class:none={!key}
-              onclick={() => listen(entry.id)}
+              onclick={() => rebind.listen(entry.id)}
             >
-              {listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
+              {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
             </button>
             <button
               class="revert"
@@ -947,16 +805,16 @@
           {/if}
         </div>
 
-        {#if clash?.id === entry.id}
+        {#if rebind.clash?.id === entry.id}
           <div class="clash" transition:slide={{ duration: 160 }}>
             <span>
               {t('{key} already runs {name}.', {
-                key: shown(clash.key) ?? '',
-                name: clash.holders.map((one) => one.label()).join(', '),
+                key: shown(rebind.clash.key) ?? '',
+                name: rebind.clash.holders.map((one) => one.label()).join(', '),
               })}
             </span>
-            <button class="take" onclick={takeOver}>{t('Take it over')}</button>
-            <button class="give" onclick={() => (clash = null)}>{t('Cancel')}</button>
+            <button class="take" onclick={() => rebind.takeOver()}>{t('Take it over')}</button>
+            <button class="give" onclick={() => (rebind.clash = null)}>{t('Cancel')}</button>
           </div>
         {/if}
       {/each}
