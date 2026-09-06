@@ -177,17 +177,24 @@ export class FenceHeaderWidget extends NibWidget {
       event.preventDefault()
       event.stopPropagation()
 
-      void navigator.clipboard.writeText(this.code).then(() => {
-        copy.classList.add('nib-fence-copied')
-        copy.title = uiLabel('copied')
-        draw(TICK)
+      navigator.clipboard
+        .writeText(this.code)
+        .then(() => {
+          copy.classList.add('nib-fence-copied')
+          copy.title = uiLabel('copied')
+          draw(TICK)
 
-        window.setTimeout(() => {
-          copy.classList.remove('nib-fence-copied')
-          copy.title = uiLabel('copy')
-          draw(SHEETS)
-        }, 1400)
-      })
+          window.setTimeout(() => {
+            copy.classList.remove('nib-fence-copied')
+            copy.title = uiLabel('copy')
+            draw(SHEETS)
+          }, 1400)
+        })
+        // A clipboard the browser refuses - no permission, or not a secure
+        // context - leaves the button as it was, which says the copy did not
+        // happen. Caught rather than dropped: an unhandled rejection is a
+        // console full of noise, and in a webview sometimes worse.
+        .catch(() => undefined)
     })
 
     controls.append(copy)

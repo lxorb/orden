@@ -382,16 +382,22 @@ export class ImageWidget extends NibWidget {
     })
 
     const copy = button('nib-image-copy', uiLabel('copyLink'), icon(ICONS.link), (image) => {
-      void navigator.clipboard.writeText(image.src).then(() => {
-        copy.classList.add('is-copied')
-        copy.title = uiLabel('copied')
-        copy.replaceChildren(icon(ICONS.copied))
-        window.setTimeout(() => {
-          copy.classList.remove('is-copied')
-          copy.title = uiLabel('copyLink')
-          copy.replaceChildren(icon(ICONS.link))
-        }, 1400)
-      })
+      navigator.clipboard
+        .writeText(image.src)
+        .then(() => {
+          copy.classList.add('is-copied')
+          copy.title = uiLabel('copied')
+          copy.replaceChildren(icon(ICONS.copied))
+          window.setTimeout(() => {
+            copy.classList.remove('is-copied')
+            copy.title = uiLabel('copyLink')
+            copy.replaceChildren(icon(ICONS.link))
+          }, 1400)
+        })
+        // A clipboard the browser refuses leaves the button as it was, which
+        // says the copy did not happen. Caught rather than dropped: nothing
+        // else would answer for the rejection.
+        .catch(() => undefined)
     })
 
     button('nib-image-source', uiLabel('editMarkdown'), icon(ICONS.source), (image) => {

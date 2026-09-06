@@ -129,13 +129,21 @@ export function richPaste(): Extension {
   })
 }
 
-/** `Ctrl+Shift+V` - take the clipboard exactly as it is. */
+/** `Ctrl+Shift+V` - take the clipboard exactly as it is.
+ *
+ *  A clipboard the browser will not hand over - no permission, or not a secure
+ *  context - pastes nothing, and says so by pasting nothing. The rejection is
+ *  caught rather than dropped: nothing else would answer for it, and an
+ *  unhandled one is noise at best. */
 export const pastePlain: Command = (view) => {
   if (view.state.readOnly) return false
 
-  void navigator.clipboard.readText().then((text) => {
-    if (text) insert(view, text)
-  })
+  navigator.clipboard
+    .readText()
+    .then((text) => {
+      if (text) insert(view, text)
+    })
+    .catch(() => undefined)
   return true
 }
 
@@ -143,6 +151,6 @@ export const pastePlain: Command = (view) => {
 export const copyMarkdown: Command = (view) => {
   const { from, to } = view.state.selection.main
   const text = from === to ? view.state.doc.toString() : view.state.doc.sliceString(from, to)
-  void navigator.clipboard.writeText(text)
+  navigator.clipboard.writeText(text).catch(() => undefined)
   return true
 }
