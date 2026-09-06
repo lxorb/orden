@@ -322,6 +322,22 @@ export function slugify(text: string): string {
 const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
 const CLOSING_HASHES = /\s*#+\s*$/
 
+/** Every heading in a note, in order, as the words it shows. What a link may
+ *  point at inside a note, which is why it lives here rather than with the
+ *  outline: the browser's stand-in for the link scanner reads it, and so does the
+ *  slice below, and the two have to agree on what counts as a heading. */
+export function headingsOf(text: string): string[] {
+  const found: string[] = []
+
+  for (const row of lines(text)) {
+    if (row.code) continue
+    const [, hashes = '', words = ''] = HEADING.exec(row.text) ?? []
+    if (hashes) found.push(words.replace(CLOSING_HASHES, '').trim())
+  }
+
+  return found
+}
+
 /** The part of a note a link points into: the section under the heading it
  *  names, the block it names, or the whole note when it names neither. Null when
  *  the note has no such heading or block, which is a thing worth saying rather

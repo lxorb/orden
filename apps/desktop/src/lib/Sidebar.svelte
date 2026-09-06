@@ -10,6 +10,7 @@
   import { workspace } from './workspace.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import Links from './Links.svelte'
   import Tree from './Tree.svelte'
 
   const { ongoto }: { ongoto?: (line: number) => void } = $props()
@@ -38,6 +39,12 @@
     { id: 'tree', label: t('Files'), path: 'M1 3.5h4l1 1.5h6v6.5H1z' },
     { id: 'outline', label: t('Outline'), path: 'M2 2.5h9M4 6.5h7M6 10.5h5' },
     { id: 'search', label: t('Search'), path: 'M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3' },
+    // Two links of a chain, which is what a link between notes is.
+    {
+      id: 'links',
+      label: t('Links'),
+      path: 'M5.6 7.4 7.4 5.6M6.9 4.3l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7l-1.2 1.2M8.4 9.9l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7l1.2-1.2',
+    },
   ]
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
@@ -316,6 +323,8 @@
         {:else}
           <p class="empty-text">{t('No headings in this note')}</p>
         {/if}
+      {:else if workspace.panel === 'links'}
+        <Links {ongoto} />
       {:else if workspace.panel === 'search'}
         <!-- svelte-ignore a11y_autofocus -->
         <input

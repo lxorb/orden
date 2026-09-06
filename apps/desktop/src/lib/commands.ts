@@ -1,6 +1,7 @@
 import { CODE_PALETTES, type EditorView, reformatDocument, type Transaction } from '@nib/editor'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
+import { composerCommands } from './composer-commands'
 import { t } from './i18n.svelte'
 import type { HtmlOptions } from './export'
 import { PANDOC_FORMATS } from './export-formats'
@@ -173,6 +174,11 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('New note'),
       hint: shortcuts.hint('app.new'),
       run: () => workspace.openBlank(),
+    },
+    {
+      id: 'new-unique',
+      label: t('New unique note'),
+      run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
     {
       id: 'open',
@@ -387,5 +393,12 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.search'),
       run: () => workspace.showPanel('search'),
     },
+    {
+      id: 'links-panel',
+      label: t('Links'),
+      run: () => workspace.showPanel('links'),
+    },
+
+    ...composerCommands(view),
   ]
 }

@@ -14,7 +14,15 @@
 
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { createEditor, type EditorView, replaceDoc, type Text } from '@nib/editor'
+  import {
+    createEditor,
+    type EditorView,
+    type NoteIndex,
+    type NoteJump,
+    replaceDoc,
+    setNoteIndex,
+    type Text,
+  } from '@nib/editor'
   import { shortcuts } from './shortcuts.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
@@ -26,6 +34,9 @@
     resolveimage,
     openlink,
     onselection,
+    notes,
+    opennote,
+    nameblock,
     view = $bindable(),
   }: {
     doc?: string
@@ -39,6 +50,11 @@
     resolveimage?: (src: string) => string
     openlink?: (href: string) => void
     onselection?: (view: EditorView) => void
+    /** The space around this note, so `[[links]]` can be drawn and completed.
+     *  Handed over again whenever it changes; see `setNoteIndex`. */
+    notes?: NoteIndex
+    opennote?: (jump: NoteJump) => void
+    nameblock?: (path: string, line: number) => Promise<string | null>
     /** Bound back out: undefined until the view has been made. */
     view?: EditorView | undefined
   } = $props()
@@ -61,6 +77,9 @@
       ...(resolveimage ? { resolveImage: resolveimage } : {}),
       ...(openlink ? { openLink: openlink } : {}),
       ...(onselection ? { onSelection: onselection } : {}),
+      ...(notes ? { notes: untrack(() => notes) } : {}),
+      ...(opennote ? { openNote: opennote } : {}),
+      ...(nameblock ? { nameBlock: nameblock } : {}),
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.
       shortcuts: shortcuts.forEditor,
@@ -72,6 +91,19 @@
       created.destroy()
       view = undefined
     }
+  })
+
+  /** The index the view has been given. A fresh object means the space changed,
+   *  which is what makes every link on screen be drawn again; the same one means
+   *  nothing did, and reconfiguring for it would redraw the note for nothing. */
+  let held = untrack(() => notes)
+
+  $effect(() => {
+    const index = notes
+    if (!view || !index || index === held) return
+
+    held = index
+    setNoteIndex(view, index)
   })
 
   /** Which push the view has taken. Starts at whatever it was built with, so

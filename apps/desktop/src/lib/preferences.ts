@@ -2,6 +2,8 @@ import type { EditorView } from '@nib/editor'
 import { CODE_PALETTES } from '@nib/editor'
 import { i18n, LANGUAGES, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
+import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
+import { settings } from './settings.svelte'
 import { theme } from './theme.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -62,6 +64,10 @@ export interface Pane {
 
 /** Built against a live view so a change lands in the editor on screen. */
 export function preferences(view?: EditorView): Pane[] {
+  // One moment for every example on the pane, so the options read as one set of
+  // spellings of the same time rather than as four different times.
+  const moment = new Date()
+
   return [
     {
       id: 'general',
@@ -174,6 +180,24 @@ export function preferences(view?: EditorView): Pane[] {
               initial: false,
               get: () => modes.ligatures,
               set: () => modes.toggleLigatures(view),
+            },
+          ],
+        },
+        {
+          // What "New unique note" names a note. Each option is labelled with
+          // what it would produce right now, which says more than the tokens do.
+          title: t('Unique note names'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('Name'),
+              options: ID_FORMATS.map((format) => ({
+                value: format,
+                label: noteId(format, moment),
+              })),
+              initial: DEFAULT_ID_FORMAT,
+              get: () => settings.noteIdFormat,
+              set: (value) => settings.setNoteIdFormat(value),
             },
           ],
         },

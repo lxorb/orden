@@ -8,7 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{in_spaces, is_markdown, MAX_DEPTH};
+use crate::paths::{files_in, in_spaces};
 
 /// How much of a matching line is worth showing.
 const LINE: usize = 200;
@@ -153,43 +153,15 @@ fn tags_in(body: &str) -> Vec<String> {
 }
 
 /// Every note in a space, in a stable order so two searches of an unchanged
-/// space read the same.
+/// space read the same. The walk itself lives in `paths`, which is also where
+/// `links` gets it from.
 fn notes_in(dir: &Path) -> Vec<PathBuf> {
-    let mut found = Vec::new();
-    collect(dir, 0, &mut found);
-    found.sort();
-    found
-}
-
-/// Notes under one folder. Hidden folders are skipped, which is what keeps the
-/// trash out of a search, and the depth is capped so a symlink pointing at one of
-/// its own parents cannot be followed forever.
-fn collect(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
-    if depth >= MAX_DEPTH {
-        return;
-    }
-
-    let Ok(entries) = fs::read_dir(dir) else {
-        return;
-    };
-
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if entry.file_name().to_string_lossy().starts_with('.') {
-            continue;
-        }
-
-        if path.is_dir() {
-            collect(&path, depth + 1, out);
-        } else if is_markdown(&path) {
-            out.push(path);
-        }
-    }
+    files_in(dir).0
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{collect, tags_in};
+    use super::tags_in;
 
     #[test]
     fn finds_tags_but_not_headings() {
@@ -220,45 +192,5 @@ mod tests {
     #[test]
     fn counts_a_tag_once_per_use() {
         assert_eq!(tags_in("#a #a #b").len(), 3);
-    }
-
-    #[test]
-    fn collects_the_notes_and_nothing_else() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let here = dir.path();
-        std::fs::create_dir_all(here.join("Deep/Deeper")).expect("two folders");
-        std::fs::create_dir_all(here.join(".hidden")).expect("a hidden folder");
-        std::fs::write(here.join("One.md"), "").expect("a note");
-        std::fs::write(here.join("Deep/Deeper/Two.markdown"), "").expect("a nested note");
-        std::fs::write(here.join("Deep/notes.txt"), "").expect("a text file");
-        std::fs::write(here.join(".hidden/Three.md"), "").expect("a hidden note");
-
-        let mut found = Vec::new();
-        collect(here, 0, &mut found);
-
-        let mut names: Vec<String> = found
-            .iter()
-            .filter_map(|path| path.file_name())
-            .map(|name| name.to_string_lossy().to_string())
-            .collect();
-        names.sort();
-        assert_eq!(names, ["One.md", "Two.markdown"]);
-    }
-
-    #[test]
-    fn stops_before_it_runs_out_of_stack() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let mut deep = dir.path().to_path_buf();
-        // One past the cap, in short names so the whole path stays inside what
-        // Windows allows without asking.
-        for level in 0..34 {
-            deep.push(format!("d{level}"));
-        }
-        std::fs::create_dir_all(&deep).expect("a very deep folder");
-        std::fs::write(deep.join("Buried.md"), "").expect("a buried note");
-
-        let mut found = Vec::new();
-        collect(dir.path(), 0, &mut found);
-        assert!(found.is_empty());
     }
 }

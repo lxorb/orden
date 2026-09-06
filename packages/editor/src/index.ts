@@ -31,6 +31,7 @@ export {
   type NoteJump,
   type NoteRef,
   resolveNote,
+  resolveRelative,
   setNoteIndex,
 } from './wikilink/notes'
 export { setSnippets, snippets } from './snippets'

@@ -27,6 +27,13 @@ interface Choose {
   options: Choice[]
 }
 
+/** One of many, found by typing rather than by reading a list of them. */
+interface Find {
+  title: string
+  options: Choice[]
+  placeholder?: string
+}
+
 interface SpaceOption {
   id: string
   name: string
@@ -45,11 +52,12 @@ interface NamedIn {
 
 type Pending = { resolve: (answer: unknown) => void } | null
 
-/** One small modal for the two questions the app ever asks: name this, and are
- *  you sure. Both resolve a promise, so the caller reads top to bottom. */
+/** One small modal for the questions the app ever asks: name this, are you sure,
+ *  which of these few, and which of these many. Each resolves a promise, so the
+ *  caller reads top to bottom. */
 class Prompt {
   open = $state(false)
-  mode = $state<'text' | 'confirm' | 'choose'>('text')
+  mode = $state<'text' | 'confirm' | 'choose' | 'find'>('text')
   options = $state<Choice[]>([])
   title = $state('')
   detail = $state('')
@@ -116,7 +124,24 @@ class Prompt {
     return this.show() as Promise<string | null>
   }
 
-  /** Answers a `choose` with one of its options. */
+  /** Too many to read at once: the same sheet with a field above the list, and
+   *  the list narrowing as it is typed into. Resolves the chosen id, or null.
+   *
+   *  Its own mode rather than a long `choose`, because a space can hold thousands
+   *  of notes and a question with thousands of buttons is not a question. */
+  find(options: Find): Promise<string | null> {
+    this.mode = 'find'
+    this.title = options.title
+    this.detail = ''
+    this.value = ''
+    this.placeholder = options.placeholder ?? ''
+    this.options = options.options
+    this.spaces = []
+
+    return this.show() as Promise<string | null>
+  }
+
+  /** Answers a `choose` or a `find` with one of its options. */
   pick(id: string) {
     this.open = false
     this.pending?.resolve(id)

@@ -1,5 +1,10 @@
-import { flushTableEdits } from '@nib/editor'
+import { flushTableEdits, type NoteJump } from '@nib/editor'
 import { account } from './account.svelte'
+import { blockIds, slugify } from '@nib/markdown/links'
+import { extracted, merged, splitAt } from './composer'
+import { links } from './link-index.svelte'
+import { noteId } from './note-id'
+import { folderOf as folderIn, insideSpace, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
 import { scanHeadings } from './outline'
@@ -67,7 +72,7 @@ export interface DocText {
   toString(): string
 }
 
-export type Panel = 'tree' | 'outline' | 'search'
+export type Panel = 'tree' | 'outline' | 'search' | 'links'
 
 export interface Hit {
   path: string
@@ -98,6 +103,28 @@ const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 function basename(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
+}
+
+/** Which line of a note a followed link lands on: the heading it names, or the
+ *  line the block name sits on. Null when the note holds neither, which leaves
+ *  the note opened where it was left rather than somewhere arbitrary.
+ *
+ *  A heading is matched by its own words and by the anchor it becomes, so
+ *  `[[Note#Some Heading]]` and `[x](Note.md#some-heading)` reach the same one. */
+function lineOfTarget(doc: string, jump: NoteJump): number | null {
+  if (jump.block !== null) {
+    return blockIds(doc).find((one) => one.id === jump.block)?.line ?? null
+  }
+  if (jump.heading === null) return null
+
+  const wanted = jump.heading.trim().toLowerCase()
+  const anchor = slugify(jump.heading)
+
+  return (
+    scanHeadings(doc).find(
+      (heading) => heading.text.toLowerCase() === wanted || slugify(heading.text) === anchor,
+    )?.line ?? null
+  )
 }
 
 /** Ids handed out within one run of the app: tabs, and the spaces the rail
@@ -596,6 +623,11 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
+    // The link index is of a space, so it is built when the space's tree is.
+    // Not awaited: the tree is what is on screen, and a scan of a few thousand
+    // notes must not hold it up.
+    if (links.rootOf() !== root) void links.build(root)
+
     try {
       this.tree = await invoke<Entry>('read_tree', { root, options: this.treeOptions })
     } catch {
@@ -635,7 +667,12 @@ class Workspace {
 
     await invoke('rename_note', { from, to: target })
     this.positions.move(from, target)
-    this.undone.record({ kind: 'move', from, to: target })
+
+    // A note that moved is a note every link to it has to be pointed at again;
+    // see `rename` below, including why this comes before the index is told.
+    const rewrote = (await this.retarget(from, target)) > 0
+    links.notesMoved(from, target)
+    this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
     for (const tab of this.tabs.filter((entry) => entry.path === from)) {
       tab.path = target
@@ -900,6 +937,10 @@ class Workspace {
     tab.dirty = false
     this.markSaved(tab.id)
 
+    // The one note that changed, read again from what was written. This is the
+    // whole of keeping the index up to date after the first scan of a space.
+    links.noteSaved(path, tab.doc)
+
     // Editing the config files in Nib should take effect on save.
     if (/custom\.css$|snippets\.json$/.test(path)) {
       const { settings } = await import('./settings.svelte')
@@ -1128,6 +1169,7 @@ class Workspace {
     this.startRenaming(path)
 
     await invoke('write_note', { path, content })
+    links.noteSaved(path, content)
     await this.loadTree()
     this.persist()
   }
@@ -1186,7 +1228,16 @@ class Workspace {
 
     await invoke('rename_note', { from: path, to: target })
     this.positions.move(path, target)
-    this.undone.record({ kind: 'rename', from: path, to: target })
+
+    // Every link to the note now points at a name nothing answers to, so they
+    // are rewritten, silently, as Obsidian does. Recorded on the action so that
+    // undoing the rename undoes the rewrite with it.
+    //
+    // Before the index is told the note moved, not after: finding the links that
+    // pointed at the old name means resolving them against the space as it was.
+    const rewrote = (await this.retarget(path, target)) > 0
+    links.notesMoved(path, target)
+    this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
     const tab = this.tabs.find((entry) => entry.path === path)
     if (tab) {
@@ -1246,24 +1297,31 @@ class Workspace {
       this.close(tab.id)
     }
 
+    links.noteGone(path)
     await this.loadTree()
   }
 
-  /** Puts the last move, rename or deletion back; see workspace/undo. */
+  /** Puts the last file operation back; see workspace/undo. */
   async undoFileAction() {
     const action = this.undone.last
     if (!action) return
 
     try {
-      if (action.kind === 'delete') await this.putBack(action)
-      else {
-        await invoke('rename_note', { from: action.to, to: action.from })
-        this.positions.move(action.to, action.from)
-
-        for (const tab of this.tabs.filter((entry) => entry.path === action.to)) {
-          tab.path = action.from
-          tab.name = basename(action.from)
-        }
+      switch (action.kind) {
+        case 'delete':
+          await this.putBack(action)
+          break
+        case 'merge':
+          await this.unmerge(action)
+          break
+        case 'split':
+        case 'extract':
+          await this.uncarve(action)
+          break
+        case 'move':
+        case 'rename':
+          await this.putName(action)
+          break
       }
     } catch {
       // Something else has since changed the file; leave what is there alone.
@@ -1298,6 +1356,255 @@ class Workspace {
     if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
     await invoke('write_note', { path: action.path, content: action.content })
+  }
+
+  /** Puts a rename or a move back: the file where it was, and the links that
+   *  followed it pointed at the old name again. */
+  private async putName(action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
+    await invoke('rename_note', { from: action.to, to: action.from })
+    this.positions.move(action.to, action.from)
+
+    for (const tab of this.tabs.filter((entry) => entry.path === action.to)) {
+      tab.path = action.from
+      tab.name = basename(action.from)
+    }
+
+    // The rename rewrote every link that pointed at the note; putting the name
+    // back has to put those back too, which is the same rewrite the other way
+    // round - and, again, before the index is told the note moved.
+    if (action.rewrote) await this.retarget(action.to, action.from)
+    links.notesMoved(action.to, action.from)
+  }
+
+  /** Puts a merge back: both notes as they were, and the note that was folded
+   *  in written again where it was. */
+  private async unmerge(action: Extract<FileAction, { kind: 'merge' }>) {
+    await invoke('write_note', { path: action.into, content: action.intoContent })
+    await invoke('write_note', { path: action.from, content: action.fromContent })
+
+    links.noteSaved(action.into, action.intoContent)
+    links.noteSaved(action.from, action.fromContent)
+    this.reload(action.into, action.intoContent)
+
+    // Links to the note that went away were pointed at the note it went into.
+    await this.retarget(action.into, action.from)
+  }
+
+  /** Puts a split or an extraction back: the note whole again, and the note that
+   *  was carved out of it gone. */
+  private async uncarve(action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
+    await invoke('write_note', { path: action.from, content: action.fromContent })
+    await invoke('delete_note', { path: action.created }).catch(() => undefined)
+
+    links.noteSaved(action.from, action.fromContent)
+    links.noteGone(action.created)
+
+    for (const tab of this.tabs.filter((one) => one.path === action.created)) this.close(tab.id)
+    this.reload(action.from, action.fromContent)
+  }
+
+  /** Text written to a note from outside the editor, put into the tab holding it
+   *  if one is open. `pushed` is what tells the view to take it. */
+  private reload(path: string, content: string) {
+    const tab = this.tabs.find((one) => one.path === path)
+    if (!tab) return
+
+    if (this.live?.id === tab.id) this.live = null
+    tab.doc = content
+    tab.dirty = false
+    tab.pushed = (tab.pushed ?? 0) + 1
+  }
+
+  /** Rewrites every link in the space that points at `from` so it points at `to`.
+   *  Answers how many notes were touched, so a caller can record whether there is
+   *  anything to put back. */
+  private async retarget(from: string, to: string): Promise<number> {
+    const root = this.activeSpace?.root
+    if (!root) return 0
+
+    const touched = await links.retarget(from, to, root)
+
+    // A note on screen may be one of the notes that was rewritten.
+    for (const tab of this.tabs) {
+      if (!tab.path || tab.dirty) continue
+      const fresh = await invoke<string>('read_note', { path: tab.path }).catch(() => null)
+      if (fresh !== null && fresh !== tab.doc) this.reload(tab.path, fresh)
+    }
+
+    return touched
+  }
+
+  /** Follows a link between notes: opens the note, goes to the heading or the
+   *  block it names, and makes the note when the space has none.
+   *
+   *  Where the caret ends up is worked out from the note that has just been
+   *  loaded rather than from the index, because the index knows a heading's words
+   *  and not which line they are on - and the note on disk is the authority. */
+  async followLink(jump: NoteJump) {
+    const root = this.activeSpace?.root
+    if (!root) return
+
+    const path = jump.path ? insideSpace(root, jump.path) : await this.makeLinked(jump.target, root)
+    if (!path) return
+
+    await this.open(path)
+    if (jump.heading === null && jump.block === null) return
+
+    const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
+    const line = lineOfTarget(doc, jump)
+    if (line !== null) this.goto = { path, line }
+  }
+
+  /** Where a followed link asked to land: which note, and which line of it. Read
+   *  and cleared by the app, which is what owns the editor's scroll. */
+  goto = $state<{ path: string; line: number } | null>(null)
+
+  /** The note a link names but the space has not got. Made where a link would
+   *  look for it: in the folder the link says, or beside the note that links to
+   *  it when it says none. */
+  private async makeLinked(target: string, root: string): Promise<string | null> {
+    const clean = target.replace(/[\\]/g, '/').replace(/^\/+|\/+$/g, '')
+    if (!clean) return null
+
+    const here = this.active?.path ? folderIn(relativeTo(root, this.active.path)) : ''
+    const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
+    const path = insideSpace(root, MARKDOWN.test(relative) ? relative : `${relative}.md`)
+
+    const content = `# ${noteName(relative)}\n\n`
+    await invoke('write_note', { path, content })
+    links.noteSaved(path, content)
+    await this.loadTree()
+
+    return path
+  }
+
+  /** Appends this note into another, deletes it, and points every link that came
+   *  here at the note it went into. */
+  async mergeInto(from: string, into: string) {
+    if (from === into) return
+
+    const [fromContent, intoContent] = await Promise.all([
+      invoke<string>('read_note', { path: from }).catch(() => null),
+      invoke<string>('read_note', { path: into }).catch(() => null),
+    ])
+    if (fromContent === null || intoContent === null) return
+
+    const joined = merged(intoContent, fromContent)
+
+    await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
+    await invoke('write_note', { path: into, content: joined })
+    links.noteSaved(into, joined)
+    this.reload(into, joined)
+
+    // Before the note goes, so the links that pointed at it can still be found.
+    await this.retarget(from, into)
+
+    await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
+    await invoke('delete_note', { path: from })
+    links.noteGone(from)
+
+    for (const tab of this.tabs.filter((one) => one.path === from)) this.close(tab.id)
+
+    this.undone.record({ kind: 'merge', from, fromContent, into, intoContent })
+    await this.loadTree()
+    await this.open(into)
+  }
+
+  /** Everything from the caret on becomes a note of its own, with a link left in
+   *  its place. */
+  async splitAtCaret(at: number) {
+    const tab = this.active
+    if (!tab?.path) return
+    this.flush()
+
+    const carved = splitAt(tab.doc, at, UNTITLED)
+    if (!carved) return
+
+    await this.carve(tab.path, tab.doc, carved, 'split')
+  }
+
+  /** The selection becomes a note of its own, with a link in its place. */
+  async extractSelection(from: number, to: number) {
+    const tab = this.active
+    if (!tab?.path) return
+    this.flush()
+
+    const carved = extracted(tab.doc, from, to, UNTITLED)
+    if (!carved) return
+
+    await this.carve(tab.path, tab.doc, carved, 'extract')
+  }
+
+  /** What a split and an extraction both do: write the new note, write what is
+   *  left of this one, and remember enough to undo both. */
+  private async carve(
+    path: string,
+    before: string,
+    carved: { kept: string; taken: string; name: string },
+    kind: 'split' | 'extract',
+  ) {
+    const folder = folderOf(path)
+    const taken = new Set(this.notes.map((note) => note.path))
+
+    let name = `${carved.name}.md`
+    let counter = 2
+    while (taken.has(joinPath(folder, name))) name = `${carved.name} ${counter++}.md`
+    const created = joinPath(folder, name)
+
+    await invoke('write_note', { path: created, content: carved.taken })
+    links.noteSaved(created, carved.taken)
+
+    await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
+    await invoke('write_note', { path, content: carved.kept })
+    links.noteSaved(path, carved.kept)
+    this.reload(path, carved.kept)
+
+    this.undone.record({ kind, from: path, fromContent: before, created })
+    await this.loadTree()
+    this.persist()
+  }
+
+  /** A note whose name is the moment it was made, so nothing ever collides with
+   *  it and no link to it ever has to be rewritten. The format is the reader's;
+   *  see note-id.ts and the Editor settings. */
+  async createUniqueNote(format: string, folder?: string) {
+    const dir = folder ?? this.activeSpace?.root
+    if (!dir) return
+
+    const taken = new Set(this.notes.map((note) => note.path))
+    const stem = noteId(format)
+    let name = `${stem}.md`
+    let counter = 2
+    while (taken.has(joinPath(dir, name))) name = `${stem}-${counter++}.md`
+
+    // Opens with an empty heading and the caret in it: the name is settled, so
+    // the only thing left to do is say what the note is about.
+    const path = joinPath(dir, name)
+    const content = '# '
+
+    this.showEntry(this.freshEntry(path, false))
+    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+
+    const tab: Tab = {
+      id: identifier(),
+      path,
+      name: basename(path),
+      doc: content,
+      dirty: false,
+      cursor: content.length,
+    }
+    this.tabs = [...this.tabs, tab]
+    this.activeTabId = tab.id
+    this.showNote()
+    this.remember(path)
+    this.tabs = this.tabs.filter(
+      (other) => other.id === tab.id || other.path !== null || other.dirty,
+    )
+
+    await invoke('write_note', { path, content })
+    links.noteSaved(path, content)
+    await this.loadTree()
+    this.persist()
   }
 
   /** What undoing would do, phrased for a menu. Null when there is nothing. */

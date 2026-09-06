@@ -9,6 +9,7 @@ mod assets;
 mod clock;
 mod history;
 mod launch;
+mod links;
 mod logs;
 mod notes;
 mod pandoc;
@@ -67,6 +68,7 @@ pub fn run() {
             assets::save_asset,
             search::search_space,
             search::space_tags,
+            links::scan_links,
             themes::theme_dir,
             themes::list_themes,
             themes::read_theme,

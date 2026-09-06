@@ -1,0 +1,221 @@
+<script lang="ts">
+  /** What points at this note, what it points at, and where its name is written
+   *  without a link.
+   *
+   *  Three lists in one column, each headed by one word and a count. The rows are
+   *  the search panel's rows, because they say the same thing: which note, and the
+   *  line it says it on. Nothing is computed until the panel is open - the two
+   *  derived lists are lazy, and the mentions are only looked for while it shows. */
+
+  import { t } from './i18n.svelte'
+  import { links, type Outgoing, type Reference } from './link-index.svelte'
+  import { insideSpace } from './space-paths'
+  import { workspace } from './workspace.svelte'
+
+  const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
+
+  const path = $derived(workspace.active?.path ?? null)
+  const root = $derived(workspace.activeSpace?.root ?? null)
+
+  const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
+  const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
+
+  /** Reads a value for its own sake, so the effect around it follows it. */
+  const follows = (_value: unknown) => undefined
+
+  let mentions = $state<Reference[]>([])
+
+  // Looked for while the panel is open, and again whenever the note or the index
+  // changes. A search of the space is a round trip, so it is never on the way to
+  // showing the two lists above it.
+  $effect(() => {
+    const note = path
+    const space = root
+    // Read for its own sake, so this runs again when a note is saved anywhere
+    // in the space and a mention may have become a link.
+    follows(links.version)
+
+    if (!note || !space) {
+      mentions = []
+      return
+    }
+
+    let current = true
+    void links.unlinked(note, space).then((found) => {
+      if (current) mentions = found
+    })
+
+    return () => {
+      current = false
+    }
+  })
+
+  async function openAt(reference: Reference) {
+    if (!root) return
+    await workspace.open(insideSpace(root, reference.path))
+    ongoto?.(reference.line)
+  }
+
+  async function openTarget(link: Outgoing) {
+    if (!root || !link.to) return
+    await workspace.open(insideSpace(root, link.to))
+  }
+</script>
+
+{#if !path}
+  <p class="empty-text">{t('No note is open')}</p>
+{:else}
+  <!-- Backlinks first: what points here is what the panel is opened for. -->
+  <p class="head">{t('Backlinks')}<span class="count">{backlinks.length}</span></p>
+  {#if backlinks.length}
+    <ul>
+      {#each backlinks as reference, index (`${reference.path}:${reference.line}:${index}`)}
+        <li>
+          <button class="hit" onclick={() => openAt(reference)}>
+            <span class="hit-note">{reference.name}</span>
+            <span class="hit-line">{reference.text}</span>
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="empty-text">{t('Nothing links here yet')}</p>
+  {/if}
+
+  <p class="head">{t('Links out')}<span class="count">{outgoing.length}</span></p>
+  {#if outgoing.length}
+    <ul>
+      {#each outgoing as link, index (`${link.target}:${link.line}:${index}`)}
+        <li>
+          <button
+            class="hit"
+            class:missing={!link.to}
+            onclick={() => (link.to ? openTarget(link) : ongoto?.(link.line))}
+          >
+            <span class="hit-note">{link.name}</span>
+            <span class="hit-line">{link.text}</span>
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="empty-text">{t('This note links nowhere yet')}</p>
+  {/if}
+
+  {#if mentions.length}
+    <p class="head">{t('Mentions')}<span class="count">{mentions.length}</span></p>
+    <ul>
+      {#each mentions as reference, index (`${reference.path}:${reference.line}:${index}`)}
+        <li>
+          <button class="hit" onclick={() => openAt(reference)}>
+            <span class="hit-note">{reference.name}</span>
+            <span class="hit-line">{reference.text}</span>
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+
+  {#if links.scanning}
+    <p class="empty-text">{t('Reading the space…')}</p>
+  {/if}
+{/if}
+
+<style>
+  /* One word and a number: the whole heading of a list. */
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin: var(--space-3) var(--space-2) var(--space-1);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .head:first-child {
+    margin-top: var(--space-1);
+  }
+
+  .count {
+    font-variant-numeric: tabular-nums;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hit {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    text-align: left;
+    cursor: default;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .hit:hover {
+    background: var(--item-hover-bg-color);
+  }
+
+  .hit:active {
+    background: var(--press);
+  }
+
+  .hit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .hit-note {
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    color: var(--accent);
+  }
+
+  /* A link with nowhere to go wears the same muted, dotted mark the link in the
+     text does, so the two read as the same fact. */
+  .missing .hit-note {
+    color: var(--muted);
+    text-decoration: underline dotted;
+    text-underline-offset: 0.16em;
+  }
+
+  .hit-line {
+    overflow: hidden;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .empty-text {
+    margin: var(--space-1) var(--space-2) 0;
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  @media (max-width: 720px) {
+    .hit {
+      min-height: 48px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .empty-text {
+      font-size: var(--text-base);
+    }
+  }
+</style>

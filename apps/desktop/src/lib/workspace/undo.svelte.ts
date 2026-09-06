@@ -8,8 +8,22 @@
 import { t } from '../i18n.svelte'
 
 export type FileAction =
-  | { kind: 'move' | 'rename'; from: string; to: string }
+  | {
+      kind: 'move' | 'rename'
+      from: string
+      to: string
+      /** Whether links to the note elsewhere in the space were rewritten with
+       *  it, so undoing knows to rewrite them back. The old text is not kept:
+       *  the reverse rename is the same rewrite the other way round, and holding
+       *  a copy of every touched note would hold a whole space. */
+      rewrote?: boolean
+    }
   | { kind: 'delete'; path: string; content: string; trashId?: string }
+  /** The composer's three, each recorded with the text it replaced: what those
+   *  do is edit two notes at once, and an edit is not a file operation the
+   *  filesystem can put back. */
+  | { kind: 'merge'; from: string; fromContent: string; into: string; intoContent: string }
+  | { kind: 'split' | 'extract'; from: string; fromContent: string; created: string }
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
@@ -57,11 +71,19 @@ export class FileActions {
     const action = this.last
     if (!action) return null
 
-    const name = basename(action.kind === 'delete' ? action.path : action.to)
-    return {
-      move: t('Undo moving {name}', { name }),
-      rename: t('Undo renaming {name}', { name }),
-      delete: t('Undo deleting {name}', { name }),
-    }[action.kind]
+    switch (action.kind) {
+      case 'move':
+        return t('Undo moving {name}', { name: basename(action.to) })
+      case 'rename':
+        return t('Undo renaming {name}', { name: basename(action.to) })
+      case 'delete':
+        return t('Undo deleting {name}', { name: basename(action.path) })
+      case 'merge':
+        return t('Undo merging {name}', { name: basename(action.from) })
+      case 'split':
+        return t('Undo splitting {name}', { name: basename(action.from) })
+      case 'extract':
+        return t('Undo extracting from {name}', { name: basename(action.from) })
+    }
   }
 }

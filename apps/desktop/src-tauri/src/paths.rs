@@ -225,6 +225,52 @@ pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     Err(format!("{path} is not in a folder Nib has open"))
 }
 
+/// Every file in a space, split into the notes and everything else, each list in
+/// a stable order so two walks of an unchanged space read the same.
+///
+/// Here rather than in one of the two modules that walk a space, because both do:
+/// `search` reads every note for a word or a tag, and `links` reads every note
+/// for the links out of it and every other file for a picture an embed might
+/// name. A second copy of the walk would be a second answer to what counts as
+/// part of a space.
+///
+/// Hidden folders are skipped, which is what keeps the trash out of a search, and
+/// the depth is capped so a symlink pointing at one of its own parents cannot be
+/// followed forever.
+pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
+    let mut notes = Vec::new();
+    let mut others = Vec::new();
+    gather(dir, 0, &mut notes, &mut others);
+    notes.sort();
+    others.sort();
+    (notes, others)
+}
+
+fn gather(dir: &Path, depth: usize, notes: &mut Vec<PathBuf>, others: &mut Vec<PathBuf>) {
+    if depth >= MAX_DEPTH {
+        return;
+    }
+
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if entry.file_name().to_string_lossy().starts_with('.') {
+            continue;
+        }
+
+        if path.is_dir() {
+            gather(&path, depth + 1, notes, others);
+        } else if is_markdown(&path) {
+            notes.push(path);
+        } else {
+            others.push(path);
+        }
+    }
+}
+
 /// Writes a file whole: a temp file beside it takes the content and is flushed to
 /// the disk itself before being renamed over the target. A crash, a full disk or
 /// a pulled cable leaves either the old file or the new one, never half of
@@ -295,7 +341,7 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{folded, free_spot, inside, is_markdown, write_atomically};
+    use super::{files_in, folded, free_spot, inside, is_markdown, write_atomically};
     use std::path::{Path, PathBuf};
 
     /// Written the way the platform writes them, so the assertions read the same
@@ -392,5 +438,47 @@ mod tests {
         );
         assert_eq!(free_spot(&here.join("Notes"), false), here.join("Notes 2"));
         assert_eq!(free_spot(&here.join("New.md"), true), here.join("New.md"));
+    }
+
+    fn names(paths: &[PathBuf]) -> Vec<String> {
+        paths
+            .iter()
+            .filter_map(|path| path.file_name())
+            .map(|name| name.to_string_lossy().to_string())
+            .collect()
+    }
+
+    #[test]
+    fn tells_the_notes_of_a_space_from_the_files_beside_them() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::create_dir_all(here.join("Deep/Deeper")).expect("two folders");
+        std::fs::create_dir_all(here.join(".hidden")).expect("a hidden folder");
+        std::fs::write(here.join("One.md"), "").expect("a note");
+        std::fs::write(here.join("Deep/Deeper/Two.markdown"), "").expect("a nested note");
+        std::fs::write(here.join("Deep/notes.txt"), "").expect("a text file");
+        std::fs::write(here.join("Deep/pic.png"), "").expect("a picture");
+        std::fs::write(here.join(".hidden/Three.md"), "").expect("a hidden note");
+
+        let (notes, others) = files_in(here);
+        assert_eq!(names(&notes), ["One.md", "Two.markdown"]);
+        assert_eq!(names(&others), ["notes.txt", "pic.png"]);
+    }
+
+    #[test]
+    fn stops_before_it_runs_out_of_stack() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let mut deep = dir.path().to_path_buf();
+        // One past the cap, in short names so the whole path stays inside what
+        // Windows allows without asking.
+        for level in 0..34 {
+            deep.push(format!("d{level}"));
+        }
+        std::fs::create_dir_all(&deep).expect("a very deep folder");
+        std::fs::write(deep.join("Buried.md"), "").expect("a buried note");
+
+        let (notes, others) = files_in(dir.path());
+        assert!(notes.is_empty());
+        assert!(others.is_empty());
     }
 }

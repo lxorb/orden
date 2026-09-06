@@ -2,6 +2,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { rank } from './fuzzy'
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
@@ -9,6 +10,52 @@
 
   // Back answers the question with nothing, the same as tapping away.
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
+
+  /** How many rows a search through many answers shows at once. Enough to pick
+   *  from without the sheet becoming a page. */
+  const MOST_SHOWN = 8
+
+  let cursor = $state(0)
+
+  /** The answers that match what has been typed, best first. */
+  const matches = $derived(
+    prompt.mode === 'find'
+      ? rank(prompt.value.trim(), prompt.options, (option) => option.label).slice(0, MOST_SHOWN)
+      : [],
+  )
+
+  /** Reads a value for its own sake, so the effect around it follows it. */
+  const follows = (_value: unknown) => undefined
+
+  // A fresh set of rows starts at the top: the row the cursor pointed at is no
+  // longer the one under it.
+  $effect(() => {
+    follows(matches)
+    cursor = 0
+  })
+
+  function onFindKey(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      prompt.dismiss()
+      return
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      cursor = (cursor + 1) % Math.max(matches.length, 1)
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      cursor = (cursor - 1 + matches.length) % Math.max(matches.length, 1)
+    }
+  }
+
+  function submitFind() {
+    const chosen = matches[cursor]
+    if (chosen) prompt.pick(chosen.id)
+  }
 </script>
 
 {#if prompt.open}
@@ -19,7 +66,8 @@
     <form
       onsubmit={(event) => {
         event.preventDefault()
-        prompt.submit()
+        if (prompt.mode === 'find') submitFind()
+        else prompt.submit()
       }}
     >
       <p class="title">{prompt.title}</p>
@@ -48,6 +96,35 @@
             />
           </div>
         {/if}
+      {:else if prompt.mode === 'find'}
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          bind:value={prompt.value}
+          placeholder={prompt.placeholder}
+          spellcheck="false"
+          onkeydown={onFindKey}
+          autofocus
+        />
+
+        {#if matches.length}
+          <ul class="found">
+            {#each matches as option, index (option.id)}
+              <li>
+                <button
+                  type="button"
+                  class="found-row"
+                  class:at={index === cursor}
+                  onmouseenter={() => (cursor = index)}
+                  onclick={() => prompt.pick(option.id)}
+                >
+                  {option.label}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="detail">{t('Nothing found')}</p>
+        {/if}
       {:else if prompt.detail}
         <p class="detail">{prompt.detail}</p>
       {/if}
@@ -65,6 +142,9 @@
               {t(option.label)}
             </button>
           {/each}
+        {:else if prompt.mode === 'find'}
+          <button type="button" class="quiet" onclick={() => prompt.dismiss()}>{t('Cancel')}</button
+          >
         {:else}
           <button type="button" class="quiet" onclick={() => prompt.dismiss()}>{t('Cancel')}</button
           >
@@ -127,6 +207,40 @@
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--muted-strong);
+  }
+
+  /* The answers to a question with too many of them, narrowed by typing. The
+     gap the form puts between its children is the whole spacing here: the list
+     sits under the field like the field sits under the title. */
+  .found {
+    list-style: none;
+    margin: calc(var(--space-4) * -1 + var(--space-1)) 0 0;
+    padding: 0;
+  }
+
+  .found-row {
+    width: 100%;
+    display: block;
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+    transition:
+      background var(--dur-instant) var(--ease-out),
+      color var(--dur-instant) var(--ease-out);
+  }
+
+  .found-row.at {
+    background: var(--accent-soft);
+    color: var(--text-strong);
   }
 
   input {

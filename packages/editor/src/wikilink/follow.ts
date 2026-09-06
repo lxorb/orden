@@ -1,9 +1,10 @@
+import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { linkTarget, type Wikilink } from '@nib/markdown/links'
 import { label } from '../labels'
 import { MAC, modifier } from '../links'
 import { linkAt } from './at'
-import { jumpFor, noteIndex, noteOpener } from './notes'
+import { jumpFor, noteIndex, type NoteJump, noteOpener } from './notes'
 
 /** Following a link between notes, and what the link says about itself.
  *
@@ -26,13 +27,19 @@ export function noteLinkTitle(link: Wikilink, missing: boolean): string {
   return `${linkTarget(link)}\n${label(MAC ? wording.mac : wording.other)}`
 }
 
-/** Opens the note a click landed on, if it landed on one. Exported so a test
- *  can follow a link without a pointer. */
-export function followNoteAt(view: EditorView, pos: number): boolean {
-  const link = linkAt(view.state, pos)
-  if (!link) return false
+/** Where the link at a position goes, or null when there is no link there.
+ *  Exported so what a click will do can be asked without a pointer, or a DOM. */
+export function jumpAt(state: EditorState, pos: number): NoteJump | null {
+  const link = linkAt(state, pos)
+  return link && jumpFor(state.facet(noteIndex), link, link.kind)
+}
 
-  view.state.facet(noteOpener)(jumpFor(view.state.facet(noteIndex), link, link.kind))
+/** Opens the note a click landed on, if it landed on one. */
+function followNoteAt(view: EditorView, pos: number): boolean {
+  const jump = jumpAt(view.state, pos)
+  if (!jump) return false
+
+  view.state.facet(noteOpener)(jump)
   return true
 }
 

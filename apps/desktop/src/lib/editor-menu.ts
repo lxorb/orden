@@ -14,6 +14,7 @@ import {
   type Transaction,
 } from '@nib/editor'
 import { copySelection, cutSelection } from './clipboard'
+import { composerEntries } from './composer-commands'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
@@ -135,6 +136,11 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
       run: run(insertHorizontalRule),
     },
     { label: t('Page break'), run: run(insertPageBreak) },
+    DIVIDER,
+    // Moving text between notes. Here rather than only in the palette because
+    // what they act on is the caret and the selection, which is what a right
+    // click is already about.
+    ...composerEntries(view),
     DIVIDER,
     {
       label: modes.source ? t('Leave source mode') : t('Source mode'),

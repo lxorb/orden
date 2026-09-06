@@ -1,6 +1,7 @@
 /** The desktop app's command surface, served from the browser's own storage.
  *  Same names, same shapes - so every call site works on both. */
 
+import { scanNote, type SpaceLinks } from '../scan-note'
 import { basename, isMarkdown, join, normalise, parent, safeName, spaceOf, within } from './paths'
 import { assets, files, KEEP, meta, snapshots } from './store'
 
@@ -294,6 +295,31 @@ async function spaceTags(root: string) {
     .sort((a, b) => b.count - a.count || (a.tag < b.tag ? -1 : 1))
 }
 
+/** The browser's answer to the desktop's `scan_links`, which reads a whole space
+ *  in one pass. Here the space is already in memory, so the pass is over rows
+ *  rather than over files; each note is read by `scanNote`, which is also what
+ *  the index uses for a note that has just been saved. */
+async function scanLinks(root: string): Promise<SpaceLinks> {
+  const base = normalise(root)
+  const rows = (await files.all()).filter((row) => within(base, row.path))
+  const relative = (path: string) => path.slice(base === '/' ? 1 : base.length + 1)
+
+  const notes = rows
+    .filter((row) => isMarkdown(row.path))
+    .sort((a, b) => (a.path < b.path ? -1 : 1))
+    .map((row) => scanNote(relative(row.path), row.content))
+
+  // Pictures live in their own store here, and a `.keep` is scaffolding rather
+  // than a file somebody put in the space.
+  const kept = rows.filter((row) => !isMarkdown(row.path) && basename(row.path) !== KEEP)
+  const pictures = (await assets.all()).filter((row) => within(base, row.path))
+
+  return {
+    notes,
+    files: [...kept, ...pictures].map((row) => relative(row.path)).sort(),
+  }
+}
+
 const KEEP_SNAPSHOTS = 40
 
 async function snapshot(path: string, content: string) {
@@ -370,6 +396,9 @@ export async function webInvoke<T>(
 
     case 'space_tags':
       return (await spaceTags(root)) as T
+
+    case 'scan_links':
+      return (await scanLinks(root)) as T
 
     case 'spaces_root':
       return '/' as T

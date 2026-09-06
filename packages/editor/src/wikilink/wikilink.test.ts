@@ -7,6 +7,7 @@ import { buildBlockDecorations } from '../live-preview/blocks'
 import { buildDecorations } from '../live-preview/decorate'
 import { linkAt } from './at'
 import { embedOfBlock, isImageTarget } from './embed'
+import { jumpAt } from './follow'
 import {
   jumpFor,
   type NoteIndex,
@@ -264,6 +265,25 @@ describe('where a link goes', () => {
 
   test('to this note for a link with no target', () => {
     expect(jumpFor(SPACE, wiki('', 'Today'), 'wikilink').path).toBe('Plan.md')
+  })
+
+  test('what a click on one would do, read off the document', () => {
+    const doc = 'see [[ideas/Spark#Later]] and [[Nowhere]] and plain words'
+    const where = state(doc, 0)
+
+    expect(jumpAt(where, doc.indexOf('Spark'))).toEqual({
+      path: 'ideas/Spark.md',
+      target: 'ideas/Spark',
+      heading: 'Later',
+      block: null,
+    })
+    expect(jumpAt(where, doc.indexOf('Nowhere'))).toEqual({
+      path: null,
+      target: 'Nowhere',
+      heading: null,
+      block: null,
+    })
+    expect(jumpAt(where, doc.indexOf('plain'))).toBeNull()
   })
 })
 

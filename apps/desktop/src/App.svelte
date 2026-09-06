@@ -3,7 +3,7 @@
   import { key, message, t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import { EditorView, type Text } from '@nib/editor'
+  import { EditorView, type NoteJump, type Text } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import Editor from './lib/Editor.svelte'
   import FormatBar from './lib/FormatBar.svelte'
@@ -30,6 +30,7 @@
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes.svelte'
   import { imageUrl } from './lib/images'
+  import { links } from './lib/link-index.svelte'
   import { storeImage } from './lib/assets'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
@@ -162,8 +163,31 @@
   }
 
   function resolveImage(src: string): string {
-    return imageUrl(src, workspace.active?.path, workspace.active?.doc ?? '')
+    // A picture an embed names by file name alone may live anywhere in the
+    // space, the way Obsidian resolves an attachment; the index knows where.
+    const root = workspace.activeSpace?.root
+    const found = root && !src.includes('/') ? links.fileNamed(src) : null
+    const path = found && root ? `${root}/${found}` : src
+
+    return imageUrl(path, workspace.active?.path, workspace.active?.doc ?? '')
   }
+
+  /** Names a block of another note, so a `[[…#^` link can point at it. */
+  function nameBlock(path: string, line: number): Promise<string | null> {
+    const root = workspace.activeSpace?.root
+    return root ? links.nameBlock(path, line, root) : Promise.resolve(null)
+  }
+
+  // A followed link lands on a heading or a block, which the editor cannot know
+  // the line of: the workspace works it out from the note it just loaded and
+  // leaves it here.
+  $effect(() => {
+    const asked = workspace.goto
+    if (!asked || workspace.active?.path !== asked.path) return
+
+    workspace.goto = null
+    goto(asked.line)
+  })
 
   async function toggleFullscreen() {
     if (!isDesktop) return
@@ -274,6 +298,9 @@
             onimage={saveImage}
             resolveimage={resolveImage}
             openlink={(href: string) => void openExternal(href)}
+            notes={links.index(workspace.active?.path ?? null)}
+            opennote={(jump: NoteJump) => void workspace.followLink(jump)}
+            nameblock={(path: string, line: number) => nameBlock(path, line)}
             onselection={(current: EditorView) => {
               formatBar?.follow(current)
               placement.remember()

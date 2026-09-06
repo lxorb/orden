@@ -4,6 +4,7 @@ import { account } from './account.svelte'
 import { connectors } from './connectors.svelte'
 import { keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
+import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
 import { isRecord, isString, stored } from './stored'
 import { invoke, isDesktop } from './tauri'
@@ -12,6 +13,7 @@ import { workspace } from './workspace.svelte'
 
 const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
+const NOTE_ID_KEY = 'nib:note-id'
 
 /** How an exported page is coloured: light, dark, or as the app looks now. */
 type ExportAppearance = 'light' | 'dark' | 'app'
@@ -50,6 +52,10 @@ class Settings {
 
   /** Whether Explorer's "New" menu offers a markdown document. Windows only. */
   newMenu = $state(false)
+
+  /** How "New unique note" spells the moment it names a note after. Only that
+   *  command uses it; every other note is named by whoever writes it. */
+  noteIdFormat = $state(DEFAULT_ID_FORMAT)
 
   busy = $state(false)
   error = $state<string | null>(null)
@@ -91,6 +97,11 @@ class Settings {
       }
     }
 
+    // Only a format this build knows how to fill in, so a value written by a
+    // later one cannot leave every unique note sharing a name.
+    const format = localStorage.getItem(NOTE_ID_KEY)
+    if (format && ID_FORMATS.includes(format)) this.noteIdFormat = format
+
     const appearance = localStorage.getItem(APPEARANCE_KEY)
     if (appearance === 'light' || appearance === 'dark' || appearance === 'app') {
       this.exportAppearance = appearance
@@ -125,6 +136,11 @@ class Settings {
   setPage(patch: Partial<PageSetup>) {
     this.page = { ...this.page, ...patch }
     localStorage.setItem(PAGE_KEY, JSON.stringify(this.page))
+  }
+
+  setNoteIdFormat(format: string) {
+    this.noteIdFormat = format
+    localStorage.setItem(NOTE_ID_KEY, format)
   }
 
   setExportAppearance(appearance: ExportAppearance) {
