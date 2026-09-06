@@ -5,5 +5,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    nib_lib::run()
+    nib_lib::run();
 }

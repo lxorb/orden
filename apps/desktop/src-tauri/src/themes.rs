@@ -7,6 +7,7 @@
 use serde::Serialize;
 use std::ffi::OsStr;
 use std::fs;
+use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
@@ -79,9 +80,7 @@ pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
 #[tauri::command]
 pub fn custom_css_path(app: AppHandle) -> Result<String, String> {
     let path = custom_css_file(&app)?;
-    if !path.exists() {
-        fs::write(&path, CUSTOM_CSS).map_err(|error| cannot("create", &path, &error))?;
-    }
+    seed(&path, CUSTOM_CSS)?;
     Ok(path.to_string_lossy().to_string())
 }
 
@@ -100,9 +99,7 @@ pub fn read_custom_css(app: AppHandle) -> String {
 #[tauri::command]
 pub fn snippets_path(app: AppHandle) -> Result<String, String> {
     let path = snippets_file(&app)?;
-    if !path.exists() {
-        fs::write(&path, SNIPPETS).map_err(|error| cannot("create", &path, &error))?;
-    }
+    seed(&path, SNIPPETS)?;
     Ok(path.to_string_lossy().to_string())
 }
 
@@ -116,11 +113,30 @@ pub fn read_snippets(app: AppHandle) -> String {
         .unwrap_or_else(|| "{}".into())
 }
 
-/// The app's own settings folder.
+/// Writes a starter file, unless it is already there. Asking the filesystem to
+/// create it rather than looking first and then writing: two windows starting at
+/// the same moment would both find it missing, and the second would write its
+/// default over whatever the first had already put there.
+fn seed(path: &Path, content: &str) -> Result<(), String> {
+    match fs::File::create_new(path) {
+        Ok(mut file) => file
+            .write_all(content.as_bytes())
+            .map_err(|error| cannot("write", path, &error)),
+        Err(error) if error.kind() == ErrorKind::AlreadyExists => Ok(()),
+        Err(error) => Err(cannot("create", path, &error)),
+    }
+}
+
+/// The app's own settings folder, made if it is not there yet: on a fresh install
+/// nothing has written to it, and the two files below have to land somewhere.
 fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    app.path()
+    let dir = app
+        .path()
         .app_config_dir()
-        .map_err(|error| format!("could not find the settings folder: {error}"))
+        .map_err(|error| format!("could not find the settings folder: {error}"))?;
+
+    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    Ok(dir)
 }
 
 /// The themes folder, made if it is not there yet.

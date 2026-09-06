@@ -172,7 +172,7 @@ fn encode(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{encode, mime_of, safe_name};
+    use super::{encode, mime_of, safe_name, MAX_NAME};
     use std::path::Path;
 
     #[test]
@@ -233,6 +233,9 @@ mod tests {
     #[test]
     fn caps_how_long_a_name_can_get() {
         let long = format!("{}.png", "x".repeat(400));
-        assert_eq!(safe_name(&long).unwrap().chars().count(), 120);
+        assert_eq!(
+            safe_name(&long).map(|name| name.chars().count()),
+            Some(MAX_NAME)
+        );
     }
 }
