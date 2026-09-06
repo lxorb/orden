@@ -12,10 +12,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [lints.rust]
 # Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
-# There is unsafe here, in three places: the shell's recent documents list, the
-# registry key behind Explorer's New menu, and WebView2's print engine. All three
-# are Windows calls with no safe wrapper, so this cannot be forbidden - but any
-# new one has to be written as a block that says why it is sound.
+# Unsafe is denied everywhere and excepted by name in the four functions that
+# call Windows directly: the shell's recent documents list, the two registry
+# calls behind Explorer's New menu, and WebView2's print engine. None of the four
+# has a safe wrapper to use instead, and anything new that wants unsafe has to
+# say so at the function and say why.
+unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
 # Pedantic as the floor, so CI's plain `cargo clippy -- -D warnings` enforces it.

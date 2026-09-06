@@ -18,6 +18,10 @@ pub fn remember_recent(path: String) {
 const PATH_AS_WIDE_STRING: u32 = 3;
 
 #[cfg(target_os = "windows")]
+#[allow(
+    unsafe_code,
+    reason = "the shell's recent documents list is a C call with no safe wrapper"
+)]
 fn add_to_recent(path: &str) {
     use std::os::windows::ffi::OsStrExt;
     use windows::Win32::UI::Shell::SHAddToRecentDocs;

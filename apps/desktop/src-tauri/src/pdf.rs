@@ -151,6 +151,10 @@ mod printer {
     }
 
     /// Asks `WebView2` for the PDF. The answer arrives later, on the channel.
+    #[allow(
+        unsafe_code,
+        reason = "WebView2's print engine is reached through its COM interfaces"
+    )]
     pub fn print(
         webview: &PlatformWebview,
         output: &str,

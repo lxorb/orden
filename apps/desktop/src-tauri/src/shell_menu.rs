@@ -28,6 +28,10 @@ mod platform {
     const KEY: PCWSTR = w!("Software\\Classes\\.md\\ShellNew");
 
     /// Whether the key is there, which is the whole of the state.
+    #[allow(
+        unsafe_code,
+        reason = "the registry has no safe wrapper in the windows crate"
+    )]
     pub fn read() -> bool {
         let mut key = HKEY::default();
 
@@ -47,6 +51,10 @@ mod platform {
 
     /// Adds the key or takes it away, and says so in a sentence rather than in a
     /// status code.
+    #[allow(
+        unsafe_code,
+        reason = "the registry has no safe wrapper in the windows crate"
+    )]
     pub fn write(enabled: bool) -> Result<(), String> {
         // Safe: every call is given a valid key handle and a null-terminated
         // constant name, and the one handle opened here is closed below.
