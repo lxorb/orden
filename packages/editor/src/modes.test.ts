@@ -10,7 +10,17 @@ import { clearFormatting, insertHorizontalRule, setHeading, toggleWrap } from '.
 import { external } from './external'
 import { blockDecorations } from './live-preview'
 import { buildDecorations } from './live-preview/decorate'
-import { modeExtensions, setReadingMode, setSourceMode } from './modes'
+import {
+  modeExtensions,
+  setCodeLineNumbers,
+  setFocusMode,
+  setHeadingNumbers,
+  setLigatures,
+  setReadingMode,
+  setRightToLeft,
+  setSourceMode,
+  setTypewriterMode,
+} from './modes'
 import { reformatDocument } from './reformat'
 
 /** A view is a DOM thing and these tests are not, so this is all the setters
@@ -211,5 +221,75 @@ describe('source mode and reading mode', () => {
     expect(view.state.readOnly).toBe(false)
     expect(preview(view.state)).toBe(false)
     expect(readingClass(view.state)).toBe(false)
+  })
+})
+
+/** Every class a mode puts on the editor, as the editor itself writes them. */
+function editorClasses(state: EditorState): string[] {
+  return state
+    .facet(EditorView.editorAttributes)
+    .flatMap((attrs) => (typeof attrs === 'object' && attrs?.class ? [attrs.class] : []))
+}
+
+function direction(state: EditorState): string | undefined {
+  return state
+    .facet(EditorView.contentAttributes)
+    .flatMap((attrs) => (typeof attrs === 'object' && attrs?.dir ? [attrs.dir] : []))
+    .at(-1)
+}
+
+/** A mode that is on and cannot be seen is off in every way that counts.
+ *
+ *  CodeMirror rewrites its element's class attribute from these facets on
+ *  every focus change, so a class put there with `classList` was gone at the
+ *  next click somewhere else - the mode stayed on, its styling did not. Reading
+ *  mode was written the right way round from the start; these five were not,
+ *  and this is what keeps them that way. */
+describe('the classes the stylesheet works from', () => {
+  const modes: Array<[string, (view: EditorView, on: boolean) => void, string]> = [
+    ['focus mode', setFocusMode, 'nib-focus-mode'],
+    ['typewriter mode', setTypewriterMode, 'nib-typewriter-mode'],
+    ['ligatures', setLigatures, 'nib-ligatures'],
+    ['numbered headings', setHeadingNumbers, 'nib-numbered'],
+    ['code line numbers', setCodeLineNumbers, 'nib-line-numbers'],
+    ['right to left', setRightToLeft, 'nib-rtl'],
+  ]
+
+  for (const [name, set, className] of modes) {
+    test(`${name} hands its class to the editor, and takes it back`, () => {
+      const { view } = surface('# Note')
+      expect(editorClasses(view.state)).not.toContain(className)
+
+      set(view, true)
+      expect(editorClasses(view.state)).toContain(className)
+
+      set(view, false)
+      expect(editorClasses(view.state)).not.toContain(className)
+    })
+  }
+
+  test('right to left sets the writing direction with it', () => {
+    const { view } = surface('# Note')
+    expect(direction(view.state)).toBe('ltr')
+
+    setRightToLeft(view, true)
+    expect(direction(view.state)).toBe('rtl')
+
+    setRightToLeft(view, false)
+    expect(direction(view.state)).toBe('ltr')
+  })
+
+  test('two modes at once keep both classes', () => {
+    const { view } = surface('# Note')
+    setFocusMode(view, true)
+    setTypewriterMode(view, true)
+
+    expect(editorClasses(view.state)).toEqual(
+      expect.arrayContaining(['nib-focus-mode', 'nib-typewriter-mode']),
+    )
+
+    setFocusMode(view, false)
+    expect(editorClasses(view.state)).toContain('nib-typewriter-mode')
+    expect(editorClasses(view.state)).not.toContain('nib-focus-mode')
   })
 })

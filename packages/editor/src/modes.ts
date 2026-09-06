@@ -25,6 +25,20 @@ const spelling = new Compartment()
 const brackets = new Compartment()
 const glyphs = new Compartment()
 const reading = new Compartment()
+const headingNumbers = new Compartment()
+const codeLineNumbers = new Compartment()
+const direction = new Compartment()
+
+/** A class the stylesheet works from, handed to the editor rather than put on
+ *  its element. CodeMirror writes that element's class attribute out from its
+ *  own facets every time the editor takes or loses focus, so a class added
+ *  with `classList` survives only until the next click somewhere else - the
+ *  mode was still on while everything that made it visible was gone. Attributes
+ *  from this facet are merged into what CodeMirror writes, and they leave again
+ *  when the compartment holding them is emptied. */
+function editorClass(name: string): Extension {
+  return EditorView.editorAttributes.of({ class: name })
+}
 
 /** Strict mode drops GFM and the Typora extensions, leaving plain CommonMark -
  *  useful when a document has to render the same everywhere. */
@@ -116,6 +130,9 @@ export function modeExtensions(): Extension {
     // Off until asked for: a note reads as typed unless someone chose otherwise.
     glyphs.of([]),
     reading.of([]),
+    headingNumbers.of([]),
+    codeLineNumbers.of([]),
+    direction.of(EditorView.contentAttributes.of({ dir: 'ltr' })),
   ]
 }
 
@@ -196,22 +213,22 @@ export function setReadingMode(view: EditorView, on: boolean) {
 }
 
 export function setFocusMode(view: EditorView, on: boolean) {
-  view.dispatch({ effects: focus.reconfigure(on ? focusPlugin : []) })
-  view.dom.classList.toggle('nib-focus-mode', on)
+  view.dispatch({ effects: focus.reconfigure(on ? [focusPlugin, editorClass('nib-focus-mode')] : []) })
 }
 
 export function setTypewriterMode(view: EditorView, on: boolean) {
-  view.dispatch({ effects: typewriter.reconfigure(on ? typewriterPlugin : []) })
-  // Extra room below the last line, so the caret can still reach the middle.
-  view.dom.classList.toggle('nib-typewriter-mode', on)
+  // The class buys extra room below the last line, so the caret can still
+  // reach the middle.
+  view.dispatch({
+    effects: typewriter.reconfigure(on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : []),
+  })
 }
 
 /** Shows `->`, `<=` and their kind as the arrow or sign they stand for; the
  *  text underneath stays as typed. The class lets the stylesheet hold back
  *  the code font's own ligatures while this is off, so that off means off. */
 export function setLigatures(view: EditorView, on: boolean) {
-  view.dispatch({ effects: glyphs.reconfigure(on ? ligatures() : []) })
-  view.dom.classList.toggle('nib-ligatures', on)
+  view.dispatch({ effects: glyphs.reconfigure(on ? [ligatures(), editorClass('nib-ligatures')] : []) })
 }
 
 /** Curly quotes, en and em dashes, ellipsis - on by default, like Typora. */
@@ -221,12 +238,12 @@ export function setSmartPunctuation(view: EditorView, on: boolean) {
 
 /** CSS counters number the headings; the document text stays untouched. */
 export function setHeadingNumbers(view: EditorView, on: boolean) {
-  view.dom.classList.toggle('nib-numbered', on)
+  view.dispatch({ effects: headingNumbers.reconfigure(on ? editorClass('nib-numbered') : []) })
 }
 
 /** Numbers the lines inside code fences, counting from one per fence. */
 export function setCodeLineNumbers(view: EditorView, on: boolean) {
-  view.dom.classList.toggle('nib-line-numbers', on)
+  view.dispatch({ effects: codeLineNumbers.reconfigure(on ? editorClass('nib-line-numbers') : []) })
 }
 
 /** Widens or narrows the writing column. */
@@ -273,7 +290,14 @@ export function setCloseBrackets(view: EditorView, on: boolean) {
   view.dispatch({ effects: brackets.reconfigure(on ? closeBrackets() : []) })
 }
 
+/** The writing direction, given to the editor the same way as the class: the
+ *  content element's attributes are CodeMirror's to write too. */
 export function setRightToLeft(view: EditorView, on: boolean) {
-  view.contentDOM.setAttribute('dir', on ? 'rtl' : 'ltr')
-  view.dom.classList.toggle('nib-rtl', on)
+  view.dispatch({
+    effects: direction.reconfigure(
+      on
+        ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl')]
+        : EditorView.contentAttributes.of({ dir: 'ltr' }),
+    ),
+  })
 }
