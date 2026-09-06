@@ -37,7 +37,6 @@
     "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
-    "@types/katex": "^0.16.8",
     "@types/node": "^24.13.3",
     "@types/turndown": "^5.0.6",
     "typescript": "^5.9.3",

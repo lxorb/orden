@@ -21,4 +21,4 @@ export function livePreview(): Extension {
   ]
 }
 
-export { blockDecorations, livePreviewDecorations }
+export { blockDecorations }

@@ -306,7 +306,7 @@ export const imageBindings: BindingSpec[] = [
 // ── Sizing ──────────────────────────────────────────────────────────
 
 /** Where a drag settles when it comes close: the sizes people mean. */
-export const SNAP_STOPS = [25, 33, 50, 67, 75, 100]
+const SNAP_STOPS = [25, 33, 50, 67, 75, 100]
 const SNAP_TOLERANCE = 3
 /** Narrower than this and the handles would overlap. */
 const MIN_WIDTH = 48
@@ -892,7 +892,7 @@ const imageSelection = ViewPlugin.fromClass(
 /** Full-window preview. Escape or a click outside closes it; a click on a
  *  picture larger than the window toggles it between fitting and actual
  *  size. Focus goes back to the editor afterwards. */
-export function openLightbox(view: EditorView, src: string, alt: string) {
+function openLightbox(view: EditorView, src: string, alt: string) {
   const backdrop = document.createElement('div')
   backdrop.className = 'nib-lightbox'
 

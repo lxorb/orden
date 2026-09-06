@@ -84,7 +84,7 @@ export const CODE_PALETTES: CodePalette[] = [
   },
 ]
 
-export function codeHighlightStyle(palette: CodePalette) {
+function codeHighlightStyle(palette: CodePalette) {
   return HighlightStyle.define([
     { tag: tags.keyword, color: palette.keyword },
     { tag: [tags.string, tags.special(tags.string)], color: palette.string },
@@ -117,7 +117,7 @@ export function codeHighlightStyle(palette: CodePalette) {
   ])
 }
 
-export function paletteById(id: string): CodePalette {
+function paletteById(id: string): CodePalette {
   return CODE_PALETTES.find((palette) => palette.id === id) ?? FOLLOW
 }
 

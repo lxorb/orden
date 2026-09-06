@@ -29,7 +29,7 @@ function isSpace(code: number): boolean {
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }
 
 /** `==marked==`, Typora's highlight syntax. */
-export const Highlight: MarkdownConfig = {
+const Highlight: MarkdownConfig = {
   defineNodes: [
     { name: 'Highlight', style: markTags.highlight },
     { name: 'HighlightMark', style: tags.processingInstruction },
@@ -47,7 +47,7 @@ export const Highlight: MarkdownConfig = {
 }
 
 /** `$x$`. Requires non-space just inside the delimiters, so prices survive. */
-export const InlineMath: MarkdownConfig = {
+const InlineMath: MarkdownConfig = {
   defineNodes: [
     { name: 'InlineMath', style: markTags.math },
     { name: 'MathMark', style: tags.processingInstruction },
@@ -83,7 +83,7 @@ export const InlineMath: MarkdownConfig = {
 }
 
 /** A `$$` fence on its own line, closed by another. */
-export const BlockMath: MarkdownConfig = {
+const BlockMath: MarkdownConfig = {
   defineNodes: [{ name: 'BlockMath', block: true, style: markTags.math }],
   parseBlock: [
     {
@@ -115,7 +115,7 @@ export const BlockMath: MarkdownConfig = {
 }
 
 /** `[^id]` in the text and `[^id]: …` at the bottom. */
-export const Footnote: MarkdownConfig = {
+const Footnote: MarkdownConfig = {
   defineNodes: [
     { name: 'FootnoteRef', style: markTags.footnote },
     { name: 'FootnoteDef', block: true },
@@ -173,7 +173,7 @@ export const Footnote: MarkdownConfig = {
 }
 
 /** YAML metadata fenced by `---`, only at the very top of a document. */
-export const FrontMatter: MarkdownConfig = {
+const FrontMatter: MarkdownConfig = {
   defineNodes: [
     { name: 'FrontMatter', block: true, style: markTags.frontMatter },
     { name: 'FrontMatterMark', style: tags.processingInstruction },
@@ -210,7 +210,7 @@ export const FrontMatter: MarkdownConfig = {
 }
 
 /** `: a meaning` under the term it belongs to. */
-export const DefinitionList: MarkdownConfig = {
+const DefinitionList: MarkdownConfig = {
   defineNodes: [
     { name: 'DefinitionDetail', block: true },
     { name: 'DefinitionMark', style: tags.processingInstruction },
@@ -242,7 +242,7 @@ export const DefinitionList: MarkdownConfig = {
 }
 
 /** `*[HTML]: HyperText Markup Language` - a definition, never shown as prose. */
-export const Abbreviation: MarkdownConfig = {
+const Abbreviation: MarkdownConfig = {
   defineNodes: [
     { name: 'AbbrevDef', block: true },
     { name: 'AbbrevMark', style: tags.processingInstruction },
@@ -527,7 +527,7 @@ const alreadyCut = new WeakSet<readonly TreeFragment[]>()
  *  fence characters, the indent allowed, the info string, where a container
  *  ends, and the nodes produced - follows the built-in parser line by line,
  *  so nested language highlighting and the fence rendering keep working. */
-export const FencedCode: MarkdownConfig = {
+const FencedCode: MarkdownConfig = {
   // Rebuilds a parse that would reuse an unclosed fence line from before an
   // edit; see `withoutUnclosedFences`. A parse is created and wrapped before
   // this sees it, so a cut fragment list means starting the parse over.

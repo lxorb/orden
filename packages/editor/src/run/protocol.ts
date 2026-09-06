@@ -2,7 +2,7 @@ import { formatRunValues } from './format'
 
 /** What kind of line the panel is showing. The five console levels, the value
  *  of the last expression, and anything that was thrown or rejected. */
-export type RunLevel = 'log' | 'info' | 'warn' | 'error' | 'debug' | 'result' | 'exception'
+type RunLevel = 'log' | 'info' | 'warn' | 'error' | 'debug' | 'result' | 'exception'
 
 export interface RunLine {
   level: RunLevel

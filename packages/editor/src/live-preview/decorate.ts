@@ -29,7 +29,7 @@ const hide = Decoration.replace({})
 const meta = Decoration.mark({ class: 'md-meta' })
 
 /** Syntax characters that vanish unless the caret is inside their construct. */
-export const INLINE_MARKS = new Set([
+const INLINE_MARKS = new Set([
   'EmphasisMark',
   'StrikethroughMark',
   'SubscriptMark',

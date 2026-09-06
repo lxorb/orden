@@ -23,7 +23,7 @@ export type Side = 'above' | 'below'
 export type Step = CellAddress | Side
 
 /** The whole-line span of a Table node - what its widget replaces. */
-export function tableSpan(state: EditorState, from: number, to: number): TableSpan {
+function tableSpan(state: EditorState, from: number, to: number): TableSpan {
   return { from: state.doc.lineAt(from).from, to: state.doc.lineAt(to).to }
 }
 

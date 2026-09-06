@@ -105,7 +105,7 @@ export function shiftHeading(delta: number): StateCommand {
 }
 
 /** Adds the prefix to every selected line, or strips it if all lines have it. */
-export function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
+function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
   return ({ state, dispatch }) => {
     const lines = selectedLines(state)
     const allPrefixed = lines.every((line) => pattern.test(line.text))
@@ -126,7 +126,6 @@ export function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand 
 
 export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
 export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
-export const toggleTaskList = toggleLinePrefix('- [ ] ', /^\s*[-*+]\s+\[[ xX]\]\s+/)
 
 export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)

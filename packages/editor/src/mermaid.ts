@@ -54,7 +54,7 @@ export const mermaidParser: StreamParser<MermaidState> = {
   languageData: { commentTokens: { line: '%%' } },
 }
 
-export const mermaidLanguage = StreamLanguage.define(mermaidParser)
+const mermaidLanguage = StreamLanguage.define(mermaidParser)
 
 /** Registered the way `@codemirror/language-data` registers everything else, so
  *  a ` ```mermaid ` fence highlights in source mode and while the diagram is

@@ -175,9 +175,6 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
     devDependencies:
-      '@types/katex':
-        specifier: ^0.16.8
-        version: 0.16.8
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -203,9 +200,6 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
     devDependencies:
-      '@types/katex':
-        specifier: ^0.16.8
-        version: 0.16.8
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -1467,9 +1461,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/katex@0.16.8':
-    resolution: {integrity: sha512-trgaNyfU+Xh2Tc+ABIb44a5AYUpicB3uwirOioeOkNPPbmgRNtcWyDeeFRzjPZENO9Vq8gvVqfhaaXWLlevVwg==}
 
   '@types/node@24.13.3':
     resolution: {integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==}
@@ -3904,8 +3895,6 @@ snapshots:
   '@types/geojson@7946.0.16': {}
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/katex@0.16.8': {}
 
   '@types/node@24.13.3':
     dependencies:

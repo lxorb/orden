@@ -13,13 +13,13 @@ import { parseRunMessage, runnerDocument } from './protocol'
  *  frame with an opaque origin is a browser process of its own, and on a loaded
  *  machine it can be seconds coming up; charging that to the note's code would
  *  time out programs that never got to run. */
-export const RUN_TIME_LIMIT = 10_000
+const RUN_TIME_LIMIT = 10_000
 
 /** How long the sandbox itself has to come up before the run is given up on.
  *  Generous on purpose: this is a browser starting a process, and a machine
  *  that is already fully loaded can take tens of seconds over it. Giving up
  *  earlier would report a timeout against code that never got to run. */
-export const RUN_START_LIMIT = 45_000
+const RUN_START_LIMIT = 45_000
 
 /** Fence languages the Run button appears on. Four spellings of the same
  *  language. `ts` is left out because nothing here compiles, and `node` because
@@ -181,7 +181,7 @@ export function runFenceAtCursor(view: EditorView): boolean {
  *
  *  Kept out of the panel's own DOM so that the state stays the single account of
  *  what is running: the buttons dispatch, and this reacts. */
-export const runSandboxes = ViewPlugin.define((view) => ({
+const runSandboxes = ViewPlugin.define((view) => ({
   update(update: ViewUpdate) {
     for (const transaction of update.transactions) {
       for (const effect of transaction.effects) {

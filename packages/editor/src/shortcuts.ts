@@ -55,7 +55,7 @@ export type KeyOverrides = Record<string, string | null>
  *  `keymap.compute`d against it: change the facet and every keymap that reads
  *  it is rebuilt, including the one live preview installs for pictures, which
  *  is inside a compartment this module never sees. */
-export const shortcutKeys = Facet.define<KeyOverrides, KeyOverrides>({
+const shortcutKeys = Facet.define<KeyOverrides, KeyOverrides>({
   combine: (values) => values[0] ?? {},
 })
 

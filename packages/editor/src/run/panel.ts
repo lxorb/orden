@@ -176,7 +176,7 @@ function fill(text: string, name: string, value: string | number): string {
   return text.replace(`{${name}}`, String(value))
 }
 
-export class RunPanelWidget extends NibWidget {
+class RunPanelWidget extends NibWidget {
   constructor(private readonly panel: RunPanel) {
     super()
   }

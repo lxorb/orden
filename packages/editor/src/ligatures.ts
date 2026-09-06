@@ -18,7 +18,7 @@ import type { SyntaxNode } from '@lezer/common'
  *  made invisible, and the glyph is painted over the room they take. So a
  *  run keeps its width - columns in code still line up - and reading it as
  *  typed, when the caret goes in, shifts nothing. */
-export const LIGATURES: Record<string, string> = {
+const LIGATURES: Record<string, string> = {
   '->': '→',
   '<-': '←',
   '<->': '↔',
@@ -136,7 +136,7 @@ function markFor(glyph: string): Decoration {
   return mark
 }
 
-export function buildLigatures(
+function buildLigatures(
   state: EditorState,
   ranges?: readonly { from: number; to: number }[],
 ): DecorationSet {
