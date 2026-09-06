@@ -3,8 +3,13 @@ import { account } from './account.svelte'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
 import { scanHeadings } from './outline'
-import { without, withOrWithout } from './records'
-import { isBoolean, isNumber, isRecord, isString, recordOf, stored, stringList } from './stored'
+import { without } from './records'
+import { isRecord, stored } from './stored'
+import { type Draft, readSession, type Session, writeSession } from './workspace/session'
+import { DeviceView } from './workspace/device.svelte'
+import { Positions } from './workspace/positions'
+import { type FileAction, FileActions } from './workspace/undo.svelte'
+import { outermost, Selection } from './workspace/selection.svelte'
 import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -64,11 +69,6 @@ export interface DocText {
 
 export type Panel = 'tree' | 'outline' | 'search'
 
-/** A file operation that can be put back. */
-export type FileAction =
-  | { kind: 'move' | 'rename'; from: string; to: string }
-  | { kind: 'delete'; path: string; content: string; trashId?: string }
-
 export interface Hit {
   path: string
   name: string
@@ -86,12 +86,6 @@ export type { Heading } from './outline'
 const STORAGE_KEY = 'nib:workspace'
 const AUTO_SAVE_KEY = 'nib:autosave'
 const TREE_KEY = 'nib:tree'
-const RECENT_KEY = 'nib:recent'
-const RECENT_LIMIT = 15
-const UNDO_LIMIT = 20
-const PINNED_KEY = 'nib:pinned'
-const ICONS_KEY = 'nib:icons'
-const EXPANDED_KEY = 'nib:expanded'
 const AUTO_SAVE_DELAY = 1200
 /** How long the dot stays as a tick once the note is down, in milliseconds. */
 const SAVED_SHOWN = 1400
@@ -101,44 +95,6 @@ const AUTO_SAVE_DELAY_KEY = 'nib:autosave-delay'
 const SESSION_DELAY = 400
 const UNTITLED = 'Untitled'
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-
-/** One tab as it is written down: enough to put it back exactly, including
- *  work that never reached the disk. */
-interface Draft {
-  path: string | null
-  name: string
-  doc: string
-  dirty: boolean
-  cursor: number
-  scroll: number
-  anchor?: number | undefined
-}
-
-/** Where a note was last looked at on this device. Kept after its tab has
- *  closed, so the note opens there again rather than at the top. */
-interface Position {
-  cursor: number
-  scroll: number
-  anchor?: number | undefined
-  at: number
-}
-
-/** Enough for every note anyone comes back to, small enough for storage. */
-const POSITIONS_KEPT = 300
-
-interface Persisted {
-  spaces: Space[]
-  activeSpace: string | null
-  tabs?: Draft[]
-  positions?: Record<string, Position>
-  /** Index into `tabs`, not an id: ids are handed out fresh on every run. */
-  active?: number
-  /** Written by versions before drafts existed. Still read, so an update
-   *  arrives with the same notes open. */
-  openPaths?: string[]
-  activePath?: string | null
-  panel: Panel | null
-}
 
 function basename(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
@@ -156,22 +112,6 @@ function identifier(): string {
   return `${(handed++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function readRecent(): string[] {
-  return stringList(stored(RECENT_KEY)) ?? []
-}
-
-function readExpanded(): Record<string, boolean> {
-  return recordOf(stored(EXPANDED_KEY), isBoolean)
-}
-
-function readIcons(): Record<string, string> {
-  return recordOf(stored(ICONS_KEY), isString)
-}
-
-function readPinned(): string[] {
-  return stringList(stored(PINNED_KEY)) ?? []
-}
-
 const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'created']
 
 function readTreeOptions(): TreeOptions {
@@ -187,87 +127,6 @@ function readTreeOptions(): TreeOptions {
     sort: sort ?? 'name',
     descending: saved.descending === true,
   }
-}
-
-/** One tab as it was written down, once it has been recognised as one. A draft
- *  with no name or no text is not half a note; it is a corrupt entry. */
-function readDraft(value: unknown): Draft | null {
-  if (!isRecord(value)) return null
-
-  const { path, name, doc, dirty, cursor, scroll, anchor } = value
-  if (typeof name !== 'string' || typeof doc !== 'string') return null
-  if (path !== null && typeof path !== 'string') return null
-
-  return {
-    path,
-    name,
-    doc,
-    dirty: dirty === true,
-    cursor: isNumber(cursor) ? cursor : 0,
-    scroll: isNumber(scroll) ? scroll : 0,
-    ...(isNumber(anchor) ? { anchor } : {}),
-  }
-}
-
-function readPosition(value: unknown): Position | null {
-  if (!isRecord(value)) return null
-
-  const { cursor, scroll, anchor, at } = value
-  if (!isNumber(cursor) || !isNumber(scroll)) return null
-
-  return {
-    cursor,
-    scroll,
-    at: isNumber(at) ? at : 0,
-    ...(isNumber(anchor) ? { anchor } : {}),
-  }
-}
-
-/** Where notes were last looked at, by path, dropping any entry that no longer
- *  reads as a place. One unreadable entry says nothing about the others. */
-function readPositions(value: unknown): Record<string, Position> {
-  if (!isRecord(value)) return {}
-
-  const out: Record<string, Position> = {}
-  for (const [path, one] of Object.entries(value)) {
-    const place = readPosition(one)
-    if (place) out[path] = place
-  }
-
-  return out
-}
-
-/** The session as it was written down, with anything unrecognised left out.
- *  Reading it field by field is what lets an entry written by an older build,
- *  or one cut short by a full disk, still bring back the notes it does hold. */
-function readSession(value: unknown): Persisted | null {
-  if (!isRecord(value)) return null
-
-  const drafts = Array.isArray(value.tabs)
-    ? value.tabs.map(readDraft).filter((draft): draft is Draft => draft !== null)
-    : null
-  const openPaths = stringList(value.openPaths)
-
-  return {
-    spaces: Array.isArray(value.spaces) ? value.spaces.filter(isSpace) : [],
-    activeSpace: isString(value.activeSpace) ? value.activeSpace : null,
-    panel: isPanel(value.panel) ? value.panel : null,
-    positions: readPositions(value.positions),
-    ...(drafts ? { tabs: drafts } : {}),
-    ...(isNumber(value.active) ? { active: value.active } : {}),
-    ...(openPaths ? { openPaths } : {}),
-    ...(isString(value.activePath) ? { activePath: value.activePath } : {}),
-  }
-}
-
-function isSpace(value: unknown): value is Space {
-  return isRecord(value) && isString(value.id) && isString(value.name) && isString(value.root)
-}
-
-const PANELS: readonly Panel[] = ['tree', 'outline', 'search']
-
-function isPanel(value: unknown): value is Panel {
-  return PANELS.some((panel) => panel === value)
 }
 
 /** Where a note that has never been saved should go. The desktop asks the
@@ -318,32 +177,28 @@ class Workspace {
   /** How long to wait after the last keystroke before writing. */
   autoSaveDelay = $state(Number(localStorage.getItem(AUTO_SAVE_DELAY_KEY)) || AUTO_SAVE_DELAY)
   treeOptions = $state<TreeOptions>(readTreeOptions())
-  recent = $state<string[]>(readRecent())
-  /** Not persisted: putting a file back only makes sense while it is fresh. */
-  undoable = $state<FileAction[]>([])
+  /** The last handful of file operations; see workspace/undo. */
+  readonly undone = new FileActions()
   tags = $state<Tag[]>([])
-  pinned = $state<string[]>(readPinned())
-  icons = $state<Record<string, string>>(readIcons())
-  /** Which folders are open in the tree. Kept here rather than in the tree
-   *  component: that one is rebuilt from scratch every time the folder is read
-   *  again - on every save, rename and sync - and took the open folders with
-   *  it each time. Per device, because it describes a view and not a note. */
-  expanded = $state<Record<string, boolean>>(readExpanded())
-  /** Rows picked in the tree with Ctrl or Shift, as paths. The anchor is
-   *  where a Shift range starts: the last row clicked without Shift. */
-  selection = $state<string[]>([])
+  /** What this machine remembers about the list: which folders are open,
+   *  which rows are pinned, what was opened lately, the icon each space
+   *  wears. See workspace/device. */
+  readonly device = new DeviceView()
+  /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
+  private readonly picked = new Selection()
   /** Which tabs are being written, and which have just been. The dot beside a
    *  note's name is the whole report on saving, so it has three things to say:
    *  there is something unwritten, it is going down now, it is down. Held by id
    *  rather than on the tab, because "just saved" is about this moment and not
    *  about the note. */
   saveState = $state<Record<string, 'saving' | 'saved'>>({})
-  private anchor: string | null = null
   private savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
-  private positions: Record<string, Position> = {}
+
+  /** Where each note was last being read; see workspace/positions.ts. */
+  private positions = new Positions()
 
   /** The text the editor holds for the note being typed in, before anything
    *  has turned it into a string. Turning half a megabyte of rope into a
@@ -399,7 +254,7 @@ class Workspace {
     }
 
     this.spaces = state.spaces
-    this.positions = state.positions ?? {}
+    this.positions = new Positions(state.positions ?? {})
     // The sidebar comes back the way it was left.
     this.panel = state.panel
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
@@ -458,7 +313,7 @@ class Workspace {
     clearTimeout(this.sessionTimer)
     this.flush()
 
-    const state: Persisted = {
+    const state: Session = {
       spaces: this.spaces,
       activeSpace: this.activeSpaceId,
       tabs: this.tabs.map((tab) => ({
@@ -479,40 +334,10 @@ class Workspace {
         this.tabs.findIndex((tab) => tab.id === this.activeTabId),
       ),
       panel: this.panel,
-      positions: this.positions,
+      positions: this.positions.all,
     }
 
-    this.write(state)
-  }
-
-  /** Storage is finite. Unsaved work is what has to survive a full one, so the
-   *  notes that live somewhere else give up their copies first: `persist`
-   *  already leaves out the saved ones, and if that still does not fit, the
-   *  edited ones that have a file give up theirs too - the file is an older
-   *  version of the same note, which is a far better place to come back to
-   *  than none. A note that has never been saved exists nowhere but here, so
-   *  its words are the last thing to go. */
-  private write(state: Persisted) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-      return
-    } catch {
-      // Out of room. Try again with less.
-    }
-
-    const lean = {
-      ...state,
-      tabs: state.tabs?.map((draft) =>
-        draft.path && draft.doc ? { ...draft, doc: '', dirty: false } : draft,
-      ),
-    }
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(lean))
-    } catch {
-      // Nothing left to give up. The previous entry stays, which is still a
-      // better place to come back to than none at all.
-    }
+    writeSession(STORAGE_KEY, state)
   }
 
   /** Writes the session soon rather than now, so a burst of typing costs one
@@ -533,36 +358,8 @@ class Workspace {
     tab.cursor = cursor
     tab.scroll = scroll
     tab.anchor = anchor
-    if (tab.path) this.rememberPlace(tab.path, cursor, scroll, anchor)
+    if (tab.path) this.positions.remember(tab.path, cursor, scroll, anchor)
     this.scheduleSession()
-  }
-
-  private rememberPlace(path: string, cursor: number, scroll: number, anchor?: number) {
-    const place: Position = { cursor, scroll, anchor, at: Date.now() }
-    const entries = Object.entries({ ...this.positions, [path]: place })
-
-    // Most recently looked at first, and everything past what is worth keeping
-    // dropped. The record outlives every tab in it, so without a cap here it
-    // grows for as long as the app is ever used.
-    if (entries.length > POSITIONS_KEPT) {
-      entries.sort(([, a], [, b]) => b.at - a.at)
-      entries.length = POSITIONS_KEPT
-    }
-
-    this.positions = Object.fromEntries(entries)
-  }
-
-  /** Where a note was last looked at, for a tab that opens it afresh. */
-  private placeOf(path: string): Pick<Tab, 'cursor' | 'scroll' | 'anchor'> {
-    const known = this.positions[path]
-    return known ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor } : {}
-  }
-
-  /** A note that moves takes its place along. */
-  private movePlace(from: string, to: string) {
-    const known = this.positions[from]
-    if (!known) return
-    this.positions = { ...without(this.positions, from), [to]: known }
   }
 
   openBlank(name = UNTITLED, doc = '') {
@@ -661,7 +458,7 @@ class Workspace {
     }
 
     // The icon is keyed by folder, so it has to follow the folder.
-    this.moveIcon(space.root, renamed.path)
+    this.device.moveIcon(space.root, renamed.path)
 
     space.name = renamed.name
     space.root = renamed.path
@@ -806,8 +603,7 @@ class Workspace {
     }
 
     // Rows that went away take themselves out of the selection.
-    if (this.selection.length)
-      this.selection = this.selection.filter((path) => !!this.entryAt(path))
+    this.picked.keepOnly((path) => !!this.entryAt(path))
   }
 
   setSort(sort: SortKey) {
@@ -838,8 +634,8 @@ class Workspace {
     this.showMove(from, target)
 
     await invoke('rename_note', { from, to: target })
-    this.movePlace(from, target)
-    this.recordFileAction({ kind: 'move', from, to: target })
+    this.positions.move(from, target)
+    this.undone.record({ kind: 'move', from, to: target })
 
     for (const tab of this.tabs.filter((entry) => entry.path === from)) {
       tab.path = target
@@ -882,7 +678,7 @@ class Workspace {
       options.preview && this.tabs.find((tab) => tab.id === this.previewTabId && !tab.dirty)
 
     if (reusable) {
-      const place = this.placeOf(path)
+      const place = this.positions.of(path)
       reusable.path = path
       reusable.name = basename(path)
       reusable.doc = doc
@@ -909,7 +705,7 @@ class Workspace {
       name: basename(path),
       doc,
       dirty: false,
-      ...this.placeOf(path),
+      ...this.positions.of(path),
     }
     this.tabs = [...this.tabs, tab]
     if (options.activate !== false) {
@@ -1120,98 +916,76 @@ class Workspace {
     sync.nudge()
   }
 
-  /** Most-recent-first, newest at the front, no duplicates. */
-  private remember(path: string) {
-    this.recent = [path, ...this.recent.filter((entry) => entry !== path)].slice(0, RECENT_LIMIT)
-    localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent))
+  /** Notes opened lately, for the palette. The taskbar keeps a list of its
+   *  own, which is what the second call puts a note into. */
+  get recent(): string[] {
+    return this.device.recent
+  }
 
-    // The taskbar keeps its own recent list; this is what puts a note in it.
+  private remember(path: string) {
+    this.device.remember(path)
     if (isDesktop) void invoke('remember_recent', { path }).catch(() => undefined)
   }
 
   forgetRecent() {
-    this.recent = []
-    localStorage.removeItem(RECENT_KEY)
+    this.device.forgetRecent()
   }
 
   /** The icon a space shows in the rail, if it has been given one. Keyed by
    *  folder rather than id, so it survives the ids being handed out again. */
   iconFor(spaceId: string | null): string | null {
     const space = this.spaces.find((entry) => entry.id === spaceId)
-    return space ? (this.icons[space.root] ?? null) : null
+    return space ? this.device.iconOf(space.root) : null
   }
 
   /** An icon that came from the account rather than from this machine. */
   applyIcon(root: string, name: string | null) {
-    if ((this.icons[root] ?? null) === name) return
-    this.writeIcons(withOrWithout(this.icons, root, name))
+    if (this.device.iconOf(root) === name) return
+    this.device.setIcon(root, name)
   }
 
   setIcon(spaceId: string, name: string | null) {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     if (!space) return
 
-    this.writeIcons(withOrWithout(this.icons, space.root, name))
+    this.device.setIcon(space.root, name)
 
     // Imported here rather than at the top: syncing reads the workspace, and
     // the two would import each other.
     void import('./sync.svelte').then(({ sync }) => sync.pushIcon(space.root, name))
   }
 
-  /** Carries a chosen icon over to a renamed folder. Without this a rename
-   *  looks like a space that never had an icon, and it falls back to a letter. */
-  private moveIcon(from: string, to: string) {
-    const icon = this.icons[from]
-    if (!icon || from === to) return
-
-    this.writeIcons({ ...without(this.icons, from), [to]: icon })
-  }
-
-  private writeIcons(next: Record<string, string>) {
-    this.icons = next
-    localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+  /** The picked rows. The tree reads it; every change to it goes through the
+   *  four calls below, so the anchor a Shift range counts from stays right. */
+  get selection(): string[] {
+    return this.picked.paths
   }
 
   isSelected(path: string): boolean {
-    return this.selection.includes(path)
+    return this.picked.has(path)
   }
 
   /** A plain click: that row alone. */
   select(path: string) {
-    this.selection = [path]
-    this.anchor = path
+    this.picked.select(path)
   }
 
   /** Ctrl-click: in or out, leaving the rest as it is. */
   toggleSelect(path: string) {
-    this.selection = this.isSelected(path)
-      ? this.selection.filter((one) => one !== path)
-      : [...this.selection, path]
-    this.anchor = path
+    this.picked.toggle(path)
   }
 
   /** Shift-click: from the anchor to here, in the order the rows are shown. */
   selectRange(path: string) {
-    const order = this.visibleRows()
-    const from = this.anchor ? order.indexOf(this.anchor) : -1
-    const to = order.indexOf(path)
-    if (from < 0 || to < 0) {
-      this.select(path)
-      return
-    }
-
-    this.selection = order.slice(Math.min(from, to), Math.max(from, to) + 1)
+    this.picked.range(path, this.visibleRows())
   }
 
   selectAll() {
-    const order = this.visibleRows()
-    this.selection = order
-    this.anchor = order[0] ?? null
+    this.picked.all(this.visibleRows())
   }
 
   clearSelection() {
-    this.selection = []
-    this.anchor = null
+    this.picked.clear()
   }
 
   /** Every row the tree shows, top to bottom: a folder's children only while
@@ -1231,24 +1005,16 @@ class Workspace {
   /** What a drag from `path` carries: the whole selection when the row is part
    *  of it, the row alone otherwise. */
   dragPayload(path: string): string[] {
-    return this.isSelected(path) && this.selection.length > 1 ? [...this.selection] : [path]
-  }
-
-  /** The rows that are not inside another row of the same list: a folder
-   *  takes what is in it along, so those need no move or deletion of their own. */
-  private outermost(paths: string[]): string[] {
-    return paths.filter(
-      (path) => !paths.some((other) => other !== path && path.startsWith(`${other}/`)),
-    )
+    return this.picked.dragging(path)
   }
 
   async moveMany(paths: string[], intoFolder: string) {
-    for (const path of this.outermost(paths)) await this.move(path, intoFolder)
+    for (const path of outermost(paths)) await this.move(path, intoFolder)
     this.clearSelection()
   }
 
   async removeMany(paths: string[]) {
-    for (const path of this.outermost(paths)) {
+    for (const path of outermost(paths)) {
       const entry = this.entryAt(path)
       if (entry) await this.remove(path, entry.is_dir)
     }
@@ -1292,30 +1058,25 @@ class Workspace {
     }
   }
 
+  get pinned(): string[] {
+    return this.device.pinned
+  }
+
   isExpanded(path: string): boolean {
-    return !!this.expanded[path]
+    return this.device.isExpanded(path)
   }
 
   toggleFolder(path: string) {
-    const next = this.isExpanded(path)
-      ? without(this.expanded, path)
-      : { ...this.expanded, [path]: true }
-
-    this.expanded = next
-    localStorage.setItem(EXPANDED_KEY, JSON.stringify(next))
+    this.device.toggleFolder(path)
   }
 
   isPinned(path: string): boolean {
-    return this.pinned.includes(path)
+    return this.device.isPinned(path)
   }
 
   /** Pinned notes and folders sit above the tree, whatever their depth. */
   togglePin(path: string) {
-    this.pinned = this.isPinned(path)
-      ? this.pinned.filter((entry) => entry !== path)
-      : [...this.pinned, path]
-
-    localStorage.setItem(PINNED_KEY, JSON.stringify(this.pinned))
+    this.device.togglePin(path)
   }
 
   /** Every `#tag` in the space, most used first. */
@@ -1353,7 +1114,7 @@ class Workspace {
     // a note is the one thing that should never feel like waiting for a disk,
     // and everything below knows what the note will say.
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.expanded = { ...this.expanded, [dir]: true }
+    if (dir !== this.activeSpace?.root) this.device.expand(dir)
 
     const tab: Tab = { id: identifier(), path, name: basename(path), doc: content, dirty: false }
     this.tabs = [...this.tabs, tab]
@@ -1424,8 +1185,8 @@ class Workspace {
     this.renaming = null
 
     await invoke('rename_note', { from: path, to: target })
-    this.movePlace(path, target)
-    this.recordFileAction({ kind: 'rename', from: path, to: target })
+    this.positions.move(path, target)
+    this.undone.record({ kind: 'rename', from: path, to: target })
 
     const tab = this.tabs.find((entry) => entry.path === path)
     if (tab) {
@@ -1458,7 +1219,7 @@ class Workspace {
     if (!isFolder) {
       const content = await invoke<string>('read_note', { path }).catch(() => '')
       if (content) await invoke('snapshot_note', { path, content }).catch(() => undefined)
-      this.recordFileAction({ kind: 'delete', path, content })
+      this.undone.record({ kind: 'delete', path, content })
     }
 
     try {
@@ -1471,8 +1232,7 @@ class Workspace {
           path,
           kind: isFolder ? 'folder' : 'note',
         })
-        const last = this.undoable.at(-1)
-        if (last?.kind === 'delete' && last.path === path) last.trashId = entry.id
+        this.undone.trashed(path, entry.id)
       }
     } catch (error) {
       // The row was hidden before the file was asked to go, so a delete that
@@ -1489,22 +1249,16 @@ class Workspace {
     await this.loadTree()
   }
 
-  /** The last handful of file operations, newest last, so one can be taken back.
-   *  Deleting a folder is not among them: its contents are already gone. */
-  private recordFileAction(action: FileAction) {
-    this.undoable = [...this.undoable, action].slice(-UNDO_LIMIT)
-  }
-
-  /** Puts the last move, rename or deletion back. */
+  /** Puts the last move, rename or deletion back; see workspace/undo. */
   async undoFileAction() {
-    const action = this.undoable.at(-1)
+    const action = this.undone.last
     if (!action) return
 
     try {
       if (action.kind === 'delete') await this.putBack(action)
       else {
         await invoke('rename_note', { from: action.to, to: action.from })
-        this.movePlace(action.to, action.from)
+        this.positions.move(action.to, action.from)
 
         for (const tab of this.tabs.filter((entry) => entry.path === action.to)) {
           tab.path = action.from
@@ -1518,7 +1272,7 @@ class Workspace {
       return
     }
 
-    this.undoable = this.undoable.slice(0, -1)
+    this.undone.drop()
     await this.loadTree()
     this.persist()
   }
@@ -1548,15 +1302,7 @@ class Workspace {
 
   /** What undoing would do, phrased for a menu. Null when there is nothing. */
   get undoLabel(): string | null {
-    const action = this.undoable.at(-1)
-    if (!action) return null
-
-    const name = basename(action.kind === 'delete' ? action.path : action.to)
-    return {
-      move: t('Undo moving {name}', { name }),
-      rename: t('Undo renaming {name}', { name }),
-      delete: t('Undo deleting {name}', { name }),
-    }[action.kind]
+    return this.undone.label
   }
 
   async duplicate(path: string) {

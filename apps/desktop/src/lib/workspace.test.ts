@@ -174,7 +174,7 @@ describe('selecting several rows', () => {
       folder('/space/f', [note('/space/f/b.md'), note('/space/f/c.md')]),
       note('/space/d.md'),
     ])
-    workspace.expanded = { '/space/f': true }
+    workspace.device.expanded = { '/space/f': true }
     workspace.clearSelection()
   })
 
@@ -186,7 +186,7 @@ describe('selecting several rows', () => {
       '/space/f/c.md',
       '/space/d.md',
     ])
-    workspace.expanded = {}
+    workspace.device.expanded = {}
     expect(workspace.visibleRows()).toEqual(['/space/a.md', '/space/f', '/space/d.md'])
   })
 

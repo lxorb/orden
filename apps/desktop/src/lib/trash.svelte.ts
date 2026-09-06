@@ -119,9 +119,7 @@ class Trash {
       if (item.source === 'device') {
         await invoke('restore_trash', { id: item.ref })
         // The undo entry that would have done the same has nothing left to do.
-        workspace.undoable = workspace.undoable.filter(
-          (action) => action.kind !== 'delete' || action.trashId !== item.ref,
-        )
+        workspace.undone.forget(item.ref)
         await workspace.loadSpaces()
         await workspace.loadTree()
         return

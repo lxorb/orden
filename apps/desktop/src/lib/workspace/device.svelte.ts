@@ -1,0 +1,103 @@
+/** What this machine remembers about the file list, as opposed to what the
+ *  notes themselves say.
+ *
+ *  Which folders are open, which rows are pinned, which notes were opened
+ *  lately, and the icon each space wears: all of it describes a view rather
+ *  than a note, so it stays on the device and never travels with the account -
+ *  with one exception, the icons, which the account does carry so a space
+ *  looks the same on every machine. The rest is keyed by path, and a path is
+ *  only meaningful on the machine that holds the folder.
+ *
+ *  Kept out of the tree component because that one is rebuilt from scratch
+ *  every time the folder is read again - on every save, rename and sync - and
+ *  took the open folders with it each time. */
+
+import { isBoolean, isString, recordOf, stored, stringList } from '../stored'
+import { without, withOrWithout } from '../records'
+
+const RECENT_KEY = 'nib:recent'
+const PINNED_KEY = 'nib:pinned'
+const ICONS_KEY = 'nib:icons'
+const EXPANDED_KEY = 'nib:expanded'
+
+/** Enough that a note opened this morning is still there, short enough that
+ *  the list is worth reading. */
+const RECENT_LIMIT = 15
+
+export class DeviceView {
+  /** Most recent first, no duplicates. */
+  recent = $state<string[]>(stringList(stored(RECENT_KEY)) ?? [])
+
+  /** Notes and folders that sit above the tree, whatever their depth. */
+  pinned = $state<string[]>(stringList(stored(PINNED_KEY)) ?? [])
+
+  /** Which folders are open, by path. */
+  expanded = $state<Record<string, boolean>>(recordOf(stored(EXPANDED_KEY), isBoolean))
+
+  /** The icon a space wears, keyed by folder rather than by id so it survives
+   *  the ids being handed out again on the next launch. */
+  icons = $state<Record<string, string>>(recordOf(stored(ICONS_KEY), isString))
+
+  remember(path: string) {
+    this.recent = [path, ...this.recent.filter((entry) => entry !== path)].slice(0, RECENT_LIMIT)
+    localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent))
+  }
+
+  forgetRecent() {
+    this.recent = []
+    localStorage.removeItem(RECENT_KEY)
+  }
+
+  isPinned(path: string): boolean {
+    return this.pinned.includes(path)
+  }
+
+  togglePin(path: string) {
+    this.pinned = this.isPinned(path)
+      ? this.pinned.filter((entry) => entry !== path)
+      : [...this.pinned, path]
+
+    localStorage.setItem(PINNED_KEY, JSON.stringify(this.pinned))
+  }
+
+  isExpanded(path: string): boolean {
+    return this.expanded[path] === true
+  }
+
+  toggleFolder(path: string) {
+    this.expanded = this.isExpanded(path)
+      ? without(this.expanded, path)
+      : { ...this.expanded, [path]: true }
+
+    localStorage.setItem(EXPANDED_KEY, JSON.stringify(this.expanded))
+  }
+
+  /** Opens a folder without closing one that is already open: making a note
+   *  inside a closed folder should show it. */
+  expand(path: string) {
+    if (this.isExpanded(path)) return
+    this.toggleFolder(path)
+  }
+
+  iconOf(root: string): string | null {
+    return this.icons[root] ?? null
+  }
+
+  setIcon(root: string, name: string | null) {
+    this.writeIcons(withOrWithout(this.icons, root, name))
+  }
+
+  /** Carries a chosen icon over to a renamed folder. Without this a rename
+   *  looks like a space that never had an icon, and it falls back to a letter. */
+  moveIcon(from: string, to: string) {
+    const icon = this.icons[from]
+    if (!icon || from === to) return
+
+    this.writeIcons({ ...without(this.icons, from), [to]: icon })
+  }
+
+  private writeIcons(next: Record<string, string>) {
+    this.icons = next
+    localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+  }
+}

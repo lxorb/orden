@@ -139,7 +139,7 @@
 
   // Only worth loading the set once a space actually uses one.
   $effect(() => {
-    if (Object.keys(workspace.icons).length && !Object.keys(library).length) {
+    if (Object.keys(workspace.device.icons).length && !Object.keys(library).length) {
       void loadIcons().then((all) => (library = all))
     }
   })

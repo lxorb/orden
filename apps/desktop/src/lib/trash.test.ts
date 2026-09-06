@@ -164,7 +164,7 @@ beforeEach(() => {
   workspace.spaces = [{ id: 's', name: 'space', root: '/space' }]
   workspace.activeSpaceId = 's'
   workspace.tabs = []
-  workspace.undoable = []
+  workspace.undone.stack = []
   workspace.setAutoSave(false)
   account.token = null
   account.user = null
@@ -240,20 +240,20 @@ describe('signed out', () => {
 
     expect(calls).toContain('write_note')
     expect(notes.get('/space/Idea.md')).toBe('# Idea')
-    expect(workspace.undoable).toEqual([])
+    expect(workspace.undone.stack).toEqual([])
   })
 
   test('an undo that could not happen stays on the stack to be tried again', async () => {
     await workspace.remove('/space/Idea.md', false)
     // Nothing to restore from and nothing worth writing back.
     deviceTrash = []
-    const [action] = workspace.undoable
+    const [action] = workspace.undone.stack
     if (action?.kind !== 'delete') throw new Error('the deletion was not recorded')
     action.content = ''
 
     await workspace.undoFileAction()
 
-    expect(workspace.undoable).toHaveLength(1)
+    expect(workspace.undone.stack).toHaveLength(1)
     expect(workspace.undoLabel).toBe('Undo deleting Idea.md')
   })
 
