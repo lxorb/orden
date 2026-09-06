@@ -2,11 +2,11 @@ import { katexCss } from '@nib/themes/raw'
 
 /** Every KaTeX face as a `data:` URI, baked in at build time. The package is
  *  a dependency of the app, so the path is stable. */
-const FONTS = import.meta.glob('/node_modules/katex/dist/fonts/*.woff2', {
+const FONTS = import.meta.glob<string>('/node_modules/katex/dist/fonts/*.woff2', {
   query: '?inline',
   eager: true,
   import: 'default',
-}) as Record<string, string>
+})
 
 const FACE = /@font-face\{[^}]*\}/g
 const RULE = /([^{}]+)\{([^{}]*)\}/g

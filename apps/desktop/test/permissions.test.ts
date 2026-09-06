@@ -33,10 +33,10 @@ const EVENTS = new Set(['onCloseRequested'])
 /** The method names declared on the `WindowLike` interface. */
 function windowMethods(): string[] {
   const source = read('../src/lib/tauri.ts')
-  const block = /interface WindowLike \{([\s\S]*?)\n\}/.exec(source)
-  expect(block, 'WindowLike interface not found in tauri.ts').toBeTruthy()
+  const [, block] = /interface WindowLike \{([\s\S]*?)\n\}/.exec(source) ?? []
+  if (block === undefined) throw new Error('WindowLike interface not found in tauri.ts')
 
-  return [...block![1].matchAll(/^\s{2}(\w+)\(/gm)].map((match) => match[1])
+  return [...block.matchAll(/^\s{2}(\w+)\(/gm)].map(([, name = '']) => name)
 }
 
 describe('window permissions', () => {

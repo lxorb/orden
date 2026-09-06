@@ -138,6 +138,14 @@ const fake = vi.hoisted(() => {
     blog: { enabled: false, subdomain: null, domain: null, title: null, note: null, dns: [] },
   })
 
+  /** The space these two answer about. Neither is called before one exists, so
+   *  an empty list here means the test set itself up wrong. */
+  const firstRemoteSpace = () => {
+    const [space] = remote.spaces
+    if (!space) throw new Error('the account holds no spaces')
+    return space
+  }
+
   const user = { id: 'u1', email: 'me@example.com', name: null }
   const found = (id: string) => {
     const note = remote.notes.find((one) => one.id === id)
@@ -201,8 +209,8 @@ const fake = vi.hoisted(() => {
       return { ok: true as const }
     },
     reorderSpaces: async () => ({ ok: true as const }),
-    setSpaceIcon: async () => ({ space: listed(remote.spaces[0], 0) }),
-    renameSpace: async () => ({ space: listed(remote.spaces[0], 0) }),
+    setSpaceIcon: async () => ({ space: listed(firstRemoteSpace(), 0) }),
+    renameSpace: async () => ({ space: listed(firstRemoteSpace(), 0) }),
   }
 
   function addRemoteNote(spaceId: string, path: string, content: string) {

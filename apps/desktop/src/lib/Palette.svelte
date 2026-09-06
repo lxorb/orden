@@ -64,9 +64,10 @@
       return
     }
 
-    if (event.key === 'Enter' && results[cursor]) {
+    const chosen = results[cursor]
+    if (event.key === 'Enter' && chosen) {
       event.preventDefault()
-      choose(results[cursor])
+      choose(chosen)
     }
   }
 </script>

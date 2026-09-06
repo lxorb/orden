@@ -78,7 +78,10 @@ describe('highlighting', () => {
 
 describe('the palette stylesheet', () => {
   test('writes one rule per token class', () => {
-    const css = paletteCss(CODE_PALETTES[0])
+    const [follow] = CODE_PALETTES
+    if (!follow) throw new Error('the editor ships no code palettes')
+
+    const css = paletteCss(follow)
 
     expect(css).toContain('#write .hl-keyword { color: var(--accent); }')
     expect(css).toContain('#write .hl-comment { color: var(--muted); }')

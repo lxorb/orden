@@ -23,11 +23,10 @@ const highlighter = tagHighlighter([
   { tag: tags.deleted, class: 'hl-deleted' },
 ])
 
+const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
+
 function escape(text: string): string {
-  return text.replace(
-    /[&<>]/g,
-    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[character]!,
-  )
+  return text.replace(/[&<>]/g, (character) => ESCAPES[character] ?? character)
 }
 
 /** A parser for each language named, loaded once. The list is the editor's

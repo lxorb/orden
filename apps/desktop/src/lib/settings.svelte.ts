@@ -4,7 +4,8 @@ import { account } from './account.svelte'
 import { connectors } from './connectors.svelte'
 import { keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
-import { DEFAULT_PAGE_SETUP, type PageSetup } from './page-setup'
+import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
+import { isRecord, isString, stored } from './stored'
 import { invoke, isDesktop } from './tauri'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
@@ -13,7 +14,7 @@ const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
 
 /** How an exported page is coloured: light, dark, or as the app looks now. */
-export type ExportAppearance = 'light' | 'dark' | 'app'
+type ExportAppearance = 'light' | 'dark' | 'app'
 
 export type Section =
   | 'general'
@@ -56,10 +57,12 @@ class Settings {
   /** How far along a domain of one's own is, kept fresh while the pane
    *  shows it. Null until asked, or when the space has no domain. */
   domain = $state<DomainStatus | null>(null)
-  availability = $state<{ checking: boolean; available: boolean | null; reason?: string }>({
-    checking: false,
-    available: null,
-  })
+  availability = $state<{
+    checking: boolean
+    available: boolean | null
+    /** Why not, when the server says. Undefined when it says nothing. */
+    reason?: string | undefined
+  }>({ checking: false, available: null })
 
   /** The remote space the open one mirrors to. Publishing needs it, and it only
    *  exists once syncing is on, since that is what creates the remote side. */
@@ -74,11 +77,18 @@ class Settings {
   restore() {
     connectors.restore()
 
-    try {
-      const saved = JSON.parse(localStorage.getItem(PAGE_KEY) ?? '{}')
-      this.page = { ...DEFAULT_PAGE_SETUP, ...saved }
-    } catch {
-      // Defaults are the safe ones.
+    // Field by field, so a paper size this build has never heard of costs the
+    // reader their paper and not their margins as well.
+    const saved = stored(PAGE_KEY)
+    if (isRecord(saved)) {
+      this.page = {
+        paper: PAPER_SIZES.find((one) => one === saved.paper) ?? DEFAULT_PAGE_SETUP.paper,
+        orientation:
+          ORIENTATIONS.find((one) => one === saved.orientation) ?? DEFAULT_PAGE_SETUP.orientation,
+        margin: isString(saved.margin) ? saved.margin : DEFAULT_PAGE_SETUP.margin,
+        header: isString(saved.header) ? saved.header : DEFAULT_PAGE_SETUP.header,
+        footer: isString(saved.footer) ? saved.footer : DEFAULT_PAGE_SETUP.footer,
+      }
     }
 
     const appearance = localStorage.getItem(APPEARANCE_KEY)
@@ -167,7 +177,11 @@ class Settings {
     try {
       const result = await api.subdomainAvailable(account.token, value, this.remote?.id)
       if (check !== this.checks) return
-      this.availability = { checking: false, available: result.available, reason: result.reason }
+      this.availability = {
+        checking: false,
+        available: result.available,
+        ...(result.reason === undefined ? {} : { reason: result.reason }),
+      }
     } catch {
       if (check !== this.checks) return
       this.availability = { checking: false, available: null }

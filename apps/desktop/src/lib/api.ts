@@ -1,7 +1,9 @@
 /** Typed client for the sync service. Every call carries the session token;
  *  nothing here touches cookies, so it works the same in the app and the web. */
 
-export const BASE = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
+import { isRecord, isString, parsed } from './stored'
+
+export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
 
 export interface Account {
   id: string
@@ -104,27 +106,21 @@ async function request<T>(
   const response = await fetch(`${BASE}${path}`, {
     method: options.method ?? (options.body === undefined ? 'GET' : 'POST'),
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   })
 
-  const text = await response.text()
-  const parsed = text ? safeParse(text) : null
+  const body = parsed(await response.text())
 
   if (!response.ok) {
-    const message =
-      (parsed as { error?: string } | null)?.error ?? `request failed (${response.status})`
-    throw new ApiError(response.status, message, parsed)
+    // The server says why in `error` when it can. When it cannot - a proxy
+    // between here and there, say - the status is all there is to go on.
+    const said = isRecord(body) && isString(body.error) ? body.error : null
+    throw new ApiError(response.status, said ?? `request failed (${response.status})`, body)
   }
 
-  return parsed as T
-}
-
-function safeParse(text: string): unknown {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return null
-  }
+  // The service is the other half of this repo and answers the shapes above;
+  // checking each one field by field here would be a second copy of its types.
+  return body as T
 }
 
 export const api = {
@@ -162,12 +158,14 @@ export const api = {
       body: bytes,
     })
 
+    const body = parsed(await response.text())
+
     if (!response.ok) {
-      const body = await response.json().catch(() => ({}) as { error?: string })
-      throw new ApiError(response.status, (body as { error?: string }).error ?? 'upload failed')
+      const said = isRecord(body) && isString(body.error) ? body.error : null
+      throw new ApiError(response.status, said ?? 'upload failed')
     }
 
-    return response.json() as Promise<{ hash: string; stored: boolean }>
+    return body as { hash: string; stored: boolean }
   },
 
   reorderSpaces: (token: string, order: string[]) =>

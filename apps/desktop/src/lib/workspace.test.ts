@@ -88,7 +88,9 @@ describe('keeping a preview tab', () => {
 
   test('leaves the preview alone when asked about some other tab', async () => {
     await workspace.open('/space/a.md')
-    const permanent = workspace.tabs[0]
+    const [permanent] = workspace.tabs
+    if (!permanent) throw new Error('opening a note left no tab')
+
     const previewed = await preview('/space/b.md')
 
     workspace.keep(permanent.id)

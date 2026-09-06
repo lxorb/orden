@@ -31,7 +31,7 @@ describe('the outline of a note', () => {
   })
 
   test('trailing hashes and space around the words are not part of them', () => {
-    expect(scanHeadings('##   Spaced   \n')[0].text).toBe('Spaced')
+    expect(scanHeadings('##   Spaced   \n')[0]?.text).toBe('Spaced')
   })
 })
 

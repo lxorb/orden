@@ -16,6 +16,14 @@ interface Entry {
 
 const notes = new Map<string, string>()
 let deviceTrash: Entry[] = []
+
+/** The one entry a test has just made. Reaching for it by index everywhere
+ *  would mean checking for a gap that the line above rules out. */
+function onlyTrashed(): Entry {
+  const [entry] = deviceTrash
+  if (!entry) throw new Error('nothing is in the device trash')
+  return entry
+}
 let counter = 0
 const calls: string[] = []
 
@@ -180,14 +188,17 @@ describe('signed out', () => {
       source: 'device',
       detail: '/space',
     })
-    expect(trash.items[0].purgeAt - trash.items[0].deletedAt).toBe(14 * DAY)
+    const [item] = trash.items
+    expect(item ? item.purgeAt - item.deletedAt : null).toBe(14 * DAY)
   })
 
   test('restoring brings the note back and empties the list', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
 
-    await trash.restore(trash.items[0])
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+    await trash.restore(only)
 
     expect(calls).toContain('restore_trash')
     expect(notes.get('/space/Idea.md')).toBe('restored')
@@ -210,12 +221,12 @@ describe('signed out', () => {
 
     expect(calls).toContain('trash_item')
     expect(calls).not.toContain('delete_space')
-    expect(deviceTrash[0]).toMatchObject({ kind: 'space', from: '/space' })
+    expect(onlyTrashed()).toMatchObject({ kind: 'space', from: '/space' })
   })
 
   test('the sweep drops what is older than 14 days', async () => {
     await workspace.remove('/space/Idea.md', false)
-    deviceTrash[0].trashedAt = Date.now() - 15 * DAY
+    onlyTrashed().trashedAt = Date.now() - 15 * DAY
     await trash.load()
     expect(trash.items).toHaveLength(1)
 

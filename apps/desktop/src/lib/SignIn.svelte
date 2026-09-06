@@ -57,10 +57,10 @@
 
     // A pasted code fills the row from wherever it landed.
     for (let offset = 0; offset < value.length && index + offset < LENGTH; offset++) {
-      digits[index + offset] = value[offset]
+      digits[index + offset] = value.charAt(offset)
     }
 
-    input.value = digits[index]
+    input.value = digits[index] ?? ''
     boxes[Math.min(index + value.length, LENGTH - 1)]?.focus()
   }
 

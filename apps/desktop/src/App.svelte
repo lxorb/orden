@@ -261,10 +261,15 @@
 
     const panels = () => host.querySelector<HTMLElement>('.panels')
 
-    const onStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return
+    /** The one finger on the screen, or nothing when there is not exactly one:
+     *  a second finger is a pinch or a two-finger scroll, and neither is this. */
+    const single = (event: TouchEvent) =>
+      event.touches.length === 1 ? event.touches[0] : undefined
 
-      const touch = event.touches[0]
+    const onStart = (event: TouchEvent) => {
+      const touch = single(event)
+      if (!touch) return
+
       claimed = false
       openedByDrag = false
       measured = false
@@ -285,9 +290,9 @@
     }
 
     const onMove = (event: TouchEvent) => {
-      if (event.touches.length !== 1 || !width) return
+      const touch = single(event)
+      if (!touch || !width) return
 
-      const touch = event.touches[0]
       const dx = touch.clientX - startX
       const dy = touch.clientY - startY
 
@@ -623,7 +628,9 @@
   function onKeydown(event: KeyboardEvent) {
     shortcuts.handle(event, {
       view,
-      palette: () => (palette = true),
+      palette: () => {
+        palette = true
+      },
       fullscreen: () => void toggleFullscreen(),
     })
   }

@@ -106,10 +106,12 @@
         cursor = options.length - 1
         break
       case 'Enter':
-      case ' ':
+      case ' ': {
         event.preventDefault()
-        choose(options[cursor].value)
+        const chosen = options[cursor]
+        if (chosen) choose(chosen.value)
         break
+      }
       case 'Escape':
         event.preventDefault()
         close()
@@ -117,7 +119,7 @@
       case 'Tab':
         close()
         break
-      default:
+      default: {
         if (event.key.length !== 1) return
         if (event.timeStamp - typedAt > 600) typed = ''
         typed += event.key.toLowerCase()
@@ -125,6 +127,7 @@
 
         const found = options.findIndex((one) => one.label.toLowerCase().startsWith(typed))
         if (found >= 0) cursor = found
+      }
     }
 
     list?.children[cursor]?.scrollIntoView({ block: 'nearest' })

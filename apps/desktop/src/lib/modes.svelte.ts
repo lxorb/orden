@@ -20,6 +20,7 @@ import {
 } from '@nib/editor'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
+import { isNumber, isRecord, isString, stored } from './stored'
 
 const STORAGE_KEY = 'nib:modes'
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
@@ -30,7 +31,7 @@ export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
 interface Saved {
   source: boolean
-  reading?: boolean
+  reading: boolean
   focus: boolean
   typewriter: boolean
   punctuation: boolean
@@ -43,15 +44,40 @@ interface Saved {
   zoom: number
   width: number
   lineHeight: number
-  spellcheck?: boolean
-  spellLanguage?: string
-  closeBrackets?: boolean
-  ligatures?: boolean
+  spellcheck: boolean
+  spellLanguage: string
+  closeBrackets: boolean
+  ligatures: boolean
 }
 
 /** Nearest of the steps the keyboard uses, so both routes agree. */
 function clamp(value: number, steps: readonly number[]): number {
   return steps.reduce((best, one) => (Math.abs(one - value) < Math.abs(best - value) ? one : best))
+}
+
+/** One step along a fixed list, clamped at both ends. A value that is not one
+ *  of the steps - written by an older build, or set from a slider - starts from
+ *  `fallback`, which is. */
+function step<T extends number>(
+  steps: readonly T[],
+  current: number,
+  direction: number,
+  fallback: T,
+): T {
+  const at = steps.findIndex((one) => one === current)
+  const from = at >= 0 ? at : steps.findIndex((one) => one === fallback)
+  return steps[Math.min(steps.length - 1, Math.max(0, from + direction))] ?? fallback
+}
+
+/** A stored string, when there is one worth having. */
+function text(value: unknown, fallback: string): string {
+  return isString(value) && value ? value : fallback
+}
+
+/** A stored number, when it is a real one. Zero is not a size or a zoom, so it
+ *  reads as nothing written. */
+function measure(value: unknown, fallback: number): number {
+  return isNumber(value) && value !== 0 ? value : fallback
 }
 
 class Modes {
@@ -81,33 +107,31 @@ class Modes {
   ligatures = $state(false)
 
   restore() {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      try {
-        const state = JSON.parse(saved) as Saved
-        this.source = !!state.source
-        // Both at once is a state the app cannot get into; a hand-edited entry
-        // can say it anyway, and source mode is the one that was written last.
-        this.reading = !!state.reading && !this.source
-        this.focus = !!state.focus
-        this.typewriter = !!state.typewriter
-        this.punctuation = state.punctuation ?? true
-        this.numbers = !!state.numbers
-        this.lineNumbers = !!state.lineNumbers
-        this.codeTheme = state.codeTheme || 'follow'
-        this.rtl = !!state.rtl
-        this.strict = !!state.strict
-        this.equationNumbers = !!state.equationNumbers
-        this.zoom = state.zoom || 1
-        this.width = state.width || 42
-        this.lineHeight = state.lineHeight || 1.72
-        this.spellcheck = state.spellcheck ?? false
-        this.spellLanguage = state.spellLanguage || 'system'
-        this.closeBrackets = state.closeBrackets ?? true
-        this.ligatures = state.ligatures ?? false
-      } catch {
-        // A corrupt entry just means defaults.
-      }
+    // Field by field off an unknown, not a cast: the entry may have been
+    // written by another version of the app or edited by hand, and a mode that
+    // reads as neither on nor off should simply be the default.
+    const saved = stored(STORAGE_KEY)
+    if (isRecord(saved)) {
+      this.source = saved.source === true
+      // Both at once is a state the app cannot get into; a hand-edited entry
+      // can say it anyway, and source mode is the one that was written last.
+      this.reading = saved.reading === true && !this.source
+      this.focus = saved.focus === true
+      this.typewriter = saved.typewriter === true
+      this.punctuation = saved.punctuation !== false
+      this.numbers = saved.numbers === true
+      this.lineNumbers = saved.lineNumbers === true
+      this.codeTheme = text(saved.codeTheme, 'follow')
+      this.rtl = saved.rtl === true
+      this.strict = saved.strict === true
+      this.equationNumbers = saved.equationNumbers === true
+      this.zoom = measure(saved.zoom, 1)
+      this.width = measure(saved.width, 42)
+      this.lineHeight = measure(saved.lineHeight, 1.72)
+      this.spellcheck = saved.spellcheck === true
+      this.spellLanguage = text(saved.spellLanguage, 'system')
+      this.closeBrackets = saved.closeBrackets !== false
+      this.ligatures = saved.ligatures === true
     }
     this.applyZoom()
   }
@@ -296,31 +320,19 @@ class Modes {
 
   /** Steps through the widths rather than offering a slider of nothing. */
   stepWidth(direction: number, view?: EditorView) {
-    const index = WIDTHS.indexOf(this.width as (typeof WIDTHS)[number])
-    const from = index >= 0 ? index : WIDTHS.indexOf(42)
-    const next = Math.min(WIDTHS.length - 1, Math.max(0, from + direction))
-
-    this.width = WIDTHS[next]
+    this.width = step(WIDTHS, this.width, direction, 42)
     if (view) setMeasure(view, this.width)
     this.persist()
   }
 
   stepLineHeight(direction: number, view?: EditorView) {
-    const index = LINE_HEIGHTS.indexOf(this.lineHeight as (typeof LINE_HEIGHTS)[number])
-    const from = index >= 0 ? index : LINE_HEIGHTS.indexOf(1.72)
-    const next = Math.min(LINE_HEIGHTS.length - 1, Math.max(0, from + direction))
-
-    this.lineHeight = LINE_HEIGHTS[next]
+    this.lineHeight = step(LINE_HEIGHTS, this.lineHeight, direction, 1.72)
     if (view) setLineHeight(view, this.lineHeight)
     this.persist()
   }
 
   stepZoom(direction: number) {
-    const index = ZOOM_STEPS.indexOf(this.zoom)
-    const from = index >= 0 ? index : ZOOM_STEPS.indexOf(1)
-    const next = Math.min(ZOOM_STEPS.length - 1, Math.max(0, from + direction))
-
-    this.zoom = ZOOM_STEPS[next]
+    this.zoom = step(ZOOM_STEPS, this.zoom, direction, 1)
     this.applyZoom()
     this.persist()
   }

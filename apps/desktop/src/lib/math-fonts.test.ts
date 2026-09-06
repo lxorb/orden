@@ -4,7 +4,9 @@ import { mathCss } from './math-fonts'
 
 /** The families the stylesheet actually ships a face for. */
 function faces(css: string): string[] {
-  return [...css.matchAll(/@font-face\{[^}]*?font-family:(KaTeX_[\w-]+)/g)].map((match) => match[1])
+  return [...css.matchAll(/@font-face\{[^}]*?font-family:(KaTeX_[\w-]+)/g)].map(
+    ([, family = '']) => family,
+  )
 }
 
 describe('maths in an export', () => {

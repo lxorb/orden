@@ -59,8 +59,8 @@ describe('the look of things the browser also has an opinion about', () => {
     // giving it its own colours, border or arrow is not.
     const offenders = components
       .filter((one) =>
-        [...one.text.matchAll(/(?<![\w-])select(?![\w-])[^{;]*\{([^}]*)\}/g)].some(([, body]) =>
-          /(appearance|background|border|font-family)\s*:/.test(body),
+        [...one.text.matchAll(/(?<![\w-])select(?![\w-])[^{;]*\{([^}]*)\}/g)].some(
+          ([, body = '']) => /(appearance|background|border|font-family)\s*:/.test(body),
         ),
       )
       .map((one) => one.name)

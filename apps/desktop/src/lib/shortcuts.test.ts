@@ -198,7 +198,9 @@ describe('what is written down', () => {
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
     // Everything else follows whatever the app says today.
-    expect(shortcuts.keyFor('format.italic')).toBe(defaultKeyFor(nibBindings[1], 'win'))
+    const italic = nibBindings.find((one) => one.id === 'format.italic')
+    if (!italic) throw new Error('the editor no longer binds format.italic')
+    expect(shortcuts.keyFor('format.italic')).toBe(defaultKeyFor(italic, 'win'))
   })
 
   test('keeps an id this version has never heard of', async () => {

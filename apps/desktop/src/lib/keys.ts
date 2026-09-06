@@ -15,7 +15,7 @@ export type Platform = 'mac' | 'win' | 'linux'
 export function currentPlatform(): Platform {
   const agent = typeof navigator === 'undefined' ? '' : navigator.userAgent
   if (/Mac|iPhone|iPad|iPod/.test(agent)) return 'mac'
-  if (/Windows/.test(agent)) return 'win'
+  if (agent.includes('Windows')) return 'win'
   return 'linux'
 }
 
@@ -46,7 +46,7 @@ export function parseCombination(text: string, platform: Platform): Combination 
     meta: false,
     alt: false,
     shift: false,
-    key: normalizeKey(parts[parts.length - 1]),
+    key: normalizeKey(parts.at(-1) ?? ''),
   }
 
   if (!combination.key) return null
@@ -74,7 +74,7 @@ function normalizeKey(key: string): string {
 
 /** The combination written the way this app writes them: Mod, then Alt, then
  *  Shift, then the key. What goes to storage and to the account. */
-export function writeCombination(combination: Combination, platform: Platform): string {
+function writeCombination(combination: Combination, platform: Platform): string {
   const parts: string[] = []
   const mod = primary(platform)
 
@@ -133,11 +133,28 @@ const MODIFIER_KEYS = new Set(['Control', 'Meta', 'Alt', 'Shift', 'CapsLock', 'O
 
 interface Keystroke {
   key: string
-  code?: string
-  ctrlKey?: boolean
-  metaKey?: boolean
-  altKey?: boolean
-  shiftKey?: boolean
+  code?: string | undefined
+  ctrlKey?: boolean | undefined
+  metaKey?: boolean | undefined
+  altKey?: boolean | undefined
+  shiftKey?: boolean | undefined
+}
+
+/** Which modifiers were down, as plain yes or no. A keystroke may arrive with
+ *  them left out - a synthetic one, or an older recording - and "not there" is
+ *  not held down. */
+function held(event: Keystroke) {
+  return {
+    ctrl: event.ctrlKey ?? false,
+    meta: event.metaKey ?? false,
+    alt: event.altKey ?? false,
+    shift: event.shiftKey ?? false,
+  }
+}
+
+/** The character the physical key carries unshifted, when the code names one. */
+function unshifted(event: Keystroke): string | undefined {
+  return event.code === undefined ? undefined : PHYSICAL[event.code]
 }
 
 /** What was pressed, written down. Null while only modifiers are held, which
@@ -145,23 +162,15 @@ interface Keystroke {
 export function readCombination(event: Keystroke, platform: Platform): string | null {
   if (MODIFIER_KEYS.has(event.key)) return null
 
-  const physical = event.code ? PHYSICAL[event.code] : undefined
+  const down = held(event)
+  const physical = unshifted(event)
   // With Shift or Alt down the character on the key is not the key: the
   // combination is named after the key itself.
-  const shifted = (event.shiftKey || event.altKey) && physical
-  const key = shifted ? physical : normalizeKey(event.key)
+  const key =
+    (down.shift || down.alt) && physical !== undefined ? physical : normalizeKey(event.key)
   if (!key) return null
 
-  return writeCombination(
-    {
-      ctrl: !!event.ctrlKey,
-      meta: !!event.metaKey,
-      alt: !!event.altKey,
-      shift: !!event.shiftKey,
-      key,
-    },
-    platform,
-  )
+  return writeCombination({ ...down, key }, platform)
 }
 
 /** Whether a keystroke is the written combination.
@@ -174,17 +183,17 @@ export function matchesCombination(text: string, event: Keystroke, platform: Pla
   const wanted = parseCombination(text, platform)
   if (!wanted) return false
 
-  if (wanted.ctrl !== !!event.ctrlKey) return false
-  if (wanted.meta !== !!event.metaKey) return false
-  if (wanted.alt !== !!event.altKey) return false
-  if (wanted.shift !== !!event.shiftKey) return false
+  const down = held(event)
+  if (wanted.ctrl !== down.ctrl) return false
+  if (wanted.meta !== down.meta) return false
+  if (wanted.alt !== down.alt) return false
+  if (wanted.shift !== down.shift) return false
 
-  const physical = event.code ? PHYSICAL[event.code] : undefined
-  return wanted.key === normalizeKey(event.key) || wanted.key === physical
+  return wanted.key === normalizeKey(event.key) || wanted.key === unshifted(event)
 }
 
 /** How a key reads on a Mac, where modifiers are signs rather than words. */
-const SIGNS: Record<string, string> = { ctrl: '⌃', alt: '⌥', shift: '⇧', meta: '⌘' }
+const SIGNS = { ctrl: '⌃', alt: '⌥', shift: '⇧', meta: '⌘' }
 
 /** Names for keys whose own name is too long, or is a word in English that
  *  every keyboard prints as an arrow anyway. */

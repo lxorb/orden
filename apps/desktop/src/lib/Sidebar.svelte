@@ -76,8 +76,16 @@
       { label: t('New note'), run: () => workspace.createNote() },
       { label: t('New folder'), run: () => workspace.createFolder() },
       DIVIDER,
-      ...revealEntry(workspace.activeSpace!.root),
+      // Nothing to reveal when no space is open, and `revealEntry` says so.
+      ...revealEntry(workspace.activeSpace?.root),
     ]
+  }
+
+  /** What a phone's menu sheet is headed with. Left out entirely when there is
+   *  no space to name, since `title: undefined` is not the same as no title. */
+  function titleOfSpace(): { title?: string } {
+    const name = workspace.activeSpace?.name
+    return name === undefined ? {} : { title: name }
   }
 
   let query = $state('')
@@ -321,8 +329,7 @@
           <div
             class="rest"
             class:dropping={rootDrop}
-            oncontextmenu={(event) =>
-              menu.show(event, spaceMenu(), { title: workspace.activeSpace?.name })}
+            oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
             onclick={() => (workspace.renaming = null)}
             ondragover={overRoot}
             ondragleave={() => (rootDrop = false)}

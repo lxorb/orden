@@ -71,8 +71,8 @@ function loosePhrases(path: string, source: string): Finding[] {
   const found: Finding[] = []
   const body = template(source)
 
-  for (const match of body.matchAll(/>([^<>{}]+)</g)) {
-    const text = match[1].trim()
+  for (const [, phrase = ''] of body.matchAll(/>([^<>{}]+)</g)) {
+    const text = phrase.trim()
     // Needs at least one letter and one word to be prose worth translating.
     if (!/[A-Za-z]/.test(text) || exempt(text)) continue
 
@@ -88,8 +88,8 @@ function looseAttributes(path: string, source: string): Finding[] {
   const body = template(source)
 
   for (const name of SPOKEN) {
-    for (const match of body.matchAll(new RegExp(`\\b${name}="([^"{}]+)"`, 'g'))) {
-      const text = match[1].trim()
+    for (const [, written = ''] of body.matchAll(new RegExp(`\\b${name}="([^"{}]+)"`, 'g'))) {
+      const text = written.trim()
       if (!/[A-Za-z]/.test(text) || exempt(text)) continue
 
       found.push({ where: `${relative(path)} (${name})`, text })
@@ -103,8 +103,8 @@ function looseAttributes(path: string, source: string): Finding[] {
 function looseLabels(path: string, source: string): Finding[] {
   const found: Finding[] = []
 
-  for (const match of source.matchAll(/\blabel:\s*(['"])((?:(?!\1)[^\\]|\\.)*)\1/g)) {
-    const text = match[2].trim()
+  for (const [, , written = ''] of source.matchAll(/\blabel:\s*(['"])((?:(?!\1)[^\\]|\\.)*)\1/g)) {
+    const text = written.trim()
     if (!/[A-Za-z]/.test(text) || exempt(text)) continue
 
     found.push({ where: `${relative(path)} (label)`, text })

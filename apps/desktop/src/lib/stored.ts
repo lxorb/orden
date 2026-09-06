@@ -43,7 +43,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
  *  and a caller cannot tell which half it got. */
 export function stringList(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
-  return value.every((one) => typeof one === 'string') ? (value as string[]) : null
+  return value.every((one) => typeof one === 'string') ? value : null
 }
 
 /** The entries of an object whose values pass `check`, with the rest left out.

@@ -45,11 +45,14 @@
     const created = createEditor({
       parent: host,
       doc: untrack(() => doc),
-      onChange: onchange,
-      onImage: onimage,
-      resolveImage: resolveimage,
-      openLink: openlink,
-      onSelection: onselection,
+      // Each handed over only when there is one. The editor has defaults of its
+      // own for several of these - `openLink` opens a browser tab - and passing
+      // undefined would take the default away rather than leave it in place.
+      ...(onchange ? { onChange: onchange } : {}),
+      ...(onimage ? { onImage: onimage } : {}),
+      ...(resolveimage ? { resolveImage: resolveimage } : {}),
+      ...(openlink ? { openLink: openlink } : {}),
+      ...(onselection ? { onSelection: onselection } : {}),
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.
       shortcuts: shortcuts.forEditor,

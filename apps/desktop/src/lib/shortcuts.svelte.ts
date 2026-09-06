@@ -22,7 +22,9 @@ import {
 } from './keys'
 import { modes } from './modes.svelte'
 import { openFile } from './open-file'
+import { without } from './records'
 import { settings } from './settings.svelte'
+import { isRecord, stored } from './stored'
 import { invoke, isDesktop } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -51,8 +53,8 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
 
 /** What an app-level shortcut needs that only the running app has: the view
  *  on screen, and the two things that live in App.svelte's own state. */
-export interface AppContext {
-  view?: EditorView
+interface AppContext {
+  view?: EditorView | undefined
   palette(): void
   fullscreen(): void
 }
@@ -72,6 +74,8 @@ export interface Shortcut {
   category: Category
   scope: 'app' | 'editor' | 'panel' | 'fixed'
   key: string | null
+  /** Absent where the platform has nothing of its own to say, which is how the
+   *  editor's own specs read - and `defaultKeyFor` tells absent from null. */
   mac?: string | null
   win?: string | null
   linux?: string | null
@@ -169,11 +173,14 @@ function fromEditor(spec: BindingSpec): Shortcut {
     category: named ? named[0] : 'edit',
     scope: 'editor',
     key: spec.key,
-    mac: spec.mac,
-    win: spec.win,
-    linux: spec.linux,
-    contextual: spec.contextual,
-    alias: spec.alias,
+    // Only what the spec actually carries. A platform key that is absent means
+    // "use `key`", while one set to null means "no key on this platform", and
+    // copying an absent one over as undefined would blur the two.
+    ...(spec.mac === undefined ? {} : { mac: spec.mac }),
+    ...(spec.win === undefined ? {} : { win: spec.win }),
+    ...(spec.linux === undefined ? {} : { linux: spec.linux }),
+    ...(spec.contextual === undefined ? {} : { contextual: spec.contextual }),
+    ...(spec.alias === undefined ? {} : { alias: spec.alias }),
   }
 }
 
@@ -396,11 +403,12 @@ const PANEL_ENTRIES: Shortcut[] = [
 ]
 
 function cycleTab(direction: number) {
-  const index = workspace.tabs.findIndex((tab) => tab.id === workspace.activeTabId)
+  const tabs = workspace.tabs
+  const index = tabs.findIndex((tab) => tab.id === workspace.activeTabId)
   if (index < 0) return
 
-  const next = (index + direction + workspace.tabs.length) % workspace.tabs.length
-  workspace.activate(workspace.tabs[next].id)
+  const next = tabs[(index + direction + tabs.length) % tabs.length]
+  if (next) workspace.activate(next.id)
 }
 
 /** Keys that are spoken for and cannot be handed to something else.
@@ -552,18 +560,17 @@ class Shortcuts {
   readonly platform = currentPlatform()
 
   restore() {
-    try {
-      const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-      this.overrides = usable(saved)
-    } catch {
-      // A corrupt entry just means the defaults.
-    }
+    // A corrupt or missing entry reads as no overrides, which is the defaults.
+    this.overrides = usable(stored(STORAGE_KEY))
   }
 
   /** The key an entry answers to, resolved for this platform: what the reader
    *  chose, or the default. Null where it is unbound. */
   keyFor(id: string): string | null {
-    if (id in this.overrides) return this.overrides[id]
+    // Null is a choice here - the key taken away - so only a missing entry
+    // falls through to the default.
+    const chosen = this.overrides[id]
+    if (chosen !== undefined) return chosen
 
     const entry = BY_ID.get(id)
     return entry ? defaultKeyFor(entry, this.platform) : null
@@ -653,9 +660,7 @@ class Shortcuts {
   }
 
   reset(id: string) {
-    const rest = { ...this.overrides }
-    delete rest[id]
-    this.overrides = rest
+    this.overrides = without(this.overrides, id)
     this.settle()
   }
 
@@ -749,10 +754,10 @@ class Shortcuts {
  *  server checks the same things, but a file on this machine never went
  *  through the server. */
 function usable(value: unknown): KeyOverrides {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  if (!isRecord(value)) return {}
 
   const kept: KeyOverrides = {}
-  for (const [id, key] of Object.entries(value as Record<string, unknown>)) {
+  for (const [id, key] of Object.entries(value)) {
     if (key === null) kept[id] = null
     else if (typeof key === 'string' && key.length <= 40 && key.length > 0) kept[id] = key
 

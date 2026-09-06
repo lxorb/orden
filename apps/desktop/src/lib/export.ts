@@ -4,7 +4,7 @@ import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
 import { drawDiagram } from './diagrams'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
-import { highlightCode, loadParsers, paletteCss } from './highlight'
+import { highlightCode, loadParsers, type Parser, paletteCss } from './highlight'
 import { mathCss } from './math-fonts'
 import {
   DEFAULT_PAGE_SETUP,
@@ -19,11 +19,10 @@ import type { Scheme } from './theme.svelte'
 
 export { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 
+const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
+
 function escape(text: string): string {
-  return text.replace(
-    /[&<>"]/g,
-    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character]!,
-  )
+  return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
 }
 
 /** A fence already drawn or coloured: the HTML for the whole block, or null
@@ -80,7 +79,11 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
   const title = titleOf(source, name)
   const author = frontMatterValue(source, 'author')
   const lang = frontMatterValue(source, 'lang') ?? 'en'
-  const body = renderMarkdown(source, { footnotes: true, toc: true, code: options.fence })
+  const body = renderMarkdown(source, {
+    footnotes: true,
+    toc: true,
+    ...(options.fence ? { code: options.fence } : {}),
+  })
 
   const meta = [
     '<meta charset="utf-8">',
@@ -98,14 +101,17 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
   const setup = pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)
   const date =
     options.date ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
-  const palette = CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES[0]
+  // The first palette is the one that follows the theme, and stands in for an
+  // id nothing here recognises - one written by a later build, say.
+  const palette =
+    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES.at(0)
 
   const styles = [
     mathCss(body),
     themeCss,
     accentCss(options.accent ?? DEFAULT_ACCENT, scheme),
     exportCss,
-    paletteCss(palette),
+    palette ? paletteCss(palette) : '',
     pageCss(setup),
     options.css ?? '',
   ]
@@ -157,7 +163,7 @@ export async function prepareFences(
   }
 
   const [parsers] = await Promise.all([
-    options.highlight === false ? new Map() : loadParsers(languages),
+    options.highlight === false ? new Map<string, Parser>() : loadParsers(languages),
     ...drawings,
   ])
 
@@ -178,8 +184,7 @@ export async function prepareFences(
 export function localSources(html: string): string[] {
   const found = new Set<string>()
 
-  for (const match of html.matchAll(/<img\b[^>]*?\bsrc="([^"]*)"/g)) {
-    const src = match[1]
+  for (const [, src] of html.matchAll(/<img\b[^>]*?\bsrc="([^"]*)"/g)) {
     if (src && !/^(data:|https?:|\/\/)/i.test(src)) found.add(src)
   }
 
@@ -204,10 +209,13 @@ export async function inlineImages(
     }),
   )
 
-  return html.replace(/(<img\b[^>]*?\bsrc=")([^"]*)(")/g, (whole, before, src, after) => {
-    const data = inlined.get(src)
-    return data ? `${before}${data}${after}` : whole
-  })
+  return html.replace(
+    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
+    (whole: string, before: string, src: string, after: string) => {
+      const data = inlined.get(src)
+      return data ? `${before}${data}${after}` : whole
+    },
+  )
 }
 
 /** The whole document, ready to write: fences drawn, pictures inside it. */
@@ -272,9 +280,12 @@ function printInFrame(html: string): Promise<void> {
       resolve()
     }
 
-    frame.addEventListener('load', async () => {
+    const show = async () => {
       const inner = frame.contentWindow
-      if (!inner) return finish()
+      if (!inner) {
+        finish()
+        return
+      }
 
       // Fonts arrive inline but still have to be decoded before the page is measured.
       await inner.document.fonts.ready.catch(() => undefined)
@@ -283,7 +294,12 @@ function printInFrame(html: string): Promise<void> {
       inner.print()
       // An engine that never says afterprint would otherwise keep the frame forever.
       window.setTimeout(finish, 5 * 60 * 1000)
-    })
+    }
+
+    // Whatever goes wrong on the way to the dialog, the frame goes and the
+    // caller is let go of; a print that never resolves would hold the line at
+    // the top of the document for as long as the app is open.
+    frame.addEventListener('load', () => void show().catch(finish))
 
     frame.srcdoc = html
     document.body.append(frame)
