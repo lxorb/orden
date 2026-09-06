@@ -65,26 +65,38 @@ export function tableCrossed(state: EditorState, from: number, to: number): Tabl
 /** The line the caret lands on when it leaves a table. A table that is the
  *  first or last thing in the document has no such line, so one is made:
  *  otherwise there would be no way to write above or below it. */
-export function lineBeside(
-  state: EditorState,
-  span: TableSpan,
-  side: Side,
-): { from: number; to: number; changes?: ChangeSpec } {
+export interface LineBeside {
+  from: number
+  to: number
+  /** Whether the line had to be made. A made line is empty, so the caret can
+   *  only go to its start, and there is no column on it to aim for. */
+  made: boolean
+  /** Always a change set the caller can dispatch; empty when the line was
+   *  already there. */
+  changes: ChangeSpec
+}
+
+export function lineBeside(state: EditorState, span: TableSpan, side: Side): LineBeside {
   const { doc } = state
 
   if (side === 'below') {
     if (span.to < doc.length) {
       const line = doc.lineAt(span.to + 1)
-      return { from: line.from, to: line.to }
+      return { from: line.from, to: line.to, made: false, changes: [] }
     }
-    return { from: span.to + 1, to: span.to + 1, changes: { from: span.to, insert: '\n' } }
+    return {
+      from: span.to + 1,
+      to: span.to + 1,
+      made: true,
+      changes: { from: span.to, insert: '\n' },
+    }
   }
 
   if (span.from > 0) {
     const line = doc.lineAt(span.from - 1)
-    return { from: line.from, to: line.to }
+    return { from: line.from, to: line.to, made: false, changes: [] }
   }
-  return { from: 0, to: 0, changes: { from: 0, insert: '\n' } }
+  return { from: 0, to: 0, made: true, changes: { from: 0, insert: '\n' } }
 }
 
 export const firstCell: CellAddress = { row: -1, column: 0 }

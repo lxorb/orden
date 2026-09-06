@@ -57,7 +57,7 @@ describe('building the keymap', () => {
     expect(defaultKeyFor(alt, 'linux')).toBe('Ctrl-Shift-z')
     expect(defaultKeyFor(alt, 'win')).toBeNull()
     expect(bindings([alt], {}).length).toBe(1)
-    expect(bindings([alt], {})[0].key).toBeUndefined()
+    expect(bindings([alt], {})[0]?.key).toBeUndefined()
   })
 })
 

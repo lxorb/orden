@@ -56,7 +56,7 @@ describe('highlighting a makefile fence', () => {
   })
 
   test('marks comments', () => {
-    expect(tokens('# how to build')[0][1]).toBe('comment')
+    expect(tokens('# how to build')[0]?.[1]).toBe('comment')
     expect(typeOf('build: # the default', '# the default')).toBe('comment')
   })
 

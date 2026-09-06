@@ -34,7 +34,7 @@ function tree(doc: string): string {
 function namesOf(state: EditorState): string[] {
   return treeOf(state)
     .split('\n')
-    .map((line) => line.trim().split(' ')[0])
+    .map((line) => line.trim().split(' ')[0] ?? '')
 }
 
 function names(doc: string): string[] {

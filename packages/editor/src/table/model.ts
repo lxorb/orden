@@ -64,11 +64,13 @@ function isDelimiterRow(line: string): boolean {
 
 export function parseTable(source: string): TableModel | null {
   const lines = source.split('\n').filter((line) => line.trim().length > 0)
-  if (lines.length < 2 || !isDelimiterRow(lines[1])) return null
+  const [headerLine, delimiterLine, ...bodyLines] = lines
+  if (headerLine === undefined || delimiterLine === undefined) return null
+  if (!isDelimiterRow(delimiterLine)) return null
 
-  const header = splitRow(lines[0])
-  const align = splitRow(lines[1]).map(readAlign)
-  const rows = lines.slice(2).map((line) => splitRow(line))
+  const header = splitRow(headerLine)
+  const align = splitRow(delimiterLine).map(readAlign)
+  const rows = bodyLines.map((line) => splitRow(line))
 
   // Ragged rows are legal markdown; normalise so the model is rectangular.
   const columns = Math.max(header.length, align.length, ...rows.map((row) => row.length))
@@ -80,6 +82,9 @@ export function parseTable(source: string): TableModel | null {
     rows: rows.map(fit),
   }
 }
+
+/** The narrowest a column is written, which is what `---` needs. */
+const MIN_CELL = 3
 
 function padCell(text: string, width: number): string {
   return text + ' '.repeat(Math.max(0, width - displayWidth(text)))
@@ -94,7 +99,7 @@ function delimiterCell(align: Align, width: number): string {
     case 'center':
       return `:${'-'.repeat(Math.max(1, width - 2))}:`
     default:
-      return '-'.repeat(Math.max(3, width))
+      return '-'.repeat(Math.max(MIN_CELL, width))
   }
 }
 
@@ -103,18 +108,20 @@ export function serializeTable(model: TableModel): string {
   const columns = model.header.length
   const widths = Array.from({ length: columns }, (_, i) =>
     Math.max(
-      3,
+      MIN_CELL,
       displayWidth(model.header[i] ?? ''),
       ...model.rows.map((row) => displayWidth(row[i] ?? '')),
     ),
   )
 
+  // A row wider than the header has no width measured for its extra cells; the
+  // model is meant to be rectangular, so the narrowest column will do.
   const row = (cells: string[]) =>
-    `| ${cells.map((cell, i) => padCell(cell ?? '', widths[i])).join(' | ')} |`
+    `| ${cells.map((cell, i) => padCell(cell, widths[i] ?? MIN_CELL)).join(' | ')} |`
 
   return [
     row(model.header),
-    `| ${model.align.map((align, i) => delimiterCell(align, widths[i])).join(' | ')} |`,
+    `| ${model.align.map((align, i) => delimiterCell(align, widths[i] ?? MIN_CELL)).join(' | ')} |`,
     ...model.rows.map(row),
   ].join('\n')
 }
@@ -149,6 +156,7 @@ export function moveRow(model: TableModel, from: number, to: number): TableModel
   if (to < 0 || to >= model.rows.length) return model
   const rows = [...model.rows]
   const [moved] = rows.splice(from, 1)
+  if (moved === undefined) return model
   rows.splice(to, 0, moved)
   return { ...model, rows }
 }
@@ -158,6 +166,9 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
   const swap = <T>(list: T[]) => {
     const next = [...list]
     const [moved] = next.splice(from, 1)
+    // Compared against undefined rather than tested for truth: an alignment of
+    // null is a real value, and dropping it would unalign the column.
+    if (moved === undefined) return list
     next.splice(to, 0, moved)
     return next
   }

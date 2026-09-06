@@ -122,8 +122,8 @@ describe('prose typed away from every construct', () => {
     const opened = `${PROSE}$$\nx\n\nmore prose after it\n`
     const at = opened.indexOf('\n\nmore')
     const { was, is } = afterTyping(opened, at + 1, '$$\n')
-    expect(was.spans[0].to).toBe(opened.length)
-    expect(is.spans[0].to).toBe(at + 3)
+    expect(was.spans[0]?.to).toBe(opened.length)
+    expect(is.spans[0]?.to).toBe(at + 3)
   })
 
   test('a note with a toc is always looked at again: a heading elsewhere changes it', () => {

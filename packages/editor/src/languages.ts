@@ -148,7 +148,9 @@ function streamMode(spec: {
   return LanguageDescription.of({
     name: spec.name,
     alias: spec.alias,
-    extensions: spec.extensions,
+    // An empty list and no list are the same to a description; the compiler
+    // minds the difference, so the choice is made here rather than passed on.
+    extensions: spec.extensions ?? [],
     load: async () => new LanguageSupport(StreamLanguage.define(await spec.parser())),
   })
 }
@@ -184,7 +186,7 @@ function cLike(spec: {
   return streamMode({
     name: spec.name,
     alias: spec.alias,
-    extensions: spec.extensions,
+    extensions: spec.extensions ?? [],
     parser: async () => {
       const { clike } = await import('@codemirror/legacy-modes/mode/clike')
       return clike({

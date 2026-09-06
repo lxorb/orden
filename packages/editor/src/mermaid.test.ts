@@ -55,7 +55,7 @@ describe('highlighting a mermaid fence', () => {
 
   test('marks labels and comments', () => {
     expect(typeOf('A["a label"]', '"a label"')).toBe('string')
-    expect(tokens('%% a comment')[0][1]).toBe('comment')
+    expect(tokens('%% a comment')[0]?.[1]).toBe('comment')
   })
 
   test('marks brackets and numbers', () => {

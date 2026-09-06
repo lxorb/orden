@@ -239,7 +239,7 @@ export class TableView {
     const { editor } = this
     const line = lineBeside(editor.state, this, side)
     let pos = line.from
-    if (!line.changes) {
+    if (!line.made) {
       if (where === 'end') pos = line.to
       else if (typeof where === 'object') pos = posOnRow(editor, line, side, where.x)
     }

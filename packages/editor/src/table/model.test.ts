@@ -81,11 +81,11 @@ describe('editing', () => {
   })
 
   test('escapes a pipe typed into a cell', () => {
-    expect(setCell(model, 0, 0, 'x|y').rows[0][0]).toBe('x\\|y')
+    expect(setCell(model, 0, 0, 'x|y').rows[0]?.[0]).toBe('x\\|y')
   })
 
   test('flattens a newline typed into a cell', () => {
-    expect(setCell(model, 0, 0, 'x\ny').rows[0][0]).toBe('x y')
+    expect(setCell(model, 0, 0, 'x\ny').rows[0]?.[0]).toBe('x y')
   })
 
   test('inserts and removes columns', () => {
@@ -133,7 +133,7 @@ describe('display width', () => {
 
   test('aligns a CJK table', () => {
     const source = serializeTable(parseTable('| 名前 | x |\n| - | - |\n| ab | y |')!)
-    const [header, , body] = source.split('\n')
+    const [header = '', , body = ''] = source.split('\n')
     expect(displayWidth(header)).toBe(displayWidth(body))
   })
 })

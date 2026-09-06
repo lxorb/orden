@@ -53,7 +53,7 @@ describe('highlighting a graphql fence', () => {
   })
 
   test('marks comments, strings and numbers', () => {
-    expect(tokens('# a comment')[0][1]).toBe('comment')
+    expect(tokens('# a comment')[0]?.[1]).toBe('comment')
     expect(typeOf('  name(first: "abc")', '"abc"')).toBe('string')
     expect(typeOf('  name(first: 10)', '10')).toBe('number')
     expect(typeOf('  name(all: true)', 'true')).toBe('atom')

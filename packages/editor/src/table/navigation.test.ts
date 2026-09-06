@@ -72,8 +72,18 @@ describe('the line beside a table', () => {
   test('is the line already there', () => {
     const doc = `|above\n\n${TABLE}\n\nbelow`
     const span = { from: 7, to: 7 + TABLE.length }
-    expect(lineBeside(state(doc), span, 'above')).toEqual({ from: 6, to: 6 })
-    expect(lineBeside(state(doc), span, 'below')).toEqual({ from: span.to + 1, to: span.to + 1 })
+    expect(lineBeside(state(doc), span, 'above')).toEqual({
+      from: 6,
+      to: 6,
+      made: false,
+      changes: [],
+    })
+    expect(lineBeside(state(doc), span, 'below')).toEqual({
+      from: span.to + 1,
+      to: span.to + 1,
+      made: false,
+      changes: [],
+    })
   })
 
   test('is made when the table ends the document', () => {
@@ -81,6 +91,7 @@ describe('the line beside a table', () => {
     expect(lineBeside(state(`|above\n\n${TABLE}`), span, 'below')).toEqual({
       from: span.to + 1,
       to: span.to + 1,
+      made: true,
       changes: { from: span.to, insert: '\n' },
     })
   })
@@ -90,6 +101,7 @@ describe('the line beside a table', () => {
     expect(lineBeside(state(`${TABLE}\n\nbelow|`), span, 'above')).toEqual({
       from: 0,
       to: 0,
+      made: true,
       changes: { from: 0, insert: '\n' },
     })
   })

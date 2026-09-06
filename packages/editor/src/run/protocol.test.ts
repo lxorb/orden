@@ -61,9 +61,9 @@ describe('the document the sandbox runs', () => {
   test('is JavaScript that compiles, embedded formatter and all', () => {
     // The script is written as text, so nothing type checks it. Compiling it
     // here catches a stray backtick or a broken embedding before it ships.
-    const script = /<script>([\s\S]*)<\/script>/.exec(runnerDocument("console.log('hi')", 1))
-    expect(script).not.toBeNull()
-    expect(() => new Function(script![1])).not.toThrow()
+    const body = /<script>([\s\S]*)<\/script>/.exec(runnerDocument("console.log('hi')", 1))?.[1]
+    expect(body).toBeDefined()
+    expect(() => new Function(body ?? '')).not.toThrow()
   })
 
   test('cannot be escaped from by code that closes the script element', () => {
@@ -80,8 +80,8 @@ describe('the document the sandbox runs', () => {
   test('hands the code through as itself, quotes and newlines and all', () => {
     const code = 'console.log(\'a\\nb\')\n`back` + "tick"'
     const html = runnerDocument(code, 1)
-    const literal = /var CODE = (".*")\n/.exec(html)
-    expect(literal).not.toBeNull()
-    expect(JSON.parse(literal![1].replace(/\\u003c/g, '<'))).toBe(code)
+    const literal = /var CODE = (".*")\n/.exec(html)?.[1]
+    expect(literal).toBeDefined()
+    expect(JSON.parse((literal ?? '""').replace(/\\u003c/g, '<'))).toBe(code)
   })
 })

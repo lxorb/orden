@@ -22,7 +22,7 @@ function writersOf(source: string): { name: string; body: string }[] {
   const out: { name: string; body: string }[] = []
 
   for (const match of source.matchAll(/export function (\w+)\(([\s\S]*?)\n\}/g)) {
-    const [, name, body] = match
+    const [, name = '', body = ''] = match
     if (body.includes("setProperty('--")) out.push({ name, body })
   }
 

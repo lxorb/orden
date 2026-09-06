@@ -40,8 +40,8 @@ describe('snippets', () => {
 
     const result = completionsFor('tod')
     expect(result?.options).toHaveLength(1)
-    expect(result?.options[0].label).toBe('todo')
-    expect(result?.options[0].apply).toBe('- [ ] ')
+    expect(result?.options[0]?.label).toBe('todo')
+    expect(result?.options[0]?.apply).toBe('- [ ] ')
   })
 
   test('replaces from the start of the abbreviation', () => {
@@ -66,6 +66,6 @@ describe('snippets', () => {
 
   test('summarises a multi-line body to one line', () => {
     setSnippets({ note: '> [!NOTE]\n> ' })
-    expect(completionsFor('not')?.options[0].detail).toBe('> [!NOTE]')
+    expect(completionsFor('not')?.options[0]?.detail).toBe('> [!NOTE]')
   })
 })

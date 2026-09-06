@@ -61,7 +61,7 @@ describe('highlighting a prisma fence', () => {
   })
 
   test('marks comments and literals', () => {
-    expect(tokens('// a note')[0][1]).toBe('comment')
+    expect(tokens('// a note')[0]?.[1]).toBe('comment')
     expect(typeOf('  active Boolean @default(true)', 'true')).toBe('atom')
     expect(typeOf('  rank Int @default(3)', '3')).toBe('number')
   })

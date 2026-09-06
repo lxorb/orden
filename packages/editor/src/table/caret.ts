@@ -85,7 +85,10 @@ export function caretAtEdge(element: HTMLElement, edge: 'top' | 'bottom'): boole
   if (rows.length < 2 || !caret) return true
 
   const y = (caret.top + caret.bottom) / 2
-  const row = edge === 'top' ? rows[0] : rows[rows.length - 1]
+  const row = edge === 'top' ? rows[0] : rows.at(-1)
+  // The length check above means there is one, and a missing row would count as
+  // an edge for the same reason a missing measurement does.
+  if (!row) return true
   return y >= row.top - 1 && y <= row.bottom + 1
 }
 
