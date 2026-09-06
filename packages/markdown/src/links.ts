@@ -462,6 +462,35 @@ export function blocksOf(text: string): NoteBlock[] {
   return found
 }
 
+/** The same markdown with the block names taken out.
+ *
+ *  `^abc123` at the end of a block is a marker for a link to point at, not a
+ *  word of the note, so nothing that shows a note shows it: not an export, not a
+ *  published page, not an embed. The editor hides it the way it hides any other
+ *  syntax mark, and brings it back when the caret is on its line. */
+export function withoutBlockIds(text: string): string {
+  let out = ''
+  let at = 0
+
+  for (const row of lines(text)) {
+    if (row.code) continue
+
+    const id = blockIdOf(row.text)
+    if (!id) continue
+
+    const end = row.from + row.text.trimEnd().length
+    const caret = end - id.length - 1
+    // The space that separated it from the words goes with it.
+    const before = text[caret - 1]
+    const from = before === ' ' || before === '\t' ? caret - 1 : caret
+
+    out += text.slice(at, from)
+    at = end
+  }
+
+  return at === 0 ? text : out + text.slice(at)
+}
+
 /** A block's first line as words: the heading hashes, the bullet, the quote mark
  *  and a name at the end all taken off. */
 function firstWords(line: string): string {

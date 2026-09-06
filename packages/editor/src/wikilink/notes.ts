@@ -1,4 +1,4 @@
-import { Compartment, type Extension, Facet } from '@codemirror/state'
+import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import type { LinkKind, Wikilink } from '@nib/markdown/links'
 
@@ -40,20 +40,37 @@ export const noteIndex = Facet.define<NoteIndex, NoteIndex>({
   combine: (values) => values[0] ?? EMPTY,
 })
 
-/** Its own compartment, because the space changes while the editor is open: a
- *  note saved gains a heading, a note renamed answers to another name, and every
- *  link on screen has to be redrawn against the new answer. */
-const compartment = new Compartment()
+/** The space changes while the editor is open: a note saved gains a heading, a
+ *  note renamed answers to another name, and every link on screen has to be
+ *  drawn again against the new answer.
+ *
+ *  Held in a field and replaced by an effect rather than swapped in a
+ *  compartment, because reconfiguring an editor resets what the reconfiguration
+ *  had nothing to do with: a note saved in the background while `[[` was being
+ *  typed took the list of names away with it. An effect is an ordinary
+ *  transaction and leaves everything else where it was. */
+const setIndex = StateEffect.define<NoteIndex>()
+
+const indexField = StateField.define<NoteIndex>({
+  create: () => EMPTY,
+  update(value, transaction) {
+    for (const effect of transaction.effects) {
+      if (effect.is(setIndex)) return effect.value
+    }
+    return value
+  },
+  provide: (field) => noteIndex.from(field),
+})
 
 export function noteIndexExtension(index: NoteIndex | undefined): Extension {
-  return compartment.of(index ? noteIndex.of(index) : [])
+  return indexField.init(() => index ?? EMPTY)
 }
 
 /** Hands over a new index. Compared by identity where it matters, so the app
  *  should give a fresh object when something changed and the same one when
  *  nothing did. */
 export function setNoteIndex(view: EditorView, index: NoteIndex) {
-  view.dispatch({ effects: compartment.reconfigure(noteIndex.of(index)) })
+  view.dispatch({ effects: setIndex.of(index) })
 }
 
 /** Where a followed link goes. `path` is null when nothing in the space answers

@@ -1,4 +1,5 @@
 import type { Extension } from '@codemirror/state'
+import { modifierWatch } from '../links'
 import { noteClicks } from './follow'
 import { notePreviews } from './hover'
 
@@ -27,5 +28,5 @@ import { notePreviews } from './hover'
  *  Everything the editor cannot know - which notes exist, what one says, what
  *  opening a note means - arrives through a facet the app fills in. */
 export function wikilinks(): Extension {
-  return [noteClicks, notePreviews]
+  return [modifierWatch, noteClicks, notePreviews]
 }

@@ -1,5 +1,5 @@
 import { Facet } from '@codemirror/state'
-import { EditorView } from '@codemirror/view'
+import { EditorView, ViewPlugin } from '@codemirror/view'
 import { label } from './labels'
 
 /** Opens a link the reader asked for. The host supplies one that leaves the
@@ -35,9 +35,66 @@ export function modifier(event: MouseEvent | KeyboardEvent): boolean {
   return MAC ? event.metaKey : event.ctrlKey
 }
 
+/** Whether the modifier is being held right now.
+ *
+ *  A value of its own rather than something read back off the `nib-modifier`
+ *  class below, because that class does not survive: CodeMirror writes the
+ *  content element's `class` attribute out from its own facets on every update,
+ *  and takes any class added by hand with it. */
+export function modifierHeld(): boolean {
+  return held
+}
+
+let held = false
+
+/** Watches the modifier, and marks the writing surface while it is down so the
+ *  pointer can turn into a hand over a link.
+ *
+ *  On the window rather than on the editor, because which key is held is a fact
+ *  about the keyboard: the editor loses focus for all sorts of reasons - a
+ *  click in the sidebar, a panel opening, a re-render - and a reader holding the
+ *  key has not stopped holding it because of any of them. Watched from a plugin
+ *  rather than at import time, so the listeners live exactly as long as a view
+ *  does. */
+export const modifierWatch = ViewPlugin.fromClass(
+  class {
+    constructor(private readonly view: EditorView) {
+      window.addEventListener('keydown', this.watch, true)
+      window.addEventListener('keyup', this.watch, true)
+      window.addEventListener('blur', this.drop)
+    }
+
+    private readonly watch = (event: KeyboardEvent) => {
+      held = modifier(event)
+      this.mark()
+    }
+
+    private readonly drop = () => {
+      held = false
+      this.mark()
+    }
+
+    /** Put back after every update, which is when CodeMirror rewrites the
+     *  attribute this lives in. A no-op when it is already right. */
+    update() {
+      this.mark()
+    }
+
+    private mark() {
+      this.view.contentDOM.classList.toggle('nib-modifier', held)
+    }
+
+    destroy() {
+      window.removeEventListener('keydown', this.watch, true)
+      window.removeEventListener('keyup', this.watch, true)
+      window.removeEventListener('blur', this.drop)
+    }
+  },
+)
+
 /** A click on a link places the caret, as anywhere else in the text; with the
- *  modifier held it follows the link instead, Typora's way. While the modifier
- *  is down the pointer says so over links.
+ *  modifier held it follows the link instead, Typora's way. What the pointer
+ *  looks like while the key is down is `modifierWatch` above.
  *
  *  Reading mode has no caret to place, so there the plain click is not
  *  ambiguous and follows the link, the way it would on a page. */
@@ -55,17 +112,5 @@ export const linkClicks = EditorView.domEventHandlers({
     event.preventDefault()
     view.state.facet(linkOpener)(href)
     return true
-  },
-  keydown(event, view) {
-    if (modifier(event)) view.contentDOM.classList.add('nib-modifier')
-    return false
-  },
-  keyup(event, view) {
-    if (!modifier(event)) view.contentDOM.classList.remove('nib-modifier')
-    return false
-  },
-  blur(_event, view) {
-    view.contentDOM.classList.remove('nib-modifier')
-    return false
   },
 })

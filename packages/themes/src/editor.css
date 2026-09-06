@@ -1157,29 +1157,47 @@
   overflow: hidden;
 }
 
-.cm-tooltip-autocomplete > ul {
+/* Written from `.cm-editor` down, so these outrank the library's own rules for
+   the same elements: it writes `.cm-tooltip.cm-tooltip-autocomplete > ul`, which
+   is exactly as specific as ours and lands later in the document. Without the
+   extra class the list came out in the browser's monospace with a blue
+   selection bar - which it had been doing for the emoji list all along. */
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul {
+  max-height: 16em;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  max-height: 16em;
 }
 
-.cm-tooltip-autocomplete > ul > li {
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: 5px 10px;
   color: var(--muted-strong);
+  line-height: 1.5;
 }
 
-.cm-tooltip-autocomplete > ul > li[aria-selected] {
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
   background: var(--accent-soft);
   color: var(--text-strong);
 }
 
-.cm-completionDetail {
+/* The letters that were typed, marked where they landed in the name. */
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionMatchedText {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* What a row says about itself beyond its name: the emoji a shortcode stands
+   for, the folder a note lives in. */
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionDetail {
   margin-left: auto;
+  padding-left: var(--space-3);
+  color: var(--muted);
   font-style: normal;
-  font-size: 1.1em;
+  font-size: 0.95em;
+  white-space: nowrap;
 }
 
 /* ── Table of contents ───────────────────────────────────────────── */
@@ -1832,17 +1850,22 @@
   max-height: 22em;
   padding: 0.2em var(--space-4) 0.4em;
   overflow: auto;
+  /* The writing surface is `pre-wrap`, and this holds rendered HTML rather than
+     source: without this the newlines between its tags become blank lines. */
+  white-space: normal;
   /* Smaller than the note around it, so the two are never confused and the
      first heading inside does not shout over the writing. */
   font-size: 0.94em;
 }
 
-.nib-embed-body > :first-child {
+/* Written against `#write` so they beat the id-scoped rules the writing surface
+   gives a paragraph: an embed is a note inside a note, not a note of its own. */
+#write .nib-embed-body > :first-child {
   margin-top: 0.6em;
 }
 
-.nib-embed-body > :last-child {
-  margin-bottom: 0.4em;
+#write .nib-embed-body > :last-child {
+  margin-bottom: 0.5em;
 }
 
 /* The name is a button because it opens the note; it reads as a caption. */
@@ -1934,13 +1957,21 @@
   overflow: hidden;
   color: var(--text);
   font-size: 0.9em;
+  /* Rendered HTML, not source; see the embed above. */
+  white-space: normal;
   /* The note runs out under a fade rather than at a hard edge, which says
      there is more of it without a word. */
   mask-image: linear-gradient(to bottom, #000 78%, transparent);
 }
 
+#write .nib-note-preview-body > :first-child,
 .nib-note-preview-body > :first-child {
   margin-top: 0.7em;
+}
+
+#write .nib-note-preview-body > :last-child,
+.nib-note-preview-body > :last-child {
+  margin-bottom: 0.7em;
 }
 
 /* Before it has arrived, or when there is nothing to show: one line of words,

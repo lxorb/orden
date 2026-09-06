@@ -17,7 +17,7 @@ import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
 import { fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
-import { linkTarget } from '@nib/markdown/links'
+import { blockIdOf, linkTarget } from '@nib/markdown/links'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, isImageTarget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
@@ -59,6 +59,9 @@ class Decorator {
     for (const { from, to } of ranges) {
       syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) })
     }
+
+    // After the walk, because whether a line is code is settled by it.
+    for (const { from, to } of ranges) this.blockNames(from, to)
 
     const lines: Range<Decoration>[] = []
     for (const [pos, classes] of this.lineClasses) {
@@ -250,6 +253,41 @@ class Decorator {
       ? { class: 'nib-link', attributes: { 'data-href': href, title: linkTitle(href) } }
       : { class: 'nib-link' }
     this.marks.push(Decoration.mark(spec).range(from, to))
+  }
+
+  /** Lines whose text is not prose, and where a `^word` at the end is therefore
+   *  a `^word` and not the name of a block. */
+  private static readonly VERBATIM = ['nib-code', 'nib-frontmatter', 'nib-math-source']
+
+  /** `^abc123` at the end of a line names the block, so a link can point at it.
+   *  It is a marker rather than a word, so it hides like any other syntax and
+   *  comes back while the caret is on its line.
+   *
+   *  Read off the lines rather than out of the tree, because the parser has no
+   *  node for it: it is Obsidian's construct, not markdown's. Only the visible
+   *  lines are looked at, which is what the caller hands over. */
+  private blockNames(from: number, to: number) {
+    const doc = this.state.doc
+
+    for (let pos = from; pos <= to; ) {
+      const line = doc.lineAt(pos)
+      const classes = this.lineClasses.get(line.from)
+
+      if (!classes || !Decorator.VERBATIM.some((one) => classes.has(one))) {
+        const id = blockIdOf(line.text)
+        if (id) {
+          const end = line.from + line.text.trimEnd().length
+          const caret = end - id.length - 1
+          const before = doc.sliceString(caret - 1, caret)
+          const start = before === ' ' || before === '\t' ? caret - 1 : caret
+
+          this.conceal(start, end, lineRevealed(this.state, line.from))
+        }
+      }
+
+      if (line.to >= doc.length) break
+      pos = line.to + 1
+    }
   }
 
   private isClaimed(from: number, to: number): boolean {

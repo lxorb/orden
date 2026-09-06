@@ -8,6 +8,7 @@ import {
   linkTarget,
   parseWikilink,
   shownText,
+  withoutBlockIds,
 } from './links'
 
 describe('what is between the brackets', () => {
@@ -236,5 +237,23 @@ describe('block names', () => {
 
   test('a fence holds no names', () => {
     expect(blockIds('```\nxor eax ^a\n```')).toEqual([])
+  })
+
+  test('a note without them comes back exactly as it was', () => {
+    const note = '# Title\n\nWords, and x^2 as well.\n'
+    expect(withoutBlockIds(note)).toBe(note)
+  })
+
+  test('a name goes, and the space that separated it goes with it', () => {
+    expect(withoutBlockIds('A paragraph. ^abc123\n\nmore')).toBe('A paragraph.\n\nmore')
+    expect(withoutBlockIds('^on-its-own\n')).toBe('\n')
+  })
+
+  test('several go, and nothing between them moves', () => {
+    expect(withoutBlockIds('one ^a\n\ntwo ^b\n\nthree')).toBe('one\n\ntwo\n\nthree')
+  })
+
+  test('a caret inside code stays', () => {
+    expect(withoutBlockIds('```\nxor eax ^a\n```')).toBe('```\nxor eax ^a\n```')
   })
 })

@@ -1,6 +1,7 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view'
 import { linkTarget } from '@nib/markdown/links'
 import { label } from '../labels'
+import { modifierHeld } from '../links'
 import { linkAt } from './at'
 import { noteIndex, resolveLink } from './notes'
 import { renderNote, sectionOf } from './preview'
@@ -25,11 +26,13 @@ const MOST_PREVIEWED = 4000
 
 export const notePreviews = hoverTooltip(
   (view, pos, side): Tooltip | null => {
-    // links.ts already marks the writing surface while the modifier is down, so
-    // that the pointer can turn into a hand over a link. CodeMirror reports a
-    // hover as a position and not as the event behind it, so this is what there
-    // is to read - and reusing it means one place decides what "held" means.
-    if (!view.contentDOM.classList.contains('nib-modifier')) return null
+    // CodeMirror reports a hover as a position and not as the event behind it,
+    // so whether the key is down has to be asked of links.ts, which watches it
+    // for the pointer already. One place decides what "held" means.
+    // CodeMirror reports a hover as a position and not as the event behind it,
+    // so whether the key is down is asked of links.ts, which watches it for the
+    // pointer already. One place decides what "held" means.
+    if (!modifierHeld()) return null
 
     const link = linkAt(view.state, pos)
     if (!link) return null

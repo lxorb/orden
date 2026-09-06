@@ -440,12 +440,16 @@ mod tests {
         assert_eq!(free_spot(&here.join("New.md"), true), here.join("New.md"));
     }
 
+    /// The file names, sorted: the walk orders by whole path, and where in the
+    /// tree each file sits is not what these tests are about.
     fn names(paths: &[PathBuf]) -> Vec<String> {
-        paths
+        let mut found: Vec<String> = paths
             .iter()
             .filter_map(|path| path.file_name())
             .map(|name| name.to_string_lossy().to_string())
-            .collect()
+            .collect();
+        found.sort();
+        found
     }
 
     #[test]

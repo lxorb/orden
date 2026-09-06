@@ -203,6 +203,33 @@ describe('a wikilink in the live preview', () => {
   })
 })
 
+describe('the name a block carries', () => {
+  test('is hidden, with the space that separated it', () => {
+    expect(concealed('A paragraph. ^abc123')).toEqual([' ^abc123'])
+    expect(concealed('^on-its-own')).toEqual(['^on-its-own'])
+  })
+
+  test('comes back while the caret is on its line', () => {
+    const doc = 'A paragraph. ^abc123\n\nmore'
+    expect(concealed(doc, 3)).toEqual([])
+    expect(concealed(doc, 24)).toEqual([' ^abc123'])
+  })
+
+  test('is nothing where there is no name', () => {
+    expect(concealed('x^2 is a square')).toEqual([])
+    expect(concealed('a^b')).toEqual([])
+  })
+
+  test('a caret inside code is code', () => {
+    // The fence's own backticks hide as usual; nothing on the line inside does.
+    expect(concealed('```\nxor eax ^abc\n```')).toEqual(['```', '```'])
+  })
+
+  test('a block link is not read as one', () => {
+    expect(concealed('see [[Plan#^abc]]')).toEqual(['[[', ']]'])
+  })
+})
+
 describe('which note a name means', () => {
   test('a whole path wins over the end of one', () => {
     expect(resolveNote(SPACE, 'ideas/Plan')?.path).toBe('ideas/Plan.md')

@@ -1,7 +1,7 @@
 import { Marked, Renderer } from 'marked'
 import type { Tokens } from 'marked'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
-import { slugify } from './links'
+import { slugify, withoutBlockIds } from './links'
 import {
   type EmbedResolver,
   type Embeds,
@@ -274,7 +274,9 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
       ? publishing
       : trusting
 
-  const body = stripFrontMatter(source)
+  // Front matter is metadata and a block's name is a marker; neither is a word
+  // of the note, so neither reaches the page.
+  const body = withoutBlockIds(stripFrontMatter(source))
   let html = marked.parse(body, { async: false })
 
   html = markAbbreviations(html, collectAbbreviations(body))
