@@ -91,7 +91,7 @@ export function readPosition(value: unknown): Position | null {
 
 /** Where notes were last looked at, by path, dropping any entry that no longer
  *  reads as a place. One unreadable entry says nothing about the others. */
-export function readPositions(value: unknown): Record<string, Position> {
+function readPositions(value: unknown): Record<string, Position> {
   if (!isRecord(value)) return {}
 
   const out: Record<string, Position> = {}
