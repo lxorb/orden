@@ -31,6 +31,15 @@ jobs:
       - name: Types
         run: pnpm check
 
+      - name: Lint
+        run: pnpm lint
+
+      - name: Prettier
+        run: pnpm format:check
+
+      - name: Dead code and unused dependencies
+        run: pnpm knip
+
       - name: Tests
         run: pnpm test
 

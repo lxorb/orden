@@ -75,6 +75,11 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // Command-line scripts talk through the console; that is their output.
+    files: ['scripts/**/*.{js,mjs}'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     files: ['**/*.test.ts', '**/test/**/*.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
