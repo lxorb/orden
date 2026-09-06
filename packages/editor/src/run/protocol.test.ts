@@ -63,6 +63,7 @@ describe('the document the sandbox runs', () => {
     // here catches a stray backtick or a broken embedding before it ships.
     const body = /<script>([\s\S]*)<\/script>/.exec(runnerDocument("console.log('hi')", 1))?.[1]
     expect(body).toBeDefined()
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval -- compiling the script is how a stray backtick is caught
     expect(() => new Function(body ?? '')).not.toThrow()
   })
 

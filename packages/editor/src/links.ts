@@ -18,7 +18,10 @@ export function hrefOf(target: string): string | null {
   return null
 }
 
-const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+/** Read from the user agent string rather than `navigator.platform`, which is
+ *  deprecated, and from the string rather than `userAgentData`, which only
+ *  Chromium has. All this decides is whether the modifier is Cmd or Ctrl. */
+const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
 /** The tooltip on a link: where it goes, and how to get there without moving
  *  the caret. */
@@ -40,8 +43,11 @@ export const linkClicks = EditorView.domEventHandlers({
   mousedown(event, view) {
     if (event.button !== 0 || !(modifier(event) || view.state.readOnly)) return false
 
-    const target = event.target as HTMLElement | null
-    const href = target?.closest?.('.nib-link')?.getAttribute('data-href')
+    // An event's target is only an element some of the time - a click can land
+    // on a text node - so it is asked rather than assumed.
+    const target = event.target
+    const link = target instanceof Element ? target.closest('.nib-link') : null
+    const href = link?.getAttribute('data-href')
     if (!href) return false
 
     event.preventDefault()

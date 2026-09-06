@@ -63,6 +63,14 @@ function marked(doc: string, className: string, cursor?: number): string[] {
   return out
 }
 
+/** What a decoration's spec carries that these tests read. CodeMirror types
+ *  `spec` as whatever the caller passed, so the two fields are named here rather
+ *  than reached for blind. */
+interface Spec {
+  class?: string
+  widget?: unknown
+}
+
 /** Every class given to a whole line, in document order. */
 function lineClasses(doc: string): string[] {
   const full = doc + PARK
@@ -71,9 +79,9 @@ function lineClasses(doc: string): string[] {
     0,
     full.length,
     (from, to, value) => {
+      const spec = value.spec as Spec
       // Line decorations are the only empty ranges that carry no widget.
-      if (from === to && !value.spec.widget && value.spec.class)
-        out.push(...value.spec.class.split(' '))
+      if (from === to && !spec.widget && spec.class) out.push(...spec.class.split(' '))
     },
   )
   return out

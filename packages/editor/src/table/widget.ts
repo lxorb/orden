@@ -25,7 +25,7 @@ export class TableWidget extends NibWidget {
     /** Whether the note takes edits. A table drawn for a reader has no fields
      *  in it, so this is part of what makes two widgets the same table: the
      *  cells are contenteditable in the DOM, and only a redraw undoes that. */
-    readonly writable: boolean = true,
+    readonly writable = true,
   ) {
     super()
   }

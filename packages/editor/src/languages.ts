@@ -248,7 +248,9 @@ const plainTextDescription = LanguageDescription.of({
     'adoc',
   ],
   extensions: ['txt', 'text', 'rst', 'adoc', 'asciidoc'],
-  load: async () => new LanguageSupport(StreamLanguage.define(plainTextParser)),
+  // Nothing to fetch: the tokenizer is right here, so the promise is already
+  // kept. `load` is asked for a promise, not for an async function.
+  load: () => Promise.resolve(new LanguageSupport(StreamLanguage.define(plainTextParser))),
 })
 
 /** Languages the stock list leaves out. */

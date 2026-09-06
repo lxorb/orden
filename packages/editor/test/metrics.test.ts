@@ -45,7 +45,7 @@ describe('settings that change the shape of the text', () => {
       .filter((one) => !one.body.includes('remeasure('))
       .map((one) => one.name)
 
-    expect(silent, `these would leave the caret misplaced: ${silent}`).toEqual([])
+    expect(silent, `these would leave the caret misplaced: ${silent.join(', ')}`).toEqual([])
   })
 
   test('remeasure exists and guards a torn-down view', () => {

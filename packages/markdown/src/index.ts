@@ -63,6 +63,15 @@ export function slugify(text: string): string {
   )
 }
 
+/** The default renderer's own methods, which an override calls to add a class or
+ *  an id to what it produced.
+ *
+ *  Said out loud because `Renderer` is generic in what it renders to, and the
+ *  prototype of a generic class comes back with its type arguments as `any` -
+ *  so everything an override built on it would be untyped too. Here they are
+ *  both strings: markdown in, HTML out, which is the only shape this uses. */
+const defaults = Renderer.prototype as Renderer
+
 const TOC_MARK = '<!--nib:toc-->'
 
 /** A `[toc]` alone on a line. Inside a sentence it stays text. */
@@ -94,7 +103,7 @@ function renderer(options: RenderOptions, headings: Heading[]) {
       // The default renderer knows how to draw a list item, a link and a
       // heading; these only add a class or an id to what it produced.
       listitem(token: Tokens.ListItem) {
-        const html = Renderer.prototype.listitem.call(this as Renderer, token)
+        const html = defaults.listitem.call(this, token)
         if (!token.task) return html
 
         const classes = token.checked ? 'task-list-item is-done' : 'task-list-item'
@@ -122,9 +131,9 @@ function renderer(options: RenderOptions, headings: Heading[]) {
       /** The same, for a picture. `data:` is allowed here and nowhere else:
        *  it is how a small image travels inside the document. */
       image(token: Tokens.Image) {
-        const alt = token.tokens
-          ? this.parser.parseInline(token.tokens, this.parser.textRenderer)
-          : token.text
+        // Through the text renderer, so markdown in the alt text comes out as
+        // the words it stands for rather than as tags inside an attribute.
+        const alt = this.parser.parseInline(token.tokens, this.parser.textRenderer)
         const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
         if (!src) return escape(alt)
 
@@ -134,7 +143,7 @@ function renderer(options: RenderOptions, headings: Heading[]) {
       },
 
       heading(token: Tokens.Heading) {
-        const html = Renderer.prototype.heading.call(this as Renderer, token)
+        const html = defaults.heading.call(this, token)
         if (!options.toc) return html
 
         const text = plainText(html)
@@ -149,7 +158,7 @@ function renderer(options: RenderOptions, headings: Heading[]) {
 
       code(token: Tokens.Code) {
         const custom = options.code?.(token.text, token.lang?.trim() ?? '')
-        return custom ?? Renderer.prototype.code.call(this as Renderer, token)
+        return custom ?? defaults.code.call(this, token)
       },
     },
   })
@@ -209,10 +218,12 @@ export function documentTitle(source: string): string | null {
 export function codeBlocks(source: string): CodeBlock[] {
   const found: CodeBlock[] = []
 
-  trusting.walkTokens(trusting.lexer(stripFrontMatter(source)), (token) => {
-    if (token.type === 'code') {
-      found.push({ language: (token as Tokens.Code).lang?.trim() ?? '', code: token.text })
-    }
+  // The walk is over already; what it hands back is the callback's own returns,
+  // which are nothing here.
+  void trusting.walkTokens(trusting.lexer(stripFrontMatter(source)), (token) => {
+    if (token.type !== 'code') return
+    const fence = token as Tokens.Code
+    found.push({ language: fence.lang?.trim() ?? '', code: fence.text })
   })
 
   return found
@@ -311,7 +322,10 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   return out + text(html.slice(last))
 
   function text(chunk: string): string {
-    return chunk.replace(word, (term) => `<abbr title="${escape(terms.get(term)!)}">${term}</abbr>`)
+    return chunk.replace(
+      word,
+      (term) => `<abbr title="${escape(terms.get(term) ?? '')}">${term}</abbr>`,
+    )
   }
 }
 

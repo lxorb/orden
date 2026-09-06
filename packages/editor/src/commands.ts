@@ -190,7 +190,7 @@ function fenceOf(text: string): { mark: string; info: string } | null {
 function closes(text: string, mark: string): boolean {
   const found = fenceOf(text)
   if (!found) return false
-  return found.mark[0] === mark[0] && found.mark.length >= mark.length && !found.info
+  return found.mark.startsWith(mark.charAt(0)) && found.mark.length >= mark.length && !found.info
 }
 
 /** Enter at the end of an opening fence closes the fence as well, with the

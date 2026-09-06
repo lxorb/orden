@@ -5,12 +5,16 @@ import type { MarkedExtension, Tokens } from 'marked'
 import { get } from 'node-emoji'
 import { escape, fragment } from './html'
 
+/** Only the three that matter in element content, which is where the source of
+ *  an equation that would not parse ends up. */
+const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
+
 /** Renders TeX, or shows the source when it will not parse. */
 function math(tex: string, display: boolean): string {
   try {
     return katex.renderToString(tex, { displayMode: display, throwOnError: false, output: 'html' })
   } catch {
-    const escaped = tex.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!)
+    const escaped = tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
     return display ? `<pre class="math-error">${escaped}</pre>` : `<code>${escaped}</code>`
   }
 }
@@ -102,7 +106,7 @@ export const maths: MarkedExtension = {
         return { type: 'blockMath', raw: match[0], text: match[1] }
       },
       renderer: (token: Tokens.Generic) =>
-        `<div class="math-block">${math(token.text ?? '', true)}</div>`,
+        `<div class="math-block">${math(String(token.text ?? ''), true)}</div>`,
     },
     {
       name: 'inlineMath',
@@ -114,7 +118,7 @@ export const maths: MarkedExtension = {
         return { type: 'inlineMath', raw: match[0], text: match[1] }
       },
       renderer: (token: Tokens.Generic) =>
-        `<span class="math-inline">${math(token.text ?? '', false)}</span>`,
+        `<span class="math-inline">${math(String(token.text ?? ''), false)}</span>`,
     },
   ],
 }
@@ -126,17 +130,17 @@ const CALLOUT_TEXT = /\[!(?:note|tip|important|warning|caution)\]\s*(?:<br\s*\/?
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
-      const first = token.tokens?.[0]
+      const first = token.tokens[0]
       const raw = first && 'text' in first ? String(first.text) : ''
       const match = CALLOUT.exec(raw)
 
-      if (!match) return `<blockquote>\n${this.parser.parse(token.tokens ?? [])}</blockquote>\n`
+      if (!match) return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
 
       const kind = (match[1] ?? '').toLowerCase()
       const label = kind.charAt(0).toUpperCase() + kind.slice(1)
 
       // The marker becomes the heading, so drop it from the rendered body.
-      const body = this.parser.parse(token.tokens ?? []).replace(CALLOUT_TEXT, '')
+      const body = this.parser.parse(token.tokens).replace(CALLOUT_TEXT, '')
 
       return `<div class="callout" data-kind="${kind}"><p class="callout-label">${label}</p>\n${body}</div>\n`
     },
@@ -272,7 +276,7 @@ export function collectAbbreviations(source: string): Map<string, string> {
     const mark = FENCE.exec(line)?.[1]
 
     if (fence !== null) {
-      if (mark && mark[0] === fence[0] && mark.length >= fence.length) fence = null
+      if (mark?.startsWith(fence.charAt(0)) && mark.length >= fence.length) fence = null
       continue
     }
     if (mark) {

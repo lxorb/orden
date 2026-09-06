@@ -76,6 +76,13 @@ export function flushTableEdits() {
   active?.flush()
 }
 
+/** Remembers which table holds an uncommitted edit, so the flush above can find
+ *  it. Named rather than assigned in place: handing an object's own `this` out
+ *  to something that outlives it is worth being able to see. */
+function holdsEdit(table: TableView) {
+  active = table
+}
+
 const ALIGN_PATHS = {
   left: 'M0 2h10M0 5h6M0 8h10',
   center: 'M0 2h10M2 5h6M0 8h10',
@@ -243,7 +250,7 @@ export class TableView {
     if (!cell) return false
 
     cell.focus()
-    const length = cell.textContent?.length ?? 0
+    const length = cell.textContent.length
 
     if (typeof placement === 'number') selectIn(cell, Math.min(placement, length))
     else if (placement === 'start') selectIn(cell, 0)
@@ -439,8 +446,8 @@ export class TableView {
       return
     }
 
-    this.pending = { at, value: cell.textContent ?? '' }
-    active = this
+    this.pending = { at, value: cell.textContent }
+    holdsEdit(this)
 
     window.clearTimeout(this.idle)
     this.idle = window.setTimeout(() => this.flush(), IDLE_COMMIT)
@@ -448,9 +455,12 @@ export class TableView {
 
   private left(cell: HTMLElement, at: CellAddress) {
     // A redraw blurs the old cell; its text is already in the document.
-    if (!cell.isConnected) return
+    if (!attached(cell)) return
     this.flush()
-    if (!cell.isConnected) return
+    // Which may have rewritten the table and taken this cell with it. Asked
+    // through a function, since the compiler holds the answer to the first
+    // question and would otherwise call the second one pointless.
+    if (!attached(cell)) return
 
     cell.dataset.source = this.textOf(at)
     showRendered(cell)
@@ -489,13 +499,18 @@ export class TableView {
 
     if (mod && !event.altKey) {
       const lower = key.toLowerCase()
-      if (lower === 'z' && !event.shiftKey) return this.history(event, undo, cell, at)
-      if (lower === 'y' || (lower === 'z' && event.shiftKey))
-        return this.history(event, redo, cell, at)
+      if (lower === 'z' && !event.shiftKey) {
+        this.history(event, undo, cell, at)
+        return
+      }
+      if (lower === 'y' || (lower === 'z' && event.shiftKey)) {
+        this.history(event, redo, cell, at)
+        return
+      }
       // The browser's select-all reaches past the cell to the whole document.
       if (lower === 'a' && !event.shiftKey) {
         event.preventDefault()
-        selectIn(cell, 0, cell.textContent?.length ?? 0)
+        selectIn(cell, 0, cell.textContent.length)
         return
       }
     }
@@ -513,11 +528,13 @@ export class TableView {
       case 'ArrowUp':
         if (!caretAtEdge(cell, 'top')) return
         event.preventDefault()
-        return this.stepVertically(cellAbove(at), cell, 'above')
+        this.stepVertically(cellAbove(at), cell, 'above')
+        return
       case 'ArrowDown':
         if (!caretAtEdge(cell, 'bottom')) return
         event.preventDefault()
-        return this.stepVertically(cellBelow(this.model, at), cell, 'below')
+        this.stepVertically(cellBelow(this.model, at), cell, 'below')
+        return
       case 'ArrowLeft': {
         if (!collapsedAt(cell, 0)) return
         event.preventDefault()
@@ -527,7 +544,7 @@ export class TableView {
         return
       }
       case 'ArrowRight': {
-        if (!collapsedAt(cell, cell.textContent?.length ?? 0)) return
+        if (!collapsedAt(cell, cell.textContent.length)) return
         event.preventDefault()
         const next = cellAfter(this.model, at)
         if (next === 'below') this.leave('below', 'start')
@@ -564,7 +581,7 @@ export class TableView {
     const selection = selectionIn(cell)
     if (!selection) return
 
-    const result = runInCell(command, cell.textContent ?? '', selection.from, selection.to)
+    const result = runInCell(command, cell.textContent, selection.from, selection.to)
     if (!result) return
 
     cell.textContent = result.text
@@ -590,12 +607,16 @@ export class TableView {
     const text = (event.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n/g, ' ')
     if (!text) return
 
-    // Goes through the browser's editing so it fires `input` like typing.
+    // Goes through the browser's own editing so that it fires `input` like
+    // typing does, and so the cell's undo stack knows about the paste. Nothing
+    // has replaced `execCommand` for that; the branch below is what happens
+    // where it is gone.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- no replacement reaches the browser's own undo stack
     if (document.execCommand('insertText', false, text)) return
 
     const selection = selectionIn(cell)
     if (!selection) return
-    const before = cell.textContent ?? ''
+    const before = cell.textContent
     cell.textContent = before.slice(0, selection.from) + text + before.slice(selection.to)
     selectIn(cell, selection.from + text.length)
     this.edited(cell, at)
@@ -912,8 +933,13 @@ function collapsedAt(cell: HTMLElement, offset: number): boolean {
   return selection !== null && selection.from === offset && selection.to === offset
 }
 
+/** Whether a node is still in the document. */
+function attached(node: Node): boolean {
+  return node.isConnected
+}
+
 function sameCell(a: CellAddress, b: CellAddress | undefined): boolean {
-  return b !== undefined && a.row === b.row && a.column === b.column
+  return a.row === b?.row && a.column === b.column
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string) {

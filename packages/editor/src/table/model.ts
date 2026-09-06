@@ -31,17 +31,18 @@ function splitRow(line: string): string[] {
   let current = ''
 
   for (let i = 0; i < body.length; i++) {
-    if (body[i] === '\\' && body[i + 1] === '|') {
+    const character = body.charAt(i)
+    if (character === '\\' && body.charAt(i + 1) === '|') {
       current += '\\|'
       i++
       continue
     }
-    if (body[i] === '|') {
+    if (character === '|') {
       cells.push(current.trim())
       current = ''
       continue
     }
-    current += body[i]
+    current += character
   }
 
   // A closing pipe ends the row rather than opening one more cell. Decided here
@@ -104,7 +105,8 @@ function delimiterCell(align: Align, width: number): string {
       return `${'-'.repeat(Math.max(1, width - 1))}:`
     case 'center':
       return `:${'-'.repeat(Math.max(1, width - 2))}:`
-    default:
+    case null:
+      // No alignment marker, so all of the width is dashes.
       return '-'.repeat(Math.max(MIN_CELL, width))
   }
 }

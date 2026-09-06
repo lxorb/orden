@@ -198,7 +198,10 @@ export class FenceHeaderWidget extends NibWidget {
     // line counts when it sits between this header's line and the closing
     // line of the same block.
     const over = (event: Event) => {
-      const line = (event.target as Element | null)?.closest?.('.cm-line') ?? null
+      // The pointer can be over a text node rather than an element, so the
+      // target is asked what it is rather than assumed to be one.
+      const target = event.target
+      const line = target instanceof Element ? target.closest('.cm-line') : null
       bar.classList.toggle('nib-fence-hover', !!line && FenceHeaderWidget.holds(bar, line))
     }
     const leave = () => bar.classList.remove('nib-fence-hover')

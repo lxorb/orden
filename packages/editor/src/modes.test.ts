@@ -49,7 +49,7 @@ function surface(doc: string, cursor = doc.length) {
 function readingClass(state: EditorState): boolean {
   return state
     .facet(EditorView.editorAttributes)
-    .some((attrs) => typeof attrs === 'object' && attrs?.class === 'nib-reading-mode')
+    .some((attrs) => typeof attrs === 'object' && attrs.class === 'nib-reading-mode')
 }
 
 /** Text the reader never sees: syntax the preview has concealed. */
@@ -235,13 +235,13 @@ describe('source mode and reading mode', () => {
 function editorClasses(state: EditorState): string[] {
   return state
     .facet(EditorView.editorAttributes)
-    .flatMap((attrs) => (typeof attrs === 'object' && attrs?.class ? [attrs.class] : []))
+    .flatMap((attrs) => (typeof attrs === 'object' && attrs.class ? [attrs.class] : []))
 }
 
 function direction(state: EditorState): string | undefined {
   return state
     .facet(EditorView.contentAttributes)
-    .flatMap((attrs) => (typeof attrs === 'object' && attrs?.dir ? [attrs.dir] : []))
+    .flatMap((attrs) => (typeof attrs === 'object' && attrs.dir ? [attrs.dir] : []))
     .at(-1)
 }
 
@@ -253,7 +253,7 @@ function direction(state: EditorState): string | undefined {
  *  mode was written the right way round from the start; these five were not,
  *  and this is what keeps them that way. */
 describe('the classes the stylesheet works from', () => {
-  const modes: Array<[string, (view: EditorView, on: boolean) => void, string]> = [
+  const modes: [string, (view: EditorView, on: boolean) => void, string][] = [
     ['focus mode', setFocusMode, 'nib-focus-mode'],
     ['typewriter mode', setTypewriterMode, 'nib-typewriter-mode'],
     ['ligatures', setLigatures, 'nib-ligatures'],

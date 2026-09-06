@@ -77,7 +77,7 @@ class Decorator {
 
   build(ranges: readonly { from: number; to: number }[]) {
     for (const { from, to } of ranges) {
-      syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) !== false })
+      syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) })
     }
 
     const lines: Range<Decoration>[] = []
@@ -93,38 +93,54 @@ class Decorator {
     }
   }
 
-  /** Returns false to stop the walk descending into a node that was replaced. */
-  private visit(node: SyntaxNode): boolean | void {
+  /** Whether the walk should go on into this node's children. False for a node
+   *  that was replaced wholesale: the syntax inside it is part of what the
+   *  replacement stands for, and decorating it again would overlap. */
+  private visit(node: SyntaxNode): boolean {
     const name = node.name
 
     const heading = HEADING.exec(name)
-    if (heading) return this.markLines(node, `nib-h${heading[1]}`)
+    if (heading) {
+      this.markLines(node, `nib-h${heading[1]}`)
+      return true
+    }
 
-    if (LINE_CLASS[name]) return this.markLines(node, LINE_CLASS[name])
+    const lineClass = LINE_CLASS[name]
+    if (lineClass) {
+      this.markLines(node, lineClass)
+      return true
+    }
 
     switch (name) {
       case 'Blockquote':
-        return this.blockquote(node)
+        this.blockquote(node)
+        return true
       case 'FencedCode':
         return this.fence(node)
       case 'ListItem':
-        return this.markLines(node, 'nib-li', true)
+        this.markLines(node, 'nib-li', true)
+        return true
       case 'HeaderMark':
       case 'QuoteMark':
         // Block marks follow the caret's line, and swallow the space after them
         // so hiding `# ` does not indent the heading by one column.
-        return this.conceal(node.from, this.eatSpace(node.to), lineRevealed(this.state, node.from))
+        this.conceal(node.from, this.eatSpace(node.to), lineRevealed(this.state, node.from))
+        return true
       case 'CodeMark':
         // Both of a fence's ``` show together whenever the caret is anywhere in
         // the block, so its extent is never in doubt while it is being edited.
         // Inline backticks follow their own span.
-        return this.conceal(node.from, node.to, revealed(this.state, node))
+        this.conceal(node.from, node.to, revealed(this.state, node))
+        return true
       case 'ListMark':
-        return this.listMark(node)
+        this.listMark(node)
+        return true
       case 'TaskMarker':
-        return this.taskMarker(node)
+        this.taskMarker(node)
+        return true
       case 'HorizontalRule':
-        return this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
+        this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
+        return true
       case 'Image':
         return this.image(node)
       case 'HTMLTag':
@@ -138,29 +154,35 @@ class Decorator {
         return this.blockMath(node)
       case 'CodeInfo':
         // Shown alongside the fences it belongs to, not on its own schedule.
-        return this.conceal(node.from, node.to, revealed(this.state, node))
+        this.conceal(node.from, node.to, revealed(this.state, node))
+        return true
       case 'TableDelimiter':
-        return this.tableDelimiter(node)
+        this.tableDelimiter(node)
+        return true
       case 'InlineCode':
         // The mono face alone is a weak signal at this size, so inline code
         // gets the same box the exported HTML gives it. Pushed before the walk
         // reaches the backticks inside, which conceal themselves as usual.
-        return void this.marks.push(
-          Decoration.mark({ class: 'nib-inline-code' }).range(node.from, node.to),
-        )
+        this.marks.push(Decoration.mark({ class: 'nib-inline-code' }).range(node.from, node.to))
+        return true
       case 'Link':
-        return this.link(node)
+        this.link(node)
+        return true
       case 'URL':
-        if (concealable(node)) return this.conceal(node.from, node.to, revealed(this.state, node))
+        if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
         // A bare address, or one between the `<` `>` of an autolink: shown as
         // itself, and it is the link.
-        return this.linkText(node.from, node.to, this.state.doc.sliceString(node.from, node.to))
+        else this.linkText(node.from, node.to, this.state.doc.sliceString(node.from, node.to))
+        return true
       case 'Subscript':
-        return void this.marks.push(Decoration.mark({ class: 'nib-sub' }).range(node.from, node.to))
+        this.marks.push(Decoration.mark({ class: 'nib-sub' }).range(node.from, node.to))
+        return true
       case 'Superscript':
-        return void this.marks.push(Decoration.mark({ class: 'nib-sup' }).range(node.from, node.to))
+        this.marks.push(Decoration.mark({ class: 'nib-sup' }).range(node.from, node.to))
+        return true
       default:
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
+        return true
     }
   }
 
@@ -227,7 +249,7 @@ class Decorator {
     else this.hidden.push(Decoration.replace({ widget: new CalloutWidget(kind) }).range(from, to))
   }
 
-  private fence(node: SyntaxNode): boolean | void {
+  private fence(node: SyntaxNode): boolean {
     const info = node.getChild('CodeInfo')
     const language = info ? this.state.doc.sliceString(info.from, info.to).trim() : ''
 
@@ -260,20 +282,21 @@ class Decorator {
         side: 1,
       }).range(open.to),
     )
+    return true
   }
 
-  private inlineMath(node: SyntaxNode): boolean | void {
-    if (revealed(this.state, node)) return
+  private inlineMath(node: SyntaxNode): boolean {
+    if (revealed(this.state, node)) return true
 
     const tex = this.state.doc.sliceString(node.from + 1, node.to - 1)
     this.inlineWidget(node, new MathWidget(tex, false), false)
     return false
   }
 
-  private blockMath(node: SyntaxNode): boolean | void {
+  private blockMath(node: SyntaxNode): boolean {
     if (overlaps(this.state, node.from, node.to)) {
       this.markLines(node, 'nib-math-source')
-      return
+      return true
     }
     // Rendered by the block state field; see blocks.ts.
     return false
@@ -310,11 +333,11 @@ class Decorator {
 
   /** A picture stays a picture while the caret is beside it, or selects it;
    *  only a caret inside the markup shows the markup. image.ts has the rest. */
-  private image(node: SyntaxNode): boolean | void {
-    if (imageRevealed(this.state, node.from, node.to)) return
+  private image(node: SyntaxNode): boolean {
+    if (imageRevealed(this.state, node.from, node.to)) return true
 
     const image = imageOfNode(this.state, node)
-    if (!image) return
+    if (!image) return true
 
     this.inlineWidget(node, new ImageWidget(image), false)
     // Its marks live inside the replacement now; decorating them would overlap.
@@ -355,17 +378,17 @@ class Decorator {
 
   /** Two pieces of HTML get rendered rather than shown: a resized image, which
    *  is how a size is recorded, and a page break, which has no markdown form. */
-  private htmlImage(node: SyntaxNode): boolean | void {
+  private htmlImage(node: SyntaxNode): boolean {
     // A closing tag already paired up by its opener.
-    if (this.isClaimed(node.from, node.to)) return
-    if (node.name === 'HTMLTag' && this.underline(node)) return
+    if (this.isClaimed(node.from, node.to)) return true
+    if (node.name === 'HTMLTag' && this.underline(node)) return true
 
     const tag = this.state.doc.sliceString(node.from, node.to)
 
     if (/page-break-(after|before)\s*:\s*always/i.test(tag)) {
       // Its own range, not its parent's: a block-level tag's parent is the
       // whole document, which the caret always overlaps.
-      if (overlaps(this.state, node.from, node.to)) return
+      if (overlaps(this.state, node.from, node.to)) return true
       this.inlineWidget(node, new PageBreakWidget(), false)
       return false
     }
@@ -373,12 +396,12 @@ class Decorator {
     return this.image(node)
   }
 
-  private emoji(node: SyntaxNode): boolean | void {
-    if (revealed(this.state, node)) return
+  private emoji(node: SyntaxNode): boolean {
+    if (revealed(this.state, node)) return true
 
     const shortcode = this.state.doc.sliceString(node.from + 1, node.to - 1)
     const character = emojiFor(shortcode)
-    if (!character) return
+    if (!character) return true
 
     this.inlineWidget(node, new EmojiWidget(character), false)
     return false

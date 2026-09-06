@@ -21,8 +21,7 @@ function walkInto(
     const span = tableCrossed(view.state, range.head, move(view, range).head)
     if (!span) return false
 
-    const table = tableViewAt(view, span.from)
-    return table !== null && table.enter(side, where(view))
+    return tableViewAt(view, span.from)?.enter(side, where(view)) ?? false
   }
 }
 

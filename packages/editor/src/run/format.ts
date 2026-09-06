@@ -10,7 +10,12 @@
  *  So it has to stand alone: everything it needs is declared inside it, and it
  *  refers to nothing in this module or any other. A bundler renaming the
  *  outside world cannot reach in, and a test evaluates the embedded copy in an
- *  empty scope to make sure that stays true. */
+ *  empty scope to make sure that stays true.
+ *
+ *  It also joins its strings with `+` rather than interpolating them, and turns
+ *  numbers into strings by name. The document it goes into is built as a
+ *  template literal, so one backtick in here would end that literal and take
+ *  the rest of the runner with it. */
 export function formatRunValues(values: unknown[], quoteStrings = false): string {
   // A console line is read, not parsed, so the caps are about keeping one line
   // legible rather than about safety. The sandbox is what keeps things safe.
@@ -31,7 +36,7 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
 
   const className = (value: object): string => {
     const holder = value as { constructor?: { name?: unknown } }
-    const name = holder.constructor && holder.constructor.name
+    const name = holder.constructor?.name
     return typeof name === 'string' && name !== 'Object' ? name : ''
   }
 
@@ -40,16 +45,17 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
   const describe = (value: unknown, depth: number): string => {
     if (value === null) return 'null'
 
-    const type = typeof value
-    if (type === 'undefined') return 'undefined'
-    if (type === 'string') return quote(value as string)
-    if (type === 'bigint') return String(value) + 'n'
-    if (type === 'symbol') return String(value)
-    if (type === 'boolean') return String(value)
+    // Narrowed on `typeof value` itself rather than on a saved copy of it, so
+    // each branch knows what it is holding and can say so without a cast.
+    if (value === undefined) return 'undefined'
+    if (typeof value === 'string') return quote(value)
+    if (typeof value === 'bigint') return String(value) + 'n'
+    if (typeof value === 'symbol') return String(value)
+    if (typeof value === 'boolean') return String(value)
     // Only -0 needs saying out loud; String() spells it as 0.
-    if (type === 'number') return Object.is(value, -0) ? '-0' : String(value)
+    if (typeof value === 'number') return Object.is(value, -0) ? '-0' : String(value)
 
-    if (type === 'function') {
+    if (typeof value === 'function') {
       const named = (value as { name?: unknown }).name
       const name = typeof named === 'string' ? named : ''
       if (/^\s*class[\s{]/.test(String(value))) {
@@ -58,7 +64,8 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
       return name ? '[Function: ' + name + ']' : '[Function (anonymous)]'
     }
 
-    const object = value as object
+    // Everything else has been answered for above, so this is an object.
+    const object = value
     if (seen.has(object)) return '[Circular]'
 
     // An error is worth reading as a sentence rather than as an object with a
@@ -82,7 +89,7 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
       if (Array.isArray(object)) {
         const parts = object.slice(0, MAX_ITEMS).map((item) => describe(item, depth + 1))
         if (object.length > MAX_ITEMS) {
-          parts.push('… ' + (object.length - MAX_ITEMS) + ' more')
+          parts.push('… ' + String(object.length - MAX_ITEMS) + ' more')
         }
         return '[' + parts.join(', ') + ']'
       }
@@ -93,8 +100,11 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
           if (parts.length === MAX_ITEMS) break
           parts.push(describe(name, depth + 1) + ' => ' + describe(held, depth + 1))
         }
-        if (object.size > parts.length) parts.push('… ' + (object.size - parts.length) + ' more')
-        return 'Map(' + object.size + ')' + (parts.length ? ' { ' + parts.join(', ') + ' }' : ' {}')
+        if (object.size > parts.length) {
+          parts.push('… ' + String(object.size - parts.length) + ' more')
+        }
+        const size = String(object.size)
+        return 'Map(' + size + ')' + (parts.length ? ' { ' + parts.join(', ') + ' }' : ' {}')
       }
 
       if (object instanceof Set) {
@@ -103,8 +113,11 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
           if (parts.length === MAX_ITEMS) break
           parts.push(describe(held, depth + 1))
         }
-        if (object.size > parts.length) parts.push('… ' + (object.size - parts.length) + ' more')
-        return 'Set(' + object.size + ')' + (parts.length ? ' { ' + parts.join(', ') + ' }' : ' {}')
+        if (object.size > parts.length) {
+          parts.push('… ' + String(object.size - parts.length) + ' more')
+        }
+        const size = String(object.size)
+        return 'Set(' + size + ')' + (parts.length ? ' { ' + parts.join(', ') + ' }' : ' {}')
       }
 
       const names = Object.keys(object)
@@ -114,7 +127,7 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
           (name) =>
             key(name) + ': ' + describe((object as Record<string, unknown>)[name], depth + 1),
         )
-      if (names.length > MAX_KEYS) parts.push('… ' + (names.length - MAX_KEYS) + ' more')
+      if (names.length > MAX_KEYS) parts.push('… ' + String(names.length - MAX_KEYS) + ' more')
 
       const prefix = className(object) ? className(object) + ' ' : ''
       return prefix + (parts.length ? '{ ' + parts.join(', ') + ' }' : '{}')

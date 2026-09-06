@@ -35,13 +35,25 @@ export function selectIn(element: HTMLElement, from: number, to = from) {
   apply(range)
 }
 
+/** The two ways a browser turns a point on screen into a place in the text.
+ *
+ *  Neither is on every engine this runs in - WebKitGTK has the older one,
+ *  WebView2 the newer - while the DOM types say both are always there. So the
+ *  pair is described here and asked for, rather than called blind. The older one
+ *  is tried first because it is the one more of these engines have; it is also
+ *  the deprecated one, which is why it is named here and not in a call. */
+interface CaretFromPoint {
+  caretRangeFromPoint?: (x: number, y: number) => Range | null
+  caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
+}
+
 /** Puts the caret at the spot in an element nearest to a point on screen. */
 export function selectAtPoint(element: HTMLElement, x: number, y: number) {
-  // Optional calls: WebKitGTK and WebView2 differ on which of the two exists.
-  let range = document.caretRangeFromPoint?.(x, y) ?? null
+  const finder: CaretFromPoint = document
+  let range = finder.caretRangeFromPoint?.(x, y) ?? null
 
   if (!range) {
-    const position = document.caretPositionFromPoint?.(x, y)
+    const position = finder.caretPositionFromPoint?.(x, y)
     if (position) {
       range = document.createRange()
       range.setStart(position.offsetNode, position.offset)

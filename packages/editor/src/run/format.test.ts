@@ -70,9 +70,17 @@ describe('formatting what the sandbox says', () => {
   })
 
   test('names functions and classes without printing their bodies', () => {
-    expect(line(function named() {})).toBe('[Function: named]')
+    // Bodies on purpose: what is under test is the name, not what is inside.
+    function named() {
+      return undefined
+    }
+    class Thing {
+      readonly kind = 'thing'
+    }
+
+    expect(line(named)).toBe('[Function: named]')
     expect(line(() => 1)).toBe('[Function (anonymous)]')
-    expect(line(class Thing {})).toBe('[class Thing]')
+    expect(line(Thing)).toBe('[class Thing]')
   })
 
   test('stops at a cycle instead of following it', () => {
@@ -107,7 +115,11 @@ describe('formatting what the sandbox says', () => {
     // The sandbox gets this function as source text, so anything it referred to
     // in this module would be undefined by the time it runs there. Evaluating
     // the same text in an empty scope is the check.
-    const alone = new Function(`return (${String(formatRunValues)})`)() as typeof formatRunValues
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval -- evaluating the embedded copy in an empty scope is the whole test
+    const build = new Function(
+      `return (${String(formatRunValues)})`,
+    ) as () => typeof formatRunValues
+    const alone = build()
     expect(alone([{ a: [1, 'two'] }])).toBe("{ a: [1, 'two'] }")
     expect(alone([new Error('boom')])).toBe('Error: boom')
   })

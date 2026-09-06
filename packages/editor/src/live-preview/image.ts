@@ -217,7 +217,7 @@ export function selectedImage(state: EditorState): ImageSpan | null {
   const range = state.selection.main
   if (range.empty) return null
   const image = imageAt(state, range.from)
-  return image && image.to === range.to ? image : null
+  return image?.to === range.to ? image : null
 }
 
 function selectionOver(image: ImageSpan) {
@@ -372,23 +372,28 @@ const ICONS = {
   missing: ['M2 3.5h10v7H2z', 'M4 9l2.5-3 2 2 1.5-1.5L11.5 9', 'M4.5 5.5h.01'],
 }
 
-/** Parts of the frame the handlers reach for, found once per frame. */
+/** The pieces of a frame that the handlers reach for. */
 interface Parts {
   frame: HTMLElement
+  /** The picture and everything drawn over it: what the toolbar is placed against. */
+  box: HTMLElement
   image: HTMLImageElement
+  /** Holds the path of a picture that would not load. */
+  missing: HTMLElement
   alt: HTMLInputElement
   size: HTMLButtonElement
   badge: HTMLElement
+  tools: HTMLElement
 }
 
-function partsOf(frame: HTMLElement): Parts {
-  return {
-    frame,
-    image: frame.querySelector('img') as HTMLImageElement,
-    alt: frame.querySelector('.nib-image-alt') as HTMLInputElement,
-    size: frame.querySelector('.nib-image-size') as HTMLButtonElement,
-    badge: frame.querySelector('.nib-image-badge') as HTMLElement,
-  }
+/** Each frame's pieces, kept when the frame is built rather than searched for
+ *  again. Looking them up meant claiming each one was there, which no
+ *  `querySelector` can promise; this way the reference is the one that was
+ *  created, and a frame this class did not build says so by being absent. */
+const PARTS = new WeakMap<HTMLElement, Parts>()
+
+function partsOf(frame: HTMLElement): Parts | null {
+  return PARTS.get(frame) ?? null
 }
 
 /** The image this frame stands for right now, read from the document. Null
@@ -467,7 +472,8 @@ export class ImageWidget extends NibWidget {
     const missing = document.createElement('span')
     missing.className = 'nib-image-missing'
     missing.title = uiLabel('imageNotFound')
-    missing.append(icon(ICONS.missing), document.createElement('span'))
+    const path = document.createElement('span')
+    missing.append(icon(ICONS.missing), path)
     box.append(missing)
 
     for (const corner of ['nw', 'ne', 'sw', 'se']) {
@@ -485,7 +491,21 @@ export class ImageWidget extends NibWidget {
     badge.className = 'nib-image-badge'
     box.append(badge)
 
-    box.append(this.toolbar(view, frame))
+    const toolbar = this.toolbar(view, frame)
+    box.append(toolbar.tools)
+
+    // Written down before anything reads them, since `sync` below is one of the
+    // things that does.
+    PARTS.set(frame, {
+      frame,
+      box,
+      image,
+      missing: path,
+      alt: toolbar.alt,
+      size: toolbar.size,
+      badge,
+      tools: toolbar.tools,
+    })
 
     const src = view.state.facet(imageResolver)(this.spec.src)
     frame.dataset.src = src
@@ -544,22 +564,22 @@ export class ImageWidget extends NibWidget {
    *  rather than loading it again. A different picture is rebuilt. */
   override updateDOM(frame: HTMLElement, view: EditorView): boolean {
     if (frame.dataset.src !== view.state.facet(imageResolver)(this.spec.src)) return false
-    this.sync(frame, this.spec)
-    return true
+    return this.sync(frame, this.spec)
   }
 
-  /** Writes what a spec says onto the frame's parts. Never asks the view
-   *  where the frame is: `toDOM` runs before the view has finished building. */
-  private sync(frame: HTMLElement, image: ImageSpec) {
+  /** Writes what a spec says onto the frame's parts, and says whether it could.
+   *  Never asks the view where the frame is: `toDOM` runs before the view has
+   *  finished building. */
+  private sync(frame: HTMLElement, image: ImageSpec): boolean {
     const parts = partsOf(frame)
+    if (!parts) return false
+
     const natural = NATURAL.get(frame.dataset.src ?? '')?.width
 
     parts.image.alt = image.alt
     parts.image.title = image.title
     parts.image.style.width = displayWidth(image, natural)
-
-    const missing = frame.querySelector('.nib-image-missing > span')
-    if (missing) missing.textContent = image.src
+    parts.missing.textContent = image.src
 
     if (document.activeElement !== parts.alt) parts.alt.value = image.alt
     parts.size.textContent = sizeLabel(image.zoom, natural)
@@ -569,13 +589,21 @@ export class ImageWidget extends NibWidget {
     const plain = image.zoom === 100 && !image.width
     parts.size.disabled = plain
     parts.size.title = plain ? '' : uiLabel('resetSize')
+    return true
   }
 
   private inToolbar(event: Event): boolean {
-    return !!(event.target as Element | null)?.closest?.('.nib-image-tools')
+    // A press can land on a text node rather than an element, so the target is
+    // asked what it is rather than assumed to be one.
+    const target = event.target
+    return target instanceof Element && target.closest('.nib-image-tools') !== null
   }
 
-  private toolbar(view: EditorView, frame: HTMLElement): HTMLElement {
+  /** The toolbar, and the two of its controls the frame reads back later. */
+  private toolbar(
+    view: EditorView,
+    frame: HTMLElement,
+  ): { tools: HTMLElement; alt: HTMLInputElement; size: HTMLButtonElement } {
     const tools = document.createElement('span')
     tools.className = 'nib-image-tools'
 
@@ -644,7 +672,7 @@ export class ImageWidget extends NibWidget {
       return control
     }
 
-    button('nib-image-size', '', '', (image) => {
+    const size = button('nib-image-size', '', '', (image) => {
       if (image.zoom !== 100 || image.width) {
         rewrite(view, image, withZoom(image, 100), 'input.image.resize')
       }
@@ -652,8 +680,10 @@ export class ImageWidget extends NibWidget {
     })
 
     button('nib-image-open', uiLabel('openImage'), icon(ICONS.open), (image) => {
-      const picture = partsOf(frame).image
-      if (!frame.classList.contains('is-broken')) openLightbox(view, picture.src, image.alt)
+      const picture = partsOf(frame)?.image
+      if (picture && !frame.classList.contains('is-broken')) {
+        openLightbox(view, picture.src, image.alt)
+      }
     })
 
     const copy = button('nib-image-copy', uiLabel('copyLink'), icon(ICONS.link), (image) => {
@@ -683,7 +713,7 @@ export class ImageWidget extends NibWidget {
       remove(view, image),
     )
 
-    return tools
+    return { tools, alt, size }
   }
 
   /** A corner drag. The picture follows the pointer live; the document is
@@ -700,8 +730,13 @@ export class ImageWidget extends NibWidget {
 
     const image = imageOfFrame(view, frame)
     const parts = partsOf(frame)
-    const natural = NATURAL.get(frame.dataset.src ?? '')?.width || parts.image.naturalWidth
-    if (!image || !natural) return
+    if (!image || !parts) return
+
+    // A remembered width of zero is no width at all - a picture that loaded with
+    // no size of its own - so the element is asked instead.
+    const remembered = NATURAL.get(frame.dataset.src ?? '')?.width ?? 0
+    const natural = remembered > 0 ? remembered : parts.image.naturalWidth
+    if (!natural) return
 
     if (selectedImage(view.state)?.from !== image.from) select(view, image)
 
@@ -819,6 +854,9 @@ const imageSelection = ViewPlugin.fromClass(
       const out: Mark[] = []
 
       for (const frame of view.contentDOM.querySelectorAll<HTMLElement>('.nib-image-frame')) {
+        const parts = partsOf(frame)
+        if (!parts) continue
+
         const image = imageOfFrame(view, frame)
         // The selection is only shown while it is the editor's, or while the
         // toolbar - part of showing it - holds focus.
@@ -828,10 +866,8 @@ const imageSelection = ViewPlugin.fromClass(
         let flipped = false
         let shift = 0
         if (selected) {
-          const box = (frame.querySelector('.nib-image-box') as HTMLElement).getBoundingClientRect()
-          const tools = (
-            frame.querySelector('.nib-image-tools') as HTMLElement
-          ).getBoundingClientRect()
+          const box = parts.box.getBoundingClientRect()
+          const tools = parts.tools.getBoundingClientRect()
           flipped = box.top - scroller.top < tools.height + 16
 
           // Centred on the picture, but kept inside the view.

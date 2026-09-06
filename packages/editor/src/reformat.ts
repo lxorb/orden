@@ -15,7 +15,7 @@ function fenceMark(line: string): string | null {
  *  least as many of them, and nothing else on the line. */
 function closesFence(line: string, mark: string): boolean {
   const found = fenceMark(line)
-  if (!found || found[0] !== mark[0] || found.length < mark.length) return false
+  if (!found?.startsWith(mark.charAt(0)) || found.length < mark.length) return false
   return !line.slice(line.indexOf(found) + found.length).trim()
 }
 

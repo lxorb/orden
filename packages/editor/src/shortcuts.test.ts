@@ -36,7 +36,7 @@ describe('building the keymap', () => {
     const built = bindings(nibBindings, { 'format.bold': null })
 
     expect(built.some((one) => one.key === 'Mod-b')).toBe(false)
-    expect(built.every((one) => one.key || one.mac || one.win || one.linux)).toBe(true)
+    expect(built.every((one) => one.key ?? one.mac ?? one.win ?? one.linux)).toBe(true)
   })
 
   test('carries the fields CodeMirror needs beside the key', () => {

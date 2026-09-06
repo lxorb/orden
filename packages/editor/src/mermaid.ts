@@ -63,5 +63,7 @@ export const mermaidDescription = LanguageDescription.of({
   name: 'mermaid',
   alias: ['mmd'],
   extensions: ['mmd'],
-  load: async () => new LanguageSupport(mermaidLanguage),
+  // The tokenizer is in this file, so there is nothing to fetch and the promise
+  // is already kept.
+  load: () => Promise.resolve(new LanguageSupport(mermaidLanguage)),
 })

@@ -286,7 +286,7 @@ function fenceEnd(line: Line): number {
   let pos = line.pos + 1
   while (pos < line.text.length && line.text.charCodeAt(pos) === line.next) pos++
   if (pos < line.pos + 3) return -1
-  if (line.next === BACKTICK && line.text.indexOf('`', pos) >= 0) return -1
+  if (line.next === BACKTICK && line.text.includes('`', pos)) return -1
   return pos
 }
 
@@ -355,8 +355,8 @@ function closerAhead(cx: BlockContext, line: Line, mark: number, length: number)
 /** Adds code text, stretching the previous piece when it touches this one. */
 function addCodeText(cx: BlockContext, marks: Element[], from: number, to: number) {
   const last = marks.at(-1)
-  const name = last && cx.parser.nodeSet.types[last.type]?.name
-  if (last && last.to === from && name === 'CodeText') {
+  const name = last ? cx.parser.nodeSet.types[last.type]?.name : undefined
+  if (last?.to === from && name === 'CodeText') {
     marks[marks.length - 1] = cx.elt('CodeText', last.from, to)
   } else {
     marks.push(cx.elt('CodeText', from, to))

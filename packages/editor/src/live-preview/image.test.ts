@@ -33,10 +33,16 @@ function state(doc: string, selection: { anchor: number; head?: number } = { anc
 
 /** Runs a command and returns the selection it left, or null when it declined. */
 function run(command: StateCommand, from: EditorState): { anchor: number; head: number } | null {
-  let next: EditorState | null = null
-  const handled = command({ state: from, dispatch: (tr: Transaction) => (next = tr.state) })
+  const states: EditorState[] = []
+  const handled = command({
+    state: from,
+    dispatch: (transaction: Transaction) => states.push(transaction.state),
+  })
+
+  const next = states.at(-1)
   if (!handled || !next) return null
-  const range = (next as EditorState).selection.main
+
+  const range = next.selection.main
   return { anchor: range.anchor, head: range.head }
 }
 

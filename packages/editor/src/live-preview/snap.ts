@@ -61,18 +61,18 @@ function runEnd(state: EditorState, mark: SyntaxNode, forward: boolean): number 
 function step(state: EditorState, tree: Tree, pos: number): number {
   // A hidden mark ending at the caret is the tail of an opening run.
   const before = tree.resolveInner(pos, -1)
-  if (before.to === pos && concealed(state, before)) {
-    const parent = before.parent!
+  const opening = before.parent
+  if (opening && before.to === pos && concealed(state, before)) {
     // Not when the caret is already at the construct's far edge: a construct
     // hidden wholesale (an image) has the caret outside on both sides.
-    if (pos < parent.to && runEnd(state, before, false) === parent.from) return parent.from
+    if (pos < opening.to && runEnd(state, before, false) === opening.from) return opening.from
   }
 
   // A hidden mark starting at the caret is the head of a closing run.
   const after = tree.resolveInner(pos, 1)
-  if (after.from === pos && concealed(state, after)) {
-    const parent = after.parent!
-    if (pos > parent.from && runEnd(state, after, true) === parent.to) return parent.to
+  const closing = after.parent
+  if (closing && after.from === pos && concealed(state, after)) {
+    if (pos > closing.from && runEnd(state, after, true) === closing.to) return closing.to
   }
 
   return pos
@@ -99,16 +99,16 @@ export const pointerSnap = EditorState.transactionFilter.of((transaction) => {
   if (selection.ranges.some((range) => !range.empty)) return transaction
 
   const state = transaction.startState
-  let moved = false
   const ranges = selection.ranges.map((range) => {
     const pos = snapOutward(state, range.head)
     if (pos === range.head) return range
-    moved = true
     // Lean towards the text the caret just crossed, so a wrapped line keeps
     // it on the same visual row as the click.
     return EditorSelection.cursor(pos, pos > range.head ? -1 : 1)
   })
 
-  if (!moved) return transaction
+  // Compared against what came in, rather than a flag set inside the callback:
+  // the compiler cannot see a callback run, and reads such a flag as never set.
+  if (ranges.every((range, index) => range === selection.ranges[index])) return transaction
   return [transaction, { selection: EditorSelection.create(ranges, selection.mainIndex) }]
 })
