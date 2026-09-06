@@ -172,7 +172,13 @@ describe('selecting several rows', () => {
   })
 
   test('the rows shown, top to bottom, follow open folders', () => {
-    expect(workspace.visibleRows()).toEqual(['/space/a.md', '/space/f', '/space/f/b.md', '/space/f/c.md', '/space/d.md'])
+    expect(workspace.visibleRows()).toEqual([
+      '/space/a.md',
+      '/space/f',
+      '/space/f/b.md',
+      '/space/f/c.md',
+      '/space/d.md',
+    ])
     workspace.expanded = {}
     expect(workspace.visibleRows()).toEqual(['/space/a.md', '/space/f', '/space/d.md'])
   })
@@ -190,7 +196,12 @@ describe('selecting several rows', () => {
   test('shift takes everything shown between the anchor and the row', () => {
     workspace.select('/space/a.md')
     workspace.selectRange('/space/f/c.md')
-    expect(workspace.selection).toEqual(['/space/a.md', '/space/f', '/space/f/b.md', '/space/f/c.md'])
+    expect(workspace.selection).toEqual([
+      '/space/a.md',
+      '/space/f',
+      '/space/f/b.md',
+      '/space/f/c.md',
+    ])
     workspace.selectRange('/space/f')
     expect(workspace.selection).toEqual(['/space/a.md', '/space/f'])
   })
@@ -216,7 +227,9 @@ describe('selecting several rows', () => {
 
   test('moving several skips what a moving folder already takes along', async () => {
     const moved: string[] = []
-    const spy = vi.spyOn(workspace, 'move').mockImplementation(async (from: string) => void moved.push(from))
+    const spy = vi
+      .spyOn(workspace, 'move')
+      .mockImplementation(async (from: string) => void moved.push(from))
     await workspace.moveMany(['/space/f', '/space/f/b.md', '/space/a.md'], '/space/elsewhere')
     expect(moved).toEqual(['/space/f', '/space/a.md'])
     expect(workspace.selection).toEqual([])
@@ -227,7 +240,9 @@ describe('selecting several rows', () => {
     const removed: [string, boolean][] = []
     const spy = vi
       .spyOn(workspace, 'remove')
-      .mockImplementation(async (path: string, isFolder: boolean) => void removed.push([path, isFolder]))
+      .mockImplementation(
+        async (path: string, isFolder: boolean) => void removed.push([path, isFolder]),
+      )
     await workspace.removeMany(['/space/f', '/space/f/c.md', '/space/d.md'])
     expect(removed).toEqual([
       ['/space/f', true],

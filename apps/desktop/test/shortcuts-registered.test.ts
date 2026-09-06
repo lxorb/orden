@@ -55,7 +55,8 @@ function markup(dir: string, found: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) markup(path, found)
-    else if ((name.endsWith('.ts') || name.endsWith('.svelte')) && !name.endsWith('.test.ts')) found.push(path)
+    else if ((name.endsWith('.ts') || name.endsWith('.svelte')) && !name.endsWith('.test.ts'))
+      found.push(path)
   }
   return found
 }
@@ -68,7 +69,10 @@ describe('the menus and the palette', () => {
    *  therefore comes from `shortcuts.hint(id)`, and this is what says so. */
   test('never spell a shortcut out by hand', () => {
     const guilty = markup(APP)
-      .map((path) => ({ name: path.slice(APP.length).replace(/\\/g, '/'), text: readFileSync(path, 'utf8') }))
+      .map((path) => ({
+        name: path.slice(APP.length).replace(/\\/g, '/'),
+        text: readFileSync(path, 'utf8'),
+      }))
       .filter((one) => /hint: '[^']/.test(one.text))
       .map((one) => one.name)
 

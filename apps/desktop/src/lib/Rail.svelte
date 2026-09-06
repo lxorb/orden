@@ -141,7 +141,6 @@
       void loadIcons().then((all) => (library = all))
     }
   })
-
 </script>
 
 <nav>
@@ -189,7 +188,12 @@
 
     <!-- The rail is the list of spaces, so its plus makes one. New notes are
          made from the plus beside the tabs. -->
-    <button class="add" title={t('New space')} aria-label={t('New space')} onclick={() => newSpace()}>
+    <button
+      class="add"
+      title={t('New space')}
+      aria-label={t('New space')}
+      onclick={() => newSpace()}
+    >
       <svg viewBox="0 0 12 12"><path d="M6 1v10M1 6h10" /></svg>
     </button>
   </div>
@@ -233,7 +237,9 @@
         aria-label={t('Sign in')}
         onclick={() => (account.open = true)}
       >
-        <svg viewBox="0 0 14 14"><circle cx="7" cy="4.6" r="2.8" /><path d="M1.6 13a5.4 5.4 0 0 1 10.8 0" /></svg>
+        <svg viewBox="0 0 14 14"
+          ><circle cx="7" cy="4.6" r="2.8" /><path d="M1.6 13a5.4 5.4 0 0 1 10.8 0" /></svg
+        >
       </button>
     {/if}
 
@@ -243,14 +249,16 @@
       aria-label={t('Switch theme')}
       onclick={() => theme.toggle()}
     >
-    {#if theme.current === 'dark'}
-      <svg viewBox="0 0 14 14"
-        ><circle cx="7" cy="7" r="3" /><path
-          d="M7 0v2M7 12v2M0 7h2M12 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M11.5 2.5l-1.4 1.4M3.9 10.1l-1.4 1.4"
-        /></svg
-      >
-    {:else}
-        <svg viewBox="0 0 14 14"><path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" /></svg>
+      {#if theme.current === 'dark'}
+        <svg viewBox="0 0 14 14"
+          ><circle cx="7" cy="7" r="3" /><path
+            d="M7 0v2M7 12v2M0 7h2M12 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M11.5 2.5l-1.4 1.4M3.9 10.1l-1.4 1.4"
+          /></svg
+        >
+      {:else}
+        <svg viewBox="0 0 14 14"
+          ><path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" /></svg
+        >
       {/if}
     </button>
 

@@ -82,7 +82,8 @@ describe('GitHub-flavoured basics', () => {
 })
 
 describe('headings and the table of contents', () => {
-  const SOURCE = '# Title\n\n[toc]\n\n## Two words\n\n### Deeper, *with* `code`\n\n## Two words\n\nText'
+  const SOURCE =
+    '# Title\n\n[toc]\n\n## Two words\n\n### Deeper, *with* `code`\n\n## Two words\n\nText'
 
   test('are plain by default', () => {
     const html = renderMarkdown(SOURCE)
@@ -108,7 +109,9 @@ describe('headings and the table of contents', () => {
     expect(html).toContain('<nav class="toc">')
     expect(html).toContain('<a href="#title">Title</a>')
     expect(html).toContain('<a href="#deeper-with-code">Deeper, with code</a>')
-    expect(html).toMatch(/<li><a href="#two-words">Two words<\/a>\n?<ul>\n?<li><a href="#deeper-with-code">/)
+    expect(html).toMatch(
+      /<li><a href="#two-words">Two words<\/a>\n?<ul>\n?<li><a href="#deeper-with-code">/,
+    )
   })
 
   test('accept [TOC] in capitals, as Typora does', () => {
@@ -126,7 +129,9 @@ describe('headings and the table of contents', () => {
 
 describe('code fences', () => {
   test('are listed with their language', () => {
-    const blocks = codeBlocks('```js\nlet a\n```\n\n- item\n\n  ```mermaid\n  graph TD\n  ```\n\n```\nplain\n```')
+    const blocks = codeBlocks(
+      '```js\nlet a\n```\n\n- item\n\n  ```mermaid\n  graph TD\n  ```\n\n```\nplain\n```',
+    )
 
     expect(blocks).toEqual([
       { language: 'js', code: 'let a' },
@@ -251,10 +256,10 @@ describe('raw HTML', () => {
 
 describe('definition lists', () => {
   test('renders a term and its meaning', () => {
+    expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dt>Markdown</dt>')
     expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain(
-      '<dt>Markdown</dt>',
+      '<dd>A way of writing.</dd>',
     )
-    expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dd>A way of writing.</dd>')
   })
 
   test('takes several meanings for one term', () => {
@@ -287,9 +292,7 @@ describe('abbreviations', () => {
   const SOURCE = '*[HTML]: HyperText Markup Language\n\nI write HTML every day.\n'
 
   test('expands a defined word', () => {
-    expect(renderMarkdown(SOURCE)).toContain(
-      '<abbr title="HyperText Markup Language">HTML</abbr>',
-    )
+    expect(renderMarkdown(SOURCE)).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
   })
 
   test('does not print the definition itself', () => {

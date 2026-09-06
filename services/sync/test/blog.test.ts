@@ -302,7 +302,9 @@ describe('choosing a subdomain', () => {
     expect((await call(env, '/v1/spaces/available/free-name', { token })).json.available).toBe(true)
 
     await publish({ subdomain: 'taken-name' })
-    expect((await call(env, '/v1/spaces/available/taken-name', { token })).json.available).toBe(false)
+    expect((await call(env, '/v1/spaces/available/taken-name', { token })).json.available).toBe(
+      false,
+    )
     expect((await call(env, '/v1/spaces/available/www', { token })).json.available).toBe(false)
   })
 })
@@ -389,7 +391,6 @@ describe('the author', () => {
     expect(note.text).not.toContain('<b>Ada</b>')
     expect(note.text).toContain('by &lt;b&gt;Ada&lt;/b&gt;')
   })
-
 })
 
 /** Every public surface, rendered for an account whose address is known, and
@@ -412,7 +413,9 @@ describe('nothing public carries the email address', () => {
     const seen: string[] = []
     for (const path of PUBLIC) {
       const response = await call(env, path, { host })
-      seen.push(`${path}: ${[...response.headers.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`)
+      seen.push(
+        `${path}: ${[...response.headers.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`,
+      )
       seen.push(`${path}: ${response.text}`)
     }
 

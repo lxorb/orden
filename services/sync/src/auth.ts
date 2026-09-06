@@ -1,5 +1,14 @@
 import { Hono } from 'hono'
-import { equals, isEmail, newId, normaliseEmail, now, randomCode, randomToken, sha256 } from './crypto'
+import {
+  equals,
+  isEmail,
+  newId,
+  normaliseEmail,
+  now,
+  randomCode,
+  randomToken,
+  sha256,
+} from './crypto'
 import { codeMessage, mailer } from './email'
 import type { Env, User, Variables } from './types'
 
@@ -23,10 +32,7 @@ export async function userForToken(env: Env, token: string): Promise<User | null
 }
 
 /** Rejects the request unless it carries a live session. */
-export async function requireUser(
-  env: Env,
-  header: string | undefined,
-): Promise<User | null> {
+export async function requireUser(env: Env, header: string | undefined): Promise<User | null> {
   const token = header?.startsWith('Bearer ') ? header.slice(7).trim() : null
   return token ? userForToken(env, token) : null
 }

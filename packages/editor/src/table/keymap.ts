@@ -31,7 +31,8 @@ function walkInto(
  *  and that wins over a blank line's start. */
 function caretX(view: EditorView): Landing {
   const { head, goalColumn } = view.state.selection.main
-  if (goalColumn !== undefined) return { x: view.contentDOM.getBoundingClientRect().left + goalColumn }
+  if (goalColumn !== undefined)
+    return { x: view.contentDOM.getBoundingClientRect().left + goalColumn }
 
   const coords = view.coordsAtPos(head)
   return coords ? { x: coords.left } : 'start'
@@ -62,10 +63,30 @@ export const insertTableToEdit: Command = (view) => {
 export const tableBindings: BindingSpec[] = [
   { id: 'table.below', key: 'ArrowDown', run: walkInto('above', down, caretX), contextual: true },
   { id: 'table.above', key: 'ArrowUp', run: walkInto('below', up, caretX), contextual: true },
-  { id: 'table.ahead', key: 'ArrowRight', run: walkInto('above', forward, () => 'start'), contextual: true },
-  { id: 'table.behind', key: 'ArrowLeft', run: walkInto('below', backward, () => 'end'), contextual: true },
+  {
+    id: 'table.ahead',
+    key: 'ArrowRight',
+    run: walkInto('above', forward, () => 'start'),
+    contextual: true,
+  },
+  {
+    id: 'table.behind',
+    key: 'ArrowLeft',
+    run: walkInto('below', backward, () => 'end'),
+    contextual: true,
+  },
   // Deleting into a table from beside it would tear a row; stepping in is
   // what was meant.
-  { id: 'table.delete', key: 'Delete', run: walkInto('above', forward, () => 'start'), contextual: true },
-  { id: 'table.backspace', key: 'Backspace', run: walkInto('below', backward, () => 'end'), contextual: true },
+  {
+    id: 'table.delete',
+    key: 'Delete',
+    run: walkInto('above', forward, () => 'start'),
+    contextual: true,
+  },
+  {
+    id: 'table.backspace',
+    key: 'Backspace',
+    run: walkInto('below', backward, () => 'end'),
+    contextual: true,
+  },
 ]

@@ -30,7 +30,20 @@ const MOST_BYTES = 8 * 1024
 /** The modifiers a combination may name. `Mod` is Cmd on a Mac and Ctrl
  *  everywhere else, which is why what is stored says `Mod` rather than either
  *  of them: one account, two kinds of machine. */
-const MODIFIERS = new Set(['mod', 'cmd', 'meta', 'm', 'ctrl', 'control', 'c', 'alt', 'a', 'option', 'shift', 's'])
+const MODIFIERS = new Set([
+  'mod',
+  'cmd',
+  'meta',
+  'm',
+  'ctrl',
+  'control',
+  'c',
+  'alt',
+  'a',
+  'option',
+  'shift',
+  's',
+])
 
 /** Whether a string is a key combination in CodeMirror's notation.
  *
@@ -57,7 +70,8 @@ function isCombination(value: string): boolean {
 const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/
 
 function shortcutMap(value: unknown): string | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'shortcuts must be an object'
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    return 'shortcuts must be an object'
 
   const entries = Object.entries(value as Record<string, unknown>)
   if (entries.length > MOST_SHORTCUTS) return `shortcuts holds at most ${MOST_SHORTCUTS} keys`
@@ -68,7 +82,8 @@ function shortcutMap(value: unknown): string | null {
     // travel: without it a machine could never learn that another one
     // unbound something.
     if (key === null) continue
-    if (typeof key !== 'string' || !isCombination(key)) return `${id} is not set to a key combination`
+    if (typeof key !== 'string' || !isCombination(key))
+      return `${id} is not set to a key combination`
   }
 
   return null
@@ -86,7 +101,9 @@ export async function settingsOf(env: Env, userId: string): Promise<AccountSetti
 function parse(raw: string | undefined): AccountSettings {
   try {
     const value: unknown = JSON.parse(raw ?? '{}')
-    return value && typeof value === 'object' && !Array.isArray(value) ? (value as AccountSettings) : {}
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as AccountSettings)
+      : {}
   } catch {
     return {}
   }
@@ -122,6 +139,8 @@ settings.patch('/', async (context) => {
     return context.json({ error: 'that is more settings than an account holds' }, 413)
   }
 
-  await context.env.DB.prepare('update users set settings = ? where id = ?').bind(written, user.id).run()
+  await context.env.DB.prepare('update users set settings = ? where id = ?')
+    .bind(written, user.id)
+    .run()
   return context.json({ settings: merged })
 })

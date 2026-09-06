@@ -30,7 +30,11 @@ async function insert(view: EditorView, files: File[], sink: ImageSink, at?: num
   const pos = at ?? view.state.selection.main.from
 
   view.dispatch({
-    changes: { from: pos, to: at === undefined ? view.state.selection.main.to : pos, insert: markdown },
+    changes: {
+      from: pos,
+      to: at === undefined ? view.state.selection.main.to : pos,
+      insert: markdown,
+    },
     selection: EditorSelection.cursor(pos + markdown.length),
     scrollIntoView: true,
     userEvent: 'input.paste',

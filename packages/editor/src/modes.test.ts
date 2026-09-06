@@ -169,7 +169,9 @@ describe('what may still change the document', () => {
     for (const userEvent of ['input.paste', 'input.drop', 'delete.selection']) {
       expect(afterChange(state, { changes: { from: 0, insert: 'x' }, userEvent })).toBe('# Note')
     }
-    expect(afterChange(state, { changes: { from: 0, to: 6 }, userEvent: 'move.drop' })).toBe('# Note')
+    expect(afterChange(state, { changes: { from: 0, to: 6 }, userEvent: 'move.drop' })).toBe(
+      '# Note',
+    )
   })
 
   test('and not a widget dispatching straight at the view either', () => {
@@ -189,7 +191,12 @@ describe('what may still change the document', () => {
   test('the format commands write nothing', () => {
     const state = reading()
 
-    for (const command of [toggleWrap('**'), setHeading(2), insertHorizontalRule, clearFormatting]) {
+    for (const command of [
+      toggleWrap('**'),
+      setHeading(2),
+      insertHorizontalRule,
+      clearFormatting,
+    ]) {
       expect(afterCommand(state, command)).toBe('# Note')
     }
   })

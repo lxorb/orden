@@ -17,9 +17,17 @@ export function domainNotice(status: DomainStatus): Notice | null {
     case 'active':
       return { tone: 'ok', text: 'Certificate issued.', detail: null }
     case 'error':
-      return { tone: 'bad', text: 'Cloudflare could not set this domain up.', detail: status.detail }
+      return {
+        tone: 'bad',
+        text: 'Cloudflare could not set this domain up.',
+        detail: status.detail,
+      }
     case 'unconfigured':
-      return { tone: 'muted', text: 'This server does not hand out certificates yet.', detail: null }
+      return {
+        tone: 'muted',
+        text: 'This server does not hand out certificates yet.',
+        detail: null,
+      }
   }
 }
 

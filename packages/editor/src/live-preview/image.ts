@@ -143,7 +143,11 @@ export function imageOfNode(state: EditorState, node: SyntaxNode): ImageSpan | n
 }
 
 function imageNode(state: EditorState, pos: number, side: -1 | 1): SyntaxNode | null {
-  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side); node; node = node.parent) {
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side);
+    node;
+    node = node.parent
+  ) {
     if (IMAGE_NODES.has(node.name) && (side > 0 ? node.from : node.to) === pos) return node
   }
   return null
@@ -328,7 +332,8 @@ export function resizeTo(
 const NATURAL = new Map<string, { width: number; height: number }>()
 
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
-  if (spec.zoom !== 100) return natural ? `${Math.round((natural * spec.zoom) / 100)}px` : `${spec.zoom}%`
+  if (spec.zoom !== 100)
+    return natural ? `${Math.round((natural * spec.zoom) / 100)}px` : `${spec.zoom}%`
   return spec.width ? `${spec.width}px` : ''
 }
 
@@ -401,7 +406,9 @@ function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent:
 
   view.dispatch({
     changes: { from: image.from, to: image.to, insert },
-    selection: wasSelected ? EditorSelection.range(image.from, image.from + insert.length) : undefined,
+    selection: wasSelected
+      ? EditorSelection.range(image.from, image.from + insert.length)
+      : undefined,
     userEvent,
   })
 }
@@ -426,7 +433,11 @@ export class ImageWidget extends NibWidget {
     const a = this.spec
     const b = other.spec
     return (
-      a.src === b.src && a.alt === b.alt && a.title === b.title && a.zoom === b.zoom && a.width === b.width
+      a.src === b.src &&
+      a.alt === b.alt &&
+      a.title === b.title &&
+      a.zoom === b.zoom &&
+      a.width === b.width
     )
   }
 
@@ -455,7 +466,9 @@ export class ImageWidget extends NibWidget {
       handle.className = 'nib-image-handle'
       handle.dataset.corner = corner
       handle.title = uiLabel('dragToResize')
-      handle.addEventListener('pointerdown', (event) => this.startResize(event, view, frame, handle))
+      handle.addEventListener('pointerdown', (event) =>
+        this.startResize(event, view, frame, handle),
+      )
       box.append(handle)
     }
 
@@ -650,14 +663,21 @@ export class ImageWidget extends NibWidget {
       })
     })
 
-    button('nib-image-delete', uiLabel('deleteImage'), icon(ICONS.trash), (image) => remove(view, image))
+    button('nib-image-delete', uiLabel('deleteImage'), icon(ICONS.trash), (image) =>
+      remove(view, image),
+    )
 
     return tools
   }
 
   /** A corner drag. The picture follows the pointer live; the document is
    *  written once, when the pointer is released. */
-  private startResize(event: PointerEvent, view: EditorView, frame: HTMLElement, handle: HTMLElement) {
+  private startResize(
+    event: PointerEvent,
+    view: EditorView,
+    frame: HTMLElement,
+    handle: HTMLElement,
+  ) {
     if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
@@ -688,7 +708,13 @@ export class ImageWidget extends NibWidget {
     }
 
     const move = (moved: PointerEvent) => {
-      zoom = resizeTo(startWidth, sign * (moved.clientX - startX), natural, lineWidth, !moved.altKey)
+      zoom = resizeTo(
+        startWidth,
+        sign * (moved.clientX - startX),
+        natural,
+        lineWidth,
+        !moved.altKey,
+      )
       parts.image.style.width = displayWidth({ ...image, zoom, width: undefined }, natural)
       parts.badge.textContent = sizeLabel(zoom, natural)
       parts.size.textContent = sizeLabel(zoom, natural)
@@ -787,7 +813,9 @@ const imageSelection = ViewPlugin.fromClass(
         let shift = 0
         if (selected) {
           const box = (frame.querySelector('.nib-image-box') as HTMLElement).getBoundingClientRect()
-          const tools = (frame.querySelector('.nib-image-tools') as HTMLElement).getBoundingClientRect()
+          const tools = (
+            frame.querySelector('.nib-image-tools') as HTMLElement
+          ).getBoundingClientRect()
           flipped = box.top - scroller.top < tools.height + 16
 
           // Centred on the picture, but kept inside the view.

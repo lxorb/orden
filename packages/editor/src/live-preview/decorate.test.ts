@@ -12,9 +12,7 @@ function state(doc: string, cursor: number) {
   return EditorState.create({
     doc,
     selection: EditorSelection.cursor(cursor),
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-    ],
+    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
   })
 }
 
@@ -69,10 +67,15 @@ function marked(doc: string, className: string, cursor?: number): string[] {
 function lineClasses(doc: string): string[] {
   const full = doc + PARK
   const out: string[] = []
-  buildDecorations(state(full, full.length)).decorations.between(0, full.length, (from, to, value) => {
-    // Line decorations are the only empty ranges that carry no widget.
-    if (from === to && !value.spec.widget && value.spec.class) out.push(...value.spec.class.split(' '))
-  })
+  buildDecorations(state(full, full.length)).decorations.between(
+    0,
+    full.length,
+    (from, to, value) => {
+      // Line decorations are the only empty ranges that carry no widget.
+      if (from === to && !value.spec.widget && value.spec.class)
+        out.push(...value.spec.class.split(' '))
+    },
+  )
   return out
 }
 
@@ -103,16 +106,7 @@ describe('inline emphasis', () => {
   })
 
   test('handles italic, strikethrough, subscript and superscript', () => {
-    expect(concealed('_i_ ~~s~~ H~2~O X^2^')).toEqual([
-      '_',
-      '_',
-      '~~',
-      '~~',
-      '~',
-      '~',
-      '^',
-      '^',
-    ])
+    expect(concealed('_i_ ~~s~~ H~2~O X^2^')).toEqual(['_', '_', '~~', '~~', '~', '~', '^', '^'])
   })
 })
 
@@ -370,22 +364,33 @@ describe('links', () => {
   function linkMarks(doc: string, cursor?: number): { text: string; href: string | null }[] {
     const full = cursor === undefined ? doc + PARK : doc
     const out: { text: string; href: string | null }[] = []
-    buildDecorations(state(full, cursor ?? full.length)).decorations.between(0, full.length, (from, to, value) => {
-      if (value.spec.class === 'nib-link') {
-        out.push({ text: full.slice(from, to), href: value.spec.attributes?.['data-href'] ?? null })
-      }
-    })
+    buildDecorations(state(full, cursor ?? full.length)).decorations.between(
+      0,
+      full.length,
+      (from, to, value) => {
+        if (value.spec.class === 'nib-link') {
+          out.push({
+            text: full.slice(from, to),
+            href: value.spec.attributes?.['data-href'] ?? null,
+          })
+        }
+      },
+    )
     return out
   }
 
   test('the label of a link carries its target', () => {
-    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([{ text: 'docs', href: 'https://x.dev' }])
+    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([
+      { text: 'docs', href: 'https://x.dev' },
+    ])
   })
 
   test('a bare address stays visible and is the link', () => {
     const doc = 'go to https://bare.dev/p?q=1 now'
     expect(concealed(doc)).toEqual([])
-    expect(linkMarks(doc)).toEqual([{ text: 'https://bare.dev/p?q=1', href: 'https://bare.dev/p?q=1' }])
+    expect(linkMarks(doc)).toEqual([
+      { text: 'https://bare.dev/p?q=1', href: 'https://bare.dev/p?q=1' },
+    ])
   })
 
   test('an autolink hides its brackets and shows the address', () => {
@@ -395,7 +400,9 @@ describe('links', () => {
   })
 
   test('a www address gets its scheme', () => {
-    expect(linkMarks('see www.w.dev now')).toEqual([{ text: 'www.w.dev', href: 'https://www.w.dev' }])
+    expect(linkMarks('see www.w.dev now')).toEqual([
+      { text: 'www.w.dev', href: 'https://www.w.dev' },
+    ])
   })
 
   test('a note-relative target is styled but not a browser link', () => {

@@ -20,7 +20,7 @@ describe('what the pane says about a domain', () => {
     expect(notice?.text).toBe('Waiting for the record to show up.')
   })
 
-  test("passes on what Cloudflare is waiting for", () => {
+  test('passes on what Cloudflare is waiting for', () => {
     const notice = domainNotice(status('pending', 'custom hostname does not CNAME to this zone.'))
     expect(notice?.detail).toBe('custom hostname does not CNAME to this zone.')
   })

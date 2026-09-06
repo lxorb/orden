@@ -112,7 +112,12 @@ function escape(text: string): string {
  *  footer sits at the bottom of each. Browsers repeat a table's head and foot
  *  across pages and reserve their room, which is what makes running text
  *  possible without a print engine; a plain export stays a plain document. */
-export function withRunningText(body: string, setup: PageSetup, title: string, date: string): string {
+export function withRunningText(
+  body: string,
+  setup: PageSetup,
+  title: string,
+  date: string,
+): string {
   if (!setup.header && !setup.footer) return body
 
   const header = setup.header

@@ -39,11 +39,7 @@ export function compareEntries(options: TreeOptions): (a: Entry, b: Entry) => nu
 }
 
 /** `tree` with `change` applied to the children of the folder at `path`. */
-function inFolder(
-  tree: Entry,
-  path: string,
-  change: (children: Entry[]) => Entry[],
-): Entry {
+function inFolder(tree: Entry, path: string, change: (children: Entry[]) => Entry[]): Entry {
   if (tree.path === path) return { ...tree, children: change([...tree.children]) }
   if (!path.startsWith(tree.path)) return tree
 

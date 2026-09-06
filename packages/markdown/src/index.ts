@@ -155,9 +155,7 @@ const publishing = renderer({ escapeHtml: true }, [])
 
 /** Strips YAML front matter, which is metadata rather than content. */
 export function stripFrontMatter(source: string): string {
-  return source.startsWith('---')
-    ? source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '')
-    : source
+  return source.startsWith('---') ? source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '') : source
 }
 
 export function frontMatter(source: string): string | null {
@@ -241,7 +239,11 @@ function tableOfContents(headings: Heading[]): string {
 
   for (const heading of headings) {
     const wanted =
-      heading.level > last ? depth + 1 : heading.level < last ? Math.max(0, heading.level - top) : depth
+      heading.level > last
+        ? depth + 1
+        : heading.level < last
+          ? Math.max(0, heading.level - top)
+          : depth
 
     while (depth < wanted) {
       out.push('<ul>')

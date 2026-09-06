@@ -49,7 +49,8 @@ function sameRedirect(registered: string, given: string): boolean {
   if (registered === given) return true
   if (!LOOPBACK.test(registered) || !LOOPBACK.test(given)) return false
 
-  const withoutPort = (uri: string) => uri.replace(/^(http:\/\/(?:localhost|127\.0\.0\.1|\[::1\])):\d+/i, '$1')
+  const withoutPort = (uri: string) =>
+    uri.replace(/^(http:\/\/(?:localhost|127\.0\.0\.1|\[::1\])):\d+/i, '$1')
   return withoutPort(registered) === withoutPort(given)
 }
 
@@ -196,8 +197,12 @@ function protectedResource(env: Env) {
   }
 }
 
-oauthMetadata.get('/oauth-protected-resource', (context) => context.json(protectedResource(context.env)))
-oauthMetadata.get('/oauth-protected-resource/mcp', (context) => context.json(protectedResource(context.env)))
+oauthMetadata.get('/oauth-protected-resource', (context) =>
+  context.json(protectedResource(context.env)),
+)
+oauthMetadata.get('/oauth-protected-resource/mcp', (context) =>
+  context.json(protectedResource(context.env)),
+)
 
 /** What a refused connector request carries, so a client knows where to go. */
 export function challenge(env: Env, invalid: boolean): string {
@@ -297,7 +302,14 @@ interface Ask {
   resource: string
 }
 
-const FIELDS: (keyof Ask)[] = ['client_id', 'redirect_uri', 'state', 'code_challenge', 'scope', 'resource']
+const FIELDS: (keyof Ask)[] = [
+  'client_id',
+  'redirect_uri',
+  'state',
+  'code_challenge',
+  'scope',
+  'resource',
+]
 
 function askFrom(source: Record<string, string | undefined>): Ask {
   const ask = {} as Ask
@@ -339,7 +351,10 @@ async function checkClient(env: Env, ask: Ask): Promise<{ client: Client } | { p
   const client = await clientFor(env, ask.client_id)
   if (!client) return { problem: 'This app is not known here. Add the connector again in the app.' }
 
-  if (!ask.redirect_uri || !client.redirectUris.some((one) => sameRedirect(one, ask.redirect_uri))) {
+  if (
+    !ask.redirect_uri ||
+    !client.redirectUris.some((one) => sameRedirect(one, ask.redirect_uri))
+  ) {
     return { problem: `${client.name} asked to be sent somewhere it did not register.` }
   }
 
@@ -347,7 +362,11 @@ async function checkClient(env: Env, ask: Ask): Promise<{ client: Client } | { p
 }
 
 /** Checks the rest, whose failures go back to the client as OAuth errors. */
-function checkRequest(env: Env, ask: Ask, query: Record<string, string | undefined>): Record<string, string> | null {
+function checkRequest(
+  env: Env,
+  ask: Ask,
+  query: Record<string, string | undefined>,
+): Record<string, string> | null {
   if (query.response_type !== 'code') {
     return failure('unsupported_response_type', 'only the code flow is supported')
   }
@@ -393,7 +412,11 @@ oauth.post('/authorize', async (context) => {
   const { client } = checked
 
   if (!ask.code_challenge || !resourceMatches(context.env, ask.resource)) {
-    return page(context.env, refusal('This request is not complete. Start again from the app.'), 400)
+    return page(
+      context.env,
+      refusal('This request is not complete. Start again from the app.'),
+      400,
+    )
   }
 
   const email = normaliseEmail(form.email ?? '')
@@ -404,7 +427,8 @@ oauth.post('/authorize', async (context) => {
 
   if (form.action === 'send') {
     const sent = await sendCode(context.env, email)
-    if ('error' in sent) return page(context.env, emailStep(client, ask, { email, error: sent.error }))
+    if ('error' in sent)
+      return page(context.env, emailStep(client, ask, { email, error: sent.error }))
     return page(context.env, codeStep(client, ask, { email }))
   }
 
@@ -453,7 +477,10 @@ async function tokenBody(context: Context<{ Bindings: Env }>): Promise<Record<st
 
 /** The client's id and, if it has one, its secret: in the body or, for
  *  `client_secret_basic`, in the Authorization header. */
-function credentials(header: string | undefined, body: Record<string, string>): { id: string; secret: string } {
+function credentials(
+  header: string | undefined,
+  body: Record<string, string>,
+): { id: string; secret: string } {
   if (header?.startsWith('Basic ')) {
     try {
       const decoded = atob(header.slice(6).trim())
@@ -496,7 +523,11 @@ interface Grant {
 async function issue(env: Env, grant: Grant, replacing?: { refresh_hash: string }) {
   const access = `nib_${randomToken()}`
   const refresh = `nibr_${randomToken()}`
-  const hashes = { access: await sha256(access), refresh: await sha256(refresh), expiresAt: now() + ACCESS_TTL }
+  const hashes = {
+    access: await sha256(access),
+    refresh: await sha256(refresh),
+    expiresAt: now() + ACCESS_TTL,
+  }
 
   if (replacing) {
     await env.DB.prepare(
@@ -531,14 +562,18 @@ oauth.post('/token', async (context) => {
   // itself with PKCE alone, and a secret it sends anyway is ignored.
   const client = await clientFor(context.env, id)
   if (!client) return invalidClient()
-  if (client.secretHash && (!secret || (await sha256(secret)) !== client.secretHash)) return invalidClient()
+  if (client.secretHash && (!secret || (await sha256(secret)) !== client.secretHash))
+    return invalidClient()
 
   if (body.grant_type === 'authorization_code') {
     if (!body.code || !body.code_verifier) {
       return context.json(failure('invalid_request', 'code and code_verifier are required'), 400)
     }
     if (!resourceMatches(context.env, body.resource ?? '')) {
-      return context.json(failure('invalid_target', `this server is ${resourceUrl(context.env)}`), 400)
+      return context.json(
+        failure('invalid_target', `this server is ${resourceUrl(context.env)}`),
+        400,
+      )
     }
 
     const hash = await sha256(body.code)
@@ -556,7 +591,8 @@ oauth.post('/token', async (context) => {
       }>()
 
     // A code is good once, however the attempt goes.
-    if (code) await context.env.DB.prepare('delete from oauth_codes where code_hash = ?').bind(hash).run()
+    if (code)
+      await context.env.DB.prepare('delete from oauth_codes where code_hash = ?').bind(hash).run()
 
     if (
       !code ||
@@ -632,15 +668,21 @@ export async function grantForToken(
 
   if (!row || row.access_expires_at < now()) return null
 
-  await env.DB.prepare('update oauth_grants set last_used_at = ? where id = ?').bind(now(), row.id).run()
+  await env.DB.prepare('update oauth_grants set last_used_at = ? where id = ?')
+    .bind(now(), row.id)
+    .run()
   return { user_id: row.user_id, read_only: row.read_only }
 }
 
 /* ── The consent page ─────────────────────────────────────────────────── */
 
 function escape(text: string): string {
-  return text.replace(/[&<>"']/g, (character) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] as string,
+  return text.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+        character
+      ] as string,
   )
 }
 

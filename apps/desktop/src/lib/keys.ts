@@ -95,7 +95,13 @@ export function sameCombination(left: string, right: string, platform: Platform)
   const b = parseCombination(right, platform)
   if (!a || !b) return false
 
-  return a.ctrl === b.ctrl && a.meta === b.meta && a.alt === b.alt && a.shift === b.shift && a.key === b.key
+  return (
+    a.ctrl === b.ctrl &&
+    a.meta === b.meta &&
+    a.alt === b.alt &&
+    a.shift === b.shift &&
+    a.key === b.key
+  )
 }
 
 /** The physical key behind a code, for the shifted characters.
@@ -201,7 +207,9 @@ export function showCombination(text: string, platform: Platform): string {
   const combination = parseCombination(text, platform)
   if (!combination) return text
 
-  const key = SHOWN[combination.key] ?? (combination.key.length === 1 ? combination.key.toUpperCase() : combination.key)
+  const key =
+    SHOWN[combination.key] ??
+    (combination.key.length === 1 ? combination.key.toUpperCase() : combination.key)
 
   if (platform === 'mac') {
     return (

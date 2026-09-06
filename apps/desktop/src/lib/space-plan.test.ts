@@ -173,7 +173,10 @@ describe('a space the account says was deleted', () => {
 describe('two folders with the same name', () => {
   test('do not both claim the one space', () => {
     const result = plan({
-      local: [{ name: 'Work', root: '/a/Work' }, { name: 'Work', root: '/b/Work' }],
+      local: [
+        { name: 'Work', root: '/a/Work' },
+        { name: 'Work', root: '/b/Work' },
+      ],
       remote: [remote('Work')],
     })
 

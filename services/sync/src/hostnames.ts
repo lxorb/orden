@@ -132,7 +132,8 @@ function describe(hostname: CustomHostname): DomainStatus {
   if (hostname.status === 'active' && ssl === 'active') return { state: 'active', detail: null }
 
   // Taken away again after it worked, or refused outright.
-  if (hostname.status === 'moved') return { state: 'error', detail: 'the domain no longer points here' }
+  if (hostname.status === 'moved')
+    return { state: 'error', detail: 'the domain no longer points here' }
   if (hostname.status === 'blocked') {
     return { state: 'error', detail: 'Cloudflare has blocked this domain' }
   }

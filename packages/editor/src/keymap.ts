@@ -79,7 +79,12 @@ export const nibBindings: BindingSpec[] = [
   { id: 'paragraph.code-block', key: 'Mod-Shift-k', run: insertCodeFence, preventDefault: true },
   { id: 'paragraph.math-block', key: 'Mod-Shift-m', run: insertMathBlock, preventDefault: true },
   { id: 'paragraph.quote', key: 'Mod-Shift-q', run: toggleQuote, preventDefault: true },
-  { id: 'paragraph.ordered-list', key: 'Mod-Shift-[', run: toggleOrderedList, preventDefault: true },
+  {
+    id: 'paragraph.ordered-list',
+    key: 'Mod-Shift-[',
+    run: toggleOrderedList,
+    preventDefault: true,
+  },
   { id: 'paragraph.bullet-list', key: 'Mod-Shift-]', run: toggleBulletList, preventDefault: true },
   { id: 'paragraph.rule', key: 'Mod-Shift-r', run: insertHorizontalRule, preventDefault: true },
 
@@ -112,7 +117,12 @@ export const nibBindings: BindingSpec[] = [
  *  editing keys - the arrows, Home, Backspace, Enter - which are how a text
  *  editor works rather than shortcuts anyone chose. Those stay in the keymap
  *  underneath and are listed in the settings as fixed, with the reason. */
-function adopt(id: string, from: readonly KeyBinding[], key: string, extra: Partial<BindingSpec> = {}): BindingSpec {
+function adopt(
+  id: string,
+  from: readonly KeyBinding[],
+  key: string,
+  extra: Partial<BindingSpec> = {},
+): BindingSpec {
   const original = from.find((binding) => binding.key === key)
   if (!original) throw new Error(`no binding for ${key} to adopt as ${id}`)
 

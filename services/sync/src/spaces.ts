@@ -159,9 +159,7 @@ spaces.patch('/:id', async (context) => {
           ? body.icon
           : space.icon
 
-  await context.env.DB.prepare(
-    'update spaces set name = ?, icon = ?, updated_at = ? where id = ?',
-  )
+  await context.env.DB.prepare('update spaces set name = ?, icon = ?, updated_at = ? where id = ?')
     .bind(label, icon, now(), space.id)
     .run()
 
@@ -204,7 +202,11 @@ spaces.put('/:id/blog', async (context) => {
     note?: string | null
   }>()
   const subdomain = body.subdomain?.trim().toLowerCase()
-  const domain = body.domain?.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+  const domain = body.domain
+    ?.trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
 
   if (subdomain !== undefined) {
     if (!SUBDOMAIN.test(subdomain)) {
@@ -381,7 +383,10 @@ spaces.get('/available/:subdomain', async (context) => {
  *  providers offer an ALIAS or ANAME record, or flatten the CNAME themselves;
  *  the note says so. A longer name can be a root too (example.co.uk), which
  *  the owner will know and the note does not need to. */
-export function dnsRecords(env: Env, space: Space): { type: string; name: string; value: string; note?: string }[] {
+export function dnsRecords(
+  env: Env,
+  space: Space,
+): { type: string; name: string; value: string; note?: string }[] {
   if (!space.blog_domain) return []
 
   const apex = space.blog_domain.split('.').length === 2

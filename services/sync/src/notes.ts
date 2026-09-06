@@ -87,7 +87,8 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
     .bind(space.id, path)
     .first<Note>()
 
-  if (existing) return context.json({ error: 'a note already lives there', note: presentNote(existing) }, 409)
+  if (existing)
+    return context.json({ error: 'a note already lives there', note: presentNote(existing) }, 409)
 
   // A limit nobody enforces is a number on a settings page.
   if (!(await fits(context.env, user.id, content.length))) {

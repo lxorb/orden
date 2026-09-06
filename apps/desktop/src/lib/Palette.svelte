@@ -23,8 +23,7 @@
     return rank(term, workspace.notes, (note) => stripped(note.name)).slice(0, 40)
   })
 
-  const label = (item: Command | Entry) =>
-    'label' in item ? item.label : stripped(item.name)
+  const label = (item: Command | Entry) => ('label' in item ? item.label : stripped(item.name))
 
   $effect(() => {
     void results

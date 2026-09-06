@@ -76,7 +76,10 @@
       <ul class="versions">
         {#each snapshots as snapshot (snapshot.path)}
           <li>
-            <button class:active={selected?.path === snapshot.path} onclick={() => (selected = snapshot)}>
+            <button
+              class:active={selected?.path === snapshot.path}
+              onclick={() => (selected = snapshot)}
+            >
               <span>{when(snapshot.taken_at)}</span>
               <kbd>{Math.max(1, Math.round(snapshot.size / 1024))} kB</kbd>
             </button>

@@ -37,7 +37,9 @@ describe('finding tables', () => {
   })
 
   test('a table is not rendered while the caret is in its text', () => {
-    expect(renderedTables(state(`above\n\n${TABLE.slice(0, 3)}|${TABLE.slice(3)}\n\nbelow`))).toEqual([])
+    expect(
+      renderedTables(state(`above\n\n${TABLE.slice(0, 3)}|${TABLE.slice(3)}\n\nbelow`)),
+    ).toEqual([])
   })
 
   test('a move that skips over the table crosses it', () => {

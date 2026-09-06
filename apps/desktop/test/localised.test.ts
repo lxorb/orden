@@ -117,7 +117,9 @@ describe('everything the reader sees is translated', () => {
   const files = sources(ROOT)
 
   test('no loose phrases in the markup', () => {
-    const found = files.filter((p) => p.endsWith('.svelte')).flatMap((p) => loosePhrases(p, readFileSync(p, 'utf8')))
+    const found = files
+      .filter((p) => p.endsWith('.svelte'))
+      .flatMap((p) => loosePhrases(p, readFileSync(p, 'utf8')))
     expect(found).toEqual([])
   })
 

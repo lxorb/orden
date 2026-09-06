@@ -85,7 +85,11 @@ describe('deleting a space', () => {
   })
 
   test('releases its published address for someone else', async () => {
-    await call(env, `/v1/spaces/${space}/blog`, { token, method: 'PUT', body: { subdomain: 'mine' } })
+    await call(env, `/v1/spaces/${space}/blog`, {
+      token,
+      method: 'PUT',
+      body: { subdomain: 'mine' },
+    })
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
 
     const other = await call(env, '/v1/spaces', { token, body: { name: 'Second' } })
@@ -313,7 +317,11 @@ describe('notes', () => {
     const created = await addNote('a.md', 'one')
     const id = created.json.note.id
 
-    await call(env, `/v1/notes/${id}`, { method: 'PUT', token, body: { content: 'server', baseVersion: 1 } })
+    await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'server', baseVersion: 1 },
+    })
 
     const stale = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
@@ -360,7 +368,9 @@ describe('notes', () => {
     const created = await addNote('a.md', 'secret')
     const other = await signIn(env, 'other@b.dev')
 
-    expect((await call(env, `/v1/notes/${created.json.note.id}`, { token: other })).status).toBe(404)
+    expect((await call(env, `/v1/notes/${created.json.note.id}`, { token: other })).status).toBe(
+      404,
+    )
   })
 })
 

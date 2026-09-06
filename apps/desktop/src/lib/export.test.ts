@@ -137,13 +137,23 @@ describe('a styled export', () => {
   })
 
   test('takes the paper from the settings when the note says nothing', () => {
-    const page = { paper: 'Letter', orientation: 'landscape', margin: '1in', header: '', footer: '' } as const
-    expect(buildHtml('# Plain', 'p.md', { page })).toContain('@page { size: Letter landscape; margin: 1in; }')
+    const page = {
+      paper: 'Letter',
+      orientation: 'landscape',
+      margin: '1in',
+      header: '',
+      footer: '',
+    } as const
+    expect(buildHtml('# Plain', 'p.md', { page })).toContain(
+      '@page { size: Letter landscape; margin: 1in; }',
+    )
   })
 
   test('writes the code palette in', () => {
     expect(html).toContain('#write .hl-keyword { color: var(--accent); }')
-    expect(buildHtml(NOTE, 'x.md', { codeTheme: 'github' })).toContain('#write .hl-keyword { color: #cf222e; }')
+    expect(buildHtml(NOTE, 'x.md', { codeTheme: 'github' })).toContain(
+      '#write .hl-keyword { color: #cf222e; }',
+    )
   })
 
   test('lets a theme file and custom css sit on top', () => {
@@ -157,7 +167,8 @@ describe('a styled export', () => {
 
   test('uses fences the caller prepared', () => {
     const styled = buildHtml(NOTE, 'x.md', {
-      fence: (code, language) => (language === 'mermaid' ? `<figure class="diagram">${code}</figure>` : null),
+      fence: (code, language) =>
+        language === 'mermaid' ? `<figure class="diagram">${code}</figure>` : null,
     })
     expect(styled).toContain('<figure class="diagram">graph TD; A-->B</figure>')
   })
@@ -235,7 +246,18 @@ describe('naming the document', () => {
 describe('pandoc formats', () => {
   test('cover what Typora offers', () => {
     const ids = PANDOC_FORMATS.map((format) => format.id)
-    for (const expected of ['docx', 'odt', 'rtf', 'epub', 'latex', 'mediawiki', 'rst', 'textile', 'opml', 'revealjs']) {
+    for (const expected of [
+      'docx',
+      'odt',
+      'rtf',
+      'epub',
+      'latex',
+      'mediawiki',
+      'rst',
+      'textile',
+      'opml',
+      'revealjs',
+    ]) {
       expect(ids).toContain(expected)
     }
   })

@@ -32,9 +32,7 @@ export class TableWidget extends NibWidget {
 
   eq(other: TableWidget) {
     return (
-      other.source === this.source &&
-      other.from === this.from &&
-      other.writable === this.writable
+      other.source === this.source && other.from === this.from && other.writable === this.writable
     )
   }
 

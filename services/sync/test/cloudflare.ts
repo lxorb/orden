@@ -46,7 +46,9 @@ export function fakeCloudflare() {
   let next = 0
 
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input : input.url)
+    const url = new URL(
+      typeof input === 'string' ? input : input instanceof URL ? input : input.url,
+    )
     const method = init?.method ?? 'GET'
     const headers = new Headers(init?.headers)
 

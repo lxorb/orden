@@ -230,7 +230,9 @@ export const DefinitionList: MarkdownConfig = {
         const from = cx.lineStart + line.pos
         const to = cx.lineStart + line.text.length
 
-        cx.addElement(cx.elt('DefinitionDetail', from, to, [cx.elt('DefinitionMark', from, from + 1)]))
+        cx.addElement(
+          cx.elt('DefinitionDetail', from, to, [cx.elt('DefinitionMark', from, from + 1)]),
+        )
         cx.nextLine()
         return true
       },
@@ -439,7 +441,10 @@ function leafBlockAt(tree: Tree, pos: number): { from: number; to: number } {
  *  place, reused, with no way for the parser to know. Leaving such blocks
  *  out of the fragments makes the parser look at them again every time,
  *  which is cheap - there is rarely more than the one being typed. */
-function withoutUnclosedFences(fragments: readonly TreeFragment[], input: Input): readonly TreeFragment[] {
+function withoutUnclosedFences(
+  fragments: readonly TreeFragment[],
+  input: Input,
+): readonly TreeFragment[] {
   const out: TreeFragment[] = []
   let changed = false
 
@@ -456,14 +461,24 @@ function withoutUnclosedFences(fragments: readonly TreeFragment[], input: Input)
       if (blockFrom < from || blockTo > fragment.to) continue
 
       if (blockFrom > from) {
-        out.push(new TreeFragment(from, blockFrom, tree, offset, from === fragment.from && fragment.openStart, true))
+        out.push(
+          new TreeFragment(
+            from,
+            blockFrom,
+            tree,
+            offset,
+            from === fragment.from && fragment.openStart,
+            true,
+          ),
+        )
       }
       from = blockTo
       changed = true
     }
 
     if (from === fragment.from) out.push(fragment)
-    else if (from < fragment.to) out.push(new TreeFragment(from, fragment.to, tree, offset, true, fragment.openEnd))
+    else if (from < fragment.to)
+      out.push(new TreeFragment(from, fragment.to, tree, offset, true, fragment.openEnd))
   }
 
   return changed ? out : fragments
@@ -543,12 +558,17 @@ export const FencedCode: MarkdownConfig = {
         while (infoTo > infoFrom && isSpace(line.text.charCodeAt(infoTo - 1))) infoTo--
 
         const marks: Element[] = [cx.elt('CodeMark', from, from + length)]
-        if (infoFrom < infoTo) marks.push(cx.elt('CodeInfo', cx.lineStart + infoFrom, cx.lineStart + infoTo))
+        if (infoFrom < infoTo)
+          marks.push(cx.elt('CodeInfo', cx.lineStart + infoFrom, cx.lineStart + infoTo))
 
         // The line breaks between code lines are code text too, the one after
         // the opener is not, and a block of nothing but blank lines still gets
         // one piece of code text - as the built-in parser has it.
-        for (let first = true, empty = true, hasLine = false; cx.nextLine() && insideContainers(cx, line); first = false) {
+        for (
+          let first = true, empty = true, hasLine = false;
+          cx.nextLine() && insideContainers(cx, line);
+          first = false
+        ) {
           const closer = closerEnd(line, mark, length)
           if (closer >= 0) {
             marks.push(...line.markers)

@@ -22,9 +22,18 @@ const REPO = 'lxorb/nib'
  *  AppImage, and the wrong one would install and refuse to start. */
 const PLATFORMS = [
   { key: 'windows-x86_64', match: (path) => /windows-x64/.test(path) && path.endsWith('.exe.sig') },
-  { key: 'windows-aarch64', match: (path) => /windows-arm64/.test(path) && path.endsWith('.exe.sig') },
-  { key: 'linux-x86_64', match: (path) => /linux-x64/.test(path) && path.endsWith('.AppImage.sig') },
-  { key: 'linux-aarch64', match: (path) => /linux-arm64/.test(path) && path.endsWith('.AppImage.sig') },
+  {
+    key: 'windows-aarch64',
+    match: (path) => /windows-arm64/.test(path) && path.endsWith('.exe.sig'),
+  },
+  {
+    key: 'linux-x86_64',
+    match: (path) => /linux-x64/.test(path) && path.endsWith('.AppImage.sig'),
+  },
+  {
+    key: 'linux-aarch64',
+    match: (path) => /linux-arm64/.test(path) && path.endsWith('.AppImage.sig'),
+  },
 ]
 
 /** The macOS bundle is universal, so every Mac is offered the same file. Tauri

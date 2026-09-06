@@ -112,8 +112,7 @@ export async function call(env: Env, path: string, options: CallOptions = {}) {
     new Request(`https://${host}${path}`, {
       method,
       headers,
-      body:
-        options.raw ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
+      body: options.raw ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
     }),
     env,
   )

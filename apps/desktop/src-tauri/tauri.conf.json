@@ -44,12 +44,7 @@
     "createUpdaterArtifacts": true,
     "fileAssociations": [
       {
-        "ext": [
-          "md",
-          "markdown",
-          "mdown",
-          "mkd"
-        ],
+        "ext": ["md", "markdown", "mdown", "mkd"],
         "name": "Markdown",
         "description": "Markdown document",
         "role": "Editor"

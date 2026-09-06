@@ -18,7 +18,9 @@ function treeOf(state: EditorState): string {
     enter: (node) => {
       let indent = 0
       for (let parent = node.node.parent; parent; parent = parent.parent) indent++
-      out.push(`${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`)
+      out.push(
+        `${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`,
+      )
     },
   })
   return out.join('\n')
@@ -129,18 +131,30 @@ describe('fenced code', () => {
     expect(found).toContain('ATXHeading1')
     expect(found).toContain('Emphasis')
     expect(tree('```\n# Title')).toBe(
-      ['Document "```\\n# Title"', '  Paragraph "```"', '  ATXHeading1 "# Title"', '    HeaderMark "#"'].join('\n'),
+      [
+        'Document "```\\n# Title"',
+        '  Paragraph "```"',
+        '  ATXHeading1 "# Title"',
+        '    HeaderMark "#"',
+      ].join('\n'),
     )
   })
 
   test('leaves a fence on the last line as a paragraph', () => {
     expect(tree('# Title\n\n```')).toBe(
-      ['Document "# Title\\n\\n```"', '  ATXHeading1 "# Title"', '    HeaderMark "#"', '  Paragraph "```"'].join('\n'),
+      [
+        'Document "# Title\\n\\n```"',
+        '  ATXHeading1 "# Title"',
+        '    HeaderMark "#"',
+        '  Paragraph "```"',
+      ].join('\n'),
     )
   })
 
   test('still cuts a paragraph short, so the fence line stands on its own', () => {
-    expect(tree('text\n```')).toBe(['Document "text\\n```"', '  Paragraph "text"', '  Paragraph "```"'].join('\n'))
+    expect(tree('text\n```')).toBe(
+      ['Document "text\\n```"', '  Paragraph "text"', '  Paragraph "```"'].join('\n'),
+    )
   })
 
   test('becomes a fence the moment the third backtick of the closer lands', () => {
@@ -244,7 +258,8 @@ describe('fenced code', () => {
 // The parser reuses blocks of an earlier parse that lie clear of an edit,
 // and it only does so for stretches of some length - hence the padding.
 describe('fenced code while editing', () => {
-  const padding = '# Heading\n\nA paragraph of prose, long enough for the parse to keep it around.\n\n'.repeat(2)
+  const padding =
+    '# Heading\n\nA paragraph of prose, long enough for the parse to keep it around.\n\n'.repeat(2)
 
   /** The nodes after editing a document that was parsed before. */
   function edited(doc: string, from: number, to: number, insert: string): string[] {

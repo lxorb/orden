@@ -191,7 +191,10 @@ export function buildBlockDecorations(state: EditorState): DecorationSet {
  *  it and shows it again on the way out - so a caret that stays clear of all
  *  of them leaves the decorations exactly as they were. Compared the way
  *  `overlaps` does, edges included. */
-function crosses(spans: readonly { from: number; to: number }[], ranges: readonly SelectionRange[]) {
+function crosses(
+  spans: readonly { from: number; to: number }[],
+  ranges: readonly SelectionRange[],
+) {
   return spans.some((span) =>
     ranges.some((range) => range.from <= span.to && range.to >= span.from),
   )

@@ -21,8 +21,7 @@ function tokens(line: string): [string, string | null][] {
   return out
 }
 
-const typeOf = (line: string, text: string) =>
-  tokens(line).find(([token]) => token === text)?.[1]
+const typeOf = (line: string, text: string) => tokens(line).find(([token]) => token === text)?.[1]
 
 describe('highlighting a mermaid fence', () => {
   test('marks the word that opens a diagram', () => {

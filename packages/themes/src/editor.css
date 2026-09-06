@@ -655,7 +655,13 @@
   width: 100%;
   height: 1px;
   vertical-align: middle;
-  background: linear-gradient(to right, transparent, var(--line-strong) 12%, var(--line-strong) 88%, transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--line-strong) 12%,
+    var(--line-strong) 88%,
+    transparent
+  );
 }
 
 /* ── Tables ──────────────────────────────────────────────────────── */
@@ -974,11 +980,7 @@
   border-top: 1.8em solid transparent;
   border-bottom: 1.8em solid transparent;
   background-clip: padding-box;
-  background: repeating-linear-gradient(
-    to right,
-    var(--line-strong) 0 6px,
-    transparent 6px 12px
-  );
+  background: repeating-linear-gradient(to right, var(--line-strong) 0 6px, transparent 6px 12px);
 }
 
 .nib-page-break::after {

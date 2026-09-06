@@ -13,7 +13,9 @@ import {
   setCell,
 } from './model'
 
-const SOURCE = ['| Name | Size |', '| :--- | ---: |', '| a    | 1    |', '| b    | 2    |'].join('\n')
+const SOURCE = ['| Name | Size |', '| :--- | ---: |', '| a    | 1    |', '| b    | 2    |'].join(
+  '\n',
+)
 
 describe('parsing', () => {
   test('reads header, alignment and rows', () => {
@@ -97,7 +99,11 @@ describe('editing', () => {
   })
 
   test('inserts and removes rows', () => {
-    expect(insertRow(model, 1).rows).toEqual([['a', '1'], ['', ''], ['b', '2']])
+    expect(insertRow(model, 1).rows).toEqual([
+      ['a', '1'],
+      ['', ''],
+      ['b', '2'],
+    ])
     expect(removeRow(model, 0).rows).toEqual([['b', '2']])
   })
 

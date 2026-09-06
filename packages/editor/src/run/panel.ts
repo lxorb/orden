@@ -1,4 +1,10 @@
-import { type ChangeDesc, type EditorState, type Range, StateEffect, StateField } from '@codemirror/state'
+import {
+  type ChangeDesc,
+  type EditorState,
+  type Range,
+  StateEffect,
+  StateField,
+} from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { label } from '../labels'
 import { NibWidget } from '../live-preview/widget'

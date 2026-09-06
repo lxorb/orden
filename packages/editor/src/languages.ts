@@ -70,15 +70,7 @@ export const SPELLINGS: Record<string, string[]> = {
 
   // A pasted terminal is a shell fence under another name, and the transcript
   // spellings - console, shell-session - are how most people write one.
-  Shell: [
-    'ksh',
-    'fish',
-    'console',
-    'terminal',
-    'shell-session',
-    'shellsession',
-    'bash-session',
-  ],
+  Shell: ['ksh', 'fish', 'console', 'terminal', 'shell-session', 'shellsession', 'bash-session'],
   // GAS is AT&T syntax and NASM is Intel's, but the two agree on what a
   // comment, a label, a register and a number look like, which is all a fence
   // is being coloured for.
@@ -163,7 +155,12 @@ function streamMode(spec: {
 
 /** Words to the shape the C-like tokenizer wants them in. */
 const words = (list: string): Record<string, boolean> =>
-  Object.fromEntries(list.split(' ').filter(Boolean).map((word) => [word, true]))
+  Object.fromEntries(
+    list
+      .split(' ')
+      .filter(Boolean)
+      .map((word) => [word, true]),
+  )
 
 /** A language described only by its vocabulary, tokenized by the mode C, Java,
  *  Kotlin and a dozen others already share.

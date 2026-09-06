@@ -59,7 +59,10 @@
     JSON.stringify(
       {
         mcpServers: {
-          nib: { url: MCP_URL, ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}) },
+          nib: {
+            url: MCP_URL,
+            ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+          },
         },
       },
       null,
@@ -93,7 +96,9 @@
 {/snippet}
 
 {#snippet chevron(open: boolean)}
-  <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
+  <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"
+    ><path d="M6 3l5 5-5 5" /></svg
+  >
 {/snippet}
 
 <div class="llm">
@@ -121,7 +126,11 @@
               {t('Pasted token')}
               <small>{access(connectors.token.readOnly)} {when(connectors.token.lastUsedAt)}</small>
             </span>
-            <button class="quiet danger" disabled={connectors.busy} onclick={() => connectors.revokeToken()}>
+            <button
+              class="quiet danger"
+              disabled={connectors.busy}
+              onclick={() => connectors.revokeToken()}
+            >
               {t('Revoke')}
             </button>
           </div>
@@ -131,7 +140,9 @@
 
     <h3>{connected ? t('Connect another') : t('Connect')}</h3>
     <p class="note">
-      {t('An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.')}
+      {t(
+        'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.',
+      )}
     </p>
 
     <div class="segmented" role="tablist">
@@ -175,7 +186,9 @@
           {#if showCode}
             <div class="disclosed" transition:slide={{ duration: 180, easing: cubicOut }}>
               {@render copyable(t('Command'), CLAUDE_CODE)}
-              <p class="hint">{t('Run it in a terminal, then type /mcp in Claude Code to sign in.')}</p>
+              <p class="hint">
+                {t('Run it in a terminal, then type /mcp in Claude Code to sign in.')}
+              </p>
             </div>
           {/if}
         {:else if connectors.client === 'chatgpt'}
@@ -188,7 +201,9 @@
                 {t('Open ChatGPT’s plugins')}
               </button>
               <p class="hint">
-                {t('No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.')}
+                {t(
+                  'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.',
+                )}
               </p>
             </li>
             <li>
@@ -200,7 +215,9 @@
                 <span class="value plain">OAuth</span>
               </div>
               <p class="hint">
-                {t('Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.')}
+                {t(
+                  'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.',
+                )}
               </p>
             </li>
             <li>
@@ -211,11 +228,17 @@
         {:else}
           <div class="steps-wrap">
             <p class="note">
-              {t('Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.')}
+              {t(
+                'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.',
+              )}
             </p>
             {@render copyable(t('Server URL'), MCP_URL)}
 
-            <button class="disclose" aria-expanded={showConfig} onclick={() => (showConfig = !showConfig)}>
+            <button
+              class="disclose"
+              aria-expanded={showConfig}
+              onclick={() => (showConfig = !showConfig)}
+            >
               {@render chevron(showConfig)}
               {t('Show config')}
             </button>
@@ -223,12 +246,18 @@
               <div class="disclosed" transition:slide={{ duration: 180, easing: cubicOut }}>
                 <p class="hint">{t('For a client that takes a JSON block instead of a URL.')}</p>
                 <pre>{config()}</pre>
-                <button class="copy wide" class:done={copied === config()} onclick={() => copy(config())}>
+                <button
+                  class="copy wide"
+                  class:done={copied === config()}
+                  onclick={() => copy(config())}
+                >
                   {copied === config() ? t('Copied') : t('Copy')}
                 </button>
 
                 <p class="hint spaced">
-                  {t('A client that cannot sign in can be given a token instead. It is shown only once.')}
+                  {t(
+                    'A client that cannot sign in can be given a token instead. It is shown only once.',
+                  )}
                 </p>
                 <button
                   class="switch"
@@ -252,7 +281,11 @@
                     </button>
                   </div>
                 {:else}
-                  <button class="primary" disabled={connectors.busy} onclick={() => connectors.createToken()}>
+                  <button
+                    class="primary"
+                    disabled={connectors.busy}
+                    onclick={() => connectors.createToken()}
+                  >
                     {connectors.token?.exists ? t('Replace the token') : t('Create a token')}
                   </button>
                 {/if}

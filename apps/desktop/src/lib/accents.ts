@@ -44,7 +44,9 @@ function toHex([r, g, b]: [number, number, number]): string {
 /** Moves a colour toward white or black, for the hover shade. */
 export function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
   const target = towards === 'light' ? 255 : 0
-  return toHex(channels(hex).map((one) => one + (target - one) * amount) as [number, number, number])
+  return toHex(
+    channels(hex).map((one) => one + (target - one) * amount) as [number, number, number],
+  )
 }
 
 /** Every token that depends on the accent, so one choice restyles the app. */

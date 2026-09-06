@@ -81,13 +81,23 @@
           ></span>
         {/if}
       </button>
-      <button class="shut" title={t('Close')} aria-label={t('Close')} onclick={() => workspace.close(tab.id)}>
+      <button
+        class="shut"
+        title={t('Close')}
+        aria-label={t('Close')}
+        onclick={() => workspace.close(tab.id)}
+      >
         <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
       </button>
     </div>
   {/each}
 
-  <button class="new" title={t('New note')} aria-label={t('New note')} onclick={() => workspace.openBlank()}>
+  <button
+    class="new"
+    title={t('New note')}
+    aria-label={t('New note')}
+    onclick={() => workspace.openBlank()}
+  >
     <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
   </button>
 </div>

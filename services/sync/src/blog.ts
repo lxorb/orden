@@ -22,9 +22,7 @@ export async function spaceForHost(env: Env, host: string): Promise<Space | null
   if (hostname.endsWith(`.${env.BLOG_ROOT}`)) {
     const subdomain = hostname.slice(0, -(env.BLOG_ROOT.length + 1))
     return (
-      (await env.DB.prepare(
-        'select * from spaces where blog_subdomain = ? and blog_enabled = 1',
-      )
+      (await env.DB.prepare('select * from spaces where blog_subdomain = ? and blog_enabled = 1')
         .bind(subdomain)
         .first<Space>()) ?? null
     )
@@ -59,14 +57,18 @@ export function slugFor(path: string): string {
 function title(note: Note, body: string): string {
   return (
     documentTitle(body) ??
-    note.path.replace(/\.(md|markdown|mdown|mkd)$/i, '').split('/').pop() ??
+    note.path
+      .replace(/\.(md|markdown|mdown|mkd)$/i, '')
+      .split('/')
+      .pop() ??
     note.path
   )
 }
 
 function escape(text: string): string {
-  return text.replace(/[&<>"]/g, (character) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character] as string,
+  return text.replace(
+    /[&<>"]/g,
+    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character] as string,
   )
 }
 

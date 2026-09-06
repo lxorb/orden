@@ -180,9 +180,7 @@ function fenceOf(text: string): { mark: string; info: string } | null {
  *  least as many of them, and nothing else. */
 function closes(text: string, mark: string): boolean {
   const found = fenceOf(text)
-  return (
-    !!found && found.mark[0] === mark[0] && found.mark.length >= mark.length && !found.info
-  )
+  return !!found && found.mark[0] === mark[0] && found.mark.length >= mark.length && !found.info
 }
 
 /** Enter at the end of an opening fence closes the fence as well, with the

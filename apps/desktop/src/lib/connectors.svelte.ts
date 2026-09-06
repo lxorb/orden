@@ -72,7 +72,11 @@ class Connectors {
       const listed = await api.connector(account.token)
       // A server from before OAuth lists no clients at all.
       this.clients = listed.clients ?? []
-      this.token = { exists: listed.exists, readOnly: listed.readOnly, lastUsedAt: listed.lastUsedAt }
+      this.token = {
+        exists: listed.exists,
+        readOnly: listed.readOnly,
+        lastUsedAt: listed.lastUsedAt,
+      }
       if (listed.exists) this.readOnly = listed.readOnly
     } catch {
       // A failed refresh keeps what was last known.

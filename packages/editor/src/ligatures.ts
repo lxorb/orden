@@ -1,6 +1,12 @@
 import { syntaxTree } from '@codemirror/language'
 import { type EditorState, type Extension, Prec, type Range } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  ViewPlugin,
+  type ViewUpdate,
+} from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 
 /** Runs of plain characters and the glyph each stands for. The glyph is what
@@ -49,7 +55,7 @@ export interface Ligature {
  *  `offset`. Pure: the syntax around a run is the caller's business. */
 export function findLigatures(text: string, offset = 0): Ligature[] {
   const out: Ligature[] = []
-  for (let at = 0; at < text.length; ) {
+  for (let at = 0; at < text.length;) {
     const run = OPENERS.has(text[at]) ? RUNS.find((one) => text.startsWith(one, at)) : undefined
     if (!run) {
       at += 1
@@ -121,7 +127,10 @@ function markFor(glyph: string): Decoration {
   return mark
 }
 
-export function buildLigatures(state: EditorState, ranges?: readonly { from: number; to: number }[]): DecorationSet {
+export function buildLigatures(
+  state: EditorState,
+  ranges?: readonly { from: number; to: number }[],
+): DecorationSet {
   const out: Range<Decoration>[] = []
   for (const one of ligaturesIn(state, ranges)) out.push(markFor(one.glyph).range(one.from, one.to))
   return Decoration.set(out, true)

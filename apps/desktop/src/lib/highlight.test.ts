@@ -42,7 +42,10 @@ describe('highlighting', () => {
    *  what the fence means - see code-theme.ts. */
   test('colours a diff added and removed', async () => {
     const parsers = await loadParsers(['diff'])
-    const html = highlightCode('--- a/file@@+++ b/file@@-old line@@+new line'.split('@@').join('\n'), parsers.get('diff')!)
+    const html = highlightCode(
+      '--- a/file@@+++ b/file@@-old line@@+new line'.split('@@').join('\n'),
+      parsers.get('diff')!,
+    )
 
     expect(html).toContain('<span class="hl-inserted">+new line</span>')
     expect(html).toContain('<span class="hl-deleted">-old line</span>')
@@ -59,7 +62,9 @@ describe('highlighting', () => {
 
   test('colours a function name', async () => {
     const parsers = await loadParsers(['js'])
-    expect(highlightCode('greet(1)', parsers.get('js')!)).toContain('<span class="hl-function">greet</span>')
+    expect(highlightCode('greet(1)', parsers.get('js')!)).toContain(
+      '<span class="hl-function">greet</span>',
+    )
   })
 
   test('keeps every character of the source', async () => {

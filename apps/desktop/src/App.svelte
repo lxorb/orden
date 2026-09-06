@@ -377,7 +377,9 @@
 
   // `window.nib` is the editor view; this is the surrounding app state.
   if (import.meta.env.DEV) {
-    Object.assign(window, { nibApp: { account, sync, workspace, settings, modes, theme, viewport } })
+    Object.assign(window, {
+      nibApp: { account, sync, workspace, settings, modes, theme, viewport },
+    })
   }
 
   function goto(line: number) {
@@ -456,7 +458,10 @@
 
   function runCommand(command: StateCommand) {
     if (!view) return
-    command({ state: view.state, dispatch: (transaction: Transaction) => view!.dispatch(transaction) })
+    command({
+      state: view.state,
+      dispatch: (transaction: Transaction) => view!.dispatch(transaction),
+    })
     view.focus()
   }
 
@@ -488,7 +493,12 @@
         disabled: !selected,
         run: () => document.execCommand('copy'),
       },
-      { label: t('Paste'), hint: shortcuts.hint('fixed.paste'), disabled: reading, run: () => void paste() },
+      {
+        label: t('Paste'),
+        hint: shortcuts.hint('fixed.paste'),
+        disabled: reading,
+        run: () => void paste(),
+      },
     ]
 
     // On a phone a press on the text is for the clipboard, the way it is in
@@ -504,25 +514,69 @@
       return [
         ...clipboard,
         DIVIDER,
-        { label: t('Leave reading mode'), hint: shortcuts.hint('app.reading'), run: () => modes.toggleReading(view) },
+        {
+          label: t('Leave reading mode'),
+          hint: shortcuts.hint('app.reading'),
+          run: () => modes.toggleReading(view),
+        },
       ]
     }
 
     return [
       ...clipboard,
       DIVIDER,
-      { label: t('Bold'), hint: shortcuts.hint('format.bold'), run: () => runCommand(toggleWrap('**')) },
-      { label: t('Italic'), hint: shortcuts.hint('format.italic'), run: () => runCommand(toggleWrap('*')) },
-      { label: t('Code'), hint: shortcuts.hint('format.code'), run: () => runCommand(toggleWrap('`')) },
+      {
+        label: t('Bold'),
+        hint: shortcuts.hint('format.bold'),
+        run: () => runCommand(toggleWrap('**')),
+      },
+      {
+        label: t('Italic'),
+        hint: shortcuts.hint('format.italic'),
+        run: () => runCommand(toggleWrap('*')),
+      },
+      {
+        label: t('Code'),
+        hint: shortcuts.hint('format.code'),
+        run: () => runCommand(toggleWrap('`')),
+      },
       { label: t('Link'), hint: shortcuts.hint('format.link'), run: () => runCommand(insertLink) },
-      { label: t('Clear formatting'), hint: shortcuts.hint('format.clear'), run: () => runCommand(clearFormatting) },
+      {
+        label: t('Clear formatting'),
+        hint: shortcuts.hint('format.clear'),
+        run: () => runCommand(clearFormatting),
+      },
       DIVIDER,
-      { label: t('Quote'), hint: shortcuts.hint('paragraph.quote'), run: () => runCommand(toggleQuote) },
-      { label: t('Bulleted list'), hint: shortcuts.hint('paragraph.bullet-list'), run: () => runCommand(toggleBulletList) },
-      { label: t('Numbered list'), hint: shortcuts.hint('paragraph.ordered-list'), run: () => runCommand(toggleOrderedList) },
-      { label: t('Table'), hint: shortcuts.hint('paragraph.table'), run: () => view && insertTableToEdit(view) },
-      { label: t('Code block'), hint: shortcuts.hint('paragraph.code-block'), run: () => runCommand(insertCodeFence) },
-      { label: t('Horizontal rule'), hint: shortcuts.hint('paragraph.rule'), run: () => runCommand(insertHorizontalRule) },
+      {
+        label: t('Quote'),
+        hint: shortcuts.hint('paragraph.quote'),
+        run: () => runCommand(toggleQuote),
+      },
+      {
+        label: t('Bulleted list'),
+        hint: shortcuts.hint('paragraph.bullet-list'),
+        run: () => runCommand(toggleBulletList),
+      },
+      {
+        label: t('Numbered list'),
+        hint: shortcuts.hint('paragraph.ordered-list'),
+        run: () => runCommand(toggleOrderedList),
+      },
+      {
+        label: t('Table'),
+        hint: shortcuts.hint('paragraph.table'),
+        run: () => view && insertTableToEdit(view),
+      },
+      {
+        label: t('Code block'),
+        hint: shortcuts.hint('paragraph.code-block'),
+        run: () => runCommand(insertCodeFence),
+      },
+      {
+        label: t('Horizontal rule'),
+        hint: shortcuts.hint('paragraph.rule'),
+        run: () => runCommand(insertHorizontalRule),
+      },
       { label: t('Page break'), run: () => runCommand(insertPageBreak) },
       DIVIDER,
       {
@@ -592,7 +646,9 @@
       class:open={!!workspace.panel}
       class:dragging={drag !== null}
       class:settling={settle !== null}
-      style:transform={drag === null || viewport.narrow ? undefined : `translateX(${drag - dragWidth}px)`}
+      style:transform={drag === null || viewport.narrow
+        ? undefined
+        : `translateX(${drag - dragWidth}px)`}
       style:--settle={settle === null ? undefined : `${settle}ms`}
       ontransitionend={arrived}
     >

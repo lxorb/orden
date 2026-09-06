@@ -38,11 +38,14 @@
     // A word under the checker's wavy line, with the tick it earns.
     spelling: 'M2 11.5L5.6 3l3.6 8.5M3.4 8.6h4.4M9.6 12.8l1.8 1.7 3.1-3.5',
     markdown: 'M2.5 3.5h11v9h-11zM4.5 10.5V6l2 2.4L8.5 6v4.5M10.5 6v4.5M9 9l1.5 1.5L12 9',
-    appearance: 'M8 1.8a6.2 6.2 0 1 0 0 12.4c.9 0 1.4-.6 1.4-1.3 0-.8-.7-1.2-.7-1.9 0-.5.4-.9 1-.9h1.1a3.4 3.4 0 0 0 3.4-3.4c0-2.8-2.8-4.9-6.2-4.9zM5 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM8 5.6a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM11 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z',
+    appearance:
+      'M8 1.8a6.2 6.2 0 1 0 0 12.4c.9 0 1.4-.6 1.4-1.3 0-.8-.7-1.2-.7-1.9 0-.5.4-.9 1-.9h1.1a3.4 3.4 0 0 0 3.4-3.4c0-2.8-2.8-4.9-6.2-4.9zM5 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM8 5.6a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8zM11 7.4a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z',
     account: 'M8 8.4a2.9 2.9 0 1 0 0-5.8 2.9 2.9 0 0 0 0 5.8zM2.6 14a5.4 5.4 0 0 1 10.8 0',
-    publish: 'M8 1.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 8 1.8zM1.8 8h12.4M8 1.8c1.6 1.8 2.4 3.9 2.4 6.2S9.6 12.4 8 14.2C6.4 12.4 5.6 10.3 5.6 8S6.4 3.6 8 1.8z',
+    publish:
+      'M8 1.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 8 1.8zM1.8 8h12.4M8 1.8c1.6 1.8 2.4 3.9 2.4 6.2S9.6 12.4 8 14.2C6.4 12.4 5.6 10.3 5.6 8S6.4 3.6 8 1.8z',
     llm: 'M5 2.5h6a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5.5 14v-2.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
-    trash: 'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
+    trash:
+      'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
     export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   }
 
@@ -106,7 +109,14 @@
       {
         section: 'export',
         label: t('Page'),
-        text: [t('Paper'), t('Orientation'), t('Margin'), t('Header'), t('Footer'), t('Appearance')],
+        text: [
+          t('Paper'),
+          t('Orientation'),
+          t('Margin'),
+          t('Header'),
+          t('Footer'),
+          t('Appearance'),
+        ],
       },
       { section: 'editor', label: t('Reset to defaults'), text: [] },
       // Every shortcut by name, so searching the settings for "Bold" lands on
@@ -117,16 +127,28 @@
         text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
       })),
       { section: 'markdown', label: t('Reset to defaults'), text: [] },
-      ...exportActions().map((action) => ({ section: 'export' as Section, label: action.label, text: [] })),
+      ...exportActions().map((action) => ({
+        section: 'export' as Section,
+        label: action.label,
+        text: [],
+      })),
     ]
 
     if (isDesktop) {
-      all.push({ section: 'appearance', label: t('Reload themes and custom CSS'), text: [t('Custom')] })
+      all.push({
+        section: 'appearance',
+        label: t('Reload themes and custom CSS'),
+        text: [t('Custom')],
+      })
     }
 
     if (account.signedIn) {
       all.push(
-        { section: 'publish', label: t('Publish'), text: [t('What to publish'), t('Address'), 'blog'] },
+        {
+          section: 'publish',
+          label: t('Publish'),
+          text: [t('What to publish'), t('Address'), 'blog'],
+        },
         { section: 'publish', label: t('Your own domain'), text: ['domain', 'dns'] },
         {
           section: 'llm',
@@ -274,7 +296,11 @@
       id: category.id,
       label: category.label(),
       rows: SHORTCUTS.filter((one) => one.category === category.id).filter(
-        (one) => !needle || has(one.label()) || has(shown(shortcuts.keyFor(one.id))) || has(category.label()),
+        (one) =>
+          !needle ||
+          has(one.label()) ||
+          has(shown(shortcuts.keyFor(one.id))) ||
+          has(category.label()),
       ),
     })).filter((group) => group.rows.length)
   })
@@ -372,7 +398,11 @@
 
 {#if settings.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 140 }} onclick={() => (settings.open = false)}></div>
+  <div
+    class="scrim"
+    transition:fade={{ duration: 140 }}
+    onclick={() => (settings.open = false)}
+  ></div>
 
   <div class="sheet" class:phone={viewport.phone} transition:appear>
     {#if viewport.phone}
@@ -400,7 +430,9 @@
         {/if}
 
         <label class="search">
-          <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
+          <svg viewBox="0 0 16 16"
+            ><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg
+          >
           <input bind:value={query} placeholder={t('Search settings')} spellcheck="false" />
         </label>
 
@@ -486,12 +518,16 @@
       aria-checked={field.get()}
       onclick={() => field.set(!field.get())}
     >
-      <span class="name">{field.label}{#if where}<small>{where}</small>{/if}</span>
+      <span class="name"
+        >{field.label}{#if where}<small>{where}</small>{/if}</span
+      >
       <span class="toggle" class:on={field.get()} aria-hidden="true"></span>
     </button>
   {:else if field.kind === 'slider'}
     <div class="setting sliding">
-      <span class="name">{field.label}{#if where}<small>{where}</small>{/if}</span>
+      <span class="name"
+        >{field.label}{#if where}<small>{where}</small>{/if}</span
+      >
       <span class="value">{field.get()}{field.unit ?? ''}</span>
       <input
         class="slider"
@@ -507,7 +543,9 @@
     </div>
   {:else}
     <div class="setting">
-      <span class="name">{field.label}{#if where}<small>{where}</small>{/if}</span>
+      <span class="name"
+        >{field.label}{#if where}<small>{where}</small>{/if}</span
+      >
       <div class="pick">
         <Select
           value={field.get()}
@@ -601,7 +639,13 @@
       </div>
     {:else}
       <p class="lead">{t('Not signed in')}</p>
-      <button class="primary" onclick={() => { settings.open = false; account.open = true }}>
+      <button
+        class="primary"
+        onclick={() => {
+          settings.open = false
+          account.open = true
+        }}
+      >
         {t('Sign in')}
       </button>
     {/if}
@@ -638,26 +682,26 @@
              no way to end up asking for both. -->
         <h3>{t('Address')}</h3>
         {#if offerDomain}
-        <div class="segmented" role="radiogroup" aria-label={t('Address')}>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === 'subdomain'}
-            class:on={mode === 'subdomain'}
-            onclick={() => (mode = 'subdomain')}
-          >
-            {t('On nibeditor.com')}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === 'domain'}
-            class:on={mode === 'domain'}
-            onclick={() => (mode = 'domain')}
-          >
-            {t('Your own domain')}
-          </button>
-        </div>
+          <div class="segmented" role="radiogroup" aria-label={t('Address')}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={mode === 'subdomain'}
+              class:on={mode === 'subdomain'}
+              onclick={() => (mode = 'subdomain')}
+            >
+              {t('On nibeditor.com')}
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={mode === 'domain'}
+              class:on={mode === 'domain'}
+              onclick={() => (mode = 'domain')}
+            >
+              {t('Your own domain')}
+            </button>
+          </div>
         {/if}
 
         {#if !offerDomain || mode === 'subdomain'}
@@ -726,7 +770,11 @@
                 </span>
               {/if}
               {#if notice}
-                <span class="hint" class:ok={notice.tone === 'ok'} class:bad={notice.tone === 'bad'}>
+                <span
+                  class="hint"
+                  class:ok={notice.tone === 'ok'}
+                  class:bad={notice.tone === 'bad'}
+                >
                   {t(notice.text)}
                   {#if notice.detail}{t(notice.detail)}{/if}
                 </span>
@@ -944,7 +992,9 @@
   {#if isDesktop}
     <h3>{t('Custom')}</h3>
     <div class="card">
-      <button class="action" onclick={() => theme.reload()}>{t('Reload themes and custom CSS')}</button>
+      <button class="action" onclick={() => theme.reload()}
+        >{t('Reload themes and custom CSS')}</button
+      >
 
       {#if isWindows}
         {@render row({

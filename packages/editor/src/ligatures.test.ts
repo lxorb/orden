@@ -36,7 +36,12 @@ describe('finding runs', () => {
   })
 
   test('knows the comparisons and the ellipsis', () => {
-    expect(findLigatures('a <= b >= c != d ... e').map((one) => one.glyph)).toEqual(['≤', '≥', '≠', '…'])
+    expect(findLigatures('a <= b >= c != d ... e').map((one) => one.glyph)).toEqual([
+      '≤',
+      '≥',
+      '≠',
+      '…',
+    ])
   })
 
   test('leaves what it has no glyph for', () => {

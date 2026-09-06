@@ -96,9 +96,9 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
 
   const scheme = options.scheme ?? 'light'
   const setup = pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)
-  const date = options.date ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
-  const palette =
-    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES[0]
+  const date =
+    options.date ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
+  const palette = CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES[0]
 
   const styles = [
     mathCss(body),
@@ -211,7 +211,11 @@ export async function inlineImages(
 }
 
 /** The whole document, ready to write: fences drawn, pictures inside it. */
-export async function renderNote(source: string, name: string, options: HtmlOptions = {}): Promise<string> {
+export async function renderNote(
+  source: string,
+  name: string,
+  options: HtmlOptions = {},
+): Promise<string> {
   const fence = await prepareFences(source, options.scheme ?? 'light', { highlight: !options.bare })
   const html = buildHtml(source, name, { ...options, fence })
 
@@ -331,7 +335,11 @@ export async function importDocument(): Promise<{ name: string; markdown: string
   if (typeof picked !== 'string') return null
 
   const markdown = await invoke<string>('import_document', { path: picked })
-  const name = picked.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, '') ?? 'Imported'
+  const name =
+    picked
+      .split(/[\\/]/)
+      .pop()
+      ?.replace(/\.[^.]+$/, '') ?? 'Imported'
 
   return { name: `${name}.md`, markdown }
 }

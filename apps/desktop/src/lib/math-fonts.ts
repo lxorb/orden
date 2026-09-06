@@ -29,7 +29,10 @@ function familiesByClass(css: string): Map<string, string[][]> {
     if (!family) continue
 
     for (const part of selector.split(',')) {
-      const compounds = part.trim().split(/\s*[\s>+~]\s*/).reverse()
+      const compounds = part
+        .trim()
+        .split(/\s*[\s>+~]\s*/)
+        .reverse()
       const classes = compounds
         .map((compound) => [...compound.matchAll(/\.([\w-]+)/g)].map((match) => match[1]))
         .find((found) => found.length)

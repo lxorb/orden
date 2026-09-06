@@ -78,7 +78,7 @@ describe('the document the sandbox runs', () => {
   })
 
   test('hands the code through as itself, quotes and newlines and all', () => {
-    const code = "console.log('a\\nb')\n`back` + \"tick\""
+    const code = 'console.log(\'a\\nb\')\n`back` + "tick"'
     const html = runnerDocument(code, 1)
     const literal = /var CODE = (".*")\n/.exec(html)
     expect(literal).not.toBeNull()

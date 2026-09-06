@@ -74,7 +74,9 @@ describe('handing out a token', () => {
 
 describe('the connector', () => {
   test('refuses a caller with no token', async () => {
-    expect((await call(env, '/mcp', { body: { jsonrpc: '2.0', id: 1, method: 'ping' } })).status).toBe(401)
+    expect(
+      (await call(env, '/mcp', { body: { jsonrpc: '2.0', id: 1, method: 'ping' } })).status,
+    ).toBe(401)
   })
 
   test('refuses a token that was never issued', async () => {
@@ -122,9 +124,9 @@ describe('reading notes through it', () => {
   })
 
   test('reads a note', async () => {
-    expect(await tool(await connector(), 'read_note', { space: 'Work', path: 'plan.md' })).toContain(
-      'Ship the thing.',
-    )
+    expect(
+      await tool(await connector(), 'read_note', { space: 'Work', path: 'plan.md' }),
+    ).toContain('Ship the thing.')
   })
 
   test('searches across the account', async () => {
@@ -136,7 +138,10 @@ describe('reading notes through it', () => {
   })
 
   test('refuses a path that climbs out of the space', async () => {
-    const text = await tool(await connector(), 'read_note', { space: 'Work', path: '../../etc/passwd' })
+    const text = await tool(await connector(), 'read_note', {
+      space: 'Work',
+      path: '../../etc/passwd',
+    })
     expect(text).toContain('not a note path')
   })
 })
@@ -154,9 +159,9 @@ describe('writing through it', () => {
 
   test('creates a note when the token allows it', async () => {
     const key = await connector(false)
-    expect(await tool(key, 'write_note', { space: 'Work', path: 'new.md', content: 'hello' })).toContain(
-      'Saved',
-    )
+    expect(
+      await tool(key, 'write_note', { space: 'Work', path: 'new.md', content: 'hello' }),
+    ).toContain('Saved')
 
     expect(await tool(key, 'read_note', { space: 'Work', path: 'new.md' })).toBe('hello')
   })
@@ -186,8 +191,8 @@ describe('writing through it', () => {
     })
 
     expect(await tool(otherKey.json.token, 'list_spaces')).toContain('No spaces')
-    expect(await tool(otherKey.json.token, 'read_note', { space: 'Work', path: 'plan.md' })).toContain(
-      'No space',
-    )
+    expect(
+      await tool(otherKey.json.token, 'read_note', { space: 'Work', path: 'plan.md' }),
+    ).toContain('No space')
   })
 })

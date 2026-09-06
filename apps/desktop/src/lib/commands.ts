@@ -158,9 +158,24 @@ export interface Command {
 /** Everything the palette can do. Labels read as the action, not the setting. */
 export function appCommands(view?: EditorView): Command[] {
   return [
-    { id: 'save', label: t('Save'), hint: shortcuts.hint('app.save'), run: () => void workspace.save() },
-    { id: 'new', label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
-    { id: 'open', label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
+    {
+      id: 'save',
+      label: t('Save'),
+      hint: shortcuts.hint('app.save'),
+      run: () => void workspace.save(),
+    },
+    {
+      id: 'new',
+      label: t('New note'),
+      hint: shortcuts.hint('app.new'),
+      run: () => workspace.openBlank(),
+    },
+    {
+      id: 'open',
+      label: t('Open file'),
+      hint: shortcuts.hint('app.open'),
+      run: () => void openFile(),
+    },
     {
       id: 'close',
       label: t('Close note'),
@@ -185,7 +200,12 @@ export function appCommands(view?: EditorView): Command[] {
       label: workspace.autoSave ? t('Turn off auto-save') : t('Turn on auto-save'),
       run: () => workspace.setAutoSave(!workspace.autoSave),
     },
-    { id: 'settings', label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
+    {
+      id: 'settings',
+      label: t('Settings'),
+      hint: shortcuts.hint('app.settings'),
+      run: () => settings.show(),
+    },
     { id: 'shortcuts', label: t('Shortcuts'), run: () => settings.show('shortcuts') },
     {
       id: 'history',
@@ -199,12 +219,21 @@ export function appCommands(view?: EditorView): Command[] {
       .slice(0, 8)
       .map((path) => ({
         id: `recent:${path}`,
-        label: `Recent: ${path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, '') ?? path}`,
+        label: `Recent: ${
+          path
+            .split(/[\\/]/)
+            .pop()
+            ?.replace(/\.[^.]+$/, '') ?? path
+        }`,
         run: () => void workspace.open(path),
       })),
 
     ...exportCommands(),
-    { id: 'publish', label: t('Publish this space as a blog'), run: () => settings.show('publish') },
+    {
+      id: 'publish',
+      label: t('Publish this space as a blog'),
+      run: () => settings.show('publish'),
+    },
     { id: 'llm', label: t('Connect an LLM to your notes'), run: () => settings.show('llm') },
 
     account.signedIn
@@ -289,9 +318,24 @@ export function appCommands(view?: EditorView): Command[] {
     { id: 'looser', label: t('Looser line spacing'), run: () => modes.stepLineHeight(1, view) },
     { id: 'tighter', label: t('Tighter line spacing'), run: () => modes.stepLineHeight(-1, view) },
 
-    { id: 'zoom-in', label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
-    { id: 'zoom-out', label: t('Zoom out'), hint: shortcuts.hint('app.zoom-out'), run: () => modes.stepZoom(-1) },
-    { id: 'zoom-reset', label: t('Actual size'), hint: shortcuts.hint('app.zoom-reset'), run: () => modes.resetZoom() },
+    {
+      id: 'zoom-in',
+      label: t('Zoom in'),
+      hint: shortcuts.hint('app.zoom-in'),
+      run: () => modes.stepZoom(1),
+    },
+    {
+      id: 'zoom-out',
+      label: t('Zoom out'),
+      hint: shortcuts.hint('app.zoom-out'),
+      run: () => modes.stepZoom(-1),
+    },
+    {
+      id: 'zoom-reset',
+      label: t('Actual size'),
+      hint: shortcuts.hint('app.zoom-reset'),
+      run: () => modes.resetZoom(),
+    },
 
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,
@@ -327,7 +371,12 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.sidebar'),
       run: () => workspace.toggleSidebar(),
     },
-    { id: 'files', label: t('Files'), hint: shortcuts.hint('app.files'), run: () => workspace.showPanel('tree') },
+    {
+      id: 'files',
+      label: t('Files'),
+      hint: shortcuts.hint('app.files'),
+      run: () => workspace.showPanel('tree'),
+    },
     {
       id: 'search-space',
       label: t('Search this space'),

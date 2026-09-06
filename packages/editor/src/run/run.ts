@@ -181,26 +181,24 @@ export function runFenceAtCursor(view: EditorView): boolean {
  *
  *  Kept out of the panel's own DOM so that the state stays the single account of
  *  what is running: the buttons dispatch, and this reacts. */
-export const runSandboxes = ViewPlugin.define(
-  (view) => ({
-    update(update: ViewUpdate) {
-      for (const transaction of update.transactions) {
-        for (const effect of transaction.effects) {
-          if (effect.is(dropRun)) teardown(effect.value)
-          else if (effect.is(closeRun) && effect.value.status !== 'done') teardown(effect.value.run)
-        }
+export const runSandboxes = ViewPlugin.define((view) => ({
+  update(update: ViewUpdate) {
+    for (const transaction of update.transactions) {
+      for (const effect of transaction.effects) {
+        if (effect.is(dropRun)) teardown(effect.value)
+        else if (effect.is(closeRun) && effect.value.status !== 'done') teardown(effect.value.run)
       }
-    },
+    }
+  },
 
-    destroy() {
-      // The view is going, or live preview was switched off. Either way nothing
-      // is left to show the output, so nothing should still be running.
-      for (const [run, sandbox] of [...live]) {
-        if (sandbox.view === view) teardown(run)
-      }
-    },
-  }),
-)
+  destroy() {
+    // The view is going, or live preview was switched off. Either way nothing
+    // is left to show the output, so nothing should still be running.
+    for (const [run, sandbox] of [...live]) {
+      if (sandbox.view === view) teardown(run)
+    }
+  },
+}))
 
 /** The panels and the sandboxes behind them. */
 export const runExtension = [runPanels, runSandboxes]

@@ -11,8 +11,8 @@
       "binding": "DB",
       "database_name": "nib",
       "database_id": "3eb83f94-5361-4850-a256-28611a4f94a4",
-      "migrations_dir": "migrations"
-    }
+      "migrations_dir": "migrations",
+    },
   ],
 
   "r2_buckets": [{ "binding": "NOTES", "bucket_name": "nib-notes" }],
@@ -26,7 +26,7 @@
     "directory": "../../apps/desktop/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/*", "!/assets/*"]
+    "run_worker_first": ["/*", "!/assets/*"],
   },
 
   // Cloudflare Email Sending. `nibeditor.com` is enabled as a sending
@@ -58,7 +58,7 @@
     "BLOG_CNAME_TARGET": "cname.nibeditor.com",
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
     "APP_ORIGIN": "https://nibeditor.com",
-    "MAIL_FROM": "Nib <nib@nibeditor.com>"
+    "MAIL_FROM": "Nib <nib@nibeditor.com>",
   },
 
   // The catch-all is what lets a custom hostname reach the Worker: a request
@@ -76,6 +76,6 @@
     // A custom domain whose zone is in this Cloudflare account needs no SaaS:
     // a proxied record plus a route here. Routes not listed are removed on
     // every deploy, so the shortcut has to live in this file.
-    { "pattern": "blog.emilvinu.ch/*", "zone_name": "emilvinu.ch" }
-  ]
+    { "pattern": "blog.emilvinu.ch/*", "zone_name": "emilvinu.ch" },
+  ],
 }

@@ -7,8 +7,18 @@ const FONT = "'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
 /** flowchart.js takes colours rather than a theme; these are the surface,
  *  line and text tokens of each scheme. */
 const FLOW = {
-  light: { fill: '#f3f5f8', 'line-color': '#8a93a2', 'element-color': '#ccd4de', 'font-color': '#1a1d23' },
-  dark: { fill: '#1a1e25', 'line-color': '#767e8c', 'element-color': '#2f3641', 'font-color': '#dde2ea' },
+  light: {
+    fill: '#f3f5f8',
+    'line-color': '#8a93a2',
+    'element-color': '#ccd4de',
+    'font-color': '#1a1d23',
+  },
+  dark: {
+    fill: '#1a1e25',
+    'line-color': '#767e8c',
+    'element-color': '#2f3641',
+    'font-color': '#dde2ea',
+  },
 }
 
 let sequence = 0

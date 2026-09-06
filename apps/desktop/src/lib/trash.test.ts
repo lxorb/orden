@@ -33,7 +33,14 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (command === 'write_note') notes.set(path, String(args?.content ?? ''))
         return undefined
       case 'read_tree':
-        return { name: 'space', path: '/space', is_dir: true, modified: 0, created: 0, children: [] }
+        return {
+          name: 'space',
+          path: '/space',
+          is_dir: true,
+          modified: 0,
+          created: 0,
+          children: [],
+        }
       case 'list_spaces':
         return [{ name: 'space', path: '/space' }]
       case 'trash_item': {
@@ -167,7 +174,12 @@ describe('signed out', () => {
 
     await trash.load()
     expect(trash.items).toHaveLength(1)
-    expect(trash.items[0]).toMatchObject({ kind: 'note', name: 'Idea.md', source: 'device', detail: '/space' })
+    expect(trash.items[0]).toMatchObject({
+      kind: 'note',
+      name: 'Idea.md',
+      source: 'device',
+      detail: '/space',
+    })
     expect(trash.items[0].purgeAt - trash.items[0].deletedAt).toBe(14 * DAY)
   })
 
@@ -227,9 +239,28 @@ describe('signed in', () => {
 
   test('the list is the account’s, with any device leftovers', async () => {
     const at = Date.now() - 2 * DAY
-    remote.notes = [{ id: 'n1', spaceId: 's', spaceName: 'Work', path: 'notes/Idea.md', deletedAt: at, purgeAt: at + 14 * DAY }]
-    remote.spaces = [{ id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 }]
-    deviceTrash = [{ id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at - 2 * DAY }]
+    remote.notes = [
+      {
+        id: 'n1',
+        spaceId: 's',
+        spaceName: 'Work',
+        path: 'notes/Idea.md',
+        deletedAt: at,
+        purgeAt: at + 14 * DAY,
+      },
+    ]
+    remote.spaces = [
+      { id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 },
+    ]
+    deviceTrash = [
+      {
+        id: 'd1',
+        kind: 'note',
+        name: 'Local.md',
+        from: '/space/Local.md',
+        trashedAt: at - 2 * DAY,
+      },
+    ]
 
     await trash.load()
 
@@ -242,7 +273,16 @@ describe('signed in', () => {
 
   test('restoring and purging call the account', async () => {
     const at = Date.now()
-    remote.notes = [{ id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at + 14 * DAY }]
+    remote.notes = [
+      {
+        id: 'n1',
+        spaceId: 's',
+        spaceName: 'Work',
+        path: 'Idea.md',
+        deletedAt: at,
+        purgeAt: at + 14 * DAY,
+      },
+    ]
     remote.spaces = [{ id: 's2', name: 'Old', deletedAt: at, purgeAt: at + 14 * DAY, notes: 0 }]
     await trash.load()
 

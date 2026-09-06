@@ -25,7 +25,9 @@ function afterMove(doc: string, from: number, to: number) {
 
 /** Where the field found something, as text. */
 function spans(doc: string, cursor = 0): string[] {
-  return state(doc, cursor).field(blockDecorations).spans.map((span) => doc.slice(span.from, span.to))
+  return state(doc, cursor)
+    .field(blockDecorations)
+    .spans.map((span) => doc.slice(span.from, span.to))
 }
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
@@ -62,7 +64,6 @@ describe('block decorations', () => {
     expect(is).not.toBe(was)
     expect(is.decorations.size).toBe(1)
   })
-
 })
 
 /** What the field made of typing `insert` at `at`, and what it had before. */

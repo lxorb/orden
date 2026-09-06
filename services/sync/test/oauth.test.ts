@@ -30,7 +30,12 @@ async function pkce() {
 /** Registers a public client the way Claude and ChatGPT do. */
 async function register(redirectUris = [CHATGPT], extra: Record<string, unknown> = {}) {
   const response = await call(env, '/oauth/register', {
-    body: { client_name: 'ChatGPT', redirect_uris: redirectUris, token_endpoint_auth_method: 'none', ...extra },
+    body: {
+      client_name: 'ChatGPT',
+      redirect_uris: redirectUris,
+      token_endpoint_auth_method: 'none',
+      ...extra,
+    },
   })
   return response
 }
@@ -77,16 +82,30 @@ async function exchange(fields: Record<string, string>) {
 }
 
 /** The whole dance, as a client and a person would do it, ending in tokens. */
-async function connect(options: { write?: boolean; email?: string; clientId?: string; redirect?: string } = {}) {
+async function connect(
+  options: { write?: boolean; email?: string; clientId?: string; redirect?: string } = {},
+) {
   const email = options.email ?? 'a@b.dev'
   const clientId = options.clientId ?? (await register()).json.client_id
   const redirect = options.redirect ?? CHATGPT
   const { verifier, challenge } = await pkce()
 
-  const ask = { client_id: clientId, redirect_uri: redirect, state: 'xyz', code_challenge: challenge, resource: `${ORIGIN}/mcp` }
+  const ask = {
+    client_id: clientId,
+    redirect_uri: redirect,
+    state: 'xyz',
+    code_challenge: challenge,
+    resource: `${ORIGIN}/mcp`,
+  }
 
   const code = await codeSentTo(() => submit({ ...ask, action: 'send', email }))
-  const allowed = await submit({ ...ask, action: 'allow', email, code, ...(options.write ? { write: '1' } : {}) })
+  const allowed = await submit({
+    ...ask,
+    action: 'allow',
+    email,
+    code,
+    ...(options.write ? { write: '1' } : {}),
+  })
 
   expect(allowed.status).toBe(302)
   const sentTo = new URL(allowed.headers.get('location')!)
@@ -123,7 +142,10 @@ describe('what a client can find out on its own', () => {
   })
 
   test('the connector says which server signs people in, at both well-known paths', async () => {
-    for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp']) {
+    for (const path of [
+      '/.well-known/oauth-protected-resource',
+      '/.well-known/oauth-protected-resource/mcp',
+    ]) {
       const response = await call(env, path)
 
       expect(response.status, path).toBe(200)
@@ -211,7 +233,11 @@ describe('registering', () => {
     expect(response.json.client_secret).toMatch(/^[0-9a-f]{64}$/)
     expect(response.json.token_endpoint_auth_method).toBe('client_secret_post')
 
-    const without = await exchange({ client_id: response.json.client_id, code: 'x', code_verifier: 'y'.repeat(43) })
+    const without = await exchange({
+      client_id: response.json.client_id,
+      code: 'x',
+      code_verifier: 'y'.repeat(43),
+    })
     expect(without.status).toBe(401)
     expect(without.json.error).toBe('invalid_client')
 
@@ -240,7 +266,10 @@ describe('asking for consent', () => {
 
   test('refuses an unknown client on a page rather than by redirecting', async () => {
     const { challenge } = await pkce()
-    const response = await call(env, authorizeUrl({ client_id: 'nobody', code_challenge: challenge }))
+    const response = await call(
+      env,
+      authorizeUrl({ client_id: 'nobody', code_challenge: challenge }),
+    )
 
     expect(response.status).toBe(400)
     expect(response.headers.get('location')).toBeNull()
@@ -251,7 +280,11 @@ describe('asking for consent', () => {
     const { challenge } = await pkce()
     const response = await call(
       env,
-      authorizeUrl({ client_id, code_challenge: challenge, redirect_uri: 'https://evil.example/cb' }),
+      authorizeUrl({
+        client_id,
+        code_challenge: challenge,
+        redirect_uri: 'https://evil.example/cb',
+      }),
     )
 
     expect(response.status).toBe(400)
@@ -278,7 +311,9 @@ describe('asking for consent', () => {
       authorizeUrl({ client_id, code_challenge: challenge, resource: 'https://other.example/mcp' }),
     )
 
-    expect(new URL(response.headers.get('location')!).searchParams.get('error')).toBe('invalid_target')
+    expect(new URL(response.headers.get('location')!).searchParams.get('error')).toBe(
+      'invalid_target',
+    )
   })
 
   test('lets a local app answer on whichever port it has', async () => {
@@ -286,7 +321,11 @@ describe('asking for consent', () => {
     const { challenge } = await pkce()
     const response = await call(
       env,
-      authorizeUrl({ client_id, code_challenge: challenge, redirect_uri: 'http://localhost:3118/callback' }),
+      authorizeUrl({
+        client_id,
+        code_challenge: challenge,
+        redirect_uri: 'http://localhost:3118/callback',
+      }),
     )
 
     expect(response.status).toBe(200)
@@ -298,11 +337,18 @@ describe('asking for consent', () => {
     const { challenge } = await pkce()
     const ask = { client_id, redirect_uri: CHATGPT, code_challenge: challenge }
 
-    await codeSentTo(() => submit({ ...ask, scope: 'notes:read', action: 'send', email: 'a@b.dev' }))
+    await codeSentTo(() =>
+      submit({ ...ask, scope: 'notes:read', action: 'send', email: 'a@b.dev' }),
+    )
     const readOnly = await submit({ ...ask, scope: 'notes:read', action: 'send', email: 'a@b.dev' })
     expect(readOnly.text).not.toContain('change my notes')
 
-    const both = await submit({ ...ask, scope: 'notes:read notes:write', action: 'send', email: 'a@b.dev' })
+    const both = await submit({
+      ...ask,
+      scope: 'notes:read notes:write',
+      action: 'send',
+      email: 'a@b.dev',
+    })
     expect(both.text).toContain('change my notes')
   })
 
@@ -376,7 +422,10 @@ describe('connecting', () => {
 
   test('signs up an address it has never seen', async () => {
     const { tokens } = await connect({ email: 'new@b.dev' })
-    const spaces = await rpc(tokens.json.access_token, 'tools/call', { name: 'list_spaces', arguments: {} })
+    const spaces = await rpc(tokens.json.access_token, 'tools/call', {
+      name: 'list_spaces',
+      arguments: {},
+    })
 
     expect(spaces.json.result.content[0].text).toContain('No spaces')
   })
@@ -391,7 +440,13 @@ describe('connecting', () => {
     const grant = new URL(allowed.headers.get('location')!).searchParams.get('code')!
 
     const tokens = await call(env, '/oauth/token', {
-      body: { grant_type: 'authorization_code', code: grant, code_verifier: verifier, client_id, redirect_uri: CHATGPT },
+      body: {
+        grant_type: 'authorization_code',
+        code: grant,
+        code_verifier: verifier,
+        client_id,
+        redirect_uri: CHATGPT,
+      },
     })
     expect(tokens.status).toBe(200)
   })
@@ -405,7 +460,12 @@ describe('connecting', () => {
     const allowed = await submit({ ...ask, action: 'allow', email: 'a@b.dev', code })
     const grant = new URL(allowed.headers.get('location')!).searchParams.get('code')!
 
-    const tokens = await exchange({ code: grant, code_verifier: (await pkce()).verifier, client_id, redirect_uri: CHATGPT })
+    const tokens = await exchange({
+      code: grant,
+      code_verifier: (await pkce()).verifier,
+      client_id,
+      redirect_uri: CHATGPT,
+    })
     expect(tokens.status).toBe(400)
     expect(tokens.json.error).toBe('invalid_grant')
   })
@@ -420,7 +480,9 @@ describe('connecting', () => {
     const grant = new URL(allowed.headers.get('location')!).searchParams.get('code')!
 
     expect((await exchange({ code: grant, code_verifier: verifier, client_id })).status).toBe(200)
-    expect((await exchange({ code: grant, code_verifier: verifier, client_id })).json.error).toBe('invalid_grant')
+    expect((await exchange({ code: grant, code_verifier: verifier, client_id })).json.error).toBe(
+      'invalid_grant',
+    )
   })
 
   test('refuses a code presented by another client', async () => {
@@ -452,7 +514,11 @@ describe('connecting', () => {
 describe('refreshing', () => {
   async function refresh(clientId: string, token: string) {
     return call(env, '/oauth/token', {
-      raw: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: token, client_id: clientId }).toString(),
+      raw: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: token,
+        client_id: clientId,
+      }).toString(),
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
   }
@@ -503,7 +569,9 @@ describe('a client that describes itself at a URL', () => {
       'fetch',
       vi.fn(async (url: string) =>
         url === CLAUDE_CODE
-          ? new Response(JSON.stringify(document), { headers: { 'content-type': 'application/json' } })
+          ? new Response(JSON.stringify(document), {
+              headers: { 'content-type': 'application/json' },
+            })
           : new Response('not found', { status: 404 }),
       ),
     )
@@ -530,10 +598,17 @@ describe('a client that describes itself at a URL', () => {
   })
 
   test('is refused when the document does not name itself', async () => {
-    hosting({ client_id: 'https://elsewhere.example/x', client_name: 'X', redirect_uris: [CHATGPT] })
+    hosting({
+      client_id: 'https://elsewhere.example/x',
+      client_name: 'X',
+      redirect_uris: [CHATGPT],
+    })
 
     const { challenge } = await pkce()
-    const response = await call(env, authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }))
+    const response = await call(
+      env,
+      authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }),
+    )
     expect(response.status).toBe(400)
   })
 
@@ -575,7 +650,10 @@ describe('what the settings show', () => {
     const { tokens } = await connect()
 
     const listed = await call(env, '/v1/mcp/token', { token: owner })
-    await call(env, `/v1/mcp/clients/${listed.json.clients[0].id}`, { token: other, method: 'DELETE' })
+    await call(env, `/v1/mcp/clients/${listed.json.clients[0].id}`, {
+      token: other,
+      method: 'DELETE',
+    })
 
     expect((await rpc(tokens.json.access_token, 'ping')).status).toBe(200)
   })

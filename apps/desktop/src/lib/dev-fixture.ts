@@ -85,7 +85,9 @@ function tree(): Entry {
   }
 
   const sort = (entry: Entry) => {
-    entry.children.sort((a, b) => Number(b.is_dir) - Number(a.is_dir) || a.name.localeCompare(b.name))
+    entry.children.sort(
+      (a, b) => Number(b.is_dir) - Number(a.is_dir) || a.name.localeCompare(b.name),
+    )
     entry.children.filter((child) => child.is_dir).forEach(sort)
   }
   sort(root)

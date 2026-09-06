@@ -63,20 +63,40 @@ async function colouring(word: string, code: string) {
 
 /** One fence per mechanism, each written the way someone would write it. */
 const fences: [string, string, string[]][] = [
-  ['py', 'def greet(name):\n    # hello\n    return f"hi {name}"', ['comment', 'keyword', 'string']],
+  [
+    'py',
+    'def greet(name):\n    # hello\n    return f"hi {name}"',
+    ['comment', 'keyword', 'string'],
+  ],
   ['rs', 'fn main() {\n    let n: u32 = 3; // three\n}', ['comment', 'keyword', 'number']],
   ['kt', 'fun main() {\n    val greeting = "hi"\n}', ['keyword', 'string']],
-  ['zig', 'pub fn main() void {\n    // a comment\n    const n: u32 = 3;\n}', ['comment', 'keyword', 'number']],
+  [
+    'zig',
+    'pub fn main() void {\n    // a comment\n    const n: u32 = 3;\n}',
+    ['comment', 'keyword', 'number'],
+  ],
   ['awk', '# sum\nBEGIN { total = 0 }', ['comment', 'keyword']],
   ['glsl', 'void main() {\n    // red\n    gl_FragColor = vec4(1.0);\n}', ['comment', 'keyword']],
   ['elixir', 'defmodule A do\n  def hi(name), do: IO.puts("hi")\nend', ['keyword', 'string']],
   ['nix', '# a shell\npkgs.mkShell { buildInputs = [ pkgs.git ]; }', ['comment', 'punctuation']],
-  ['terraform', '# an instance\nresource "aws_instance" "web" {\n  count = 3\n}', ['comment', 'number', 'type']],
+  [
+    'terraform',
+    '# an instance\nresource "aws_instance" "web" {\n  count = 3\n}',
+    ['comment', 'number', 'type'],
+  ],
   ['solidity', '// a contract\npragma solidity ^0.8.20;', ['comment', 'keyword']],
   ['svelte', '<script>\n  let n = 0\n</script>\n\n<b>{n}</b>', ['keyword', 'number']],
-  ['makefile', '# build\nCC := gcc\nall: main.c\n\t$(CC) main.c', ['comment', 'function', 'property', 'punctuation']],
+  [
+    'makefile',
+    '# build\nCC := gcc\nall: main.c\n\t$(CC) main.c',
+    ['comment', 'function', 'property', 'punctuation'],
+  ],
   ['graphql', '# a schema\ntype User {\n  id: ID!\n}', ['comment', 'keyword', 'property', 'type']],
-  ['prisma', '// a model\nmodel User {\n  id Int @id\n}', ['comment', 'keyword', 'property', 'type']],
+  [
+    'prisma',
+    '// a model\nmodel User {\n  id Int @id\n}',
+    ['comment', 'keyword', 'property', 'type'],
+  ],
   ['console', '$ echo "done"\nDone in 2s', ['string']],
   ['jsonc', '{\n  "name": "nib"\n}', ['property', 'string']],
   ['helm', 'metadata:\n  name: nib\n  replicas: 3', ['property']],

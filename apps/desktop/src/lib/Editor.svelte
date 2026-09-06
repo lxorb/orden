@@ -73,7 +73,10 @@
     if (!view || at === taken) return
 
     taken = at
-    replaceDoc(view, untrack(() => doc))
+    replaceDoc(
+      view,
+      untrack(() => doc),
+    )
   })
 </script>
 

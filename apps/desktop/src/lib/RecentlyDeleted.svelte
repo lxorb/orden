@@ -23,7 +23,8 @@
   function ago(at: number): string {
     const format = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' })
     const elapsed = Date.now() - at
-    if (elapsed < 60 * 60 * 1000) return format.format(-Math.max(1, Math.round(elapsed / 60000)), 'minute')
+    if (elapsed < 60 * 60 * 1000)
+      return format.format(-Math.max(1, Math.round(elapsed / 60000)), 'minute')
     if (elapsed < DAY) return format.format(-Math.round(elapsed / (60 * 60 * 1000)), 'hour')
     return format.format(-Math.round(elapsed / DAY), 'day')
   }
@@ -64,7 +65,9 @@
   </div>
 {/snippet}
 
-<p class="hint">{t('Deleted notes and spaces wait here for 14 days, then they are gone for good.')}</p>
+<p class="hint">
+  {t('Deleted notes and spaces wait here for 14 days, then they are gone for good.')}
+</p>
 
 {#if trash.error}
   <p class="hint bad">{trash.error}</p>

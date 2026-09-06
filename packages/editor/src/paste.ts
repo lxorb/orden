@@ -53,10 +53,17 @@ export function htmlToMarkdown(html: string): string {
 /** Spreadsheet cells arrive as tab-separated lines; Typora turns them into a
  *  table, which is nearly always what was meant. */
 export function delimitedToTable(text: string): string | null {
-  const lines = text.replace(/\r\n?/g, '\n').split('\n').filter((line) => line.length > 0)
+  const lines = text
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .filter((line) => line.length > 0)
   if (lines.length < 2) return null
 
-  const separator = lines[0].includes('\t') ? '\t' : lines.every((l) => l.includes(',')) ? ',' : null
+  const separator = lines[0].includes('\t')
+    ? '\t'
+    : lines.every((l) => l.includes(','))
+      ? ','
+      : null
   if (!separator) return null
 
   const rows = lines.map((line) => line.split(separator).map((cell) => cell.trim()))

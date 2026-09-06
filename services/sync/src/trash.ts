@@ -105,7 +105,10 @@ export async function purgeSpace(env: Env, space: Pick<Space, 'id'>) {
 }
 
 /** What the daily job does: everything that has waited its 14 days goes. */
-export async function purgeExpired(env: Env, at: number): Promise<{ notes: number; spaces: number }> {
+export async function purgeExpired(
+  env: Env,
+  at: number,
+): Promise<{ notes: number; spaces: number }> {
   const cutoff = at - KEEP_FOR
 
   const notes = await env.DB.prepare(
@@ -183,7 +186,10 @@ trash.post('/spaces/:id/restore', async (context) => {
     .run()
 
   return context.json({
-    space: presentSpace({ ...space, deleted: 0, deleted_at: null, name, position, updated_at: at }, env),
+    space: presentSpace(
+      { ...space, deleted: 0, deleted_at: null, name, position, updated_at: at },
+      env,
+    ),
   })
 })
 

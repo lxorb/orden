@@ -17,7 +17,10 @@ import { isRunnableLanguage, runnableFenceAt } from './run'
 function state(doc: string) {
   return EditorState.create({
     doc,
-    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }), runPanels],
+    extensions: [
+      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+      runPanels,
+    ],
   })
 }
 
@@ -178,7 +181,9 @@ describe('the panel state', () => {
 
   test('lets the first ending stand, so a timeout cannot overwrite a result', () => {
     const { begun } = started()
-    const done = begun.update({ effects: closeRun.of({ run: 1, status: 'done', elapsed: 4 }) }).state
+    const done = begun.update({
+      effects: closeRun.of({ run: 1, status: 'done', elapsed: 4 }),
+    }).state
     const later = done.update({
       effects: closeRun.of({ run: 1, status: 'timeout', elapsed: 10_000 }),
     }).state

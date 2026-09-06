@@ -46,7 +46,10 @@ beforeEach(async () => {
 })
 
 /** A keystroke, as the window would hand one over. */
-function press(key: string, held: { code?: string; ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
+function press(
+  key: string,
+  held: { code?: string; ctrl?: boolean; alt?: boolean; shift?: boolean } = {},
+) {
   return {
     key,
     code: held.code,
@@ -114,7 +117,8 @@ describe('every shortcut there is', () => {
       if (!key) continue
 
       for (const [taken, by] of held) {
-        if (sameCombination(taken, key, platform)) clashes.push(`${entry.id} and ${by} both start on ${key}`)
+        if (sameCombination(taken, key, platform))
+          clashes.push(`${entry.id} and ${by} both start on ${key}`)
       }
       held.set(key, entry.id)
     }
@@ -180,7 +184,9 @@ describe('what is written down', () => {
     const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
 
-    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({ 'format.bold': 'Mod-Alt-b' })
+    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({
+      'format.bold': 'Mod-Alt-b',
+    })
   })
 
   /** The reason only the differences are kept: a full dump would freeze
@@ -221,7 +227,9 @@ describe('what is written down', () => {
     shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
-    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({ 'format.bold': 'Mod-Alt-b' })
+    expect(JSON.parse(localStorage.getItem('nib:shortcuts')!)).toEqual({
+      'format.bold': 'Mod-Alt-b',
+    })
   })
 
   test('is left alone by an account that carries none', () => {
@@ -304,7 +312,9 @@ describe('the keyboard', () => {
     shortcuts.set('app.palette', 'Mod-Alt-9')
 
     expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(false)
-    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(true)
+    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(
+      true,
+    )
     expect(opened).toBe(1)
   })
 
@@ -324,7 +334,9 @@ describe('the keyboard', () => {
 describe('the file list', () => {
   test('reads its own keys from the registry', () => {
     const { shortcuts } = registry
-    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(true)
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(
+      true,
+    )
     expect(shortcuts.pressed('tree.deselect', press('Escape'))).toBe(true)
     expect(shortcuts.pressed('tree.delete', press('Delete'))).toBe(true)
     expect(shortcuts.pressed('tree.delete.alt', press('Backspace'))).toBe(true)
@@ -334,8 +346,12 @@ describe('the file list', () => {
     const { shortcuts } = registry
     shortcuts.set('tree.select-all', 'Mod-Alt-a')
 
-    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(false)
-    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, alt: true, code: 'KeyA' }))).toBe(true)
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(
+      false,
+    )
+    expect(
+      shortcuts.pressed('tree.select-all', press('a', { ctrl: true, alt: true, code: 'KeyA' })),
+    ).toBe(true)
   })
 
   /** They fire where the list is, not on the window, so they are none of the

@@ -413,7 +413,7 @@ class Decorator {
     const doc = this.state.doc
     const last = firstOnly ? node.from : Math.min(node.to, doc.length)
 
-    for (let pos = node.from; pos <= last; ) {
+    for (let pos = node.from; pos <= last;) {
       const line = doc.lineAt(pos)
       this.addLineClass(line.from, className)
       if (line.to >= doc.length) break
@@ -457,7 +457,14 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       // that moves neither the document nor the caret - so it has to say so
       // itself, or the syntax around the caret would stay showing.
       const sealed = update.startState.facet(noReveal) !== update.state.facet(noReveal)
-      if (update.docChanged || update.viewportChanged || settled || released || reparsed || sealed) {
+      if (
+        update.docChanged ||
+        update.viewportChanged ||
+        settled ||
+        released ||
+        reparsed ||
+        sealed
+      ) {
         const built = buildDecorations(update.view.state, update.view.visibleRanges)
         this.decorations = built.decorations
         this.atomic = built.atomic

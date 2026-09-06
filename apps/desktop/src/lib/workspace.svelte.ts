@@ -275,7 +275,9 @@ class Workspace {
    *  through it first. */
   private live: { id: string; text: DocText } | null = null
 
-  readonly activeSpace = $derived(this.spaces.find((space) => space.id === this.activeSpaceId) ?? null)
+  readonly activeSpace = $derived(
+    this.spaces.find((space) => space.id === this.activeSpaceId) ?? null,
+  )
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
 
   /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
@@ -400,7 +402,10 @@ class Workspace {
         scroll: tab.scroll ?? 0,
         anchor: tab.anchor,
       })),
-      active: Math.max(0, this.tabs.findIndex((tab) => tab.id === this.activeTabId)),
+      active: Math.max(
+        0,
+        this.tabs.findIndex((tab) => tab.id === this.activeTabId),
+      ),
       panel: this.panel,
       positions: this.positions,
     }
@@ -678,9 +683,10 @@ class Workspace {
     {
       // The account keeps a deleted space for 14 days; signed out, this device
       // keeps it in its trash folder instead (see trash.svelte.ts).
-      const gone = await (account.signedIn
-        ? invoke('delete_space', { path: space.root })
-        : invoke('trash_item', { path: space.root, kind: 'space' })
+      const gone = await (
+        account.signedIn
+          ? invoke('delete_space', { path: space.root })
+          : invoke('trash_item', { path: space.root, kind: 'space' })
       )
         .then(() => true)
         .catch(() => false)
@@ -712,7 +718,8 @@ class Workspace {
     }
 
     // Rows that went away take themselves out of the selection.
-    if (this.selection.length) this.selection = this.selection.filter((path) => !!this.entryAt(path))
+    if (this.selection.length)
+      this.selection = this.selection.filter((path) => !!this.entryAt(path))
   }
 
   setSort(sort: SortKey) {
@@ -744,7 +751,7 @@ class Workspace {
 
     await invoke('rename_note', { from, to: target })
     this.movePlace(from, target)
-    this.recordFileAction({ kind:'move', from, to: target })
+    this.recordFileAction({ kind: 'move', from, to: target })
 
     for (const tab of this.tabs.filter((entry) => entry.path === from)) {
       tab.path = target
@@ -811,7 +818,14 @@ class Workspace {
       return
     }
 
-    const tab: Tab = { id: identifier(), path, name: basename(path), doc, dirty: false, ...this.placeOf(path) }
+    const tab: Tab = {
+      id: identifier(),
+      path,
+      name: basename(path),
+      doc,
+      dirty: false,
+      ...this.placeOf(path),
+    }
     this.tabs = [...this.tabs, tab]
     if (options.activate !== false) {
       this.activeTabId = tab.id
@@ -1328,7 +1342,7 @@ class Workspace {
 
     await invoke('rename_note', { from: path, to: target })
     this.movePlace(path, target)
-    this.recordFileAction({ kind:'rename', from: path, to: target })
+    this.recordFileAction({ kind: 'rename', from: path, to: target })
 
     const tab = this.tabs.find((entry) => entry.path === path)
     if (tab) {
@@ -1361,7 +1375,7 @@ class Workspace {
     if (!isFolder) {
       const content = await invoke<string>('read_note', { path }).catch(() => '')
       if (content) await invoke('snapshot_note', { path, content }).catch(() => undefined)
-      this.recordFileAction({ kind:'delete', path, content })
+      this.recordFileAction({ kind: 'delete', path, content })
     }
 
     // Signed in, the account keeps a copy for 14 days; signed out, this

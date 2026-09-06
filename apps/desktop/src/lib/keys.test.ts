@@ -9,13 +9,32 @@ import {
 
 /** A keystroke, with only the fields the reader of one looks at. */
 function press(key: string, held: Partial<KeyboardEvent> & { code?: string } = {}) {
-  return { key, code: held.code, ctrlKey: !!held.ctrlKey, metaKey: !!held.metaKey, altKey: !!held.altKey, shiftKey: !!held.shiftKey }
+  return {
+    key,
+    code: held.code,
+    ctrlKey: !!held.ctrlKey,
+    metaKey: !!held.metaKey,
+    altKey: !!held.altKey,
+    shiftKey: !!held.shiftKey,
+  }
 }
 
 describe('reading a written combination', () => {
   test('Mod is Ctrl off a Mac and Cmd on one', () => {
-    expect(parseCombination('Mod-k', 'win')).toEqual({ ctrl: true, meta: false, alt: false, shift: false, key: 'k' })
-    expect(parseCombination('Mod-k', 'mac')).toEqual({ ctrl: false, meta: true, alt: false, shift: false, key: 'k' })
+    expect(parseCombination('Mod-k', 'win')).toEqual({
+      ctrl: true,
+      meta: false,
+      alt: false,
+      shift: false,
+      key: 'k',
+    })
+    expect(parseCombination('Mod-k', 'mac')).toEqual({
+      ctrl: false,
+      meta: true,
+      alt: false,
+      shift: false,
+      key: 'k',
+    })
   })
 
   test('keeps a trailing minus as the key it is', () => {
@@ -45,8 +64,12 @@ describe('reading a keystroke', () => {
   test('names the key rather than the character Shift made of it', () => {
     // Ctrl+Shift+3 arrives as `#` on a US layout and as `§` on others; the
     // key underneath is the 3, and that is what the binding says.
-    expect(readCombination(press('#', { ctrlKey: true, shiftKey: true, code: 'Digit3' }), 'win')).toBe('Mod-Shift-3')
-    expect(readCombination(press('+', { ctrlKey: true, shiftKey: true, code: 'Equal' }), 'win')).toBe('Mod-Shift-=')
+    expect(
+      readCombination(press('#', { ctrlKey: true, shiftKey: true, code: 'Digit3' }), 'win'),
+    ).toBe('Mod-Shift-3')
+    expect(
+      readCombination(press('+', { ctrlKey: true, shiftKey: true, code: 'Equal' }), 'win'),
+    ).toBe('Mod-Shift-=')
   })
 
   test('waits through the modifiers on their own', () => {
@@ -57,15 +80,33 @@ describe('reading a keystroke', () => {
 
 describe('matching a keystroke against a binding', () => {
   test('answers to the character or to the key', () => {
-    expect(matchesCombination('Mod-Shift-3', press('#', { ctrlKey: true, shiftKey: true, code: 'Digit3' }), 'win')).toBe(true)
-    expect(matchesCombination('Mod-Shift-3', press('3', { ctrlKey: true, shiftKey: true, code: 'Digit3' }), 'win')).toBe(true)
+    expect(
+      matchesCombination(
+        'Mod-Shift-3',
+        press('#', { ctrlKey: true, shiftKey: true, code: 'Digit3' }),
+        'win',
+      ),
+    ).toBe(true)
+    expect(
+      matchesCombination(
+        'Mod-Shift-3',
+        press('3', { ctrlKey: true, shiftKey: true, code: 'Digit3' }),
+        'win',
+      ),
+    ).toBe(true)
   })
 
   test('wants the modifiers exactly', () => {
-    expect(matchesCombination('Mod-s', press('s', { ctrlKey: true, code: 'KeyS' }), 'win')).toBe(true)
+    expect(matchesCombination('Mod-s', press('s', { ctrlKey: true, code: 'KeyS' }), 'win')).toBe(
+      true,
+    )
     // Ctrl+Alt+S is not Ctrl+S with something else held down.
-    expect(matchesCombination('Mod-s', press('s', { ctrlKey: true, altKey: true, code: 'KeyS' }), 'win')).toBe(false)
-    expect(matchesCombination('Mod-s', press('s', { metaKey: true, code: 'KeyS' }), 'win')).toBe(false)
+    expect(
+      matchesCombination('Mod-s', press('s', { ctrlKey: true, altKey: true, code: 'KeyS' }), 'win'),
+    ).toBe(false)
+    expect(matchesCombination('Mod-s', press('s', { metaKey: true, code: 'KeyS' }), 'win')).toBe(
+      false,
+    )
   })
 })
 

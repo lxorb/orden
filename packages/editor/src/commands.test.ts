@@ -1,5 +1,10 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  type StateCommand,
+  type Transaction,
+} from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import {
   clearFormatting,
@@ -189,7 +194,10 @@ describe('pressing Enter after a code fence', () => {
     })
 
     let next = state
-    const took = closeFence({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
+    const took = closeFence({
+      state,
+      dispatch: (transaction: Transaction) => (next = transaction.state),
+    })
     return { took, doc: next.doc.toString() }
   }
 

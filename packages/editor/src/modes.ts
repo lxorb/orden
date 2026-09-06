@@ -1,5 +1,11 @@
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  ViewPlugin,
+  type ViewUpdate,
+} from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
@@ -74,7 +80,7 @@ const focusPlugin = ViewPlugin.fromClass(
       const ranges = []
 
       for (const { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to; ) {
+        for (let pos = from; pos <= to;) {
           const line = state.doc.lineAt(pos)
           if (line.to < block.from || line.from > block.to) ranges.push(dim.range(line.from))
           if (line.to >= state.doc.length) break
@@ -213,14 +219,18 @@ export function setReadingMode(view: EditorView, on: boolean) {
 }
 
 export function setFocusMode(view: EditorView, on: boolean) {
-  view.dispatch({ effects: focus.reconfigure(on ? [focusPlugin, editorClass('nib-focus-mode')] : []) })
+  view.dispatch({
+    effects: focus.reconfigure(on ? [focusPlugin, editorClass('nib-focus-mode')] : []),
+  })
 }
 
 export function setTypewriterMode(view: EditorView, on: boolean) {
   // The class buys extra room below the last line, so the caret can still
   // reach the middle.
   view.dispatch({
-    effects: typewriter.reconfigure(on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : []),
+    effects: typewriter.reconfigure(
+      on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : [],
+    ),
   })
 }
 
@@ -228,7 +238,9 @@ export function setTypewriterMode(view: EditorView, on: boolean) {
  *  text underneath stays as typed. The class lets the stylesheet hold back
  *  the code font's own ligatures while this is off, so that off means off. */
 export function setLigatures(view: EditorView, on: boolean) {
-  view.dispatch({ effects: glyphs.reconfigure(on ? [ligatures(), editorClass('nib-ligatures')] : []) })
+  view.dispatch({
+    effects: glyphs.reconfigure(on ? [ligatures(), editorClass('nib-ligatures')] : []),
+  })
 }
 
 /** Curly quotes, en and em dashes, ellipsis - on by default, like Typora. */

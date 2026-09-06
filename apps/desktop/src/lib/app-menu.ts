@@ -106,7 +106,12 @@ export function appMenu(context: Context): MenuGroup[] {
             ]
           : []),
         SPLIT,
-        { label: t('Save'), hint: shortcuts.hint('app.save'), disabled: !hasNote, run: () => void workspace.save() },
+        {
+          label: t('Save'),
+          hint: shortcuts.hint('app.save'),
+          disabled: !hasNote,
+          run: () => void workspace.save(),
+        },
         {
           label: t('Save notes as I type'),
           checked: workspace.autoSave,
@@ -136,8 +141,18 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'edit',
       label: t('Edit'),
       rows: [
-        { label: t('Undo'), hint: shortcuts.hint('edit.undo'), disabled: !writable, run: () => view && undoEdit(view) },
-        { label: t('Redo'), hint: shortcuts.hint('edit.redo'), disabled: !writable, run: () => view && redoEdit(view) },
+        {
+          label: t('Undo'),
+          hint: shortcuts.hint('edit.undo'),
+          disabled: !writable,
+          run: () => view && undoEdit(view),
+        },
+        {
+          label: t('Redo'),
+          hint: shortcuts.hint('edit.redo'),
+          disabled: !writable,
+          run: () => view && redoEdit(view),
+        },
         SPLIT,
         {
           label: t('Cut'),
@@ -156,8 +171,7 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Select all'),
           hint: shortcuts.hint('edit.select-all'),
           disabled: !view,
-          run: () =>
-            view?.dispatch({ selection: { anchor: 0, head: view.state.doc.length } }),
+          run: () => view?.dispatch({ selection: { anchor: 0, head: view.state.doc.length } }),
         },
         SPLIT,
         {
@@ -166,7 +180,11 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !view,
           run: () => view && openFind(view),
         },
-        { label: t('Search'), hint: shortcuts.hint('app.search'), run: () => workspace.showPanel('search') },
+        {
+          label: t('Search'),
+          hint: shortcuts.hint('app.search'),
+          run: () => workspace.showPanel('search'),
+        },
       ],
     },
 
@@ -184,13 +202,43 @@ export function appMenu(context: Context): MenuGroup[] {
         SPLIT,
         // Not through `run`: the new table takes the focus into its first cell,
         // and focusing the editor afterwards would take it straight back out.
-        { label: t('Table'), hint: shortcuts.hint('paragraph.table'), disabled: !writable, run: () => view && insertTableToEdit(view) },
-        { label: t('Code block'), hint: shortcuts.hint('paragraph.code-block'), disabled: !writable, run: () => run(view, insertCodeFence) },
-        { label: t('Quote'), hint: shortcuts.hint('paragraph.quote'), disabled: !writable, run: () => run(view, toggleQuote) },
-        { label: t('Math block'), hint: shortcuts.hint('paragraph.math-block'), disabled: !writable, run: () => run(view, insertMathBlock) },
+        {
+          label: t('Table'),
+          hint: shortcuts.hint('paragraph.table'),
+          disabled: !writable,
+          run: () => view && insertTableToEdit(view),
+        },
+        {
+          label: t('Code block'),
+          hint: shortcuts.hint('paragraph.code-block'),
+          disabled: !writable,
+          run: () => run(view, insertCodeFence),
+        },
+        {
+          label: t('Quote'),
+          hint: shortcuts.hint('paragraph.quote'),
+          disabled: !writable,
+          run: () => run(view, toggleQuote),
+        },
+        {
+          label: t('Math block'),
+          hint: shortcuts.hint('paragraph.math-block'),
+          disabled: !writable,
+          run: () => run(view, insertMathBlock),
+        },
         SPLIT,
-        { label: t('Bulleted list'), hint: shortcuts.hint('paragraph.bullet-list'), disabled: !writable, run: () => run(view, toggleBulletList) },
-        { label: t('Numbered list'), hint: shortcuts.hint('paragraph.ordered-list'), disabled: !writable, run: () => run(view, toggleOrderedList) },
+        {
+          label: t('Bulleted list'),
+          hint: shortcuts.hint('paragraph.bullet-list'),
+          disabled: !writable,
+          run: () => run(view, toggleBulletList),
+        },
+        {
+          label: t('Numbered list'),
+          hint: shortcuts.hint('paragraph.ordered-list'),
+          disabled: !writable,
+          run: () => run(view, toggleOrderedList),
+        },
         SPLIT,
         {
           label: t('Horizontal rule'),
@@ -206,22 +254,47 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'format',
       label: t('Format'),
       rows: [
-        { label: t('Bold'), hint: shortcuts.hint('format.bold'), disabled: !writable, run: () => run(view, toggleWrap('**')) },
-        { label: t('Italic'), hint: shortcuts.hint('format.italic'), disabled: !writable, run: () => run(view, toggleWrap('*')) },
+        {
+          label: t('Bold'),
+          hint: shortcuts.hint('format.bold'),
+          disabled: !writable,
+          run: () => run(view, toggleWrap('**')),
+        },
+        {
+          label: t('Italic'),
+          hint: shortcuts.hint('format.italic'),
+          disabled: !writable,
+          run: () => run(view, toggleWrap('*')),
+        },
         {
           label: t('Strikethrough'),
           hint: shortcuts.hint('format.strikethrough'),
           disabled: !writable,
           run: () => run(view, toggleWrap('~~')),
         },
-        { label: t('Highlight'), hint: shortcuts.hint('format.highlight'), disabled: !writable, run: () => run(view, toggleWrap('==')) },
+        {
+          label: t('Highlight'),
+          hint: shortcuts.hint('format.highlight'),
+          disabled: !writable,
+          run: () => run(view, toggleWrap('==')),
+        },
         SPLIT,
-        { label: t('Code'), hint: shortcuts.hint('format.code'), disabled: !writable, run: () => run(view, toggleWrap('`')) },
+        {
+          label: t('Code'),
+          hint: shortcuts.hint('format.code'),
+          disabled: !writable,
+          run: () => run(view, toggleWrap('`')),
+        },
         { label: t('Inline math'), disabled: !writable, run: () => run(view, toggleWrap('$')) },
         { label: t('Superscript'), disabled: !writable, run: () => run(view, toggleWrap('^')) },
         { label: t('Subscript'), disabled: !writable, run: () => run(view, toggleWrap('~')) },
         SPLIT,
-        { label: t('Link'), hint: shortcuts.hint('format.link'), disabled: !writable, run: () => run(view, insertLink) },
+        {
+          label: t('Link'),
+          hint: shortcuts.hint('format.link'),
+          disabled: !writable,
+          run: () => run(view, insertLink),
+        },
         SPLIT,
         {
           label: t('Clear formatting'),
@@ -236,7 +309,11 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'view',
       label: t('View'),
       rows: [
-        { label: t('Command palette'), hint: shortcuts.hint('app.palette'), run: () => context.onpalette() },
+        {
+          label: t('Command palette'),
+          hint: shortcuts.hint('app.palette'),
+          run: () => context.onpalette(),
+        },
         SPLIT,
         {
           label: t('Reading mode'),
@@ -269,12 +346,24 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: !!workspace.panel,
           run: () => workspace.toggleSidebar(),
         },
-        { label: t('Files'), hint: shortcuts.hint('app.files'), run: () => workspace.showPanel('tree') },
+        {
+          label: t('Files'),
+          hint: shortcuts.hint('app.files'),
+          run: () => workspace.showPanel('tree'),
+        },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
         SPLIT,
         { label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
-        { label: t('Zoom out'), hint: shortcuts.hint('app.zoom-out'), run: () => modes.stepZoom(-1) },
-        { label: t('Actual size'), hint: shortcuts.hint('app.zoom-reset'), run: () => modes.resetZoom() },
+        {
+          label: t('Zoom out'),
+          hint: shortcuts.hint('app.zoom-out'),
+          run: () => modes.stepZoom(-1),
+        },
+        {
+          label: t('Actual size'),
+          hint: shortcuts.hint('app.zoom-reset'),
+          run: () => modes.resetZoom(),
+        },
       ],
     },
 
@@ -287,9 +376,7 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => (account.signedIn ? void account.signOut() : (account.open = true)),
         },
         SPLIT,
-        ...(isDesktop
-          ? [{ label: t('Check for updates'), run: () => void stageUpdate() }]
-          : []),
+        ...(isDesktop ? [{ label: t('Check for updates'), run: () => void stageUpdate() }] : []),
         { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
       ],
     },

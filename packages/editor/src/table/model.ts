@@ -102,7 +102,11 @@ function delimiterCell(align: Align, width: number): string {
 export function serializeTable(model: TableModel): string {
   const columns = model.header.length
   const widths = Array.from({ length: columns }, (_, i) =>
-    Math.max(3, displayWidth(model.header[i] ?? ''), ...model.rows.map((row) => displayWidth(row[i] ?? ''))),
+    Math.max(
+      3,
+      displayWidth(model.header[i] ?? ''),
+      ...model.rows.map((row) => displayWidth(row[i] ?? '')),
+    ),
   )
 
   const row = (cells: string[]) =>
@@ -170,12 +174,7 @@ export function setAlign(model: TableModel, column: number, align: Align): Table
   return { ...model, align: next }
 }
 
-export function setCell(
-  model: TableModel,
-  row: number,
-  column: number,
-  value: string,
-): TableModel {
+export function setCell(model: TableModel, row: number, column: number, value: string): TableModel {
   // The source is one line per row, so a newline typed into a cell would split it.
   const clean = value.replace(/\r?\n/g, ' ').replace(/\|/g, '\\|')
 

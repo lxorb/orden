@@ -38,7 +38,8 @@ function database(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const db = request.result
       if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'path' })
-      if (!db.objectStoreNames.contains('assets')) db.createObjectStore('assets', { keyPath: 'path' })
+      if (!db.objectStoreNames.contains('assets'))
+        db.createObjectStore('assets', { keyPath: 'path' })
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
 
       if (!db.objectStoreNames.contains('snapshots')) {
@@ -87,7 +88,8 @@ export const assets = {
 
 export const meta = {
   get: (key: string) => run<string | undefined>('meta', 'readonly', (s) => s.get(key)),
-  put: (key: string, value: string) => run<IDBValidKey>('meta', 'readwrite', (s) => s.put(value, key)),
+  put: (key: string, value: string) =>
+    run<IDBValidKey>('meta', 'readwrite', (s) => s.put(value, key)),
 }
 
 export const snapshots = {

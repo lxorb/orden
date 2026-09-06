@@ -104,8 +104,7 @@ export function bindings(specs: BindingSpec[], overrides: KeyOverrides): KeyBind
       if (spec.win) binding.win = spec.win
       if (spec.linux) binding.linux = spec.linux
       if (!binding.key && !binding.mac && !binding.win && !binding.linux) continue
-    }
-    else {
+    } else {
       binding.key = chosen
     }
 

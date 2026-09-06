@@ -32,7 +32,12 @@
   function insets(node: HTMLElement) {
     const style = getComputedStyle(node)
     const px = (name: string) => parseFloat(style.getPropertyValue(name)) || 0
-    return { top: px('--inset-top'), right: px('--inset-right'), bottom: px('--inset-bottom'), left: px('--inset-left') }
+    return {
+      top: px('--inset-top'),
+      right: px('--inset-right'),
+      bottom: px('--inset-bottom'),
+      left: px('--inset-left'),
+    }
   }
 
   // A desktop menu opens at the pointer and is flipped back inside the
@@ -118,7 +123,12 @@
          layer over the app; clear under a callout, which sits beside a
          selection that has to stay readable. -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="scrim" class:dim={sheet} transition:fade={{ duration: 130 }} onclick={() => menu.hide()}></div>
+    <div
+      class="scrim"
+      class:dim={sheet}
+      transition:fade={{ duration: 130 }}
+      onclick={() => menu.hide()}
+    ></div>
   {/if}
 
   <div

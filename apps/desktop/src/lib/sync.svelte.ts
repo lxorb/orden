@@ -43,7 +43,10 @@ function join(root: string, path: string): string {
 }
 
 function relative(root: string, absolute: string): string {
-  return absolute.slice(root.length).replace(/^[\\/]+/, '').replace(/\\/g, '/')
+  return absolute
+    .slice(root.length)
+    .replace(/^[\\/]+/, '')
+    .replace(/\\/g, '/')
 }
 
 /** Where the other side's copy goes when both changed the same note. */
@@ -438,7 +441,10 @@ class Sync {
 
   private load(): Record<string, Mirror> {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Record<string, Mirror> &
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Record<
+        string,
+        Mirror
+      > &
         Partial<Stored>
 
       // Written while the mirrors were wrapped in an object of their own.

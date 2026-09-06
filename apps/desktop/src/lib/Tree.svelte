@@ -1,3 +1,12 @@
+<script module lang="ts">
+  /** Folders keep their name; notes keep their extension. */
+  function fullName(entry: { is_dir: boolean; name: string }, typed: string): string {
+    if (entry.is_dir) return typed
+    const extension = entry.name.match(/\.[^.]+$/)?.[0] ?? '.md'
+    return typed.endsWith(extension) ? typed : typed + extension
+  }
+</script>
+
 <script lang="ts">
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -84,7 +93,8 @@
       return
     }
 
-    const deleting = shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
+    const deleting =
+      shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
     if (deleting && workspace.selection.length) {
       event.preventDefault()
       void workspace.removeMany(workspace.selection)
@@ -224,8 +234,10 @@
           draggable="true"
           onclick={(event) => pick(event, entry) || workspace.open(entry.path, { preview: true })}
           ondblclick={() => workspace.open(entry.path)}
-          oncontextmenu={(event) => menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
-          use:longPress={(event) => menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
+          oncontextmenu={(event) =>
+            menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
+          use:longPress={(event) =>
+            menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
@@ -237,15 +249,6 @@
     </li>
   {/each}
 </ul>
-
-<script module lang="ts">
-  /** Folders keep their name; notes keep their extension. */
-  function fullName(entry: { is_dir: boolean; name: string }, typed: string): string {
-    if (entry.is_dir) return typed
-    const extension = entry.name.match(/\.[^.]+$/)?.[0] ?? '.md'
-    return typed.endsWith(extension) ? typed : typed + extension
-  }
-</script>
 
 <style>
   ul {

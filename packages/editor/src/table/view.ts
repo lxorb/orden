@@ -2,7 +2,15 @@ import { redo, undo } from '@codemirror/commands'
 import { EditorSelection, type StateCommand } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { label, type LabelKey } from '../labels'
-import { caretAtEdge, caretOffset, caretRect, selectAtPoint, selectIn, selectionIn, textRows } from './caret'
+import {
+  caretAtEdge,
+  caretOffset,
+  caretRect,
+  selectAtPoint,
+  selectIn,
+  selectionIn,
+  textRows,
+} from './caret'
 import { renderInline } from './inline'
 import {
   type TableModel,
@@ -129,7 +137,9 @@ export class TableView {
     this.scroller.append(this.table)
 
     this.alignButtons = {
-      left: this.columnButton('left', ALIGN_PATHS.left, (column) => this.toggleAlign(column, 'left')),
+      left: this.columnButton('left', ALIGN_PATHS.left, (column) =>
+        this.toggleAlign(column, 'left'),
+      ),
       center: this.columnButton('center', ALIGN_PATHS.center, (column) =>
         this.toggleAlign(column, 'center'),
       ),
@@ -180,7 +190,10 @@ export class TableView {
 
     const row = side === 'above' ? -1 : this.model.rows.length - 1
     const column = this.columnAt(row, where.x)
-    return this.focusCell({ row, column }, { x: where.x, edge: side === 'above' ? 'top' : 'bottom' })
+    return this.focusCell(
+      { row, column },
+      { x: where.x, edge: side === 'above' ? 'top' : 'bottom' },
+    )
   }
 
   /** Puts the caret in a cell. The cell swaps to its markdown as it takes
@@ -234,7 +247,9 @@ export class TableView {
     // A vertical step out carries its column on, the way it does between
     // lines, so the next arrow press continues in the same column.
     const goal =
-      typeof where === 'object' ? where.x - editor.contentDOM.getBoundingClientRect().left : undefined
+      typeof where === 'object'
+        ? where.x - editor.contentDOM.getBoundingClientRect().left
+        : undefined
     editor.dispatch({
       changes: line.changes,
       selection: EditorSelection.create([EditorSelection.cursor(pos, undefined, undefined, goal)]),
@@ -437,7 +452,8 @@ export class TableView {
     if (mod && !event.altKey) {
       const lower = key.toLowerCase()
       if (lower === 'z' && !event.shiftKey) return this.history(event, undo, cell, at)
-      if (lower === 'y' || (lower === 'z' && event.shiftKey)) return this.history(event, redo, cell, at)
+      if (lower === 'y' || (lower === 'z' && event.shiftKey))
+        return this.history(event, redo, cell, at)
       // The browser's select-all reaches past the cell to the whole document.
       if (lower === 'a' && !event.shiftKey) {
         event.preventDefault()
@@ -625,10 +641,19 @@ export class TableView {
       this.alignButtons.left,
       this.alignButtons.center,
       this.alignButtons.right,
-      this.columnButton('moveColumnLeft', 'M6 1L2 5l4 4', (column) => this.moveColumnBy(column, -1)),
-      this.columnButton('moveColumnRight', 'M4 1l4 4-4 4', (column) => this.moveColumnBy(column, 1)),
+      this.columnButton('moveColumnLeft', 'M6 1L2 5l4 4', (column) =>
+        this.moveColumnBy(column, -1),
+      ),
+      this.columnButton('moveColumnRight', 'M4 1l4 4-4 4', (column) =>
+        this.moveColumnBy(column, 1),
+      ),
       this.columnButton('insertColumn', 'M5 1v8M1 5h8', (column) => this.insertColumnAfter(column)),
-      this.columnButton('deleteColumn', 'M1 1l8 8M9 1l-8 8', (column) => this.deleteColumn(column), true),
+      this.columnButton(
+        'deleteColumn',
+        'M1 1l8 8M9 1l-8 8',
+        (column) => this.deleteColumn(column),
+        true,
+      ),
     )
     return bar
   }
@@ -639,7 +664,8 @@ export class TableView {
     onPress: (column: number) => void,
     danger = false,
   ): HTMLButtonElement {
-    const key = name in ALIGN_LABELS ? ALIGN_LABELS[name as keyof typeof ALIGN_LABELS] : (name as LabelKey)
+    const key =
+      name in ALIGN_LABELS ? ALIGN_LABELS[name as keyof typeof ALIGN_LABELS] : (name as LabelKey)
     const className = danger ? 'nib-table-btn nib-table-btn-danger' : 'nib-table-btn'
     return button(className, key, path, () => onPress(this.barColumn))
   }
@@ -715,7 +741,9 @@ export class TableView {
   }
 
   private cellAt(at: CellAddress): HTMLElement | null {
-    return this.table.querySelector<HTMLElement>(`[data-row="${at.row}"][data-column="${at.column}"]`)
+    return this.table.querySelector<HTMLElement>(
+      `[data-row="${at.row}"][data-column="${at.column}"]`,
+    )
   }
 
   private headerCell(column: number): HTMLTableCellElement | null {

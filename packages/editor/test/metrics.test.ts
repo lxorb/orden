@@ -33,7 +33,11 @@ describe('settings that change the shape of the text', () => {
   const modes = read('../src/modes.ts')
 
   test('the scan finds them', () => {
-    expect(writersOf(modes).map((one) => one.name).sort()).toEqual(['setLineHeight', 'setMeasure'])
+    expect(
+      writersOf(modes)
+        .map((one) => one.name)
+        .sort(),
+    ).toEqual(['setLineHeight', 'setMeasure'])
   })
 
   test('every one tells the editor to measure again', () => {

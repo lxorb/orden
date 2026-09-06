@@ -2,7 +2,13 @@ import { history } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches } from '@codemirror/search'
 import { EditorState, Prec, type Text } from '@codemirror/state'
-import { EditorView, drawSelection, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
+import {
+  EditorView,
+  drawSelection,
+  dropCursor,
+  highlightActiveLine,
+  keymap,
+} from '@codemirror/view'
 import { editorCompletion } from './emoji'
 import { external } from './external'
 import { imageHandling, imageResolver, type ImageSink } from './images'

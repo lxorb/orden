@@ -27,9 +27,7 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
     text.length > MAX_TEXT ? text.slice(0, MAX_TEXT) + '…' : text
 
   const quote = (text: string): string =>
-    "'" +
-    clip(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n') +
-    "'"
+    "'" + clip(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n') + "'"
 
   const className = (value: object): string => {
     const holder = value as { constructor?: { name?: unknown } }
@@ -112,7 +110,10 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
       const names = Object.keys(object)
       const parts = names
         .slice(0, MAX_KEYS)
-        .map((name) => key(name) + ': ' + describe((object as Record<string, unknown>)[name], depth + 1))
+        .map(
+          (name) =>
+            key(name) + ': ' + describe((object as Record<string, unknown>)[name], depth + 1),
+        )
       if (names.length > MAX_KEYS) parts.push('… ' + (names.length - MAX_KEYS) + ' more')
 
       const prefix = className(object) ? className(object) + ' ' : ''

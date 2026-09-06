@@ -316,7 +316,10 @@ const UNSUPPORTED: Record<string, unknown> = {
   snippets_path: '/snippets.json',
 }
 
-export async function webInvoke<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
+export async function webInvoke<T>(
+  command: string,
+  args: Record<string, unknown> = {},
+): Promise<T> {
   const path = args.path as string
   const root = args.root as string
 

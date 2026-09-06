@@ -23,7 +23,10 @@ export function headings(state: EditorState): Heading[] {
       const line = state.doc.lineAt(node.from)
       found.push({
         level: Number(match[1]),
-        text: line.text.replace(/^#{1,6}\s*/, '').replace(/\s*#+\s*$/, '').trim(),
+        text: line.text
+          .replace(/^#{1,6}\s*/, '')
+          .replace(/\s*#+\s*$/, '')
+          .trim(),
         from: node.from,
       })
       return false

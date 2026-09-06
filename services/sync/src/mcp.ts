@@ -182,7 +182,11 @@ const TOOLS = [
     description: 'Create or replace a note. Refused while the token is read-only.',
     inputSchema: {
       type: 'object',
-      properties: { space: { type: 'string' }, path: { type: 'string' }, content: { type: 'string' } },
+      properties: {
+        space: { type: 'string' },
+        path: { type: 'string' },
+        content: { type: 'string' },
+      },
       required: ['space', 'path', 'content'],
     },
   },

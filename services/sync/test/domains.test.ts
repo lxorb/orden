@@ -56,11 +56,15 @@ describe("a domain of one's own", () => {
     expect(response.json.domain).toBe('notes.example.com')
     expect(response.json.state).toBe('pending')
     expect(response.json.dns).toEqual([
-      expect.objectContaining({ type: 'CNAME', name: 'notes.example.com', value: 'cname.nibeditor.com' }),
+      expect.objectContaining({
+        type: 'CNAME',
+        name: 'notes.example.com',
+        value: 'cname.nibeditor.com',
+      }),
     ])
   })
 
-  test("relays what Cloudflare is waiting for, without calling it an error", async () => {
+  test('relays what Cloudflare is waiting for, without calling it an error', async () => {
     await publish({ domain: 'notes.example.com' })
     cloudflare.complain('notes.example.com', 'custom hostname does not CNAME to this zone.')
 
@@ -240,7 +244,9 @@ describe('without Cloudflare access', () => {
       body: { domain: 'notes.example.com' },
     })
 
-    const response = await call(plain, `/v1/spaces/${plainSpace}/blog/domain`, { token: plainToken })
+    const response = await call(plain, `/v1/spaces/${plainSpace}/blog/domain`, {
+      token: plainToken,
+    })
     expect(response.json.state).toBe('unconfigured')
     expect(response.json.dns).toHaveLength(1)
   })
@@ -251,7 +257,11 @@ describe('what to add at the registrar', () => {
     const response = await publish({ domain: 'notes.example.com' })
 
     expect(response.json.dns).toEqual([
-      expect.objectContaining({ type: 'CNAME', name: 'notes.example.com', value: 'cname.nibeditor.com' }),
+      expect.objectContaining({
+        type: 'CNAME',
+        name: 'notes.example.com',
+        value: 'cname.nibeditor.com',
+      }),
     ])
   })
 

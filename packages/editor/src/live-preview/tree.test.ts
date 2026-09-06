@@ -13,7 +13,9 @@ function dump(doc: string): string {
     enter: (node) => {
       let indent = 0
       for (let parent = node.node.parent; parent; parent = parent.parent) indent++
-      out.push(`${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`)
+      out.push(
+        `${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`,
+      )
     },
   })
 
@@ -83,9 +85,8 @@ test('html', () => {
 })
 
 test('blocks', () => {
-  expect(
-    dump('# H\n\n> q\n\n---\n\n```js\nx\n```\n\n| a | b |\n| - | - |\n| 1 | 2 |\n'),
-  ).toMatchInlineSnapshot(`
+  expect(dump('# H\n\n> q\n\n---\n\n```js\nx\n```\n\n| a | b |\n| - | - |\n| 1 | 2 |\n'))
+    .toMatchInlineSnapshot(`
     "Document "# H\\n\\n> q\\n\\n---\\n\\n\`\`\`js\\nx\\n\`\`\`\\n\\n| a | b |\\n| - | - |\\n| 1 | 2 |\\n"
       ATXHeading1 "# H"
         HeaderMark "#"

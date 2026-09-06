@@ -19,7 +19,10 @@ beforeEach(async () => {
 afterEach(() => env.close())
 
 async function addNote(path: string, content: string, inSpace = space): Promise<string> {
-  const response = await call(env, `/v1/spaces/${inSpace}/notes`, { token, body: { path, content } })
+  const response = await call(env, `/v1/spaces/${inSpace}/notes`, {
+    token,
+    body: { path, content },
+  })
   return response.json.note.id
 }
 
@@ -30,14 +33,20 @@ async function addSpace(name: string): Promise<string> {
 
 function row(id: string) {
   return env.db.prepare('select * from notes where id = ?').get(id) as
-    | { deleted: number; deleted_at: number | null; size: number; hash: string; seq: number; path: string }
+    | {
+        deleted: number
+        deleted_at: number | null
+        size: number
+        hash: string
+        seq: number
+        path: string
+      }
     | undefined
 }
 
 function spaceRow(id: string) {
   return env.db.prepare('select * from spaces where id = ?').get(id) as
-    | { deleted: number; deleted_at: number | null; name: string; position: number }
-    | undefined
+    { deleted: number; deleted_at: number | null; name: string; position: number } | undefined
 }
 
 async function stored(noteId: string, inSpace = space): Promise<string | null> {
@@ -72,9 +81,9 @@ describe('deleting keeps what was deleted', () => {
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
 
     const changes = await call(env, `/v1/spaces/${space}/changes`, { token })
-    expect(changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted])).toEqual([
-      [id, true],
-    ])
+    expect(
+      changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted]),
+    ).toEqual([[id, true]])
   })
 
   test('a space keeps its notes and is stamped', async () => {
@@ -98,7 +107,12 @@ describe('the listing', () => {
     const listed = await call(env, '/v1/trash', { token })
     expect(listed.status).toBe(200)
     expect(listed.json.notes).toHaveLength(1)
-    expect(listed.json.notes[0]).toMatchObject({ id: note, path: 'Idea.md', spaceId: space, spaceName: 'Work' })
+    expect(listed.json.notes[0]).toMatchObject({
+      id: note,
+      path: 'Idea.md',
+      spaceId: space,
+      spaceName: 'Work',
+    })
     expect(listed.json.notes[0].purgeAt - listed.json.notes[0].deletedAt).toBe(14 * DAY)
     expect(listed.json.spaces).toHaveLength(1)
     expect(listed.json.spaces[0]).toMatchObject({ id: other, name: 'Old', notes: 0 })
@@ -142,9 +156,9 @@ describe('restoring a note', () => {
     expect(await stored(id)).toBe('# Idea')
 
     const changes = await call(env, `/v1/spaces/${space}/changes?since=${gone.seq}`, { token })
-    expect(changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted])).toEqual([
-      [id, false],
-    ])
+    expect(
+      changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted]),
+    ).toEqual([[id, false]])
     expect((await call(env, '/v1/trash', { token })).json.notes).toEqual([])
   })
 
@@ -172,7 +186,10 @@ describe('restoring a note', () => {
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
 
     const other = await signIn(env, 'other@b.dev')
-    const refused = await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token: other })
+    const refused = await call(env, `/v1/trash/notes/${id}/restore`, {
+      method: 'POST',
+      token: other,
+    })
     expect(refused.status).toBe(404)
   })
 })
@@ -203,7 +220,11 @@ describe('restoring a space', () => {
   })
 
   test('comes back unpublished', async () => {
-    await call(env, `/v1/spaces/${space}/blog`, { token, method: 'PUT', body: { subdomain: 'mine' } })
+    await call(env, `/v1/spaces/${space}/blog`, {
+      token,
+      method: 'PUT',
+      body: { subdomain: 'mine' },
+    })
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
 
     const restored = await call(env, `/v1/trash/spaces/${space}/restore`, { method: 'POST', token })
@@ -222,7 +243,9 @@ describe('purging', () => {
     expect(await stored(id)).toBeNull()
     expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, size: 0, hash: '' })
     expect((await call(env, '/v1/trash', { token })).json.notes).toEqual([])
-    expect((await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status).toBe(404)
+    expect(
+      (await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status,
+    ).toBe(404)
   })
 
   test('a space now: notes gone, marker kept', async () => {
@@ -258,9 +281,13 @@ describe('purging', () => {
     await call(env, `/v1/notes/${mine}`, { method: 'DELETE', token })
 
     const other = await signIn(env, 'other@b.dev')
-    const theirSpace = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
+    const theirSpace = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } }))
+      .json.space.id
     const theirs = (
-      await call(env, `/v1/spaces/${theirSpace}/notes`, { token: other, body: { path: 'T.md', content: 't' } })
+      await call(env, `/v1/spaces/${theirSpace}/notes`, {
+        token: other,
+        body: { path: 'T.md', content: 't' },
+      })
     ).json.note.id
     await call(env, `/v1/notes/${theirs}`, { method: 'DELETE', token: other })
 

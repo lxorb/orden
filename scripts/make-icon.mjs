@@ -23,7 +23,14 @@ function inRoundedSquare(x, y) {
   const max = SIZE - inset
   const cx = Math.min(Math.max(x, min + corner), max - corner)
   const cy = Math.min(Math.max(y, min + corner), max - corner)
-  return (x - cx) ** 2 + (y - cy) ** 2 <= corner ** 2 || (x >= min && x <= max && y >= min && y <= max && (Math.abs(x - cx) < corner || Math.abs(y - cy) < corner))
+  return (
+    (x - cx) ** 2 + (y - cy) ** 2 <= corner ** 2 ||
+    (x >= min &&
+      x <= max &&
+      y >= min &&
+      y <= max &&
+      (Math.abs(x - cx) < corner || Math.abs(y - cy) < corner))
+  )
 }
 
 function sign(ax, ay, bx, by, cx, cy) {
@@ -111,7 +118,6 @@ ihdr.writeUInt32BE(SIZE, 0)
 ihdr.writeUInt32BE(SIZE, 4)
 ihdr[8] = 8 // bit depth
 ihdr[9] = 6 // RGBA
-
 
 const png = Buffer.concat([
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),

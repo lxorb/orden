@@ -1,5 +1,10 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  type StateCommand,
+  type Transaction,
+} from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import {
   editSelectedImage,
@@ -49,7 +54,12 @@ describe('parsing an img tag', () => {
   })
 
   test('defaults to full size and an empty alt', () => {
-    expect(parseHtmlImage('<img src="a.png">')).toEqual({ src: 'a.png', alt: '', title: '', zoom: 100 })
+    expect(parseHtmlImage('<img src="a.png">')).toEqual({
+      src: 'a.png',
+      alt: '',
+      title: '',
+      zoom: 100,
+    })
   })
 
   test('keeps a width attribute as pixels', () => {
@@ -78,7 +88,9 @@ describe('writing an image back', () => {
   })
 
   test('keeps a title in the markdown form', () => {
-    expect(imageMarkup({ src: 'a.png', alt: 'x', title: 'Cat', zoom: 100 })).toBe('![x](a.png "Cat")')
+    expect(imageMarkup({ src: 'a.png', alt: 'x', title: 'Cat', zoom: 100 })).toBe(
+      '![x](a.png "Cat")',
+    )
   })
 
   test('is an img tag with a zoom the way Typora writes it', () => {
@@ -232,7 +244,10 @@ describe('keys beside an image', () => {
     // A second caret inside the image reveals it; the first sits after it.
     const revealed = EditorState.create({
       doc,
-      selection: EditorSelection.create([EditorSelection.cursor(to), EditorSelection.cursor(from + 3)]),
+      selection: EditorSelection.create([
+        EditorSelection.cursor(to),
+        EditorSelection.cursor(from + 3),
+      ]),
       extensions: [
         EditorState.allowMultipleSelections.of(true),
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),

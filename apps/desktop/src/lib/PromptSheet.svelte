@@ -64,7 +64,8 @@
             </button>
           {/each}
         {:else}
-          <button type="button" class="quiet" onclick={() => prompt.dismiss()}>{t('Cancel')}</button>
+          <button type="button" class="quiet" onclick={() => prompt.dismiss()}>{t('Cancel')}</button
+          >
           <button
             type="submit"
             class="primary"

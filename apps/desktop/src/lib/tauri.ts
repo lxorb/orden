@@ -71,8 +71,9 @@ export async function currentWindow(): Promise<WindowLike> {
 export function assetUrl(path: string): string {
   if (!isDesktop) return path
 
-  const internals = (window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } })
-    .__TAURI_INTERNALS__
+  const internals = (
+    window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } }
+  ).__TAURI_INTERNALS__
 
   return internals?.convertFileSrc?.(path) ?? path
 }

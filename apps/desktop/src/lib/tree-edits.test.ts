@@ -129,12 +129,7 @@ describe('a row renamed or moved before the disk answers', () => {
 
   test('a folder takes its contents along, paths and all', () => {
     const moved = withMove(root(), '/N/Deep', '/N/Shallow', BY_NAME)
-    expect(shape(moved)).toEqual([
-      '/N/Shallow',
-      '/N/Shallow/inner.md',
-      '/N/a.md',
-      '/N/c.md',
-    ])
+    expect(shape(moved)).toEqual(['/N/Shallow', '/N/Shallow/inner.md', '/N/a.md', '/N/c.md'])
     expect(entryAt(moved, '/N/Shallow/inner.md')?.name).toBe('inner.md')
   })
 

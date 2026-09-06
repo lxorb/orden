@@ -68,7 +68,14 @@ const fake = vi.hoisted(() => {
         folder(parent(path))
         continue
       }
-      folder(parent(path)).children.push({ name, path, is_dir: false, modified: 0, created: 0, children: [] })
+      folder(parent(path)).children.push({
+        name,
+        path,
+        is_dir: false,
+        modified: 0,
+        created: 0,
+        children: [],
+      })
     }
 
     return folders.get(root)!
@@ -165,7 +172,15 @@ const fake = vi.hoisted(() => {
     },
     createNote: async (_token: string, spaceId: string, path: string, content: string) => {
       remote.calls.push(`createNote ${path}`)
-      const note = { id: `n-${path}`, spaceId, path, content, version: 1, seq: ++remote.seq, deleted: false }
+      const note = {
+        id: `n-${path}`,
+        spaceId,
+        path,
+        content,
+        version: 1,
+        seq: ++remote.seq,
+        deleted: false,
+      }
       remote.notes.push(note)
       return { note: await wire(note) }
     },
@@ -191,7 +206,15 @@ const fake = vi.hoisted(() => {
   }
 
   function addRemoteNote(spaceId: string, path: string, content: string) {
-    remote.notes.push({ id: `n-${path}`, spaceId, path, content, version: 1, seq: ++remote.seq, deleted: false })
+    remote.notes.push({
+      id: `n-${path}`,
+      spaceId,
+      path,
+      content,
+      version: 1,
+      seq: ++remote.seq,
+      deleted: false,
+    })
   }
 
   function reset() {
@@ -307,7 +330,7 @@ describe('signing in on a machine that already holds notes', () => {
     expect(workspace.tabs.every((tab) => !tab.path)).toBe(true)
   })
 
-  test('keeping them sends them up and takes the account\'s spaces alongside', async () => {
+  test("keeping them sends them up and takes the account's spaces alongside", async () => {
     await machineWithNotes()
     accountWithNotes()
     await signIn()

@@ -49,8 +49,16 @@
 
     return [
       { label: t('Sort by name'), hint: arrow('name'), run: () => workspace.setSort('name') },
-      { label: t('Sort by modified'), hint: arrow('modified'), run: () => workspace.setSort('modified') },
-      { label: t('Sort by created'), hint: arrow('created'), run: () => workspace.setSort('created') },
+      {
+        label: t('Sort by modified'),
+        hint: arrow('modified'),
+        run: () => workspace.setSort('modified'),
+      },
+      {
+        label: t('Sort by created'),
+        hint: arrow('created'),
+        run: () => workspace.setSort('created'),
+      },
       DIVIDER,
       {
         label: options.showHidden ? t('Hide hidden files') : t('Show hidden files'),
@@ -272,113 +280,113 @@
   <!-- Rebuilt for each space, and arriving from the side of the rail the new
        space is on. -->
   {#key workspace.activeSpaceId}
-  <div class="body" in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}>
-    {#if workspace.panel === 'tree'}
-      {#if workspace.tree}
-        {#if pinned.length}
-          <ul class="pinned">
-            {#each pinned as entry (entry.path)}
+    <div class="body" in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}>
+      {#if workspace.panel === 'tree'}
+        {#if workspace.tree}
+          {#if pinned.length}
+            <ul class="pinned">
+              {#each pinned as entry (entry.path)}
+                <li>
+                  <button
+                    class="row"
+                    class:active={workspace.active?.path === entry.path}
+                    onclick={() => !entry.is_dir && workspace.open(entry.path, { preview: true })}
+                    ondblclick={() => !entry.is_dir && workspace.open(entry.path)}
+                    oncontextmenu={(event) =>
+                      menu.show(
+                        event,
+                        [{ label: t('Unpin'), run: () => workspace.togglePin(entry.path) }],
+                        { title: entry.is_dir ? entry.name : stripped(entry.name) },
+                      )}
+                  >
+                    <span class="label">{entry.is_dir ? entry.name : stripped(entry.name)}</span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+
+          <Tree entries={workspace.tree.children} />
+
+          <!-- A space with nothing in it says what to do about it. Folders can
+             still be there, which is why this counts notes and not rows. -->
+          {#if !workspace.notes.length}
+            <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button>
+          {/if}
+
+          <!-- The space below the last row still belongs to the space, so it
+             takes the same menu instead of swallowing the click, and accepts a
+             note dropped on it as "out of whatever folder it was in". -->
+          <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+          <div
+            class="rest"
+            class:dropping={rootDrop}
+            oncontextmenu={(event) =>
+              menu.show(event, spaceMenu(), { title: workspace.activeSpace?.name })}
+            onclick={() => (workspace.renaming = null)}
+            ondragover={overRoot}
+            ondragleave={() => (rootDrop = false)}
+            ondrop={dropOnRoot}
+          ></div>
+        {:else}
+          <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
+        {/if}
+      {:else if workspace.panel === 'outline'}
+        {#if workspace.headings.length}
+          <ul bind:this={outline}>
+            {#each workspace.headings as heading, index (index)}
               <li>
                 <button
-                  class="row"
-                  class:active={workspace.active?.path === entry.path}
-                  onclick={() => !entry.is_dir && workspace.open(entry.path, { preview: true })}
-                  ondblclick={() => !entry.is_dir && workspace.open(entry.path)}
-                  oncontextmenu={(event) =>
-                    menu.show(
-                      event,
-                      [{ label: t('Unpin'), run: () => workspace.togglePin(entry.path) }],
-                      { title: entry.is_dir ? entry.name : stripped(entry.name) },
-                    )}
+                  class="row heading"
+                  class:active={index === current}
+                  style:--level={heading.level - shallowest}
+                  onclick={() => ongoto?.(heading.line)}
                 >
-                  <span class="label">{entry.is_dir ? entry.name : stripped(entry.name)}</span>
+                  <span class="label">{heading.text}</span>
                 </button>
               </li>
             {/each}
           </ul>
+        {:else}
+          <p class="empty-text">{t('No headings in this note')}</p>
         {/if}
+      {:else if workspace.panel === 'search'}
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          class="query"
+          value={query}
+          oninput={(event) => onQuery(event.currentTarget.value)}
+          placeholder={t('Search this space')}
+          spellcheck="false"
+          autofocus
+        />
 
-        <Tree entries={workspace.tree.children} />
-
-        <!-- A space with nothing in it says what to do about it. Folders can
-             still be there, which is why this counts notes and not rows. -->
-        {#if !workspace.notes.length}
-          <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button>
+        {#if hits.length}
+          <ul>
+            {#each hits as hit, index (hit.path + hit.line + index)}
+              <li>
+                <button class="hit" onclick={() => openHit(hit)}>
+                  <span class="hit-note">{stripped(hit.name)}</span>
+                  <span class="hit-line">{hit.text}</span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {:else if tags.length}
+          <ul class="tags">
+            {#each tags as tag (tag.tag)}
+              <li>
+                <button class="tag" onclick={() => onQuery(tag.tag)}>
+                  {tag.tag}<span class="count">{tag.count}</span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {:else if query.trim().length >= 2 && !searching}
+          <p class="empty-text">{t('Nothing found')}</p>
         {/if}
-
-        <!-- The space below the last row still belongs to the space, so it
-             takes the same menu instead of swallowing the click, and accepts a
-             note dropped on it as "out of whatever folder it was in". -->
-        <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-        <div
-          class="rest"
-          class:dropping={rootDrop}
-          oncontextmenu={(event) =>
-            menu.show(event, spaceMenu(), { title: workspace.activeSpace?.name })}
-          onclick={() => (workspace.renaming = null)}
-          ondragover={overRoot}
-          ondragleave={() => (rootDrop = false)}
-          ondrop={dropOnRoot}
-        ></div>
-      {:else}
-        <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
       {/if}
-    {:else if workspace.panel === 'outline'}
-      {#if workspace.headings.length}
-        <ul bind:this={outline}>
-          {#each workspace.headings as heading, index (index)}
-            <li>
-              <button
-                class="row heading"
-                class:active={index === current}
-                style:--level={heading.level - shallowest}
-                onclick={() => ongoto?.(heading.line)}
-              >
-                <span class="label">{heading.text}</span>
-              </button>
-            </li>
-          {/each}
-        </ul>
-      {:else}
-        <p class="empty-text">{t('No headings in this note')}</p>
-      {/if}
-    {:else if workspace.panel === 'search'}
-      <!-- svelte-ignore a11y_autofocus -->
-      <input
-        class="query"
-        value={query}
-        oninput={(event) => onQuery(event.currentTarget.value)}
-        placeholder={t('Search this space')}
-        spellcheck="false"
-        autofocus
-      />
-
-      {#if hits.length}
-        <ul>
-          {#each hits as hit, index (hit.path + hit.line + index)}
-            <li>
-              <button class="hit" onclick={() => openHit(hit)}>
-                <span class="hit-note">{stripped(hit.name)}</span>
-                <span class="hit-line">{hit.text}</span>
-              </button>
-            </li>
-          {/each}
-        </ul>
-      {:else if tags.length}
-        <ul class="tags">
-          {#each tags as tag (tag.tag)}
-            <li>
-              <button class="tag" onclick={() => onQuery(tag.tag)}>
-                {tag.tag}<span class="count">{tag.count}</span>
-              </button>
-            </li>
-          {/each}
-        </ul>
-      {:else if query.trim().length >= 2 && !searching}
-        <p class="empty-text">{t('Nothing found')}</p>
-      {/if}
-    {/if}
-  </div>
+    </div>
   {/key}
 </aside>
 
@@ -421,7 +429,6 @@
   aside.resizing .edge::after {
     background: var(--accent);
   }
-
 
   .switch {
     display: flex;

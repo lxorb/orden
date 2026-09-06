@@ -35,15 +35,7 @@ const MOST_OVERRIDES = 200
 /** Where an entry sits in the list. The first five are the app's own menus,
  *  so a reader looking for Bold looks under Format either way. */
 export type Category =
-  | 'file'
-  | 'edit'
-  | 'format'
-  | 'paragraph'
-  | 'view'
-  | 'panel'
-  | 'table'
-  | 'picture'
-  | 'fixed'
+  'file' | 'edit' | 'format' | 'paragraph' | 'view' | 'panel' | 'table' | 'picture' | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'file', label: () => t('File') },
@@ -161,7 +153,12 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
 }
 
 /** The editor's bindings, in the order the editor installs them. */
-const EDITOR_SPECS: BindingSpec[] = [...nibBindings, ...standardBindings, ...tableBindings, ...imageBindings]
+const EDITOR_SPECS: BindingSpec[] = [
+  ...nibBindings,
+  ...standardBindings,
+  ...tableBindings,
+  ...imageBindings,
+]
 
 function fromEditor(spec: BindingSpec): Shortcut {
   const named = EDITOR_ENTRIES[spec.id]
@@ -511,7 +508,16 @@ const BY_ID = new Map(SHORTCUTS.map((one) => [one.id, one]))
  *  app cannot know what a given system does with a given key - but a warning
  *  beside the binding, so nobody sets a key and wonders why nothing happens. */
 const SYSTEM_KEYS: Record<Platform, string[]> = {
-  mac: ['Mod-q', 'Mod-h', 'Mod-m', 'Mod-Tab', 'Mod-Space', 'Mod-Shift-3', 'Mod-Shift-4', 'Mod-Shift-5'],
+  mac: [
+    'Mod-q',
+    'Mod-h',
+    'Mod-m',
+    'Mod-Tab',
+    'Mod-Space',
+    'Mod-Shift-3',
+    'Mod-Shift-4',
+    'Mod-Shift-5',
+  ],
   win: ['Alt-F4', 'Alt-Tab', 'Meta-l', 'Ctrl-Shift-Escape'],
   linux: ['Alt-F4', 'Alt-Tab'],
 }
@@ -549,8 +555,7 @@ class Shortcuts {
     try {
       const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
       this.overrides = usable(saved)
-    }
-    catch {
+    } catch {
       // A corrupt entry just means the defaults.
     }
   }
@@ -619,8 +624,10 @@ class Shortcuts {
     if (!key) return null
 
     const taken = (list: string[]) => list.some((one) => sameCombination(one, key, this.platform))
-    if (taken(SYSTEM_KEYS[this.platform])) return t('Your system takes this key before the app sees it.')
-    if (!isDesktop && taken(BROWSER_KEYS)) return t('Your browser takes this key before the app sees it.')
+    if (taken(SYSTEM_KEYS[this.platform]))
+      return t('Your system takes this key before the app sees it.')
+    if (!isDesktop && taken(BROWSER_KEYS))
+      return t('Your browser takes this key before the app sees it.')
 
     return null
   }

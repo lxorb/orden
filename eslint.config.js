@@ -43,7 +43,10 @@ export default tseslint.config(
       // A promise that nobody awaits or catches is a bug that surfaces as a
       // silent failure; `void promise` says the drop is meant.
       '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
-      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
       // Every case of a union handled, or the compiler says which is missing.
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       // Numbers in template strings read fine; objects and arrays do not.
@@ -51,7 +54,10 @@ export default tseslint.config(
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       // `catch (error) { ... }` with an unused binding is fine; `_` marks intent.
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', caughtErrors: 'none' },
+      ],
       // The codebase explains itself in prose; a non-null assertion is allowed
       // where the line before makes it obvious, and reviewed by eye.
       '@typescript-eslint/no-non-null-assertion': 'warn',
