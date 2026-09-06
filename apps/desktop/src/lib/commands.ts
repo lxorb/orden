@@ -9,6 +9,7 @@ import { newSpace } from './space-actions'
 import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
+import { shortcuts } from './shortcuts.svelte'
 import { invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
 import { workspace } from './workspace.svelte'
@@ -157,13 +158,13 @@ export interface Command {
 /** Everything the palette can do. Labels read as the action, not the setting. */
 export function appCommands(view?: EditorView): Command[] {
   return [
-    { id: 'save', label: t('Save'), hint: 'Ctrl S', run: () => void workspace.save() },
-    { id: 'new', label: t('New note'), hint: 'Ctrl N', run: () => workspace.openBlank() },
-    { id: 'open', label: t('Open file'), hint: 'Ctrl O', run: () => void openFile() },
+    { id: 'save', label: t('Save'), hint: shortcuts.hint('app.save'), run: () => void workspace.save() },
+    { id: 'new', label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
+    { id: 'open', label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
     {
       id: 'close',
       label: t('Close note'),
-      hint: 'Ctrl W',
+      hint: shortcuts.hint('app.close'),
       run: () => workspace.activeTabId && workspace.close(workspace.activeTabId),
     },
     { id: 'space', label: t('New space'), run: () => void newSpace() },
@@ -184,7 +185,8 @@ export function appCommands(view?: EditorView): Command[] {
       label: workspace.autoSave ? t('Turn off auto-save') : t('Turn on auto-save'),
       run: () => workspace.setAutoSave(!workspace.autoSave),
     },
-    { id: 'settings', label: t('Settings'), hint: 'Ctrl ,', run: () => settings.show() },
+    { id: 'settings', label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
+    { id: 'shortcuts', label: t('Shortcuts'), run: () => settings.show('shortcuts') },
     {
       id: 'history',
       label: t('Version history'),
@@ -229,25 +231,25 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'reading',
       label: modes.reading ? t('Leave reading mode') : t('Reading mode'),
-      hint: 'F10',
+      hint: shortcuts.hint('app.reading'),
       run: () => modes.toggleReading(view),
     },
     {
       id: 'source',
       label: modes.source ? t('Leave source mode') : t('Source mode'),
-      hint: 'Ctrl /',
+      hint: shortcuts.hint('app.source'),
       run: () => modes.toggleSource(view),
     },
     {
       id: 'focus',
       label: modes.focus ? t('Leave focus mode') : t('Focus mode'),
-      hint: 'F8',
+      hint: shortcuts.hint('app.focus'),
       run: () => modes.toggleFocus(view),
     },
     {
       id: 'typewriter',
       label: modes.typewriter ? t('Leave typewriter mode') : t('Typewriter mode'),
-      hint: 'F9',
+      hint: shortcuts.hint('app.typewriter'),
       run: () => modes.toggleTypewriter(view),
     },
 
@@ -287,9 +289,9 @@ export function appCommands(view?: EditorView): Command[] {
     { id: 'looser', label: t('Looser line spacing'), run: () => modes.stepLineHeight(1, view) },
     { id: 'tighter', label: t('Tighter line spacing'), run: () => modes.stepLineHeight(-1, view) },
 
-    { id: 'zoom-in', label: t('Zoom in'), hint: 'Ctrl Shift =', run: () => modes.stepZoom(1) },
-    { id: 'zoom-out', label: t('Zoom out'), hint: 'Ctrl Shift -', run: () => modes.stepZoom(-1) },
-    { id: 'zoom-reset', label: t('Actual size'), hint: 'Ctrl Shift 0', run: () => modes.resetZoom() },
+    { id: 'zoom-in', label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
+    { id: 'zoom-out', label: t('Zoom out'), hint: shortcuts.hint('app.zoom-out'), run: () => modes.stepZoom(-1) },
+    { id: 'zoom-reset', label: t('Actual size'), hint: shortcuts.hint('app.zoom-reset'), run: () => modes.resetZoom() },
 
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,
@@ -322,14 +324,14 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'sidebar',
       label: workspace.panel ? t('Hide sidebar') : t('Show sidebar'),
-      hint: 'Ctrl Shift L',
+      hint: shortcuts.hint('app.sidebar'),
       run: () => workspace.toggleSidebar(),
     },
-    { id: 'files', label: t('Files'), hint: 'Ctrl Shift 3', run: () => workspace.showPanel('tree') },
+    { id: 'files', label: t('Files'), hint: shortcuts.hint('app.files'), run: () => workspace.showPanel('tree') },
     {
       id: 'search-space',
       label: t('Search this space'),
-      hint: 'Ctrl Shift F',
+      hint: shortcuts.hint('app.search'),
       run: () => workspace.showPanel('search'),
     },
   ]

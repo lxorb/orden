@@ -23,6 +23,7 @@ import { exportCommands } from './commands'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
+import { shortcuts } from './shortcuts.svelte'
 import { newSpace } from './space-actions'
 import { invoke, isDesktop, openExternal } from './tauri'
 import { stageUpdate } from './updater'
@@ -82,7 +83,7 @@ export function appMenu(context: Context): MenuGroup[] {
 
   const heading = (level: number): MenuAction => ({
     label: t('Heading {level}', { level }),
-    hint: `Ctrl ${level}`,
+    hint: shortcuts.hint(`paragraph.heading-${level}`),
     disabled: !writable,
     run: () => run(view, setHeading(level)),
   })
@@ -92,20 +93,20 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'file',
       label: t('File'),
       rows: [
-        { label: t('New note'), hint: 'Ctrl N', run: () => workspace.openBlank() },
-        { label: t('Open file'), hint: 'Ctrl O', run: () => void openFile() },
+        { label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
+        { label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
         { label: t('New space'), run: () => void newSpace() },
         ...(isDesktop
           ? [
               {
                 label: t('New window'),
-                hint: 'Ctrl Shift N',
+                hint: shortcuts.hint('app.new-window'),
                 run: () => void invoke('new_window'),
               },
             ]
           : []),
         SPLIT,
-        { label: t('Save'), hint: 'Ctrl S', disabled: !hasNote, run: () => void workspace.save() },
+        { label: t('Save'), hint: shortcuts.hint('app.save'), disabled: !hasNote, run: () => void workspace.save() },
         {
           label: t('Save notes as I type'),
           checked: workspace.autoSave,
@@ -120,11 +121,11 @@ export function appMenu(context: Context): MenuGroup[] {
         ...exportCommands().map((one) => ({ label: one.label, run: one.run })),
         SPLIT,
         { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
-        { label: t('Settings'), hint: 'Ctrl ,', run: () => settings.show() },
+        { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
         SPLIT,
         {
           label: t('Close note'),
-          hint: 'Ctrl W',
+          hint: shortcuts.hint('app.close'),
           disabled: !hasNote,
           run: () => workspace.active && workspace.close(workspace.active.id),
         },
@@ -135,25 +136,25 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'edit',
       label: t('Edit'),
       rows: [
-        { label: t('Undo'), hint: 'Ctrl Z', disabled: !writable, run: () => view && undoEdit(view) },
-        { label: t('Redo'), hint: 'Ctrl Y', disabled: !writable, run: () => view && redoEdit(view) },
+        { label: t('Undo'), hint: shortcuts.hint('edit.undo'), disabled: !writable, run: () => view && undoEdit(view) },
+        { label: t('Redo'), hint: shortcuts.hint('edit.redo'), disabled: !writable, run: () => view && redoEdit(view) },
         SPLIT,
         {
           label: t('Cut'),
-          hint: 'Ctrl X',
+          hint: shortcuts.hint('fixed.cut'),
           disabled: !selected || !writable,
           run: () => document.execCommand('cut'),
         },
         {
           label: t('Copy'),
-          hint: 'Ctrl C',
+          hint: shortcuts.hint('fixed.copy'),
           disabled: !selected,
           run: () => document.execCommand('copy'),
         },
         SPLIT,
         {
           label: t('Select all'),
-          hint: 'Ctrl A',
+          hint: shortcuts.hint('edit.select-all'),
           disabled: !view,
           run: () =>
             view?.dispatch({ selection: { anchor: 0, head: view.state.doc.length } }),
@@ -161,11 +162,11 @@ export function appMenu(context: Context): MenuGroup[] {
         SPLIT,
         {
           label: t('Find'),
-          hint: 'Ctrl F',
+          hint: shortcuts.hint('edit.find'),
           disabled: !view,
           run: () => view && openFind(view),
         },
-        { label: t('Search'), hint: 'Ctrl Shift F', run: () => workspace.showPanel('search') },
+        { label: t('Search'), hint: shortcuts.hint('app.search'), run: () => workspace.showPanel('search') },
       ],
     },
 
@@ -183,16 +184,17 @@ export function appMenu(context: Context): MenuGroup[] {
         SPLIT,
         // Not through `run`: the new table takes the focus into its first cell,
         // and focusing the editor afterwards would take it straight back out.
-        { label: t('Table'), hint: 'Ctrl Alt T', disabled: !writable, run: () => view && insertTableToEdit(view) },
-        { label: t('Code block'), disabled: !writable, run: () => run(view, insertCodeFence) },
-        { label: t('Quote'), disabled: !writable, run: () => run(view, toggleQuote) },
-        { label: t('Math block'), disabled: !writable, run: () => run(view, insertMathBlock) },
+        { label: t('Table'), hint: shortcuts.hint('paragraph.table'), disabled: !writable, run: () => view && insertTableToEdit(view) },
+        { label: t('Code block'), hint: shortcuts.hint('paragraph.code-block'), disabled: !writable, run: () => run(view, insertCodeFence) },
+        { label: t('Quote'), hint: shortcuts.hint('paragraph.quote'), disabled: !writable, run: () => run(view, toggleQuote) },
+        { label: t('Math block'), hint: shortcuts.hint('paragraph.math-block'), disabled: !writable, run: () => run(view, insertMathBlock) },
         SPLIT,
-        { label: t('Bulleted list'), disabled: !writable, run: () => run(view, toggleBulletList) },
-        { label: t('Numbered list'), disabled: !writable, run: () => run(view, toggleOrderedList) },
+        { label: t('Bulleted list'), hint: shortcuts.hint('paragraph.bullet-list'), disabled: !writable, run: () => run(view, toggleBulletList) },
+        { label: t('Numbered list'), hint: shortcuts.hint('paragraph.ordered-list'), disabled: !writable, run: () => run(view, toggleOrderedList) },
         SPLIT,
         {
           label: t('Horizontal rule'),
+          hint: shortcuts.hint('paragraph.rule'),
           disabled: !writable,
           run: () => run(view, insertHorizontalRule),
         },
@@ -204,25 +206,26 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'format',
       label: t('Format'),
       rows: [
-        { label: t('Bold'), hint: 'Ctrl B', disabled: !writable, run: () => run(view, toggleWrap('**')) },
-        { label: t('Italic'), hint: 'Ctrl I', disabled: !writable, run: () => run(view, toggleWrap('*')) },
+        { label: t('Bold'), hint: shortcuts.hint('format.bold'), disabled: !writable, run: () => run(view, toggleWrap('**')) },
+        { label: t('Italic'), hint: shortcuts.hint('format.italic'), disabled: !writable, run: () => run(view, toggleWrap('*')) },
         {
           label: t('Strikethrough'),
+          hint: shortcuts.hint('format.strikethrough'),
           disabled: !writable,
           run: () => run(view, toggleWrap('~~')),
         },
-        { label: t('Highlight'), disabled: !writable, run: () => run(view, toggleWrap('==')) },
+        { label: t('Highlight'), hint: shortcuts.hint('format.highlight'), disabled: !writable, run: () => run(view, toggleWrap('==')) },
         SPLIT,
-        { label: t('Code'), disabled: !writable, run: () => run(view, toggleWrap('`')) },
+        { label: t('Code'), hint: shortcuts.hint('format.code'), disabled: !writable, run: () => run(view, toggleWrap('`')) },
         { label: t('Inline math'), disabled: !writable, run: () => run(view, toggleWrap('$')) },
         { label: t('Superscript'), disabled: !writable, run: () => run(view, toggleWrap('^')) },
         { label: t('Subscript'), disabled: !writable, run: () => run(view, toggleWrap('~')) },
         SPLIT,
-        { label: t('Link'), hint: 'Ctrl K', disabled: !writable, run: () => run(view, insertLink) },
+        { label: t('Link'), hint: shortcuts.hint('format.link'), disabled: !writable, run: () => run(view, insertLink) },
         SPLIT,
         {
           label: t('Clear formatting'),
-          hint: 'Ctrl \\',
+          hint: shortcuts.hint('format.clear'),
           disabled: !writable,
           run: () => run(view, clearFormatting),
         },
@@ -233,39 +236,45 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'view',
       label: t('View'),
       rows: [
-        { label: t('Command palette'), hint: 'Ctrl P', run: () => context.onpalette() },
+        { label: t('Command palette'), hint: shortcuts.hint('app.palette'), run: () => context.onpalette() },
         SPLIT,
         {
           label: t('Reading mode'),
-          hint: 'F10',
+          hint: shortcuts.hint('app.reading'),
           checked: modes.reading,
           run: () => modes.toggleReading(view),
         },
         {
           label: t('Source mode'),
-          hint: 'Ctrl /',
+          hint: shortcuts.hint('app.source'),
           checked: modes.source,
           run: () => modes.toggleSource(view),
         },
         {
           label: t('Typewriter mode'),
+          hint: shortcuts.hint('app.typewriter'),
           checked: modes.typewriter,
           run: () => modes.toggleTypewriter(view),
         },
-        { label: t('Focus mode'), checked: modes.focus, run: () => modes.toggleFocus(view) },
+        {
+          label: t('Focus mode'),
+          hint: shortcuts.hint('app.focus'),
+          checked: modes.focus,
+          run: () => modes.toggleFocus(view),
+        },
         SPLIT,
         {
           label: t('Show sidebar'),
-          hint: 'Ctrl B',
+          hint: shortcuts.hint('app.sidebar'),
           checked: !!workspace.panel,
           run: () => workspace.toggleSidebar(),
         },
-        { label: t('Files'), run: () => workspace.showPanel('tree') },
+        { label: t('Files'), hint: shortcuts.hint('app.files'), run: () => workspace.showPanel('tree') },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
         SPLIT,
-        { label: t('Zoom in'), hint: 'Ctrl Shift =', run: () => modes.stepZoom(1) },
-        { label: t('Zoom out'), hint: 'Ctrl Shift -', run: () => modes.stepZoom(-1) },
-        { label: t('Actual size'), hint: 'Ctrl Shift 0', run: () => modes.resetZoom() },
+        { label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
+        { label: t('Zoom out'), hint: shortcuts.hint('app.zoom-out'), run: () => modes.stepZoom(-1) },
+        { label: t('Actual size'), hint: shortcuts.hint('app.zoom-reset'), run: () => modes.resetZoom() },
       ],
     },
 
