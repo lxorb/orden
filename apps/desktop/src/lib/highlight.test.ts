@@ -12,8 +12,15 @@ describe('loading parsers', () => {
   })
 
   test('leaves out what it does not know', async () => {
-    const parsers = await loadParsers(['mermaid', 'no-such-language', ''])
+    const parsers = await loadParsers(['no-such-language', ''])
     expect(parsers.size).toBe(0)
+  })
+
+  /** The exporter reads the editor's own language list, so a fence that was
+   *  coloured on screen is coloured in the file that leaves. */
+  test('knows the languages the editor knows', async () => {
+    const parsers = await loadParsers(['makefile', 'tf', 'mermaid'])
+    expect(parsers.size).toBe(3)
   })
 })
 

@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@codemirror/language": "^6.12.4",
-    "@codemirror/language-data": "^6.5.2",
     "@lezer/highlight": "^1.2.3",
     "@nib/editor": "workspace:*",
     "@nib/markdown": "workspace:*",

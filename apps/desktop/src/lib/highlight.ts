@@ -1,7 +1,6 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
-import { languages } from '@codemirror/language-data'
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
-import type { CodePalette } from '@nib/editor'
+import { type CodePalette, fenceLanguages } from '@nib/editor'
 
 export type Parser = LanguageSupport['language']['parser']
 
@@ -26,17 +25,19 @@ function escape(text: string): string {
   )
 }
 
-/** A parser for each language named, loaded once. A fence may name a language
- *  or use its file extension, as ` ```py ` does. A language nothing is known
- *  about is simply absent, and its code stays plain. */
+/** A parser for each language named, loaded once. The list is the editor's
+ *  own, so an exported document is coloured by whatever coloured it on screen:
+ *  a fence may name a language, spell it the short way, or use its file
+ *  extension. A language nothing is known about is simply absent, and its code
+ *  stays plain. */
 export async function loadParsers(names: Iterable<string>): Promise<Map<string, Parser>> {
   const parsers = new Map<string, Parser>()
 
   await Promise.all(
     [...new Set(names)].map(async (name) => {
       const description =
-        LanguageDescription.matchLanguageName(languages, name, true) ??
-        LanguageDescription.matchFilename(languages, `code.${name}`)
+        LanguageDescription.matchLanguageName(fenceLanguages, name, true) ??
+        LanguageDescription.matchFilename(fenceLanguages, `code.${name}`)
       if (!description) return
 
       const support = await description.load().catch(() => null)
