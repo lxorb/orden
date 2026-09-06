@@ -26,7 +26,7 @@ export function displayWidth(text: string): number {
 }
 
 function splitRow(line: string): string[] {
-  const body = line.trim().replace(/^\|/, '').replace(/\|$/, '')
+  const body = line.trim().replace(/^\|/, '')
   const cells: string[] = []
   let current = ''
 
@@ -43,6 +43,12 @@ function splitRow(line: string): string[] {
     }
     current += body[i]
   }
+
+  // A closing pipe ends the row rather than opening one more cell. Decided here
+  // rather than by trimming the line first, because trimming cannot tell a
+  // closing pipe from the `\|` of a cell that ends in a literal one - and used
+  // to eat it, along with the backslash's meaning.
+  if (!current && cells.length) return cells
 
   cells.push(current.trim())
   return cells
@@ -103,9 +109,14 @@ function delimiterCell(align: Align, width: number): string {
   }
 }
 
-/** Writes the table back as pipe-aligned markdown, the way Typora formats it. */
+/** Writes the table back as pipe-aligned markdown, the way Typora formats it.
+ *
+ *  Every line gets the same number of cells, taken from the widest of the header
+ *  and the alignments, whatever shape the model is in. A row short of a cell or
+ *  one cell over would otherwise write a table that does not parse as one, and
+ *  the note would be left with a block of pipes where its table was. */
 export function serializeTable(model: TableModel): string {
-  const columns = model.header.length
+  const columns = Math.max(model.header.length, model.align.length)
   const widths = Array.from({ length: columns }, (_, i) =>
     Math.max(
       MIN_CELL,
@@ -114,14 +125,12 @@ export function serializeTable(model: TableModel): string {
     ),
   )
 
-  // A row wider than the header has no width measured for its extra cells; the
-  // model is meant to be rectangular, so the narrowest column will do.
-  const row = (cells: string[]) =>
-    `| ${cells.map((cell, i) => padCell(cell, widths[i] ?? MIN_CELL)).join(' | ')} |`
+  const row = (cells: readonly string[]) =>
+    `| ${widths.map((width, i) => padCell(cells[i] ?? '', width)).join(' | ')} |`
 
   return [
     row(model.header),
-    `| ${model.align.map((align, i) => delimiterCell(align, widths[i] ?? MIN_CELL)).join(' | ')} |`,
+    `| ${widths.map((width, i) => delimiterCell(model.align[i] ?? null, width)).join(' | ')} |`,
     ...model.rows.map(row),
   ].join('\n')
 }
@@ -135,6 +144,9 @@ export function insertColumn(model: TableModel, at: number): TableModel {
 }
 
 export function removeColumn(model: TableModel, at: number): TableModel {
+  // A negative index would reach `splice` and take the *last* column away, and
+  // -1 is what the view's column bar holds while no column is under the pointer.
+  if (at < 0 || at >= model.header.length) return model
   if (model.header.length <= 1) return model
   return {
     header: withRemoved(model.header, at),
@@ -149,10 +161,12 @@ export function insertRow(model: TableModel, at: number): TableModel {
 }
 
 export function removeRow(model: TableModel, at: number): TableModel {
+  if (at < 0 || at >= model.rows.length) return model
   return { ...model, rows: withRemoved(model.rows, at) }
 }
 
 export function moveRow(model: TableModel, from: number, to: number): TableModel {
+  if (from < 0 || from >= model.rows.length) return model
   if (to < 0 || to >= model.rows.length) return model
   const rows = [...model.rows]
   const [moved] = rows.splice(from, 1)
@@ -162,6 +176,7 @@ export function moveRow(model: TableModel, from: number, to: number): TableModel
 }
 
 export function moveColumn(model: TableModel, from: number, to: number): TableModel {
+  if (from < 0 || from >= model.header.length) return model
   if (to < 0 || to >= model.header.length) return model
   const swap = <T>(list: T[]) => {
     const next = [...list]
@@ -186,8 +201,13 @@ export function setAlign(model: TableModel, column: number, align: Align): Table
 }
 
 export function setCell(model: TableModel, row: number, column: number, value: string): TableModel {
-  // The source is one line per row, so a newline typed into a cell would split it.
-  const clean = value.replace(/\r?\n/g, ' ').replace(/\|/g, '\\|')
+  // The source is one line per row, so a newline typed into a cell would split
+  // it. A pipe has to be escaped or it would open another cell - and the value
+  // comes back from a focused cell, which shows the markdown, so a pipe that is
+  // already escaped comes back escaped. Matching the backslash as part of what
+  // is replaced is what keeps a cell from growing one more backslash every time
+  // the caret visits it.
+  const clean = value.replace(/\r?\n/g, ' ').replace(/\\?\|/g, '\\|')
 
   if (row < 0) {
     const header = [...model.header]

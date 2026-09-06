@@ -9,6 +9,7 @@ import {
   type Transaction,
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { tableStandsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { lineRevealed, noReveal, overlaps } from './reveal'
 import {
@@ -151,6 +152,10 @@ function buildBlocks(state: EditorState): Blocks {
         }
 
         case 'Table': {
+          // A table with something before its pipes - indented into a list item,
+          // or inside a blockquote - is left as source; see `tableStandsAlone`.
+          if (!tableStandsAlone(state, node.from)) return true
+
           // Clicks inside the widget do not move CodeMirror's selection, so the
           // rendered table stays up while its cells are edited. Source only
           // shows while the caret is genuinely in the table's text.

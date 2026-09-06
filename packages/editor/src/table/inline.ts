@@ -75,6 +75,12 @@ function walk(node: SyntaxNode, source: string, from: number, to: number): Inlin
     if (child.name === 'Escape') {
       // The backslash is syntax; the character it protects is the content.
       out.push({ text: source.slice(child.from + 1, child.to) })
+    } else if (child.name === 'InlineCode') {
+      // A code span has no escapes inside it, so the parser gives none - but a
+      // pipe in a cell had to be written `\|` whether or not it was in code, and
+      // showing the backslash would be showing syntax. Unwritten here, at the
+      // one place the rule differs from the grammar's.
+      out.push({ tag: 'code', children: [{ text: codeText(child, source) }] })
     } else if (!HIDDEN.has(child.name)) {
       const children = walk(child, source, child.from, child.to)
       const tag = TAGS[child.name]
@@ -96,6 +102,21 @@ function walk(node: SyntaxNode, source: string, from: number, to: number): Inlin
 
   if (at < to) out.push({ text: source.slice(at, to) })
   return out
+}
+
+/** What a code span says: everything between its backticks, with the escape a
+ *  cell needs for a pipe taken back off. */
+function codeText(node: SyntaxNode, source: string): string {
+  let from = node.from
+  let to = node.to
+
+  for (let child = node.firstChild; child; child = child.nextSibling) {
+    if (child.name !== 'CodeMark') continue
+    if (child.from === from) from = child.to
+    if (child.to === to) to = child.from
+  }
+
+  return source.slice(from, to).replace(/\\\|/g, '|')
 }
 
 function build(parent: Node, nodes: Inline[]) {

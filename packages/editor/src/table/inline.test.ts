@@ -64,6 +64,17 @@ describe('a table cell', () => {
   test('shows an escaped pipe as the pipe, which is how a cell has to spell one', () => {
     expect(html('a \\| b')).toBe('a | b')
   })
+
+  test('shows it inside code as well, where the grammar has no escapes', () => {
+    // A pipe has to be written `\|` wherever it is in a cell, code span or not,
+    // and showing the backslash would be showing syntax.
+    expect(html('`a \\| b`')).toBe('<code>a | b</code>')
+    expect(html('`x` and \\| and `y \\| z`')).toBe('<code>x</code> and | and <code>y | z</code>')
+  })
+
+  test('keeps a backslash that is not spelling a pipe', () => {
+    expect(html('`C:\\temp`')).toBe('<code>C:\\temp</code>')
+  })
 })
 
 describe('links in a cell', () => {

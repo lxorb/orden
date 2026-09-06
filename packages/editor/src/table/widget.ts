@@ -12,7 +12,7 @@ const live = new Set<TableView>()
 /** The rendered table whose source starts at a position, if it is on screen. */
 export function tableViewAt(editor: EditorView, from: number): TableView | null {
   for (const table of live) {
-    if (table.editor === editor && table.from === from) return table
+    if (table.editor === editor && table.span()?.from === from) return table
   }
   return null
 }

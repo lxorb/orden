@@ -27,12 +27,25 @@ export function tableSpan(state: EditorState, from: number, to: number): TableSp
   return { from: state.doc.lineAt(from).from, to: state.doc.lineAt(to).to }
 }
 
+/** Whether a table's lines hold the table and nothing else.
+ *
+ *  A table indented into a list item, or one inside a blockquote, carries a
+ *  prefix before the first pipe of every line. The rendered widget replaces
+ *  whole lines and the model knows nothing of a prefix, so writing an edit back
+ *  would drop it and lift the table out of whatever it was in. Those tables stay
+ *  as source instead, which reads well enough with the pipes dimmed. */
+export function tableStandsAlone(state: EditorState, from: number): boolean {
+  return state.doc.lineAt(from).from === from
+}
+
 /** Every table the caret is not in, which are the ones shown rendered. */
 export function renderedTables(state: EditorState): TableSpan[] {
   const spans: TableSpan[] = []
   syntaxTree(state).iterate({
     enter: (node) => {
       if (node.name !== 'Table') return true
+      if (!tableStandsAlone(state, node.from)) return false
+
       const span = tableSpan(state, node.from, node.to)
       if (!overlaps(state, span.from, span.to)) spans.push(span)
       return false

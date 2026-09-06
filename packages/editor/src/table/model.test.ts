@@ -45,6 +45,22 @@ describe('parsing', () => {
     expect(parseTable('| a\\|b |\n| - |\n| 1 |')?.header).toEqual(['a\\|b'])
   })
 
+  test('keeps an escaped pipe that ends a row', () => {
+    // A row need not be closed with a pipe, so the last one on the line is
+    // either the closing pipe or part of a cell - and a `\|` is the cell's.
+    expect(parseTable('| a | b\\|\n| - | - |\n| 1 | 2 |')?.header).toEqual(['a', 'b\\|'])
+    expect(parseTable('| a | b |\n| - | - |\n| 1 | 2\\|')?.rows).toEqual([['1', '2\\|']])
+  })
+
+  test('reads a closing pipe as the end of the row, not another cell', () => {
+    expect(parseTable('| a | b |\n| - | - |\n| 1 | 2 |')?.header).toEqual(['a', 'b'])
+    expect(parseTable('a | b\n- | -\n1 | 2')?.header).toEqual(['a', 'b'])
+  })
+
+  test('keeps an empty last cell', () => {
+    expect(parseTable('| a | b |\n| - | - |\n| 1 |  |')?.rows).toEqual([['1', '']])
+  })
+
   test('rejects text that is not a table', () => {
     expect(parseTable('just a paragraph')).toBeNull()
     expect(parseTable('| a |\nnot a delimiter\n| 1 |')).toBeNull()
@@ -84,6 +100,14 @@ describe('editing', () => {
     expect(setCell(model, 0, 0, 'x|y').rows[0]?.[0]).toBe('x\\|y')
   })
 
+  test('does not escape a pipe that is escaped already', () => {
+    // A focused cell shows its markdown, so the value comes back with the
+    // backslash in it. Escaping again added one per visit to the cell.
+    expect(setCell(model, 0, 0, 'x\\|y').rows[0]?.[0]).toBe('x\\|y')
+    const twice = setCell(setCell(model, 0, 0, 'x|y'), 0, 0, 'x\\|y')
+    expect(twice.rows[0]?.[0]).toBe('x\\|y')
+  })
+
   test('flattens a newline typed into a cell', () => {
     expect(setCell(model, 0, 0, 'x\ny').rows[0]?.[0]).toBe('x y')
   })
@@ -96,6 +120,17 @@ describe('editing', () => {
   test('refuses to remove the last column', () => {
     const single = parseTable('| a |\n| - |\n| 1 |')!
     expect(removeColumn(single, 0)).toEqual(single)
+  })
+
+  test('refuses an index that is not a row or a column', () => {
+    // `splice` reads a negative index from the end, so -1 used to mean "the
+    // last one" - and -1 is what the column bar holds while it is hidden.
+    expect(removeColumn(model, -1)).toEqual(model)
+    expect(removeColumn(model, 2)).toEqual(model)
+    expect(removeRow(model, -1)).toEqual(model)
+    expect(removeRow(model, 2)).toEqual(model)
+    expect(moveColumn(model, -1, 0)).toEqual(model)
+    expect(moveRow(model, -1, 0)).toEqual(model)
   })
 
   test('inserts and removes rows', () => {

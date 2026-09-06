@@ -45,6 +45,23 @@ describe('block decorations', () => {
     expect(spans(`${PROSE}\`\`\`js\nlet x = 1\n\`\`\``)).toEqual([])
   })
 
+  test('a table with something before its pipes is left as source', () => {
+    // The widget replaces whole lines and the table model knows nothing of an
+    // indent or a quote mark, so writing an edit back would drop the prefix and
+    // lift the table out of the list item or blockquote it was in.
+    const indented = `- item\n\n  ${TABLE.split('\n').join('\n  ')}\n`
+    expect(spans(indented)).toEqual([])
+    expect(state(indented).field(blockDecorations).decorations.size).toBe(0)
+
+    const quoted = `> ${TABLE.split('\n').join('\n> ')}\n`
+    expect(spans(quoted)).toEqual([])
+    expect(state(quoted).field(blockDecorations).decorations.size).toBe(0)
+  })
+
+  test('a table of its own still renders', () => {
+    expect(state(`${PROSE}${TABLE}`).field(blockDecorations).decorations.size).toBe(1)
+  })
+
   test('a caret that stays clear of them all rebuilds nothing', () => {
     const doc = `${PROSE}${TABLE}`
     const { was, is } = afterMove(doc, 0, 20)

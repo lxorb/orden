@@ -34,6 +34,8 @@ import {
   firstCell,
   lastCell,
   lineBeside,
+  type TableSpan,
+  tableAt,
 } from './navigation'
 import { inlineShortcut, runInCell } from './shortcuts'
 
@@ -51,6 +53,13 @@ export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bo
 /** Where the caret goes when it steps out: an end of the line, or the spot
  *  nearest to where it was. */
 export type Landing = 'start' | 'end' | { x: number }
+
+/** A cell and how far into its text the caret sits. Carried through a commit so
+ *  a table that is rewritten around the caret does not move it. */
+interface Focus {
+  at: CellAddress
+  offset: number
+}
 
 /** How long a cell may sit untouched before its edit is written out anyway.
  *  Blur is the primary trigger; this is the safety net for when focus never
@@ -84,8 +93,6 @@ const ALIGN_LABELS = {
  *  survive each edit instead of being rebuilt around it. */
 export class TableView {
   readonly dom: HTMLElement
-  from: number
-  to: number
 
   private readonly scroller: HTMLElement
   private readonly table: HTMLTableElement
@@ -100,7 +107,7 @@ export class TableView {
   private idle: number | undefined
 
   /** The cell to put the caret in once the next redraw has happened. */
-  private focusAfter: { at: CellAddress; offset: number } | null = null
+  private focusAfter: Focus | null = null
 
   /** Column widths set by dragging; markdown records none, so they are the
    *  view's to keep. */
@@ -108,6 +115,10 @@ export class TableView {
 
   /** The column whose controls are up. */
   private barColumn = -1
+
+  /** How to end a column drag that is still going, so the document listeners it
+   *  put down come off even if the table goes first. */
+  private dragging: (() => void) | null = null
 
   /** Whether the cells were drawn as fields. Reading mode takes that away, and
    *  the table has to be redrawn for it: a cell is contenteditable in the DOM,
@@ -121,8 +132,6 @@ export class TableView {
   ) {
     this.model = model
     this.source = text.source
-    this.from = text.from
-    this.to = text.to
     this.widths = model.header.map(() => null)
     this.editable = !editor.state.readOnly
 
@@ -154,6 +163,27 @@ export class TableView {
     this.render()
   }
 
+  /** Where this table's text is in the document, right now, or null when the
+   *  editor has let go of the widget.
+   *
+   *  Asked of the view rather than remembered, for the same reason image.ts
+   *  gives: prose typed elsewhere in the note moves the table's text without
+   *  redrawing anything. The block field maps the decoration along and hands
+   *  the very same widget back, so nothing here is told that anything happened.
+   *  A remembered offset then points at the wrong text - and since `commit`
+   *  checks the text before writing, a cell edit made after such a keystroke
+   *  was quietly thrown away. */
+  span(): TableSpan | null {
+    const { editor, dom } = this
+    if (!editor.contentDOM.contains(dom)) return null
+
+    // `posAtDOM` gives the start of the block the widget replaces, which is the
+    // start of the table's first line. The end of that line is inside the node
+    // whatever the indent, which is what the tree can be asked about.
+    const at = Math.min(editor.posAtDOM(dom), editor.state.doc.length)
+    return tableAt(editor.state, editor.state.doc.lineAt(at).to)
+  }
+
   /** Points the DOM at a newer version of the source. Redrawn only when the
    *  document says something the cells do not already show - after an edit
    *  made here, it never does. */
@@ -161,8 +191,6 @@ export class TableView {
     // Compared in canonical form: a table typed by hand is rarely aligned
     // the way the serializer writes it, and that is not a difference.
     const shown = serializeTable(model) === serializeTable(this.current())
-    this.from = text.from
-    this.to = text.to
     this.source = text.source
     this.model = model
 
@@ -177,6 +205,7 @@ export class TableView {
 
   destroy() {
     this.clearPending()
+    this.dragging?.()
   }
 
   flush() {
@@ -237,7 +266,11 @@ export class TableView {
     this.flush()
 
     const { editor } = this
-    const line = lineBeside(editor.state, this, side)
+    // Read after the flush, since that may have rewritten the table.
+    const span = this.span()
+    if (!span) return
+
+    const line = lineBeside(editor.state, span, side)
     let pos = line.from
     if (!line.made) {
       if (where === 'end') pos = line.to
@@ -266,7 +299,7 @@ export class TableView {
 
   /** Writes a model into the document. The new widget then adopts this DOM,
    *  which is where `focusAfter` is acted on. */
-  private commit(next: TableModel, focus?: CellAddress) {
+  private commit(next: TableModel, focus?: Focus) {
     // Every edit a table makes comes through here, so this is where reading
     // mode stops them - the buttons in the margins and the idle timer of a
     // cell that was being typed in when the mode came on, both.
@@ -276,19 +309,20 @@ export class TableView {
     }
 
     window.clearTimeout(this.idle)
-    this.focusAfter = focus ? { at: focus, offset: 0 } : null
+    this.focusAfter = focus ?? null
 
     const text = serializeTable(next)
     // The document may have moved on without this table, in which case the
     // widget is about to be dropped and the edit with it. Better than writing
     // over whatever took its place.
     const { editor } = this
-    const current = editor.state.doc.sliceString(this.from, this.to) === this.source
+    const span = this.span()
+    const current = span && editor.state.doc.sliceString(span.from, span.to) === this.source
 
-    if (text !== this.source && current) {
+    if (text !== this.source && span && current) {
       // The edit stays pending through the dispatch: the new widget compares
       // the document against what the cells show, and the edit is part of it.
-      editor.dispatch({ changes: { from: this.from, to: this.to, insert: text } })
+      editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
     }
 
     this.clearPending()
@@ -429,8 +463,12 @@ export class TableView {
     if (key === 'Tab' && !mod && !event.altKey) {
       event.preventDefault()
       const next = event.shiftKey ? cellBefore(this.model, at) : cellAfter(this.model, at)
+      // Tab past the last cell grows the table; Shift-Tab out of the first one
+      // hands the caret to the line above, the way ArrowLeft there does. It used
+      // to do nothing at all, having already swallowed the key.
       if (next === 'below') this.growBelow(0)
-      else if (next !== 'above') this.focusCell(next, event.shiftKey ? 'end' : 'start')
+      else if (next === 'above') this.leave('above', 'end')
+      else this.focusCell(next, event.shiftKey ? 'end' : 'start')
       return
     }
 
@@ -509,7 +547,7 @@ export class TableView {
 
   private growBelow(column: number) {
     const rows = this.model.rows.length
-    this.commit(insertRow(this.current(), rows), { row: rows, column })
+    this.commit(insertRow(this.current(), rows), { at: { row: rows, column }, offset: 0 })
   }
 
   /** Undo and redo are the editor's, not the browser's: a cell's edits live
@@ -563,10 +601,25 @@ export class TableView {
     this.edited(cell, at)
   }
 
+  /** Alignment changes nothing about the text, so the caret does not move: not
+   *  to the start of its cell either, which is what passing no offset did. */
   private toggleAlign(column: number, align: 'left' | 'center' | 'right') {
     const base = this.current()
     const next = setAlign(base, column, align === base.align[column] ? null : align)
-    this.commit(next, this.focusedCell()?.at)
+    this.commit(next, this.focusedCell() ?? undefined)
+  }
+
+  /** The caret follows its own text through a move or a removal rather than
+   *  staying at an index. Anywhere it lands is clamped to what is left. */
+  private followingColumn(next: TableModel, was: number, now: number): Focus | undefined {
+    const focused = this.focusedCell()
+    if (!focused) return undefined
+
+    const column = focused.at.column === was ? now : focused.at.column
+    return {
+      at: { row: focused.at.row, column: Math.max(0, Math.min(column, next.header.length - 1)) },
+      offset: focused.offset,
+    }
   }
 
   private moveColumnBy(column: number, step: number) {
@@ -577,13 +630,15 @@ export class TableView {
     const [width] = this.widths.splice(column, 1)
     this.widths.splice(column + step, 0, width ?? null)
 
-    const focused = this.focusedCell()?.at
-    this.commit(next, focused && { row: focused.row, column: column + step })
+    this.commit(next, this.followingColumn(next, column, column + step))
   }
 
   private insertColumnAfter(column: number) {
     this.widths.splice(column + 1, 0, null)
-    this.commit(insertColumn(this.current(), column + 1), { row: -1, column: column + 1 })
+    this.commit(insertColumn(this.current(), column + 1), {
+      at: { row: -1, column: column + 1 },
+      offset: 0,
+    })
   }
 
   private deleteColumn(column: number) {
@@ -592,9 +647,19 @@ export class TableView {
     if (next === base) return
 
     this.widths.splice(column, 1)
-    const focused = this.focusedCell()?.at
-    const kept = Math.min(column, next.header.length - 1)
-    this.commit(next, focused && { row: focused.row, column: kept })
+    const focused = this.focusedCell()
+    this.commit(
+      next,
+      focused
+        ? {
+            at: {
+              row: focused.at.row,
+              column: Math.max(0, afterRemoval(focused.at.column, column, next.header.length)),
+            },
+            offset: focused.offset,
+          }
+        : undefined,
+    )
   }
 
   private moveRowBy(row: number, step: number) {
@@ -602,19 +667,46 @@ export class TableView {
     const next = moveRow(base, row, row + step)
     if (next === base) return
 
-    const focused = this.focusedCell()?.at
-    this.commit(next, focused && { row: row + step, column: focused.column })
+    const focused = this.focusedCell()
+    // Only a caret that was in the row that moved goes with it.
+    this.commit(
+      next,
+      focused
+        ? {
+            at: {
+              row: focused.at.row === row ? row + step : focused.at.row,
+              column: focused.at.column,
+            },
+            offset: focused.offset,
+          }
+        : undefined,
+    )
   }
 
   private insertRowAfter(row: number) {
-    this.commit(insertRow(this.current(), row + 1), { row: row + 1, column: 0 })
+    this.commit(insertRow(this.current(), row + 1), { at: { row: row + 1, column: 0 }, offset: 0 })
   }
 
   private deleteRow(row: number) {
-    const next = removeRow(this.current(), row)
-    const focused = this.focusedCell()?.at
-    const kept = Math.min(row, next.rows.length - 1)
-    this.commit(next, focused && { row: kept, column: focused.column })
+    const base = this.current()
+    const next = removeRow(base, row)
+    if (next === base) return
+
+    const focused = this.focusedCell()
+    // A row left with nothing below it clamps to -1, the header, which is the
+    // one row a table always has.
+    this.commit(
+      next,
+      focused
+        ? {
+            at: {
+              row: afterRemoval(focused.at.row, row, next.rows.length),
+              column: focused.at.column,
+            },
+            offset: focused.offset,
+          }
+        : undefined,
+    )
   }
 
   private rowGrip(row: number): HTMLElement {
@@ -735,9 +827,15 @@ export class TableView {
     const finish = () => {
       document.removeEventListener('mousemove', move)
       document.removeEventListener('mouseup', finish)
+      this.dragging = null
     }
     document.addEventListener('mousemove', move)
     document.addEventListener('mouseup', finish)
+    // A drag can outlive its table: an edit elsewhere in the note, or a sync
+    // arriving, takes the widget away without a mouseup. Both listeners are on
+    // the document, so nothing else would ever take them off it, and the next
+    // pointer move would go on sizing a column of a table that is gone.
+    this.dragging = finish
   }
 
   private cellAt(at: CellAddress): HTMLElement | null {
@@ -797,6 +895,15 @@ function showRendered(cell: HTMLElement) {
  *  is somewhere for the caret to sit in an empty cell. */
 function showSource(cell: HTMLElement) {
   cell.replaceChildren(document.createTextNode(cell.dataset.source ?? ''))
+}
+
+/** Where a caret at `index` belongs once the one at `removed` has gone: one
+ *  place earlier when it was after the removal, the same place otherwise, and
+ *  never past the end of what is left. The caret follows its own text rather
+ *  than staying at a number, which is what asking about the removed one instead
+ *  of the focused one used to do. */
+function afterRemoval(index: number, removed: number, left: number): number {
+  return Math.min(index > removed ? index - 1 : index, left - 1)
 }
 
 /** Whether the caret, and nothing selected, sits at an offset in a cell. */
