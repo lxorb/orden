@@ -82,7 +82,7 @@ export const SPELLINGS: Record<string, string[]> = {
   Gas: ['asm', 'assembly', 'nasm', 'x86', 'x86asm', 'armasm'],
 
   // Markup, and the template dialects that are markup with holes in.
-  HTML: ['htm', 'handlebars', 'hbs', 'mustache', 'erb', 'ejs'],
+  HTML: ['htm', 'handlebars', 'hbs', 'mustache', 'erb', 'ejs', 'astro'],
   XML: ['svg', 'xsl', 'xslt', 'plist', 'xaml'],
   Markdown: ['md', 'mkd', 'mdown', 'mdx'],
   Jinja: ['jinja2', 'j2', 'twig', 'nunjucks', 'njk'],
@@ -291,6 +291,44 @@ const ADDED: LanguageDescription[] = [
     name: 'Spark SQL',
     alias: ['sparksql', 'spark-sql'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/sql')).sparkSQL,
+  }),
+
+  // Languages with a grammar of their own, written for CodeMirror 6 and kept
+  // up. A grammar knows the shape of the code and not only its vocabulary,
+  // which is what marks a property apart from the value beside it - worth a
+  // dependency for a language people write enough of. Each is a chunk nothing
+  // fetches until a fence names it.
+  LanguageDescription.of({
+    name: 'Elixir',
+    alias: ['elixir', 'ex', 'exs', 'iex'],
+    extensions: ['ex', 'exs'],
+    load: async () => (await import('codemirror-lang-elixir')).elixir(),
+  }),
+  LanguageDescription.of({
+    name: 'Svelte',
+    alias: ['svelte'],
+    extensions: ['svelte'],
+    load: async () => (await import('@replit/codemirror-lang-svelte')).svelte(),
+  }),
+  LanguageDescription.of({
+    name: 'Nix',
+    alias: ['nix', 'nixos'],
+    extensions: ['nix'],
+    load: async () => (await import('@replit/codemirror-lang-nix')).nix(),
+  }),
+  LanguageDescription.of({
+    name: 'Solidity',
+    alias: ['solidity', 'sol'],
+    extensions: ['sol'],
+    load: async () => (await import('@replit/codemirror-lang-solidity')).solidity,
+  }),
+  // HCL is the language; Terraform is what nearly every fence of it is. The
+  // name people type wins, and `hcl`, `nomad` and `packer` answer to it too.
+  LanguageDescription.of({
+    name: 'Terraform',
+    alias: ['terraform', 'tf', 'tfvars', 'hcl', 'nomad', 'packer'],
+    extensions: ['tf', 'tfvars', 'hcl'],
+    load: async () => (await import('codemirror-lang-hcl')).hcl(),
   }),
 
   // Nobody has ported these three, and all three are C-shaped enough that the
