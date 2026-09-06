@@ -921,6 +921,50 @@
   padding-bottom: 55vh;
 }
 
+/* Reading mode. What goes is the writing chrome: the caret, and the controls
+   whose only purpose is to change something. What stays is everything a reader
+   uses - the selection, the copy button on a fence, the links, the pictures at
+   the size the note gives them.
+
+   The caret goes by way of its layer rather than the caret itself: CodeMirror's
+   own theme turns `.cm-cursor` back on with five classes' worth of specificity
+   while the surface has focus, and the surface keeps focus here so that arrows,
+   Page Down and Ctrl+F still reach it. Nothing styles the layer's display, so
+   this is uncontested. */
+.nib-reading-mode .cm-cursorLayer,
+.nib-reading-mode .cm-dropCursor {
+  display: none;
+}
+
+/* The box still says whether the task is done. It is no longer a switch. */
+.nib-reading-mode .nib-checkbox {
+  pointer-events: none;
+}
+
+/* The fence still says which language it is. The name is no longer a field. */
+.nib-reading-mode .nib-fence-language {
+  pointer-events: none;
+}
+
+/* Rows, columns and column widths are all edits. */
+.nib-reading-mode .nib-table-grip,
+.nib-reading-mode .nib-table-columns,
+.nib-reading-mode .nib-table-resize {
+  display: none;
+}
+
+/* A picture keeps the two controls that only read - open it, copy its
+   address - and loses the alt text, the size, the way into the markup and the
+   delete, along with the corner handles that resize it. */
+.nib-reading-mode .nib-image-alt,
+.nib-reading-mode .nib-image-size,
+.nib-reading-mode .nib-image-source,
+.nib-reading-mode .nib-image-delete,
+.nib-reading-mode .nib-image-tools-gap,
+.nib-reading-mode .nib-image-handle {
+  display: none;
+}
+
 /* ── Page break ──────────────────────────────────────────────────── */
 
 .nib-page-break {
