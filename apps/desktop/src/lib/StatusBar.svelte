@@ -57,8 +57,7 @@
     opacity: 1;
   }
 
-  /* Said once, quietly, and never in the way: the numbers slide in beside it
-     when the pointer comes over. */
+  /* Said once and quietly; the numbers come in beside it on hover. */
   .reading {
     letter-spacing: 0.03em;
   }

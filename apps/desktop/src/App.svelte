@@ -469,17 +469,17 @@
   /** The editor's own menu, so the browser's never appears. */
   function editorMenu(): MenuEntry[] {
     const selected = !!view && !view.state.selection.main.empty
-    const writable = !!view && !view.state.readOnly
+    const reading = !!view && view.state.readOnly
 
     const clipboard: MenuEntry[] = [
       {
         label: t('Cut'),
         hint: 'Ctrl X',
-        disabled: !selected || !writable,
+        disabled: !selected || reading,
         run: () => document.execCommand('cut'),
       },
       { label: t('Copy'), hint: 'Ctrl C', disabled: !selected, run: () => document.execCommand('copy') },
-      { label: t('Paste'), hint: 'Ctrl V', disabled: !writable, run: () => void paste() },
+      { label: t('Paste'), hint: 'Ctrl V', disabled: reading, run: () => void paste() },
     ]
 
     // On a phone a press on the text is for the clipboard, the way it is in
@@ -491,7 +491,7 @@
     // Reading mode leaves the clipboard rows and the way back out. The rest of
     // this menu writes, and a menu of things that cannot happen is worse than
     // a short one.
-    if (!writable) {
+    if (reading) {
       return [
         ...clipboard,
         DIVIDER,
