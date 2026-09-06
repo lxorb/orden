@@ -509,4 +509,11 @@ export const gsw: Dictionary = {
     'Din Browser fangt die Taste ab, bevor s Programm sie gseht.',
   'That is not a key combination.': 'Das isch kei Tastekombination.',
   'Hold Ctrl, Alt or Cmd as well.': 'Halt zuesätzlich Strg, Alt oder Cmd.',
+  'File list': 'Dateilischte',
+  'Select every file': 'Alli Dateie uswähle',
+  'Clear the selection': 'D Uswahl ufhebe',
+  'Delete the selected files': 'Uswählti Dateie lösche',
+  'Moving through a list': 'I ere Lischte bewege',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Pfiiltaste, Enter und Esc bediened, was offe isch; das sind kei Chürzel.',
 }

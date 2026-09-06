@@ -34,7 +34,16 @@ const MOST_OVERRIDES = 200
 
 /** Where an entry sits in the list. The first five are the app's own menus,
  *  so a reader looking for Bold looks under Format either way. */
-export type Category = 'file' | 'edit' | 'format' | 'paragraph' | 'view' | 'table' | 'picture' | 'fixed'
+export type Category =
+  | 'file'
+  | 'edit'
+  | 'format'
+  | 'paragraph'
+  | 'view'
+  | 'panel'
+  | 'table'
+  | 'picture'
+  | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'file', label: () => t('File') },
@@ -42,6 +51,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'format', label: () => t('Format') },
   { id: 'paragraph', label: () => t('Paragraph') },
   { id: 'view', label: () => t('View') },
+  { id: 'panel', label: () => t('File list') },
   { id: 'table', label: () => t('Tables') },
   { id: 'picture', label: () => t('Pictures') },
   { id: 'fixed', label: () => t('Fixed keys') },
@@ -60,14 +70,15 @@ export interface AppContext {
  *
  *  `scope` is the difference that matters for conflicts. An `app` binding is
  *  read off the window and fires wherever the focus is, so it shadows an
- *  `editor` binding on the same key rather than sharing it. A `fixed` one
+ *  `editor` binding on the same key rather than sharing it. A `panel` one is
+ *  read inside the file list and only while the focus is in it. A `fixed` one
  *  cannot be changed at all and is here to be seen: a key that is spoken for
  *  and a reason why, rather than a gap in the list. */
 export interface Shortcut {
   id: string
   label: () => string
   category: Category
-  scope: 'app' | 'editor' | 'fixed'
+  scope: 'app' | 'editor' | 'panel' | 'fixed'
   key: string | null
   mac?: string | null
   win?: string | null
@@ -348,6 +359,45 @@ const APP_ENTRIES: Shortcut[] = [
   },
 ]
 
+/** The file list's own keys. They are read where the list is - see
+ *  Tree.svelte - and only fire while the focus is in it, which is why they
+ *  can hold Ctrl+A and Delete without being in the way of the editor's. */
+const PANEL_ENTRIES: Shortcut[] = [
+  {
+    id: 'tree.select-all',
+    label: () => t('Select every file'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Mod-a',
+    contextual: true,
+  },
+  {
+    id: 'tree.deselect',
+    label: () => t('Clear the selection'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Escape',
+    contextual: true,
+  },
+  {
+    id: 'tree.delete',
+    label: () => t('Delete the selected files'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Delete',
+    contextual: true,
+  },
+  {
+    id: 'tree.delete.alt',
+    label: () => t('Delete the selected files'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Backspace',
+    contextual: true,
+    alias: true,
+  },
+]
+
 function cycleTab(direction: number) {
   const index = workspace.tabs.findIndex((tab) => tab.id === workspace.activeTabId)
   if (index < 0) return
@@ -429,6 +479,14 @@ const FIXED_ENTRIES: Shortcut[] = [
     why: () => t('Escape closes whatever is open.'),
   },
   {
+    id: 'fixed.lists',
+    label: () => t('Moving through a list'),
+    category: 'fixed',
+    scope: 'fixed',
+    key: null,
+    why: () => t('The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.'),
+  },
+  {
     id: 'fixed.quit',
     label: () => t('Quit'),
     category: 'fixed',
@@ -443,6 +501,7 @@ const FIXED_ENTRIES: Shortcut[] = [
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
   ...EDITOR_SPECS.map(fromEditor),
+  ...PANEL_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 
@@ -651,6 +710,14 @@ class Shortcuts {
     if (!token) return
 
     void api.saveSettings(token, { shortcuts: this.overrides }).catch(() => undefined)
+  }
+
+  /** Whether a keystroke is the one an entry holds. What a panel with keys of
+   *  its own asks, since those fire where the focus is rather than on the
+   *  window. */
+  pressed(id: string, event: KeyboardEvent): boolean {
+    const key = this.keyFor(id)
+    return !!key && matchesCombination(key, event, this.platform)
   }
 
   /** Runs whatever the keystroke is bound to at app level. True when it did,

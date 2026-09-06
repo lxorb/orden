@@ -5,6 +5,7 @@
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { selectAll } from './select-all'
+  import { shortcuts } from './shortcuts.svelte'
   import { carry, dragged, isTreeDrag } from './drag-paths'
   import { folderOf } from './tauri'
   import type { Entry } from './workspace.svelte'
@@ -68,18 +69,23 @@
     return false
   }
 
-  /** Keys that act on the selection, from anywhere in the tree. */
+  /** Keys that act on the selection, from anywhere in the tree. Which keys
+   *  those are comes from the registry, like every other shortcut; they are
+   *  read here rather than on the window because they only mean anything
+   *  while the focus is in the list. */
   function onKey(event: KeyboardEvent) {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
+    if (shortcuts.pressed('tree.select-all', event)) {
       event.preventDefault()
       workspace.selectAll()
       return
     }
-    if (event.key === 'Escape') {
+    if (shortcuts.pressed('tree.deselect', event)) {
       workspace.clearSelection()
       return
     }
-    if ((event.key === 'Delete' || event.key === 'Backspace') && workspace.selection.length) {
+
+    const deleting = shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
+    if (deleting && workspace.selection.length) {
       event.preventDefault()
       void workspace.removeMany(workspace.selection)
     }

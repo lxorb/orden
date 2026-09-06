@@ -508,4 +508,11 @@ export const de: Dictionary = {
     'Dein Browser fängt diese Taste ab, bevor die App sie sieht.',
   'That is not a key combination.': 'Das ist keine Tastenkombination.',
   'Hold Ctrl, Alt or Cmd as well.': 'Halte zusätzlich Strg, Alt oder Cmd.',
+  'File list': 'Dateiliste',
+  'Select every file': 'Alle Dateien auswählen',
+  'Clear the selection': 'Auswahl aufheben',
+  'Delete the selected files': 'Ausgewählte Dateien löschen',
+  'Moving through a list': 'In einer Liste bewegen',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Pfeiltasten, Enter und Esc bedienen, was offen ist; sie sind keine Kürzel.',
 }

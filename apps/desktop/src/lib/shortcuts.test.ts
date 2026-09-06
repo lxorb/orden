@@ -321,6 +321,41 @@ describe('the keyboard', () => {
   })
 })
 
+describe('the file list', () => {
+  test('reads its own keys from the registry', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(true)
+    expect(shortcuts.pressed('tree.deselect', press('Escape'))).toBe(true)
+    expect(shortcuts.pressed('tree.delete', press('Delete'))).toBe(true)
+    expect(shortcuts.pressed('tree.delete.alt', press('Backspace'))).toBe(true)
+  })
+
+  test('follows a rebind like everything else', () => {
+    const { shortcuts } = registry
+    shortcuts.set('tree.select-all', 'Mod-Alt-a')
+
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(false)
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, alt: true, code: 'KeyA' }))).toBe(true)
+  })
+
+  /** They fire where the list is, not on the window, so they are none of the
+   *  window's business even at the keys the window also uses. */
+  test('is not read off the window', () => {
+    const { shortcuts } = registry
+    let opened = 0
+    shortcuts.set('app.palette', 'Mod-a')
+
+    const ran = shortcuts.handle(press('a', { ctrl: true, code: 'KeyA' }), {
+      palette: () => opened++,
+      fullscreen: () => undefined,
+    })
+
+    // The palette's own binding answered; the list's did not come into it.
+    expect(ran).toBe(true)
+    expect(opened).toBe(1)
+  })
+})
+
 describe('what a reader is shown', () => {
   test('is the key written the way this machine writes it', () => {
     expect(registry.shortcuts.hint('app.save')).toBe('Ctrl+S')

@@ -508,4 +508,11 @@ export const fr: Dictionary = {
     'Votre navigateur intercepte cette touche avant l’application.',
   'That is not a key combination.': 'Ce n’est pas une combinaison de touches.',
   'Hold Ctrl, Alt or Cmd as well.': 'Maintenez aussi Ctrl, Alt ou Cmd.',
+  'File list': 'Liste des fichiers',
+  'Select every file': 'Sélectionner tous les fichiers',
+  'Clear the selection': 'Annuler la sélection',
+  'Delete the selected files': 'Supprimer les fichiers sélectionnés',
+  'Moving through a list': 'Se déplacer dans une liste',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    'Les flèches, Entrée et Échap pilotent ce qui est ouvert ; ce ne sont pas des raccourcis.',
 }

@@ -500,4 +500,11 @@ export const ja: Dictionary = {
   'Your browser takes this key before the app sees it.': 'このキーはアプリより先にブラウザーが受け取ります。',
   'That is not a key combination.': 'キーの組み合わせではありません。',
   'Hold Ctrl, Alt or Cmd as well.': 'Ctrl、Alt、Cmd のいずれかも押してください。',
+  'File list': 'ファイル一覧',
+  'Select every file': 'すべてのファイルを選択',
+  'Clear the selection': '選択を解除',
+  'Delete the selected files': '選択したファイルを削除',
+  'Moving through a list': '一覧の中を移動',
+  'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
+    '矢印キー、Enter、Esc は開いているものを操作するためのもので、ショートカットではありません。',
 }
