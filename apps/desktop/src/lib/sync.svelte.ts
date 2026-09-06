@@ -1,56 +1,21 @@
-import { api, ApiError } from './api'
+/** The syncing loop: when to look, what to do about spaces that are on one
+ *  side and not the other, and what the light in the corner says.
+ *
+ *  Moving the notes of one space is next door, in sync/mirror.ts. */
+
+import { api } from './api'
 import { without } from './records'
-import { isRecord, isString, parsed } from './stored'
+import { isRecord, parsed } from './stored'
 import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
 import { t } from './i18n.svelte'
-import { invoke } from './tauri'
-import { type Entry, workspace } from './workspace.svelte'
+import { type Mirror, pull, push, readMirror } from './sync/mirror'
+import { workspace } from './workspace.svelte'
 
 const STORAGE_KEY = 'nib:mirrors'
 
-/** What the last sync left on disk, so local edits can be told apart from
- *  remote ones without diffing whole documents. */
-interface Tracked {
-  id: string
-  version: number
-  hash: string
-}
-
-/** One local space folder and the remote space it mirrors. Keyed by `root`,
- *  because the folder is the thing that persists across launches. */
-interface Mirror {
-  spaceId: string
-  root: string
-  cursor: number
-  notes: Record<string, Tracked>
-}
-
 export type Status = 'off' | 'idle' | 'syncing' | 'error'
-
-async function sha256(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
-function join(root: string, path: string): string {
-  const separator = root.includes('\\') ? '\\' : '/'
-  return `${root}${separator}${path.split('/').join(separator)}`
-}
-
-function relative(root: string, absolute: string): string {
-  return absolute
-    .slice(root.length)
-    .replace(/^[\\/]+/, '')
-    .replace(/\\/g, '/')
-}
-
-/** Where the other side's copy goes when both changed the same note. */
-function conflictPath(path: string): string {
-  const stamp = new Date().toISOString().slice(0, 10)
-  return path.replace(/(\.[^.\\/]+)$/, ` (from another device ${stamp})$1`)
-}
 
 class Sync {
   status = $state<Status>('off')
@@ -294,6 +259,7 @@ class Sync {
   async run(): Promise<boolean> {
     if (this.running || !account.token) return false
 
+    const token = account.token
     const mine = this.generation
     this.running = true
     this.status = 'syncing'
@@ -309,11 +275,11 @@ class Sync {
         // every note as deleted here, and delete them from the account.
         if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
 
-        if (await this.pull(mirror)) {
+        if (await pull(mirror, token)) {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
         }
-        if (await this.push(mirror)) moved = true
+        if (await push(mirror, token)) moved = true
       }
 
       // Nothing else re-reads the folder for notes that arrived from another
@@ -340,134 +306,6 @@ class Sync {
     return moved
   }
 
-  private async pull(mirror: Mirror): Promise<boolean> {
-    const token = account.token
-    if (!token) return false
-
-    // Read once: a rename lands in `renamed` while a pass is in the air, and a
-    // pass that changed folder halfway would join the new root onto paths it
-    // listed under the old one.
-    const root = mirror.root
-    let moved = false
-
-    for (;;) {
-      const page = await api.changes(token, mirror.spaceId, mirror.cursor)
-      if (page.notes.length) moved = true
-
-      for (const remote of page.notes) {
-        const target = join(root, remote.path)
-
-        if (remote.deleted) {
-          if (mirror.notes[remote.path]) {
-            await invoke('delete_note', { path: target }).catch(() => undefined)
-            mirror.notes = without(mirror.notes, remote.path)
-          }
-          continue
-        }
-
-        const tracked = mirror.notes[remote.path]
-        if (tracked?.version === remote.version) continue
-
-        const local = await invoke<string>('read_note', { path: target }).catch(() => null)
-        const { content } = await api.readNote(token, remote.id)
-
-        // The local file carries edits that never reached the server, and the
-        // server moved too. Overwriting here would throw one of them away.
-        const diverged = tracked && local !== null && (await sha256(local)) !== tracked.hash
-
-        if (diverged && local !== content) {
-          await invoke('write_note', { path: conflictPath(target), content })
-          // An empty hash guarantees the push below sends our copy, now based
-          // on the version we just saw, so it lands as the newest one.
-          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
-          continue
-        }
-
-        await invoke('write_note', { path: target, content })
-        mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
-      }
-
-      mirror.cursor = page.cursor
-      if (!page.more) break
-    }
-
-    return moved
-  }
-
-  private async push(mirror: Mirror): Promise<boolean> {
-    const token = account.token
-    if (!token) return false
-
-    // Read once, for the same reason as in `pull`.
-    const root = mirror.root
-    const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
-    if (!tree) return false
-
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one pass; nothing renders from it
-    const seen = new Set<string>()
-    let moved = false
-
-    for (const file of flatten(tree)) {
-      const path = relative(root, file.path)
-      seen.add(path)
-
-      const content = await invoke<string>('read_note', { path: file.path })
-      const hash = await sha256(content)
-      const tracked = mirror.notes[path]
-
-      if (!tracked) {
-        const { note } = await api.createNote(token, mirror.spaceId, path, content)
-        mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
-        moved = true
-        continue
-      }
-
-      if (tracked.hash === hash) continue
-      moved = true
-
-      try {
-        const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
-        mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 409) throw error
-        await this.keepBoth(mirror, path, tracked, error.body)
-      }
-    }
-
-    // A file that vanished locally is a delete, not a gap.
-    for (const [path, tracked] of Object.entries(mirror.notes)) {
-      if (seen.has(path)) continue
-
-      await api.deleteNote(token, tracked.id).catch(() => undefined)
-      mirror.notes = without(mirror.notes, path)
-      moved = true
-    }
-
-    return moved
-  }
-
-  /** Never silently drop an edit: the other device's copy lands beside ours. */
-  private async keepBoth(mirror: Mirror, path: string, tracked: Tracked, conflict: unknown) {
-    const token = account.token
-    if (!token) return
-
-    // The body of a 409 is whatever the server sent; only a real version to
-    // base the next write on makes this worth doing at all.
-    const server = isRecord(conflict) ? conflict : {}
-    const theirs = isRecord(server.note) ? server.note : null
-    if (typeof theirs?.version !== 'number') return
-
-    await invoke('write_note', {
-      path: conflictPath(join(mirror.root, path)),
-      content: isString(server.content) ? server.content : '',
-    })
-
-    // Our version is now the newer one; write it over the server's.
-    const ours = await invoke<string>('read_note', { path: join(mirror.root, path) })
-    const { note } = await api.writeNote(token, tracked.id, path, ours, theirs.version)
-    mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
-  }
-
   private load(): Record<string, Mirror> {
     const saved = parsed(localStorage.getItem(STORAGE_KEY))
     if (!isRecord(saved)) return {}
@@ -487,48 +325,6 @@ class Sync {
   private save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mirrors))
   }
-}
-
-/** One mirror as it was written down, once it reads as one. A mirror with no
- *  space to point at is worse than none: the next pass would sync a folder
- *  against nothing and read every note in it as deleted. */
-function readMirror(root: string, value: unknown): Mirror | null {
-  if (!isRecord(value) || !isString(value.spaceId)) return null
-
-  return {
-    spaceId: value.spaceId,
-    // The key is the folder; an older entry that disagrees with itself takes
-    // the key, which is what every lookup goes through.
-    root,
-    cursor: typeof value.cursor === 'number' ? value.cursor : 0,
-    notes: readTracked(value.notes),
-  }
-}
-
-function readTracked(value: unknown): Record<string, Tracked> {
-  if (!isRecord(value)) return {}
-
-  const out: Record<string, Tracked> = {}
-  for (const [path, one] of Object.entries(value)) {
-    if (!isRecord(one) || !isString(one.id) || !isString(one.hash)) continue
-    if (typeof one.version !== 'number') continue
-
-    out[path] = { id: one.id, version: one.version, hash: one.hash }
-  }
-
-  return out
-}
-
-function flatten(entry: Entry): Entry[] {
-  const out: Entry[] = []
-  const walk = (node: Entry) => {
-    for (const child of node.children) {
-      if (child.is_dir) walk(child)
-      else out.push(child)
-    }
-  }
-  walk(entry)
-  return out
 }
 
 export const sync = new Sync()
