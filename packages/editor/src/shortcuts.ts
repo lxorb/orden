@@ -68,8 +68,13 @@ export function setShortcutKeys(view: EditorView, overrides: KeyOverrides) {
   view.dispatch({ effects: chosen.reconfigure(shortcutKeys.of(overrides)) })
 }
 
-/** The default key for a spec on one platform, in CodeMirror's notation. */
-export function defaultKeyFor(spec: BindingSpec, platform: 'mac' | 'win' | 'linux'): string | null {
+/** The default key for a spec on one platform, in CodeMirror's notation.
+ *  Takes only the four fields it reads, so the app can ask this about its own
+ *  entries, which carry the same four and a command it runs itself. */
+export function defaultKeyFor(
+  spec: Pick<BindingSpec, 'key' | 'mac' | 'win' | 'linux'>,
+  platform: 'mac' | 'win' | 'linux',
+): string | null {
   const own = platform === 'mac' ? spec.mac : platform === 'win' ? spec.win : spec.linux
   return own === undefined ? spec.key : own
 }

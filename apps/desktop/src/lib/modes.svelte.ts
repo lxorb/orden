@@ -220,13 +220,17 @@ class Modes {
 
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
-   *  What the account has not decided stays as this machine had it. */
-  async adopt(token: string) {
+   *  What the account has not decided stays as this machine had it.
+   *
+   *  Hands back everything the account holds, settings this store knows
+   *  nothing about included, so the one request answers for all of them. The
+   *  shortcuts are taken from it in App.svelte; see shortcuts.svelte.ts. */
+  async adopt(token: string): Promise<AccountSettings | null> {
     let remote: AccountSettings
     try {
       remote = (await api.settings(token)).settings
     } catch {
-      return
+      return null
     }
 
     if (typeof remote.ligatures === 'boolean' && remote.ligatures !== this.ligatures) {
@@ -234,6 +238,8 @@ class Modes {
       if (this.view) setLigatures(this.view, this.ligatures)
       this.persist()
     }
+
+    return remote
   }
 
   /** Tells the account, when there is one. A machine that is offline keeps

@@ -57,6 +57,11 @@ export interface TrashListing {
  *  there once chosen; a missing one means the machine's own choice stands. */
 export interface AccountSettings {
   ligatures?: boolean
+  /** Keys the reader chose, by shortcut id, as differences from the defaults.
+   *  Null where they took a key away. Only the differences travel: a full
+   *  dump would freeze today's defaults into every account that ever saved
+   *  one, and a default that changed later would never reach anybody. */
+  shortcuts?: Record<string, string | null>
 }
 
 export interface DnsRecord {

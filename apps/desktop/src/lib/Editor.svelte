@@ -8,6 +8,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { createEditor, type EditorView, replaceDoc, type Text } from '@nib/editor'
+  import { shortcuts } from './shortcuts.svelte'
 
   let {
     doc = '',
@@ -48,6 +49,9 @@
       resolveImage: resolveimage,
       openLink: openlink,
       onSelection: onselection,
+      // The keys the reader chose, so the first keystroke in a note that has
+      // just opened is already theirs.
+      shortcuts: shortcuts.forEditor,
     })
     view = created
     if (import.meta.env.DEV) Object.assign(window, { nib: created })

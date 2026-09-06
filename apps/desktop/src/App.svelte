@@ -60,7 +60,7 @@
   import { currentWindow, invoke, isDesktop, openExternal } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { workspace } from './lib/workspace.svelte'
-  import { openFile } from './lib/open-file'
+  import { shortcuts } from './lib/shortcuts.svelte'
 
   let view = $state<EditorView>()
   let palette = $state(false)
@@ -85,6 +85,7 @@
   i18n.restore()
   theme.init()
   modes.restore()
+  shortcuts.restore()
   settings.restore()
   void workspace.restore().then(openLaunchFiles)
   // Recently deleted on this device is swept at start and once a day after;
@@ -102,15 +103,18 @@
   void account.restore()
 
   // The account's settings come along with the account: when the session is
-  // restored at start, and again on signing in.
+  // restored at start, and again on signing in. One request brings all of
+  // them, so what the modes fetched is handed on rather than asked for twice.
   $effect(() => {
     const token = account.token
-    if (token) void modes.adopt(token)
+    if (token) void modes.adopt(token).then((remote) => remote && shortcuts.receive(remote))
   })
 
-  // A new view starts with no modes applied, so re-apply on every swap.
+  // A new view starts with no modes and no keys applied, so re-apply on
+  // every swap.
   $effect(() => {
     if (view) modes.apply(view)
+    if (view) shortcuts.apply(view)
   })
 
   /** The tab whose caret and scroll have been put back. Nothing is recorded
@@ -474,12 +478,17 @@
     const clipboard: MenuEntry[] = [
       {
         label: t('Cut'),
-        hint: 'Ctrl X',
+        hint: shortcuts.hint('fixed.cut'),
         disabled: !selected || reading,
         run: () => document.execCommand('cut'),
       },
-      { label: t('Copy'), hint: 'Ctrl C', disabled: !selected, run: () => document.execCommand('copy') },
-      { label: t('Paste'), hint: 'Ctrl V', disabled: reading, run: () => void paste() },
+      {
+        label: t('Copy'),
+        hint: shortcuts.hint('fixed.copy'),
+        disabled: !selected,
+        run: () => document.execCommand('copy'),
+      },
+      { label: t('Paste'), hint: shortcuts.hint('fixed.paste'), disabled: reading, run: () => void paste() },
     ]
 
     // On a phone a press on the text is for the clipboard, the way it is in
@@ -495,7 +504,7 @@
       return [
         ...clipboard,
         DIVIDER,
-        { label: t('Leave reading mode'), hint: 'F10', run: () => modes.toggleReading(view) },
+        { label: t('Leave reading mode'), hint: shortcuts.hint('app.reading'), run: () => modes.toggleReading(view) },
       ]
     }
 
@@ -553,51 +562,16 @@
     await window.setFullscreen(!(await window.isFullscreen()))
   }
 
-  function cycleTab(direction: number) {
-    const index = workspace.tabs.findIndex((tab) => tab.id === workspace.activeTabId)
-    if (index < 0) return
-
-    const next = (index + direction + workspace.tabs.length) % workspace.tabs.length
-    workspace.activate(workspace.tabs[next].id)
-  }
-
+  /** Every app-level key comes from one registry, so a rebind reaches the
+   *  keyboard, the menus and the palette at once. The two things it cannot
+   *  reach on its own are here: the palette is this component's own state,
+   *  and full screen is a property of this window. */
   function onKeydown(event: KeyboardEvent) {
-    const mod = event.ctrlKey || event.metaKey
-    const shift = event.shiftKey
-
-    // The mode keys run F8, F9, F10 in the order the modes were added, and
-    // Ctrl+Shift+R, the other candidate, already writes a horizontal rule.
-    if (event.key === 'F8') return act(event, () => modes.toggleFocus(view))
-    if (event.key === 'F9') return act(event, () => modes.toggleTypewriter(view))
-    if (event.key === 'F10') return act(event, () => modes.toggleReading(view))
-    if (event.key === 'F11') return act(event, () => void toggleFullscreen())
-    if (!mod) return
-
-    const key = event.key.toLowerCase()
-
-    if (key === 'p' && !shift) return act(event, () => (palette = true))
-    if (key === ',') return act(event, () => settings.show())
-    if (key === '/') return act(event, () => modes.toggleSource(view))
-    if (key === 's' && !shift) return act(event, () => void workspace.save())
-    if (key === 'n' && !shift) return act(event, () => workspace.openBlank())
-    if (key === 't' && !shift) return act(event, () => workspace.openBlank())
-    if (key === 'o' && !shift) return act(event, () => void openFile())
-    if (key === 'w') return act(event, () => workspace.activeTabId && workspace.close(workspace.activeTabId))
-    if (key === 'tab') return act(event, () => cycleTab(shift ? -1 : 1))
-
-    if (!shift) return
-
-    if (key === 'l') return act(event, () => workspace.toggleSidebar())
-    if (key === '3') return act(event, () => workspace.showPanel('tree'))
-    if (key === 'f') return act(event, () => workspace.showPanel('search'))
-    if (key === '0') return act(event, () => modes.resetZoom())
-    if (key === '=' || key === '+') return act(event, () => modes.stepZoom(1))
-    if (key === '-' || key === '_') return act(event, () => modes.stepZoom(-1))
-  }
-
-  function act(event: KeyboardEvent, run: () => void) {
-    event.preventDefault()
-    run()
+    shortcuts.handle(event, {
+      view,
+      palette: () => (palette = true),
+      fullscreen: () => void toggleFullscreen(),
+    })
   }
 </script>
 
