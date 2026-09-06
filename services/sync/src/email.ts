@@ -7,8 +7,12 @@ export interface Mailer {
 /** Without the binding - local dev and tests - codes go to the log. */
 function logging(): Mailer {
   return {
-    async send(to, subject, body) {
+    send(to, subject, body) {
+      // The log is the mailbox here; without it there is no way to sign in
+      // locally, and the tests read the code back out of it.
+      // eslint-disable-next-line no-console -- the log stands in for the mail
       console.log(`[mail] ${to} - ${subject}\n${body.text}`)
+      return Promise.resolve()
     },
   }
 }

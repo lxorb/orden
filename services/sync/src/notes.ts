@@ -65,7 +65,7 @@ notes.get('/spaces/:spaceId/changes', async (context) => {
     .bind(space.id, since)
     .all<Note>()
 
-  const cursor = results.length ? results[results.length - 1].seq : since
+  const cursor = results.at(-1)?.seq ?? since
   return context.json({ notes: results.map(presentNote), cursor, more: results.length === 1000 })
 })
 

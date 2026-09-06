@@ -12,25 +12,30 @@ const MIGRATIONS = readdirSync(FOLDER)
   .sort()
   .map((name) => FOLDER + name)
 
-/** D1's shape over Node's built-in SQLite, so routes run against real SQL. */
+/** D1's shape over Node's built-in SQLite, so routes run against real SQL.
+ *
+ *  The fake is handed to the Worker as a D1Database, which is where the types
+ *  come from; here every read is `unknown`, because only the calling route
+ *  knows what it selected. Nothing is `async` that has nothing to await - a
+ *  resolved promise is the same thing to the caller and says so. */
 function d1(database: DatabaseSync) {
   return {
     prepare(sql: string) {
       const statement = {
-        args: [] as unknown[],
+        args: [] as never[],
         bind(...args: unknown[]) {
-          statement.args = args
+          statement.args = args as never[]
           return statement
         },
-        async first<T>() {
-          return (database.prepare(sql).get(...(statement.args as never[])) as T) ?? null
+        first(): Promise<unknown> {
+          return Promise.resolve(database.prepare(sql).get(...statement.args) ?? null)
         },
-        async all<T>() {
-          return { results: database.prepare(sql).all(...(statement.args as never[])) as T[] }
+        all(): Promise<{ results: unknown[] }> {
+          return Promise.resolve({ results: database.prepare(sql).all(...statement.args) })
         },
-        async run() {
-          database.prepare(sql).run(...(statement.args as never[]))
-          return { success: true }
+        run(): Promise<{ success: true }> {
+          database.prepare(sql).run(...statement.args)
+          return Promise.resolve({ success: true })
         },
       }
       return statement
@@ -41,24 +46,26 @@ function d1(database: DatabaseSync) {
 function bucket() {
   // Notes go in as text and images as bytes, so both are kept as given and
   // handed back the way the Worker asks for them.
-  const store = new Map<string, { value: unknown; httpMetadata?: { contentType?: string } }>()
+  const store = new Map<string, { value: unknown; contentType: string | undefined }>()
 
   return {
-    async put(key: string, value: unknown, options?: { httpMetadata?: { contentType?: string } }) {
-      store.set(key, { value, httpMetadata: options?.httpMetadata })
+    put(key: string, value: unknown, options?: { httpMetadata?: { contentType?: string } }) {
+      store.set(key, { value, contentType: options?.httpMetadata?.contentType })
+      return Promise.resolve()
     },
-    async get(key: string) {
+    get(key: string) {
       const held = store.get(key)
-      if (!held) return null
+      if (!held) return Promise.resolve(null)
 
-      return {
-        text: async () => String(held.value),
+      return Promise.resolve({
+        text: () => Promise.resolve(String(held.value)),
         body: held.value,
-        httpMetadata: held.httpMetadata,
-      }
+        httpMetadata: { contentType: held.contentType },
+      })
     },
-    async delete(key: string) {
+    delete(key: string) {
       store.delete(key)
+      return Promise.resolve()
     },
   }
 }
@@ -86,6 +93,164 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
   }
 }
 
+/* ── What the routes answer with ──────────────────────────────────────── */
+
+export interface UserView {
+  id: string
+  email: string
+  name: string | null
+}
+
+export interface DnsRecord {
+  type: string
+  name: string
+  value: string
+  note?: string
+}
+
+export interface SpaceView {
+  id: string
+  name: string
+  position: number
+  icon: string | null
+  createdAt: number
+  updatedAt: number
+  blog: {
+    enabled: boolean
+    subdomain: string | null
+    domain: string | null
+    title: string | null
+    note: string | null
+    dns: DnsRecord[]
+  }
+}
+
+export interface NoteView {
+  id: string
+  path: string
+  seq: number
+  version: number
+  updatedAt: number
+  deleted: boolean
+  size: number
+  hash: string
+}
+
+export interface ClientView {
+  id: string
+  name: string
+  readOnly: boolean
+  createdAt: number
+  lastUsedAt: number | null
+}
+
+/** Every field any route answers with, in one shape rather than one per route.
+ *
+ *  Each is declared as present: a test reads the field belonging to the route
+ *  it called and gets `undefined` from any other, which is what an `any` body
+ *  gave before - except that now the names and the types are checked, so a
+ *  test cannot quietly assert on a field no route sends. Where two routes
+ *  disagree about a name, the odd one out gets its own shape and the test asks
+ *  for it: `call<TrashView>(...)`. */
+export interface Reply {
+  error: string
+  error_description: string
+  ok: boolean
+
+  // Signing in and the account.
+  token: string
+  user: UserView
+  resendIn: number
+  settings: Record<string, unknown>
+
+  // Storage.
+  used: number
+  limit: number
+  hash: string
+  stored: boolean
+
+  // Spaces and their published address.
+  space: SpaceView
+  spaces: SpaceView[]
+  deleted: string[]
+  available: boolean
+  reason: string
+  domain: string | null
+  state: string
+  detail: string | null
+  dns: DnsRecord[]
+
+  // Notes and the change feed.
+  note: NoteView
+  notes: NoteView[]
+  content: string
+  cursor: number
+  more: boolean
+
+  // The connector, as the settings pane sees it.
+  exists: boolean
+  readOnly: boolean
+  createdAt: number | null
+  lastUsedAt: number | null
+  clients: ClientView[]
+
+  // What a client discovers about the OAuth server.
+  issuer: string
+  authorization_endpoint: string
+  token_endpoint: string
+  registration_endpoint: string
+  response_types_supported: string[]
+  grant_types_supported: string[]
+  token_endpoint_auth_methods_supported: string[]
+  code_challenge_methods_supported: string[]
+  scopes_supported: string[]
+  client_id_metadata_document_supported: boolean
+  authorization_response_iss_parameter_supported: boolean
+  resource: string
+  authorization_servers: string[]
+
+  // Registering, and the tokens that follow.
+  client_id: string
+  client_secret: string
+  client_name: string
+  redirect_uris: string[]
+  token_endpoint_auth_method: string
+  access_token: string
+  refresh_token: string
+  token_type: string
+  expires_in: number
+  scope: string
+}
+
+/** Recently deleted, which names its lists after what they hold rather than
+ *  after the shapes the sync routes use. */
+export interface TrashView {
+  spaces: { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[]
+  notes: {
+    id: string
+    spaceId: string
+    spaceName: string
+    path: string
+    deletedAt: number
+    purgeAt: number
+  }[]
+}
+
+/** JSON-RPC, as the connector speaks it. */
+export interface RpcView {
+  jsonrpc: string
+  id: number | string | null
+  result: {
+    protocolVersion: string
+    capabilities: { tools: Record<string, unknown> }
+    serverInfo: { name: string; version: string }
+    tools: { name: string; description: string; inputSchema: Record<string, unknown> }[]
+    content: { type: string; text: string }[]
+    isError?: boolean
+  }
+  error: { code: number; message: string }
+}
+
 interface CallOptions {
   method?: string
   body?: unknown
@@ -96,8 +261,21 @@ interface CallOptions {
   host?: string
 }
 
+export interface Answer<T> {
+  status: number
+  /** The parsed body. Null when the answer was not JSON, which the shape does
+   *  not say: a test that asks for a page reads `text` instead. */
+  json: T
+  text: string
+  headers: Headers
+}
+
 /** Calls the Worker the way the network would. */
-export async function call(env: Env, path: string, options: CallOptions = {}) {
+export async function call<T = Reply>(
+  env: Env,
+  path: string,
+  options: CallOptions = {},
+): Promise<Answer<T>> {
   const host = options.host ?? 'nibeditor.com'
   const headers: Record<string, string> = {}
 
@@ -107,32 +285,31 @@ export async function call(env: Env, path: string, options: CallOptions = {}) {
 
   const method =
     options.method ?? (options.body === undefined && options.raw === undefined ? 'GET' : 'POST')
+  const body = options.raw ?? (options.body === undefined ? null : JSON.stringify(options.body))
 
   const response = await app.fetch(
-    new Request(`https://${host}${path}`, {
-      method,
-      headers,
-      body: options.raw ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
-    }),
+    new Request(`https://${host}${path}`, { method, headers, body }),
     env,
   )
 
   const text = await response.text()
-  let json: any = null
+  let json: unknown = null
   try {
     json = JSON.parse(text)
   } catch {
     // Blog responses are HTML.
   }
 
-  return { status: response.status, json, text, headers: response.headers }
+  return { status: response.status, json: json as T, text, headers: response.headers }
 }
 
 /** Runs the sign-in flow and returns a usable session token. */
 export async function signIn(env: Env, email: string): Promise<string> {
   const logged: string[] = []
   const original = console.log
-  console.log = (message: string) => logged.push(String(message))
+  console.log = (message: string) => {
+    logged.push(message)
+  }
 
   try {
     await call(env, '/v1/auth/code', { body: { email } })
@@ -144,9 +321,9 @@ export async function signIn(env: Env, email: string): Promise<string> {
   if (!code) throw new Error(`no code was sent:\n${logged.join('\n')}`)
 
   const verified = await call(env, '/v1/auth/verify', {
-    body: { email, code: code[1] + code[2] },
+    body: { email, code: `${code[1]}${code[2]}` },
   })
 
   if (verified.status !== 200) throw new Error(`sign-in failed: ${verified.text}`)
-  return verified.json.token as string
+  return verified.json.token
 }

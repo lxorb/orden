@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { freeName, freePath, purgeExpired } from '../src/trash'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, signIn, testEnv, type TestEnv, type TrashView } from './harness'
 
 let env: TestEnv
 let token: string
@@ -104,7 +104,7 @@ describe('the listing', () => {
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token })
     await call(env, `/v1/spaces/${other}`, { method: 'DELETE', token })
 
-    const listed = await call(env, '/v1/trash', { token })
+    const listed = await call<TrashView>(env, '/v1/trash', { token })
     expect(listed.status).toBe(200)
     expect(listed.json.notes).toHaveLength(1)
     expect(listed.json.notes[0]).toMatchObject({
@@ -113,10 +113,10 @@ describe('the listing', () => {
       spaceId: space,
       spaceName: 'Work',
     })
-    expect(listed.json.notes[0].purgeAt - listed.json.notes[0].deletedAt).toBe(14 * DAY)
+    expect(listed.json.notes[0]!.purgeAt - listed.json.notes[0]!.deletedAt).toBe(14 * DAY)
     expect(listed.json.spaces).toHaveLength(1)
     expect(listed.json.spaces[0]).toMatchObject({ id: other, name: 'Old', notes: 0 })
-    expect(listed.json.spaces[0].purgeAt - listed.json.spaces[0].deletedAt).toBe(14 * DAY)
+    expect(listed.json.spaces[0]!.purgeAt - listed.json.spaces[0]!.deletedAt).toBe(14 * DAY)
   })
 
   test('counts the notes a deleted space holds, and does not list them on their own', async () => {
@@ -124,8 +124,8 @@ describe('the listing', () => {
     await addNote('Two.md', '2')
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
 
-    const listed = await call(env, '/v1/trash', { token })
-    expect(listed.json.spaces[0].notes).toBe(2)
+    const listed = await call<TrashView>(env, '/v1/trash', { token })
+    expect(listed.json.spaces[0]!.notes).toBe(2)
     expect(listed.json.notes).toEqual([])
   })
 
@@ -134,7 +134,7 @@ describe('the listing', () => {
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token })
 
     const other = await signIn(env, 'other@b.dev')
-    const theirs = await call(env, '/v1/trash', { token: other })
+    const theirs = await call<TrashView>(env, '/v1/trash', { token: other })
     expect(theirs.json).toEqual({ spaces: [], notes: [] })
   })
 })
@@ -159,7 +159,7 @@ describe('restoring a note', () => {
     expect(
       changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted]),
     ).toEqual([[id, false]])
-    expect((await call(env, '/v1/trash', { token })).json.notes).toEqual([])
+    expect((await call<TrashView>(env, '/v1/trash', { token })).json.notes).toEqual([])
   })
 
   test('takes the next free name when its place is taken', async () => {
@@ -242,7 +242,7 @@ describe('purging', () => {
     expect(purged.status).toBe(200)
     expect(await stored(id)).toBeNull()
     expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, size: 0, hash: '' })
-    expect((await call(env, '/v1/trash', { token })).json.notes).toEqual([])
+    expect((await call<TrashView>(env, '/v1/trash', { token })).json.notes).toEqual([])
     expect(
       (await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status,
     ).toBe(404)
@@ -273,7 +273,10 @@ describe('purging', () => {
     expect(await purgeExpired(env, Date.now())).toEqual({ notes: 1, spaces: 1 })
     expect(await stored(note)).toBeNull()
     expect(spaceRow(other)).toMatchObject({ deleted: 1, deleted_at: null })
-    expect((await call(env, '/v1/trash', { token })).json).toEqual({ spaces: [], notes: [] })
+    expect((await call<TrashView>(env, '/v1/trash', { token })).json).toEqual({
+      spaces: [],
+      notes: [],
+    })
   })
 
   test('everything at once, but only one’s own', async () => {
@@ -294,7 +297,7 @@ describe('purging', () => {
     await call(env, '/v1/trash', { method: 'DELETE', token })
     expect(await stored(mine)).toBeNull()
     expect(await stored(theirs, theirSpace)).toBe('t')
-    expect((await call(env, '/v1/trash', { token: other })).json.notes).toHaveLength(1)
+    expect((await call<TrashView>(env, '/v1/trash', { token: other })).json.notes).toHaveLength(1)
   })
 })
 

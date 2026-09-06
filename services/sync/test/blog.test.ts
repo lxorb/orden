@@ -125,23 +125,23 @@ describe('publishing', () => {
     const response = await publish({ domain: 'notes.example.com' })
 
     expect(response.json.dns).toHaveLength(1)
-    expect(response.json.dns[0].type).toBe('CNAME')
-    expect(response.json.dns[0].value).toMatch(/\.nibeditor\.com$/)
+    expect(response.json.dns[0]!.type).toBe('CNAME')
+    expect(response.json.dns[0]!.value).toMatch(/\.nibeditor\.com$/)
   })
 
   test('an apex domain gets a CNAME too, never a placeholder address', async () => {
     const response = await publish({ domain: 'example.com' })
-    expect(response.json.dns[0].type).toBe('CNAME')
-    expect(response.json.dns[0].value).not.toMatch(/^192\.0\.2\./)
+    expect(response.json.dns[0]!.type).toBe('CNAME')
+    expect(response.json.dns[0]!.value).not.toMatch(/^192\.0\.2\./)
   })
 
   test('the listing carries the records too, for the next time the pane opens', async () => {
     await publish({ domain: 'notes.example.com' })
 
     const listed = await call(env, '/v1/spaces', { token })
-    const mine = listed.json.spaces.find((one: { id: string }) => one.id === space)
+    const mine = listed.json.spaces.find((one) => one.id === space)!
     expect(mine.blog.dns).toHaveLength(1)
-    expect(mine.blog.dns[0].type).toBe('CNAME')
+    expect(mine.blog.dns[0]!.type).toBe('CNAME')
   })
 
   test('a custom title replaces the space name', async () => {

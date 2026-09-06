@@ -93,10 +93,15 @@ function cleanName(value: unknown): string {
   return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 80) : ''
 }
 
-function uriList(value: unknown): string[] | null {
-  if (!Array.isArray(value) || value.length === 0) return null
+/** At least one, or it is not a list of anywhere to go. The count is capped
+ *  because the whole list is stored as one column: a client that registers ten
+ *  thousand callbacks would otherwise write a row of any size it liked. */
+const MOST_REDIRECTS = 20
+
+function uriList(value: unknown): [string, ...string[]] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MOST_REDIRECTS) return null
   if (!value.every((one) => typeof one === 'string' && one.length <= 2048)) return null
-  return value as string[]
+  return value as [string, ...string[]]
 }
 
 /** A client whose id is a URL keeps its description there (Client ID Metadata
@@ -128,7 +133,7 @@ async function clientFromDocument(id: string): Promise<Client | null> {
     if (document.client_id !== id) return null
 
     const redirectUris = uriList(document.redirect_uris)
-    if (!redirectUris || !redirectUris.every(redirectAllowed)) return null
+    if (!redirectUris?.every(redirectAllowed)) return null
 
     return {
       id,
@@ -313,7 +318,7 @@ const FIELDS: (keyof Ask)[] = [
 
 function askFrom(source: Record<string, string | undefined>): Ask {
   const ask = {} as Ask
-  for (const field of FIELDS) ask[field] = (source[field] ?? '').toString()
+  for (const field of FIELDS) ask[field] = source[field] ?? ''
   return ask
 }
 
@@ -399,10 +404,23 @@ oauth.get('/authorize', async (context) => {
   return page(context.env, emailStep(checked.client, ask, {}))
 })
 
+/** The fields of a submitted form, which are text. A file, or a field sent
+ *  twice, is not something any of these forms has; such a value is dropped
+ *  rather than stringified into nonsense. */
+async function formFields(
+  context: Context<{ Bindings: Env }>,
+): Promise<Record<string, string | undefined>> {
+  const parsed = await context.req.parseBody().catch(() => ({}))
+  const fields: Record<string, string> = {}
+
+  for (const [key, value] of Object.entries(parsed)) {
+    if (typeof value === 'string') fields[key] = value
+  }
+  return fields
+}
+
 oauth.post('/authorize', async (context) => {
-  const form = Object.fromEntries(
-    Object.entries(await context.req.parseBody()).map(([key, value]) => [key, String(value)]),
-  ) as Record<string, string>
+  const form = await formFields(context)
   const ask = askFrom(form)
 
   // Nothing in a form is trusted more than a query string: the same checks,
@@ -641,7 +659,7 @@ oauth.post('/token', async (context) => {
       .bind(hash, hash)
       .first<Grant>()
 
-    if (!grant || grant.client_id !== client.id) {
+    if (grant?.client_id !== client.id) {
       return context.json(failure('invalid_grant', 'the refresh token is not valid'), 400)
     }
 
@@ -676,14 +694,16 @@ export async function grantForToken(
 
 /* ── The consent page ─────────────────────────────────────────────────── */
 
+const ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+}
+
 function escape(text: string): string {
-  return text.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
-        character
-      ] as string,
-  )
+  return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 }
 
 /** The app's own palette, both ways round, so the page reads as Nib's. */

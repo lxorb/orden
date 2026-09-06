@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
 
@@ -49,7 +49,7 @@ function authorizeUrl(params: Record<string, string>) {
     resource: `${ORIGIN}/mcp`,
     ...params,
   })
-  return `/oauth/authorize?${query}`
+  return `/oauth/authorize?${query.toString()}`
 }
 
 /** Submits one of the consent page's forms. */
@@ -71,7 +71,7 @@ async function codeSentTo(action: () => Promise<unknown>): Promise<string> {
 
   const match = /(\d{3}) (\d{3})/.exec(logged.join('\n'))
   if (!match) throw new Error('no code was sent')
-  return match[1] + match[2]
+  return `${match[1]}${match[2]}`
 }
 
 async function exchange(fields: Record<string, string>) {
@@ -123,7 +123,7 @@ async function connect(
 }
 
 async function rpc(token: string, method: string, params?: Record<string, unknown>) {
-  return call(env, '/mcp', { token, body: { jsonrpc: '2.0', id: 1, method, params } })
+  return call<RpcView>(env, '/mcp', { token, body: { jsonrpc: '2.0', id: 1, method, params } })
 }
 
 describe('what a client can find out on its own', () => {
@@ -411,13 +411,13 @@ describe('connecting', () => {
       name: 'write_note',
       arguments: { space: 'Work', path: 'a.md', content: 'x' },
     })
-    expect(refused.json.result.content[0].text).toContain('only read')
+    expect(refused.json.result.content[0]!.text).toContain('only read')
 
     const saved = await rpc(writing, 'tools/call', {
       name: 'write_note',
       arguments: { space: 'Work', path: 'a.md', content: 'x' },
     })
-    expect(saved.json.result.content[0].text).toContain('Saved')
+    expect(saved.json.result.content[0]!.text).toContain('Saved')
   })
 
   test('signs up an address it has never seen', async () => {
@@ -427,7 +427,7 @@ describe('connecting', () => {
       arguments: {},
     })
 
-    expect(spaces.json.result.content[0].text).toContain('No spaces')
+    expect(spaces.json.result.content[0]!.text).toContain('No spaces')
   })
 
   test('takes the token request as JSON too', async () => {
@@ -567,12 +567,14 @@ describe('a client that describes itself at a URL', () => {
   function hosting(document: Record<string, unknown>) {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (url: string) =>
-        url === CLAUDE_CODE
-          ? new Response(JSON.stringify(document), {
-              headers: { 'content-type': 'application/json' },
-            })
-          : new Response('not found', { status: 404 }),
+      vi.fn((url: string) =>
+        Promise.resolve(
+          url === CLAUDE_CODE
+            ? new Response(JSON.stringify(document), {
+                headers: { 'content-type': 'application/json' },
+              })
+            : new Response('not found', { status: 404 }),
+        ),
       ),
     )
   }
@@ -594,7 +596,7 @@ describe('a client that describes itself at a URL', () => {
     expect(tokens.status).toBe(200)
 
     const listed = await call(env, '/v1/mcp/token', { token: await signIn(env, 'a@b.dev') })
-    expect(listed.json.clients[0].name).toBe('Claude Code')
+    expect(listed.json.clients[0]!.name).toBe('Claude Code')
   })
 
   test('is refused when the document does not name itself', async () => {
@@ -631,10 +633,10 @@ describe('what the settings show', () => {
 
     const before = await call(env, '/v1/mcp/token', { token: session })
     expect(before.json.clients).toHaveLength(1)
-    expect(before.json.clients[0].name).toBe('ChatGPT')
-    expect(before.json.clients[0].readOnly).toBe(false)
+    expect(before.json.clients[0]!.name).toBe('ChatGPT')
+    expect(before.json.clients[0]!.readOnly).toBe(false)
 
-    const gone = await call(env, `/v1/mcp/clients/${before.json.clients[0].id}`, {
+    const gone = await call(env, `/v1/mcp/clients/${before.json.clients[0]!.id}`, {
       token: session,
       method: 'DELETE',
     })
@@ -650,7 +652,7 @@ describe('what the settings show', () => {
     const { tokens } = await connect()
 
     const listed = await call(env, '/v1/mcp/token', { token: owner })
-    await call(env, `/v1/mcp/clients/${listed.json.clients[0].id}`, {
+    await call(env, `/v1/mcp/clients/${listed.json.clients[0]!.id}`, {
       token: other,
       method: 'DELETE',
     })

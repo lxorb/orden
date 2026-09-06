@@ -53,10 +53,10 @@ function isCombination(value: string): boolean {
   if (!value || value.length > LONGEST_KEY) return false
   // Nothing a keyboard produces has whitespace or a control character in its
   // name, and neither does any modifier.
-  if (/[\s\u0000-\u001f]/.test(value)) return false
+  if (/\s/.test(value) || /\p{Cc}/u.test(value)) return false
 
   const parts = value.split(/-(?!$)/)
-  const key = parts[parts.length - 1]
+  const key = parts.at(-1)
   if (!key || key.length > 16) return false
 
   return parts.slice(0, -1).every((modifier) => MODIFIERS.has(modifier.toLowerCase()))

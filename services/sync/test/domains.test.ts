@@ -269,9 +269,9 @@ describe('what to add at the registrar', () => {
     const response = await publish({ domain: 'example.com' })
 
     expect(response.json.dns).toHaveLength(1)
-    expect(response.json.dns[0].type).toBe('CNAME')
-    expect(response.json.dns[0].value).toBe('cname.nibeditor.com')
-    expect(response.json.dns[0].note).toMatch(/ALIAS/)
+    expect(response.json.dns[0]!.type).toBe('CNAME')
+    expect(response.json.dns[0]!.value).toBe('cname.nibeditor.com')
+    expect(response.json.dns[0]!.note).toMatch(/ALIAS/)
   })
 
   test('never names a placeholder address', async () => {

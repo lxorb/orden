@@ -114,7 +114,7 @@ describe('deleting a space', () => {
 describe("a space's icon", () => {
   test('starts unset', async () => {
     const listed = await call(env, '/v1/spaces', { token })
-    expect(listed.json.spaces[0].icon).toBe(null)
+    expect(listed.json.spaces[0]!.icon).toBe(null)
   })
 
   test('is remembered, so every machine shows the same one', async () => {
@@ -127,7 +127,7 @@ describe("a space's icon", () => {
     expect(response.json.space.icon).toBe('Briefcase')
 
     const listed = await call(env, '/v1/spaces', { token })
-    expect(listed.json.spaces[0].icon).toBe('Briefcase')
+    expect(listed.json.spaces[0]!.icon).toBe('Briefcase')
   })
 
   test('can be taken off again', async () => {
@@ -183,7 +183,7 @@ describe('the order spaces appear in', () => {
 
   async function idOf(name: string): Promise<string> {
     const listed = await call(env, '/v1/spaces', { token })
-    return listed.json.spaces.find((one: { name: string }) => one.name === name).id
+    return listed.json.spaces.find((one) => one.name === name)!.id
   }
 
   beforeEach(async () => {
@@ -354,7 +354,7 @@ describe('notes', () => {
 
     const changes = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
     expect(changes.json.notes).toHaveLength(1)
-    expect(changes.json.notes[0].deleted).toBe(true)
+    expect(changes.json.notes[0]!.deleted).toBe(true)
   })
 
   test('a deleted path can be reused', async () => {

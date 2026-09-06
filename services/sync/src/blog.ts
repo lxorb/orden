@@ -15,9 +15,15 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join('; ')
 
-/** Which space, if any, a hostname publishes. */
+/** Which space, if any, a hostname publishes.
+ *
+ *  The name is taken apart here rather than trusted as it arrives: the port
+ *  goes, the case goes, and so does the trailing dot that a fully qualified
+ *  name may carry - `Field.Nibeditor.com.` is the same host as
+ *  `field.nibeditor.com` and must not read as a domain of someone's own. */
 export async function spaceForHost(env: Env, host: string): Promise<Space | null> {
-  const hostname = host.toLowerCase().split(':')[0]
+  const hostname = (host.toLowerCase().split(':')[0] ?? '').replace(/\.$/, '')
+  if (!hostname) return null
 
   if (hostname.endsWith(`.${env.BLOG_ROOT}`)) {
     const subdomain = hostname.slice(0, -(env.BLOG_ROOT.length + 1))
@@ -65,11 +71,15 @@ function title(note: Note, body: string): string {
   )
 }
 
+const ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+}
+
 function escape(text: string): string {
-  return text.replace(
-    /[&<>"]/g,
-    (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character] as string,
-  )
+  return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
 }
 
 /** The author's name under the note's own heading when it opens with one,

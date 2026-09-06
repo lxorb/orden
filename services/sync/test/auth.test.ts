@@ -24,7 +24,7 @@ async function requestCode(email: string): Promise<string> {
 
   const match = /(\d{3}) (\d{3})/.exec(logged.join('\n'))
   if (!match) throw new Error('no code sent')
-  return match[1] + match[2]
+  return `${match[1]}${match[2]}`
 }
 
 describe('requesting a code', () => {

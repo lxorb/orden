@@ -127,7 +127,7 @@ spaces.put('/order', async (context) => {
   if (ids.length) {
     // One statement, so a half-applied order is not a state the rail can end
     // up in. The positions are array indexes, never anything sent in.
-    const cases = ids.map((one, index) => `when ? then ${index}`).join(' ')
+    const cases = ids.map((_, index) => `when ? then ${index}`).join(' ')
     await context.env.DB.prepare(
       `update spaces set position = case id ${cases} else position end where user_id = ?`,
     )

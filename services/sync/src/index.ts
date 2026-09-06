@@ -130,7 +130,7 @@ app.all('*', async (context) => {
 })
 
 /** The daily job: what has waited its 14 days in Recently deleted goes. */
-async function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
+function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
   context.waitUntil(purgeExpired(env, Date.now()))
 }
 

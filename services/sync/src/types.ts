@@ -80,4 +80,7 @@ export interface Note {
   hash: string
 }
 
-export type Variables = { user: User }
+/** What the session guard puts on the request for the routes behind it. */
+export interface Variables {
+  user: User
+}

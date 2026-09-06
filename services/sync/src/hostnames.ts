@@ -40,31 +40,38 @@ interface Envelope<T> {
 
 /** Set as a var and a secret; absent in tests and local development, where
  *  a domain is recorded and nothing is asked of anyone. */
-function access(env: Env): { token: string; zone: string } | null {
+function access(env: Env): Access | null {
   return env.CF_API_TOKEN && env.CF_ZONE_ID
     ? { token: env.CF_API_TOKEN, zone: env.CF_ZONE_ID }
     : null
 }
 
+interface Access {
+  token: string
+  zone: string
+}
+
+/** The access is passed in rather than read again here, so a caller cannot
+ *  reach the network without having checked that there is anything to reach
+ *  it with. */
 async function request<T>(
-  env: Env,
+  access: Access,
   method: string,
   path: string,
   body?: unknown,
 ): Promise<Envelope<T>> {
-  const { token, zone } = access(env)!
-  const response = await fetch(`${API}/zones/${zone}/custom_hostnames${path}`, {
+  const response = await fetch(`${API}/zones/${access.zone}/custom_hostnames${path}`, {
     method,
-    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: { authorization: `Bearer ${access.token}`, 'content-type': 'application/json' },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   })
 
-  return (await response.json()) as Envelope<T>
+  return await response.json<Envelope<T>>()
 }
 
-async function find(env: Env, domain: string): Promise<CustomHostname | null> {
+async function find(access: Access, domain: string): Promise<CustomHostname | null> {
   const listed = await request<CustomHostname[]>(
-    env,
+    access,
     'GET',
     `?hostname=${encodeURIComponent(domain)}`,
   )
@@ -78,12 +85,13 @@ function reason(error: unknown): string {
 /** Asks for a certificate. Safe to repeat: a domain already asked for is left
  *  as it is. Returns Cloudflare's objection when it has one, null otherwise. */
 export async function claimDomain(env: Env, domain: string): Promise<string | null> {
-  if (!access(env)) return null
+  const reachable = access(env)
+  if (!reachable) return null
 
   try {
-    if (await find(env, domain)) return null
+    if (await find(reachable, domain)) return null
 
-    const created = await request<CustomHostname>(env, 'POST', '', {
+    const created = await request<CustomHostname>(reachable, 'POST', '', {
       hostname: domain,
       ssl: { method: 'http', type: 'dv' },
     })
@@ -99,11 +107,12 @@ export async function claimDomain(env: Env, domain: string): Promise<string | nu
  *  left where it is: the row has already let the domain go, and a hostname
  *  nobody publishes on serves nothing. */
 export async function releaseDomain(env: Env, domain: string): Promise<void> {
-  if (!access(env)) return
+  const reachable = access(env)
+  if (!reachable) return
 
   try {
-    const found = await find(env, domain)
-    if (found) await request(env, 'DELETE', `/${found.id}`)
+    const found = await find(reachable, domain)
+    if (found) await request(reachable, 'DELETE', `/${found.id}`)
   } catch (error) {
     console.warn(`could not release ${domain}: ${reason(error)}`)
   }
@@ -113,10 +122,11 @@ export async function releaseDomain(env: Env, domain: string): Promise<void> {
  *  of it, so a domain set before this ran, or while Cloudflare was down,
  *  catches up the first time anyone looks. */
 export async function domainStatus(env: Env, domain: string): Promise<DomainStatus> {
-  if (!access(env)) return { state: 'unconfigured', detail: null }
+  const reachable = access(env)
+  if (!reachable) return { state: 'unconfigured', detail: null }
 
   try {
-    const found = await find(env, domain)
+    const found = await find(reachable, domain)
     if (found) return describe(found)
 
     const objection = await claimDomain(env, domain)

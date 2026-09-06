@@ -45,7 +45,9 @@ export function fakeCloudflare() {
   const calls: string[] = []
   let next = 0
 
-  const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+  /** Cloudflare's answer, worked out without touching anything asynchronous;
+   *  the stub below is what makes it look like a fetch. */
+  function answer(input: RequestInfo | URL, init?: RequestInit): Response {
     const url = new URL(
       typeof input === 'string' ? input : input instanceof URL ? input : input.url,
     )
@@ -68,7 +70,7 @@ export function fakeCloudflare() {
     }
 
     if (method === 'POST' && !id) {
-      const body = JSON.parse(String(init?.body)) as {
+      const body = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as {
         hostname: string
         ssl: { method: string; type: string }
       }
@@ -97,7 +99,11 @@ export function fakeCloudflare() {
     }
 
     throw new Error(`unexpected request ${method} ${url.href}`)
-  })
+  }
+
+  const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+    Promise.resolve(answer(input, init)),
+  )
 
   return {
     hostnames,

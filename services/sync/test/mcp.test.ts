@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
 let token: string
@@ -23,11 +23,11 @@ afterEach(() => env.close())
 /** Issues a connector token, read-only unless told otherwise. */
 async function connector(readOnly = true): Promise<string> {
   const made = await call(env, '/v1/mcp/token', { token, body: { readOnly } })
-  return made.json.token as string
+  return made.json.token
 }
 
 async function rpc(key: string, method: string, params?: Record<string, unknown>) {
-  return call(env, '/mcp', {
+  return call<RpcView>(env, '/mcp', {
     token: key,
     body: { jsonrpc: '2.0', id: 1, method, params },
   })
@@ -35,7 +35,7 @@ async function rpc(key: string, method: string, params?: Record<string, unknown>
 
 async function tool(key: string, name: string, args: Record<string, unknown> = {}) {
   const response = await rpc(key, 'tools/call', { name, arguments: args })
-  return response.json?.result?.content?.[0]?.text as string
+  return response.json.result.content[0]?.text ?? ''
 }
 
 describe('handing out a token', () => {
