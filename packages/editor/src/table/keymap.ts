@@ -1,6 +1,7 @@
 import type { SelectionRange } from '@codemirror/state'
-import type { Command, EditorView, KeyBinding } from '@codemirror/view'
+import type { Command, EditorView } from '@codemirror/view'
 import { insertTable } from '../commands'
+import type { BindingSpec } from '../shortcuts'
 import { lineBeside, type Side, tableAt, tableCrossed } from './navigation'
 import type { Landing } from './view'
 import { tableViewAt } from './widget'
@@ -55,13 +56,16 @@ export const insertTableToEdit: Command = (view) => {
   return true
 }
 
-export const tableKeymap: KeyBinding[] = [
-  { key: 'ArrowDown', run: walkInto('above', down, caretX) },
-  { key: 'ArrowUp', run: walkInto('below', up, caretX) },
-  { key: 'ArrowRight', run: walkInto('above', forward, () => 'start') },
-  { key: 'ArrowLeft', run: walkInto('below', backward, () => 'end') },
+/** Every one of these gives way when there is no table where it is looking,
+ *  so they share their keys with the editor's own motion rather than taking
+ *  them over. See `contextual` in shortcuts.ts. */
+export const tableBindings: BindingSpec[] = [
+  { id: 'table.below', key: 'ArrowDown', run: walkInto('above', down, caretX), contextual: true },
+  { id: 'table.above', key: 'ArrowUp', run: walkInto('below', up, caretX), contextual: true },
+  { id: 'table.ahead', key: 'ArrowRight', run: walkInto('above', forward, () => 'start'), contextual: true },
+  { id: 'table.behind', key: 'ArrowLeft', run: walkInto('below', backward, () => 'end'), contextual: true },
   // Deleting into a table from beside it would tear a row; stepping in is
   // what was meant.
-  { key: 'Delete', run: walkInto('above', forward, () => 'start') },
-  { key: 'Backspace', run: walkInto('below', backward, () => 'end') },
+  { id: 'table.delete', key: 'Delete', run: walkInto('above', forward, () => 'start'), contextual: true },
+  { id: 'table.backspace', key: 'Backspace', run: walkInto('below', backward, () => 'end'), contextual: true },
 ]

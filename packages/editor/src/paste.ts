@@ -1,5 +1,5 @@
 import { EditorSelection, type Extension } from '@codemirror/state'
-import { EditorView, type KeyBinding } from '@codemirror/view'
+import { type Command, EditorView } from '@codemirror/view'
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
 
@@ -117,27 +117,19 @@ export function richPaste(): Extension {
 }
 
 /** `Ctrl+Shift+V` - take the clipboard exactly as it is. */
-export const pastePlain: KeyBinding = {
-  key: 'Mod-Shift-v',
-  preventDefault: true,
-  run(view) {
-    if (view.state.readOnly) return false
+export const pastePlain: Command = (view) => {
+  if (view.state.readOnly) return false
 
-    void navigator.clipboard.readText().then((text) => {
-      if (text) insert(view, text)
-    })
-    return true
-  },
+  void navigator.clipboard.readText().then((text) => {
+    if (text) insert(view, text)
+  })
+  return true
 }
 
 /** `Ctrl+Shift+C` - the document is markdown, so this is the selection as-is. */
-export const copyMarkdown: KeyBinding = {
-  key: 'Mod-Shift-c',
-  preventDefault: true,
-  run(view) {
-    const { from, to } = view.state.selection.main
-    const text = from === to ? view.state.doc.toString() : view.state.doc.sliceString(from, to)
-    void navigator.clipboard.writeText(text)
-    return true
-  },
+export const copyMarkdown: Command = (view) => {
+  const { from, to } = view.state.selection.main
+  const text = from === to ? view.state.doc.toString() : view.state.doc.sliceString(from, to)
+  void navigator.clipboard.writeText(text)
+  return true
 }

@@ -1,7 +1,6 @@
-import { closeBracketsKeymap } from '@codemirror/autocomplete'
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { history } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
+import { highlightSelectionMatches } from '@codemirror/search'
 import { EditorState, Prec, type Text } from '@codemirror/state'
 import { EditorView, drawSelection, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
 import { editorCompletion } from './emoji'
@@ -10,10 +9,11 @@ import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
 import { codeThemeExtension } from './code-theme'
 import { closeFence } from './commands'
-import { nibKeymap } from './keymap'
+import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richPaste } from './paste'
 import { modeExtensions } from './modes'
-import { tableKeymap } from './table/keymap'
+import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
+import { tableBindings } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
 
 /** Puts a whole document into a view without it being read back as an edit.
@@ -44,6 +44,9 @@ export interface EditorOptions {
   codeTheme?: string
   /** Follows a link the reader modifier-clicked. Defaults to a browser tab. */
   openLink?: (href: string) => void
+  /** Keys the reader chose, as differences from the defaults. Changed later
+   *  through `setShortcutKeys`; this is only what the editor opens with. */
+  shortcuts?: KeyOverrides
 }
 
 export function createEditor(options: EditorOptions): EditorView {
@@ -78,18 +81,20 @@ export function createEditor(options: EditorOptions): EditorView {
         // Above the markdown language's own Enter, which continues a list or
         // a quote and would otherwise take the key on a fence inside one.
         Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
-        keymap.of([
+        // Which key runs what, in one place and changeable while the editor
+        // is open: see shortcuts.ts.
+        shortcutExtensions(options.shortcuts),
+        boundKeymap([
           // Arrow keys beside a table walk into it; the defaults would step
           // over it. These give way whenever no table is in the way.
-          ...tableKeymap,
+          ...tableBindings,
           // Markdown bindings come first so they win over the defaults.
-          ...nibKeymap,
-          ...closeBracketsKeymap,
-          ...defaultKeymap,
-          ...historyKeymap,
-          ...searchKeymap,
-          indentWithTab,
+          ...nibBindings,
+          ...standardBindings,
         ]),
+        // What the library binds that nothing here has a name for, underneath
+        // everything that does.
+        keymap.of(unclaimedKeymap),
         EditorView.updateListener.of((update) => {
           // Text this view was handed is not news to whoever handed it over.
           const pushed = update.transactions.some((one) => one.annotation(external))

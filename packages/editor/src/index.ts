@@ -47,7 +47,16 @@ export {
   setTypewriterMode,
 } from './modes'
 export { flushTableEdits } from './table/widget'
-export { insertTableToEdit } from './table/keymap'
+export { insertTableToEdit, tableBindings } from './table/keymap'
+export { imageBindings } from './live-preview/image'
+export { nibBindings, nibKeymap, standardBindings, unclaimedKeymap } from './keymap'
+export {
+  type BindingSpec,
+  bindings,
+  defaultKeyFor,
+  type KeyOverrides,
+  setShortcutKeys,
+} from './shortcuts'
 export { caretLine, showLine, topLine } from './scroll'
 export { EditorView } from '@codemirror/view'
 export { EditorState } from '@codemirror/state'

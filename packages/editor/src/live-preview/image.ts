@@ -1,15 +1,9 @@
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
-import {
-  type Command,
-  EditorView,
-  type KeyBinding,
-  keymap,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
+import { type Command, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import { imageResolver } from '../images'
+import { boundKeymap, type BindingSpec } from '../shortcuts'
 import { label as uiLabel } from '../labels'
 import { noReveal } from './reveal'
 import { NibWidget } from './widget'
@@ -284,13 +278,16 @@ function stepOff(forward: boolean): Command {
   }
 }
 
-export const imageKeymap: KeyBinding[] = [
-  { key: 'Backspace', run: selectImageBehind },
-  { key: 'Delete', run: selectImageAhead },
-  { key: 'Enter', run: editSelectedImage },
-  { key: 'Escape', run: leaveSelectedImage },
-  { key: 'ArrowUp', run: stepOff(false) },
-  { key: 'ArrowDown', run: stepOff(true) },
+/** All six give way when no picture is where they are looking, so they sit
+ *  over the editor's own Backspace, Delete, Enter and arrows without taking
+ *  those keys away. See `contextual` in shortcuts.ts. */
+export const imageBindings: BindingSpec[] = [
+  { id: 'image.select-behind', key: 'Backspace', run: selectImageBehind, contextual: true },
+  { id: 'image.select-ahead', key: 'Delete', run: selectImageAhead, contextual: true },
+  { id: 'image.edit', key: 'Enter', run: editSelectedImage, contextual: true },
+  { id: 'image.leave', key: 'Escape', run: leaveSelectedImage, contextual: true },
+  { id: 'image.step-up', key: 'ArrowUp', run: stepOff(false), contextual: true },
+  { id: 'image.step-down', key: 'ArrowDown', run: stepOff(true), contextual: true },
 ]
 
 // ── Sizing ──────────────────────────────────────────────────────────
@@ -878,4 +875,4 @@ export function openLightbox(view: EditorView, src: string, alt: string) {
 }
 
 /** Everything the live preview needs for images beyond the widget itself. */
-export const imageExtension = [imageSelection, keymap.of(imageKeymap)]
+export const imageExtension = [imageSelection, boundKeymap(imageBindings)]
