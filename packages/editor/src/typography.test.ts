@@ -1,5 +1,8 @@
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { inCodeSpan, smartReplacement } from './typography'
+import { inCodeSpan, keepsStraightQuotes, smartReplacement } from './typography'
+import { nibMarkdownExtensions } from './markdown/extensions'
 
 /** Applies the rule the way the editor would, so tests read as typed text. */
 function type(line: string, character: string): string {
@@ -76,5 +79,61 @@ describe('code spans', () => {
 
   test('a fence is left alone', () => {
     expect(inCodeSpan('```js', 5)).toBe(true)
+  })
+})
+
+/** A document with `|` where the caret is, so a test reads as the place it is
+ *  asking about. */
+function at(marked: string): boolean {
+  const caret = marked.indexOf('|')
+  const doc = marked.slice(0, caret) + marked.slice(caret + 1)
+  const state = EditorState.create({
+    doc,
+    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+  })
+  return keepsStraightQuotes(state, caret)
+}
+
+describe('what keeps its straight quotes', () => {
+  test('the body of a fenced block, which is not prose at all', () => {
+    // The line on its own reads as ordinary text, so only the tree can say.
+    expect(at('```js\nconst s = "a|\n```\n')).toBe(true)
+    expect(at('```\nwait..|\n```\n')).toBe(true)
+  })
+
+  test('an inline code span, and the fence lines themselves', () => {
+    expect(at('run `echo "a|` after\n')).toBe(true)
+    expect(at('```js|\n\n```\n')).toBe(true)
+  })
+
+  test('maths, where a quote is a prime', () => {
+    expect(at('the slope $f|$ of it\n')).toBe(true)
+    expect(at('$$\nf|\n$$\n')).toBe(true)
+  })
+
+  test('front matter, which is YAML', () => {
+    expect(at('---\ntitle: "a|\n---\n\nBody.\n')).toBe(true)
+  })
+
+  test("a link's address and its title", () => {
+    expect(at('see [it](https://x.dev/a|b "T")\n')).toBe(true)
+    expect(at('see [it](https://x.dev "a|")\n')).toBe(true)
+  })
+
+  test('an HTML tag, whose attributes are quoted straight', () => {
+    expect(at('text <span class="a| ">x</span>\n')).toBe(true)
+  })
+
+  test('but not the prose around any of them', () => {
+    expect(at('he said |\n')).toBe(false)
+    expect(at('run `echo` and| then\n')).toBe(false)
+    expect(at('```js\nlet x = 1\n```\n\nafter| it\n')).toBe(false)
+    expect(at('see [it](https://x.dev) and| more\n')).toBe(false)
+  })
+
+  test('and not a fence that nothing closes, which is a paragraph', () => {
+    // The parser only calls a closed fence a fence; see markdown/fences.ts. The
+    // line test still holds the fence line itself.
+    expect(at('```js\nhe said| something\n')).toBe(false)
   })
 })
