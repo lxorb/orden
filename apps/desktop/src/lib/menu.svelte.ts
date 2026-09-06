@@ -8,7 +8,7 @@ export interface MenuItem {
   hint?: string | undefined
   danger?: boolean
   disabled?: boolean
-  run(): void
+  run: () => void
 }
 
 /** A separator between groups. */

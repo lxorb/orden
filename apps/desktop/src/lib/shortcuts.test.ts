@@ -400,7 +400,7 @@ describe('what a reader is shown', () => {
       (group) => group.id === 'file',
     )
     const row = file?.rows.find((one) => one !== null && one.label === command?.label)
-    expect(row && row.hint).toBe('Ctrl+Alt+S')
+    expect(row?.hint).toBe('Ctrl+Alt+S')
   })
 })
 

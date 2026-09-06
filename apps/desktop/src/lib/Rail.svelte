@@ -16,7 +16,7 @@
   import { type Space, workspace } from './workspace.svelte'
   import { theme } from './theme.svelte'
 
-  let {
+  const {
     view,
     onpalette,
     onhistory,

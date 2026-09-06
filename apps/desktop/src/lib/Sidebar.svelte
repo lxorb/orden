@@ -11,7 +11,7 @@
   import { viewport } from './viewport.svelte'
   import Tree from './Tree.svelte'
 
-  let { ongoto }: { ongoto?: (line: number) => void } = $props()
+  const { ongoto }: { ongoto?: (line: number) => void } = $props()
 
   /** Lit while a note is held over the space below the tree. */
   let rootDrop = $state(false)

@@ -31,31 +31,38 @@ interface WindowLike {
   onCloseRequested(handler: (event: { preventDefault(): void }) => void): Promise<() => void>
 }
 
+// Each answers a promise because the desktop's does; none of them waits on
+// anything, so none of them is written as `async`.
 const browserWindow: WindowLike = {
-  minimize: async () => undefined,
-  toggleMaximize: async () => undefined,
-  isMaximized: async () => false,
+  minimize: () => Promise.resolve(),
+  toggleMaximize: () => Promise.resolve(),
+  isMaximized: () => Promise.resolve(false),
   setFullscreen: async (on: boolean) => {
     if (on) await document.documentElement.requestFullscreen().catch(() => undefined)
     else await document.exitFullscreen().catch(() => undefined)
   },
-  isFullscreen: async () => !!document.fullscreenElement,
-  close: async () => undefined,
-  destroy: async () => undefined,
-  setTitle: async (title: string) => {
+  isFullscreen: () => Promise.resolve(document.fullscreenElement !== null),
+  close: () => Promise.resolve(),
+  destroy: () => Promise.resolve(),
+  setTitle: (title: string) => {
     document.title = title
+    return Promise.resolve()
   },
   // A page cannot ask its own question on the way out: the browser owns that
   // dialog. The handler is still run so unsaved work can be written first.
-  onCloseRequested: async (handler) => {
+  onCloseRequested: (handler) => {
     const listener = (event: BeforeUnloadEvent) => {
       let prevented = false
-      handler({ preventDefault: () => (prevented = true) })
+      handler({
+        preventDefault: () => {
+          prevented = true
+        },
+      })
       if (prevented) event.preventDefault()
     }
 
     window.addEventListener('beforeunload', listener)
-    return () => window.removeEventListener('beforeunload', listener)
+    return Promise.resolve(() => window.removeEventListener('beforeunload', listener))
   },
 }
 
@@ -63,7 +70,7 @@ export async function currentWindow(): Promise<WindowLike> {
   if (!isDesktop) return browserWindow
 
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
-  return getCurrentWindow() as unknown as WindowLike
+  return getCurrentWindow()
 }
 
 /** A webview cannot load a bare filesystem path; Tauri hands out a URL for one.

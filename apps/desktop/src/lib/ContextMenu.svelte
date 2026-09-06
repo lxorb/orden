@@ -113,7 +113,7 @@
   onclick={() => menu.hide()}
   onblur={() => menu.hide()}
   onresize={() => menu.hide()}
-  onkeydown={(event) => event.key === 'Escape' && menu.hide()}
+  onkeydown={(event: KeyboardEvent) => event.key === 'Escape' && menu.hide()}
 />
 
 {#if menu.open}

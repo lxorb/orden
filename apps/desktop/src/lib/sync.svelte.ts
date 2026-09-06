@@ -448,7 +448,7 @@ class Sync {
         Partial<Stored>
 
       // Written while the mirrors were wrapped in an object of their own.
-      return saved.mirrors ?? (saved as Record<string, Mirror>)
+      return saved.mirrors ?? saved
     } catch {
       return {}
     }

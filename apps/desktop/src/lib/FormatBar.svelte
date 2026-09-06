@@ -13,7 +13,7 @@
   import { t } from './i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './viewport.svelte'
 
-  let { view }: { view?: EditorView | undefined } = $props()
+  const { view }: { view?: EditorView | undefined } = $props()
 
   let at = $state<{ x: number; y: number } | null>(null)
 
@@ -56,7 +56,7 @@
 
   function run(command: StateCommand) {
     if (!view) return
-    command({ state: view.state, dispatch: (t: Transaction) => view!.dispatch(t) })
+    command({ state: view.state, dispatch: (t: Transaction) => view.dispatch(t) })
     view.focus()
   }
 

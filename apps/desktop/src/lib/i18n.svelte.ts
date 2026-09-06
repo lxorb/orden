@@ -1,4 +1,4 @@
-import { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from '@nib/editor'
+import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
 import { de } from '../locales/de'
 import { fr } from '../locales/fr'
 import { gsw } from '../locales/gsw'
@@ -47,12 +47,7 @@ class I18n {
 
   /** The editor package has its own handful of labels; hand it ours. */
   private translateEditor() {
-    setLabels(
-      Object.fromEntries(LABEL_KEYS.map((key) => [key, this.t(englishLabel(key))])) as Record<
-        LabelKey,
-        string
-      >,
-    )
+    setLabels(Object.fromEntries(LABEL_KEYS.map((key) => [key, this.t(englishLabel(key))])))
   }
 
   /** Translates one string, filling in `{name}` placeholders. */

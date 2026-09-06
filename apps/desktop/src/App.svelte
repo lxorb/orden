@@ -1,39 +1,14 @@
 <script lang="ts">
-  import { flushSync, untrack, onDestroy } from 'svelte'
-  import { i18n, key, message, t } from './lib/i18n.svelte'
+  import { onDestroy } from 'svelte'
+  import { key, message, t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import {
-    CLAIM,
-    claimsGesture,
-    scrollsSideways,
-    SETTLE_MAX,
-    SETTLE_MIN,
-    settleOpen,
-  } from './lib/swipe'
-  import {
-    clearFormatting,
-    EditorView,
-    type StateCommand,
-    type Transaction,
-    insertCodeFence,
-    insertHorizontalRule,
-    insertLink,
-    insertPageBreak,
-    insertTableToEdit,
-    toggleBulletList,
-    toggleOrderedList,
-    toggleQuote,
-    toggleWrap,
-    showLine,
-    topLine,
-    caretLine,
-  } from '@nib/editor'
+  import { EditorView, type Text } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import Editor from './lib/Editor.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
-  import { DIVIDER, type MenuEntry, menu } from './lib/menu.svelte'
+  import { menu } from './lib/menu.svelte'
   import Palette from './lib/Palette.svelte'
   import PromptSheet from './lib/PromptSheet.svelte'
   import Rail from './lib/Rail.svelte'
@@ -45,19 +20,20 @@
   import { account } from './lib/account.svelte'
   import { busy } from './lib/busy.svelte'
   import Progress from './lib/Progress.svelte'
+  import { drawer } from './lib/drawer.svelte'
+  import { showEditorMenu } from './lib/editor-menu'
+  import { placement } from './lib/placement.svelte'
   import { settings } from './lib/settings.svelte'
+  import { start } from './lib/start'
   import { sync } from './lib/sync.svelte'
-  import { trash } from './lib/trash.svelte'
   import StatusBar from './lib/StatusBar.svelte'
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes.svelte'
   import { imageUrl } from './lib/images'
   import { storeImage } from './lib/assets'
+  import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { collectErrors } from './lib/log'
-  import { prompt } from './lib/prompt.svelte'
-  import { installStaged, ready, stageUpdate } from './lib/updater'
-  import { currentWindow, invoke, isDesktop, openExternal } from './lib/tauri'
+  import { currentWindow, isDesktop, openExternal } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { shortcuts } from './lib/shortcuts.svelte'
@@ -65,6 +41,12 @@
   let view = $state<EditorView>()
   let palette = $state(false)
   let formatBar = $state<FormatBar>()
+  /** The element holding both layers, which is what the drawer gesture
+   *  listens on. */
+  let middle = $state<HTMLElement>()
+
+  // Everything that has to happen as the app comes up; see start.ts.
+  onDestroy(start())
 
   const title = $derived(
     workspace.active
@@ -79,28 +61,6 @@
     document.title = next
     if (isDesktop) void currentWindow().then((window) => window.setTitle(next))
   })
-
-  collectErrors()
-  viewport.start()
-  i18n.restore()
-  theme.init()
-  modes.restore()
-  shortcuts.restore()
-  settings.restore()
-  void workspace.restore().then(openLaunchFiles)
-  // Recently deleted on this device is swept at start and once a day after;
-  // the account's is swept on the server.
-  void trash.sweep()
-  const sweeper = setInterval(() => void trash.sweep(), 24 * 60 * 60 * 1000)
-  onDestroy(() => clearInterval(sweeper))
-  void guardClose()
-  /** The version waiting to be installed, once one has been downloaded. */
-  let updateReady = $state<string | null>(null)
-
-  // Fetched quietly at startup. It would take effect on the next launch by
-  // itself; the notice just offers to get there sooner.
-  void stageUpdate().then((version) => (updateReady = version))
-  void account.restore()
 
   // The account's settings come along with the account: when the session is
   // restored at start, and again on signing in. One request brings all of
@@ -117,22 +77,7 @@
     if (view) shortcuts.apply(view)
   })
 
-  /** The tab whose caret and scroll have been put back. Nothing is recorded
-   *  before that, or the fresh view's caret at 0 would overwrite the real one.
-   *
-   *  Deliberately not `$state`: nothing renders from it, and the effect below
-   *  both writes it and reads it back through `remember`. As reactive state
-   *  that is a cycle, and Svelte answers a cycle by tearing down the whole
-   *  render loop - which looked like tabs that only switched after a reload. */
-  let placed: string | null = null
-
-  /** Asks for the caret and scroll of the tab on show to be written down, at
-   *  the next frame. Set by the effect below, which owns the measurement; not
-   *  reactive, for the same reason `placed` is not. */
-  let rememberSoon: (() => void) | null = null
-
-  // Reopening a note lands where it was left, and keeps saying where that is,
-  // because a crash gives no chance to write it down on the way out.
+  // Reopening a note lands where it was left; see placement.svelte.ts.
   $effect(() => {
     const current = view
     const id = workspace.activeTabId
@@ -141,232 +86,26 @@
     const path = workspace.active?.path ?? null
     if (!current || !id) return
 
-    const tab = untrack(() => workspace.tabs.find((one) => one.id === id))
-    const cursor = untrack(() => tab?.cursor ?? 0)
-    const top = untrack(() => tab?.scroll ?? 0)
-    const anchor = untrack(() => tab?.anchor)
-
-    const remember = () => {
-      if (placed !== id) return
-      // What the view shows belongs to the note the tab is on now; if that is
-      // no longer this one, this run has nothing true to say about it.
-      const now = untrack(() => workspace.tabs.find((one) => one.id === id)?.path ?? null)
-      if (now !== path) return
-      workspace.noteView(
-        id,
-        current.state.selection.main.head,
-        current.scrollDOM.scrollTop,
-        topLine(current),
-        caretLine(current),
-      )
-    }
-
-    // `topLine` measures the view, and a measurement taken straight after the
-    // editor has written to the DOM makes the browser lay the document out
-    // again there and then - on every keystroke, over a document that may be
-    // thousands of lines. Once a frame instead: by then the layout is the one
-    // on screen, and a burst of keystrokes asks for it once.
-    let scheduled = 0
-    const soon = () => {
-      if (scheduled) return
-      scheduled = requestAnimationFrame(() => {
-        scheduled = 0
-        remember()
-      })
-    }
-    rememberSoon = soon
-
-    // Placed once a frame has laid the note out: the caret needs the text to
-    // be in, the offset needs a height, and a view that has just been made
-    // has neither. Recording starts only then, so nothing gets written down
-    // about a view that is still settling.
-    const frame = requestAnimationFrame(() => {
-      const at = Math.min(cursor, current.state.doc.length)
-      current.dispatch({ selection: { anchor: at } })
-
-      // The line that was at the top goes back to the top. Only a session
-      // written by an older build has no line, and keeps its pixel offset -
-      // with one more pass after the measure, since the estimate can put the
-      // same offset on a different line.
-      if (anchor !== undefined) showLine(current, anchor)
-      else {
-        current.scrollDOM.scrollTop = top
-        current.requestMeasure({
-          read: () => null,
-          write: () => {
-            if (placed === id) current.scrollDOM.scrollTop = top
-          },
-        })
-      }
-
-      placed = id
-      current.scrollDOM.addEventListener('scroll', soon, { passive: true })
-    })
-
-    return () => {
-      cancelAnimationFrame(frame)
-      cancelAnimationFrame(scheduled)
-      current.scrollDOM.removeEventListener('scroll', soon)
-      // A view that has already left the page reads as scrolled to the top,
-      // which is not where the note was: what was recorded as it moved stands.
-      if (current.scrollDOM.isConnected) remember()
-      placed = null
-      if (rememberSoon === soon) rememberSoon = null
-    }
+    return placement.follow(current, id, path)
   })
 
   // On a phone each of these is a screen of its own, so back closes it rather
   // than leaving the app - newest first, the way Android expects.
-  $effect(() => closeOnBack(!!workspace.panel, () => workspace.showPanel(workspace.panel!)))
-  $effect(() => closeOnBack(palette, () => (palette = false)))
+  $effect(() => closeOnBack(!!workspace.panel, () => workspace.closePanel()))
+  $effect(() =>
+    closeOnBack(palette, () => {
+      palette = false
+    }),
+  )
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
-  /** How far the drawer is pulled out while a finger is on it, in pixels.
-   *  `null` hands it back to CSS, which is what animates the settle. */
-  let drag = $state<number | null>(null)
-  /** How far it can travel, measured when the gesture starts. */
-  let dragWidth = $state(0)
-  /** How long the drawer takes to settle once the finger lifts, in
-   *  milliseconds. The tap-to-open transition is tuned to feel prompt, which
-   *  is far too quick for the last stretch of a drag: the drawer would leap
-   *  the rest of the way. Set from how far it still has to go, and cleared
-   *  once it has arrived so a tap goes back to being prompt. */
-  let settle = $state<number | null>(null)
-
-  /** Buttons inside a layer finish transitions of their own; only the layer's
-   *  own slide means it has arrived. */
-  function arrived(event: TransitionEvent) {
-    if (event.target === event.currentTarget && event.propertyName === 'transform') settle = null
-  }
-  let middle = $state<HTMLElement>()
-
-  // The drawer follows the finger, the way a phone app's does. Attached by
-  // hand rather than with `ontouchmove`, because claiming the gesture means
-  // calling preventDefault, and that needs a listener that is not passive.
+  // The drawer follows the finger, the way a phone app's does; see
+  // drawer.svelte.ts.
   $effect(() => {
     const host = middle
     if (!host || !viewport.phone) return
 
-    let startX = 0
-    let startY = 0
-    let width = 0
-    let claimed = false
-    let openedByDrag = false
-    /** The drawer is only as wide as the rail until the sidebar inside it
-     *  mounts, so opening has to re-measure once it has. */
-    let measured = false
-    let lastX = 0
-    let lastAt = 0
-    let velocity = 0
-
-    const panels = () => host.querySelector<HTMLElement>('.panels')
-
-    /** The one finger on the screen, or nothing when there is not exactly one:
-     *  a second finger is a pinch or a two-finger scroll, and neither is this. */
-    const single = (event: TouchEvent) =>
-      event.touches.length === 1 ? event.touches[0] : undefined
-
-    const onStart = (event: TouchEvent) => {
-      const touch = single(event)
-      if (!touch) return
-
-      claimed = false
-      openedByDrag = false
-      measured = false
-
-      // From anywhere on the screen, not just the edge: an edge-only gesture is
-      // a thin target and easy to miss. The one thing that outranks it is
-      // something that scrolls sideways under the finger.
-      if (scrollsSideways(document.elementFromPoint(touch.clientX, touch.clientY), host)) return
-
-      startX = touch.clientX
-      startY = touch.clientY
-      lastX = touch.clientX
-      lastAt = event.timeStamp
-      velocity = 0
-      // Zero means there is nothing to drag, and every later handler bails.
-      width = panels()?.getBoundingClientRect().width ?? 0
-      dragWidth = width
-    }
-
-    const onMove = (event: TouchEvent) => {
-      const touch = single(event)
-      if (!touch || !width) return
-
-      const dx = touch.clientX - startX
-      const dy = touch.clientY - startY
-
-      if (!claimed) {
-        // Settled once: a scroll stays a scroll for the whole gesture, and a
-        // drag stays a drag. Going vertical first gives the drawer up.
-        if (Math.abs(dy) > CLAIM) {
-          width = 0
-          return
-        }
-        if (!claimsGesture(dx, dy)) return
-        // Closed, only a rightward pull opens it; a leftward one on the
-        // document means nothing and should be left alone.
-        if (!workspace.panel && dx < 0) {
-          width = 0
-          return
-        }
-
-        claimed = true
-
-        if (!workspace.panel) {
-          workspace.showPanel('tree')
-          openedByDrag = true
-
-          // Closed, the drawer is only as wide as the rail, and dragging
-          // against that width would snap it open in a few pixels. `flushSync`
-          // puts the sidebar in the DOM now so the real width can be read -
-          // waiting a frame would be at the mercy of a throttled clock.
-          flushSync()
-          width = panels()?.getBoundingClientRect().width ?? width
-          dragWidth = width
-        }
-
-        measured = true
-      }
-
-      if (!measured) return
-
-      const elapsed = event.timeStamp - lastAt
-      if (elapsed > 0) velocity = (touch.clientX - lastX) / elapsed
-      lastX = touch.clientX
-      lastAt = event.timeStamp
-
-      // Opening counts from nothing; closing counts down from wide open.
-      const base = openedByDrag ? 0 : width
-      drag = Math.max(0, Math.min(width, base + dx))
-      event.preventDefault()
-    }
-
-    const onEnd = () => {
-      if (!claimed) return
-
-      const settled = settleOpen(drag ?? 0, width, velocity)
-      // The remaining distance decides the time, so the drawer moves at
-      // roughly the same pace whether it was let go near its end or its start.
-      const remaining = Math.abs((drag ?? 0) - (settled ? width : 0))
-      settle = Math.round(SETTLE_MIN + (SETTLE_MAX - SETTLE_MIN) * (width ? remaining / width : 0))
-      drag = null
-      claimed = false
-
-      if (settled !== !!workspace.panel) workspace.showPanel(workspace.panel ?? 'tree')
-    }
-
-    host.addEventListener('touchstart', onStart, { passive: true })
-    host.addEventListener('touchmove', onMove, { passive: false })
-    host.addEventListener('touchend', onEnd)
-    host.addEventListener('touchcancel', onEnd)
-
-    return () => {
-      host.removeEventListener('touchstart', onStart)
-      host.removeEventListener('touchmove', onMove)
-      host.removeEventListener('touchend', onEnd)
-      host.removeEventListener('touchcancel', onEnd)
-    }
+    return drawer.follow(host)
   })
 
   // Syncing only runs while there is an account behind it - and not before a
@@ -392,7 +131,7 @@
 
     // Going somewhere in the note means wanting to see it, and on a phone
     // the drawer is in the way.
-    if (viewport.phone && workspace.panel) workspace.showPanel(workspace.panel)
+    if (viewport.phone) workspace.closePanel()
 
     const target = view.state.doc.line(Math.min(line + 1, view.state.doc.lines))
     view.dispatch({
@@ -400,196 +139,6 @@
       effects: EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
     })
     view.focus()
-  }
-
-  /** Nothing with words in it is lost on the way out: closing asks first. */
-  async function guardClose() {
-    const window = await currentWindow()
-    await window.onCloseRequested(async (event) => {
-      // A tab gets no chance to ask its own question - `beforeunload` runs to
-      // completion before anything is painted. Preventing it is the whole
-      // signal, and the browser puts up its own leave-page dialog.
-      if (!isDesktop) {
-        if (workspace.unsaved.length) event.preventDefault()
-        return
-      }
-
-      // Nothing to ask about, but there may still be an update to put in place.
-      if (!workspace.unsaved.length) {
-        if (!ready()) return
-
-        event.preventDefault()
-        await installStaged()
-        await window.destroy()
-        return
-      }
-
-      event.preventDefault()
-
-      const answer = await prompt.choose({
-        title: t('Save your changes?'),
-        detail: t('{count} of your notes have unsaved changes.', {
-          count: workspace.unsaved.length,
-        }),
-        options: [
-          { id: 'save', label: t('Save'), primary: true },
-          { id: 'discard', label: t('Discard'), danger: true },
-          { id: 'cancel', label: t('Cancel') },
-        ],
-      })
-
-      if (answer === 'save') await workspace.saveAll()
-      else if (answer !== 'discard') return
-
-      // Everything is either written or deliberately given up on.
-      await installStaged()
-      await window.destroy()
-    })
-  }
-
-  /** Files named on the command line, and any handed over by a second launch. */
-  async function openLaunchFiles() {
-    if (!isDesktop) return
-
-    for (const path of await invoke<string[]>('take_startup_files').catch(() => [])) {
-      await workspace.open(path)
-    }
-
-    const { listen } = await import('@tauri-apps/api/event')
-    void listen<string[]>('nib://open-files', async (event) => {
-      for (const path of event.payload) await workspace.open(path)
-    })
-  }
-
-  function runCommand(command: StateCommand) {
-    if (!view) return
-    command({
-      state: view.state,
-      dispatch: (transaction: Transaction) => view!.dispatch(transaction),
-    })
-    view.focus()
-  }
-
-  async function paste() {
-    if (!view) return
-    const text = await navigator.clipboard.readText().catch(() => '')
-    if (!text) return
-
-    const range = view.state.selection.main
-    view.dispatch({ changes: { from: range.from, to: range.to, insert: text } })
-    view.focus()
-  }
-
-  /** The editor's own menu, so the browser's never appears. */
-  function editorMenu(): MenuEntry[] {
-    const selected = !!view && !view.state.selection.main.empty
-    const reading = !!view && view.state.readOnly
-
-    const clipboard: MenuEntry[] = [
-      {
-        label: t('Cut'),
-        hint: shortcuts.hint('fixed.cut'),
-        disabled: !selected || reading,
-        run: () => document.execCommand('cut'),
-      },
-      {
-        label: t('Copy'),
-        hint: shortcuts.hint('fixed.copy'),
-        disabled: !selected,
-        run: () => document.execCommand('copy'),
-      },
-      {
-        label: t('Paste'),
-        hint: shortcuts.hint('fixed.paste'),
-        disabled: reading,
-        run: () => void paste(),
-      },
-    ]
-
-    // On a phone a press on the text is for the clipboard, the way it is in
-    // every other app there. The formatting lives in the bar above the
-    // keyboard and in the app menu, and sixteen rows would cover the text
-    // they are about.
-    if (viewport.phone) return clipboard
-
-    // Reading mode leaves the clipboard rows and the way back out. The rest of
-    // this menu writes, and a menu of things that cannot happen is worse than
-    // a short one.
-    if (reading) {
-      return [
-        ...clipboard,
-        DIVIDER,
-        {
-          label: t('Leave reading mode'),
-          hint: shortcuts.hint('app.reading'),
-          run: () => modes.toggleReading(view),
-        },
-      ]
-    }
-
-    return [
-      ...clipboard,
-      DIVIDER,
-      {
-        label: t('Bold'),
-        hint: shortcuts.hint('format.bold'),
-        run: () => runCommand(toggleWrap('**')),
-      },
-      {
-        label: t('Italic'),
-        hint: shortcuts.hint('format.italic'),
-        run: () => runCommand(toggleWrap('*')),
-      },
-      {
-        label: t('Code'),
-        hint: shortcuts.hint('format.code'),
-        run: () => runCommand(toggleWrap('`')),
-      },
-      { label: t('Link'), hint: shortcuts.hint('format.link'), run: () => runCommand(insertLink) },
-      {
-        label: t('Clear formatting'),
-        hint: shortcuts.hint('format.clear'),
-        run: () => runCommand(clearFormatting),
-      },
-      DIVIDER,
-      {
-        label: t('Quote'),
-        hint: shortcuts.hint('paragraph.quote'),
-        run: () => runCommand(toggleQuote),
-      },
-      {
-        label: t('Bulleted list'),
-        hint: shortcuts.hint('paragraph.bullet-list'),
-        run: () => runCommand(toggleBulletList),
-      },
-      {
-        label: t('Numbered list'),
-        hint: shortcuts.hint('paragraph.ordered-list'),
-        run: () => runCommand(toggleOrderedList),
-      },
-      {
-        label: t('Table'),
-        hint: shortcuts.hint('paragraph.table'),
-        run: () => view && insertTableToEdit(view),
-      },
-      {
-        label: t('Code block'),
-        hint: shortcuts.hint('paragraph.code-block'),
-        run: () => runCommand(insertCodeFence),
-      },
-      {
-        label: t('Horizontal rule'),
-        hint: shortcuts.hint('paragraph.rule'),
-        run: () => runCommand(insertHorizontalRule),
-      },
-      { label: t('Page break'), run: () => runCommand(insertPageBreak) },
-      DIVIDER,
-      {
-        label: modes.source ? t('Leave source mode') : t('Source mode'),
-        hint: shortcuts.hint('app.source'),
-        run: () => modes.toggleSource(view),
-      },
-    ]
   }
 
   /** A pasted or dropped image, stored once however often it is pasted. A large
@@ -637,7 +186,10 @@
 </script>
 
 <!-- Nothing in the app ever shows the browser's own menu. -->
-<svelte:window onkeydown={onKeydown} oncontextmenu={(event) => event.preventDefault()} />
+<svelte:window
+  onkeydown={onKeydown}
+  oncontextmenu={(event: MouseEvent) => event.preventDefault()}
+/>
 
 <!-- The titlebar spans the whole window, so the rail, the sidebar and the
      document all start on the same line. -->
@@ -651,18 +203,22 @@
     <div
       class="panels"
       class:open={!!workspace.panel}
-      class:dragging={drag !== null}
-      class:settling={settle !== null}
-      style:transform={drag === null || viewport.narrow
+      class:dragging={drawer.at !== null}
+      class:settling={drawer.settle !== null}
+      style:transform={drawer.at === null || viewport.narrow
         ? undefined
-        : `translateX(${drag - dragWidth}px)`}
-      style:--settle={settle === null ? undefined : `${settle}ms`}
-      ontransitionend={arrived}
+        : `translateX(${drawer.at - drawer.width}px)`}
+      style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
+      ontransitionend={(event) => drawer.arrived(event)}
     >
       <Rail
         {view}
-        onpalette={() => (palette = true)}
-        onhistory={() => (settings.historyOpen = true)}
+        onpalette={() => {
+          palette = true
+        }}
+        onhistory={() => {
+          settings.historyOpen = true
+        }}
       />
 
       {#if workspace.panel}
@@ -674,9 +230,9 @@
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
       <div
         class="scrim"
-        class:dragging={drag !== null}
-        style:opacity={drag === null || !dragWidth ? undefined : drag / dragWidth}
-        onclick={() => workspace.showPanel(workspace.panel!)}
+        class:dragging={drawer.at !== null}
+        style:opacity={drawer.at === null || !drawer.width ? undefined : drawer.at / drawer.width}
+        onclick={() => workspace.closePanel()}
       ></div>
     {/if}
 
@@ -687,16 +243,22 @@
     <div
       class="document"
       class:open={!!workspace.panel}
-      class:dragging={drag !== null}
-      class:settling={settle !== null}
-      style:transform={drag === null || !viewport.narrow ? undefined : `translateX(${drag}px)`}
-      style:--settle={settle === null ? undefined : `${settle}ms`}
-      ontransitionend={arrived}
+      class:dragging={drawer.at !== null}
+      class:settling={drawer.settle !== null}
+      style:transform={drawer.at === null || !viewport.narrow
+        ? undefined
+        : `translateX(${drawer.at}px)`}
+      style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
+      ontransitionend={(event) => drawer.arrived(event)}
     >
-      <Titlebar onopennotes={() => (palette = true)} />
+      <Titlebar
+        onopennotes={() => {
+          palette = true
+        }}
+      />
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="editor" oncontextmenu={(event) => menu.show(event, editorMenu(), { near: true })}>
+      <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>
         <!-- Anything slow enough to be waited for draws a line along the top
              of the document, just under the tabs. -->
         <Progress />
@@ -705,13 +267,15 @@
             bind:view
             doc={workspace.active?.doc ?? ''}
             pushed={workspace.active?.pushed ?? 0}
-            onchange={(text) => workspace.edit(text)}
+            onchange={(text: Text) => {
+              workspace.edit(text)
+            }}
             onimage={saveImage}
             resolveimage={resolveImage}
-            openlink={(href) => void openExternal(href)}
-            onselection={(current) => {
+            openlink={(href: string) => void openExternal(href)}
+            onselection={(current: EditorView) => {
               formatBar?.follow(current)
-              rememberSoon?.()
+              placement.remember()
             }}
           />
         {/key}
@@ -733,8 +297,8 @@
 
 <StorageWarning />
 
-{#if updateReady}
-  <UpdateNotice version={updateReady} ondismiss={() => (updateReady = null)} />
+{#if updates.ready}
+  <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
 {/if}
 
 <Palette bind:open={palette} {view} />

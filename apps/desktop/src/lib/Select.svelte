@@ -15,7 +15,7 @@
     label: string
   }
 
-  let {
+  const {
     value,
     options,
     onchange,

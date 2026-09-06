@@ -7,7 +7,7 @@
   import { workspace } from './workspace.svelte'
   import { openFile } from './open-file'
 
-  let { onopennotes }: { onopennotes?: () => void } = $props()
+  const { onopennotes }: { onopennotes?: () => void } = $props()
 
   let maximized = $state(false)
 

@@ -2,7 +2,7 @@
   /** Folders keep their name; notes keep their extension. */
   function fullName(entry: { is_dir: boolean; name: string }, typed: string): string {
     if (entry.is_dir) return typed
-    const extension = entry.name.match(/\.[^.]+$/)?.[0] ?? '.md'
+    const extension = /\.[^.]+$/.exec(entry.name)?.[0] ?? '.md'
     return typed.endsWith(extension) ? typed : typed + extension
   }
 </script>
@@ -21,7 +21,7 @@
   import { workspace } from './workspace.svelte'
   import Tree from './Tree.svelte'
 
-  let { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
+  const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
 
   let dropTarget = $state<string | null>(null)
 

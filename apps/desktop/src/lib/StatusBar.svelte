@@ -2,7 +2,7 @@
   import { countText } from './counts'
   import { t } from './i18n.svelte'
 
-  let { doc = '', reading = false }: { doc?: string; reading?: boolean } = $props()
+  const { doc = '', reading = false }: { doc?: string; reading?: boolean } = $props()
 
   /** Whether the pointer is on the numbers. They are invisible until then, and
    *  counting the words of a large note is not something to do on the way past:

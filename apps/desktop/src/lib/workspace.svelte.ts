@@ -1542,6 +1542,16 @@ class Workspace {
     this.persist()
   }
 
+  /** Shuts the sidebar whichever panel is in it. Its own method because every
+   *  caller had to name the panel it was closing, and `showPanel(panel)` only
+   *  closes it by happening to be the one already open. */
+  closePanel() {
+    if (!this.panel) return
+
+    this.panel = null
+    this.persist()
+  }
+
   toggleSidebar() {
     this.panel = this.panel ? null : 'tree'
     this.persist()

@@ -23,7 +23,7 @@
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
 
-  let { view }: { view?: EditorView | undefined } = $props()
+  const { view }: { view?: EditorView | undefined } = $props()
 
   /** A line drawing each, so the list reads at a glance rather than as a
    *  column of words. */
@@ -121,17 +121,17 @@
       { section: 'editor', label: t('Reset to defaults'), text: [] },
       // Every shortcut by name, so searching the settings for "Bold" lands on
       // the key that runs it as well as on the button that does.
-      ...SHORTCUTS.map((one) => ({
-        section: 'shortcuts' as Section,
-        label: one.label(),
-        text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
-      })),
+      ...SHORTCUTS.map(
+        (one): Place => ({
+          section: 'shortcuts',
+          label: one.label(),
+          text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
+        }),
+      ),
       { section: 'markdown', label: t('Reset to defaults'), text: [] },
-      ...exportActions().map((action) => ({
-        section: 'export' as Section,
-        label: action.label,
-        text: [],
-      })),
+      ...exportActions().map(
+        (action): Place => ({ section: 'export', label: action.label, text: [] }),
+      ),
     ]
 
     if (isDesktop) {
@@ -850,7 +850,7 @@
         <input
           class="inline"
           value={settings.page.header}
-          placeholder="&#36;{'{'}title{'}'}"
+          placeholder="&#36;{'{'}title}"
           oninput={(event) => settings.setPage({ header: event.currentTarget.value })}
           spellcheck="false"
         />
@@ -860,7 +860,7 @@
         <input
           class="inline"
           value={settings.page.footer}
-          placeholder="&#36;{'{'}date{'}'}"
+          placeholder="&#36;{'{'}date}"
           oninput={(event) => settings.setPage({ footer: event.currentTarget.value })}
           spellcheck="false"
         />

@@ -7,7 +7,7 @@
   import { t } from './i18n.svelte'
   import { viewport } from './viewport.svelte'
 
-  let {
+  const {
     view,
     onpalette,
     onhistory,
@@ -43,7 +43,7 @@
 </script>
 
 <svelte:window
-  onkeydown={(event) => {
+  onkeydown={(event: KeyboardEvent) => {
     if (event.key === 'Escape' && open) open = false
   }}
 />

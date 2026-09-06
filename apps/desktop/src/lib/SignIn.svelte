@@ -10,7 +10,7 @@
   const LENGTH = 6
 
   let digits = $state<string[]>(Array(LENGTH).fill(''))
-  let boxes = $state<HTMLInputElement[]>([])
+  const boxes = $state<HTMLInputElement[]>([])
   let emailField = $state<HTMLInputElement>()
 
   const entered = $derived(digits.join(''))

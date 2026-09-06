@@ -19,6 +19,7 @@ import {
   undoEdit,
 } from '@nib/editor'
 import { account } from './account.svelte'
+import { copySelection, cutSelection } from './clipboard'
 import { exportCommands } from './commands'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
@@ -40,7 +41,7 @@ export interface MenuAction {
   hint?: string | undefined
   checked?: boolean
   disabled?: boolean
-  run(): void
+  run: () => void
 }
 
 /** A rule between groups of actions. */
@@ -159,13 +160,13 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Cut'),
           hint: shortcuts.hint('fixed.cut'),
           disabled: !selected || !writable,
-          run: () => document.execCommand('cut'),
+          run: cutSelection,
         },
         {
           label: t('Copy'),
           hint: shortcuts.hint('fixed.copy'),
           disabled: !selected,
-          run: () => document.execCommand('copy'),
+          run: copySelection,
         },
         SPLIT,
         {

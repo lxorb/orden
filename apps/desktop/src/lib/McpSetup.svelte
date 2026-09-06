@@ -10,6 +10,7 @@
   import { cubicOut } from 'svelte/easing'
   import { MCP_URL } from './api'
   import { account } from './account.svelte'
+  import { copyText } from './clipboard'
   import { type Client, connectors } from './connectors.svelte'
   import { t } from './i18n.svelte'
   import { openExternal } from './tauri'
@@ -32,25 +33,13 @@
   let copyTimer: ReturnType<typeof setTimeout>
 
   async function copy(value: string) {
-    try {
-      await navigator.clipboard.writeText(value)
-    } catch {
-      // A webview without the clipboard API, or a document that is not
-      // focused: the old way through a selection still works there.
-      const scratch = document.createElement('textarea')
-      scratch.value = value
-      scratch.setAttribute('readonly', '')
-      scratch.style.position = 'fixed'
-      scratch.style.opacity = '0'
-      document.body.append(scratch)
-      scratch.select()
-      document.execCommand('copy')
-      scratch.remove()
-    }
+    await copyText(value)
 
     copied = value
     clearTimeout(copyTimer)
-    copyTimer = setTimeout(() => (copied = null), 1600)
+    copyTimer = setTimeout(() => {
+      copied = null
+    }, 1600)
   }
 
   /** What a client that takes a JSON block wants: the URL, and the token

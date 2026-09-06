@@ -4,7 +4,7 @@
   import { t } from './i18n.svelte'
   import { restartToUpdate } from './updater'
 
-  let { version, ondismiss }: { version: string; ondismiss: () => void } = $props()
+  const { version, ondismiss }: { version: string; ondismiss: () => void } = $props()
 
   let restarting = $state(false)
 

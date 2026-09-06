@@ -80,7 +80,9 @@
   </div>
 {/if}
 
-<svelte:window onkeydown={(event) => prompt.open && event.key === 'Escape' && prompt.dismiss()} />
+<svelte:window
+  onkeydown={(event: KeyboardEvent) => prompt.open && event.key === 'Escape' && prompt.dismiss()}
+/>
 
 <style>
   .scrim {

@@ -116,7 +116,7 @@ class Session {
     if (!this.token) return
     const listed = await api.listSpaces(this.token)
     this.spaces = listed.spaces
-    this.deletedSpaces = listed.deleted ?? []
+    this.deletedSpaces = listed.deleted
   }
 
   private forget() {

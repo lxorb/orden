@@ -27,7 +27,7 @@
   const label = (item: Command | Entry) => ('label' in item ? item.label : stripped(item.name))
 
   $effect(() => {
-    void results
+    results
     cursor = 0
   })
 

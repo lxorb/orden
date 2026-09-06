@@ -39,6 +39,16 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.svelte'],
+    rules: {
+      // `{@render snippet()}` is a statement in the markup, but the parser hands
+      // it over as an expression, so the rule reads every one of them as a void
+      // call in the wrong place. Nothing a component can be written differently
+      // to avoid, and the rule still applies to every `.ts` file.
+      '@typescript-eslint/no-confusing-void-expression': 'off',
+    },
+  },
+  {
     rules: {
       // A promise that nobody awaits or catches is a bug that surfaces as a
       // silent failure; `void promise` says the drop is meant.

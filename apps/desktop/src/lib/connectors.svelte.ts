@@ -4,6 +4,7 @@
 import { api } from './api'
 import { account } from './account.svelte'
 import { message } from './i18n.svelte'
+import { isRecord, stored } from './stored'
 
 const STORAGE_KEY = 'nib:llm'
 const CLIENT_KEY = 'nib:llm-client'
@@ -45,12 +46,10 @@ class Connectors {
   error = $state<string | null>(null)
 
   restore() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-      this.readOnly = saved.readOnly ?? true
-    } catch {
-      // Defaults are the safe ones.
-    }
+    // Read-only unless the entry says otherwise: the safe default, and what a
+    // missing or unreadable entry has to mean.
+    const saved = stored(STORAGE_KEY)
+    this.readOnly = !isRecord(saved) || saved.readOnly !== false
 
     const client = localStorage.getItem(CLIENT_KEY)
     if (client === 'claude' || client === 'chatgpt' || client === 'other') this.client = client
@@ -70,8 +69,7 @@ class Connectors {
 
     try {
       const listed = await api.connector(account.token)
-      // A server from before OAuth lists no clients at all.
-      this.clients = listed.clients ?? []
+      this.clients = listed.clients
       this.token = {
         exists: listed.exists,
         readOnly: listed.readOnly,

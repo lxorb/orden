@@ -352,7 +352,7 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'read_tree':
-      return (await tree(root, (args.options ?? {}) as TreeOptions)) as T
+      return (await tree(root, args.options ?? {})) as T
 
     case 'search_space':
       return (await search(root, args.query as string, (args.limit as number) ?? 100)) as T

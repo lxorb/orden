@@ -238,7 +238,7 @@ describe('signed out', () => {
 describe('signed in', () => {
   beforeEach(() => {
     account.token = 'token'
-    account.user = { id: 'u', email: 'a@b.dev', name: null } as never
+    account.user = { id: 'u', email: 'a@b.dev', name: null }
   })
 
   test('deleting removes the local copy; the account keeps it', async () => {

@@ -17,8 +17,8 @@ export async function openFile() {
       multiple: true,
       filters: [{ name: 'Markdown', extensions: EXTENSIONS }],
     })
-    const paths = Array.isArray(picked) ? picked : picked ? [picked] : []
-    for (const path of paths) await workspace.open(path)
+    // `multiple` makes the dialog answer with a list, or null when cancelled.
+    for (const path of picked ?? []) await workspace.open(path)
     return
   }
 

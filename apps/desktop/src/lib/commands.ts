@@ -154,7 +154,9 @@ export interface Command {
    *  undefined for an unbound command, so undefined is a real value here. */
   hint?: string | undefined
   disabled?: boolean
-  run(): void
+  // A property rather than a method, so a caller may hand the function on -
+  // the app menu passes an export row straight through as a row of its own.
+  run: () => void
 }
 
 /** Everything the palette can do. Labels read as the action, not the setting. */
