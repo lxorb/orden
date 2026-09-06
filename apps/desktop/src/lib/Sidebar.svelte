@@ -8,6 +8,7 @@
   import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import type { Entry, Hit, Panel, SortKey } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
+  import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
   import Tree from './Tree.svelte'
 
@@ -202,63 +203,8 @@
     return towards
   })
 
-  /** The width is a habit of the machine, not of the account: a laptop and a
-   *  wide monitor want different ones, so it is kept here and not synced. */
-  const WIDTH_KEY = 'nib:sidebar-width'
-  const NARROWEST = 180
-  const WIDEST = 520
-
-  function savedWidth(): number | null {
-    const saved = Number(localStorage.getItem(WIDTH_KEY))
-    return saved >= NARROWEST && saved <= WIDEST ? saved : null
-  }
-
-  /** Null means the default width from the theme tokens. */
-  let width = $state<number | null>(savedWidth())
-  let resizing = $state(false)
+  const size = new SidebarWidth()
   let aside = $state<HTMLElement>()
-
-  /** The edge follows the pointer; letting go keeps the width. Pointer
-   *  capture keeps the events coming even once the pointer has left the thin
-   *  handle, which it does in the first few pixels of any drag. */
-  function startResize(event: PointerEvent) {
-    if (viewport.phone || event.button !== 0 || !aside) return
-
-    const handle = event.currentTarget as HTMLElement
-    const startX = event.clientX
-    const from = aside.getBoundingClientRect().width
-
-    handle.setPointerCapture(event.pointerId)
-    resizing = true
-    // The document keeps its own cursor and selection out of the way for
-    // the length of the drag.
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-
-    const move = (moved: PointerEvent) => {
-      width = Math.round(Math.min(WIDEST, Math.max(NARROWEST, from + moved.clientX - startX)))
-    }
-
-    const stop = () => {
-      handle.removeEventListener('pointermove', move)
-      handle.removeEventListener('pointerup', stop)
-      handle.removeEventListener('pointercancel', stop)
-      resizing = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-      if (width !== null) localStorage.setItem(WIDTH_KEY, String(width))
-    }
-
-    handle.addEventListener('pointermove', move)
-    handle.addEventListener('pointerup', stop)
-    handle.addEventListener('pointercancel', stop)
-  }
-
-  /** Double-clicking the edge puts the default back. */
-  function resetWidth() {
-    width = null
-    localStorage.removeItem(WIDTH_KEY)
-  }
 </script>
 
 <!-- On a desktop the sidebar slides open and shut, and the document slides
@@ -268,8 +214,8 @@
      sidebar still growing. -->
 <aside
   bind:this={aside}
-  class:resizing
-  style:width={width !== null && !viewport.phone ? `${width}px` : undefined}
+  class:resizing={size.dragging}
+  style:width={size.pixels !== null && !viewport.phone ? `${size.pixels}px` : undefined}
   transition:slide={{ axis: 'x', duration: viewport.phone ? 0 : 210, easing: cubicOut }}
 >
   <!-- The strip along the right edge that changes the width. Not on a phone,
@@ -278,8 +224,8 @@
   <div
     class="edge"
     title={t('Drag to resize')}
-    onpointerdown={startResize}
-    ondblclick={resetWidth}
+    onpointerdown={(event) => size.start(event, aside)}
+    ondblclick={() => size.reset()}
   ></div>
 
   <div class="switch">
