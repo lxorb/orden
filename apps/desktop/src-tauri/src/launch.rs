@@ -1,26 +1,35 @@
-use std::path::Path;
-use std::sync::Mutex;
+//! Starting up and opening windows: the files the app was launched with, and the
+//! extra windows someone asks for while it is running.
+//!
+//! A launch argument is the one way a note reaches the app before the window is
+//! even there, so the files wait here until the window is ready to ask for them.
 
-const MARKDOWN: [&str; 4] = ["md", "markdown", "mdown", "mkd"];
+use std::path::Path;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Mutex;
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+
+use crate::paths::is_markdown;
+
+/// Windows are labelled in the order they were opened, and a label is never
+/// reused: counting the open ones would hand out a label that a window closed
+/// earlier has already had, and the second window with that label cannot be
+/// built.
+static WINDOWS: AtomicU32 = AtomicU32::new(0);
 
 /// Files named on the command line, waiting for the window to ask for them.
 #[derive(Default)]
 pub struct Pending(pub Mutex<Vec<String>>);
 
 /// Picks the markdown paths out of a command line, ignoring flags and anything
-/// that is not a file we can open.
+/// that is not a file the app can open.
 pub fn markdown_paths<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
     args.into_iter()
         .skip(1)
         .filter(|argument| !argument.starts_with('-'))
         .filter(|argument| {
             let path = Path::new(argument);
-            path.is_file()
-                && path
-                    .extension()
-                    .and_then(|e| e.to_str())
-                    .map(|e| MARKDOWN.contains(&e.to_lowercase().as_str()))
-                    .unwrap_or(false)
+            path.is_file() && is_markdown(path)
         })
         .collect()
 }
@@ -29,20 +38,18 @@ pub fn markdown_paths<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
 /// reopening the same files a second time.
 #[tauri::command]
 pub fn take_startup_files(pending: tauri::State<'_, Pending>) -> Vec<String> {
-    pending
-        .0
-        .lock()
-        .map(|mut files| std::mem::take(&mut *files))
-        .unwrap_or_default()
+    let Ok(mut files) = pending.0.lock() else {
+        return Vec::new();
+    };
+
+    std::mem::take(&mut *files)
 }
 
-/// A second window onto the same spaces. Each gets its own label, so several
-/// can be open at once; closing one leaves the others alone.
+/// A second window onto the same spaces. Each gets its own label, so several can
+/// be open at once; closing one leaves the others alone.
 #[tauri::command]
-pub fn new_window(app: tauri::AppHandle) -> Result<(), String> {
-    use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
-
-    let label = format!("nib-{}", app.webview_windows().len() + 1);
+pub fn new_window(app: AppHandle) -> Result<(), String> {
+    let label = free_label(&app);
 
     WebviewWindowBuilder::new(&app, &label, WebviewUrl::default())
         .title("Nib")
@@ -51,7 +58,18 @@ pub fn new_window(app: tauri::AppHandle) -> Result<(), String> {
         .decorations(false)
         .build()
         .map(|_| ())
-        .map_err(|e| e.to_string())
+        .map_err(|error| format!("could not open another window: {error}"))
+}
+
+/// A label no window has. The counter alone is enough within one run; the loop is
+/// there because a label is also a name a window built elsewhere could hold.
+fn free_label(app: &AppHandle) -> String {
+    loop {
+        let label = format!("nib-{}", WINDOWS.fetch_add(1, Ordering::Relaxed) + 2);
+        if app.get_webview_window(&label).is_none() {
+            return label;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -68,5 +86,39 @@ mod tests {
     fn ignores_paths_that_are_not_files() {
         let args = vec!["nib.exe".to_string(), "not-a-real-file.md".to_string()];
         assert!(markdown_paths(args).is_empty());
+    }
+
+    #[test]
+    fn takes_the_markdown_files_that_are_really_there() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let note = dir.path().join("Idea.md");
+        let other = dir.path().join("notes.txt");
+        let folder = dir.path().join("Work.md");
+        std::fs::write(&note, "# Idea").expect("a note");
+        std::fs::write(&other, "plain").expect("a text file");
+        // A folder that happens to be named like a note is not a note.
+        std::fs::create_dir_all(&folder).expect("a folder");
+
+        let args = vec![
+            "nib.exe".to_string(),
+            note.to_string_lossy().to_string(),
+            other.to_string_lossy().to_string(),
+            folder.to_string_lossy().to_string(),
+        ];
+
+        assert_eq!(
+            markdown_paths(args),
+            vec![note.to_string_lossy().to_string()]
+        );
+    }
+
+    #[test]
+    fn the_extension_may_be_written_in_any_case() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let note = dir.path().join("Idea.MARKDOWN");
+        std::fs::write(&note, "# Idea").expect("a note");
+
+        let args = vec!["nib.exe".to_string(), note.to_string_lossy().to_string()];
+        assert_eq!(markdown_paths(args).len(), 1);
     }
 }
