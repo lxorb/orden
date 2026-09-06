@@ -112,11 +112,17 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
   frame.style.cssText =
     'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;visibility:hidden'
 
-  const expire = (limit: number) => () => {
+  const expire = () => {
     // Only a run that never finished timed out. One that did is simply over,
     // and its sandbox has been kept this long in case a timer or a promise it
     // left behind still had something to say.
-    view.dispatch({ effects: closeRun.of({ run, status: 'timeout', elapsed: limit }) })
+    //
+    // Reported as the time that actually passed, not as the limit that ran out.
+    // The panel counts up from `startedAt` while the run is going, so giving it
+    // the limit made the number it was showing jump backwards at the moment it
+    // stopped - and told a run that never started that it had had ten seconds.
+    const elapsed = Date.now() - startedAt
+    view.dispatch({ effects: closeRun.of({ run, status: 'timeout', elapsed }) })
     teardown(run)
   }
 
@@ -138,7 +144,7 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
     if (message.ready && !sandbox.started) {
       sandbox.started = true
       window.clearTimeout(sandbox.timer)
-      sandbox.timer = window.setTimeout(expire(RUN_TIME_LIMIT), RUN_TIME_LIMIT)
+      sandbox.timer = window.setTimeout(expire, RUN_TIME_LIMIT)
     }
 
     const effects: StateEffect<unknown>[] = []
@@ -156,7 +162,7 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
     view,
     frame,
     listener,
-    timer: window.setTimeout(expire(RUN_START_LIMIT), RUN_START_LIMIT),
+    timer: window.setTimeout(expire, RUN_START_LIMIT),
     started: false,
     finished: false,
   })

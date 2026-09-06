@@ -77,12 +77,18 @@ function literal(code: string): string {
  *  Two things keep it harmless, and they are independent of each other. The
  *  frame is sandboxed without `allow-same-origin`, so the document has an
  *  opaque origin: the app's DOM, storage, IndexedDB, cookies and notes are all
- *  cross-origin to it and reading them throws. And this policy leaves it
- *  nothing to talk to: `default-src 'none'` covers fetch, XHR, WebSocket,
- *  EventSource, imports, images, nested frames and workers, so the code cannot
- *  reach the network or spawn anything that outlives the frame.
+ *  cross-origin to it and reading them throws. And this policy takes away nearly
+ *  everything it could talk to: `default-src 'none'` covers fetch, XHR,
+ *  WebSocket, EventSource, imports, images, nested frames and workers, and
+ *  `form-action 'none'` is said out loud because forms do not fall back to it.
  *
- *  `'unsafe-eval'` is the one concession, and it is what makes the feature
+ *  The one thing neither layer stops is the frame navigating *itself*: setting
+ *  its own `location` is a request that leaves the machine, carrying whatever the
+ *  code put in the URL. Nothing comes back - the frame is gone and its listener
+ *  with it - and the reader asked for this code to run, so it is named here
+ *  rather than claimed to be closed.
+ *
+ *  `'unsafe-eval'` is the other concession, and it is what makes the feature
  *  possible at all: the value of the last expression only exists if the code is
  *  evaluated rather than parsed as part of this document. It hands the code
  *  nothing extra, since the code is already inline and there is nothing left
@@ -90,7 +96,7 @@ function literal(code: string): string {
 export function runnerDocument(code: string, run: number): string {
   return `<!doctype html>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; form-action 'none'">
 <title>nib runner</title>
 <script>
 (function () {
