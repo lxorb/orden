@@ -38,7 +38,7 @@ export class MathWidget extends NibWidget {
     super()
   }
 
-  eq(other: MathWidget) {
+  override eq(other: MathWidget) {
     return other.tex === this.tex && other.block === this.block && other.number === this.number
   }
 
@@ -83,7 +83,7 @@ export class DiagramWidget extends NibWidget {
     super()
   }
 
-  eq(other: DiagramWidget) {
+  override eq(other: DiagramWidget) {
     return other.code === this.code && other.language === this.language
   }
 

@@ -42,7 +42,7 @@ export class TocWidget extends NibWidget {
     super()
   }
 
-  eq(other: TocWidget) {
+  override eq(other: TocWidget) {
     return (
       other.entries.length === this.entries.length &&
       other.entries.every((entry, index) => {

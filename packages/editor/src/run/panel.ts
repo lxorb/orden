@@ -165,10 +165,6 @@ function runDecorations(state: EditorState, panels: readonly RunPanel[]): Decora
   return Decoration.set(ranges, true)
 }
 
-/** The tickers counting up in the panels on screen, so they can be stopped when
- *  the panel goes. Keyed by element, since one panel can be drawn more than once. */
-const TICKERS = new WeakMap<HTMLElement, number>()
-
 /** `48 ms`, `1.4 s`. Numbers and their units, which read the same everywhere. */
 export function formatElapsed(ms: number): string {
   if (ms < 1000) return `${Math.max(0, Math.round(ms))} ms`
@@ -185,7 +181,7 @@ export class RunPanelWidget extends NibWidget {
     super()
   }
 
-  eq(other: RunPanelWidget) {
+  override eq(other: RunPanelWidget) {
     const mine = this.panel
     const theirs = other.panel
     return (
@@ -228,7 +224,8 @@ export class RunPanelWidget extends NibWidget {
     if (panel.status === 'running') {
       // The count is the widget's own business: driving it through the editor
       // would mean a transaction every tenth of a second.
-      TICKERS.set(host, window.setInterval(tick, 100))
+      const ticker = window.setInterval(tick, 100)
+      this.onDestroy(host, () => window.clearInterval(ticker))
 
       const stop = document.createElement('button')
       stop.className = 'nib-run-stop'
@@ -291,15 +288,8 @@ export class RunPanelWidget extends NibWidget {
     return host
   }
 
-  destroy(dom: HTMLElement) {
-    const ticker = TICKERS.get(dom)
-    if (ticker !== undefined) window.clearInterval(ticker)
-    TICKERS.delete(dom)
-    super.destroy(dom)
-  }
-
   /** The widget runs its own buttons; CodeMirror should not read the clicks. */
-  ignoreEvent() {
+  override ignoreEvent() {
     return true
   }
 

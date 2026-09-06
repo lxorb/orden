@@ -429,7 +429,7 @@ export class ImageWidget extends NibWidget {
     super()
   }
 
-  eq(other: ImageWidget) {
+  override eq(other: ImageWidget) {
     const a = this.spec
     const b = other.spec
     return (
@@ -530,7 +530,7 @@ export class ImageWidget extends NibWidget {
 
   /** A changed alt or size is applied to the picture that is already there,
    *  rather than loading it again. A different picture is rebuilt. */
-  updateDOM(frame: HTMLElement, view: EditorView): boolean {
+  override updateDOM(frame: HTMLElement, view: EditorView): boolean {
     if (frame.dataset.src !== view.state.facet(imageResolver)(this.spec.src)) return false
     this.sync(frame, this.spec)
     return true
@@ -742,7 +742,7 @@ export class ImageWidget extends NibWidget {
     handle.addEventListener('pointercancel', finish)
   }
 
-  ignoreEvent() {
+  override ignoreEvent() {
     return true
   }
 }

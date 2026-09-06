@@ -9,7 +9,7 @@ export class BulletWidget extends NibWidget {
     super()
   }
 
-  eq(other: BulletWidget) {
+  override eq(other: BulletWidget) {
     return other.depth === this.depth
   }
 
@@ -30,7 +30,7 @@ export class CheckboxWidget extends NibWidget {
     super()
   }
 
-  eq(other: CheckboxWidget) {
+  override eq(other: CheckboxWidget) {
     return other.checked === this.checked && other.from === this.from
   }
 
@@ -54,13 +54,13 @@ export class CheckboxWidget extends NibWidget {
     return box
   }
 
-  ignoreEvent() {
+  override ignoreEvent() {
     return false
   }
 }
 
 export class RuleWidget extends NibWidget {
-  eq() {
+  override eq() {
     return true
   }
 
@@ -77,7 +77,7 @@ export class CalloutWidget extends NibWidget {
     super()
   }
 
-  eq(other: CalloutWidget) {
+  override eq(other: CalloutWidget) {
     return other.kind === this.kind
   }
 
@@ -91,10 +91,6 @@ export class CalloutWidget extends NibWidget {
 }
 
 /** Sits on a code fence's top line: what language it is, and a way to take it. */
-/** What each header registered on the editor, to take down with the header.
- *  Keyed by the element, since one widget can be drawn more than once. */
-const LISTENERS = new WeakMap<HTMLElement, () => void>()
-
 export class FenceHeaderWidget extends NibWidget {
   constructor(
     private readonly language: string,
@@ -109,7 +105,7 @@ export class FenceHeaderWidget extends NibWidget {
     super()
   }
 
-  eq(other: FenceHeaderWidget) {
+  override eq(other: FenceHeaderWidget) {
     return (
       other.language === this.language &&
       other.code === this.code &&
@@ -209,18 +205,12 @@ export class FenceHeaderWidget extends NibWidget {
 
     view.contentDOM.addEventListener('mouseover', over)
     view.contentDOM.addEventListener('mouseleave', leave)
-    LISTENERS.set(bar, () => {
+    this.onDestroy(bar, () => {
       view.contentDOM.removeEventListener('mouseover', over)
       view.contentDOM.removeEventListener('mouseleave', leave)
     })
 
     return bar
-  }
-
-  destroy(dom: HTMLElement) {
-    LISTENERS.get(dom)?.()
-    LISTENERS.delete(dom)
-    super.destroy(dom)
   }
 
   /** Whether `line` is one of the lines of the block this header sits on. */
@@ -292,14 +282,14 @@ export class FenceHeaderWidget extends NibWidget {
     field.select()
   }
 
-  ignoreEvent() {
+  override ignoreEvent() {
     return true
   }
 }
 
 /** Where a printed page ends. Invisible in the file, obvious on screen. */
 export class PageBreakWidget extends NibWidget {
-  eq() {
+  override eq() {
     return true
   }
 
@@ -317,7 +307,7 @@ export class EmojiWidget extends NibWidget {
     super()
   }
 
-  eq(other: EmojiWidget) {
+  override eq(other: EmojiWidget) {
     return other.character === this.character
   }
 

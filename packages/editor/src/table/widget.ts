@@ -30,14 +30,14 @@ export class TableWidget extends NibWidget {
     super()
   }
 
-  eq(other: TableWidget) {
+  override eq(other: TableWidget) {
     return (
       other.source === this.source && other.from === this.from && other.writable === this.writable
     )
   }
 
   /** The widget runs its own editing, so CodeMirror should not interpret events. */
-  ignoreEvent() {
+  override ignoreEvent() {
     return true
   }
 
@@ -59,7 +59,7 @@ export class TableWidget extends NibWidget {
 
   /** A table that was edited, moved or undone keeps its DOM. Cells the
    *  document disagrees with are redrawn; column widths and the caret stay. */
-  updateDOM(dom: HTMLElement, _view: EditorView, previous: TableWidget) {
+  override updateDOM(dom: HTMLElement, _view: EditorView, previous: TableWidget) {
     const table = views.get(dom)
     if (!table) return false
     if (previous.from !== this.from && previous.source !== this.source) return false
@@ -71,11 +71,13 @@ export class TableWidget extends NibWidget {
     return true
   }
 
-  destroy(dom: HTMLElement) {
+  override destroy(dom: HTMLElement) {
     const table = views.get(dom)
-    if (!table) return
-    table.destroy()
-    views.delete(dom)
-    live.delete(table)
+    if (table) {
+      table.destroy()
+      views.delete(dom)
+      live.delete(table)
+    }
+    super.destroy(dom)
   }
 }
