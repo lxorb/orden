@@ -14,7 +14,7 @@ export function snippets(): Record<string, string> {
 
 /** The first line, trimmed, for the completion list's second column. */
 function summarise(body: string): string {
-  const first = body.split('\n')[0].trim()
+  const first = (body.split('\n')[0] ?? '').trim()
   return first.length > 48 ? `${first.slice(0, 47)}…` : first
 }
 

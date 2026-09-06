@@ -22,10 +22,13 @@ export interface BindingSpec {
   mac?: string | null
   win?: string | null
   linux?: string | null
-  run: KeyBinding['run']
+  /** Required, and never undefined: a spec is a command with a name, and one
+   *  without a command would go into the keymap as a key that swallows the
+   *  keystroke and does nothing. */
+  run: NonNullable<KeyBinding['run']>
   /** The same key with Shift held, where CodeMirror's own binding paired the
    *  two - Find next and Find previous are one binding to it. */
-  shift?: KeyBinding['shift']
+  shift?: NonNullable<KeyBinding['shift']>
   scope?: string
   preventDefault?: boolean
   /** A binding that gives way: it looks for something around the caret - a
@@ -88,7 +91,10 @@ export function bindings(specs: BindingSpec[], overrides: KeyOverrides): KeyBind
   const built: KeyBinding[] = []
 
   for (const spec of specs) {
-    const chosen = spec.id in overrides ? overrides[spec.id] : undefined
+    // A key of null is the reader taking the key away; an id that is not in
+    // the overrides at all is the default. `in` is what tells those apart,
+    // since the lookup answers undefined either way.
+    const chosen = spec.id in overrides ? (overrides[spec.id] ?? null) : undefined
     if (chosen === null) continue
 
     const binding: KeyBinding = { run: spec.run }

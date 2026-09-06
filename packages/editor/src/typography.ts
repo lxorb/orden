@@ -24,8 +24,10 @@ export interface Replacement {
  *  to and including it. Pure, so the behaviour is testable without a view. */
 export function smartReplacement(before: string): Replacement | null {
   for (const rule of RULES) {
-    const match = rule.pattern.exec(before)
-    if (match) return { consumed: match[1].length, insert: rule.insert }
+    // Every rule captures exactly the characters it replaces, so a match has
+    // group one; the default is what satisfies a compiler that cannot see that.
+    const [, replaced = ''] = rule.pattern.exec(before) ?? []
+    if (replaced) return { consumed: replaced.length, insert: rule.insert }
   }
   return null
 }

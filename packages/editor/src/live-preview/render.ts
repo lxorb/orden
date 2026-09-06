@@ -13,8 +13,8 @@ export function resetEquationLabels() {
 }
 
 export function recordEquationLabel(tex: string, number: number) {
-  const label = /\\label\s*\{([^}]+)\}/.exec(tex)
-  if (label) equationNumbers.set(label[1], number)
+  const label = /\\label\s*\{([^}]+)\}/.exec(tex)?.[1]
+  if (label !== undefined) equationNumbers.set(label, number)
 }
 
 /** `\label` is TeX bookkeeping, not something KaTeX renders; `\eqref` becomes

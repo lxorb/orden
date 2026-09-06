@@ -108,10 +108,19 @@ export function parseHtmlImage(tag: string): ImageSpec | null {
     src,
     alt: attribute(tag, 'alt') ?? '',
     title: attribute(tag, 'title') ?? '',
-    zoom: zoom ? Number(zoom[1]) : 100,
+    zoom: zoom?.[1] === undefined ? 100 : Number(zoom[1]),
   }
-  if (width && !zoom) spec.width = Number(width[1])
+  // A zoom is what this editor writes, so it wins: an old tag carrying both
+  // would otherwise be shown at one size and written back at the other.
+  if (!zoom && width?.[1] !== undefined) spec.width = Number(width[1])
   return spec
+}
+
+/** The same image at a new zoom, with any pixel `width` dropped. The two are
+ *  different ways of saying one thing, and a resize records the zoom, so
+ *  leaving the old width behind would make the markup contradict itself. */
+function withZoom(image: ImageSpec, zoom: number): ImageSpec {
+  return { src: image.src, alt: image.alt, title: image.title, zoom }
 }
 
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {
@@ -119,8 +128,8 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   if (!url) return null
 
   // The parser leaves alt text as bare text between `![` and `]`.
-  const marks = node.getChildren('LinkMark')
-  const alt = marks.length >= 2 ? state.doc.sliceString(marks[0].to, marks[1].from) : ''
+  const [open, close] = node.getChildren('LinkMark')
+  const alt = open && close ? state.doc.sliceString(open.to, close.from) : ''
   const title = node.getChild('LinkTitle')
 
   return {
@@ -488,7 +497,10 @@ export class ImageWidget extends NibWidget {
     }
 
     image.addEventListener('load', () => {
-      NATURAL.set(image.src, { width: image.naturalWidth, height: image.naturalHeight })
+      // Filed under the resolved path, which is what the lookups use. Reading
+      // `image.src` back instead would give the browser's absolute form of it,
+      // and a relative path would never be found again.
+      NATURAL.set(src, { width: image.naturalWidth, height: image.naturalHeight })
       // A picture arriving for the first time develops into view; one whose
       // size was already known simply appears where its room was kept.
       if (!known) frame.classList.add('is-fresh')
@@ -551,8 +563,12 @@ export class ImageWidget extends NibWidget {
 
     if (document.activeElement !== parts.alt) parts.alt.value = image.alt
     parts.size.textContent = sizeLabel(image.zoom, natural)
-    parts.size.disabled = image.zoom === 100
-    parts.size.title = image.zoom === 100 ? '' : uiLabel('resetSize')
+    // A pixel `width` is a size too, so an image carrying one has something to
+    // reset even at 100%: leaving the button disabled there was the one way to
+    // reach an `<img width="...">` and not be able to undo it.
+    const plain = image.zoom === 100 && !image.width
+    parts.size.disabled = plain
+    parts.size.title = plain ? '' : uiLabel('resetSize')
   }
 
   private inToolbar(event: Event): boolean {
@@ -630,7 +646,7 @@ export class ImageWidget extends NibWidget {
 
     button('nib-image-size', '', '', (image) => {
       if (image.zoom !== 100 || image.width) {
-        rewrite(view, image, { ...image, zoom: 100, width: undefined }, 'input.image.resize')
+        rewrite(view, image, withZoom(image, 100), 'input.image.resize')
       }
       view.focus()
     })
@@ -715,7 +731,7 @@ export class ImageWidget extends NibWidget {
         lineWidth,
         !moved.altKey,
       )
-      parts.image.style.width = displayWidth({ ...image, zoom, width: undefined }, natural)
+      parts.image.style.width = displayWidth(withZoom(image, zoom), natural)
       parts.badge.textContent = sizeLabel(zoom, natural)
       parts.size.textContent = sizeLabel(zoom, natural)
     }
@@ -734,7 +750,7 @@ export class ImageWidget extends NibWidget {
         this.sync(frame, current)
         return
       }
-      rewrite(view, current, { ...current, zoom, width: undefined }, 'input.image.resize')
+      rewrite(view, current, withZoom(current, zoom), 'input.image.resize')
     }
 
     handle.addEventListener('pointermove', move)

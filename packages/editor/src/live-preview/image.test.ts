@@ -66,6 +66,14 @@ describe('parsing an img tag', () => {
     expect(parseHtmlImage('<img src="a.png" width="320">')?.width).toBe(320)
   })
 
+  test('lets a zoom win over a width', () => {
+    // The two are different ways of saying one size, and a zoom is what this
+    // editor writes. A tag carrying both would otherwise be drawn at the
+    // width and written back at the zoom.
+    const spec = parseHtmlImage('<img src="a.png" width="320" style="zoom:50%;">')
+    expect(spec).toEqual({ src: 'a.png', alt: '', title: '', zoom: 50 })
+  })
+
   test('unescapes attribute values', () => {
     expect(parseHtmlImage('<img src="a.png" alt="say &quot;hi&quot; &amp; bye">')?.alt).toBe(
       'say "hi" & bye',

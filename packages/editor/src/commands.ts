@@ -61,17 +61,25 @@ function selectedLines(state: Parameters<StateCommand>[0]['state']) {
 
 const HEADING = /^(#{1,6})\s+/
 
+/** What the `#` run at the head of a line says, and how much of the line it
+ *  takes with the whitespace after it. Level zero is a line that is not a
+ *  heading, and then there is nothing to replace. Both commands below want
+ *  exactly this, so it is decided in one place. */
+function headingOf(text: string): { level: number; length: number } {
+  const match = HEADING.exec(text)
+  const hashes = match?.[1]
+  if (!match || hashes === undefined) return { level: 0, length: 0 }
+  return { level: hashes.length, length: match[0].length }
+}
+
 /** Level 0 turns the line back into a paragraph. */
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
-    const changes: ChangeSpec[] = selectedLines(state).map((line) => {
-      const existing = HEADING.exec(line.text)
-      return {
-        from: line.from,
-        to: line.from + (existing ? existing[0].length : 0),
-        insert: level ? `${'#'.repeat(level)} ` : '',
-      }
-    })
+    const changes: ChangeSpec[] = selectedLines(state).map((line) => ({
+      from: line.from,
+      to: line.from + headingOf(line.text).length,
+      insert: level ? `${'#'.repeat(level)} ` : '',
+    }))
 
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
@@ -81,13 +89,12 @@ export function setHeading(level: number): StateCommand {
 export function shiftHeading(delta: number): StateCommand {
   return ({ state, dispatch }) => {
     const changes: ChangeSpec[] = selectedLines(state).map((line) => {
-      const existing = HEADING.exec(line.text)
-      const current = existing ? existing[1].length : 0
-      const next = Math.min(6, Math.max(0, current + delta))
+      const existing = headingOf(line.text)
+      const next = Math.min(6, Math.max(0, existing.level + delta))
 
       return {
         from: line.from,
-        to: line.from + (existing ? existing[0].length : 0),
+        to: line.from + existing.length,
         insert: next ? `${'#'.repeat(next)} ` : '',
       }
     })
@@ -171,16 +178,19 @@ const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
 
 function fenceOf(text: string): { mark: string; info: string } | null {
   const match = FENCE.exec(text)
-  if (!match) return null
-  if (match[1][0] === '`' && match[2].includes('`')) return null
-  return { mark: match[1], info: match[2].trim() }
+  const mark = match?.[1]
+  const info = match?.[2]
+  if (mark === undefined || info === undefined) return null
+  if (mark.startsWith('`') && info.includes('`')) return null
+  return { mark, info: info.trim() }
 }
 
 /** Whether a line closes a fence opened with `mark`: the same character, at
  *  least as many of them, and nothing else. */
 function closes(text: string, mark: string): boolean {
   const found = fenceOf(text)
-  return !!found && found.mark[0] === mark[0] && found.mark.length >= mark.length && !found.info
+  if (!found) return false
+  return found.mark[0] === mark[0] && found.mark.length >= mark.length && !found.info
 }
 
 /** Enter at the end of an opening fence closes the fence as well, with the

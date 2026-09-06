@@ -40,8 +40,6 @@ const TOC_MAX = 16
  *  counted in a first pass over the document. */
 function collectEquationLabels(state: EditorState): Map<number, number> {
   const numbers = new Map<number, number>()
-  resetEquationLabels()
-
   let counter = 0
   syntaxTree(state).iterate({
     enter: (node) => {
@@ -78,6 +76,10 @@ function buildBlocks(state: EditorState): Blocks {
   let toc = false
   const doc = state.doc
   const numbered = state.facet(numberEquations)
+  // The labels belong to this document, so they are dropped whether or not
+  // numbering is on. With it off there is nothing for `\eqref` to resolve to,
+  // and it must not answer with a number left over from another note.
+  resetEquationLabels()
   const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
 
   const wholeLines = (from: number, to: number) => ({

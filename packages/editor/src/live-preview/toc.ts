@@ -22,7 +22,7 @@ export function headings(state: EditorState): Heading[] {
 
       const line = state.doc.lineAt(node.from)
       found.push({
-        level: Number(match[1]),
+        level: Number(match[1] ?? '1'),
         text: line.text
           .replace(/^#{1,6}\s*/, '')
           .replace(/\s*#+\s*$/, '')
@@ -42,14 +42,21 @@ export class TocWidget extends NibWidget {
     super()
   }
 
+  /** `from` counts, not only the text: each entry's link carries the position
+   *  it scrolls to, so a heading that moved needs a new one. Without that, a
+   *  paragraph typed above a heading leaves every entry below it pointing at
+   *  where the heading used to be. */
   override eq(other: TocWidget) {
-    return (
-      other.entries.length === this.entries.length &&
-      other.entries.every((entry, index) => {
-        const mine = this.entries[index]
-        return entry.text === mine.text && entry.level === mine.level
-      })
-    )
+    if (other.entries.length !== this.entries.length) return false
+    return this.entries.every((mine, index) => {
+      const theirs = other.entries[index]
+      return (
+        !!theirs &&
+        theirs.text === mine.text &&
+        theirs.level === mine.level &&
+        theirs.from === mine.from
+      )
+    })
   }
 
   toDOM(view: EditorView) {

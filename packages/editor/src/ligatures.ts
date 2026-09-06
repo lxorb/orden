@@ -41,9 +41,13 @@ export const LIGATURES: Record<string, string> = {
   '...': '…',
 }
 
-/** Longest first, so `<=>` is one arrow and not `<=` and a stray `>`. */
-const RUNS = Object.keys(LIGATURES).sort((a, b) => b.length - a.length)
-const OPENERS = new Set(RUNS.map((run) => run[0]))
+/** Each run beside its glyph, longest first, so `<=>` is one arrow and not
+ *  `<=` and a stray `>`. Paired rather than looked up again by key: the run
+ *  that matched already knows what it stands for. */
+const RUNS: readonly (readonly [run: string, glyph: string])[] = Object.entries(LIGATURES).sort(
+  ([a], [b]) => b.length - a.length,
+)
+const OPENERS = new Set(RUNS.map(([run]) => run.charAt(0)))
 
 export interface Ligature {
   from: number
@@ -56,12 +60,17 @@ export interface Ligature {
 export function findLigatures(text: string, offset = 0): Ligature[] {
   const out: Ligature[] = []
   for (let at = 0; at < text.length;) {
-    const run = OPENERS.has(text[at]) ? RUNS.find((one) => text.startsWith(one, at)) : undefined
-    if (!run) {
+    // Most characters open nothing, so the set answers for them before the
+    // list is walked at all.
+    const found = OPENERS.has(text.charAt(at))
+      ? RUNS.find(([run]) => text.startsWith(run, at))
+      : undefined
+    if (!found) {
       at += 1
       continue
     }
-    out.push({ from: offset + at, to: offset + at + run.length, glyph: LIGATURES[run] })
+    const [run, glyph] = found
+    out.push({ from: offset + at, to: offset + at + run.length, glyph })
     at += run.length
   }
   return out

@@ -179,9 +179,13 @@ class Decorator {
 
   private linkText(from: number, to: number, target: string) {
     if (from >= to) return
+    // A target the browser cannot follow - a relative path, a `#heading` -
+    // still reads as a link, but carries no `data-href` for links.ts to open.
     const href = hrefOf(target)
-    const attributes = href ? { 'data-href': href, title: linkTitle(href) } : undefined
-    this.marks.push(Decoration.mark({ class: 'nib-link', attributes }).range(from, to))
+    const spec = href
+      ? { class: 'nib-link', attributes: { 'data-href': href, title: linkTitle(href) } }
+      : { class: 'nib-link' }
+    this.marks.push(Decoration.mark(spec).range(from, to))
   }
 
   private isClaimed(from: number, to: number): boolean {
@@ -204,16 +208,16 @@ class Decorator {
     this.markLines(node, 'nib-quote')
 
     const first = this.state.doc.lineAt(node.from)
-    const callout = CALLOUT.exec(first.text)
-    if (!callout) return
+    const kind = CALLOUT.exec(first.text)?.[1]?.toLowerCase()
+    if (kind === undefined) return
 
     // Every line needs the kind, not just the header, so the accent runs the
     // full height of the callout.
-    const kind = callout[1].toLowerCase()
     this.markLines(node, `nib-callout nib-callout-${kind}`)
 
-    const from = first.from + first.text.indexOf('[!')
-    const to = first.from + first.text.indexOf(']', first.text.indexOf('[!')) + 1
+    const opened = first.text.indexOf('[!')
+    const from = first.from + opened
+    const to = first.from + first.text.indexOf(']', opened) + 1
 
     // `[!NOTE]` also parses as a link label, so claim it before the walk reaches
     // the LinkMarks inside it.

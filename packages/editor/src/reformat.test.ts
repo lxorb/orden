@@ -46,6 +46,27 @@ describe('tidying a document', () => {
     expect(reformat(source)).toBe(source)
   })
 
+  test('a tilde run inside a backtick block does not end it', () => {
+    const source = '```md\n~~~\n*  still code\n~~~\n```\n\n* a list\n'
+    expect(reformat(source)).toBe('```md\n~~~\n*  still code\n~~~\n```\n\n- a list\n')
+  })
+
+  test('a fence nothing closes takes the rest of the note with it', () => {
+    const source = '```\n*  still code\n_still code_\n'
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('leaves front matter exactly as written', () => {
+    const source = '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n* a list\n'
+    expect(reformat(source)).toBe(
+      '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n- a list\n',
+    )
+  })
+
+  test('a leading rule is not front matter', () => {
+    expect(reformat('---\n\n_text_\n')).toBe('---\n\n*text*\n')
+  })
+
   test('leaves a document that is already tidy unchanged', () => {
     const source = '# Title\n\n- one\n- two\n\n*emphasis* here\n'
     expect(reformat(source)).toBe(source)

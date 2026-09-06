@@ -38,10 +38,12 @@ export const selectWord: StateCommand = ({ state, dispatch }) => {
     const text = line.text
     const offset = range.head - line.from
 
+    // `charAt` past either end of the line answers with the empty string,
+    // which is not a word character, so the walk stops there on its own.
     let from = offset
     let to = offset
-    while (from > 0 && WORD.test(text[from - 1])) from--
-    while (to < text.length && WORD.test(text[to])) to++
+    while (from > 0 && WORD.test(text.charAt(from - 1))) from--
+    while (to < text.length && WORD.test(text.charAt(to))) to++
 
     return { range: EditorSelection.range(line.from + from, line.from + to) }
   })
@@ -121,24 +123,42 @@ function adopt(
   id: string,
   from: readonly KeyBinding[],
   key: string,
-  extra: Partial<BindingSpec> = {},
+  extra: Extra = {},
 ): BindingSpec {
-  const original = from.find((binding) => binding.key === key)
-  if (!original) throw new Error(`no binding for ${key} to adopt as ${id}`)
+  const original = claim(from, (binding) => binding.key === key, `${key} to adopt as ${id}`)
 
+  // Only the fields the library actually set are copied across. An absent
+  // `mac` and a `mac` of undefined mean the same thing to `defaultKeyFor`, but
+  // not to the compiler, and not to anyone reading a spec to see which
+  // platforms it names.
+  const spec: BindingSpec = { id, key: original.key ?? null, run: original.run, ...extra }
+  if (original.mac !== undefined) spec.mac = original.mac
+  if (original.win !== undefined) spec.win = original.win
+  if (original.linux !== undefined) spec.linux = original.linux
+  if (original.shift !== undefined) spec.shift = original.shift
+  if (original.scope !== undefined) spec.scope = original.scope
+  if (original.preventDefault !== undefined) spec.preventDefault = original.preventDefault
+  return spec
+}
+
+/** What an adopted binding may be told about itself that the library's own
+ *  entry cannot say. Only aliases so far, and there is no reason to widen it
+ *  until something needs it. */
+type Extra = Pick<Partial<BindingSpec>, 'alias'>
+
+/** Takes one of the library's bindings over by name, or fails loudly. A key
+ *  the library no longer binds would otherwise become a named shortcut with no
+ *  command behind it, which reads in the settings as a key that simply does
+ *  nothing. */
+function claim(
+  from: readonly KeyBinding[],
+  match: (binding: KeyBinding) => boolean,
+  what: string,
+): KeyBinding & Pick<BindingSpec, 'run'> {
+  const original = from.find(match)
+  if (!original?.run) throw new Error(`no binding for ${what}`)
   adopted.add(original)
-  return {
-    id,
-    key: original.key ?? null,
-    mac: original.mac,
-    win: original.win,
-    linux: original.linux,
-    run: original.run,
-    shift: original.shift,
-    scope: original.scope,
-    preventDefault: original.preventDefault,
-    ...extra,
-  }
+  return { ...original, run: original.run }
 }
 
 /** The library's own binding objects that are now spoken for by an id. */
@@ -155,7 +175,9 @@ export const standardBindings: BindingSpec[] = [
     id: 'edit.redo.alt',
     key: null,
     linux: 'Ctrl-Shift-z',
-    run: historyKeymap.find((binding) => binding.linux === 'Ctrl-Shift-z')!.run,
+    // Claimed the same way as the rest, so the library's own entry goes out of
+    // `unclaimedKeymap` below and the key is not bound twice.
+    run: claim(historyKeymap, (binding) => binding.linux === 'Ctrl-Shift-z', 'the Linux redo').run,
     preventDefault: true,
     alias: true,
   },
@@ -169,12 +191,6 @@ export const standardBindings: BindingSpec[] = [
   adopt('edit.copy-line-up', defaultKeymap, 'Shift-Alt-ArrowUp'),
   adopt('edit.copy-line-down', defaultKeymap, 'Shift-Alt-ArrowDown'),
 ]
-
-// The Linux-only redo is bound by id now, so it goes out of the keymap below
-// with the rest of the ones taken over.
-for (const binding of historyKeymap) {
-  if (binding.linux === 'Ctrl-Shift-z') adopted.add(binding)
-}
 
 /** Everything CodeMirror binds that nothing here has taken over: the keys
  *  that make a text editor a text editor, left exactly as the library has

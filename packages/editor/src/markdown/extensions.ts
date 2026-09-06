@@ -155,13 +155,14 @@ export const Footnote: MarkdownConfig = {
         const match = /^\[\^([^\]\s]+)\]:/.exec(line.text.slice(line.pos))
         if (!match) return false
 
+        const [whole, label = ''] = match
         const from = cx.lineStart + line.pos
         const to = from + line.text.length - line.pos
         cx.addElement(
           cx.elt('FootnoteDef', from, to, [
             cx.elt('FootnoteMark', from, from + 2),
-            cx.elt('FootnoteLabel', from + 2, from + 2 + match[1].length),
-            cx.elt('FootnoteMark', from + 2 + match[1].length, from + match[0].length),
+            cx.elt('FootnoteLabel', from + 2, from + 2 + label.length),
+            cx.elt('FootnoteMark', from + 2 + label.length, from + whole.length),
           ]),
         )
         cx.nextLine()
@@ -258,14 +259,15 @@ export const Abbreviation: MarkdownConfig = {
         const match = /^\*\[([^\]\n]+)\]:/.exec(line.text.slice(line.pos))
         if (!match) return false
 
+        const [whole, label = ''] = match
         const from = cx.lineStart + line.pos
         const to = cx.lineStart + line.text.length
 
         cx.addElement(
           cx.elt('AbbrevDef', from, to, [
             cx.elt('AbbrevMark', from, from + 2),
-            cx.elt('AbbrevLabel', from + 2, from + 2 + match[1].length),
-            cx.elt('AbbrevMark', from + 2 + match[1].length, from + match[0].length),
+            cx.elt('AbbrevLabel', from + 2, from + 2 + label.length),
+            cx.elt('AbbrevMark', from + 2 + label.length, from + whole.length),
           ]),
         )
         cx.nextLine()
@@ -339,14 +341,22 @@ function closerAhead(cx: BlockContext, line: Line, mark: number, length: number)
     Object.assign(state.line, fields)
     state.line.markers.length = 0
     state.line.markers.push(...savedMarkers)
-    blocks.forEach((block, i) => Object.assign(state.stack[i], block))
+    // Reading lines never pushes or pops the stack - only the parse loop does,
+    // and it is not running here - so the same blocks are still there to write
+    // back into. Written to defend against that changing rather than to fix a
+    // shortened stack, which this could not put right anyway.
+    blocks.forEach((block, i) => {
+      const still = state.stack[i]
+      if (still) Object.assign(still, block)
+    })
   }
 }
 
 /** Adds code text, stretching the previous piece when it touches this one. */
 function addCodeText(cx: BlockContext, marks: Element[], from: number, to: number) {
-  const last = marks[marks.length - 1]
-  if (last && last.to === from && cx.parser.nodeSet.types[last.type].name === 'CodeText') {
+  const last = marks.at(-1)
+  const name = last && cx.parser.nodeSet.types[last.type]?.name
+  if (last && last.to === from && name === 'CodeText') {
     marks[marks.length - 1] = cx.elt('CodeText', last.from, to)
   } else {
     marks.push(cx.elt('CodeText', from, to))

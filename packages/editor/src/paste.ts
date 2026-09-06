@@ -57,9 +57,12 @@ export function delimitedToTable(text: string): string | null {
     .replace(/\r\n?/g, '\n')
     .split('\n')
     .filter((line) => line.length > 0)
-  if (lines.length < 2) return null
+  const [firstLine] = lines
+  if (firstLine === undefined || lines.length < 2) return null
 
-  const separator = lines[0].includes('\t')
+  // A tab on the first line settles it; a comma has to be on every line, since
+  // one comma in a sentence is not a column.
+  const separator = firstLine.includes('\t')
     ? '\t'
     : lines.every((l) => l.includes(','))
       ? ','
@@ -67,16 +70,19 @@ export function delimitedToTable(text: string): string | null {
   if (!separator) return null
 
   const rows = lines.map((line) => line.split(separator).map((cell) => cell.trim()))
-  const columns = rows[0].length
+  // An empty header falls out below on the column count, so the default needs
+  // no check of its own.
+  const [header = [], ...body] = rows
+  const columns = header.length
   if (columns < 2 || rows.some((row) => row.length !== columns)) return null
 
   const escape = (cell: string) => cell.replace(/\|/g, '\\|')
   const render = (row: string[]) => `| ${row.map(escape).join(' | ')} |`
 
   return [
-    render(rows[0]),
+    render(header),
     `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`,
-    ...rows.slice(1).map(render),
+    ...body.map(render),
   ].join('\n')
 }
 

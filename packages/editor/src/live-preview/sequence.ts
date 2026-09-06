@@ -47,7 +47,9 @@ function asMessage(line: string): string | null {
   const match = /^(.+?)(-->>|->>|-->|->|--|-)\s*(.+?)\s*:\s*(.*)$/.exec(line)
   if (!match) return null
 
-  const [, from, arrow, to, text] = match
+  // Every group is required by the pattern, so a match has them all; the
+  // defaults are what satisfies a compiler that cannot see that.
+  const [, from = '', arrow = '', to = '', text = ''] = match
   const dashed = arrow.startsWith('--')
   const mermaidArrow = dashed ? '-->>' : '->>'
 
