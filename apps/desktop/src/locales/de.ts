@@ -136,6 +136,9 @@ export const de: Dictionary = {
   'Tidy up this note': 'Notiz aufräumen',
 
   // Modes and view
+  'Reading mode': 'Lesemodus',
+  'Leave reading mode': 'Lesemodus verlassen',
+  'Read-only': 'Schreibgeschützt',
   'Source mode': 'Quelltextmodus',
   'Leave source mode': 'Quelltextmodus verlassen',
   'Focus mode': 'Fokusmodus',

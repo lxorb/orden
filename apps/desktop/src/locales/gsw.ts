@@ -138,6 +138,9 @@ export const gsw: Dictionary = {
   'Tidy up this note': 'Notiz ufruume',
 
   // Modes and view
+  'Reading mode': 'Läsmodus',
+  'Leave reading mode': 'Läsmodus verlaa',
+  'Read-only': 'Schriibgschützt',
   'Source mode': 'Quälltextmodus',
   'Leave source mode': 'Quälltextmodus verlaa',
   'Focus mode': 'Fokusmodus',

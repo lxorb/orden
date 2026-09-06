@@ -1,7 +1,8 @@
 <script lang="ts">
   import { countText } from './counts'
+  import { t } from './i18n.svelte'
 
-  let { doc = '' }: { doc?: string } = $props()
+  let { doc = '', reading = false }: { doc?: string; reading?: boolean } = $props()
 
   /** Whether the pointer is on the numbers. They are invisible until then, and
    *  counting the words of a large note is not something to do on the way past:
@@ -11,11 +12,17 @@
   const counts = $derived(looking ? countText(doc) : null)
 </script>
 
+<!-- The one place the app says what is true of the note it is showing, so the
+     word for a note nobody can type into goes here rather than into a banner
+     over the text. It is the only thing in the bar that shows unasked. -->
 <footer
-  class:looking
+  class:looking={looking || reading}
   onpointerenter={() => (looking = true)}
   onpointerleave={() => (looking = false)}
 >
+  {#if reading}
+    <span class="reading">{t('Read-only')}</span>
+  {/if}
   {#if counts}
     <span>{counts.words.toLocaleString()}w</span>
     <span>{counts.characters.toLocaleString()}c</span>
@@ -48,6 +55,12 @@
 
   footer.looking {
     opacity: 1;
+  }
+
+  /* Said once, quietly, and never in the way: the numbers slide in beside it
+     when the pointer comes over. */
+  .reading {
+    letter-spacing: 0.03em;
   }
 
   /* There is no hover on a phone, so this never appears - but it still sits in

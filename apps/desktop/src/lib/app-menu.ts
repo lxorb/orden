@@ -75,11 +75,15 @@ export function appMenu(context: Context): MenuGroup[] {
   const { view } = context
   const hasNote = !!workspace.active
   const selected = !!view && !view.state.selection.main.empty
+  /** Whether the editor takes an edit at all. Reading mode says no, and every
+   *  row that would write says so by greying out rather than by doing nothing
+   *  when it is pressed. */
+  const writable = !!view && !view.state.readOnly
 
   const heading = (level: number): MenuAction => ({
     label: t('Heading {level}', { level }),
     hint: `Ctrl ${level}`,
-    disabled: !view,
+    disabled: !writable,
     run: () => run(view, setHeading(level)),
   })
 
@@ -131,13 +135,13 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'edit',
       label: t('Edit'),
       rows: [
-        { label: t('Undo'), hint: 'Ctrl Z', disabled: !view, run: () => view && undoEdit(view) },
-        { label: t('Redo'), hint: 'Ctrl Y', disabled: !view, run: () => view && redoEdit(view) },
+        { label: t('Undo'), hint: 'Ctrl Z', disabled: !writable, run: () => view && undoEdit(view) },
+        { label: t('Redo'), hint: 'Ctrl Y', disabled: !writable, run: () => view && redoEdit(view) },
         SPLIT,
         {
           label: t('Cut'),
           hint: 'Ctrl X',
-          disabled: !selected,
+          disabled: !selected || !writable,
           run: () => document.execCommand('cut'),
         },
         {
@@ -175,24 +179,24 @@ export function appMenu(context: Context): MenuGroup[] {
         heading(4),
         heading(5),
         heading(6),
-        { label: t('Paragraph'), disabled: !view, run: () => run(view, setHeading(0)) },
+        { label: t('Paragraph'), disabled: !writable, run: () => run(view, setHeading(0)) },
         SPLIT,
         // Not through `run`: the new table takes the focus into its first cell,
         // and focusing the editor afterwards would take it straight back out.
-        { label: t('Table'), hint: 'Ctrl Alt T', disabled: !view, run: () => view && insertTableToEdit(view) },
-        { label: t('Code block'), disabled: !view, run: () => run(view, insertCodeFence) },
-        { label: t('Quote'), disabled: !view, run: () => run(view, toggleQuote) },
-        { label: t('Math block'), disabled: !view, run: () => run(view, insertMathBlock) },
+        { label: t('Table'), hint: 'Ctrl Alt T', disabled: !writable, run: () => view && insertTableToEdit(view) },
+        { label: t('Code block'), disabled: !writable, run: () => run(view, insertCodeFence) },
+        { label: t('Quote'), disabled: !writable, run: () => run(view, toggleQuote) },
+        { label: t('Math block'), disabled: !writable, run: () => run(view, insertMathBlock) },
         SPLIT,
-        { label: t('Bulleted list'), disabled: !view, run: () => run(view, toggleBulletList) },
-        { label: t('Numbered list'), disabled: !view, run: () => run(view, toggleOrderedList) },
+        { label: t('Bulleted list'), disabled: !writable, run: () => run(view, toggleBulletList) },
+        { label: t('Numbered list'), disabled: !writable, run: () => run(view, toggleOrderedList) },
         SPLIT,
         {
           label: t('Horizontal rule'),
-          disabled: !view,
+          disabled: !writable,
           run: () => run(view, insertHorizontalRule),
         },
-        { label: t('Page break'), disabled: !view, run: () => run(view, insertPageBreak) },
+        { label: t('Page break'), disabled: !writable, run: () => run(view, insertPageBreak) },
       ],
     },
 
@@ -200,26 +204,26 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'format',
       label: t('Format'),
       rows: [
-        { label: t('Bold'), hint: 'Ctrl B', disabled: !view, run: () => run(view, toggleWrap('**')) },
-        { label: t('Italic'), hint: 'Ctrl I', disabled: !view, run: () => run(view, toggleWrap('*')) },
+        { label: t('Bold'), hint: 'Ctrl B', disabled: !writable, run: () => run(view, toggleWrap('**')) },
+        { label: t('Italic'), hint: 'Ctrl I', disabled: !writable, run: () => run(view, toggleWrap('*')) },
         {
           label: t('Strikethrough'),
-          disabled: !view,
+          disabled: !writable,
           run: () => run(view, toggleWrap('~~')),
         },
-        { label: t('Highlight'), disabled: !view, run: () => run(view, toggleWrap('==')) },
+        { label: t('Highlight'), disabled: !writable, run: () => run(view, toggleWrap('==')) },
         SPLIT,
-        { label: t('Code'), disabled: !view, run: () => run(view, toggleWrap('`')) },
-        { label: t('Inline math'), disabled: !view, run: () => run(view, toggleWrap('$')) },
-        { label: t('Superscript'), disabled: !view, run: () => run(view, toggleWrap('^')) },
-        { label: t('Subscript'), disabled: !view, run: () => run(view, toggleWrap('~')) },
+        { label: t('Code'), disabled: !writable, run: () => run(view, toggleWrap('`')) },
+        { label: t('Inline math'), disabled: !writable, run: () => run(view, toggleWrap('$')) },
+        { label: t('Superscript'), disabled: !writable, run: () => run(view, toggleWrap('^')) },
+        { label: t('Subscript'), disabled: !writable, run: () => run(view, toggleWrap('~')) },
         SPLIT,
-        { label: t('Link'), hint: 'Ctrl K', disabled: !view, run: () => run(view, insertLink) },
+        { label: t('Link'), hint: 'Ctrl K', disabled: !writable, run: () => run(view, insertLink) },
         SPLIT,
         {
           label: t('Clear formatting'),
           hint: 'Ctrl \\',
-          disabled: !view,
+          disabled: !writable,
           run: () => run(view, clearFormatting),
         },
       ],
@@ -231,6 +235,12 @@ export function appMenu(context: Context): MenuGroup[] {
       rows: [
         { label: t('Command palette'), hint: 'Ctrl P', run: () => context.onpalette() },
         SPLIT,
+        {
+          label: t('Reading mode'),
+          hint: 'F10',
+          checked: modes.reading,
+          run: () => modes.toggleReading(view),
+        },
         {
           label: t('Source mode'),
           hint: 'Ctrl /',

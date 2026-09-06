@@ -136,6 +136,9 @@ export const fr: Dictionary = {
   'Tidy up this note': 'Mettre au propre',
 
   // Modes and view
+  'Reading mode': 'Mode lecture',
+  'Leave reading mode': 'Quitter le mode lecture',
+  'Read-only': 'Lecture seule',
   'Source mode': 'Mode source',
   'Leave source mode': 'Quitter le mode source',
   'Focus mode': 'Mode concentration',

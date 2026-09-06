@@ -469,11 +469,17 @@
   /** The editor's own menu, so the browser's never appears. */
   function editorMenu(): MenuEntry[] {
     const selected = !!view && !view.state.selection.main.empty
+    const writable = !!view && !view.state.readOnly
 
     const clipboard: MenuEntry[] = [
-      { label: t('Cut'), hint: 'Ctrl X', disabled: !selected, run: () => document.execCommand('cut') },
+      {
+        label: t('Cut'),
+        hint: 'Ctrl X',
+        disabled: !selected || !writable,
+        run: () => document.execCommand('cut'),
+      },
       { label: t('Copy'), hint: 'Ctrl C', disabled: !selected, run: () => document.execCommand('copy') },
-      { label: t('Paste'), hint: 'Ctrl V', run: () => void paste() },
+      { label: t('Paste'), hint: 'Ctrl V', disabled: !writable, run: () => void paste() },
     ]
 
     // On a phone a press on the text is for the clipboard, the way it is in
@@ -481,6 +487,17 @@
     // keyboard and in the app menu, and sixteen rows would cover the text
     // they are about.
     if (viewport.phone) return clipboard
+
+    // Reading mode leaves the clipboard rows and the way back out. The rest of
+    // this menu writes, and a menu of things that cannot happen is worse than
+    // a short one.
+    if (!writable) {
+      return [
+        ...clipboard,
+        DIVIDER,
+        { label: t('Leave reading mode'), hint: 'F10', run: () => modes.toggleReading(view) },
+      ]
+    }
 
     return [
       ...clipboard,
@@ -548,8 +565,11 @@
     const mod = event.ctrlKey || event.metaKey
     const shift = event.shiftKey
 
+    // The mode keys run F8, F9, F10 in the order the modes were added, and
+    // Ctrl+Shift+R, the other candidate, already writes a horizontal rule.
     if (event.key === 'F8') return act(event, () => modes.toggleFocus(view))
     if (event.key === 'F9') return act(event, () => modes.toggleTypewriter(view))
+    if (event.key === 'F10') return act(event, () => modes.toggleReading(view))
     if (event.key === 'F11') return act(event, () => void toggleFullscreen())
     if (!mod) return
 
@@ -660,7 +680,7 @@
         {/key}
       </div>
 
-      <StatusBar doc={workspace.active?.doc ?? ''} />
+      <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.reading} />
 
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the

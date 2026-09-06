@@ -135,6 +135,9 @@ export const ja: Dictionary = {
   'Tidy up this note': 'ノートを整える',
 
   // Modes and view
+  'Reading mode': '閲覧モード',
+  'Leave reading mode': '閲覧モードを終了',
+  'Read-only': '読み取り専用',
   'Source mode': 'ソースモード',
   'Leave source mode': 'ソースモードを終了',
   'Focus mode': 'フォーカスモード',

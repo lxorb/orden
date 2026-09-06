@@ -23,11 +23,17 @@
   const docked = $derived(viewport.phone && viewport.keyboard > KEYBOARD_THRESHOLD)
 
   /** Follows the selection, and hides the moment there is nothing selected.
-   *  A selected picture has a toolbar of its own, in the same place. */
+   *  A selected picture has a toolbar of its own, in the same place, and a
+   *  note being read has nothing to format: every button here writes. */
   export function follow(current: EditorView) {
     const range = current.state.selection.main
 
-    if (range.empty || !current.hasFocus || selectedImage(current.state)) {
+    if (
+      range.empty ||
+      !current.hasFocus ||
+      current.state.readOnly ||
+      selectedImage(current.state)
+    ) {
       at = null
       return
     }

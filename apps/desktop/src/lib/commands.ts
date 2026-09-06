@@ -216,7 +216,8 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'reformat',
       label: t('Tidy up this note'),
-      disabled: !view,
+      // Rewriting the whole note is an edit, whatever it is called.
+      disabled: !view || view.state.readOnly,
       run: () =>
         view &&
         reformatDocument({
@@ -225,6 +226,12 @@ export function appCommands(view?: EditorView): Command[] {
         }),
     },
 
+    {
+      id: 'reading',
+      label: modes.reading ? t('Leave reading mode') : t('Reading mode'),
+      hint: 'F10',
+      run: () => modes.toggleReading(view),
+    },
     {
       id: 'source',
       label: modes.source ? t('Leave source mode') : t('Source mode'),

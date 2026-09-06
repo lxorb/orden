@@ -7,6 +7,7 @@ import {
   setLigatures,
   setLineHeight,
   setMeasure,
+  setReadingMode,
   setRightToLeft,
   setEquationNumbers,
   setSmartPunctuation,
@@ -29,6 +30,7 @@ export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
 interface Saved {
   source: boolean
+  reading?: boolean
   focus: boolean
   typewriter: boolean
   punctuation: boolean
@@ -54,6 +56,10 @@ function clamp(value: number, steps: readonly number[]): number {
 
 class Modes {
   source = $state(false)
+  /** The note as it reads, with nothing that writes to it. Never on at the
+   *  same time as source mode, and never shared with the account: which of a
+   *  note's two faces is up this minute is not a preference. */
+  reading = $state(false)
   focus = $state(false)
   typewriter = $state(false)
   punctuation = $state(true)
@@ -80,6 +86,9 @@ class Modes {
       try {
         const state = JSON.parse(saved) as Saved
         this.source = !!state.source
+        // Both at once is a state the app cannot get into; a hand-edited entry
+        // can say it anyway, and source mode is the one that was written last.
+        this.reading = !!state.reading && !this.source
         this.focus = !!state.focus
         this.typewriter = !!state.typewriter
         this.punctuation = state.punctuation ?? true
@@ -112,6 +121,7 @@ class Modes {
     this.view = view
 
     setSourceMode(view, this.source)
+    setReadingMode(view, this.reading)
     setFocusMode(view, this.focus)
     setTypewriterMode(view, this.typewriter)
     setSmartPunctuation(view, this.punctuation)
@@ -130,7 +140,18 @@ class Modes {
 
   toggleSource(view?: EditorView) {
     this.source = !this.source
+    if (this.source) this.reading = false
     if (view) setSourceMode(view, this.source)
+    this.persist()
+  }
+
+  /** The editor keeps the same rule on its side, in setReadingMode: the two
+   *  are opposite answers to the same question, so one going on takes the
+   *  other off. Here it is the ticks in the menu that have to agree. */
+  toggleReading(view?: EditorView) {
+    this.reading = !this.reading
+    if (this.reading) this.source = false
+    if (view) setReadingMode(view, this.reading)
     this.persist()
   }
 
@@ -316,6 +337,7 @@ class Modes {
   private persist() {
     const state: Saved = {
       source: this.source,
+      reading: this.reading,
       focus: this.focus,
       typewriter: this.typewriter,
       punctuation: this.punctuation,
