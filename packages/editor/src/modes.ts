@@ -2,9 +2,8 @@ import { Compartment, type Extension } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { languages } from '@codemirror/language-data'
+import { fenceLanguages } from './languages'
 import { livePreview } from './live-preview'
-import { mermaidDescription } from './mermaid'
 import { numberEquations } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { closeBrackets } from '@codemirror/autocomplete'
@@ -29,7 +28,7 @@ const glyphs = new Compartment()
 function markdownFor(strict: boolean) {
   return markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
-    codeLanguages: [...languages, mermaidDescription],
+    codeLanguages: fenceLanguages,
     extensions: strict ? [] : nibMarkdownExtensions,
   })
 }
