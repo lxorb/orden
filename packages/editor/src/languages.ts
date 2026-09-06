@@ -28,7 +28,7 @@ import { mermaidDescription } from './mermaid'
  *  a description that already exists, and loads nothing new for them. */
 export const SPELLINGS: Record<string, string[]> = {
   // The everyday ones, by every name they go by.
-  Python: ['py', 'py3', 'python3', 'starlark', 'bzl', 'bazel'],
+  Python: ['py', 'py3', 'python3', 'starlark', 'bzl', 'bazel', 'vyper'],
   JavaScript: ['mjs', 'cjs', 'es6', 'nodejs'],
   TypeScript: ['mts', 'cts'],
   Rust: ['rs'],
@@ -36,12 +36,15 @@ export const SPELLINGS: Record<string, string[]> = {
   Kotlin: ['kt', 'kts'],
   Scala: ['sc'],
   C: ['h', 'ino'],
-  'C++': ['cc', 'cxx', 'hpp', 'hh', 'hxx', 'h++'],
+  'C++': ['cc', 'cxx', 'hpp', 'hh', 'hxx', 'h++', 'cuda', 'metal'],
   'Objective-C': ['objectivec', 'obj-c'],
   'Objective-C++': ['objectivecpp', 'obj-c++'],
   Perl: ['pl', 'pm', 'raku', 'perl6', 'p6'],
   Haskell: ['hs', 'purescript', 'purs', 'idris'],
-  Erlang: ['erl', 'escript'],
+  // No `escript`: it is a real Erlang spelling, but the near-match rule then
+  // reads `rescript` and `applescript` as Erlang too, which is worse than
+  // leaving all three alone.
+  Erlang: ['erl'],
   OCaml: ['ml', 'mli'],
   'F#': ['fs', 'fsx', 'fsi'],
   'Common Lisp': ['cl', 'elisp', 'emacs-lisp', 'emacslisp', 'commonlisp'],
@@ -94,7 +97,7 @@ export const SPELLINGS: Record<string, string[]> = {
   JSON: ['jsonc', 'jsonl', 'ndjson', 'geojson'],
   // A Helm chart is YAML with Go template holes; the stock fuzzy match read
   // `helm` as Elm and coloured it as a functional language.
-  YAML: ['helm'],
+  YAML: ['helm', 'compose', 'docker-compose', 'ansible', 'k8s', 'kubernetes'],
   // The INI mode is loose enough to cover everything shaped like key=value:
   // .env files, systemd units, .gitconfig, .npmrc.
   'Properties files': [
@@ -336,7 +339,7 @@ const ADDED: LanguageDescription[] = [
   // it knows and how it knows it.
   streamMode({
     name: 'Makefile',
-    alias: ['makefile', 'make', 'mk', 'gnumakefile', 'bsdmake', 'justfile'],
+    alias: ['makefile', 'make', 'mk', 'gnumakefile', 'bsdmake', 'just', 'justfile'],
     extensions: ['mk', 'mak'],
     parser: async () => (await import('./makefile')).makefileParser,
   }),

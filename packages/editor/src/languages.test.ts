@@ -60,6 +60,7 @@ describe('the word a fence is opened with', () => {
     ml: 'OCaml',
     fs: 'F#',
     erl: 'Erlang',
+    cuda: 'C++',
     ex: 'Elixir',
     exs: 'Elixir',
     elixir: 'Elixir',
@@ -96,6 +97,8 @@ describe('the word a fence is opened with', () => {
     yml: 'YAML',
     yaml: 'YAML',
     helm: 'YAML',
+    compose: 'YAML',
+    k8s: 'YAML',
     json: 'JSON',
     json5: 'JSON',
     jsonc: 'JSON',
@@ -157,9 +160,16 @@ describe('the word a fence is opened with', () => {
     expect(languageFor('Dockerfile')).toBe('Dockerfile')
   })
 
+  /** The near-match rule reads a word that merely *contains* a language's
+   *  name as that language, so a spelling added here can quietly swallow one
+   *  nobody has a grammar for. These three have none, and have to stay that
+   *  way rather than be coloured as something they are not. */
   test('a word nobody has a language for stays plain code', () => {
     expect(languageFor('notalanguage')).toBeNull()
     expect(languageFor('')).toBeNull()
+    expect(languageFor('rescript')).toBeNull()
+    expect(languageFor('applescript')).toBeNull()
+    expect(languageFor('gleam')).toBeNull()
   })
 })
 
