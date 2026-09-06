@@ -55,6 +55,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
+      # Cargo resolves the lock file itself; this is how the resolved one gets
+      # back to the branch it belongs on.
+      - name: Lock file
+        if: ${{ !cancelled() }}
+        run: git diff --patch -- apps/desktop/src-tauri/Cargo.lock
+
   windows:
     runs-on: windows-latest
     steps:

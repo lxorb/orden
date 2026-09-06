@@ -1,8 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissions for the main window.",
-  "windows": ["main"],
+  "description": "Permissions for the main window. Only what the window actually calls: core:default for the window's own read-only queries and the event channel, the eight window commands the title bar and the close handler use, the two dialogs (open and save), the opener for links and Reveal in folder, restart for an update installed by hand, and the three updater steps. Notes are read and written by this app's own commands, so the fs plugin is not here and not built in.",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-close",
@@ -14,10 +16,12 @@
     "core:window:allow-set-title",
     "core:window:allow-start-dragging",
     "core:window:allow-toggle-maximize",
-    "dialog:default",
-    "fs:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
     "opener:default",
     "process:allow-restart",
-    "updater:default"
+    "updater:allow-check",
+    "updater:allow-download",
+    "updater:allow-install"
   ]
 }
