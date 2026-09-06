@@ -269,7 +269,7 @@ class Decorator {
   private blockNames(from: number, to: number) {
     const doc = this.state.doc
 
-    for (let pos = from; pos <= to; ) {
+    for (let pos = from; pos <= to;) {
       const line = doc.lineAt(pos)
       const classes = this.lineClasses.get(line.from)
 
