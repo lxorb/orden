@@ -6,6 +6,7 @@
  *  argument's type - a model sends what it likes - so each is checked before
  *  it reaches a query. */
 
+import { findLinks } from '@nib/markdown'
 import { byteLength, newId, now, sha256 } from '../crypto'
 import { cleanPath, MAX_NOTE_BYTES, nextSeq, noteKey } from '../notes'
 import { fits } from '../storage'
@@ -20,6 +21,13 @@ const MOST_MATCHES = 50
 /** How many notes a search reads the body of. A match is usually near the
  *  front of an account; past this the answer says it stopped looking. */
 const MOST_SEARCHED = 300
+
+const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+
+/** Which line an offset falls on, counting from zero. */
+function lineAt(body: string, at: number): number {
+  return body.slice(0, at).split('\n').length - 1
+}
 
 export const TOOLS = [
   {
@@ -55,6 +63,18 @@ export const TOOLS = [
       type: 'object',
       properties: { query: { type: 'string' }, space: { type: 'string' } },
       required: ['query'],
+    },
+  },
+  {
+    name: 'list_backlinks',
+    description: 'List the notes that link to one note.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        space: { type: 'string' },
+        path: { type: 'string', description: 'Path inside the space, such as ideas/plan.md' },
+      },
+      required: ['space', 'path'],
     },
   },
   {
@@ -184,6 +204,47 @@ async function searchNotes(
   return found.join('\n') || 'Nothing found.'
 }
 
+/** Which notes link to one note, and the line each says it on.
+ *
+ *  A link may name a note by its file name or by any tail of its path, so the
+ *  names the note answers to are worked out once and every link in the space is
+ *  compared against them. Nothing here resolves a name the way the editor does -
+ *  which of two notes of one name is meant depends on where the link was written,
+ *  and a connector answering "these mention it" is honest and cheap. */
+async function listBacklinks(
+  env: Env,
+  space: Space,
+  args: Record<string, unknown>,
+): Promise<string> {
+  const path = cleanPath(text(args, 'path') ?? '')
+  if (!path) return 'That is not a note path.'
+
+  const names = new Set<string>()
+  const parts = path.replace(MARKDOWN, '').toLowerCase().split('/')
+  for (let at = 0; at < parts.length; at++) names.add(parts.slice(at).join('/'))
+
+  const { results } = await env.DB.prepare(
+    'select id, path from notes where space_id = ? and deleted = 0 order by path limit ?',
+  )
+    .bind(space.id, MOST_NOTES)
+    .all<{ id: string; path: string }>()
+
+  const found: string[] = []
+
+  for (const row of results) {
+    if (found.length >= MOST_MATCHES || row.path === path) continue
+
+    const body = await noteBody(env, space.id, row.id)
+    for (const link of findLinks(body)) {
+      if (!names.has(link.target.replace(MARKDOWN, '').toLowerCase())) continue
+      found.push(`${row.path}:${lineAt(body, link.from) + 1}`)
+      break
+    }
+  }
+
+  return found.join('\n') || `Nothing links to ${path}.`
+}
+
 /** Writes through the same two limits the sync API applies: a note is at most
  *  so large, and an account holds at most so much. A connector that skipped
  *  them would be the way around the quota. */
@@ -270,6 +331,11 @@ export async function callTool(
         return typeof space === 'string' ? space : searchNotes(env, [space], args)
       }
       return searchNotes(env, await spacesFor(env, userId), args)
+    }
+
+    case 'list_backlinks': {
+      const space = await askedSpace(env, userId, args)
+      return typeof space === 'string' ? space : listBacklinks(env, space, args)
     }
 
     case 'write_note': {

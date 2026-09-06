@@ -3,6 +3,13 @@ import type { Tokens } from 'marked'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { slugify } from './links'
 import {
+  type EmbedResolver,
+  type Embeds,
+  embedSink,
+  type LinkResolver,
+  wikilinks,
+} from './wikilinks'
+import {
   abbreviations,
   callouts,
   collectAbbreviations,
@@ -27,6 +34,14 @@ export interface RenderOptions {
    *  leave it to the default. An export uses this to draw diagrams and to
    *  colour code, which need more than a renderer has. */
   code?: (code: string, language: string) => string | null
+  /** Where a `[[wikilink]]` points on this page. Without it a wikilink renders
+   *  as the words it showed, which is what an export wants: a document has no
+   *  space around it to point into. */
+  resolveLink?: LinkResolver
+  /** What a `![[wikilink]]` shows: the markdown of the note it names. Without it
+   *  an embed reads as a link. One level deep - a `![[…]]` inside an embedded
+   *  note is rendered without this, so it comes out as a link of its own. */
+  resolveEmbed?: EmbedResolver
 }
 
 export interface CodeBlock {
@@ -81,9 +96,18 @@ const toc = {
 /** One renderer, shared by export and the published blog, so a note looks the
  *  same wherever it is read. The headings list is filled in while rendering,
  *  which is why a renderer that numbers them is built per document. */
-function renderer(options: RenderOptions, headings: Heading[]) {
+function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(maths, highlight, scripts, emoji, footnotes, callouts, definitionLists, abbreviations)
+  // First among the inline extensions, so `[[…]]` is one link rather than a
+  // link nested in another - the same reason the editor's parser puts it first.
+  marked.use(
+    wikilinks({
+      embeds,
+      ...(options.resolveLink ? { resolveLink: options.resolveLink } : {}),
+      ...(options.resolveEmbed ? { resolveEmbed: options.resolveEmbed } : {}),
+    }),
+  )
 
   const taken = new Map<string, number>()
 
@@ -165,10 +189,12 @@ function renderer(options: RenderOptions, headings: Heading[]) {
   return marked
 }
 
-// The two plain renderers are built once; a renderer with a table of contents
-// carries state and is built per document.
-const trusting = renderer({}, [])
-const publishing = renderer({ escapeHtml: true }, [])
+// The two plain renderers are built once; a renderer with a table of contents,
+// or with a space to resolve links against, carries state and is built per
+// document. Neither of these resolves anything, so their embed sinks are never
+// filled in - a `![[…]]` in an export with no space behind it is a link.
+const trusting = renderer({}, [], embedSink())
+const publishing = renderer({ escapeHtml: true }, [], embedSink())
 
 /** Strips YAML front matter, which is metadata rather than content. */
 export function stripFrontMatter(source: string): string {
@@ -218,14 +244,35 @@ export function codeBlocks(source: string): CodeBlock[] {
   return found
 }
 
+/** Whether a document needs a renderer of its own: one that keeps a headings
+ *  list, draws its fences, or knows the space its links point into. */
+function needsOwn(options: RenderOptions): boolean {
+  return (
+    options.toc === true ||
+    options.code !== undefined ||
+    options.resolveLink !== undefined ||
+    options.resolveEmbed !== undefined
+  )
+}
+
+/** How an embedded note is rendered: as its own document, minus the two things
+ *  that belong to the page around it. No embed resolver, which is what makes an
+ *  embed one level deep; and no table of contents, which is the outer note's. */
+function inside(options: RenderOptions): RenderOptions {
+  const rest = { ...options }
+  delete rest.resolveEmbed
+  delete rest.toc
+  return rest
+}
+
 export function renderMarkdown(source: string, options: RenderOptions = {}): string {
   const headings: Heading[] = []
-  const marked =
-    options.toc || options.code
-      ? renderer(options, headings)
-      : options.escapeHtml
-        ? publishing
-        : trusting
+  const embeds = embedSink()
+  const marked = needsOwn(options)
+    ? renderer(options, headings, embeds)
+    : options.escapeHtml
+      ? publishing
+      : trusting
 
   const body = stripFrontMatter(source)
   let html = marked.parse(body, { async: false })
@@ -233,6 +280,12 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   html = markAbbreviations(html, collectAbbreviations(body))
 
   if (options.toc) html = html.replace(TOC_MARK, tableOfContents(headings))
+
+  // The notes inside embeds, rendered after the document around them so that
+  // nothing re-enters the parser mid-parse.
+  embeds.sections.forEach((section, at) => {
+    html = html.replace(embeds.marker(at), renderMarkdown(section, inside(options)))
+  })
 
   if (!options.footnotes) return html
 

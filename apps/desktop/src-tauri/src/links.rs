@@ -228,7 +228,7 @@ fn links_in(body: &str) -> Vec<Link> {
 
         for mut link in links_on(&without_code(line)) {
             link.line = index;
-            link.text = context.clone();
+            link.text.clone_from(&context);
             found.push(link);
         }
     }
@@ -344,11 +344,13 @@ fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
     let mut at = from;
     while at < letters.len() {
         match letters[at] {
+            // A bracket of its own ends the search: `[[a]b]]` is not a link, and
+            // neither is `[[]]`, which is what the emptiness check below says.
             '[' => return None,
-            ']' if letters.get(at + 1) == Some(&']') => {
-                return if at > from { Some(at) } else { None };
+            ']' => {
+                let closed = letters.get(at + 1) == Some(&']');
+                return if closed && at > from { Some(at) } else { None };
             }
-            ']' => return None,
             _ => at += 1,
         }
     }

@@ -6,6 +6,7 @@ import { t } from './i18n.svelte'
 import type { HtmlOptions } from './export'
 import { PANDOC_FORMATS } from './export-formats'
 import { imagePath } from './images'
+import { links } from './link-index.svelte'
 import { newSpace } from './space-actions'
 import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
@@ -64,6 +65,9 @@ export function exportCommands(): Command[] {
   const options = async (): Promise<HtmlOptions> => ({
     page: settings.page,
     resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
+    // An `![[Note]]` in the document brings that note into it, the way it shows
+    // in the editor. Read here rather than in the renderer, which is sync.
+    readNote: (target: string) => links.embedSource(target, note()?.path ?? null),
     ...(await look()),
   })
 

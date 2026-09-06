@@ -1,4 +1,4 @@
-import { documentTitle, renderMarkdown } from '@nib/markdown'
+import { documentTitle, findLinks, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { noteKey } from './notes'
 import type { Env, Note, Space } from './types'
 
@@ -62,6 +62,90 @@ export function slugFor(path: string): string {
     )
     .filter(Boolean)
     .join('/')
+}
+
+const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+
+/** A note's path as the name a link uses for it: no extension, folded case. The
+ *  same reading the editor does, so a link that follows in the app resolves on
+ *  the page. */
+function nameOf(path: string): string {
+  return path.replace(/\\/g, '/').replace(MARKDOWN, '').toLowerCase()
+}
+
+/** Where each note of a space is published, by every name a link could use for
+ *  it: its own name and every tail of its path, which is what `[[Note]]` and
+ *  `[[folder/Note]]` are. A name two notes answer to goes to the shallower one,
+ *  which is the reading the editor settles on too.
+ *
+ *  Built once per page rather than per link: a note with fifty links in it would
+ *  otherwise walk the space fifty times. */
+function pages(notes: readonly Note[]): Map<string, string> {
+  const byName = new Map<string, string>()
+
+  // Deepest first, so a shallower note overwrites it and wins the bare name.
+  const ordered = [...notes].sort(
+    (one, other) => other.path.split('/').length - one.path.split('/').length,
+  )
+
+  for (const note of ordered) {
+    const whole = nameOf(note.path)
+    const url = `/${slugFor(note.path)}`
+    const parts = whole.split('/')
+
+    for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
+    byName.set(whole, url)
+  }
+
+  return byName
+}
+
+/** How many embeds one page will fetch the notes for. Well past any note anyone
+ *  writes, and a ceiling so one page cannot pull a whole space out of storage. */
+const MOST_EMBEDDED = 20
+
+/** What a `[[wikilink]]` on a published page points at. A note the space does
+ *  not publish resolves to nothing, and the renderer leaves it as words. */
+function linkResolver(notes: readonly Note[]) {
+  const byName = pages(notes)
+
+  return (link: Wikilink) => ({
+    // A link naming no note points inside the page it is written on, which is
+    // an empty target plus whichever heading it named.
+    href: link.target ? (byName.get(nameOf(link.target)) ?? null) : '',
+  })
+}
+
+/** The notes the embeds on one page name, by the name each embed used, so the
+ *  renderer can ask for them without waiting on storage. */
+async function embedded(
+  env: Env,
+  space: Space,
+  notes: readonly Note[],
+  source: string,
+): Promise<(link: Wikilink) => string | null> {
+  const byName = new Map<string, Note>()
+  for (const note of notes) byName.set(nameOf(note.path), note)
+
+  const wanted = new Set<string>()
+  for (const link of findLinks(source)) {
+    if (!link.embed || link.kind !== 'wikilink' || !link.target) continue
+    if (wanted.size >= MOST_EMBEDDED) break
+    wanted.add(nameOf(link.target))
+  }
+
+  const bodies = new Map<string, string>()
+  await Promise.all(
+    [...wanted].map(async (name) => {
+      const note = byName.get(name)
+      if (!note) return
+
+      const object = await env.NOTES.get(noteKey(space.id, note.id))
+      if (object) bodies.set(name, await object.text())
+    }),
+  )
+
+  return (link) => bodies.get(nameOf(link.target)) ?? null
 }
 
 function title(note: Note, body: string): string {
@@ -128,6 +212,9 @@ ul.index li{border-bottom:1px solid var(--line)}
 ul.index a{display:flex;justify-content:space-between;gap:1rem;padding:.85rem 0;border:0;color:var(--fg)}
 ul.index a:hover{color:var(--accent)}
 ul.index time{color:var(--muted);font-size:.85em;flex:none}
+figure.embed{margin:1.4em 0;padding:0 1.15rem;background:color-mix(in srgb,var(--surface) 55%,transparent);border:1px solid var(--line);border-radius:9px;font-size:.94em}
+figure.embed>div>:first-child{margin-top:.9em}
+figure.embed figcaption{margin:0 -1.15rem;padding:.4rem 1.15rem .45rem;border-top:1px solid var(--line);color:var(--muted);font-size:.8em}
 footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.82em}
 .by{margin:-.4em 0 2.2em;color:var(--muted);font-size:.94em}
 .back{margin:0 0 1.6em;font-size:.88em}
@@ -190,12 +277,15 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     const object = await env.NOTES.get(noteKey(space.id, only.id))
     const source = object ? await object.text() : ''
 
-    return page(
-      title(only, source),
-      withByline(renderMarkdown(source, { footnotes: true, escapeHtml: true }), author),
-      env,
-      author,
-    )
+    // One note is the whole site, so there is nowhere for a link between notes
+    // to go; an embed still shows what it names, which is inside this page.
+    const rendered = renderMarkdown(source, {
+      footnotes: true,
+      escapeHtml: true,
+      resolveEmbed: await embedded(env, space, [only], source),
+    })
+
+    return page(title(only, source), withByline(rendered, author), env, author)
   }
 
   const { results } = await env.DB.prepare(
@@ -229,8 +319,15 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const object = await env.NOTES.get(noteKey(space.id, note.id))
   const source = object ? await object.text() : ''
 
-  // A published note is public: its raw HTML is shown, never run.
-  const rendered = renderMarkdown(source, { footnotes: true, escapeHtml: true })
+  // A published note is public: its raw HTML is shown, never run. Its links to
+  // other notes point at where those notes are published, and its embeds show
+  // what they name - one level deep, which is the renderer's own rule.
+  const rendered = renderMarkdown(source, {
+    footnotes: true,
+    escapeHtml: true,
+    resolveLink: linkResolver(results),
+    resolveEmbed: await embedded(env, space, results, source),
+  })
 
   // The way back sits above the note, where a reader who came from the
   // index looks for it, and the author right under the title.

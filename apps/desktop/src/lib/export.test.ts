@@ -3,6 +3,7 @@ import {
   buildHtml,
   localSources,
   PANDOC_FORMATS,
+  prepareEmbeds,
   prepareFences,
   renderNote,
   titleOf,
@@ -232,6 +233,64 @@ describe('rendering a whole note', () => {
   test('keeps a bare export free of colouring', async () => {
     const html = await renderNote('```ts\nlet x = 1\n```', 'n.md', { bare: true })
     expect(html).toContain('<pre><code class="language-ts">let x = 1\n</code></pre>')
+  })
+
+  test('brings an embedded note into the document', async () => {
+    const html = await renderNote('# Holder\n\n![[Quote]]\n', 'n.md', {
+      readNote: (target) =>
+        Promise.resolve(target === 'Quote' ? '## Quoted\n\nThe words.\n' : null),
+    })
+
+    expect(html).toContain('<figure class="embed">')
+    expect(html).toContain('The words.')
+    expect(html).toContain('<figcaption>Quote</figcaption>')
+  })
+
+  test('an embed of a note the space has not got reads as its own name', async () => {
+    const html = await renderNote('![[Nowhere]]\n', 'n.md', {
+      readNote: () => Promise.resolve(null),
+    })
+
+    expect(html).not.toContain('<figure class="embed">')
+    expect(html).toContain('Nowhere')
+  })
+
+  test('a wikilink in a document has nowhere to point, so it reads as words', async () => {
+    const html = await renderNote('see [[Other|the other one]]\n', 'n.md')
+    expect(html).toContain('the other one')
+    expect(html).not.toContain('wikilink')
+  })
+})
+
+describe('preparing the notes a document embeds', () => {
+  test('reads each named note once, whatever it is named in', async () => {
+    const asked: string[] = []
+    const resolve = await prepareEmbeds('![[A]]\n\n![[A]]\n\n![[B#Heading]]\n', (target) => {
+      asked.push(target)
+      return Promise.resolve(`body of ${target}`)
+    })
+
+    expect(asked.sort()).toEqual(['A', 'B'])
+    expect(resolve({ target: 'A', heading: null, block: null, alias: null, embed: true })).toBe(
+      'body of A',
+    )
+  })
+
+  test('a plain link is not an embed and is not read', async () => {
+    const asked: string[] = []
+    await prepareEmbeds('see [[A]] now\n', (target) => {
+      asked.push(target)
+      return Promise.resolve(null)
+    })
+
+    expect(asked).toEqual([])
+  })
+
+  test('a note that cannot be read is simply left out', async () => {
+    const resolve = await prepareEmbeds('![[A]]\n', () => Promise.reject(new Error('gone')))
+    expect(
+      resolve({ target: 'A', heading: null, block: null, alias: null, embed: true }),
+    ).toBeNull()
   })
 })
 

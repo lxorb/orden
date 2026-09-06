@@ -264,6 +264,107 @@ describe('a published note cannot script the reader', () => {
   })
 })
 
+describe('links between notes on a published page', () => {
+  test('point at where the other note is published', async () => {
+    await addNote('Notes/Deep idea.md', '# Deep idea\n\nSomething.\n')
+    await addNote('linking.md', '# Linking\n\nsee [[Deep idea]] and [[Hello world|the first]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('<a class="wikilink" href="/notes/deep-idea">Deep idea</a>')
+    expect(response.text).toContain('<a class="wikilink" href="/hello-world">the first</a>')
+  })
+
+  test('a heading is reached by the id the renderer gave it', async () => {
+    await addNote('parts.md', '# Parts\n\n## The middle\n\nText.\n')
+    await addNote('linking.md', 'see [[parts#The middle]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('href="/parts#the-middle"')
+  })
+
+  test('a path-qualified link finds the note in its folder', async () => {
+    await addNote('Notes/Deep idea.md', '# Deep idea\n')
+    await addNote('linking.md', 'see [[Notes/Deep idea]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('href="/notes/deep-idea"')
+  })
+
+  test('a note the space has not got is words, not a link to nowhere', async () => {
+    await addNote('linking.md', 'see [[Nothing here]] now\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('see Nothing here now')
+    expect(response.text).not.toContain('wikilink')
+  })
+
+  test('a wikilink cannot script the reader through its own words', async () => {
+    await addNote('linking.md', 'see [[Hello world|<img src=x onerror=alert(1)>]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
+    expect(response.text).not.toContain('<img src=x')
+    expect(response.text).toContain('&lt;img')
+  })
+})
+
+describe('an embed on a published page', () => {
+  test('shows the note it names, with its name under it', async () => {
+    await addNote('quote.md', '# Quote\n\nThe words themselves.\n')
+    await addNote('holder.md', '# Holder\n\n![[quote]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('<figure class="embed">')
+    expect(response.text).toContain('The words themselves.')
+    expect(response.text).toContain('<figcaption>quote</figcaption>')
+  })
+
+  test('a heading names the section, and only that one', async () => {
+    await addNote('parts.md', '# Parts\n\n## One\n\nFirst.\n\n## Two\n\nSecond.\n')
+    await addNote('holder.md', '![[parts#Two]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('Second.')
+    expect(response.text).not.toContain('First.')
+  })
+
+  test('one level deep: an embed inside an embedded note is a link', async () => {
+    await addNote('inner.md', 'The innermost words.\n')
+    await addNote('outer.md', 'Outer says ![[inner]]\n')
+    await addNote('holder.md', '![[outer]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('Outer says')
+    expect(response.text).not.toContain('The innermost words.')
+  })
+
+  test('raw HTML inside an embedded note is shown, not run', async () => {
+    await addNote('nasty.md', '<script>alert(1)</script>\n')
+    await addNote('holder.md', '![[nasty]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).not.toContain('<script>alert(1)</script>')
+    expect(response.text).toContain('&lt;script&gt;')
+  })
+
+  test('a note the space has not got leaves no empty frame', async () => {
+    await addNote('holder.md', '![[Nothing here]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).not.toContain('<figure class="embed">')
+    expect(response.text).toContain('Nothing here')
+  })
+})
+
 describe('one address, not two', () => {
   test('a domain of your own gives the name up', async () => {
     await publish({ subdomain: 'field' })

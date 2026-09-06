@@ -147,6 +147,68 @@ describe('reading notes through it', () => {
   })
 })
 
+describe('the notes that link to one note', () => {
+  async function addNote(path: string, content: string) {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+  }
+
+  test('are found by name, by path and in either spelling', async () => {
+    await addNote('one.md', 'see [[plan]] now\n')
+    await addNote('two.md', 'and [the plan](plan.md)\n')
+    await addNote('three.md', 'nothing to do with it\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'plan.md',
+    })
+
+    expect(text).toContain('one.md:1')
+    expect(text).toContain('two.md:1')
+    expect(text).not.toContain('three.md')
+  })
+
+  test('say which line each one is on', async () => {
+    await addNote('one.md', '# One\n\nsome words\n\nsee [[plan]]\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'plan.md',
+    })
+    expect(text).toContain('one.md:5')
+  })
+
+  test('a note nothing links to says so', async () => {
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'plan.md',
+    })
+    expect(text).toContain('Nothing links to plan.md')
+  })
+
+  test('a link inside code is not a link', async () => {
+    await addNote('one.md', 'write `[[plan]]` to link\n')
+
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: 'plan.md',
+    })
+    expect(text).toContain('Nothing links to')
+  })
+
+  test('a path nobody could have is refused rather than searched for', async () => {
+    const text = await tool(await connector(), 'list_backlinks', {
+      space: 'Work',
+      path: '../../etc/passwd',
+    })
+    expect(text).toContain('not a note path')
+  })
+
+  test('it is offered to the model like every other tool', async () => {
+    const listed = await rpc(await connector(), 'tools/list')
+    expect(listed.json.result.tools.map((one) => one.name)).toContain('list_backlinks')
+  })
+})
+
 /** A model sends what it likes. Every one of these used to reach a `null.id` or
  *  a `String({})` and come back as a message about a property of undefined. */
 describe('what a tool is given', () => {

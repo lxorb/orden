@@ -1,5 +1,12 @@
 import { CODE_PALETTES, DIAGRAM_LANGUAGES } from '@nib/editor'
-import { codeBlocks, documentTitle, frontMatterValue, renderMarkdown } from '@nib/markdown'
+import {
+  codeBlocks,
+  documentTitle,
+  findLinks,
+  frontMatterValue,
+  renderMarkdown,
+  type Wikilink,
+} from '@nib/markdown'
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
 import { drawDiagram } from './diagrams'
@@ -51,6 +58,11 @@ export interface HtmlOptions {
   date?: string
   /** Fences already prepared; see `prepareFences`. */
   fence?: Fence
+  /** Reads the note a `![[…]]` names, so the embeds in a document can be
+   *  gathered before it is rendered - the renderer cannot wait on a disk. */
+  readNote?: (target: string) => Promise<string | null>
+  /** The notes an embed names, already read; see `prepareEmbeds`. */
+  embed?: (link: Wikilink) => string | null
 }
 
 function declarations(tokens: Record<string, string>): string {
@@ -83,6 +95,9 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
     footnotes: true,
     toc: true,
     ...(options.fence ? { code: options.fence } : {}),
+    // No link resolver: an exported document stands on its own, and a link to a
+    // note that is not in it has nowhere to point, so it reads as its own words.
+    ...(options.embed ? { resolveEmbed: options.embed } : {}),
   })
 
   const meta = [
@@ -134,6 +149,30 @@ ${styles}
 ${page}</body>
 </html>
 `
+}
+
+/** The notes a document embeds, read before it is rendered. A note that cannot
+ *  be read is left out, and the embed then renders as a link, which is what an
+ *  embed of a note the space has not got does anyway. */
+export async function prepareEmbeds(
+  source: string,
+  read: (target: string) => Promise<string | null>,
+): Promise<(link: Wikilink) => string | null> {
+  const wanted = new Set(
+    findLinks(source)
+      .filter((link) => link.embed && link.kind === 'wikilink' && link.target)
+      .map((link) => link.target),
+  )
+
+  const bodies = new Map<string, string>()
+  await Promise.all(
+    [...wanted].map(async (target) => {
+      const body = await read(target).catch(() => null)
+      if (body !== null) bodies.set(target, body)
+    }),
+  )
+
+  return (link) => bodies.get(link.target) ?? null
 }
 
 export type Drawer = (code: string, language: string, scheme: Scheme) => Promise<string>
@@ -225,7 +264,8 @@ export async function renderNote(
   options: HtmlOptions = {},
 ): Promise<string> {
   const fence = await prepareFences(source, options.scheme ?? 'light', { highlight: !options.bare })
-  const html = buildHtml(source, name, { ...options, fence })
+  const embed = options.readNote ? await prepareEmbeds(source, options.readNote) : undefined
+  const html = buildHtml(source, name, { ...options, fence, ...(embed ? { embed } : {}) })
 
   return options.bare || !options.resolveImage ? html : inlineImages(html, options.resolveImage)
 }
