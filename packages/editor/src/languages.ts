@@ -356,9 +356,9 @@ const ADDED: LanguageDescription[] = [
     parser: async () => (await import('./prisma')).prismaParser,
   }),
 
-  // Nobody has ported these three, and all three are C-shaped enough that the
-  // shared tokenizer reads them correctly; see cLike above for what that does
-  // and does not promise.
+  // Three more with nothing to import, and no need for a tokenizer of their
+  // own: each is C-shaped enough that the shared one reads it correctly given
+  // its words. See cLike above for what that does and does not promise.
   cLike({
     name: 'Zig',
     alias: ['zig'],
