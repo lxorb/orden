@@ -1,10 +1,15 @@
 //! Spaces live in one folder the app owns, so nobody is ever asked where to put
-//! a note. Each space is a directory inside it, named after the space.
+//! a note. Each space is a directory inside it, named after the space, and this
+//! module owns making, listing, renaming and removing those directories.
 
 use serde::Serialize;
+use std::ffi::OsStr;
 use std::fs;
-use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use std::io::ErrorKind;
+use std::path::Path;
+use tauri::AppHandle;
+
+use crate::paths::{self, a_space, cannot, inside};
 
 /// Names Windows refuses whatever the extension.
 const RESERVED: [&str; 22] = [
@@ -16,42 +21,36 @@ const RESERVED: [&str; 22] = [
 /// limits once the space folder and a note name are added.
 const MAX_NAME: usize = 64;
 
+/// How many times a taken name is numbered before the app admits defeat. Reached
+/// only by someone with five hundred spaces of the same name.
+const MAX_TRIES: usize = 500;
+
+/// One space: the name the window shows and the folder it stands for.
 #[derive(Serialize)]
 pub struct Space {
     name: String,
     path: String,
 }
 
-/// `Documents/Nib`, so notes sit where a person would look for them rather than
-/// buried in application data. Falls back to the home folder.
-pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {
-    let base = app
-        .path()
-        .document_dir()
-        .or_else(|_| app.path().home_dir())
-        .map_err(|e| e.to_string())?;
-
-    let dir = base.join("Nib");
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    Ok(dir)
-}
-
+/// The folder every space lives in, as a string the window can hand back.
 #[tauri::command]
 pub fn spaces_root(app: AppHandle) -> Result<String, String> {
-    Ok(root(&app)?.to_string_lossy().to_string())
+    Ok(paths::spaces_root(&app)?.to_string_lossy().to_string())
 }
 
 /// Every space on disk, alphabetical. The folder is the source of truth, so a
 /// space copied in by hand simply appears.
 #[tauri::command]
 pub fn list_spaces(app: AppHandle) -> Result<Vec<Space>, String> {
-    let dir = root(&app)?;
+    let dir = paths::spaces_root(&app)?;
     let mut spaces = Vec::new();
 
-    for entry in fs::read_dir(&dir).map_err(|e| e.to_string())?.flatten() {
+    let entries = fs::read_dir(&dir).map_err(|error| cannot("read", &dir, &error))?;
+    for entry in entries.flatten() {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
 
+        // A dot in front means the app's own business, the trash above all.
         if path.is_dir() && !name.starts_with('.') {
             spaces.push(Space {
                 name,
@@ -65,85 +64,89 @@ pub fn list_spaces(app: AppHandle) -> Result<Vec<Space>, String> {
 }
 
 /// Creates a space and returns where it landed. The folder name is derived from
-/// what was typed, and made unique if that name is taken.
+/// what was typed, and numbered if that name is taken.
 #[tauri::command]
 pub fn create_space(app: AppHandle, name: String) -> Result<Space, String> {
-    let dir = root(&app)?;
+    let dir = paths::spaces_root(&app)?;
     let wanted = folder_name(&name).ok_or("that name cannot be used for a folder")?;
 
+    // Creating the folder is how the name is claimed: `create_dir` fails when
+    // something is already there, so two windows asking at the same moment end
+    // up with two spaces rather than sharing one.
     let mut candidate = wanted.clone();
-    let mut counter = 2;
-    while dir.join(&candidate).exists() {
-        candidate = format!("{wanted} {counter}");
-        counter += 1;
+    for counter in 2..=MAX_TRIES {
+        let path = dir.join(&candidate);
+
+        match fs::create_dir(&path) {
+            Ok(()) => return Ok(space_at(&path)),
+            Err(error) if error.kind() == ErrorKind::AlreadyExists => {
+                candidate = format!("{wanted} {counter}");
+            }
+            Err(error) => return Err(cannot("create", &path, &error)),
+        }
     }
 
-    let path = dir.join(&candidate);
-    fs::create_dir_all(&path).map_err(|e| e.to_string())?;
-
-    Ok(Space {
-        name: candidate,
-        path: path.to_string_lossy().to_string(),
-    })
+    Err(format!("there are already too many spaces called {wanted}"))
 }
 
 /// Renames a space by renaming its folder.
 #[tauri::command]
 pub fn rename_space(app: AppHandle, from: String, name: String) -> Result<Space, String> {
-    let dir = root(&app)?;
+    let dir = paths::spaces_root(&app)?;
+    let source = a_space(&app, &from)?;
     let wanted = folder_name(&name).ok_or("that name cannot be used for a folder")?;
     let target = dir.join(&wanted);
 
-    let source = PathBuf::from(&from);
-    if source == target {
-        return Ok(Space {
-            name: wanted,
-            path: target.to_string_lossy().to_string(),
-        });
+    // Already there. On Windows that includes a name typed in another case,
+    // which names the same folder, so the space keeps the name it has.
+    if inside(&source, &target) && inside(&target, &source) {
+        return Ok(space_at(&source));
     }
 
     if target.exists() {
         return Err("a space with that name already exists".into());
     }
 
-    fs::rename(&source, &target).map_err(|e| e.to_string())?;
-
-    Ok(Space {
-        name: wanted,
-        path: target.to_string_lossy().to_string(),
-    })
+    fs::rename(&source, &target).map_err(|error| cannot("rename", &source, &error))?;
+    Ok(space_at(&target))
 }
 
-/// Deletes a space and every note in it. Refuses anything outside the spaces
-/// folder, so a mistyped path cannot take a different directory with it.
+/// Deletes a space and every note in it. Only a folder directly inside the
+/// spaces folder is a space, so a mistyped path cannot take a different
+/// directory with it.
 #[tauri::command]
 pub fn delete_space(app: AppHandle, path: String) -> Result<(), String> {
-    let dir = root(&app)?;
-    let target = PathBuf::from(&path);
-
-    let inside = target
-        .parent()
-        .map(|parent| parent == dir.as_path())
-        .unwrap_or(false);
-
-    if !inside || !target.is_dir() {
-        return Err("that is not a space".into());
+    let target = a_space(&app, &path)?;
+    if !target.is_dir() {
+        return Err(format!("{path} is not a space"));
     }
 
-    fs::remove_dir_all(&target).map_err(|e| e.to_string())
+    fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
+}
+
+/// A space as the window wants it, named after the folder it actually is.
+fn space_at(path: &Path) -> Space {
+    Space {
+        name: path
+            .file_name()
+            .and_then(OsStr::to_str)
+            .unwrap_or_default()
+            .to_string(),
+        path: path.to_string_lossy().to_string(),
+    }
 }
 
 /// Turns what someone typed into a folder name every platform accepts, or None
 /// when nothing usable is left.
-pub fn folder_name(input: &str) -> Option<String> {
+fn folder_name(input: &str) -> Option<String> {
     let cleaned: String = input
         .chars()
         // `<>:"/\|?*` are illegal on Windows; control characters everywhere.
-        .map(|c| {
-            if c.is_control() || r#"<>:"/\|?*"#.contains(c) {
+        .map(|letter| {
+            if letter.is_control() || r#"<>:"/\|?*"#.contains(letter) {
                 ' '
             } else {
-                c
+                letter
             }
         })
         .collect();
@@ -153,14 +156,14 @@ pub fn folder_name(input: &str) -> Option<String> {
 
     // A trailing dot or space is dropped silently by Windows, so a name that
     // ends in one would not be the name that was asked for.
-    let trimmed = collapsed.trim_matches(|c: char| c == '.' || c.is_whitespace());
+    let trimmed = collapsed.trim_matches(|letter: char| letter == '.' || letter.is_whitespace());
     if trimmed.is_empty() {
         return None;
     }
 
     let capped: String = trimmed.chars().take(MAX_NAME).collect();
     let capped = capped
-        .trim_matches(|c: char| c == '.' || c.is_whitespace())
+        .trim_matches(|letter: char| letter == '.' || letter.is_whitespace())
         .to_string();
     if capped.is_empty() {
         return None;
@@ -178,7 +181,7 @@ pub fn folder_name(input: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{folder_name, MAX_NAME};
 
     #[test]
     fn keeps_an_ordinary_name() {
@@ -218,6 +221,13 @@ mod tests {
     }
 
     #[test]
+    fn a_name_cannot_climb_out_of_the_spaces_folder() {
+        assert_eq!(folder_name(".."), None);
+        assert_eq!(folder_name("../../elsewhere"), Some("elsewhere".into()));
+        assert_eq!(folder_name(r"..\elsewhere"), Some("elsewhere".into()));
+    }
+
+    #[test]
     fn works_around_the_reserved_names() {
         assert_eq!(folder_name("CON"), Some("CON space".into()));
         assert_eq!(folder_name("nul"), Some("nul space".into()));
@@ -229,7 +239,10 @@ mod tests {
     #[test]
     fn caps_the_length() {
         let long = "x".repeat(200);
-        assert_eq!(folder_name(&long).unwrap().chars().count(), MAX_NAME);
+        assert_eq!(
+            folder_name(&long).map(|name| name.chars().count()),
+            Some(MAX_NAME)
+        );
     }
 
     #[test]
