@@ -4,13 +4,13 @@ import { invoke } from './tauri'
 
 /** SHA-256 of the bytes, as hex. The picture's name is its contents, so the
  *  same image pasted twice is stored once wherever it ends up. */
-export async function hashBytes(bytes: ArrayBuffer): Promise<string> {
+async function hashBytes(bytes: ArrayBuffer): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bytes)
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 /** The extension to give a stored image, from what the clipboard said it is. */
-export function extensionFor(type: string, name: string): string {
+function extensionFor(type: string, name: string): string {
   const fromName = /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase()
   if (fromName && fromName.length <= 5) return fromName
 

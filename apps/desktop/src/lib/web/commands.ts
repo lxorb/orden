@@ -477,7 +477,7 @@ export async function webInvoke<T>(
 }
 
 /** True once anything has been written, so a first visit can be seeded. */
-export async function hasContent(): Promise<boolean> {
+async function hasContent(): Promise<boolean> {
   return (await files.all()).length > 0
 }
 

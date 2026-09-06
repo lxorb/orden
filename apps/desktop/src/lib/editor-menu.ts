@@ -43,7 +43,7 @@ async function paste(view: EditorView) {
   view.focus()
 }
 
-export function editorMenu(view: EditorView | undefined): MenuEntry[] {
+function editorMenu(view: EditorView | undefined): MenuEntry[] {
   const selected = !!view && !view.state.selection.main.empty
   const reading = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)

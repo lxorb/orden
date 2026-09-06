@@ -14,7 +14,7 @@ interface Confirm {
   danger?: boolean
 }
 
-export interface Choice {
+interface Choice {
   id: string
   label: string
   primary?: boolean
@@ -27,7 +27,7 @@ interface Choose {
   options: Choice[]
 }
 
-export interface SpaceOption {
+interface SpaceOption {
   id: string
   name: string
 }
@@ -38,7 +38,7 @@ interface AskName extends Ask {
   space: string | null
 }
 
-export interface NamedIn {
+interface NamedIn {
   name: string
   space: string | null
 }

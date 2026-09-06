@@ -1,7 +1,7 @@
 /** Path arithmetic for the browser's virtual disk. Everything uses `/`, and a
  *  space is a folder directly under the root. */
 
-export const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 export function normalise(path: string): string {
   return `/${path

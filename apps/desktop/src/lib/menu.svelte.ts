@@ -17,7 +17,7 @@ export type MenuEntry = MenuItem | typeof DIVIDER
 
 /** How a phone shows the menu. A desktop ignores both: there it is always a
  *  popover at the pointer. */
-export interface MenuOptions {
+interface MenuOptions {
   /** What the menu is about, for the sheet a phone shows, which does not
    *  point at anything the way a popover does. */
   title?: string

@@ -35,7 +35,7 @@ import { openFile } from './open-file'
  *  source editor. */
 export const SOURCE_URL = 'https://github.com/lxorb/nib'
 
-export interface MenuAction {
+interface MenuAction {
   label: string
   /** Undefined where the action has no key bound to it. */
   hint?: string | undefined
@@ -46,7 +46,7 @@ export interface MenuAction {
 
 /** A rule between groups of actions. */
 export const SPLIT = null
-export type MenuRow = MenuAction | typeof SPLIT
+type MenuRow = MenuAction | typeof SPLIT
 
 export interface MenuGroup {
   id: string

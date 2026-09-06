@@ -22,11 +22,6 @@ export async function loadIcons(): Promise<Record<string, IconNode>> {
   return found
 }
 
-/** One icon, or null while the library is still loading. */
-export function iconNode(name: string): IconNode | null {
-  return library?.[name] ?? null
-}
-
 /** `BookOpen` reads as "book open", which is what people actually search for. */
 export function words(name: string): string {
   return name
@@ -101,7 +96,7 @@ const SYNONYMS: Record<string, string[]> = {
   web: ['Globe', 'Link'],
 }
 
-export interface Match {
+interface Match {
   name: string
   score: number
 }

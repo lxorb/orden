@@ -5,8 +5,8 @@ export const PAPER_SIZES = ['A3', 'A4', 'A5', 'Letter', 'Legal'] as const
 
 export const ORIENTATIONS = ['portrait', 'landscape'] as const
 
-export type Paper = (typeof PAPER_SIZES)[number]
-export type Orientation = (typeof ORIENTATIONS)[number]
+type Paper = (typeof PAPER_SIZES)[number]
+type Orientation = (typeof ORIENTATIONS)[number]
 
 /** The units a stylesheet and a printer both understand, and how many of each
  *  make an inch. One list, so a unit cannot be accepted when a length is read

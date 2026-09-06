@@ -14,7 +14,7 @@ import { sync } from './sync.svelte'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
-export const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
+const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 
 export interface TrashItem {
   /** Unique across both sources, so a list can key on it. */

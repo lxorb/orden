@@ -52,7 +52,7 @@ const DICTIONARIES = [
 
 /** The panes that are only about settings. Account, publishing and the LLM
  *  connector are their own thing and stay written out by hand. */
-export type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance'
+type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance'
 
 export interface Pane {
   id: PaneId
@@ -311,11 +311,6 @@ export function preferences(view?: EditorView): Pane[] {
       ],
     },
   ]
-}
-
-/** Whether a field answers to what someone typed in the search box. */
-export function matches(field: Field, query: string): boolean {
-  return field.label.toLowerCase().includes(query.trim().toLowerCase())
 }
 
 /** Whether every field in the pane knows what it started as. */

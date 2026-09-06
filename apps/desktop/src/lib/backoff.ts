@@ -2,9 +2,9 @@
 // slower the longer nothing does, and slower still when the window is not on
 // screen: a change nobody can see does not need fetching yet. Coming back to
 // the window resets it, so it is fast exactly while it is being watched.
-export const POLL_BUSY = 20_000
-export const POLL_IDLE_MAX = 120_000
-export const POLL_HIDDEN_MAX = 600_000
+const POLL_BUSY = 20_000
+const POLL_IDLE_MAX = 120_000
+const POLL_HIDDEN_MAX = 600_000
 
 /** After a local save, so an edit does not sit waiting for a slow timer. Long
  *  enough that a burst of saves becomes one pass. */

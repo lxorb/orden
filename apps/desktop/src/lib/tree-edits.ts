@@ -24,7 +24,7 @@ function folderOf(path: string): string {
 }
 
 /** The order the listing itself uses: folders first, then the chosen key. */
-export function compareEntries(options: TreeOptions): (a: Entry, b: Entry) => number {
+function compareEntries(options: TreeOptions): (a: Entry, b: Entry) => number {
   const key: SortKey = options.sort
   const by = (a: Entry, b: Entry) => {
     if (key === 'modified') return a.modified - b.modified

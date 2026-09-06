@@ -12,7 +12,7 @@ const CLIENT_KEY = 'nib:llm-client'
 /** The clients the setup steps are written for. */
 export type Client = 'claude' | 'chatgpt' | 'other'
 
-export interface Connected {
+interface Connected {
   id: string
   name: string
   readOnly: boolean

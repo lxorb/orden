@@ -2,7 +2,7 @@ import { frontMatter } from '@nib/markdown'
 import { assetUrl, folderOf, joinPath } from './tauri'
 
 /** True for anything the browser can already fetch on its own. */
-export function isRemote(src: string): boolean {
+function isRemote(src: string): boolean {
   return /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')
 }
 
