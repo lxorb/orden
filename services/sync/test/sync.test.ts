@@ -374,6 +374,59 @@ describe('notes', () => {
   })
 })
 
+/** An id is not a permission. Every route that takes one looks it up inside the
+ *  signed-in account, so an id from somewhere else is indistinguishable from an
+ *  id that was never issued: 404, and nothing about it in the answer. */
+describe('an id belonging to another account', () => {
+  test('is not found by any route that takes one', async () => {
+    const created = await addNote('Secret.md', 'not yours')
+    const note = created.json.note.id
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'mine' },
+    })
+
+    const other = await signIn(env, 'other@b.dev')
+    const attempts: [string, string][] = [
+      ['GET', `/v1/spaces/${space}/changes`],
+      ['POST', `/v1/spaces/${space}/notes`],
+      ['PATCH', `/v1/spaces/${space}`],
+      ['DELETE', `/v1/spaces/${space}`],
+      ['PUT', `/v1/spaces/${space}/blog`],
+      ['DELETE', `/v1/spaces/${space}/blog`],
+      ['GET', `/v1/spaces/${space}/blog/domain`],
+      ['GET', `/v1/notes/${note}`],
+      ['PUT', `/v1/notes/${note}`],
+      ['DELETE', `/v1/notes/${note}`],
+      ['POST', `/v1/trash/spaces/${space}/restore`],
+      ['POST', `/v1/trash/notes/${note}/restore`],
+      ['DELETE', `/v1/trash/notes/${note}`],
+      ['DELETE', `/v1/trash/spaces/${space}`],
+    ]
+
+    for (const [method, path] of attempts) {
+      const response = await call(env, path, {
+        method,
+        token: other,
+        ...(method === 'GET' || method === 'DELETE'
+          ? {}
+          : { body: { name: 'x', path: 'x.md', content: 'x', subdomain: 'theirs' } }),
+      })
+
+      expect(response.status, `${method} ${path}`).toBe(404)
+      expect(response.text, `${method} ${path}`).not.toContain('Work')
+      expect(response.text, `${method} ${path}`).not.toContain('Secret')
+    }
+
+    // And nothing was changed by the asking.
+    const mine = await call(env, '/v1/spaces', { token })
+    expect(mine.json.spaces[0]!.name).toBe('Work')
+    expect(mine.json.spaces[0]!.blog.subdomain).toBe('mine')
+    expect((await call(env, `/v1/notes/${note}`, { token })).json.content).toBe('not yours')
+  })
+})
+
 describe('what a note is made of', () => {
   test('a path or a body that is not text is refused', async () => {
     const bad = [

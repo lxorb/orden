@@ -1,4 +1,5 @@
 import { documentTitle, renderMarkdown } from '@nib/markdown'
+import { noteKey } from './notes'
 import type { Env, Note, Space } from './types'
 
 const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
@@ -163,12 +164,6 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
 const MOST_LISTED = 2000
 
 export async function serveBlog(env: Env, space: Space, url: URL): Promise<Response> {
-  const { results } = await env.DB.prepare(
-    'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
-  )
-    .bind(space.id, MOST_LISTED)
-    .all<Note>()
-
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
 
@@ -178,13 +173,21 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const author = owner?.name ?? null
 
   // One note published on its own is the whole site: it sits at the root with
-  // no index above it, and nothing else in the space is reachable.
+  // no index above it, and nothing else in the space is reachable. Asked for by
+  // name rather than found in the listing, so it is served whatever else the
+  // space holds.
   if (space.blog_note) {
-    const only = results.find((entry) => entry.path === space.blog_note)
-    if (!only) return page('Not found', '<h1>Not found</h1>', env, author)
     if (slug) return page('Not found', '<h1>Not found</h1>', env, author)
 
-    const object = await env.NOTES.get(`spaces/${space.id}/${only.id}`)
+    const only = await env.DB.prepare(
+      'select * from notes where space_id = ? and path = ? and deleted = 0',
+    )
+      .bind(space.id, space.blog_note)
+      .first<Note>()
+
+    if (!only) return page('Not found', '<h1>Not found</h1>', env, author)
+
+    const object = await env.NOTES.get(noteKey(space.id, only.id))
     const source = object ? await object.text() : ''
 
     return page(
@@ -194,6 +197,12 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
       author,
     )
   }
+
+  const { results } = await env.DB.prepare(
+    'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
+  )
+    .bind(space.id, MOST_LISTED)
+    .all<Note>()
 
   if (!slug) {
     const items = results
@@ -217,7 +226,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const note = results.find((entry) => slugFor(entry.path) === slug)
   if (!note) return page('Not found', '<h1>Not found</h1>', env, author)
 
-  const object = await env.NOTES.get(`spaces/${space.id}/${note.id}`)
+  const object = await env.NOTES.get(noteKey(space.id, note.id))
   const source = object ? await object.text() : ''
 
   // A published note is public: its raw HTML is shown, never run.

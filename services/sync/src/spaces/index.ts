@@ -13,8 +13,6 @@ import type { Env, Space, Variables } from '../types'
 import { publish } from './publish'
 import { ownedSpace, presentSpace } from './space'
 
-export { ownedSpace, presentSpace } from './space'
-
 const NAME_LIMIT = 80
 /** An id is a UUID; the length is all this needs to know. */
 const ID_LIMIT = 64

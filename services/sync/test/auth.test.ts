@@ -185,6 +185,35 @@ describe('sessions', () => {
   })
 })
 
+/** The API is reached by the desktop app and by the web build on the app's own
+ *  origin, and by nothing else. A token is not a cookie, so this is a second
+ *  line rather than the only one - but it is the line the browser enforces. */
+describe('who may call the API from a browser', () => {
+  test('the app itself may', async () => {
+    for (const origin of [
+      'https://nibeditor.com',
+      'http://localhost:1420',
+      'tauri://localhost',
+      'http://127.0.0.1:5173',
+    ]) {
+      const response = await call(env, '/v1/me', { headers: { origin } })
+      expect(response.headers.get('access-control-allow-origin'), origin).toBe(origin)
+    }
+  })
+
+  test('a page on someone else’s site may not', async () => {
+    for (const origin of [
+      'https://evil.example',
+      'https://nibeditor.com.evil.example',
+      'http://localhost.evil.example',
+      'https://www.nibeditor.com',
+    ]) {
+      const response = await call(env, '/v1/me', { headers: { origin } })
+      expect(response.headers.get('access-control-allow-origin'), origin).toBeNull()
+    }
+  })
+})
+
 describe('a display name', () => {
   test('starts empty', async () => {
     const token = await signIn(env, 'a@b.dev')
