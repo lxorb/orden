@@ -67,30 +67,35 @@ class Session {
     this.busy = true
     this.error = null
 
+    let session
     try {
-      const { token, user } = await api.verifyCode(this.email.trim(), code)
-      localStorage.setItem(STORAGE_KEY, token)
-
-      // Before the session exists, so whatever starts syncing on sign-in
-      // finds the wait already in place.
-      this.settling = true
-      this.token = token
-      this.user = user
-      this.open = false
-      this.step = 'email'
-      this.email = ''
-
-      await this.loadSpaces()
-      return true
+      session = await api.verifyCode(this.email.trim(), code)
     } catch (error) {
-      // A session that came this far is kept; only the question is dropped,
-      // since nobody is going to ask it now.
-      this.settling = false
       this.error = error instanceof ApiError ? error.message : 'could not reach the server'
       return false
     } finally {
       this.busy = false
     }
+
+    const { token, user } = session
+    localStorage.setItem(STORAGE_KEY, token)
+    this.stopResendTimer()
+
+    // Before the session exists, so whatever starts syncing on sign-in finds
+    // the wait already in place.
+    this.settling = true
+    this.token = token
+    this.user = user
+    this.open = false
+    this.step = 'email'
+    this.email = ''
+
+    // The spaces are wanted for the question that follows, but failing to
+    // fetch them is not a failed sign-in. Letting it read as one would answer
+    // false to the caller, which skips the question about the notes already
+    // here - and syncing would then start and upload them unasked.
+    await this.loadSpaces().catch(() => undefined)
+    return true
   }
 
   /** The notes already on this machine have been dealt with, one way or the
@@ -121,6 +126,7 @@ class Session {
 
   private forget() {
     localStorage.removeItem(STORAGE_KEY)
+    this.stopResendTimer()
     this.token = null
     this.user = null
     this.settling = false
@@ -128,12 +134,24 @@ class Session {
     this.deletedSpaces = []
   }
 
+  private resendTimer: ReturnType<typeof setInterval> | undefined
+
+  /** Counts down to when another code may be asked for. One timer at a time:
+   *  asking again used to start a second one beside the first, and the two
+   *  together took a second off the count twice a second. */
   private startResendTimer(seconds: number) {
+    this.stopResendTimer()
     this.resendIn = seconds
-    const tick = setInterval(() => {
+
+    this.resendTimer = setInterval(() => {
       this.resendIn -= 1
-      if (this.resendIn <= 0) clearInterval(tick)
+      if (this.resendIn <= 0) this.stopResendTimer()
     }, 1000)
+  }
+
+  private stopResendTimer() {
+    clearInterval(this.resendTimer)
+    this.resendTimer = undefined
   }
 }
 

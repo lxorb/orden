@@ -144,8 +144,16 @@ function basename(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
 }
 
+/** Ids handed out within one run of the app: tabs, and the spaces the rail
+ *  keeps its order by. The counter is what makes them unique - eight random
+ *  characters collide rarely, and rarely is not never, and two tabs sharing an
+ *  id would share their saving mark and take each other's place in the strip.
+ *  The random part keeps two windows from agreeing on the same id for
+ *  different things. */
+let handed = 0
+
 function identifier(): string {
-  return Math.random().toString(36).slice(2, 10)
+  return `${(handed++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 function readRecent(): string[] {
@@ -1453,17 +1461,25 @@ class Workspace {
       this.recordFileAction({ kind: 'delete', path, content })
     }
 
-    // Signed in, the account keeps a copy for 14 days; signed out, this
-    // device does, in its own trash folder (see trash.svelte.ts).
-    if (account.signedIn) {
-      await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
-    } else {
-      const entry = await invoke<{ id: string }>('trash_item', {
-        path,
-        kind: isFolder ? 'folder' : 'note',
-      })
-      const last = this.undoable.at(-1)
-      if (last?.kind === 'delete' && last.path === path) last.trashId = entry.id
+    try {
+      // Signed in, the account keeps a copy for 14 days; signed out, this
+      // device does, in its own trash folder (see trash.svelte.ts).
+      if (account.signedIn) {
+        await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
+      } else {
+        const entry = await invoke<{ id: string }>('trash_item', {
+          path,
+          kind: isFolder ? 'folder' : 'note',
+        })
+        const last = this.undoable.at(-1)
+        if (last?.kind === 'delete' && last.path === path) last.trashId = entry.id
+      }
+    } catch (error) {
+      // The row was hidden before the file was asked to go, so a delete that
+      // did not happen has to put it back: the listing is what the tree really
+      // is, and until it is read again the row is simply missing.
+      await this.loadTree()
+      throw error
     }
 
     for (const tab of this.tabs.filter((entry) => entry.path?.startsWith(path))) {
@@ -1484,15 +1500,9 @@ class Workspace {
     const action = this.undoable.at(-1)
     if (!action) return
 
-    this.undoable = this.undoable.slice(0, -1)
-
     try {
-      if (action.kind === 'delete') {
-        // Out of the device's trash when it went there, or back from the
-        // snapshot when the account holds the copy.
-        if (action.trashId) await invoke('restore_trash', { id: action.trashId })
-        else await invoke('write_note', { path: action.path, content: action.content })
-      } else {
+      if (action.kind === 'delete') await this.putBack(action)
+      else {
         await invoke('rename_note', { from: action.to, to: action.from })
         this.movePlace(action.to, action.from)
 
@@ -1503,11 +1513,37 @@ class Workspace {
       }
     } catch {
       // Something else has since changed the file; leave what is there alone.
+      // The action stays on the stack, so the same undo can be tried again
+      // once whatever is in the way has been dealt with.
       return
     }
 
+    this.undoable = this.undoable.slice(0, -1)
     await this.loadTree()
     this.persist()
+  }
+
+  /** A deleted note back where it was. Out of the device's trash when it went
+   *  there, and from the snapshot taken on the way out otherwise.
+   *
+   *  The trash can refuse: the sweep runs daily and clears anything past its
+   *  fourteen days, and Recently deleted can purge an entry by hand. The
+   *  snapshot is still here either way, so it stands in rather than leaving
+   *  the note gone with nothing said. */
+  private async putBack(action: Extract<FileAction, { kind: 'delete' }>) {
+    if (!action.trashId) {
+      await invoke('write_note', { path: action.path, content: action.content })
+      return
+    }
+
+    const restored = await invoke('restore_trash', { id: action.trashId })
+      .then(() => true)
+      .catch(() => false)
+
+    if (restored) return
+    if (!action.content) throw new Error('the deleted note is no longer in the trash')
+
+    await invoke('write_note', { path: action.path, content: action.content })
   }
 
   /** What undoing would do, phrased for a menu. Null when there is nothing. */

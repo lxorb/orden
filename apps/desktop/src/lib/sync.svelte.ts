@@ -64,7 +64,15 @@ class Sync {
   private quiet = 0
   private reconciledAt = 0
 
+  /** Which run of the loop this is. Bumped by every start and every stop, so a
+   *  pass still in flight when syncing was turned off can tell that what it is
+   *  about to say is out of date. Signing out is the case that matters: the
+   *  pass finishes, and without this it would put the light back to "synced"
+   *  and set the next timer for an account that is no longer there. */
+  private generation = 0
+
   start() {
+    this.generation++
     this.mirrors = this.load()
     this.quiet = 0
     this.reconciledAt = 0
@@ -76,6 +84,7 @@ class Sync {
   }
 
   stop() {
+    this.generation++
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
 
@@ -160,7 +169,12 @@ class Sync {
   }
 
   private async tick() {
+    const mine = this.generation
     const moved = await this.pass()
+
+    // Syncing may have been turned off while that pass was in the air. Setting
+    // the next timer here would restart a loop that was deliberately stopped.
+    if (mine !== this.generation) return
 
     // Eight doublings is far past either cap; stopping there keeps the shift
     // from overflowing on a client left open for days.
@@ -280,6 +294,7 @@ class Sync {
   async run(): Promise<boolean> {
     if (this.running || !account.token) return false
 
+    const mine = this.generation
     this.running = true
     this.status = 'syncing'
     this.lastError = null
@@ -306,9 +321,16 @@ class Sync {
       if (shown) await workspace.loadTree()
 
       this.save()
+      // Syncing may have been turned off while the pass was running, and the
+      // light is already saying so. What it found is still worth writing down;
+      // what it thinks the state is no longer is.
+      if (mine !== this.generation) return moved
+
       this.lastSyncedAt = Date.now()
       this.status = Object.keys(this.mirrors).length ? 'idle' : 'off'
     } catch (error) {
+      if (mine !== this.generation) return moved
+
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : t('sync failed')
     } finally {
@@ -322,6 +344,10 @@ class Sync {
     const token = account.token
     if (!token) return false
 
+    // Read once: a rename lands in `renamed` while a pass is in the air, and a
+    // pass that changed folder halfway would join the new root onto paths it
+    // listed under the old one.
+    const root = mirror.root
     let moved = false
 
     for (;;) {
@@ -329,7 +355,7 @@ class Sync {
       if (page.notes.length) moved = true
 
       for (const remote of page.notes) {
-        const target = join(mirror.root, remote.path)
+        const target = join(root, remote.path)
 
         if (remote.deleted) {
           if (mirror.notes[remote.path]) {
@@ -372,7 +398,9 @@ class Sync {
     const token = account.token
     if (!token) return false
 
-    const tree = await invoke<Entry>('read_tree', { root: mirror.root }).catch(() => null)
+    // Read once, for the same reason as in `pull`.
+    const root = mirror.root
+    const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
     if (!tree) return false
 
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one pass; nothing renders from it
@@ -380,7 +408,7 @@ class Sync {
     let moved = false
 
     for (const file of flatten(tree)) {
-      const path = relative(mirror.root, file.path)
+      const path = relative(root, file.path)
       seen.add(path)
 
       const content = await invoke<string>('read_note', { path: file.path })

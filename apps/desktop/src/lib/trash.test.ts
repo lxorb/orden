@@ -228,6 +228,35 @@ describe('signed out', () => {
     expect(onlyTrashed()).toMatchObject({ kind: 'space', from: '/space' })
   })
 
+  test('undoing a deletion the trash no longer holds falls back to the snapshot', async () => {
+    await workspace.remove('/space/Idea.md', false)
+
+    // Recently deleted was emptied, or the daily sweep took it: the entry the
+    // undo was going to restore from is gone.
+    deviceTrash = []
+    calls.length = 0
+
+    await workspace.undoFileAction()
+
+    expect(calls).toContain('write_note')
+    expect(notes.get('/space/Idea.md')).toBe('# Idea')
+    expect(workspace.undoable).toEqual([])
+  })
+
+  test('an undo that could not happen stays on the stack to be tried again', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    // Nothing to restore from and nothing worth writing back.
+    deviceTrash = []
+    const [action] = workspace.undoable
+    if (action?.kind !== 'delete') throw new Error('the deletion was not recorded')
+    action.content = ''
+
+    await workspace.undoFileAction()
+
+    expect(workspace.undoable).toHaveLength(1)
+    expect(workspace.undoLabel).toBe('Undo deleting Idea.md')
+  })
+
   test('the sweep drops what is older than 14 days', async () => {
     await workspace.remove('/space/Idea.md', false)
     onlyTrashed().trashedAt = Date.now() - 15 * DAY

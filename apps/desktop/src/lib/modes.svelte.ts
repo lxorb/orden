@@ -250,6 +250,12 @@ class Modes {
    *  nothing about included, so the one request answers for all of them. The
    *  shortcuts are taken from it in App.svelte; see shortcuts.svelte.ts. */
   async adopt(token: string): Promise<AccountSettings | null> {
+    // What this machine had said before the question went out. Anything it
+    // says while the answer is in the air is newer than the answer, so the
+    // answer stops being worth adopting: the account already has the newer
+    // value, and taking the older one back would undo the reader's own switch.
+    const asked = this.sent
+
     let remote: AccountSettings
     try {
       remote = (await api.settings(token)).settings
@@ -257,18 +263,26 @@ class Modes {
       return null
     }
 
-    if (typeof remote.ligatures === 'boolean' && remote.ligatures !== this.ligatures) {
-      this.ligatures = remote.ligatures
-      if (this.view) setLigatures(this.view, this.ligatures)
+    const theirs = remote.ligatures
+    if (typeof theirs === 'boolean' && this.sent === asked && theirs !== this.ligatures) {
+      this.ligatures = theirs
+      if (this.view) setLigatures(this.view, theirs)
       this.persist()
     }
 
     return remote
   }
 
+  /** How many choices this machine has made since it started. Counted whether
+   *  or not there was an account to tell, because what it is for is telling an
+   *  answer that set off earlier from one that set off later. */
+  private sent = 0
+
   /** Tells the account, when there is one. A machine that is offline keeps
    *  its own choice; the next change made online carries it up. */
   private share(patch: AccountSettings) {
+    this.sent++
+
     const token = account.token
     if (!token) return
     void api.saveSettings(token, patch).catch(() => undefined)

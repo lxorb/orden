@@ -33,6 +33,22 @@ vi.mock('@nib/editor', async (importOriginal) => ({
   setSourceMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'source', on }),
 }))
 
+/** The account, standing still. One object across module resets, so a test can
+ *  swap a call out and the store made afterwards still sees it. */
+const api = vi.hoisted(() => {
+  const empty: { ligatures?: boolean } = {}
+
+  return {
+    settings: async () => ({ settings: empty }),
+    saveSettings: async () => ({ settings: empty }),
+  }
+})
+
+vi.mock('./api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./api')>()),
+  api,
+}))
+
 /** Everything the other mode setters reach for on a view, and nothing else. */
 function surface() {
   const view = {
@@ -131,5 +147,51 @@ describe('reading mode and source mode', () => {
     const restored = await restarted()
     expect(restored.reading).toBe(true)
     expect(restored.source).toBe(false)
+  })
+})
+
+describe('taking over what the account holds', () => {
+  /** Answers the account's settings, but only once released - so a choice can
+   *  be made on this machine while the answer is still in the air. */
+  function heldAnswer(settings: { ligatures?: boolean }) {
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const settingsCall = async () => {
+      await held
+      return { settings }
+    }
+
+    return { release, settingsCall }
+  }
+
+  test('brings a setting this machine has never chosen', async () => {
+    const { release, settingsCall } = heldAnswer({ ligatures: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.ligatures).toBe(true)
+  })
+
+  test('leaves alone a switch flicked while the answer was in the air', async () => {
+    const { release, settingsCall } = heldAnswer({ ligatures: true })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    // The reader turns them on and off again before the account answers. The
+    // answer is older than that, and `toggleLigatures` has already sent this
+    // machine's choice up.
+    modes.toggleLigatures()
+    modes.toggleLigatures()
+
+    release()
+    await adopted
+
+    expect(modes.ligatures).toBe(false)
   })
 })

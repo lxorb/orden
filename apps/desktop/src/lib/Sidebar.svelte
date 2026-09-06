@@ -93,21 +93,31 @@
   let searching = $state(false)
   let debounce: ReturnType<typeof setTimeout>
 
+  /** Which search is the latest. Typing outruns the disk, and a slow search
+   *  landing after a quicker one that came later would show the results for a
+   *  word that is no longer in the box. */
+  let searches = 0
+
   function onQuery(value: string) {
     query = value
     clearTimeout(debounce)
+    searches++
 
     if (value.trim().length < 2) {
       hits = []
+      searching = false
       return
     }
 
     searching = true
-    debounce = setTimeout(() => void run(value), 220)
+    debounce = setTimeout(() => void run(value, searches), 220)
   }
 
-  async function run(query: string) {
-    hits = await workspace.search(query)
+  async function run(text: string, search: number) {
+    const found = await workspace.search(text)
+    if (search !== searches) return
+
+    hits = found
     searching = false
   }
 

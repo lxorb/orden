@@ -314,4 +314,46 @@ describe('where a note was last looked at', () => {
     }
     expect(saved.positions?.['/space/a.md']).toMatchObject({ cursor: 1, scroll: 77 })
   })
+
+  test('only the notes most recently looked at are kept', () => {
+    workspace.tabs = []
+    // A place is stamped with the moment it was recorded, and which are the
+    // newest is the whole question here.
+    let clock = Date.now()
+    const now = vi.spyOn(Date, 'now').mockImplementation(() => ++clock)
+
+    for (let index = 0; index < 320; index++) {
+      workspace.tabs = [
+        { id: `t${index}`, path: `/space/${index}.md`, name: `${index}.md`, doc: '', dirty: false },
+      ]
+      workspace.activeTabId = `t${index}`
+      workspace.noteView(`t${index}`, index, index)
+    }
+
+    // The session is written on a timer; activating a tab writes it now.
+    workspace.activate('t319')
+    now.mockRestore()
+
+    const saved = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+      positions?: Record<string, unknown>
+    }
+    const kept = Object.keys(saved.positions ?? {})
+
+    // The record outlives every tab in it, so it has to stop growing somewhere.
+    expect(kept).toHaveLength(300)
+    expect(kept).toContain('/space/319.md')
+    expect(kept).not.toContain('/space/0.md')
+  })
+})
+
+describe('the ids tabs are known by', () => {
+  test('are never handed out twice', () => {
+    workspace.tabs = []
+    for (let index = 0; index < 5000; index++) workspace.openBlank()
+
+    const ids = new Set(workspace.tabs.map((tab) => tab.id))
+    expect(ids.size).toBe(workspace.tabs.length)
+
+    workspace.tabs = []
+  })
 })

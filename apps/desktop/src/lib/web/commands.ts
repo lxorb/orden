@@ -102,8 +102,12 @@ async function writeNote(path: string, content: string) {
 async function renameNote(from: string, to: string) {
   const source = normalise(from)
   const target = normalise(to)
+  if (source === target) return
 
-  if (await files.get(target)) throw new Error('something already lives there')
+  // `occupied` and not `files.get`: a folder has no row of its own, so asking
+  // only about an exact path would let a note be renamed onto a folder and
+  // land inside it, taking the folder's name and hiding what was in it.
+  if (await occupied(target)) throw new Error('something already lives there')
 
   const rows = (await files.all()).filter(
     (row) => row.path === source || row.path.startsWith(`${source}/`),
@@ -111,10 +115,13 @@ async function renameNote(from: string, to: string) {
 
   if (!rows.length) throw new Error('nothing to rename')
 
-  for (const row of rows) {
-    await files.put({ ...row, path: target + row.path.slice(source.length), modified: now() })
-    await files.remove(row.path)
-  }
+  // One transaction for the lot. Row by row, a browser closed halfway through
+  // renaming a folder would leave half its notes under the old name and half
+  // under the new, with no way to tell which.
+  await files.move(
+    rows.map((row) => ({ ...row, path: target + row.path.slice(source.length), modified: now() })),
+    rows.map((row) => row.path),
+  )
 }
 
 async function removeFolder(path: string) {

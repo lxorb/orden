@@ -72,11 +72,42 @@ function run<T>(
   )
 }
 
+/** Several writes as one. IndexedDB commits a transaction when the last
+ *  request in it settles, so the whole batch has to be queued together: this
+ *  resolves on the transaction rather than on any one request, which is what
+ *  makes "all of it, or none of it" true. */
+function batch(store: string, queue: (store: IDBObjectStore) => void): Promise<void> {
+  return database().then(
+    (db) =>
+      new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(store, 'readwrite')
+
+        transaction.oncomplete = () => resolve()
+        transaction.onabort = () =>
+          reject(transaction.error ?? new Error(`${store} was rolled back`))
+        transaction.onerror = () => reject(transaction.error ?? new Error(`${store} failed`))
+
+        queue(transaction.objectStore(store))
+      }),
+  )
+}
+
 export const files = {
   get: (path: string) => run<FileRow | undefined>('files', 'readonly', (s) => s.get(path)),
   all: () => run<FileRow[]>('files', 'readonly', (s) => s.getAll()),
   put: (row: FileRow) => run<IDBValidKey>('files', 'readwrite', (s) => s.put(row)),
   remove: (path: string) => run<undefined>('files', 'readwrite', (s) => s.delete(path)),
+  /** Writes `rows` and drops `gone`, all or nothing. What a rename is: every
+   *  note under the folder lands under its new name at the same moment. */
+  move: (rows: FileRow[], gone: string[]) =>
+    batch('files', (store) => {
+      for (const row of rows) store.put(row)
+      // After the writes, so a path that is both written and dropped - a
+      // rename that only changes a folder above it - keeps the new row.
+      for (const path of gone) {
+        if (!rows.some((row) => row.path === path)) store.delete(path)
+      }
+    }),
 }
 
 export const assets = {

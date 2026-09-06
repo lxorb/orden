@@ -307,6 +307,28 @@ async function signIn() {
   expect(await account.verify('123456')).toBe(true)
 }
 
+describe('signing in when the account will not answer', () => {
+  test('is still a sign-in, and still asks about the notes already here', async () => {
+    await machineWithNotes()
+
+    // The code is accepted, and the request that follows it is not.
+    const real = fake.api.listSpaces
+    fake.api.listSpaces = () => Promise.reject(new Error('offline'))
+
+    try {
+      account.email = 'me@example.com'
+      // False here would tell the sign-in sheet the code was refused, and the
+      // question about the notes on this machine would never be asked - while
+      // the session it made in passing let syncing upload them unasked.
+      expect(await account.verify('123456')).toBe(true)
+      expect(account.signedIn).toBe(true)
+      expect(account.syncable).toBe(false)
+    } finally {
+      fake.api.listSpaces = real
+    }
+  })
+})
+
 describe('signing in on a machine that already holds notes', () => {
   test('holds syncing back until the question about them is answered', async () => {
     await machineWithNotes()
@@ -399,5 +421,59 @@ describe('a mirror whose folder is gone', () => {
 
     await sync.run()
     expect(fake.remote.calls).toEqual([])
+  })
+})
+
+describe('turning syncing off while a pass is in the air', () => {
+  test('leaves the light off and does not start the loop again', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    // One pass first, so there is a mirror for the next one to work on.
+    await sync.pass()
+
+    const listeners = { addEventListener: () => undefined, removeEventListener: () => undefined }
+    vi.stubGlobal('document', { hidden: false, ...listeners })
+    vi.stubGlobal('window', listeners)
+    vi.useFakeTimers()
+
+    // Holds the next pass open on the network, so it is still in flight when
+    // syncing is turned off - which is what signing out looks like from here.
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const real = fake.api.changes
+    let asked = 0
+    fake.api.changes = async (token: string, spaceId: string, since: number) => {
+      asked++
+      await held
+      return real(token, spaceId, since)
+    }
+
+    try {
+      sync.start()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(asked).toBe(1)
+
+      sync.stop()
+      expect(sync.status).toBe('off')
+
+      release()
+      await vi.advanceTimersByTimeAsync(0)
+
+      // The pass finished after the stop; what it thinks the state is no
+      // longer holds.
+      expect(sync.status).toBe('off')
+
+      // And it must not have set the next timer: a stopped loop stays stopped.
+      await vi.advanceTimersByTimeAsync(30 * 60 * 1000)
+      expect(asked).toBe(1)
+    } finally {
+      fake.api.changes = real
+      vi.useRealTimers()
+      vi.unstubAllGlobals()
+    }
   })
 })
