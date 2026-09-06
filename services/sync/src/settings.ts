@@ -3,12 +3,78 @@ import type { Env, Variables } from './types'
 
 /** The settings that follow the account from machine to machine, and what
  *  each may be. Anything else in a request is refused, so the column never
- *  holds what no version of the app knows what to do with. */
-const KNOWN: Record<string, 'boolean'> = {
-  ligatures: 'boolean',
+ *  holds what no version of the app knows what to do with.
+ *
+ *  Each entry says what is wrong rather than only that something is, because
+ *  the message is what the app shows: see the ERROR path in api.ts. */
+type Check = (value: unknown) => string | null
+
+const KNOWN: Record<string, Check> = {
+  ligatures: (value) => (typeof value === 'boolean' ? null : 'ligatures must be true or false'),
+  shortcuts: shortcutMap,
 }
 
-export type AccountSettings = Record<string, boolean>
+/** How much of any of this an account may hold.
+ *
+ *  The column is one JSON blob on the user's row, and a shortcut map is the
+ *  first thing in it that a client could grow without limit - an id is a
+ *  string the server never chose. So the count, the length of every part and
+ *  the size of the whole are all bounded, and the bounds are generous enough
+ *  that a person rebinding every shortcut there is stays well inside them:
+ *  the app has around ninety. */
+const MOST_SHORTCUTS = 200
+const LONGEST_ID = 64
+const LONGEST_KEY = 40
+const MOST_BYTES = 8 * 1024
+
+/** The modifiers a combination may name. `Mod` is Cmd on a Mac and Ctrl
+ *  everywhere else, which is why what is stored says `Mod` rather than either
+ *  of them: one account, two kinds of machine. */
+const MODIFIERS = new Set(['mod', 'cmd', 'meta', 'm', 'ctrl', 'control', 'c', 'alt', 'a', 'option', 'shift', 's'])
+
+/** Whether a string is a key combination in CodeMirror's notation.
+ *
+ *  Split on every `-` except a trailing one, the way CodeMirror splits it, so
+ *  `Mod--` reads as Mod and the minus key rather than as Mod and nothing. */
+function isCombination(value: string): boolean {
+  if (!value || value.length > LONGEST_KEY) return false
+  // Nothing a keyboard produces has whitespace or a control character in its
+  // name, and neither does any modifier.
+  if (/[\s\u0000-\u001f]/.test(value)) return false
+
+  const parts = value.split(/-(?!$)/)
+  const key = parts[parts.length - 1]
+  if (!key || key.length > 16) return false
+
+  return parts.slice(0, -1).every((modifier) => MODIFIERS.has(modifier.toLowerCase()))
+}
+
+/** An id the app files a key under: lower case, in dotted parts. Checked
+ *  rather than matched against a list, because the list lives in the app and
+ *  a server that knew it would have to be deployed before every new
+ *  shortcut. An id this version has never heard of is kept and handed back;
+ *  nothing here has to know what it means. */
+const ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/
+
+function shortcutMap(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'shortcuts must be an object'
+
+  const entries = Object.entries(value as Record<string, unknown>)
+  if (entries.length > MOST_SHORTCUTS) return `shortcuts holds at most ${MOST_SHORTCUTS} keys`
+
+  for (const [id, key] of entries) {
+    if (id.length > LONGEST_ID || !ID.test(id)) return `${id} is not a shortcut id`
+    // Null is a key taken away, which is a choice like any other and has to
+    // travel: without it a machine could never learn that another one
+    // unbound something.
+    if (key === null) continue
+    if (typeof key !== 'string' || !isCombination(key)) return `${id} is not set to a key combination`
+  }
+
+  return null
+}
+
+export type AccountSettings = Record<string, unknown>
 
 export async function settingsOf(env: Env, userId: string): Promise<AccountSettings> {
   const row = await env.DB.prepare('select settings from users where id = ?')
@@ -41,14 +107,21 @@ settings.patch('/', async (context) => {
   }
 
   for (const [name, value] of Object.entries(body as Record<string, unknown>)) {
-    const kind = KNOWN[name]
-    if (!kind) return context.json({ error: `unknown setting ${name}` }, 400)
-    if (typeof value !== kind) return context.json({ error: `${name} must be true or false` }, 400)
+    const check = KNOWN[name]
+    if (!check) return context.json({ error: `unknown setting ${name}` }, 400)
+
+    const wrong = check(value)
+    if (wrong) return context.json({ error: wrong }, 400)
   }
 
   const merged = { ...(await settingsOf(context.env, user.id)), ...(body as AccountSettings) }
-  await context.env.DB.prepare('update users set settings = ? where id = ?')
-    .bind(JSON.stringify(merged), user.id)
-    .run()
+  const written = JSON.stringify(merged)
+  // Measured on what would be stored rather than on what arrived: a patch
+  // small enough on its own can still be the one that tips the column over.
+  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+    return context.json({ error: 'that is more settings than an account holds' }, 413)
+  }
+
+  await context.env.DB.prepare('update users set settings = ? where id = ?').bind(written, user.id).run()
   return context.json({ settings: merged })
 })
