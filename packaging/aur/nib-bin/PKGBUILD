@@ -1,4 +1,4 @@
-# Maintainer: Emil Vinu <me@emilvinu.de>
+# Maintainer: Emil Vinu <101118850+lxorb@users.noreply.github.com>
 
 # Nib ships an official .deb for both architectures, so this package unpacks
 # that rather than rebuilding the app: no Rust or Node toolchain is pulled in
