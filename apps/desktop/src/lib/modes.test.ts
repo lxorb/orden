@@ -22,10 +22,19 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('document', { documentElement: { style: { setProperty: () => undefined } } })
 
-/** Everything the mode setters reach for on a view, and nothing else: what
- *  they end up doing is dispatching, and marking the editor's element. */
+/** What the two modes under test were last told. The editor's own side of
+ *  them is tested in packages/editor; what matters here is that the store
+ *  says the same thing to a view as it says in the menu. */
+const told = vi.hoisted(() => ({ calls: [] as { mode: string; on: boolean }[] }))
+
+vi.mock('@nib/editor', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@nib/editor')>()),
+  setReadingMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'reading', on }),
+  setSourceMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'source', on }),
+}))
+
+/** Everything the other mode setters reach for on a view, and nothing else. */
 function surface() {
-  const classes = new Set<string>()
   const view = {
     state: { readOnly: false },
     dispatch: () => undefined,
@@ -36,14 +45,14 @@ function surface() {
       isConnected: false,
       style: { setProperty: () => undefined },
       classList: {
-        toggle: (name: string, on: boolean) => (on ? classes.add(name) : classes.delete(name)),
-        remove: (name: string) => classes.delete(name),
-        add: (name: string) => classes.add(name),
+        toggle: () => undefined,
+        remove: () => undefined,
+        add: () => undefined,
       },
     },
   }
 
-  return { view: view as unknown as EditorView, classes }
+  return view as unknown as EditorView
 }
 
 let modes: typeof import('./modes.svelte').modes
@@ -58,6 +67,7 @@ async function restarted() {
 
 beforeEach(async () => {
   localStorage.clear()
+  told.calls = []
   modes = await restarted()
 })
 
@@ -73,20 +83,23 @@ describe('reading mode', () => {
     expect((await restarted()).reading).toBe(true)
   })
 
-  test('is put back on a view built later', () => {
-    modes.toggleReading()
-
-    const { view, classes } = surface()
-    modes.apply(view)
-
-    expect(classes.has('nib-reading-mode')).toBe(true)
+  test('reaches the view it is toggled against', () => {
+    modes.toggleReading(surface())
+    expect(told.calls).toContainEqual({ mode: 'reading', on: true })
   })
 
-  test('leaves nothing on the view once it is off', () => {
-    const { view, classes } = surface()
-    modes.apply(view)
+  test('is put back on a view built later', () => {
+    modes.toggleReading()
+    told.calls = []
 
-    expect(classes.has('nib-reading-mode')).toBe(false)
+    modes.apply(surface())
+
+    expect(told.calls).toContainEqual({ mode: 'reading', on: true })
+  })
+
+  test('and stays off on one when it is off', () => {
+    modes.apply(surface())
+    expect(told.calls).toContainEqual({ mode: 'reading', on: false })
   })
 })
 

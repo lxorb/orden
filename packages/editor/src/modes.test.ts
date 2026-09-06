@@ -13,9 +13,8 @@ import { buildDecorations } from './live-preview/decorate'
 import { modeExtensions, setReadingMode, setSourceMode } from './modes'
 import { reformatDocument } from './reformat'
 
-/** A view is a DOM thing and these tests are not, so this is everything the
- *  mode setters actually touch: a state to dispatch into, and the class list
- *  they mark for the stylesheet. */
+/** A view is a DOM thing and these tests are not, so this is all the setters
+ *  under test actually touch: a state to dispatch into. */
 function surface(doc: string, cursor = doc.length) {
   let state = EditorState.create({
     doc,
@@ -23,7 +22,6 @@ function surface(doc: string, cursor = doc.length) {
     extensions: modeExtensions(),
   })
 
-  const classes = new Set<string>()
   const view = {
     get state() {
       return state
@@ -31,15 +29,17 @@ function surface(doc: string, cursor = doc.length) {
     dispatch: (spec: TransactionSpec) => {
       state = state.update(spec).state
     },
-    dom: {
-      classList: {
-        toggle: (name: string, on: boolean) => (on ? classes.add(name) : classes.delete(name)),
-        remove: (name: string) => classes.delete(name),
-      },
-    },
   }
 
-  return { view: view as unknown as EditorView, classes }
+  return { view: view as unknown as EditorView }
+}
+
+/** The class the stylesheet works from, as the editor itself will write it
+ *  onto its element - not put there by hand; see readingExtensions. */
+function readingClass(state: EditorState): boolean {
+  return state
+    .facet(EditorView.editorAttributes)
+    .some((attrs) => typeof attrs === 'object' && attrs?.class === 'nib-reading-mode')
 }
 
 /** Text the reader never sees: syntax the preview has concealed. */
@@ -87,12 +87,12 @@ describe('turning reading mode on', () => {
   })
 
   test('marks the editor for the stylesheet', () => {
-    const { view, classes } = surface('# Note')
+    const { view } = surface('# Note')
     setReadingMode(view, true)
-    expect(classes.has('nib-reading-mode')).toBe(true)
+    expect(readingClass(view.state)).toBe(true)
 
     setReadingMode(view, false)
-    expect(classes.has('nib-reading-mode')).toBe(false)
+    expect(readingClass(view.state)).toBe(false)
   })
 
   test('gives everything back when it goes off', () => {
@@ -204,12 +204,12 @@ describe('source mode and reading mode', () => {
   })
 
   test('and source takes reading off', () => {
-    const { view, classes } = surface('| a |\n| --- |\n| 1 |')
+    const { view } = surface('| a |\n| --- |\n| 1 |')
     setReadingMode(view, true)
 
     setSourceMode(view, true)
     expect(view.state.readOnly).toBe(false)
     expect(preview(view.state)).toBe(false)
-    expect(classes.has('nib-reading-mode')).toBe(false)
+    expect(readingClass(view.state)).toBe(false)
   })
 })

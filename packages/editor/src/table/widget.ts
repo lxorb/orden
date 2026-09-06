@@ -22,12 +22,20 @@ export class TableWidget extends NibWidget {
     readonly source: string,
     readonly from: number,
     readonly to: number,
+    /** Whether the note takes edits. A table drawn for a reader has no fields
+     *  in it, so this is part of what makes two widgets the same table: the
+     *  cells are contenteditable in the DOM, and only a redraw undoes that. */
+    readonly writable: boolean = true,
   ) {
     super()
   }
 
   eq(other: TableWidget) {
-    return other.source === this.source && other.from === this.from
+    return (
+      other.source === this.source &&
+      other.from === this.from &&
+      other.writable === this.writable
+    )
   }
 
   /** The widget runs its own editing, so CodeMirror should not interpret events. */

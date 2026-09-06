@@ -141,7 +141,6 @@ export function setSourceMode(view: EditorView, on: boolean) {
       ? [preview.reconfigure([]), reading.reconfigure([])]
       : preview.reconfigure(livePreview()),
   })
-  if (on) view.dom.classList.remove('nib-reading-mode')
 }
 
 /** What reading mode puts over the editor while it is on.
@@ -167,6 +166,14 @@ function readingExtensions(): Extension {
     // keyboard. So it keeps its place in the tab order; the caret that would
     // otherwise blink in it is taken away in the stylesheet.
     EditorView.contentAttributes.of({ tabindex: '0' }),
+    // The class the stylesheet works from. Handed to the editor rather than
+    // put on its element, because CodeMirror writes that element's class
+    // attribute out from its own facets every time the editor takes or loses
+    // focus - a class added from outside survives only until the next click
+    // somewhere else. Attributes from this facet are merged into what it
+    // writes, so this one is part of the configuration and goes when the
+    // compartment is emptied.
+    EditorView.editorAttributes.of({ class: 'nib-reading-mode' }),
     EditorState.changeFilter.of(isExternal),
   ]
 }
@@ -186,7 +193,6 @@ export function setReadingMode(view: EditorView, on: boolean) {
       ? [reading.reconfigure(readingExtensions()), preview.reconfigure(livePreview())]
       : reading.reconfigure([]),
   })
-  view.dom.classList.toggle('nib-reading-mode', on)
 }
 
 export function setFocusMode(view: EditorView, on: boolean) {

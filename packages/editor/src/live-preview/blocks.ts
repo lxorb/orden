@@ -157,7 +157,12 @@ function buildBlocks(state: EditorState): Blocks {
 
           ranges.push(
             Decoration.replace({
-              widget: new TableWidget(doc.sliceString(span.from, span.to), span.from, span.to),
+              widget: new TableWidget(
+                doc.sliceString(span.from, span.to),
+                span.from,
+                span.to,
+                !state.readOnly,
+              ),
               block: true,
             }).range(span.from, span.to),
           )
