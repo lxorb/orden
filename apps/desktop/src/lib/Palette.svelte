@@ -7,7 +7,8 @@
   import { rank } from './fuzzy'
   import { workspace, type Entry } from './workspace.svelte'
 
-  let { open = $bindable(false), view }: { open?: boolean; view?: EditorView } = $props()
+  let { open = $bindable(false), view }: { open?: boolean; view?: EditorView | undefined } =
+    $props()
 
   let query = $state('')
   let cursor = $state(0)

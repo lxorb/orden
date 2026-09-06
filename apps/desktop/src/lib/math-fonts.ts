@@ -24,7 +24,7 @@ function fontData(file: string): string | null {
 function familiesByClass(css: string): Map<string, string[][]> {
   const families = new Map<string, string[][]>()
 
-  for (const [, selector, body] of css.replace(FACE, '').matchAll(RULE)) {
+  for (const [, selector = '', body = ''] of css.replace(FACE, '').matchAll(RULE)) {
     const family = FAMILY.exec(body)?.[1]
     if (!family) continue
 
@@ -34,7 +34,7 @@ function familiesByClass(css: string): Map<string, string[][]> {
         .split(/\s*[\s>+~]\s*/)
         .reverse()
       const classes = compounds
-        .map((compound) => [...compound.matchAll(/\.([\w-]+)/g)].map((match) => match[1]))
+        .map((compound) => [...compound.matchAll(/\.([\w-]+)/g)].map(([, name = '']) => name))
         .find((found) => found.length)
 
       if (classes) families.set(family, [...(families.get(family) ?? []), classes])

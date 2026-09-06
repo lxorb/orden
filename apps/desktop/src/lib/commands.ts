@@ -150,7 +150,9 @@ async function openThemesFolder() {
 export interface Command {
   id: string
   label: string
-  hint?: string
+  /** The key that runs it, when it has one. `shortcuts.hint` answers
+   *  undefined for an unbound command, so undefined is a real value here. */
+  hint?: string | undefined
   disabled?: boolean
   run(): void
 }

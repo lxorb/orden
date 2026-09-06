@@ -9,8 +9,12 @@ export interface Accent {
   light: string
 }
 
+/** The one every fallback lands on, named rather than reached for by index:
+ *  the list is data, and `ACCENTS[0]` promises an order it does not have. */
+const VIOLET: Accent = { id: 'violet', name: 'Violet', dark: '#7c6bf5', light: '#5b4be0' }
+
 export const ACCENTS: Accent[] = [
-  { id: 'violet', name: 'Violet', dark: '#7c6bf5', light: '#5b4be0' },
+  VIOLET,
   { id: 'blue', name: 'Blue', dark: '#3584e4', light: '#1c71d8' },
   { id: 'teal', name: 'Teal', dark: '#33c7ba', light: '#0f9b8e' },
   { id: 'green', name: 'Green', dark: '#3fcf8e', light: '#1a8f5c' },
@@ -21,14 +25,14 @@ export const ACCENTS: Accent[] = [
   { id: 'slate', name: 'Slate', dark: '#8aa0b8', light: '#5b6b7f' },
 ]
 
-export const DEFAULT_ACCENT = 'violet'
+export const DEFAULT_ACCENT = VIOLET.id
 
-export function accentById(id: string): Accent {
-  return ACCENTS.find((accent) => accent.id === id) ?? ACCENTS[0]
+function accentById(id: string): Accent {
+  return ACCENTS.find((accent) => accent.id === id) ?? VIOLET
 }
 
 /** `#rrggbb` to its three channels. */
-export function channels(hex: string): [number, number, number] {
+function channels(hex: string): [number, number, number] {
   const value = hex.replace('#', '')
   return [
     Number.parseInt(value.slice(0, 2), 16),
@@ -42,7 +46,7 @@ function toHex([r, g, b]: [number, number, number]): string {
 }
 
 /** Moves a colour toward white or black, for the hover shade. */
-export function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
+function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
   const target = towards === 'light' ? 255 : 0
   return toHex(
     channels(hex).map((one) => one + (target - one) * amount) as [number, number, number],

@@ -4,7 +4,8 @@ import { workspace } from './workspace.svelte'
 
 export interface MenuItem {
   label: string
-  hint?: string
+  /** Undefined where the entry has no key bound to it. */
+  hint?: string | undefined
   danger?: boolean
   disabled?: boolean
   run(): void

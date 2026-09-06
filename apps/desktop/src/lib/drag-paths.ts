@@ -6,8 +6,9 @@ const ONE = 'text/nib-path'
 const MANY = 'text/nib-paths'
 
 export function carry(transfer: DataTransfer | null, paths: string[]) {
-  if (!transfer || !paths.length) return
-  transfer.setData(ONE, paths[0])
+  const [first] = paths
+  if (!transfer || !first) return
+  transfer.setData(ONE, first)
   transfer.setData(MANY, JSON.stringify(paths))
   transfer.effectAllowed = 'move'
 }

@@ -13,7 +13,7 @@
   import { t } from './i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './viewport.svelte'
 
-  let { view }: { view?: EditorView } = $props()
+  let { view }: { view?: EditorView | undefined } = $props()
 
   let at = $state<{ x: number; y: number } | null>(null)
 

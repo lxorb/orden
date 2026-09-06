@@ -36,7 +36,8 @@ export const SOURCE_URL = 'https://github.com/lxorb/nib'
 
 export interface MenuAction {
   label: string
-  hint?: string
+  /** Undefined where the action has no key bound to it. */
+  hint?: string | undefined
   checked?: boolean
   disabled?: boolean
   run(): void
@@ -53,7 +54,7 @@ export interface MenuGroup {
 }
 
 interface Context {
-  view?: EditorView
+  view?: EditorView | undefined
   onpalette(): void
   onhistory(): void
 }

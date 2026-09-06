@@ -20,7 +20,7 @@
     view,
     onpalette,
     onhistory,
-  }: { view?: EditorView; onpalette: () => void; onhistory: () => void } = $props()
+  }: { view?: EditorView | undefined; onpalette: () => void; onhistory: () => void } = $props()
 
   let picker = $state<IconPicker>()
 

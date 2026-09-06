@@ -3,7 +3,7 @@ import { invoke, isDesktop } from './tauri'
 
 export type Scheme = 'dark' | 'light'
 
-export interface ThemeInfo {
+interface ThemeInfo {
   id: string
   name: string
   scheme: Scheme
@@ -21,14 +21,18 @@ const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
 /** Not a theme of its own: whichever built-in the system asks for, live. */
-export const SYSTEM = 'system'
+const SYSTEM = 'system'
 
 // Two schemes, and a colour of your own on top. More built-in themes only
-// asked people to choose between things that were nearly the same.
-const BUILT_IN: ThemeInfo[] = [
-  { id: 'dark', name: 'Dark', scheme: 'dark' },
-  { id: 'light', name: 'Light', scheme: 'light' },
-]
+// asked people to choose between things that were nearly the same. Kept by
+// scheme as well as in a list, so "the dark one" is a lookup and not a search
+// that might come back empty.
+const BY_SCHEME: Record<Scheme, ThemeInfo> = {
+  dark: { id: 'dark', name: 'Dark', scheme: 'dark' },
+  light: { id: 'light', name: 'Light', scheme: 'light' },
+}
+
+const BUILT_IN: ThemeInfo[] = [BY_SCHEME.dark, BY_SCHEME.light]
 
 const ACCENT_KEY = 'nib:accent'
 
@@ -51,8 +55,8 @@ class Themes {
     ...this.files,
   ])
   readonly active = $derived.by((): ThemeInfo => {
-    if (this.id === SYSTEM) return BUILT_IN.find((one) => one.scheme === this.preferred)!
-    return this.all.find((theme) => theme.id === this.id) ?? BUILT_IN[0]
+    if (this.id === SYSTEM) return BY_SCHEME[this.preferred]
+    return this.all.find((theme) => theme.id === this.id) ?? BY_SCHEME.dark
   })
   readonly current = $derived(this.active.scheme)
 
@@ -143,10 +147,7 @@ class Themes {
   /** The rail's one-click switch: jump to the counterpart scheme. An explicit
    *  choice, so it stops following the system until that is chosen again. */
   toggle() {
-    const wanted: Scheme = this.current === 'dark' ? 'light' : 'dark'
-    const preferred = BUILT_IN.find((theme) => theme.id === wanted)
-    const fallback = this.files.find((theme) => theme.scheme === wanted)
-    this.select((preferred ?? fallback ?? BUILT_IN[0]).id)
+    this.select(BY_SCHEME[this.current === 'dark' ? 'light' : 'dark'].id)
   }
 
   private apply() {
@@ -157,8 +158,16 @@ class Themes {
     this.paintAccent()
     this.paintSystemBars()
 
-    if (!theme.path) return this.inject('')
-    void invoke<string>('read_theme', { path: theme.path }).then((css) => this.inject(css))
+    if (!theme.path) {
+      this.inject('')
+      return
+    }
+
+    // A theme file that has gone away leaves the built-in tokens showing,
+    // which is what the data attribute above has already set up.
+    void invoke<string>('read_theme', { path: theme.path })
+      .then((css) => this.inject(css))
+      .catch(() => this.inject(''))
   }
 
   /** Android and iOS tint their own bars from this, which is the difference

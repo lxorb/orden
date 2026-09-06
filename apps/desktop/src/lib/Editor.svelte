@@ -31,7 +31,8 @@
     resolveimage?: (src: string) => string
     openlink?: (href: string) => void
     onselection?: (view: EditorView) => void
-    view?: EditorView
+    /** Bound back out: undefined until the view has been made. */
+    view?: EditorView | undefined
   } = $props()
 
   let host: HTMLDivElement

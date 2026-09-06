@@ -34,8 +34,10 @@ export function scanHeadings(text: string): Heading[] {
 
     if (FENCE.test(row)) fenced = !fenced
     else if (!fenced) {
-      const match = HEADING.exec(row)
-      if (match) found.push({ level: match[1].length, text: match[2].trim(), line })
+      // Both groups are there whenever the pattern matches at all, so an
+      // empty `hashes` is exactly the no-match case.
+      const [, hashes = '', title = ''] = HEADING.exec(row) ?? []
+      if (hashes) found.push({ level: hashes.length, text: title.trim(), line })
     }
 
     if (end === -1) break
@@ -58,8 +60,8 @@ export function lineOf(text: string, at: number): number {
  *  its line, or -1 when the caret is above them all. */
 export function headingAt(headings: readonly Heading[], line: number): number {
   let found = -1
-  for (let i = 0; i < headings.length; i++) {
-    if (headings[i].line <= line) found = i
+  for (const [index, heading] of headings.entries()) {
+    if (heading.line <= line) found = index
   }
   return found
 }

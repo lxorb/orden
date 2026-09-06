@@ -39,9 +39,13 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
   }
 
   const onStart = (event: TouchEvent) => {
-    if (event.touches.length !== 1) return cancel()
+    // Two fingers down is a pinch or a scroll, not a press.
+    const touch = event.touches.length === 1 ? event.touches[0] : undefined
+    if (!touch) {
+      cancel()
+      return
+    }
 
-    const touch = event.touches[0]
     startX = touch.clientX
     startY = touch.clientY
     fired = false

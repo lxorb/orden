@@ -1,7 +1,7 @@
 /** Subsequence match with a score. Higher is better; null means no match.
  *  Consecutive hits and matches at word starts are rewarded, so "rdm" ranks
  *  "Read me" above a note that merely contains those letters scattered. */
-export function fuzzy(query: string, text: string): number | null {
+function fuzzy(query: string, text: string): number | null {
   if (!query) return 0
 
   const needle = query.toLowerCase()
@@ -16,7 +16,9 @@ export function fuzzy(query: string, text: string): number | null {
     if (found < 0) return null
 
     if (found === previous + 1) score += 8
-    if (found === 0 || /[\s/\\_.-]/.test(haystack[found - 1])) score += 6
+    // `charAt` rather than an index: at the start of the string there is no
+    // character before it, and it answers an empty one instead of undefined.
+    if (found === 0 || /[\s/\\_.-]/.test(haystack.charAt(found - 1))) score += 6
     score -= Math.min(found - cursor, 12)
 
     previous = found

@@ -23,7 +23,7 @@
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
 
-  let { view }: { view?: EditorView } = $props()
+  let { view }: { view?: EditorView | undefined } = $props()
 
   /** A line drawing each, so the list reads at a glance rather than as a
    *  column of words. */
