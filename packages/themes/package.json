@@ -11,6 +11,9 @@
     "./base.css": "./src/base.css",
     "./*": "./src/*"
   },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
   "dependencies": {
     "katex": "^0.18.5"
   }

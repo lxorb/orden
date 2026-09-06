@@ -330,4 +330,105 @@ describe('abbreviations', () => {
     expect(html).toContain('&quot;quoted&quot;')
     expect(html).not.toContain('<thing>')
   })
+
+  test('a definition inside a fence defines nothing', () => {
+    // A note explaining the syntax shows the syntax, and showing it must not
+    // also do it - which is the rule the block tokenizer already follows.
+    const html = renderMarkdown('```\n*[HTML]: Markup\n```\n\nHTML here.\n')
+    expect(html).not.toContain('<abbr')
+    expect(html).toContain('*[HTML]: Markup')
+  })
+})
+
+/** Everything a note contains is written by whoever wrote the note, and a
+ *  published one is served to strangers from a domain shared with every other
+ *  blog. Escaping raw HTML is not enough on its own: a construct that builds
+ *  its own markup out of the source, or writes a target the author chose into
+ *  an attribute, is a way straight past it. Each case below was one. */
+describe('what a note cannot do to the page around it', () => {
+  const published = (source: string) => renderMarkdown(source, { escapeHtml: true })
+
+  test('subscript and superscript are text, not markup', () => {
+    expect(published('H~<img src=x onerror=alert(1)>~O')).not.toContain('<img src=x')
+    expect(published('X^<img src=x onerror=alert(1)>^')).not.toContain('<img src=x')
+    expect(published('a ~</p><script>alert(1)</script>~ b')).not.toContain('<script>')
+  })
+
+  test('subscript and superscript still render what they are for', () => {
+    const html = published('H~2~O and X^2^')
+    expect(html).toContain('<sub>2</sub>')
+    expect(html).toContain('<sup>2</sup>')
+  })
+
+  /** No element carries an event handler. The name itself may well appear in
+   *  the page, as the words of the link a footnote shows; what matters is that
+   *  it stays inside the attribute, or inside the text, it was put in. */
+  const noHandlers = (html: string) => expect(html).not.toMatch(/<[a-z]+[^>]*\son[a-z]+\s*=/i)
+
+  test('a footnote name cannot break out of the attribute it sits in', () => {
+    const html = published('Text[^a"onmouseover=alert(1)].')
+    noHandlers(html)
+    expect(html).not.toContain('"onmouseover')
+  })
+
+  test('a footnote name cannot open a tag of its own', () => {
+    expect(published('Text[^<svg/onload=alert(1)>].')).not.toContain('<svg')
+    noHandlers(published('T[^x].\n\n[^x"onmouseover=alert(1)]: note\n'))
+  })
+
+  test('a footnote still links both ways with an ordinary name', () => {
+    const html = renderMarkdown('Text[^note-1].\n\n[^note-1]: The note.\n', { footnotes: true })
+    expect(html).toContain('id="fnref-note-1"')
+    expect(html).toContain('href="#fn-note-1"')
+    expect(html).toContain('id="fn-note-1"')
+  })
+
+  test('a link cannot carry a scheme the browser would run', () => {
+    for (const target of [
+      'javascript:alert(1)',
+      'JaVaScRiPt:alert(1)',
+      'vbscript:msgbox(1)',
+      'data:text/html,<script>alert(1)</script>',
+    ]) {
+      const html = published(`[click](${target})`)
+      expect(html, target).not.toContain('href=')
+      expect(html).toContain('click')
+    }
+  })
+
+  test('an entity in a target cannot grow into a scheme', () => {
+    // These name no scheme as written, and would name one by the time anyone
+    // clicked them. What stops them is the ampersand itself being escaped, so
+    // the entity never forms.
+    for (const target of ['javascript&colon;alert(1)', '&#106;avascript:alert(1)']) {
+      const html = published(`[click](${target})`)
+      expect(html, target).toContain('&amp;')
+      expect(html, target).not.toMatch(/href="[^"]*javascript:/i)
+    }
+  })
+
+  test('an image cannot either', () => {
+    expect(published('![x](javascript:alert(1))')).not.toContain('src=')
+    expect(published('![x](data:text/html,<script>alert(1)</script>)')).not.toContain('src=')
+  })
+
+  test('an autolink cannot either', () => {
+    expect(published('<javascript:alert(1)>')).not.toContain('href=')
+  })
+
+  test('the links people actually write still work', () => {
+    expect(published('[a](https://x.dev/p?q=1)')).toContain('href="https://x.dev/p?q=1"')
+    expect(published('[a](http://x.dev)')).toContain('href="http://x.dev"')
+    expect(published('[a](mailto:me@x.dev)')).toContain('href="mailto:me@x.dev"')
+    expect(published('[a](#heading)')).toContain('href="#heading"')
+    expect(published('[a](notes/other.md)')).toContain('href="notes/other.md"')
+    expect(published('![a](pictures/cat.png)')).toContain('src="pictures/cat.png"')
+    expect(published('![a](data:image/png;base64,iVBORw0KGgo=)')).toContain('src="data:image/png')
+  })
+
+  test('an ampersand in a URL is written as one entity', () => {
+    const html = published('[a](https://x.dev/?a=1&b=2)')
+    expect(html).toContain('href="https://x.dev/?a=1&amp;b=2"')
+    expect(html).not.toContain('&amp;amp;')
+  })
 })

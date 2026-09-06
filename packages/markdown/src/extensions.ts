@@ -3,6 +3,7 @@ import katex from 'katex'
 import 'katex/contrib/mhchem'
 import type { MarkedExtension, Tokens } from 'marked'
 import { get } from 'node-emoji'
+import { escape, fragment } from './html'
 
 /** Renders TeX, or shows the source when it will not parse. */
 function math(tex: string, display: boolean): string {
@@ -23,7 +24,7 @@ export const highlight: MarkedExtension = {
       start: (src: string) => src.indexOf('=='),
       tokenizer(src: string) {
         const match = /^==(?=\S)([\s\S]*?\S)==/.exec(src)
-        if (!match) return undefined
+        if (!match?.[1]) return undefined
 
         return {
           type: 'highlight',
@@ -39,7 +40,14 @@ export const highlight: MarkedExtension = {
   ],
 }
 
-/** `H~2~O` and `X^2^` */
+/** `H~2~O` and `X^2^`
+ *
+ *  Both tokenize what is between the marks and render it through the parser,
+ *  the way `highlight` above does. Interpolating the source text straight into
+ *  the tag was a way past the escaping a published note relies on - `~<img
+ *  src=x onerror=...>~` is not a raw HTML token, so nothing else would have
+ *  caught it - and it also meant that emphasis inside a subscript came out as
+ *  its own asterisks. */
 export const scripts: MarkedExtension = {
   extensions: [
     {
@@ -47,22 +55,36 @@ export const scripts: MarkedExtension = {
       level: 'inline',
       start: (src: string) => src.indexOf('~'),
       tokenizer(src: string) {
-        const match = /^~(?!~)([^~\s][^~]*)~/.exec(src)
-        if (!match) return undefined
-        return { type: 'subscript', raw: match[0], text: match[1] }
+        const inner = /^~(?!~)([^~\s][^~]*)~/.exec(src)
+        if (!inner?.[1]) return undefined
+        return {
+          type: 'subscript',
+          raw: inner[0],
+          text: inner[1],
+          tokens: this.lexer.inlineTokens(inner[1]),
+        }
       },
-      renderer: (token: Tokens.Generic) => `<sub>${token.text}</sub>`,
+      renderer(token: Tokens.Generic) {
+        return `<sub>${this.parser.parseInline(token.tokens ?? [])}</sub>`
+      },
     },
     {
       name: 'superscript',
       level: 'inline',
       start: (src: string) => src.indexOf('^'),
       tokenizer(src: string) {
-        const match = /^\^([^^\s][^^]*)\^/.exec(src)
-        if (!match) return undefined
-        return { type: 'superscript', raw: match[0], text: match[1] }
+        const inner = /^\^([^^\s][^^]*)\^/.exec(src)
+        if (!inner?.[1]) return undefined
+        return {
+          type: 'superscript',
+          raw: inner[0],
+          text: inner[1],
+          tokens: this.lexer.inlineTokens(inner[1]),
+        }
       },
-      renderer: (token: Tokens.Generic) => `<sup>${token.text}</sup>`,
+      renderer(token: Tokens.Generic) {
+        return `<sup>${this.parser.parseInline(token.tokens ?? [])}</sup>`
+      },
     },
   ],
 }
@@ -110,7 +132,7 @@ export const callouts: MarkedExtension = {
 
       if (!match) return `<blockquote>\n${this.parser.parse(token.tokens ?? [])}</blockquote>\n`
 
-      const kind = match[1].toLowerCase()
+      const kind = (match[1] ?? '').toLowerCase()
       const label = kind.charAt(0).toUpperCase() + kind.slice(1)
 
       // The marker becomes the heading, so drop it from the rendered body.
@@ -130,7 +152,7 @@ export const emoji: MarkedExtension = {
       start: (src: string) => src.indexOf(':'),
       tokenizer(src: string) {
         const match = /^:([a-z0-9_+-]+):/i.exec(src)
-        if (!match) return undefined
+        if (!match?.[1]) return undefined
 
         const character = get(match[1])
         if (!character) return undefined
@@ -158,16 +180,16 @@ export const definitionLists: MarkedExtension = {
         return at < 0 ? undefined : at
       },
       tokenizer(src: string) {
-        const match = /^((?:[^\n:][^\n]*\n(?:[ \t]{0,3}:[ \t]+[^\n]*(?:\n|$))+)+)/.exec(src)
-        if (!match) return undefined
+        const block = /^((?:[^\n:][^\n]*\n(?:[ \t]{0,3}:[ \t]+[^\n]*(?:\n|$))+)+)/.exec(src)?.[1]
+        if (block === undefined) return undefined
 
         const items: { term: string; details: string[] }[] = []
 
-        for (const line of match[1].split('\n')) {
+        for (const line of block.split('\n')) {
           if (!line.trim()) continue
 
           const detail = /^[ \t]{0,3}:[ \t]+(.*)$/.exec(line)
-          if (detail) items.at(-1)?.details.push(detail[1])
+          if (detail) items.at(-1)?.details.push(detail[1] ?? '')
           else items.push({ term: line.trim(), details: [] })
         }
 
@@ -177,7 +199,7 @@ export const definitionLists: MarkedExtension = {
         // Tokenized here: the lexer is only reachable from the tokenizer.
         return {
           type: 'definitionList',
-          raw: match[1],
+          raw: block,
           items: items.map((item) => ({
             term: this.lexer.inlineTokens(item.term),
             details: item.details.map((detail) => this.lexer.inlineTokens(detail)),
@@ -219,7 +241,12 @@ export const abbreviations: MarkedExtension = {
         const match = /^\*\[([^\]\n]+)\]:[ \t]*(.*)(?:\r?\n|$)/.exec(src)
         if (!match) return undefined
 
-        return { type: 'abbrDef', raw: match[0], term: match[1], title: match[2].trim() }
+        return {
+          type: 'abbrDef',
+          raw: match[0],
+          term: match[1] ?? '',
+          title: (match[2] ?? '').trim(),
+        }
       },
       // The definition itself is not shown; it only teaches the document a word.
       renderer: () => '',
@@ -227,14 +254,37 @@ export const abbreviations: MarkedExtension = {
   ],
 }
 
+const ABBREV_DEF = /^\*\[([^\]\n]+)\]:[ \t]*(.*)$/
+const FENCE = /^ {0,3}(`{3,}|~{3,})/
+
 /** Collects the abbreviations a document defines, so the rendered HTML can be
- *  marked up afterwards - the definition may come after its first use. */
+ *  marked up afterwards - the definition may come after its first use.
+ *
+ *  Read line by line rather than with one pass of the whole source, so that
+ *  fenced code can be stepped over. The block tokenizer above never sees a line
+ *  inside a fence, and this has to agree with it: a note showing what a
+ *  definition looks like would otherwise teach itself the word. */
 export function collectAbbreviations(source: string): Map<string, string> {
   const found = new Map<string, string>()
+  let fence: string | null = null
 
-  for (const match of source.matchAll(/^\*\[([^\]\n]+)\]:[ \t]*(.*)$/gm)) {
-    const term = match[1].trim()
-    if (term) found.set(term, match[2].trim())
+  for (const line of source.split('\n')) {
+    const mark = FENCE.exec(line)?.[1]
+
+    if (fence !== null) {
+      if (mark && mark[0] === fence[0] && mark.length >= fence.length) fence = null
+      continue
+    }
+    if (mark) {
+      fence = mark
+      continue
+    }
+
+    const match = ABBREV_DEF.exec(line)
+    if (!match) continue
+
+    const term = match[1]?.trim()
+    if (term) found.set(term, (match[2] ?? '').trim())
   }
 
   return found
@@ -254,13 +304,15 @@ export const footnotes: MarkedExtension = {
         return {
           type: 'footnoteDef',
           raw: match[0],
-          id: match[1],
-          tokens: this.lexer.inlineTokens(match[2]),
+          id: match[1] ?? '',
+          tokens: this.lexer.inlineTokens(match[2] ?? ''),
         }
       },
       renderer(token: Tokens.Generic) {
         const id = String(token.id)
-        return `<li id="fn-${id}"><a class="footnote-back" href="#fnref-${id}">${id}</a> ${this.parser.parseInline(token.tokens ?? [])}</li>\n`
+        const key = fragment(id)
+        const body = this.parser.parseInline(token.tokens ?? [])
+        return `<li id="fn-${key}"><a class="footnote-back" href="#fnref-${key}">${escape(id)}</a> ${body}</li>\n`
       },
     },
     {
@@ -272,8 +324,11 @@ export const footnotes: MarkedExtension = {
         if (!match) return undefined
         return { type: 'footnoteRef', raw: match[0], id: match[1] }
       },
-      renderer: (token: Tokens.Generic) =>
-        `<sup class="footnote-ref" id="fnref-${token.id}"><a href="#fn-${token.id}">${token.id}</a></sup>`,
+      renderer: (token: Tokens.Generic) => {
+        const id = String(token.id)
+        const key = fragment(id)
+        return `<sup class="footnote-ref" id="fnref-${key}"><a href="#fn-${key}">${escape(id)}</a></sup>`
+      },
     },
   ],
 }

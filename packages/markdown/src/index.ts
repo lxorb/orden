@@ -1,5 +1,6 @@
 import { Marked, Renderer } from 'marked'
 import type { Tokens } from 'marked'
+import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import {
   abbreviations,
   callouts,
@@ -36,14 +37,6 @@ interface Heading {
   level: number
   text: string
   id: string
-}
-
-function escape(text: string): string {
-  return text.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!,
-  )
 }
 
 /** Rendered inline HTML back to the words it shows. */
@@ -108,10 +101,36 @@ function renderer(options: RenderOptions, headings: Heading[]) {
         return html.replace(/^<li>/, `<li class="${classes}">`)
       },
 
+      /** Written out here rather than delegated, because the default renderer
+       *  puts the target into the attribute without asking what scheme it
+       *  names, and without escaping the ampersand that could grow into one
+       *  later. See html.ts. A target that fails the check leaves no `<a>` at
+       *  all: the label stays as words, which is what the default does with a
+       *  URL it cannot encode. */
       link(token: Tokens.Link) {
-        const html = Renderer.prototype.link.call(this as Renderer, token)
+        const body = this.parser.parseInline(token.tokens)
+        const href = safeHref(token.href) ? attributeUrl(token.href) : ''
+        if (!href) return body
+
+        // A bare address, or an autolink, stands for itself and says so.
         const bare = !token.raw.startsWith('[') || token.text === token.href
-        return bare ? html.replace(/^<a /, '<a class="url" ') : html
+        const attributes = [bare ? ' class="url"' : '', ` href="${href}"`]
+        if (token.title) attributes.push(` title="${escape(token.title)}"`)
+        return `<a${attributes.join('')}>${body}</a>`
+      },
+
+      /** The same, for a picture. `data:` is allowed here and nowhere else:
+       *  it is how a small image travels inside the document. */
+      image(token: Tokens.Image) {
+        const alt = token.tokens
+          ? this.parser.parseInline(token.tokens, this.parser.textRenderer)
+          : token.text
+        const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
+        if (!src) return escape(alt)
+
+        const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
+        if (token.title) attributes.push(` title="${escape(token.title)}"`)
+        return `<img${attributes.join('')}>`
       },
 
       heading(token: Tokens.Heading) {
@@ -159,8 +178,7 @@ export function stripFrontMatter(source: string): string {
 }
 
 export function frontMatter(source: string): string | null {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)
-  return match ? match[1] : null
+  return /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? null
 }
 
 /** A top-level `key: value` from the front matter, quotes stripped. Nested
@@ -171,9 +189,9 @@ export function frontMatterValue(source: string, key: string): string | null {
 
   for (const line of block.split('\n')) {
     const pair = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(line)
-    if (!pair || pair[1].toLowerCase() !== key.toLowerCase()) continue
+    if (pair?.[1]?.toLowerCase() !== key.toLowerCase()) continue
 
-    const value = pair[2].trim().replace(/^(["'])(.*)\1$/, '$2')
+    const value = (pair[2] ?? '').trim().replace(/^(["'])(.*)\1$/, '$2')
     return value || null
   }
 
@@ -182,8 +200,7 @@ export function frontMatterValue(source: string, key: string): string | null {
 
 /** The first heading, or null when the note has none. */
 export function documentTitle(source: string): string | null {
-  const match = /^#\s+(.+)$/m.exec(stripFrontMatter(source))
-  return match ? match[1].trim() : null
+  return /^#\s+(.+)$/m.exec(stripFrontMatter(source))?.[1]?.trim() ?? null
 }
 
 /** Every fenced block in the document, in order, with the language it names.
