@@ -2,20 +2,13 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "entry": [
-        "scripts/**/*.{ts,js,mjs}"
-      ]
+      "entry": ["scripts/**/*.{ts,js,mjs}"]
     },
     "packages/editor": {},
     "packages/markdown": {},
     "apps/desktop": {
-      "entry": [
-        "src/**/*.svelte",
-        "index.html"
-      ],
-      "ignoreDependencies": [
-        "katex"
-      ]
+      "entry": ["src/**/*.svelte", "index.html"],
+      "ignoreDependencies": ["katex"]
     },
     "services/sync": {},
     "packages/themes": {}
