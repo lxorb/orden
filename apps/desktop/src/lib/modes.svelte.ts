@@ -20,6 +20,7 @@ import {
   setTypewriterMode,
   setVim,
   onVimMode,
+  type LigatureScope,
   type VimMode,
   type EditorView,
 } from '@nib/editor'
@@ -35,6 +36,22 @@ const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
 /** Writing column widths, in rem. */
 export const WIDTHS = [32, 38, 42, 50, 60, 80] as const
+
+/** How much of a note the ligature glyphs are drawn over, in the order the
+ *  select offers them: off, then the narrow scope, then all of it. */
+export const LIGATURE_SCOPES: readonly LigatureScope[] = ['off', 'code', 'all']
+
+/** A ligature scope out of whatever was stored or came down from the account.
+ *
+ *  The setting was a switch before it was a scope, and both shapes still read:
+ *  an account written by an older build says `true` for everywhere and `false`
+ *  for off, and one written by a newer build reaching an older one is a string
+ *  that build has never heard of, which reads as nothing said. */
+export function ligatureScope(value: unknown): LigatureScope | null {
+  if (typeof value === 'boolean') return value ? 'all' : 'off'
+  return LIGATURE_SCOPES.find((one) => one === value) ?? null
+}
+
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
 interface Saved {
@@ -55,7 +72,7 @@ interface Saved {
   spellcheck: boolean
   spellLanguage: string
   closeBrackets: boolean
-  ligatures: boolean
+  ligatures: LigatureScope
   vim: boolean
   attachments: string
 }
@@ -124,9 +141,10 @@ class Modes {
   /** The dictionary to check against; `system` leaves it to the browser. */
   spellLanguage = $state('system')
   closeBrackets = $state(true)
-  /** `->` shown as an arrow, `<=` as a sign, and so on. Off until chosen;
-   *  the choice follows the account. */
-  ligatures = $state(false)
+  /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
+   *  a note, or everywhere in it. Off until chosen; the choice follows the
+   *  account. */
+  ligatures = $state<LigatureScope>('off')
   /** Modal editing. Off until chosen, follows the account, and independent of
    *  which keyboard the shortcuts are on: the Vim preset turns it on, and the
    *  switch in the Editor pane puts it on top of any of the others. */
@@ -174,7 +192,7 @@ class Modes {
       this.spellcheck = saved.spellcheck === true
       this.spellLanguage = text(saved.spellLanguage, 'system')
       this.closeBrackets = saved.closeBrackets !== false
-      this.ligatures = saved.ligatures === true
+      this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
       this.vim = saved.vim === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
     }
@@ -310,11 +328,16 @@ class Modes {
     this.persist()
   }
 
-  toggleLigatures(view?: EditorView) {
-    this.ligatures = !this.ligatures
-    this.each(view, (one) => setLigatures(one, this.ligatures))
+  /** How much of a note the glyphs are drawn over. Said outright rather than
+   *  flipped: there are three answers, not two. */
+  setLigatures(scope: string, view?: EditorView) {
+    const wanted = ligatureScope(scope)
+    if (!wanted || wanted === this.ligatures) return
+
+    this.ligatures = wanted
+    this.each(view, (one) => setLigatures(one, wanted))
     this.persist()
-    this.share({ ligatures: this.ligatures })
+    this.share({ ligatures: wanted })
   }
 
   toggleVim(view?: EditorView) {
@@ -370,8 +393,9 @@ class Modes {
     // Nothing this machine has chosen since the question went out; see above.
     const unheard = this.sent === asked
 
-    const theirs = remote.ligatures
-    if (typeof theirs === 'boolean' && unheard && theirs !== this.ligatures) {
+    // Both shapes of the setting read; see `ligatureScope`.
+    const theirs = ligatureScope(remote.ligatures)
+    if (theirs && unheard && theirs !== this.ligatures) {
       this.ligatures = theirs
       this.each(undefined, (one) => setLigatures(one, theirs))
       this.persist()

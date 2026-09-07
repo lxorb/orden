@@ -19,8 +19,17 @@ const ATTACHMENT_FOLDERS = ['space', 'note', 'named']
  *  word and an account should not be able to carry a sentence into a select. */
 const PRESETS = ['default', 'notion', 'obsidian', 'vim', 'custom']
 
+/** How much of a note the ligature glyphs are drawn over. It was a switch
+ *  before it was a scope, so both shapes are accepted and both are handed back
+ *  as they arrived: an account is read by every version of the app at once, and
+ *  a build with the switch reads `true` where a newer one wrote `all`. */
+const LIGATURE_SCOPES = ['off', 'code', 'all']
+
 const KNOWN: Record<string, Check> = {
-  ligatures: (value) => (typeof value === 'boolean' ? null : 'ligatures must be true or false'),
+  ligatures: (value) =>
+    typeof value === 'boolean' || (typeof value === 'string' && LIGATURE_SCOPES.includes(value))
+      ? null
+      : `ligatures must be true, false, or one of ${LIGATURE_SCOPES.join(', ')}`,
   vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
   attachments: (value) =>
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)

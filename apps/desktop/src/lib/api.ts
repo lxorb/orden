@@ -70,7 +70,9 @@ export interface TrashListing {
 /** The settings that follow the account from machine to machine. Each is
  *  there once chosen; a missing one means the machine's own choice stands. */
 export interface AccountSettings {
-  ligatures?: boolean
+  /** How much of a note the ligature glyphs are drawn over. A boolean is what
+   *  a build that had a switch here wrote, and still reads. */
+  ligatures?: boolean | string
   /** Where a pasted picture is written; one of attachments.ts's three. */
   attachments?: string
   /** Keys the reader chose, by shortcut id, as differences from the defaults.

@@ -55,7 +55,7 @@ const api = vi.hoisted(() => {
 
 /** As much of the account's settings as these tests are about. */
 interface Held {
-  ligatures?: boolean
+  ligatures?: boolean | string
   attachments?: string
   vim?: boolean
 }
@@ -132,6 +132,38 @@ describe('read-only mode', () => {
   test('and stays off on one when it is off', () => {
     modes.apply(surface())
     expect(told.calls).toContainEqual({ mode: 'read-only', on: false })
+  })
+})
+
+describe('the ligature scope', () => {
+  test('starts off', () => {
+    expect(modes.ligatures).toBe('off')
+  })
+
+  test('is remembered across a restart', async () => {
+    modes.setLigatures('code')
+    expect((await restarted()).ligatures).toBe('code')
+  })
+
+  /** A switch is what an entry written before the scope existed says, and a
+   *  scope this build has never heard of is what one written after it might. */
+  test('reads a switch written by an older build', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ ligatures: true }))
+    expect((await restarted()).ligatures).toBe('all')
+
+    localStorage.setItem('nib:modes', JSON.stringify({ ligatures: false }))
+    expect((await restarted()).ligatures).toBe('off')
+  })
+
+  test('falls back to off for a scope it does not know', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ ligatures: 'sometimes' }))
+    expect((await restarted()).ligatures).toBe('off')
+  })
+
+  test('ignores a scope it does not know when one is chosen', () => {
+    modes.setLigatures('code')
+    modes.setLigatures('sometimes')
+    expect(modes.ligatures).toBe('code')
   })
 })
 
@@ -242,31 +274,67 @@ describe('taking over what the account holds', () => {
   }
 
   test('brings a setting this machine has never chosen', async () => {
-    const { release, settingsCall } = heldAnswer({ ligatures: true })
+    const { release, settingsCall } = heldAnswer({ ligatures: 'code' })
     api.settings = settingsCall
 
     const adopted = modes.adopt('token')
     release()
     await adopted
 
-    expect(modes.ligatures).toBe(true)
+    expect(modes.ligatures).toBe('code')
   })
 
-  test('leaves alone a switch flicked while the answer was in the air', async () => {
+  /** The ligature setting was a switch before it was a scope, and an account
+   *  written by that build still says so. */
+  test('reads a switch from an older build as a scope', async () => {
     const { release, settingsCall } = heldAnswer({ ligatures: true })
     api.settings = settingsCall
 
     const adopted = modes.adopt('token')
-    // The reader turns them on and off again before the account answers. The
-    // answer is older than that, and `toggleLigatures` has already sent this
+    release()
+    await adopted
+
+    expect(modes.ligatures).toBe('all')
+  })
+
+  test('and reads false as off', async () => {
+    modes.setLigatures('all')
+    const { release, settingsCall } = heldAnswer({ ligatures: false })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.ligatures).toBe('off')
+  })
+
+  test('ignores a scope it has never heard of', async () => {
+    const { release, settingsCall } = heldAnswer({ ligatures: 'sometimes' })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.ligatures).toBe('off')
+  })
+
+  test('leaves alone a choice made while the answer was in the air', async () => {
+    const { release, settingsCall } = heldAnswer({ ligatures: 'all' })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    // The reader picks a scope and goes back to off before the account answers.
+    // The answer is older than that, and `setLigatures` has already sent this
     // machine's choice up.
-    modes.toggleLigatures()
-    modes.toggleLigatures()
+    modes.setLigatures('code')
+    modes.setLigatures('off')
 
     release()
     await adopted
 
-    expect(modes.ligatures).toBe(false)
+    expect(modes.ligatures).toBe('off')
   })
 
   test('brings modal editing another machine turned on', async () => {

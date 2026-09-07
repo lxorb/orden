@@ -44,6 +44,27 @@ describe('account settings', () => {
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
 
+  /** The ligature setting was a switch before it was a scope. Both shapes are
+   *  kept as they arrive, because one account is read by every version of the
+   *  app at once and the older ones only know the switch. */
+  test('the ligature scope is one of the three the app offers', async () => {
+    for (const scope of ['off', 'code', 'all']) {
+      const set = await patch({ ligatures: scope })
+      expect(set.status, scope).toBe(200)
+      expect(set.json.settings.ligatures).toBe(scope)
+    }
+  })
+
+  test('and a switch from an older build still reads', async () => {
+    expect((await patch({ ligatures: true })).json.settings.ligatures).toBe(true)
+    expect((await patch({ ligatures: false })).json.settings.ligatures).toBe(false)
+  })
+
+  test('but not a scope nobody has heard of', async () => {
+    expect((await patch({ ligatures: 'sometimes' })).status).toBe(400)
+    expect((await patch({ ligatures: 2 })).status).toBe(400)
+  })
+
   test('are the account’s alone', async () => {
     const other = await signIn(env, 'c@d.dev')
     await patch({ ligatures: true })

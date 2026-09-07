@@ -175,11 +175,20 @@ export function preferences(view?: EditorView): Pane[] {
               set: () => modes.toggleFocus(view),
             },
             {
-              kind: 'switch',
+              // `->` drawn as an arrow, and its kind. A scope rather than a
+              // switch: an arrow is welcome where it is an operator and a
+              // surprise in the middle of a sentence, so code can have it on
+              // its own.
+              kind: 'select',
               label: t('Ligatures'),
-              initial: false,
+              options: [
+                { value: 'off', label: t('Off') },
+                { value: 'code', label: t('Code only') },
+                { value: 'all', label: t('Everywhere') },
+              ],
+              initial: 'off',
               get: () => modes.ligatures,
-              set: () => modes.toggleLigatures(view),
+              set: (value) => modes.setLigatures(value, view),
             },
             {
               // Modal editing over whichever keyboard the shortcuts are on.
