@@ -23,6 +23,9 @@ import type { DocView, SharedDoc } from './shared'
 export interface StateView extends DocView {
   setState(state: EditorState): void
   scrollSnapshot(): StateEffect<unknown>
+  /** The element that scrolls. A view outlives the note in it, and so does its
+   *  scroller: a note that opens at its top has to say so. */
+  readonly scrollDOM: { scrollTop: number }
 }
 
 export class HeldState implements DocView {
@@ -96,6 +99,10 @@ export class HeldState implements DocView {
     // the same words would each be sent the other's changes.
     this.note.leave(this)
     view.setState(this.held)
+    // A note nobody has read opens at its top. The scroller is the same element
+    // whichever note is in it, so without this the note would arrive at however
+    // far down the last one was.
+    if (!this.place) view.scrollDOM.scrollTop = 0
     this.note.join(view)
     this.settle(view, effects)
   }

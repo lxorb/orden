@@ -10,11 +10,22 @@
 
 import { HeldState, type SharedDoc, type StateEffect, type StateView } from '@nib/editor'
 
+/** What a state is kept under: the tab, and which note the tab is on.
+ *
+ *  Almost always the tab alone would do. The exception is the one tab that
+ *  previews a note: it moves on to another note without becoming another tab,
+ *  and the note it moves to has its own caret and its own place. A rename does
+ *  not count, which is why this asks the document how many notes it has held
+ *  rather than which path it is on. */
+export function noteKey(tab: { id: string; note: { arrivals: number } }): string {
+  return `${tab.id} ${tab.note.arrivals}`
+}
+
 export class EditorStates {
   private readonly held = new Map<string, HeldState>()
   /** What each state is already configured for; see `fitted`. */
   private readonly stamps = new Map<string, string>()
-  /** Which tab the view is showing, so a switch knows what to take back. */
+  /** Which note the view is showing, so a switch knows what to take back. */
   private showing: string | null = null
   /** Whether the note on show has had its place put back. Only the first note a
    *  pane shows can be waiting for that, and putting a place back twice would
@@ -26,35 +37,35 @@ export class EditorStates {
     return this.held.size
   }
 
-  /** Which tab is up, or null before the pane has shown one. */
+  /** Which note is up, or null before the pane has shown one. */
   get current(): string | null {
     return this.showing
   }
 
   /** The note the pane's view was built on; see `HeldState.shownIn`. `place` is
    *  where that note was last being read, which the first `show` settles. */
-  started(tabId: string, note: SharedDoc, view: StateView, place: StateEffect<unknown> | null) {
-    this.held.set(tabId, HeldState.shownIn(note, view, place))
-    this.showing = tabId
+  started(key: string, note: SharedDoc, view: StateView, place: StateEffect<unknown> | null) {
+    this.held.set(key, HeldState.shownIn(note, view, place))
+    this.showing = key
   }
 
-  /** What the state kept for a tab is already configured for: the modes, and the
-   *  keys. Undefined for a note this pane has not shown yet.
+  /** What the state kept for a note is already configured for: the modes, and
+   *  the keyboard. Undefined for a note this pane has not shown yet.
    *
    *  Reconfiguring an editor is not free - a fresh markdown language throws the
    *  parse away, and fresh view plugins redraw everything on screen - so a switch
    *  only does it when the answer here is not what the app holds now. */
-  fitted(tabId: string): string | undefined {
-    return this.stamps.get(tabId)
+  fitted(key: string): string | undefined {
+    return this.stamps.get(key)
   }
 
   /** Says a state is now configured for `stamp`. */
-  fit(tabId: string, stamp: string) {
-    this.stamps.set(tabId, stamp)
+  fit(key: string, stamp: string) {
+    this.stamps.set(key, stamp)
   }
 
-  /** Shows a tab's note in the pane's view, building its state the first time
-   *  the pane shows it.
+  /** Shows a note in the pane's view, building its state the first time the pane
+   *  shows it. `key` names the note within this pane; see `noteKey`.
    *
    *  `effects` is everything the app has to say about the note that is not in
    *  its state - the modes, the keys, the space's links - and it goes into the
@@ -63,15 +74,15 @@ export class EditorStates {
    *  between a warm switch and a cold one. */
   show(
     view: StateView,
-    tabId: string,
+    key: string,
     build: () => HeldState,
     effects: readonly StateEffect<unknown>[] = [],
   ): boolean {
-    const known = this.held.get(tabId)
+    const known = this.held.get(key)
     const next = known ?? build()
-    if (!known) this.held.set(tabId, next)
+    if (!known) this.held.set(key, next)
 
-    if (this.showing === tabId) {
+    if (this.showing === key) {
       // Already up. The first time round the view was built on it and its place
       // has still to be put back, with everything else in the same transaction;
       // after that the place is where the reader left it, and only what the app
@@ -85,7 +96,7 @@ export class EditorStates {
     }
 
     this.held.get(this.showing ?? '')?.take(view)
-    this.showing = tabId
+    this.showing = key
     this.settled = true
     next.give(view, effects)
 
@@ -93,11 +104,11 @@ export class EditorStates {
   }
 
   /** Lets go of every note but these: what is left after a tab has closed, been
-   *  dragged to another pane, or taken its note with it. The one on show stays
+   *  dragged to another pane, or moved on to another note. The one on show stays
    *  whatever the list says, since the view is holding it. */
-  keepOnly(tabIds: readonly string[]) {
+  keepOnly(keys: readonly string[]) {
     for (const [id, state] of this.held) {
-      if (id === this.showing || tabIds.includes(id)) continue
+      if (id === this.showing || keys.includes(id)) continue
 
       state.release()
       this.held.delete(id)

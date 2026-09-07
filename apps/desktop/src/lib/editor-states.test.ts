@@ -8,7 +8,7 @@ import {
   type TransactionSpec,
 } from '@nib/editor'
 import { describe, expect, test } from 'vitest'
-import { EditorStates } from './editor-states'
+import { EditorStates, noteKey } from './editor-states'
 
 /** Stands in for a scroll snapshot; see held.test.ts in the editor package. */
 const scrolledTo = StateEffect.define<number>({ map: (at, changes) => changes.mapPos(at) })
@@ -17,6 +17,8 @@ const scrolledTo = StateEffect.define<number>({ map: (at, changes) => changes.ma
 class Surface implements StateView {
   state = EditorState.create({})
   at = 0
+  /** The element that scrolls, as far as a swap looks at it. */
+  readonly scrollDOM = { scrollTop: 0 }
   /** How many transactions it has been handed. A switch should cost one. */
   transactions = 0
 
@@ -44,6 +46,32 @@ function note(text: string) {
   const shared = new SharedDoc(text)
   return { shared, state: () => editorState({ shared }) }
 }
+
+describe('what a state is kept under', () => {
+  test('a note renamed is still the same note', () => {
+    const tab = { id: 'a', note: { arrivals: 0 } }
+    const was = noteKey(tab)
+
+    // Renaming rewrites the title and moves the file; the tab and the document
+    // are the ones that were there before.
+    expect(noteKey(tab)).toBe(was)
+  })
+
+  test('the preview moving on to another note is another note', () => {
+    const tab = { id: 'a', note: { arrivals: 0 } }
+    const was = noteKey(tab)
+
+    tab.note.arrivals++
+
+    expect(noteKey(tab)).not.toBe(was)
+  })
+
+  test('two tabs on one note are two of them', () => {
+    expect(noteKey({ id: 'a', note: { arrivals: 0 } })).not.toBe(
+      noteKey({ id: 'b', note: { arrivals: 0 } }),
+    )
+  })
+})
 
 describe('the states a pane keeps', () => {
   test('builds one the first time it shows a note and keeps it after that', () => {

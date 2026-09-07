@@ -18,6 +18,8 @@ class Surface implements StateView {
   readonly done: string[] = []
   /** Where the reader has got to, in document positions. */
   at = 0
+  /** The element that scrolls, as far as a swap looks at it. */
+  readonly scrollDOM = { scrollTop: 0 }
 
   constructor(doc: string) {
     this.state = EditorState.create({ doc, extensions: [history(), sharing()] })
@@ -171,9 +173,25 @@ describe('showing a note in a view', () => {
     const note = new SharedDoc('Hello')
     const held = HeldState.waiting(note, stateFor('Hello'))
     const view = new Surface('')
+    // The scroller is the same element whichever note is in it, and the last one
+    // was being read half way down.
+    view.scrollDOM.scrollTop = 1200
 
     held.give(view)
 
     expect(view.done).toEqual(['state'])
+    expect(view.scrollDOM.scrollTop).toBe(0)
+  })
+
+  test('a note that was being read is not dragged to its top', () => {
+    const note = new SharedDoc('one\ntwo\nthree')
+    const held = HeldState.waiting(note, stateFor('one\ntwo\nthree'), scrolledTo.of(8))
+    const view = new Surface('')
+    view.scrollDOM.scrollTop = 1200
+
+    held.give(view)
+
+    expect(view.scrollDOM.scrollTop).toBe(1200)
+    expect(view.at).toBe(8)
   })
 })

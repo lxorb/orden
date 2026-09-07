@@ -131,8 +131,15 @@ export class NoteDoc {
   adopt(note: { path: string; name: string; text: string }) {
     this.path = note.path
     this.name = note.name
+    this.arrivals++
     this.replace(note.text, false)
   }
+
+  /** How many notes this document has held. Only the preview ever takes a second
+   *  one on, and a pane that keeps an editor state per open note has to be able
+   *  to tell "the same note, renamed" from "another note in the same tab": the
+   *  first keeps its caret and its place, the second brings its own. */
+  arrivals = $state(0)
 
   written(path: string, name: string) {
     this.path = path

@@ -12,6 +12,7 @@
   import type { Tab } from './workspace.svelte'
   import type { Along, Pane } from './workspace/pane-tree'
   import { draggedTab, isTabDrag } from './drag-paths'
+  import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
   import Graph from './Graph.svelte'
   import { key, message, t } from './i18n.svelte'
@@ -35,9 +36,9 @@
   const { pane }: { pane: Pane } = $props()
 
   const tab = $derived(workspace.showing(pane.id))
-  /** Every tab in this pane, by id. The editor keeps a state per note it has
-   *  shown, and this is what tells it which of them the pane still holds. */
-  const strip = $derived(workspace.tabsIn(pane.id).map((one) => one.id))
+  /** Every note this pane holds. The editor keeps a state for each one it has
+   *  shown, and this is what tells it which of them are still open. */
+  const strip = $derived(workspace.tabsIn(pane.id).map(noteKey))
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along. */

@@ -34,7 +34,7 @@
     type StateOptions,
     shortcutEffect,
   } from '@nib/editor'
-  import { EditorStates } from './editor-states'
+  import { EditorStates, noteKey } from './editor-states'
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
@@ -126,10 +126,10 @@
    *  The modes and the keys go on only when they are not what the state was built
    *  or last shown for: each of those is a reconfiguration, and reconfiguring
    *  throws away the parse and every decoration on screen. */
-  function fitting(one: Tab, index: NoteIndex | undefined): StateEffect<unknown>[] {
+  function fitting(key: string, index: NoteIndex | undefined): StateEffect<unknown>[] {
     const stamp = dressing()
-    const dressed = states.fitted(one.id) === stamp
-    states.fit(one.id, stamp)
+    const dressed = states.fitted(key) === stamp
+    states.fit(key, stamp)
 
     return [
       ...(index ? [noteIndexEffect(index)] : []),
@@ -145,7 +145,7 @@
     const created = createEditor({ parent: host, ...untrack(() => optionsFor(first)) })
 
     states.started(
-      first.id,
+      noteKey(first),
       first.note.live,
       created,
       untrack(() => placeOf(first)),
@@ -171,22 +171,23 @@
   // The note, and the space around it. Swapped in whole, in the same frame as
   // the click that asked for it: see editor-states.ts.
   //
-  // Two things are read for their own sake, and nothing else is. The tab, which
-  // is the switch. And the space's links, because a note saved somewhere else
-  // gains a heading and every `[[link]]` to it has to be drawn again - that one
-  // arrives on its own, without the note being disturbed. Everything the fitting
-  // reads is untracked: the modes reach every open editor by themselves, and
-  // hearing about them here as well would dress the same view twice.
+  // Two things are read for their own sake, and nothing else is. Which note the
+  // pane is on, which is the switch. And the space's links, because a note saved
+  // somewhere else gains a heading and every `[[link]]` to it has to be drawn
+  // again - that one arrives on its own, without the note being disturbed.
+  // Everything the fitting reads is untracked: the modes reach every open editor
+  // by themselves, and hearing about them here as well would dress a view twice.
   $effect(() => {
     const current = view
     const showing = tab
     if (!current) return
 
+    const key = noteKey(showing)
     const index = notes?.(showing)
 
     untrack(() => {
-      const switching = states.current !== showing.id
-      states.show(current, showing.id, () => build(showing), fitting(showing, index))
+      const switching = states.current !== key
+      states.show(current, key, () => build(showing), fitting(key, index))
 
       // Another note is another length and another place in it, so the bar
       // shapes itself into its new size rather than appearing in it.
