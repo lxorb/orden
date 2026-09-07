@@ -122,7 +122,10 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Rename'),
           disabled: !workspace.active?.path,
-          run: () => (workspace.renaming = workspace.active?.path ?? null),
+          run: () => {
+            const path = workspace.active?.path
+            if (path) workspace.startRenaming(path)
+          },
         },
         SPLIT,
         ...exportCommands().map((one) => ({ label: one.label, run: one.run })),

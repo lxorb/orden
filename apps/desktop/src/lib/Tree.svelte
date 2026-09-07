@@ -13,7 +13,7 @@
   import { t } from './i18n.svelte'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { longPress } from './longpress'
-  import { selectAll } from './select-all'
+  import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
   import { carry, dragged, isTreeDrag } from './drag-paths'
   import { folderOf } from './tauri'
@@ -32,7 +32,7 @@
       { label: t('New note'), run: () => void workspace.createNote(entry.path) },
       { label: t('New folder'), run: () => void workspace.createFolder(entry.path) },
       DIVIDER,
-      { label: t('Rename'), run: () => (workspace.renaming = entry.path) },
+      { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
       { label: pinLabel(entry.path), run: () => workspace.togglePin(entry.path) },
       ...revealEntry(entry.path),
       DIVIDER,
@@ -111,7 +111,7 @@
     return [
       { label: t('Open'), run: () => void workspace.open(entry.path) },
       DIVIDER,
-      { label: t('Rename'), run: () => (workspace.renaming = entry.path) },
+      { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
       { label: pinLabel(entry.path), run: () => workspace.togglePin(entry.path) },
       { label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) },
       ...copyPathEntry(entry.path),
@@ -122,8 +122,20 @@
     ]
   }
 
+  /** What the name field starts with. A note waiting for a title starts with the
+   *  name it has and a space, so typing one adds to it. */
+  function nameToEdit(entry: Entry): string {
+    const name = entry.is_dir ? entry.name : stripped(entry.name)
+    return workspace.renaming?.appending ? `${name} ` : name
+  }
+
+  /** Which way the field takes the caret; see select-all.ts. */
+  function rename(node: HTMLInputElement, appending: boolean) {
+    return appending ? caretAtEnd(node) : selectAll(node)
+  }
+
   function commit(path: string, value: string) {
-    workspace.renaming = null
+    workspace.stopRenaming()
     void workspace.rename(path, value)
   }
 
@@ -178,22 +190,25 @@
 <ul onkeydown={depth === 0 ? onKey : undefined}>
   {#each entries as entry (entry.path)}
     <li>
-      {#if workspace.renaming === entry.path}
+      {#if workspace.renaming?.path === entry.path}
         <!-- The name arrives selected, the way every file manager does it:
              renaming usually replaces the name rather than adding to it. The
              value already leaves the extension off, so this selects the name
-             and nothing else. -->
+             and nothing else.
+             A note made with a name of its own is the exception: a unique
+             note's timestamp is waiting for a title after it, so the caret
+             goes to the end and the space is already there. -->
         <input
           class="rename"
           style:padding-left="{depth * 12 + 8}px"
-          value={entry.is_dir ? entry.name : stripped(entry.name)}
+          value={nameToEdit(entry)}
           spellcheck="false"
-          use:selectAll
+          use:rename={workspace.renaming.appending}
           onblur={(event) => commit(entry.path, fullName(entry, event.currentTarget.value))}
           onkeydown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur()
             if (event.key === 'Escape') {
-              workspace.renaming = null
+              workspace.stopRenaming()
             }
           }}
         />

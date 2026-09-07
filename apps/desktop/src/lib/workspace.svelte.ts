@@ -198,8 +198,11 @@ class Workspace {
   panel = $state<Panel | null>(null)
   /** The one tab holding a note that is only being looked at. */
   previewTabId = $state<string | null>(null)
-  /** Path of the tree row currently being renamed in place. */
-  renaming = $state<string | null>(null)
+  /** The tree row being named in place, and whether the name it starts with is
+   *  something to add to rather than to replace: a note that was just made with
+   *  a name of its own - a unique note's timestamp - is waiting for a title
+   *  after it, not instead of it. */
+  renaming = $state<{ path: string; appending: boolean } | null>(null)
   autoSave = $state(localStorage.getItem(AUTO_SAVE_KEY) !== 'false')
   /** How long to wait after the last keystroke before writing. */
   autoSaveDelay = $state(Number(localStorage.getItem(AUTO_SAVE_DELAY_KEY)) || AUTO_SAVE_DELAY)
@@ -1208,10 +1211,14 @@ class Workspace {
     return out
   }
 
-  /** Opens the name field on a row that has just been made, so naming it is
-   *  part of making it. Pointless while the tree is not the panel on show. */
-  private startRenaming(path: string) {
-    if (this.panel === 'tree') this.renaming = path
+  /** Opens the name field on a row, so naming a note is part of making it.
+   *  Pointless while the tree is not the panel on show. */
+  startRenaming(path: string, appending = false) {
+    if (this.panel === 'tree') this.renaming = { path, appending }
+  }
+
+  stopRenaming() {
+    this.renaming = null
   }
 
   async rename(path: string, name: string) {
@@ -1600,6 +1607,10 @@ class Workspace {
     this.tabs = this.tabs.filter(
       (other) => other.id === tab.id || other.path !== null || other.dirty,
     )
+    // The name is settled and the row is waiting for a title after it; typing
+    // one leaves `202609070155 Some title.md`, and pressing Enter with nothing
+    // typed leaves the timestamp alone.
+    this.startRenaming(path, true)
 
     await invoke('write_note', { path, content })
     links.noteSaved(path, content)
