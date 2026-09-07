@@ -67,23 +67,32 @@ export function inlineCodeStyle(): TextStyle {
   }
 }
 
-/** A fence's own size. One step down from prose, because code lines are long
- *  and a fence that wraps every second line reads worse than a smaller one
- *  that does not. */
-export const CODE_SIZE = 14
+/** A fence's own size. The same as prose rather than a step under it: a fence
+ *  set smaller than the words around it is the hardest thing on the panel to
+ *  read, and a line of code that wraps is a smaller price than a line of code
+ *  nobody can make out. The measure still fits about seventy mono characters. */
+export const CODE_SIZE = BODY_SIZE
 
-/** The greys that are not text: a rule, the bar beside a quote, the box behind
- *  inline code, a table's grid. Dim enough to stay furniture, bright enough to
- *  survive the panel. */
+/** The greys that are not text: a rule, the bar beside a quote, a table's grid.
+ *
+ *  Furniture may sit under the floor that words keep, because furniture is
+ *  read by being noticed rather than by being made out - but only just under.
+ *  These were two and three, which on a real panel is nothing at all: the bar
+ *  beside a quote was not there, and the box behind inline code was a rumour.
+ *
+ *  The fence's own background is gone. It never separated a fence from the
+ *  prose the way the mono face already does, and a dark wash under light text is
+ *  the one thing a see-through panel cannot draw: it has no ink, so a background
+ *  can only add light behind the letters and take contrast away. */
 export const FURNITURE = {
-  rule: 6,
-  quoteBar: 7,
-  codeBox: 3,
-  tableGrid: 6,
+  rule: 7,
+  quoteBar: 9,
+  codeBox: 6,
+  tableGrid: 8,
   /** The bullet or number in front of a list item. */
   marker: 12,
-  /** A fence's own background, behind every line of it. */
-  codeBlock: 2,
+  /** A fence has no ground of its own; the face and the greys carry it. */
+  codeBlock: 0,
 } as const
 
 /** Prose that is quieter than the note around it: a quote, a caption, the

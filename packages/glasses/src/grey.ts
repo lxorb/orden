@@ -47,40 +47,67 @@ export interface RoleLook {
   slant: Slant
 }
 
+/** The dimmest a token that carries meaning may be drawn.
+ *
+ *  Read off a real G2 rather than off a screenshot, and that is the whole point:
+ *  a page of code that looks well graded on a black monitor is a page whose
+ *  bottom third has simply gone on the glass. The panel lights pixels rather
+ *  than inking them, it is looked through rather than at, and whatever is behind
+ *  it is competing. Nine of fifteen is where a word stops being a shade and
+ *  starts being a word.
+ *
+ *  Comments used to sit at three. They were the first thing a reader asked
+ *  about, and they were right to. */
+export const FLOOR = 9
+
+/** The four levels anything is drawn at, and nothing in between.
+ *
+ *  Six bands over sixteen levels meant most pairs were one or two steps apart,
+ *  which on glass is no difference at all: the grades were real in the buffer
+ *  and invisible on the panel. Four levels, well separated, are four a reader
+ *  can actually tell apart, and the work of telling twelve roles apart is done
+ *  where it survives the display - by weight and by slant. */
+const DIM = FLOOR
+const MID = 11
+const CLEAR = 13
+const FULL = WHITE
+
 /** Every role's band and emphasis.
  *
- *  The bands do not overlap *within one emphasis*, and that is the whole of why
+ *  The levels do not repeat *within one emphasis*, and that is the whole of why
  *  two roles can never come out looking alike: two roles drawn at the same
- *  brightness are always drawn plain against italic, or plain against bold. Set
- *  out below in the four groups so that the property is visible rather than
+ *  brightness are always plain against italic, or plain against bold. Set out
+ *  below in the four groups so that the property is visible rather than
  *  asserted, and a role added to a group has an obvious place to go.
  *
- *  Nothing sits below three. The panel lights pixels rather than inking them,
- *  and one or two out of fifteen is not something anybody reads.
+ *  A palette still chooses where inside a role's band it sits, so switching the
+ *  code theme still changes what the glasses show; the bands are narrow now, so
+ *  what it cannot do is push a role below the floor.
  *
  *  A diff is the one place a palette is overruled outright: added and removed
- *  mean the same in every theme, so one is the brightest thing on the line and
- *  the other recedes with the comments. */
+ *  mean the same in every theme. */
 export const ROLE_LOOKS: Readonly<Record<CodeRole, RoleLook>> = {
-  // Plain.
-  deleted: { band: [3, 5], weight: 'normal', slant: 'normal' },
-  punctuation: { band: [6, 8], weight: 'normal', slant: 'normal' },
-  string: { band: [9, 11], weight: 'normal', slant: 'normal' },
-  text: { band: [12, 12], weight: 'normal', slant: 'normal' },
-  number: { band: [13, 14], weight: 'normal', slant: 'normal' },
-  inserted: { band: [WHITE, WHITE], weight: 'normal', slant: 'normal' },
+  // Plain, which is most of a line.
+  punctuation: { band: [DIM, DIM + 1], weight: 'normal', slant: 'normal' },
+  string: { band: [MID, MID + 1], weight: 'normal', slant: 'normal' },
+  text: { band: [CLEAR, CLEAR], weight: 'normal', slant: 'normal' },
+  number: { band: [FULL, FULL], weight: 'normal', slant: 'normal' },
 
-  // Italic.
-  comment: { band: [3, 6], weight: 'normal', slant: 'italic' },
-  property: { band: [8, 11], weight: 'normal', slant: 'italic' },
-  type: { band: [12, 15], weight: 'normal', slant: 'italic' },
+  // Italic. A comment is set in the same ink as the code and told apart by its
+  // slant, which is how a comment is told apart on paper and in every editor
+  // anybody has used. Dimming it was the mistake.
+  deleted: { band: [DIM, DIM + 1], weight: 'normal', slant: 'italic' },
+  property: { band: [MID, MID + 1], weight: 'normal', slant: 'italic' },
+  comment: { band: [CLEAR, CLEAR], weight: 'normal', slant: 'italic' },
+  type: { band: [FULL, FULL], weight: 'normal', slant: 'italic' },
 
   // Bold.
-  function: { band: [9, 13], weight: 'bold', slant: 'normal' },
-  keyword: { band: [14, WHITE], weight: 'bold', slant: 'normal' },
+  function: { band: [MID, CLEAR - 1], weight: 'bold', slant: 'normal' },
+  keyword: { band: [FULL, FULL], weight: 'bold', slant: 'normal' },
 
-  // Bold and italic: the one thing that should look wrong.
-  invalid: { band: [WHITE, WHITE], weight: 'bold', slant: 'italic' },
+  // Bold and italic: what is added, and the one thing that should look wrong.
+  inserted: { band: [CLEAR, CLEAR], weight: 'bold', slant: 'italic' },
+  invalid: { band: [FULL, FULL], weight: 'bold', slant: 'italic' },
 }
 
 /** How a role comes out for one code theme: a level rather than a band. */

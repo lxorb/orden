@@ -13,6 +13,7 @@
 import katex from 'katex'
 import type { Block } from './blocks'
 import { ditherToLevels, quantise, type Tile } from './encode'
+import { FLOOR } from './grey'
 import { fontOf, fontsReady } from './fonts'
 import type { Line, Page, Placed } from './layout'
 import { type Box, edgeOf, type MathBox, type Measurer, type Painted } from './measure'
@@ -304,6 +305,11 @@ export class Painter implements Measurer {
     const ctx = this.panel
 
     for (const fill of line.fills) {
+      // A fill at level zero is a fill of nothing: the panel has no ink, so the
+      // darkest it can draw is the glass. Painting it costs a rectangle and
+      // changes not one pixel.
+      if (fill.grey <= 0) continue
+
       ctx.fillStyle = greyCss(fill.grey)
       ctx.fillRect(MARGIN_X + fill.x, top + fill.y, fill.width, fill.height)
     }
@@ -480,13 +486,15 @@ function paintedOf(element: Element): Painted {
   }
 }
 
-/** The page count in the bottom band. Dim on purpose: it is not the note. */
+/** The page count in the bottom band. Quiet on purpose: it is not the note, but
+ *  it is a number somebody reads, so it keeps the floor that words keep. Six was
+ *  not there at all on a real panel. */
 const MARK_STYLE: TextStyle = {
   family: 'ui',
-  size: 10,
+  size: 11,
   weight: 'normal',
   slant: 'normal',
-  grey: 6,
+  grey: FLOOR,
   underline: false,
   strike: false,
 }
