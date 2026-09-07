@@ -42,9 +42,15 @@ export const manifest: chrome.runtime.ManifestV3 = {
   // would leave every image a dead link the day the article moves.
   host_permissions: ['<all_urls>'],
 
+  // Suggestions rather than settings: Chrome hands them out only if nothing
+  // else has them, and the options page links to chrome://extensions/shortcuts,
+  // where they can be changed. `S` and `L` say what they do; the page would
+  // have liked `P`, but Chrome keeps `Alt+Shift+` with A, C, N and P for itself
+  // and hands out nothing at all rather than something else, so it gets the key
+  // next to the link's.
   commands: {
     'clip-page': {
-      suggested_key: { default: 'Alt+Shift+C' },
+      suggested_key: { default: 'Alt+Shift+K' },
       description: '__MSG_clipPage__',
     },
     'clip-selection': {

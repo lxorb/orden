@@ -193,6 +193,15 @@ describe('what a clip is called', () => {
     expect(pageTitle(page, PAGE)).toBe('A page')
   })
 
+  test('prefers what the page calls itself when something else shows the name', () => {
+    const page = pageOf(
+      '',
+      '<title>Deep work | The Journal</title><meta property="og:title" content="Deep work">',
+    )
+
+    expect(pageTitle(page, PAGE)).toBe('Deep work')
+  })
+
   test('falls back to the last part of the address', () => {
     expect(pageTitle(pageOf(''), 'https://site.example/notes/deep-work.html')).toBe('deep-work')
   })

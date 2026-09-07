@@ -174,9 +174,16 @@ function titleFromUrl(url: string): string {
 }
 
 /** The page's own name for itself, falling back to its address so a note is
- *  never called nothing. */
+ *  never called nothing.
+ *
+ *  `og:title` first, where a page has one: it is what the page calls itself
+ *  when something else is going to show the name, so it carries the headline
+ *  without the site's name bolted on after a pipe. */
 export function pageTitle(document: Document, url: string): string {
-  return document.title.trim() || titleFromUrl(url)
+  const shared = document.querySelector('meta[property="og:title"]')?.getAttribute('content')
+
+  const named = [shared ?? '', document.title].map((one) => one.trim()).find((one) => one !== '')
+  return named ?? titleFromUrl(url)
 }
 
 /** The words a link shows, for the link that was right clicked. The anchor is

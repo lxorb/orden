@@ -229,6 +229,15 @@ describe('the note a clip becomes', () => {
   })
 })
 
+describe('clipping a selection', () => {
+  test('is called what the page calls itself, not what its tab says', () => {
+    // `document.title` on this page carries the site's name after a pipe;
+    // `og:title` is the headline on its own, which is what a note wants.
+    const clip = clipOf('code.html', 'selection')
+    expect(clip.origin.title).toBe('Reading a file without reading a file')
+  })
+})
+
 describe('clipping a link', () => {
   const clip = clipOf('code.html', 'link')
 

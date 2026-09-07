@@ -108,7 +108,11 @@
   {/each}
 </div>
 
-<div class="preview" class:waiting={!clip && !problem && !nowhere}>
+<div
+  class="preview"
+  class:waiting={!clip && !problem && !nowhere}
+  class:saying={!!problem || nowhere}
+>
   {#if problem}
     <p class="problem" transition:fly={{ y: -6, duration: 160 }}>{t(problem)}</p>
   {:else if nowhere}
@@ -196,6 +200,14 @@
     background: var(--surface);
   }
 
+  /* A sentence is the whole of what the box has to say, so it sits in the
+     middle of it rather than in a corner. */
+  .saying {
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+
   /* Reading a page takes a moment. A surface that breathes says so without a
      word or a spinner. */
   .waiting {
@@ -245,6 +257,12 @@
   .save {
     width: 100%;
     margin-top: var(--space-3);
+  }
+
+  /* A note that exists is not a button that is off: the press has landed, and
+     what is left is the path it landed at. */
+  .save:has(.path):disabled {
+    opacity: 1;
   }
 
   .path {
