@@ -21,6 +21,56 @@ export interface MathBox extends Box {
   depth: number
 }
 
+/** How far right and how far down something reaches. */
+export interface Edge {
+  right: number
+  bottom: number
+}
+
+/** A box as `edgeOf` sees it: where it ends, whether it keeps what overflows it
+ *  to itself, and what is inside it.
+ *
+ *  Structural rather than a DOM element so that the rule below can be tested
+ *  without a browser, which is the only way anything in this package is tested. */
+export interface Painted {
+  right: number
+  bottom: number
+  /** True when nothing inside can show outside. */
+  clips: boolean
+  children: readonly Painted[]
+}
+
+/** How far a tree of boxes actually paints, which is not the same as how far it
+ *  reaches.
+ *
+ *  The walk exists because a box is not always as wide as what it holds: KaTeX
+ *  draws a big delimiter with negative margins, and a box shrunk to fit around
+ *  one comes out narrower than its own contents, so a formula measured by its
+ *  outermost box loses its last symbol off the edge of the picture.
+ *
+ *  It stops at anything that clips because of the opposite trap. KaTeX draws a
+ *  square root's tail as an SVG path several hundred em wide inside an `svg`
+ *  that hides its overflow. Asked for its rectangle that path answers about nine
+ *  thousand pixels, so a formula with a root in it measured fifty times too
+ *  wide, and the layout, doing as it was told, scaled the whole formula down to
+ *  fit the column and left a few lit pixels where an equation should have been.
+ *  A clipped box's children cannot show outside it, so they are not asked. */
+export function edgeOf(boxes: readonly Painted[], from: Edge): Edge {
+  let { right, bottom } = from
+
+  for (const box of boxes) {
+    right = Math.max(right, box.right)
+    bottom = Math.max(bottom, box.bottom)
+    if (box.clips) continue
+
+    const inside = edgeOf(box.children, { right, bottom })
+    right = inside.right
+    bottom = inside.bottom
+  }
+
+  return { right, bottom }
+}
+
 export interface Measurer {
   /** How much room `text` takes in `style`, in pixels. */
   width(text: string, style: TextStyle): number

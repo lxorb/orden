@@ -15,7 +15,7 @@ import type { Block } from './blocks'
 import { ditherToLevels, quantise, type Tile } from './encode'
 import { fontOf, fontsReady } from './fonts'
 import type { Line, Page, Placed } from './layout'
-import type { Box, MathBox, Measurer } from './measure'
+import { type Box, edgeOf, type MathBox, type Measurer, type Painted } from './measure'
 import { BLACK, MARGIN_TOP, MARGIN_X, PANEL_HEIGHT, PANEL_WIDTH, WHITE } from './panel'
 import type { MathRun, Run } from './runs'
 import type { Family, TextStyle } from './style'
@@ -463,10 +463,22 @@ export class Painter implements Measurer {
 const DISPLAY = { margin: '0', display: 'inline-block', textAlign: 'left' } as const
 
 /** Room left around a formula's picture, in pixels. The edge of a glyph is
- *  antialiased and the picture clips what falls outside it. */
-/** Room left around a formula's picture, in pixels. The edge of a glyph is
  *  antialiased, and the picture clips whatever falls outside it. */
 const SLACK = 6
+
+/** One element as the edge walk sees it, straight off the page. The rule about
+ *  what counts lives in `edgeOf`; this only mirrors the tree. */
+function paintedOf(element: Element): Painted {
+  const box = element.getBoundingClientRect()
+  const style = getComputedStyle(element)
+
+  return {
+    right: box.right,
+    bottom: box.bottom,
+    clips: style.overflowX !== 'visible' || style.overflowY !== 'visible',
+    children: [...element.children].map(paintedOf),
+  }
+}
 
 /** The page count in the bottom band. Dim on purpose: it is not the note. */
 const MARK_STYLE: TextStyle = {
@@ -547,17 +559,12 @@ function measureHtml(html: string, size: number, slack: number): MathBox | null 
   // comes out narrower than what it holds, so the last symbol of a `$$` block
   // falls outside the picture and is simply gone.
   const end = marker.getBoundingClientRect()
-  // And the far edge of everything inside it, which is not the same thing: a
-  // shrink-to-fit box around a big delimiter comes out narrower than what it
-  // holds, so a formula can overflow its own box and lose its last symbol to
-  // the edge of the picture. Every element is asked rather than the outermost.
-  let right = end.left
-  let bottom = box.bottom
-  for (const one of host.querySelectorAll('*')) {
-    const its = one.getBoundingClientRect()
-    right = Math.max(right, its.right)
-    bottom = Math.max(bottom, its.bottom)
-  }
+  // And the far edge of everything inside it that can actually show, which is
+  // neither the outermost box nor every box there is; see `edgeOf`.
+  const { right, bottom } = edgeOf([...host.children].map(paintedOf), {
+    right: end.left,
+    bottom: box.bottom,
+  })
 
   const width = Math.max(host.scrollWidth, Math.ceil(right - box.left))
   const height = Math.max(host.scrollHeight, Math.ceil(bottom - box.top))
