@@ -32,6 +32,14 @@ vi.mock('@nib/editor', async (importOriginal) => ({
   setReadOnlyMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'read-only', on }),
   setSourceMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'source', on }),
   setVim: (_view: unknown, on: boolean) => told.calls.push({ mode: 'vim', on }),
+  // A view built later takes every mode at once rather than one at a time, so
+  // this is where the store says what it holds to a fresh editor.
+  modeEffects: (settings: { readOnly: boolean; source: boolean; vim: boolean }) => {
+    told.calls.push({ mode: 'read-only', on: settings.readOnly })
+    told.calls.push({ mode: 'source', on: settings.source })
+    told.calls.push({ mode: 'vim', on: settings.vim })
+    return []
+  },
 }))
 
 /** The account, standing still. One object across module resets, so a test can

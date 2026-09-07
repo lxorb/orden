@@ -66,6 +66,12 @@ export function noteIndexExtension(index: NoteIndex | undefined): Extension {
   return indexField.init(() => index ?? EMPTY)
 }
 
+/** The index as an effect, so a pane taking another note on can put it in the
+ *  same transaction as everything else it changes. */
+export function noteIndexEffect(index: NoteIndex): StateEffect<unknown> {
+  return setIndex.of(index)
+}
+
 /** Hands over a new index. Compared by identity where it matters, so the app
  *  should give a fresh object when something changed and the same one when
  *  nothing did. */

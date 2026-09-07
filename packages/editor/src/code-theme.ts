@@ -1,5 +1,5 @@
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { Compartment, type Extension } from '@codemirror/state'
+import { Compartment, type Extension, type StateEffect } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 
@@ -123,12 +123,20 @@ function paletteById(id: string): CodePalette {
 
 const codeTheme = new Compartment()
 
+function highlightingFor(id: string): Extension {
+  return syntaxHighlighting(codeHighlightStyle(paletteById(id)))
+}
+
 export function codeThemeExtension(id = 'follow'): Extension {
-  return codeTheme.of(syntaxHighlighting(codeHighlightStyle(paletteById(id))))
+  return codeTheme.of(highlightingFor(id))
+}
+
+/** The palette as an effect, so a pane taking another note on can put it in the
+ *  same transaction as everything else it changes. */
+export function codeThemeEffect(id: string): StateEffect<unknown> {
+  return codeTheme.reconfigure(highlightingFor(id))
 }
 
 export function setCodeTheme(view: EditorView, id: string) {
-  view.dispatch({
-    effects: codeTheme.reconfigure(syntaxHighlighting(codeHighlightStyle(paletteById(id)))),
-  })
+  view.dispatch({ effects: codeThemeEffect(id) })
 }

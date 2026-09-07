@@ -1,10 +1,14 @@
-import { caretLine, type EditorView, showLine, topLine } from '@nib/editor'
+import { caretLine, type EditorView, sharedOf, topLine } from '@nib/editor'
 import { untrack } from 'svelte'
 import { workspace } from './workspace.svelte'
 
-/** Where a note was being read, put back when it opens and written down as it
- *  moves. A crash gives no chance to record it on the way out, so it is recorded
- *  as it happens instead.
+/** Where a note is being read, written down as it moves. A crash gives no chance
+ *  to record it on the way out, so it is recorded as it happens instead.
+ *
+ *  Only the writing down. Putting a place back is not done here: it belongs to
+ *  the state the pane swaps in, so a note appears already where it was left
+ *  rather than arriving at its top and being moved a frame later. See
+ *  editor-states.ts and held.ts.
  *
  *  One entry per view, because a note open in two panes is being read in two
  *  places: each pane keeps its own caret and its own place in the note, and the
@@ -22,29 +26,28 @@ class Placement {
     this.pending.get(view)?.()
   }
 
-  /** Puts the tab's place into `view` and keeps it up to date until the view
-   *  goes. `path` is the note the tab is on now: a preview tab moves on to
-   *  another note without becoming another tab, so what is recorded has to be
-   *  checked against the note it was measured for.
+  /** Keeps the tab's place up to date until the pane moves on. `path` is the note
+   *  the tab is on now: a preview tab moves on to another note without becoming
+   *  another tab, so what is recorded has to be checked against the note it was
+   *  measured for.
    *
    *  Answers the teardown, so the effect that calls this can hand it straight
    *  back to Svelte. */
   follow(view: EditorView, id: string, path: string | null): () => void {
-    const tab = untrack(() => workspace.tabs.find((one) => one.id === id))
-    const cursor = untrack(() => tab?.cursor ?? 0)
-    const top = untrack(() => tab?.scroll ?? 0)
-    const anchor = untrack(() => tab?.anchor)
-
-    /** Nothing is recorded before the place has been put back, or a fresh view's
-     *  caret at 0 would overwrite the real one. */
+    /** Nothing is recorded until the note has settled into the view. The offset a
+     *  view reports before CodeMirror has measured it and scrolled it is the top
+     *  of the note, which is not where the note is. */
     let placed = false
 
     const record = () => {
       if (!placed) return
+
+      const tab = untrack(() => workspace.tabs.find((one) => one.id === id))
       // What the view shows belongs to the note the tab is on now; if that is
-      // no longer this one, this run has nothing true to say about it.
-      const now = untrack(() => workspace.tabs.find((one) => one.id === id)?.path ?? null)
-      if (now !== path) return
+      // no longer this one, this run has nothing true to say about it. A preview
+      // tab takes another note on without becoming another tab, and the pane's
+      // view may already have swapped this note out for the next one.
+      if (tab?.path !== path || sharedOf(view.state) !== tab.note.live) return
 
       workspace.noteView(
         id,
@@ -70,36 +73,13 @@ class Placement {
     }
     this.pending.set(view, soon)
 
-    // Placed once a frame has laid the note out: the caret needs the text to
-    // be in, the offset needs a height, and a view that has just been made
-    // has neither. Recording starts only then, so nothing gets written down
-    // about a view that is still settling.
-    const frame = requestAnimationFrame(() => {
-      const at = Math.min(cursor, view.state.doc.length)
-      view.dispatch({ selection: { anchor: at } })
-
-      // The line that was at the top goes back to the top. Only a session
-      // written by an older build has no line, and keeps its pixel offset -
-      // with one more pass after the measure, since the estimate can put the
-      // same offset on a different line.
-      if (anchor === undefined) {
-        view.scrollDOM.scrollTop = top
-        view.requestMeasure({
-          read: () => null,
-          write: () => {
-            if (placed) view.scrollDOM.scrollTop = top
-          },
-        })
-      } else {
-        showLine(view, anchor)
-      }
-
+    const settled = requestAnimationFrame(() => {
       placed = true
-      view.scrollDOM.addEventListener('scroll', soon, { passive: true })
     })
+    view.scrollDOM.addEventListener('scroll', soon, { passive: true })
 
     return () => {
-      cancelAnimationFrame(frame)
+      cancelAnimationFrame(settled)
       cancelAnimationFrame(scheduled)
       view.scrollDOM.removeEventListener('scroll', soon)
       // A view that has already left the page reads as scrolled to the top,

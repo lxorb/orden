@@ -1,4 +1,4 @@
-import { Compartment, Facet, type Extension } from '@codemirror/state'
+import { Compartment, Facet, type Extension, type StateEffect } from '@codemirror/state'
 import { type EditorView, keymap, type KeyBinding } from '@codemirror/view'
 
 /** Bindings the editor knows by name.
@@ -66,9 +66,15 @@ export function shortcutExtensions(overrides: KeyOverrides = {}): Extension {
   return chosen.of(shortcutKeys.of(overrides))
 }
 
+/** The keys as an effect, so a pane taking another note on can put them in the
+ *  same transaction as everything else it changes. */
+export function shortcutEffect(overrides: KeyOverrides): StateEffect<unknown> {
+  return chosen.reconfigure(shortcutKeys.of(overrides))
+}
+
 /** Puts a new set of keys in force, without rebuilding the editor. */
 export function setShortcutKeys(view: EditorView, overrides: KeyOverrides) {
-  view.dispatch({ effects: chosen.reconfigure(shortcutKeys.of(overrides)) })
+  view.dispatch({ effects: shortcutEffect(overrides) })
 }
 
 /** The default key for a spec on one platform, in CodeMirror's notation.

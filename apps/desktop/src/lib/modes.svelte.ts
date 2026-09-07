@@ -1,4 +1,6 @@
 import {
+  modeEffects,
+  type ModeSettings,
   setCloseBrackets,
   setCodeLineNumbers,
   setCodeTheme,
@@ -192,27 +194,41 @@ class Modes {
     for (const one of this.views) if (one !== view) apply(one)
   }
 
-  /** Re-applies every mode to a freshly created view, and keeps it. */
+  /** Every mode as the editor package wants them, so a pane can put a whole set
+   *  of them on in one transaction; see `modeEffects`. */
+  get settings(): ModeSettings {
+    return {
+      source: this.source,
+      readOnly: this.readOnly,
+      focus: this.focus,
+      typewriter: this.typewriter,
+      punctuation: this.punctuation,
+      numbers: this.numbers,
+      lineNumbers: this.lineNumbers,
+      codeTheme: this.codeTheme,
+      rtl: this.rtl,
+      strict: this.strict,
+      equationNumbers: this.equationNumbers,
+      spellcheck: this.spellcheck,
+      dictionary: this.dictionary,
+      closeBrackets: this.closeBrackets,
+      ligatures: this.ligatures,
+      vim: this.vim,
+    }
+  }
+
+  /** Re-applies every mode to a freshly created view, and keeps it.
+   *
+   *  One transaction for the seventeen of them: a view that took them one at a
+   *  time spent seventeen updates being dressed, and every one of those redrew
+   *  whatever was on screen. The two that are CSS custom properties are not
+   *  transactions at all and follow on their own. */
   apply(view: EditorView) {
     this.views.add(view)
 
-    setSourceMode(view, this.source)
-    setReadOnlyMode(view, this.readOnly)
-    setFocusMode(view, this.focus)
-    setTypewriterMode(view, this.typewriter)
-    setSmartPunctuation(view, this.punctuation)
-    setHeadingNumbers(view, this.numbers)
-    setCodeLineNumbers(view, this.lineNumbers)
-    setCodeTheme(view, this.codeTheme)
-    setRightToLeft(view, this.rtl)
-    setStrictMode(view, this.strict)
-    setEquationNumbers(view, this.equationNumbers)
+    view.dispatch({ effects: modeEffects(this.settings) })
     setMeasure(view, this.width)
     setLineHeight(view, this.lineHeight)
-    setSpellcheck(view, this.spellcheck, this.dictionary)
-    setCloseBrackets(view, this.closeBrackets)
-    setLigatures(view, this.ligatures)
-    setVim(view, this.vim)
   }
 
   /** A view that has left the page. */

@@ -26,9 +26,16 @@ import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
 
-export interface EditorOptions {
-  parent: HTMLElement
+/** Everything a state needs to be a Nib editor's state. Not the element it
+ *  draws into: a pane builds one of these for every note it has open and swaps
+ *  them into its one view, so the state and the view are separate things. See
+ *  held.ts. */
+export interface StateOptions {
   doc?: string
+  /** Where the caret goes. A note reopening lands where it was left, and that
+   *  belongs in the state rather than in a dispatch after it: a selection put in
+   *  afterwards is a frame the note spends at the top of itself. */
+  selection?: { anchor: number; head?: number }
   /** The document this view is a window onto, when it shares one with the other
    *  views of the same note; see shared.ts. A view given one starts on its text
    *  and reports its changes through it rather than through `onChange`. */
@@ -60,80 +67,90 @@ export interface EditorOptions {
   nameBlock?: (path: string, line: number) => Promise<string | null>
 }
 
-export function createEditor(options: EditorOptions): EditorView {
-  const { parent, doc = '', onChange, onImage, resolveImage, onSelection } = options
-  const { openLink, openNote, nameBlock, shared } = options
-  const view = new EditorView({
-    parent,
-    // The document's own rope, so joining it below finds the text already
-    // there and has nothing to put in.
-    state: EditorState.create({
-      doc: shared ? shared.text : doc,
-      extensions: [
-        history(),
-        sharing(),
-        drawSelection(),
-        dropCursor(),
-        indentOnInput(),
-        bracketMatching(),
-        highlightActiveLine(),
-        highlightSelectionMatches(),
-        EditorView.lineWrapping,
-        // The writing surface carries Typora's `#write` id, so Typora themes
-        // that target `#write` style our editor directly.
-        EditorView.contentAttributes.of({ id: 'write' }),
-        syntaxHighlighting(nibHighlightStyle),
-        codeThemeExtension(options.codeTheme),
-        modeExtensions(),
-        editorCompletion(),
-        // Images are checked first, so a screenshot beats the HTML around it.
-        ...(onImage ? [imageHandling(onImage)] : []),
-        richPaste(),
-        ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
-        linkClicks,
-        ...(openLink ? [linkOpener.of(openLink)] : []),
-        // Links between notes: drawn, followed, completed and previewed. What
-        // notes there are comes from the app; see wikilink/index.ts.
-        wikilinks(),
-        noteIndexExtension(options.notes),
-        ...(openNote ? [noteOpener.of(openNote)] : []),
-        ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
-        nibTheme,
-        // Above the markdown language's own Enter, which continues a list or
-        // a quote and would otherwise take the key on a fence inside one.
-        Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
-        // Which key runs what, in one place and changeable while the editor
-        // is open: see shortcuts.ts.
-        shortcutExtensions(options.shortcuts),
-        boundKeymap([
-          // Arrow keys beside a table walk into it; the defaults would step
-          // over it. These give way whenever no table is in the way.
-          ...tableBindings,
-          // Markdown bindings come first so they win over the defaults.
-          ...nibBindings,
-          ...standardBindings,
-        ]),
-        // What the library binds that nothing here has a name for, underneath
-        // everything that does.
-        keymap.of(unclaimedKeymap),
-        EditorView.updateListener.of((update) => {
-          // Text this view was handed is not news to whoever handed it over.
-          const pushed = update.transactions.some((one) => one.annotation(external))
-          if (update.docChanged && !pushed) {
-            // A shared note is one document in several views: the change goes to
-            // it, and it is the document that says the note changed.
-            const document = sharedOf(update.state)
-            if (document) document.local(update.changes, update.state.selection, update.view)
-            else onChange?.(update.state.doc)
-          }
-          if (update.selectionSet || update.docChanged || update.focusChanged) {
-            onSelection?.(update.view)
-          }
-        }),
-      ],
-    }),
-  })
+export interface EditorOptions extends StateOptions {
+  parent: HTMLElement
+}
 
-  shared?.join(view)
+export function editorState(options: StateOptions): EditorState {
+  const { doc = '', onChange, onImage, resolveImage, onSelection } = options
+  const { openLink, openNote, nameBlock, shared, selection } = options
+  const text = shared ? shared.text : doc
+
+  return EditorState.create({
+    // The document's own rope, so joining it finds the text already there and
+    // has nothing to put in.
+    doc: text,
+    ...(selection
+      ? { selection: { anchor: Math.min(Math.max(0, selection.anchor), text.length) } }
+      : {}),
+    extensions: [
+      history(),
+      sharing(),
+      drawSelection(),
+      dropCursor(),
+      indentOnInput(),
+      bracketMatching(),
+      highlightActiveLine(),
+      highlightSelectionMatches(),
+      EditorView.lineWrapping,
+      // The writing surface carries Typora's `#write` id, so Typora themes
+      // that target `#write` style our editor directly.
+      EditorView.contentAttributes.of({ id: 'write' }),
+      syntaxHighlighting(nibHighlightStyle),
+      codeThemeExtension(options.codeTheme),
+      modeExtensions(),
+      editorCompletion(),
+      // Images are checked first, so a screenshot beats the HTML around it.
+      ...(onImage ? [imageHandling(onImage)] : []),
+      richPaste(),
+      ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
+      linkClicks,
+      ...(openLink ? [linkOpener.of(openLink)] : []),
+      // Links between notes: drawn, followed, completed and previewed. What
+      // notes there are comes from the app; see wikilink/index.ts.
+      wikilinks(),
+      noteIndexExtension(options.notes),
+      ...(openNote ? [noteOpener.of(openNote)] : []),
+      ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
+      nibTheme,
+      // Above the markdown language's own Enter, which continues a list or
+      // a quote and would otherwise take the key on a fence inside one.
+      Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
+      // Which key runs what, in one place and changeable while the editor
+      // is open: see shortcuts.ts.
+      shortcutExtensions(options.shortcuts),
+      boundKeymap([
+        // Arrow keys beside a table walk into it; the defaults would step
+        // over it. These give way whenever no table is in the way.
+        ...tableBindings,
+        // Markdown bindings come first so they win over the defaults.
+        ...nibBindings,
+        ...standardBindings,
+      ]),
+      // What the library binds that nothing here has a name for, underneath
+      // everything that does.
+      keymap.of(unclaimedKeymap),
+      EditorView.updateListener.of((update) => {
+        // Text this view was handed is not news to whoever handed it over.
+        const pushed = update.transactions.some((one) => one.annotation(external))
+        if (update.docChanged && !pushed) {
+          // A shared note is one document in several views: the change goes to
+          // it, and it is the document that says the note changed.
+          const document = sharedOf(update.state)
+          if (document) document.local(update.changes, update.state.selection, update.view)
+          else onChange?.(update.state.doc)
+        }
+        if (update.selectionSet || update.docChanged || update.focusChanged) {
+          onSelection?.(update.view)
+        }
+      }),
+    ],
+  })
+}
+
+export function createEditor(options: EditorOptions): EditorView {
+  const view = new EditorView({ parent: options.parent, state: editorState(options) })
+
+  options.shared?.join(view)
   return view
 }

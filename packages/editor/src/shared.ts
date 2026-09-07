@@ -104,6 +104,13 @@ export class SharedDoc {
   join(view: DocView) {
     this.views.add(view)
 
+    // A state that says it is already this document's has had every change since
+    // it joined, so there is nothing to tell it and nothing to compare: two ropes
+    // built by applying the same changes are equal without being the same object,
+    // and comparing them costs a pass over the note on every switch between two
+    // open ones. See held.ts, which is what leaves and comes back.
+    if (sharedOf(view.state) === this) return
+
     const same = view.state.doc.eq(this.state.doc)
     view.dispatch({
       ...(same ? {} : { changes: { from: 0, to: view.state.doc.length, insert: this.state.doc } }),

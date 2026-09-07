@@ -23,7 +23,7 @@
  *  Vim does not swallow, and everything underneath sees it exactly as it does
  *  with modal editing off. */
 
-import { Compartment, type Extension, Prec } from '@codemirror/state'
+import { Compartment, type Extension, Prec, type StateEffect } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
 import { redoEdit, undoEdit } from './shared'
@@ -239,10 +239,16 @@ export function vimExtensions(): Extension {
   return modal.of([])
 }
 
+/** Modal editing as an effect, so a pane taking another note on can put it in
+ *  the same transaction as everything else it changes. */
+export function vimEffect(on: boolean): StateEffect<unknown> {
+  return modal.reconfigure(on ? modalEditing() : [])
+}
+
 /** Modal editing on or off, in a view that is already open. */
 export function setVim(view: EditorView, on: boolean) {
   // A cell may be holding an edit that has not reached the document yet, and
   // the keyboard is about to mean something else.
   flushTableEdits()
-  view.dispatch({ effects: modal.reconfigure(on ? modalEditing() : []) })
+  view.dispatch({ effects: vimEffect(on) })
 }

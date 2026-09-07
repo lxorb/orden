@@ -9,6 +9,7 @@
    *  otherwise both answer for whichever one had the focus. */
 
   import { type EditorView, type NoteJump } from '@nib/editor'
+  import type { Tab } from './workspace.svelte'
   import type { Along, Pane } from './workspace/pane-tree'
   import { draggedTab, isTabDrag } from './drag-paths'
   import Editor from './Editor.svelte'
@@ -34,6 +35,9 @@
   const { pane }: { pane: Pane } = $props()
 
   const tab = $derived(workspace.showing(pane.id))
+  /** Every tab in this pane, by id. The editor keeps a state per note it has
+   *  shown, and this is what tells it which of them the pane still holds. */
+  const strip = $derived(workspace.tabsIn(pane.id).map((one) => one.id))
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along. */
@@ -73,10 +77,13 @@
 
   /** A pasted or dropped image, stored once however often it is pasted. A large
    *  screenshot takes a moment to hash and write, and nothing appears in the
-   *  note until it has, so the line at the top says so meanwhile. */
-  async function saveImage(file: File): Promise<string | null> {
+   *  note until it has, so the line at the top says so meanwhile.
+   *
+   *  Which note the picture belongs beside comes from the tab that was written
+   *  in, not from the pane: the pane's editor outlives the note in it. */
+  async function saveImage(file: File, into: Tab): Promise<string | null> {
     try {
-      const src = await busy.run(t('Storing the image'), () => storeImage(file, tab?.path ?? null))
+      const src = await busy.run(t('Storing the image'), () => storeImage(file, into.path))
       void usage.refresh()
       return src
     } catch (error) {
@@ -88,8 +95,8 @@
     }
   }
 
-  function resolveImage(src: string): string {
-    return notePicture(src, tab?.path ?? null, tab?.doc ?? '')
+  function resolveImage(src: string, from: Tab): string {
+    return notePicture(src, from.path, from.doc)
   }
 
   /** Names a block of another note, so a `[[…#^` link can point at it. */
@@ -181,24 +188,26 @@
       <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
     {/key}
   {:else if tab}
+    <!-- One editor for the pane, whichever note is in it: switching swaps the
+         note's state into it rather than building another editor, which is what
+         makes a switch land in one frame. See Editor.svelte. -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>
-      {#key tab.id}
-        <Editor
-          bind:view
-          shared={tab.note.live}
-          onimage={saveImage}
-          resolveimage={resolveImage}
-          openlink={(href: string) => void openExternal(href)}
-          notes={links.index(tab.path)}
-          opennote={(jump: NoteJump) => void workspace.followLink(jump)}
-          nameblock={(path: string, line: number) => nameBlock(path, line)}
-          onselection={(current: EditorView) => {
-            views.moved(current)
-            placement.remember(current)
-          }}
-        />
-      {/key}
+      <Editor
+        bind:view
+        {tab}
+        kept={strip}
+        onimage={saveImage}
+        resolveimage={resolveImage}
+        openlink={(href: string) => void openExternal(href)}
+        notes={(one: Tab) => links.index(one.path)}
+        opennote={(jump: NoteJump) => void workspace.followLink(jump)}
+        nameblock={(path: string, line: number) => nameBlock(path, line)}
+        onselection={(current: EditorView) => {
+          views.moved(current)
+          placement.remember(current)
+        }}
+      />
     </div>
   {/if}
 

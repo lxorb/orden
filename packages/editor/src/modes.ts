@@ -1,4 +1,4 @@
-import { Compartment, EditorState, type Extension } from '@codemirror/state'
+import { Compartment, EditorState, type Extension, type StateEffect } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -17,8 +17,9 @@ import { nibMarkdownExtensions } from './markdown/extensions'
 import { closeBrackets } from '@codemirror/autocomplete'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
+import { codeThemeEffect } from './code-theme'
 import { ligatures } from './ligatures'
-import { vimExtensions } from './vim'
+import { vimEffect, vimExtensions } from './vim'
 
 /** Each mode lives in its own compartment so it can be swapped at runtime
  *  without rebuilding the editor state. */
@@ -146,30 +147,6 @@ export function modeExtensions(): Extension {
   ]
 }
 
-export function setStrictMode(view: EditorView, on: boolean) {
-  // Strict mode has no tables; a cell still being typed in would go with them.
-  flushTableEdits()
-  view.dispatch({ effects: language.reconfigure(markdownFor(on)) })
-}
-
-/** Numbers display equations and lets `\eqref` point at them. */
-export function setEquationNumbers(view: EditorView, on: boolean) {
-  view.dispatch({ effects: equations.reconfigure(numberEquations.of(on)) })
-}
-
-/** Source mode shows the markdown as written, with no syntax hidden. */
-export function setSourceMode(view: EditorView, on: boolean) {
-  flushTableEdits()
-  // Turning it on unlocks a note that was read-only: the two are opposite
-  // answers to the same question, and the markdown as written is the writer's
-  // answer. See setReadOnlyMode below.
-  view.dispatch({
-    effects: on
-      ? [preview.reconfigure([]), readOnly.reconfigure([])]
-      : preview.reconfigure(livePreview()),
-  })
-}
-
 /** What read-only mode puts over the editor while it is on.
  *
  *  Three locks, because a document can be written to through three different
@@ -205,6 +182,136 @@ function readOnlyExtensions(): Extension {
   ]
 }
 
+/* What each mode is while it is on, said once. The setter that toggles one and
+   the batch that configures a whole editor for all of them both read from here,
+   so the two cannot drift into meaning different things. */
+
+const readOnlyFor = (on: boolean): Extension => (on ? readOnlyExtensions() : [])
+
+/** Source mode shows the markdown as written, so nothing is drawn over it. */
+const previewFor = (source: boolean): Extension => (source ? [] : livePreview())
+
+const focusFor = (on: boolean): Extension =>
+  on ? [focusPlugin, editorClass('nib-focus-mode')] : []
+
+/** The class buys extra room below the last line, so the caret can still reach
+ *  the middle. */
+const typewriterFor = (on: boolean): Extension =>
+  on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : []
+
+/** Shows `->`, `<=` and their kind as the arrow or sign they stand for; the text
+ *  underneath stays as typed. The class lets the stylesheet hold back the code
+ *  font's own ligatures while this is off, so that off means off. */
+const ligaturesFor = (on: boolean): Extension =>
+  on ? [ligatures(), editorClass('nib-ligatures')] : []
+
+/** Curly quotes, dashes, ellipsis - on by default, like Typora. */
+const punctuationFor = (on: boolean): Extension => (on ? smartPunctuation() : [])
+
+/** CSS counters number the headings; the document text stays untouched. */
+const headingNumbersFor = (on: boolean): Extension => (on ? editorClass('nib-numbered') : [])
+
+/** Numbers the lines inside code fences, counting from one per fence. */
+const codeLineNumbersFor = (on: boolean): Extension => (on ? editorClass('nib-line-numbers') : [])
+
+const bracketsFor = (on: boolean): Extension => (on ? closeBrackets() : [])
+
+/** The writing direction, given to the editor the same way as the class: the
+ *  content element's attributes are CodeMirror's to write too. */
+const directionFor = (rtl: boolean): Extension =>
+  rtl
+    ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl')]
+    : EditorView.contentAttributes.of({ dir: 'ltr' })
+
+/** The browser's own spell checker, over the writing surface. `language` is the
+ *  dictionary to check against, as a language tag; the browser reads it off the
+ *  surface's `lang`. Without one it falls back to its own choice. */
+const spellingFor = (on: boolean, language?: string): Extension =>
+  EditorView.contentAttributes.of({
+    spellcheck: on ? 'true' : 'false',
+    ...(language ? { lang: language } : {}),
+  })
+
+/** Every mode there is, as the app holds them; see modes.svelte.ts. */
+export interface ModeSettings {
+  source: boolean
+  readOnly: boolean
+  focus: boolean
+  typewriter: boolean
+  punctuation: boolean
+  numbers: boolean
+  lineNumbers: boolean
+  codeTheme: string
+  rtl: boolean
+  strict: boolean
+  equationNumbers: boolean
+  spellcheck: boolean
+  /** Which dictionary to check against. Absent leaves the choice to the
+   *  browser. */
+  dictionary?: string | undefined
+  closeBrackets: boolean
+  ligatures: boolean
+  vim: boolean
+}
+
+/** Every mode at once, as the effects that put an editor into them.
+ *
+ *  One transaction rather than seventeen. A pane taking another note on swaps in
+ *  a state built for whatever the modes were at the time, and this is what
+ *  brings it up to what they are now - in the same transaction as the caret and
+ *  the scroll, so the note appears already in its modes instead of settling into
+ *  them over the frames after it. */
+export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
+  // A cell may be holding an edit that has not reached the document yet, and
+  // what goes on below can take the table, the keyboard, or the right to write
+  // at all, out from under it.
+  flushTableEdits()
+
+  return [
+    language.reconfigure(markdownFor(settings.strict)),
+    preview.reconfigure(previewFor(settings.source)),
+    // Source mode and read-only are opposite answers to the same question, and
+    // the markdown as written is the writer's answer; see setReadOnlyMode.
+    readOnly.reconfigure(readOnlyFor(settings.readOnly && !settings.source)),
+    focus.reconfigure(focusFor(settings.focus)),
+    typewriter.reconfigure(typewriterFor(settings.typewriter)),
+    punctuation.reconfigure(punctuationFor(settings.punctuation)),
+    equations.reconfigure(numberEquations.of(settings.equationNumbers)),
+    spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
+    brackets.reconfigure(bracketsFor(settings.closeBrackets)),
+    glyphs.reconfigure(ligaturesFor(settings.ligatures)),
+    headingNumbers.reconfigure(headingNumbersFor(settings.numbers)),
+    codeLineNumbers.reconfigure(codeLineNumbersFor(settings.lineNumbers)),
+    direction.reconfigure(directionFor(settings.rtl)),
+    codeThemeEffect(settings.codeTheme),
+    vimEffect(settings.vim),
+  ]
+}
+
+export function setStrictMode(view: EditorView, on: boolean) {
+  // Strict mode has no tables; a cell still being typed in would go with them.
+  flushTableEdits()
+  view.dispatch({ effects: language.reconfigure(markdownFor(on)) })
+}
+
+/** Numbers display equations and lets `\eqref` point at them. */
+export function setEquationNumbers(view: EditorView, on: boolean) {
+  view.dispatch({ effects: equations.reconfigure(numberEquations.of(on)) })
+}
+
+/** Source mode shows the markdown as written, with no syntax hidden. */
+export function setSourceMode(view: EditorView, on: boolean) {
+  flushTableEdits()
+  // Turning it on unlocks a note that was read-only: the two are opposite
+  // answers to the same question, and the markdown as written is the writer's
+  // answer. See setReadOnlyMode below.
+  view.dispatch({
+    effects: on
+      ? [preview.reconfigure(previewFor(true)), readOnly.reconfigure(readOnlyFor(false))]
+      : preview.reconfigure(previewFor(false)),
+  })
+}
+
 /** Read-only mode: the note laid out as it reads, with nothing that writes to
  *  it. The app's reading view is a different thing - the note through the
  *  renderer, in Reading.svelte - and this is the editor with the doors locked.
@@ -218,49 +325,33 @@ export function setReadOnlyMode(view: EditorView, on: boolean) {
   flushTableEdits()
   view.dispatch({
     effects: on
-      ? [readOnly.reconfigure(readOnlyExtensions()), preview.reconfigure(livePreview())]
-      : readOnly.reconfigure([]),
+      ? [readOnly.reconfigure(readOnlyFor(true)), preview.reconfigure(previewFor(false))]
+      : readOnly.reconfigure(readOnlyFor(false)),
   })
 }
 
 export function setFocusMode(view: EditorView, on: boolean) {
-  view.dispatch({
-    effects: focus.reconfigure(on ? [focusPlugin, editorClass('nib-focus-mode')] : []),
-  })
+  view.dispatch({ effects: focus.reconfigure(focusFor(on)) })
 }
 
 export function setTypewriterMode(view: EditorView, on: boolean) {
-  // The class buys extra room below the last line, so the caret can still
-  // reach the middle.
-  view.dispatch({
-    effects: typewriter.reconfigure(
-      on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : [],
-    ),
-  })
+  view.dispatch({ effects: typewriter.reconfigure(typewriterFor(on)) })
 }
 
-/** Shows `->`, `<=` and their kind as the arrow or sign they stand for; the
- *  text underneath stays as typed. The class lets the stylesheet hold back
- *  the code font's own ligatures while this is off, so that off means off. */
 export function setLigatures(view: EditorView, on: boolean) {
-  view.dispatch({
-    effects: glyphs.reconfigure(on ? [ligatures(), editorClass('nib-ligatures')] : []),
-  })
+  view.dispatch({ effects: glyphs.reconfigure(ligaturesFor(on)) })
 }
 
-/** Curly quotes, en and em dashes, ellipsis - on by default, like Typora. */
 export function setSmartPunctuation(view: EditorView, on: boolean) {
-  view.dispatch({ effects: punctuation.reconfigure(on ? smartPunctuation() : []) })
+  view.dispatch({ effects: punctuation.reconfigure(punctuationFor(on)) })
 }
 
-/** CSS counters number the headings; the document text stays untouched. */
 export function setHeadingNumbers(view: EditorView, on: boolean) {
-  view.dispatch({ effects: headingNumbers.reconfigure(on ? editorClass('nib-numbered') : []) })
+  view.dispatch({ effects: headingNumbers.reconfigure(headingNumbersFor(on)) })
 }
 
-/** Numbers the lines inside code fences, counting from one per fence. */
 export function setCodeLineNumbers(view: EditorView, on: boolean) {
-  view.dispatch({ effects: codeLineNumbers.reconfigure(on ? editorClass('nib-line-numbers') : []) })
+  view.dispatch({ effects: codeLineNumbers.reconfigure(codeLineNumbersFor(on)) })
 }
 
 /** Widens or narrows the writing column. */
@@ -288,33 +379,14 @@ export function remeasure(view: EditorView) {
   if (view.dom.isConnected) view.requestMeasure()
 }
 
-/** Right-to-left writing, for Arabic and Hebrew. */
-/** The browser's own spell checker, over the writing surface. `language` is
- *  the dictionary to check against, as a language tag; the browser reads it
- *  off the surface's `lang`. Without one it falls back to its own choice. */
 export function setSpellcheck(view: EditorView, on: boolean, language?: string) {
-  view.dispatch({
-    effects: spelling.reconfigure(
-      EditorView.contentAttributes.of({
-        spellcheck: on ? 'true' : 'false',
-        ...(language ? { lang: language } : {}),
-      }),
-    ),
-  })
+  view.dispatch({ effects: spelling.reconfigure(spellingFor(on, language)) })
 }
 
 export function setCloseBrackets(view: EditorView, on: boolean) {
-  view.dispatch({ effects: brackets.reconfigure(on ? closeBrackets() : []) })
+  view.dispatch({ effects: brackets.reconfigure(bracketsFor(on)) })
 }
 
-/** The writing direction, given to the editor the same way as the class: the
- *  content element's attributes are CodeMirror's to write too. */
 export function setRightToLeft(view: EditorView, on: boolean) {
-  view.dispatch({
-    effects: direction.reconfigure(
-      on
-        ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl')]
-        : EditorView.contentAttributes.of({ dir: 'ltr' }),
-    ),
-  })
+  view.dispatch({ effects: direction.reconfigure(directionFor(on)) })
 }

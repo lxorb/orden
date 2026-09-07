@@ -1,5 +1,6 @@
-export { createEditor, type EditorOptions } from './editor'
-export { redoEdit, SharedDoc, undoEdit } from './shared'
+export { createEditor, type EditorOptions, editorState, type StateOptions } from './editor'
+export { HeldState } from './held'
+export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
 export {
   clearFormatting,
   insertCodeFence,
@@ -31,6 +32,7 @@ export {
   type NoteRef,
   resolveNote,
   resolveRelative,
+  noteIndexEffect,
   setNoteIndex,
 } from './wikilink/notes'
 export { setSnippets, snippets } from './snippets'
@@ -41,6 +43,8 @@ export {
   setEquationNumbers,
   setFocusMode,
   setHeadingNumbers,
+  modeEffects,
+  type ModeSettings,
   setLigatures,
   setLineHeight,
   setMeasure,
@@ -64,8 +68,9 @@ export {
   defaultKeyFor,
   type KeyOverrides,
   setShortcutKeys,
+  shortcutEffect,
 } from './shortcuts'
 export { caretLine, showLine, topLine } from './scroll'
 export { EditorView } from '@codemirror/view'
 export { EditorState } from '@codemirror/state'
-export type { StateCommand, Text, Transaction } from '@codemirror/state'
+export type { StateCommand, StateEffect, Text, Transaction } from '@codemirror/state'
