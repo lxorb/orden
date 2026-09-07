@@ -557,4 +557,17 @@ export const gsw: Dictionary = {
   'Name this layout': 'Layout benäme',
   'Layout: {name}': 'Layout: {name}',
   'Delete a layout': 'Es Layout lösche',
+
+  // Keyboards and modal editing
+  Default: 'Standard',
+  'Vim keys': 'Vim-Taschte',
+  'Follow the link': 'Em Link naa',
+  'Replace your own keys?': 'Eigeni Taschte ersetze?',
+  Replace: 'Ersetze',
+  'The keys you changed go back to what this keyboard says.':
+    'D Taschte, wo du gänderet häsch, gönd zrugg uf das, wo die Taschtatur seit.',
+  NORMAL: 'NORMAL',
+  INSERT: 'IIFÜEGE',
+  VISUAL: 'VISUELL',
+  REPLACE: 'ERSETZE',
 }

@@ -53,6 +53,7 @@ export {
   setStrictMode,
   setTypewriterMode,
 } from './modes'
+export { onVimMode, setVim, setVimCommands, type VimCommands, type VimMode } from './vim'
 export { flushTableEdits } from './table/widget'
 export { insertTableToEdit, tableBindings } from './table/keymap'
 export { imageBindings } from './live-preview/image'

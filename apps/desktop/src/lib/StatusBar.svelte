@@ -1,8 +1,14 @@
 <script lang="ts">
+  import type { VimMode } from '@nib/editor'
   import { countText } from './counts'
   import { t } from './i18n.svelte'
+  import { VIM_WORDS } from './modes.svelte'
 
-  const { doc = '', reading = false }: { doc?: string; reading?: boolean } = $props()
+  const {
+    doc = '',
+    reading = false,
+    vimMode = null,
+  }: { doc?: string; reading?: boolean; vimMode?: VimMode | null } = $props()
 
   /** Whether the pointer is on the numbers. They are invisible until then, and
    *  counting the words of a large note is not something to do on the way past:
@@ -11,6 +17,14 @@
 
   const counts = $derived(looking ? countText(doc) : null)
 </script>
+
+<!-- Which mode the keyboard is in, on the left, and only while modal editing is
+     on. It shows unasked because that is the whole of its job: whether the next
+     keystroke is a letter or a command is the one thing a reader cannot guess.
+     Muted while a keystroke is a command, in the accent while it is text. -->
+{#if vimMode}
+  <span class="mode" class:writing={vimMode !== 'normal'}>{t(VIM_WORDS[vimMode])}</span>
+{/if}
 
 <!-- The one place the app says what is true of the note it is showing, so the
      word for a note nobody can type into goes here rather than into a banner
@@ -32,6 +46,26 @@
 </footer>
 
 <style>
+  /* Opposite corner from the numbers, on the same line, and floated the same
+     way so it reserves nothing while modal editing is off. */
+  .mode {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 4px var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    transition: color var(--dur-base) var(--ease-out);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .mode.writing {
+    color: var(--accent);
+  }
+
   /* Numbers only, and only when looked for. Floated rather than laid out, so
      an invisible bar never reserves a strip of empty space. */
   footer {
@@ -63,9 +97,11 @@
   }
 
   /* There is no hover on a phone, so this never appears - but it still sits in
-     the corner catching taps meant for the button that does. */
+     the corner catching taps meant for the button that does. Nor is there a
+     keyboard with modes on one. */
   @media (max-width: 720px) {
-    footer {
+    footer,
+    .mode {
       display: none;
     }
   }

@@ -557,4 +557,17 @@ export const fr: Dictionary = {
   'Name this layout': 'Nommer la disposition',
   'Layout: {name}': 'Disposition : {name}',
   'Delete a layout': 'Supprimer une disposition',
+
+  // Keyboards and modal editing
+  Default: 'Par défaut',
+  'Vim keys': 'Touches Vim',
+  'Follow the link': 'Suivre le lien',
+  'Replace your own keys?': 'Remplacer vos propres touches ?',
+  Replace: 'Remplacer',
+  'The keys you changed go back to what this keyboard says.':
+    'Les touches que vous avez changées reviennent à ce que dit ce clavier.',
+  NORMAL: 'NORMAL',
+  INSERT: 'INSERTION',
+  VISUAL: 'VISUEL',
+  REPLACE: 'REMPLACER',
 }

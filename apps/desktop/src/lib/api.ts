@@ -69,6 +69,12 @@ export interface AccountSettings {
    *  dump would freeze today's defaults into every account that ever saved
    *  one, and a default that changed later would never reach anybody. */
   shortcuts?: Record<string, string | null>
+  /** Which keyboard the map above is: one of shortcuts/presets.ts, or
+   *  `custom` for a map somebody put together themselves. */
+  preset?: string
+  /** Modal editing, which is a mode rather than a map: it can be on over any
+   *  of the presets. */
+  vim?: boolean
 }
 
 export interface DnsRecord {

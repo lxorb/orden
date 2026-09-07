@@ -3,7 +3,8 @@
  *
  *  Only the differences from the defaults are kept, here and on the account: a
  *  full dump would freeze today's defaults into every entry that ever saved
- *  one, and a default that changed later would never reach anybody. */
+ *  one, and a default that changed later would never reach anybody. A preset is
+ *  the same thing, written by somebody else; see shortcuts/presets.ts. */
 
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@nib/editor'
 import { account } from './account.svelte'
@@ -16,6 +17,8 @@ import {
   sameCombination,
   showCombination,
 } from './keys'
+import { modes } from './modes.svelte'
+import { knownPreset, type PresetId, presetById } from './shortcuts/presets'
 import { without } from './records'
 import {
   type AppContext,
@@ -32,6 +35,9 @@ import { isDesktop } from './tauri'
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
 const STORAGE_KEY = 'nib:shortcuts'
+/** Beside the map rather than inside it, so an entry written before there were
+ *  presets still reads as the map it is. */
+const PRESET_KEY = 'nib:preset'
 
 /** How many entries the account will carry, and how long a key may be. The
  *  same numbers the server enforces; see services/sync/src/settings.ts. */
@@ -47,11 +53,34 @@ class Shortcuts {
    *  that machine's choice the next time anything else changed. */
   overrides = $state<KeyOverrides>({})
 
+  /** Whose keyboard this is. Custom the moment one key is rebound by hand. */
+  preset = $state<PresetId>('default')
+
   readonly platform = currentPlatform()
 
   restore() {
     // A corrupt or missing entry reads as no overrides, which is the defaults.
     this.overrides = usable(stored(STORAGE_KEY))
+    // An entry written before there were presets has no name for its map, and
+    // a map with something in it is exactly what Custom means.
+    this.preset =
+      knownPreset(storedPreset()) ?? (Object.keys(this.overrides).length ? 'custom' : 'default')
+  }
+
+  /** Hands the whole keyboard over to a preset. Modal editing is part of what
+   *  a preset says, so the Vim one turns it on and the others turn it off; the
+   *  switch in the Editor pane is what puts it back on top of another map.
+   *
+   *  Takes a name rather than one of the four, because what arrives is what a
+   *  select handed over; a name this version does not have changes nothing. */
+  choose(id: string) {
+    const preset = presetById(id)
+    if (!preset) return
+
+    this.preset = preset.id
+    this.overrides = { ...preset.keys }
+    this.settle()
+    modes.setVimKeys(preset.vim)
   }
 
   /** The key an entry answers to, resolved for this platform: what the reader
@@ -146,17 +175,20 @@ class Shortcuts {
     if (Object.keys(this.overrides).length >= MOST_OVERRIDES && !(id in this.overrides)) return
 
     this.overrides = { ...this.overrides, [id]: key }
+    this.preset = 'custom'
     this.settle()
   }
 
   reset(id: string) {
     this.overrides = without(this.overrides, id)
+    this.preset = 'custom'
     this.settle()
   }
 
+  /** Every key back where it started, which is the Default preset by another
+   *  name. */
   resetAll() {
-    this.overrides = {}
-    this.settle()
+    this.choose('default')
   }
 
   /** Writes the choice down, tells the editor on screen, and tells the
@@ -164,6 +196,7 @@ class Shortcuts {
    *  and the palette follow on their own. */
   private settle() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides))
+    localStorage.setItem(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
   }
@@ -200,25 +233,34 @@ class Shortcuts {
     // machine's, which is how a choice made before signing in follows the
     // account afterwards rather than being lost at the door.
     if (!theirs || typeof theirs !== 'object') {
-      if (Object.keys(this.overrides).length) this.share()
+      if (Object.keys(this.overrides).length || this.preset !== 'default') this.share()
       return
     }
 
     const usableOnes = usable(theirs)
-    if (JSON.stringify(usableOnes) === JSON.stringify(this.overrides)) return
+    const named = knownPreset(remote.preset) ?? this.preset
+    if (JSON.stringify(usableOnes) === JSON.stringify(this.overrides) && named === this.preset) {
+      return
+    }
 
     this.overrides = usableOnes
+    this.preset = named
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides))
+    localStorage.setItem(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 
   /** Tells the account, when there is one. Signed out, the choice is this
-   *  machine's alone and is carried up whenever an account is signed into. */
+   *  machine's alone and is carried up whenever an account is signed into.
+   *  The name travels with the map: two machines have to agree on which
+   *  keyboard this is, not only on what is in it. */
   private share() {
     const token = account.token
     if (!token) return
 
-    void api.saveSettings(token, { shortcuts: this.overrides }).catch(() => undefined)
+    void api
+      .saveSettings(token, { shortcuts: this.overrides, preset: this.preset })
+      .catch(() => undefined)
   }
 
   /** Whether a keystroke is the one an entry holds. What a panel with keys of
@@ -244,6 +286,17 @@ class Shortcuts {
     }
 
     return false
+  }
+}
+
+/** The name as it was written down, which is a word rather than JSON since a
+ *  word is all it is. Reading storage can throw where a browser is told to
+ *  allow no site data, and that reads as nothing written. */
+function storedPreset(): string | null {
+  try {
+    return localStorage.getItem(PRESET_KEY)
+  } catch {
+    return null
   }
 }
 

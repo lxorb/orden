@@ -555,4 +555,17 @@ export const ja: Dictionary = {
   'Name this layout': 'レイアウトに名前を付ける',
   'Layout: {name}': 'レイアウト: {name}',
   'Delete a layout': 'レイアウトを削除',
+
+  // Keyboards and modal editing
+  Default: '既定',
+  'Vim keys': 'Vim キー',
+  'Follow the link': 'リンクをたどる',
+  'Replace your own keys?': '独自のキーを置き換えますか？',
+  Replace: '置き換える',
+  'The keys you changed go back to what this keyboard says.':
+    '変更したキーは、このキーボードが決めた状態に戻ります。',
+  NORMAL: 'ノーマル',
+  INSERT: '挿入',
+  VISUAL: 'ビジュアル',
+  REPLACE: '置換',
 }

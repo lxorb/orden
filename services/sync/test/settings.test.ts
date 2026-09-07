@@ -73,6 +73,63 @@ describe('where a pasted picture goes', () => {
   })
 })
 
+describe('the keyboard an account is on', () => {
+  test('is one of the ones the app has', async () => {
+    for (const preset of ['default', 'notion', 'obsidian', 'vim', 'custom']) {
+      const set = await patch({ preset })
+      expect(set.status, preset).toBe(200)
+      expect(set.json.settings.preset).toBe(preset)
+    }
+  })
+
+  /** A preset name is shown as a word in a select, so an account may not carry
+   *  a sentence, a number or a name no version of the app has. */
+  test('is nothing else', async () => {
+    expect((await patch({ preset: 'emacs' })).status).toBe(400)
+    expect((await patch({ preset: '' })).status).toBe(400)
+    expect((await patch({ preset: 7 })).status).toBe(400)
+    expect((await patch({ preset: null })).status).toBe(400)
+    expect((await patch({ preset: ['vim'] })).status).toBe(400)
+  })
+
+  test('says which names it takes', async () => {
+    expect((await patch({ preset: 'emacs' })).json.error).toContain('default, notion, obsidian')
+  })
+
+  test('travels beside the map it names', async () => {
+    await patch({ preset: 'custom', shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+
+    const read = await call(env, '/v1/settings', { token })
+    expect(read.json.settings).toEqual({
+      preset: 'custom',
+      shortcuts: { 'format.bold': 'Mod-Alt-b' },
+    })
+  })
+})
+
+describe('modal editing on an account', () => {
+  test('is on or off', async () => {
+    expect((await patch({ vim: true })).json.settings.vim).toBe(true)
+    expect((await patch({ vim: false })).json.settings.vim).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    expect((await patch({ vim: 'yes' })).status).toBe(400)
+    expect((await patch({ vim: 1 })).status).toBe(400)
+    expect((await patch({ vim: null })).status).toBe(400)
+  })
+
+  /** It is a mode rather than a map: someone on the Obsidian keyboard can have
+   *  modal editing too, so the two travel independently. */
+  test('sits beside the keyboard rather than inside it', async () => {
+    await patch({ preset: 'obsidian' })
+    await patch({ vim: true })
+
+    const read = await call(env, '/v1/settings', { token })
+    expect(read.json.settings).toEqual({ preset: 'obsidian', vim: true })
+  })
+})
+
 describe('a name that is not a setting', () => {
   /** `KNOWN[name]` reaches Object's own properties for these, and what came
    *  back was called as though it were a check: a 500 from a body a client is

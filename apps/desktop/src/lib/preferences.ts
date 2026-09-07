@@ -182,6 +182,16 @@ export function preferences(view?: EditorView): Pane[] {
               set: () => modes.toggleLigatures(view),
             },
             {
+              // Modal editing over whichever keyboard the shortcuts are on.
+              // The Vim preset turns this on; it is here so it can also be on
+              // over the Obsidian or the Notion map.
+              kind: 'switch',
+              label: t('Vim keys'),
+              initial: false,
+              get: () => modes.vim,
+              set: (on) => modes.setVimKeys(on, view),
+            },
+            {
               // Where a pasted or dropped picture lands. What the note says
               // stays relative to the note either way, so the choice changes
               // nothing about notes already written.

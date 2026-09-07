@@ -28,6 +28,7 @@
     "@replit/codemirror-lang-nix": "^6.0.1",
     "@replit/codemirror-lang-solidity": "^6.0.2",
     "@replit/codemirror-lang-svelte": "^6.0.0",
+    "@replit/codemirror-vim": "^6.4.0",
     "codemirror-lang-elixir": "^4.0.1",
     "codemirror-lang-hcl": "^0.2.0",
     "flowchart.js": "^1.18.0",

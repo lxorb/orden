@@ -3,7 +3,7 @@
   import { t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import { EditorView, showLine, topLine } from '@nib/editor'
+  import { EditorView, setVimCommands, showLine, topLine } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
@@ -49,6 +49,18 @@
 
   // Everything that has to happen as the app comes up; see start.ts.
   onDestroy(start())
+
+  // What `:w`, `:q` and `:e` mean, since all three act on the app rather than
+  // on the text. The palette is this component's own state, which is why this
+  // is said here rather than in start.ts; `:e` opens it on its note search,
+  // which is what a reader typing `:e` is after.
+  setVimCommands({
+    write: () => void workspace.save(),
+    quit: () => workspace.activeTabId && workspace.close(workspace.activeTabId),
+    edit: () => {
+      palette = true
+    },
+  })
 
   const title = $derived(
     workspace.active
@@ -307,7 +319,11 @@
       </div>
 
       {#if workspace.active?.kind !== 'graph'}
-        <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.readOnly} />
+        <StatusBar
+          doc={workspace.active?.doc ?? ''}
+          reading={modes.readOnly}
+          vimMode={modes.vimModeOf(view)}
+        />
       {/if}
 
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the

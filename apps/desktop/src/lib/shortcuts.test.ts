@@ -45,6 +45,12 @@ beforeEach(async () => {
   registry = await restarted()
 })
 
+/** The modes store, which the Vim preset also has something to say to. Its own
+ *  module, and reset with everything else by `restarted`. */
+async function currentModes() {
+  return (await import('./modes.svelte')).modes
+}
+
 /** A keystroke, as the window would hand one over. */
 function press(
   key: string,
@@ -242,6 +248,133 @@ describe('what is written down', () => {
     // Signing in with a choice already made keeps it, and the account is
     // told: nothing chosen before signing in is lost at the door.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+  })
+})
+
+describe('choosing a keyboard', () => {
+  test('starts on the default one', () => {
+    expect(registry.shortcuts.preset).toBe('default')
+    expect(registry.shortcuts.overrides).toEqual({})
+  })
+
+  test('rewrites the whole map rather than adding to it', () => {
+    const { shortcuts } = registry
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+    shortcuts.choose('obsidian')
+
+    expect(shortcuts.preset).toBe('obsidian')
+    // The hand-made key is gone: a preset is a keyboard, not a patch.
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    expect(shortcuts.keyFor('app.note-1')).toBe('Mod-1')
+    expect(shortcuts.keyFor('paragraph.heading-1')).toBeNull()
+  })
+
+  test('and Notion puts inline code where the reading view was', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('notion')
+
+    expect(shortcuts.keyFor('format.code')).toBe('Mod-e')
+    expect(shortcuts.keyFor('app.reading')).toBeNull()
+    expect(shortcuts.keyFor('paragraph.heading-1')).toBe('Mod-Shift-1')
+  })
+
+  test('goes back to the defaults by choosing the default one', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('obsidian')
+    shortcuts.choose('default')
+
+    expect(shortcuts.overrides).toEqual({})
+    expect(shortcuts.keyFor('paragraph.heading-1')).toBe('Mod-1')
+  })
+
+  test('is what resetting every key does', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('notion')
+    shortcuts.resetAll()
+
+    expect(shortcuts.preset).toBe('default')
+    expect(shortcuts.overrides).toEqual({})
+  })
+
+  test('turns modal editing on for Vim and off for the others', async () => {
+    const { shortcuts } = registry
+    const modes = await currentModes()
+
+    shortcuts.choose('vim')
+    expect(modes.vim).toBe(true)
+
+    shortcuts.choose('obsidian')
+    expect(modes.vim).toBe(false)
+  })
+
+  test('leaves a name this version has never heard of alone', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('emacs')
+
+    expect(shortcuts.preset).toBe('default')
+  })
+
+  test('is remembered across a restart', async () => {
+    registry.shortcuts.choose('obsidian')
+    const { shortcuts } = await restarted()
+
+    expect(shortcuts.preset).toBe('obsidian')
+    expect(shortcuts.keyFor('app.note-1')).toBe('Mod-1')
+  })
+})
+
+describe('a map made by hand', () => {
+  test('is Custom as soon as one key is rebound', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('obsidian')
+    shortcuts.set('format.bold', 'Mod-Alt-b')
+
+    expect(shortcuts.preset).toBe('custom')
+  })
+
+  test('is Custom when one key is put back on its own, too', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('obsidian')
+    shortcuts.reset('app.note-1')
+
+    expect(shortcuts.preset).toBe('custom')
+  })
+
+  /** An entry written before there were presets has a map and no name for it,
+   *  and a map with something in it is exactly what Custom means. */
+  test('is what a map written by an older build reads as', async () => {
+    localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
+    expect((await restarted()).shortcuts.preset).toBe('custom')
+
+    localStorage.setItem('nib:shortcuts', '{}')
+    expect((await restarted()).shortcuts.preset).toBe('default')
+  })
+})
+
+describe('the keyboard the account carries', () => {
+  test('brings the name along with the map', () => {
+    const { shortcuts } = registry
+    shortcuts.receive({ preset: 'notion', shortcuts: { 'format.code': 'Mod-e' } })
+
+    expect(shortcuts.preset).toBe('notion')
+    expect(shortcuts.keyFor('format.code')).toBe('Mod-e')
+    expect(localStorage.getItem('nib:preset')).toBe('notion')
+  })
+
+  test('reads a name this version has never heard of as Custom', () => {
+    const { shortcuts } = registry
+    shortcuts.receive({ preset: 'emacs', shortcuts: { 'format.bold': 'Mod-Alt-b' } })
+
+    expect(shortcuts.preset).toBe('custom')
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
+  })
+
+  test('keeps the one this machine has when the account carries none', () => {
+    const { shortcuts } = registry
+    shortcuts.choose('obsidian')
+    shortcuts.receive({ ligatures: true })
+
+    expect(shortcuts.preset).toBe('obsidian')
   })
 })
 

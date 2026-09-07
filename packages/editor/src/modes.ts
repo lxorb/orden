@@ -18,6 +18,7 @@ import { closeBrackets } from '@codemirror/autocomplete'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 import { ligatures } from './ligatures'
+import { vimExtensions } from './vim'
 
 /** Each mode lives in its own compartment so it can be swapped at runtime
  *  without rebuilding the editor state. */
@@ -139,6 +140,9 @@ export function modeExtensions(): Extension {
     headingNumbers.of([]),
     codeLineNumbers.of([]),
     direction.of(EditorView.contentAttributes.of({ dir: 'ltr' })),
+    // Off until asked for. Its compartment lives with the rest of it in
+    // vim.ts, which is a mode with a keymap of its own to answer for.
+    vimExtensions(),
   ]
 }
 

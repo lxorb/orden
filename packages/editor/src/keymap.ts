@@ -29,6 +29,7 @@ import { runFenceAtCursor } from './run/run'
 import { redoEdit, undoEdit } from './shared'
 import { bindings, type BindingSpec } from './shortcuts'
 import { insertTableToEdit } from './table/keymap'
+import { followNoteAtCaret } from './wikilink/follow'
 
 const WORD = /[\p{L}\p{N}_]/u
 
@@ -103,6 +104,12 @@ export const nibBindings: BindingSpec[] = [
 
   { id: 'edit.copy-markdown', key: 'Mod-Shift-c', run: copyMarkdown, preventDefault: true },
   { id: 'edit.paste-plain', key: 'Mod-Shift-v', run: pastePlain, preventDefault: true },
+
+  // No key of its own: Ctrl+click is how a link is followed here, and a second
+  // way of doing it is not worth a chord out of the box. It is listed so a
+  // reader can give it one, and so the Obsidian preset has somewhere to put
+  // Alt+Enter.
+  { id: 'edit.follow-link', key: null, run: followNoteAtCaret, preventDefault: true },
 ]
 
 /** CodeMirror's own bindings that this takes over.

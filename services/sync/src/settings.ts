@@ -13,12 +13,23 @@ type Check = (value: unknown) => string | null
  *  the folder itself is worked out on the machine that has the note. */
 const ATTACHMENT_FOLDERS = ['space', 'note', 'named']
 
+/** Which keyboard a shortcut map is. Named rather than described: what each
+ *  one holds is the app's business, and `custom` is a map somebody put together
+ *  themselves. A list rather than any string, because this one is shown as a
+ *  word and an account should not be able to carry a sentence into a select. */
+const PRESETS = ['default', 'notion', 'obsidian', 'vim', 'custom']
+
 const KNOWN: Record<string, Check> = {
   ligatures: (value) => (typeof value === 'boolean' ? null : 'ligatures must be true or false'),
+  vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
   attachments: (value) =>
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)
       ? null
       : `attachments must be one of ${ATTACHMENT_FOLDERS.join(', ')}`,
+  preset: (value) =>
+    typeof value === 'string' && PRESETS.includes(value)
+      ? null
+      : `preset must be one of ${PRESETS.join(', ')}`,
   shortcuts: shortcutMap,
 }
 

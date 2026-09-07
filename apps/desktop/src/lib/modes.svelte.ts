@@ -16,11 +16,16 @@ import {
   setSpellcheck,
   setStrictMode,
   setTypewriterMode,
+  setVim,
+  onVimMode,
+  type VimMode,
   type EditorView,
 } from '@nib/editor'
+import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, stored } from './stored'
 
 const STORAGE_KEY = 'nib:modes'
@@ -49,7 +54,18 @@ interface Saved {
   spellLanguage: string
   closeBrackets: boolean
   ligatures: boolean
+  vim: boolean
   attachments: string
+}
+
+/** The word the status bar shows for each mode modal editing has, in Vim's own
+ *  case because that is what the mode is called wherever anybody learned it.
+ *  Keys for `t()`, translated in every dictionary. */
+export const VIM_WORDS: Record<VimMode, string> = {
+  normal: key('NORMAL'),
+  insert: key('INSERT'),
+  visual: key('VISUAL'),
+  replace: key('REPLACE'),
 }
 
 /** Nearest of the steps the keyboard uses, so both routes agree. */
@@ -109,10 +125,26 @@ class Modes {
   /** `->` shown as an arrow, `<=` as a sign, and so on. Off until chosen;
    *  the choice follows the account. */
   ligatures = $state(false)
+  /** Modal editing. Off until chosen, follows the account, and independent of
+   *  which keyboard the shortcuts are on: the Vim preset turns it on, and the
+   *  switch in the Editor pane puts it on top of any of the others. */
+  vim = $state(false)
+  /** Which mode each editor on the page is in, while modal editing is on. The
+   *  status bar shows the one the reader is writing in. */
+  readonly vimModes = new SvelteMap<EditorView, VimMode>()
   /** Where a pasted picture is written; see attachments.ts. Follows the account
    *  too, because it is about how someone keeps their notes rather than about
    *  the machine they are at. */
   attachments = $state<AttachmentFolder>('space')
+
+  constructor() {
+    // The editor package reports a view's mode as it changes and null when
+    // that view leaves modal editing; see packages/editor/src/vim.ts.
+    onVimMode((view, mode) => {
+      if (mode) this.vimModes.set(view, mode)
+      else this.vimModes.delete(view)
+    })
+  }
 
   restore() {
     // Field by field off an unknown, not a cast: the entry may have been
@@ -141,6 +173,7 @@ class Modes {
       this.spellLanguage = text(saved.spellLanguage, 'system')
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = saved.ligatures === true
+      this.vim = saved.vim === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
     }
     this.applyZoom()
@@ -179,11 +212,13 @@ class Modes {
     setSpellcheck(view, this.spellcheck, this.dictionary)
     setCloseBrackets(view, this.closeBrackets)
     setLigatures(view, this.ligatures)
+    setVim(view, this.vim)
   }
 
   /** A view that has left the page. */
   forget(view: EditorView) {
     this.views.delete(view)
+    this.vimModes.delete(view)
   }
 
   toggleSource(view?: EditorView) {
@@ -266,6 +301,27 @@ class Modes {
     this.share({ ligatures: this.ligatures })
   }
 
+  toggleVim(view?: EditorView) {
+    this.setVimKeys(!this.vim, view)
+  }
+
+  /** Modal editing on or off. Said outright rather than flipped, because a
+   *  preset says which it wants rather than that it wants the other one. */
+  setVimKeys(on: boolean, view?: EditorView) {
+    if (on === this.vim) return
+
+    this.vim = on
+    this.each(view, (one) => setVim(one, on))
+    this.persist()
+    this.share({ vim: on })
+  }
+
+  /** Which mode a view is in, for the status bar. Null while modal editing is
+   *  off, and while a view that has just been built has yet to report. */
+  vimModeOf(view: EditorView | undefined): VimMode | null {
+    return (view && this.vimModes.get(view)) ?? null
+  }
+
   setAttachments(value: string) {
     if (!isAttachmentFolder(value)) return
 
@@ -302,6 +358,13 @@ class Modes {
     if (typeof theirs === 'boolean' && unheard && theirs !== this.ligatures) {
       this.ligatures = theirs
       this.each(undefined, (one) => setLigatures(one, theirs))
+      this.persist()
+    }
+
+    const modal = remote.vim
+    if (typeof modal === 'boolean' && unheard && modal !== this.vim) {
+      this.vim = modal
+      this.each(undefined, (one) => setVim(one, modal))
       this.persist()
     }
 
@@ -427,6 +490,7 @@ class Modes {
       spellLanguage: this.spellLanguage,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
+      vim: this.vim,
       attachments: this.attachments,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))

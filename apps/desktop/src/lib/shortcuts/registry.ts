@@ -132,6 +132,7 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'edit.move-line-down': ['edit', () => t('Move the line down')],
   'edit.copy-line-up': ['edit', () => t('Copy the line up')],
   'edit.copy-line-down': ['edit', () => t('Copy the line down')],
+  'edit.follow-link': ['edit', () => t('Follow the link')],
 
   'table.below': ['table', () => t('Into the table below')],
   'table.above': ['table', () => t('Into the table above')],
@@ -314,6 +315,17 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-f',
     run: () => workspace.showPanel('search'),
+  },
+  {
+    // The space drawn as a map of its links. No key out of the box - it opens
+    // from the rail and the palette - and here so a preset that has one for it
+    // has somewhere to put it. Obsidian's is Ctrl+G.
+    id: 'app.graph',
+    label: () => t('Graph'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    run: () => workspace.openGraph(),
   },
   {
     id: 'app.source',

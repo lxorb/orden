@@ -164,20 +164,29 @@ describe('bookmarking', () => {
     expect(marks.has(note('a.md'))).toBe(false)
   })
 
-  test('offers the space to the account on every change', async () => {
-    const marks = store()
-    marks.toggle(search('tea'))
+  /** The last argument is this test's own budget, and it has to be more than
+   *  the wait's. Vitest allows five seconds by default, which is the same five
+   *  the wait asks for, so the wait could never spend it: a machine running
+   *  the other packages' suites alongside this one lost the test rather than
+   *  the wait. */
+  test(
+    'offers the space to the account on every change',
+    async () => {
+      const marks = store()
+      marks.toggle(search('tea'))
 
-    // Told after the click rather than during it: the syncing store is fetched
-    // when it is wanted, so the row answers first and the account hears next.
-    // A busy machine can take a moment over the store's import.
-    await vi.waitFor(
-      () => {
-        expect(pushed).toEqual(['/Notes'])
-      },
-      { timeout: 5000 },
-    )
-  })
+      // Told after the click rather than during it: the syncing store is
+      // fetched when it is wanted, so the row answers first and the account
+      // hears next. A busy machine can take a moment over the store's import.
+      await vi.waitFor(
+        () => {
+          expect(pushed).toEqual(['/Notes'])
+        },
+        { timeout: 5000 },
+      )
+    },
+    15000,
+  )
 
   test('does nothing without a space to keep it in', () => {
     const marks = store(null)

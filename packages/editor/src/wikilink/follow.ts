@@ -1,5 +1,5 @@
 import type { EditorState } from '@codemirror/state'
-import { EditorView } from '@codemirror/view'
+import { type Command, EditorView } from '@codemirror/view'
 import { linkTarget, type Wikilink } from '@nib/markdown/links'
 import { label } from '../labels'
 import { MAC, modifier } from '../links'
@@ -42,6 +42,13 @@ function followNoteAt(view: EditorView, pos: number): boolean {
   view.state.facet(noteOpener)(jump)
   return true
 }
+
+/** Follows the link the caret sits in, with no pointer involved. Gives way
+ *  when there is no link there, so the key it is on goes on to whatever else
+ *  wants it. Unbound until a reader or a preset gives it a key; Obsidian's is
+ *  Alt+Enter. */
+export const followNoteAtCaret: Command = (view) =>
+  followNoteAt(view, view.state.selection.main.head)
 
 export const noteClicks = EditorView.domEventHandlers({
   mousedown(event, view) {

@@ -31,6 +31,7 @@ vi.mock('@nib/editor', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@nib/editor')>()),
   setReadOnlyMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'read-only', on }),
   setSourceMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'source', on }),
+  setVim: (_view: unknown, on: boolean) => told.calls.push({ mode: 'vim', on }),
 }))
 
 /** The account, standing still. One object across module resets, so a test can
@@ -48,6 +49,7 @@ const api = vi.hoisted(() => {
 interface Held {
   ligatures?: boolean
   attachments?: string
+  vim?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -125,6 +127,64 @@ describe('read-only mode', () => {
   })
 })
 
+describe('modal editing', () => {
+  test('starts off', () => {
+    expect(modes.vim).toBe(false)
+  })
+
+  test('is remembered across a restart', async () => {
+    modes.toggleVim()
+    expect(modes.vim).toBe(true)
+
+    expect((await restarted()).vim).toBe(true)
+  })
+
+  test('reaches every editor on the page, not only the one it was toggled at', () => {
+    modes.apply(surface())
+    told.calls = []
+
+    modes.toggleVim(surface())
+
+    expect(told.calls.filter((one) => one.mode === 'vim')).toEqual([
+      { mode: 'vim', on: true },
+      { mode: 'vim', on: true },
+    ])
+  })
+
+  test('is put back on a view built later', () => {
+    modes.toggleVim()
+    told.calls = []
+
+    modes.apply(surface())
+
+    expect(told.calls).toContainEqual({ mode: 'vim', on: true })
+  })
+
+  /** A preset says which it wants rather than that it wants the other one, so
+   *  choosing the same preset twice does not turn modal editing off again. */
+  test('is said outright rather than flipped', () => {
+    modes.setVimKeys(true)
+    modes.setVimKeys(true)
+    expect(modes.vim).toBe(true)
+
+    told.calls = []
+    modes.setVimKeys(true)
+    expect(told.calls).toEqual([])
+  })
+
+  test('has no mode to show while it is off', () => {
+    expect(modes.vimModeOf(surface())).toBeNull()
+    expect(modes.vimModeOf(undefined)).toBeNull()
+  })
+
+  /** The words the status bar shows, which the editor package reports the
+   *  modes for; every one of them is translated in all four dictionaries. */
+  test('has a word for every mode it has', async () => {
+    const { VIM_WORDS } = await import('./modes.svelte')
+    expect(Object.values(VIM_WORDS)).toEqual(['NORMAL', 'INSERT', 'VISUAL', 'REPLACE'])
+  })
+})
+
 describe('read-only mode and source mode', () => {
   test('are never both on', () => {
     modes.toggleSource()
@@ -199,6 +259,20 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.ligatures).toBe(false)
+  })
+
+  test('brings modal editing another machine turned on', async () => {
+    const { release, settingsCall } = heldAnswer({ vim: true })
+    api.settings = settingsCall
+    modes.apply(surface())
+    told.calls = []
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.vim).toBe(true)
+    expect(told.calls).toContainEqual({ mode: 'vim', on: true })
   })
 
   test('brings the attachment folder another machine chose', async () => {

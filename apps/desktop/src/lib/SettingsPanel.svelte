@@ -13,7 +13,9 @@
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
+  import { PRESETS } from './shortcuts/presets'
   import { showCombination } from './keys'
+  import { prompt } from './prompt.svelte'
   import { Publishing, relativeToSpace } from './settings/publishing.svelte'
   import { Rebind } from './settings/rebind.svelte'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -190,6 +192,30 @@
   let keyFilter = $state('')
 
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
+
+  /** The keyboards to choose from. Custom is in the list only while it is what
+   *  the map is: it is arrived at by rebinding a key, never chosen, and an
+   *  option that does nothing is worse than one that is not there. */
+  const presetChoices = $derived([
+    ...PRESETS.map((one) => ({ value: one.id, label: one.label() })),
+    ...(shortcuts.preset === 'custom' ? [{ value: 'custom', label: t('Custom') }] : []),
+  ])
+
+  /** Handing the whole keyboard over throws away a map somebody made by hand,
+   *  so that one case asks first. Choosing between two presets replaces
+   *  nothing anybody wrote and goes straight through. */
+  async function choosePreset(id: string) {
+    if (shortcuts.preset === 'custom') {
+      const sure = await prompt.confirm({
+        title: t('Replace your own keys?'),
+        detail: t('The keys you changed go back to what this keyboard says.'),
+        confirmLabel: t('Replace'),
+      })
+      if (!sure) return
+    }
+
+    shortcuts.choose(id)
+  }
 
   /** The list, grouped the way the menus group the same commands, and cut
    *  down to what was typed in the box above it. A shortcut is looked for by
@@ -758,6 +784,22 @@
      commands. A row is its name, the key it is on, and a way back to the key
      it started on; the ones that cannot be changed say why instead. -->
 {#snippet keyboard()}
+  <!-- Whose keyboard this is, before the list of what is on it. -->
+  <div class="card">
+    <div class="setting">
+      <span class="name">{t('Shortcuts')}</span>
+      <div class="pick">
+        <Select
+          value={shortcuts.preset}
+          options={presetChoices}
+          onchange={(value: string) => void choosePreset(value)}
+          label={t('Shortcuts')}
+          plain={viewport.phone}
+        />
+      </div>
+    </div>
+  </div>
+
   <label class="search">
     <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
     <input bind:value={keyFilter} placeholder={t('Search shortcuts')} spellcheck="false" />

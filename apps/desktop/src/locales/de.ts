@@ -559,4 +559,17 @@ export const de: Dictionary = {
   'Name this layout': 'Layout benennen',
   'Layout: {name}': 'Layout: {name}',
   'Delete a layout': 'Layout löschen',
+
+  // Keyboards and modal editing
+  Default: 'Standard',
+  'Vim keys': 'Vim-Tasten',
+  'Follow the link': 'Dem Link folgen',
+  'Replace your own keys?': 'Eigene Tasten ersetzen?',
+  Replace: 'Ersetzen',
+  'The keys you changed go back to what this keyboard says.':
+    'Die von dir geänderten Tasten gehen zurück auf das, was diese Tastatur sagt.',
+  NORMAL: 'NORMAL',
+  INSERT: 'EINFÜGEN',
+  VISUAL: 'VISUELL',
+  REPLACE: 'ERSETZEN',
 }
