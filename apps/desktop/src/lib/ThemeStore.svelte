@@ -210,7 +210,12 @@
           {#each store.shown as one (one.id)}
             <button
               class="card"
-              onclick={() => (store.opened = one.id)}
+              onclick={() => {
+                store.opened = one.id
+                // Each theme is looked at from the side the app is on, whatever
+                // side the last one was being looked at from.
+                previewing = null
+              }}
               onmouseenter={() => (hovered = one.id)}
               onmouseleave={() => (hovered = null)}
               onfocus={() => (hovered = one.id)}
@@ -342,9 +347,9 @@
       <!-- What the theme asked for and did not get. Said once, plainly, under
            the thing it is about: a theme with one line the app will not apply is
            still a theme, and pretending otherwise would be the lie. -->
-      {#if store.refused.length && store.installed(one.id)}
+      {#if store.refused.id === one.id && store.refused.notes.length}
         <p class="note">
-          {t('{count} things in this theme were left out.', { count: store.refused.length })}
+          {t('{count} things in this theme were left out.', { count: store.refused.notes.length })}
         </p>
       {/if}
     </div>

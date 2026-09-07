@@ -62,10 +62,11 @@ class Store {
   loading = $state(false)
   /** Why the catalogue or an install did not work, as a sentence. */
   error = $state<string | null>(null)
-  /** What a theme's own stylesheet refused to be, once it has been read. Shown
-   *  under the preview rather than instead of it: a theme with one bad line
-   *  installs, and says which line. */
-  refused = $state<string[]>([])
+  /** What a theme's stylesheet asked for and did not get, and which theme asked.
+   *  Shown under that theme's preview rather than instead of it, and under no
+   *  other theme's: a theme with one bad line installs, and says so where it
+   *  can be read as being about that theme. */
+  refused = $state<{ id: string; notes: string[] }>({ id: '', notes: [] })
   /** Which theme is being written right now, so its button can say so. */
   working = $state<string | null>(null)
 
@@ -144,7 +145,7 @@ class Store {
   async install(one: StoreTheme, andUse = true) {
     this.working = one.id
     this.error = null
-    this.refused = []
+    this.refused = { id: one.id, notes: [] }
 
     try {
       const response = await fetch(styleUrl(one.id))
@@ -153,7 +154,7 @@ class Store {
       const reviewed = review(await response.text())
       if (!reviewed.css) throw new Error('that theme has nothing a theme may set')
 
-      this.refused = reviewed.refused
+      this.refused = { id: one.id, notes: reviewed.refused }
       await invoke<string>('write_theme', {
         id: one.id,
         css: stamped(

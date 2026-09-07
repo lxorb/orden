@@ -130,7 +130,7 @@ beforeEach(() => {
   store.query = ''
   store.order = 'newest'
   store.error = null
-  store.refused = []
+  store.refused = { id: '', notes: [] }
 })
 
 describe('what the grid shows', () => {
@@ -320,7 +320,10 @@ describe('installing, updating and removing', () => {
     await store.load()
     await store.install(entry({}) as never)
 
-    expect(store.refused).toEqual(['.sidebar is not a selector a theme may set'])
+    expect(store.refused).toEqual({
+      id: 'warm-paper',
+      notes: ['.sidebar is not a selector a theme may set'],
+    })
     expect(folder.files.get('warm-paper')).not.toContain('sidebar')
   })
 
