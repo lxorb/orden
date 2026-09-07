@@ -257,6 +257,32 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Ctrl-Shift-Tab',
     run: () => cycleTab(-1),
   },
+  // The panes. Named for what they do rather than for the key they are on, since
+  // a later batch maps Obsidian's own keys onto the same actions.
+  {
+    id: 'pane.split-right',
+    label: () => t('Split right'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-ArrowRight',
+    run: () => workspace.split('row'),
+  },
+  {
+    id: 'pane.split-down',
+    label: () => t('Split down'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-ArrowDown',
+    run: () => workspace.split('column'),
+  },
+  {
+    id: 'pane.focus-next',
+    label: () => t('Other pane'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-o',
+    run: () => workspace.panes.focusNext(),
+  },
   {
     id: 'app.palette',
     label: () => t('Command palette'),
@@ -355,6 +381,23 @@ const APP_ENTRIES: Shortcut[] = [
   },
 ]
 
+/** The notes of the pane being worked in, by number. Nine of them, because a
+ *  tenth would need two keys and nobody counts that far along a strip.
+ *
+ *  Alt as well as Ctrl, because Ctrl and a digit is a heading level in the
+ *  editor and has been since the first version. */
+const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
+  id: `app.note-${index + 1}`,
+  label: () => t('Note {number}', { number: index + 1 }),
+  category: 'view' as const,
+  scope: 'app' as const,
+  key: `Mod-Alt-${index + 1}`,
+  run: () => {
+    const tab = workspace.tabsIn(workspace.panes.focusedId)[index]
+    if (tab) workspace.activate(tab.id)
+  },
+}))
+
 /** The file list's own keys. They are read where the list is - see
  *  Tree.svelte - and only fire while the focus is in it, which is why they
  *  can hold Ctrl+A and Delete without being in the way of the editor's. */
@@ -394,8 +437,10 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
 ]
 
+/** Round the strip of the pane being worked in. Every key stays inside its own
+ *  pane: the other pane is somebody's reference, not their next tab. */
 function cycleTab(direction: number) {
-  const tabs = workspace.tabs
+  const tabs = workspace.tabsIn(workspace.panes.focusedId)
   const index = tabs.findIndex((tab) => tab.id === workspace.activeTabId)
   if (index < 0) return
 
@@ -497,6 +542,7 @@ export const FIXED_ENTRIES: Shortcut[] = [
 /** Every shortcut there is, in the order the settings list shows them. */
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
+  ...NUMBERED,
   ...EDITOR_SPECS.map(fromEditor),
   ...PANEL_ENTRIES,
   ...FIXED_ENTRIES,

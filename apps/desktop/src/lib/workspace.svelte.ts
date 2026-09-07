@@ -163,7 +163,6 @@ async function pickSavePath(
 /** A map read within one call and thrown away. Not one of Svelte's: nothing
  *  renders from these, and a reactive map would only cost the app the wrappers. */
 function emptyMap<T>(): Map<string, T> {
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   return new Map<string, T>()
 }
 
@@ -225,7 +224,6 @@ class Workspace {
   /** Notes waiting to be written when the typing stops. A set rather than one
    *  note, because two panes may hold two different notes and both be edited
    *  between one pause and the next. */
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly waiting = new Set<NoteDoc>()
 
   /** Where each note was last being read; see workspace/positions.ts. */
@@ -1976,6 +1974,14 @@ class Workspace {
 
     const made = this.panes.split(along, paneId)
     if (made) this.moveTab(id, made.id)
+  }
+
+  /** A pane and everything in it. The last pane cannot go: a window with none
+   *  has nowhere to show a note. */
+  closePane(paneId: string = this.panes.focusedId) {
+    if (this.panes.count < 2) return
+
+    for (const tab of this.tabsIn(paneId)) this.close(tab.id)
   }
 
   /** The other panes showing the note this one is showing. What the link toggle

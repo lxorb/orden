@@ -3,27 +3,23 @@ import { untrack } from 'svelte'
 import { workspace } from './workspace.svelte'
 
 /** Where a note was being read, put back when it opens and written down as it
- *  moves. A crash gives no chance to record it on the way out, so it is
- *  recorded as it happens instead. */
+ *  moves. A crash gives no chance to record it on the way out, so it is recorded
+ *  as it happens instead.
+ *
+ *  One entry per view, because a note open in two panes is being read in two
+ *  places: each pane keeps its own caret and its own place in the note, and the
+ *  tab is what those belong to. */
 class Placement {
-  /** The tab whose caret and scroll have been put back. Nothing is recorded
-   *  before that, or a fresh view's caret at 0 would overwrite the real one.
-   *
-   *  Deliberately not `$state`: nothing renders from it, and `follow` both
-   *  writes it and reads it back. As reactive state that is a cycle, and Svelte
-   *  answers a cycle by tearing down the whole render loop - which looked like
-   *  tabs that only switched after a reload. */
-  private placed: string | null = null
+  /** What each view on the page asks for when its selection moves. Deliberately
+   *  not `$state`: nothing renders from it, and `follow` both writes it and
+   *  reads it back, which as reactive state is a cycle - and Svelte answers a
+   *  cycle by tearing down the whole render loop. */
+  private readonly pending = new Map<EditorView, () => void>()
 
-  /** Asks for the place of the tab on show to be written down at the next
-   *  frame. Set by `follow`, which owns the measurement; not reactive, for the
-   *  same reason `placed` is not. */
-  private soon: (() => void) | null = null
-
-  /** What the editor calls when the selection moves. Nothing to do before a
-   *  view has been placed. */
-  remember() {
-    this.soon?.()
+  /** What the editor calls when the selection moves. Nothing to do before a view
+   *  has been placed. */
+  remember(view: EditorView) {
+    this.pending.get(view)?.()
   }
 
   /** Puts the tab's place into `view` and keeps it up to date until the view
@@ -39,8 +35,12 @@ class Placement {
     const top = untrack(() => tab?.scroll ?? 0)
     const anchor = untrack(() => tab?.anchor)
 
+    /** Nothing is recorded before the place has been put back, or a fresh view's
+     *  caret at 0 would overwrite the real one. */
+    let placed = false
+
     const record = () => {
-      if (this.placed !== id) return
+      if (!placed) return
       // What the view shows belongs to the note the tab is on now; if that is
       // no longer this one, this run has nothing true to say about it.
       const now = untrack(() => workspace.tabs.find((one) => one.id === id)?.path ?? null)
@@ -68,7 +68,7 @@ class Placement {
         record()
       })
     }
-    this.soon = soon
+    this.pending.set(view, soon)
 
     // Placed once a frame has laid the note out: the caret needs the text to
     // be in, the offset needs a height, and a view that has just been made
@@ -87,14 +87,14 @@ class Placement {
         view.requestMeasure({
           read: () => null,
           write: () => {
-            if (this.placed === id) view.scrollDOM.scrollTop = top
+            if (placed) view.scrollDOM.scrollTop = top
           },
         })
       } else {
         showLine(view, anchor)
       }
 
-      this.placed = id
+      placed = true
       view.scrollDOM.addEventListener('scroll', soon, { passive: true })
     })
 
@@ -105,8 +105,8 @@ class Placement {
       // A view that has already left the page reads as scrolled to the top,
       // which is not where the note was: what was recorded as it moved stands.
       if (view.scrollDOM.isConnected) record()
-      this.placed = null
-      if (this.soon === soon) this.soon = null
+      placed = false
+      this.pending.delete(view)
     }
   }
 }

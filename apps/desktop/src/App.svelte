@@ -1,17 +1,16 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { key, message, t } from './lib/i18n.svelte'
+  import { t } from './lib/i18n.svelte'
   import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
-  import { EditorView, type NoteJump, type Text } from '@nib/editor'
+  import { EditorView, showLine, topLine } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
-  import Editor from './lib/Editor.svelte'
   import FormatBar from './lib/FormatBar.svelte'
-  import Graph from './lib/Graph.svelte'
   import History from './lib/History.svelte'
   import { menu } from './lib/menu.svelte'
   import Palette from './lib/Palette.svelte'
   import PromptSheet from './lib/PromptSheet.svelte'
+  import PaneTree from './lib/PaneTree.svelte'
   import Rail from './lib/Rail.svelte'
   import Sidebar from './lib/Sidebar.svelte'
   import SettingsPanel from './lib/SettingsPanel.svelte'
@@ -19,28 +18,28 @@
   import StorageWarning from './lib/StorageWarning.svelte'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
-  import { busy } from './lib/busy.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
-  import { showEditorMenu } from './lib/editor-menu'
-  import { placement } from './lib/placement.svelte'
+  import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { settings } from './lib/settings.svelte'
   import { start } from './lib/start'
   import { sync } from './lib/sync.svelte'
   import StatusBar from './lib/StatusBar.svelte'
   import Titlebar from './lib/Titlebar.svelte'
   import { modes } from './lib/modes.svelte'
-  import { imageUrl } from './lib/images'
   import { links } from './lib/link-index.svelte'
-  import { storeImage } from './lib/assets'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { currentWindow, isDesktop, openExternal } from './lib/tauri'
+  import { currentWindow, isDesktop } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
+  import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { shortcuts } from './lib/shortcuts.svelte'
 
-  let view = $state<EditorView>()
+  /** The editor of the pane that has the focus, which is what every key, every
+   *  menu and the palette act on. Each pane leaves its own here; see
+   *  views.svelte.ts. */
+  const view = $derived(views.of(workspace.panes.focusedId))
   let palette = $state(false)
   /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
@@ -73,23 +72,40 @@
     if (token) void modes.adopt(token).then((remote) => remote && shortcuts.receive(remote))
   })
 
-  // A new view starts with no modes and no keys applied, so re-apply on
-  // every swap.
+  // Each pane applies the modes and the keys to its own editor as it builds it;
+  // see Pane.svelte. What is left here is the formatting bar, which follows the
+  // selection of whichever pane is being written in.
   $effect(() => {
-    if (view) modes.apply(view)
-    if (view) shortcuts.apply(view)
+    const bar = formatBar
+    if (!bar) return
+
+    views.onSelection = (current: EditorView) => bar.follow(current)
+    return () => {
+      views.onSelection = null
+    }
   })
 
-  // Reopening a note lands where it was left; see placement.svelte.ts.
+  // A phone shows one note at a time, so an arrangement made on a desktop, or on
+  // this window before it was made narrow, comes down to one pane.
   $effect(() => {
-    const current = view
-    const id = workspace.activeTabId
-    // A preview tab moves on to another note without becoming another tab,
-    // so the note's own place has to be read again when that happens.
-    const path = workspace.active?.path ?? null
-    if (!current || !id) return
+    if (viewport.phone) workspace.collapsePanes()
+  })
 
-    return placement.follow(current, id, path)
+  // Two panes on one note, scrolling together while the link is on; see
+  // linked-scroll.ts. By document position, so a heading stays level in both.
+  $effect(() => {
+    const panes = workspace.panes.all.filter((pane) => pane.linked)
+    const stops = pairs(panes.map((pane) => pane.id))
+      .filter(([one, other]) => workspace.twins(one).includes(other))
+      .flatMap(([one, other]) => {
+        const first = views.of(one)
+        const second = views.of(other)
+        return first && second ? [linkScroll(scrollEnd(first), scrollEnd(second))] : []
+      })
+
+    return () => {
+      for (const stop of stops) stop()
+    }
   })
 
   // On a phone each of these is a screen of its own, so back closes it rather
@@ -129,6 +145,29 @@
     })
   }
 
+  /** Every pair of panes in a list of them, each pair once. */
+  function pairs(ids: string[]): [string, string][] {
+    const out: [string, string][] = []
+    for (const [at, one] of ids.entries()) {
+      for (const other of ids.slice(at + 1)) out.push([one, other])
+    }
+
+    return out
+  }
+
+  /** An editor as one end of a scroll link: where it is in the note, and how to
+   *  put it somewhere in it. */
+  function scrollEnd(current: EditorView): ScrollEnd {
+    return {
+      top: () => topLine(current),
+      show: (position: number) => showLine(current, position),
+      onScroll: (run: () => void) => {
+        current.scrollDOM.addEventListener('scroll', run, { passive: true })
+        return () => current.scrollDOM.removeEventListener('scroll', run)
+      },
+    }
+  }
+
   function goto(line: number) {
     if (!view) return
 
@@ -142,41 +181,6 @@
       effects: EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
     })
     view.focus()
-  }
-
-  /** A pasted or dropped image, stored once however often it is pasted. A large
-   *  screenshot takes a moment to hash and write, and nothing appears in the
-   *  note until it has, so the line at the top says so meanwhile. */
-  async function saveImage(file: File): Promise<string | null> {
-    try {
-      const src = await busy.run(t('Storing the image'), () =>
-        storeImage(file, workspace.active?.path ?? null),
-      )
-      void usage.refresh()
-      return src
-    } catch (error) {
-      // The one failure worth interrupting for: nothing else the editor does
-      // will work either until something is deleted.
-      void usage.refresh()
-      settings.error = message(error, key('That image does not fit in your storage.'))
-      return null
-    }
-  }
-
-  function resolveImage(src: string): string {
-    // A picture an embed names by file name alone may live anywhere in the
-    // space, the way Obsidian resolves an attachment; the index knows where.
-    const root = workspace.activeSpace?.root
-    const found = root && !src.includes('/') ? links.fileNamed(src) : null
-    const path = found && root ? `${root}/${found}` : src
-
-    return imageUrl(path, workspace.active?.path, workspace.active?.doc ?? '')
-  }
-
-  /** Names a block of another note, so a `[[…#^` link can point at it. */
-  function nameBlock(path: string, line: number): Promise<string | null> {
-    const root = workspace.activeSpace?.root
-    return root ? links.nameBlock(path, line, root) : Promise.resolve(null)
   }
 
   // A followed link, or a bookmarked heading, lands on a line the editor cannot
@@ -295,43 +299,14 @@
         }}
       />
 
-      {#if workspace.active?.kind === 'graph'}
-        <!-- The graph of the space is a tab like a note is, so it takes the note's
-             place in the window rather than a surface of its own. -->
-        <Graph
-          graph={links.graph}
-          current={workspace.relativeNote}
-          onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
-          onescape={() => workspace.activeTabId && workspace.close(workspace.activeTabId)}
-        />
-      {:else}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>
-          <!-- Anything slow enough to be waited for draws a line along the top
-             of the document, just under the tabs. -->
-          <Progress />
-          {#key workspace.activeTabId}
-            <Editor
-              bind:view
-              doc={workspace.active?.doc ?? ''}
-              pushed={workspace.active?.pushed ?? 0}
-              onchange={(text: Text) => {
-                workspace.edit(text)
-              }}
-              onimage={saveImage}
-              resolveimage={resolveImage}
-              openlink={(href: string) => void openExternal(href)}
-              notes={links.index(workspace.active?.path ?? null)}
-              opennote={(jump: NoteJump) => void workspace.followLink(jump)}
-              nameblock={(path: string, line: number) => nameBlock(path, line)}
-              onselection={(current: EditorView) => {
-                formatBar?.follow(current)
-                placement.remember()
-              }}
-            />
-          {/key}
-        </div>
+      <!-- Anything slow enough to be waited for draws a line along the top of
+           the document, just under the tabs. -->
+      <Progress />
 
+      <!-- One pane, or up to four of them; see PaneTree.svelte. -->
+      <PaneTree frame={workspace.panes.frame} />
+
+      {#if workspace.active?.kind !== 'graph'}
         <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.reading} />
       {/if}
 
@@ -394,13 +369,6 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-  }
-
-  .editor {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    display: flex;
   }
 
   /* Sits above the document, clear of the gesture bar. */

@@ -13,6 +13,10 @@
 
   const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
+  /** The one pane, while there is only one. Null once something is split, and
+   *  then the strips live in the panes. */
+  const only = $derived(workspace.panes.count === 1 ? workspace.panes.focused : null)
+
   /** A phone shows one document, so the bar says which one. */
   const title = $derived(
     workspace.active
@@ -80,7 +84,12 @@
       >
     </button>
   {:else}
-    <Tabs />
+    <!-- One pane keeps its tabs up here, where a browser puts them. Split, each
+         pane carries its own strip instead, so which tabs belong to which pane
+         is never a question; see Pane.svelte. -->
+    {#if only}
+      <Tabs paneId={only.id} />
+    {/if}
 
     <!-- The empty stretch is what the window is dragged by. -->
     <div class="drag" data-tauri-drag-region></div>

@@ -20,7 +20,7 @@ import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
 
 /** The shape this version writes. */
-export const VERSION = 2
+const VERSION = 2
 
 /** One tab as it is written down: enough to put it back exactly, including work
  *  that never reached the disk. */

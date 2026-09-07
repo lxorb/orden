@@ -545,4 +545,16 @@ export const de: Dictionary = {
   'Moving through a list': 'In einer Liste bewegen',
   'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
     'Pfeiltasten, Enter und Esc bedienen, was offen ist; sie sind keine Kürzel.',
+  'Split right': 'Rechts teilen',
+  'Split down': 'Unten teilen',
+  'Other pane': 'Anderes Teilfenster',
+  'Close this pane': 'Dieses Teilfenster schließen',
+  'Note {number}': 'Notiz {number}',
+  'Scroll together': 'Gemeinsam scrollen',
+  'Scroll on its own': 'Einzeln scrollen',
+  'Save layout': 'Layout speichern',
+  'Name this layout': 'Layout benennen',
+  'Layout: {name}': 'Layout: {name}',
+  'Delete a layout': 'Layout löschen',
+  Reading: 'Lesen',
 }

@@ -40,7 +40,7 @@ export const EQUAL = 0.5
 
 /** The least room a pane may be dragged down to, in pixels. Below this there is
  *  no writing area left, only a margin. */
-export const LEAST = 220
+const LEAST = 220
 
 export function pane(id: string, activeTabId: string | null = null): Pane {
   return { kind: 'pane', id, activeTabId, linked: false }

@@ -19,17 +19,14 @@
     type EditorView,
     type NoteIndex,
     type NoteJump,
-    replaceDoc,
     setNoteIndex,
-    type Text,
+    type SharedDoc,
   } from '@nib/editor'
   import { shortcuts } from './shortcuts.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
   let {
-    doc = '',
-    pushed = 0,
-    onchange,
+    shared,
     onimage,
     resolveimage,
     openlink,
@@ -39,13 +36,12 @@
     nameblock,
     view = $bindable(),
   }: {
-    doc?: string
-    /** Counts the times `doc` was replaced from outside the editor. Typing
-     *  never changes it, and it is the only thing this component watches:
-     *  comparing the text instead would mean reading the whole note back on
-     *  every keystroke, which is what a large note could not afford. */
-    pushed?: number
-    onchange?: (doc: Text) => void
+    /** The document this view is a window onto: its text, its undo history, and
+     *  the other panes showing the same note. A note keeps one document for as
+     *  long as it is open, so this never changes under a view - the one tab that
+     *  previews notes keeps its document and the document takes the new note on.
+     *  See shared.ts in the editor package. */
+    shared: SharedDoc
     onimage?: (file: File) => Promise<string | null>
     resolveimage?: (src: string) => string
     openlink?: (href: string) => void
@@ -63,16 +59,16 @@
   let host: HTMLDivElement
   const rise = firstOfTheSession()
 
-  // Built once. Reading `doc` reactively here would tear the editor down and
-  // rebuild it on every keystroke, losing the caret each time.
+  // Built once, on the document it was handed. Reading anything reactively here
+  // would tear the editor down and rebuild it, losing the caret each time.
   $effect(() => {
+    const document = untrack(() => shared)
     const created = createEditor({
       parent: host,
-      doc: untrack(() => doc),
+      shared: document,
       // Each handed over only when there is one. The editor has defaults of its
       // own for several of these - `openLink` opens a browser tab - and passing
       // undefined would take the default away rather than leave it in place.
-      ...(onchange ? { onChange: onchange } : {}),
       ...(onimage ? { onImage: onimage } : {}),
       ...(resolveimage ? { resolveImage: resolveimage } : {}),
       ...(openlink ? { openLink: openlink } : {}),
@@ -88,6 +84,9 @@
     if (import.meta.env.DEV) Object.assign(window, { nib: created })
 
     return () => {
+      // The document lets the view go first: it carries every change into the
+      // views it holds, and one that has been destroyed is not one of them.
+      document.leave(created)
       created.destroy()
       view = undefined
     }
@@ -104,23 +103,6 @@
 
     held = index
     setNoteIndex(view, index)
-  })
-
-  /** Which push the view has taken. Starts at whatever it was built with, so
-   *  a view made for a note that had already been pushed to does not replace
-   *  its own text on the way up. */
-  let taken = untrack(() => pushed)
-
-  // Pushes externally loaded content in without recreating the view.
-  $effect(() => {
-    const at = pushed
-    if (!view || at === taken) return
-
-    taken = at
-    replaceDoc(
-      view,
-      untrack(() => doc),
-    )
   })
 </script>
 

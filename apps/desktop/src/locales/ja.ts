@@ -541,4 +541,16 @@ export const ja: Dictionary = {
   'Moving through a list': '一覧の中を移動',
   'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
     '矢印キー、Enter、Esc は開いているものを操作するためのもので、ショートカットではありません。',
+  'Split right': '右に分割',
+  'Split down': '下に分割',
+  'Other pane': '別のペイン',
+  'Close this pane': 'このペインを閉じる',
+  'Note {number}': 'ノート {number}',
+  'Scroll together': '一緒にスクロール',
+  'Scroll on its own': '個別にスクロール',
+  'Save layout': 'レイアウトを保存',
+  'Name this layout': 'レイアウトに名前を付ける',
+  'Layout: {name}': 'レイアウト: {name}',
+  'Delete a layout': 'レイアウトを削除',
+  Reading: '読書',
 }

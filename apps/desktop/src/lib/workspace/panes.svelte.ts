@@ -36,11 +36,15 @@ export class Panes {
   frame = $state<Frame>(pane(identifier()))
   focusedId = $state('')
 
-  /** True while a divider is under a pointer, so the panes follow it instead of
-   *  easing after it. */
-  sliding = $state(false)
+  /** The divider under a pointer, while one is, so that split follows the finger
+   *  instead of easing after it. */
+  sliding = $state<string | null>(null)
 
-  /** The drop zone a dragged tab is over, lit while it is. */
+  /** The tab being dragged out of a strip, while it is. What lights the drop
+   *  zones: they are there to be aimed at, and nothing else should show them. */
+  dragging = $state<string | null>(null)
+
+  /** The drop zone the dragged tab is over, lit while it is. */
   landing = $state<Landing | null>(null)
 
   /** Called whenever the arrangement changes, so the session is written down. */
@@ -119,7 +123,7 @@ export class Panes {
   }
 
   settle() {
-    this.sliding = false
+    this.sliding = null
     this.changed()
   }
 

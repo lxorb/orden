@@ -258,15 +258,15 @@ describe('two shortcuts on one key', () => {
 
   test('is not a conflict when nothing else is on the key', () => {
     const { shortcuts } = registry
-    expect(shortcuts.conflicts('app.save', 'Mod-Alt-9')).toEqual([])
+    expect(shortcuts.conflicts('app.save', 'Mod-Alt-j')).toEqual([])
   })
 
   test('follows the keys as they are now, not as they started', () => {
     const { shortcuts } = registry
-    shortcuts.set('app.open', 'Mod-Alt-o')
+    shortcuts.set('app.open', 'Mod-Alt-j')
 
     expect(shortcuts.conflicts('app.save', 'Mod-o')).toEqual([])
-    expect(shortcuts.conflicts('app.save', 'Mod-Alt-o').map((one) => one.id)).toEqual(['app.open'])
+    expect(shortcuts.conflicts('app.save', 'Mod-Alt-j').map((one) => one.id)).toEqual(['app.open'])
   })
 
   test('leaves the contextual ones out, which is how they share the arrows', () => {

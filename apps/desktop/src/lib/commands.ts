@@ -2,11 +2,12 @@ import { CODE_PALETTES, type EditorView, reformatDocument, type Transaction } fr
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
-import { t } from './i18n.svelte'
+import { key, t } from './i18n.svelte'
 import type { HtmlOptions } from './export'
 import { PANDOC_FORMATS } from './export-formats'
 import { imagePath } from './images'
 import { links } from './link-index.svelte'
+import { prompt } from './prompt.svelte'
 import { newSpace } from './space-actions'
 import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
@@ -14,6 +15,7 @@ import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
+import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { openFile } from './open-file'
 
@@ -164,6 +166,89 @@ export interface Command {
   run: () => void
 }
 
+/** Splitting, moving between panes, and closing one. Left out entirely on a
+ *  phone, which shows one note at a time and has no panes to talk about. */
+function paneCommands(): Command[] {
+  if (viewport.phone) return []
+
+  return [
+    {
+      id: 'split-right',
+      label: t('Split right'),
+      hint: shortcuts.hint('pane.split-right'),
+      disabled: !workspace.canSplit('row'),
+      run: () => workspace.split('row'),
+    },
+    {
+      id: 'split-down',
+      label: t('Split down'),
+      hint: shortcuts.hint('pane.split-down'),
+      disabled: !workspace.canSplit('column'),
+      run: () => workspace.split('column'),
+    },
+    {
+      id: 'focus-pane',
+      label: t('Other pane'),
+      hint: shortcuts.hint('pane.focus-next'),
+      disabled: workspace.panes.count < 2,
+      run: () => workspace.panes.focusNext(),
+    },
+    {
+      id: 'close-pane',
+      label: t('Close this pane'),
+      disabled: workspace.panes.count < 2,
+      run: () => workspace.closePane(),
+    },
+  ]
+}
+
+/** Arrangements: keeping this one under a name, going back to one, and letting
+ *  one go. A saved layout reads as what it will do - "Layout: reading" - so the
+ *  palette needs no heading to say what the row is. */
+function layoutCommands(): Command[] {
+  if (viewport.phone) return []
+
+  const saved = workspace.layouts.all
+
+  return [
+    {
+      id: 'save-layout',
+      label: t('Save layout'),
+      run: () => void askForLayoutName(),
+    },
+    ...saved.map((one) => ({
+      id: `layout:${one.name}`,
+      label: t('Layout: {name}', { name: one.name }),
+      run: () => void workspace.useLayout(one.name),
+    })),
+    {
+      id: 'delete-layout',
+      label: t('Delete a layout'),
+      disabled: !saved.length,
+      run: () => void askWhichLayoutToDelete(),
+    },
+  ]
+}
+
+async function askForLayoutName() {
+  const name = await prompt.ask({
+    title: t('Name this layout'),
+    placeholder: t('Reading'),
+    confirmLabel: key('Save'),
+  })
+
+  if (name) workspace.saveLayout(name)
+}
+
+async function askWhichLayoutToDelete() {
+  const chosen = await prompt.find({
+    title: t('Delete a layout'),
+    options: workspace.layouts.all.map((one) => ({ id: one.name, label: one.name })),
+  })
+
+  if (chosen) workspace.layouts.remove(chosen)
+}
+
 /** Everything the palette can do. Labels read as the action, not the setting. */
 export function appCommands(view?: EditorView): Command[] {
   return [
@@ -197,6 +282,8 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => workspace.activeTabId && workspace.close(workspace.activeTabId),
     },
     { id: 'space', label: t('New space'), run: () => void newSpace() },
+    ...paneCommands(),
+    ...layoutCommands(),
     {
       id: 'new-window',
       label: t('New window'),

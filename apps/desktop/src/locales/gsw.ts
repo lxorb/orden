@@ -543,4 +543,16 @@ export const gsw: Dictionary = {
   'Moving through a list': 'I ere Lischte bewege',
   'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
     'Pfiiltaste, Enter und Esc bediened, was offe isch; das sind kei Chürzel.',
+  'Split right': 'Rächts teile',
+  'Split down': 'Une teile',
+  'Other pane': 'Anders Teilfänschter',
+  'Close this pane': 'Das Teilfänschter zuemache',
+  'Note {number}': 'Notiz {number}',
+  'Scroll together': 'Zäme scrolle',
+  'Scroll on its own': 'Für sich scrolle',
+  'Save layout': 'Layout spichere',
+  'Name this layout': 'Layout benäme',
+  'Layout: {name}': 'Layout: {name}',
+  'Delete a layout': 'Es Layout lösche',
+  Reading: 'Läse',
 }
