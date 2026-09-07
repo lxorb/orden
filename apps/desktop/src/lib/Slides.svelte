@@ -15,6 +15,7 @@
 
   import { onDestroy, tick } from 'svelte'
   import { claimsGesture } from './swipe'
+  import { menu } from './menu.svelte'
   import { overlays } from './overlays'
   import { deckHtml, type StageSlide } from './slides/render'
   import {
@@ -273,8 +274,15 @@
   $effect(() => overlays.show(leave))
 
   function onKeydown(event: KeyboardEvent) {
-    // Anything typed while a menu or a sheet is over the deck belongs to that.
-    if (overlays.depth > 1) return
+    // A key held with a modifier is one of the app's own, and the app reads it
+    // off the same window: Ctrl+P is the palette, not the presenter's window.
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+
+    // Something over the deck has the keyboard: a field being typed into - the
+    // palette, a prompt - or a menu the arrows are walking down.
+    const focused = document.activeElement
+    if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return
+    if (menu.open) return
 
     // A number, then Enter, jumps. Held as it is typed and shown where the
     // counter is, so a slip is visible before it does anything.
