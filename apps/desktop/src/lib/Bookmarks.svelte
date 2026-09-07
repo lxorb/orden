@@ -139,6 +139,7 @@
       <li>
         <button
           class="row"
+          class:folder={row.mark.kind === 'folder'}
           class:active={row.active}
           class:above={dropAt === row.at && dropAbove}
           class:below={dropAt === row.at && !dropAbove}
@@ -210,6 +211,11 @@
   .row:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
+  }
+
+  /* Quieter than a note, the way a folder is in the tree below. */
+  .row.folder {
+    color: var(--muted);
   }
 
   .row.active {

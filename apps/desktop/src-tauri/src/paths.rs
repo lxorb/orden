@@ -361,9 +361,7 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        files_in, folded, free_spot, inside, is_markdown, space_root, write_atomically,
-    };
+    use super::{files_in, folded, free_spot, inside, is_markdown, space_root, write_atomically};
     use std::path::{Path, PathBuf};
 
     /// Written the way the platform writes them, so the assertions read the same
@@ -414,14 +412,20 @@ mod tests {
         let space = path(&["Documents", "Nib", "Notes"]);
 
         assert_eq!(space_root(&spaces, &space), Some(space.clone()));
-        assert_eq!(space_root(&spaces, &space.join("Work")), Some(space.clone()));
+        assert_eq!(
+            space_root(&spaces, &space.join("Work")),
+            Some(space.clone())
+        );
         assert_eq!(
             space_root(&spaces, &space.join("Work").join("2026")),
             Some(space.clone())
         );
         // Folded first, so a path that climbs back into its own space still
         // names that space.
-        assert_eq!(space_root(&spaces, &space.join("Work").join("..")), Some(space));
+        assert_eq!(
+            space_root(&spaces, &space.join("Work").join("..")),
+            Some(space)
+        );
     }
 
     #[test]

@@ -1121,9 +1121,11 @@
     stroke-linejoin: round;
   }
 
+  /* Wide enough for the longest choice any pane offers, so a value is read
+     rather than guessed from its first half. */
   .pick {
     flex: none;
-    width: 12rem;
+    width: 14rem;
   }
 
   .pick.wide {
