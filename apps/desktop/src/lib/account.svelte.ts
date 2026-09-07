@@ -4,6 +4,34 @@ const STORAGE_KEY = 'nib:session'
 
 export type Step = 'email' | 'code'
 
+/** A second place to keep the token, for a host whose storage does not outlive a
+ *  launch. The Even plugin registers one; nothing else has one, and the plain web
+ *  build never loads the code that would. See lib/even/vault.ts. */
+export interface Vault {
+  read(): Promise<string | null>
+  write(token: string): Promise<void>
+  clear(): Promise<void>
+}
+
+/** How long to keep trying to reach the account before leaving it for the next
+ *  launch, and the waits between tries.
+ *
+ *  A cold start can begin before the network does, which on a phone is the usual
+ *  case rather than the odd one. Three tries over about four seconds is the
+ *  difference between a session that settles a moment late and a session the
+ *  reader has to type an emailed code to get back. */
+const TRIES = [400, 1200, 2500]
+
+/** The statuses that mean the token itself is finished. Anything else is about
+ *  the journey, not the credential. */
+function rejected(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 401 || error.status === 403)
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 class Session {
   token = $state<string | null>(null)
   user = $state<Account | null>(null)
@@ -30,18 +58,47 @@ class Session {
   /** When syncing may run: signed in, and not waiting on that question. */
   readonly syncable = $derived(this.signedIn && !this.settling)
 
+  /** A second store, for a host whose own does not last. Handed over before the
+   *  app is mounted, so `restore` below already has it. */
+  private vault: Vault | null = null
+
+  alsoKeepIn(vault: Vault) {
+    this.vault = vault
+  }
+
   async restore() {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = localStorage.getItem(STORAGE_KEY) ?? (await this.vault?.read()) ?? null
     if (!saved) return
 
+    // Read back out of the other store: the page's own is what everything else
+    // here writes, so putting it back keeps the two saying the same thing.
+    localStorage.setItem(STORAGE_KEY, saved)
     this.token = saved
-    try {
-      this.user = (await api.me(saved)).user
-      await this.loadSpaces()
-    } catch {
-      // An expired or revoked token is just a signed-out state.
-      this.forget()
+
+    for (const [attempt, pause] of [0, ...TRIES].entries()) {
+      if (pause) await wait(pause)
+
+      try {
+        this.user = (await api.me(saved)).user
+        break
+      } catch (error) {
+        // Only the account saying so signs anybody out. A request that never
+        // arrived says nothing about the token, and throwing one away because
+        // the radio was not ready yet costs a reader their session for the
+        // sake of a second.
+        if (rejected(error)) {
+          this.forget()
+          return
+        }
+
+        if (attempt === TRIES.length) return
+      }
     }
+
+    // The same reasoning as signing in: the spaces are wanted, and failing to
+    // list them is not a failed session. This used to share the catch above,
+    // which turned one unreachable listing into a sign-out.
+    await this.loadSpaces().catch(() => undefined)
   }
 
   async requestCode() {
@@ -79,6 +136,9 @@ class Session {
 
     const { token, user } = session
     localStorage.setItem(STORAGE_KEY, token)
+    // Nothing waits on the other store: the session is already in hand, and a
+    // host that cannot be told is a host that will ask again next launch.
+    void this.vault?.write(token).catch(() => undefined)
     this.stopResendTimer()
 
     // Before the session exists, so whatever starts syncing on sign-in finds
@@ -126,6 +186,7 @@ class Session {
 
   private forget() {
     localStorage.removeItem(STORAGE_KEY)
+    void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()
     this.token = null
     this.user = null

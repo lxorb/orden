@@ -13,11 +13,18 @@
 import '@nib/themes'
 import { mount } from 'svelte'
 import App from './App.svelte'
+import { account } from './lib/account.svelte'
 import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
+import { hostVault } from './lib/even/vault'
 
 const target = document.getElementById('app')
 if (!target) throw new Error('even.html has no #app to mount into')
+
+// Before the app, because mounting it is what restores the session, and the
+// phone app's store is where a packed plugin's token survives a launch. See
+// lib/even/vault.ts.
+account.alsoKeepIn(hostVault)
 
 const app = mount(App, { target })
 // After the app, so the workspace has restored its tabs before the glasses are

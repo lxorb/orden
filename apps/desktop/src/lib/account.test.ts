@@ -8,6 +8,14 @@ const server = vi.hoisted(() => ({
   resendIn: 30,
   /** Set to make the code be refused. */
   refuse: false,
+  /** How many of the first `me` calls fail, and how. `null` is a request that
+   *  never arrived; a number is the account answering with that status. */
+  meFails: 0,
+  meStatus: null as number | null,
+  /** How many `me` calls were made, so a retry can be counted. */
+  meCalls: 0,
+  /** Set to make listing the spaces fail, which is not a failed session. */
+  spacesFail: false,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -24,7 +32,22 @@ vi.mock('./api', async (importOriginal) => {
               token: 'session',
               user: { id: 'u1', email: 'me@example.com', name: null },
             }),
-      listSpaces: () => Promise.resolve({ spaces: [], deleted: [] }),
+      me: () => {
+        server.meCalls += 1
+        if (server.meCalls <= server.meFails) {
+          return Promise.reject(
+            server.meStatus === null
+              ? new Error('the network is not there yet')
+              : new original.ApiError(server.meStatus, 'no'),
+          )
+        }
+
+        return Promise.resolve({ user: { id: 'u1', email: 'me@example.com', name: null } })
+      },
+      listSpaces: () =>
+        server.spacesFail
+          ? Promise.reject(new Error('the network is not there yet'))
+          : Promise.resolve({ spaces: [], deleted: [] }),
       signOut: () => Promise.resolve({ ok: true as const }),
     },
   }
@@ -53,6 +76,10 @@ beforeEach(async () => {
   localStorage.clear()
   server.refuse = false
   server.resendIn = 30
+  server.meFails = 0
+  server.meStatus = null
+  server.meCalls = 0
+  server.spacesFail = false
 
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
@@ -132,5 +159,121 @@ describe('a code that is accepted', () => {
     expect(account.token).toBeNull()
     expect(account.spaces).toEqual([])
     expect(localStorage.getItem('nib:session')).toBeNull()
+  })
+})
+
+/** Coming back to a session that is already on this machine.
+ *
+ *  The bug these are about: every failure used to be read as a revoked token, so
+ *  a launch that began before the network did threw the session away and asked
+ *  for an emailed code instead. On a phone, where the plugin starts while the
+ *  WebView is still finding its feet, that was every launch. */
+describe('restoring a session', () => {
+  /** Runs the whole retry ladder without waiting for it. */
+  async function restore(): Promise<void> {
+    vi.useFakeTimers()
+    try {
+      const restoring = account.restore()
+      await vi.advanceTimersByTimeAsync(10_000)
+      await restoring
+    } finally {
+      vi.useRealTimers()
+    }
+  }
+
+  test('keeps a token the account could not be asked about', async () => {
+    localStorage.setItem('nib:session', 'session')
+    server.meFails = Infinity
+
+    await restore()
+
+    // Signed out for now, because there is no account to show. Not signed out
+    // for good: the token is still here for the next launch.
+    expect(account.signedIn).toBe(false)
+    expect(localStorage.getItem('nib:session')).toBe('session')
+  })
+
+  test('settles into signed in when the first try came too early', async () => {
+    localStorage.setItem('nib:session', 'session')
+    server.meFails = 2
+
+    await restore()
+
+    expect(account.signedIn).toBe(true)
+    expect(server.meCalls).toBe(3)
+    expect(localStorage.getItem('nib:session')).toBe('session')
+  })
+
+  test('signs out only when the account refuses the token', async () => {
+    localStorage.setItem('nib:session', 'session')
+    server.meFails = Infinity
+    server.meStatus = 401
+
+    await restore()
+
+    expect(account.signedIn).toBe(false)
+    expect(localStorage.getItem('nib:session')).toBeNull()
+    // Refused is refused: there is nothing a second ask would change.
+    expect(server.meCalls).toBe(1)
+  })
+
+  test('keeps the session when the spaces cannot be listed', async () => {
+    localStorage.setItem('nib:session', 'session')
+    server.spacesFail = true
+
+    await restore()
+
+    expect(account.signedIn).toBe(true)
+    expect(localStorage.getItem('nib:session')).toBe('session')
+  })
+})
+
+/** The second store, which only the Even plugin registers: a packed plugin's
+ *  page has no origin whose storage outlives a launch, so the phone app is asked
+ *  to keep the token as well. */
+describe('a host that keeps the token too', () => {
+  function vault(held: { token: string | null }) {
+    return {
+      read: () => Promise.resolve(held.token),
+      write: (token: string) => {
+        held.token = token
+        return Promise.resolve()
+      },
+      clear: () => {
+        held.token = null
+        return Promise.resolve()
+      },
+    }
+  }
+
+  test('signs back in from the host when the page kept nothing', async () => {
+    account.alsoKeepIn(vault({ token: 'from-the-host' }))
+
+    await account.restore()
+
+    expect(account.token).toBe('from-the-host')
+    expect(account.signedIn).toBe(true)
+    // Put back where everything else here reads it, so the two agree.
+    expect(localStorage.getItem('nib:session')).toBe('from-the-host')
+  })
+
+  test('prefers the page when it has a token of its own', async () => {
+    localStorage.setItem('nib:session', 'session')
+    account.alsoKeepIn(vault({ token: 'stale' }))
+
+    await account.restore()
+
+    expect(account.token).toBe('session')
+  })
+
+  test('hands a fresh token to the host, and takes it back on the way out', async () => {
+    const held: { token: string | null } = { token: null }
+    account.alsoKeepIn(vault(held))
+
+    await account.verify('123456')
+    await vi.waitFor(() => expect(held.token).toBe('session'))
+
+    await account.signOut()
+    await vi.waitFor(() => expect(held.token).toBeNull())
   })
 })
