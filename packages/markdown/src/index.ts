@@ -248,6 +248,11 @@ export function documentTitle(source: string): string | null {
 export function codeBlocks(source: string): CodeBlock[] {
   const found: CodeBlock[] = []
 
+  // A fence is written with one of two marks, and finding neither is a byte scan
+  // rather than a second reading of the whole note - which is what this used to
+  // cost every export and every note opened for reading, fences or not.
+  if (!source.includes('```') && !source.includes('~~~')) return found
+
   // The walk is over already; what it hands back is the callback's own returns,
   // which are nothing here.
   void trusting.walkTokens(trusting.lexer(stripFrontMatter(source)), (token) => {

@@ -1,6 +1,23 @@
 import { describe, expect, test } from 'vitest'
 import { firstStart, lineStart, matchesAt, paragraphWindow } from './starts'
-import { renderMarkdown } from './index'
+import { codeBlocks, renderMarkdown } from './index'
+
+describe('looking for the fences of a note', () => {
+  test('finds them, whichever mark they were written with', () => {
+    expect(codeBlocks('```ts\nconst a = 1\n```\n')).toEqual([
+      { language: 'ts', code: 'const a = 1' },
+    ])
+    expect(codeBlocks('~~~py\nx = 1\n~~~\n')).toEqual([{ language: 'py', code: 'x = 1' }])
+  })
+
+  test('finds one inside a quote, which is not at the start of its line', () => {
+    expect(codeBlocks('> ```ts\n> const a = 1\n> ```\n')).toHaveLength(1)
+  })
+
+  test('reads a note with neither mark in it no further', () => {
+    expect(codeBlocks('# Just words\n\nand a `span` of code.\n')).toEqual([])
+  })
+})
 
 describe('how far a block start has to look', () => {
   test('to the end of the paragraph', () => {

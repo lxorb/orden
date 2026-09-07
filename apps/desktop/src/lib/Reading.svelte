@@ -285,24 +285,44 @@
     reveal()
   }
 
+  /** Paints the places found and brings the current one into view.
+   *
+   *  Painted rather than selected. Selecting a match is the obvious way to show
+   *  it and the wrong one: an input holds its caret in the same selection the
+   *  page does, so moving it left the find field with nowhere to type - the
+   *  second letter of a query never arrived. A highlight is the browser's own
+   *  paint over a range and touches neither the caret nor what a reader has
+   *  selected to copy. */
   function reveal() {
-    const offset = found[current]
-    if (offset === undefined) return
+    const words = wording()
+    const ranges = found.flatMap((offset) => rangeOf(words, offset, query.length) ?? [])
+    const here = ranges[current]
 
-    const range = rangeOf(wording(), offset, query.length)
-    if (!range) return
+    paint('nib-find', ranges)
+    paint('nib-find-here', here ? [here] : [])
 
-    const selection = getSelection()
-    selection?.removeAllRanges()
-    selection?.addRange(range)
+    const box = scroller
+    if (!here || !box) return
 
-    const box = range.startContainer.parentElement
-    box?.scrollIntoView({ block: 'center' })
+    // Into the middle, and by the box's own scroll rather than scrollIntoView,
+    // which would move whatever else on the page happens to be scrollable.
+    const top = here.getBoundingClientRect().top - box.getBoundingClientRect().top
+    box.scrollTop += top - box.clientHeight / 2
+  }
+
+  function paint(name: string, ranges: Range[]) {
+    const highlights = CSS.highlights
+    // Not in every engine yet. Without it the find bar still counts and still
+    // scrolls; only the paint is missing.
+    if (!highlights) return
+
+    if (ranges.length) highlights.set(name, new Highlight(...ranges))
+    else highlights.delete(name)
   }
 
   function typed() {
     current = 0
-    if (found.length) reveal()
+    reveal()
   }
 
   function openFind() {
@@ -318,9 +338,16 @@
   function closeFind() {
     finding = false
     query = ''
-    getSelection()?.removeAllRanges()
+    paint('nib-find', [])
+    paint('nib-find-here', [])
     scroller?.focus({ preventScroll: true })
   }
+
+  // A page that has gone, or been drawn again, has no matches to paint.
+  $effect(() => () => {
+    paint('nib-find', [])
+    paint('nib-find-here', [])
+  })
 
   /** The reader's own find key, read off the window because there is no editor
    *  here to read it: an editor binding never reaches a pane without one. */
@@ -430,6 +457,18 @@
      as one note turning over instead of two notes swapping. */
   .page {
     animation: settle var(--dur-base) var(--ease-out);
+  }
+
+  /* What the find bar paints, in the editor's own two search colours. A
+     highlight is a document-wide name, so these cannot be scoped to a
+     component; the names carry the scope instead. */
+  :global(::highlight(nib-find)) {
+    background-color: var(--accent-soft);
+  }
+
+  :global(::highlight(nib-find-here)) {
+    background-color: var(--accent);
+    color: #fff;
   }
 
   @keyframes settle {
