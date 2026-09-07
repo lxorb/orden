@@ -355,13 +355,17 @@
     height: 100%;
   }
 
-  .editor :global(.cm-scroller) {
-    padding: 4px 6px;
-    font-size: 13px;
-  }
-
-  .editor :global(.cm-content) {
-    padding: 0;
+  /* The writing surface carries Typora's `#write`, which in the app is the page
+     column: a measure, a margin that centres it, and half a screen of padding
+     underneath. A card is not a page, so inside one it is the card - at the same
+     size and in the same place as the rendered words it replaces, which is what
+     makes double-clicking one read as the card opening rather than as something
+     else arriving. */
+  .editor :global(#write) {
     max-width: none;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1.55;
   }
 </style>

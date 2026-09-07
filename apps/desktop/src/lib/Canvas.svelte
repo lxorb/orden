@@ -111,6 +111,8 @@
   let height = $state(0)
   /** Space held, which turns a drag anywhere into a pan. */
   let spacing = $state(false)
+  /** Whether the plane has been put in view yet; see `measure`. */
+  let placed = false
   /** Where the pointer last was on the plane, so a paste and a new card land
    *  where the reader is looking. */
   let at: Point = { x: 0, y: 0 }
@@ -213,12 +215,12 @@
 
   // Words that changed under the surface: a version restored, a copy a sync
   // brought over, the file undo putting one back. A plane that had nothing on it
-  // is framed the moment it has something, which is what a blank canvas the
-  // account fills a second later needs.
+  // is framed the moment something arrives that way, which is what a blank canvas
+  // the account fills a second later needs; a card the reader has just put down
+  // is no reason at all to move the plane out from under them.
   $effect(() => {
     follows(tab.note.revision)
-    store.follow()
-    if (!store.framed && width && height) store.fit(width, height)
+    if (store.follow() && !store.framed && width && height) store.fit(width, height)
   })
 
   $effect(() => {
@@ -255,9 +257,15 @@
 
     width = Math.round(box.width)
     height = Math.round(box.height)
-    // A canvas opens with everything on it in view. Once only: where the reader
-    // panned to is theirs from then on.
-    if (!store.framed) store.fit(width, height)
+
+    // A canvas opens with everything on it in view, and only then: the view is
+    // the reader's from the first frame on, and a window being resized - or a
+    // card being put down, which lays the pane out again - is no reason at all
+    // to move the plane out from under them.
+    if (placed) return
+
+    placed = true
+    store.fit(width, height)
   }
 
   function planeAt(event: { clientX: number; clientY: number }): Point {

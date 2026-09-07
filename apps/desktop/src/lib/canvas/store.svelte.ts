@@ -116,12 +116,16 @@ export class CanvasStore {
    *  component, which is what watches the document.
    *
    *  What can be taken back goes with it. Undoing past a canvas somebody else
-   *  wrote would put ours over theirs, which is the one thing this must not do. */
-  follow() {
-    if (this.note.revision === this.at) return
+   *  wrote would put ours over theirs, which is the one thing this must not do.
+   *
+   *  Answers whether it took anything on, so the caller can tell a canvas that
+   *  arrived from elsewhere from one the reader is drawing. */
+  follow(): boolean {
+    if (this.note.revision === this.at) return false
 
     this.read()
     this.history.clear()
+    return true
   }
 
   private read() {
