@@ -36,13 +36,19 @@ vi.mock('@nib/editor', async (importOriginal) => ({
 /** The account, standing still. One object across module resets, so a test can
  *  swap a call out and the store made afterwards still sees it. */
 const api = vi.hoisted(() => {
-  const empty: { ligatures?: boolean } = {}
+  const empty: Held = {}
 
   return {
     settings: async () => ({ settings: empty }),
     saveSettings: async () => ({ settings: empty }),
   }
 })
+
+/** As much of the account's settings as these tests are about. */
+interface Held {
+  ligatures?: boolean
+  attachments?: string
+}
 
 vi.mock('./api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api')>()),
@@ -153,7 +159,7 @@ describe('reading mode and source mode', () => {
 describe('taking over what the account holds', () => {
   /** Answers the account's settings, but only once released - so a choice can
    *  be made on this machine while the answer is still in the air. */
-  function heldAnswer(settings: { ligatures?: boolean }) {
+  function heldAnswer(settings: Held) {
     let release: () => void = () => undefined
     const held = new Promise<void>((resolve) => {
       release = resolve
@@ -193,5 +199,59 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.ligatures).toBe(false)
+  })
+
+  test('brings the attachment folder another machine chose', async () => {
+    const { release, settingsCall } = heldAnswer({ attachments: 'named' })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.attachments).toBe('named')
+  })
+
+  test('leaves a folder chosen while the answer was in the air', async () => {
+    const { release, settingsCall } = heldAnswer({ attachments: 'named' })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    modes.setAttachments('note')
+
+    release()
+    await adopted
+
+    expect(modes.attachments).toBe('note')
+  })
+
+  test('ignores a folder no version of the app knows', async () => {
+    const { release, settingsCall } = heldAnswer({ attachments: 'vault' })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.attachments).toBe('space')
+  })
+})
+
+describe('where a pasted picture goes', () => {
+  test("starts in the space's assets folder, which is where it always went", () => {
+    expect(modes.attachments).toBe('space')
+  })
+
+  test('is remembered across a restart', async () => {
+    modes.setAttachments('named')
+    expect((await restarted()).attachments).toBe('named')
+  })
+
+  test('takes only one of the three names', async () => {
+    modes.setAttachments('sideways')
+    expect(modes.attachments).toBe('space')
+
+    localStorage.setItem('nib:modes', JSON.stringify({ attachments: 'sideways' }))
+    expect((await restarted()).attachments).toBe('space')
   })
 })

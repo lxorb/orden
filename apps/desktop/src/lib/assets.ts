@@ -1,6 +1,9 @@
 import { api, BASE } from './api'
 import { account } from './account.svelte'
+import { attachmentFolder } from './attachments'
+import { modes } from './modes.svelte'
 import { invoke } from './tauri'
+import { workspace } from './workspace.svelte'
 
 /** SHA-256 of the bytes, as hex. The picture's name is its contents, so the
  *  same image pasted twice is stored once wherever it ends up. */
@@ -25,8 +28,9 @@ function extensionFor(type: string, name: string): string {
  *  note carries a plain URL, so it still renders in an export or a published
  *  blog with nothing else to resolve.
  *
- *  Without one it lands beside the note, named by the same hash, so the folder
- *  stays portable and a repeated paste still costs nothing. */
+ *  Without one it lands in the folder the Attachments setting names, near the
+ *  note and named by the same hash, so the space stays portable and a repeated
+ *  paste still costs nothing. */
 export async function storeImage(file: File, notePath: string | null): Promise<string | null> {
   const bytes = await file.arrayBuffer()
   const hash = await hashBytes(bytes)
@@ -46,8 +50,13 @@ export async function storeImage(file: File, notePath: string | null): Promise<s
 
   if (!notePath) return null
 
+  // The folder is decided here and checked there: the command joins it onto the
+  // note's own folder and refuses one that would leave the space.
+  const folder = attachmentFolder(modes.attachments, notePath, workspace.activeSpace?.root ?? null)
+
   return invoke<string>('save_asset', {
     notePath,
+    folder,
     name: `${hash.slice(0, 16)}.${extension}`,
     bytes: [...new Uint8Array(bytes)],
   }).catch(() => null)

@@ -4,12 +4,25 @@
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 export function normalise(path: string): string {
-  return `/${path
+  const parts = path
     .replace(/\\/g, '/')
     // Interior runs collapse too, so joining a path that already ends in a
     // slash to one that starts with one does not leave `//` behind.
     .replace(/\/+/g, '/')
-    .replace(/^\/+|\/+$/g, '')}`
+    .replace(/^\/+|\/+$/g, '')
+    .split('/')
+
+  const out: string[] = []
+  for (const part of parts) {
+    // Folded down to where the path points, so `a/../b` and `b` are one path
+    // rather than two. Climbing above the root names no place, so it stops
+    // there; there is nothing outside the virtual disk to reach.
+    if (part === '.' || part === '') continue
+    if (part === '..') out.pop()
+    else out.push(part)
+  }
+
+  return `/${out.join('/')}`
 }
 
 export function basename(path: string): string {

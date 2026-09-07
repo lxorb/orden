@@ -107,6 +107,26 @@ pub fn inside(root: &Path, path: &Path) -> bool {
     true
 }
 
+/// The space a folder belongs to: the folder directly inside `spaces` that holds
+/// it, or the folder itself when it is one. None when it is not in a space at
+/// all, which is what a note opened from somewhere else on the disk looks like,
+/// and also what the spaces folder itself is.
+///
+/// Takes the spaces folder rather than the app, so what counts as a space can be
+/// tested without one.
+pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
+    let spaces = folded(spaces);
+    let path = folded(path);
+    if !inside(&spaces, &path) {
+        return None;
+    }
+
+    // The first part below the spaces folder is the space; the path itself is
+    // the spaces folder when there is no such part, and that is no space.
+    let mut parts = path.components().skip(spaces.components().count());
+    parts.next().map(|first| spaces.join(first))
+}
+
 /// One part of a path against another. Windows tells `Notes` and `notes` apart
 /// nowhere but in the letters, so neither does this.
 fn same_part(one: Component, other: Component) -> bool {
@@ -341,7 +361,9 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{files_in, folded, free_spot, inside, is_markdown, write_atomically};
+    use super::{
+        files_in, folded, free_spot, inside, is_markdown, space_root, write_atomically,
+    };
     use std::path::{Path, PathBuf};
 
     /// Written the way the platform writes them, so the assertions read the same
@@ -384,6 +406,31 @@ mod tests {
     #[test]
     fn nothing_is_inside_a_folder_with_no_name() {
         assert!(!inside(Path::new(""), &path(&["a"])));
+    }
+
+    #[test]
+    fn names_the_space_a_folder_belongs_to() {
+        let spaces = path(&["Documents", "Nib"]);
+        let space = path(&["Documents", "Nib", "Notes"]);
+
+        assert_eq!(space_root(&spaces, &space), Some(space.clone()));
+        assert_eq!(space_root(&spaces, &space.join("Work")), Some(space.clone()));
+        assert_eq!(
+            space_root(&spaces, &space.join("Work").join("2026")),
+            Some(space.clone())
+        );
+        // Folded first, so a path that climbs back into its own space still
+        // names that space.
+        assert_eq!(space_root(&spaces, &space.join("Work").join("..")), Some(space));
+    }
+
+    #[test]
+    fn nothing_outside_the_spaces_folder_belongs_to_a_space() {
+        let spaces = path(&["Documents", "Nib"]);
+
+        assert_eq!(space_root(&spaces, &path(&["elsewhere", "notes"])), None);
+        // The spaces folder holds the spaces and is not one of them.
+        assert_eq!(space_root(&spaces, &spaces), None);
     }
 
     #[test]

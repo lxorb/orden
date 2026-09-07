@@ -20,6 +20,7 @@ import {
 } from '@nib/editor'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
+import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isNumber, isRecord, isString, stored } from './stored'
 
 const STORAGE_KEY = 'nib:modes'
@@ -48,6 +49,7 @@ interface Saved {
   spellLanguage: string
   closeBrackets: boolean
   ligatures: boolean
+  attachments: string
 }
 
 /** Nearest of the steps the keyboard uses, so both routes agree. */
@@ -105,6 +107,10 @@ class Modes {
   /** `->` shown as an arrow, `<=` as a sign, and so on. Off until chosen;
    *  the choice follows the account. */
   ligatures = $state(false)
+  /** Where a pasted picture is written; see attachments.ts. Follows the account
+   *  too, because it is about how someone keeps their notes rather than about
+   *  the machine they are at. */
+  attachments = $state<AttachmentFolder>('space')
 
   restore() {
     // Field by field off an unknown, not a cast: the entry may have been
@@ -132,6 +138,7 @@ class Modes {
       this.spellLanguage = text(saved.spellLanguage, 'system')
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = saved.ligatures === true
+      if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
     }
     this.applyZoom()
   }
@@ -242,6 +249,14 @@ class Modes {
     this.share({ ligatures: this.ligatures })
   }
 
+  setAttachments(value: string) {
+    if (!isAttachmentFolder(value)) return
+
+    this.attachments = value
+    this.persist()
+    this.share({ attachments: value })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -263,10 +278,19 @@ class Modes {
       return null
     }
 
+    // Nothing this machine has chosen since the question went out; see above.
+    const unheard = this.sent === asked
+
     const theirs = remote.ligatures
-    if (typeof theirs === 'boolean' && this.sent === asked && theirs !== this.ligatures) {
+    if (typeof theirs === 'boolean' && unheard && theirs !== this.ligatures) {
       this.ligatures = theirs
       if (this.view) setLigatures(this.view, theirs)
+      this.persist()
+    }
+
+    const folder = remote.attachments
+    if (isAttachmentFolder(folder) && unheard && folder !== this.attachments) {
+      this.attachments = folder
       this.persist()
     }
 
@@ -386,6 +410,7 @@ class Modes {
       spellLanguage: this.spellLanguage,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
+      attachments: this.attachments,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }

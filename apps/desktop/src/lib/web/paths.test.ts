@@ -16,6 +16,17 @@ describe('normalising a path', () => {
     expect(normalise('/')).toBe('/')
     expect(normalise('')).toBe('/')
   })
+
+  test('folds a path down to where it points', () => {
+    expect(normalise('/Notes/./a.md')).toBe('/Notes/a.md')
+    expect(normalise('/Notes/Work/../assets')).toBe('/Notes/assets')
+    expect(normalise('/Notes/Work/2026/../../a.md')).toBe('/Notes/a.md')
+  })
+
+  test('stops climbing at the root, which nothing is above', () => {
+    expect(normalise('/Notes/../../a.md')).toBe('/a.md')
+    expect(normalise('/..')).toBe('/')
+  })
 })
 
 describe('taking a path apart', () => {

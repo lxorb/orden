@@ -9,8 +9,16 @@ import type { Env, Variables } from './types'
  *  the message is what the app shows: see the ERROR path in api.ts. */
 type Check = (value: unknown) => string | null
 
+/** Where the app writes a pasted picture. Named rather than described, because
+ *  the folder itself is worked out on the machine that has the note. */
+const ATTACHMENT_FOLDERS = ['space', 'note', 'named']
+
 const KNOWN: Record<string, Check> = {
   ligatures: (value) => (typeof value === 'boolean' ? null : 'ligatures must be true or false'),
+  attachments: (value) =>
+    typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)
+      ? null
+      : `attachments must be one of ${ATTACHMENT_FOLDERS.join(', ')}`,
   shortcuts: shortcutMap,
 }
 

@@ -181,6 +181,21 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => modes.ligatures,
               set: () => modes.toggleLigatures(view),
             },
+            {
+              // Where a pasted or dropped picture lands. What the note says
+              // stays relative to the note either way, so the choice changes
+              // nothing about notes already written.
+              kind: 'select',
+              label: t('Attachments'),
+              options: [
+                { value: 'space', label: t('Assets folder of the space') },
+                { value: 'note', label: t('Next to the note') },
+                { value: 'named', label: t('A folder named after the note') },
+              ],
+              initial: 'space',
+              get: () => modes.attachments,
+              set: (value) => modes.setAttachments(value),
+            },
           ],
         },
         {

@@ -52,6 +52,27 @@ describe('account settings', () => {
   })
 })
 
+describe('where a pasted picture goes', () => {
+  test('is one of the three folders the app offers', async () => {
+    for (const folder of ['space', 'note', 'named']) {
+      const set = await patch({ attachments: folder })
+      expect(set.status, folder).toBe(200)
+      expect(set.json.settings.attachments).toBe(folder)
+    }
+  })
+
+  test('is nothing else', async () => {
+    expect((await patch({ attachments: 'vault' })).status).toBe(400)
+    expect((await patch({ attachments: true })).status).toBe(400)
+    expect((await patch({ attachments: null })).status).toBe(400)
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
+  })
+
+  test('says which names it takes', async () => {
+    expect((await patch({ attachments: 'vault' })).json.error).toContain('space, note, named')
+  })
+})
+
 describe('a name that is not a setting', () => {
   /** `KNOWN[name]` reaches Object's own properties for these, and what came
    *  back was called as though it were a check: a 500 from a body a client is

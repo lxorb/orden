@@ -233,6 +233,47 @@ describe('the tree', () => {
   })
 })
 
+describe('a pasted picture', () => {
+  const save = (notePath: string, folder: string) =>
+    webInvoke<string>('save_asset', { notePath, folder, name: 'pic.png', bytes: [1, 2, 3] })
+
+  test('goes in the folder the window asked for and is named relative to the note', async () => {
+    expect(await save('/Notes/Read me.md', 'assets')).toBe('assets/pic.png')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/assets/pic.png'])
+  })
+
+  test('lands beside the note when no folder is named', async () => {
+    expect(await save('/Notes/Read me.md', '')).toBe('pic.png')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/pic.png'])
+  })
+
+  test('climbs to the space’s own assets folder from a note further down', async () => {
+    expect(await save('/Notes/Work/Plan.md', '../assets')).toBe('../assets/pic.png')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/assets/pic.png'])
+  })
+
+  test('goes in a folder named after the note', async () => {
+    expect(await save('/Notes/Read me.md', 'Read me')).toBe('Read me/pic.png')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/Read me/pic.png'])
+  })
+
+  test('refuses a folder that climbs out of the space', async () => {
+    await expect(save('/Notes/Read me.md', '../../elsewhere')).rejects.toThrow()
+    await expect(save('/Notes/Work/Plan.md', '../../Other/assets')).rejects.toThrow()
+    expect([...disk.assets.keys()]).toEqual([])
+  })
+
+  test('keeps the folder an older build wrote when none is sent', async () => {
+    const written = await webInvoke<string>('save_asset', {
+      notePath: '/Notes/Read me.md',
+      name: 'pic.png',
+      bytes: [1],
+    })
+
+    expect(written).toBe('assets/pic.png')
+  })
+})
+
 describe('what the browser cannot do', () => {
   test('answers the shape that makes the app hide the feature', async () => {
     expect(await webInvoke('has_pandoc')).toBe(false)

@@ -457,20 +457,30 @@ export async function webInvoke<T>(
     case 'save_asset': {
       const bytes = args.bytes as number[]
       const name = (args.name as string) || `pasted-${now()}.png`
-      const folder = join(parent(args.notePath as string), 'assets')
+      const notePath = args.notePath as string
+      // Relative to the note's own folder, as the desktop command takes it; see
+      // attachments.ts for which of the three it is.
+      const relative = ((args.folder as string | undefined) ?? 'assets').replace(/^\/+|\/+$/g, '')
+
+      const folder = join(parent(notePath), relative)
+      // The same limit the desktop command holds a folder to: a picture of this
+      // note goes somewhere in this note's space and nowhere else.
+      const space = spaceOf(notePath)
+      if (folder !== space && !within(space, folder)) {
+        throw new Error(`${relative} is not a folder inside the space`)
+      }
 
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
-      const target = join(folder, name)
       await assets.put({
-        path: target,
+        path: join(folder, name),
         type: `image/${name.split('.').pop() ?? 'png'}`,
         data: btoa(binary),
         modified: now(),
       })
 
-      return `assets/${name}` as T
+      return (relative ? `${relative}/${name}` : name) as T
     }
 
     case 'read_asset': {
