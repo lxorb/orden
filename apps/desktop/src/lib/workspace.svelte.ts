@@ -280,8 +280,9 @@ class Workspace {
    *  closed outline panel costs nothing at all. */
   readonly headings = $derived.by(() => scanHeadings(this.active?.doc ?? ''))
 
-  /** Every note in the space, flattened - the Articles panel and quick open. */
-  readonly notes = $derived.by((): Entry[] => {
+  /** Every file in the space, flattened: the notes and the PDFs beside them,
+   *  which are the two things a tab can hold. What quick open lists. */
+  readonly files = $derived.by((): Entry[] => {
     const out: Entry[] = []
     const walk = (entry: Entry) => {
       for (const child of entry.children) {
@@ -292,6 +293,11 @@ class Workspace {
     if (this.tree) walk(this.tree)
     return out
   })
+
+  /** The notes among them. What everything that means words asks for: which note
+   *  to merge into, which note a space is published as, which names a search
+   *  completes. A PDF is a file to read, not a note to write in. */
+  readonly notes = $derived(this.files.filter((one) => !isPdfTarget(one.name)))
 
   async restore() {
     // The browser build starts empty, so give a first visit something to read.
@@ -308,7 +314,7 @@ class Workspace {
       if (this.activeSpaceId) await this.loadTree()
 
       // A first visit opens what it was given rather than a blank page.
-      const first = this.notes[0]
+      const first = this.files[0]
       if (first) await this.openEntry(first.path)
       if (!this.tabs.length) this.openBlank()
       return

@@ -34,6 +34,7 @@
     selected,
     onmeasure,
     onwords,
+    onforget,
     onpick,
   }: {
     doc: PDFDocumentProxy
@@ -50,6 +51,9 @@
     /** The words pdf.js laid out, and the spans it laid them out in, so the find
      *  bar can paint a match over them. */
     onwords: (number: number, runs: readonly string[], divs: readonly HTMLElement[]) => void
+    /** This page is going. Whatever was kept of its DOM has to go with it, or a
+     *  document scrolled from end to end would hold every page it ever drew. */
+    onforget: (number: number) => void
     onpick: (id: string | null) => void
   } = $props()
 
@@ -59,6 +63,10 @@
    *  in memory nobody gets back. Past this the page is drawn a little softer
    *  rather than not at all. */
   const MOST_PIXELS = 16 * 1024 * 1024
+
+  /** How long one page took to draw, under a name a profiler and a test can both
+   *  read. */
+  const DRAWN = 'nib:pdf-page'
 
   let canvas = $state<HTMLCanvasElement>()
   let words = $state<HTMLDivElement>()
@@ -95,6 +103,7 @@
 
     const mine = ++latest
     const current = () => mine === latest
+    const asked = performance.now()
     let render: RenderTask | null = null
     let page: PDFPageProxy | null = null
 
@@ -127,6 +136,11 @@
       await render.promise
       if (!current()) return
 
+      // The picture is what a reader is waiting for, so the measurement stops
+      // here rather than after the words. Named so a profiler and a test can
+      // both read it, the way the reading view's render is.
+      performance.measure(DRAWN, { start: asked, detail: { page: number, zoom } })
+
       // After the picture, deliberately: the words are what a selection and the
       // find bar need, and the page is worth looking at before either.
       const content = await view.getTextContent()
@@ -155,6 +169,7 @@
 
     return () => {
       latest++
+      onforget(number)
       render?.cancel()
       // The picture's memory goes with the element, but the page's own working
       // set - its fonts and its images - is pdf.js's and has to be given back.
@@ -231,7 +246,11 @@
        carries its own colours and tinting the paper would change them. */
     background: #fff;
     border-radius: 2px;
-    box-shadow: var(--shadow-sm);
+    /* A hairline as well as the shadow: on the light surface a white sheet has
+       almost no edge, and a page has to read as a sheet of paper. */
+    box-shadow:
+      0 0 0 1px var(--line),
+      var(--shadow-sm);
     /* Each page is its own layer, so the browser has nothing to repaint outside
        the one that changed. */
     contain: content;

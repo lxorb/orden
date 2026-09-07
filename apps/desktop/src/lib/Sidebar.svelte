@@ -250,8 +250,8 @@
           <Tree entries={workspace.tree.children} />
 
           <!-- A space with nothing in it says what to do about it. Folders can
-             still be there, which is why this counts notes and not rows. -->
-          {#if !workspace.notes.length}
+             still be there, which is why this counts files and not rows. -->
+          {#if !workspace.files.length}
             <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button>
           {/if}
 

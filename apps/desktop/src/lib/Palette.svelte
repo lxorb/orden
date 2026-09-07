@@ -23,7 +23,7 @@
 
   const results = $derived.by((): (Command | Entry)[] => {
     if (asCommands) return rank(term, appCommands(view), (command) => command.label)
-    return rank(term, workspace.notes, (note) => stripped(note.name)).slice(0, 40)
+    return rank(term, workspace.files, (one) => stripped(one.name)).slice(0, 40)
   })
 
   const label = (item: Command | Entry) => ('label' in item ? item.label : stripped(item.name))

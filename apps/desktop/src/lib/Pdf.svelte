@@ -63,6 +63,10 @@
    *  on painting it. The page is already scrolled to; this is the render. */
   const PATIENCE = 2000
 
+  /** How long it took to open the document, under a name a profiler and a test
+   *  can both read. */
+  const OPENED = 'nib:pdf-open'
+
   let doc = $state<PDFDocumentProxy | null>(null)
   let broken = $state(false)
   let scroller = $state<HTMLDivElement>()
@@ -121,6 +125,7 @@
 
     const mine = ++opening
     const current = () => mine === opening
+    const asked = performance.now()
     let opened: OpenPdf | null = null
 
     const open = async () => {
@@ -143,6 +148,11 @@
         index === 0 ? { width: view.width, height: view.height } : undefined,
       )
       doc = held.doc
+
+      // Opening is what stands between the tab appearing and the first page, so
+      // it is worth being able to ask how long it took. The same measurement the
+      // reading view takes of a render; see reading/render.ts.
+      performance.measure(OPENED, { start: asked, detail: { pages: held.doc.numPages } })
     }
 
     void open().catch(() => {
@@ -248,8 +258,10 @@
   async function zoomTo(next: number, anchor?: number) {
     const box = scroller
     const wanted = heldZoom(next)
+    // The tab is what holds the zoom, and setting it there is also what writes it
+    // down; see `notePdf`, which does nothing when nothing changed.
     if (!box || !height) {
-      tab.zoom = wanted
+      workspace.notePdf(tab.id, tab.page ?? 1, wanted)
       return
     }
 
@@ -257,7 +269,6 @@
       anchor === undefined ? box.clientHeight / 2 : anchor - box.getBoundingClientRect().top
     const along = (box.scrollTop + focus) / height
 
-    tab.zoom = wanted
     workspace.notePdf(tab.id, tab.page ?? 1, wanted)
 
     // The column is laid out again by the change above; the scroll can only be
@@ -311,6 +322,17 @@
 
     // A page arriving under the current match is a match that can now be shown.
     if (finding && matches[current]?.page === number) void reveal()
+  }
+
+  /** A page that has gone takes what was kept of its DOM with it. The words
+   *  themselves stay: they are a few hundred bytes a page, they are what the find
+   *  bar counts with, and reading them again would be a round trip to the worker
+   *  for every page a scroll passes. */
+  function forget(number: number) {
+    layers.delete(number)
+    matrices.delete(number)
+    waiting.get(number)?.()
+    waiting.delete(number)
   }
 
   async function runsOf(number: number): Promise<string[]> {
@@ -654,6 +676,7 @@
                 selected={picked}
                 onmeasure={measured}
                 onwords={words}
+                onforget={forget}
                 onpick={(id: string | null) => (picked = id)}
               />
             {/if}
