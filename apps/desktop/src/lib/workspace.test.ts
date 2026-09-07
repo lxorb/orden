@@ -15,9 +15,19 @@ const notes: Record<string, string> = {
  *  and a path that is not a string is not a path. */
 const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'string' ? args.path : '')
 
+/** Every command the store sent, in order, so a test can say what was written
+ *  and what was kept before it. */
+const sent: { command: string; path: string; content: string }[] = []
+
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
+    sent.push({
+      command,
+      path: pathOf(args),
+      content: typeof args?.content === 'string' ? args.content : '',
+    })
+
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
@@ -708,5 +718,91 @@ describe('a note being read', () => {
     tab.note.live.replace('# a, changed')
 
     expect(tab.note.revision).toBeGreaterThan(before)
+  })
+})
+
+describe('a replacement across the space', () => {
+  /** What the panel works out before anything is written; see search/apply. */
+  const change = (path: string, before: string, after: string) => ({
+    path,
+    before,
+    after,
+    edits: [{ from: 0, to: before.length, insert: after }],
+    back: [{ from: 0, to: after.length, insert: before }],
+  })
+
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.undone.stack = []
+    workspace.setAutoSave(false)
+    sent.length = 0
+  })
+
+  test('keeps what each note said before it writes what it says now', async () => {
+    await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha')])
+
+    const written = sent.filter((one) => one.path === '/space/a.md')
+    expect(written.map((one) => one.command)).toEqual(['snapshot_note', 'write_note'])
+    expect(written[0]?.content).toBe('# a')
+    expect(written[1]?.content).toBe('# alpha')
+  })
+
+  test('takes a snapshot of every note it touches', async () => {
+    await workspace.replaceInNotes([
+      change('/space/a.md', '# a', '# alpha'),
+      change('/space/b.md', '# b', '# beta'),
+    ])
+
+    expect(sent.filter((one) => one.command === 'snapshot_note').map((one) => one.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+    ])
+  })
+
+  test('puts the words into a note that is open, and leaves it saved', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha')])
+
+    const tab = workspace.tabs.find((one) => one.path === '/space/a.md')
+    expect(tab?.doc).toBe('# alpha')
+    expect(tab?.dirty).toBe(false)
+  })
+
+  test('is one thing to undo, however many notes it touched', async () => {
+    await workspace.replaceInNotes([
+      change('/space/a.md', '# a', '# alpha'),
+      change('/space/b.md', '# b', '# beta'),
+    ])
+
+    expect(workspace.undone.stack).toHaveLength(1)
+    expect(workspace.undoLabel).toBe('Undo the replacement')
+  })
+
+  test('writes nothing and remembers nothing when there is nothing to change', async () => {
+    await workspace.replaceInNotes([])
+
+    expect(sent).toEqual([])
+    expect(workspace.undoLabel).toBeNull()
+  })
+
+  test('undoing gives every note its old words back', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.replaceInNotes([
+      change('/space/a.md', '# a', '# alpha'),
+      change('/space/b.md', '# b', '# beta'),
+    ])
+
+    sent.length = 0
+    await workspace.undoFileAction()
+
+    const written = sent.filter((one) => one.command === 'write_note')
+    expect(written.map((one) => [one.path, one.content])).toEqual([
+      ['/space/a.md', '# a'],
+      ['/space/b.md', '# b'],
+    ])
+
+    expect(workspace.tabs.find((one) => one.path === '/space/a.md')?.doc).toBe('# a')
+    expect(workspace.undone.stack).toHaveLength(0)
   })
 })

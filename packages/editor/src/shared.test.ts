@@ -216,6 +216,33 @@ describe('a document in two panes', () => {
     expect(note.text.toString()).toBe('restored')
   })
 
+  test('takes an edit from outside as an edit, so no caret is swept away', () => {
+    const note = new SharedDoc('alpha here\nalpha there\n')
+    // A caret near the end of the note, which is what a whole-text replacement
+    // would leave sitting at the end of the new text instead.
+    const only = new Pane(note, 22)
+
+    note.edit([
+      { from: 0, to: 5, insert: 'beta' },
+      { from: 11, to: 16, insert: 'beta' },
+    ])
+
+    expect(only.text).toBe('beta here\nbeta there\n')
+    expect(only.caret).toBe(20)
+    expect(note.text.toString()).toBe('beta here\nbeta there\n')
+  })
+
+  test('an edit from outside reaches every pane', () => {
+    const note = new SharedDoc('alpha')
+    const left = new Pane(note)
+    const right = new Pane(note)
+
+    note.edit([{ from: 0, to: 5, insert: 'beta' }])
+
+    expect(left.text).toBe('beta')
+    expect(right.text).toBe('beta')
+  })
+
   test('carries a deletion as a deletion', () => {
     const note = new SharedDoc('keep this word')
     const left = new Pane(note)

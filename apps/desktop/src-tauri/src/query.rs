@@ -26,23 +26,65 @@ pub enum Unit {
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Query {
     /// Every branch answers, which is what a space between two words means.
-    All { of: Vec<Query> },
+    All {
+        /// The branches.
+        of: Vec<Query>,
+    },
     /// Any branch answers, which is what `OR` means.
-    Any { of: Vec<Query> },
+    Any {
+        /// The branches.
+        of: Vec<Query>,
+    },
     /// The branch does not answer, which is what a leading `-` means.
-    Not { of: Box<Query> },
+    Not {
+        /// The branch that must not answer.
+        of: Box<Query>,
+    },
     /// Words in the note.
-    Text { text: String, fold: bool },
-    /// A `/pattern/`, with the `i` flag folded into `fold`.
-    Regex { source: String, fold: bool },
+    Text {
+        /// The word or the phrase, as it was typed.
+        text: String,
+        /// Whether case is folded.
+        fold: bool,
+    },
+    /// A `/pattern/`.
+    Regex {
+        /// The pattern between the slashes.
+        source: String,
+        /// Whether the `i` flag was given.
+        fold: bool,
+    },
     /// Where the note is, relative to the space.
-    Path { text: String, fold: bool },
+    Path {
+        /// What the path has to hold.
+        text: String,
+        /// Whether case is folded.
+        fold: bool,
+    },
     /// The note's own name.
-    File { text: String, fold: bool },
-    /// A tag without its hash. It stands for its children too.
-    Tag { tag: String },
+    File {
+        /// What the name has to hold.
+        text: String,
+        /// Whether case is folded.
+        fold: bool,
+    },
+    /// A tag. It stands for its children too, so `work` finds `work/2026`.
+    Tag {
+        /// The tag without its hash.
+        tag: String,
+    },
     /// Front matter: the key alone, or the key and something its value says.
-    Property { name: String, value: Option<String> },
+    Property {
+        /// The key, lowercased.
+        name: String,
+        /// What the value has to hold, or nothing to ask only for the key.
+        value: Option<String>,
+    },
     /// The branch, looked for inside one line, paragraph or section.
-    Scope { unit: Unit, of: Box<Query> },
+    Scope {
+        /// How near the branch's terms have to be.
+        unit: Unit,
+        /// The branch, answered within one unit at a time.
+        of: Box<Query>,
+    },
 }

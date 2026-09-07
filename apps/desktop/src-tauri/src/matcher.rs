@@ -67,7 +67,9 @@ pub struct Note<'a> {
     pub path: &'a str,
     /// How `path:` reads the note: relative to the space, `/`-separated.
     pub relative: &'a str,
+    /// The file's own name, which is what `file:` reads.
     pub name: &'a str,
+    /// The words.
     pub body: &'a str,
 }
 
@@ -77,15 +79,30 @@ enum Term {
     All(Vec<Term>),
     Any(Vec<Term>),
     Not(Box<Term>),
-    Text { needle: String, folded: bool },
+    Text {
+        needle: String,
+        folded: bool,
+    },
     /// None for a pattern that will not compile, which is a query still being
     /// typed rather than something to report, and matches nothing.
     Regex(Option<Pattern>),
-    Path { needle: String, folded: bool },
-    File { needle: String, folded: bool },
+    Path {
+        needle: String,
+        folded: bool,
+    },
+    File {
+        needle: String,
+        folded: bool,
+    },
     Tag(String),
-    Property { name: String, value: Option<String> },
-    Scope { unit: Unit, of: Box<Term> },
+    Property {
+        name: String,
+        value: Option<String>,
+    },
+    Scope {
+        unit: Unit,
+        of: Box<Term>,
+    },
 }
 
 /// What the query asks of a note beyond its words. Anything it never asks for
@@ -341,12 +358,16 @@ fn utf16_at(text: &str, byte: usize) -> usize {
         .sum()
 }
 
+/// A query with the work a whole space would repeat already done: patterns
+/// compiled, needles folded, and a note of what each note will be asked.
 pub struct Matcher {
     root: Term,
     needs: Needs,
 }
 
 impl Matcher {
+    /// Reads a query in, ready to be asked about note after note.
+    #[must_use]
     pub fn new(query: Query) -> Self {
         let mut needs = Needs::default();
         let root = compile(query, &mut needs);
@@ -355,6 +376,7 @@ impl Matcher {
 
     /// The note's matching lines, ready for a row in the panel. Empty when the
     /// note does not answer the query at all.
+    #[must_use]
     pub fn hits(&self, note: &Note, most: usize) -> Vec<Hit> {
         if most == 0 {
             return Vec::new();
@@ -366,7 +388,7 @@ impl Matcher {
             to: note.body.len(),
         };
 
-        let Some(mut spans) = self.walk(&self.root, note, &facts, whole) else {
+        let Some(mut spans) = walk(&self.root, note, &facts, whole) else {
             return Vec::new();
         };
 
@@ -448,75 +470,80 @@ impl Matcher {
             starts,
         }
     }
+}
 
-    fn walk(&self, term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<Span>> {
-        match term {
-            Term::All(of) => {
-                let mut out = Vec::new();
-                for one in of {
-                    out.append(&mut self.walk(one, note, facts, region)?);
-                }
-                Some(out)
+/// Where the term answers inside the region, or None when it does not.
+///
+/// A free function rather than a method, because everything it needs is in
+/// front of it: the query has already become a `Term`, and a matcher would be
+/// carried through the recursion for nothing.
+fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<Span>> {
+    match term {
+        Term::All(of) => {
+            let mut out = Vec::new();
+            for one in of {
+                out.append(&mut walk(one, note, facts, region)?);
             }
+            Some(out)
+        }
 
-            Term::Any(of) => {
-                let mut out = Vec::new();
-                let mut answered = false;
-                for one in of {
-                    if let Some(mut found) = self.walk(one, note, facts, region) {
-                        answered = true;
-                        out.append(&mut found);
-                    }
-                }
-                answered.then_some(out)
-            }
-
-            Term::Not(of) => self.walk(of, note, facts, region).is_none().then(Vec::new),
-
-            Term::Text { needle, folded } => literals(
-                if *folded { &facts.folded } else { note.body },
-                needle,
-                region,
-            ),
-
-            Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region),
-
-            Term::Path { needle, folded } => holds(note.relative, needle, *folded).then(Vec::new),
-
-            Term::File { needle, folded } => holds(note.name, needle, *folded).then(Vec::new),
-
-            // A tag stands for its children too, the way Obsidian reads it, so
-            // `tag:work` finds `#work/2026`.
-            Term::Tag(wanted) => facts
-                .tags
-                .iter()
-                .any(|tag| tag == wanted || under(tag, wanted))
-                .then(Vec::new),
-
-            Term::Property { name, value } => {
-                let held = facts.front.get(name)?;
-                match value {
-                    None => Some(Vec::new()),
-                    Some(wanted) => holds(held, wanted, true).then(Vec::new),
+        Term::Any(of) => {
+            let mut out = Vec::new();
+            let mut answered = false;
+            for one in of {
+                if let Some(mut found) = walk(one, note, facts, region) {
+                    answered = true;
+                    out.append(&mut found);
                 }
             }
+            answered.then_some(out)
+        }
 
-            Term::Scope { unit, of } => {
-                let mut out = Vec::new();
-                let mut answered = false;
+        Term::Not(of) => walk(of, note, facts, region).is_none().then(Vec::new),
 
-                for one in &facts.units[slot(*unit)] {
-                    let Some(within) = clip(*one, region) else {
-                        continue;
-                    };
-                    if let Some(mut found) = self.walk(of, note, facts, within) {
-                        answered = true;
-                        out.append(&mut found);
-                    }
-                }
+        Term::Text { needle, folded } => literals(
+            if *folded { &facts.folded } else { note.body },
+            needle,
+            region,
+        ),
 
-                answered.then_some(out)
+        Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region),
+
+        Term::Path { needle, folded } => holds(note.relative, needle, *folded).then(Vec::new),
+
+        Term::File { needle, folded } => holds(note.name, needle, *folded).then(Vec::new),
+
+        // A tag stands for its children too, the way Obsidian reads it, so
+        // `tag:work` finds `#work/2026`.
+        Term::Tag(wanted) => facts
+            .tags
+            .iter()
+            .any(|tag| tag == wanted || under(tag, wanted))
+            .then(Vec::new),
+
+        Term::Property { name, value } => {
+            let held = facts.front.get(name)?;
+            match value {
+                None => Some(Vec::new()),
+                Some(wanted) => holds(held, wanted, true).then(Vec::new),
             }
+        }
+
+        Term::Scope { unit, of } => {
+            let mut out = Vec::new();
+            let mut answered = false;
+
+            for one in &facts.units[slot(*unit)] {
+                let Some(within) = clip(*one, region) else {
+                    continue;
+                };
+                if let Some(mut found) = walk(of, note, facts, within) {
+                    answered = true;
+                    out.append(&mut found);
+                }
+            }
+
+            answered.then_some(out)
         }
     }
 }
@@ -675,7 +702,9 @@ mod tests {
                 hit.ranges
                     .into_iter()
                     .map(|range| {
-                        String::from_utf16_lossy(units.get(range.from..range.to).unwrap_or_default())
+                        String::from_utf16_lossy(
+                            units.get(range.from..range.to).unwrap_or_default(),
+                        )
                     })
                     .collect::<Vec<String>>()
             })
@@ -746,8 +775,14 @@ mod tests {
 
     #[test]
     fn excluding_turns_a_match_into_a_miss() {
-        assert!(!answers(&all(&[text("alpha"), without(&text("gamma"))]), NOTE));
-        assert!(answers(&all(&[text("alpha"), without(&text("zeta"))]), NOTE));
+        assert!(!answers(
+            &all(&[text("alpha"), without(&text("gamma"))]),
+            NOTE
+        ));
+        assert!(answers(
+            &all(&[text("alpha"), without(&text("zeta"))]),
+            NOTE
+        ));
         assert!(answers(&without(&text("zeta")), NOTE));
         assert!(!answers(&without(&text("alpha")), NOTE));
     }
@@ -863,10 +898,7 @@ mod tests {
 
     #[test]
     fn nearness_excludes_within_the_line_it_is_given() {
-        let one = scope(
-            "line",
-            &all(&[text("alpha"), without(&text("beta"))]),
-        );
+        let one = scope("line", &all(&[text("alpha"), without(&text("beta"))]));
 
         assert!(answers(&one, CLOSE));
         assert!(!answers(&one, "alpha beta\n"));

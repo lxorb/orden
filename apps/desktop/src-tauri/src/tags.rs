@@ -9,6 +9,7 @@
 //! what rules out `#42`.
 
 /// Every tag in one note's text, with the hash, in the order they are used.
+#[must_use]
 pub fn tags_in(body: &str) -> Vec<String> {
     let mut found = Vec::new();
     let mut in_fence = false;

@@ -14,9 +14,17 @@
 //! quantifiers `* + ? {n} {n,} {n,m}`, greedy or lazy.
 //!
 //! Not understood, and answered by refusing to compile: lookahead, lookbehind,
-//! backreferences, named groups, property escapes, inline flags, and anything
-//! half typed. A pattern that does not compile is one that matches nothing, which
-//! is what a query still being typed should do.
+//! backreferences, named groups, property escapes, inline flags, a `{` that
+//! opens no quantifier, and anything half typed. A pattern that does not compile
+//! is one that matches nothing, which is what a query still being typed should
+//! do.
+//!
+//! Two places part from the browser on purpose. A `.` here takes every character
+//! but a newline, where the browser also holds back the carriage return and the
+//! two line separators. A `]` written first inside a class is that bracket, where
+//! the browser reads `[]` as a class of nothing at all. Both are the reading the
+//! search field is specified against, and both are what the other half of search
+//! implements.
 //!
 //! Matching runs on a step budget. `(a+)+b` costs exponentially many steps on a
 //! line of the right shape, and a search field is exactly where such a pattern

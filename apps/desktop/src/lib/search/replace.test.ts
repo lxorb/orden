@@ -1,7 +1,21 @@
 import { describe, expect, test } from 'vitest'
 import { Matcher } from './match'
 import { parseQuery } from './query'
-import { expand, replaceIn } from './replace'
+import { type Edit, expand, replaceIn, reverse } from './replace'
+
+/** The same splice `replaceIn` makes, so a set of edits can be checked by
+ *  running them. */
+function applied(body: string, edits: readonly Edit[]): string {
+  let text = ''
+  let at = 0
+
+  for (const edit of edits) {
+    text += body.slice(at, edit.from) + edit.insert
+    at = edit.to
+  }
+
+  return text + body.slice(at)
+}
 
 /** What the panel does to one note: find, keep the lines that are ticked,
  *  and put the replacement in. */
@@ -76,6 +90,46 @@ describe('groups', () => {
   test('run down a whole note', () => {
     const body = 'a-1\nb-2\n'
     expect(rewrite(body, '/(\\w)-(\\d)/', '$2$1')?.text).toBe('1a\n2b\n')
+  })
+})
+
+describe('putting a replacement back', () => {
+  const back = (body: string, query: string, replacement: string) => {
+    const made = rewrite(body, query, replacement)
+    if (!made) throw new Error('nothing was replaced')
+
+    return { made, edits: reverse(body, made.edits) }
+  }
+
+  test('gives the note its old words', () => {
+    const body = 'alpha and alpha\n'
+    const { made, edits } = back(body, 'alpha', 'beta')
+
+    expect(applied(made.text, edits)).toBe(body)
+  })
+
+  test('works when the replacement is longer than what it replaced', () => {
+    const body = 'a b a\n'
+    const { made, edits } = back(body, 'a', 'much longer')
+
+    expect(made.text).toBe('much longer b much longer\n')
+    expect(applied(made.text, edits)).toBe(body)
+  })
+
+  test('works when the replacement is shorter', () => {
+    const body = 'alpha alpha alpha\n'
+    const { made, edits } = back(body, 'alpha', 'x')
+
+    expect(made.text).toBe('x x x\n')
+    expect(applied(made.text, edits)).toBe(body)
+  })
+
+  test('works when the replacement took the words out', () => {
+    const body = 'keep alpha this\n'
+    const { made, edits } = back(body, '"alpha "', '')
+
+    expect(made.text).toBe('keep this\n')
+    expect(applied(made.text, edits)).toBe(body)
   })
 })
 
