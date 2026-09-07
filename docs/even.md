@@ -417,6 +417,48 @@ binding. Its not-found handling is `single-page-application`, which would answer
 `/even/` with the editor's own page, so two routes are named ahead of the
 catch-all and ask for `/even.html` by name.
 
+### Where a packed plugin actually runs, and what it may keep
+
+Undocumented by the platform, and settled on a real device on 2026-09-08. The
+plugin's own diagnosis panel, photographed on a Samsung SM-S948B running Android
+16, said:
+
+```
+origin      http://127.0.0.1:42479
+protocol    http:
+href        http://127.0.0.1:42479/
+agent       ... Android 16; SM-S948B ... wv) ... Chrome/151 Mobile Safari
+last launch #5
+localStorage  empty
+cookie        kept 5
+indexedDB     empty
+```
+
+**A packed plugin is served by a local HTTP server on `127.0.0.1`, on a port
+picked afresh every launch.** That one fact explains everything that was wrong
+with this plugin for a week:
+
+- The origin is `http://127.0.0.1:<port>`, and a different port is a different
+  origin. `localStorage` and IndexedDB are keyed by origin, so both come up
+  **empty on every launch** - not wiped, simply somebody else's. Signing in and
+  being asked to sign in again next time is what that looks like.
+- **Cookies ignore the port.** `http://127.0.0.1:41234` and
+  `http://127.0.0.1:42479` are different origins but the same cookie host, which
+  is why the cookie was the one page store that survived, five launches running.
+- The host's own store, through `setLocalStorage`, survives because the phone
+  app holds it rather than the page.
+
+So the two stores that matter are **the cookie and the host store**, and they
+fail in different ways: the cookie is limited to about 4 KB and is the only one
+that works before the channel arrives, and the host store is unbounded in
+practice but answers nothing until it does. `localStorage` and IndexedDB stay in
+the list as free fallbacks for the browser and the desktop app, where they are
+the ones that work. See `src/lib/even/keep.ts`.
+
+The community had reported the symptom - "browser localStorage does not survive
+app restarts inside the `.ehpk` WebView", in `nickustinov/even-g2-notes` - but
+not the cause. The cause is the port.
+
 ### What goes into the package, and why it is not `dist`
 
 `pnpm --filter @nib/desktop build:even` builds, then stages
