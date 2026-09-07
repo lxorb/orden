@@ -22,6 +22,10 @@ import { everywhere } from './lib/even/keep'
 const target = document.getElementById('app')
 if (!target) throw new Error('even.html has no #app to mount into')
 
+// The line the page paints before any of this ran. Its job is done: it is here
+// to be seen when this file never gets to run at all.
+document.getElementById('boot')?.remove()
+
 // Before the app, because mounting it is what restores the session, and a packed
 // plugin's page has no store it can count on. See lib/even/keep.ts.
 account.alsoKeepIn(everywhere)

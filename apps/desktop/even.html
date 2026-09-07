@@ -14,8 +14,25 @@
     <link rel="icon" href="/icon-256.png" />
 
     <title>Nib</title>
+
+    <!-- The one rule the page carries itself, because the stylesheet is a
+         module and this has to be readable before any module has loaded. -->
+    <style>
+      #boot {
+        margin: 0;
+        padding: 10px 12px;
+        color: #8a8f98;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+      }
+    </style>
   </head>
   <body>
+    <!-- Painted before a line of script runs, and removed by the app the moment
+         it mounts. The plain editor has nothing like it, so seeing it at all
+         proves the plugin's own page was loaded; seeing it stay proves the page
+         loaded and its script did not. -->
+    <p id="boot">Nib for G2</p>
     <div id="app"></div>
     <script type="module" src="/src/even.ts"></script>
   </body>

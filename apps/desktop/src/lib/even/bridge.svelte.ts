@@ -114,12 +114,12 @@ class Bridge {
       // the one case worth being loud about, so the diagnosis opens itself.
       this.health = 'alone'
       this.said('no host')
-      diagnosis.settled('not found', waited, true)
+      diagnosis.settled('not found', waited)
       return undefined
     }
 
     this.said('host')
-    diagnosis.settled('found', waited, false)
+    diagnosis.settled('found', waited)
 
     const sheets = new Sheets({
       // KaTeX's own stylesheet with its faces inside it, which is what lets a

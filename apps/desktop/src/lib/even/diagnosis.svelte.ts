@@ -8,9 +8,22 @@ import manifest from '../../../even.app.json'
 import { bridgeLike, countLaunch, type Fact, hostFacts, pageFacts } from './facts'
 
 class Diagnosis {
-  open = $state(false)
+  /** Open from the first paint, and stays open until somebody closes it.
+   *
+   *  It used to wait for the bridge to give up before showing itself, which
+   *  meant the one build where nothing worked at all was also the one build
+   *  that said nothing. A panel that has to be earned is no use: this is the
+   *  plugin's only voice on a device, so it speaks first and is dismissed
+   *  second. */
+  open = $state(true)
   /** Everything worth reading, in the order it is worth reading it. */
   facts = $state<Fact[]>([])
+
+  constructor() {
+    // Filled in here rather than waiting to be started, so that a launch which
+    // falls over before anything else runs still says which build fell over.
+    this.gather()
+  }
 
   /** Set once the bridge has finished looking, so the view can say what came of
    *  it rather than showing a blank where the answer goes. */
@@ -20,16 +33,14 @@ class Diagnosis {
     this.open = !this.open
   }
 
-  /** Says what became of the wait for the phone app, and opens the view by
-   *  itself when there was no phone app to find: somebody holding a plugin that
-   *  does nothing should not also have to know where to tap. */
-  settled(what: string, ms: number, alone: boolean) {
+  /** Says what became of the wait for the phone app. The view is already open;
+   *  this only fills in the answer when it arrives. */
+  settled(what: string, ms: number) {
     this.found = [
       { name: 'bridge', value: what },
       { name: 'waited', value: `${String(Math.round(ms))} ms` },
     ]
     this.gather()
-    if (alone) this.open = true
   }
 
   async start() {
@@ -52,7 +63,9 @@ class Diagnosis {
     const global = globalThis as unknown as Record<string, unknown>
 
     this.facts = [
-      { name: 'build', value: `${manifest.name} ${manifest.version}` },
+      // First line, and the one that answers "did the build I just shipped
+      // reach the phone at all": version, commit, and when it was built.
+      { name: 'build', value: `${manifest.name} ${__EVEN_BUILD__}` },
       ...pageFacts(global),
       ...this.found,
       ...hostFacts(global),
