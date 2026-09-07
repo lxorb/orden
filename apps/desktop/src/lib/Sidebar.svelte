@@ -6,12 +6,14 @@
   import { newSpace } from './space-actions'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
-  import type { Hit, Panel, SortKey } from './workspace.svelte'
+  import type { Panel, SortKey } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
+  import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import Links from './Links.svelte'
+  import SearchPanel from './SearchPanel.svelte'
   import Tree from './Tree.svelte'
 
   const { ongoto }: { ongoto?: (line: number) => void } = $props()
@@ -48,10 +50,6 @@
     },
   ]
 
-  /** A star: the mark bookmarking wears wherever it is not a word. */
-  const STAR_ICON =
-    'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
-
   const GRAPH_ICON =
     'M1.4 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M8 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M4.7 9.9a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M5 3.4h3M5.7 8.3 4 5M7.3 8.3 9 5'
 
@@ -59,8 +57,6 @@
    *  Held here because the switch for it is in the row of panel tabs above. */
   let graphing = $state(false)
   let depth = $state(1)
-
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
   /** Right-clicking the Files tab is where a file list keeps its sorting. */
   function sortMenu(): MenuEntry[] {
@@ -109,64 +105,13 @@
     return name === undefined ? {} : { title: name }
   }
 
-  let query = $state('')
-  let hits = $state<Hit[]>([])
-  let searching = $state(false)
-  let debounce: ReturnType<typeof setTimeout>
-
-  /** Which search is the latest. Typing outruns the disk, and a slow search
-   *  landing after a quicker one that came later would show the results for a
-   *  word that is no longer in the box. */
-  let searches = 0
-
-  function onQuery(value: string) {
-    query = value
-    clearTimeout(debounce)
-    searches++
-
-    if (value.trim().length < 2) {
-      hits = []
-      searching = false
-      return
-    }
-
-    searching = true
-    debounce = setTimeout(() => void run(value, searches), 220)
-  }
-
-  async function run(text: string, search: number) {
-    const found = await workspace.search(text)
-    if (search !== searches) return
-
-    hits = found
-    searching = false
-  }
-
-  async function openHit(hit: Hit) {
-    await workspace.open(hit.path)
-    ongoto?.(hit.line)
-  }
-
-  /** The search in the box, as something to keep. Null until there is enough
-   *  of it to search for. */
-  const searchMark = $derived(
-    query.trim().length >= 2 ? workspace.bookmarks.forSearch(query) : null,
-  )
-
   /** A bookmarked search puts its words back in the box and runs them. The
    *  panel is named rather than shown, because `showPanel` is a switch and
    *  would shut a search panel that was already open. */
   function runBookmarked(text: string) {
     if (workspace.panel !== 'search') workspace.showPanel('search')
-    onQuery(text)
+    search.ask(text)
   }
-
-  /** An empty search offers the space's own tags, which is how you find out
-   *  what there is to search for. */
-  const tags = $derived.by(() => {
-    if (workspace.panel !== 'search' || query.trim()) return []
-    return workspace.tags
-  })
 
   $effect(() => {
     if (workspace.panel === 'search') void workspace.loadTags()
@@ -351,59 +296,7 @@
       {:else if workspace.panel === 'links'}
         <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
       {:else if workspace.panel === 'search'}
-        <div class="find">
-          <!-- svelte-ignore a11y_autofocus -->
-          <input
-            class="query"
-            value={query}
-            oninput={(event) => onQuery(event.currentTarget.value)}
-            placeholder={t('Search this space')}
-            spellcheck="false"
-            autofocus
-          />
-
-          <!-- The one place a bookmark is a mark rather than a word: there is no
-               row to right-click, and a star in the box says what it does. -->
-          {#if searchMark}
-            {@const kept = workspace.bookmarks.has(searchMark)}
-            <button
-              class="star"
-              class:on={kept}
-              title={kept ? t('Remove bookmark') : t('Bookmark')}
-              aria-label={kept ? t('Remove bookmark') : t('Bookmark')}
-              aria-pressed={kept}
-              onclick={() => workspace.bookmarks.toggle(searchMark)}
-              transition:fly={{ x: 6, duration: 130, easing: cubicOut }}
-            >
-              <svg viewBox="0 0 13 13"><path d={STAR_ICON} /></svg>
-            </button>
-          {/if}
-        </div>
-
-        {#if hits.length}
-          <ul>
-            {#each hits as hit, index (`${hit.path}:${hit.line}:${index}`)}
-              <li>
-                <button class="hit" onclick={() => openHit(hit)}>
-                  <span class="hit-note">{stripped(hit.name)}</span>
-                  <span class="hit-line">{hit.text}</span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        {:else if tags.length}
-          <ul class="tags">
-            {#each tags as tag (tag.tag)}
-              <li>
-                <button class="tag" onclick={() => onQuery(tag.tag)}>
-                  {tag.tag}<span class="count">{tag.count}</span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        {:else if query.trim().length >= 2 && !searching}
-          <p class="empty-text">{t('Nothing found')}</p>
-        {/if}
+        <SearchPanel {ongoto} />
       {/if}
     </div>
   {/key}
@@ -578,8 +471,7 @@
     color: var(--item-hover-text-color);
   }
 
-  .row:active,
-  .hit:active {
+  .row:active {
     background: var(--press);
     color: var(--text-strong);
   }
@@ -608,150 +500,10 @@
     outline-offset: -2px;
   }
 
-  .find {
-    position: relative;
-    margin-bottom: var(--space-2);
-  }
-
-  .query {
-    width: 100%;
-    /* Room for the star at all times, so switching it on moves no text. */
-    padding: 6px 30px 6px 9px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    outline: none;
-    transition: border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .query:focus {
-    border-color: var(--accent);
-  }
-
-  /* Inside the field rather than beside it: it is about what is in the field. */
-  .star {
-    position: absolute;
-    top: 50%;
-    right: 5px;
-    transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
-    display: grid;
-    place-items: center;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  .star:hover {
-    background: var(--surface-2);
-    color: var(--text);
-  }
-
-  .star:active {
-    transform: translateY(-50%) scale(0.88);
-  }
-
-  .star.on {
-    color: var(--accent);
-  }
-
-  /* Filled once it is kept: the shape alone says which way it stands. */
-  .star.on svg {
-    fill: currentColor;
-  }
-
-  .star:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-  }
-
-  .hit {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 6px 8px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    text-align: left;
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .hit:hover {
-    background: var(--item-hover-bg-color);
-  }
-
-  .hit-note {
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    color: var(--accent);
-  }
-
-  .hit-line {
-    font-size: var(--text-sm);
-    color: var(--muted-strong);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   /* Fills whatever is left, so the whole panel responds. */
   .rest {
     flex: 1;
     min-height: var(--space-6);
-  }
-
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    padding: var(--space-2) 0;
-  }
-
-  .tag {
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-    padding: 3px 8px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    cursor: default;
-    transition:
-      background var(--dur-instant) var(--ease-out),
-      border-color var(--dur-instant) var(--ease-out),
-      color var(--dur-instant) var(--ease-out);
-  }
-
-  .tag:hover {
-    border-color: var(--accent-line);
-    background: var(--accent-soft);
-    color: var(--text-strong);
-  }
-
-  .tag:active {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 24%, transparent);
-  }
-
-  .count {
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
   }
 
   .empty-text {
@@ -851,14 +603,8 @@
 
     /* Same floor as the tree rows beneath them: everything in the drawer is
        something a thumb has to land on. */
-    .row,
-    .hit {
+    .row {
       min-height: 48px;
-    }
-
-    .hit {
-      padding-top: 10px;
-      padding-bottom: 10px;
     }
 
     /* The same type as the tree rows, and none of the desktop's vertical
@@ -881,13 +627,6 @@
     .empty-text {
       margin: var(--space-3) var(--space-2) 0;
       font-size: var(--text-base);
-    }
-
-    /* 16px is where iOS stops zooming into a focused field. */
-    .query {
-      min-height: 44px;
-      padding: 10px 12px;
-      font-size: 16px;
     }
   }
 </style>

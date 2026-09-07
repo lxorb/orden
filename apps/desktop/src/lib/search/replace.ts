@@ -73,3 +73,19 @@ export function replaceIn(
 
   return { text: text + body.slice(at), edits }
 }
+
+/** The edits that put a replacement back, in the coordinates of the note the
+ *  replacement left behind. Undoing is then the same kind of change the
+ *  replacement was, which is what keeps the carets in an open pane where their
+ *  readers left them. */
+export function reverse(body: string, edits: readonly Edit[]): Edit[] {
+  let drift = 0
+
+  return edits.map((edit) => {
+    const from = edit.from + drift
+    const to = from + edit.insert.length
+    drift += edit.insert.length - (edit.to - edit.from)
+
+    return { from, to, insert: body.slice(edit.from, edit.to) }
+  })
+}

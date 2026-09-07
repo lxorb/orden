@@ -4,7 +4,7 @@
  *  value: the operator itself is short enough to type, and a list of three
  *  words is a lesson, not a help. */
 
-export type Field = 'path' | 'file' | 'tag'
+type Field = 'path' | 'file' | 'tag'
 
 /** The value being typed: which operator it belongs to and where it sits, so
  *  the chosen one goes back exactly where the typed one was. */

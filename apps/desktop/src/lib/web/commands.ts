@@ -2,6 +2,9 @@
  *  Same names, same shapes - so every call site works on both. */
 
 import { scanNote, type SpaceLinks } from '../scan-note'
+import { type Hit, Matcher } from '../search/match'
+import type { Query } from '../search/query'
+import { tagsIn } from '../search/tags'
 import { basename, isMarkdown, join, normalise, parent, safeName, spaceOf, within } from './paths'
 import { assets, files, KEEP, meta, snapshots } from './store'
 
@@ -232,52 +235,47 @@ async function spaceList() {
     .map((path) => ({ name: basename(path), path }))
 }
 
-async function search(root: string, query: string, limit: number) {
-  const needle = query.trim().toLowerCase()
-  if (!needle) return []
+/** How many hits are worth handing over at once. The same handful the Rust
+ *  side sends, so a list fills the same way on both. */
+const BATCH = 24
 
+/** The same search the desktop runs, over the rows in this browser. The query
+ *  arrives already parsed and the matching itself is shared code, so the two
+ *  cannot answer differently; what differs is only where the notes are. */
+async function search(root: string, query: Query, limit: number, onHits: (hits: Hit[]) => void) {
+  const base = normalise(root)
   const rows = (await files.all())
-    .filter((row) => within(normalise(root), row.path) && isMarkdown(row.path))
+    .filter((row) => within(base, row.path) && isMarkdown(row.path))
     .sort((a, b) => (a.path < b.path ? -1 : 1))
 
-  const hits: { path: string; name: string; line: number; text: string }[] = []
+  const matcher = new Matcher(query)
+  let found = 0
+  let pending: Hit[] = []
 
   for (const row of rows) {
-    row.content.split('\n').forEach((line, index) => {
-      if (hits.length >= limit || !line.toLowerCase().includes(needle)) return
-      hits.push({
+    if (found >= limit) break
+
+    const hits = matcher.hits(
+      {
         path: row.path,
+        relative: row.path.slice(base === '/' ? 1 : base.length + 1),
         name: basename(row.path),
-        line: index,
-        text: line.trim().slice(0, 200),
-      })
-    })
+        body: row.content,
+      },
+      limit - found,
+    )
+    if (!hits.length) continue
 
-    if (hits.length >= limit) break
-  }
+    found += hits.length
+    pending.push(...hits)
 
-  return hits
-}
-
-/** Same rule the Rust side uses: a tag starts a word and has no space after the
- *  hash, which is what tells it apart from a heading. */
-function tagsIn(body: string): string[] {
-  const found: string[] = []
-  let fenced = false
-
-  for (const line of body.split('\n')) {
-    if (/^\s*(```|~~~)/.test(line.trim())) {
-      fenced = !fenced
-      continue
-    }
-    if (fenced) continue
-
-    for (const match of line.matchAll(/(^|[\s(])#([\p{L}][\p{L}\p{N}\-_/]*)/gu)) {
-      found.push(`#${match[2]}`)
+    if (pending.length >= BATCH) {
+      onHits(pending)
+      pending = []
     }
   }
 
-  return found
+  if (pending.length) onHits(pending)
 }
 
 async function spaceTags(root: string) {
@@ -388,11 +386,13 @@ export async function webInvoke<T>(
       return (await tree(root, args.options ?? {})) as T
 
     case 'search_space':
-      return (await search(
+      await search(
         root,
-        args.query as string,
+        args.query as Query,
         (args.limit as number | undefined) ?? 100,
-      )) as T
+        args.hits as (hits: Hit[]) => void,
+      )
+      return undefined as T
 
     case 'space_tags':
       return (await spaceTags(root)) as T

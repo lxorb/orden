@@ -10,6 +10,7 @@ import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
+import type { Change } from './search/apply'
 import { isRecord, stored } from './stored'
 import {
   type Draft,
@@ -64,13 +65,6 @@ export interface Space {
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'links'
-
-export interface Hit {
-  path: string
-  name: string
-  line: number
-  text: string
-}
 
 export interface Tag {
   tag: string
@@ -1417,12 +1411,44 @@ class Workspace {
     this.tags = await invoke<Tag[]>('space_tags', { root }).catch(() => [])
   }
 
-  /** Searches every note in the space and returns the matching lines. */
-  async search(query: string): Promise<Hit[]> {
-    const root = this.activeSpace?.root
-    if (!root || query.trim().length < 2) return []
+  /** A note's words as they stand: what is on screen when it is open, and what
+   *  is on disk otherwise. A replacement reads through here so it never writes
+   *  over work that has not been saved yet. */
+  async noteText(path: string): Promise<string | null> {
+    this.flush()
 
-    return invoke<Hit[]>('search_space', { root, query, limit: 200 }).catch(() => [])
+    const open = this.documents.find((one) => one.path === path)
+    if (open) return open.text
+
+    return invoke<string>('read_note', { path }).catch(() => null)
+  }
+
+  /** Writes a replacement across the space. Every note keeps a snapshot of
+   *  what it said before it is written, a note open in a pane takes the change
+   *  as the words that changed so no caret moves, and however many notes were
+   *  touched it is one thing to undo. */
+  async replaceInNotes(changes: readonly Change[]) {
+    if (!changes.length) return
+
+    const done: Extract<FileAction, { kind: 'replace' }>['notes'] = []
+
+    for (const change of changes) {
+      // Keeping the version about to be replaced, the same way saving does.
+      await invoke('snapshot_note', {
+        path: change.path,
+        content: change.before,
+      }).catch(() => undefined)
+
+      await invoke('write_note', { path: change.path, content: change.after })
+
+      done.push({ path: change.path, content: change.before, edits: change.back })
+      links.noteSaved(change.path, change.after)
+      this.documents.find((one) => one.path === change.path)?.edited(change.edits, change.after)
+    }
+
+    this.undone.record({ kind: 'replace', notes: done })
+    await this.loadTree()
+    this.persist()
   }
 
   /** Creates `Untitled.md` in a folder, stepping the name until it is free. */
@@ -1616,6 +1642,9 @@ class Workspace {
         case 'rename':
           await this.putName(action)
           break
+        case 'replace':
+          await this.putWordsBack(action)
+          break
       }
     } catch {
       // Something else has since changed the file; leave what is there alone.
@@ -1650,6 +1679,17 @@ class Workspace {
     if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
     await invoke('write_note', { path: action.path, content: action.content })
+  }
+
+  /** Puts a replacement back: every note that was touched says what it said,
+   *  and a note open in a pane takes its old words as the words that changed,
+   *  so undoing costs nobody their caret either. */
+  private async putWordsBack(action: Extract<FileAction, { kind: 'replace' }>) {
+    for (const note of action.notes) {
+      await invoke('write_note', { path: note.path, content: note.content })
+      links.noteSaved(note.path, note.content)
+      this.documents.find((one) => one.path === note.path)?.edited(note.edits, note.content)
+    }
   }
 
   /** Puts a rename or a move back: the file where it was, and the links that

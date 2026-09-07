@@ -6,6 +6,7 @@
  *  contents are already gone, and there is no snapshot of a folder. */
 
 import { t } from '../i18n.svelte'
+import type { Edit } from '../search/replace'
 
 export type FileAction =
   | {
@@ -24,6 +25,11 @@ export type FileAction =
    *  filesystem can put back. */
   | { kind: 'merge'; from: string; fromContent: string; into: string; intoContent: string }
   | { kind: 'split' | 'extract'; from: string; fromContent: string; created: string }
+  /** A replacement run across the space. However many notes it touched, it is
+   *  one thing somebody did and so one thing to take back. Each note keeps the
+   *  words it had and the edits that put them back, so a note open in a pane
+   *  gets its old words the way it got the new ones and keeps its caret. */
+  | { kind: 'replace'; notes: { path: string; content: string; edits: Edit[] }[] }
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
@@ -84,6 +90,8 @@ export class FileActions {
         return t('Undo splitting {name}', { name: basename(action.from) })
       case 'extract':
         return t('Undo extracting from {name}', { name: basename(action.from) })
+      case 'replace':
+        return t('Undo the replacement')
     }
   }
 }

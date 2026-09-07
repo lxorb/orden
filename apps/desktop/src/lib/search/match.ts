@@ -96,7 +96,7 @@ export function lineAt(starts: readonly number[], offset: number): number {
 /** The regions a `line:` `block:` or `section:` group looks inside. */
 function unitsIn(body: string, unit: Unit): Range[] {
   const starts = lineStarts(body)
-  const ends = starts.map((start, index) => {
+  const ends = starts.map((_start, index) => {
     const next = starts[index + 1]
     return next === undefined ? body.length : next - 1
   })
@@ -174,7 +174,7 @@ function foldedOf(facts: Facts): string {
 }
 
 function tagsOf(facts: Facts): string[] {
-  return (facts.tags ??= tagsIn(facts.note.body).map((tag) => fold(tag.slice(1))))
+  return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tag.slice(1).toLowerCase()))
 }
 
 function frontOf(facts: Facts): Map<string, string> {
@@ -185,8 +185,11 @@ function unitsOf(facts: Facts, unit: Unit): Range[] {
   return (facts.units[unit] ??= unitsIn(facts.note.body, unit))
 }
 
+/** Whether a short string holds another. Plain lowercasing rather than the
+ *  length-preserving fold above: nothing here is an offset into a note, so a
+ *  letter that lowercases into two may as well do so. */
 function contains(hay: string, needle: string, folded: boolean): boolean {
-  return folded ? fold(hay).includes(fold(needle)) : hay.includes(needle)
+  return folded ? hay.toLowerCase().includes(needle.toLowerCase()) : hay.includes(needle)
 }
 
 /** Every place a plain word or phrase sits inside the region, without
@@ -266,7 +269,9 @@ export class Matcher {
     const next = starts[line + 1]
     const raw = note.body.slice(from, next === undefined ? note.body.length : next - 1)
     const lead = raw.length - raw.trimStart().length
-    const text = [...raw.trim()].slice(0, LINE).join('')
+    // Whole characters, so a row cut short never ends inside one. The Rust
+    // side counts the same way.
+    const text = Array.from(raw.trim()).slice(0, LINE).join('')
 
     const moved: Range[] = []
     for (const range of ranges) {
@@ -323,7 +328,7 @@ export class Matcher {
         return contains(facts.note.name, query.text, query.fold) ? [] : null
 
       case 'tag': {
-        const wanted = this.folded(query.tag)
+        const wanted = query.tag.toLowerCase()
         // A tag stands for its children too, the way Obsidian reads it, so
         // `tag:work` finds `#work/2026`.
         const has = tagsOf(facts).some((tag) => tag === wanted || tag.startsWith(`${wanted}/`))
@@ -374,7 +379,7 @@ export class Matcher {
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 
-    let made: RegExp | null = null
+    let made: RegExp | null
     try {
       made = new RegExp(source, folded ? 'gi' : 'g')
     } catch {

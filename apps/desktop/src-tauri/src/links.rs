@@ -14,10 +14,9 @@
 
 use serde::Serialize;
 use std::fs;
-use std::path::Path;
 use tauri::AppHandle;
 
-use crate::paths::{files_in, in_spaces};
+use crate::paths::{files_in, in_spaces, relative_to};
 
 /// How much of a line is worth keeping as the context a result is read in. The
 /// same as a search hit shows, so the two panels read alike.
@@ -99,15 +98,6 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         notes: out,
         files: others.iter().map(|path| relative_to(&dir, path)).collect(),
     })
-}
-
-/// A path inside the space as the space speaks of it: relative, and with `/`
-/// separators whichever the platform writes.
-fn relative_to(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
 }
 
 /// Whether a line opens or closes a fenced code block.

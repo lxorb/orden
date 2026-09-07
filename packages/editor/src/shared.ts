@@ -143,6 +143,21 @@ export class SharedDoc {
     this.onChange?.(this.state.doc)
   }
 
+  /** Changes made to the document from outside, as the ranges that actually
+   *  changed: a replacement run across the whole space, and putting one back.
+   *
+   *  Not `replace` above, which is the whole text at once. Every position each
+   *  view holds is mapped through a change set, and a change set covering the
+   *  document maps every caret in it to the same place; the words that changed
+   *  leave every caret but the ones inside them where they were. */
+  edit(changes: readonly { from: number; to: number; insert: string }[]) {
+    const made = this.state.update({ changes })
+
+    this.state = made.state
+    this.carry(made.changes, null)
+    this.onChange?.(this.state.doc)
+  }
+
   undo(asked: DocView): boolean {
     return this.step(undo, asked)
   }

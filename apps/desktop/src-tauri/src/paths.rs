@@ -291,6 +291,19 @@ fn gather(dir: &Path, depth: usize, notes: &mut Vec<PathBuf>, others: &mut Vec<P
     }
 }
 
+/// A path inside a space as the space speaks of it: relative, and with `/`
+/// separators whichever the platform writes.
+///
+/// Here rather than in one of the modules that walks a space, because both do:
+/// `links` names a note this way so a link can point at it, and `search` reads
+/// the same spelling for the `path:` operator.
+pub fn relative_to(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .replace('\\', "/")
+}
+
 /// Writes a file whole: a temp file beside it takes the content and is flushed to
 /// the disk itself before being renamed over the target. A crash, a full disk or
 /// a pulled cable leaves either the old file or the new one, never half of

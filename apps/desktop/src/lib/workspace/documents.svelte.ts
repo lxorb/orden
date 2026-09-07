@@ -109,6 +109,20 @@ export class NoteDoc {
     this.dirty = dirty
   }
 
+  /** Words changed under the note by something other than an editor, as the
+   *  ranges that changed: a replacement across the space, and putting one
+   *  back. The file is written in the same breath, so this leaves the note
+   *  clean, and every pane showing it keeps its caret. */
+  edited(changes: readonly { from: number; to: number; insert: string }[], text: string) {
+    this.quiet = true
+    this.live.edit(changes)
+    this.quiet = false
+
+    this.words = text
+    this.behind = false
+    this.dirty = false
+  }
+
   /** The one tab that previews a note, moving on to another one.
    *
    *  The document takes the new note on rather than being swapped for another,
