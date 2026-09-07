@@ -114,6 +114,11 @@ interface BookmarkView {
   text: string
 }
 
+interface SpaceFileView {
+  path: string
+  hash: string
+}
+
 interface SpaceView {
   id: string
   name: string
@@ -180,6 +185,8 @@ export interface Reply {
   space: SpaceView
   spaces: SpaceView[]
   bookmarks: BookmarkView[]
+  files: SpaceFileView[]
+  missing: string[]
   deleted: string[]
   available: boolean
   reason: string

@@ -3,12 +3,30 @@ import { now } from './crypto'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
-/** Two megabytes of picture is already more than a note needs, and the limit
- *  keeps one paste from eating a tenth of the quota. */
-const MAX_BLOB = 16 * 1024 * 1024
+/** What may be stored, and how much of each.
+ *
+ *  Sixteen megabytes of picture is already far more than a note needs, and the
+ *  limit keeps one paste from eating a tenth of the quota. A PDF is a whole
+ *  document rather than an illustration - a scanned paper of a few hundred pages
+ *  is tens of megabytes - so it gets its own, four times as much. Not more than
+ *  that: the body is read whole to hash and store it, and a worker has 128 MB of
+ *  memory to do it in. */
+const LIMITS: Record<string, number> = {
+  'image/png': 16 * 1024 * 1024,
+  'image/jpeg': 16 * 1024 * 1024,
+  'image/gif': 16 * 1024 * 1024,
+  'image/webp': 16 * 1024 * 1024,
+  'image/avif': 16 * 1024 * 1024,
+  'application/pdf': 64 * 1024 * 1024,
+}
 
 const HASH = /^[a-f0-9]{64}$/
-const TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'])
+
+/** The type a request declares, with any parameters after it left off:
+ *  `application/pdf; charset=binary` is a PDF. */
+function typeOf(header: string): string {
+  return (header.split(';')[0] ?? '').trim().toLowerCase()
+}
 
 const key = (hash: string) => `blobs/${hash}`
 
@@ -22,13 +40,14 @@ blobs.put('/:hash', async (context) => {
   const hash = context.req.param('hash').toLowerCase()
   if (!HASH.test(hash)) return context.json({ error: 'that is not a hash' }, 400)
 
-  const type = context.req.header('content-type') ?? ''
-  if (!TYPES.has(type)) return context.json({ error: 'images only' }, 415)
+  const type = typeOf(context.req.header('content-type') ?? '')
+  const limit = LIMITS[type]
+  if (limit === undefined) return context.json({ error: 'images and PDFs only' }, 415)
 
   // Read before the body is: a request that says it is bringing a hundred
   // megabytes is turned away without spending the memory to find out.
   const declared = Number(context.req.header('content-length') ?? 0)
-  if (declared > MAX_BLOB) return context.json({ error: 'that image is too big' }, 413)
+  if (declared > limit) return context.json({ error: 'that file is too big' }, 413)
 
   const already = await context.env.DB.prepare(
     'select hash from blobs where hash = ? and user_id = ?',
@@ -40,7 +59,7 @@ blobs.put('/:hash', async (context) => {
 
   const body = await context.req.arrayBuffer()
   if (!body.byteLength) return context.json({ error: 'nothing to store' }, 400)
-  if (body.byteLength > MAX_BLOB) return context.json({ error: 'that image is too big' }, 413)
+  if (body.byteLength > limit) return context.json({ error: 'that file is too big' }, 413)
 
   if (!(await fits(context.env, user.id, body.byteLength))) {
     return context.json({ error: 'out of space' }, 507)
@@ -58,8 +77,8 @@ blobs.put('/:hash', async (context) => {
   return context.json({ hash, stored: true }, 201)
 })
 
-/** Gives a picture back and stops keeping it. The object survives while any
- *  other account still references it. */
+/** Gives a file back and stops keeping it. The object survives while any other
+ *  account still references it. */
 blobs.delete('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
@@ -99,6 +118,9 @@ publicBlobs.get('/:name', async (context) => {
       // Addressed by content, so it can never go stale.
       'cache-control': 'public, max-age=31536000, immutable',
       etag: `"${hash}"`,
+      // The type is the one that was accepted on the way in; nothing here is to
+      // be read as anything else, whatever the bytes look like.
+      'x-content-type-options': 'nosniff',
     },
   })
 })

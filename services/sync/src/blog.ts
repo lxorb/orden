@@ -1,5 +1,7 @@
 import { documentTitle, findLinks, renderMarkdown, type Wikilink } from '@nib/markdown'
+import { isPdfTarget } from '@nib/markdown/links'
 import { noteKey } from './notes'
+import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import type { Env, Note, Space } from './types'
 
 const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
@@ -104,15 +106,73 @@ function pages(notes: readonly Note[]): Map<string, string> {
  *  writes, and a ceiling so one page cannot pull a whole space out of storage. */
 const MOST_EMBEDDED = 20
 
+/** Where the bytes of a file are served: the hash of its contents, with the
+ *  extension after it so that saving it keeps a sensible name. The same URL a
+ *  pasted picture gets, and for the same reason - addressed by content, it can
+ *  never go stale. */
+function blobUrl(file: SpaceFile): string {
+  const extension = /\.([a-z0-9]+)$/i.exec(file.path)?.[1]?.toLowerCase() ?? 'bin'
+  return `/i/${file.hash}.${extension}`
+}
+
+/** Where each file of a space is served, by every name a link could use for it:
+ *  its whole path and every tail of it, which is the same reading `pages` does
+ *  for the notes. A name two files answer to goes to the shallower one. */
+function fileUrls(files: readonly SpaceFile[]): Map<string, string> {
+  const byName = new Map<string, string>()
+
+  // Deepest first, so a shallower file overwrites it and wins the bare name.
+  const ordered = [...files].sort(
+    (one, other) => other.path.split('/').length - one.path.split('/').length,
+  )
+
+  for (const file of ordered) {
+    const url = blobUrl(file)
+    // Already forward-slashed: a path with a separator of anyone's platform in
+    // it was never recorded; see `wrong` in spaces/files.ts.
+    const parts = file.path.toLowerCase().split('/')
+    for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
+  }
+
+  return byName
+}
+
+/** The file a request is asking for, when the path names one the space keeps.
+ *
+ *  A markdown link writes the path the note wrote, so the reader's browser asks
+ *  the blog for `files/paper.pdf`. The bytes are a blob; this sends them there,
+ *  which keeps one place serving them and the `#page=` on the link intact. */
+function fileFor(space: Space, slug: string, url: URL): Response | null {
+  const files = readSpaceFiles(space.files)
+  if (!files.length) return null
+
+  let wanted = slug
+  try {
+    wanted = decodeURIComponent(slug)
+  } catch {
+    // Not valid encoding, so it is already the name it stands for.
+  }
+
+  const found = files.find((one) => one.path.toLowerCase() === wanted.toLowerCase())
+  return found ? Response.redirect(new URL(blobUrl(found), url).toString(), 302) : null
+}
+
 /** What a `[[wikilink]]` on a published page points at. A note the space does
  *  not publish resolves to nothing, and the renderer leaves it as words. */
-function linkResolver(notes: readonly Note[]) {
+function linkResolver(notes: readonly Note[], files: readonly SpaceFile[]) {
   const byName = pages(notes)
+  const byFile = fileUrls(files)
 
   return (link: Wikilink) => ({
     // A link naming no note points inside the page it is written on, which is
-    // an empty target plus whichever heading it named.
-    href: link.target ? (byName.get(nameOf(link.target)) ?? null) : '',
+    // an empty target plus whichever heading it named. A PDF is a file rather
+    // than a note and is served from where its bytes are; the renderer writes
+    // the page the link named after it.
+    href: !link.target
+      ? ''
+      : isPdfTarget(link.target)
+        ? (byFile.get(nameOf(link.target)) ?? null)
+        : (byName.get(nameOf(link.target)) ?? null),
   })
 }
 
@@ -259,6 +319,11 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     .first<{ name: string | null }>()
   const author = owner?.name ?? null
 
+  // A file the space keeps beside its notes, asked for by the path a link in one
+  // of them wrote. Before the notes, because it is settled by the path alone.
+  const asked = slug ? fileFor(space, slug, url) : null
+  if (asked) return asked
+
   // One note published on its own is the whole site: it sits at the root with
   // no index above it, and nothing else in the space is reachable. Asked for by
   // name rather than found in the listing, so it is served whatever else the
@@ -282,6 +347,10 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     const rendered = renderMarkdown(source, {
       footnotes: true,
       escapeHtml: true,
+      // One note is the whole site, so `linkResolver` has no other note to point
+      // at - but the files beside it are still served, and a link to one still
+      // has somewhere to go.
+      resolveLink: linkResolver([], readSpaceFiles(space.files)),
       resolveEmbed: await embedded(env, space, [only], source),
     })
 
@@ -325,7 +394,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const rendered = renderMarkdown(source, {
     footnotes: true,
     escapeHtml: true,
-    resolveLink: linkResolver(results),
+    resolveLink: linkResolver(results, readSpaceFiles(space.files)),
     resolveEmbed: await embedded(env, space, results, source),
   })
 

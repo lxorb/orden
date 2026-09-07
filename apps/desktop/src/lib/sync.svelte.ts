@@ -10,7 +10,7 @@ import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
 import { t } from './i18n.svelte'
-import { type Mirror, pull, push, readMirror } from './sync/mirror'
+import { type Mirror, newMirror, pull, push, readMirror } from './sync/mirror'
 import { workspace } from './workspace.svelte'
 
 const STORAGE_KEY = 'nib:mirrors'
@@ -214,17 +214,17 @@ class Sync {
     }
 
     for (const { root, spaceId } of plan.pair) {
-      this.mirrors[root] = { spaceId, root, cursor: 0, notes: {} }
+      this.mirrors[root] = newMirror(spaceId, root)
     }
 
     for (const space of plan.upload) {
       const { space: remote } = await api.createSpace(token, space.name)
-      this.mirrors[space.root] = { spaceId: remote.id, root: space.root, cursor: 0, notes: {} }
+      this.mirrors[space.root] = newMirror(remote.id, space.root)
     }
 
     for (const space of plan.adopt) {
       const root = await workspace.adoptSpace(space.name)
-      if (root) this.mirrors[root] = { spaceId: space.id, root, cursor: 0, notes: {} }
+      if (root) this.mirrors[root] = newMirror(space.id, root)
     }
 
     // The icon and the bookmarks belong to the space, so they travel with it.

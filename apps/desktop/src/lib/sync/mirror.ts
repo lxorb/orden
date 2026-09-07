@@ -11,9 +11,10 @@
  *  always the same one: never silently drop an edit. The other side's copy
  *  lands beside ours with a name that says where it came from. */
 
-import { api, ApiError } from '../api'
+import { isPdfTarget } from '@nib/markdown/links'
+import { api, ApiError, type SpaceFile } from '../api'
 import { without } from '../records'
-import { isRecord, isString } from '../stored'
+import { isNumber, isRecord, isString } from '../stored'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 
@@ -25,6 +26,14 @@ interface Tracked {
   hash: string
 }
 
+/** A PDF beside the notes, as the last pass left it. When the file was last
+ *  written is what says whether it is worth reading and hashing again: a paper is
+ *  tens of megabytes, and a pass runs every few minutes. */
+interface TrackedFile {
+  hash: string
+  modified: number
+}
+
 /** One local space folder and the remote space it mirrors. Keyed by `root`,
  *  because the folder is the thing that persists across launches. */
 export interface Mirror {
@@ -32,11 +41,22 @@ export interface Mirror {
   root: string
   cursor: number
   notes: Record<string, Tracked>
+  /** The PDFs beside the notes; see `pushFiles`. */
+  files: Record<string, TrackedFile>
+}
+
+/** A folder just paired with a space, which knows nothing about it yet. One
+ *  place, so a new field cannot be forgotten at one of the five call sites. */
+export function newMirror(spaceId: string, root: string): Mirror {
+  return { spaceId, root, cursor: 0, notes: {}, files: {} }
+}
+
+function hex(digest: ArrayBuffer): string {
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 async function sha256(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))
 }
 
 function join(root: string, path: string): string {
@@ -128,10 +148,15 @@ export async function push(mirror: Mirror, token: string): Promise<boolean> {
   const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
   if (!tree) return false
 
+  const listed = flatten(tree)
   const seen = new Set<string>()
   let moved = false
 
-  for (const file of flatten(tree)) {
+  // A PDF is bytes rather than words, so it goes up as a blob and the space
+  // records where in it the file sits; see `pushFiles`.
+  if (await pushFiles(mirror, root, listed, token)) moved = true
+
+  for (const file of listed.filter((one) => !isPdfTarget(one.name))) {
     const path = relative(root, file.path)
     seen.add(path)
 
@@ -168,6 +193,83 @@ export async function push(mirror: Mirror, token: string): Promise<boolean> {
   }
 
   return moved
+}
+
+/** The PDFs of a space, offered to the account so that a published note linking
+ *  one can be served it.
+ *
+ *  A file goes up the way a pasted picture does: as a blob addressed by the hash
+ *  of its bytes. What the space records is where each one sits, and the answer to
+ *  that says which hashes the account holds no blob for - which is what makes the
+ *  bytes of a thirty megabyte paper travel once and never again.
+ *
+ *  Nothing comes back down. The list is what makes a paper reachable from a
+ *  published page; a second machine gets its PDFs the way it got them the first
+ *  time, which is by somebody putting them in the folder. */
+async function pushFiles(
+  mirror: Mirror,
+  root: string,
+  listed: readonly Entry[],
+  token: string,
+): Promise<boolean> {
+  const held: Record<string, TrackedFile> = {}
+  const manifest: SpaceFile[] = []
+
+  for (const file of listed) {
+    if (!isPdfTarget(file.name)) continue
+
+    const path = relative(root, file.path)
+    const tracked = mirror.files[path]
+    // Read and hashed again only when the file has been written since, so a
+    // paper nobody has touched costs nothing at all.
+    const hash = tracked?.modified === file.modified ? tracked.hash : await hashFile(file.path)
+    if (hash === null) continue
+
+    held[path] = { hash, modified: file.modified }
+    manifest.push({ path, hash })
+  }
+
+  if (same(mirror.files, held)) return false
+
+  const { missing } = await api.saveSpaceFiles(token, mirror.spaceId, manifest)
+
+  // What the account could not keep is what it has no bytes for. Those go up
+  // now, and the list is offered again so their rows land as well.
+  if (missing.length) {
+    const wanted = new Set(missing)
+
+    for (const file of manifest) {
+      if (!wanted.has(file.hash)) continue
+
+      const bytes = await invoke<ArrayBuffer>('read_file', {
+        path: join(root, file.path),
+      }).catch(() => null)
+      if (bytes) await api.putBlob(token, file.hash, 'application/pdf', bytes)
+    }
+
+    await api.saveSpaceFiles(token, mirror.spaceId, manifest)
+  }
+
+  mirror.files = held
+  return true
+}
+
+/** The hash of a file's bytes, or null when it cannot be read - a paper deleted
+ *  between the listing and here is nothing to report. */
+async function hashFile(path: string): Promise<string | null> {
+  const bytes = await invoke<ArrayBuffer>('read_file', { path }).catch(() => null)
+  return bytes === null ? null : hex(await crypto.subtle.digest('SHA-256', bytes))
+}
+
+/** Whether two lists of files say the same thing, so a space nobody has changed
+ *  costs no request at all. */
+function same(was: Record<string, TrackedFile>, now: Record<string, TrackedFile>): boolean {
+  const paths = Object.keys(now)
+
+  return (
+    paths.length === Object.keys(was).length &&
+    paths.every((path) => was[path]?.hash === now[path]?.hash)
+  )
 }
 
 /** Never silently drop an edit: the other device's copy lands beside ours. */
@@ -208,7 +310,24 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     root,
     cursor: typeof value.cursor === 'number' ? value.cursor : 0,
     notes: readTracked(value.notes),
+    files: readTrackedFiles(value.files),
   }
+}
+
+/** The PDFs the last pass knew about. An entry that no longer reads as one is
+ *  simply absent, which costs that one file a re-read rather than the whole
+ *  list a resend. */
+function readTrackedFiles(value: unknown): Record<string, TrackedFile> {
+  if (!isRecord(value)) return {}
+
+  const out: Record<string, TrackedFile> = {}
+  for (const [path, one] of Object.entries(value)) {
+    if (!isRecord(one) || !isString(one.hash) || !isNumber(one.modified)) continue
+
+    out[path] = { hash: one.hash, modified: one.modified }
+  }
+
+  return out
 }
 
 function readTracked(value: unknown): Record<string, Tracked> {

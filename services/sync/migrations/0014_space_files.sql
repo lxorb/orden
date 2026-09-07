@@ -1,0 +1,11 @@
+-- The files of a space that are not notes: today the PDFs a note links to.
+-- The bytes go up as blobs, addressed by the hash of their contents, exactly
+-- as a pasted image does; this column is only where in the space each one
+-- sits, so a published note that links `[[paper.pdf]]` can be served the
+-- paper.
+--
+-- On the space rather than in a table of its own, the way its bookmarks are:
+-- it is a short list belonging to one space, it goes with the space when the
+-- space is deleted, and a published page reads it off the row it has already
+-- fetched.
+alter table spaces add column files text not null default '[]';

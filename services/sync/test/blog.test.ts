@@ -722,6 +722,93 @@ describe('publishing one note instead of the space', () => {
   })
 })
 
+describe('a published note that links a PDF', () => {
+  /** A hash is 64 hex characters; the bytes behind it never matter here. */
+  const PAPER = 'c'.repeat(64)
+
+  /** The paper goes up as a blob, and the space records where in it the file
+   *  sits: the same two steps a sync pass takes. */
+  async function keepPaper(path = 'reading/paper.pdf') {
+    await call(env, `/v1/blobs/${PAPER}`, {
+      method: 'PUT',
+      token,
+      raw: new Uint8Array(2048),
+      headers: { 'content-type': 'application/pdf' },
+    })
+    await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token,
+      body: { files: [{ path, hash: PAPER }] },
+    })
+  }
+
+  test('links it at the page the link named', async () => {
+    await keepPaper()
+    await addNote('cites.md', '# Cites\n\nSee [[paper.pdf#page=3]].\n')
+    await publish({ subdomain: 'field' })
+
+    const page = await call(env, '/cites', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain(`href="/i/${PAPER}.pdf#page=3"`)
+  })
+
+  test('and with no page when the link named none', async () => {
+    await keepPaper()
+    await addNote('cites.md', '# Cites\n\nSee [[reading/paper.pdf]].\n')
+    await publish({ subdomain: 'field' })
+
+    const page = await call(env, '/cites', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain(`href="/i/${PAPER}.pdf"`)
+  })
+
+  test('serves the paper itself under the path the note wrote', async () => {
+    await keepPaper()
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toContain(`/i/${PAPER}.pdf`)
+  })
+
+  test('under a path with a space in its name, as a browser asks for it', async () => {
+    await keepPaper('reading/a long paper.pdf')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/reading/a%20long%20paper.pdf', {
+      host: 'field.nibeditor.com',
+    })
+    expect(response.status).toBe(302)
+  })
+
+  test('and leaves a link to a paper the space does not keep as plain words', async () => {
+    await addNote('cites.md', '# Cites\n\nSee [[missing.pdf#page=3]].\n')
+    await publish({ subdomain: 'field' })
+
+    const page = await call(env, '/cites', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain('See missing.pdf#page=3.')
+    expect(page.text).not.toContain('/i/')
+  })
+
+  test('serves it from a space published as one note as well', async () => {
+    await keepPaper()
+    await addNote('home.md', '# Home\n\nSee [[paper.pdf#page=2]].\n')
+    await publish({ subdomain: 'field', note: 'home.md' })
+
+    const page = await call(env, '/', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain(`href="/i/${PAPER}.pdf#page=2"`)
+
+    const paper = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
+    expect(paper.status).toBe(302)
+  })
+
+  test('while a path that is nobody’s file is still not found', async () => {
+    await keepPaper()
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/reading/other.pdf', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('Not found')
+  })
+})
+
 describe('subdomain lengths', () => {
   test('takes the shortest the message promises', async () => {
     expect((await publish({ subdomain: 'me' })).status).toBe(200)

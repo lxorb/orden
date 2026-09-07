@@ -45,6 +45,15 @@ export interface RemoteNote {
   hash: string
 }
 
+/** A file a space keeps beside its notes: where it sits, and the blob holding
+ *  its bytes. Today a PDF, so that a published note linking one can serve it. */
+export interface SpaceFile {
+  /** Relative to the space, `/`-separated. */
+  path: string
+  /** The hash of its contents, which is also the blob's name. */
+  hash: string
+}
+
 /** What Recently deleted holds on the account. */
 export interface TrashListing {
   spaces: { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[]
@@ -187,6 +196,16 @@ export const api = {
 
   setSpaceIcon: (token: string, id: string, icon: string | null) =>
     request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { icon } }),
+
+  /** The whole list of what a space keeps beside its notes. Answers which of the
+   *  hashes the account has no blob for yet, so a thirty megabyte PDF is sent
+   *  once rather than on every pass. */
+  saveSpaceFiles: (token: string, id: string, files: SpaceFile[]) =>
+    request<{ files: SpaceFile[]; missing: string[] }>(`/v1/spaces/${id}/files`, {
+      method: 'PUT',
+      token,
+      body: { files },
+    }),
 
   /** The whole list, in its order: reordering is a change to the list itself,
    *  so there is nothing smaller worth sending. */
