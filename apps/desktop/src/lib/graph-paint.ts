@@ -9,8 +9,8 @@
  *  are in it: six for the nodes, two for the lines. Colours come in from the
  *  stylesheet, so the graph is whatever the theme says it is. */
 
-import type { Camera } from './graph-camera'
-import { SMALLEST_DOT } from './graph-camera'
+import type { Camera } from './camera'
+import { SMALLEST_DOT } from './camera'
 import type { NoteGraph } from './graph'
 
 /** How wide a note is drawn, in graph units, by how many links it has. The square

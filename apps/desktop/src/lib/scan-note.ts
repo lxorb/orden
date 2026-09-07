@@ -7,6 +7,7 @@
  *  from the same note read by the first scan. */
 
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
+import { readCanvas } from './canvas/format'
 
 /** One link out of a note. Named for the shape below rather than for a caller:
  *  everything outside reads a whole note, never one of its links. */
@@ -61,6 +62,43 @@ export function scanNote(path: string, content: string): ScannedNote {
       line: lineAt(content, link.from),
       text: contextAt(content, link.from),
     })),
+  }
+}
+
+/** A canvas read into the same shape a note is.
+ *
+ *  A canvas has no words of its own worth indexing - the JSON is a drawing, not
+ *  prose - but the notes its file nodes name are links out of it, so the Links
+ *  panel can say what a canvas points at and a note can say which canvas points
+ *  at it. Each file node becomes one link written the way a wikilink is, which is
+ *  how the index resolves a path relative to the space.
+ *
+ *  Headings and blocks stay empty: nothing points into a canvas, only at it. */
+export function scanCanvas(path: string, content: string): ScannedNote {
+  const canvas = readCanvas(content)
+
+  return {
+    path,
+    // The extension is part of a canvas's name, the way it is for a PDF: a link
+    // to one is written `[[Board.canvas]]`.
+    name: path.split('/').pop() ?? path,
+    headings: [],
+    blocks: [],
+    links: canvas.nodes
+      .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
+      .map((node) => ({
+        kind: 'wikilink' as const,
+        target: node.file,
+        // A file node's subpath is a heading or a block, written with the `#` a
+        // wikilink writes it with; a link into neither has null for both.
+        heading: node.subpath?.startsWith('#^') === false ? node.subpath.slice(1) : null,
+        block: node.subpath?.startsWith('#^') === true ? node.subpath.slice(2) : null,
+        alias: null,
+        embed: false,
+        // A canvas has no lines, so every row reads as the card it came from.
+        line: 0,
+        text: node.file,
+      })),
   }
 }
 

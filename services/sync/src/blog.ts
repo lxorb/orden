@@ -1,5 +1,5 @@
 import { documentTitle, findLinks, renderMarkdown, type Wikilink } from '@nib/markdown'
-import { isPdfTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import type { Env, Note, Space } from './types'
@@ -357,11 +357,16 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     return page(title(only, source), withByline(rendered, author), env, author)
   }
 
-  const { results } = await env.DB.prepare(
+  const listing = await env.DB.prepare(
     'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
   )
     .bind(space.id, MOST_LISTED)
     .all<Note>()
+
+  // A canvas syncs as a note because it is text somebody edits on two machines,
+  // but it is a drawing rather than a page: published it would come out as the
+  // JSON it is made of. So it is not listed and has no page of its own.
+  const results = listing.results.filter((note) => !isCanvasTarget(note.path))
 
   if (!slug) {
     const items = results

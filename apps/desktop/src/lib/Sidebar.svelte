@@ -84,6 +84,7 @@
       },
       DIVIDER,
       { label: t('New note'), run: () => void workspace.createNote() },
+      { label: t('New canvas'), run: () => void workspace.createCanvas() },
       { label: t('New folder'), run: () => void workspace.createFolder() },
     ]
   }
@@ -92,6 +93,7 @@
   function spaceMenu(): MenuEntry[] {
     return [
       { label: t('New note'), run: () => void workspace.createNote() },
+      { label: t('New canvas'), run: () => void workspace.createCanvas() },
       { label: t('New folder'), run: () => void workspace.createFolder() },
       DIVIDER,
       // Nothing to reveal when no space is open, and `revealEntry` says so.

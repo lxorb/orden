@@ -12,13 +12,15 @@
  *  to keep in step. */
 
 import { SharedDoc } from '@nib/editor'
+import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 
 /** What a tab holds. Almost always a note. The graph of the space is a tab
  *  without one, because a picture of the notes belongs beside them rather than in
  *  a panel; a PDF is a tab without one because a paper someone is reading belongs
- *  in the same place as the notes they are making about it. */
-export type TabKind = 'note' | 'graph' | 'pdf'
+ *  in the same place as the notes they are making about it; a canvas is a file of
+ *  its own with its own surface, and its words are the JSON in it. */
+export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas'
 
 export interface DocumentStart {
   kind: TabKind
@@ -93,7 +95,11 @@ export class NoteDoc {
    *
    *  Reads the words as of the last flush, like everything else here. */
   get unsaved(): boolean {
-    if (this.kind !== 'note' || !this.dirty) return false
+    if (!this.dirty) return false
+    // Only a file with words in it can be out of step with what is on disk. A
+    // canvas is words like a note is; the graph of a space is drawn from the
+    // notes, and a PDF is read rather than written.
+    if (this.kind !== 'note' && this.kind !== 'canvas') return false
 
     return this.path !== null || this.words.trim().length > 0
   }
@@ -189,6 +195,13 @@ export class Tab {
    *  written in another, and because which face is up is about this sitting with
    *  this note - a note always opens for writing. */
   reading = $state(false)
+
+  /** For a canvas: where the plane is being looked at from. Kept for this
+   *  sitting only and not written into the session: a canvas opens framed on
+   *  what it holds, which is the right place to start from, and where somebody
+   *  panned to belongs to the afternoon rather than to the file. Per tab, since
+   *  one canvas can be looked at from two places in two panes. */
+  camera = $state<Camera | undefined>(undefined)
 
   /** For a PDF: the page being read, counting from one, and how far it is zoomed.
    *  Where a note keeps a caret and a scroll, a PDF keeps these, and for the same

@@ -10,7 +10,7 @@
 
 import { resolveFile, resolveNote } from '@nib/editor'
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
-import { isPdfTarget } from '@nib/markdown/links'
+import { isTabFile } from '@nib/markdown/links'
 import { links } from '../link-index.svelte'
 import { notePicture } from '../note-images'
 import type { Scheme } from '../theme.svelte'
@@ -25,8 +25,12 @@ export interface Note {
 /** Where a wikilink points on this page: the note it names, relative to the
  *  space, which is what the workspace opens. A link nothing answers to is left as
  *  the words it showed, exactly as an export leaves it - a page that cannot go
- *  anywhere should not offer something that looks as if it could. */
-function pointer(note: Note): (link: Wikilink) => { href: string | null } | null {
+ *  anywhere should not offer something that looks as if it could.
+ *
+ *  Exported because a canvas renders markdown too: a text card is a small page
+ *  inside the app, and a link in one has to reach the same note it would reach in
+ *  the reading view. */
+export function pointer(note: Note): (link: Wikilink) => { href: string | null } | null {
   const index = links.index(note.path)
 
   return (link) => {
@@ -36,7 +40,7 @@ function pointer(note: Note): (link: Wikilink) => { href: string | null } | null
 
     // A PDF is a file rather than a note, and the renderer writes the `#page=`
     // after it as the link had it; see `anchored` in the renderer.
-    if (isPdfTarget(link.target)) {
+    if (isTabFile(link.target)) {
       const file = resolveFile(index, link.target, 'wikilink')
       return file === null ? null : { href: file }
     }

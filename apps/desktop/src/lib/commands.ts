@@ -269,6 +269,7 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('New unique note'),
       run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
+    { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
     {
       id: 'open',
       label: t('Open file'),

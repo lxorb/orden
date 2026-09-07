@@ -11,7 +11,7 @@
   import { onDestroy } from 'svelte'
   import type { NoteGraph } from './graph'
   import { Layout } from './graph-layout'
-  import { type Camera, framing, graphPoint, nodeAt, zoomed } from './graph-camera'
+  import { type Camera, framing, graphPoint, nodeAt, zoomed } from './camera'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { t } from './i18n.svelte'
   import { theme } from './theme.svelte'

@@ -45,12 +45,24 @@ pub fn is_markdown(path: &Path) -> bool {
         .is_some_and(|extension| MARKDOWN.contains(&extension.to_lowercase().as_str()))
 }
 
-/// Whether a path names a PDF, in whichever case the extension is written. The
-/// one thing beside a note that the window can open in a tab of its own.
+/// Whether a path names a PDF, in whichever case the extension is written. One
+/// of the two things beside a note that the window can open in a tab of its own.
 pub fn is_pdf(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("pdf"))
+}
+
+/// Whether a path names a canvas: the plane of cards Obsidian keeps in a
+/// `.canvas` file, which Nib reads and writes as JSON Canvas 1.0.
+///
+/// It is text, so `read_note` and `write_note` already carry it and nothing here
+/// has to know what is inside; the crate only has to agree that it is a file the
+/// window lists and opens.
+pub fn is_canvas(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("canvas"))
 }
 
 /// Where a PDF's highlights live: the PDF's own name with the suffix after it,
@@ -422,8 +434,8 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::{
-        drop_highlights, files_in, folded, free_spot, highlights_of, inside, is_markdown, is_pdf,
-        move_highlights, space_root, write_atomically,
+        drop_highlights, files_in, folded, free_spot, highlights_of, inside, is_canvas,
+        is_markdown, is_pdf, move_highlights, space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
 
@@ -572,6 +584,16 @@ mod tests {
         assert!(is_pdf(Path::new("a/paper.PDF")));
         assert!(!is_pdf(Path::new("a/paper.pdf.md")));
         assert!(!is_pdf(Path::new("a/paper")));
+    }
+
+    #[test]
+    fn names_a_canvas_by_its_extension() {
+        assert!(is_canvas(Path::new("a/Board.canvas")));
+        assert!(is_canvas(Path::new("a/Board.CANVAS")));
+        // A note that merely mentions one is still a note.
+        assert!(!is_canvas(Path::new("a/Board.canvas.md")));
+        assert!(!is_canvas(Path::new("a/Board")));
+        assert!(!is_markdown(Path::new("a/Board.canvas")));
     }
 
     #[test]

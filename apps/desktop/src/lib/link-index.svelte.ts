@@ -25,12 +25,13 @@ import {
   blockIdOf,
   blockIds,
   type FoundLink,
-  isPdfTarget,
+  isCanvasTarget,
+  isTabFile,
   type LinkKind,
 } from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
-import { type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
+import { scanCanvas, type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
 import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
 import { invoke } from './tauri'
 
@@ -146,14 +147,45 @@ class Links {
     this.version++
   }
 
-  /** The note that has just been written, read again from the text that was
-   *  written. One note rather than the space: this runs on every save. */
+  /** The file that has just been written, read again from the text that was
+   *  written. One file rather than the space: this runs on every save.
+   *
+   *  A canvas counts, because the notes its file nodes name are links out of it;
+   *  see `canvasRead`. */
   noteSaved(path: string, content: string) {
     const relative = this.relative(path)
-    if (!relative || !isMarkdownPath(relative)) return
+    if (!relative) return
 
-    const scanned = scanNote(relative, content)
-    const at = this.notes.findIndex((note) => note.path === relative)
+    if (isCanvasTarget(relative)) {
+      this.put(scanCanvas(relative, content))
+      return
+    }
+
+    if (!isMarkdownPath(relative)) return
+
+    this.put(scanNote(relative, content))
+    // What was written is what the note says, so an embed of it needs no read.
+    this.read.set(relative, content)
+  }
+
+  /** A canvas that has just been opened, so the panel can say what it points at
+   *  before anybody has saved it.
+   *
+   *  Only the canvases somebody has opened or written are in the index: the scan
+   *  of a space reads the notes and lists the other files by name, and reading
+   *  every canvas in a space to find its file nodes would be a second pass over
+   *  the disk for a panel that is about the file on screen. */
+  canvasRead(path: string, content: string) {
+    const relative = this.relative(path)
+    if (!relative || !isCanvasTarget(relative)) return
+
+    this.put(scanCanvas(relative, content))
+  }
+
+  /** One scanned file into the index, replacing whatever was there under its
+   *  path. */
+  private put(scanned: ScannedNote) {
+    const at = this.notes.findIndex((note) => note.path === scanned.path)
 
     this.notes =
       at === -1
@@ -161,8 +193,6 @@ class Links {
         : [...this.notes.slice(0, at), scanned, ...this.notes.slice(at + 1)]
 
     this.changed()
-    // What was written is what the note says, so an embed of it needs no read.
-    this.read.set(relative, content)
   }
 
   /** A note that has gone. */
@@ -291,11 +321,12 @@ class Links {
     return map
   })
 
-  /** Which note, or which PDF, a link in `source` points at.
+  /** Which note, which PDF or which canvas a link in `source` points at.
    *
-   *  A PDF resolves through the files rather than the notes: it is the one thing
-   *  beside a note that a link can open, so a note that links a paper is a note
-   *  that links somewhere. Anything else beside the notes stays unresolved. */
+   *  A PDF and a canvas resolve through the files rather than the notes: they are
+   *  what a link can open beside a note, so a note that links a paper or a plane
+   *  is a note that links somewhere. Anything else beside the notes stays
+   *  unresolved. */
   private resolveFrom(source: string, link: { kind: LinkKind; target: string }): string | null {
     if (!link.target) return null
 
@@ -303,7 +334,7 @@ class Links {
     const held = this.resolved.get(key)
     if (held !== undefined) return held
 
-    const found = isPdfTarget(link.target)
+    const found = isTabFile(link.target)
       ? resolveFile(this.spaceFiles(source), link.target, link.kind)
       : this.noteFrom(source, link)
 

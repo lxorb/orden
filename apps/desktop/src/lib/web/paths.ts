@@ -53,6 +53,12 @@ export function isPdf(path: string): boolean {
   return /\.pdf$/i.test(path)
 }
 
+/** A canvas is text like a note is, so it lives in the note store rather than
+ *  beside the pictures: it is written, read and searched through the same rows. */
+export function isCanvas(path: string): boolean {
+  return /\.canvas$/i.test(path)
+}
+
 /** The space a path belongs to: the first segment under the root. */
 export function spaceOf(path: string): string {
   const segment = normalise(path).split('/')[1]

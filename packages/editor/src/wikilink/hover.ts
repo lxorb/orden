@@ -1,5 +1,5 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view'
-import { isPdfTarget, linkTarget, sectionOf } from '@nib/markdown/links'
+import { isTabFile, linkTarget, sectionOf } from '@nib/markdown/links'
 import { label } from '../labels'
 import { modifierHeld } from '../links'
 import { linkAt } from './at'
@@ -38,7 +38,7 @@ export const notePreviews = hoverTooltip(
     if (!link) return null
     // A PDF has no markdown to show in a popover, and rendering its bytes as
     // words would be worse than showing nothing.
-    if (isPdfTarget(link.target)) return null
+    if (isTabFile(link.target)) return null
 
     const index = view.state.facet(noteIndex)
     const path = link.target ? (resolveLink(index, link, link.kind)?.path ?? null) : index.path

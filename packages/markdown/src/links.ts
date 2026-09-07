@@ -87,6 +87,29 @@ export function isPdfTarget(target: string): boolean {
   return /\.pdf$/i.test(target.trim())
 }
 
+/** Whether a target names a canvas: the plane of notes and cards Obsidian keeps
+ *  in a `.canvas` file, which Nib reads and writes as JSON Canvas 1.0. Like a
+ *  PDF it is a file rather than a note, so `[[Board.canvas]]` carries the
+ *  extension the way `[[paper.pdf]]` does. */
+export function isCanvasTarget(target: string): boolean {
+  return /\.canvas$/i.test(target.trim())
+}
+
+/** Whether a target names a file the app opens in a tab of its own rather than a
+ *  note: a PDF, or a canvas.
+ *
+ *  These two behave alike everywhere a link is read. Both resolve through the
+ *  files of the space rather than its notes, because a file has no headings and
+ *  nothing to be told apart by except its extension; both are followed to the
+ *  file itself; and a link to one the space does not hold is a link to nothing,
+ *  never a reason to make a note under that name.
+ *
+ *  Not to be confused with `isNoteTarget`, which asks something else entirely:
+ *  whether a target points inside the space at all rather than out at the web. */
+export function isTabFile(target: string): boolean {
+  return isPdfTarget(target) || isCanvasTarget(target)
+}
+
 /** The page a fragment names, or null when it names none.
  *
  *  `[[paper.pdf#page=3]]` is Obsidian's spelling and also the one a browser's own

@@ -78,6 +78,19 @@
   --danger: #f2555a;
   --success: #3fcf8e;
   --selection: rgb(124 107 245 / 0.28);
+
+  /* The canvas. The six colours JSON Canvas names by number, in the spec's
+     order, and the dots of the plane. Obsidian's own palette, so a canvas
+     coloured in either app reads the same in the other; a theme can restate
+     them like any other colour. */
+  --canvas-1: #fb464c;
+  --canvas-2: #e9973f;
+  --canvas-3: #e0de71;
+  --canvas-4: #44cf6e;
+  --canvas-5: #53dfdd;
+  --canvas-6: #a882ff;
+  --canvas-dot: #2b323d;
+
   --scrollbar: #39404d;
   --scrollbar-hover: #4d5665;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -107,6 +120,15 @@
   --danger: #d92b34;
   --success: #16a06a;
   --selection: rgb(91 75 224 / 0.18);
+
+  --canvas-1: #e93147;
+  --canvas-2: #ec7500;
+  --canvas-3: #d9a600;
+  --canvas-4: #08b94e;
+  --canvas-5: #00b3b0;
+  --canvas-6: #7852ee;
+  --canvas-dot: #d5dce5;
+
   --scrollbar: #c3cbd6;
   --scrollbar-hover: #a7b1bf;
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);

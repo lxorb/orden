@@ -9,6 +9,7 @@ import type { Query } from '../search/query'
 import { tagsIn } from '../search/tags'
 import {
   basename,
+  isCanvas,
   isMarkdown,
   isPdf,
   join,
@@ -37,11 +38,11 @@ interface TreeOptions {
 
 const now = () => Date.now()
 
-/** Whether a file is one the tree shows: a note, or a PDF beside one. The same
- *  two kinds the desktop's `read_tree` lists, and for the same reason - they are
- *  the two things a tab can hold. */
+/** Whether a file is one the tree shows: a note, a PDF beside one, or a canvas.
+ *  The same three kinds the desktop's `read_tree` lists, and for the same
+ *  reason - they are the three things a tab can hold. */
 function listed(path: string): boolean {
-  return isMarkdown(path) || isPdf(path)
+  return isMarkdown(path) || isPdf(path) || isCanvas(path)
 }
 
 /** Where a PDF's highlights are kept. The desktop's command derives this on the

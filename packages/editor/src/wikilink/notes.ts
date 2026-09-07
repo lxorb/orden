@@ -1,6 +1,6 @@
 import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { isPdfTarget, type LinkKind, pageFragment, type Wikilink } from '@nib/markdown/links'
+import { isTabFile, type LinkKind, pageFragment, type Wikilink } from '@nib/markdown/links'
 
 /** What the editor knows about the space around the open note, and what it does
  *  when a link is followed.
@@ -25,8 +25,9 @@ export interface NoteRef {
 export interface NoteIndex {
   notes: readonly NoteRef[]
   /** Everything in the space that is not a note, relative to it: the PDF a
-   *  `[[paper.pdf]]` names, the picture an embed shows. A file is not a note and
-   *  has no headings, so it is a plain path rather than a `NoteRef`. */
+   *  `[[paper.pdf]]` names, the canvas a `[[Board.canvas]]` names, the picture an
+   *  embed shows. A file is not a note and has no headings, so it is a plain path
+   *  rather than a `NoteRef`. */
   files: readonly string[]
   /** The note this view is showing, so `[[#Heading]]` knows which note it means
    *  and a name that could mean two notes is read from where it was written.
@@ -221,12 +222,12 @@ export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): N
  *  note it was written in always does; an unresolved one is drawn muted, and
  *  following it makes the note.
  *
- *  A PDF resolves through the files rather than the notes, because a PDF is the
- *  one thing beside the notes that Nib itself can open. Any other file is left
- *  unresolved: a link that cannot be followed should not look as though it can. */
+ *  A PDF and a canvas resolve through the files rather than the notes, because
+ *  those are what Nib can open beside a note. Any other file is left unresolved:
+ *  a link that cannot be followed should not look as though it can. */
 export function resolves(index: NoteIndex, link: Wikilink, kind: LinkKind): boolean {
   if (!link.target) return true
-  if (isPdfTarget(link.target)) return resolveFile(index, link.target, kind) !== null
+  if (isTabFile(link.target)) return resolveFile(index, link.target, kind) !== null
 
   return resolveLink(index, link, kind) !== null
 }
@@ -234,8 +235,9 @@ export function resolves(index: NoteIndex, link: Wikilink, kind: LinkKind): bool
 /** Where following a link would go. */
 export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJump {
   // A PDF has pages where a note has headings, so the fragment is read as one
-  // and the note side of the jump stays empty.
-  if (link.target && isPdfTarget(link.target)) {
+  // and the note side of the jump stays empty. A canvas has neither, and
+  // `pageFragment` answers nothing for a fragment that is not a page.
+  if (link.target && isTabFile(link.target)) {
     return {
       path: resolveFile(index, link.target, kind),
       target: link.target,

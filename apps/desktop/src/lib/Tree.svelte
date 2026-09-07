@@ -10,7 +10,7 @@
 <script lang="ts">
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { isPdfTarget } from '@nib/markdown/links'
+  import { isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
   import { t } from './i18n.svelte'
   import {
     bookmarkEntry,
@@ -38,6 +38,7 @@
   function folderMenu(entry: Entry): MenuEntry[] {
     return [
       { label: t('New note'), run: () => void workspace.createNote(entry.path) },
+      { label: t('New canvas'), run: () => void workspace.createCanvas(entry.path) },
       { label: t('New folder'), run: () => void workspace.createFolder(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
@@ -255,7 +256,7 @@
           class:active={workspace.active?.path === entry.path}
           class:dropping={dropTarget === entry.path}
           class:selected={workspace.isSelected(entry.path)}
-          style:padding-left="{depth * 12 + (isPdfTarget(entry.name) ? 8 : 20)}px"
+          style:padding-left="{depth * 12 + (isTabFile(entry.name) ? 8 : 20)}px"
           draggable="true"
           onclick={(event) =>
             pick(event, entry) || workspace.openEntry(entry.path, { preview: true })}
@@ -275,6 +276,13 @@
             <svg class="glyph" viewBox="0 0 9 11">
               <path d="M1.2 0.8h3.6l3 3v6.4H1.2z" />
               <path d="M4.8 0.8v3h3" />
+            </svg>
+          {:else if isCanvasTarget(entry.name)}
+            <!-- Two cards joined: a plane with things on it, said in the same
+                 breath as the sheet above. -->
+            <svg class="glyph canvas" viewBox="0 0 11 11">
+              <path d="M0.8 1.4h4v3h-4zM6.2 6.6h4v3h-4z" />
+              <path d="M4.8 2.9h.9v5.2h.5" />
             </svg>
           {/if}
           <span class="label">{stripped(entry.name)}</span>

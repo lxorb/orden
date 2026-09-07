@@ -1,6 +1,6 @@
 import type { EditorState } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { isPdfTarget, linkTarget, type Wikilink } from '@nib/markdown/links'
+import { isTabFile, linkTarget, type Wikilink } from '@nib/markdown/links'
 import { label } from '../labels'
 import { MAC, modifier } from '../links'
 import { linkAt } from './at'
@@ -27,7 +27,7 @@ const HOW = {
  *  A PDF is a file rather than a note, so a click opens it and a name nothing
  *  answers to is nothing a click can make; the muted link says that on its own. */
 export function noteLinkTitle(link: Wikilink, missing: boolean): string {
-  const wording = isPdfTarget(link.target) ? HOW.file : HOW[missing ? 'create' : 'open']
+  const wording = isTabFile(link.target) ? HOW.file : HOW[missing ? 'create' : 'open']
   return `${linkTarget(link)}\n${label(MAC ? wording.mac : wording.other)}`
 }
 

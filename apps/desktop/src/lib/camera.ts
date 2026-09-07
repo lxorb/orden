@@ -1,15 +1,20 @@
-/** Where the graph is being looked at from, and what is under the pointer.
+/** Where a plane is being looked at from, and what is under the pointer.
  *
  *  One transform, in one place: the paint, the pointer and the hit test all read
- *  it, so a click cannot land somewhere other than where the node is drawn. The
- *  camera says which graph point is at the middle of the view and how many
- *  pixels a graph unit is worth. */
+ *  it, so a click cannot land somewhere other than where the thing is drawn. The
+ *  camera says which point of the plane is at the middle of the view and how many
+ *  pixels a unit of the plane is worth.
+ *
+ *  Two surfaces read it. The graph draws itself on a 2d context and applies the
+ *  camera per node; the canvas puts its nodes in the page and applies it once, as
+ *  one css transform. Neither knows anything about the other, and the arithmetic
+ *  they agree on is here. */
 
 export interface Camera {
-  /** The graph point the middle of the view is on. */
+  /** The point of the plane the middle of the view is on. */
   x: number
   y: number
-  /** Pixels per graph unit. */
+  /** Pixels per unit of the plane. */
   scale: number
 }
 
@@ -26,7 +31,7 @@ export function clampScale(scale: number): number {
   return Math.min(CLOSEST, Math.max(FURTHEST, scale))
 }
 
-/** The graph point a screen point is over. */
+/** The point of the plane a screen point is over. */
 export function graphPoint(
   camera: Camera,
   width: number,
@@ -40,9 +45,38 @@ export function graphPoint(
   }
 }
 
-/** A camera that frames every node with `padding` pixels to spare. A graph small
- *  enough to fit at its natural size is not blown up to fill the view: the notes
- *  would read as balloons. */
+/** A camera that puts a rectangle of the plane in view with `padding` pixels to
+ *  spare. Something small enough to fit at its natural size is not blown up to
+ *  fill the view: it would read as a balloon.
+ *
+ *  Takes the rectangle rather than the things in it, so the two surfaces can each
+ *  work out their own extent: a graph node is a point, a canvas node is a box. */
+export function framingBox(
+  box: { x: number; y: number; width: number; height: number },
+  width: number,
+  height: number,
+  padding: number,
+): Camera {
+  if (width === 0 || height === 0) return { x: 0, y: 0, scale: 1 }
+
+  const across = Math.max(box.width, 1)
+  const down = Math.max(box.height, 1)
+  const room = Math.min(
+    (width - 2 * padding) / across,
+    (height - 2 * padding) / down,
+    // One pixel per unit is as close as framing goes; getting closer is the
+    // reader's business.
+    1,
+  )
+
+  return {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+    scale: clampScale(room),
+  }
+}
+
+/** A camera that frames every point with `padding` pixels to spare. */
 export function framing(
   x: Float64Array,
   y: Float64Array,
@@ -67,17 +101,12 @@ export function framing(
     if (py > highest) highest = py
   }
 
-  const across = Math.max(most - least, 1)
-  const down = Math.max(highest - lowest, 1)
-  const room = Math.min(
-    (width - 2 * padding) / across,
-    (height - 2 * padding) / down,
-    // One pixel per unit is as close as framing goes; getting closer is the
-    // reader's business.
-    1,
+  return framingBox(
+    { x: least, y: lowest, width: most - least, height: highest - lowest },
+    width,
+    height,
+    padding,
   )
-
-  return { x: (least + most) / 2, y: (lowest + highest) / 2, scale: clampScale(room) }
 }
 
 /** The camera after a scroll at a point, which keeps whatever was under the

@@ -11,13 +11,26 @@ import type { Env, Note, Variables } from './types'
 export const MAX_NOTE_BYTES = 4 * 1024 * 1024
 export const PATH_LIMIT = 400
 
-/** Paths are relative, forward-slashed and end in `.md`. Nothing escapes the space. */
+/** What a note's path may end in.
+ *
+ *  A canvas is here beside the markdown extensions because it travels as a note
+ *  rather than as a file. The two ways a space's contents reach an account are
+ *  this one, which is versioned and comes back down, and the blob list beside it,
+ *  which only goes up so that a published page can serve a PDF. A canvas is small
+ *  text that is edited on more than one device, so it wants the first: the
+ *  version, the hash and the conflict rule are exactly what a file two people
+ *  draw on needs. See apps/desktop/src/lib/sync/mirror.ts, which sends every file
+ *  that is not a PDF through here. */
+const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas)$/i
+
+/** Paths are relative, forward-slashed and named like a note. Nothing escapes
+ *  the space. */
 export function cleanPath(input: string): string | null {
   const path = input.replace(/\\/g, '/').replace(/^\/+/, '').trim()
 
   if (!path || path.length > PATH_LIMIT) return null
   if (path.split('/').some((part) => !part || part === '.' || part === '..')) return null
-  if (!/\.(md|markdown|mdown|mkd)$/i.test(path)) return null
+  if (!NOTE_PATH.test(path)) return null
 
   return path
 }

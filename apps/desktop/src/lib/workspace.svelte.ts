@@ -1,6 +1,7 @@
 import { flushTableEdits, type NoteJump } from '@nib/editor'
 import { account } from './account.svelte'
-import { blockIds, isPdfTarget } from '@nib/markdown/links'
+import { blankCanvas } from './canvas/format'
+import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
@@ -306,8 +307,9 @@ class Workspace {
    *  closed outline panel costs nothing at all. */
   readonly headings = $derived.by(() => scanHeadings(this.active?.doc ?? ''))
 
-  /** Every file in the space, flattened: the notes and the PDFs beside them,
-   *  which are the two things a tab can hold. What quick open lists. */
+  /** Every file in the space, flattened: the notes, and the PDFs and canvases
+   *  beside them, which are the three things a tab can hold. What quick open
+   *  lists. */
   readonly files = $derived.by((): Entry[] => {
     const out: Entry[] = []
     const walk = (entry: Entry) => {
@@ -322,8 +324,9 @@ class Workspace {
 
   /** The notes among them. What everything that means words asks for: which note
    *  to merge into, which note a space is published as, which names a search
-   *  completes. A PDF is a file to read, not a note to write in. */
-  readonly notes = $derived(this.files.filter((one) => !isPdfTarget(one.name)))
+   *  completes. A PDF is a file to read and a canvas is a plane to arrange notes
+   *  on; neither is a note to write in. */
+  readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
 
   async restore() {
     // The browser build starts empty, so give a first visit something to read.
@@ -686,20 +689,65 @@ class Workspace {
     this.persist()
   }
 
+  /** A canvas in the space, in a tab of its own. One tab per canvas, the way the
+   *  graph is one: asking for a plane that is already open brings it forward.
+   *
+   *  Its words are the JSON in the file, so the tab holds a document exactly as a
+   *  note's tab does and the dirty mark, Ctrl+S, the auto-save and the closing
+   *  question all work here without knowing what a canvas is. What differs is the
+   *  surface drawn on top of those words. */
+  async openCanvas(path: string) {
+    const existing = this.tabs.find((tab) => tab.kind === 'canvas' && tab.path === path)
+    if (existing) {
+      this.activeTabId = existing.id
+      this.showNote()
+      return
+    }
+
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
+    // draw on: saving one over it would take the file with it.
+    if (text === null) return
+
+    const file = this.document({
+      kind: 'canvas',
+      path,
+      name: basename(path),
+      text,
+      dirty: false,
+    })
+    const tab = new Tab(file, this.panes.focusedId)
+    this.add(tab)
+    this.dropScaffolding(tab)
+
+    // The notes a canvas holds are links out of it, which is what the Links
+    // panel shows while the canvas is the tab being looked at.
+    links.canvasRead(path, text)
+
+    this.showNote()
+    this.remember(path)
+    this.persist()
+  }
+
   /** Which page of a PDF a followed link asked for. Read and taken down by the
    *  pane showing that PDF, the way `goto` is by the one showing a note. */
   gotoPage = $state<{ path: string; page: number } | null>(null)
 
-  /** Opens whatever a row of the file list names: a PDF in its own kind of tab,
-   *  anything else as a note. Every way in from a listing goes through here - the
-   *  tree, the palette, a bookmark, the Links panel - so none of them can open a
-   *  paper as text.
+  /** Opens whatever a row of the file list names: a PDF or a canvas in its own
+   *  kind of tab, anything else as a note. Every way in from a listing goes
+   *  through here - the tree, the palette, a bookmark, the Links panel, the graph
+   *  - so none of them can open a paper or a plane as text.
    *
    *  `open` itself stays about notes: a note is what the caret, the preview tab
    *  and every unsaved word belong to. */
   async openEntry(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
     if (isPdfTarget(path)) {
       this.openPdf(path)
+      return
+    }
+
+    if (isCanvasTarget(path)) {
+      await this.openCanvas(path)
       return
     }
 
@@ -1398,7 +1446,7 @@ class Workspace {
     flushTableEdits()
 
     const tab = target ?? this.active
-    if (tab?.kind !== 'note') return
+    if (tab?.kind !== 'note' && tab?.kind !== 'canvas') return
 
     // Saving is as deliberate as it gets: a note that was only being looked
     // at is one to stay from here on, whether or not there was anything to
@@ -1407,15 +1455,22 @@ class Workspace {
     await this.write(tab.note)
   }
 
-  /** Writes one note down. Everything that saves comes through here, so a note
-   *  open in two panes is written once however the saving was asked for. */
+  /** Writes one document down: a note, or a canvas, which are the two things a
+   *  tab holds that have words of their own. Everything that saves comes through
+   *  here, so a note open in two panes is written once however the saving was
+   *  asked for. */
   private async write(note: NoteDoc) {
     // The keystrokes since the last pause, which are still only a rope.
     note.flush()
-    if (note.kind !== 'note') return
+    if (note.kind !== 'note' && note.kind !== 'canvas') return
 
     let path = note.path
     if (!path) {
+      // A canvas is only ever made with a name and a place of its own, so there
+      // is no "save this canvas somewhere" to ask about; the name prompt would
+      // offer to write it as markdown.
+      if (note.kind === 'canvas') return
+
       const picked = await pickSavePath(this.spaces, this.activeSpaceId, note.text, note.name)
       if (!picked) return
       path = picked
@@ -1438,8 +1493,9 @@ class Workspace {
     note.written(path, basename(path))
     this.markSaved(note.key)
 
-    // The one note that changed, read again from what was written. This is the
-    // whole of keeping the index up to date after the first scan of a space.
+    // The one file that changed, read again from what was written. This is the
+    // whole of keeping the index up to date after the first scan of a space; it
+    // knows a canvas from a note by its name.
     links.noteSaved(path, note.text)
 
     // Editing the config files in Nib should take effect on save.
@@ -1726,6 +1782,43 @@ class Workspace {
 
     await invoke('write_note', { path, content })
     links.noteSaved(path, content)
+    await this.loadTree()
+    this.persist()
+  }
+
+  /** Creates `Untitled.canvas` in a folder and opens it, stepping the name until
+   *  it is free the way a new note's is. The file is written straight away, so
+   *  the plane on screen and the file on disk say the same thing from the first
+   *  frame; the row is waiting for a name. */
+  async createCanvas(folder?: string) {
+    const dir = folder ?? this.activeSpace?.root
+    if (!dir) return
+
+    const taken = new Set(this.files.map((one) => one.path))
+    let name = 'Untitled.canvas'
+    let counter = 2
+    while (taken.has(joinPath(dir, name))) name = `Untitled ${counter++}.canvas`
+
+    const path = joinPath(dir, name)
+    const content = blankCanvas()
+
+    this.showEntry(this.freshEntry(path, false))
+    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+
+    const file = this.document({
+      kind: 'canvas',
+      path,
+      name: basename(path),
+      text: content,
+      dirty: false,
+    })
+    const tab = this.add(new Tab(file, this.panes.focusedId))
+    this.showNote()
+    this.remember(path)
+    this.dropScaffolding(tab)
+    this.startRenaming(path)
+
+    await invoke('write_note', { path, content })
     await this.loadTree()
     this.persist()
   }
@@ -2023,10 +2116,15 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
-    // A PDF is a file: a link to one the space does not hold is a link to nothing,
-    // never a reason to make a note under that name.
+    // A PDF and a canvas are files: a link to one the space does not hold is a
+    // link to nothing, never a reason to make a note under that name.
     if (isPdfTarget(jump.target)) {
       if (jump.path) this.openPdf(insideSpace(root, jump.path), jump.page)
+      return
+    }
+
+    if (isCanvasTarget(jump.target)) {
+      if (jump.path) await this.openCanvas(insideSpace(root, jump.path))
       return
     }
 

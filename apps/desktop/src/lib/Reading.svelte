@@ -27,7 +27,7 @@
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { resolveFile, resolveNote, resolveRelative } from '@nib/editor'
-  import { isPdfTarget, pageFragment } from '@nib/markdown/links'
+  import { isTabFile, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -209,8 +209,10 @@
     const index = links.index(tab.path)
     const wiki = anchor.classList.contains('wikilink')
 
-    // A PDF opens in a tab of its own, at the page the link names.
-    if (isPdfTarget(target)) {
+    // A PDF opens in a tab of its own, at the page the link names; a canvas opens
+    // in one too, and has no page to name. Both are followed the same way, since
+    // `pageFragment` answers nothing for a fragment that is not a page.
+    if (isTabFile(target)) {
       const file = wiki ? target : resolveFile(index, target, 'markdown')
       if (file === null) return
 

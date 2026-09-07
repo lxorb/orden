@@ -286,8 +286,39 @@ describe('notes', () => {
     expect(created.json.note.path).toBe('etc/passwd.md')
   })
 
-  test('rejects a non-markdown path', async () => {
+  test('rejects a path that is neither a note nor a canvas', async () => {
     expect((await addNote('note.txt', 'x')).status).toBe(400)
+    expect((await addNote('paper.pdf', 'x')).status).toBe(400)
+  })
+
+  /** A canvas is text that is drawn on from more than one device, so it travels
+   *  the way a note does: versioned, hashed, and with the conflict rule behind
+   *  it. The blob list beside this only goes up, which would not round trip. */
+  test('takes a canvas as a note, and gives it back unchanged', async () => {
+    const drawn = '{\n\t"nodes": [],\n\t"edges": []\n}\n'
+    const created = await addNote('Boards/Plan.canvas', drawn)
+
+    expect(created.status).toBe(201)
+    expect(created.json.note.path).toBe('Boards/Plan.canvas')
+
+    const fetched = await call(env, `/v1/notes/${created.json.note.id}`, { token })
+    expect(fetched.json.content).toBe(drawn)
+  })
+
+  test('a canvas that changed comes back in the next catch-up', async () => {
+    const created = await addNote('Plan.canvas', '{"nodes":[],"edges":[]}')
+    await call(env, `/v1/notes/${created.json.note.id}`, {
+      method: 'PUT',
+      token,
+      body: { content: '{"nodes":[{"id":"a"}],"edges":[]}', baseVersion: 1 },
+    })
+
+    const page = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
+    const canvas = (page.json.notes as { path: string; version: number }[]).find(
+      (note) => note.path === 'Plan.canvas',
+    )
+
+    expect(canvas?.version).toBe(2)
   })
 
   test('updating raises the version', async () => {

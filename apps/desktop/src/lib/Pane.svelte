@@ -11,6 +11,7 @@
   import { type EditorView, type NoteJump } from '@nib/editor'
   import type { Tab } from './workspace.svelte'
   import type { Along, Pane } from './workspace/pane-tree'
+  import Canvas from './Canvas.svelte'
   import { draggedTab, isTabDrag } from './drag-paths'
   import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
@@ -180,6 +181,13 @@
       onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
       onescape={() => void workspace.closeAsking(tab.id)}
     />
+  {:else if tab?.kind === 'canvas'}
+    <!-- A plane of cards, in the note's place. Keyed like the reading view and a
+         PDF: a canvas is a document of its own and nothing about it is swapped
+         into an editor. -->
+    {#key tab.id}
+      <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
+    {/key}
   {:else if tab?.kind === 'pdf'}
     <!-- A paper being read, beside the notes about it. Keyed like the reading
          view: a PDF is a document of its own and nothing about it is swapped

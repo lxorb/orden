@@ -115,7 +115,7 @@ function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf']
+const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas']
 
 /** Which kind of tab an entry says it is. An entry written before there were
  *  kinds, or one naming a kind this version has never heard of, is a note: that

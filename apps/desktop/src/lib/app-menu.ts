@@ -97,6 +97,7 @@ export function appMenu(context: Context): MenuGroup[] {
       label: t('File'),
       rows: [
         { label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
+        { label: t('New canvas'), run: () => void workspace.createCanvas() },
         { label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
         { label: t('New space'), run: () => void newSpace() },
         ...(isDesktop

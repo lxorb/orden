@@ -9,7 +9,7 @@ import {
   nodeAt,
   SMALLEST_DOT,
   zoomed,
-} from './graph-camera'
+} from './camera'
 
 const WIDTH = 400
 const HEIGHT = 300
