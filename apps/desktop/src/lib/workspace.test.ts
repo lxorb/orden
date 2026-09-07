@@ -439,8 +439,8 @@ describe('a note in two panes', () => {
     workspace.noteView(tab.id, 2, 40, 1)
     workspace.split('column')
 
-    expect(workspace.active?.cursor).toBe(2)
-    expect(workspace.active?.anchor).toBe(1)
+    expect(workspace.active.cursor).toBe(2)
+    expect(workspace.active.anchor).toBe(1)
   })
 
   test('wears one dirty mark and one place to save to', async () => {
@@ -517,7 +517,7 @@ describe('closing what is in a pane', () => {
 
     expect(workspace.panes.count).toBe(1)
     expect(workspace.tabs).toHaveLength(1)
-    expect(workspace.active?.path).toBeNull()
+    expect(workspace.active.path).toBeNull()
   })
 
   test('closing a pane closes everything in it', async () => {
