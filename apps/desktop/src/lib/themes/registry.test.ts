@@ -84,7 +84,7 @@ describe('reading the catalogue', () => {
         entry({
           tags: ['warm', 'a much longer phrase than a tag', '<script>', 'ok'],
           palettes: {
-            light: { '--bg': '#fff', background: 'red', '--x': 5, '--long': 'y'.repeat(80) },
+            light: { '--bg': '#fff', background: 'red', '--x': 5, '--long': 'y'.repeat(400) },
             dark: 'nonsense',
           },
         }),
@@ -94,6 +94,59 @@ describe('reading the catalogue', () => {
     expect(theme?.tags).toEqual(['warm', 'ok'])
     expect(theme?.palettes.light).toEqual({ '--bg': '#fff' })
     expect(theme?.palettes.dark).toEqual({})
+  })
+
+  test('drops a palette value that would write a rule of its own', () => {
+    // The gallery pastes these into a stylesheet it injects, and it does that
+    // for every card as soon as the store is opened: nobody has installed
+    // anything, so nothing else has looked at them. A value here is the shortest
+    // path there is from the catalogue to the whole app's CSS.
+    const [theme] = readIndex({
+      themes: [
+        entry({
+          palettes: {
+            light: {
+              '--bg': 'red} html{opacity:.02',
+              '--surface': 'url(https://example.com/beacon.png)',
+              '--line': 'red; position: fixed',
+              '--text': 'red /*',
+              '--muted': '"unclosed',
+              '--accent': 'rgb(124 107 245 / 0.15)',
+              '--danger': '#f2555a',
+            },
+            dark: {},
+          },
+        }),
+      ],
+    })
+
+    expect(theme?.palettes.light).toEqual({
+      '--accent': 'rgb(124 107 245 / 0.15)',
+      '--danger': '#f2555a',
+    })
+  })
+
+  test('keeps a font stack, which is the one token that is a sentence', () => {
+    // Long enough to be worth a bound, and the bound has to clear it: a card
+    // that dropped it would show a theme in the wrong typeface, which is the
+    // one thing a preview must not do.
+    const stack = `'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif`
+    const [theme] = readIndex({
+      themes: [entry({ palettes: { light: { '--font-content': stack }, dark: {} } })],
+    })
+
+    expect(theme?.palettes.light['--font-content']).toBe(stack)
+  })
+
+  test('drops a version that is not three numbers', () => {
+    // It is written into the installed file and compared against what is there,
+    // so an entry that cannot say plainly which version it is has nothing the
+    // app can do with it.
+    for (const version of ['1.0', 'next', '1.0.0-beta', '1.0.0 */ x', '']) {
+      expect(readIndex({ themes: [entry({ version })] }), version).toEqual([])
+    }
+
+    expect(readIndex({ themes: [entry({ version: '10.2.30' })] })).toHaveLength(1)
   })
 
   test('drops a date that is not one, so newest stays newest', () => {

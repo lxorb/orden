@@ -52,7 +52,7 @@ function headers(type: string): Record<string, string> {
  *  `cacheEverything` is what makes the cache apply at all: without it Cloudflare
  *  caches by file extension, and `index.json` is not one of the extensions it
  *  caches by. */
-async function fromRegistry(path: string): Promise<Response | null> {
+async function fromRegistry(path: string): Promise<string | null> {
   const response = await fetch(`${REGISTRY}/${path}`, {
     cf: { cacheTtl: EDGE_SECONDS, cacheEverything: true },
   })
@@ -60,7 +60,20 @@ async function fromRegistry(path: string): Promise<Response | null> {
   if (!response.ok) return null
 
   const text = await response.text()
-  return new TextEncoder().encode(text).length > MOST_BYTES ? null : new Response(text)
+  return new TextEncoder().encode(text).length > MOST_BYTES ? null : text
+}
+
+/** Something went wrong, said so the app can read it.
+ *
+ *  Through the same headers as an answer that worked, because the desktop app is
+ *  not on this origin: a body without them is a body the app is not allowed to
+ *  look at, and the reader would be shown whatever the browser says about a
+ *  request that failed instead of the sentence written here. */
+function wrong(message: string, status: 400 | 404 | 502): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: headers('application/json; charset=utf-8'),
+  })
 }
 
 export const themes = new Hono<{ Bindings: Env }>()
@@ -76,19 +89,19 @@ themes.options('/*', (context) =>
   }),
 )
 
-themes.get('/index.json', async (context) => {
+themes.get('/index.json', async () => {
   const found = await fromRegistry('index.json')
-  if (!found) return context.json({ error: 'the theme store is not answering' }, 502)
+  if (found === null) return wrong('the theme store is not answering', 502)
 
-  return new Response(await found.text(), { headers: headers('application/json; charset=utf-8') })
+  return new Response(found, { headers: headers('application/json; charset=utf-8') })
 })
 
 themes.get('/:id/theme.css', async (context) => {
   const id = context.req.param('id')
-  if (!ID.test(id)) return context.json({ error: 'that is not a theme' }, 400)
+  if (!ID.test(id)) return wrong('that is not a theme', 400)
 
   const found = await fromRegistry(`themes/${id}/theme.css`)
-  if (!found) return context.json({ error: 'no such theme' }, 404)
+  if (found === null) return wrong('no such theme', 404)
 
-  return new Response(await found.text(), { headers: headers('text/css; charset=utf-8') })
+  return new Response(found, { headers: headers('text/css; charset=utf-8') })
 })

@@ -100,8 +100,61 @@ describe('what a theme may not set', () => {
       const reviewed = review(tokens(`--bg: ${value};`))
 
       expect(reviewed.css, value).toBe('')
-      expect(reviewed.refused, value).toEqual(['--bg reaches outside the stylesheet'])
+      expect(reviewed.refused, value).toEqual(['--bg is not a value a theme may set'])
     }
+  })
+
+  test('refuses a value that would be read back as something else', () => {
+    // A comment marker comments out the rest of the file from where it lands,
+    // and a string opened and never closed swallows the end of the rule. Either
+    // makes what is applied differ from what was read here.
+    for (const value of ['red /* ', 'red */ x']) {
+      const reviewed = review(tokens(`--bg: ${value};`))
+
+      expect(reviewed.css, value).toBe('')
+      expect(reviewed.refused, value).toContain('--bg is not a value a theme may set')
+    }
+
+    // A string that is never closed does not even get that far: the scanner
+    // follows quotes to find the end of the block, so it never finds one and
+    // the whole rule is refused as unfinished.
+    for (const value of ['"unclosed', "'unclosed"]) {
+      const reviewed = review(tokens(`--bg: ${value};`))
+
+      expect(reviewed.css, value).toBe('')
+      expect(reviewed.refused, value).toHaveLength(1)
+    }
+  })
+
+  test('a value cannot open a rule of its own', () => {
+    // The scanner gets there first: the block ends at the unquoted `}`, so what
+    // follows is read as the next selector and refused as one. The colour
+    // survives on its own, which is the whole of what the theme asked for that
+    // the app is willing to give it.
+    const reviewed = review(`[data-theme='dark'] { --bg: red } html { opacity: 0.02 }`)
+
+    expect(reviewed.css).toBe(`[data-theme=dark] {\n  --bg: red;\n}`)
+    expect(reviewed.css).not.toContain('opacity')
+    expect(reviewed.refused).toEqual(['html is not a selector a theme may set'])
+  })
+
+  test('refuses a selector list that mixes the tokens with the prose', () => {
+    // `:root` is the element the app is laid out on. Read as a prose rule, the
+    // list below would be allowed to set `opacity` and `font-size` there, which
+    // is a window somebody cannot see and every measurement in it rescaled.
+    for (const list of ['#write, :root', ':root, #write h1', "#write, [data-theme='dark']"]) {
+      const reviewed = review(`${list} { opacity: 0.03; font-size: 200px; }`)
+
+      expect(reviewed.css, list).toBe('')
+      expect(reviewed.refused[0], list).toContain('mixes the tokens with the prose')
+    }
+  })
+
+  test('an at-rule with no block of its own does not swallow the rule after it', () => {
+    const reviewed = review(`@charset "utf-8";\n[data-theme='dark'] { --bg: #000; }`)
+
+    expect(reviewed.css).toContain('--bg: #000;')
+    expect(reviewed.refused).toEqual(['@charset "utf-8" is not a theme rule'])
   })
 
   test('refuses every at-rule, whatever it would have held', () => {
@@ -111,10 +164,11 @@ describe('what a theme may not set', () => {
 
     expect(reviewed.css).toContain('--text: #eee;')
     expect(reviewed.css).not.toContain('--bg')
-    // The `@import` has no block of its own, so it is read as the front of the
-    // `@media` and the two are refused together.
-    expect(reviewed.refused).toHaveLength(1)
+    // Two: the `@import` ends at its semicolon and is refused there, and the
+    // `@media` is refused with everything inside it.
+    expect(reviewed.refused).toHaveLength(2)
     expect(reviewed.refused[0]).toContain('@import')
+    expect(reviewed.refused[1]).toContain('@media')
   })
 
   test('refuses a nested rule rather than reading past it', () => {
@@ -209,6 +263,29 @@ describe('the stamp an installed theme carries', () => {
   test('survives a name with a quote in it', () => {
     const odd = { ...stamp, name: `Emil's paper` }
     expect(stampOf(stamped(odd, ''))).toEqual(odd)
+  })
+
+  test('cannot be made to close its own comment', () => {
+    // The name and the version come out of the catalogue, which is a file on
+    // somebody else's server. A stamp that could end its comment would be a way
+    // to write any CSS at all into the installed file, past everything above.
+    const evil = {
+      id: 'a',
+      name: 'A */ html { opacity: 0.02 } /*',
+      author: 'B',
+      version: '1.0.0 */ .rail { display: none } /*',
+    }
+    const file = stamped(evil, tokens('--bg: #000;'))
+
+    const line = file.slice(0, file.indexOf('\n'))
+    // One `*/` in the line, and it is the one that ends it, so everything the
+    // catalogue wrote stays inside a comment. Words in a comment are not CSS.
+    expect(line.split('*/')).toHaveLength(2)
+    expect(line.endsWith('*/')).toBe(true)
+
+    // Still a stamp, so the theme is still marked installed at its version.
+    expect(stampOf(file)?.id).toBe('a')
+    expect(stampOf(file)?.version).toBe('1.0.0  .rail { display: none } ')
   })
 
   test('is absent from a theme somebody wrote by hand', () => {

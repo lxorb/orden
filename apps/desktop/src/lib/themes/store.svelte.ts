@@ -8,6 +8,7 @@
  *  kind of thing from that moment on. */
 
 import { message, t } from '../i18n.svelte'
+import { log } from '../log'
 import { theme } from '../theme.svelte'
 import { invoke } from '../tauri'
 import { indexUrl, isNewer, readIndex, type StoreTheme, styleUrl } from './registry'
@@ -103,6 +104,11 @@ class Store {
     this.open = false
     this.query = ''
     this.opened = null
+    // What went wrong last time went wrong last time. A count of refusals left
+    // lying about would come back under the same card on a later opening,
+    // saying something about an install that did not happen.
+    this.error = null
+    this.refused = { id: '', notes: [] }
   }
 
   /** The catalogue. Read once per opening, and not again while what was read is
@@ -155,6 +161,12 @@ class Store {
       if (!reviewed.css) throw new Error('that theme has nothing a theme may set')
 
       this.refused = { id: one.id, notes: reviewed.refused }
+      // The count is what the preview says, because a list of CSS complaints is
+      // not what somebody installing a theme came for. The complaints themselves
+      // go to the log, which is where a question about them is answered.
+      if (reviewed.refused.length) {
+        log('warn', `${one.id} ${one.version}: ${reviewed.refused.join('; ')}`)
+      }
       await invoke<string>('write_theme', {
         id: one.id,
         css: stamped(

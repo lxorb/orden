@@ -459,6 +459,11 @@ async function writeTheme(id: string, css: string): Promise<string> {
   return key
 }
 
+async function removeTheme(id: string): Promise<void> {
+  if (!THEME_ID.test(id)) throw new Error(`${id} is not a theme id`)
+  await meta.remove(themeKey(id))
+}
+
 /** Commands the browser genuinely cannot serve. Each returns the shape that
  *  makes the interface hide the feature rather than break on it. */
 const UNSUPPORTED: Record<string, unknown> = {
@@ -665,7 +670,7 @@ export async function webInvoke<T>(
       return (await writeTheme(args.id as string, args.css as string)) as T
 
     case 'remove_theme':
-      await meta.remove(themeKey(args.id as string))
+      await removeTheme(args.id as string)
       return undefined as T
 
     case 'read_custom_css':

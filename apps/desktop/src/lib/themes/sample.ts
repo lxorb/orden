@@ -12,6 +12,7 @@
 
 import { t } from '../i18n.svelte'
 import type { Palette, StoreTheme } from './registry'
+import { closes } from './validate'
 
 /** The frame, and the page inside it. Global names in the app's own `nib-`
  *  family, because the stylesheet below is injected rather than scoped: the
@@ -46,18 +47,14 @@ function* rules(source: string): Generator<{ prelude: string; body: string }> {
     const open = css.indexOf('{', at)
     if (open < 0) return
 
-    let depth = 1
-    let close = open + 1
-    while (close < css.length && depth > 0) {
-      if (css[close] === '{') depth++
-      else if (css[close] === '}') depth--
-      close++
-    }
-
+    // The same walk the validator uses to find where a block ends, quotes and
+    // nesting included, so the two cannot disagree about what a rule is.
+    const close = closes(css, open)
     const prelude = css.slice(start, open).trim()
-    const body = css.slice(open + 1, close - 1)
-    start = close
-    at = close
+    const body = css.slice(open + 1, close)
+
+    start = close + 1
+    at = close + 1
 
     if (!prelude.startsWith('@') && !body.includes('{')) yield { prelude, body }
   }
@@ -186,7 +183,10 @@ export function paletteCss(themes: StoreTheme[]): string {
 export function sampleHtml(full = false): string {
   const sentence = t('Words with {bold} and a {link}.', {
     bold: `<strong>${t('bold')}</strong>`,
-    link: `<a href="#">${t('link')}</a>`,
+    // No `href`: the card is itself a button, and a link inside one is a second
+    // thing to tab to and a place to accidentally go. What it is here for is the
+    // colour a theme gives a link, which needs no destination.
+    link: `<a>${t('link')}</a>`,
   })
 
   const more = full

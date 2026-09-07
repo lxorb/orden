@@ -4,7 +4,7 @@ export type Level = 'info' | 'warn' | 'error'
 
 /** Writes one line to the app's log file. Never throws: a failure to log must
  *  not become a second failure. */
-function log(level: Level, message: string) {
+export function log(level: Level, message: string) {
   if (!isDesktop) return
   void invoke('write_log', { level, message, at: new Date().toISOString() }).catch(() => undefined)
 }

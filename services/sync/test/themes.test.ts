@@ -76,6 +76,20 @@ describe('the catalogue', () => {
     expect(answer.json.error).toBe('the theme store is not answering')
   })
 
+  test('says so where the app can read it when it goes wrong', async () => {
+    // The desktop app is not on this origin, so a body without the header is a
+    // body it is not allowed to look at: the reader would be shown whatever the
+    // browser says about a failed request instead of the sentence written here.
+    registry(() => new Response('nope', { status: 500 }))
+
+    const answer = await call(env, '/themes/index.json', {
+      headers: { origin: 'tauri://localhost' },
+    })
+
+    expect(answer.status).toBe(502)
+    expect(answer.headers.get('access-control-allow-origin')).toBe('*')
+  })
+
   test('refuses to hand on something far too big to be a catalogue', async () => {
     registry(() => new Response('x'.repeat(600 * 1024), { status: 200 }))
 
@@ -119,6 +133,7 @@ describe('a theme stylesheet', () => {
 
       expect(answer.status, id).toBe(400)
       expect(answer.json.error, id).toBe('that is not a theme')
+      expect(answer.headers.get('access-control-allow-origin'), id).toBe('*')
     }
 
     expect(asked).toEqual([])

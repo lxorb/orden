@@ -121,6 +121,41 @@ const PROSE_PROPERTIES = new Set([
  *  past a check like this one. */
 const DANGEROUS = /url\s*\(|image-set\s*\(|element\s*\(|attr\s*\(|expression\s*\(|javascript:|\\/i
 
+/** Whether a value written back out is read back as the same value.
+ *
+ *  A comment marker would comment out the rest of the file from wherever it
+ *  landed, and a string opened and never closed swallows the end of the rule and
+ *  whatever follows it. Both would make the sheet that is applied differ from
+ *  the sheet that was read here, which is the one thing this file exists to
+ *  prevent.
+ *
+ *  Kept here rather than beside the palettes because the palettes ask a stricter
+ *  version of the same question; see `usablePaletteValue`.
+ *
+ *  A brace or a semicolon needs no rule of its own: the scanner has already
+ *  ended the block at an unquoted `}`, refused the rule outright at an unquoted
+ *  `{`, and split the declaration at an unquoted `;`, so one that reaches a
+ *  value is inside a string and stays there. That is what lets a font called
+ *  `'Semi; colon'` through, which a blanket ban would not. */
+function usableValue(value: string): boolean {
+  if (!value || DANGEROUS.test(value)) return false
+  if (/\/\*|\*\//.test(value) || /\p{Cc}/u.test(value)) return false
+
+  const doubles = value.split('"').length - 1
+  const singles = value.split("'").length - 1
+  return doubles % 2 === 0 && singles % 2 === 0
+}
+
+/** The same question, for a value that never goes past the scanner.
+ *
+ *  A palette in the catalogue is pasted straight into a block the gallery
+ *  injects; nothing has looked at where its braces and semicolons are, so those
+ *  are the breakout that `usableValue` can afford to leave to the scanner and
+ *  this cannot. See registry.ts. */
+export function usablePaletteValue(value: string): boolean {
+  return usableValue(value) && !/[{};]/.test(value)
+}
+
 /** What a custom property is called. */
 const TOKEN = /^--[a-z0-9-]+$/i
 
@@ -215,8 +250,9 @@ function declarationsOf(body: string): [string, string][] {
  *  the same reason: a `}` inside a string is not the end of anything.
  *
  *  Answers the length of the file when nothing closes it, which the caller reads
- *  as an unfinished block. */
-function closes(css: string, from: number): number {
+ *  as an unfinished block. Exported because the gallery walks the app's own
+ *  stylesheets the same way; see sample.ts. */
+export function closes(css: string, from: number): number {
   let depth = 1
   let quote = ''
 
@@ -253,12 +289,22 @@ function scan(css: string): { rules: Rule[]; stray: string[] } {
       break
     }
 
-    const prelude = css.slice(at, open).trim()
+    const whole = css.slice(at, open)
     const close = closes(css, open)
     const body = css.slice(open + 1, close)
     const unfinished = close === css.length
 
     at = close + 1
+
+    // An at-rule with no block of its own - `@charset`, a bare `@import` - ends
+    // at its semicolon, and what follows it is the next rule's selector. Split
+    // there, so one of those at the top of a file is refused on its own rather
+    // than swallowing the rule after it.
+    const statements = whole.split(';')
+    const prelude = (statements.pop() ?? '').trim()
+    for (const one of statements) {
+      if (one.trim()) stray.push(one.trim().slice(0, 40))
+    }
 
     if (unfinished || body.includes('{') || prelude.startsWith('@') || !prelude) {
       stray.push(prelude.slice(0, 40) || '{')
@@ -327,9 +373,17 @@ export function review(css: string): Reviewed {
 
     if (!good.length) continue
 
-    // A rule listing both kinds at once would have to satisfy both, and no
-    // theme needs it: the first selector decides, and a mixed list has already
-    // lost whichever selectors were not allowed.
+    // A list naming both kinds is refused whole rather than read as its first
+    // selector's kind. `#write, :root` would otherwise be a prose rule, and
+    // `:root` is the element the app itself is laid out on: a theme allowed to
+    // set `opacity` or `font-size` there could hide the window or rescale every
+    // measurement in it. No theme has any use for the mixture.
+    const kinds = new Set(good.map((one) => kindOf(one)))
+    if (kinds.size > 1) {
+      refused.push(`${good.join(', ')} mixes the tokens with the prose`)
+      continue
+    }
+
     const kind = kindOf(good[0] ?? '') ?? 'tokens'
     const lines: string[] = []
 
@@ -341,8 +395,8 @@ export function review(css: string): Reviewed {
         continue
       }
 
-      if (DANGEROUS.test(value)) {
-        refused.push(`${property} reaches outside the stylesheet`)
+      if (!usableValue(value)) {
+        refused.push(`${property} is not a value a theme may set`)
         continue
       }
 
@@ -370,9 +424,23 @@ export function review(css: string): Reviewed {
 /** The stamp line an installed theme starts with. One line of JSON inside a
  *  comment: the file is the whole record of the install, so there is nothing to
  *  keep in step and a theme copied to another machine by hand still knows what
- *  it is and which version it is at. */
+ *  it is and which version it is at.
+ *
+ *  What goes in it is a name and a version out of the catalogue, which is a file
+ *  on somebody else's server; a comment holding those verbatim is a comment they
+ *  can close. So every `/` is written as `\/`, which JSON reads back as itself
+ *  and CSS can make no comment out of, and the fields are cleaned first: the
+ *  stamp is the one part of an installed theme the reviewer never sees. */
 export function stamped(stamp: Stamp, css: string): string {
-  return `/*! nib-theme ${JSON.stringify(stamp)} */\n${css}\n`
+  const clean = (text: string) => text.replace(/[/*\\]/g, '').replace(/\p{Cc}/gu, '')
+  const said = {
+    id: clean(stamp.id),
+    name: clean(stamp.name),
+    author: clean(stamp.author),
+    version: clean(stamp.version),
+  }
+
+  return `/*! nib-theme ${JSON.stringify(said).replace(/\//g, '\\/')} */\n${css}\n`
 }
 
 /** What the stamp said, for a file that has one. Anything else is a theme

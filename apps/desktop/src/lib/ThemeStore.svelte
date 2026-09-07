@@ -322,18 +322,18 @@
         {#if store.installed(one.id) && !store.updatable(one)}
           <button
             class="primary"
-            disabled={store.using(one.id) || store.working === one.id}
+            disabled={store.using(one.id) || store.working !== null}
             onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
           >
           <button
             class="quiet"
-            disabled={store.working === one.id}
+            disabled={store.working !== null}
             onclick={() => void store.remove(one.id)}>{t('Remove')}</button
           >
         {:else}
           <button
             class="primary"
-            disabled={store.working === one.id}
+            disabled={store.working !== null}
             onclick={() => void store.install(one)}
             >{store.updatable(one) ? t('Update') : t('Install')}</button
           >

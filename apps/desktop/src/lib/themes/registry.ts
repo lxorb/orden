@@ -11,6 +11,7 @@
 
 import { BASE } from '../api'
 import { isRecord, isString, stringList } from '../stored'
+import { usablePaletteValue } from './validate'
 import type { Scheme } from '../theme.svelte'
 
 /** Where the catalogue is served. The dev flag points a working copy at a local
@@ -20,6 +21,14 @@ const ROOT: string = import.meta.env.VITE_NIB_THEMES ?? `${BASE}/themes`
 /** What an id may be, the same shape the registry's folders use and the same
  *  the proxy checks: one path segment, and nothing that could be a path. */
 const ID = /^[a-z0-9][a-z0-9-]{0,38}$/
+
+/** How long a name, an author and a sentence about a theme may be. The
+ *  catalogue is somebody else's file; a card has room for a phrase. */
+const LONGEST_NAME = 40
+const LONGEST_SENTENCE = 160
+
+/** Semver, and only semver. */
+const VERSION = /^\d{1,4}\.\d{1,4}\.\d{1,4}$/
 
 /** The tokens a miniature is painted from, per scheme. Only what the theme
  *  itself states; every other token comes from the app underneath it. */
@@ -44,14 +53,28 @@ export interface StoreTheme {
   palettes: { light: Palette; dark: Palette }
 }
 
-/** A map of token names to values, with anything that is not one dropped. A
- *  malformed palette costs the card its colours, not the gallery its grid. */
+/** The most tokens a palette may carry, and the most any one of them may be.
+ *  More than any theme needs, and together a bound on how much of a stylesheet
+ *  the catalogue gets to decide. Long enough for a font stack with its
+ *  fallbacks, which is the one token that is a sentence rather than a colour. */
+const MOST_TOKENS = 120
+const LONGEST_VALUE = 200
+
+/** A map of token names to values, with anything that is not one dropped.
+ *
+ *  Held to the same rule as a declaration in a theme's own stylesheet, because
+ *  it ends up in one: `paletteCss` writes these into a block the gallery injects,
+ *  so a value that could close that block or fetch something is the same hole
+ *  here as it is there, and reaches further - a card is painted from the
+ *  catalogue alone, so nobody has to install anything for it to matter. */
 function paletteOf(value: unknown): Palette {
   if (!isRecord(value)) return {}
 
   const out: Palette = {}
   for (const [token, one] of Object.entries(value)) {
-    if (/^--[a-z0-9-]+$/i.test(token) && isString(one) && one.length <= 64) out[token] = one
+    if (Object.keys(out).length >= MOST_TOKENS) break
+    if (!/^--[a-z0-9-]+$/i.test(token)) continue
+    if (isString(one) && one.length <= LONGEST_VALUE && usablePaletteValue(one)) out[token] = one
   }
 
   return out
@@ -69,7 +92,13 @@ function themeOf(value: unknown): StoreTheme | null {
 
   const { id, name, author, version } = value
   if (!isString(id) || !ID.test(id)) return null
-  if (!isString(name) || !name.trim() || !isString(author) || !isString(version)) return null
+  if (!isString(name) || !name.trim() || name.length > LONGEST_NAME) return null
+  if (!isString(author) || author.length > LONGEST_NAME) return null
+  // Three numbers and nothing else. The version is compared, shown, and written
+  // into the installed file, and a catalogue is a file on somebody else's
+  // server: an entry that cannot say plainly which version it is has nothing
+  // the app can do with it.
+  if (!isString(version) || !VERSION.test(version)) return null
 
   const variants = variantsOf(value.variants)
   if (!variants.length) return null
@@ -81,9 +110,11 @@ function themeOf(value: unknown): StoreTheme | null {
     name: name.trim(),
     author: author.trim(),
     version,
-    description: isString(value.description) ? value.description.trim() : '',
+    description: isString(value.description)
+      ? value.description.trim().slice(0, LONGEST_SENTENCE)
+      : '',
     tags: (stringList(value.tags) ?? []).filter((tag) => /^[a-z0-9 -]{1,20}$/i.test(tag)),
-    licence: isString(value.licence) ? value.licence.trim() : '',
+    licence: isString(value.licence) ? value.licence.trim().slice(0, LONGEST_NAME) : '',
     variants,
     updated:
       isString(value.updated) && /^\d{4}-\d\d-\d\d$/.test(value.updated) ? value.updated : '',

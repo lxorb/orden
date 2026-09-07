@@ -52,6 +52,10 @@ const ACCENT_KEY = 'nib:accent'
 
 const LIGHT = '(prefers-color-scheme: light)'
 
+/** The line the store writes on the front of a theme it installs. Taken off
+ *  before the file is read for what it sets: what it says is a name, not CSS. */
+const STAMP_LINE = /^\s*\/\*!\s*nib-theme\s*\{.*?\}\s*\*\//
+
 /** Which schemes a theme file states.
  *
  *  A theme written against the tokens says so outright, in a block per scheme.
@@ -131,8 +135,11 @@ class Themes {
       )
 
       this.files = found.map((file, at): ThemeInfo => {
-        const css = sheets[at] ?? ''
-        const stamp = stampOf(css)
+        const whole = sheets[at] ?? ''
+        const stamp = stampOf(whole)
+        // Read past the stamp: it holds a name out of the catalogue, and a theme
+        // called `--accent:` would otherwise be read as one that brings its own.
+        const css = whole.replace(STAMP_LINE, '')
         const variants = variantsOf(css)
 
         return {
@@ -245,8 +252,17 @@ class Themes {
     this.select(BY_SCHEME[wanted].id)
   }
 
+  /** Which application is the latest. Reading a theme file is a round trip, and
+   *  installing one asks for two of them a moment apart: the rescan applies what
+   *  is still the old theme, and choosing the new one applies that. Whichever
+   *  read finishes last would otherwise decide, which is how the window ends up
+   *  wearing one theme's stylesheet under another theme's tokens. */
+  private applied = 0
+
   private apply() {
     const theme = this.active
+    const applying = ++this.applied
+
     // Built-in tokens still provide the base, so a file theme only overrides
     // what it cares about.
     document.documentElement.dataset.theme = theme.path ? theme.scheme : theme.id
@@ -261,8 +277,8 @@ class Themes {
     // A theme file that has gone away leaves the built-in tokens showing,
     // which is what the data attribute above has already set up.
     void invoke<string>('read_theme', { path: theme.path })
-      .then((css) => this.inject(css))
-      .catch(() => this.inject(''))
+      .then((css) => this.inject(applying === this.applied ? css : null))
+      .catch(() => this.inject(applying === this.applied ? '' : null))
   }
 
   /** Android and iOS tint their own bars from this, which is the difference
@@ -276,7 +292,11 @@ class Themes {
     if (background) tag.setAttribute('content', background)
   }
 
-  private inject(css: string) {
+  /** Puts the active theme's stylesheet on the page. Null is an answer that
+   *  arrived after a newer one: nothing to do, and above all not to be applied. */
+  private inject(css: string | null) {
+    if (css === null) return
+
     let style = document.getElementById(STYLE_ID)
 
     if (!css) {
