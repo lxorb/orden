@@ -66,6 +66,11 @@ export class Session {
   /** Bumped by every call. A render that finishes after a newer one started has
    *  nothing to say, and sending its page would put the reader back a note. */
   private latest = 0
+  /** The page the reader has asked for, which is where the glass is heading
+   *  rather than where it is. A burst of scrolls moves this and nothing else. */
+  private asked = 0
+  /** The one send in flight, if there is one. */
+  private drawing: Promise<void> | null = null
 
   constructor(
     private readonly pages: Pager,
@@ -119,6 +124,8 @@ export class Session {
 
     const shown: Shown = { key: open.key, name: open.name, pages, page: wanted.index }
     this.shown = shown
+    // A new note is a new place to be heading.
+    this.asked = wanted.index
     this.places.set(open.key, wanted.index)
 
     // Nothing the reader can see has moved, so nothing is sent. This is what
@@ -143,19 +150,51 @@ export class Session {
     const shown = this.shown
     if (!shown) return
 
-    const page = clamp(shown.page + by, shown.pages.length)
-    if (page === shown.page) return
+    this.asked = clamp(this.asked + by, shown.pages.length)
+    return this.pump()
+  }
 
-    const wanted = shown.pages[page]
-    if (!wanted) return
+  /** Draws until the glass shows the page the reader asked for.
+   *
+   *  One send at a time, and always the newest answer. A page costs the best
+   *  part of a second over the radio, so five flicks of the ring used to start
+   *  five four-tile sends that queued behind each other: the reader waited three
+   *  seconds and watched four pages they had already scrolled past go by. They
+   *  asked to be on page six, not to see pages two to six.
+   *
+   *  Concurrent sends are also the documented way to wedge the host's image
+   *  channel until the app is restarted, which is the other reason there is only
+   *  ever one. */
+  private async pump(): Promise<void> {
+    // Already drawing: the loop below re-reads the target every time round, so
+    // it will pick this up without a second send being started.
+    if (this.drawing) return this.drawing
 
-    shown.page = page
-    this.places.set(shown.key, page)
+    this.drawing = this.drain()
+    try {
+      await this.drawing
+    } finally {
+      this.drawing = null
+    }
+  }
 
-    // Claims the turn, so a render that started before it cannot land after it
-    // and put the reader back a page.
-    this.latest++
-    await this.screen.show(wanted, showingOf(shown))
+  private async drain(): Promise<void> {
+    const shown = this.shown
+    if (!shown) return
+
+    while (shown.page !== this.asked) {
+      const page = this.asked
+      const wanted = shown.pages[page]
+      if (!wanted) return
+
+      shown.page = page
+      this.places.set(shown.key, page)
+
+      // Claims the turn, so a render that started before it cannot land after
+      // it and put the reader back a page.
+      this.latest++
+      await this.screen.show(wanted, showingOf(shown))
+    }
   }
 
   /** Shows the page it is already on again. What a page that has come back to

@@ -265,3 +265,119 @@ describe('coming back to the front', () => {
     expect(screen.sent).toEqual([])
   })
 })
+
+/** A burst of scrolls, the way a ring sends them: several before the first page
+ *  has finished going over the radio.
+ *
+ *  A page costs the best part of a second on a real link. Every flick used to
+ *  start its own four-tile send, so five flicks queued five of them and the
+ *  reader waited three seconds while pages they had already scrolled past went
+ *  by one at a time. They asked to be on page six, not to watch two to six. */
+describe('scrolling faster than the radio', () => {
+  /** Lets every promise that is ready settle, without letting time pass. */
+  async function flush(): Promise<void> {
+    for (let at = 0; at < 8; at++) await Promise.resolve()
+  }
+
+  /** A screen that does not answer until it is told to, which is what a slow
+   *  link is. */
+  class Slow {
+    readonly sent: string[] = []
+    private readonly waiting: (() => void)[] = []
+
+    show(page: Page): Promise<void> {
+      this.sent.push(page.hash)
+      return new Promise<void>((resolve) => this.waiting.push(resolve))
+    }
+
+    /** Lets the send in flight finish. */
+    async land(): Promise<void> {
+      await flush()
+      this.waiting.shift()?.()
+      await flush()
+    }
+
+    get inFlight(): number {
+      return this.waiting.length
+    }
+  }
+
+  const LONG: OpenNote = {
+    key: 'long',
+    name: 'Long',
+    text: 'one\ntwo\nthree\nfour\nfive\nsix\nseven',
+  }
+
+  async function reading(): Promise<{ slow: Slow; paced: Session }> {
+    const slow = new Slow()
+    const paced = new Session((text) => Promise.resolve(pagesOf(text)), slow)
+
+    const following = paced.follow(LONG)
+    await slow.land()
+    await following
+
+    return { slow, paced }
+  }
+
+  test('costs two sends for a burst of five, not five', async () => {
+    const { slow, paced } = await reading()
+    expect(slow.sent).toEqual(['h:one'])
+
+    // Five flicks of the ring, none of them waited for. The first is already on
+    // the radio and cannot be called back; the other four are one send between
+    // them, for where the reader ended up.
+    const turns = [1, 1, 1, 1, 1].map((by) => paced.turn(by))
+    await flush()
+    expect(slow.sent).toEqual(['h:one', 'h:two'])
+
+    await slow.land()
+    expect(slow.sent).toEqual(['h:one', 'h:two', 'h:six'])
+
+    await slow.land()
+    await Promise.all(turns)
+
+    // Pages three, four and five were scrolled past and never drawn: five page
+    // costs became two.
+    expect(slow.sent).toEqual(['h:one', 'h:two', 'h:six'])
+    expect(paced.showing?.page).toBe(5)
+  })
+
+  test('never runs two sends at once, whatever arrives meanwhile', async () => {
+    const { slow, paced } = await reading()
+
+    const first = paced.turn(1)
+    await flush()
+    expect(slow.inFlight).toBe(1)
+
+    // More scrolls while the radio is busy. The channel wedges if two image
+    // sends overlap, so there must still be exactly one.
+    const more = [paced.turn(1), paced.turn(1)]
+    await flush()
+    expect(slow.inFlight).toBe(1)
+
+    await slow.land()
+    // The catch-up send, for where the reader ended up rather than where they
+    // passed through.
+    expect(slow.sent).toEqual(['h:one', 'h:two', 'h:four'])
+
+    await slow.land()
+    await Promise.all([first, ...more])
+    expect(paced.showing?.page).toBe(3)
+  })
+
+  test('scrolling back over the pages it skipped lands on the right one', async () => {
+    const { slow, paced } = await reading()
+
+    const forward = [paced.turn(1), paced.turn(1), paced.turn(1)]
+    await flush()
+    const back = [paced.turn(-1), paced.turn(-1)]
+
+    await slow.land()
+    await slow.land()
+    await Promise.all([...forward, ...back])
+
+    // Three on and two back is one on.
+    expect(paced.showing?.page).toBe(1)
+    expect(slow.sent.at(-1)).toBe('h:two')
+  })
+})
