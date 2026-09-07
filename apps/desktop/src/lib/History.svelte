@@ -115,18 +115,16 @@
           <button class:on={comparing} onclick={() => (comparing = true)}>{t('Changes')}</button>
           <button class:on={!comparing} onclick={() => (comparing = false)}>{t('Text')}</button>
 
-          {#if comparing}
+          {#if comparing && changes.length}
             <span class="tally">
-              {#if counted.added || counted.removed}
-                <ins>+{counted.added}</ins><del>-{counted.removed}</del>
-              {:else}
-                {t('No changes')}
-              {/if}
+              <ins>+{counted.added}</ins><del>-{counted.removed}</del>
             </span>
           {/if}
         </div>
 
-        {#if comparing}
+        {#if !comparing}
+          <pre>{preview}</pre>
+        {:else if changes.length}
           <div class="diff" use:scrollbar>
             {#each changes as row, at (at)}
               <div class="row {row.change}">
@@ -136,7 +134,9 @@
             {/each}
           </div>
         {:else}
-          <pre>{preview}</pre>
+          <!-- The version the note already says. Said here rather than in the
+               tally, so an empty box never reads as a broken one. -->
+          <div class="diff same"><p class="empty">{t('No changes')}</p></div>
         {/if}
 
         <button class="primary" onclick={() => void restore()}>
@@ -321,6 +321,10 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     line-height: 1.6;
+  }
+
+  .diff.same {
+    display: flex;
   }
 
   .row {
