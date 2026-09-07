@@ -12,6 +12,7 @@
 
 import { CODE_PALETTES, type CodePalette } from '@nib/editor'
 import { type Look, Sheets } from '@nib/glasses'
+import { diagnosis } from './diagnosis.svelte'
 import { mathCss } from '../math-fonts'
 import { modes } from '../modes.svelte'
 import { notePicture } from '../note-images'
@@ -103,16 +104,22 @@ class Bridge {
   }
 
   private async connect(): Promise<(() => void) | undefined> {
+    const at = performance.now()
     const glasses = await connectGlasses()
+    const waited = performance.now() - at
+
     if (!glasses) {
-      // No phone app behind this page. The plain web build and every browser end
-      // here, and the corner stays away entirely.
+      // No phone app behind this page. Every browser ends here, and so does a
+      // packed plugin whose host never put its channel on the page - which is
+      // the one case worth being loud about, so the diagnosis opens itself.
       this.health = 'alone'
       this.said('no host')
+      diagnosis.settled('not found', waited, true)
       return undefined
     }
 
     this.said('host')
+    diagnosis.settled('found', waited, false)
 
     const sheets = new Sheets({
       // KaTeX's own stylesheet with its faces inside it, which is what lets a
