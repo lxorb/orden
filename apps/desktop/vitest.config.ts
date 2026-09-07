@@ -4,6 +4,8 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   // The Svelte plugin is what compiles the runes in `.svelte.ts` stores.
   plugins: [svelte()],
+  // The build stamps this in; a test only needs it to exist.
+  define: { __EVEN_BUILD__: JSON.stringify('under test') },
   test: {
     // Vitest skips CSS by default, which makes the `?raw` imports the export
     // bakes into a document come back empty - the very thing under test.

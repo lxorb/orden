@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+/** Which build this is: the plugin's version, the commit it was built from, and
+ *  when. Baked in by `vite.config.ts` so a screenshot of a phone can say whether
+ *  the code on it is the code somebody just shipped. */
+declare const __EVEN_BUILD__: string
+
 /** The build-time settings this app reads. Vite types every `VITE_` name as
  *  `any` by default, and an `any` spreading out of `import.meta.env` is how a
  *  missing variable becomes a URL of `undefined` at runtime. Named here, so the
