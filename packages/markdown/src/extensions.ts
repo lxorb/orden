@@ -109,7 +109,7 @@ function mathBlock(src: string, at: number): number | null {
   return line !== null && matchesAt(MATH_BLOCK, src, at) ? line : null
 }
 
-/** `$inline$` and a `$$` block on its own lines. */
+/** `$inline$`, and a `$$` block written either way. */
 export const maths: MarkedExtension = {
   extensions: [
     {
