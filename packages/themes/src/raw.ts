@@ -1,5 +1,6 @@
 import katex from 'katex/dist/katex.min.css?raw'
 import base from './base.css?raw'
+import note from './document.css?raw'
 import exported from './export.css?raw'
 import tokens from './tokens.css?raw'
 
@@ -8,9 +9,11 @@ import tokens from './tokens.css?raw'
  *  package's exports map from another package come back empty. */
 export const themeCss = [tokens, base].join('\n')
 
-/** What an exported document needs on top of the theme: a page instead of an
- *  app around the text, and how it prints. */
-export const exportCss = exported
+/** What an exported document needs on top of the theme: the constructs only the
+ *  renderer makes (document.css, which the app loads too, so the reading view
+ *  and the export are one thing rather than two that look alike), a page instead
+ *  of an app around the text, and how it prints. */
+export const exportCss = [note, exported].join('\n')
 
 /** KaTeX's own stylesheet. Its fonts are referenced by relative path, which
  *  an export resolves before writing the file. */

@@ -1,0 +1,109 @@
+/* A rendered note, wherever it is read.
+ *
+ * base.css already dresses the prose - headings, quotes, tables, callouts, the
+ * table of contents. What is left here is the handful of things only the
+ * renderer in packages/markdown produces, which the editor draws its own way
+ * with its own classes: a real checkbox instead of a drawn one, a nested list
+ * for the contents, coloured code as classes, a framed diagram, a framed embed.
+ *
+ * Loaded by the app, so the reading view looks like the export, and baked into
+ * an exported document and a published page, so the export looks like the
+ * reading view. One sheet, three places, no drift. */
+
+/* ── Task lists ──────────────────────────────────────────────────── */
+
+/* The renderer's checkbox is a real input, which does not inherit the text
+   size the theme measures its offset in; given the size, it sits in the
+   list's gutter the way the editor draws it. Shown but inert: nothing on this
+   page writes to the note. */
+#write .task-list-item input[type='checkbox'] {
+  font-size: inherit;
+  left: -1.45em;
+  top: 0.4em;
+}
+
+#write .task-list-item input[type='checkbox']:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+#write .task-list-item input[type='checkbox']:disabled:hover {
+  border-color: var(--line-strong);
+  transform: none;
+}
+
+#write .task-list-item input[type='checkbox']:disabled:checked:hover {
+  border-color: var(--accent);
+}
+
+/* ── Table of contents ───────────────────────────────────────────── */
+
+#write .toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#write .toc ul ul {
+  padding-left: 1.1em;
+}
+
+#write .toc li {
+  margin: 0;
+}
+
+#write .toc li::before {
+  display: none;
+}
+
+/* ── Code ────────────────────────────────────────────────────────── */
+
+/* The colours themselves come from the code palette chosen in the app, and are
+   written into the document next to this sheet. */
+#write .hl-comment {
+  font-style: italic;
+}
+
+/* ── Diagrams ────────────────────────────────────────────────────── */
+
+#write .diagram {
+  margin: 1.7em 0;
+  padding: var(--space-4);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+#write .diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Embedded notes ──────────────────────────────────────────────── */
+
+/* `![[Note]]` on a line of its own, rendered where it stood. The same frame the
+   editor draws around one, so a note reads the same however it is read. */
+#write .embed {
+  margin: 1.2em 0;
+  padding: 0 var(--space-4);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: 0.94em;
+}
+
+#write .embed-body > :first-child {
+  margin-top: 0.8em;
+}
+
+#write .embed figcaption {
+  margin: 0 calc(var(--space-4) * -1);
+  padding: 5px var(--space-4) 6px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}

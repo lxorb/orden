@@ -1,7 +1,7 @@
-/* An exported document. Sits on top of tokens.css and base.css, which are
-   written for the editor: this undoes the parts that only make sense with an
-   app around the writing surface, styles what only an export produces, and
-   carries the print stylesheet. */
+/* An exported document. Sits on top of tokens.css, base.css and document.css,
+   which dress the note itself: this undoes the parts that only make sense with
+   an app around the writing surface, styles what only an export produces - the
+   running header and footer - and carries the print stylesheet. */
 
 /* ── A document rather than an app ──────────────────────────────── */
 
@@ -24,89 +24,6 @@ body {
 #write *::after {
   animation: none !important;
   transition: none !important;
-}
-
-/* ── Task lists ──────────────────────────────────────────────────── */
-
-/* The renderer's checkbox is a real input, which does not inherit the text
-   size the theme measures its offset in; given the size, it sits in the
-   list's gutter the way the editor draws it. */
-#write .task-list-item input[type='checkbox'] {
-  font-size: inherit;
-  left: -1.45em;
-  top: 0.4em;
-}
-
-/* ── Table of contents ───────────────────────────────────────────── */
-
-#write .toc ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-#write .toc ul ul {
-  padding-left: 1.1em;
-}
-
-#write .toc li {
-  margin: 0;
-}
-
-#write .toc li::before {
-  display: none;
-}
-
-/* ── Code ────────────────────────────────────────────────────────── */
-
-/* The colours themselves come from the code palette chosen in the app and
-   are written into the document next to this sheet. */
-#write .hl-comment {
-  font-style: italic;
-}
-
-/* ── Diagrams ────────────────────────────────────────────────────── */
-
-#write .diagram {
-  margin: 1.7em 0;
-  padding: var(--space-4);
-  text-align: center;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-}
-
-#write .diagram svg {
-  max-width: 100%;
-  height: auto;
-}
-
-/* ── Embedded notes ──────────────────────────────────────────────── */
-
-/* `![[Note]]` on a line of its own, rendered where it stood. The same frame the
-   editor draws around one, so a note reads the same on paper as on screen. */
-#write .embed {
-  margin: 1.2em 0;
-  padding: 0 var(--space-4);
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  font-size: 0.94em;
-}
-
-#write .embed-body > :first-child {
-  margin-top: 0.8em;
-}
-
-#write .embed figcaption {
-  margin: 0 calc(var(--space-4) * -1);
-  padding: 5px var(--space-4) 6px;
-  border-top: 1px solid var(--line);
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  letter-spacing: 0.02em;
-  color: var(--muted);
 }
 
 /* ── Running header and footer ───────────────────────────────────── */
