@@ -17,6 +17,7 @@ import {
   resolveRelative,
   resolves,
 } from './notes'
+import { parsed } from '../../test/parsed'
 
 /** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
@@ -45,14 +46,16 @@ const SPACE = index(
 )
 
 function state(doc: string, cursor: number, notes = SPACE) {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(cursor),
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-      noteIndex.of(notes),
-    ],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(cursor),
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        noteIndex.of(notes),
+      ],
+    }),
+  )
 }
 
 /** Every node of one name in a document, as the text it covers. */

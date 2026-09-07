@@ -3,16 +3,19 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { findLigatures, ligaturesIn } from './ligatures'
 import { nibMarkdownExtensions } from './markdown/extensions'
+import { parsed } from '../test/parsed'
 
 /** Somewhere to park the caret that is outside every run under test. */
 const PARK = '\n\nx'
 
 function state(doc: string, cursor: number) {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(cursor),
-    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(cursor),
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+    }),
+  )
 }
 
 /** What is shown as a glyph, as `text→glyph`, with the caret parked off the

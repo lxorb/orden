@@ -13,15 +13,18 @@ import {
   runPanels,
 } from './panel'
 import { isRunnableLanguage, runnableFenceAt } from './run'
+import { parsed } from '../../test/parsed'
 
 function state(doc: string) {
-  return EditorState.create({
-    doc,
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-      runPanels,
-    ],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        runPanels,
+      ],
+    }),
+  )
 }
 
 const FENCED = 'intro\n\n```js\nconsole.log(1)\n```\n\ntail\n'
@@ -106,22 +109,26 @@ describe('the panel state', () => {
 
   test('moves with the text above it', () => {
     const { begun, from, to } = started()
-    const after = begun.update({ changes: { from: 0, insert: 'a new first line\n' } }).state
+    const after = parsed(begun.update({ changes: { from: 0, insert: 'a new first line\n' } }).state)
     expect(only(after)).toMatchObject({ from: from + 17, to: to + 17 })
   })
 
   test('stays put when the text below it changes', () => {
     const { begun, from, to } = started()
-    const after = begun.update({ changes: { from: begun.doc.length, insert: 'more\n' } }).state
+    const after = parsed(
+      begun.update({ changes: { from: begun.doc.length, insert: 'more\n' } }).state,
+    )
     expect(only(after)).toMatchObject({ from, to })
   })
 
   test('keeps its output while it moves', () => {
     const { begun } = started()
-    const withLines = begun.update({
-      effects: addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'hi' }] }),
-    }).state
-    const after = withLines.update({ changes: { from: 0, insert: 'x\n' } }).state
+    const withLines = parsed(
+      begun.update({
+        effects: addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'hi' }] }),
+      }).state,
+    )
+    const after = parsed(withLines.update({ changes: { from: 0, insert: 'x\n' } }).state)
     expect(only(after)?.lines).toEqual([{ level: 'log', text: 'hi' }])
   })
 
@@ -135,7 +142,7 @@ describe('the panel state', () => {
       effects: openRun.of({ run: 1, from, to: inList.indexOf('  ```\n\ntail') + 5, startedAt: 1 }),
     }).state
 
-    const after = begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state
+    const after = parsed(begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state)
     expect(after.field(runPanels)).toHaveLength(1)
   })
 
@@ -145,7 +152,7 @@ describe('the panel state', () => {
       effects: openRun.of({ run: 1, from: 0, to: quoted.indexOf('> ```\n') + 5, startedAt: 1 }),
     }).state
 
-    const after = begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state
+    const after = parsed(begun.update({ changes: { from: begun.doc.length, insert: 'x' } }).state)
     expect(after.field(runPanels)).toHaveLength(1)
   })
 
@@ -159,50 +166,60 @@ describe('the panel state', () => {
       effects: openRun.of({ run: 1, from: 0, to, startedAt: 1 }),
     }).state
 
-    const indented = begun.update({ changes: { from: 0, insert: ' ' } }).state
+    const indented = parsed(begun.update({ changes: { from: 0, insert: ' ' } }).state)
     expect(only(indented)?.from).toBe(0)
 
-    const again = indented.update({
-      effects: openRun.of({ run: 2, from: 0, to: to + 1, startedAt: 2 }),
-    }).state
+    const again = parsed(
+      indented.update({
+        effects: openRun.of({ run: 2, from: 0, to: to + 1, startedAt: 2 }),
+      }).state,
+    )
     expect(again.field(runPanels)).toHaveLength(1)
     expect(only(again)?.run).toBe(2)
   })
 
   test('goes when the block it belongs to is deleted', () => {
     const { begun, from, to } = started()
-    const after = begun.update({ changes: { from, to, insert: '' } }).state
+    const after = parsed(begun.update({ changes: { from, to, insert: '' } }).state)
     expect(after.field(runPanels)).toEqual([])
   })
 
   test('goes when the whole note is replaced, as a reopened note replaces it', () => {
     const { begun } = started()
-    const after = begun.update({
-      changes: { from: 0, to: begun.doc.length, insert: 'another note\n' },
-    }).state
+    const after = parsed(
+      begun.update({
+        changes: { from: 0, to: begun.doc.length, insert: 'another note\n' },
+      }).state,
+    )
     expect(after.field(runPanels)).toEqual([])
   })
 
   test('goes when the fence stops being a fence', () => {
     const { begun, from } = started()
-    const after = begun.update({ changes: { from, to: from + 3, insert: '' } }).state
+    const after = parsed(begun.update({ changes: { from, to: from + 3, insert: '' } }).state)
     expect(after.field(runPanels)).toEqual([])
   })
 
   test('survives the language on the fence being retyped', () => {
     const { begun, from } = started()
-    const after = begun.update({ changes: { from: from + 3, to: from + 5, insert: 'mjs' } }).state
+    const after = parsed(
+      begun.update({ changes: { from: from + 3, to: from + 5, insert: 'mjs' } }).state,
+    )
     expect(after.field(runPanels)).toHaveLength(1)
   })
 
   test('appends output as it arrives', () => {
     const { begun } = started()
-    const first = begun.update({
-      effects: addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'one' }] }),
-    }).state
-    const second = first.update({
-      effects: addRunLines.of({ run: 1, lines: [{ level: 'error', text: 'two' }] }),
-    }).state
+    const first = parsed(
+      begun.update({
+        effects: addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'one' }] }),
+      }).state,
+    )
+    const second = parsed(
+      first.update({
+        effects: addRunLines.of({ run: 1, lines: [{ level: 'error', text: 'two' }] }),
+      }).state,
+    )
 
     expect(only(second)?.lines).toEqual([
       { level: 'log', text: 'one' },
@@ -212,9 +229,11 @@ describe('the panel state', () => {
 
   test('ignores output from a run that has been replaced', () => {
     const { begun } = started()
-    const after = begun.update({
-      effects: addRunLines.of({ run: 99, lines: [{ level: 'log', text: 'stale' }] }),
-    }).state
+    const after = parsed(
+      begun.update({
+        effects: addRunLines.of({ run: 99, lines: [{ level: 'log', text: 'stale' }] }),
+      }).state,
+    )
     expect(only(after)?.lines).toEqual([])
   })
 
@@ -224,7 +243,7 @@ describe('the panel state', () => {
       level: 'log' as const,
       text: String(index),
     }))
-    const after = begun.update({ effects: addRunLines.of({ run: 1, lines: many }) }).state
+    const after = parsed(begun.update({ effects: addRunLines.of({ run: 1, lines: many }) }).state)
 
     expect(only(after)?.lines).toHaveLength(MAX_RUN_LINES)
     expect(only(after)?.truncated).toBe(true)
@@ -232,31 +251,39 @@ describe('the panel state', () => {
 
   test('records how a run ended and how long it took', () => {
     const { begun } = started()
-    const after = begun.update({
-      effects: closeRun.of({ run: 1, status: 'timeout', elapsed: 10_000 }),
-    }).state
+    const after = parsed(
+      begun.update({
+        effects: closeRun.of({ run: 1, status: 'timeout', elapsed: 10_000 }),
+      }).state,
+    )
     expect(only(after)).toMatchObject({ status: 'timeout', elapsed: 10_000 })
   })
 
   test('lets the first ending stand, so a timeout cannot overwrite a result', () => {
     const { begun } = started()
-    const done = begun.update({
-      effects: closeRun.of({ run: 1, status: 'done', elapsed: 4 }),
-    }).state
-    const later = done.update({
-      effects: closeRun.of({ run: 1, status: 'timeout', elapsed: 10_000 }),
-    }).state
+    const done = parsed(
+      begun.update({
+        effects: closeRun.of({ run: 1, status: 'done', elapsed: 4 }),
+      }).state,
+    )
+    const later = parsed(
+      done.update({
+        effects: closeRun.of({ run: 1, status: 'timeout', elapsed: 10_000 }),
+      }).state,
+    )
     expect(only(later)).toMatchObject({ status: 'done', elapsed: 4 })
   })
 
   test('replaces the panel of the block when it is run again', () => {
     const { begun, from, to } = started()
-    const again = begun.update({
-      effects: [
-        addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'old' }] }),
-        openRun.of({ run: 2, from, to, startedAt: 2000 }),
-      ],
-    }).state
+    const again = parsed(
+      begun.update({
+        effects: [
+          addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'old' }] }),
+          openRun.of({ run: 2, from, to, startedAt: 2000 }),
+        ],
+      }).state,
+    )
 
     expect(again.field(runPanels)).toHaveLength(1)
     expect(only(again)).toMatchObject({ run: 2, lines: [] })
@@ -278,21 +305,23 @@ describe('the panel state', () => {
 
   test('is dismissed on its own', () => {
     const { begun } = started()
-    const after = begun.update({ effects: dropRun.of(1) }).state
+    const after = parsed(begun.update({ effects: dropRun.of(1) }).state)
     expect(after.field(runPanels)).toEqual([])
   })
 
   test('is nowhere near the document, whatever it holds', () => {
     const { begun } = started()
-    const after = begun.update({
-      effects: addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'hi' }] }),
-    }).state
+    const after = parsed(
+      begun.update({
+        effects: addRunLines.of({ run: 1, lines: [{ level: 'log', text: 'hi' }] }),
+      }).state,
+    )
     expect(after.doc.toString()).toBe(FENCED)
   })
 
   test('follows a selection change without being rebuilt', () => {
     const { begun } = started()
-    const after = begun.update({ selection: EditorSelection.cursor(0) }).state
+    const after = parsed(begun.update({ selection: EditorSelection.cursor(0) }).state)
     expect(after.field(runPanels)).toBe(begun.field(runPanels))
   })
 })

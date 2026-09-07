@@ -3,19 +3,22 @@ import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { pointerSnap, snapOutward } from './snap'
 import { nibMarkdownExtensions } from '../markdown/extensions'
+import { parsed } from '../../test/parsed'
 
 /** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
 function state(doc: string, cursor: number) {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(cursor),
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-      pointerSnap,
-    ],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(cursor),
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        pointerSnap,
+      ],
+    }),
+  )
 }
 
 /** Where the caret ends up after a click that CodeMirror mapped to `pos`,

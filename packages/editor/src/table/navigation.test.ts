@@ -13,17 +13,20 @@ import {
   tableAt,
   tableCrossed,
 } from './navigation'
+import { parsed } from '../../test/parsed'
 
 const TABLE = ['| a | b |', '| - | - |', '| 1 | 2 |'].join('\n')
 
 /** A document with `|` marking the caret. */
 function state(marked: string): EditorState {
   const caret = marked.indexOf('|')
-  return EditorState.create({
-    doc: marked.slice(0, caret) + marked.slice(caret + 1),
-    selection: EditorSelection.cursor(caret),
-    extensions: [markdown({ base: markdownLanguage })],
-  })
+  return parsed(
+    EditorState.create({
+      doc: marked.slice(0, caret) + marked.slice(caret + 1),
+      selection: EditorSelection.cursor(caret),
+      extensions: [markdown({ base: markdownLanguage })],
+    }),
+  )
 }
 
 describe('finding tables', () => {

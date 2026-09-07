@@ -3,6 +3,7 @@ import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { inCodeSpan, keepsStraightQuotes, smartReplacement } from './typography'
 import { nibMarkdownExtensions } from './markdown/extensions'
+import { parsed } from '../test/parsed'
 
 /** Applies the rule the way the editor would, so tests read as typed text. */
 function type(line: string, character: string): string {
@@ -87,10 +88,12 @@ describe('code spans', () => {
 function at(marked: string): boolean {
   const caret = marked.indexOf('|')
   const doc = marked.slice(0, caret) + marked.slice(caret + 1)
-  const state = EditorState.create({
-    doc,
-    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-  })
+  const state = parsed(
+    EditorState.create({
+      doc,
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+    }),
+  )
   return keepsStraightQuotes(state, caret)
 }
 

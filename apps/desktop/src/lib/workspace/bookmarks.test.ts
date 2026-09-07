@@ -170,9 +170,13 @@ describe('bookmarking', () => {
 
     // Told after the click rather than during it: the syncing store is fetched
     // when it is wanted, so the row answers first and the account hears next.
-    await vi.waitFor(() => {
-      expect(pushed).toEqual(['/Notes'])
-    })
+    // A busy machine can take a moment over the store's import.
+    await vi.waitFor(
+      () => {
+        expect(pushed).toEqual(['/Notes'])
+      },
+      { timeout: 5000 },
+    )
   })
 
   test('does nothing without a space to keep it in', () => {

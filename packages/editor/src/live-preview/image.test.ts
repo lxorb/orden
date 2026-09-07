@@ -22,13 +22,16 @@ import {
   sourceCaret,
 } from './image'
 import { nibMarkdownExtensions } from '../markdown/extensions'
+import { parsed } from '../../test/parsed'
 
 function state(doc: string, selection: { anchor: number; head?: number } = { anchor: 0 }) {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.single(selection.anchor, selection.head ?? selection.anchor),
-    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.single(selection.anchor, selection.head ?? selection.anchor),
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+    }),
+  )
 }
 
 /** Runs a command and returns the selection it left, or null when it declined. */
@@ -256,17 +259,19 @@ describe('keys beside an image', () => {
 
   test('give way while the markup is showing', () => {
     // A second caret inside the image reveals it; the first sits after it.
-    const revealed = EditorState.create({
-      doc,
-      selection: EditorSelection.create([
-        EditorSelection.cursor(to),
-        EditorSelection.cursor(from + 3),
-      ]),
-      extensions: [
-        EditorState.allowMultipleSelections.of(true),
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-      ],
-    })
+    const revealed = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.create([
+          EditorSelection.cursor(to),
+          EditorSelection.cursor(from + 3),
+        ]),
+        extensions: [
+          EditorState.allowMultipleSelections.of(true),
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        ],
+      }),
+    )
     expect(run(selectImageBehind, revealed)).toBeNull()
   })
 })

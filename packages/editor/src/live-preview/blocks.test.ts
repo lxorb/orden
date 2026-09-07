@@ -4,23 +4,26 @@ import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
 import { external } from '../external'
 import { nibMarkdownExtensions } from '../markdown/extensions'
+import { parsed } from '../../test/parsed'
 
 function state(doc: string, cursor = 0) {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(cursor),
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-      blockDecorations,
-    ],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(cursor),
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        blockDecorations,
+      ],
+    }),
+  )
 }
 
 /** Moving the caret to `to` from `from`, and what the field did about it. */
 function afterMove(doc: string, from: number, to: number) {
   const before = state(doc, from)
   const was = before.field(blockDecorations)
-  const now = before.update({ selection: EditorSelection.cursor(to) }).state
+  const now = parsed(before.update({ selection: EditorSelection.cursor(to) }).state)
   return { was, is: now.field(blockDecorations) }
 }
 
@@ -142,10 +145,12 @@ describe('block decorations', () => {
 function afterTyping(doc: string, at: number, insert: string, to = at) {
   const before = state(doc, at)
   const was = before.field(blockDecorations)
-  const now = before.update({
-    changes: { from: at, to, insert },
-    selection: { anchor: at + insert.length },
-  }).state
+  const now = parsed(
+    before.update({
+      changes: { from: at, to, insert },
+      selection: { anchor: at + insert.length },
+    }).state,
+  )
   return { was, is: now.field(blockDecorations), state: now }
 }
 

@@ -3,12 +3,15 @@ import { syntaxTree } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { nibMarkdownExtensions } from './extensions'
+import { parsed } from '../../test/parsed'
 
 function stateFor(doc: string): EditorState {
-  return EditorState.create({
-    doc,
-    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+    }),
+  )
 }
 
 function treeOf(state: EditorState): string {
@@ -265,7 +268,7 @@ describe('fenced code while editing', () => {
   function edited(doc: string, from: number, to: number, insert: string): string[] {
     const state = stateFor(doc)
     syntaxTree(state)
-    return namesOf(state.update({ changes: { from, to, insert } }).state)
+    return namesOf(parsed(state.update({ changes: { from, to, insert } }).state))
   }
 
   /** The nodes after a run of edits, each parsed before the next arrives -
@@ -275,7 +278,7 @@ describe('fenced code while editing', () => {
     let state = stateFor(doc)
     for (const insert of inserts) {
       syntaxTree(state)
-      state = state.update({ changes: { from: state.doc.length, insert } }).state
+      state = parsed(state.update({ changes: { from: state.doc.length, insert } }).state)
     }
     syntaxTree(state)
     return namesOf(state)

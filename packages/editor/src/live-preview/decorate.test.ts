@@ -4,16 +4,19 @@ import { describe, expect, test } from 'vitest'
 import { buildDecorations } from './decorate'
 import { buildBlockDecorations } from './blocks'
 import { nibMarkdownExtensions } from '../markdown/extensions'
+import { parsed } from '../../test/parsed'
 
 /** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
 function state(doc: string, cursor: number) {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(cursor),
-    extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-  })
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(cursor),
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+    }),
+  )
 }
 
 /** Text the reader never sees. Without a cursor, the caret parks off the sample. */
@@ -208,11 +211,13 @@ describe('images', () => {
 
   test('stays a picture while it is selected', () => {
     const doc = '![alt](pic.png)'
-    const selected = EditorState.create({
-      doc,
-      selection: EditorSelection.range(0, doc.length),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
-    })
+    const selected = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.range(0, doc.length),
+        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      }),
+    )
 
     const out: string[] = []
     buildDecorations(selected).atomic.between(0, doc.length, (from, to) => {

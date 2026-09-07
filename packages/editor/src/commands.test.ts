@@ -21,6 +21,7 @@ import {
   toggleWrap,
 } from './commands'
 import { selectWord } from './keymap'
+import { parsed } from '../test/parsed'
 
 /** Runs a command against a document and returns the resulting text.
  *  `|` marks the caret; `[` and `]` mark a selection. */
@@ -35,11 +36,13 @@ function run(command: StateCommand, marked: string): string {
       ? EditorSelection.cursor(caret)
       : EditorSelection.range(selectionStart, selectionEnd - 1)
 
-  const state = EditorState.create({
-    doc,
-    selection,
-    extensions: [markdown({ base: markdownLanguage })],
-  })
+  const state = parsed(
+    EditorState.create({
+      doc,
+      selection,
+      extensions: [markdown({ base: markdownLanguage })],
+    }),
+  )
 
   let next = state
   command({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
@@ -51,11 +54,13 @@ function runSelection(command: StateCommand, marked: string): [number, number] {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[[\]|]/g, '')
 
-  const state = EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(caret),
-    extensions: [markdown({ base: markdownLanguage })],
-  })
+  const state = parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(caret),
+      extensions: [markdown({ base: markdownLanguage })],
+    }),
+  )
 
   let next = state
   command({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
@@ -187,11 +192,13 @@ describe('pressing Enter after a code fence', () => {
   function press(marked: string): { took: boolean; doc: string } {
     const caret = marked.indexOf('|')
     const doc = marked.replace(/\|/g, '')
-    const state = EditorState.create({
-      doc,
-      selection: EditorSelection.cursor(caret),
-      extensions: [markdown({ base: markdownLanguage })],
-    })
+    const state = parsed(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(caret),
+        extensions: [markdown({ base: markdownLanguage })],
+      }),
+    )
 
     let next = state
     const took = closeFence({

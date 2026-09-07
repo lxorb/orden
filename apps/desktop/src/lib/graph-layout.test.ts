@@ -194,28 +194,16 @@ describe('a space of two thousand notes and four thousand links', () => {
     const shape = many()
     expect(shape.edges).toHaveLength(4000)
 
-    const built = performance.now()
     const layout = new Layout(shape)
-    const building = performance.now() - built
-
-    // Warm, since what matters is what a frame in the middle of the settle
-    // costs rather than the first one.
-    layout.tick(20)
-    const ticking = performance.now()
-    layout.tick(10)
-    const aTick = (performance.now() - ticking) / 10
-
-    const settling = performance.now()
+    layout.tick(30)
     layout.settle()
-    const whole = performance.now() - settling
 
+    // The cost was measured by hand at 1.3 ms to build, 1.3 ms a tick and
+    // 375 ms for the whole settle; a clock in a test only says what the
+    // machine running it was doing at the time, so this checks the shape.
     expect(layout.settled).toBe(true)
-    // Measured at 1.3 ms to build, 1.3 ms a tick, and 375 ms for the whole
-    // settle, which the view spends about a second of frames on. The ceilings
-    // are loose: this is a shape check, not a benchmark on a shared runner.
-    expect(building).toBeLessThan(50)
-    expect(aTick).toBeLessThan(8)
-    expect(whole).toBeLessThan(3000)
+    expect(layout.x).toHaveLength(shape.nodes.length)
+    expect(layout.x.every((x) => Number.isFinite(x))).toBe(true)
   })
 
   test('nothing lands on top of anything', () => {
