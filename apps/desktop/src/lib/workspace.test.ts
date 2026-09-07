@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const notes: Record<string, string> = {
   '/space/a.md': '# a',
   '/space/b.md': '# b',
+  '/space/c.md': '# Quarter plan\n\ntext\n\n## Why it works\n\nmore\n',
 }
 
 /** The path an invoke was given, or an empty one: `args` is a bag of unknowns
@@ -350,6 +351,34 @@ describe('where a note was last looked at', () => {
     expect(kept).toHaveLength(300)
     expect(kept).toContain('/space/319.md')
     expect(kept).not.toContain('/space/0.md')
+  })
+})
+
+describe('opening a bookmarked heading', () => {
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.tabs = []
+    workspace.goto = null
+  })
+
+  test('opens the note and asks for the line the words are on', async () => {
+    await workspace.openAtHeading('c.md', 'Why it works')
+
+    expect(workspace.active?.path).toBe('/space/c.md')
+    expect(workspace.goto).toEqual({ path: '/space/c.md', line: 4 })
+  })
+
+  test('takes the anchor a link would write, not only the words', async () => {
+    await workspace.openAtHeading('c.md', 'why-it-works')
+    expect(workspace.goto).toEqual({ path: '/space/c.md', line: 4 })
+  })
+
+  test('leaves the note where it was when the heading has gone', async () => {
+    await workspace.openAtHeading('c.md', 'Renamed since')
+
+    expect(workspace.active?.path).toBe('/space/c.md')
+    expect(workspace.goto).toBeNull()
   })
 })
 

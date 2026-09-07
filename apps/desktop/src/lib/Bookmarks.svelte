@@ -83,6 +83,12 @@
    *  it or below: above when the row being dragged comes from further down. */
   let dropAt = $state<number | null>(null)
   let dropAbove = $state(false)
+  /** Which row is being dragged. Kept here as well as in the drag itself
+   *  because what a drag carries is sealed until it is dropped: while it is
+   *  moving, a page may ask what kinds of thing it holds and not what they
+   *  are, and the line showing where it would land has to know which way it
+   *  came from. */
+  let dragging = $state<number | null>(null)
 
   function open(row: Row, preview: boolean) {
     const mark = row.mark
@@ -105,6 +111,12 @@
 
   function startDrag(event: DragEvent, row: Row) {
     carryBookmark(event.dataTransfer, row.at)
+    dragging = row.at
+  }
+
+  function endDrag() {
+    dropAt = null
+    dragging = null
   }
 
   function over(event: DragEvent, row: Row) {
@@ -113,19 +125,18 @@
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
 
-    const from = draggedBookmark(event.dataTransfer)
     dropAt = row.at
     // The line marks the edge the row would arrive at, which is the near side
-    // of the target: its top when it is coming down the list, its bottom when
-    // it is going up.
-    dropAbove = from !== null && from > row.at
+    // of the target: its top when the row is coming down the list, its bottom
+    // when it is going up.
+    dropAbove = dragging !== null && dragging > row.at
   }
 
   function drop(event: DragEvent, row: Row) {
     event.preventDefault()
-    dropAt = null
 
     const from = draggedBookmark(event.dataTransfer)
+    endDrag()
     if (from !== null) workspace.bookmarks.move(from, row.at)
   }
 
@@ -155,7 +166,7 @@
           ondragstart={(event) => startDrag(event, row)}
           ondragover={(event) => over(event, row)}
           ondragleave={() => (dropAt = null)}
-          ondragend={() => (dropAt = null)}
+          ondragend={endDrag}
           ondrop={(event) => drop(event, row)}
         >
           {#if row.mark.kind === 'search'}

@@ -179,15 +179,27 @@
     return root ? links.nameBlock(path, line, root) : Promise.resolve(null)
   }
 
-  // A followed link lands on a heading or a block, which the editor cannot know
-  // the line of: the workspace works it out from the note it just loaded and
-  // leaves it here.
+  // A followed link, or a bookmarked heading, lands on a line the editor cannot
+  // know: the workspace works it out from the note it just loaded and leaves it
+  // here.
+  //
+  // Two things about the timing, both of which used to leave the note open at
+  // its top instead. The view is waited for rather than checked inside `goto`,
+  // because opening another note builds a new one and for a moment there is
+  // none. And the jump is made on the next frame, because a fresh view is given
+  // the place the note was last read at on the frame after it appears - see
+  // placement.svelte.ts, whose effect is declared above this one and so takes
+  // that frame first. Being asked for a heading is newer than being remembered
+  // at a line, so this lands on top.
   $effect(() => {
     const asked = workspace.goto
-    if (!asked || workspace.active?.path !== asked.path) return
+    if (!asked || !view || workspace.active?.path !== asked.path) return
 
+    // Taking the ask down runs this effect again, so nothing is returned to
+    // undo the frame: a teardown here would cancel the very jump just asked
+    // for. The frame is harmless on its own - `goto` needs a view.
     workspace.goto = null
-    goto(asked.line)
+    requestAnimationFrame(() => goto(asked.line))
   })
 
   async function toggleFullscreen() {
