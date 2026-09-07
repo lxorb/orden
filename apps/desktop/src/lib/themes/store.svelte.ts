@@ -167,6 +167,7 @@ class Store {
       if (reviewed.refused.length) {
         log('warn', `${one.id} ${one.version}: ${reviewed.refused.join('; ')}`)
       }
+
       await invoke<string>('write_theme', {
         id: one.id,
         css: stamped(
