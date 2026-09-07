@@ -45,6 +45,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
+const { panesOf } = await import('./workspace/session')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -389,5 +390,226 @@ describe('the ids tabs are known by', () => {
     expect(ids.size).toBe(workspace.tabs.length)
 
     workspace.tabs = []
+  })
+})
+
+/** A pane beside the first one, holding `note` and nothing else. The split opens
+ *  the same note in both, the way it does in the app; closing that copy leaves
+ *  one note in each pane, which is what most of these tests are about. */
+async function beside(note: string) {
+  workspace.split('row')
+  const copy = workspace.active
+  await workspace.open(note)
+  if (copy) workspace.close(copy.id)
+}
+
+/** One empty pane, whatever the last test left behind. */
+function onePane() {
+  workspace.collapsePanes()
+  workspace.tabs = []
+  workspace.previewTabId = null
+}
+
+describe('a note in two panes', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+  })
+
+  test('is one document, in a pane of its own', async () => {
+    await workspace.open('/space/a.md')
+    const first = workspace.active
+    workspace.split('row')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabs).toHaveLength(2)
+
+    const [left, right] = workspace.tabs
+    // Two tabs, one document: that is the whole of it.
+    expect(left?.note).toBe(right?.note)
+    expect(right?.paneId).not.toBe(left?.paneId)
+    expect(workspace.active?.id).not.toBe(first?.id)
+  })
+
+  test('opens the second pane where the note is being read', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    workspace.noteView(tab.id, 2, 40, 1)
+    workspace.split('column')
+
+    expect(workspace.active?.cursor).toBe(2)
+    expect(workspace.active?.anchor).toBe(1)
+  })
+
+  test('wears one dirty mark and one place to save to', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    const [left, right] = workspace.tabs
+    if (!left || !right) throw new Error('the split did not happen')
+
+    left.note.live.replace('# a, typed in one pane')
+
+    expect(right.dirty).toBe(true)
+    expect(right.doc).toBe(left.doc)
+    // One note to ask about on the way out, not two.
+    expect(workspace.unsaved).toHaveLength(1)
+  })
+
+  test('shows the link toggle in both panes and sets it for both', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    const [first, second] = workspace.panes.all
+    if (!first || !second) throw new Error('the split did not happen')
+
+    expect(workspace.twins(first.id)).toEqual([second.id])
+    workspace.toggleLink(first.id)
+
+    expect(workspace.panes.at(first.id)?.linked).toBe(true)
+    expect(workspace.panes.at(second.id)?.linked).toBe(true)
+  })
+
+  test('offers no link where the panes hold different notes', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+
+    expect(workspace.twins(workspace.panes.focusedId)).toEqual([])
+  })
+
+  test('splits no further than a 2x2', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+    workspace.split('column')
+    workspace.split('row')
+
+    expect(workspace.panes.count).toBe(3)
+    expect(workspace.canSplit('row')).toBe(false)
+  })
+})
+
+describe('closing what is in a pane', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+  })
+
+  test('the last tab takes the pane with it', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+    const beside = workspace.active
+    if (!beside) throw new Error('the split did not happen')
+
+    workspace.close(beside.id)
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.tabs).toHaveLength(1)
+  })
+
+  test('the last pane stays, with a blank note in it', async () => {
+    await workspace.open('/space/a.md')
+    const only = workspace.active
+    if (!only) throw new Error('nothing opened')
+
+    workspace.close(only.id)
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.tabs).toHaveLength(1)
+    expect(workspace.active?.path).toBeNull()
+  })
+
+  test('closing a pane closes everything in it', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    const paneId = workspace.panes.focusedId
+
+    workspace.closePane(paneId)
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md'])
+  })
+
+  test('a tab dragged out of a pane closes the pane behind it', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+
+    const moving = workspace.active
+    const [first] = workspace.panes.all
+    if (!moving || !first) throw new Error('the split did not happen')
+
+    workspace.dropTab(moving.id, first.id, null)
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+    ])
+  })
+})
+
+describe('an arrangement kept under a name', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+    for (const one of [...workspace.layouts.all]) workspace.layouts.remove(one.name)
+  })
+
+  test('comes back with the panes and the notes it held', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    workspace.saveLayout('two up')
+
+    onePane()
+    await workspace.open('/space/c.md')
+    expect(workspace.panes.count).toBe(1)
+
+    await workspace.useLayout('two up')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md'])
+  })
+
+  test('keeps a note nobody has saved rather than dropping it', async () => {
+    await workspace.open('/space/a.md')
+    workspace.saveLayout('one up')
+
+    workspace.openBlank('Untitled', '# unsaved words')
+    await workspace.useLayout('one up')
+
+    expect(workspace.tabs.some((tab) => tab.doc === '# unsaved words')).toBe(true)
+  })
+
+  test('is gone once it is deleted', async () => {
+    await workspace.open('/space/a.md')
+    workspace.saveLayout('for a moment')
+    expect(workspace.layouts.all.map((one) => one.name)).toEqual(['for a moment'])
+
+    workspace.layouts.remove('for a moment')
+
+    expect(workspace.layouts.all).toEqual([])
+    expect(workspace.layouts.of('for a moment')).toBeNull()
+  })
+
+  test('holds no words, so it shows what the notes say now', async () => {
+    await workspace.open('/space/a.md')
+    workspace.saveLayout('bare')
+
+    const layout = workspace.layouts.of('bare')
+    const drafts = layout ? panesOf(layout.frame).flatMap((one) => one.tabs) : []
+
+    expect(drafts.map((draft) => draft.doc)).toEqual([''])
+  })
+
+  test('comes down to one pane on a phone', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+
+    workspace.collapsePanes()
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.tabs).toHaveLength(2)
+    expect(new Set(workspace.tabs.map((tab) => tab.paneId)).size).toBe(1)
   })
 })
