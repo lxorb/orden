@@ -1,5 +1,6 @@
 import { t } from './i18n.svelte'
 import { isDesktop } from './tauri'
+import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 
 export interface MenuItem {
@@ -76,6 +77,20 @@ export function copyPathEntry(path: string | null | undefined): MenuEntry[] {
   if (!isDesktop || !path) return []
 
   return [{ label: t('Copy path'), run: () => void navigator.clipboard.writeText(path) }]
+}
+
+/** One gesture and one word for everything that can be kept above the file
+ *  list: a note, a folder, a heading, a search. Nothing to offer where there is
+ *  nothing to point at - a heading with no note, an empty search box. */
+export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
+  if (!mark) return []
+
+  return [
+    {
+      label: workspace.bookmarks.has(mark) ? t('Remove bookmark') : t('Bookmark'),
+      run: () => workspace.bookmarks.toggle(mark),
+    },
+  ]
 }
 
 /** "Reveal in Explorer", but only where there is a file manager to reveal in.

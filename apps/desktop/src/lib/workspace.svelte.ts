@@ -1,16 +1,17 @@
 import { flushTableEdits, type NoteJump } from '@nib/editor'
 import { account } from './account.svelte'
-import { blockIds, slugify } from '@nib/markdown/links'
+import { blockIds } from '@nib/markdown/links'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { folderOf as folderIn, insideSpace, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
 import { nameFromContent } from './note-name'
-import { scanHeadings } from './outline'
+import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import { isRecord, stored } from './stored'
 import { type Draft, readSession, type Session, writeSession } from './workspace/session'
+import { Bookmarks } from './workspace/bookmarks.svelte'
 import { DeviceView } from './workspace/device.svelte'
 import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
@@ -123,14 +124,7 @@ function lineOfTarget(doc: string, jump: NoteJump): number | null {
   }
   if (jump.heading === null) return null
 
-  const wanted = jump.heading.trim().toLowerCase()
-  const anchor = slugify(jump.heading)
-
-  return (
-    scanHeadings(doc).find(
-      (heading) => heading.text.toLowerCase() === wanted || slugify(heading.text) === anchor,
-    )?.line ?? null
-  )
+  return lineOfHeading(scanHeadings(doc), jump.heading)
 }
 
 /** Ids handed out within one run of the app: tabs, and the spaces the rail
@@ -216,10 +210,12 @@ class Workspace {
   /** The last handful of file operations; see workspace/undo. */
   readonly undone = new FileActions()
   tags = $state<Tag[]>([])
-  /** What this machine remembers about the list: which folders are open,
-   *  which rows are pinned, what was opened lately, the icon each space
-   *  wears. See workspace/device. */
+  /** What this machine remembers about the list: which folders are open, what
+   *  was opened lately, the icon each space wears. See workspace/device. */
   readonly device = new DeviceView()
+  /** The notes, folders, headings and searches kept above the file list. Per
+   *  space, and on the account when there is one; see workspace/bookmarks. */
+  readonly bookmarks = new Bookmarks(() => this.activeSpace?.root ?? null)
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
   /** Which tabs are being written, and which have just been. The dot beside a
@@ -479,6 +475,11 @@ class Workspace {
     if (!this.spaces.some((space) => space.id === this.activeSpaceId)) {
       this.activeSpaceId = this.spaces[0]?.id ?? null
     }
+
+    // Pins became bookmarks, and a pin is a path this machine wrote down, so
+    // the spaces have to be known before it can be said which space it was in.
+    // Runs itself once and then has nothing left to read.
+    this.bookmarks.migrate(this.spaces.map((space) => space.root))
   }
 
   /** Creates a space folder under the one the app owns. The name is the only
@@ -1165,10 +1166,6 @@ class Workspace {
     }
   }
 
-  get pinned(): string[] {
-    return this.device.pinned
-  }
-
   isExpanded(path: string): boolean {
     return this.device.isExpanded(path)
   }
@@ -1177,13 +1174,33 @@ class Workspace {
     this.device.toggleFolder(path)
   }
 
-  isPinned(path: string): boolean {
-    return this.device.isPinned(path)
+  /** Opens a folder and every folder on the way down to it, so a bookmarked
+   *  folder can be shown where it sits rather than only named. */
+  revealFolder(path: string) {
+    const root = this.activeSpace?.root
+    if (root === undefined || !path.startsWith(root)) return
+
+    // Each step down is a folder of its own, and its own row to open.
+    let here = root
+    for (const part of relativeTo(root, path).split('/')) {
+      here = joinPath(here, part)
+      this.device.expand(here)
+    }
   }
 
-  /** Pinned notes and folders sit above the tree, whatever their depth. */
-  togglePin(path: string) {
-    this.device.togglePin(path)
+  /** Opens a note and lands on one of its headings, the way a link into a
+   *  heading does: the note that was just loaded says which line the words are
+   *  on, because a bookmark keeps the words and not the line. */
+  async openAtHeading(relative: string, heading: string) {
+    const root = this.activeSpace?.root
+    if (!root) return
+
+    const path = insideSpace(root, relative)
+    await this.open(path)
+
+    const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
+    const line = lineOfHeading(scanHeadings(doc), heading)
+    if (line !== null) this.goto = { path, line }
   }
 
   /** Every `#tag` in the space, most used first. */

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { headingAt, lineOf, scanHeadings } from './outline'
+import { headingAt, lineOf, lineOfHeading, scanHeadings } from './outline'
 
 describe('the outline of a note', () => {
   test('reads every heading with its level and line', () => {
@@ -57,5 +57,31 @@ describe('where the caret is in the outline', () => {
     expect(lineOf('a\nb\nc', 0)).toBe(0)
     expect(lineOf('a\nb\nc', 2)).toBe(1)
     expect(lineOf('a\nb\nc', 4)).toBe(2)
+  })
+})
+
+describe('finding a heading by name', () => {
+  const headings = scanHeadings('# Read me\n\ntext\n\n## Why it works\n\n## Later\n')
+
+  test('takes the words as they are written', () => {
+    expect(lineOfHeading(headings, 'Why it works')).toBe(4)
+  })
+
+  test('ignores the case and the space around it', () => {
+    expect(lineOfHeading(headings, '  why IT works ')).toBe(4)
+  })
+
+  test('takes the anchor those words turn into, which is what a link writes', () => {
+    expect(lineOfHeading(headings, 'why-it-works')).toBe(4)
+  })
+
+  test('is nothing when the note has no such heading', () => {
+    expect(lineOfHeading(headings, 'Something else')).toBeNull()
+    expect(lineOfHeading([], 'Read me')).toBeNull()
+  })
+
+  test('finds the first of two headings with the same words', () => {
+    const twice = scanHeadings('## Notes\n\n## Notes\n')
+    expect(lineOfHeading(twice, 'Notes')).toBe(0)
   })
 })

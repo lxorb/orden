@@ -7,6 +7,8 @@
  *  place: it is the whole text every time it runs, which is why the workspace
  *  only lets it run once the typing has paused. */
 
+import { slugify } from '@nib/markdown/links'
+
 export interface Heading {
   level: number
   text: string
@@ -54,6 +56,23 @@ export function lineOf(text: string, at: number): number {
   let line = 0
   for (let i = text.indexOf('\n'); i !== -1 && i < at; i = text.indexOf('\n', i + 1)) line++
   return line
+}
+
+/** Which line the heading called `name` starts on, or null when the note has no
+ *  such heading.
+ *
+ *  Matched by the words themselves and by the anchor they turn into, so
+ *  `[[Note#Some Heading]]`, `[x](Note.md#some-heading)` and a bookmark kept on
+ *  the row in the outline all reach the same line. */
+export function lineOfHeading(headings: readonly Heading[], name: string): number | null {
+  const wanted = name.trim().toLowerCase()
+  const anchor = slugify(name)
+
+  return (
+    headings.find(
+      (heading) => heading.text.toLowerCase() === wanted || slugify(heading.text) === anchor,
+    )?.line ?? null
+  )
 }
 
 /** Which of `headings` the caret sits under: the last one starting on or above

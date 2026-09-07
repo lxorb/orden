@@ -11,7 +11,14 @@
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
-  import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import {
+    bookmarkEntry,
+    copyPathEntry,
+    DIVIDER,
+    menu,
+    type MenuEntry,
+    revealEntry,
+  } from './menu.svelte'
   import { longPress } from './longpress'
   import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
@@ -33,15 +40,13 @@
       { label: t('New folder'), run: () => void workspace.createFolder(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
-      { label: pinLabel(entry.path), run: () => workspace.togglePin(entry.path) },
+      ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
       ...revealEntry(entry.path),
       DIVIDER,
       { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, true) },
       ...undoEntry(),
     ]
   }
-
-  const pinLabel = (path: string) => (workspace.isPinned(path) ? t('Unpin') : t('Pin to the top'))
 
   /** A row that is part of a selection of several stands for all of them:
    *  its menu acts on the lot, and offers only what makes sense for a lot. */
@@ -112,7 +117,7 @@
       { label: t('Open'), run: () => void workspace.open(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
-      { label: pinLabel(entry.path), run: () => workspace.togglePin(entry.path) },
+      ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
       { label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) },
       ...copyPathEntry(entry.path),
       ...revealEntry(entry.path),

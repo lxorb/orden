@@ -5,11 +5,12 @@
   import { t } from './i18n.svelte'
   import { newSpace } from './space-actions'
   import { headingAt, lineOf } from './outline'
-  import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
-  import type { Entry, Hit, Panel, SortKey } from './workspace.svelte'
+  import { bookmarkEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import type { Hit, Panel, SortKey } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import Bookmarks from './Bookmarks.svelte'
   import Links from './Links.svelte'
   import Tree from './Tree.svelte'
 
@@ -46,6 +47,10 @@
       path: 'M5.6 7.4 7.4 5.6M6.9 4.3l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7l-1.2 1.2M8.4 9.9l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7l1.2-1.2',
     },
   ]
+
+  /** A star: the mark bookmarking wears wherever it is not a word. */
+  const STAR_ICON =
+    'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
 
   const GRAPH_ICON =
     'M1.4 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M8 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M4.7 9.9a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M5 3.4h3M5.7 8.3 4 5M7.3 8.3 9 5'
@@ -142,22 +147,17 @@
     ongoto?.(hit.line)
   }
 
-  /** Pinned entries, in the order they were pinned. One that has since been
-   *  deleted simply does not appear. */
-  const pinned = $derived.by(() => {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
-    const byPath = new Map<string, Entry>()
+  /** The search in the box, as something to keep. Null until there is enough
+   *  of it to search for. */
+  const searchMark = $derived(
+    query.trim().length >= 2 ? workspace.bookmarks.forSearch(query) : null,
+  )
 
-    const walk = (entries: Entry[]) => {
-      for (const entry of entries) {
-        byPath.set(entry.path, entry)
-        if (entry.children.length) walk(entry.children)
-      }
-    }
-
-    if (workspace.tree) walk(workspace.tree.children)
-    return workspace.pinned.map((path) => byPath.get(path)).filter((entry) => !!entry)
-  })
+  /** A bookmarked search puts its words back in the box and runs them. */
+  function runBookmarked(text: string) {
+    workspace.showPanel('search')
+    onQuery(text)
+  }
 
   /** An empty search offers the space's own tags, which is how you find out
    *  what there is to search for. */
@@ -293,28 +293,7 @@
     <div class="body" in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}>
       {#if workspace.panel === 'tree'}
         {#if workspace.tree}
-          {#if pinned.length}
-            <ul class="pinned">
-              {#each pinned as entry (entry.path)}
-                <li>
-                  <button
-                    class="row"
-                    class:active={workspace.active?.path === entry.path}
-                    onclick={() => !entry.is_dir && workspace.open(entry.path, { preview: true })}
-                    ondblclick={() => !entry.is_dir && workspace.open(entry.path)}
-                    oncontextmenu={(event) =>
-                      menu.show(
-                        event,
-                        [{ label: t('Unpin'), run: () => workspace.togglePin(entry.path) }],
-                        { title: entry.is_dir ? entry.name : stripped(entry.name) },
-                      )}
-                  >
-                    <span class="label">{entry.is_dir ? entry.name : stripped(entry.name)}</span>
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          {/if}
+          <Bookmarks onsearch={runBookmarked} />
 
           <Tree entries={workspace.tree.children} />
 
@@ -350,6 +329,14 @@
                   class:active={index === current}
                   style:--level={heading.level - shallowest}
                   onclick={() => ongoto?.(heading.line)}
+                  oncontextmenu={(event) =>
+                    menu.show(
+                      event,
+                      bookmarkEntry(
+                        workspace.bookmarks.forHeading(workspace.relativeNote, heading.text),
+                      ),
+                      { title: heading.text },
+                    )}
                 >
                   <span class="label">{heading.text}</span>
                 </button>
@@ -362,15 +349,34 @@
       {:else if workspace.panel === 'links'}
         <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
       {:else if workspace.panel === 'search'}
-        <!-- svelte-ignore a11y_autofocus -->
-        <input
-          class="query"
-          value={query}
-          oninput={(event) => onQuery(event.currentTarget.value)}
-          placeholder={t('Search this space')}
-          spellcheck="false"
-          autofocus
-        />
+        <div class="find">
+          <!-- svelte-ignore a11y_autofocus -->
+          <input
+            class="query"
+            value={query}
+            oninput={(event) => onQuery(event.currentTarget.value)}
+            placeholder={t('Search this space')}
+            spellcheck="false"
+            autofocus
+          />
+
+          <!-- The one place a bookmark is a mark rather than a word: there is no
+               row to right-click, and a star in the box says what it does. -->
+          {#if searchMark}
+            {@const kept = workspace.bookmarks.has(searchMark)}
+            <button
+              class="star"
+              class:on={kept}
+              title={kept ? t('Remove bookmark') : t('Bookmark')}
+              aria-label={kept ? t('Remove bookmark') : t('Bookmark')}
+              aria-pressed={kept}
+              onclick={() => workspace.bookmarks.toggle(searchMark)}
+              transition:fly={{ x: 6, duration: 130, easing: cubicOut }}
+            >
+              <svg viewBox="0 0 13 13"><path d={STAR_ICON} /></svg>
+            </button>
+          {/if}
+        </div>
 
         {#if hits.length}
           <ul>
@@ -590,7 +596,7 @@
   }
 
   /* The heading the caret is under is a place, not a pick, so it may be
-     shown the way a pick is. A pinned note that is open is not. */
+     shown the way a pick is. A bookmarked note that is open is not. */
   .row.heading.active {
     background: var(--active-file-bg-color);
   }
@@ -600,10 +606,15 @@
     outline-offset: -2px;
   }
 
+  .find {
+    position: relative;
+    margin-bottom: var(--space-2);
+  }
+
   .query {
     width: 100%;
-    padding: 6px 9px;
-    margin-bottom: var(--space-2);
+    /* Room for the star at all times, so switching it on moves no text. */
+    padding: 6px 30px 6px 9px;
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-sm);
     background: var(--bg);
@@ -616,6 +627,50 @@
 
   .query:focus {
     border-color: var(--accent);
+  }
+
+  /* Inside the field rather than beside it: it is about what is in the field. */
+  .star {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-spring);
+  }
+
+  .star:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .star:active {
+    transform: translateY(-50%) scale(0.88);
+  }
+
+  .star.on {
+    color: var(--accent);
+  }
+
+  /* Filled once it is kept: the shape alone says which way it stands. */
+  .star.on svg {
+    fill: currentColor;
+  }
+
+  .star:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
   }
 
   .hit {
@@ -654,12 +709,6 @@
   .rest {
     flex: 1;
     min-height: var(--space-6);
-  }
-
-  .pinned {
-    margin-bottom: var(--space-2);
-    padding-bottom: var(--space-2);
-    border-bottom: 1px solid var(--line);
   }
 
   .tags {

@@ -1,12 +1,16 @@
 /** What this machine remembers about the file list, as opposed to what the
  *  notes themselves say.
  *
- *  Which folders are open, which rows are pinned, which notes were opened
- *  lately, and the icon each space wears: all of it describes a view rather
- *  than a note, so it stays on the device and never travels with the account -
- *  with one exception, the icons, which the account does carry so a space
- *  looks the same on every machine. The rest is keyed by path, and a path is
- *  only meaningful on the machine that holds the folder.
+ *  Which folders are open, which notes were opened lately, and the icon each
+ *  space wears: all of it describes a view rather than a note, so it stays on
+ *  the device and never travels with the account - with one exception, the
+ *  icons, which the account does carry so a space looks the same on every
+ *  machine. The rest is keyed by path, and a path is only meaningful on the
+ *  machine that holds the folder.
+ *
+ *  The bookmarks above the file list started out here as pins and are next
+ *  door now, in bookmarks.svelte.ts: they say what someone chose to keep, not
+ *  how this machine happens to be looking at it, so they follow the account.
  *
  *  Kept out of the tree component because that one is rebuilt from scratch
  *  every time the folder is read again - on every save, rename and sync - and
@@ -16,7 +20,6 @@ import { isBoolean, isString, recordOf, stored, stringList } from '../stored'
 import { without, withOrWithout } from '../records'
 
 const RECENT_KEY = 'nib:recent'
-const PINNED_KEY = 'nib:pinned'
 const ICONS_KEY = 'nib:icons'
 const EXPANDED_KEY = 'nib:expanded'
 
@@ -27,9 +30,6 @@ const RECENT_LIMIT = 15
 export class DeviceView {
   /** Most recent first, no duplicates. */
   recent = $state<string[]>(stringList(stored(RECENT_KEY)) ?? [])
-
-  /** Notes and folders that sit above the tree, whatever their depth. */
-  pinned = $state<string[]>(stringList(stored(PINNED_KEY)) ?? [])
 
   /** Which folders are open, by path. */
   expanded = $state<Record<string, boolean>>(recordOf(stored(EXPANDED_KEY), isBoolean))
@@ -46,18 +46,6 @@ export class DeviceView {
   forgetRecent() {
     this.recent = []
     localStorage.removeItem(RECENT_KEY)
-  }
-
-  isPinned(path: string): boolean {
-    return this.pinned.includes(path)
-  }
-
-  togglePin(path: string) {
-    this.pinned = this.isPinned(path)
-      ? this.pinned.filter((entry) => entry !== path)
-      : [...this.pinned, path]
-
-    localStorage.setItem(PINNED_KEY, JSON.stringify(this.pinned))
   }
 
   isExpanded(path: string): boolean {
