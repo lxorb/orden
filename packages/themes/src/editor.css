@@ -1051,9 +1051,11 @@
 }
 
 /* The code font may bring ligatures of its own - iA Writer Mono draws `->`
-   as an arrow by itself - and shows them only while the setting is on, so
-   that off means off. Prose is left to its font: fi and fl are not what is
-   being asked about. */
+   as an arrow by itself - and shows them only while the setting asks for a
+   glyph in code, so that off means off. The class follows the scope: it is
+   there for Code only and for Everywhere, both of which draw in code, and gone
+   when the setting is off. Prose is left to its font either way: fi and fl are
+   not what is being asked about. */
 .cm-editor:not(.nib-ligatures) .nib-inline-code,
 .cm-editor:not(.nib-ligatures) .cm-line.nib-code {
   font-variant-ligatures: none;

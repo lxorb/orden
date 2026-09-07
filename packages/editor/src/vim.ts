@@ -26,6 +26,7 @@
 import { Compartment, type Extension, Prec, type StateEffect } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
+import { once } from './once'
 import { redoEdit, undoEdit } from './shared'
 import { flushTableEdits } from './table/widget'
 
@@ -226,14 +227,19 @@ const modal = new Compartment()
  *  reads a keystroke first - and it has to, or Enter in normal mode would
  *  carry a list on instead of moving down a line. What Vim must not read is
  *  settled by the keymap it was left with, above. */
-function modalEditing(): Extension {
-  return Prec.high([
-    vim(),
-    modeReporter,
-    vimTheme,
-    EditorView.editorAttributes.of({ class: 'nib-vim' }),
-  ])
-}
+/** Built once, for the same reason the other modes are: turning it on again
+ *  when it is already on must not tear the keymap down and build it back. See
+ *  once.ts. */
+const modalEditing = once((on: boolean): Extension =>
+  on
+    ? Prec.high([
+        vim(),
+        modeReporter,
+        vimTheme,
+        EditorView.editorAttributes.of({ class: 'nib-vim' }),
+      ])
+    : [],
+)
 
 export function vimExtensions(): Extension {
   return modal.of([])
@@ -242,7 +248,7 @@ export function vimExtensions(): Extension {
 /** Modal editing as an effect, so a pane taking another note on can put it in
  *  the same transaction as everything else it changes. */
 export function vimEffect(on: boolean): StateEffect<unknown> {
-  return modal.reconfigure(on ? modalEditing() : [])
+  return modal.reconfigure(modalEditing(on))
 }
 
 /** Modal editing on or off, in a view that is already open. */

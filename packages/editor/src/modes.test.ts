@@ -5,12 +5,15 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { syntaxTree } from '@codemirror/language'
 import { describe, expect, test } from 'vitest'
 import { clearFormatting, insertHorizontalRule, setHeading, toggleWrap } from './commands'
 import { external } from './external'
 import { blockDecorations } from './live-preview'
 import { buildDecorations } from './live-preview/decorate'
 import {
+  modeEffects,
+  type ModeSettings,
   modeExtensions,
   setCodeLineNumbers,
   setEquationNumbers,
@@ -23,6 +26,7 @@ import {
   setTypewriterMode,
 } from './modes'
 import { reformatDocument } from './reformat'
+import { parsed } from '../test/parsed'
 
 /** A view is a DOM thing and these tests are not, so this is all the setters
  *  under test actually touch: a state to dispatch into. */
@@ -276,7 +280,9 @@ describe('the classes the stylesheet works from', () => {
   const modes: [string, (view: EditorView, on: boolean) => void, string][] = [
     ['focus mode', setFocusMode, 'nib-focus-mode'],
     ['typewriter mode', setTypewriterMode, 'nib-typewriter-mode'],
-    ['ligatures', setLigatures, 'nib-ligatures'],
+    // The ligature setting is a scope rather than a switch, and the class is on
+    // for every scope that draws a glyph anywhere.
+    ['ligatures', (view, on) => setLigatures(view, on ? 'all' : 'off'), 'nib-ligatures'],
     ['numbered headings', setHeadingNumbers, 'nib-numbered'],
     ['code line numbers', setCodeLineNumbers, 'nib-line-numbers'],
     ['right to left', setRightToLeft, 'nib-rtl'],
@@ -318,5 +324,74 @@ describe('the classes the stylesheet works from', () => {
     setFocusMode(view, false)
     expect(editorClasses(view.state)).toContain('nib-typewriter-mode')
     expect(editorClasses(view.state)).not.toContain('nib-focus-mode')
+  })
+})
+
+/** Re-applying the modes has to be free.
+ *
+ *  The app dresses every editor on the page whenever anything about the page
+ *  changes, and resizing a pane changes the page on every pointer move. A
+ *  reconfiguration that hands a compartment an equal value built again is not
+ *  free: a second `markdown()` is a different parser as far as
+ *  @codemirror/language is concerned, so it drops the parse of the whole
+ *  document and starts over from the top of it with a twenty millisecond
+ *  budget. Everything past that has no tree, and a decoration built off no tree
+ *  is no decoration - which is how a note went raw for a frame at a time while
+ *  the divider between two panes was being dragged. */
+describe('applying every mode again', () => {
+  const DEFAULTS: ModeSettings = {
+    source: false,
+    readOnly: false,
+    focus: false,
+    typewriter: false,
+    punctuation: true,
+    numbers: false,
+    lineNumbers: false,
+    codeTheme: 'follow',
+    rtl: false,
+    strict: false,
+    equationNumbers: false,
+    spellcheck: false,
+    closeBrackets: true,
+    ligatures: 'off',
+    vim: false,
+  }
+
+  /** Longer than one state's parse budget, so a parse thrown away shows. */
+  function long(): string {
+    const sections: string[] = []
+    for (let at = 0; at < 400; at++) {
+      sections.push(`## Section ${at}`, '', 'Some **bold** and *italic* text.', '')
+    }
+    return sections.join('\n')
+  }
+
+  function dressed(): EditorState {
+    return parsed(EditorState.create({ doc: long(), extensions: modeExtensions() }))
+  }
+
+  test('keeps the parse of the whole document', () => {
+    const before = dressed()
+    const after = before.update({ effects: modeEffects(DEFAULTS) }).state
+
+    expect(syntaxTree(after)).toBe(syntaxTree(before))
+  })
+
+  test('leaves the decorations at the far end of the document standing', () => {
+    const before = dressed()
+    const far = [{ from: before.doc.length - 400, to: before.doc.length }]
+    const had = buildDecorations(before, far).decorations.size
+    expect(had).toBeGreaterThan(0)
+
+    const after = before.update({ effects: modeEffects(DEFAULTS) }).state
+    expect(buildDecorations(after, far).decorations.size).toBe(had)
+  })
+
+  test('a mode that did change still takes effect', () => {
+    const after = dressed().update({
+      effects: modeEffects({ ...DEFAULTS, numbers: true }),
+    }).state
+
+    expect(editorClasses(after)).toContain('nib-numbered')
   })
 })

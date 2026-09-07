@@ -8,6 +8,12 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
+import { inCode } from './code'
+
+/** How much of a note the glyphs are drawn over: nothing, the code in it, or
+ *  all of it. Code only is the setting for somebody who wants `->` to be an
+ *  arrow where it is an operator and two characters where it is prose. */
+export type LigatureScope = 'off' | 'code' | 'all'
 
 /** Runs of plain characters and the glyph each stands for. The glyph is what
  *  is shown; the characters are what is kept, so the file reads the same in
@@ -108,17 +114,21 @@ function standsAlone(state: EditorState, from: number, to: number): boolean {
 }
 
 /** The runs in `ranges` that are shown as glyphs: not the one the caret is
- *  inside, which reads as typed so it can be edited, and none that syntax
- *  has a claim on. */
+ *  inside, which reads as typed so it can be edited, none that syntax has a
+ *  claim on, and under the `code` scope none that sits in prose. */
 export function ligaturesIn(
   state: EditorState,
   ranges: readonly { from: number; to: number }[] = [{ from: 0, to: state.doc.length }],
+  scope: Exclude<LigatureScope, 'off'> = 'all',
 ): Ligature[] {
   const out: Ligature[] = []
   for (const { from, to } of ranges) {
     for (const run of findLigatures(state.sliceDoc(from, to), from)) {
       const inside = state.selection.ranges.some((one) => one.from < run.to && one.to > run.from)
-      if (!inside && standsAlone(state, run.from, run.to)) out.push(run)
+      if (inside || !standsAlone(state, run.from, run.to)) continue
+      if (scope === 'code' && !inCode(state, run.from)) continue
+
+      out.push(run)
     }
   }
   return out
@@ -138,39 +148,47 @@ function markFor(glyph: string): Decoration {
 
 function buildLigatures(
   state: EditorState,
+  scope: Exclude<LigatureScope, 'off'>,
   ranges?: readonly { from: number; to: number }[],
 ): DecorationSet {
   const out: Range<Decoration>[] = []
-  for (const one of ligaturesIn(state, ranges)) out.push(markFor(one.glyph).range(one.from, one.to))
+  for (const one of ligaturesIn(state, ranges, scope)) {
+    out.push(markFor(one.glyph).range(one.from, one.to))
+  }
   return Decoration.set(out, true)
 }
 
-// The caret steps into a run one character at a time, and the run reads as
-// typed while it is there - the way a font ligature opens up under the caret
-// in an editor that has them.
-const ligaturePlugin = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet
+/** Shows `->`, `<=` and their kind as the arrow or sign they stand for, over as
+ *  much of the note as the scope says. Ahead of every other mark so that its
+ *  span is the innermost one: the glyph then takes the colour of the token it
+ *  sits in, and a code span or a bold run around it stays in one piece.
+ *
+ *  The scope is fixed for the life of the plugin, which is why it is a closure
+ *  rather than a facet: the compartment holding this is reconfigured when the
+ *  setting changes, and that is the only time it can change. Called once per
+ *  scope; see `once` in modes.ts. */
+export function ligatures(scope: Exclude<LigatureScope, 'off'>): Extension {
+  // The caret steps into a run one character at a time, and the run reads as
+  // typed while it is there - the way a font ligature opens up under the caret
+  // in an editor that has them.
+  return Prec.high(
+    ViewPlugin.fromClass(
+      class {
+        decorations: DecorationSet
 
-    constructor(view: EditorView) {
-      this.decorations = buildLigatures(view.state, view.visibleRanges)
-    }
+        constructor(view: EditorView) {
+          this.decorations = buildLigatures(view.state, scope, view.visibleRanges)
+        }
 
-    update(update: ViewUpdate) {
-      // The parse catches up after a big paste in a transaction of its own.
-      const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
-      if (update.docChanged || update.viewportChanged || update.selectionSet || reparsed) {
-        this.decorations = buildLigatures(update.view.state, update.view.visibleRanges)
-      }
-    }
-  },
-  { decorations: (plugin) => plugin.decorations },
-)
-
-/** Shows `->`, `<=` and their kind as the arrow or sign they stand for. Ahead
- *  of every other mark so that its span is the innermost one: the glyph then
- *  takes the colour of the token it sits in, and a code span or a bold run
- *  around it stays in one piece. */
-export function ligatures(): Extension {
-  return Prec.high(ligaturePlugin)
+        update(update: ViewUpdate) {
+          // The parse catches up after a big paste in a transaction of its own.
+          const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
+          if (update.docChanged || update.viewportChanged || update.selectionSet || reparsed) {
+            this.decorations = buildLigatures(update.view.state, scope, update.view.visibleRanges)
+          }
+        }
+      },
+      { decorations: (plugin) => plugin.decorations },
+    ),
+  )
 }

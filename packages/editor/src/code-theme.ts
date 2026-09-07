@@ -2,6 +2,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { Compartment, type Extension, type StateEffect } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
+import { once } from './once'
 
 /** The colours a code fence needs. Kept apart from the document's own styling
  *  so a code theme can be chosen without changing how prose looks. */
@@ -123,9 +124,12 @@ function paletteById(id: string): CodePalette {
 
 const codeTheme = new Compartment()
 
-function highlightingFor(id: string): Extension {
-  return syntaxHighlighting(codeHighlightStyle(paletteById(id)))
-}
+/** Built once per palette: reconfiguring with a freshly built highlighter drops
+ *  the highlighting on screen and works it out again, and the palette is only
+ *  ever one of a handful. See once.ts. */
+const highlightingFor = once((id: string): Extension =>
+  syntaxHighlighting(codeHighlightStyle(paletteById(id))),
+)
 
 export function codeThemeExtension(id = 'follow'): Extension {
   return codeTheme.of(highlightingFor(id))

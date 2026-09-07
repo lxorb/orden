@@ -27,6 +27,14 @@ function shown(doc: string, cursor?: number): string[] {
   )
 }
 
+/** The same, under the scope that draws in code and nowhere else. */
+function shownInCode(doc: string): string[] {
+  const full = doc + PARK
+  return ligaturesIn(state(full, full.length), undefined, 'code').map(
+    (one) => `${full.slice(one.from, one.to)}${one.glyph}`,
+  )
+}
+
 describe('finding runs', () => {
   test('finds each run where it is', () => {
     expect(findLigatures('a -> b', 10)).toEqual([{ from: 12, to: 14, glyph: '→' }])
@@ -95,5 +103,25 @@ describe('what is shown', () => {
 
   test('maths is left alone', () => {
     expect(shown('$a <= b$')).toEqual([])
+  })
+})
+
+describe('the code scope', () => {
+  test('draws in a fence and in an inline span', () => {
+    expect(shownInCode(['```', 'a->b', '```'].join('\n'))).toEqual(['->→'])
+    expect(shownInCode('`x <= y`')).toEqual(['<=≤'])
+  })
+
+  test('draws in a fence whose language the app knows', () => {
+    expect(shownInCode(['```js', 'const f = (a) => a', '```'].join('\n'))).toEqual(['=>⇒'])
+  })
+
+  test('leaves prose as typed', () => {
+    expect(shownInCode('a -> b')).toEqual([])
+    expect(shownInCode('a **b -> c** d')).toEqual([])
+  })
+
+  test('draws in the code of a line that is otherwise prose', () => {
+    expect(shownInCode('walk `a -> b` then a -> b')).toEqual(['->→'])
   })
 })

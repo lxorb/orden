@@ -18,7 +18,9 @@ import { closeBrackets } from '@codemirror/autocomplete'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 import { codeThemeEffect } from './code-theme'
-import { ligatures } from './ligatures'
+import { ligatures, type LigatureScope } from './ligatures'
+import { once } from './once'
+import { wrapSelection } from './wrap'
 import { vimEffect, vimExtensions } from './vim'
 
 /** Each mode lives in its own compartment so it can be swapped at runtime
@@ -50,13 +52,13 @@ function editorClass(name: string): Extension {
 
 /** Strict mode drops GFM and the Typora extensions, leaving plain CommonMark -
  *  useful when a document has to render the same everywhere. */
-function markdownFor(strict: boolean) {
-  return markdown({
+const markdownFor = once((strict: boolean): Extension =>
+  markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
     codeLanguages: fenceLanguages,
     extensions: strict ? [] : nibMarkdownExtensions,
-  })
-}
+  }),
+)
 
 const dim = Decoration.line({ class: 'nib-dim' })
 
@@ -123,24 +125,28 @@ const typewriterPlugin = EditorView.updateListener.of((update) => {
   view.scrollDOM.scrollTop += offset
 })
 
+/** A fresh editor's modes: the defaults, said through the same builders the
+ *  effects below use, so a view the app dresses the moment it is built is handed
+ *  the values it already holds rather than equal ones built again. See once.ts.
+ */
 export function modeExtensions(): Extension {
   return [
     language.of(markdownFor(false)),
-    preview.of(livePreview()),
-    focus.of([]),
-    typewriter.of([]),
-    punctuation.of(smartPunctuation()),
+    preview.of(previewFor(false)),
+    focus.of(focusFor(false)),
+    typewriter.of(typewriterFor(false)),
+    punctuation.of(punctuationFor(true)),
     equations.of(numberEquations.of(false)),
     // Off until asked for: a checker's wavy lines under prose that is not in
     // its dictionary's language are noise, and most notes start that way.
-    spelling.of(EditorView.contentAttributes.of({ spellcheck: 'false' })),
-    brackets.of(closeBrackets()),
+    spelling.of(spellingFor(false)),
+    brackets.of(bracketsFor(true)),
     // Off until asked for: a note reads as typed unless someone chose otherwise.
-    glyphs.of([]),
-    readOnly.of([]),
-    headingNumbers.of([]),
-    codeLineNumbers.of([]),
-    direction.of(EditorView.contentAttributes.of({ dir: 'ltr' })),
+    glyphs.of(ligaturesFor('off')),
+    readOnly.of(readOnlyFor(false)),
+    headingNumbers.of(headingNumbersFor(false)),
+    codeLineNumbers.of(codeLineNumbersFor(false)),
+    direction.of(directionFor(false)),
     // Off until asked for. Its compartment lives with the rest of it in
     // vim.ts, which is a mode with a keymap of its own to answer for.
     vimExtensions(),
@@ -186,51 +192,69 @@ function readOnlyExtensions(): Extension {
    the batch that configures a whole editor for all of them both read from here,
    so the two cannot drift into meaning different things. */
 
-const readOnlyFor = (on: boolean): Extension => (on ? readOnlyExtensions() : [])
+const readOnlyFor = once((on: boolean): Extension => (on ? readOnlyExtensions() : []))
 
 /** Source mode shows the markdown as written, so nothing is drawn over it. */
-const previewFor = (source: boolean): Extension => (source ? [] : livePreview())
+const previewFor = once((source: boolean): Extension => (source ? [] : livePreview()))
 
-const focusFor = (on: boolean): Extension =>
-  on ? [focusPlugin, editorClass('nib-focus-mode')] : []
+const focusFor = once((on: boolean): Extension =>
+  on ? [focusPlugin, editorClass('nib-focus-mode')] : [],
+)
 
 /** The class buys extra room below the last line, so the caret can still reach
  *  the middle. */
-const typewriterFor = (on: boolean): Extension =>
-  on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : []
+const typewriterFor = once((on: boolean): Extension =>
+  on ? [typewriterPlugin, editorClass('nib-typewriter-mode')] : [],
+)
 
 /** Shows `->`, `<=` and their kind as the arrow or sign they stand for; the text
  *  underneath stays as typed. The class lets the stylesheet hold back the code
- *  font's own ligatures while this is off, so that off means off. */
-const ligaturesFor = (on: boolean): Extension =>
-  on ? [ligatures(), editorClass('nib-ligatures')] : []
+ *  font's own ligatures wherever this scope draws none, so that off means off:
+ *  it is on for both scopes that draw in code, which is both of them. */
+const ligaturesFor = once((scope: LigatureScope): Extension =>
+  scope === 'off' ? [] : [ligatures(scope), editorClass('nib-ligatures')],
+)
 
 /** Curly quotes, dashes, ellipsis - on by default, like Typora. */
-const punctuationFor = (on: boolean): Extension => (on ? smartPunctuation() : [])
+const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 
 /** CSS counters number the headings; the document text stays untouched. */
-const headingNumbersFor = (on: boolean): Extension => (on ? editorClass('nib-numbered') : [])
+const headingNumbersFor = once((on: boolean): Extension => (on ? editorClass('nib-numbered') : []))
 
 /** Numbers the lines inside code fences, counting from one per fence. */
-const codeLineNumbersFor = (on: boolean): Extension => (on ? editorClass('nib-line-numbers') : [])
+const codeLineNumbersFor = once((on: boolean): Extension =>
+  on ? editorClass('nib-line-numbers') : [],
+)
 
-const bracketsFor = (on: boolean): Extension => (on ? closeBrackets() : [])
+/** Brackets and quotes close themselves, and a mark typed over a selection goes
+ *  around it. One switch, because both are the same promise: what you type
+ *  lands around what you meant rather than over it. */
+const bracketsFor = once((on: boolean): Extension => (on ? [closeBrackets(), wrapSelection()] : []))
 
 /** The writing direction, given to the editor the same way as the class: the
  *  content element's attributes are CodeMirror's to write too. */
-const directionFor = (rtl: boolean): Extension =>
+const directionFor = once((rtl: boolean): Extension =>
   rtl
     ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl')]
-    : EditorView.contentAttributes.of({ dir: 'ltr' })
+    : EditorView.contentAttributes.of({ dir: 'ltr' }),
+)
 
 /** The browser's own spell checker, over the writing surface. `language` is the
  *  dictionary to check against, as a language tag; the browser reads it off the
- *  surface's `lang`. Without one it falls back to its own choice. */
-const spellingFor = (on: boolean, language?: string): Extension =>
-  EditorView.contentAttributes.of({
-    spellcheck: on ? 'true' : 'false',
+ *  surface's `lang`. Without one it falls back to its own choice.
+ *
+ *  Two settings in one extension, so what is built once is keyed on the pair of
+ *  them written out as one string; see once.ts. */
+const spellings = once((setting: string): Extension => {
+  const language = setting.slice(setting.indexOf('|') + 1)
+  return EditorView.contentAttributes.of({
+    spellcheck: setting.startsWith('on|') ? 'true' : 'false',
     ...(language ? { lang: language } : {}),
   })
+})
+
+const spellingFor = (on: boolean, language?: string): Extension =>
+  spellings(`${on ? 'on' : 'off'}|${language ?? ''}`)
 
 /** Every mode there is, as the app holds them; see modes.svelte.ts. */
 export interface ModeSettings {
@@ -250,7 +274,8 @@ export interface ModeSettings {
    *  browser. */
   dictionary?: string | undefined
   closeBrackets: boolean
-  ligatures: boolean
+  /** How much of a note the ligature glyphs are drawn over. */
+  ligatures: LigatureScope
   vim: boolean
 }
 
@@ -338,8 +363,8 @@ export function setTypewriterMode(view: EditorView, on: boolean) {
   view.dispatch({ effects: typewriter.reconfigure(typewriterFor(on)) })
 }
 
-export function setLigatures(view: EditorView, on: boolean) {
-  view.dispatch({ effects: glyphs.reconfigure(ligaturesFor(on)) })
+export function setLigatures(view: EditorView, scope: LigatureScope) {
+  view.dispatch({ effects: glyphs.reconfigure(ligaturesFor(scope)) })
 }
 
 export function setSmartPunctuation(view: EditorView, on: boolean) {
