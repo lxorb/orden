@@ -1,22 +1,31 @@
 import { documentTitle, findLinks, renderMarkdown, type Wikilink } from '@nib/markdown'
+import { DECK_HEIGHT, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
+import { deckOf, isDeck } from '@nib/markdown/slides'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import type { Env, Note, Space } from './types'
 
 const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
 
-/** Scripts cannot run on a published note, whatever its markdown contained. */
-const CSP = [
-  "default-src 'none'",
-  "script-src 'none'",
-  `style-src 'unsafe-inline' ${new URL(KATEX_CSS).origin}`,
-  `font-src ${new URL(KATEX_CSS).origin}`,
-  'img-src https: data:',
-  "base-uri 'none'",
-  "form-action 'none'",
-  "frame-ancestors 'none'",
-].join('; ')
+/** Scripts cannot run on a published note, whatever its markdown contained.
+ *
+ *  A note read as slides is the one page that needs one - a deck has to turn its
+ *  pages - and it gets a nonce rather than a door left open: the only script that
+ *  runs is the one written here, and the note's own markup is still shown as text
+ *  rather than parsed. See `deckPage`. */
+function csp(nonce?: string): string {
+  return [
+    "default-src 'none'",
+    nonce ? `script-src 'nonce-${nonce}'` : "script-src 'none'",
+    `style-src 'unsafe-inline' ${new URL(KATEX_CSS).origin}`,
+    `font-src ${new URL(KATEX_CSS).origin}`,
+    'img-src https: data:',
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'none'",
+  ].join('; ')
+}
 
 /** The host a request names, as a name to compare: the port goes, the case
  *  goes, and so does the trailing dot that a fully qualified name may carry.
@@ -280,6 +289,9 @@ footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color
 .back{margin:0 0 1.6em;font-size:.88em}
 .back a{color:var(--muted);border:0}
 .back a:hover{color:var(--accent)}
+.present{margin:2.4em 0 0;font-size:.88em}
+.present a{color:var(--muted);border:0}
+.present a:hover{color:var(--accent)}
 `
 
 /** The author's name, when they have given one: in the head for machines,
@@ -299,11 +311,103 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'public, max-age=60',
-      'content-security-policy': CSP,
+      'content-security-policy': csp(),
       'referrer-policy': 'strict-origin-when-cross-origin',
       'x-content-type-options': 'nosniff',
     },
   })
+}
+
+/** The stage a published deck is read on.
+ *
+ *  The behaviour is shared with the app and with an exported file - the markup and
+ *  the handful of lines that turn the pages come from `@nib/markdown/deck` - and
+ *  the look follows this page's own palette above, the way the rest of a published
+ *  note does. A published page carries its stylesheet rather than the app's; see
+ *  STYLE. */
+const SLIDES_STYLE = `
+body{overflow:hidden}
+.deck{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;background:var(--bg);user-select:none;-webkit-user-select:none}
+.stage{width:${DECK_WIDTH}px;height:${DECK_HEIGHT}px;flex:none;transform:scale(var(--stage-scale,1));transform-origin:center;--stage-text:26px}
+.stage.away{display:none}
+.slide{width:100%;height:100%;padding:68px 96px;box-sizing:border-box;overflow:hidden;animation:slide-in .17s cubic-bezier(.22,1,.36,1)}
+.slide #write{height:100%;overflow:hidden;font-size:calc(var(--stage-text) * var(--stage-fit,1));line-height:1.5}
+.slide #write>:first-child{margin-top:0}
+.slide[data-shape=title] #write{display:flex;flex-direction:column;justify-content:center}
+.slide[data-shape=title] #write h1{font-size:2.6em;margin:0}
+.slide[data-shape=title] #write h2{font-size:1.5em;margin:.5em 0 0;color:var(--muted);font-weight:480}
+.slide[data-shape=picture]{padding:0}
+.slide[data-shape=picture] #write,.slide[data-shape=picture] #write p{display:flex;height:100%;margin:0;align-items:center;justify-content:center}
+.slide[data-shape=picture] #write img{width:100%;height:100%;object-fit:contain;border-radius:0}
+.slide #write li.fragment{opacity:0;transition:opacity .17s cubic-bezier(.22,1,.36,1)}
+.slide #write li.fragment.shown{opacity:1}
+.slide #write pre{max-height:100%;overflow:hidden}
+.rail{position:absolute;inset:auto 0 0 0;height:2px;background:var(--line)}
+.rail .run{height:100%;width:calc(var(--at,0) * 100%);background:var(--accent);transition:width .17s cubic-bezier(.22,1,.36,1)}
+.count{position:absolute;right:20px;bottom:16px;font-size:.8rem;font-variant-numeric:tabular-nums;color:var(--muted);opacity:0;transition:opacity .34s ease}
+.count[data-shown=yes]{opacity:1}
+@keyframes slide-in{from{opacity:0;transform:translate(var(--from-x,0),var(--from-y,0))}}
+.deck[data-move=forward] .slide{--from-x:28px}
+.deck[data-move=back] .slide{--from-x:-28px}
+.deck[data-move=down] .slide{--from-y:28px}
+.deck[data-move=up] .slide{--from-y:-28px}
+@media (prefers-reduced-motion:reduce){.slide,.rail .run,.slide #write li.fragment{animation:none;transition:none}}
+@media print{
+html,body{height:auto;overflow:visible}
+.deck{position:static;display:block;overflow:visible}
+.stage,.stage.away{display:block;transform:none;break-after:page}
+.slide{animation:none}
+.slide #write li.fragment{opacity:1}
+.rail,.count{display:none}
+}
+`
+
+/** A deck as a page of its own. Every slide is in it, so a reader with scripting
+ *  off still gets the whole talk and a printer gets one sheet per slide. */
+function deckPage(heading: string, body: string, author: string | null): Response {
+  const nonce = crypto.randomUUID().replace(/-/g, '')
+
+  const html = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escape(heading)}</title>
+${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${KATEX_CSS}">
+<style>${STYLE}${SLIDES_STYLE}</style>
+</head><body>${body}
+<script nonce="${nonce}">${DECK_SCRIPT}</script>
+</body></html>`
+
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'public, max-age=60',
+      'content-security-policy': csp(nonce),
+      'referrer-policy': 'strict-origin-when-cross-origin',
+      'x-content-type-options': 'nosniff',
+    },
+  })
+}
+
+/** The words `?slides` is asked for by, and the one word that offers it. A note
+ *  that is not a deck never shows the link, so nothing on the page promises
+ *  something it cannot do. */
+const SLIDES_QUERY = 'slides'
+
+function presentLink(source: string): string {
+  return isDeck(source) ? `<p class="present"><a href="?${SLIDES_QUERY}">Present</a></p>` : ''
+}
+
+/** A published note read as slides: the same renderer and the same markup rules
+ *  as the page itself, one slide at a time. */
+function publishedDeck(source: string, options: Parameters<typeof renderMarkdown>[1]): string {
+  return deckBody(
+    deckOf(source).map((slide) => ({
+      html: renderMarkdown(slide.markdown, options),
+      shape: slide.shape,
+      vertical: slide.vertical,
+      fragments: slide.fragments,
+    })),
+  )
 }
 
 /** How many notes an index lists. Well past any blog anyone writes, and a
@@ -313,6 +417,8 @@ const MOST_LISTED = 2000
 export async function serveBlog(env: Env, space: Space, url: URL): Promise<Response> {
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
+  /** Whether the reader asked for the note as a talk rather than as a page. */
+  const slides = url.searchParams.has(SLIDES_QUERY)
 
   const owner = await env.DB.prepare('select name from users where id = ?')
     .bind(space.user_id)
@@ -344,17 +450,27 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
 
     // One note is the whole site, so there is nowhere for a link between notes
     // to go; an embed still shows what it names, which is inside this page.
-    const rendered = renderMarkdown(source, {
-      footnotes: true,
+    const reading = {
       escapeHtml: true,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
       // has somewhere to go.
       resolveLink: linkResolver([], readSpaceFiles(space.files)),
       resolveEmbed: await embedded(env, space, [only], source),
-    })
+    }
 
-    return page(title(only, source), withByline(rendered, author), env, author)
+    if (slides && isDeck(source)) {
+      return deckPage(title(only, source), publishedDeck(source, reading), author)
+    }
+
+    const rendered = renderMarkdown(source, { footnotes: true, ...reading })
+
+    return page(
+      title(only, source),
+      withByline(rendered, author) + presentLink(source),
+      env,
+      author,
+    )
   }
 
   const listing = await env.DB.prepare(
@@ -396,18 +512,25 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   // A published note is public: its raw HTML is shown, never run. Its links to
   // other notes point at where those notes are published, and its embeds show
   // what they name - one level deep, which is the renderer's own rule.
-  const rendered = renderMarkdown(source, {
-    footnotes: true,
+  const reading = {
     escapeHtml: true,
     resolveLink: linkResolver(results, readSpaceFiles(space.files)),
     resolveEmbed: await embedded(env, space, results, source),
-  })
+  }
+
+  // A note whose rules break it into slides can be read as a talk instead. The
+  // same renderer and the same rules, one slide to a screen.
+  if (slides && isDeck(source)) {
+    return deckPage(title(note, source), publishedDeck(source, reading), author)
+  }
+
+  const rendered = renderMarkdown(source, { footnotes: true, ...reading })
 
   // The way back sits above the note, where a reader who came from the
   // index looks for it, and the author right under the title.
   return page(
     title(note, source),
-    `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}`,
+    `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}${presentLink(source)}`,
     env,
     author,
   )

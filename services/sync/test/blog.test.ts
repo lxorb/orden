@@ -831,3 +831,121 @@ describe('subdomain lengths', () => {
     expect((await publish({ subdomain: 'me-' })).status).toBe(400)
   })
 })
+
+describe('a published note read as slides', () => {
+  const DECK = [
+    '# The talk',
+    '',
+    '---',
+    '',
+    '## Where it goes',
+    '',
+    '+ first',
+    '+ second',
+    '',
+    'Note: only the presenter reads this',
+    '',
+    '***',
+    '',
+    '### A detail',
+  ].join('\n')
+
+  async function publishDeck() {
+    await addNote('talk.md', DECK)
+    await publish({ subdomain: 'field' })
+  }
+
+  test('the note itself offers it', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('href="?slides"')
+  })
+
+  test('a note that is not a deck offers nothing', async () => {
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
+    expect(response.text).not.toContain('href="?slides"')
+  })
+
+  test('asking for it serves one page per slide', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
+    expect(response.status).toBe(200)
+    expect(response.text.match(/<div class="stage">/g)).toHaveLength(3)
+    expect(response.text).toContain('<h1>The talk</h1>')
+    expect(response.text).toContain('<h3>A detail</h3>')
+  })
+
+  test('the presenter’s notes are not served with the deck', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
+    expect(response.text).not.toContain('only the presenter reads this')
+  })
+
+  test('a slide of headings alone is a title, and one below is a continuation', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('data-shape="title"')
+    expect(response.text.match(/data-vertical="yes"/g)).toHaveLength(1)
+  })
+
+  test('the items that wait for a click are named', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('data-fragments="0,1"')
+  })
+
+  test('only the script written here may run', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
+    const policy = response.headers.get('content-security-policy') ?? ''
+    const nonce = /script-src 'nonce-([a-f0-9]+)'/.exec(policy)?.[1]
+
+    expect(nonce).toBeTruthy()
+    expect(response.text).toContain(`<script nonce="${nonce}">`)
+    // One script tag on the page, and it is that one.
+    expect(response.text.match(/<script/g)).toHaveLength(1)
+  })
+
+  test('the page itself keeps scripting shut off entirely', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk', { host: 'field.nibeditor.com' })
+    expect(response.headers.get('content-security-policy')).toContain("script-src 'none'")
+  })
+
+  test('a note that is not a deck cannot be asked for as one', async () => {
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/hello-world?slides', { host: 'field.nibeditor.com' })
+    expect(response.text).not.toContain('<div class="stage">')
+    expect(response.headers.get('content-security-policy')).toContain("script-src 'none'")
+  })
+
+  test('the markup rules still hold: a note’s own HTML is shown, never run', async () => {
+    await addNote('sneaky.md', '# One\n\n---\n\n<script>alert(1)</script>\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/sneaky?slides', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('&lt;script&gt;alert(1)&lt;/script&gt;')
+    expect(response.text.match(/<script/g)).toHaveLength(1)
+  })
+
+  test('a single note published as the whole site can be a deck too', async () => {
+    await addNote('home.md', DECK)
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const page = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(page.text).toContain('href="?slides"')
+
+    const deck = await call(env, '/?slides', { host: 'me.nibeditor.com' })
+    expect(deck.text.match(/<div class="stage">/g)).toHaveLength(3)
+  })
+})

@@ -30,6 +30,18 @@ const NEEDS: Record<string, string> = {
 
 const EVENTS = new Set(['onCloseRequested', 'onResized'])
 
+/** The window commands presenting calls, which do not go through `WindowLike`:
+ *  the presenter's window is opened with the Tauri API directly, because it is
+ *  a second window rather than this one. Each is the call as it is written in
+ *  slides/presenter.ts, so a permission cannot outlive the code that needed it.
+ *  See docs/slides.md. */
+const PRESENTING: Record<string, string> = {
+  'new WebviewWindow(': 'core:webview:allow-create-webview-window',
+  'availableMonitors()': 'core:window:allow-available-monitors',
+  'currentMonitor()': 'core:window:allow-current-monitor',
+  'setFocus()': 'core:window:allow-set-focus',
+}
+
 /** The method names declared on the `WindowLike` interface. */
 function windowMethods(): string[] {
   const source = read('../src/lib/tauri.ts')
@@ -53,10 +65,21 @@ describe('window permissions', () => {
     expect(missing, `ungranted or unmapped: ${missing.join(', ')}`).toEqual([])
   })
 
+  test('every call presenting makes is granted, and it makes each of them', () => {
+    const source = read('../src/lib/slides/presenter.ts')
+
+    const missing = Object.entries(PRESENTING).filter(
+      ([call, permission]) =>
+        !source.includes(call) || !capabilities.permissions.includes(permission),
+    )
+
+    expect(missing.map(([call]) => call)).toEqual([])
+  })
+
   test('nothing is granted that the app never calls', () => {
-    const used = new Set(Object.values(NEEDS))
+    const used = new Set([...Object.values(NEEDS), ...Object.values(PRESENTING)])
     const stale = capabilities.permissions
-      .filter((one) => one.startsWith('core:window:'))
+      .filter((one) => one.startsWith('core:window:') || one.startsWith('core:webview:allow-'))
       // Dragging comes from `data-tauri-drag-region`, not a method call.
       .filter((one) => one !== 'core:window:allow-start-dragging')
       .filter((one) => !used.has(one))
