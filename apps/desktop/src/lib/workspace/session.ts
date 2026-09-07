@@ -76,6 +76,20 @@ export interface Position {
   at: number
 }
 
+/** One tab this window has closed, kept so the last one can be reopened.
+ *
+ *  Written down like everything else here, because closing a note and then
+ *  restarting is exactly when reopening it is worth most. It holds the same
+ *  draft a tab does, so unsaved words come back with it, plus where it sat. */
+export interface ClosedTab {
+  draft: Draft
+  /** The pane it was closed from. Reopening looks for that pane and settles for
+   *  the focused one when it has since gone. */
+  paneId: string
+  /** Its place in that pane's strip, counting from zero. */
+  at: number
+}
+
 export interface Session {
   spaces: Space[]
   activeSpace: string | null
@@ -89,6 +103,8 @@ export interface Session {
   /** Written before there were drafts. Still read, for the same reason. */
   openPaths?: string[]
   activePath?: string | null
+  /** The tabs this window closed, oldest first; see workspace/closed. */
+  closed?: ClosedTab[]
   /** The sidebar, for entries written before it became part of the layout. */
   panel: Panel | null
 }
@@ -218,6 +234,22 @@ function readPositions(value: unknown): Record<string, Position> {
   return out
 }
 
+/** One closed tab, once it reads as one. A record with no draft in it says
+ *  nothing about which tab it was, so it is dropped rather than reopened as a
+ *  blank page. */
+export function readClosed(value: unknown): ClosedTab | null {
+  if (!isRecord(value)) return null
+
+  const draft = readDraft(value.draft)
+  if (!draft) return null
+
+  return {
+    draft,
+    paneId: isString(value.paneId) ? value.paneId : '',
+    at: isNumber(value.at) && value.at >= 0 ? value.at : 0,
+  }
+}
+
 export function readSession(value: unknown): Session | null {
   if (!isRecord(value)) return null
 
@@ -235,6 +267,9 @@ export function readSession(value: unknown): Session | null {
     ...(isNumber(value.active) ? { active: value.active } : {}),
     ...(openPaths ? { openPaths } : {}),
     ...(isString(value.activePath) ? { activePath: value.activePath } : {}),
+    closed: Array.isArray(value.closed)
+      ? value.closed.map(readClosed).filter((one): one is ClosedTab => one !== null)
+      : [],
   }
 }
 
@@ -315,8 +350,14 @@ function bareFrame(frame: FrameDraft): FrameDraft {
 export function writeSession(key: string, state: Session): boolean {
   if (put(key, state)) return true
 
+  // What is on screen comes before what was closed, so the reopen stack is the
+  // first thing to go: it is a convenience, and the notes in it are either on
+  // disk or were deliberately given up on.
+  const shorter: Session = { ...state, closed: [] }
+  if (put(key, shorter)) return true
+
   const lean = state.layout ? withoutText(state.layout) : undefined
-  return put(key, { ...state, ...(lean ? { layout: lean } : {}) })
+  return put(key, { ...shorter, ...(lean ? { layout: lean } : {}) })
 }
 
 function put(key: string, state: Session): boolean {

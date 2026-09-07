@@ -7,6 +7,7 @@ import {
   type FrameDraft,
   type Layout,
   panesOf,
+  readClosed,
   readDraft,
   readLayout,
   readPosition,
@@ -103,6 +104,34 @@ describe('reading one tab', () => {
     expect(readDraft({ path: null, name: 'a', doc: '', reading: 'yes' })).not.toHaveProperty(
       'reading',
     )
+  })
+})
+
+describe('reading a closed tab', () => {
+  test('brings back the tab, its pane and its place', () => {
+    const back = readClosed({
+      draft: { path: '/Notes/a.md', name: 'a.md', doc: '', dirty: false },
+      paneId: 'left',
+      at: 3,
+    })
+
+    expect(back?.draft.name).toBe('a.md')
+    expect(back?.paneId).toBe('left')
+    expect(back?.at).toBe(3)
+  })
+
+  test('fills in a pane and a place that were never written', () => {
+    const back = readClosed({ draft: { path: null, name: 'Untitled', doc: '# draft' } })
+
+    expect(back?.paneId).toBe('')
+    expect(back?.at).toBe(0)
+  })
+
+  test('is nothing at all without a tab in it', () => {
+    expect(readClosed({ paneId: 'left', at: 0 })).toBeNull()
+    expect(readClosed({ draft: { name: 42 } })).toBeNull()
+    expect(readClosed(null)).toBeNull()
+    expect(readClosed({ draft: { path: null, name: 'a', doc: '' }, at: -2 })?.at).toBe(0)
   })
 })
 
@@ -259,6 +288,7 @@ describe('writing the session down', () => {
     spaces: [],
     activeSpace: null,
     panel: null,
+    closed: [{ draft: draft('/Notes/gone.md', '# closed'), paneId: 'p1', at: 0 }],
     layout: {
       focused: 'p1',
       panel: null,
@@ -266,18 +296,39 @@ describe('writing the session down', () => {
     },
   })
 
-  test('gives up the copies of notes that live somewhere else when storage is full', () => {
-    let full = true
+  /** Storage that refuses the first `refusals` writes and keeps the rest. */
+  function tightStorage(refusals: number): string[] {
     const written: string[] = []
+    let left = refusals
+
     vi.stubGlobal('localStorage', {
       setItem: (_key: string, value: string) => {
-        if (full) {
-          full = false
-          throw new Error('quota exceeded')
-        }
+        if (left-- > 0) throw new Error('quota exceeded')
         written.push(value)
       },
     })
+
+    return written
+  }
+
+  test('gives up what was closed before what is open when storage is full', () => {
+    const written = tightStorage(1)
+
+    try {
+      expect(writeSession('nib:workspace', session())).toBe(true)
+
+      const saved = JSON.parse(written[0] ?? '{}') as Session
+      const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
+      expect(saved.closed).toEqual([])
+      // What is still on screen has given up nothing yet.
+      expect(tabs[0]).toMatchObject({ path: '/Notes/a.md', doc: '# on disk too' })
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  test('gives up the copies of notes that live somewhere else next', () => {
+    const written = tightStorage(2)
 
     try {
       expect(writeSession('nib:workspace', session())).toBe(true)
@@ -293,11 +344,25 @@ describe('writing the session down', () => {
     }
   })
 
+  test('brings the closed tabs back through a restart', () => {
+    const written = tightStorage(0)
+
+    try {
+      writeSession('nib:workspace', session())
+      const back = readSession(JSON.parse(written[0] ?? '{}'))
+
+      expect(back?.closed).toHaveLength(1)
+      expect(back?.closed?.[0]).toMatchObject({ paneId: 'p1', at: 0 })
+      // Unsaved words travel with it, which is the whole point of writing the
+      // stack down rather than keeping it for this run only.
+      expect(back?.closed?.[0]?.draft).toMatchObject({ path: '/Notes/gone.md', doc: '# closed' })
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   test('says which shape it wrote', () => {
-    const written: string[] = []
-    vi.stubGlobal('localStorage', {
-      setItem: (_key: string, value: string) => written.push(value),
-    })
+    const written = tightStorage(0)
 
     try {
       writeSession('nib:workspace', session())

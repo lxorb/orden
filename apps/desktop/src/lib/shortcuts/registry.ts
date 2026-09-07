@@ -228,7 +228,16 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-w',
-    run: () => workspace.activeTabId && workspace.close(workspace.activeTabId),
+    run: () => void workspace.closeActive(),
+  },
+  {
+    // The key a browser and Obsidian both use for it, so no hand has to be told.
+    id: 'app.reopen',
+    label: () => t('Reopen closed tab'),
+    category: 'file',
+    scope: 'app',
+    key: 'Mod-Shift-t',
+    run: () => void workspace.reopenClosed(),
   },
   {
     id: 'app.settings',
@@ -607,4 +616,5 @@ export const BROWSER_KEYS = [
   'Mod-t',
   'Mod-n',
   'Mod-Shift-n',
+  'Mod-Shift-t',
 ]

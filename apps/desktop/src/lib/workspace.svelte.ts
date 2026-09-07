@@ -23,6 +23,7 @@ import {
   writeSession,
 } from './workspace/session'
 import { Bookmarks } from './workspace/bookmarks.svelte'
+import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
 import { type DocumentStart, NoteDoc, Tab } from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
@@ -88,6 +89,12 @@ const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 function basename(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
+}
+
+/** A file's name as the app writes it: without the extension, the way the tab
+ *  strip and the file list show it. */
+function shownName(name: string): string {
+  return name.replace(MARKDOWN, '')
 }
 
 /** Which line of a note a followed link lands on: the heading it names, or the
@@ -167,6 +174,23 @@ function pathsTo(notes: NoteDoc[]): Map<string, NoteDoc> {
   return out
 }
 
+/** The open documents by the key a draft names them with, so a tab reopened
+ *  while another pane still shows the same note becomes a second view of that
+ *  note rather than a second copy of it. */
+function keysTo(notes: NoteDoc[]): Map<string, NoteDoc> {
+  const out = emptyMap<NoteDoc>()
+  for (const note of notes) out.set(note.key, note)
+
+  return out
+}
+
+/** Whether a tab is worth remembering once it has been closed. A blank untitled
+ *  note is not: it is the empty page a window starts with, and reopening it
+ *  would put back something nobody ever wrote. */
+function worthReopening(tab: Tab): boolean {
+  return tab.kind !== 'note' || tab.path !== null || tab.doc.trim().length > 0
+}
+
 class Workspace {
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
@@ -195,6 +219,8 @@ class Workspace {
   treeOptions = $state<TreeOptions>(readTreeOptions())
   /** The last handful of file operations; see workspace/undo. */
   readonly undone = new FileActions()
+  /** The tabs this window has closed, newest last; see workspace/closed. */
+  readonly closed = new ClosedTabs()
   tags = $state<Tag[]>([])
   /** What this machine remembers about the list: which folders are open, what
    *  was opened lately, the icon each space wears. See workspace/device. */
@@ -322,6 +348,7 @@ class Workspace {
 
     this.spaces = state.spaces
     this.positions = new Positions(state.positions ?? {})
+    this.closed.restore(state.closed ?? [])
     // The sidebar comes back the way it was left.
     this.panel = state.panel
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
@@ -523,6 +550,7 @@ class Workspace {
       layout: this.layout(),
       panel: this.panel,
       positions: this.positions.all,
+      closed: this.closed.stack,
     }
 
     writeSession(STORAGE_KEY, state)
@@ -1107,12 +1135,108 @@ class Workspace {
     if (this.previewTabId === id) this.previewTabId = null
   }
 
+  /** Closes a tab, asking first when the note in it holds work that is not on
+   *  disk. Every close somebody asked for goes through here: the cross on the
+   *  tab, Ctrl+W, the menu row and the palette. `close` below stays the plain
+   *  operation, which is what everything that closes a tab because the note has
+   *  gone away needs.
+   *
+   *  Nothing is asked when the note stays open in another pane: closing one of
+   *  two views of a note loses nothing at all. */
+  async closeAsking(id: string) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return
+    if (await this.mayClose([tab])) this.close(id)
+  }
+
+  /** The tab being worked in, closed with the question. What Ctrl+W, the File
+   *  menu, the palette and `:q` all mean by closing. */
+  async closeActive() {
+    const id = this.activeTabId
+    if (id) await this.closeAsking(id)
+  }
+
+  /** Every other tab of one pane, asking about whatever is unsaved among them. */
+  async closeOthers(keepId: string) {
+    const tab = this.tabs.find((one) => one.id === keepId)
+    if (!tab) return
+
+    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== keepId)
+    if (!(await this.mayClose(others))) return
+
+    for (const other of others) this.close(other.id)
+  }
+
+  /** Whether the window may go, which is the same question over every tab in it.
+   *  See start.ts, which is what prevents the close until this answers. */
+  async mayCloseWindow(): Promise<boolean> {
+    return this.mayClose(this.tabs)
+  }
+
+  /** Whether a set of tabs may all go: the closing question once per note,
+   *  however many of the tabs hold it, and nothing asked about a note that stays
+   *  open outside the set. Cancel at any one of them stops the lot, because
+   *  closing is one gesture and half of it done is worse than none.
+   *
+   *  Asked of documents rather than of tabs throughout: a note is the thing with
+   *  words in it, and a tab is only a way of looking at one. */
+  private async mayClose(closing: readonly Tab[]): Promise<boolean> {
+    this.flush()
+
+    const going = closing.map((tab) => tab.id)
+    const asked: NoteDoc[] = []
+
+    for (const tab of closing) {
+      if (asked.includes(tab.note)) continue
+      asked.push(tab.note)
+
+      if (!tab.note.unsaved) continue
+      // A note another pane keeps showing is not going anywhere.
+      if (this.tabs.some((one) => one.note === tab.note && !going.includes(one.id))) continue
+      if (!(await this.askToClose(tab.note))) return false
+    }
+
+    return true
+  }
+
+  /** The one question the app asks before words are lost, in three answers
+   *  because there are three things a person can mean: write it down, let it go,
+   *  or stay where they are.
+   *
+   *  Saving a note with no home yet goes through the name prompt, the way saving
+   *  one always does. A name nobody gives leaves the note unsaved, and then the
+   *  close does not happen either. */
+  private async askToClose(note: NoteDoc): Promise<boolean> {
+    const { prompt } = await import('./prompt.svelte')
+
+    const answer = await prompt.choose({
+      title: t('Save {name}?', { name: note.path ? shownName(note.name) : t('Untitled') }),
+      options: [
+        { id: 'save', label: key('Save'), primary: true },
+        { id: 'discard', label: key('Don’t save'), danger: true },
+        { id: 'cancel', label: key('Cancel') },
+      ],
+    })
+
+    if (answer !== 'save') return answer === 'discard'
+
+    await this.write(note)
+    return !note.unsaved
+  }
+
   close(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
 
     const paneId = tab.paneId
     const at = this.tabsIn(paneId).findIndex((one) => one.id === id)
+
+    // The words as they stand, since a tab closed with something unsaved in it
+    // has to bring that back with it.
+    this.flush()
+    if (worthReopening(tab)) {
+      this.closed.record({ draft: this.draftOf(tab), paneId, at: Math.max(at, 0) })
+    }
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null
@@ -1132,6 +1256,47 @@ class Workspace {
     }
 
     this.persist()
+  }
+
+  /** The tab that was closed last, back where it was: in the pane it was closed
+   *  from while that pane is still there, at its own place in the strip, with
+   *  whatever was unsaved in it.
+   *
+   *  A note that has since been deleted cannot come back, so the entry is spent
+   *  and the one under it is tried: reaching past a note that is gone is what
+   *  somebody pressing the key twice means.
+   *
+   *  Nothing is dropped to make room for it. Reopening is not opening a note in
+   *  the usual sense, and closing the blank page somebody is looking at because
+   *  they asked for a tab back would be a surprise. */
+  async reopenClosed() {
+    for (let closed = this.closed.take(); closed; closed = this.closed.take()) {
+      const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
+      const [tab] = await this.tabsFrom(
+        [closed.draft],
+        paneId,
+        keysTo(this.documents),
+        pathsTo(this.documents),
+      )
+      if (!tab) continue
+
+      this.tabs = this.strippedAt(tab, closed.at)
+      this.panes.activate(paneId, tab.id)
+      this.panes.focus(paneId)
+      this.persist()
+      return
+    }
+  }
+
+  /** The flat list with a tab put back where it sat: `at` counts along its own
+   *  pane's strip, so the place in the flat list is the one the tab that now
+   *  holds that spot occupies. */
+  private strippedAt(tab: Tab, at: number): Tab[] {
+    const after = this.tabsIn(tab.paneId)[at]
+    const index = after ? this.tabs.findIndex((one) => one.id === after.id) : -1
+    if (index < 0) return [...this.tabs, tab]
+
+    return [...this.tabs.slice(0, index), tab, ...this.tabs.slice(index)]
   }
 
   /** What a document reports whenever it changes, wherever the change came from:
@@ -1221,15 +1386,11 @@ class Workspace {
   }
 
   /** Notes holding work that is not on disk: notes and not tabs, so a note open
-   *  in two panes is one thing to ask about. Whitespace-only scratch does not
-   *  count - nobody wants to be asked about an empty note. */
+   *  in two panes is one thing to ask about. What counts is the document's own
+   *  answer; see NoteDoc.unsaved. */
   get unsaved(): NoteDoc[] {
     this.flush()
-    return this.documents.filter((note) => note.dirty && note.text.trim().length > 0)
-  }
-
-  async saveAll() {
-    for (const note of this.unsaved) await this.write(note)
+    return this.documents.filter((note) => note.unsaved)
   }
 
   async save(target?: Tab) {
@@ -2146,12 +2307,16 @@ class Workspace {
     if (made) this.moveTab(id, made.id)
   }
 
-  /** A pane and everything in it. The last pane cannot go: a window with none
-   *  has nowhere to show a note. */
-  closePane(paneId: string = this.panes.focusedId) {
+  /** A pane and everything in it, asking about whatever is unsaved among its
+   *  notes. The last pane cannot go: a window with none has nowhere to show a
+   *  note. */
+  async closePane(paneId: string = this.panes.focusedId) {
     if (this.panes.count < 2) return
 
-    for (const tab of this.tabsIn(paneId)) this.close(tab.id)
+    const tabs = this.tabsIn(paneId)
+    if (!(await this.mayClose(tabs))) return
+
+    for (const tab of tabs) this.close(tab.id)
   }
 
   /** The other panes showing the note this one is showing. What the link toggle

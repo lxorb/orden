@@ -178,7 +178,7 @@
       graph={links.graph}
       current={workspace.relativeNote}
       onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
-      onescape={() => workspace.close(tab.id)}
+      onescape={() => void workspace.closeAsking(tab.id)}
     />
   {:else if tab?.kind === 'pdf'}
     <!-- A paper being read, beside the notes about it. Keyed like the reading

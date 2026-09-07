@@ -66,19 +66,34 @@
     ]
   }
 
+  /** Left out while nothing has been closed, rather than offered as a row that
+   *  does nothing. */
+  function reopenEntry(): MenuEntry[] {
+    if (!workspace.closed.any) return []
+
+    return [
+      {
+        label: t('Reopen closed tab'),
+        hint: shortcuts.hint('app.reopen'),
+        run: () => void workspace.reopenClosed(),
+      },
+    ]
+  }
+
   function tabMenu(tab: Tab): MenuEntry[] {
     return [
       ...readingEntry(tab),
-      { label: t('Close'), hint: shortcuts.hint('app.close'), run: () => workspace.close(tab.id) },
+      {
+        label: t('Close'),
+        hint: shortcuts.hint('app.close'),
+        run: () => void workspace.closeAsking(tab.id),
+      },
       {
         label: t('Close others'),
         disabled: tabs.length < 2,
-        run: () => {
-          for (const other of tabs.filter((entry) => entry.id !== tab.id)) {
-            workspace.close(other.id)
-          }
-        },
+        run: () => void workspace.closeOthers(tab.id),
       },
+      ...reopenEntry(),
       DIVIDER,
       ...splitEntries(tab),
       ...keepEntry(tab),
@@ -160,7 +175,7 @@
           class="shut"
           title={t('Close')}
           aria-label={t('Close')}
-          onclick={() => workspace.close(tab.id)}
+          onclick={() => void workspace.closeAsking(tab.id)}
         >
           <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
         </button>

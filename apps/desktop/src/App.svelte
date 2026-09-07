@@ -59,7 +59,7 @@
   // which is what a reader typing `:e` is after.
   setVimCommands({
     write: () => void workspace.save(),
-    quit: () => workspace.activeTabId && workspace.close(workspace.activeTabId),
+    quit: () => void workspace.closeActive(),
     edit: () => {
       palette = true
     },

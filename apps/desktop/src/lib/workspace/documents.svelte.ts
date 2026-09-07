@@ -83,6 +83,21 @@ export class NoteDoc {
     return this.words
   }
 
+  /** Whether this document holds work that is not on disk, which is what the
+   *  closing question and Save all both mean by unsaved.
+   *
+   *  A note that has a file is out of step with it whatever it now says, even
+   *  when what it says is nothing: emptying a note is an edit like any other. An
+   *  untitled one that says nothing has no file and nothing to lose, which is
+   *  exactly the blank page a window starts with.
+   *
+   *  Reads the words as of the last flush, like everything else here. */
+  get unsaved(): boolean {
+    if (this.kind !== 'note' || !this.dirty) return false
+
+    return this.path !== null || this.words.trim().length > 0
+  }
+
   /** Brings the words up to what the views hold. Costs one pass over the note,
    *  and nothing at all when there is nothing waiting. */
   flush() {

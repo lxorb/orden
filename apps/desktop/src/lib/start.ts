@@ -6,10 +6,9 @@
  *  place. */
 
 import { account } from './account.svelte'
-import { i18n, t } from './i18n.svelte'
+import { i18n } from './i18n.svelte'
 import { collectErrors } from './log'
 import { modes } from './modes.svelte'
-import { prompt } from './prompt.svelte'
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -114,20 +113,11 @@ async function onClose(event: Closing, window: Closable) {
 
   event.preventDefault()
 
-  const answer = await prompt.choose({
-    title: t('Save your changes?'),
-    detail: t('{count} of your notes have unsaved changes.', {
-      count: workspace.unsaved.length,
-    }),
-    options: [
-      { id: 'save', label: t('Save'), primary: true },
-      { id: 'discard', label: t('Discard'), danger: true },
-      { id: 'cancel', label: t('Cancel') },
-    ],
-  })
-
-  if (answer === 'save') await workspace.saveAll()
-  else if (answer !== 'discard') return
+  // The same question a tab asks, once for each note that holds something: it is
+  // the same decision, and a reader who has learned it on one note should not
+  // meet a different sheet on the way out. Cancel at any of them leaves the
+  // window where it is.
+  if (!(await workspace.mayCloseWindow())) return
 
   // Everything is either written or deliberately given up on.
   await installStaged()

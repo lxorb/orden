@@ -37,6 +37,31 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
+/** The sheet, scripted. `choose` is the closing question and `askName` is what
+ *  saving a note with no home yet goes through, so both are answered from here
+ *  and both record that they were asked. */
+const sheet = {
+  asked: [] as string[],
+  named: [] as string[],
+  /** What `choose` answers: `save`, `discard`, `cancel`, or null for dismissed. */
+  answer: null as string | null,
+  /** The name a save is given, or null for a question nobody answers. */
+  name: null as string | null,
+}
+
+vi.mock('./prompt.svelte', () => ({
+  prompt: {
+    choose: (options: { title: string }) => {
+      sheet.asked.push(options.title)
+      return Promise.resolve(sheet.answer)
+    },
+    askName: (options: { title: string }) => {
+      sheet.named.push(options.title)
+      return Promise.resolve(sheet.name === null ? null : { name: sheet.name, space: 's' })
+    },
+  },
+}))
+
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -558,7 +583,7 @@ describe('closing what is in a pane', () => {
     await beside('/space/b.md')
     const paneId = workspace.panes.focusedId
 
-    workspace.closePane(paneId)
+    await workspace.closePane(paneId)
 
     expect(workspace.panes.count).toBe(1)
     expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md'])
@@ -827,5 +852,268 @@ describe('a replacement across the space', () => {
 
     expect(workspace.tabs.find((one) => one.path === '/space/a.md')?.doc).toBe('# a')
     expect(workspace.undone.stack).toHaveLength(0)
+  })
+})
+
+describe('closing something that holds unsaved work', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.closed.stack = []
+    sheet.asked = []
+    sheet.named = []
+    sheet.answer = 'cancel'
+    sheet.name = null
+    sent.length = 0
+  })
+
+  /** A note open with something typed into it that has not been written. */
+  async function dirty(path: string) {
+    await workspace.open(path)
+    const tab = workspace.tabs.find((one) => one.path === path)
+    if (!tab) throw new Error(`${path} did not open`)
+
+    tab.note.live.replace(`${notes[path] ?? ''}, typed`)
+    return tab
+  }
+
+  test('asks nothing about a note that is on disk as it stands', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+  })
+
+  test('asks about a note with something typed in it, and Save writes it down', async () => {
+    const tab = await dirty('/space/a.md')
+    sheet.answer = 'save'
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual(['Save a?'])
+    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.content)).toEqual([
+      '# a, typed',
+    ])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+  })
+
+  test('lets it go on the second answer, without writing anything', async () => {
+    const tab = await dirty('/space/a.md')
+    sheet.answer = 'discard'
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toHaveLength(1)
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+  })
+
+  test('leaves the tab where it is on Cancel, and on a question dismissed', async () => {
+    const tab = await dirty('/space/a.md')
+
+    await workspace.closeAsking(tab.id)
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
+
+    sheet.answer = null
+    await workspace.closeAsking(tab.id)
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
+    expect(sheet.asked).toHaveLength(2)
+  })
+
+  test('closes an empty untitled note without a word', async () => {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+  })
+
+  test('asks about an untitled note with words in it, and Save asks for a name', async () => {
+    workspace.openBlank('Untitled', '# a draft')
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    sheet.answer = 'save'
+    sheet.name = 'Draft'
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual(['Save Untitled?'])
+    expect(sheet.named).toEqual(['Name the note'])
+    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
+      '/space/Draft.md',
+    ])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+  })
+
+  test('keeps an untitled note whose name is never given', async () => {
+    workspace.openBlank('Untitled', '# a draft')
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    sheet.answer = 'save'
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.named).toHaveLength(1)
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
+  })
+
+  test('asks nothing when the note stays open in another pane', async () => {
+    await dirty('/space/a.md')
+    workspace.split('row')
+
+    const beside = workspace.active
+    if (!beside) throw new Error('the split did not happen')
+
+    await workspace.closeAsking(beside.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toHaveLength(1)
+  })
+
+  test('asks once for each note in a pane that is closing', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    const paneId = workspace.panes.focusedId
+    await dirty('/space/b.md')
+    sheet.answer = 'discard'
+
+    await workspace.closePane(paneId)
+
+    expect(sheet.asked).toEqual(['Save b?'])
+    expect(workspace.tabs.map((one) => one.path)).toEqual(['/space/a.md'])
+  })
+
+  test('a pane stays whole when one of its notes is cancelled', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    const paneId = workspace.panes.focusedId
+    await dirty('/space/b.md')
+
+    await workspace.closePane(paneId)
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabsIn(paneId)).toHaveLength(1)
+  })
+
+  test('the window asks once per note, and Cancel keeps it open', async () => {
+    await dirty('/space/a.md')
+    await dirty('/space/b.md')
+
+    expect(await workspace.mayCloseWindow()).toBe(false)
+    expect(sheet.asked).toEqual(['Save a?'])
+
+    sheet.asked = []
+    sheet.answer = 'discard'
+    expect(await workspace.mayCloseWindow()).toBe(true)
+    expect(sheet.asked).toEqual(['Save a?', 'Save b?'])
+  })
+})
+
+describe('reopening the tab that was closed last', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+    workspace.closed.stack = []
+    sheet.asked = []
+    sheet.answer = 'discard'
+    sent.length = 0
+  })
+
+  test('brings the note back where the focus is once its pane has gone', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+    await workspace.open('/space/b.md')
+
+    const beside = workspace.active
+    if (!beside) throw new Error('the split did not happen')
+
+    workspace.close(beside.id)
+    await workspace.reopenClosed()
+
+    expect(workspace.tabs.map((one) => one.path)).toContain('/space/b.md')
+  })
+
+  test('puts it back at its own place in the strip', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+    await workspace.open('/space/c.md')
+
+    const middle = workspace.tabs[1]
+    if (!middle) throw new Error('three notes did not open')
+
+    workspace.close(middle.id)
+    await workspace.reopenClosed()
+
+    expect(workspace.tabs.map((one) => one.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+      '/space/c.md',
+    ])
+  })
+
+  test('brings back what was never written down', async () => {
+    workspace.openBlank('Untitled', '# a draft')
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+
+    await workspace.closeAsking(tab.id)
+    await workspace.reopenClosed()
+
+    expect(workspace.active.doc).toBe('# a draft')
+    expect(workspace.active.dirty).toBe(true)
+  })
+
+  test('remembers nothing about the blank page a window starts with', async () => {
+    workspace.openBlank()
+    await workspace.open('/space/a.md')
+
+    expect(workspace.closed.any).toBe(false)
+  })
+
+  test('reaches past a note that has since gone', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+
+    const [first, second] = workspace.tabs
+    if (!first || !second) throw new Error('two notes did not open')
+
+    workspace.close(first.id)
+    workspace.close(second.id)
+    // As if the file had been deleted while the tab was closed.
+    const kept = notes['/space/b.md'] ?? ''
+    delete notes['/space/b.md']
+
+    try {
+      await workspace.reopenClosed()
+      expect(workspace.tabs.map((one) => one.path)).toContain('/space/a.md')
+      expect(workspace.closed.any).toBe(false)
+    } finally {
+      notes['/space/b.md'] = kept
+    }
+  })
+
+  test('becomes a second view when the note is still open elsewhere', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    const beside = workspace.active
+    const first = workspace.tabs[0]
+    if (!beside || !first) throw new Error('the split did not happen')
+
+    workspace.close(beside.id)
+    await workspace.reopenClosed()
+
+    const back = workspace.tabs.find((one) => one.id !== first.id)
+    expect(back?.note).toBe(first.note)
   })
 })

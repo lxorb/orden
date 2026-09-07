@@ -197,7 +197,7 @@ function paneCommands(): Command[] {
       id: 'close-pane',
       label: t('Close this pane'),
       disabled: workspace.panes.count < 2,
-      run: () => workspace.closePane(),
+      run: () => void workspace.closePane(),
     },
   ]
 }
@@ -279,7 +279,14 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'close',
       label: t('Close note'),
       hint: shortcuts.hint('app.close'),
-      run: () => workspace.activeTabId && workspace.close(workspace.activeTabId),
+      run: () => void workspace.closeActive(),
+    },
+    {
+      id: 'reopen',
+      label: t('Reopen closed tab'),
+      hint: shortcuts.hint('app.reopen'),
+      disabled: !workspace.closed.any,
+      run: () => void workspace.reopenClosed(),
     },
     { id: 'space', label: t('New space'), run: () => void newSpace() },
     ...paneCommands(),
