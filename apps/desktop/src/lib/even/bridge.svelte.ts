@@ -188,15 +188,19 @@ class Bridge {
 
         const { note } = wanted
         clearTimeout(this.timer)
-        // The first page of a sitting is not a keystroke. Somebody has opened the
-        // plugin with a note already active, and waiting out the typing pause
-        // before drawing it is most of a second of dark glass for no reason.
+        // Only an edit waits. The pause is there so that a page does not go over
+        // the radio once per word, and neither the first page of a sitting nor a
+        // switch to another note is a word: both are somebody asking for a
+        // different note and then watching the glass. Waiting out the typing
+        // pause before either was most of a second of nothing happening, on top
+        // of the second the page itself costs.
+        const switching = this.showing?.key !== note.key
         this.timer = setTimeout(
           () => {
             note.flush()
             void this.follow({ key: note.key, name: note.name, text: note.text })
           },
-          this.showing ? SETTLE : 0,
+          switching ? 0 : SETTLE,
         )
       })
     })
