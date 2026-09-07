@@ -94,10 +94,15 @@ export const scripts: MarkedExtension = {
   ],
 }
 
-/** A `$$` that opens a block: on a line of its own, with a closing one under it.
- *  Confirmed rather than assumed, because `$$` in the middle of a sentence would
- *  otherwise cut the paragraph in two there and leave a space behind. */
-const MATH_BLOCK = /\$\$\r?\n[\s\S]+?\r?\n\$\$(?:\r?\n|$)/y
+/** A `$$` that opens a block. Two shapes, and both of them take a whole line:
+ *  `$$` on a line of its own with a closing one under it, or a single line that
+ *  is nothing but `$$…$$`, which is how the formula is usually typed and how
+ *  every other editor reads it.
+ *
+ *  Confirmed rather than assumed, and a whole line rather than anywhere on one,
+ *  because `$$` in the middle of a sentence would otherwise cut the paragraph in
+ *  two there: "Costs $$5 and $$6 in total" is prose about money. */
+const MATH_BLOCK = /\$\$(?:\r?\n[\s\S]+?\r?\n|(?![\s$])[^\n]*?(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/y
 
 function mathBlock(src: string, at: number): number | null {
   const line = lineStart(src, at, { orString: true })
@@ -112,9 +117,14 @@ export const maths: MarkedExtension = {
       level: 'block',
       start: (src: string) => firstStart(src, ['$$'], mathBlock),
       tokenizer(src: string) {
-        const match = /^\$\$\r?\n([\s\S]+?)\r?\n\$\$(?:\r?\n|$)/.exec(src)
+        const match =
+          /^\$\$(?:\r?\n([\s\S]+?)\r?\n|(?![\s$])([^\n]*?)(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/.exec(
+            src,
+          )
         if (!match) return undefined
-        return { type: 'blockMath', raw: match[0], text: match[1] }
+
+        // Whichever of the two shapes matched is the one that captured.
+        return { type: 'blockMath', raw: match[0], text: match[1] ?? match[2] }
       },
       renderer: (token: Tokens.Generic) =>
         `<div class="math-block">${math(String(token.text ?? ''), true)}</div>`,

@@ -78,6 +78,28 @@ describe('block math', () => {
           MathMark "$$""
     `)
   })
+
+  /** The way a formula is usually typed, and the way the renderer reads it. The
+   *  live preview and the page have to agree, or the note changes shape when it
+   *  is exported. */
+  test('parses a whole line of $$…$$', () => {
+    expect(tree('$$E = mc^2$$\n')).toMatchInlineSnapshot(`
+      "Document "$$E = mc^2$$\\n"
+        BlockMath "$$E = mc^2$$"
+          MathMark "$$"
+          MathMark "$$""
+    `)
+  })
+
+  test('leaves $$ part way along a line alone', () => {
+    // "Costs $$5 and $$6 in total" is prose about money, not a formula.
+    expect(names('Costs $$5 and $$6 in total.')).not.toContain('BlockMath')
+    expect(names('The sum $$E = mc^2$$ sits here.')).not.toContain('BlockMath')
+  })
+
+  test('does not read an empty pair as a formula', () => {
+    expect(names('$$$$')).not.toContain('BlockMath')
+  })
 })
 
 describe('footnotes', () => {

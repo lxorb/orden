@@ -138,7 +138,11 @@ const InlineMath: MarkdownConfig = {
   ],
 }
 
-/** A `$$` fence on its own line, closed by another. */
+/** A whole line of `$$…$$`, which is how a formula is usually typed. Anywhere
+ *  else on a line it is left alone, because "Costs $$5 and $$6" is prose. */
+const ONE_LINE = /^\$\$(?![\s$])[^\n]*?(?<![\s$])\$\$$/
+
+/** A `$$` fence on its own line closed by another, or a whole line of `$$…$$`. */
 const BlockMath: MarkdownConfig = {
   defineNodes: [{ name: 'BlockMath', block: true, style: markTags.math }],
   parseBlock: [
@@ -146,7 +150,23 @@ const BlockMath: MarkdownConfig = {
       name: 'BlockMath',
       before: 'HorizontalRule',
       parse(cx: BlockContext, line: Line) {
-        if (line.text.slice(line.pos).trim() !== '$$') return false
+        const rest = line.text.slice(line.pos).trimEnd()
+
+        // The one-line shape is the whole element: two marks and no scanning.
+        if (ONE_LINE.test(rest)) {
+          const at = cx.lineStart + line.pos
+          const end = at + rest.length
+          cx.addElement(
+            cx.elt('BlockMath', at, end, [
+              cx.elt('MathMark', at, at + 2),
+              cx.elt('MathMark', end - 2, end),
+            ]),
+          )
+          cx.nextLine()
+          return true
+        }
+
+        if (rest.trim() !== '$$') return false
 
         const from = cx.lineStart + line.pos
         const marks = [cx.elt('MathMark', from, from + 2)]

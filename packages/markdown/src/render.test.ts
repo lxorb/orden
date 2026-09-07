@@ -176,6 +176,36 @@ describe('Typora extensions', () => {
     expect(html).toContain('math-block')
   })
 
+  /** A whole line of `$$…$$` is how a formula is usually typed, and every other
+   *  editor reads it that way. It used to come out as an inline formula with a
+   *  literal dollar on each side of it. */
+  test('block math written on one line', () => {
+    const html = renderMarkdown('$$E = mc^2$$\n')
+
+    expect(html).toContain('math-block')
+    expect(html).not.toContain('math-inline')
+    expect(html).not.toContain('$')
+  })
+
+  test('block math on one line among prose', () => {
+    const html = renderMarkdown('Before.\n\n$$E = mc^2$$\n\nAfter.\n')
+
+    expect(html).toContain('<p>Before.</p>')
+    expect(html).toContain('math-block')
+    expect(html).toContain('<p>After.</p>')
+  })
+
+  test('a one line block that is not the whole line is left alone', () => {
+    // Display maths is a block; `$$` part way along a line is somebody's prose.
+    const html = renderMarkdown('The sum $$E = mc^2$$ sits here.\n')
+
+    expect(html).not.toContain('math-block')
+  })
+
+  test('an empty pair of double dollars is not a formula', () => {
+    expect(renderMarkdown('$$$$\n')).not.toContain('math-block')
+  })
+
   test('renders chemical equations', () => {
     const html = renderMarkdown('$\\ce{H2O}$')
     expect(html).toContain('katex')

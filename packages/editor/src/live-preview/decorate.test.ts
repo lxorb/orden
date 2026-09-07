@@ -258,6 +258,10 @@ describe('extensions', () => {
     expect(blocks('$$\nE = mc^2\n$$')).toEqual(['$$\nE = mc^2\n$$'])
   })
 
+  test('replaces a whole line of $$…$$ the same way', () => {
+    expect(blocks('$$E = mc^2$$')).toEqual(['$$E = mc^2$$'])
+  })
+
   test('replaces a known emoji shortcode', () => {
     expect(concealed('ship it :rocket: now')).toEqual([':rocket:'])
   })
