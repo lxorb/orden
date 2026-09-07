@@ -628,4 +628,6 @@ export const gsw: Dictionary = {
 
   // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Siite {page} vo {count} uf de Brülle',
+  'Reaching the glasses': 'Verbindig zur Brülle',
+  'The glasses are not keeping up': 'D Brülle chunnt nöd naa',
 }

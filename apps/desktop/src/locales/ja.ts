@@ -627,4 +627,6 @@ export const ja: Dictionary = {
 
   // Even Realities glasses
   'Page {page} of {count} on the glasses': 'グラスで {count} ページ中 {page} ページ',
+  'Reaching the glasses': 'グラスに接続中',
+  'The glasses are not keeping up': 'グラスが追いついていません',
 }

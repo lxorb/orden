@@ -632,4 +632,6 @@ export const de: Dictionary = {
 
   // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Seite {page} von {count} auf der Brille',
+  'Reaching the glasses': 'Verbindung zur Brille',
+  'The glasses are not keeping up': 'Die Brille kommt nicht mit',
 }

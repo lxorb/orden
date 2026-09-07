@@ -35,6 +35,24 @@ const SETTLE = 700
  *  than on hope; see code-theme.ts. */
 const FOLLOW: CodePalette = CODE_PALETTES[0]!
 
+/** How the bridge is getting on, in one word.
+ *
+ *  `alone` is every browser: no phone app behind the page, so there is nothing to
+ *  show and nothing to say. The other four are only ever reached on a phone. */
+type Health = 'alone' | 'reaching' | 'live' | 'stalled' | 'failed'
+
+/** How many lines of what happened are kept.
+ *
+ *  Enough to hold a whole launch and nothing more. This is the only evidence
+ *  anybody gets off a phone, and it is read by being looked at, so it has to fit
+ *  on a corner of a screen. */
+const TRAIL = 8
+
+/** Whatever was thrown, in as few words as carry the reason. */
+function why(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 class Bridge {
   /** What the glasses are showing, so the plugin can say so in a corner. Null
    *  while there is no pair in front of us, which is every browser. */
@@ -43,9 +61,23 @@ class Bridge {
    *  dims its corner rather than putting a sentence up: nobody writing a note
    *  wants a dialog about a radio. */
   stalled = $state(false)
+  /** How it is getting on, for the dot in the corner. */
+  health = $state<Health>('reaching')
+  /** What happened, newest last, in the platform's own words.
+   *
+   *  A phone has no console anybody can reach, so a launch that goes wrong on a
+   *  device is otherwise a dark panel and no reason. This is that reason, short
+   *  enough to be read off a screenshot. */
+  readonly trail = $state<string[]>([])
 
   private session: Session | null = null
   private timer: ReturnType<typeof setTimeout> | undefined
+
+  /** Writes down one step, and keeps the last few. */
+  private said(line: string): void {
+    this.trail.push(line)
+    if (this.trail.length > TRAIL) this.trail.shift()
+  }
 
   /** Brings the glasses up and starts following the active tab. Answers with a
    *  teardown either way, so the entry hands it to `onDestroy` without asking
@@ -58,8 +90,9 @@ class Bridge {
       (teardown) => {
         stop = teardown
       },
-      () => {
-        this.stalled = true
+      (error: unknown) => {
+        this.health = 'failed'
+        this.said(`bridge: ${why(error)}`)
       },
     )
 
@@ -71,7 +104,15 @@ class Bridge {
 
   private async connect(): Promise<(() => void) | undefined> {
     const glasses = await connectGlasses()
-    if (!glasses) return undefined
+    if (!glasses) {
+      // No phone app behind this page. The plain web build and every browser end
+      // here, and the corner stays away entirely.
+      this.health = 'alone'
+      this.said('no host')
+      return undefined
+    }
+
+    this.said('host')
 
     const sheets = new Sheets({
       // KaTeX's own stylesheet with its faces inside it, which is what lets a
@@ -82,13 +123,20 @@ class Bridge {
     })
 
     const panel = new Panel(glasses, sheets)
-    if (!(await panel.open())) {
+    const made = await panel.open()
+    this.said(`page: ${made}`)
+    if (made !== 'made') {
+      // The page is asked for exactly once a launch, so there is nothing to try
+      // again: whatever the host answered is the answer for this sitting, and it
+      // is written down above so that it is not a mystery.
+      this.health = 'failed'
       this.stalled = true
       return undefined
     }
 
     const session = new Session((text) => sheets.pages(text, this.look()), panel)
     this.session = session
+    this.health = 'live'
 
     const listening = glasses.listen((input) => this.heard(glasses, input))
     const watching = this.watch()
@@ -133,10 +181,16 @@ class Bridge {
 
         const { note } = wanted
         clearTimeout(this.timer)
-        this.timer = setTimeout(() => {
-          note.flush()
-          void this.follow({ key: note.key, name: note.name, text: note.text })
-        }, SETTLE)
+        // The first page of a sitting is not a keystroke. Somebody has opened the
+        // plugin with a note already active, and waiting out the typing pause
+        // before drawing it is most of a second of dark glass for no reason.
+        this.timer = setTimeout(
+          () => {
+            note.flush()
+            void this.follow({ key: note.key, name: note.name, text: note.text })
+          },
+          this.showing ? SETTLE : 0,
+        )
       })
     })
   }
@@ -148,10 +202,13 @@ class Bridge {
     try {
       await session.follow(note)
       this.stalled = false
-    } catch {
+      this.health = 'live'
+    } catch (error) {
       // The plugin is an editor first. A page that did not reach the glasses
       // dims the corner and nothing else.
       this.stalled = true
+      this.health = 'stalled'
+      this.said(`note: ${why(error)}`)
     }
     this.showing = session.showing
   }
@@ -187,8 +244,11 @@ class Bridge {
     try {
       await work
       this.stalled = false
-    } catch {
+      this.health = 'live'
+    } catch (error) {
       this.stalled = true
+      this.health = 'stalled'
+      this.said(`turn: ${why(error)}`)
     }
     this.showing = this.session?.showing ?? null
   }
