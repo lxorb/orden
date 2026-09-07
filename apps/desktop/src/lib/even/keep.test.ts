@@ -16,7 +16,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const CHANNEL_AT = 3000
 
 /** The phone app's store, which survives a launch because the phone app does. */
-const phone = vi.hoisted(() => ({ held: new Map<string, string>(), reachable: false }))
+const phone = vi.hoisted(() => ({
+  held: new Map<string, string>(),
+  reachable: false,
+  /** How many of the next writes the host turns down. */
+  refusals: 0,
+}))
 
 vi.mock('./sdk', () => ({
   connectStore: async () => {
@@ -27,6 +32,11 @@ vi.mock('./sdk', () => ({
     return {
       read: (key: string) => Promise.resolve(phone.held.get(key) ?? ''),
       write: (key: string, value: string) => {
+        if (phone.refusals > 0) {
+          phone.refusals -= 1
+          return Promise.resolve(false)
+        }
+
         phone.held.set(key, value)
         return Promise.resolve(true)
       },
@@ -68,6 +78,7 @@ async function launch() {
 
 beforeEach(() => {
   phone.held.clear()
+  phone.refusals = 0
   vi.useFakeTimers()
 })
 
@@ -121,6 +132,40 @@ describe('a session across two launches of a packed plugin', () => {
 
     await vi.advanceTimersByTimeAsync(1000)
     expect(await reading).toBe('a-token')
+
+    done()
+    vi.useRealTimers()
+  })
+
+  test('puts a token back into the stores that lost it', async () => {
+    // Only the phone app remembered. Leaving it there alone is a token one wipe
+    // from gone, so the stores that came back empty are filled in again.
+    phone.held.set('nib:session', 'a-token')
+    const { everywhere, done } = await launch()
+
+    const reading = everywhere.read()
+    await vi.advanceTimersByTimeAsync(CHANNEL_AT + 100)
+    expect(await reading).toBe('a-token')
+
+    await vi.advanceTimersByTimeAsync(100)
+    expect(localStorage.getItem('nib:session')).toBe('a-token')
+
+    done()
+    vi.useRealTimers()
+  })
+
+  test('keeps trying when the host refuses a write', async () => {
+    // The boolean is the contract: a refusal reported as success is a session
+    // shown as saved that will be gone on the next launch.
+    phone.refusals = 2
+    const { everywhere, done } = await launch()
+
+    const writing = everywhere.write('a-token')
+    await vi.advanceTimersByTimeAsync(CHANNEL_AT + 2000)
+    await writing
+
+    expect(phone.held.get('nib:session')).toBe('a-token')
+    expect(phone.refusals).toBe(0)
 
     done()
     vi.useRealTimers()

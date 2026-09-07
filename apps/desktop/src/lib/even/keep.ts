@@ -110,7 +110,16 @@ const host: Keep = {
     const store = await connectStore()
     if (!store) return false
 
-    return store.write(key, value)
+    // The boolean is the whole contract. A host that refuses answers false and
+    // says nothing else, and a caller that ignores it reports a session as kept
+    // that will be gone on the next launch, which is what this whole file exists
+    // to stop. Refusals are rare and transient enough to be worth three tries.
+    for (const pause of [0, 200, 600]) {
+      if (pause) await new Promise((resolve) => setTimeout(resolve, pause))
+      if (await store.write(key, value)) return true
+    }
+
+    return false
   },
   async clear(key) {
     // The phone app's store has no way to take a key away, so it is emptied.
@@ -177,7 +186,17 @@ export const everywhere: Vault = {
   async read() {
     // The first store that kept it. They are asked together, so the slowest of
     // them is what this costs rather than the sum.
-    return (await readAll(SESSION)).find((held) => held.value !== null)?.value ?? null
+    const held = await readAll(SESSION)
+    const found = held.find((one) => one.value !== null)?.value ?? null
+    if (!found) return null
+
+    // Put it back into the ones that had lost it. A token that survived in only
+    // one store is a token one wipe from being gone, and the store most likely
+    // to be empty on a device is the one most likely to be asked first next
+    // time. Nothing waits on this.
+    if (held.some((one) => one.value === null)) void writeAll(SESSION, found)
+
+    return found
   },
 
   write: (token) => writeAll(SESSION, token),
