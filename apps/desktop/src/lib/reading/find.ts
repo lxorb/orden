@@ -99,3 +99,22 @@ export function rangeOf(words: Words, offset: number, length: number): Range | n
 
   return range
 }
+
+/** Paints a set of ranges under one of the registry's names, or takes the name
+ *  down when there is nothing to paint.
+ *
+ *  Painted rather than selected. Selecting a match is the obvious way to show it
+ *  and the wrong one: an input holds its caret in the same selection the page
+ *  does, so moving it leaves the find field with nowhere to type - the second
+ *  letter of a query never arrives. A highlight is the browser's own paint over a
+ *  range and touches neither the caret nor what a reader has selected to copy. */
+export function paint(name: string, ranges: readonly Range[]): void {
+  try {
+    if (ranges.length) CSS.highlights.set(name, new Highlight(...ranges))
+    else CSS.highlights.delete(name)
+  } catch {
+    // An engine without a highlight registry. The types say there is always one;
+    // not every engine agrees yet, and this is the whole of what such a one
+    // loses - the find bar still counts and still scrolls.
+  }
+}

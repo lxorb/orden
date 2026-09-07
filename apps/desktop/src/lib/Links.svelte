@@ -88,7 +88,7 @@
 
   async function openTarget(link: Outgoing) {
     if (!root || !link.to) return
-    await workspace.open(insideSpace(root, link.to))
+    await workspace.openEntry(insideSpace(root, link.to))
   }
 </script>
 

@@ -326,7 +326,7 @@ export function appCommands(view?: EditorView): Command[] {
             .pop()
             ?.replace(/\.[^.]+$/, '') ?? path
         }`,
-        run: () => void workspace.open(path),
+        run: () => void workspace.openEntry(path),
       })),
 
     ...exportCommands(),

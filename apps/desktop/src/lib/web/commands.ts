@@ -1,11 +1,22 @@
 /** The desktop app's command surface, served from the browser's own storage.
  *  Same names, same shapes - so every call site works on both. */
 
+import { SIDECAR } from '../pdf/highlights'
 import { scanNote, type SpaceLinks } from '../scan-note'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
 import { tagsIn } from '../search/tags'
-import { basename, isMarkdown, join, normalise, parent, safeName, spaceOf, within } from './paths'
+import {
+  basename,
+  isMarkdown,
+  isPdf,
+  join,
+  normalise,
+  parent,
+  safeName,
+  spaceOf,
+  within,
+} from './paths'
 import { assets, files, KEEP, meta, snapshots } from './store'
 
 interface Entry {
@@ -25,10 +36,31 @@ interface TreeOptions {
 
 const now = () => Date.now()
 
+/** Whether a file is one the tree shows: a note, or a PDF beside one. The same
+ *  two kinds the desktop's `read_tree` lists, and for the same reason - they are
+ *  the two things a tab can hold. */
+function listed(path: string): boolean {
+  return isMarkdown(path) || isPdf(path)
+}
+
+/** Where a PDF's highlights are kept. The desktop's command derives this on the
+ *  Rust side; here the store is a flat map of paths, so it is derived in front of
+ *  it. */
+function sidecarOf(path: string): string {
+  return `${normalise(path)}${SIDECAR}`
+}
+
 /** Builds the folder tree from the flat list of paths. */
 async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
   const base = normalise(root)
-  const rows = (await files.all()).filter((row) => within(base, row.path))
+  // The notes live in one store and everything else in another, and the tree
+  // shows both kinds a tab can hold; see `listed` below.
+  const rows = [
+    ...(await files.all()).filter((row) => within(base, row.path)),
+    ...(await assets.all())
+      .filter((row) => within(base, row.path))
+      .map((row) => ({ path: row.path, modified: row.modified, created: row.modified })),
+  ]
 
   const folders = new Map<string, Entry>()
   const make = (path: string): Entry => {
@@ -58,7 +90,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
       continue
     }
 
-    if (!isMarkdown(row.path)) continue
+    if (!listed(row.path)) continue
     if (!options.showHidden && basename(row.path).startsWith('.')) continue
 
     make(parent(row.path)).children.push({
@@ -102,11 +134,14 @@ async function writeNote(path: string, content: string) {
   })
 }
 
-/** Everything under `from` moves, so renaming a folder takes its notes along. */
+/** Everything under `from` moves, so renaming a folder takes its notes along -
+ *  and the files beside them, which is how a PDF's own highlights follow it. */
 async function renameNote(from: string, to: string) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
+
+  await moveAssets(source, target)
 
   // `occupied` and not `files.get`: a folder has no row of its own, so asking
   // only about an exact path would let a note be renamed onto a folder and
@@ -130,11 +165,24 @@ async function renameNote(from: string, to: string) {
 
 async function removeFolder(path: string) {
   const base = normalise(path)
-  const rows = (await files.all()).filter(
-    (row) => row.path === base || row.path.startsWith(`${base}/`),
+  const under = (row: { path: string }) => row.path === base || row.path.startsWith(`${base}/`)
+
+  for (const row of (await files.all()).filter(under)) await files.remove(row.path)
+  for (const row of (await assets.all()).filter(under)) await assets.remove(row.path)
+}
+
+/** The files beside the notes, moved with them. A PDF is a row in the asset store
+ *  rather than in the note store, so a rename that only walked the notes would
+ *  leave the paper behind under a folder that no longer exists. */
+async function moveAssets(source: string, target: string) {
+  const rows = (await assets.all()).filter(
+    (row) => row.path === source || row.path.startsWith(`${source}/`),
   )
 
-  for (const row of rows) await files.remove(row.path)
+  for (const row of rows) {
+    await assets.put({ ...row, path: target + row.path.slice(source.length), modified: now() })
+    await assets.remove(row.path)
+  }
 }
 
 /** Recently deleted, the browser's way: rows move under `/.trash/<id>/` and a
@@ -309,7 +357,9 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
   // Pictures live in their own store here, and a `.keep` is scaffolding rather
   // than a file somebody put in the space.
-  const kept = rows.filter((row) => !isMarkdown(row.path) && basename(row.path) !== KEEP)
+  const kept = rows.filter(
+    (row) => !isMarkdown(row.path) && basename(row.path) !== KEEP && !row.path.endsWith(SIDECAR),
+  )
   const pictures = (await assets.all()).filter((row) => within(base, row.path))
 
   return {
@@ -367,6 +417,9 @@ export async function webInvoke<T>(
 
     case 'delete_note':
       await files.remove(normalise(path))
+      await assets.remove(normalise(path))
+      // A PDF's highlights are part of it and have nothing left to describe.
+      if (isPdf(path)) await files.remove(sidecarOf(path))
       return undefined as T
 
     case 'rename_note':
@@ -481,6 +534,19 @@ export async function webInvoke<T>(
       })
 
       return (relative ? `${relative}/${name}` : name) as T
+    }
+
+    case 'read_highlights': {
+      if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
+      return ((await files.get(sidecarOf(path)))?.content ?? '') as T
+    }
+
+    case 'write_highlights': {
+      if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
+      const content = args.content as string
+      if (content) await writeNote(sidecarOf(path), content)
+      else await files.remove(sidecarOf(path))
+      return undefined as T
     }
 
     case 'read_asset': {

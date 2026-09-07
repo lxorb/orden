@@ -34,7 +34,9 @@ vi.mock('./store', () => ({
   },
   assets: {
     get: (path: string) => Promise.resolve(disk.assets.get(path)),
+    all: () => Promise.resolve([...disk.assets.values()]),
     put: (row: AssetRow) => Promise.resolve(void disk.assets.set(row.path, row)),
+    remove: (path: string) => Promise.resolve(void disk.assets.delete(path)),
   },
   meta: {
     get: (key: string) => Promise.resolve(disk.meta.get(key)),

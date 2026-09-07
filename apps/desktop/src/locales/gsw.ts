@@ -166,6 +166,10 @@ export const gsw: Dictionary = {
   'Page break': 'Sitteumbruch',
   'Tidy up this note': 'Notiz ufruume',
 
+  // PDFs
+  'Copy a link': 'Link kopiere',
+  'That PDF could not be opened': 'Das PDF hät me nöd chöne uufmache',
+
   // Modes and view
   Reading: 'Läse',
   'Leave reading': 'Läse verlaa',

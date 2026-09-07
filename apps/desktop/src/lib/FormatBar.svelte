@@ -74,7 +74,7 @@
 </script>
 
 {#if docked}
-  <div class="bar docked" style:bottom="{viewport.keyboard}px">
+  <div class="nib-bar docked" style:bottom="{viewport.keyboard}px">
     {#each ACTIONS as action (action.title)}
       <button
         title={action.title}
@@ -90,7 +90,7 @@
     {/each}
   </div>
 {:else if at}
-  <div class="bar" style:left="{at.x}px" style:top="{at.y}px">
+  <div class="nib-bar nib-bar-at" style:left="{at.x}px" style:top="{at.y}px">
     {#each ACTIONS as action (action.title)}
       <button
         title={action.title}
@@ -107,74 +107,29 @@
 {/if}
 
 <style>
-  /* Above the selection, centred on it, and out of the way of the caret. */
-  .bar {
+  /* The bar's own shape is `.nib-bar` in the theme, which the two bars that
+     float over a surface share; see base.css. Only what is different about a
+     bar docked over the keyboard is here.
+
+     A strip across the bottom, sitting on the keyboard. Full width so every
+     button is a thumb's width, and positioned by `bottom` rather than by a
+     transform. */
+  .docked {
     position: fixed;
     z-index: 25;
-    transform: translate(-50%, calc(-100% - 10px));
-    display: flex;
-    gap: 1px;
-    padding: 3px;
-    background: var(--surface-3);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    animation: bar-in var(--dur-fast) var(--ease-out);
-  }
-
-  /* A strip across the bottom, sitting on top of the keyboard. Full width so
-     every button is a thumb's width, and no transform: `bottom` is doing the
-     positioning here. */
-  .bar.docked {
     left: 0;
     right: 0;
-    transform: none;
     justify-content: space-around;
     gap: 0;
     padding: 4px max(4px, env(safe-area-inset-left)) 4px max(4px, env(safe-area-inset-right));
     border-radius: 0;
     border-width: 1px 0 0;
-    animation: none;
   }
 
-  .bar.docked button {
+  .docked button {
     flex: 1;
     min-width: 0;
     height: 44px;
     font-size: var(--text-base);
-  }
-
-  @keyframes bar-in {
-    from {
-      opacity: 0;
-      transform: translate(-50%, calc(-100% - 4px));
-    }
-  }
-
-  button {
-    min-width: 26px;
-    height: 24px;
-    padding: 0 5px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    cursor: default;
-    transition:
-      background var(--dur-instant) var(--ease-out),
-      color var(--dur-instant) var(--ease-out);
-  }
-
-  button:hover {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  button:active {
-    background: var(--accent-press);
-    color: #fff;
   }
 </style>

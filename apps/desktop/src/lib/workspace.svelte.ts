@@ -1,6 +1,6 @@
 import { flushTableEdits, type NoteJump } from '@nib/editor'
 import { account } from './account.svelte'
-import { blockIds } from '@nib/markdown/links'
+import { blockIds, isPdfTarget } from '@nib/markdown/links'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
@@ -309,7 +309,7 @@ class Workspace {
 
       // A first visit opens what it was given rather than a blank page.
       const first = this.notes[0]
-      if (first) await this.open(first.path)
+      if (first) await this.openEntry(first.path)
       if (!this.tabs.length) this.openBlank()
       return
     }
@@ -329,7 +329,7 @@ class Workspace {
     else if (state.tabs?.length) await this.restoreStrip(state.tabs, state.active ?? 0)
     else {
       for (const path of state.openPaths ?? []) {
-        await this.open(path, { activate: path === state.activePath })
+        await this.openEntry(path, { activate: path === state.activePath })
       }
     }
 
@@ -403,6 +403,8 @@ class Workspace {
     tab.scroll = draft.scroll
     tab.anchor = draft.anchor
     tab.reading = draft.reading === true
+    tab.page = draft.page
+    tab.zoom = draft.zoom
     return tab
   }
 
@@ -501,6 +503,8 @@ class Workspace {
       // one note rather than as two copies of it.
       share: tab.note.key,
       ...(tab.reading ? { reading: true } : {}),
+      ...(tab.page === undefined ? {} : { page: tab.page }),
+      ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
     }
   }
 
@@ -537,6 +541,18 @@ class Workspace {
     tab.scroll = scroll
     tab.anchor = anchor
     if (tab.path) this.positions.remember(tab.path, cursor, scroll, anchor)
+    this.scheduleSession()
+  }
+
+  /** Which page of a PDF is being read, and how far it is zoomed. What a note
+   *  keeps in `noteView`, a PDF keeps here: it is where the tab reopens, and which
+   *  page a link copied out of the document names. */
+  notePdf(id: string, page: number, zoom: number) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab || (tab.page === page && tab.zoom === zoom)) return
+
+    tab.page = page
+    tab.zoom = zoom
     this.scheduleSession()
   }
 
@@ -603,6 +619,57 @@ class Workspace {
     }
 
     this.persist()
+  }
+
+  /** A PDF in the space, in a tab of its own. One tab per PDF per pane, the way
+   *  the graph is one: asking for a paper that is already open brings it forward
+   *  and, when a link named a page, turns to it.
+   *
+   *  `page` counts from one, and null means wherever the tab was left. */
+  openPdf(path: string, page: number | null = null) {
+    const paneId = this.panes.focusedId
+    const existing = this.tabs.find((tab) => tab.kind === 'pdf' && tab.path === path)
+
+    if (existing) {
+      this.activeTabId = existing.id
+      if (page !== null) this.gotoPage = { path, page }
+    } else {
+      const file = this.document({
+        kind: 'pdf',
+        path,
+        name: basename(path),
+        text: '',
+        dirty: false,
+      })
+      const tab = new Tab(file, paneId)
+      if (page !== null) tab.page = page
+      this.add(tab)
+      this.dropScaffolding(tab)
+    }
+
+    this.showNote()
+    this.remember(path)
+    this.persist()
+  }
+
+  /** Which page of a PDF a followed link asked for. Read and taken down by the
+   *  pane showing that PDF, the way `goto` is by the one showing a note. */
+  gotoPage = $state<{ path: string; page: number } | null>(null)
+
+  /** Opens whatever a row of the file list names: a PDF in its own kind of tab,
+   *  anything else as a note. Every way in from a listing goes through here - the
+   *  tree, the palette, a bookmark, the Links panel - so none of them can open a
+   *  paper as text.
+   *
+   *  `open` itself stays about notes: a note is what the caret, the preview tab
+   *  and every unsaved word belong to. */
+  async openEntry(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
+    if (isPdfTarget(path)) {
+      this.openPdf(path)
+      return
+    }
+
+    await this.open(path, options)
   }
 
   /** Drops the blank untitled tab a window starts with, now that something real
@@ -1005,7 +1072,7 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
-    void this.open(insideSpace(root, relative), keep ? {} : { preview: true })
+    void this.openEntry(insideSpace(root, relative), keep ? {} : { preview: true })
   }
 
   activate(id: string) {
@@ -1591,8 +1658,11 @@ class Workspace {
     // looking as though the delete had not registered.
     this.hideEntry(path)
 
-    // A deleted note keeps one last snapshot, so the delete is recoverable.
-    if (!isFolder) {
+    // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
+    // is bytes and not words: there is no snapshot of one, so the only thing that
+    // can put it back is the trash, and it is recorded once the trash has it.
+    const words = !isFolder && !isPdfTarget(path)
+    if (words) {
       const content = await invoke<string>('read_note', { path }).catch(() => '')
       if (content) await invoke('snapshot_note', { path, content }).catch(() => undefined)
       this.undone.record({ kind: 'delete', path, content })
@@ -1608,7 +1678,10 @@ class Workspace {
           path,
           kind: isFolder ? 'folder' : 'note',
         })
-        this.undone.trashed(path, entry.id)
+        if (words) this.undone.trashed(path, entry.id)
+        else if (!isFolder) {
+          this.undone.record({ kind: 'delete', path, content: '', trashId: entry.id })
+        }
       }
     } catch (error) {
       // The row was hidden before the file was asked to go, so a delete that
@@ -1672,6 +1745,11 @@ class Workspace {
    *  the note gone with nothing said. */
   private async putBack(action: Extract<FileAction, { kind: 'delete' }>) {
     if (!action.trashId) {
+      // Nothing kept and nothing in the trash, which is what a PDF deleted while
+      // signed in looks like. Writing nothing would leave an empty file where the
+      // paper was, so this says so instead.
+      if (!action.content) throw new Error('there is nothing to put back')
+
       await invoke('write_note', { path: action.path, content: action.content })
       return
     }
@@ -1777,6 +1855,13 @@ class Workspace {
   async followLink(jump: NoteJump) {
     const root = this.activeSpace?.root
     if (!root) return
+
+    // A PDF is a file: a link to one the space does not hold is a link to nothing,
+    // never a reason to make a note under that name.
+    if (isPdfTarget(jump.target)) {
+      if (jump.path) this.openPdf(insideSpace(root, jump.path), jump.page)
+      return
+    }
 
     const path = jump.path ? insideSpace(root, jump.path) : await this.makeLinked(jump.target, root)
     if (!path) return

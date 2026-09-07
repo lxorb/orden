@@ -164,6 +164,10 @@ export const de: Dictionary = {
   'Page break': 'Seitenumbruch',
   'Tidy up this note': 'Notiz aufräumen',
 
+  // PDFs
+  'Copy a link': 'Link kopieren',
+  'That PDF could not be opened': 'Dieses PDF konnte nicht geöffnet werden',
+
   // Modes and view
   Reading: 'Lesen',
   'Leave reading': 'Lesen verlassen',

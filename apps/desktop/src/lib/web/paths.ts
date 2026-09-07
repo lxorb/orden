@@ -49,6 +49,10 @@ export function isMarkdown(path: string): boolean {
   return MARKDOWN.test(path)
 }
 
+export function isPdf(path: string): boolean {
+  return /\.pdf$/i.test(path)
+}
+
 /** The space a path belongs to: the first segment under the root. */
 export function spaceOf(path: string): string {
   const segment = normalise(path).split('/')[1]

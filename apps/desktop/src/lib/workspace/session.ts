@@ -40,6 +40,10 @@ export interface Draft {
   /** Whether the tab was showing the note as it reads. Absent for one that was
    *  being written in, which is what a tab is unless it says otherwise. */
   reading?: boolean | undefined
+  /** For a PDF: the page it was open at and how far it was zoomed. Absent for a
+   *  tab holding a note, which keeps a caret and a scroll instead. */
+  page?: number | undefined
+  zoom?: number | undefined
 }
 
 /** One pane: its strip of tabs, which of them was showing, and whether it was
@@ -95,7 +99,7 @@ function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = ['note', 'graph']
+const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf']
 
 /** Which kind of tab an entry says it is. An entry written before there were
  *  kinds, or one naming a kind this version has never heard of, is a note: that
@@ -114,6 +118,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
+  const { page, zoom } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -128,6 +133,8 @@ export function readDraft(value: unknown): Draft | null {
     ...(isNumber(anchor) ? { anchor } : {}),
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
+    ...(isNumber(page) && page >= 1 ? { page } : {}),
+    ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
   }
 }
 

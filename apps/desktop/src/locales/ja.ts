@@ -163,6 +163,10 @@ export const ja: Dictionary = {
   'Page break': '改ページ',
   'Tidy up this note': 'ノートを整える',
 
+  // PDFs
+  'Copy a link': 'リンクをコピー',
+  'That PDF could not be opened': 'この PDF を開けませんでした',
+
   // Modes and view
   Reading: '閲覧',
   'Leave reading': '閲覧を終了',

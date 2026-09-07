@@ -47,7 +47,7 @@
     if ('run' in item) {
       if (item.disabled) return
       item.run()
-    } else void workspace.open(item.path)
+    } else void workspace.openEntry(item.path)
 
     open = false
     query = ''

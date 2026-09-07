@@ -95,7 +95,7 @@
 
     switch (mark.kind) {
       case 'note':
-        if (row.path) void workspace.open(row.path, preview ? { preview: true } : {})
+        if (row.path) void workspace.openEntry(row.path, preview ? { preview: true } : {})
         break
       case 'folder':
         if (row.path) workspace.revealFolder(row.path)

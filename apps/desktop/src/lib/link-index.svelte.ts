@@ -14,8 +14,20 @@
  *  Paths are relative to the space and `/`-separated throughout, because that is
  *  what a link says. `space-paths.ts` is the only place that converts. */
 
-import { type NoteIndex, type NoteRef, resolveNote, resolveRelative } from '@nib/editor'
-import { blockIdOf, blockIds, type FoundLink, type LinkKind } from '@nib/markdown/links'
+import {
+  type NoteIndex,
+  type NoteRef,
+  resolveFile,
+  resolveNote,
+  resolveRelative,
+} from '@nib/editor'
+import {
+  blockIdOf,
+  blockIds,
+  type FoundLink,
+  isPdfTarget,
+  type LinkKind,
+} from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
 import { type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
@@ -208,7 +220,12 @@ class Links {
     const known = this.handed.get(key)
     if (known) return known
 
-    const made: NoteIndex = { notes: this.refs, path, read: (wanted) => this.readNote(wanted) }
+    const made: NoteIndex = {
+      notes: this.refs,
+      files: this.files,
+      path,
+      read: (wanted) => this.readNote(wanted),
+    }
     this.handed.set(key, made)
     return made
   }
@@ -274,7 +291,11 @@ class Links {
     return map
   })
 
-  /** Which note a link in `source` points at. */
+  /** Which note, or which PDF, a link in `source` points at.
+   *
+   *  A PDF resolves through the files rather than the notes: it is the one thing
+   *  beside a note that a link can open, so a note that links a paper is a note
+   *  that links somewhere. Anything else beside the notes stays unresolved. */
   private resolveFrom(source: string, link: { kind: LinkKind; target: string }): string | null {
     if (!link.target) return null
 
@@ -282,16 +303,35 @@ class Links {
     const held = this.resolved.get(key)
     if (held !== undefined) return held
 
+    const found = isPdfTarget(link.target)
+      ? resolveFile(this.spaceFiles(source), link.target, link.kind)
+      : this.noteFrom(source, link)
+
+    this.resolved.set(key, found)
+    return found
+  }
+
+  private noteFrom(source: string, link: { kind: LinkKind; target: string }): string | null {
     // Only the notes the target could name at all; see `byName`.
     const last = comparable(link.target).split('/').pop() ?? ''
-    const index: NoteIndex = { notes: this.byName.get(last) ?? [], path: source, read: nothing }
+    const index: NoteIndex = {
+      notes: this.byName.get(last) ?? [],
+      files: [],
+      path: source,
+      read: nothing,
+    }
     const found =
       link.kind === 'markdown'
         ? resolveRelative(index, link.target)
         : resolveNote(index, link.target)
 
-    this.resolved.set(key, found?.path ?? null)
     return found?.path ?? null
+  }
+
+  /** The space's files as a link resolver sees them, from one note's point of
+   *  view: `source` is what a relative markdown target folds against. */
+  private spaceFiles(source: string | null): NoteIndex {
+    return { notes: [], files: this.files, path: source, read: nothing }
   }
 
   /** Whether a link could name the note at `path`, before anything is resolved.
@@ -465,15 +505,12 @@ class Links {
 
   /** Where a picture named by `![[picture.png]]` lives, when the space holds one
    *  by that name. Obsidian finds an attachment wherever it is; without this the
-   *  name would only work for a picture beside the note. */
+   *  name would only work for a picture beside the note.
+   *
+   *  The same reading a link to a PDF gets, so a file is found one way whichever
+   *  of the two named it. */
   fileNamed(name: string): string | null {
-    const wanted = name.replace(/\\/g, '/').toLowerCase()
-    return (
-      this.files.find((path) => {
-        const held = path.toLowerCase()
-        return held === wanted || held.endsWith(`/${wanted}`)
-      }) ?? null
-    )
+    return resolveFile(this.spaceFiles(null), name, 'wikilink')
   }
 }
 

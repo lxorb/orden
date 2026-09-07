@@ -10,6 +10,7 @@
 <script lang="ts">
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { isPdfTarget } from '@nib/markdown/links'
   import { t } from './i18n.svelte'
   import {
     bookmarkEntry,
@@ -114,11 +115,15 @@
 
   function noteMenu(entry: Entry): MenuEntry[] {
     return [
-      { label: t('Open'), run: () => void workspace.open(entry.path) },
+      { label: t('Open'), run: () => void workspace.openEntry(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
-      { label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) },
+      // Duplicating copies a file's words, and a PDF has none: it would come out
+      // as an empty file wearing the name of a paper.
+      ...(isPdfTarget(entry.name)
+        ? []
+        : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
       ...copyPathEntry(entry.path),
       ...revealEntry(entry.path),
       DIVIDER,
@@ -250,10 +255,11 @@
           class:active={workspace.active?.path === entry.path}
           class:dropping={dropTarget === entry.path}
           class:selected={workspace.isSelected(entry.path)}
-          style:padding-left="{depth * 12 + 20}px"
+          style:padding-left="{depth * 12 + (isPdfTarget(entry.name) ? 8 : 20)}px"
           draggable="true"
-          onclick={(event) => pick(event, entry) || workspace.open(entry.path, { preview: true })}
-          ondblclick={() => workspace.open(entry.path)}
+          onclick={(event) =>
+            pick(event, entry) || workspace.openEntry(entry.path, { preview: true })}
+          ondblclick={() => workspace.openEntry(entry.path)}
           oncontextmenu={(event) =>
             menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
           use:longPress={(event) =>
@@ -263,6 +269,14 @@
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => dropBeside(event, entry.path)}
         >
+          {#if isPdfTarget(entry.name)}
+            <!-- A sheet with its corner turned: the row says what it opens into
+                 without spending a word on it. -->
+            <svg class="glyph" viewBox="0 0 9 11">
+              <path d="M1.2 0.8h3.6l3 3v6.4H1.2z" />
+              <path d="M4.8 0.8v3h3" />
+            </svg>
+          {/if}
           <span class="label">{stripped(entry.name)}</span>
         </button>
       {/if}
@@ -369,6 +383,18 @@
 
   .chevron.open {
     transform: rotate(90deg);
+  }
+
+  /* The same slot the chevron sits in, so a PDF's name lines up with a note's. */
+  .glyph {
+    width: 9px;
+    height: 11px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linejoin: round;
+    opacity: 0.75;
   }
 
   /* A 25px row is a desktop row. A thumb needs the whole line, and the tree is

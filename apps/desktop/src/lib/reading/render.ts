@@ -8,8 +8,9 @@
  *  picture keeps the path the note wrote, resolved to something the webview will
  *  load, rather than being carried inside the document. */
 
-import { resolveNote } from '@nib/editor'
+import { resolveFile, resolveNote } from '@nib/editor'
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
+import { isPdfTarget } from '@nib/markdown/links'
 import { links } from '../link-index.svelte'
 import { notePicture } from '../note-images'
 import type { Scheme } from '../theme.svelte'
@@ -32,6 +33,13 @@ function pointer(note: Note): (link: Wikilink) => { href: string | null } | null
     // `[[#Heading]]` names a place on this very page, and the `#anchor` the
     // renderer writes after the target is the whole of what it needs.
     if (!link.target) return link.heading === null ? null : { href: '' }
+
+    // A PDF is a file rather than a note, and the renderer writes the `#page=`
+    // after it as the link had it; see `anchored` in the renderer.
+    if (isPdfTarget(link.target)) {
+      const file = resolveFile(index, link.target, 'wikilink')
+      return file === null ? null : { href: file }
+    }
 
     const found = resolveNote(index, link.target)
     return found ? { href: found.path } : null

@@ -224,6 +224,83 @@ select option {
   border-bottom-color: var(--accent);
 }
 
+/* ── Floating bars ─────────────────────────── */
+
+/* One shape for the small bars that appear over a surface: the format bar
+   above a selection in the editor, and the two actions a selection in a PDF
+   offers. Here rather than in either component, because two bars that look
+   almost the same are how one design becomes two. */
+.nib-bar {
+  display: flex;
+  gap: 1px;
+  padding: 3px;
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+/* Above the point it was given, centred on it, and clear of the caret. */
+.nib-bar-at {
+  position: fixed;
+  z-index: 25;
+  transform: translate(-50%, calc(-100% - 10px));
+  animation: nib-bar-in var(--dur-fast) var(--ease-out);
+}
+
+@keyframes nib-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 4px));
+  }
+}
+
+.nib-bar button {
+  min-width: 26px;
+  height: 24px;
+  padding: 0 5px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: default;
+  transition:
+    background var(--dur-instant) var(--ease-out),
+    color var(--dur-instant) var(--ease-out);
+}
+
+.nib-bar button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.nib-bar button:active {
+  background: var(--accent-press);
+  color: #fff;
+}
+
+.nib-bar button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ── Finding ───────────────────────────────── */
+
+/* What the find bar paints, in the editor's own two search colours. A highlight
+   registry name belongs to the whole document rather than to a component, and
+   two surfaces paint these: a note being read, and a PDF. */
+::highlight(nib-find) {
+  background-color: var(--accent-soft);
+}
+
+::highlight(nib-find-here) {
+  background-color: var(--accent);
+  color: #fff;
+}
+
 /* ── Scrollbars ────────────────────────────────────── */
 
 /* Our own, over the scrollers the app draws it on; see scrollbar.ts. Away while

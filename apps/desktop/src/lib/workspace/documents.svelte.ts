@@ -14,10 +14,11 @@
 import { SharedDoc } from '@nib/editor'
 import { identifier } from '../identifier'
 
-/** What a tab holds. Almost always a note; the graph of the space is the one
- *  surface that is a tab without holding one, because a picture of the notes
- *  belongs beside them rather than in a panel. */
-export type TabKind = 'note' | 'graph'
+/** What a tab holds. Almost always a note. The graph of the space is a tab
+ *  without one, because a picture of the notes belongs beside them rather than in
+ *  a panel; a PDF is a tab without one because a paper someone is reading belongs
+ *  in the same place as the notes they are making about it. */
+export type TabKind = 'note' | 'graph' | 'pdf'
 
 export interface DocumentStart {
   kind: TabKind
@@ -173,6 +174,13 @@ export class Tab {
    *  written in another, and because which face is up is about this sitting with
    *  this note - a note always opens for writing. */
   reading = $state(false)
+
+  /** For a PDF: the page being read, counting from one, and how far it is zoomed.
+   *  Where a note keeps a caret and a scroll, a PDF keeps these, and for the same
+   *  reason - reopening it should land where it was left. Per tab, since the same
+   *  paper can be read at two places in two panes. */
+  page = $state<number | undefined>(undefined)
+  zoom = $state<number | undefined>(undefined)
 
   constructor(note: NoteDoc, paneId: string) {
     this.note = note

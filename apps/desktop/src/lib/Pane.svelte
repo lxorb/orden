@@ -22,6 +22,7 @@
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
   import { notePicture } from './note-images'
+  import Pdf from './Pdf.svelte'
   import { placement } from './placement.svelte'
   import Reading from './Reading.svelte'
   import { settings } from './settings.svelte'
@@ -179,6 +180,13 @@
       onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
       onescape={() => workspace.close(tab.id)}
     />
+  {:else if tab?.kind === 'pdf'}
+    <!-- A paper being read, beside the notes about it. Keyed like the reading
+         view: a PDF is a document of its own and nothing about it is swapped
+         into an editor. -->
+    {#key tab.id}
+      <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
+    {/key}
   {:else if tab?.reading}
     <!-- The note through the renderer. A tab keeps its own face, so the same note
          can be read here and written in next door. -->

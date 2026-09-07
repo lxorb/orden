@@ -14,10 +14,11 @@
    */
 
   import { tick, untrack } from 'svelte'
+  import FindBar from './FindBar.svelte'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
-  import { placesOf, rangeOf, wordsOf, type Words } from './reading/find'
+  import { paint, placesOf, rangeOf, wordsOf, type Words } from './reading/find'
   import { type Anchor, headingOffsets, positionAt, topFor } from './reading/places'
   import { readingHtml } from './reading/render'
   import { scrollbar } from './scrollbar'
@@ -25,7 +26,8 @@
   import { openExternal } from './tauri'
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
-  import { resolveNote, resolveRelative } from '@nib/editor'
+  import { resolveFile, resolveNote, resolveRelative } from '@nib/editor'
+  import { isPdfTarget, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -205,7 +207,24 @@
     // A wikilink already carries the note it resolved to; a markdown link carries
     // the path it was written as, which is read from where it was written.
     const index = links.index(tab.path)
-    const found = anchor.classList.contains('wikilink')
+    const wiki = anchor.classList.contains('wikilink')
+
+    // A PDF opens in a tab of its own, at the page the link names.
+    if (isPdfTarget(target)) {
+      const file = wiki ? target : resolveFile(index, target, 'markdown')
+      if (file === null) return
+
+      void workspace.followLink({
+        path: file,
+        target,
+        heading: null,
+        block: null,
+        page: pageFragment(fragment ? written(fragment) : null),
+      })
+      return
+    }
+
+    const found = wiki
       ? { path: target }
       : (resolveRelative(index, target) ?? resolveNote(index, target))
     if (!found) return
@@ -215,6 +234,7 @@
       target,
       heading: fragment ? written(fragment) : null,
       block: null,
+      page: null,
     })
   }
 
@@ -264,7 +284,6 @@
   let finding = $state(false)
   let query = $state('')
   let current = $state(0)
-  let field = $state<HTMLInputElement>()
 
   /** The page's words, read once per render; see reading/find.ts. */
   let words: Words | null = null
@@ -289,14 +308,8 @@
     reveal()
   }
 
-  /** Paints the places found and brings the current one into view.
-   *
-   *  Painted rather than selected. Selecting a match is the obvious way to show
-   *  it and the wrong one: an input holds its caret in the same selection the
-   *  page does, so moving it left the find field with nowhere to type - the
-   *  second letter of a query never arrived. A highlight is the browser's own
-   *  paint over a range and touches neither the caret nor what a reader has
-   *  selected to copy. */
+  /** Paints the places found and brings the current one into view; see
+   *  `paint` in reading/find.ts for why they are painted and not selected. */
   function reveal() {
     const words = wording()
     const ranges = found.flatMap((offset) => rangeOf(words, offset, query.length) ?? [])
@@ -314,30 +327,14 @@
     box.scrollTop += top - box.clientHeight / 2
   }
 
-  function paint(name: string, ranges: Range[]) {
-    try {
-      if (ranges.length) CSS.highlights.set(name, new Highlight(...ranges))
-      else CSS.highlights.delete(name)
-    } catch {
-      // An engine without a highlight registry. The types say there is always
-      // one; not every engine agrees yet, and this is the whole of what such a
-      // one loses - the find bar still counts and still scrolls.
-    }
-  }
-
-  function typed() {
+  function typed(what: string) {
+    query = what
     current = 0
     reveal()
   }
 
   function openFind() {
     finding = true
-    // The field is put on the page by this very change, so it can only be asked
-    // for the focus once the change is on screen.
-    void tick().then(() => {
-      field?.select()
-      field?.focus()
-    })
   }
 
   function closeFind() {
@@ -376,43 +373,14 @@
 
 <div class="read" {style}>
   {#if finding}
-    <div class="find">
-      <input
-        type="text"
-        bind:this={field}
-        bind:value={query}
-        placeholder={t('Find')}
-        aria-label={t('Find')}
-        oninput={typed}
-        onkeydown={(event: KeyboardEvent) => {
-          if (event.key !== 'Enter') return
-          event.preventDefault()
-          step(event.shiftKey ? -1 : 1)
-        }}
-      />
-      <span class="tally" aria-live="polite">
-        {found.length ? `${current + 1}/${found.length}` : query ? '0' : ''}
-      </span>
-      <button
-        title={t('Previous')}
-        aria-label={t('Previous')}
-        disabled={!found.length}
-        onclick={() => step(-1)}
-      >
-        <svg viewBox="0 0 12 12"><path d="M2.5 7.5 6 4l3.5 3.5" /></svg>
-      </button>
-      <button
-        title={t('Next')}
-        aria-label={t('Next')}
-        disabled={!found.length}
-        onclick={() => step(1)}
-      >
-        <svg viewBox="0 0 12 12"><path d="M2.5 4.5 6 8l3.5-3.5" /></svg>
-      </button>
-      <button class="shut" title={t('Close')} aria-label={t('Close')} onclick={closeFind}>
-        <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
-      </button>
-    </div>
+    <FindBar
+      {query}
+      count={found.length}
+      {current}
+      onstep={step}
+      onclose={closeFind}
+      onquery={typed}
+    />
   {/if}
 
   <!-- Focusable, so the keys that move a page reach it; nothing in it is a
@@ -465,108 +433,9 @@
     animation: settle var(--dur-base) var(--ease-out);
   }
 
-  /* What the find bar paints, in the editor's own two search colours. A
-     highlight is a document-wide name, so these cannot be scoped to a
-     component; the names carry the scope instead. */
-  :global(::highlight(nib-find)) {
-    background-color: var(--accent-soft);
-  }
-
-  :global(::highlight(nib-find-here)) {
-    background-color: var(--accent);
-    color: #fff;
-  }
-
   @keyframes settle {
     from {
       opacity: 0;
     }
-  }
-
-  /* The same bar the editor's find sits in; see `.cm-panel.cm-search`. */
-  .find {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: none;
-    padding: 8px var(--space-4);
-    background: var(--surface);
-    border-bottom: 1px solid var(--line);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-  }
-
-  .find input {
-    padding: 5px 9px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: inherit;
-    font-size: inherit;
-    outline: none;
-    transition: border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .find input:focus {
-    border-color: var(--accent);
-  }
-
-  .tally {
-    min-width: 3.5em;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .find button {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .find button:hover:not(:disabled) {
-    background: var(--surface-2);
-    color: var(--text-strong);
-  }
-
-  .find button:active:not(:disabled) {
-    background: var(--press);
-  }
-
-  .find button:disabled {
-    opacity: 0.4;
-  }
-
-  .find .shut:hover {
-    color: var(--danger);
-  }
-
-  .find button svg {
-    width: 11px;
-    height: 11px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .find .shut svg {
-    width: 8px;
-    height: 8px;
-  }
-
-  .find button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
   }
 </style>
