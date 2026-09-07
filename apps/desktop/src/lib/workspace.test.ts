@@ -489,6 +489,29 @@ describe('a note in two panes', () => {
     expect(workspace.twins(workspace.panes.focusedId)).toEqual([])
   })
 
+  /** Dragging the divider must disturb nothing but the divider.
+   *
+   *  It used to rebuild the arrangement around the new share, and every pane in
+   *  it heard about that: each editor was registered and dressed again on every
+   *  pointer move, which reconfigured the language and threw away the parse of
+   *  whatever note was in it. That is what showed as a note going raw while the
+   *  divider was moving. */
+  test('a resize leaves the arrangement and its panes as they were', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    const frame = workspace.panes.frame
+    const panes = workspace.panes.all
+    const split = frame.kind === 'split' ? frame : null
+    if (!split) throw new Error('the split did not happen')
+
+    workspace.panes.resize(split.id, 0.31, 1000)
+
+    expect(workspace.panes.frame).toBe(frame)
+    expect(workspace.panes.all).toEqual(panes)
+    expect(split.fraction).toBeCloseTo(0.31)
+  })
+
   test('splits no further than a 2x2', async () => {
     await workspace.open('/space/a.md')
     workspace.split('row')

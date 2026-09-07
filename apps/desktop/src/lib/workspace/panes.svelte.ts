@@ -19,7 +19,7 @@ import {
   type Pane,
   paneIn,
   panesIn,
-  withFraction,
+  splitIn,
   withoutPane,
   withSplit,
 } from './pane-tree'
@@ -117,9 +117,14 @@ export class Panes {
   }
 
   /** Follows the divider under the pointer. Not written down on every move: the
-   *  drag ends with `settle`. */
+   *  drag ends with `settle`.
+   *
+   *  The share is written into the split rather than the tree being rebuilt
+   *  around it, so a move is one number changing and not the whole arrangement;
+   *  see `splitIn`. */
   resize(id: string, fraction: number, room: number) {
-    this.frame = withFraction(this.frame, id, clamped(fraction, room))
+    const split = splitIn(this.frame, id)
+    if (split) split.fraction = clamped(fraction, room)
   }
 
   settle() {
@@ -129,7 +134,10 @@ export class Panes {
 
   /** A double click on a divider: both sides the same again. */
   equalise(id: string) {
-    this.frame = withFraction(this.frame, id, EQUAL)
+    const split = splitIn(this.frame, id)
+    if (!split || split.fraction === EQUAL) return
+
+    split.fraction = EQUAL
     this.changed()
   }
 

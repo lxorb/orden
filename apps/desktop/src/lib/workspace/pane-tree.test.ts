@@ -9,7 +9,7 @@ import {
   pane,
   paneIn,
   panesIn,
-  withFraction,
+  splitIn,
   withoutPane,
   withSplit,
 } from './pane-tree'
@@ -131,9 +131,20 @@ describe('moving the focus', () => {
 })
 
 describe('the share of the room', () => {
-  test('follows what it is given', () => {
-    const frame = withFraction(beside(), 's-b', 0.32)
+  test('is written into the split the divider belongs to', () => {
+    // Found rather than rebuilt around: a resize is one number changing, so
+    // everything else reading the tree hears nothing. See splitIn.
+    const frame = beside()
+    const split = splitIn(frame, 's-b')
+    expect(split).not.toBeNull()
+
+    if (split) split.fraction = 0.32
     expect(frame.kind === 'split' && frame.fraction).toBe(0.32)
+  })
+
+  test('has no split to find under a lone pane, or under a name nobody has', () => {
+    expect(splitIn(one(), 'a')).toBeNull()
+    expect(splitIn(beside(), 'nobody')).toBeNull()
   })
 
   test('leaves both sides something to show', () => {

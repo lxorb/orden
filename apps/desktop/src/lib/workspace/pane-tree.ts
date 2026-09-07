@@ -115,16 +115,19 @@ export function withoutPane(frame: Frame, id: string): Frame {
   return { ...frame, sides: [withoutPane(first, id), withoutPane(second, id)] }
 }
 
-export function withFraction(frame: Frame, id: string, fraction: number): Frame {
-  if (frame.kind === 'pane') return frame
+/** The split with that id, so its share can be written straight into it.
+ *
+ *  A resize used to rebuild the tree around the new fraction, and rebuilding it
+ *  is what everything reading the tree hears about: every pane's editor was
+ *  re-registered and re-dressed on every pointer move, which threw away the
+ *  parse of whatever note it was holding and left the markdown showing raw until
+ *  the parser caught up. One number written into one split is heard by the one
+ *  thing that reads it, which is the grid the divider sits in. */
+export function splitIn(frame: Frame, id: string): Split | null {
+  if (frame.kind === 'pane') return null
+  if (frame.id === id) return frame
 
-  const [first, second] = frame.sides
-  const sides: [Frame, Frame] = [
-    withFraction(first, id, fraction),
-    withFraction(second, id, fraction),
-  ]
-
-  return frame.id === id ? { ...frame, fraction, sides } : { ...frame, sides }
+  return splitIn(frame.sides[0], id) ?? splitIn(frame.sides[1], id)
 }
 
 /** The next pane round, so one key moves the focus through all of them. */
