@@ -59,11 +59,6 @@ export function deckBody(slides: readonly RenderedSlide[]): string {
   ].join('\n')
 }
 
-/** How wide the stage is, written where the stylesheet can read it. */
-export function deckSizeCss(): string {
-  return `.deck .stage { --stage-width: ${DECK_WIDTH}px; --stage-height: ${DECK_HEIGHT}px; }`
-}
-
 /** Moving through a deck on a page of its own.
  *
  *  The same gestures the app answers to: the arrows, space, the page keys, Home
@@ -95,7 +90,7 @@ export const DECK_SCRIPT = `(function () {
   var step = 0
   var typed = ''
   var fitted = []
-  var shown
+  var hiding
 
   function scale() {
     var wanted = Math.min(deck.clientWidth / ${DECK_WIDTH}, deck.clientHeight / ${DECK_HEIGHT})
@@ -118,14 +113,16 @@ export const DECK_SCRIPT = `(function () {
     fitted[index] = true
   }
 
+  /* Which of the slide's items wait for a click, and which are out. By their
+     place among the items the slide renders, which is what the deck parser
+     counted; see slides.ts. */
   function marks(index) {
     var items = pages[index].querySelectorAll('li')
     var mine = waiting[index]
     for (var i = 0; i < items.length; i++) {
-      var isStep = mine.indexOf(i) >= 0
-      items[i].className = items[i].className.replace(/ ?fragment ?/g, ' ').replace(/ ?shown ?/g, ' ')
-      if (!isStep) continue
-      items[i].className += ' fragment' + (mine.indexOf(i) < step ? ' shown' : '')
+      var place = mine.indexOf(i)
+      items[i].classList.toggle('fragment', place >= 0)
+      items[i].classList.toggle('shown', place >= 0 && place < step)
     }
   }
 
@@ -142,8 +139,8 @@ export const DECK_SCRIPT = `(function () {
     if (count) {
       count.textContent = (typed || String(at + 1)) + '/' + stages.length
       count.setAttribute('data-shown', 'yes')
-      clearTimeout(shown)
-      shown = setTimeout(function () { count.setAttribute('data-shown', 'no') }, 1600)
+      clearTimeout(hiding)
+      hiding = setTimeout(function () { count.setAttribute('data-shown', 'no') }, 1600)
     }
   }
 
