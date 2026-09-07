@@ -25,7 +25,8 @@
 
 import { Compartment, type Extension, Prec } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
-import { getCM, Vim, vim } from '@replit/codemirror-vim'
+import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
+import { redoEdit, undoEdit } from './shared'
 import { flushTableEdits } from './table/widget'
 
 export type VimMode = 'normal' | 'insert' | 'visual' | 'replace'
@@ -96,7 +97,17 @@ const CARET_KEYS = [
  *  were actually there. Run once at load, because the keymap is the library's
  *  own table and there is one of it; run again by the test, which is how a
  *  chord the library adds in a later version is caught rather than quietly
- *  swallowing somebody's Ctrl+P. */
+ *  swallowing somebody's Ctrl+P.
+ *
+ *  A key with a name longer than one character that Vim does not answer to is
+ *  a key Vim leaves alone entirely - it neither runs anything nor stops the
+ *  keystroke - so every one of these arrives at the editor and the app exactly
+ *  as it does with modal editing off.
+ *
+ *  What this costs: the library counts its own keymap from the length it
+ *  started at, so `:noremap` and `:mapclear` typed into the command line no
+ *  longer work. Neither is much use in an editor with no vimrc to read them
+ *  from, and `:map` is unaffected. */
 export function takeBackNibKeys(): string[] {
   const taken: string[] = []
   const sweep = (keys: string) => {
@@ -112,19 +123,34 @@ export function takeBackNibKeys(): string[] {
 
 takeBackNibKeys()
 
-// A paragraph in a prose editor is one long wrapped line, so Vim's own `j`
-// would jump the whole of it. `gj` moves down the screen instead, which is
-// what a writer means by down; it is the mapping every prose vimrc has. Only
-// in normal and visual mode - an operator like `dj` matches in Vim's
-// operator-pending context, so `dj` still deletes two whole lines.
-Vim.noremap('j', 'gj', 'normal')
-Vim.noremap('k', 'gk', 'normal')
-Vim.noremap('j', 'gj', 'visual')
-Vim.noremap('k', 'gk', 'visual')
+/** A paragraph in a prose editor is one long wrapped line, so Vim's own `j`
+ *  would jump the whole of it. `gj` moves down the screen instead, which is
+ *  what a writer means by down, and it is the line every prose vimrc has in
+ *  it. Only in normal and visual mode: an operator matches in Vim's
+ *  operator-pending context, so `dj` still deletes two whole lines.
+ *
+ *  Bound to the motion itself rather than written as `j` standing for `gj`.
+ *  A key that stands for another key is expanded through Vim's own keymap,
+ *  and the keymap is no longer the one Vim shipped; see takeBackNibKeys. */
+function moveByScreenLine(keys: string, forward: boolean, context: string) {
+  Vim.mapCommand(keys, 'motion', 'moveByDisplayLines', { forward }, { context })
+}
+
+for (const context of ['normal', 'visual']) {
+  moveByScreenLine('j', true, context)
+  moveByScreenLine('k', false, context)
+}
 
 Vim.defineEx('write', 'w', () => commands?.write())
 Vim.defineEx('quit', 'q', () => commands?.quit())
 Vim.defineEx('edit', 'e', () => commands?.edit())
+
+// `u` and `:undo` go to the document's history rather than the view's. A note
+// open in two panes is one note with one history, which lives beside the text
+// and not in either view - and a joined view's own history is deliberately
+// empty, so Vim asking it would find nothing to undo. See shared.ts.
+CodeMirror.commands.undo = (cm) => void undoEdit(cm.cm6)
+CodeMirror.commands.redo = (cm) => void redoEdit(cm.cm6)
 
 /** The mode as a word, from what the plugin has just written down. Vim names
  *  a visual submode in the same string - `visual line` - and the label has
@@ -153,6 +179,46 @@ const modeReporter = ViewPlugin.define((view: EditorView) => {
   }
 })
 
+/** The two things modal editing puts on screen, in Nib's own colours.
+ *
+ *  The library paints its block cursor pink and its command line in whatever
+ *  the browser's default monospace is, neither of which belongs to any theme
+ *  here. Written against `.nib-vim`, which the compartment puts on the editor,
+ *  so each selector carries one class more than the library's own and wins on
+ *  its own terms rather than on the order the stylesheets happen to load in. */
+const vimTheme = EditorView.theme({
+  // The caret becomes a block over the character it is on, which is how a
+  // reader tells normal mode from insert at a glance. The character stays
+  // legible: the accent behind it, the page colour on top.
+  '&.nib-vim .cm-fat-cursor': {
+    background: 'var(--accent)',
+    color: 'var(--bg)',
+    borderRadius: '1px',
+  },
+  // An editor nobody is typing in shows the block as an outline, the way an
+  // unfocused caret stops blinking.
+  '&.nib-vim:not(.cm-focused) .cm-fat-cursor': {
+    background: 'none',
+    outline: '1px solid var(--accent-line)',
+    color: 'inherit',
+  },
+  // The `:` and `/` line, which is the only chrome modal editing adds.
+  '&.nib-vim .cm-vim-panel': {
+    padding: '4px var(--space-4)',
+    borderTop: '1px solid var(--line)',
+    background: 'var(--surface)',
+    color: 'var(--text)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'var(--text-sm)',
+  },
+  '&.nib-vim .cm-vim-panel input': {
+    color: 'var(--text)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'var(--text-sm)',
+    caretColor: 'var(--accent)',
+  },
+})
+
 const modal = new Compartment()
 
 /** Above every keymap. All of CodeMirror's keymaps are dispatched by one
@@ -161,7 +227,12 @@ const modal = new Compartment()
  *  carry a list on instead of moving down a line. What Vim must not read is
  *  settled by the keymap it was left with, above. */
 function modalEditing(): Extension {
-  return Prec.high([vim(), modeReporter, EditorView.editorAttributes.of({ class: 'nib-vim' })])
+  return Prec.high([
+    vim(),
+    modeReporter,
+    vimTheme,
+    EditorView.editorAttributes.of({ class: 'nib-vim' }),
+  ])
 }
 
 export function vimExtensions(): Extension {

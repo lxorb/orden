@@ -1,8 +1,15 @@
-import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import { history } from '@codemirror/commands'
+import {
+  EditorSelection,
+  EditorState,
+  type TransactionSpec,
+  type ChangeSpec,
+} from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
-import { Vim } from '@replit/codemirror-vim'
+import { CodeMirror, Vim } from '@replit/codemirror-vim'
 import { modeExtensions } from './modes'
+import { type DocView, SharedDoc, sharing } from './shared'
 import { setVim, takeBackNibKeys } from './vim'
 
 /** A view is a DOM thing and these tests are not, so this is all the setter
@@ -61,6 +68,82 @@ describe('modal editing', () => {
 /** `unmap` is declared as needing a context, and a binding that names none is
  *  matched by passing none; the same reading vim.ts makes. */
 const unmap = Vim.unmap as (keys: string, context?: string) => boolean | undefined
+
+/** A view without a DOM that has joined a shared document, which is what every
+ *  pane in the app is: the text and the history live beside it, and its own
+ *  history is deliberately left empty. See shared.ts. */
+class Pane implements DocView {
+  private held: EditorState
+
+  constructor(private readonly note: SharedDoc) {
+    this.held = EditorState.create({
+      doc: note.text,
+      selection: EditorSelection.cursor(0),
+      extensions: [history(), sharing()],
+    })
+    note.join(this)
+  }
+
+  get state(): EditorState {
+    return this.held
+  }
+
+  dispatch(spec: TransactionSpec) {
+    this.held = this.held.update(spec).state
+  }
+
+  get text(): string {
+    return this.held.doc.toString()
+  }
+
+  /** What the editor does with an edit: applies it, then hands it over. */
+  type(at: number, insert: string) {
+    this.edit({ from: at, insert }, at + insert.length)
+  }
+
+  private edit(changes: ChangeSpec, cursor: number) {
+    const made = this.held.update({
+      changes,
+      selection: EditorSelection.cursor(cursor),
+      userEvent: 'input.type',
+    })
+
+    this.held = made.state
+    this.note.local(made.changes, made.state.selection, this)
+  }
+}
+
+describe("Vim's undo", () => {
+  /** The bug this is here for: `u` went to the view's own history, which is
+   *  empty on purpose, so nothing happened. A note open in two panes is one
+   *  note with one history, and undo has to mean the same thing in both. */
+  test('goes to the history of the note rather than of the pane', () => {
+    const note = new SharedDoc('alpha')
+    const first = new Pane(note)
+    const second = new Pane(note)
+
+    first.type(5, ' bravo')
+    expect(first.text).toBe('alpha bravo')
+    expect(second.text).toBe('alpha bravo')
+
+    CodeMirror.commands.undo({ cm6: first as unknown as EditorView } as CodeMirror)
+
+    expect(first.text).toBe('alpha')
+    expect(second.text).toBe('alpha')
+  })
+
+  test('and redo comes back the same way', () => {
+    const note = new SharedDoc('alpha')
+    const pane = new Pane(note)
+
+    pane.type(5, ' bravo')
+    const cm = { cm6: pane as unknown as EditorView } as CodeMirror
+    CodeMirror.commands.undo(cm)
+    CodeMirror.commands.redo(cm)
+
+    expect(pane.text).toBe('alpha bravo')
+  })
+})
 
 describe('the keys Nib keeps for itself', () => {
   /** `unmap` answers true while it is still finding a binding to remove, so a
