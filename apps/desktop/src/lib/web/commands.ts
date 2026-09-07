@@ -694,10 +694,14 @@ async function hasContent(): Promise<boolean> {
   return (await files.all()).length > 0
 }
 
+/** The one note a first visit is given. Named so that the app can tell it from
+ *  something somebody wrote, and step off it once there is something to read. */
+export const WELCOME_PATH = '/Notes/Read me.md'
+
 export async function seed() {
   if (await hasContent()) return
 
-  await writeNote('/Notes/Read me.md', WELCOME)
+  await writeNote(WELCOME_PATH, WELCOME)
 }
 
 const WELCOME = `# Welcome to Nib

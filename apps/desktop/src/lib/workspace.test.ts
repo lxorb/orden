@@ -1117,3 +1117,77 @@ describe('reopening the tab that was closed last', () => {
     expect(back?.note).toBe(first.note)
   })
 })
+
+/** Stepping off the welcome note.
+ *
+ *  A browser opens it because a first visit has nothing else to read. Signing in
+ *  changes that, and nothing was watching: the workspace restores seconds before
+ *  the account does, so somebody who signed in was left looking at "Welcome to
+ *  Nib" with their own notes in the sidebar beside it. */
+describe('the welcome note, once there are real notes', () => {
+  const WELCOME = '/Notes/Read me.md'
+
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.previewTabId = null
+    workspace.setAutoSave(false)
+    notes[WELCOME] = '# Welcome to Nib'
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    notes[WELCOME] = ''
+  })
+
+  /** What the sidebar holds once a space has been pulled down. */
+  function listing(paths: string[]) {
+    vi.spyOn(workspace, 'notes', 'get').mockReturnValue(
+      paths.map((path) => ({ path, name: path.split('/').pop() ?? path })) as never,
+    )
+  }
+
+  test('is stepped off once the account has brought notes down', async () => {
+    listing([WELCOME, '/space/a.md', '/space/b.md'])
+    await workspace.open(WELCOME)
+    expect(workspace.tabs).toHaveLength(1)
+
+    await workspace.leaveTheWelcomeNote()
+
+    expect(workspace.active?.path).not.toBe(WELCOME)
+    expect(workspace.tabs.some((one) => one.path === WELCOME)).toBe(false)
+  })
+
+  test('stays when it is the only note there is', async () => {
+    // Nothing has arrived yet. Closing it would leave a blank page, which is
+    // worse than a welcome.
+    listing([WELCOME])
+
+    await workspace.open(WELCOME)
+    await workspace.leaveTheWelcomeNote()
+
+    expect(workspace.active?.path).toBe(WELCOME)
+  })
+
+  test('stays when somebody has written in it', async () => {
+    listing([WELCOME, '/space/a.md'])
+    await workspace.open(WELCOME)
+    const opened = workspace.tabs.find((one) => one.path === WELCOME)
+    if (opened) opened.dirty = true
+
+    await workspace.leaveTheWelcomeNote()
+
+    expect(workspace.tabs.some((one) => one.path === WELCOME)).toBe(true)
+  })
+
+  test('stays when something else is open beside it', async () => {
+    // Two tabs is somebody having said what they want on screen.
+    listing([WELCOME, '/space/a.md'])
+    await workspace.open(WELCOME)
+    await workspace.open('/space/a.md')
+
+    await workspace.leaveTheWelcomeNote()
+
+    expect(workspace.tabs.some((one) => one.path === WELCOME)).toBe(true)
+  })
+})

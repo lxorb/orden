@@ -740,6 +740,34 @@ class Workspace {
    *
    *  `open` itself stays about notes: a note is what the caret, the preview tab
    *  and every unsaved word belong to. */
+  /** Steps off the welcome note once the account has brought real notes down.
+   *
+   *  A browser build opens the welcome note because on a first visit there is
+   *  nothing else to read. Signing in changes that, and nothing was watching:
+   *  the workspace restores seconds before the account does, so somebody who
+   *  signs in is left looking at "Welcome to Nib" with their own notes in the
+   *  sidebar beside it.
+   *
+   *  Only when the welcome note is the only thing open and untouched. Somebody
+   *  who has written in it, or opened something beside it, has said what they
+   *  want on screen. */
+  async leaveTheWelcomeNote(): Promise<void> {
+    const { WELCOME_PATH } = await import('./web/commands')
+
+    const only = this.tabs.length === 1 ? this.tabs[0] : null
+    if (only?.path !== WELCOME_PATH || only.dirty) return
+
+    // Where they were last, if that note is still there, and otherwise the first
+    // note that is theirs.
+    const mine = this.notes.filter((one) => one.path !== WELCOME_PATH)
+    const back = this.recent.find((path) => mine.some((one) => one.path === path))
+    const next = back ?? mine[0]?.path
+    if (!next) return
+
+    await this.openEntry(next, { activate: true })
+    this.close(only.id)
+  }
+
   async openEntry(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
     if (isPdfTarget(path)) {
       this.openPdf(path)
