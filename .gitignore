@@ -11,6 +11,9 @@ target/
 .DS_Store
 Thumbs.db
 
+# What `evenhub pack` writes; see docs/even.md
+*.ehpk
+
 # Rust build output for the MCP connector
 services/mcp/target/
 

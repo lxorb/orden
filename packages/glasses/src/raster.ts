@@ -234,7 +234,13 @@ export class Painter implements Measurer {
     })
 
     const size = one.display ? 19 : 15
-    const box = measureHtml(html, size, SLACK)
+    // A `$$` block has a line to itself and sits on it, so none of it is below
+    // the baseline. The measurement would say otherwise - an inline block's
+    // baseline is the baseline of the last line inside it, which for a formula
+    // is somewhere in the middle of it - and the words underneath would then be
+    // written over.
+    const measured = measureHtml(html, size, SLACK)
+    const box = measured && one.display ? { ...measured, depth: 0 } : measured
     const fallback: Ready = {
       box: box ?? this.math(one.tex, one.display),
       picture: null,
