@@ -417,6 +417,26 @@ binding. Its not-found handling is `single-page-application`, which would answer
 `/even/` with the editor's own page, so two routes are named ahead of the
 catch-all and ask for `/even.html` by name.
 
+### What goes into the package, and why it is not `dist`
+
+`pnpm --filter @nib/desktop build:even` builds, then stages
+`apps/desktop/dist-even` through `scripts/even-stage.mjs`. In that folder
+**`index.html` and `even.html` are the same page, and that page is the plugin**;
+the editor's own `index.html` is not in it at all.
+
+That is not tidiness. Which page the phone app opens from a package is published
+nowhere: the manifest names `even.html` as the `entrypoint`, but an app that
+opens `index.html` instead would get the plain editor, which signs in, syncs,
+and knows nothing about any glasses. A plugin that signs in and then does
+nothing on the glasses is exactly what that looks like from the outside, and it
+is indistinguishable from a bridge that was never found. Staging both names as
+the plugin removes the question rather than answering it.
+
+`even.html` also paints one line of its own, `Nib for G2`, before any script
+runs, and the app removes it on mount. The editor's page has nothing like it, so
+seeing it at all says the plugin's page was loaded, and seeing it stay says the
+page loaded and its script did not.
+
 ---
 
 ## 6. Getting it onto the glasses
@@ -465,7 +485,7 @@ npx @evenrealities/evenhub-cli qr --http --port 5173
    encryption; the transport is HTTPS. Do not reuse that password anywhere.)
 4. Check the package id is free:
    ```sh
-   npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist -c
+   npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -c
    ```
    There is no separate registration step: the id is claimed by the first upload.
 
@@ -473,8 +493,8 @@ npx @evenrealities/evenhub-cli qr --http --port 5173
 
 1. Build and pack:
    ```sh
-   pnpm build
-   npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist -o nib.ehpk
+   pnpm --filter @nib/desktop build:even
+   npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
    ```
    About 4 MB, well inside the roughly 10 MB the platform is comfortable with.
    The CLI stamps `min_app_version` from the SDK it reads on npm.
