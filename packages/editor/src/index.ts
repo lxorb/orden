@@ -58,7 +58,7 @@ export {
   setStrictMode,
   setTypewriterMode,
 } from './modes'
-export type { LigatureScope } from './ligatures'
+export { findLigatures, type Ligature, LIGATURES, type LigatureScope } from './ligatures'
 export { onVimMode, setVim, setVimCommands, type VimCommands, type VimMode } from './vim'
 export { flushTableEdits } from './table/widget'
 export { insertTableToEdit, tableBindings } from './table/keymap'

@@ -24,7 +24,7 @@ export type LigatureScope = 'off' | 'code' | 'all'
  *  made invisible, and the glyph is painted over the room they take. So a
  *  run keeps its width - columns in code still line up - and reading it as
  *  typed, when the caret goes in, shifts nothing. */
-const LIGATURES: Record<string, string> = {
+export const LIGATURES: Record<string, string> = {
   '->': '→',
   '<-': '←',
   '<->': '↔',

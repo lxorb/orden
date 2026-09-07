@@ -1,0 +1,26 @@
+{
+  "name": "@nib/glasses",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@codemirror/language": "^6.12.4",
+    "@lezer/highlight": "^1.2.3",
+    "@nib/editor": "workspace:*",
+    "@nib/markdown": "workspace:*",
+    "katex": "^0.18.5",
+    "marked": "^18.0.11"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}

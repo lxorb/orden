@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@codemirror/language": "^6.12.4",
+    "@evenrealities/even_hub_sdk": "^0.0.15",
     "@lezer/highlight": "^1.2.3",
     "@nib/editor": "workspace:*",
     "@nib/markdown": "workspace:*",

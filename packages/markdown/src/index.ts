@@ -1,5 +1,5 @@
 import { Marked, Renderer } from 'marked'
-import type { Tokens } from 'marked'
+import type { Token, Tokens } from 'marked'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
@@ -262,6 +262,18 @@ export function codeBlocks(source: string): CodeBlock[] {
   })
 
   return found
+}
+
+/** The note as tokens, through the same grammar that renders it: GFM, plus the
+ *  maths, the callouts, the definition lists, the emoji and the wikilinks this
+ *  package adds. What a renderer that is not HTML stands on - the glasses draw
+ *  from these - so that one grammar serves every face a note has.
+ *
+ *  Front matter is not stripped here, unlike in `renderMarkdown`: a caller that
+ *  has to say where on the page a character of the file ended up needs the
+ *  offsets to be the file's own, and can strip it and count the difference. */
+export function lexMarkdown(source: string): Token[] {
+  return trusting.lexer(source)
 }
 
 /** Whether a document needs a renderer of its own: one that keeps a headings

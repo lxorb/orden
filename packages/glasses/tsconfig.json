@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // The layout core needs no DOM. The rasteriser and the font loader do, and
+    // they are the only two files in here that touch it.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  // The editor's own ambient declarations, for the same reason the app includes
+  // them: this package reads the editor through its source, so what the editor
+  // says about its untyped dependencies has to be in scope here too.
+  "include": ["src/**/*.ts", "../editor/src/env.d.ts"]
+}
