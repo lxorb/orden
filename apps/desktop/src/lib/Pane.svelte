@@ -67,13 +67,10 @@
   // because a note open in two panes is being read in two places.
   $effect(() => {
     const current = view
-    const id = tab?.id
-    // A preview tab moves on to another note without becoming another tab, so
-    // the note's own place has to be read again when that happens.
-    const path = tab?.path ?? null
-    if (!current || !id) return
+    const showing = tab
+    if (!current || !showing) return
 
-    return placement.follow(current, id, path)
+    return placement.follow(current, showing)
   })
 
   /** A pasted or dropped image, stored once however often it is pasted. A large

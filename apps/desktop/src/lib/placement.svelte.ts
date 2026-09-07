@@ -1,6 +1,6 @@
 import { caretLine, type EditorView, sharedOf, topLine } from '@nib/editor'
 import { untrack } from 'svelte'
-import { workspace } from './workspace.svelte'
+import { type Tab, workspace } from './workspace.svelte'
 
 /** Where a note is being read, written down as it moves. A crash gives no chance
  *  to record it on the way out, so it is recorded as it happens instead.
@@ -26,14 +26,23 @@ class Placement {
     this.pending.get(view)?.()
   }
 
-  /** Keeps the tab's place up to date until the pane moves on. `path` is the note
-   *  the tab is on now: a preview tab moves on to another note without becoming
-   *  another tab, so what is recorded has to be checked against the note it was
-   *  measured for.
+  /** Keeps a tab's place up to date until the pane moves on.
+   *
+   *  One run of this is about one note in one tab, and everything that says
+   *  which note that is - the path it is at, and how many notes the tab's
+   *  document has held - is read here and checked again before anything is
+   *  written down. The one tab that previews a note takes another one on without
+   *  becoming another tab, and a run that outlived that would write the new
+   *  note's place under the old note's name.
    *
    *  Answers the teardown, so the effect that calls this can hand it straight
    *  back to Svelte. */
-  follow(view: EditorView, id: string, path: string | null): () => void {
+  follow(view: EditorView, showing: Tab): () => void {
+    const id = showing.id
+    const path = showing.path
+    const live = showing.note.live
+    const arrivals = showing.note.arrivals
+
     /** Nothing is recorded until the note has settled into the view. The offset a
      *  view reports before CodeMirror has measured it and scrolled it is the top
      *  of the note, which is not where the note is. */
@@ -43,11 +52,12 @@ class Placement {
       if (!placed) return
 
       const tab = untrack(() => workspace.tabs.find((one) => one.id === id))
-      // What the view shows belongs to the note the tab is on now; if that is
-      // no longer this one, this run has nothing true to say about it. A preview
-      // tab takes another note on without becoming another tab, and the pane's
-      // view may already have swapped this note out for the next one.
-      if (tab?.path !== path || sharedOf(view.state) !== tab.note.live) return
+      // Still the same note, in the same tab, in this view. Any of the three
+      // having moved on means this run has nothing true left to say: the pane
+      // may have swapped the note out, the tab may have taken another note on,
+      // and the note may have been renamed out from under both.
+      if (tab?.path !== path || tab.note.arrivals !== arrivals) return
+      if (sharedOf(view.state) !== live) return
 
       workspace.noteView(
         id,
@@ -82,9 +92,10 @@ class Placement {
       cancelAnimationFrame(settled)
       cancelAnimationFrame(scheduled)
       view.scrollDOM.removeEventListener('scroll', soon)
-      // A view that has already left the page reads as scrolled to the top,
-      // which is not where the note was: what was recorded as it moved stands.
-      if (view.scrollDOM.isConnected) record()
+      // Nothing is written down on the way out. By the time this runs the pane
+      // may already hold the next note, and what the view says then is about
+      // that one; the last movement in this one was written down as it happened,
+      // at most a frame ago.
       placed = false
       this.pending.delete(view)
     }
