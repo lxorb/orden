@@ -7,6 +7,7 @@
 
 mod assets;
 mod clock;
+mod highlights;
 mod history;
 mod launch;
 mod links;
@@ -69,7 +70,10 @@ pub fn run() {
             notes::delete_folder,
             tree::read_tree,
             assets::read_asset,
+            assets::read_file,
             assets::save_asset,
+            highlights::read_highlights,
+            highlights::write_highlights,
             search::search_space,
             search::space_tags,
             links::scan_links,

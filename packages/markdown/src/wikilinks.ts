@@ -13,7 +13,7 @@
 
 import type { MarkedExtension, Tokens } from 'marked'
 import { attributeUrl, escape, fragment, safeHref } from './html'
-import { parseWikilink, sectionOf, shownText, slugify, type Wikilink } from './links'
+import { pageFragment, parseWikilink, sectionOf, shownText, slugify, type Wikilink } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 
 /** Where a note's name goes on this page: an `href`, or null for a link the
@@ -125,8 +125,16 @@ function anchor(link: Wikilink, resolve: LinkResolver | undefined, text: string)
   // the same for a target it cannot encode.
   if (target === null || !safeHref(target)) return words
 
-  const anchored = link.heading === null ? '' : `#${fragment(slugify(link.heading))}`
-  return `<a class="wikilink" href="${attributeUrl(target)}${anchored}">${words}</a>`
+  return `<a class="wikilink" href="${attributeUrl(target)}${anchored(link)}">${words}</a>`
+}
+
+/** The `#…` an anchor carries: the page of a PDF as it was written, since that
+ *  is what a PDF viewer reads, and a heading as the id it becomes on the page. */
+function anchored(link: Wikilink): string {
+  if (link.heading === null) return ''
+
+  const page = pageFragment(link.heading)
+  return page === null ? `#${fragment(slugify(link.heading))}` : `#page=${page}`
 }
 
 /** The frame an embedded note sits in, with a marker where its content goes.

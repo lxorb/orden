@@ -79,6 +79,28 @@ export function isNoteTarget(target: string): boolean {
   return schemeOf(target) === ''
 }
 
+/** Whether a target names a PDF rather than a note. Here with the rest of the
+ *  grammar because all four readers of a link have to agree: the editor follows
+ *  `[[paper.pdf]]` to the file, the renderer links to it, the app opens it in a
+ *  tab, and the index counts it as a link out. */
+export function isPdfTarget(target: string): boolean {
+  return /\.pdf$/i.test(target.trim())
+}
+
+/** The page a fragment names, or null when it names none.
+ *
+ *  `[[paper.pdf#page=3]]` is Obsidian's spelling and also the one a browser's own
+ *  PDF viewer reads, so the same link works in Nib, in Obsidian and on a
+ *  published page. A PDF has no headings to point at, so this is the only
+ *  fragment one takes. Pages count from one; `#page=0` names nothing. */
+export function pageFragment(fragment: string | null): number | null {
+  const digits = fragment === null ? null : /^page=(\d+)$/i.exec(fragment.trim())?.[1]
+  if (digits === undefined || digits === null) return null
+
+  const page = Number(digits)
+  return page >= 1 ? page : null
+}
+
 /** What is between the brackets, as a link. Null when it names nothing to point
  *  at: `[[]]`, or an alias with no target and no heading. */
 export function parseWikilink(inner: string, embed = false): Wikilink | null {

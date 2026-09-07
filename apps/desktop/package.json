@@ -26,7 +26,8 @@
     "flowchart.js": "^1.18.0",
     "katex": "^0.18.5",
     "lucide": "^1.40.0",
-    "mermaid": "^11.17.2"
+    "mermaid": "^11.17.2",
+    "pdfjs-dist": "^6.3.289"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

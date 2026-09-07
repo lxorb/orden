@@ -13,7 +13,9 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 use tauri::AppHandle;
 
 use crate::clock;
-use crate::paths::{cannot, free_spot, in_spaces, spaces_root, write_atomically, TRASH};
+use crate::paths::{
+    cannot, free_spot, in_spaces, move_highlights, spaces_root, write_atomically, TRASH,
+};
 
 /// The record of what is in the trash, written beside the folders it describes.
 const MANIFEST: &str = "manifest.json";
@@ -87,6 +89,10 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
         return Err(cannot("delete", &source, &error));
     }
 
+    // A deleted PDF takes its highlights into the same folder, so putting it
+    // back puts them back with it.
+    move_highlights(&source, &held);
+
     let entry = TrashEntry {
         id,
         kind,
@@ -102,6 +108,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     // it goes back where it came from instead.
     if let Err(error) = write_manifest(&dir, &entries) {
         let _ = fs::rename(&held, &source);
+        move_highlights(&held, &source);
         let _ = fs::remove_dir_all(&slot);
         return Err(error);
     }
@@ -151,6 +158,9 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     }
 
     fs::rename(&held, &target).map_err(|error| cannot("restore", &target, &error))?;
+    // The highlights come back under whatever name the PDF landed under, which
+    // is not the old one when something has taken its place in the meantime.
+    move_highlights(&held, &target);
     let _ = fs::remove_dir_all(&slot);
 
     entries.remove(position);

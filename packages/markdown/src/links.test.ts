@@ -5,7 +5,9 @@ import {
   findLinks,
   formatWikilink,
   isNoteTarget,
+  isPdfTarget,
   linkTarget,
+  pageFragment,
   parseWikilink,
   shownText,
   withoutBlockIds,
@@ -121,6 +123,48 @@ describe('which targets belong to the space', () => {
     expect(isNoteTarget('mailto:a@b.dev')).toBe(false)
     expect(isNoteTarget('//x.dev/a')).toBe(false)
     expect(isNoteTarget('javascript:alert(1)')).toBe(false)
+  })
+})
+
+describe('which targets name a PDF', () => {
+  test('anything ending in the extension, in either case', () => {
+    expect(isPdfTarget('paper.pdf')).toBe(true)
+    expect(isPdfTarget('reading/Deep Learning.PDF')).toBe(true)
+    expect(isPdfTarget('  paper.pdf  ')).toBe(true)
+  })
+
+  test('and nothing else', () => {
+    expect(isPdfTarget('paper')).toBe(false)
+    expect(isPdfTarget('paper.pdf.md')).toBe(false)
+    expect(isPdfTarget('pdf')).toBe(false)
+    expect(isPdfTarget('')).toBe(false)
+  })
+})
+
+describe('the page a fragment names', () => {
+  test('is the number after page=', () => {
+    expect(pageFragment('page=3')).toBe(3)
+    expect(pageFragment('page=1')).toBe(1)
+    expect(pageFragment('PAGE=12')).toBe(12)
+    expect(pageFragment(' page=7 ')).toBe(7)
+  })
+
+  test('read out of a link the way it is written', () => {
+    expect(pageFragment(parseWikilink('paper.pdf#page=3')?.heading ?? null)).toBe(3)
+    expect(pageFragment(parseWikilink('paper.pdf')?.heading ?? null)).toBeNull()
+  })
+
+  test('is nothing for a fragment that is not one', () => {
+    expect(pageFragment(null)).toBeNull()
+    expect(pageFragment('Some Heading')).toBeNull()
+    expect(pageFragment('page')).toBeNull()
+    expect(pageFragment('page=')).toBeNull()
+    expect(pageFragment('page=3a')).toBeNull()
+    expect(pageFragment('pages=3')).toBeNull()
+  })
+
+  test('is nothing before the first page', () => {
+    expect(pageFragment('page=0')).toBeNull()
   })
 })
 

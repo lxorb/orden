@@ -1,6 +1,6 @@
 import type { EditorState } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { linkTarget, type Wikilink } from '@nib/markdown/links'
+import { isPdfTarget, linkTarget, type Wikilink } from '@nib/markdown/links'
 import { label } from '../labels'
 import { MAC, modifier } from '../links'
 import { linkAt } from './at'
@@ -13,17 +13,21 @@ import { jumpFor, noteIndex, type NoteJump, noteOpener } from './notes'
  *  nothing in the text becomes unreachable. Reading mode has no caret to place,
  *  so there a plain click follows. */
 
-/** What a modifier-click on a link will do, in the four wordings that covers:
- *  open it or make it, with the key each platform uses. */
+/** What a modifier-click on a link will do, in the wordings that covers: open a
+ *  note, make one, or open a file, with the key each platform uses. */
 const HOW = {
   open: { mac: 'openNoteMac', other: 'openNote' },
   create: { mac: 'createNoteMac', other: 'createNote' },
+  file: { mac: 'openLinkMac', other: 'openLink' },
 } as const
 
 /** The tooltip on a link to a note: where it goes, and what a click will do -
- *  which for a name nothing answers to is to make the note. */
+ *  which for a name nothing answers to is to make the note.
+ *
+ *  A PDF is a file rather than a note, so a click opens it and a name nothing
+ *  answers to is nothing a click can make; the muted link says that on its own. */
 export function noteLinkTitle(link: Wikilink, missing: boolean): string {
-  const wording = HOW[missing ? 'create' : 'open']
+  const wording = isPdfTarget(link.target) ? HOW.file : HOW[missing ? 'create' : 'open']
   return `${linkTarget(link)}\n${label(MAC ? wording.mac : wording.other)}`
 }
 

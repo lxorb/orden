@@ -30,6 +30,7 @@ export {
   type NoteIndex,
   type NoteJump,
   type NoteRef,
+  resolveFile,
   resolveNote,
   resolveRelative,
   noteIndexEffect,

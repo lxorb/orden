@@ -8,7 +8,7 @@ use std::path::Path;
 use tauri::AppHandle;
 
 use crate::clock;
-use crate::paths::{in_spaces, is_markdown, MAX_DEPTH};
+use crate::paths::{in_spaces, is_markdown, is_pdf, MAX_DEPTH};
 
 /// A note or a folder, and everything under it if it is a folder.
 #[derive(Serialize)]
@@ -68,7 +68,11 @@ fn walk(path: &Path, options: &TreeOptions, depth: usize) -> Entry {
 
                 if child.is_dir() {
                     children.push(walk(&child, options, depth + 1));
-                } else if is_markdown(&child) {
+                } else if is_markdown(&child) || is_pdf(&child) {
+                    // The notes and the PDFs beside them: the two things a tab
+                    // can hold. Everything else in a space belongs to a note
+                    // rather than standing on its own - a picture, a PDF's own
+                    // highlights - and a file list nobody can act on is noise.
                     let meta = entry.metadata().ok();
                     children.push(Entry {
                         name,
@@ -123,7 +127,7 @@ fn sort_children(children: &mut [Entry], options: &TreeOptions) {
 
 #[cfg(test)]
 mod tests {
-    use super::{sort_children, Entry, TreeOptions};
+    use super::{sort_children, walk, Entry, TreeOptions};
 
     fn entry(name: &str, is_dir: bool, modified: u64) -> Entry {
         Entry {
@@ -179,6 +183,24 @@ mod tests {
 
         sort_children(&mut children, &options("modified", true));
         assert_eq!(names(&children), ["new.md", "middle.md", "old.md"]);
+    }
+
+    #[test]
+    fn a_space_lists_its_notes_and_its_pdfs_and_nothing_else() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::create_dir_all(here.join("Reading")).expect("a folder");
+        std::fs::write(here.join("Idea.md"), "").expect("a note");
+        std::fs::write(here.join("paper.pdf"), "").expect("a pdf");
+        std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("its highlights");
+        std::fs::write(here.join("shot.png"), "").expect("a picture");
+        std::fs::write(here.join("Reading").join("Deep.PDF"), "").expect("a nested pdf");
+
+        let top = walk(here, &options("name", false), 0);
+        assert_eq!(names(&top.children), ["Reading", "Idea.md", "paper.pdf"]);
+
+        let nested = &top.children[0];
+        assert_eq!(names(&nested.children), ["Deep.PDF"]);
     }
 
     #[test]

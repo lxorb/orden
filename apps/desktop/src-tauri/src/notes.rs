@@ -7,7 +7,8 @@ use std::fs;
 use tauri::AppHandle;
 
 use crate::paths::{
-    cannot, chosen, in_spaces, note_from_outside, outside_spaces, write_atomically,
+    cannot, chosen, drop_highlights, in_spaces, move_highlights, note_from_outside, outside_spaces,
+    write_atomically,
 };
 
 /// Reads a note, whatever folder it is in. Opening a file from outside the
@@ -48,7 +49,11 @@ pub fn write_note(path: String, content: String) -> Result<(), String> {
 #[tauri::command]
 pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
-    fs::remove_file(&target).map_err(|error| cannot("delete", &target, &error))
+    fs::remove_file(&target).map_err(|error| cannot("delete", &target, &error))?;
+
+    // A PDF's highlights are part of that PDF and have nothing left to describe.
+    drop_highlights(&target);
+    Ok(())
 }
 
 /// Renames a note, which is also how it is moved: the new path can name a folder
@@ -70,7 +75,11 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
         fs::create_dir_all(parent).map_err(|error| cannot("create", parent, &error))?;
     }
 
-    fs::rename(&source, &target).map_err(|error| cannot("rename", &source, &error))
+    fs::rename(&source, &target).map_err(|error| cannot("rename", &source, &error))?;
+
+    // A PDF's highlights follow it, so a rename or a move keeps them.
+    move_highlights(&source, &target);
+    Ok(())
 }
 
 /// Makes a folder inside a space, and every folder above it.

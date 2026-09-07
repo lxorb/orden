@@ -1,6 +1,6 @@
 import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import type { LinkKind, Wikilink } from '@nib/markdown/links'
+import { isPdfTarget, type LinkKind, pageFragment, type Wikilink } from '@nib/markdown/links'
 
 /** What the editor knows about the space around the open note, and what it does
  *  when a link is followed.
@@ -24,6 +24,10 @@ export interface NoteRef {
 
 export interface NoteIndex {
   notes: readonly NoteRef[]
+  /** Everything in the space that is not a note, relative to it: the PDF a
+   *  `[[paper.pdf]]` names, the picture an embed shows. A file is not a note and
+   *  has no headings, so it is a plain path rather than a `NoteRef`. */
+  files: readonly string[]
   /** The note this view is showing, so `[[#Heading]]` knows which note it means
    *  and a name that could mean two notes is read from where it was written.
    *  Relative to the space, like every path here. Null for a note with no home
@@ -34,7 +38,7 @@ export interface NoteIndex {
   read: (path: string) => Promise<string | null>
 }
 
-const EMPTY: NoteIndex = { notes: [], path: null, read: () => Promise.resolve(null) }
+const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }
 
 export const noteIndex = Facet.define<NoteIndex, NoteIndex>({
   combine: (values) => values[0] ?? EMPTY,
@@ -87,6 +91,9 @@ export interface NoteJump {
   target: string
   heading: string | null
   block: string | null
+  /** The page of a PDF the link names, from `[[paper.pdf#page=3]]`. Null for a
+   *  link into a note, which lands on a heading or a block instead. */
+  page: number | null
 }
 
 /** Follows a link. The app opens the note, scrolls to the heading or the block,
@@ -155,6 +162,14 @@ export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
  *  it was written in. Folded rather than resolved on disk, since the index is
  *  the only map the editor has. */
 export function resolveRelative(index: NoteIndex, target: string): NoteRef | null {
+  const parts = relativeParts(index, target)
+  return parts.length ? resolveNote(index, parts.join('/')) : null
+}
+
+/** A relative target as the path it points at, from the folder the note it was
+ *  written in sits in. Shared by the two things that resolve one: a note, and a
+ *  file beside the notes. */
+function relativeParts(index: NoteIndex, target: string): string[] {
   const parts = index.path === null ? [] : folderOf(index.path).split('/').filter(Boolean)
 
   for (const part of target.replace(/\\/g, '/').split('/')) {
@@ -163,7 +178,34 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
     else parts.push(part)
   }
 
-  return parts.length ? resolveNote(index, parts.join('/')) : null
+  return parts
+}
+
+/** The file in the space a target names, or null when the space holds none.
+ *
+ *  A wikilink names a file the way it names a note - by the end of its path, so
+ *  `[[paper.pdf]]` finds `reading/paper.pdf` wherever it sits, which is how
+ *  Obsidian finds an attachment. A markdown target is a path beside the note it
+ *  was written in, and is matched whole. The extension is part of the name here:
+ *  a file has nothing else to be told apart by. */
+export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
+  const wanted = (
+    kind === 'markdown' ? relativeParts(index, target).join('/') : target.trim().replace(/\\/g, '/')
+  ).toLowerCase()
+  if (!wanted) return null
+
+  const found = index.files.filter((path) => {
+    const held = path.toLowerCase()
+    return kind === 'markdown' ? held === wanted : held === wanted || held.endsWith(`/${wanted}`)
+  })
+
+  // The shallowest, then the first by path: the same stable order `nearest`
+  // gives notes, so a name that could mean two files always means the one.
+  return (
+    [...found].sort(
+      (one, other) => one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
+    )[0] ?? null
+  )
 }
 
 /** The note one link points at. A wikilink names a note; a markdown link names
@@ -177,18 +219,38 @@ export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): N
 
 /** Whether a link points at something the space actually holds. A link into the
  *  note it was written in always does; an unresolved one is drawn muted, and
- *  following it makes the note. */
+ *  following it makes the note.
+ *
+ *  A PDF resolves through the files rather than the notes, because a PDF is the
+ *  one thing beside the notes that Nib itself can open. Any other file is left
+ *  unresolved: a link that cannot be followed should not look as though it can. */
 export function resolves(index: NoteIndex, link: Wikilink, kind: LinkKind): boolean {
-  return !link.target || resolveLink(index, link, kind) !== null
+  if (!link.target) return true
+  if (isPdfTarget(link.target)) return resolveFile(index, link.target, kind) !== null
+
+  return resolveLink(index, link, kind) !== null
 }
 
 /** Where following a link would go. */
 export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJump {
+  // A PDF has pages where a note has headings, so the fragment is read as one
+  // and the note side of the jump stays empty.
+  if (link.target && isPdfTarget(link.target)) {
+    return {
+      path: resolveFile(index, link.target, kind),
+      target: link.target,
+      heading: null,
+      block: null,
+      page: pageFragment(link.heading),
+    }
+  }
+
   return {
     // An empty target means the note the link is written in.
     path: link.target ? (resolveLink(index, link, kind)?.path ?? null) : index.path,
     target: link.target,
     heading: link.heading,
     block: link.block,
+    page: null,
   }
 }

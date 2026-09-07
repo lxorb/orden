@@ -31,9 +31,15 @@ function note(path: string, headings: string[] = [], blocks: string[] = []): Not
   }
 }
 
-function index(notes: NoteRef[], path: string | null = null, bodies: Record<string, string> = {}) {
+function index(
+  notes: NoteRef[],
+  path: string | null = null,
+  bodies: Record<string, string> = {},
+  files: string[] = [],
+) {
   const built: NoteIndex = {
     notes,
+    files,
     path,
     read: (wanted) => Promise.resolve(bodies[wanted] ?? null),
   }
@@ -43,6 +49,8 @@ function index(notes: NoteRef[], path: string | null = null, bodies: Record<stri
 const SPACE = index(
   [note('Plan.md', ['Today', 'Later']), note('ideas/Plan.md'), note('ideas/Spark.md')],
   'Plan.md',
+  {},
+  ['paper.pdf', 'reading/Deep Learning.pdf', 'shot.png'],
 )
 
 function state(doc: string, cursor: number, notes = SPACE) {
@@ -285,6 +293,7 @@ describe('where a link goes', () => {
       target: 'ideas/Spark',
       heading: 'Later',
       block: null,
+      page: null,
     })
   })
 
@@ -297,6 +306,50 @@ describe('where a link goes', () => {
     expect(jumpFor(SPACE, wiki('', 'Today'), 'wikilink').path).toBe('Plan.md')
   })
 
+  test('to a PDF in the space, at the page it names', () => {
+    expect(jumpFor(SPACE, wiki('paper.pdf', 'page=3'), 'wikilink')).toEqual({
+      path: 'paper.pdf',
+      target: 'paper.pdf',
+      heading: null,
+      block: null,
+      page: 3,
+    })
+  })
+
+  test('to a PDF with no page for a link that names none', () => {
+    expect(jumpFor(SPACE, wiki('Deep Learning.pdf'), 'wikilink')).toEqual({
+      path: 'reading/Deep Learning.pdf',
+      target: 'Deep Learning.pdf',
+      heading: null,
+      block: null,
+      page: null,
+    })
+  })
+
+  test('a markdown link to a PDF folds against the note it was written in', () => {
+    const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['reading/paper.pdf'])
+    expect(jumpFor(here, wiki('../reading/paper.pdf', 'page=2'), 'markdown')).toMatchObject({
+      path: 'reading/paper.pdf',
+      page: 2,
+    })
+  })
+
+  test('a PDF the space does not hold is not a note to make', () => {
+    const jump = jumpFor(SPACE, wiki('missing.pdf', 'page=1'), 'wikilink')
+    expect(jump.path).toBeNull()
+    expect(jump.page).toBe(1)
+    expect(resolves(SPACE, wiki('missing.pdf'), 'wikilink')).toBe(false)
+  })
+
+  test('a PDF the space holds resolves, so the link is not drawn as missing', () => {
+    expect(resolves(SPACE, wiki('paper.pdf'), 'wikilink')).toBe(true)
+    expect(resolves(SPACE, wiki('PAPER.PDF'), 'wikilink')).toBe(true)
+  })
+
+  test('a file Nib cannot open stays unresolved', () => {
+    expect(resolves(SPACE, wiki('shot.png'), 'wikilink')).toBe(false)
+  })
+
   test('what a click on one would do, read off the document', () => {
     const doc = 'see [[ideas/Spark#Later]] and [[Nowhere]] and plain words'
     const where = state(doc, 0)
@@ -306,12 +359,14 @@ describe('where a link goes', () => {
       target: 'ideas/Spark',
       heading: 'Later',
       block: null,
+      page: null,
     })
     expect(jumpAt(where, doc.indexOf('Nowhere'))).toEqual({
       path: null,
       target: 'Nowhere',
       heading: null,
       block: null,
+      page: null,
     })
     expect(jumpAt(where, doc.indexOf('plain'))).toBeNull()
   })

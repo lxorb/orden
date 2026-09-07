@@ -33,11 +33,56 @@ pub const MAX_DEPTH: usize = 32;
 /// write to the same half-finished file.
 static WRITES: AtomicU64 = AtomicU64::new(0);
 
+/// What a PDF's highlights are written beside it as. Not a note and not a file
+/// anyone opens: it is data about one file, it travels with that file, and it
+/// goes when the file goes.
+pub const HIGHLIGHTS: &str = ".highlights.json";
+
 /// Whether a path names a note, in whichever case the extension is written.
 pub fn is_markdown(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| MARKDOWN.contains(&extension.to_lowercase().as_str()))
+}
+
+/// Whether a path names a PDF, in whichever case the extension is written. The
+/// one thing beside a note that the window can open in a tab of its own.
+pub fn is_pdf(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("pdf"))
+}
+
+/// Where a PDF's highlights live: the PDF's own name with the suffix after it,
+/// so the two sit together in a folder and no note can ever collide with one.
+pub fn highlights_of(pdf: &Path) -> PathBuf {
+    let mut name = pdf.file_name().unwrap_or_default().to_os_string();
+    name.push(HIGHLIGHTS);
+    pdf.with_file_name(name)
+}
+
+/// A PDF's highlights travel with it. They are data about the file rather than a
+/// file of their own, so a rename or a move that left them behind would leave
+/// them describing a name nothing answers to.
+///
+/// Quiet about failure on purpose: the PDF has already moved, and a sidecar that
+/// could not follow is a lost set of highlights, not a lost file.
+pub fn move_highlights(from: &Path, to: &Path) {
+    if !is_pdf(from) {
+        return;
+    }
+
+    let source = highlights_of(from);
+    if source.exists() {
+        let _ = fs::rename(&source, highlights_of(to));
+    }
+}
+
+/// And they go when it goes.
+pub fn drop_highlights(pdf: &Path) {
+    if is_pdf(pdf) {
+        let _ = fs::remove_file(highlights_of(pdf));
+    }
 }
 
 /// What went wrong and which file it was about. An `io::Error` names the failure
@@ -285,7 +330,9 @@ fn gather(dir: &Path, depth: usize, notes: &mut Vec<PathBuf>, others: &mut Vec<P
             gather(&path, depth + 1, notes, others);
         } else if is_markdown(&path) {
             notes.push(path);
-        } else {
+        } else if !entry.file_name().to_string_lossy().ends_with(HIGHLIGHTS) {
+            // A PDF's highlights are part of that PDF, not a file of the space:
+            // nothing links to them and nothing searches them.
             others.push(path);
         }
     }
@@ -374,7 +421,10 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{files_in, folded, free_spot, inside, is_markdown, space_root, write_atomically};
+    use super::{
+        drop_highlights, files_in, folded, free_spot, highlights_of, inside, is_markdown, is_pdf,
+        move_highlights, space_root, write_atomically,
+    };
     use std::path::{Path, PathBuf};
 
     /// Written the way the platform writes them, so the assertions read the same
@@ -514,6 +564,85 @@ mod tests {
             .collect();
         found.sort();
         found
+    }
+
+    #[test]
+    fn names_a_pdf_by_its_extension() {
+        assert!(is_pdf(Path::new("a/paper.pdf")));
+        assert!(is_pdf(Path::new("a/paper.PDF")));
+        assert!(!is_pdf(Path::new("a/paper.pdf.md")));
+        assert!(!is_pdf(Path::new("a/paper")));
+    }
+
+    #[test]
+    fn highlights_sit_beside_the_pdf_under_its_whole_name() {
+        assert_eq!(
+            highlights_of(&path(&["Nib", "Notes", "paper.pdf"])),
+            path(&["Nib", "Notes", "paper.pdf.highlights.json"])
+        );
+        // Two PDFs whose names differ only in the extension keep two sidecars.
+        assert_ne!(
+            highlights_of(Path::new("paper.pdf")),
+            highlights_of(Path::new("paper.PDF"))
+        );
+    }
+
+    #[test]
+    fn a_sidecar_never_leaves_the_folder_its_pdf_is_in() {
+        let root = path(&["Documents", "Nib"]);
+        let pdf = root.join("Notes").join("paper.pdf");
+
+        assert_eq!(highlights_of(&pdf).parent(), pdf.parent());
+        assert!(inside(&root, &highlights_of(&pdf)));
+        // A PDF path that climbs out is refused before a sidecar is named at
+        // all: `in_spaces` folds it first, and a folded climb is not inside.
+        assert!(!inside(&root, &folded(&root.join("..").join("secret.pdf"))));
+    }
+
+    #[test]
+    fn the_sidecar_follows_the_pdf_and_goes_with_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let was = here.join("paper.pdf");
+        let now = here.join("Reading").join("renamed.pdf");
+        std::fs::create_dir_all(here.join("Reading")).expect("a folder");
+        std::fs::write(&was, b"%PDF-1.4").expect("a pdf");
+        std::fs::write(highlights_of(&was), "{}").expect("its highlights");
+
+        std::fs::rename(&was, &now).expect("the move");
+        move_highlights(&was, &now);
+
+        assert!(!highlights_of(&was).exists());
+        assert!(highlights_of(&now).exists());
+
+        drop_highlights(&now);
+        assert!(!highlights_of(&now).exists());
+    }
+
+    #[test]
+    fn a_note_has_no_sidecar_to_move() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let note = here.join("Idea.md");
+        // Something that looks like a note's sidecar is left where it is: only a
+        // PDF has one, and nothing else may take a file with it.
+        std::fs::write(highlights_of(&note), "{}").expect("a decoy");
+
+        move_highlights(&note, &here.join("Other.md"));
+        drop_highlights(&note);
+        assert!(highlights_of(&note).exists());
+    }
+
+    #[test]
+    fn a_sidecar_is_not_one_of_the_files_of_a_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(here.join("paper.pdf"), "").expect("a pdf");
+        std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("its highlights");
+        std::fs::write(here.join("notes.json"), "{}").expect("a plain json file");
+
+        let (_notes, others) = files_in(here);
+        assert_eq!(names(&others), ["notes.json", "paper.pdf"]);
     }
 
     #[test]

@@ -1,6 +1,7 @@
-//! The pictures a note points at. This module owns copying one in beside the
-//! note, and handing one back as a `data:` URI for an export that has to carry
-//! its own pictures. Everything here stays inside the folder the note is in.
+//! The files a note points at. This module owns copying a picture in beside the
+//! note, handing one back as a `data:` URI for an export that has to carry its
+//! own pictures, and handing a whole file back as bytes for the window to read
+//! itself. Everything here stays inside the folder the note is in.
 
 use std::ffi::OsStr;
 use std::fs;
@@ -17,6 +18,41 @@ const LIMIT: u64 = 12 * 1024 * 1024;
 /// How long a picture's file name may be, so the whole path stays inside the
 /// limits Windows puts on one.
 const MAX_NAME: usize = 120;
+
+/// How large a file the window may read whole. Bigger than any PDF anyone keeps
+/// notes on - a scanned book of a thousand pages is well under this - and small
+/// enough that one read cannot exhaust the memory of the window asking.
+const FILE_LIMIT: u64 = 192 * 1024 * 1024;
+
+/// A file beside a note as its bytes, for the window to read itself: the PDF a
+/// tab is showing, which is far too large to spell out as text.
+///
+/// The bytes go over the IPC as bytes rather than as JSON, which is what makes a
+/// thirty megabyte PDF a copy rather than a hundred megabytes of numbers.
+#[tauri::command]
+pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
+    let target = beside_a_note(&app, &path)?;
+    let file = fs::File::open(&target).map_err(|error| cannot("read", &target, &error))?;
+
+    // Asked of the open file rather than of the path, so the answer is about the
+    // very bytes that are read below.
+    let size = file
+        .metadata()
+        .map_err(|error| cannot("read", &target, &error))?
+        .len();
+    if size > FILE_LIMIT {
+        return Err(format!("{path} is too large to open"));
+    }
+
+    let mut bytes = Vec::with_capacity(usize::try_from(size).unwrap_or_default());
+    // Capped again on the way in: a file that grows after the question was asked
+    // still cannot answer with more than it was allowed.
+    file.take(FILE_LIMIT)
+        .read_to_end(&mut bytes)
+        .map_err(|error| cannot("read", &target, &error))?;
+
+    Ok(tauri::ipc::Response::new(bytes))
+}
 
 /// A picture as a `data:` URI, so an exported page carries its own pictures.
 /// Refuses anything large enough to bloat the file past usefulness.

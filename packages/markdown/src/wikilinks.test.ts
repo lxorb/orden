@@ -6,6 +6,7 @@ import { renderMarkdown } from './index'
 const NOTES: Record<string, string> = {
   plan: '/notes/plan',
   spark: '/notes/spark',
+  'paper.pdf': '/i/abc.pdf',
 }
 
 const resolveLink = (link: Wikilink) => {
@@ -36,6 +37,12 @@ describe('a wikilink on a page', () => {
   test('points at the heading it names, by the id the renderer gives it', () => {
     expect(renderMarkdown('[[Plan#Some Heading]]', { resolveLink })).toContain(
       'href="/notes/plan#some-heading"',
+    )
+  })
+
+  test('carries a PDF page as the fragment a PDF viewer reads', () => {
+    expect(renderMarkdown('[[paper.pdf#page=3]]', { resolveLink })).toContain(
+      '<a class="wikilink" href="/i/abc.pdf#page=3">paper.pdf#page=3</a>',
     )
   })
 
