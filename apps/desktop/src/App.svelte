@@ -277,6 +277,11 @@
       return
     }
 
+    // A deck covers the window, so anything the app would open under it is a
+    // window nobody can see holding the keyboard nobody can get back. While a
+    // note is being presented the only app key is the one that stops.
+    if (present.on && !shortcuts.pressed('app.present', event)) return
+
     shortcuts.handle(event, {
       view,
       palette: () => {

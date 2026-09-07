@@ -122,14 +122,10 @@ class Decorator {
         this.taskMarker(node)
         return true
       case 'HorizontalRule':
-        // A rule written with hyphens or asterisks is where a deck breaks into
-        // its next slide, and one written with underscores is not; see
-        // @nib/markdown/slides. The line is marked either way and the stylesheet
-        // shows the mark only while the note is a deck, so nothing about an
-        // ordinary note changes. One character read, not a scan.
-        if (/^[-*]/.test(this.state.doc.sliceString(node.from, node.from + 1))) {
-          this.markLines(node, 'nib-slide-break', true)
-        }
+        // Where a deck breaks into its next slide. The line is marked either way
+        // and the stylesheet shows the mark only while the note is a deck, so
+        // nothing about an ordinary note changes. Two lines read, not a scan.
+        if (this.slideBreak(node)) this.markLines(node, 'nib-slide-break', true)
         this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
         return true
       case 'Image':
@@ -528,6 +524,20 @@ class Decorator {
   }
 
   /** `firstOnly` keeps a nested list item from restyling its children's lines. */
+  /** Whether this rule is the one that breaks a deck into its next slide.
+   *
+   *  The same reading `deckOf` does, so the mark and the deck never disagree: an
+   *  unbroken run of hyphens or asterisks, and a blank line above it - which is
+   *  what stops CommonMark taking the dashes for the underline of a heading. A
+   *  rule of underscores, or one written with spaces between the marks, is an
+   *  ordinary rule. See packages/markdown/src/slides.ts. */
+  private slideBreak(node: SyntaxNode): boolean {
+    const line = this.state.doc.lineAt(node.from)
+    if (!/^(?:-{3,}|\*{3,})[ \t]*$/.test(line.text)) return false
+
+    return line.number === 1 || this.state.doc.line(line.number - 1).text.trim() === ''
+  }
+
   private markLines(node: SyntaxNode, className: string, firstOnly = false) {
     const doc = this.state.doc
     const last = firstOnly ? node.from : Math.min(node.to, doc.length)

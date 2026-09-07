@@ -356,6 +356,7 @@ body{overflow:hidden}
 html,body{height:auto;overflow:visible}
 .deck{position:static;display:block;overflow:visible}
 .stage,.stage.away{display:block;position:static;margin:0;transform:none;break-after:page}
+.stage:last-of-type{break-after:auto}
 .slide{animation:none}
 .slide #write li.fragment{opacity:1}
 .rail,.count{display:none}
@@ -380,7 +381,10 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
   return new Response(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=60',
+      // The reader's own browser may keep it; a shared cache may not. The nonce
+      // is minted per response, and one handed to a second reader out of a cache
+      // in front of this would be a nonce that is not a nonce.
+      'cache-control': 'private, max-age=60',
       'content-security-policy': csp(nonce),
       'referrer-policy': 'strict-origin-when-cross-origin',
       'x-content-type-options': 'nosniff',

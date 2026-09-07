@@ -26,12 +26,12 @@
     type Channel,
     type Message,
   } from './slides/presenter'
+  import { fitSurface } from './slides/fit'
   import { present } from './slides/present.svelte'
   import {
     axesOf,
     back,
     clamp,
-    fitStep,
     forward,
     type Move,
     type Place,
@@ -148,9 +148,8 @@
    *  from it: it is a memo, not state. */
   let fitted: (number | undefined)[] = []
 
-  /** Shrinks the text until the slide fits, which is what stops a slide ever
-   *  scrolling. Read and written in one go so the browser lays the slide out
-   *  once and paints it already fitted. */
+  /** The slide on screen, sized so it does not scroll; see slides/fit.ts. Going
+   *  back to a slide costs no measuring. */
   function fit() {
     const surface = page
     if (!surface) return
@@ -161,13 +160,7 @@
       return
     }
 
-    const step = fitStep((wanted) => {
-      surface.style.setProperty('--stage-fit', String(wanted))
-      return surface.scrollHeight <= surface.clientHeight + 1
-    })
-
-    surface.style.setProperty('--stage-fit', String(step))
-    fitted[place.slide] = step
+    fitted[place.slide] = fitSurface(surface)
   }
 
   /** Whether the fonts have arrived. Until they have, every measurement is of
@@ -208,13 +201,17 @@
   })
 
   // Which of the slide's `+` items are out. By their place among the items the
-  // slide renders, which is what the deck parser counted; see slides.ts.
+  // slide renders, which is what the deck parser counted; see slides.ts. An
+  // embedded note's own list is not the slide's, and the parser never saw it, so
+  // it is skipped here too.
   $effect(() => {
     const surface = page
     const waiting = current?.fragments ?? []
     if (!surface) return
 
-    const items = [...surface.querySelectorAll('li')]
+    const items = [...surface.querySelectorAll('li')].filter(
+      (item) => !item.closest('figure.embed'),
+    )
     const shown = new Set(shownFragments(waiting, place.step))
 
     for (const [at, item] of items.entries()) {
@@ -253,8 +250,16 @@
   onDestroy(() => clearTimeout(counter))
 
   // The counter is up as the deck opens, so nobody has to guess how long it is.
+  // Once: a note being typed into in another pane redraws the deck, and the
+  // counter flashing at every keystroke over there is somebody else's typing
+  // showing up on a projector.
+  let counted = false
+
   $effect(() => {
-    if (slides.length) show()
+    if (!slides.length || counted) return
+
+    counted = true
+    show()
   })
 
   function leave() {
@@ -293,8 +298,10 @@
       return
     }
 
+    // Shift alone is somebody about to type a capital, not a slip that should
+    // throw away the number they have started.
     const jumping = typed
-    if (event.key !== 'Shift' && event.key !== 'Control' && event.key !== 'Alt') typed = ''
+    if (event.key !== 'Shift') typed = ''
 
     switch (event.key) {
       case 'Enter': {

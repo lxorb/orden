@@ -12,8 +12,9 @@
    */
 
   import { onDestroy } from 'svelte'
+  import { fitSurface } from './fit'
   import { presenterChannel, type Stage } from './presenter'
-  import { fitStep, STAGE_HEIGHT, STAGE_WIDTH } from './stage'
+  import { STAGE_HEIGHT, stageScale, STAGE_WIDTH } from './stage'
 
   let stage = $state<Stage | null>(null)
   let gone = $state(false)
@@ -65,8 +66,7 @@
   function scaleInto(box: HTMLElement | undefined) {
     if (!box) return
 
-    const scale = Math.min(box.clientWidth / STAGE_WIDTH, box.clientHeight / STAGE_HEIGHT)
-    box.style.setProperty('--stage-scale', String(scale))
+    box.style.setProperty('--stage-scale', String(stageScale(box.clientWidth, box.clientHeight)))
   }
 
   $effect(() => {
@@ -80,17 +80,11 @@
     return () => watcher.disconnect()
   })
 
-  /** Sized by the same ladder the stage uses, so a slide that was shrunk to fit
-   *  over there is shrunk by the same amount here. */
-  function fit(surface: HTMLElement | undefined) {
-    if (!surface) return
-
-    const step = fitStep((wanted) => {
-      surface.style.setProperty('--stage-fit', String(wanted))
-      return surface.scrollHeight <= surface.clientHeight + 1
-    })
-
-    surface.style.setProperty('--stage-fit', String(step))
+  /** Sized by the same ladder the stage uses, so a slide shrunk to fit over
+   *  there is shrunk by the same rung here; see slides/fit.ts. */
+  function fitBoth() {
+    if (bigPage) fitSurface(bigPage)
+    if (smallPage) fitSurface(smallPage)
   }
 
   $effect(() => {
@@ -98,8 +92,10 @@
     const reasons = [stage?.slide, stage?.next]
     if (!reasons.length) return
 
-    fit(bigPage)
-    fit(smallPage)
+    fitBoth()
+    // A maths font arriving changes how tall a slide is, and this window opens
+    // with its own stylesheet still loading.
+    void document.fonts.ready.then(fitBoth)
   })
 
   function move(by: number) {

@@ -191,6 +191,14 @@ describe('list items that wait for a click', () => {
   test('a plus inside a fence is code', () => {
     expect(deckOf('# One\n\n```diff\n+ added\n```')[0]?.fragments).toEqual([])
   })
+
+  test('an embedded note holds none of the slide`s own items', () => {
+    // The renderer puts the embedded note's list on the page too, so the places
+    // counted here have to be the places among the slide's own items and no
+    // others. Whatever shows them skips the embed the same way; see the fragment
+    // effect in Slides.svelte and `marks` in deck.ts.
+    expect(deckOf('# One\n\n![[Other]]\n\n+ mine')[0]?.fragments).toEqual([0])
+  })
 })
 
 describe('what a slide is made of', () => {

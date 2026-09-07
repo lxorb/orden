@@ -4,6 +4,13 @@
  *  right can be tested without a screen: a slide is the same shape whatever it
  *  is shown on, and pressing a key always lands somewhere that exists. */
 
+import { FIT_STEPS } from '@nib/markdown/deck'
+
+/** The sizes a slide's text is allowed to take. One ladder for the app, an
+ *  exported file and a published page, so a slide is the same size on all three;
+ *  it lives beside the page builder that has to write it out as a literal. */
+export { FIT_STEPS } from '@nib/markdown/deck'
+
 /** The stage, in CSS pixels. Sixteen by nine, fixed, so a slide written on a
  *  laptop is the slide a projector shows: everything is laid out at this size
  *  and the whole of it is scaled to whatever the screen is, which letterboxes
@@ -18,14 +25,6 @@ export function stageScale(width: number, height: number): number {
 
   return Math.min(width / STAGE_WIDTH, height / STAGE_HEIGHT)
 }
-
-/** The sizes a slide's text is allowed to take, largest first.
- *
- *  A ladder rather than a number worked out from the height, because the text
- *  has to be measured to know whether it fits at all: a picture, a table and a
- *  fenced block all take the room they take. Ten rungs reach a third of the
- *  size, which holds a slide nobody should have written. */
-export const FIT_STEPS = [1, 0.92, 0.84, 0.76, 0.68, 0.6, 0.52, 0.45, 0.38, 0.32] as const
 
 /** The largest rung the slide fits on.
  *

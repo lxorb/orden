@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { deckBody } from '@nib/markdown/deck'
+import { deckBody, FIT_STEPS } from '@nib/markdown/deck'
 import { buildDeckHtml, DECK_PAPER } from './file'
 import type { StageSlide } from './render'
 
@@ -47,7 +47,14 @@ describe('a deck written out as one page per slide', () => {
 
   test('the paper is the size of the stage', () => {
     expect(html).toContain('@page { size: 1280px 720px; margin: 0; }')
-    expect(DECK_PAPER).toEqual({ width: 1280 / 96, height: 720 / 96 })
+    // All four fields, because PdfPage in src-tauri/src/pdf.rs takes all four
+    // and a page missing one is a command that refuses to read its argument.
+    expect(DECK_PAPER).toEqual({
+      width: 1280 / 96,
+      height: 720 / 96,
+      margin: 0,
+      landscape: false,
+    })
   })
 })
 
@@ -70,11 +77,21 @@ describe('a deck that stands on its own', () => {
     expect(html).toContain("addEventListener('keydown'")
   })
 
-  test('a deck on its way to a printer turns no pages', () => {
-    // Every slide is simply on the page, and the print rules give each a sheet.
+  test('a deck on its way to a printer turns no pages, but still lays itself out', () => {
+    // Every slide is on the page and the print rules give each a sheet, so every
+    // one of them has to be fitted: none was ever on screen to be measured, and
+    // one that had to shrink would otherwise be cut off.
     const paper = buildDeckHtml(DECK, 'Talk', { interactive: false })
-    expect(paper).not.toContain('<script>')
+
     expect(stages(paper)).toBe(DECK.length)
+    expect(paper).toContain('function fitAll()')
+    expect(paper).not.toContain("addEventListener('keydown'")
+  })
+
+  test('both builds shrink a slide by the same rungs', () => {
+    const ladder = JSON.stringify([...FIT_STEPS])
+    expect(buildDeckHtml(DECK, 'Talk')).toContain(ladder)
+    expect(buildDeckHtml(DECK, 'Talk', { interactive: false })).toContain(ladder)
   })
 
   test('the scheme it was built for is the one the page wears', () => {

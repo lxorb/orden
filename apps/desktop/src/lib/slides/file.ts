@@ -9,7 +9,14 @@
  *  its own at the stage's size, so one route builds both.
  */
 
-import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
+import {
+  DECK_HEIGHT,
+  DECK_LAYOUT_SCRIPT,
+  DECK_PAGE_CSS,
+  DECK_SCRIPT,
+  DECK_WIDTH,
+  deckBody,
+} from '@nib/markdown/deck'
 import { CODE_PALETTES } from '@nib/editor'
 import { proseCss, slidesCss, tokensCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
@@ -46,9 +53,19 @@ interface DeckOptions {
   interactive?: boolean
 }
 
-/** Paper the size of the stage, in inches, so a printed slide is the slide.
- *  CSS pixels are ninety-sixths of an inch by definition. */
-export const DECK_PAPER = { width: DECK_WIDTH / 96, height: DECK_HEIGHT / 96 }
+/** Paper the size of the stage, in inches, so a printed slide is the slide. CSS
+ *  pixels are ninety-sixths of an inch by definition.
+ *
+ *  All four fields, because the command on the other side takes all four: see
+ *  PdfPage in src-tauri/src/pdf.rs. The sheet is already wider than it is tall,
+ *  so it is not turned, and a slide reaches its own edges, so there is no
+ *  margin. */
+export const DECK_PAPER = {
+  width: DECK_WIDTH / 96,
+  height: DECK_HEIGHT / 96,
+  margin: 0,
+  landscape: false,
+}
 
 function declarations(tokens: Record<string, string>): string {
   return Object.entries(tokens)
@@ -90,7 +107,11 @@ export function buildDeckHtml(
     .filter(Boolean)
     .join('\n')
 
-  const script = options.interactive === false ? '' : `<script>${DECK_SCRIPT}</script>\n`
+  // A deck on its way to a printer turns no pages, but it still has to lay
+  // itself out: every slide gets a sheet of its own and none of them was ever on
+  // screen to be measured, so the one that has to shrink would be cut off.
+  const running = options.interactive === false ? DECK_LAYOUT_SCRIPT : DECK_SCRIPT
+  const script = `<script>${running}</script>\n`
 
   return `<!doctype html>
 <html lang="en" data-theme="${scheme}">

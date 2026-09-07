@@ -29,6 +29,18 @@ export interface RenderedSlide {
 export const DECK_WIDTH = 1280
 export const DECK_HEIGHT = 720
 
+/** The sizes a slide's text is allowed to take, largest first.
+ *
+ *  A ladder rather than a number worked out from the height, because the text has
+ *  to be measured to know whether it fits at all: a picture, a table and a fenced
+ *  block all take the room they take. Ten rungs reach a third of the size, which
+ *  holds a slide nobody should have written.
+ *
+ *  Here rather than beside the app's own stage, because a slide has to come out
+ *  the same size on all three: on screen, in an exported file, and on a published
+ *  page. The app imports it; the script below is given it as a literal. */
+export const FIT_STEPS = [1, 0.92, 0.84, 0.76, 0.68, 0.6, 0.52, 0.45, 0.38, 0.32] as const
+
 /** The whole deck as markup: one stage per slide, in order.
  *
  *  Every slide is on the page rather than swapped in, so the file holds the deck
@@ -59,27 +71,83 @@ export function deckBody(slides: readonly RenderedSlide[]): string {
   ].join('\n')
 }
 
+/** Everything a deck on a page of its own has to do before anybody looks at it:
+ *  find its slides, scale the stage to the window, and shrink each slide's text
+ *  until it fits.
+ *
+ *  Shared source rather than a second copy, because both scripts below need it
+ *  and a deck that fitted one way on screen and another on paper would be two
+ *  decks. Written as text so it can be inlined into a file with no network
+ *  behind it, and with no syntax a bundler would have to touch. */
+const STAGE_SOURCE = `
+  var deck = document.querySelector('.deck')
+  var stages = deck ? Array.prototype.slice.call(deck.querySelectorAll('.stage')) : []
+  var slides = stages.map(function (stage) { return stage.querySelector('.slide') })
+  var pages = slides.map(function (slide) { return slide.querySelector('#write') })
+  var ladder = ${JSON.stringify([...FIT_STEPS])}
+  var fitted = []
+
+  function scale() {
+    var wanted = Math.min(deck.clientWidth / ${DECK_WIDTH}, deck.clientHeight / ${DECK_HEIGHT})
+    for (var i = 0; i < stages.length; i++) {
+      stages[i].style.setProperty('--stage-scale', String(wanted > 0 ? wanted : 1))
+    }
+  }
+
+  /* Down the ladder until the slide fits, and the answer kept. The same rungs
+     the app steps down; see FIT_STEPS. */
+  function fit(index) {
+    if (fitted[index]) return
+    var page = pages[index]
+    for (var rung = 0; rung < ladder.length; rung++) {
+      page.style.setProperty('--stage-fit', String(ladder[rung]))
+      if (page.scrollHeight <= page.clientHeight + 1) break
+    }
+    fitted[index] = true
+  }
+
+  /* Every slide, which is what printing needs: each of them is on its own sheet
+     and none of them was ever on screen to be measured. */
+  function fitAll() {
+    for (var i = 0; i < pages.length; i++) fit(i)
+  }
+
+  /* A picture whose size the page did not know, and a font that arrived late,
+     both change how tall a slide is. A published deck fetches KaTeX's
+     stylesheet, so its maths is measured twice or not at all. */
+  function refit() {
+    fitted = []
+    fitAll()
+  }
+`
+
+/** A deck that turns no pages: it lays itself out and stops there.
+ *
+ *  What a deck on its way to a printer gets. Every slide is on the page and the
+ *  print rules give each of them a sheet, so every one of them has to be fitted
+ *  rather than only whichever was on screen. */
+export const DECK_LAYOUT_SCRIPT = `(function () {
+${STAGE_SOURCE}
+  if (!stages.length) return
+
+  scale()
+  fitAll()
+  window.addEventListener('load', refit)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit)
+})()`
+
 /** Moving through a deck on a page of its own.
  *
  *  The same gestures the app answers to: the arrows, space, the page keys, Home
- *  and End, a number then Enter, and a click on either half of the screen. The
- *  slide is scaled to the window rather than laid out to it and shrunk until it
- *  fits, which is what stops one ever scrolling.
- *
- *  Written out as text because it is inlined into a file that must work with no
- *  network. Plain ES5 so an old browser opening an emailed deck still turns the
- *  pages. */
+ *  and End, a number then Enter, and a click on either half of the screen. A key
+ *  held with a modifier is the browser's - Alt and an arrow is the way back - and
+ *  is left alone. */
 export const DECK_SCRIPT = `(function () {
-  var deck = document.querySelector('.deck')
-  if (!deck) return
-
-  var stages = Array.prototype.slice.call(deck.querySelectorAll('.stage'))
+${STAGE_SOURCE}
   if (!stages.length) return
 
   var run = deck.querySelector('.run')
   var count = deck.querySelector('.count')
-  var slides = stages.map(function (stage) { return stage.querySelector('.slide') })
-  var pages = slides.map(function (slide) { return slide.querySelector('#write') })
   var steps = slides.map(function (slide) { return Number(slide.getAttribute('data-steps') || 0) })
   var waiting = slides.map(function (slide) {
     var written = slide.getAttribute('data-fragments')
@@ -89,35 +157,19 @@ export const DECK_SCRIPT = `(function () {
   var at = 0
   var step = 0
   var typed = ''
-  var fitted = []
   var hiding
-
-  function scale() {
-    var wanted = Math.min(deck.clientWidth / ${DECK_WIDTH}, deck.clientHeight / ${DECK_HEIGHT})
-    for (var i = 0; i < stages.length; i++) {
-      stages[i].style.setProperty('--stage-scale', String(wanted > 0 ? wanted : 1))
-    }
-  }
-
-  /* Shrink the text until the slide fits. Walked down rather than halved: it is
-     done once per slide and the answer is kept. */
-  function fit(index) {
-    if (fitted[index]) return
-    var page = pages[index]
-    var size = 1
-    for (var tries = 0; tries < 10; tries++) {
-      page.style.setProperty('--stage-fit', String(size))
-      if (page.scrollHeight <= page.clientHeight + 1) break
-      size = size * 0.92
-    }
-    fitted[index] = true
-  }
 
   /* Which of the slide's items wait for a click, and which are out. By their
      place among the items the slide renders, which is what the deck parser
-     counted; see slides.ts. */
+     counted; see slides.ts. An embedded note's own list is not the slide's, and
+     the parser never saw it, so it is skipped here too. */
   function marks(index) {
-    var items = pages[index].querySelectorAll('li')
+    var found = pages[index].querySelectorAll('li')
+    var items = []
+    for (var f = 0; f < found.length; f++) {
+      if (!found[f].closest || !found[f].closest('figure.embed')) items.push(found[f])
+    }
+
     var mine = waiting[index]
     for (var i = 0; i < items.length; i++) {
       var place = mine.indexOf(i)
@@ -163,6 +215,10 @@ export const DECK_SCRIPT = `(function () {
   }
 
   document.addEventListener('keydown', function (event) {
+    /* A key held with a modifier belongs to the browser: Alt and an arrow is the
+       way back, and Ctrl and Home is the top of the page. */
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+
     if (/^[0-9]$/.test(event.key)) {
       typed = (typed + event.key).slice(-4)
       draw(null)
@@ -178,7 +234,7 @@ export const DECK_SCRIPT = `(function () {
         if (jumping && wanted >= 1 && wanted <= stages.length) go(wanted - 1, 0, wanted - 1 > at ? 'forward' : 'back')
         else onwards()
         break
-      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': case 'Spacebar':
         onwards(); break
       case 'ArrowLeft': case 'ArrowUp': case 'PageUp': case 'Backspace':
         backwards(); break
@@ -220,7 +276,21 @@ export const DECK_SCRIPT = `(function () {
     }
   })
 
+  /* A picture or a font that arrived late changes how tall a slide is. Only the
+     slide on screen is measured again; the rest have not been measured at all
+     yet, and will be when they are shown. */
+  function again() {
+    fitted = []
+    draw(null)
+  }
+
   window.addEventListener('resize', scale)
+  /* On paper every slide is on its own sheet, and only the one on screen has
+     ever been measured. */
+  window.addEventListener('beforeprint', fitAll)
+  window.addEventListener('load', again)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(again)
+
   scale()
   draw(null)
 })()`
