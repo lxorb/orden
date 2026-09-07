@@ -70,8 +70,20 @@ describe('extracting a selection', () => {
     // goes, and the sentence's full stop with it. See note-name.ts.
     expect(carved?.name).toBe('The whole idea, written out')
     expect(carved?.taken).toBe('The whole idea, written out.\n')
+    // And the link is left plain, because the words it would show are the name
+    // with a full stop after it.
+    expect(carved?.kept).toBe('before [[The whole idea, written out]] after')
+  })
+
+  test('words the name could not keep are shown by the link', () => {
+    const doc = 'see Why it works: the whole of it here'
+    const from = doc.indexOf('Why')
+    const to = doc.indexOf(' here')
+
+    const carved = extracted(doc, from, to, 'Untitled')
+    expect(carved?.name).toBe('Why it works the whole of it')
     expect(carved?.kept).toBe(
-      'before [[The whole idea, written out|The whole idea, written out.]] after',
+      'see [[Why it works the whole of it|Why it works: the whole of it]] here',
     )
   })
 

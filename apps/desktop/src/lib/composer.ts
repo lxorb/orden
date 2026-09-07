@@ -75,10 +75,17 @@ export function extracted(text: string, from: number, to: number, fallback: stri
 
   const name = nameFromContent(taken) ?? fallback
   const shown = oneLine(taken)
-  const kept = text.slice(0, from) + linkTo(name, shown) + text.slice(to)
+  // A passage that is the note's name with a full stop after it says nothing
+  // the name does not, so the link is left plain. Anything else the name had to
+  // drop - a colon, a slash - is worth keeping in the sentence, so it stays.
+  const alias = shown.replace(SENTENCE_END, '') === name ? '' : shown
+  const kept = text.slice(0, from) + linkTo(name, alias) + text.slice(to)
 
   return { kept, taken: `${taken}\n`, name }
 }
+
+/** What ends a sentence, in the scripts Nib is written for. */
+const SENTENCE_END = /[.!?。！？]+$/u
 
 /** A passage as something a link can show: its first line, without the markup
  *  that opened it, and nothing so long that it stops reading as a link. */
