@@ -37,6 +37,9 @@ export interface Draft {
    *  write the same key here, so a restart puts them back on one document rather
    *  than on two copies of it. Absent for a tab that had it to itself. */
   share?: string | undefined
+  /** Whether the tab was showing the note as it reads. Absent for one that was
+   *  being written in, which is what a tab is unless it says otherwise. */
+  reading?: boolean | undefined
 }
 
 /** One pane: its strip of tabs, which of them was showing, and whether it was
@@ -110,7 +113,7 @@ function isSpace(value: unknown): value is Space {
 export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
-  const { kind, path, name, doc, dirty, cursor, scroll, anchor, share } = value
+  const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -124,6 +127,7 @@ export function readDraft(value: unknown): Draft | null {
     scroll: isNumber(scroll) ? scroll : 0,
     ...(isNumber(anchor) ? { anchor } : {}),
     ...(isString(share) ? { share } : {}),
+    ...(reading === true ? { reading: true } : {}),
   }
 }
 

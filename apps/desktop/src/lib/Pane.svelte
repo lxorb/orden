@@ -16,10 +16,12 @@
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
   import { showEditorMenu } from './editor-menu'
-  import { imageUrl } from './images'
+
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
+  import { notePicture } from './note-images'
   import { placement } from './placement.svelte'
+  import Reading from './Reading.svelte'
   import { settings } from './settings.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
@@ -87,13 +89,7 @@
   }
 
   function resolveImage(src: string): string {
-    // A picture an embed names by file name alone may live anywhere in the
-    // space, the way Obsidian resolves an attachment; the index knows where.
-    const root = workspace.activeSpace?.root
-    const found = root && !src.includes('/') ? links.fileNamed(src) : null
-    const path = found && root ? `${root}/${found}` : src
-
-    return imageUrl(path, tab?.path, tab?.doc ?? '')
+    return notePicture(src, tab?.path ?? null, tab?.doc ?? '')
   }
 
   /** Names a block of another note, so a `[[…#^` link can point at it. */
@@ -178,6 +174,12 @@
       onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
       onescape={() => workspace.close(tab.id)}
     />
+  {:else if tab?.reading}
+    <!-- The note through the renderer. A tab keeps its own face, so the same note
+         can be read here and written in next door. -->
+    {#key tab.id}
+      <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
+    {/key}
   {:else if tab}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>

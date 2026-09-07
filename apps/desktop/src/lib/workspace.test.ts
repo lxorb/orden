@@ -613,3 +613,100 @@ describe('an arrangement kept under a name', () => {
     expect(new Set(workspace.tabs.map((tab) => tab.paneId)).size).toBe(1)
   })
 })
+
+describe('a note being read', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+  })
+
+  test('starts being written in', async () => {
+    await workspace.open('/space/a.md')
+    expect(workspace.active?.reading).toBe(false)
+  })
+
+  test('turns over and back', async () => {
+    await workspace.open('/space/a.md')
+
+    workspace.toggleReading()
+    expect(workspace.active?.reading).toBe(true)
+
+    workspace.toggleReading()
+    expect(workspace.active?.reading).toBe(false)
+  })
+
+  test('is one tab of two on the same note, not both', async () => {
+    await workspace.open('/space/a.md')
+    const first = workspace.active
+    workspace.split('row')
+    const second = workspace.active
+
+    expect(second?.note).toBe(first?.note)
+    expect(second?.id).not.toBe(first?.id)
+
+    if (second) workspace.toggleReading(second.id)
+
+    expect(second?.reading).toBe(true)
+    expect(first?.reading).toBe(false)
+  })
+
+  test('is not something the graph does', () => {
+    workspace.openGraph()
+    const graph = workspace.active
+
+    workspace.toggleReading()
+
+    expect(graph?.kind).toBe('graph')
+    expect(graph?.reading).toBe(false)
+  })
+
+  test('goes into the arrangement, and comes back out of it', async () => {
+    await workspace.open('/space/a.md')
+    workspace.toggleReading()
+
+    const layout = workspace.layout()
+    const drafts = panesOf(layout.frame).flatMap((one) => one.tabs)
+    expect(drafts.map((draft) => draft.reading)).toEqual([true])
+
+    onePane()
+    await workspace.applyLayout(layout)
+
+    expect(workspace.tabs.map((tab) => tab.reading)).toEqual([true])
+  })
+
+  test('is written in again when the preview tab moves on', async () => {
+    const tab = await preview('/space/a.md')
+    workspace.toggleReading(tab.id)
+    expect(tab.reading).toBe(true)
+
+    await preview('/space/b.md')
+
+    expect(tab.path).toBe('/space/b.md')
+    expect(tab.reading).toBe(false)
+  })
+
+  test('keeps the place the editor left, for the editor to find again', async () => {
+    await workspace.open('/space/c.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing open')
+
+    tab.cursor = 12
+    workspace.notePlace(tab.id, 240, 22)
+
+    expect(tab.anchor).toBe(22)
+    expect(tab.scroll).toBe(240)
+    // The reading view has no caret to move, so the tab keeps the one it had.
+    expect(tab.cursor).toBe(12)
+  })
+
+  test('hears about words typed in another pane', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing open')
+
+    const before = tab.note.revision
+    tab.note.live.replace('# a, changed')
+
+    expect(tab.note.revision).toBeGreaterThan(before)
+  })
+})

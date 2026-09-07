@@ -79,7 +79,7 @@ export function appMenu(context: Context): MenuGroup[] {
   const { view } = context
   const hasNote = !!workspace.active
   const selected = !!view && !view.state.selection.main.empty
-  /** Whether the editor takes an edit at all. Reading mode says no, and every
+  /** Whether the editor takes an edit at all. Read-only mode says no, and every
    *  row that would write says so by greying out rather than by doing nothing
    *  when it is pressed. */
   const writable = !!view && !view.state.readOnly
@@ -322,10 +322,17 @@ export function appMenu(context: Context): MenuGroup[] {
         },
         SPLIT,
         {
-          label: t('Reading mode'),
+          label: t('Reading'),
           hint: shortcuts.hint('app.reading'),
-          checked: modes.reading,
-          run: () => modes.toggleReading(view),
+          checked: !!workspace.active?.reading,
+          disabled: workspace.active?.kind !== 'note',
+          run: () => workspace.toggleReading(),
+        },
+        {
+          label: t('Read-only'),
+          hint: shortcuts.hint('app.read-only'),
+          checked: modes.readOnly,
+          run: () => modes.toggleReadOnly(view),
         },
         {
           label: t('Source mode'),

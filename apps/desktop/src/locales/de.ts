@@ -162,9 +162,12 @@ export const de: Dictionary = {
   'Tidy up this note': 'Notiz aufräumen',
 
   // Modes and view
-  'Reading mode': 'Lesemodus',
-  'Leave reading mode': 'Lesemodus verlassen',
+  Reading: 'Lesen',
+  'Leave reading': 'Lesen verlassen',
   'Read-only': 'Schreibgeschützt',
+  'Leave read-only': 'Schreibschutz aufheben',
+  Next: 'Weiter',
+  Previous: 'Zurück',
   'Source mode': 'Quelltextmodus',
   'Leave source mode': 'Quelltextmodus verlassen',
   'Focus mode': 'Fokusmodus',
@@ -556,5 +559,4 @@ export const de: Dictionary = {
   'Name this layout': 'Layout benennen',
   'Layout: {name}': 'Layout: {name}',
   'Delete a layout': 'Layout löschen',
-  Reading: 'Lesen',
 }

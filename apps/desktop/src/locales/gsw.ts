@@ -164,9 +164,12 @@ export const gsw: Dictionary = {
   'Tidy up this note': 'Notiz ufruume',
 
   // Modes and view
-  'Reading mode': 'Läsmodus',
-  'Leave reading mode': 'Läsmodus verlaa',
+  Reading: 'Läse',
+  'Leave reading': 'Läse verlaa',
   'Read-only': 'Schriibgschützt',
+  'Leave read-only': 'Schriibschutz ufhebe',
+  Next: 'Wiiter',
+  Previous: 'Zrugg',
   'Source mode': 'Quälltextmodus',
   'Leave source mode': 'Quälltextmodus verlaa',
   'Focus mode': 'Fokusmodus',
@@ -554,5 +557,4 @@ export const gsw: Dictionary = {
   'Name this layout': 'Layout benäme',
   'Layout: {name}': 'Layout: {name}',
   'Delete a layout': 'Es Layout lösche',
-  Reading: 'Läse',
 }

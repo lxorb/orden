@@ -52,8 +52,23 @@
     return entries.length ? [...entries, DIVIDER] : []
   }
 
+  /** The note's other face. Not offered for the graph, which has only one. */
+  function readingEntry(tab: Tab): MenuEntry[] {
+    if (tab.kind !== 'note') return []
+
+    return [
+      {
+        label: tab.reading ? t('Leave reading') : t('Reading'),
+        hint: shortcuts.hint('app.reading'),
+        run: () => workspace.toggleReading(tab.id),
+      },
+      DIVIDER,
+    ]
+  }
+
   function tabMenu(tab: Tab): MenuEntry[] {
     return [
+      ...readingEntry(tab),
       { label: t('Close'), hint: shortcuts.hint('app.close'), run: () => workspace.close(tab.id) },
       {
         label: t('Close others'),
@@ -116,6 +131,19 @@
             workspace.panes.landing = null
           }}
         >
+          {#if tab.reading}
+            <!-- An open book, quietly: the tab says which face of the note is up
+                 without spending a word on it. -->
+            <svg
+              class="mark"
+              viewBox="0 0 14 12"
+              aria-label={t('Reading')}
+              transition:fade={{ duration: 140 }}
+            >
+              <path d="M7 3.2v7.3M7 3.2C5.6 2 3.9 1.6 1.5 1.6v7.3c2.4 0 4.1.4 5.5 1.6" />
+              <path d="M7 3.2c1.4-1.2 3.1-1.6 5.5-1.6v7.3c-2.4 0-4.1.4-5.5 1.6" />
+            </svg>
+          {/if}
           {stripped(tab.name)}
           {#if tab.dirty || workspace.savingOf(tab)}
             <span
@@ -337,6 +365,20 @@
      clicked in the file list will take this tab's place. */
   .tab.preview .pick {
     font-style: italic;
+  }
+
+  /* Before the name rather than after it, where the saving dot is: the two say
+     different kinds of thing and should not be read as one pair. */
+  .mark {
+    width: 11px;
+    height: 11px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.75;
   }
 
   /* The whole report on saving: unwritten, going down, down. Colour and a

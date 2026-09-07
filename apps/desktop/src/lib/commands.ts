@@ -360,9 +360,16 @@ export function appCommands(view?: EditorView): Command[] {
 
     {
       id: 'reading',
-      label: modes.reading ? t('Leave reading mode') : t('Reading mode'),
+      label: workspace.active?.reading ? t('Leave reading') : t('Reading'),
       hint: shortcuts.hint('app.reading'),
-      run: () => modes.toggleReading(view),
+      disabled: workspace.active?.kind !== 'note',
+      run: () => workspace.toggleReading(),
+    },
+    {
+      id: 'read-only',
+      label: modes.readOnly ? t('Leave read-only') : t('Read-only'),
+      hint: shortcuts.hint('app.read-only'),
+      run: () => modes.toggleReadOnly(view),
     },
     {
       id: 'source',

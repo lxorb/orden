@@ -89,6 +89,21 @@ describe('reading one tab', () => {
     // from one that simply sat at the top.
     expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('anchor')
   })
+
+  test('brings back which face of the note was up', () => {
+    expect(readDraft({ path: null, name: 'a', doc: '', reading: true })).toMatchObject({
+      reading: true,
+    })
+  })
+
+  test('is being written in unless it says otherwise', () => {
+    // Absent rather than false, so a tab that was being written in - which is
+    // nearly every tab - costs the entry nothing.
+    expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('reading')
+    expect(readDraft({ path: null, name: 'a', doc: '', reading: 'yes' })).not.toHaveProperty(
+      'reading',
+    )
+  })
 })
 
 describe('reading one place', () => {

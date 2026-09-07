@@ -48,6 +48,12 @@ export class NoteDoc {
    *  and everything that reads the text goes through it first. */
   private words = $state('')
   private behind = false
+
+  /** How many times the words have changed, whoever changed them: a keystroke in
+   *  any pane, an undo, a note a sync brought over. What a reader that is not an
+   *  editor watches - the reading view - because `words` itself only catches up
+   *  when something asks for it, and a pane that is only reading never does. */
+  revision = $state(0)
   /** True while text is being put in that leaves the note in step with its file,
    *  which is nothing the app has to be told about; see `replace`. */
   private quiet = false
@@ -64,6 +70,7 @@ export class NoteDoc {
 
     this.live.onChange = () => {
       this.behind = true
+      this.revision++
       if (this.quiet) return
 
       this.dirty = true
@@ -139,6 +146,12 @@ export class Tab {
   /** Which line the caret is on. The editor knows it without counting, and the
    *  outline would otherwise walk the note's newlines to work it out again. */
   line = $state<number | undefined>(undefined)
+
+  /** Whether this tab is showing the note as it reads rather than as it is
+   *  written. Per tab, because a note can be read in one pane while it is being
+   *  written in another, and because which face is up is about this sitting with
+   *  this note - a note always opens for writing. */
+  reading = $state(false)
 
   constructor(note: NoteDoc, paneId: string) {
     this.note = note

@@ -340,12 +340,24 @@ const APP_ENTRIES: Shortcut[] = [
     run: (context) => modes.toggleTypewriter(context.view),
   },
   {
+    // The note through the renderer, per tab. Obsidian's key for the same
+    // thing, and the one a hand reaches for without being told.
     id: 'app.reading',
-    label: () => t('Reading mode'),
+    label: () => t('Reading'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-e',
+    run: () => workspace.toggleReading(),
+  },
+  {
+    // The editor with its doors locked, which is a different thing; see
+    // setReadOnlyMode in the editor package.
+    id: 'app.read-only',
+    label: () => t('Read-only'),
     category: 'view',
     scope: 'app',
     key: 'F10',
-    run: (context) => modes.toggleReading(context.view),
+    run: (context) => modes.toggleReadOnly(context.view),
   },
   {
     id: 'app.fullscreen',

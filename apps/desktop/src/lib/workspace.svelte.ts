@@ -339,6 +339,11 @@ class Workspace {
       }
     }
 
+    // A note always opens for writing. Which face was up belongs to the sitting
+    // that was, not to the note; a named layout is the one thing that says
+    // otherwise, and that is chosen rather than restored. See `applyLayout`.
+    for (const tab of this.tabs) tab.reading = false
+
     // A phone shows one note at a time, so an arrangement made on a desktop
     // arrives as the pane that had the focus, with everything in it.
     if (viewport.phone) this.collapsePanes()
@@ -403,6 +408,7 @@ class Workspace {
     tab.cursor = draft.cursor
     tab.scroll = draft.scroll
     tab.anchor = draft.anchor
+    tab.reading = draft.reading === true
     return tab
   }
 
@@ -500,6 +506,7 @@ class Workspace {
       // Which document this is a view of, so two panes on one note come back as
       // one note rather than as two copies of it.
       share: tab.note.key,
+      ...(tab.reading ? { reading: true } : {}),
     }
   }
 
@@ -536,6 +543,30 @@ class Workspace {
     tab.scroll = scroll
     tab.anchor = anchor
     if (tab.path) this.positions.remember(tab.path, cursor, scroll, anchor)
+    this.scheduleSession()
+  }
+
+  /** Where a pane that is only reading has got to. The caret is not the reading
+   *  view's to move, so the tab keeps the one it had; the place is what changes,
+   *  and it is the same place the editor puts back when the note is written in
+   *  again - which is what makes the switch read as one page changing its skin. */
+  notePlace(id: string, scroll: number, anchor: number) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return
+
+    this.noteView(id, tab.cursor ?? 0, scroll, anchor, tab.line)
+  }
+
+  /** Turns a note tab between writing and reading. The focused tab unless one is
+   *  named, since that is what every key and every menu row means by "this note".
+   *  The graph is not a note and has no other face. */
+  toggleReading(tabId: string = this.activeTabId ?? '') {
+    const tab = this.tabs.find((one) => one.id === tabId)
+    if (tab?.kind !== 'note') return
+
+    tab.reading = !tab.reading
+    // Reading a note is not writing in it, so a preview tab that is being read
+    // is still only being previewed; nothing else about the tab changes.
     this.scheduleSession()
   }
 
@@ -933,6 +964,9 @@ class Workspace {
     if (reusable) {
       reusable.note.adopt({ path, name: basename(path), text: doc })
       this.placeAt(reusable, path)
+      // A note arriving in the preview tab is a note opening, and a note opens
+      // for writing however the tab was left.
+      reusable.reading = false
 
       if (options.activate !== false) {
         this.activeTabId = reusable.id
