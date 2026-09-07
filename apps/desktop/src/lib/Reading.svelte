@@ -93,6 +93,9 @@
   // they reach a pane's editor by being written onto it; there is no editor here,
   // so they are written on straight. Zoom is at the root and needs nothing.
   const style = $derived(`--measure: ${modes.width}rem; --leading-content: ${modes.lineHeight}`)
+  // The writing direction too: it is about the language a reader reads in, and a
+  // note that is written right to left is read right to left.
+  const direction = $derived(modes.rtl ? 'rtl' : 'ltr')
 
   /** Where the headings are, in the source and on the page. Taken again whenever
    *  the page has changed height, which is what a picture arriving, a wider
@@ -311,13 +314,14 @@
   }
 
   function paint(name: string, ranges: Range[]) {
-    const highlights = CSS.highlights
-    // Not in every engine yet. Without it the find bar still counts and still
-    // scrolls; only the paint is missing.
-    if (!highlights) return
-
-    if (ranges.length) highlights.set(name, new Highlight(...ranges))
-    else highlights.delete(name)
+    try {
+      if (ranges.length) CSS.highlights.set(name, new Highlight(...ranges))
+      else CSS.highlights.delete(name)
+    } catch {
+      // An engine without a highlight registry. The types say there is always
+      // one; not every engine agrees yet, and this is the whole of what such a
+      // one loses - the find bar still counts and still scrolls.
+    }
   }
 
   function typed() {
@@ -425,7 +429,7 @@
     onclick={follow}
     oncontextmenu={showMenu}
   >
-    <div id="write" class="page" bind:this={surface}>
+    <div id="write" class="page" dir={direction} bind:this={surface}>
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the export uses -->
       {@html html}
     </div>
