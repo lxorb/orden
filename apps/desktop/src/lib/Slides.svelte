@@ -23,6 +23,7 @@
     closePresenter,
     secondScreen,
     type Channel,
+    type Message,
   } from './slides/presenter'
   import { present } from './slides/present.svelte'
   import {
@@ -412,10 +413,33 @@
   let channel: Channel | null = null
   const started = Date.now()
 
+  /** Everything the other window draws, as one message. */
+  const broadcast = $derived<Message>({
+    kind: 'stage',
+    stage: {
+      slide: current?.html ?? '',
+      next: next?.html ?? '',
+      shape: current?.shape ?? 'prose',
+      nextShape: next?.shape ?? 'prose',
+      notes: current?.notes ?? '',
+      at: place.slide + 1,
+      count,
+      started,
+      scheme: theme.current,
+    },
+  })
+
   $effect(() => {
     const line = presenterChannel((message) => {
-      // The only thing the other window says is which way to go, so somebody
-      // reading their notes can move the deck without reaching for it.
+      // A window that has just opened has nothing on it and nothing about the
+      // deck is about to change, so it is told where the deck is.
+      if (message.kind === 'here') {
+        line.send(broadcast)
+        return
+      }
+
+      // The other thing it says is which way to go, so somebody reading their
+      // notes can move the deck without reaching for it.
       if (message.kind === 'move') {
         if (message.by > 0) onwards()
         else backwards()
@@ -437,22 +461,9 @@
     }
   })
 
-  // Everything the other window draws, sent whole whenever any of it changes.
+  // Sent whole whenever any of it changes.
   $effect(() => {
-    channel?.send({
-      kind: 'stage',
-      stage: {
-        slide: current?.html ?? '',
-        next: next?.html ?? '',
-        shape: current?.shape ?? 'prose',
-        nextShape: next?.shape ?? 'prose',
-        notes: current?.notes ?? '',
-        at: place.slide + 1,
-        count,
-        started,
-        scheme: theme.current,
-      },
-    })
+    channel?.send(broadcast)
   })
 
   // The deck takes the keyboard the moment it opens, so the first arrow lands.

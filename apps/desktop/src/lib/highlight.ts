@@ -1,6 +1,6 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
-import { type CodePalette, fenceLanguages } from '@nib/editor'
+import { CODE_PALETTES, type CodePalette, fenceLanguages } from '@nib/editor'
 
 export type Parser = LanguageSupport['language']['parser']
 
@@ -85,4 +85,30 @@ export function paletteCss(palette: CodePalette): string {
   ]
 
   return colours.map(([name, colour]) => `#write .hl-${name} { color: ${colour}; }`).join('\n')
+}
+
+const PALETTE_ID = 'nib-code-palette'
+
+/** Puts the chosen palette on the page, for everything the renderer draws
+ *  inside `#write`: the reading view, a text card on a canvas, a slide on the
+ *  stage. The classes are written by `highlightCode` above and mean nothing
+ *  without them, so a fence came out in one colour wherever the app itself was
+ *  showing it - an exported document has always carried the same rules in its
+ *  own head, which is why it did not.
+ *
+ *  An id nothing recognises - a palette a later build added - falls back to the
+ *  first, which is the one that follows the theme. */
+export function paintCodePalette(id: string) {
+  const palette = CODE_PALETTES.find((one) => one.id === id) ?? CODE_PALETTES.at(0)
+
+  let sheet = document.getElementById(PALETTE_ID)
+  if (!sheet) {
+    sheet = document.createElement('style')
+    sheet.id = PALETTE_ID
+    // First in the head, so a theme file and a reader's own custom.css both
+    // still have the last word on how code is coloured.
+    document.head.prepend(sheet)
+  }
+
+  sheet.textContent = palette ? paletteCss(palette) : ''
 }

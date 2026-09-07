@@ -327,8 +327,8 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
  *  STYLE. */
 const SLIDES_STYLE = `
 body{overflow:hidden}
-.deck{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;background:var(--bg);user-select:none;-webkit-user-select:none}
-.stage{width:${DECK_WIDTH}px;height:${DECK_HEIGHT}px;flex:none;transform:scale(var(--stage-scale,1));transform-origin:center;--stage-text:26px}
+.deck{position:fixed;inset:0;overflow:hidden;background:var(--bg);user-select:none;-webkit-user-select:none}
+.stage{position:absolute;top:50%;left:50%;width:${DECK_WIDTH}px;height:${DECK_HEIGHT}px;margin:${-DECK_HEIGHT / 2}px 0 0 ${-DECK_WIDTH / 2}px;transform:scale(var(--stage-scale,1));transform-origin:center;--stage-text:30px}
 .stage.away{display:none}
 .slide{width:100%;height:100%;padding:68px 96px;box-sizing:border-box;overflow:hidden;animation:slide-in .17s cubic-bezier(.22,1,.36,1)}
 .slide #write{height:100%;overflow:hidden;font-size:calc(var(--stage-text) * var(--stage-fit,1));line-height:1.5}
@@ -355,7 +355,7 @@ body{overflow:hidden}
 @media print{
 html,body{height:auto;overflow:visible}
 .deck{position:static;display:block;overflow:visible}
-.stage,.stage.away{display:block;transform:none;break-after:page}
+.stage,.stage.away{display:block;position:static;margin:0;transform:none;break-after:page}
 .slide{animation:none}
 .slide #write li.fragment{opacity:1}
 .rail,.count{display:none}

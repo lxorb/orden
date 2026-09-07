@@ -36,7 +36,13 @@ export interface Stage {
 }
 
 export type Message =
-  { kind: 'stage'; stage: Stage } | { kind: 'move'; by: number } | { kind: 'gone' }
+  | { kind: 'stage'; stage: Stage }
+  | { kind: 'move'; by: number }
+  /** The presenter's window, saying it is on the page. A window opens when a
+   *  deck is already up and nothing about the deck is about to change, so it
+   *  would otherwise sit empty until the first press. */
+  | { kind: 'here' }
+  | { kind: 'gone' }
 
 const CHANNEL = 'nib:presenter'
 const LABEL = 'nib-presenter'
@@ -48,6 +54,7 @@ function messageOf(value: unknown): Message | null {
   const said = value as Record<string, unknown>
 
   if (said.kind === 'gone') return { kind: 'gone' }
+  if (said.kind === 'here') return { kind: 'here' }
   if (said.kind === 'move' && typeof said.by === 'number') return { kind: 'move', by: said.by }
   if (said.kind !== 'stage') return null
 

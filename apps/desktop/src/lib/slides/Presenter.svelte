@@ -40,6 +40,10 @@
     }
   })
 
+  // The deck is already up by the time this window opens, and nothing about it
+  // is about to change, so it is asked where it has got to.
+  channel.send({ kind: 'here' })
+
   onDestroy(() => channel.close())
 
   // The clock runs here off the moment the stage started, so nothing has to be
@@ -175,18 +179,19 @@
 
   .screens {
     display: grid;
-    grid-template-rows: 1fr 0.42fr;
+    /* The slide that is up, and under it a smaller one that is next. */
+    grid-template-rows: 2fr 1fr;
     gap: var(--space-4);
     min-width: 0;
+    min-height: 0;
   }
 
   /* Each frame holds a stage of the real size, shrunk to fit: what is here is
      what is on the other screen, not a second layout of it. */
+  /* The stage pins itself to the middle of this; see slides.css. */
   .frame {
     position: relative;
     min-height: 0;
-    display: grid;
-    place-items: center;
     overflow: hidden;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
@@ -232,12 +237,17 @@
     border-radius: var(--radius-md);
     background: var(--surface);
     font-family: var(--font-content);
-    font-size: var(--text-base);
+    /* Read at a glance from a lectern, not at a desk. */
+    font-size: 1.1rem;
     line-height: 1.6;
     color: var(--text);
   }
 
   .notes :global(> :first-child) {
     margin-top: 0;
+  }
+
+  .notes :global(> :last-child) {
+    margin-bottom: 0;
   }
 </style>

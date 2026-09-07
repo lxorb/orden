@@ -14,8 +14,6 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  display: grid;
-  place-items: center;
   overflow: hidden;
   background: var(--bg);
   /* The stage is the only thing on screen, so nothing in it is selectable by
@@ -37,11 +35,20 @@
      against the body. The stage's own size is written in by whatever put it on
      the page, so one place knows it: see STAGE_WIDTH in
      apps/desktop/src/lib/slides/stage.ts. */
-  --stage-text: 26px;
+  --stage-text: 30px;
 
+  /* Pinned to the middle of whatever it is in rather than centred by a layout:
+     the stage is laid out at its full size and only then scaled, so on a screen
+     smaller than the stage it is an item larger than its own box - and no
+     alignment rule holds for one of those in every browser. Half its own size in
+     negative margin puts its centre on the middle, and the scale is about that
+     centre, so it lands in the middle at any size. */
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: var(--stage-width, 1280px);
   height: var(--stage-height, 720px);
-  flex: none;
+  margin: calc(var(--stage-height, 720px) / -2) 0 0 calc(var(--stage-width, 1280px) / -2);
   transform: scale(var(--stage-scale, 1));
   transform-origin: center;
 }
@@ -146,6 +153,7 @@
 .rail {
   position: absolute;
   inset: auto 0 0 0;
+  z-index: 2;
   height: 2px;
   background: var(--line);
 }
@@ -176,7 +184,9 @@
 
 /* ── The presenter's own notes, where there is no second window ───── */
 
-.notes {
+/* Scoped to the deck: the presenter's own window has a notes panel of its own,
+   which is a column beside the slide rather than a sheet over it. */
+.deck .notes {
   position: absolute;
   inset: auto 0 0 0;
   z-index: 1;
@@ -188,17 +198,29 @@
   border-top: 1px solid var(--line);
   box-shadow: var(--shadow-lg);
   font-family: var(--font-content);
+  /* Big enough to read in one glance downwards, which is the only way it is
+     ever read. */
+  font-size: 1.15rem;
+  line-height: 1.55;
   color: var(--text);
   animation: notes-up var(--dur-base) var(--ease-out);
   user-select: text;
   -webkit-user-select: text;
 }
 
-.notes > :first-child {
+/* The same measure the note itself is written in, so a long note stays a
+   column rather than one line across a projector. */
+.deck .notes > * {
+  max-width: 46rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.deck .notes > :first-child {
   margin-top: 0;
 }
 
-.notes > :last-child {
+.deck .notes > :last-child {
   margin-bottom: 0;
 }
 
@@ -275,7 +297,11 @@ body.deck-page {
     overflow: visible;
   }
 
+  /* On paper the page is the stage, so nothing is scaled and nothing is pinned:
+     the slides simply follow one another, a sheet each. */
   .stage {
+    position: static;
+    margin: 0;
     transform: none;
     break-after: page;
     page-break-after: always;
@@ -297,7 +323,7 @@ body.deck-page {
 
   .rail,
   .count,
-  .notes {
+  .deck .notes {
     display: none;
   }
 }

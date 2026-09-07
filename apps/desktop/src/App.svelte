@@ -23,6 +23,7 @@
   import { account } from './lib/account.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
+  import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
   import { search } from './lib/search.svelte'
@@ -123,6 +124,11 @@
   $effect(() => {
     if (present.on && !presenting) present.stop()
   })
+
+  // The colours a fenced block wears wherever the renderer drew it; see
+  // highlight.ts. Here rather than in the theme, because it is the code palette
+  // that decides them and that is a mode.
+  $effect(() => paintCodePalette(modes.codeTheme))
 
   // Two panes on one note, scrolling together while the link is on; see
   // linked-scroll.ts. By document position, so a heading stays level in both.
