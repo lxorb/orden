@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./links": "./src/links.ts"
+    "./links": "./src/links.ts",
+    "./slides": "./src/slides.ts"
   },
   "scripts": {
     "test": "vitest run",
