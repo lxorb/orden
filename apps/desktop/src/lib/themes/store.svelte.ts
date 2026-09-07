@@ -142,7 +142,7 @@ class Store {
    *  be applied, and only the second one is a promise to the person installing
    *  it. What is written is what survived that reading, with a line on the front
    *  saying which theme it is and at which version. */
-  async install(one: StoreTheme, andUse = true) {
+  async install(one: StoreTheme) {
     this.working = one.id
     this.error = null
     this.refused = { id: one.id, notes: [] }
@@ -164,7 +164,10 @@ class Store {
       })
 
       await theme.reload()
-      if (andUse) this.use(one.id)
+      // Applied at once. Installing a theme and then being asked to turn it on
+      // is a second click for something nobody meant twice; taking it off again
+      // is one click away in the same place.
+      this.use(one.id)
     } catch (error) {
       this.error = message(error, 'could not install that theme')
     } finally {
