@@ -41,7 +41,7 @@ export type Input =
 /** What became of an image. `again` is worth retrying; `dead` is the documented
  *  wedge where the image channel stops taking anything until the app restarts,
  *  and is the cue to fall back to words. */
-type Sent = 'ok' | 'again' | 'dead'
+export type Sent = 'ok' | 'again' | 'dead'
 
 /** A container, by both of its names. The host matches on the pair and fails
  *  silently when they disagree. */

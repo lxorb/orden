@@ -94,16 +94,25 @@ export class Session {
       return
     }
 
-    const edited = before !== null && before.key === open.key
-    if (before !== null && !edited) this.places.set(before.key, before.page)
+    // The same document, edited, or another one. A note leaving the glasses
+    // writes down the page it was left on.
+    const was = before?.key === open.key ? before : null
+    if (before && !was) this.places.set(before.key, before.page)
 
-    // The same note, edited: keep the reader on the words they were reading,
-    // which is the page that the position they were on now falls on. Another
-    // note: the page it was left on.
-    const showed = edited ? before.pages[before.page] : undefined
-    const page = showed
-      ? pageAt(pages, showed.from)
-      : clamp(this.places.get(open.key) ?? 0, pages.length)
+    // The same note, edited: keep the reader on the words in front of them.
+    // The page they were on, wherever it moved to, since a page is its pixels
+    // and its hash says when two are the same page - an edit further down the
+    // note, or a paragraph inserted above it, then moves nothing they can see.
+    // Where the page itself changed, the place in the note they were at, which
+    // is the best a rewritten page allows. And for another note, the page that
+    // note was left on.
+    const showed = was?.pages[was.page]
+    const still = showed ? pages.find((one) => one.hash === showed.hash) : undefined
+    const page = still
+      ? still.index
+      : showed
+        ? pageAt(pages, showed.from)
+        : clamp(this.places.get(open.key) ?? 0, pages.length)
 
     const wanted = pages[clamp(page, pages.length)]
     if (!wanted) return
@@ -112,9 +121,15 @@ export class Session {
     this.shown = shown
     this.places.set(open.key, wanted.index)
 
-    // Nothing moved on the page in front of them, so nothing is sent. This is
-    // what keeps a keystroke off the radio.
-    if (showed?.hash === wanted.hash) return
+    // Nothing the reader can see has moved, so nothing is sent. This is what
+    // keeps a keystroke off the radio: the same picture, and a corner that says
+    // the same page of the same count.
+    const unmoved =
+      was !== null &&
+      showed?.hash === wanted.hash &&
+      was.page === wanted.index &&
+      was.pages.length === pages.length
+    if (unmoved) return
 
     await this.screen.show(wanted, showingOf(shown))
   }

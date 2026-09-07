@@ -16,9 +16,15 @@
  *  app - the note is put into the text container as words instead. It loses the
  *  faces, the code colours and the tables, and it is still the note. */
 
-import { BLANK, PANEL_HEIGHT, PANEL_WIDTH, type Page, QUADRANTS, type Sheets } from '@nib/glasses'
+import { BLANK, PANEL_HEIGHT, PANEL_WIDTH, type Page, QUADRANTS, type Sheet } from '@nib/glasses'
 import type { Container, Glasses } from './sdk'
 import type { Screen, Showing } from './session'
+
+/** All the panel asks of the renderer: a page's containers, as bytes. `Sheets`
+ *  in `@nib/glasses` is one, and so is a stand-in with no canvas behind it. */
+export interface Drawer {
+  sheet(page: Page, mark?: string): Promise<Sheet | null>
+}
 
 /** The layer that collects every gesture. One container per page may capture,
  *  and an image container may not, so this is it. Its content is a single space:
@@ -90,7 +96,7 @@ export class Panel implements Screen {
 
   constructor(
     private readonly glasses: Glasses,
-    private readonly sheets: Sheets,
+    private readonly sheets: Drawer,
   ) {}
 
   /** Makes the page. Called once; a second call is refused by the host, and
