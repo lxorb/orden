@@ -271,18 +271,28 @@ export function deckOf(source: string): Slide[] {
   return slides
 }
 
-/** Whether the note is a deck, answered without reading past the first break.
- *  What the editor asks of every note it shows. */
+/** Whether the note is a deck: words, a break, and words after it.
+ *
+ *  The same answer as `deckOf(source).length > 1`, reached without rendering
+ *  anything and without reading past the first slide, because it is asked of
+ *  every note the editor shows. A rule with nothing above it opens the first
+ *  slide and one with nothing below it ends the last, so neither on its own
+ *  makes a note into a deck. */
 export function isDeck(source: string): boolean {
   const start = bodyStart(source)
   let fence: Fence | null = null
   let blank = true
-  let seen = false
+  /** Whether anything has been written, and whether a break has been passed
+   *  with something written before it. */
+  let written = false
+  let broken = false
 
   for (const line of lines(source, start)) {
     const change = fenceChange(line.text, fence)
     if (change !== undefined) {
       fence = change
+      if (written && broken) return true
+      written = true
       blank = false
       continue
     }
@@ -293,14 +303,16 @@ export function isDeck(source: string): boolean {
     }
 
     if (blank && (HORIZONTAL.test(line.text) || VERTICAL.test(line.text))) {
-      // A rule with nothing above it opens the first slide rather than ending
-      // one, so the note needs something before it to be a deck.
-      if (seen) return true
+      if (written) broken = true
       blank = false
       continue
     }
 
-    if (!BLANK.test(line.text)) seen = true
+    if (!BLANK.test(line.text)) {
+      if (broken) return true
+      written = true
+    }
+
     blank = BLANK.test(line.text)
   }
 

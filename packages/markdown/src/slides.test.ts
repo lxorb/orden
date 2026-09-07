@@ -84,6 +84,37 @@ describe('breaking a note into slides', () => {
   })
 })
 
+describe('whether a note is a deck at all', () => {
+  /** The cheap answer has to be the same as the whole one, whatever the note. */
+  const notes = [
+    '',
+    '# One',
+    '# One\n\n---\n',
+    '---\n\n# One',
+    'One\n\n---\n\n---\n',
+    '# One\n\n---\n\n# Two',
+    '# One\n\n***\n\n# Two',
+    '---\ntitle: x\n---\n\n# One',
+    '---\ntitle: x\n---\n\n# One\n\n---\n\n# Two',
+    'One\n---\n\nTwo',
+    '# One\n\n```\n---\n```\n',
+    '# One\n\n---\n\n```\ncode\n```\n',
+    '```\n---\n```\n\n---\n\n# Two',
+    '# One\n\n---\n\nNote: only notes',
+  ]
+
+  test('the cheap answer is the whole answer', () => {
+    for (const note of notes) {
+      expect([note, isDeck(note)]).toEqual([note, deckOf(note).length > 1])
+    }
+  })
+
+  test('a rule with nothing on one side of it is not a deck', () => {
+    expect(isDeck('# One\n\n---\n')).toBe(false)
+    expect(isDeck('---\n\n# One')).toBe(false)
+  })
+})
+
 describe('slides that go downwards', () => {
   test('a run of asterisks breaks downwards', () => {
     const slides = deckOf('# One\n\n***\n\n# Detail\n\n---\n\n# Two')
