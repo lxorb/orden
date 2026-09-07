@@ -72,9 +72,14 @@ export class EditorStates {
     if (!known) this.held.set(tabId, next)
 
     if (this.showing === tabId) {
-      // Already up: the view was built on it. Its place and everything the app
-      // has to say still have to go on, and they go on together.
-      if (!this.settled) next.settle(view, effects)
+      // Already up. The first time round the view was built on it and its place
+      // has still to be put back, with everything else in the same transaction;
+      // after that the place is where the reader left it, and only what the app
+      // has to say is news.
+      if (this.settled) {
+        if (effects.length) view.dispatch({ effects: [...effects] })
+      } else next.settle(view, effects)
+
       this.settled = true
       return !known
     }

@@ -30,7 +30,6 @@
     type NoteIndex,
     type NoteJump,
     noteIndexEffect,
-    setNoteIndex,
     type StateEffect,
     type StateOptions,
     shortcutEffect,
@@ -79,11 +78,6 @@
   const states = new EditorStates()
   /** The pane's own scrollbar, over the editor's scroller. */
   let bar: OverlayScrollbar | undefined
-  /** The index the view has been given. A fresh object means the space changed,
-   *  which is what makes every link on screen be drawn again; the same one means
-   *  nothing did, and reconfiguring for it would redraw the note for nothing. */
-  let held: NoteIndex | undefined
-
   /** Everything a state needs to be this note's state, all of it read from the
    *  tab so a state built for one note says nothing about another. */
   function optionsFor(one: Tab): StateOptions {
@@ -171,47 +165,45 @@
       bar = undefined
       created.destroy()
       view = undefined
-      held = undefined
     }
   })
 
-  // The note. Swapped in whole, in the same frame as the click that asked for
-  // it: see editor-states.ts.
+  // The note, and the space around it. Swapped in whole, in the same frame as
+  // the click that asked for it: see editor-states.ts.
+  //
+  // Two things are read for their own sake, and nothing else is. The tab, which
+  // is the switch. And the space's links, because a note saved somewhere else
+  // gains a heading and every `[[link]]` to it has to be drawn again - that one
+  // arrives on its own, without the note being disturbed. Everything the fitting
+  // reads is untracked: the modes reach every open editor by themselves, and
+  // hearing about them here as well would dress the same view twice.
   $effect(() => {
     const current = view
     const showing = tab
     if (!current) return
 
     const index = notes?.(showing)
-    held = index
-    states.show(current, showing.id, () => build(showing), fitting(showing, index))
-    // Another note is another length and another place in it, so the bar shapes
-    // itself into its new size rather than appearing in it.
-    bar?.settle()
 
-    // A session written by a build that remembered pixels rather than a line has
-    // no line to put back. The offset is the best it can do, and it goes on here
-    // rather than a frame later.
-    if (showing.anchor === undefined && showing.scroll) {
-      current.scrollDOM.scrollTop = showing.scroll
-    }
+    untrack(() => {
+      const switching = states.current !== showing.id
+      states.show(current, showing.id, () => build(showing), fitting(showing, index))
+
+      // Another note is another length and another place in it, so the bar
+      // shapes itself into its new size rather than appearing in it.
+      if (switching) bar?.settle()
+
+      // A session written by a build that remembered pixels rather than a line
+      // has no line to put back. The offset is the best it can do, and it goes
+      // on here rather than a frame later.
+      if (switching && showing.anchor === undefined && showing.scroll) {
+        current.scrollDOM.scrollTop = showing.scroll
+      }
+    })
   })
 
   function build(one: Tab): HeldState {
     return HeldState.waiting(one.note.live, editorState(optionsFor(one)), placeOf(one))
   }
-
-  // The space changes while the pane sits on one note: a note saved gains a
-  // heading, a note renamed answers to another name. Handed over on its own, so
-  // nothing else about the note is disturbed.
-  $effect(() => {
-    const current = view
-    const index = notes?.(tab)
-    if (!current || !index || index === held) return
-
-    held = index
-    setNoteIndex(current, index)
-  })
 
   // Notes the pane no longer holds - closed, or dragged into another pane - let
   // their documents go.
