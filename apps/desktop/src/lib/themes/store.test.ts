@@ -28,7 +28,10 @@ function memoryStorage(): Storage {
 function stubs() {
   vi.stubGlobal('localStorage', memoryStorage())
   vi.stubGlobal('document', {
-    documentElement: { dataset: {}, style: { setProperty: () => undefined } },
+    documentElement: {
+      dataset: {},
+      style: { setProperty: () => undefined, removeProperty: () => undefined },
+    },
     querySelector: () => null,
     getElementById: () => null,
     createElement: () => ({ id: '', textContent: '', remove: () => undefined }),
@@ -97,6 +100,10 @@ function entry(patch: Record<string, unknown> = {}) {
 /** The stylesheet the registry serves for a theme. */
 const sheet = (colour: string) => `[data-theme='light'] { color-scheme: light; --bg: ${colour}; }`
 
+/** One that states both schemes, which is what makes a theme a pair. */
+const PAIR = `[data-theme='light'] { --bg: #fff; }
+[data-theme='dark'] { --bg: #000; }`
+
 /** Answers the catalogue and the stylesheets, and counts what was asked for. */
 function serving(themes: unknown[], css = sheet('#faf6ee')) {
   const asked: string[] = []
@@ -118,6 +125,7 @@ beforeEach(() => {
   folder.files.clear()
   theme.files = []
   theme.id = 'system'
+  theme.side = null
   store.themes = []
   store.query = ''
   store.order = 'newest'
@@ -231,19 +239,42 @@ describe('installing, updating and removing', () => {
     expect(theme.active.name).toBe('Warm Paper')
   })
 
-  test('a pair is a pair, and the app can be switched inside it', async () => {
-    const pair = `[data-theme='light'] { --bg: #fff; }\n[data-theme='dark'] { --bg: #000; }`
-    serving([entry({ variants: ['light', 'dark'] })], pair)
+  test('a pair opens on the side the app was already showing', async () => {
+    serving([entry({ variants: ['light', 'dark'] })], PAIR)
     await store.load()
+    theme.select('dark')
 
     await store.install(entry({ variants: ['light', 'dark'] }) as never)
-    const first = theme.current
+
+    expect(theme.current).toBe('dark')
+    expect(theme.active.variants).toEqual(['light', 'dark'])
+  })
+
+  test('a pair is switched inside itself rather than swapped for a built-in', async () => {
+    serving([entry({ variants: ['light', 'dark'] })], PAIR)
+    await store.load()
+    theme.select('light')
+    await store.install(entry({ variants: ['light', 'dark'] }) as never)
 
     theme.toggle()
-    expect(theme.current).not.toBe(first)
-    // Still the same theme: a pair switches inside itself rather than being
-    // swapped for one of the built-in looks.
+    expect(theme.current).toBe('dark')
     expect(store.using('warm-paper')).toBe(true)
+
+    theme.toggle()
+    expect(theme.current).toBe('light')
+    expect(store.using('warm-paper')).toBe(true)
+  })
+
+  test('a theme that brings an accent keeps it, and one that does not lets it go', async () => {
+    // The card in the gallery showed the theme's own accent, so what the app
+    // looks like afterwards has to be what the card showed.
+    serving([entry()], `[data-theme='light'] { --bg: #fff; --accent: #a0522d; }`)
+    await store.load()
+    await store.install(entry({}) as never)
+    expect(theme.accentIsTheme).toBe(true)
+
+    await store.remove('warm-paper')
+    expect(theme.accentIsTheme).toBe(false)
   })
 
   test('offers an update only when the catalogue is ahead', async () => {

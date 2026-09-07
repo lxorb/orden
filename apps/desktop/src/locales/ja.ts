@@ -249,6 +249,7 @@ export const ja: Dictionary = {
   'Words with {bold} and a {link}.': '{bold} と {link} のある文章。',
   bold: '太字',
   link: 'リンク',
+  'Everything is markdown, and nothing else.': 'すべては Markdown、それ以外は何もありません。',
   'One thing': 'ひとつ',
   Another: 'もうひとつ',
   'could not reach the theme store': 'テーマストアに届きませんでした',

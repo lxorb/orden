@@ -57,7 +57,6 @@
       { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
       { section: 'account', label: t('Storage'), text: [] },
       { section: 'account', label: account.signedIn ? t('Sign out') : t('Sign in'), text: [] },
-      { section: 'appearance', label: t('Accent'), text: theme.accents.map((one) => t(one.name)) },
       { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
       {
         section: 'export',
@@ -86,6 +85,14 @@
         text: [],
       })),
     ]
+
+    if (!theme.accentIsTheme) {
+      all.push({
+        section: 'appearance',
+        label: t('Accent'),
+        text: theme.accents.map((one) => t(one.name)),
+      })
+    }
 
     if (isDesktop) {
       all.push({
@@ -900,22 +907,26 @@
     </div>
   </div>
 
-  <h3>{t('Accent')}</h3>
-  <div class="card">
-    <div class="accents">
-      {#each theme.accents as swatch (swatch.id)}
-        <button
-          class="swatch"
-          class:active={theme.accent === swatch.id}
-          title={t(swatch.name)}
-          aria-label={t(swatch.name)}
-          aria-pressed={theme.accent === swatch.id}
-          style:--swatch={swatch[theme.current]}
-          onclick={() => theme.setAccent(swatch.id)}
-        ></button>
-      {/each}
+  <!-- A theme that brought an accent of its own keeps it, so the row would be a
+       row of swatches that change nothing. Left out rather than left dead. -->
+  {#if !theme.accentIsTheme}
+    <h3>{t('Accent')}</h3>
+    <div class="card">
+      <div class="accents">
+        {#each theme.accents as swatch (swatch.id)}
+          <button
+            class="swatch"
+            class:active={theme.accent === swatch.id}
+            title={t(swatch.name)}
+            aria-label={t(swatch.name)}
+            aria-pressed={theme.accent === swatch.id}
+            style:--swatch={swatch[theme.current]}
+            onclick={() => theme.setAccent(swatch.id)}
+          ></button>
+        {/each}
+      </div>
     </div>
-  </div>
+  {/if}
 
   <!-- Theme files and custom.css live in a folder, which only a desktop has. -->
   {#if isDesktop}

@@ -9,6 +9,13 @@ import tokens from './tokens.css?raw'
  *  package's exports map from another package come back empty. */
 export const themeCss = [tokens, base].join('\n')
 
+/** The tokens alone. The theme gallery re-scopes the scheme-independent blocks
+ *  of these onto its miniatures: the Typora aliases are written in terms of
+ *  other tokens, and a custom property is substituted where it is declared, so
+ *  without this a miniature's code block would take its colour from the app's
+ *  palette rather than from the theme's. */
+export const tokensCss = tokens
+
 /** What an exported document needs on top of the theme: the constructs only the
  *  renderer makes (document.css, which the app loads too, so the reading view
  *  and the export are one thing rather than two that look alike), a page instead

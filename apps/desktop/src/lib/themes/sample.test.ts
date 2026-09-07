@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { paletteCss, rescoped } from './sample'
+import { paletteCss, rescoped, scopedRoots } from './sample'
 
 /** The miniature is drawn by the app's own prose rules, taken as text and
  *  pointed somewhere else. What is tested here is that pointing them somewhere
@@ -62,6 +62,53 @@ describe('pointing the prose rules at a miniature', () => {
   test('nothing to take comes out empty', () => {
     expect(rescoped('', '.mini')).toBe('')
     expect(rescoped('.other { color: red; }', '.mini')).toBe('')
+  })
+})
+
+describe('the token blocks restated on the frame', () => {
+  test('takes the blocks that belong to no scheme', () => {
+    const out = scopedRoots(':root { --space-1: 4px; }', '.mini')
+
+    expect(out).toBe('.mini { --space-1: 4px; }')
+  })
+
+  test('leaves the palettes alone, or every card would be the same colour', () => {
+    // `:root, [data-theme='dark']` is the dark palette. Restating it on the
+    // frame would outrank the light one and paint every miniature dark.
+    const out = scopedRoots(
+      `:root,
+[data-theme='dark'] { --bg: #000; }
+[data-theme='light'] { --bg: #fff; }`,
+      '.mini',
+    )
+
+    expect(out).toBe('')
+  })
+
+  test('carries the aliases, which is the whole point of doing it', () => {
+    // Written in terms of another token, so where it is declared decides what
+    // it resolves against. On the frame it resolves against the theme.
+    const out = scopedRoots(':root { --code-block-bg-color: var(--surface); }', '.mini')
+
+    expect(out).toContain('--code-block-bg-color: var(--surface);')
+  })
+
+  test('is not fooled by the comment above a block', () => {
+    // The sheets these come from are commented throughout, and what stands
+    // between one rule and the next is read as the selector of the next.
+    const out = scopedRoots(`/* The tokens. */\n:root { --a: 1; }`, '.mini')
+
+    expect(out).toBe('.mini { --a: 1; }')
+  })
+
+  test('leaves behind an at-rule and anything that is not a root block', () => {
+    const out = scopedRoots(
+      `@media (min-width: 1px) { :root { --a: 1; } }
+#write { color: red; }`,
+      '.mini',
+    )
+
+    expect(out).toBe('')
   })
 })
 

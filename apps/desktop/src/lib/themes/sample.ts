@@ -22,22 +22,30 @@ const PAGE = 'nib-mini-page'
 /** Where the app's prose rules point once they are re-scoped. */
 const SURFACE = `.${PAGE}`
 
-/** The rules whose selectors mention the writing surface, pointed at the
- *  miniature's page instead.
+/** How tall the sample note is at the size a note is really read at, in each of
+ *  the two lengths it comes in. Every card shows the same note, so these are
+ *  constants rather than something measured on thirty elements; the frame takes
+ *  its height from whichever it is showing. */
+const CARD_HEIGHT = 296
+export const FULL_HEIGHT = 428
+
+/** The top-level rules of a stylesheet, as they were written.
  *
  *  Only the top level: a rule inside a media query belongs to a screen width,
- *  and the miniature's width is not the screen's. Nested blocks are skipped
+ *  and the miniature's width is not the screen's. Nested blocks are stepped over
  *  whole, which is also what keeps this from having to understand at-rules. */
-export function rescoped(css: string, surface = SURFACE): string {
-  const kept: string[] = []
+function* rules(source: string): Generator<{ prelude: string; body: string }> {
+  // Taken out first: what stands between one rule and the next is that rule's
+  // selector, and the sheets these come from are commented throughout. A
+  // comment left in is a comment read as part of the name of the thing after it.
+  const css = source.replace(/\/\*[\s\S]*?\*\//g, ' ')
   let at = 0
   let start = 0
 
   while (at < css.length) {
     const open = css.indexOf('{', at)
-    if (open < 0) break
+    if (open < 0) return
 
-    // Walk to the matching brace, so a nested block is passed over as one.
     let depth = 1
     let close = open + 1
     while (close < css.length && depth > 0) {
@@ -51,12 +59,36 @@ export function rescoped(css: string, surface = SURFACE): string {
     start = close
     at = close
 
-    if (prelude.startsWith('@') || !prelude.includes('#write') || body.includes('{')) continue
-
-    kept.push(`${prelude.replace(/#write/g, surface)} {${body}}`)
+    if (!prelude.startsWith('@') && !body.includes('{')) yield { prelude, body }
   }
+}
 
-  return kept.join('\n')
+/** The rules whose selectors mention the writing surface, pointed at the
+ *  miniature's page instead. */
+export function rescoped(css: string, surface = SURFACE): string {
+  return [...rules(css)]
+    .filter((rule) => rule.prelude.includes('#write'))
+    .map((rule) => `${rule.prelude.replace(/#write/g, surface)} {${rule.body}}`)
+    .join('\n')
+}
+
+/** The token blocks that belong to no particular scheme, restated on the frame.
+ *
+ *  A custom property written in terms of another one is substituted where it is
+ *  declared, not where it is read: `--code-block-bg-color: var(--surface)` on
+ *  the root element resolves against the root's surface and then inherits as a
+ *  colour. So a miniature that only overrides `--surface` would still show the
+ *  app's code block, not the theme's. Restating the blocks here makes them
+ *  resolve against the frame instead.
+ *
+ *  Only the blocks whose selector is `:root` alone: the two that also name a
+ *  scheme are the palettes, and restating those would paint every miniature the
+ *  same colour whatever theme it belongs to. */
+export function scopedRoots(css: string, scope = `.${FRAME}`): string {
+  return [...rules(css)]
+    .filter((rule) => rule.prelude === ':root')
+    .map((rule) => `${scope} {${rule.body}}`)
+    .join('\n')
 }
 
 /** The whole of the miniature's stylesheet: the frame it lives in, and the
@@ -64,11 +96,24 @@ export function rescoped(css: string, surface = SURFACE): string {
  *  only when the gallery is first opened - the rules arrive as text, which is
  *  tens of kilobytes nobody who never opens the gallery should have to load. */
 export async function miniatureCss(): Promise<string> {
-  const { proseCss } = await import('@nib/themes/raw')
+  const { proseCss, tokensCss } = await import('@nib/themes/raw')
 
-  return `.${FRAME} {
+  // The app's rules first and the frame's after them, so what the frame says
+  // about the page it holds wins. The prose rules are written for a pane with a
+  // scrollbar and end in half a screen of empty space below the last line;
+  // a miniature is all page and no pane.
+  return `${scopedRoots(tokensCss)}
+
+${rescoped(proseCss)}
+
+.${FRAME} {
   position: relative;
   overflow: hidden;
+  /* The sample is the same handful of elements on every card, so its height is
+     known: the frame is that height, scaled, and every card is the same shape
+     without any of them being measured. */
+  --mini-page: ${CARD_HEIGHT}px;
+  height: calc(var(--mini-page) * var(--mini-scale));
   background: var(--bg);
   color: var(--text);
   contain: strict;
@@ -78,10 +123,12 @@ export async function miniatureCss(): Promise<string> {
   /* Laid out at the width of a real note, then scaled: what the frame shows is
      the shape of the thing rather than a squashed version of it. */
   width: calc(100% / var(--mini-scale));
-  height: calc(100% / var(--mini-scale));
+  height: var(--mini-page);
+  max-width: none;
+  margin: 0;
+  padding: 22px 26px 0;
   transform: scale(var(--mini-scale));
   transform-origin: top left;
-  padding: 26px 30px 0;
   box-sizing: border-box;
   font-family: var(--font-content);
   font-size: var(--text-content);
@@ -104,9 +151,7 @@ export async function miniatureCss(): Promise<string> {
     background-color var(--dur-slow) var(--ease-in-out),
     border-color var(--dur-slow) var(--ease-in-out),
     color var(--dur-slow) var(--ease-in-out);
-}
-
-${rescoped(proseCss)}`
+}`
 }
 
 /** One block per theme and scheme, so a card paints from the index alone.
@@ -132,17 +177,26 @@ export function paletteCss(themes: StoreTheme[]): string {
     .join('\n')
 }
 
-/** The sample note, as the markup the renderer would have produced. Short
- *  enough that every card is the same handful of elements, and long enough to
- *  show what a theme did to a heading, a link, a list and a fence. */
-export function sampleHtml(): string {
+/** The sample note, as the markup the renderer would have produced.
+ *
+ *  Short enough on a card that thirty of them are the same handful of elements,
+ *  and long enough to show what a theme did to a heading, a link, a list and a
+ *  fence. `full` adds the quote and the rule, for the one preview that has room
+ *  for them: a card is a taste and a preview is the note. */
+export function sampleHtml(full = false): string {
   const sentence = t('Words with {bold} and a {link}.', {
     bold: `<strong>${t('bold')}</strong>`,
     link: `<a href="#">${t('link')}</a>`,
   })
 
+  const more = full
+    ? `
+<blockquote><p>${t('Everything is markdown, and nothing else.')}</p></blockquote>
+<hr>`
+    : ''
+
   return `<h2>${t('A note')}</h2>
 <p>${sentence}</p>
 <ul><li>${t('One thing')}</li><li>${t('Another')}</li></ul>
-<pre><code>const ink = 'on glass'</code></pre>`
+<pre><code>const ink = 'on glass'</code></pre>${more}`
 }

@@ -117,12 +117,16 @@ class Store {
       const response = await fetch(indexUrl(), { headers: { accept: 'application/json' } })
       if (!response.ok) throw new Error('could not reach the theme store')
 
-      this.themes = readIndex(await response.json())
-      this.fetchedAt = Date.now()
-      // Where the measurement starts: everything after this is ours. The
-      // gallery closes it on the frame after the cards are laid out.
+      const body: unknown = await response.json()
+      // Where the measurement starts: the catalogue has arrived, and reading it
+      // and drawing it are both ours. The gallery closes the measure on the
+      // frame after the cards are laid out, and takes the mark away with it, so
+      // an opening that fetched nothing cannot be measured against a stale one.
       performance.clearMarks(`${PAINT}:index`)
       performance.mark(`${PAINT}:index`)
+
+      this.themes = readIndex(body)
+      this.fetchedAt = Date.now()
     } catch (error) {
       this.error = message(error, 'could not reach the theme store')
     } finally {

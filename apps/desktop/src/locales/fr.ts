@@ -249,6 +249,7 @@ export const fr: Dictionary = {
   'Words with {bold} and a {link}.': 'Des mots avec du {bold} et un {link}.',
   bold: 'gras',
   link: 'lien',
+  'Everything is markdown, and nothing else.': 'Tout est du Markdown, et rien d’autre.',
   'One thing': 'Une chose',
   Another: 'Une autre',
   'could not reach the theme store': 'La boutique de thèmes est injoignable',

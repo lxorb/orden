@@ -251,6 +251,7 @@ export const gsw: Dictionary = {
   'Words with {bold} and a {link}.': 'Wörter mit {bold} und emene {link}.',
   bold: 'fett',
   link: 'Link',
+  'Everything is markdown, and nothing else.': 'Alles isch Markdown, und suscht nüt.',
   'One thing': 'Ei Sach',
   Another: 'No eini',
   'could not reach the theme store': 'De Design-Store isch nöd erreichbar gsi',

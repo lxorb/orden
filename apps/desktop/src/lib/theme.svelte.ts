@@ -12,6 +12,10 @@ interface ThemeInfo {
    *  the app's light and dark switch instead of being one or the other. */
   variants: Scheme[]
   path?: string
+  /** Whether the theme states an accent of its own. One that does keeps it: the
+   *  card in the store showed that colour, and what the app looks like has to be
+   *  what the card showed. */
+  ownAccent?: boolean
   /** What the store wrote into the file when it installed it, for a theme that
    *  came from there. Absent for a file somebody put in the folder themselves,
    *  which the store has nothing to say about. */
@@ -70,9 +74,10 @@ class Themes {
   /** What the system currently prefers. Kept up to date, so following it
    *  means following it through the day and not only at launch. */
   private preferred = $state<Scheme>('dark')
-  /** Which side of a theme that states both, once the rail's switch has said.
-   *  Null follows the system, the same as the built-in choice does. */
-  private side = $state<Scheme | null>(null)
+  /** Which side of a theme that states both, once something has said. Null
+   *  follows the system, the same as the built-in choice does. A choice like
+   *  the theme itself, so it is held the same way. */
+  side = $state<Scheme | null>(null)
 
   readonly accents = ACCENTS
 
@@ -136,6 +141,7 @@ class Themes {
           // spelled it rather than worked out from the file name.
           ...(stamp ? { name: stamp.name, stamp } : {}),
           variants,
+          ownAccent: /--accent\s*:/.test(css),
           scheme: variants[0] ?? 'dark',
         }
       })
@@ -145,6 +151,10 @@ class Themes {
 
     // A theme file may have been deleted while it was selected.
     if (!this.all.some((theme) => theme.id === this.id)) this.select(SYSTEM)
+    // Otherwise applied again now that the folder has been read: at launch the
+    // theme was chosen before the files were known, so a file theme had nothing
+    // to apply and its accent was nobody's yet.
+    else this.apply()
 
     await this.loadCustom()
   }
@@ -169,9 +179,24 @@ class Themes {
   }
 
   select(id: string) {
+    // Read before the choice changes: what the app is showing right now, or
+    // nothing at all for somebody who is following the system.
+    const was = this.id === SYSTEM ? null : this.current
+
     this.id = id
+    // A theme that states both schemes opens on the side the app was already
+    // on. Choosing a theme is not a request to change the light, and taking the
+    // system's preference here would turn one explicit choice into an implicit
+    // one. Somebody who was following the system goes on following it.
+    if (was && !this.side && this.active.variants.length > 1) this.setSide(was)
+
     this.apply()
     localStorage.setItem(STORAGE_KEY, id)
+  }
+
+  private setSide(scheme: Scheme) {
+    this.side = scheme
+    localStorage.setItem(SIDE_KEY, scheme)
   }
 
   setAccent(id: string) {
@@ -180,13 +205,26 @@ class Themes {
     this.paintAccent()
   }
 
-  /** Written straight onto the root element, so it sits above whatever theme
-   *  is underneath, including one loaded from a file. */
+  /** Whether the accent belongs to the theme rather than to the reader. What
+   *  makes the row of swatches worth showing. */
+  readonly accentIsTheme = $derived(this.active.ownAccent === true)
+
+  /** Written straight onto the root element, so it sits above whatever theme is
+   *  underneath, including one loaded from a file.
+   *
+   *  Except where the theme brought an accent of its own, which is the one thing
+   *  that outranks the reader's colour: a theme is chosen from a picture of it,
+   *  and repainting a third of that picture afterwards would make the picture a
+   *  lie. Taken off first either way, so the theme underneath is uncovered
+   *  rather than left with yesterday's colour written over it. */
   private paintAccent() {
     const style = document.documentElement.style
-    for (const [token, value] of Object.entries(accentTokens(this.accent, this.current))) {
-      style.setProperty(token, value)
-    }
+    const tokens = accentTokens(this.accent, this.current)
+
+    for (const token of Object.keys(tokens)) style.removeProperty(token)
+    if (this.accentIsTheme) return
+
+    for (const [token, value] of Object.entries(tokens)) style.setProperty(token, value)
   }
 
   /** The rail's one-click switch: jump to the counterpart scheme. An explicit
@@ -199,8 +237,7 @@ class Themes {
     const wanted: Scheme = this.current === 'dark' ? 'light' : 'dark'
 
     if (this.active.variants.length > 1) {
-      this.side = wanted
-      localStorage.setItem(SIDE_KEY, wanted)
+      this.setSide(wanted)
       this.apply()
       return
     }

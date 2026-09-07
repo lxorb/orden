@@ -18,7 +18,7 @@
   import { type Scheme, theme } from './theme.svelte'
   import { viewport } from './viewport.svelte'
   import type { StoreTheme } from './themes/registry'
-  import { FRAME, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
+  import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
   import { PAINT, store } from './themes/store.svelte'
 
   const STYLE_ID = 'nib-theme-miniatures'
@@ -53,8 +53,10 @@
   let previewing = $state<Scheme | null>(null)
 
   /** The sample note, in whatever language the app is in. Built once per
-   *  language rather than once per card: thirty cards show the same note. */
+   *  language rather than once per card: thirty cards show the same note. The
+   *  preview shows more of the same one, since it has the room. */
   const sample = $derived(sampleHtml())
+  const fullSample = $derived(sampleHtml(true))
 
   // Escape closes whichever overlay is on top, and Back does the same on a
   // phone. Inside the settings, so this is a second overlay over that one.
@@ -101,9 +103,12 @@
     if (!store.open || !themes.length) return
 
     const frame = requestAnimationFrame(() => {
-      if (performance.getEntriesByName(`${PAINT}:index`).length) {
-        performance.measure(PAINT, `${PAINT}:index`)
-      }
+      if (!performance.getEntriesByName(`${PAINT}:index`).length) return
+
+      performance.measure(PAINT, `${PAINT}:index`)
+      // Taken away once it is spent, so a later re-render cannot be measured
+      // against a catalogue that arrived minutes ago.
+      performance.clearMarks(`${PAINT}:index`)
     })
 
     return () => cancelAnimationFrame(frame)
@@ -121,6 +126,14 @@
 
     const pointed = hovered === one.id && one.variants.length > 1
     return pointed && !wanted ? (shows === 'dark' ? 'light' : 'dark') : shows
+  }
+
+  /** The one tag worth putting on a card. A theme that tags itself `light` is
+   *  saying what the miniature above the line already says, and saying it wrong
+   *  half the time for a pair; so the scheme words are passed over and the first
+   *  tag that describes the mood is taken instead. */
+  function moodOf(one: StoreTheme): string | undefined {
+    return one.tags.find((tag) => tag !== 'light' && tag !== 'dark')
   }
 
   /** What the swatches show for the theme being previewed: whichever scheme it
@@ -215,8 +228,8 @@
                 <span class="who">
                   <span class="name">{one.name}</span>
                   <span class="by"
-                    >{one.author}{#if one.tags[0]}
-                      · {one.tags[0]}{/if}</span
+                    >{one.author}{#if moodOf(one)}
+                      · {moodOf(one)}{/if}</span
                   >
                 </span>
                 {@render mark(one)}
@@ -255,73 +268,86 @@
   {@const scheme = schemeOf(one, previewing)}
 
   <div class="full" in:fly={{ y: 8, duration: 180, easing: cubicOut }}>
-    <div class="frame big {FRAME}" data-palette={one.id} data-theme={scheme}>
-      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      <div class="nib-mini-page">{@html sample}</div>
-    </div>
-
-    <!-- A pair is looked at from both sides before it is chosen. -->
-    {#if one.variants.length > 1}
-      <div class="sides">
-        {#each one.variants as variant (variant)}
-          <button class="side" class:at={variant === scheme} onclick={() => (previewing = variant)}>
-            {variant === 'light' ? t('Light') : t('Dark')}
-          </button>
-        {/each}
+    <div class="shown">
+      <div
+        class="frame big {FRAME}"
+        data-palette={one.id}
+        data-theme={scheme}
+        style:--mini-page="{FULL_HEIGHT}px"
+      >
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        <div class="nib-mini-page">{@html fullSample}</div>
       </div>
-    {/if}
 
-    <div class="palette">
-      {#each swatchesOf(one, scheme) as swatch (swatch.token)}
-        <span class="chip" style:--chip={swatch.value} title={swatch.token}></span>
-      {/each}
-    </div>
-
-    {#if one.description}
-      <p class="says">{one.description}</p>
-    {/if}
-
-    <div class="facts">
-      <span>{one.author}</span>
-      <span>{one.version}</span>
-      {#if one.licence}<span>{one.licence}</span>{/if}
-      {#each one.tags as tag (tag)}<span class="tag">{tag}</span>{/each}
-    </div>
-
-    <div class="row">
-      {#if store.installed(one.id) && !store.updatable(one)}
-        <button
-          class="primary"
-          disabled={store.using(one.id) || store.working === one.id}
-          onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
-        >
-        <button
-          class="quiet"
-          disabled={store.working === one.id}
-          onclick={() => void store.remove(one.id)}>{t('Remove')}</button
-        >
-      {:else}
-        <button
-          class="primary"
-          disabled={store.working === one.id}
-          onclick={() => void store.install(one)}
-          >{store.updatable(one) ? t('Update') : t('Install')}</button
-        >
+      <!-- A pair is looked at from both sides before it is chosen. -->
+      {#if one.variants.length > 1}
+        <div class="sides">
+          {#each one.variants as variant (variant)}
+            <button
+              class="side"
+              class:at={variant === scheme}
+              onclick={() => (previewing = variant)}
+            >
+              {variant === 'light' ? t('Light') : t('Dark')}
+            </button>
+          {/each}
+        </div>
       {/if}
     </div>
 
-    {#if store.error}
-      <p class="note bad">{t(store.error)}</p>
-    {/if}
+    <div class="about">
+      <div class="palette">
+        {#each swatchesOf(one, scheme) as swatch (swatch.token)}
+          <span class="chip" style:--chip={swatch.value} title={swatch.token}></span>
+        {/each}
+      </div>
 
-    <!-- What the theme asked for and did not get. Said once, plainly, under the
-         thing it is about: a theme with one line the app will not apply is still
-         a theme, and pretending otherwise would be the lie. -->
-    {#if store.refused.length && store.installed(one.id)}
-      <p class="note">
-        {t('{count} things in this theme were left out.', { count: store.refused.length })}
-      </p>
-    {/if}
+      {#if one.description}
+        <p class="says">{one.description}</p>
+      {/if}
+
+      <div class="facts">
+        <span>{one.author}</span>
+        <span>{one.version}</span>
+        {#if one.licence}<span>{one.licence}</span>{/if}
+        {#each one.tags as tag (tag)}<span class="tag">{tag}</span>{/each}
+      </div>
+
+      <div class="row">
+        {#if store.installed(one.id) && !store.updatable(one)}
+          <button
+            class="primary"
+            disabled={store.using(one.id) || store.working === one.id}
+            onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
+          >
+          <button
+            class="quiet"
+            disabled={store.working === one.id}
+            onclick={() => void store.remove(one.id)}>{t('Remove')}</button
+          >
+        {:else}
+          <button
+            class="primary"
+            disabled={store.working === one.id}
+            onclick={() => void store.install(one)}
+            >{store.updatable(one) ? t('Update') : t('Install')}</button
+          >
+        {/if}
+      </div>
+
+      {#if store.error}
+        <p class="note bad">{t(store.error)}</p>
+      {/if}
+
+      <!-- What the theme asked for and did not get. Said once, plainly, under
+           the thing it is about: a theme with one line the app will not apply is
+           still a theme, and pretending otherwise would be the lie. -->
+      {#if store.refused.length && store.installed(one.id)}
+        <p class="note">
+          {t('{count} things in this theme were left out.', { count: store.refused.length })}
+        </p>
+      {/if}
+    </div>
   </div>
 {/snippet}
 
@@ -342,7 +368,7 @@
     left: 50%;
     translate: -50% 0;
     width: min(52rem, calc(100vw - 4rem));
-    height: 70vh;
+    height: 68vh;
     z-index: 45;
     display: grid;
     grid-template-rows: auto 1fr;
@@ -492,15 +518,15 @@
   /* The miniature. Its own colours come from the theme; the size is the card's
      business, and the scale is what turns a note into a miniature of one. */
   .frame {
-    --mini-scale: 0.3;
+    --mini-scale: 0.62;
     width: 100%;
-    aspect-ratio: 16 / 10;
     border-bottom: 1px solid var(--line);
   }
 
+  /* Not scaled at all: the preview is the reading view at the size a note is
+     really read at, so what is being judged is the thing itself. */
   .frame.big {
-    --mini-scale: 0.62;
-    aspect-ratio: 16 / 9;
+    --mini-scale: 1;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
   }
@@ -566,10 +592,21 @@
 
   /* ── The full preview ──────────────────────────────────────────── */
 
+  /* The sample takes the room; what is known about the theme stands beside it,
+     so the sheet is the same size whichever half of the store is showing. */
   .full {
+    display: grid;
+    grid-template-columns: 1fr 16rem;
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  .shown,
+  .about {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    min-width: 0;
   }
 
   .sides {
@@ -600,14 +637,14 @@
   .palette {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
   }
 
   /* A ring rather than a border, so the chip is only the colour it names and a
      colour the same as the surface still has an edge. */
   .chip {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: var(--radius-sm);
     background: var(--chip);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
@@ -707,6 +744,12 @@
 
     .grid {
       grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    }
+
+    /* No room for two columns, so the sample and what is known about it stack
+       the way every other pane does on a phone. */
+    .full {
+      grid-template-columns: 1fr;
     }
   }
 </style>
