@@ -125,6 +125,30 @@ describe('what a theme may not set', () => {
     expect(reviewed.css).toBe('')
   })
 
+  test('a name spelled with a CSS escape is not the name it spells', () => {
+    // `p\6fsition` is how a browser reads `position`. Nothing here un-escapes
+    // anything, and both whitelists match the text as written, so an escape can
+    // only ever turn an allowed name into one that is not on the list. Written
+    // out as a test because that is a property of the design and not an
+    // accident: whitelisting the raw text is what makes it true.
+    const reviewed = review(String.raw`#write p { p\6fsition: fixed; }`)
+
+    expect(reviewed.css).toBe('')
+    expect(reviewed.refused[0]).toContain('is not a property a theme may set')
+
+    const token = review(String.raw`[data-theme='dark'] { --b\67 : red; }`)
+    expect(token.css).toBe('')
+  })
+
+  test('a brace inside a string costs the rule rather than letting it out', () => {
+    // The scanner follows quotes to find the end of the block, so the block ends
+    // where it should; a brace left in the body then means either nesting or a
+    // string, and refusing both is the safe way round.
+    const reviewed = review(`[data-theme='dark'] { --a: "{"; --bg: red; }`)
+
+    expect(reviewed.css).toBe('')
+  })
+
   test('refuses a file too big to be a theme', () => {
     const reviewed = review(tokens(`--bg: #000;`.repeat(9000)))
 
