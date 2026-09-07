@@ -125,7 +125,7 @@
   // `window.nib` is the editor view; this is the surrounding app state.
   if (import.meta.env.DEV) {
     Object.assign(window, {
-      nibApp: { account, sync, workspace, settings, modes, theme, viewport },
+      nibApp: { account, sync, workspace, settings, modes, theme, viewport, links },
     })
   }
 

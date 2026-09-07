@@ -13,11 +13,13 @@ import type { Camera } from './graph-camera'
 import { SMALLEST_DOT } from './graph-camera'
 import type { NoteGraph } from './graph'
 
-/** How wide a note is drawn, in graph units, by how many links it has. The
- *  square root, so a note with a hundred links is noticeably bigger than one
- *  with four and not twenty five times bigger. */
+/** How wide a note is drawn, in graph units, by how many links it has. The square
+ *  root, so a note with a hundred links is noticeably bigger than one with four
+ *  and not twenty five times bigger, and a ceiling on top of that: past a few
+ *  dozen links the only thing a bigger circle says is that it covers the notes
+ *  behind it. */
 export function radiusOf(degree: number): number {
-  return 3.2 + Math.sqrt(degree) * 1.15
+  return 3 + Math.min(7, Math.sqrt(degree))
 }
 
 /** How faint everything that is not being pointed at goes. */
@@ -128,7 +130,9 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
     if (px < -margin || px > width + margin || py < -margin || py > height + margin) continue
 
     const radius = Math.max(SMALLEST_DOT, (radii[one] ?? 0) * scale)
-    const brought = !highlighting || lit[one] !== 0
+    // With nothing hovered there is nothing to bring forward: the whole picture
+    // is drawn plainly, at full strength.
+    const brought = highlighting && lit[one] !== 0
 
     const path =
       one === current
