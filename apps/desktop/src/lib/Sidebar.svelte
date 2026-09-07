@@ -153,9 +153,11 @@
     query.trim().length >= 2 ? workspace.bookmarks.forSearch(query) : null,
   )
 
-  /** A bookmarked search puts its words back in the box and runs them. */
+  /** A bookmarked search puts its words back in the box and runs them. The
+   *  panel is named rather than shown, because `showPanel` is a switch and
+   *  would shut a search panel that was already open. */
   function runBookmarked(text: string) {
-    workspace.showPanel('search')
+    if (workspace.panel !== 'search') workspace.showPanel('search')
     onQuery(text)
   }
 
