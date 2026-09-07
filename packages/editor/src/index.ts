@@ -1,5 +1,5 @@
 export { createEditor, type EditorOptions, editorState, type StateOptions } from './editor'
-export { HeldState } from './held'
+export { HeldState, type StateView } from './held'
 export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
 export {
   clearFormatting,
@@ -72,5 +72,5 @@ export {
 } from './shortcuts'
 export { caretLine, showLine, topLine } from './scroll'
 export { EditorView } from '@codemirror/view'
-export { EditorState } from '@codemirror/state'
-export type { StateCommand, StateEffect, Text, Transaction } from '@codemirror/state'
+export { EditorState, StateEffect } from '@codemirror/state'
+export type { StateCommand, Text, Transaction, TransactionSpec } from '@codemirror/state'

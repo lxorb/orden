@@ -2,6 +2,7 @@
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
+  import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
 
   let element = $state<HTMLDivElement>()
@@ -39,6 +40,10 @@
       left: px('--inset-left'),
     }
   }
+
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts.
+  $effect(() => (menu.open ? overlays.show(() => menu.hide()) : undefined))
 
   // A desktop menu opens at the pointer and is flipped back inside the
   // window when it would run off an edge. A phone's callout goes above the
@@ -113,7 +118,6 @@
   onclick={() => menu.hide()}
   onblur={() => menu.hide()}
   onresize={() => menu.hide()}
-  onkeydown={(event: KeyboardEvent) => event.key === 'Escape' && menu.hide()}
 />
 
 {#if menu.open}

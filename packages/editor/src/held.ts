@@ -15,20 +15,21 @@
  *  once the window is another width. */
 
 import type { EditorState, StateEffect, TransactionSpec } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
 import type { DocView, SharedDoc } from './shared'
+
+/** As much of a view as a swap needs: the state it is holding, a way to hand it
+ *  another one, and where it is scrolled to. A CodeMirror `EditorView` is one; so
+ *  is what a test without a DOM hands over. */
+export interface StateView extends DocView {
+  setState(state: EditorState): void
+  scrollSnapshot(): StateEffect<unknown>
+}
 
 export class HeldState implements DocView {
   private held: EditorState
   /** Where the note was left, as an effect a view can be handed. Null for a note
    *  nobody has read yet, which opens at its top. */
   private place: StateEffect<unknown> | null
-  /** The same place as a pixel offset, for the scroller to start from. Not what
-   *  puts the note back - line heights are estimates until they are measured, so
-   *  the offset alone lands on the wrong line - but starting the scroller near
-   *  the answer means CodeMirror renders the right part of the note first time
-   *  instead of rendering its top and then the place it was asked for. */
-  private offset = 0
 
   private constructor(
     private readonly note: SharedDoc,
@@ -60,7 +61,7 @@ export class HeldState implements DocView {
    *  on to another note, and to hold the place until the pane settles it. */
   static shownIn(
     note: SharedDoc,
-    view: EditorView,
+    view: StateView,
     place: StateEffect<unknown> | null = null,
   ): HeldState {
     return new HeldState(note, view.state, place)
@@ -90,7 +91,7 @@ export class HeldState implements DocView {
    *  is still being handled. CodeMirror measures and scrolls before the frame is
    *  painted, so the note appears already where it was left rather than at its
    *  top for a frame or two. */
-  give(view: EditorView, effects: readonly StateEffect<unknown>[] = []) {
+  give(view: StateView, effects: readonly StateEffect<unknown>[] = []) {
     // The view takes this state's place at the document: two of them holding
     // the same words would each be sent the other's changes.
     this.note.leave(this)
@@ -102,18 +103,17 @@ export class HeldState implements DocView {
   /** The place and everything the app has to say, in one transaction, into a view
    *  already holding this state. What `give` finishes with, and what a view built
    *  on this note in the first place needs on its own. */
-  settle(view: EditorView, effects: readonly StateEffect<unknown>[] = []) {
+  settle(view: StateView, effects: readonly StateEffect<unknown>[] = []) {
     const all = this.place ? [this.place, ...effects] : effects
     if (all.length) view.dispatch({ effects: [...all] })
   }
 
   /** Takes the note back when the view moves on to another one, with wherever
    *  the reader had got to in it. */
-  take(view: EditorView) {
+  take(view: StateView) {
     this.note.leave(view)
     this.held = view.state
     this.place = view.scrollSnapshot()
-    this.offset = view.scrollDOM.scrollTop
     this.note.join(this)
   }
 
@@ -124,7 +124,7 @@ export class HeldState implements DocView {
 
   /** The view showing this note is going. The document lets the view go; nothing
    *  is kept, since the tab it belonged to is going with it. */
-  close(view: EditorView) {
+  close(view: StateView) {
     this.note.leave(view)
   }
 }

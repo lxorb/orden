@@ -8,6 +8,7 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
 
   interface Option {
@@ -112,10 +113,6 @@
         if (chosen) choose(chosen.value)
         break
       }
-      case 'Escape':
-        event.preventDefault()
-        close()
-        break
       case 'Tab':
         close()
         break
@@ -139,6 +136,9 @@
   }
 
   // Back closes the sheet before it leaves the app.
+  // A dropdown can be over another overlay - one inside the settings, say -
+  // so Escape closes it and leaves what is underneath standing.
+  $effect(() => (open ? overlays.show(close) : undefined))
   $effect(() => closeOnBack(open && viewport.phone, close))
 </script>
 

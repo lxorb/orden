@@ -33,6 +33,11 @@
      accent goes to `--accent-press`. Set per theme below, where the surfaces
      are, so "deeper" means darker on light and lighter on dark. */
 
+  /* Our own scrollbar: the strip it lives in, and the thumb inside that. See
+     scrollbar.ts and the rules in base.css. */
+  --scrollbar-width: 10px;
+  --scrollbar-thumb: 6px;
+
   --rail-width: 46px;
   --sidebar-width: 244px;
   --titlebar-height: 38px;

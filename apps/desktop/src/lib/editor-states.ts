@@ -8,7 +8,7 @@
  *
  *  One of these per pane, because a tab lives in exactly one pane. */
 
-import { type EditorView, HeldState, type SharedDoc, type StateEffect } from '@nib/editor'
+import { HeldState, type SharedDoc, type StateEffect, type StateView } from '@nib/editor'
 
 export class EditorStates {
   private readonly held = new Map<string, HeldState>()
@@ -33,7 +33,7 @@ export class EditorStates {
 
   /** The note the pane's view was built on; see `HeldState.shownIn`. `place` is
    *  where that note was last being read, which the first `show` settles. */
-  started(tabId: string, note: SharedDoc, view: EditorView, place: StateEffect<unknown> | null) {
+  started(tabId: string, note: SharedDoc, view: StateView, place: StateEffect<unknown> | null) {
     this.held.set(tabId, HeldState.shownIn(note, view, place))
     this.showing = tabId
   }
@@ -62,7 +62,7 @@ export class EditorStates {
    *  of it. Answers whether the state had to be built, which is the difference
    *  between a warm switch and a cold one. */
   show(
-    view: EditorView,
+    view: StateView,
     tabId: string,
     build: () => HeldState,
     effects: readonly StateEffect<unknown>[] = [],
@@ -102,7 +102,7 @@ export class EditorStates {
 
   /** Lets go of all of them: the pane has gone. The one on show belongs to the
    *  view, which is about to be destroyed, so its document lets the view go. */
-  releaseAll(view: EditorView) {
+  releaseAll(view: StateView) {
     for (const [id, state] of this.held) {
       if (id === this.showing) state.close(view)
       else state.release()

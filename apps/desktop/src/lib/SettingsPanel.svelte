@@ -1,5 +1,6 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
@@ -10,6 +11,7 @@
   import McpSetup from './McpSetup.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
+  import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
@@ -274,6 +276,9 @@
     viewport.phone ? { x, duration: 200, easing: cubicOut } : { duration: 0 }
 
   // Back closes this before it leaves the app: the pane first, then the sheet.
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts.
+  $effect(() => (settings.open ? overlays.show(() => (settings.open = false)) : undefined))
   $effect(() => closeOnBack(settings.open, () => (settings.open = false)))
   $effect(() => closeOnBack(settings.open && !settings.listing, () => (settings.listing = true)))
 </script>
@@ -306,7 +311,7 @@
     {/if}
 
     {#if !viewport.phone || settings.listing}
-      <nav data-scrolls in:fly={enter(-24)}>
+      <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
         {#if !viewport.phone}
           <h1>{t('Settings')}</h1>
         {/if}
@@ -341,7 +346,7 @@
     {/if}
 
     {#if !viewport.phone || !settings.listing}
-      <div class="body" data-scrolls in:fly={enter(24)}>
+      <div class="body" data-scrolls use:scrollbar={settings.section} in:fly={enter(24)}>
         {#if query && !viewport.phone}
           <div class="pane">
             <h2>{t('Search settings')}</h2>

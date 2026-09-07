@@ -226,6 +226,73 @@ select option {
 
 /* ── Scrollbars ────────────────────────────────────── */
 
+/* Our own, over the scrollers the app draws it on; see scrollbar.ts. Away while
+   nothing moves, in on a scroll or a hover, and eased into its new shape when
+   the note under it becomes another one. */
+.nib-scrollbar {
+  position: absolute;
+  width: var(--scrollbar-width);
+  z-index: 4;
+  opacity: 0;
+  /* Only the thumb can be grabbed; the track is not in the way of the text. */
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+/* Nothing to say about a scroller whose content fits. */
+.nib-scrollbar:not(.is-needed) .nib-scrollbar-thumb {
+  display: none;
+}
+
+.nib-scrollbar.is-lit.is-needed {
+  opacity: 1;
+}
+
+.nib-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  width: var(--scrollbar-thumb);
+  border-radius: 99px;
+  background: var(--scrollbar);
+  pointer-events: auto;
+  transition: background var(--dur-fast) var(--ease-out);
+  /* The scroll itself must be answered in the frame it happened in, so the
+     thumb only eases while it is being asked to change its mind. */
+  will-change: transform;
+}
+
+@media (hover: hover) {
+  .nib-scrollbar-thumb:hover {
+    background: var(--scrollbar-hover);
+  }
+}
+
+.nib-scrollbar.is-held .nib-scrollbar-thumb {
+  background: var(--muted);
+}
+
+/* The note or the pane changed: the thumb shapes itself into its new place
+   rather than appearing in it. Zero under prefers-reduced-motion, where every
+   duration token is. */
+.nib-scrollbar.is-settling .nib-scrollbar-thumb {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    height var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+/* Where our bar is, the platform's is not: two bars for one scroller, one of
+   them reserving a gutter of the writing column, is not a design. */
+.nib-scrolls {
+  scrollbar-width: none;
+}
+
+.nib-scrolls::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 /* The same bar on every platform. Only where a pointer can actually grab it:
    touch scrollbars are already transient overlays, and styling them would make
    them permanent and reserve layout width on a screen with none to give. */

@@ -5,6 +5,7 @@
   import { appCommands, type Command } from './commands'
   import { t } from './i18n.svelte'
   import { rank } from './fuzzy'
+  import { overlays } from './overlays'
   import { workspace, type Entry } from './workspace.svelte'
 
   // eslint-disable-next-line prefer-const -- `open` is bindable, and a $props() pattern cannot be split
@@ -52,13 +53,18 @@
     query = ''
   }
 
-  function onKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      open = false
-      query = ''
-      return
-    }
+  /** Closed, and forgotten: the next opening starts on an empty field rather
+   *  than on whatever was typed last time. */
+  function dismiss() {
+    open = false
+    query = ''
+  }
 
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts.
+  $effect(() => (open ? overlays.show(dismiss) : undefined))
+
+  function onKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || (event.key === 'n' && event.ctrlKey)) {
       event.preventDefault()
       cursor = (cursor + 1) % Math.max(results.length, 1)

@@ -29,6 +29,11 @@ interface WindowLike {
   destroy(): Promise<void>
   setTitle(title: string): Promise<void>
   onCloseRequested(handler: (event: { preventDefault(): void }) => void): Promise<() => void>
+  /** Every time the window changes size, whoever changed it: a corner dragged, a
+   *  maximised window pulled off the top of the screen, Win and an arrow key, a
+   *  double click on the bar. What the title bar's own button reads its state
+   *  from, since it is only one of the ways the state changes. */
+  onResized(handler: () => void): Promise<() => void>
 }
 
 // Each answers a promise because the desktop's does; none of them waits on
@@ -65,6 +70,12 @@ const browserWindow: WindowLike = {
 
     window.addEventListener('beforeunload', listener)
     return Promise.resolve(() => window.removeEventListener('beforeunload', listener))
+  },
+  // A page is resized by the browser's own window, which it hears about the
+  // ordinary way.
+  onResized: (handler) => {
+    window.addEventListener('resize', handler)
+    return Promise.resolve(() => window.removeEventListener('resize', handler))
   },
 }
 

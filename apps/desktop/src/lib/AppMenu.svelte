@@ -4,6 +4,7 @@
   import type { EditorView } from '@nib/editor'
   import { appMenu, type MenuGroup, SPLIT } from './app-menu'
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
   import { t } from './i18n.svelte'
   import { viewport } from './viewport.svelte'
 
@@ -39,14 +40,11 @@
     }
   }
 
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts.
+  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
   $effect(() => closeOnBack(open, () => (open = false)))
 </script>
-
-<svelte:window
-  onkeydown={(event: KeyboardEvent) => {
-    if (event.key === 'Escape' && open) open = false
-  }}
-/>
 
 <button
   class="hamburger"

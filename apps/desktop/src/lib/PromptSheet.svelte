@@ -1,5 +1,6 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { rank } from './fuzzy'
@@ -34,12 +35,11 @@
     cursor = 0
   })
 
-  function onFindKey(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      prompt.dismiss()
-      return
-    }
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts.
+  $effect(() => (prompt.open ? overlays.show(() => prompt.dismiss()) : undefined))
 
+  function onFindKey(event: KeyboardEvent) {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
       cursor = (cursor + 1) % Math.max(matches.length, 1)
@@ -78,7 +78,6 @@
           bind:value={prompt.value}
           placeholder={prompt.placeholder}
           spellcheck="false"
-          onkeydown={(event) => event.key === 'Escape' && prompt.dismiss()}
           use:selectAll
         />
 
@@ -161,10 +160,6 @@
     </form>
   </div>
 {/if}
-
-<svelte:window
-  onkeydown={(event: KeyboardEvent) => prompt.open && event.key === 'Escape' && prompt.dismiss()}
-/>
 
 <style>
   .scrim {

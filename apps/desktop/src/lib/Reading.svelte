@@ -20,6 +20,7 @@
   import { placesOf, rangeOf, wordsOf, type Words } from './reading/find'
   import { type Anchor, headingOffsets, positionAt, topFor } from './reading/places'
   import { readingHtml } from './reading/render'
+  import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { openExternal } from './tauri'
   import { theme } from './theme.svelte'
@@ -424,6 +425,7 @@
   <div
     class="scroller"
     tabindex="-1"
+    use:scrollbar={tab.id}
     bind:this={scroller}
     onscroll={moved}
     onclick={follow}

@@ -28,7 +28,7 @@ const NEEDS: Record<string, string> = {
   setTitle: 'core:window:allow-set-title',
 }
 
-const EVENTS = new Set(['onCloseRequested'])
+const EVENTS = new Set(['onCloseRequested', 'onResized'])
 
 /** The method names declared on the `WindowLike` interface. */
 function windowMethods(): string[] {

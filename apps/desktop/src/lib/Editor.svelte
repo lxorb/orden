@@ -37,6 +37,7 @@
   } from '@nib/editor'
   import { EditorStates } from './editor-states'
   import { modes } from './modes.svelte'
+  import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import type { Tab } from './workspace.svelte'
 
@@ -76,6 +77,8 @@
   let host: HTMLDivElement
   const rise = firstOfTheSession()
   const states = new EditorStates()
+  /** The pane's own scrollbar, over the editor's scroller. */
+  let bar: OverlayScrollbar | undefined
   /** The index the view has been given. A fresh object means the space changed,
    *  which is what makes every link on screen be drawn again; the same one means
    *  nothing did, and reconfiguring for it would redraw the note for nothing. */
@@ -154,6 +157,9 @@
       untrack(() => placeOf(first)),
     )
     view = created
+    // Our own scrollbar over the editor's scroller: the platform's cannot be
+    // animated and takes a gutter of the writing column. See scrollbar.ts.
+    bar = overlayScrollbar(created.scrollDOM, created.dom)
     if (import.meta.env.DEV) Object.assign(window, { nib: created })
 
     return () => {
@@ -161,6 +167,8 @@
       // changes into a state or a view that no longer exists would be carrying
       // them nowhere.
       states.releaseAll(created)
+      bar?.stop()
+      bar = undefined
       created.destroy()
       view = undefined
       held = undefined
@@ -177,6 +185,9 @@
     const index = notes?.(showing)
     held = index
     states.show(current, showing.id, () => build(showing), fitting(showing, index))
+    // Another note is another length and another place in it, so the bar shapes
+    // itself into its new size rather than appearing in it.
+    bar?.settle()
 
     // A session written by a build that remembered pixels rather than a line has
     // no line to put back. The offset is the best it can do, and it goes on here

@@ -8,6 +8,7 @@
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
   import { menu } from './lib/menu.svelte'
+  import { overlays } from './lib/overlays'
   import Palette from './lib/Palette.svelte'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
@@ -242,6 +243,15 @@
    *  reach on its own are here: the palette is this component's own state,
    *  and full screen is a property of this window. */
   function onKeydown(event: KeyboardEvent) {
+    // Escape closes whatever is over the note, newest first: the settings, a
+    // sheet, the palette, a menu, a dropdown inside one of them. Only when
+    // there is one, so Escape in the file list still clears the selection and
+    // Escape in the editor still steps off a picture. See overlays.ts.
+    if (event.key === 'Escape' && overlays.escape()) {
+      event.preventDefault()
+      return
+    }
+
     shortcuts.handle(event, {
       view,
       palette: () => {

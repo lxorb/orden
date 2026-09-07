@@ -4,12 +4,19 @@
   import Tabs from './Tabs.svelte'
   import { currentWindow, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
+  import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
   import { openFile } from './open-file'
 
   const { onopennotes }: { onopennotes?: () => void } = $props()
 
-  let maximized = $state(false)
+  /** What the middle button says. Read off the window itself rather than off its
+   *  own clicks, because dragging a maximised window off the top of the screen
+   *  restores it too; see window-state.svelte.ts. */
+  const shape = new WindowState()
+  const maximized = $derived(shape.maximized)
+
+  $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
   const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
@@ -42,9 +49,7 @@
 
   async function toggleMaximize() {
     if (!isDesktop) return
-    const win = await currentWindow()
-    await win.toggleMaximize()
-    maximized = await win.isMaximized()
+    await shape.toggle(await currentWindow())
   }
 
   async function close() {

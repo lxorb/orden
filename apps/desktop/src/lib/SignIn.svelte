@@ -1,5 +1,6 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
   import { t } from './i18n.svelte'
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -114,6 +115,7 @@
   }
 
   // Back closes this before it leaves the app.
+  $effect(() => (account.open ? overlays.show(() => (account.open = false)) : undefined))
   $effect(() => closeOnBack(account.open, () => (account.open = false)))
 </script>
 

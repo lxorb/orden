@@ -7,6 +7,7 @@
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import type { Panel, SortKey } from './workspace.svelte'
+  import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
@@ -237,7 +238,11 @@
   <!-- Rebuilt for each space, and arriving from the side of the rail the new
        space is on. -->
   {#key workspace.activeSpaceId}
-    <div class="body" in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}>
+    <div
+      class="body"
+      use:scrollbar={workspace.panel}
+      in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}
+    >
       {#if workspace.panel === 'tree'}
         {#if workspace.tree}
           <Bookmarks onsearch={runBookmarked} />

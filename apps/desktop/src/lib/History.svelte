@@ -1,5 +1,7 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
+  import { scrollbar } from './scrollbar'
   import { t } from './i18n.svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -60,6 +62,7 @@
     open = false
   }
 
+  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
   $effect(() => closeOnBack(open, () => (open = false)))
 </script>
 
@@ -73,7 +76,7 @@
     {:else if !snapshots.length}
       <p class="empty">{t('No earlier versions yet. One is kept each time you save.')}</p>
     {:else}
-      <ul class="versions">
+      <ul class="versions" use:scrollbar>
         {#each snapshots as snapshot (snapshot.path)}
           <li>
             <button

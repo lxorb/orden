@@ -1,5 +1,6 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
+  import { overlays } from './overlays'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -29,6 +30,9 @@
     open = false
   }
 
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts.
+  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
   $effect(() => closeOnBack(open, () => (open = false)))
 </script>
 
@@ -42,7 +46,6 @@
       bind:value={query}
       placeholder={t('Search icons - work, journal, money…')}
       spellcheck="false"
-      onkeydown={(event) => event.key === 'Escape' && (open = false)}
     />
 
     {#if !names.length}
