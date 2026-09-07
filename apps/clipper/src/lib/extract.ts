@@ -1,0 +1,279 @@
+/** A page, reduced to the part worth keeping.
+ *
+ *  Everything here works on a DOM and nothing here knows about markdown: it
+ *  runs in the content script against the live page, and in the tests against
+ *  saved pages parsed by jsdom, and both get the same answer. What comes out is
+ *  an HTML string whose every address is absolute, so the note reads the same
+ *  from anywhere.
+ *
+ *  The article itself is found by Readability, which is the same extractor
+ *  Firefox's reader mode uses. When it finds nothing - a page that is a list, a
+ *  forum thread, an app - the selection stands in for it, and the body stands in
+ *  for that. */
+
+import { Readability } from '@mozilla/readability'
+import { NOT_CONTENT } from './elements'
+import type { Kind } from './kinds'
+
+/** Where a clip came from. All the note's front matter needs, and small enough
+ *  to travel between the popup and the service worker without the article. */
+export interface Origin {
+  kind: Kind
+  /** What the note records, and what every address in it resolves against. */
+  url: string
+  title: string
+  tags: string[]
+}
+
+export interface Source extends Origin {
+  /** The content as HTML, absolute throughout. Empty for a clipped link, which
+   *  is an address and nothing else. */
+  html: string
+}
+
+/** Where an image really is, for the several ways a page can defer loading one.
+ *  A lazy image carries a placeholder in `src` and the real address in an
+ *  attribute of the site's own choosing; these four are what the common
+ *  libraries write. */
+const LAZY = ['data-src', 'data-original', 'data-lazy-src', 'data-actualsrc']
+
+/** A transparent pixel or a blurred thumbnail stands in until a lazy image
+ *  loads. Neither is worth a request, let alone a blob. */
+function isPlaceholder(src: string): boolean {
+  return !src || src.startsWith('data:')
+}
+
+/** The widest candidate a `srcset` offers. The descriptors are either widths
+ *  (`640w`) or pixel ratios (`2x`); either way the largest number wins, and an
+ *  entry with no descriptor counts as one. */
+export function widestOf(srcset: string): string | null {
+  let best: { url: string; weight: number } | null = null
+
+  for (const candidate of srcset.split(',')) {
+    const parts = candidate.trim().split(/\s+/)
+    const url = parts[0]
+    if (!url) continue
+
+    const descriptor = parts[1] ?? '1x'
+    const weight = Number.parseFloat(descriptor) || 1
+    if (!best || weight >= best.weight) best = { url, weight }
+  }
+
+  return best?.url ?? null
+}
+
+function resolved(value: string, base: string): string | null {
+  try {
+    return new URL(value, base).href
+  } catch {
+    return null
+  }
+}
+
+/** Every address in the tree made absolute against the page it came from, and
+ *  every deferred image given the address it was deferring. A link the browser
+ *  would run rather than follow loses its href and stays as words. */
+export function absolutise(root: ParentNode, base: string): void {
+  for (const link of root.querySelectorAll('a[href]')) {
+    const href = link.getAttribute('href') ?? ''
+    const absolute = /^\s*javascript:/i.test(href) ? null : resolved(href, base)
+
+    if (absolute) link.setAttribute('href', absolute)
+    else link.removeAttribute('href')
+  }
+
+  for (const image of root.querySelectorAll('img')) {
+    const found = bestSource(image)
+    const absolute = found ? resolved(found, base) : null
+
+    // Attributes the note has no use for, and which would otherwise keep a
+    // relative address around beside the absolute one.
+    image.removeAttribute('srcset')
+    image.removeAttribute('sizes')
+    for (const name of LAZY) image.removeAttribute(name)
+
+    if (!absolute) {
+      image.remove()
+      continue
+    }
+
+    image.setAttribute('src', absolute)
+
+    // The candidates a `<picture>` held have been read; what is left is a
+    // wrapper the converter would turn into a stray space in front of the
+    // picture.
+    const picture = image.parentElement
+    if (picture?.tagName.toLowerCase() === 'picture') picture.replaceWith(image)
+  }
+}
+
+/** The address an `img` really means, before it is resolved. */
+function bestSource(image: Element): string | null {
+  const src = image.getAttribute('src') ?? ''
+  if (!isPlaceholder(src)) return src
+
+  for (const name of LAZY) {
+    const deferred = image.getAttribute(name)
+    if (deferred) return deferred
+  }
+
+  const own = image.getAttribute('srcset') ?? image.getAttribute('data-srcset')
+  if (own) return widestOf(own)
+
+  // A `<picture>` keeps its candidates in sibling `<source>` elements, and the
+  // `img` inside it may carry nothing at all.
+  const picture = image.parentElement
+  if (picture?.tagName.toLowerCase() === 'picture') {
+    for (const source of picture.querySelectorAll('source[srcset]')) {
+      const widest = widestOf(source.getAttribute('srcset') ?? '')
+      if (widest) return widest
+    }
+  }
+
+  return src || null
+}
+
+/** What a note never contains, plus what the page itself says is decoration. */
+export function clean(root: ParentNode): void {
+  for (const element of root.querySelectorAll(NOT_CONTENT)) element.remove()
+}
+
+/** The tags the page publishes about itself. Sites write them as a comma list
+ *  under `keywords` or one per `article:tag`, so both are read and the result
+ *  is capped: a page that lists forty keywords is describing a site, not an
+ *  article. */
+export function pageTags(document: Document): string[] {
+  const written: string[] = []
+
+  for (const meta of document.querySelectorAll('meta[name], meta[property]')) {
+    const name = (meta.getAttribute('name') ?? meta.getAttribute('property') ?? '').toLowerCase()
+    if (name !== 'keywords' && name !== 'news_keywords' && name !== 'article:tag') continue
+
+    written.push(...(meta.getAttribute('content') ?? '').split(','))
+  }
+
+  const tags: string[] = []
+  for (const one of written) {
+    const tag = one.trim().replace(/\s+/g, ' ').slice(0, 32)
+    if (tag && !tags.includes(tag)) tags.push(tag)
+  }
+
+  return tags.slice(0, 8)
+}
+
+/** What an address alone suggests a thing is called: the last part of the path,
+ *  or the host when the path says nothing. */
+function titleFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    const last = parsed.pathname.split('/').filter(Boolean).at(-1)
+    return last ? decodeURIComponent(last.replace(/\.[a-z0-9]{1,5}$/i, '')) : parsed.hostname
+  } catch {
+    return url
+  }
+}
+
+/** The page's own name for itself, falling back to its address so a note is
+ *  never called nothing. */
+export function pageTitle(document: Document, url: string): string {
+  return document.title.trim() || titleFromUrl(url)
+}
+
+/** The words a link shows, for the link that was right clicked. The anchor is
+ *  still on the page, so its own text is the truest title there is; a link that
+ *  shows only a picture has none, and the address stands in. */
+export function linkTitle(document: Document, target: string): string {
+  for (const anchor of document.querySelectorAll('a[href]')) {
+    if (anchor.getAttribute('href') === null) continue
+
+    const href = (anchor as HTMLAnchorElement).href
+    if (href !== target) continue
+
+    const said = anchor.textContent.replace(/\s+/g, ' ').trim()
+    if (said) return said.slice(0, 200)
+  }
+
+  return titleFromUrl(target)
+}
+
+/** The HTML of a node, cleaned and made absolute. One place, so the article,
+ *  the selection and the whole body are all treated the same way. */
+function contentOf(node: ParentNode, base: string): string {
+  clean(node)
+  absolutise(node, base)
+
+  const holder = node as { innerHTML?: string }
+  return (holder.innerHTML ?? '').trim()
+}
+
+/** The article, as Readability sees it, or null when it sees none. The document
+ *  is cloned first because Readability rewrites what it is given. */
+function readable(document: Document, url: string): { title: string; html: string } | null {
+  const clone = document.cloneNode(true) as Document
+
+  // Readability strips every class by default, and one of them carries meaning
+  // the note wants: `language-rust` on a code block is how the fence learns
+  // what it is fencing. Nothing else here reads a class, and none of them
+  // reach the markdown, so keeping them costs a little HTML and no risk.
+  const article = new Readability(clone, { keepClasses: true }).parse()
+  if (!article?.content) return null
+
+  const parsed = document.implementation.createHTMLDocument('')
+  parsed.body.innerHTML = article.content
+
+  const html = contentOf(parsed.body, url)
+  if (!html) return null
+
+  const named = article.title?.trim() ?? ''
+  return { title: named === '' ? pageTitle(document, url) : named, html }
+}
+
+/** What is selected, as HTML, or the empty string when nothing is. */
+function selected(document: Document, url: string): string {
+  const selection = document.getSelection()
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return ''
+
+  const holder = document.implementation.createHTMLDocument('')
+  for (let index = 0; index < selection.rangeCount; index++) {
+    holder.body.appendChild(selection.getRangeAt(index).cloneContents())
+  }
+
+  return contentOf(holder.body, url)
+}
+
+/** The whole body, for a page whose article the extractor could not find and
+ *  where nothing is selected. Rough, and better than an empty note. */
+function whole(document: Document, url: string): string {
+  const holder = document.implementation.createHTMLDocument('')
+  holder.body.innerHTML = document.body.innerHTML
+
+  return contentOf(holder.body, url)
+}
+
+/** The page as something to clip, by what was asked for.
+ *
+ *  `page` is the article, and falls back to the selection and then to the whole
+ *  body, so an extractor that finds nothing costs a rougher note rather than no
+ *  note. `link` is the address a link points at, which is the one the menu was
+ *  opened on, or the page's own when the popup asked.
+ *
+ *  `url` is the page. `link` is what was right clicked, if anything was. */
+export function extract(document: Document, kind: Kind, url: string, link?: string): Source {
+  const tags = pageTags(document)
+
+  if (kind === 'link') {
+    const target = link ?? url
+    const title = link ? linkTitle(document, link) : pageTitle(document, url)
+    return { kind, url: target, title, html: '', tags }
+  }
+
+  if (kind === 'selection') {
+    return { kind, url, title: pageTitle(document, url), html: selected(document, url), tags }
+  }
+
+  const article = readable(document, url)
+  if (article) return { kind, url, title: article.title, html: article.html, tags }
+
+  const fallback = selected(document, url) || whole(document, url)
+  return { kind, url, title: pageTitle(document, url), html: fallback, tags }
+}

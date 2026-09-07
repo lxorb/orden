@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Choosing a retention window</title>
+    <meta property="article:tag" content="Operations" />
+    <meta property="article:tag" content="Storage" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <aside class="toc" aria-hidden="true">
+        <ul>
+          <li><a href="#windows">Windows</a></li>
+          <li><a href="#cost">Cost</a></li>
+        </ul>
+      </aside>
+
+      <article>
+        <h1>Choosing a retention window</h1>
+
+        <p>
+          A retention window is a promise about the past. Pick one you can keep, because shortening
+          it later loses data and lengthening it later costs money you did not budget.
+        </p>
+
+        <h2 id="windows">What each window is good for</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Window</th>
+              <th>Recovers from</th>
+              <th align="right">Cost per TB</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>24 hours</td>
+              <td>A bad deploy caught the same day</td>
+              <td align="right">$3</td>
+            </tr>
+            <tr>
+              <td>14 days</td>
+              <td>A slow corruption, a deleted <em>space</em></td>
+              <td align="right">$41</td>
+            </tr>
+            <tr>
+              <td>1 year</td>
+              <td>An audit, a legal hold</td>
+              <td align="right">$1,090</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="cost">Before you commit</h2>
+
+        <ul class="checklist">
+          <li>
+            <input type="checkbox" checked disabled /> Measure what a day of writes actually is
+          </li>
+          <li><input type="checkbox" disabled /> Agree who may ask for a restore</li>
+          <li><input type="checkbox" disabled /> Practise one restore, end to end</li>
+        </ul>
+
+        <p>
+          The old advice was <del>keep everything forever</del> keep what somebody will ask for. See
+          the <a href="/docs/restore">restore runbook</a> and the
+          <a href="https://example.org/standards/retention">industry note</a>.
+        </p>
+      </article>
+    </div>
+  </body>
+</html>

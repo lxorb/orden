@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reading a file without reading a file | Ledgerly Engineering</title>
+    <meta name="keywords" content="rust, io, performance" />
+    <link rel="stylesheet" href="/assets/site.css" />
+    <script src="/assets/analytics.js"></script>
+  </head>
+  <body>
+    <header class="site">
+      <nav>
+        <a href="/">Ledgerly</a>
+        <a href="/blog">Blog</a>
+        <a href="/careers">Careers</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="post">
+        <h1>Reading a file without reading a file</h1>
+        <p class="byline">By <a href="/authors/mira">Mira Halvorsen</a> on 4 March 2026</p>
+
+        <p>
+          Our importer spent <strong>most of its wall clock</strong> in one place, and it was not
+          where anyone expected. The <em>parser</em> was fine. The <code>read_to_string</code> in
+          front of it was not.
+        </p>
+
+        <h2>What the profile said</h2>
+
+        <p>
+          The shape of the problem is easier to see as a list, so here it is as one, with the detail
+          underneath each point:
+        </p>
+
+        <ol>
+          <li>
+            Every ledger file was read whole into memory.
+            <ul>
+              <li>Even the ones we skipped after the first line.</li>
+              <li>Even the ones that had not changed since the last run.</li>
+            </ul>
+          </li>
+          <li>The allocator saw one enormous request per file.</li>
+          <li>Then the parser copied it again, into its own arena.</li>
+        </ol>
+
+        <p>The fix was to stop reading the file:</p>
+
+        <pre><code class="language-rust">let file = File::open(path)?;
+let mapped = unsafe { Mmap::map(&amp;file)? };
+
+for line in mapped.split(|byte| *byte == b'\n') {
+    if !line.starts_with(b"2026-") {
+        continue;
+    }
+    entries.push(Entry::parse(line)?);
+}</code></pre>
+
+        <p>
+          A memory map is not free, and it is not always right. On a network filesystem it is worse
+          than the read it replaces. But our files are local and large, and the numbers moved:
+        </p>
+
+        <blockquote>
+          <p>
+            Nine hundred milliseconds became forty. We did not make the parser faster. We stopped
+            handing it work it had not asked for.
+          </p>
+        </blockquote>
+
+        <h2>The bit that bit us</h2>
+
+        <p>
+          <code>Mmap</code> is <code>unsafe</code> for a reason: another process truncating the file
+          underneath you is undefined behaviour, not an error you can catch. We took a lock.
+        </p>
+
+        <pre>
+$ cargo bench --bench import
+import/small     time:   [39.211 ms 39.884 ms 40.702 ms]
+import/large     time:   [412.09 ms 418.77 ms 426.31 ms]</pre>
+
+        <p>
+          The full patch is <a href="/blog/mmap-import/patch.diff">here</a>, and the benchmark
+          harness is <a href="../bench/README.md">in the same folder</a>.
+        </p>
+      </article>
+    </main>
+
+    <footer class="site">
+      <p>&copy; 2026 Ledgerly. <a href="/legal">Legal</a></p>
+    </footer>
+  </body>
+</html>

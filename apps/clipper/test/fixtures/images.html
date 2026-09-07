@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>The kilns at Roßwein</title>
+    <meta name="news_keywords" content="ceramics, saxony, kilns" />
+  </head>
+  <body>
+    <header>
+      <img src="/assets/logo.svg" alt="Journal" width="120" height="24" />
+    </header>
+
+    <article>
+      <h1>The kilns at Roßwein</h1>
+
+      <p>
+        Two hundred years of firing left the hillside a colour nobody has a name for. The kilns
+        themselves are smaller than the photographs suggest.
+      </p>
+
+      <figure>
+        <img src="photos/kiln-north.jpg" alt="The north kiln, half collapsed" width="900" />
+        <figcaption>The north kiln, photographed in 2019.</figcaption>
+      </figure>
+
+      <p>
+        The clay came from <a href="/places/hainichen">Hainichen</a>, eleven kilometres away, and
+        arrived by cart along what is now the <a href="#route">B169</a>.
+      </p>
+
+      <picture>
+        <source srcset="photos/cart-480.jpg 480w, photos/cart-1600.jpg 1600w" />
+        <img
+          src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+          alt="A clay cart"
+        />
+      </picture>
+
+      <p>
+        A later photograph, loaded lazily by the gallery script, shows the same slope after the
+        works closed:
+      </p>
+
+      <img
+        class="lazy"
+        src=""
+        data-src="/photos/slope-2004.jpg"
+        alt="The slope in 2004"
+        loading="lazy"
+      />
+
+      <p>
+        Nothing here is protected. The site is open, the ground is uneven, and the
+        <svg viewBox="0 0 16 16" width="16" height="16"><path d="M8 1 15 15H1z" /></svg>
+        signs are older than the fence.
+      </p>
+
+      <p>
+        Full gallery: <a href="gallery/">the whole set</a>, and the survey is
+        <a href="https://archive.example.net/rosswein.pdf">a PDF</a>.
+      </p>
+    </article>
+
+    <script>
+      document.querySelectorAll('.lazy').forEach((image) => {
+        image.src = image.dataset.src
+      })
+    </script>
+  </body>
+</html>
