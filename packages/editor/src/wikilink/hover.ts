@@ -1,10 +1,10 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view'
-import { linkTarget } from '@nib/markdown/links'
+import { linkTarget, sectionOf } from '@nib/markdown/links'
 import { label } from '../labels'
 import { modifierHeld } from '../links'
 import { linkAt } from './at'
 import { noteIndex, resolveLink } from './notes'
-import { renderNote, sectionOf } from './preview'
+import { renderNote } from './preview'
 
 /** The note behind a link, while the modifier is held over it.
  *

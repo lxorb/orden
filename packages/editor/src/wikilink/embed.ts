@@ -1,11 +1,11 @@
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { linkTarget, parseWikilink } from '@nib/markdown/links'
+import { linkTarget, parseWikilink, sectionOf } from '@nib/markdown/links'
 import { imageResolver } from '../images'
 import { label } from '../labels'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { NibWidget } from '../live-preview/widget'
-import { renderNote, sectionOf } from './preview'
+import { renderNote } from './preview'
 import type { LinkSpan } from './at'
 import { jumpFor, noteIndex, noteOpener, resolveLink } from './notes'
 

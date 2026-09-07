@@ -13,8 +13,6 @@ import { imageResolver } from '../images'
  *  No resolver is handed to it, so a `[[…]]` inside an embedded note comes out
  *  as its own words. That is what keeps an embed one level deep. */
 
-export { sectionOf } from '@nib/markdown/links'
-
 const REMOTE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
 
 /** Only `&` and `"` matter: what goes back is a URL from the host, into a
