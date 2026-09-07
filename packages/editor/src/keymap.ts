@@ -26,6 +26,7 @@ import {
 } from './commands'
 import { copyMarkdown, pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
+import { redoEdit, undoEdit } from './shared'
 import { bindings, type BindingSpec } from './shortcuts'
 import { insertTableToEdit } from './table/keymap'
 
@@ -142,9 +143,9 @@ function adopt(
 }
 
 /** What an adopted binding may be told about itself that the library's own
- *  entry cannot say. Only aliases so far, and there is no reason to widen it
- *  until something needs it. */
-type Extra = Pick<Partial<BindingSpec>, 'alias'>
+ *  entry cannot say: that it is a second key for the same command, or that
+ *  something other than the library's own command answers to it. */
+type Extra = Pick<Partial<BindingSpec>, 'alias' | 'run'>
 
 /** Takes one of the library's bindings over by name, or fails loudly. A key
  *  the library no longer binds would otherwise become a named shortcut with no
@@ -164,20 +165,30 @@ function claim(
 /** The library's own binding objects that are now spoken for by an id. */
 const adopted = new Set<KeyBinding>()
 
+/** The library's Linux-only redo. Claimed here so its entry goes out of
+ *  `unclaimedKeymap` below and the key is not bound twice; only the key is kept,
+ *  since the command that answers it is now the app's own. */
+const linuxRedo = claim(
+  historyKeymap,
+  (binding) => binding.linux === 'Ctrl-Shift-z',
+  'the Linux redo',
+)
+
 export const standardBindings: BindingSpec[] = [
-  adopt('edit.undo', historyKeymap, 'Mod-z'),
+  // The library's own key, on the app's own undo: a note open in two panes has
+  // one history, which lives with the document rather than in either view. See
+  // shared.ts. Without a shared document these are the library's commands.
+  adopt('edit.undo', historyKeymap, 'Mod-z', { run: undoEdit }),
   // On Linux the library binds Ctrl+Shift+Z as well as Ctrl+Y, through a
   // second entry with no `key` at all. That entry cannot be reached by key,
   // so it is listed as the second key it is - and stays Linux-only, exactly
   // as it was.
-  adopt('edit.redo', historyKeymap, 'Mod-y'),
+  adopt('edit.redo', historyKeymap, 'Mod-y', { run: redoEdit }),
   {
     id: 'edit.redo.alt',
     key: null,
-    linux: 'Ctrl-Shift-z',
-    // Claimed the same way as the rest, so the library's own entry goes out of
-    // `unclaimedKeymap` below and the key is not bound twice.
-    run: claim(historyKeymap, (binding) => binding.linux === 'Ctrl-Shift-z', 'the Linux redo').run,
+    linux: linuxRedo.linux ?? 'Ctrl-Shift-z',
+    run: redoEdit,
     preventDefault: true,
     alias: true,
   },

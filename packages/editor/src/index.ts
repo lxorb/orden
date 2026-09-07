@@ -1,4 +1,5 @@
-export { createEditor, type EditorOptions, replaceDoc } from './editor'
+export { createEditor, type EditorOptions } from './editor'
+export { redoEdit, SharedDoc, undoEdit } from './shared'
 export {
   clearFormatting,
   insertCodeFence,
@@ -8,13 +9,11 @@ export {
   insertPageBreak,
   insertTable,
   openFind,
-  redoEdit,
   setHeading,
   toggleBulletList,
   toggleOrderedList,
   toggleQuote,
   toggleWrap,
-  undoEdit,
 } from './commands'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'

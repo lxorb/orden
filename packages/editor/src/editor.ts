@@ -21,27 +21,21 @@ import { closeFence } from './commands'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richPaste } from './paste'
 import { modeExtensions } from './modes'
+import { type SharedDoc, sharedOf, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
 
-/** Puts a whole document into a view without it being read back as an edit.
- *  The alternative, comparing what came in against what is already there, is
- *  a pass over the whole note, and the reason a large one felt heavy to type
- *  in: every keystroke changed the text the surrounding app held, and the app
- *  handed it straight back. */
-export function replaceDoc(view: EditorView, doc: string) {
-  view.dispatch({
-    changes: { from: 0, to: view.state.doc.length, insert: doc },
-    annotations: external.of(true),
-  })
-}
-
 export interface EditorOptions {
   parent: HTMLElement
   doc?: string
+  /** The document this view is a window onto, when it shares one with the other
+   *  views of the same note; see shared.ts. A view given one starts on its text
+   *  and reports its changes through it rather than through `onChange`. */
+  shared?: SharedDoc
   /** Called with the editor's own text - CodeMirror's rope, not a string, so
-   *  turning it into one is the caller's decision and can wait. */
+   *  turning it into one is the caller's decision and can wait. Only for a view
+   *  that owns its text: a shared document reports its own changes. */
   onChange?: (doc: Text) => void
   /** Called when an image is pasted or dropped; returns the path to insert. */
   onImage?: ImageSink
@@ -68,13 +62,16 @@ export interface EditorOptions {
 
 export function createEditor(options: EditorOptions): EditorView {
   const { parent, doc = '', onChange, onImage, resolveImage, onSelection } = options
-  const { openLink, openNote, nameBlock } = options
-  return new EditorView({
+  const { openLink, openNote, nameBlock, shared } = options
+  const view = new EditorView({
     parent,
+    // The document's own rope, so joining it below finds the text already
+    // there and has nothing to put in.
     state: EditorState.create({
-      doc,
+      doc: shared ? shared.text : doc,
       extensions: [
         history(),
+        sharing(),
         drawSelection(),
         dropCursor(),
         indentOnInput(),
@@ -122,7 +119,13 @@ export function createEditor(options: EditorOptions): EditorView {
         EditorView.updateListener.of((update) => {
           // Text this view was handed is not news to whoever handed it over.
           const pushed = update.transactions.some((one) => one.annotation(external))
-          if (update.docChanged && !pushed) onChange?.(update.state.doc)
+          if (update.docChanged && !pushed) {
+            // A shared note is one document in several views: the change goes to
+            // it, and it is the document that says the note changed.
+            const document = sharedOf(update.state)
+            if (document) document.local(update.changes, update.state.selection, update.view)
+            else onChange?.(update.state.doc)
+          }
           if (update.selectionSet || update.docChanged || update.focusChanged) {
             onSelection?.(update.view)
           }
@@ -130,4 +133,7 @@ export function createEditor(options: EditorOptions): EditorView {
       ],
     }),
   })
+
+  shared?.join(view)
+  return view
 }
