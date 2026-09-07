@@ -1,24 +1,54 @@
 <script lang="ts">
   /** What points at this note, what it points at, and where its name is written
-   *  without a link.
+   *  without a link - as three lists, or as a picture.
    *
    *  Three lists in one column, each headed by one word and a count. The rows are
    *  the search panel's rows, because they say the same thing: which note, and the
    *  line it says it on. Nothing is computed until the panel is open - the two
-   *  derived lists are lazy, and the mentions are only looked for while it shows. */
+   *  derived lists are lazy, and the mentions are only looked for while it shows.
+   *
+   *  The picture is the same thing said the other way round: the note in the
+   *  middle, what it is linked to around it, and nothing else. It comes from the
+   *  same index the lists do, so the two cannot disagree about the space. */
 
+  import Graph from './Graph.svelte'
+  import { neighbourhood, type NoteGraph } from './graph'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
   import { workspace } from './workspace.svelte'
 
-  const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
+  const {
+    ongoto,
+    graph = false,
+    depth = 1,
+    onlist,
+  }: {
+    ongoto?: ((line: number) => void) | undefined
+    /** Whether the panel is showing the picture rather than the lists. Held by
+     *  the sidebar, whose tab row the switch between them sits in. */
+    graph?: boolean
+    /** How many links out from the open note the picture reaches. */
+    depth?: number
+    onlist?: (() => void) | undefined
+  } = $props()
+
+  /** A graph with nothing in it, as one object rather than a fresh one each
+   *  reading: the view lays a graph out again whenever it is handed another. */
+  const NOTHING: NoteGraph = { nodes: [], edges: [] }
 
   const path = $derived(workspace.active?.path ?? null)
   const root = $derived(workspace.activeSpace?.root ?? null)
 
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
+
+  /** The open note and everything within `depth` links of it. Lazy like the lists
+   *  above, so the space is only walked while the picture is the thing showing. */
+  const around = $derived.by(() => {
+    const centre = workspace.relativeNote
+    return centre === null ? NOTHING : neighbourhood(links.graph, centre, depth)
+  })
 
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
@@ -64,6 +94,13 @@
 
 {#if !path}
   <p class="empty-text">{t('No note is open')}</p>
+{:else if graph}
+  <Graph
+    graph={around}
+    current={workspace.relativeNote}
+    onopen={(target: string, keep: boolean) => workspace.openRelative(target, keep)}
+    onescape={() => onlist?.()}
+  />
 {:else}
   <!-- Backlinks first: what points here is what the panel is opened for. -->
   <p class="head">{t('Backlinks')}<span class="count">{backlinks.length}</span></p>

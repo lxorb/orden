@@ -86,6 +86,7 @@ describe('reading one place', () => {
 
 describe('writing the session down', () => {
   const draft = (path: string | null, doc: string) => ({
+    kind: 'note' as const,
     path,
     name: 'a.md',
     doc,

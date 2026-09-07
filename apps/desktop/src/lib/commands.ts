@@ -402,6 +402,7 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Links'),
       run: () => workspace.showPanel('links'),
     },
+    { id: 'graph', label: t('Graph'), run: () => workspace.openGraph() },
 
     ...composerCommands(view),
   ]

@@ -53,6 +53,8 @@ export const ja: Dictionary = {
   'Undo splitting {name}': '{name} の分割を元に戻す',
   'Undo extracting from {name}': '{name} からの抽出を元に戻す',
   Links: 'リンク',
+  Graph: 'グラフ',
+  Depth: '深さ',
   Backlinks: '被リンク',
   'Links out': '外部へのリンク',
   Mentions: '名前の言及',

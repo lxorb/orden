@@ -47,6 +47,14 @@
     },
   ]
 
+  const GRAPH_ICON =
+    'M1.4 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M8 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M4.7 9.9a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M5 3.4h3M5.7 8.3 4 5M7.3 8.3 9 5'
+
+  /** Whether the Links panel is showing the picture, and how far out it reaches.
+   *  Held here because the switch for it is in the row of panel tabs above. */
+  let graphing = $state(false)
+  let depth = $state(1)
+
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
   /** Right-clicking the Files tab is where a file list keeps its sorting. */
@@ -249,6 +257,34 @@
         <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
       </button>
     {/each}
+
+    <!-- The one choice a panel has goes at the other end of the row its tabs are
+         in: the Links panel says the same thing as a list or as a picture. -->
+    {#if workspace.panel === 'links'}
+      <div class="tools">
+        {#if graphing}
+          <!-- One link out, or two. Nothing else is worth a control. -->
+          <button
+            class="depth"
+            title={t('Depth')}
+            aria-label={t('Depth')}
+            onclick={() => (depth = depth === 1 ? 2 : 1)}
+            transition:fly={{ x: 10, duration: 130, easing: cubicOut }}
+          >
+            {depth}
+          </button>
+        {/if}
+        <button
+          class:active={graphing}
+          title={t('Graph')}
+          aria-label={t('Graph')}
+          aria-pressed={graphing}
+          onclick={() => (graphing = !graphing)}
+        >
+          <svg viewBox="0 0 13 13"><path d={GRAPH_ICON} /></svg>
+        </button>
+      </div>
+    {/if}
   </div>
 
   <!-- Rebuilt for each space, and arriving from the side of the rail the new
@@ -324,7 +360,7 @@
           <p class="empty-text">{t('No headings in this note')}</p>
         {/if}
       {:else if workspace.panel === 'links'}
-        <Links {ongoto} />
+        <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
       {:else if workspace.panel === 'search'}
         <!-- svelte-ignore a11y_autofocus -->
         <input
@@ -409,6 +445,21 @@
     display: flex;
     gap: 2px;
     padding: var(--space-2) var(--space-2) var(--space-1);
+  }
+
+  /* At the far end of the row, so the tabs keep their place whether or not the
+     panel showing has anything to offer. */
+  .tools {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+  }
+
+  /* A digit, where the others have a mark. */
+  .depth {
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .switch button {

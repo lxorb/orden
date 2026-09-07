@@ -43,8 +43,14 @@ export interface Space {
   root: string
 }
 
+/** What a tab holds. Almost always a note; the graph of the space is the one
+ *  surface that is a tab without holding one, because a picture of the notes
+ *  belongs beside them rather than in a panel. */
+export type TabKind = 'note' | 'graph'
+
 export interface Tab {
   id: string
+  kind: TabKind
   path: string | null
   name: string
   doc: string
@@ -244,6 +250,18 @@ class Workspace {
   )
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
 
+  /** The note being read, named the way a link names it: relative to the space.
+   *  Falls back to the last note that was read, so a tab holding no note - the
+   *  graph of the space - still knows which note it was opened from and can mark
+   *  it. Null when there is no space, or nothing has been read in it. */
+  readonly relativeNote = $derived.by((): string | null => {
+    const root = this.activeSpace?.root
+    const path = this.active?.path ?? this.recent[0] ?? null
+    if (root === undefined || path === null) return null
+
+    return path.startsWith(root) ? relativeTo(root, path) : null
+  })
+
   /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
    *  not the editor: that one only catches up when the typing pauses, which is
    *  as often as an outline needs to move. Lazy as every derived is, so a
@@ -314,7 +332,7 @@ class Workspace {
     for (const draft of drafts) {
       let doc = draft.doc
 
-      if (draft.path && !draft.dirty) {
+      if (draft.kind === 'note' && draft.path && !draft.dirty) {
         try {
           doc = await invoke<string>('read_note', { path: draft.path })
         } catch {
@@ -325,6 +343,7 @@ class Workspace {
 
       restored.push({
         id: identifier(),
+        kind: draft.kind,
         path: draft.path,
         name: draft.name,
         doc,
@@ -347,6 +366,7 @@ class Workspace {
       spaces: this.spaces,
       activeSpace: this.activeSpaceId,
       tabs: this.tabs.map((tab) => ({
+        kind: tab.kind,
         path: tab.path,
         name: tab.name,
         // Only unsaved words are worth writing down: a note that is on disk is
@@ -393,9 +413,45 @@ class Workspace {
   }
 
   openBlank(name = UNTITLED, doc = '') {
-    const tab: Tab = { id: identifier(), path: null, name, doc, dirty: !!doc }
+    const tab: Tab = { id: identifier(), kind: 'note', path: null, name, doc, dirty: !!doc }
     this.tabs = [...this.tabs, tab]
     this.activeTabId = tab.id
+  }
+
+  /** The graph of the whole space, as a tab of its own. One at a time: a second
+   *  picture of the same space says the same thing, so asking again brings the
+   *  one already there forward. */
+  openGraph() {
+    const existing = this.tabs.find((tab) => tab.kind === 'graph')
+
+    if (existing) this.activeTabId = existing.id
+    else {
+      const tab: Tab = {
+        id: identifier(),
+        kind: 'graph',
+        path: null,
+        name: t('Graph'),
+        doc: '',
+        dirty: false,
+      }
+      this.tabs = [...this.tabs, tab]
+      this.activeTabId = tab.id
+    }
+
+    this.persist()
+  }
+
+  /** Drops the blank untitled tab a window starts with, now that something real
+   *  is open. Compared by id, because `this.tabs` holds reactive proxies and
+   *  `=== tab` on the object just pushed is never true.
+   *
+   *  A tab that is not a note is never scaffolding: the graph of the space has no
+   *  path and nothing unsaved either, and closing it behind the reader's back
+   *  because they opened a note would be a surprise. */
+  private dropScaffolding(kept: string) {
+    this.tabs = this.tabs.filter(
+      (other) => other.id === kept || other.kind !== 'note' || other.path !== null || other.dirty,
+    )
   }
 
   /** Reads the spaces folder. It is the source of truth, so a space added or
@@ -715,7 +771,8 @@ class Workspace {
 
     // A preview reuses the one preview tab rather than opening another.
     const reusable =
-      options.preview && this.tabs.find((tab) => tab.id === this.previewTabId && !tab.dirty)
+      options.preview &&
+      this.tabs.find((tab) => tab.id === this.previewTabId && tab.kind === 'note' && !tab.dirty)
 
     if (reusable) {
       const place = this.positions.of(path)
@@ -741,6 +798,7 @@ class Workspace {
 
     const tab: Tab = {
       id: identifier(),
+      kind: 'note',
       path,
       name: basename(path),
       doc,
@@ -755,13 +813,18 @@ class Workspace {
     this.previewTabId = options.preview ? tab.id : this.previewTabId
     this.remember(path)
 
-    // A blank untouched tab is scaffolding, not something worth keeping around.
-    // Compared by id: `this.tabs` holds reactive proxies, so `=== tab` on the
-    // object that was just pushed is never true.
-    this.tabs = this.tabs.filter(
-      (other) => other.id === tab.id || other.path !== null || other.dirty,
-    )
+    this.dropScaffolding(tab.id)
     this.persist()
+  }
+
+  /** A note named the way the space speaks of it, which is how the link index and
+   *  the graph name them, opened the way a row in the file list opens: a look on
+   *  one click, a tab of its own on two. */
+  openRelative(relative: string, keep: boolean) {
+    const root = this.activeSpace?.root
+    if (!root) return
+
+    void this.open(insideSpace(root, relative), keep ? {} : { preview: true })
   }
 
   activate(id: string) {
@@ -907,7 +970,7 @@ class Workspace {
     this.flush()
 
     const tab = target ?? this.active
-    if (!tab) return
+    if (tab?.kind !== 'note') return
 
     // Saving is as deliberate as it gets: a note that was only being looked
     // at is one to stay from here on, whether or not there was anything to
@@ -1160,15 +1223,19 @@ class Workspace {
     this.showEntry(this.freshEntry(path, false))
     if (dir !== this.activeSpace?.root) this.device.expand(dir)
 
-    const tab: Tab = { id: identifier(), path, name: basename(path), doc: content, dirty: false }
+    const tab: Tab = {
+      id: identifier(),
+      kind: 'note',
+      path,
+      name: basename(path),
+      doc: content,
+      dirty: false,
+    }
     this.tabs = [...this.tabs, tab]
     this.activeTabId = tab.id
     this.showNote()
     this.remember(path)
-    // A blank untouched tab is scaffolding, not something worth keeping around.
-    this.tabs = this.tabs.filter(
-      (other) => other.id === tab.id || other.path !== null || other.dirty,
-    )
+    this.dropScaffolding(tab.id)
     this.startRenaming(path)
 
     await invoke('write_note', { path, content })
@@ -1594,6 +1661,7 @@ class Workspace {
 
     const tab: Tab = {
       id: identifier(),
+      kind: 'note',
       path,
       name: basename(path),
       doc: content,
@@ -1604,9 +1672,7 @@ class Workspace {
     this.activeTabId = tab.id
     this.showNote()
     this.remember(path)
-    this.tabs = this.tabs.filter(
-      (other) => other.id === tab.id || other.path !== null || other.dirty,
-    )
+    this.dropScaffolding(tab.id)
     // The name is settled and the row is waiting for a title after it; typing
     // one leaves `202609070155 Some title.md`, and pressing Enter with nothing
     // typed leaves the timestamp alone.

@@ -56,6 +56,8 @@ export const gsw: Dictionary = {
   'Undo splitting {name}': '{name} wider zsammetue',
   'Undo extracting from {name}': 'Uszug us {name} zrugg neh',
   Links: 'Verchnüpfige',
+  Graph: 'Graph',
+  Depth: 'Tüüfi',
   Backlinks: 'Verwiis uf da',
   'Links out': 'Verwiis use',
   Mentions: 'Erwähnige',

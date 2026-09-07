@@ -54,6 +54,8 @@ export const de: Dictionary = {
   'Undo splitting {name}': '{name} wieder zusammenfügen',
   'Undo extracting from {name}': 'Auszug aus {name} zurücknehmen',
   Links: 'Verknüpfungen',
+  Graph: 'Graph',
+  Depth: 'Tiefe',
   Backlinks: 'Verweise hierher',
   'Links out': 'Verweise nach aussen',
   Mentions: 'Erwähnungen',

@@ -54,6 +54,8 @@ export const fr: Dictionary = {
   'Undo splitting {name}': 'Annuler la division de {name}',
   'Undo extracting from {name}': 'Annuler l’extraction depuis {name}',
   Links: 'Liens',
+  Graph: 'Graphe',
+  Depth: 'Profondeur',
   Backlinks: 'Liens entrants',
   'Links out': 'Liens sortants',
   Mentions: 'Mentions du nom',

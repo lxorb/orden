@@ -7,6 +7,7 @@
   import ContextMenu from './lib/ContextMenu.svelte'
   import Editor from './lib/Editor.svelte'
   import FormatBar from './lib/FormatBar.svelte'
+  import Graph from './lib/Graph.svelte'
   import History from './lib/History.svelte'
   import { menu } from './lib/menu.svelte'
   import Palette from './lib/Palette.svelte'
@@ -282,34 +283,45 @@
         }}
       />
 
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>
-        <!-- Anything slow enough to be waited for draws a line along the top
+      {#if workspace.active?.kind === 'graph'}
+        <!-- The graph of the space is a tab like a note is, so it takes the note's
+             place in the window rather than a surface of its own. -->
+        <Graph
+          graph={links.graph}
+          current={workspace.relativeNote}
+          onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
+          onescape={() => workspace.activeTabId && workspace.close(workspace.activeTabId)}
+        />
+      {:else}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>
+          <!-- Anything slow enough to be waited for draws a line along the top
              of the document, just under the tabs. -->
-        <Progress />
-        {#key workspace.activeTabId}
-          <Editor
-            bind:view
-            doc={workspace.active?.doc ?? ''}
-            pushed={workspace.active?.pushed ?? 0}
-            onchange={(text: Text) => {
-              workspace.edit(text)
-            }}
-            onimage={saveImage}
-            resolveimage={resolveImage}
-            openlink={(href: string) => void openExternal(href)}
-            notes={links.index(workspace.active?.path ?? null)}
-            opennote={(jump: NoteJump) => void workspace.followLink(jump)}
-            nameblock={(path: string, line: number) => nameBlock(path, line)}
-            onselection={(current: EditorView) => {
-              formatBar?.follow(current)
-              placement.remember()
-            }}
-          />
-        {/key}
-      </div>
+          <Progress />
+          {#key workspace.activeTabId}
+            <Editor
+              bind:view
+              doc={workspace.active?.doc ?? ''}
+              pushed={workspace.active?.pushed ?? 0}
+              onchange={(text: Text) => {
+                workspace.edit(text)
+              }}
+              onimage={saveImage}
+              resolveimage={resolveImage}
+              openlink={(href: string) => void openExternal(href)}
+              notes={links.index(workspace.active?.path ?? null)}
+              opennote={(jump: NoteJump) => void workspace.followLink(jump)}
+              nameblock={(path: string, line: number) => nameBlock(path, line)}
+              onselection={(current: EditorView) => {
+                formatBar?.follow(current)
+                placement.remember()
+              }}
+            />
+          {/key}
+        </div>
 
-      <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.reading} />
+        <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.reading} />
+      {/if}
 
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the

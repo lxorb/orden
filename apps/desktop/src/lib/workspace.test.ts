@@ -324,7 +324,14 @@ describe('where a note was last looked at', () => {
 
     for (let index = 0; index < 320; index++) {
       workspace.tabs = [
-        { id: `t${index}`, path: `/space/${index}.md`, name: `${index}.md`, doc: '', dirty: false },
+        {
+          id: `t${index}`,
+          kind: 'note',
+          path: `/space/${index}.md`,
+          name: `${index}.md`,
+          doc: '',
+          dirty: false,
+        },
       ]
       workspace.activeTabId = `t${index}`
       workspace.noteView(`t${index}`, index, index)

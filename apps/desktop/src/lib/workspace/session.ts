@@ -8,11 +8,12 @@
  *  notes it does hold rather than none of them. */
 
 import { isNumber, isRecord, isString, stringList } from '../stored'
-import type { Panel, Space } from '../workspace.svelte'
+import type { Panel, Space, TabKind } from '../workspace.svelte'
 
 /** One tab as it is written down: enough to put it back exactly, including
  *  work that never reached the disk. */
 export interface Draft {
+  kind: TabKind
   path: string | null
   name: string
   doc: string
@@ -45,10 +46,19 @@ export interface Session {
   panel: Panel | null
 }
 
-const PANELS: readonly Panel[] = ['tree', 'outline', 'search']
+const PANELS: readonly Panel[] = ['tree', 'outline', 'search', 'links']
 
 function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
+}
+
+const TAB_KINDS: readonly TabKind[] = ['note', 'graph']
+
+/** Which kind of tab an entry says it is. An entry written before there were
+ *  kinds, or one naming a kind this version has never heard of, is a note: that
+ *  is what a tab with a path and some words in it can always be read as. */
+function tabKind(value: unknown): TabKind {
+  return TAB_KINDS.find((kind) => kind === value) ?? 'note'
 }
 
 function isSpace(value: unknown): value is Space {
@@ -60,11 +70,12 @@ function isSpace(value: unknown): value is Space {
 export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
-  const { path, name, doc, dirty, cursor, scroll, anchor } = value
+  const { kind, path, name, doc, dirty, cursor, scroll, anchor } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
   return {
+    kind: tabKind(kind),
     path,
     name,
     doc,
