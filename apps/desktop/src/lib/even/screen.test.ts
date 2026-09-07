@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { BLANK, type Page, QUADRANTS, type Sheet } from '@nib/glasses'
 import { type Drawer, Panel } from './screen'
-import type { Container, Glasses, Input, Sent } from './sdk'
+import type { Container, Glasses, Input, Made, Sent } from './sdk'
 import type { Showing } from './session'
 
 const page = (hash: string): Page => ({
@@ -37,9 +37,12 @@ class Fake implements Glasses {
   /** What each send answers, in order; anything past the end answers ok. */
   answers: Sent[] = []
 
-  start(): Promise<boolean> {
+  /** What the host answers when the page is asked for. */
+  made: Made = 'made'
+
+  start(): Promise<Made> {
     this.started = true
-    return Promise.resolve(true)
+    return Promise.resolve(this.made)
   }
 
   image(container: Container, bytes: Uint8Array): Promise<Sent> {
@@ -84,13 +87,26 @@ beforeEach(() => {
 describe('the page the glasses hold', () => {
   test('is made once, with five containers and one that captures', async () => {
     const panel = new Panel(glasses, drawing(sheet('a', 'b', 'c', 'd')))
-    expect(await panel.open()).toBe(true)
+    expect(await panel.open()).toBe('made')
     expect(glasses.started).toBe(true)
 
     // Made once: a second call is refused by the host, and refused slowly.
     glasses.started = false
-    expect(await panel.open()).toBe(true)
+    expect(await panel.open()).toBe('made')
     expect(glasses.started).toBe(false)
+  })
+
+  test('says in the host’s own word when the page was not made', async () => {
+    // Which of the refusals it was, is the difference between a page worth asking
+    // for differently and one the radio simply never heard. A boolean threw that
+    // away, and a phone has no console to read it back from.
+    glasses.made = 'outOfMemory'
+    const panel = new Panel(glasses, drawing(sheet('a', 'b', 'c', 'd')))
+
+    expect(await panel.open()).toBe('outOfMemory')
+    // And keeps saying it, rather than asking again for a page it cannot have.
+    expect(await panel.open()).toBe('outOfMemory')
+    expect(glasses.started).toBe(true)
   })
 })
 

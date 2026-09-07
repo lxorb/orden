@@ -50,15 +50,34 @@ export interface Container {
   name: string
 }
 
+/** What became of the page the plugin asked for.
+ *
+ *  Kept as the host's own four words rather than folded into a boolean, because
+ *  they are the difference between a page worth asking for again and one that
+ *  never will be, and because a corner that can say which is the only evidence
+ *  anybody gets off a phone. */
+export type Made = 'made' | 'invalid' | 'oversize' | 'outOfMemory' | 'unknown'
+
 export interface Glasses {
   /** Creates the page. Exactly once for the life of the app: a second call is
    *  refused, and refused slowly. */
-  start(page: unknown): Promise<boolean>
+  start(page: unknown): Promise<Made>
   image(container: Container, bytes: Uint8Array): Promise<Sent>
   words(container: Container, content: string): Promise<boolean>
   listen(handler: (input: Input) => void): () => void
   /** Asks the glasses to put up their own leave-this-app question. */
   leave(): Promise<void>
+}
+
+/** What the phone app keeps for the plugin between launches.
+ *
+ *  Not the glasses and not this page: the Even app's own store, which is the one
+ *  place the platform documents as surviving a reboot. A packed plugin is loaded
+ *  from files on the phone rather than from an origin, so nothing about the
+ *  page's own storage is promised to outlive a launch. See vault.ts. */
+export interface Store {
+  read(key: string): Promise<string | null>
+  write(key: string, value: string): Promise<void>
 }
 
 /** Only the methods the plugin calls. Structural rather than the SDK's own class
@@ -70,6 +89,14 @@ interface Bridge {
   textContainerUpgrade(container: unknown): Promise<unknown>
   shutDownPageContainer(exitMode?: number): Promise<unknown>
   onEvenHubEvent(handler: (event: unknown) => void): () => void
+}
+
+/** The two storage calls, which a stand-in need not have. Kept apart from
+ *  `Bridge` for exactly that reason: the glasses are what the plugin cannot do
+ *  without, and a bridge with no store is still a pair of glasses. */
+interface Keeper {
+  getLocalStorage(key: string): Promise<unknown>
+  setLocalStorage(key: string, value: string): Promise<unknown>
 }
 
 const METHODS = [
@@ -99,6 +126,38 @@ function hosted(): boolean {
   return typeof host?.callHandler === 'function'
 }
 
+/** How long to wait for the host to put its handler on the page, and how often
+ *  to look.
+ *
+ *  The handler is not there when the plugin's first line runs. The phone app
+ *  installs the channel into the WebView while the page is already loading, and
+ *  the platform's own guidance is to wait for the bridge before calling
+ *  anything, because a call made before it lands does nothing at all and says
+ *  nothing about having done nothing. There is no event to wait on, so this
+ *  looks.
+ *
+ *  This is what made a packed build show an empty panel while the simulator drew
+ *  the note perfectly: the simulator installs the channel before the page runs,
+ *  so a single look was always enough there and never enough on a phone. Ten
+ *  seconds is far longer than a WebView takes and is only ever waited out in a
+ *  browser, where nothing is waiting on the answer. */
+const HOST_WAIT = 10_000
+const HOST_LOOK = 50
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitForHost(): Promise<boolean> {
+  const until = Date.now() + HOST_WAIT
+  while (!hosted()) {
+    if (Date.now() >= until) return false
+    await sleep(HOST_LOOK)
+  }
+
+  return true
+}
+
 /** A bridge already standing on the page.
  *
  *  This is how the SDK itself arrives - it puts its singleton there on import -
@@ -110,22 +169,98 @@ function standing(): Bridge | null {
   return isBridge(found) ? found : null
 }
 
+/** The wait for the host, once, shared by everything that wants the bridge.
+ *
+ *  The token store and the glasses are two faces of one channel and both are
+ *  wanted the moment the plugin starts; asking separately would wait separately. */
+let connecting: Promise<Bridge | null> | null = null
+
+async function connect(): Promise<Bridge | null> {
+  // A bridge somebody put on the page was put there on purpose, and is read as
+  // it stands every time: there is nothing to wait for and nothing to share.
+  // That is what makes the plugin drivable against a stand-in.
+  const already = standing()
+  if (already) return already
+
+  connecting ??= reach()
+  const bridge = await connecting
+
+  // A host that has not turned up is not the same as a page that will never
+  // have one, so a miss is not remembered and the next ask looks again.
+  if (!bridge) connecting = null
+  return bridge
+}
+
+async function reach(): Promise<Bridge | null> {
+  if (!(await waitForHost())) return null
+
+  // Dynamic so that the SDK is a chunk of its own, reached only from the plugin
+  // entry. The plain build never asks for it.
+  const sdk = await import('@evenrealities/even_hub_sdk')
+  // The SDK's own wait, which is the step the platform asks for by name, and the
+  // step this used to skip. It resolves at once once the host is there.
+  const bridge = await sdk.waitForEvenAppBridge()
+
+  return isBridge(bridge) ? bridge : null
+}
+
 /** The glasses, or null when this page is not in front of a pair.
  *
  *  Null is the whole of what the plain web build sees, and the plugin then does
  *  nothing at all: no containers, no listeners, no cost. */
 export async function connectGlasses(): Promise<Glasses | null> {
-  const already = standing()
-  if (already) return glassesOf(already)
+  const bridge = await connect()
+  return bridge ? glassesOf(bridge) : null
+}
 
-  if (!hosted()) return null
+function keeps(value: unknown): value is Keeper {
+  if (typeof value !== 'object' || value === null) return false
 
-  // Dynamic so that the SDK is a chunk of its own, reached only from the plugin
-  // entry. The plain build never asks for it.
-  const sdk = await import('@evenrealities/even_hub_sdk')
-  const bridge = await sdk.waitForEvenAppBridge()
+  const one = value as Record<string, unknown>
+  return typeof one.getLocalStorage === 'function' && typeof one.setLocalStorage === 'function'
+}
 
-  return isBridge(bridge) ? glassesOf(bridge) : null
+/** The phone app's own store, or null when there is no phone app behind this
+ *  page or the bridge on it has no store. */
+export async function connectStore(): Promise<Store | null> {
+  const bridge = await connect()
+  if (!keeps(bridge)) return null
+
+  return {
+    async read(key) {
+      // The host answers an absent key with an empty string, which is not the
+      // same thing as a value and must not be read as one.
+      const found = await bridge.getLocalStorage(key)
+      return typeof found === 'string' && found !== '' ? found : null
+    },
+
+    async write(key, value) {
+      await bridge.setLocalStorage(key, value)
+    },
+  }
+}
+
+/** The host's answer to being asked for a page. Zero is success, and the SDK may
+ *  hand back the int or the word; `true` is what a stand-in answers. Anything
+ *  else is a page that was not made, and says so in the host's own word so that
+ *  the corner can repeat it. */
+function madeOf(answer: unknown): Made {
+  if (answer === 0 || answer === 'success' || answer === true) return 'made'
+
+  const word = typeof answer === 'number' ? String(answer) : answer
+  switch (word) {
+    case '1':
+    case 'invalid':
+      return 'invalid'
+    case '2':
+    case 'oversize':
+      return 'oversize'
+    case '3':
+    case 'outOfMemory':
+      return 'outOfMemory'
+    default:
+      return 'unknown'
+  }
 }
 
 /** The host's answer to an image send. It may be the enum's string or its int;
@@ -227,9 +362,7 @@ function glassesOf(bridge: Bridge): Glasses {
 
   return {
     async start(page) {
-      const answer = await bridge.createStartUpPageContainer(page)
-      // `success` is zero; the SDK may hand back the int or the enum.
-      return answer === 0 || answer === 'success' || answer === true
+      return madeOf(await bridge.createStartUpPageContainer(page))
     },
 
     async image(container, bytes) {

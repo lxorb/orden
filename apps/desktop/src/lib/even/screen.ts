@@ -17,7 +17,7 @@
  *  faces, the code colours and the tables, and it is still the note. */
 
 import { BLANK, PANEL_HEIGHT, PANEL_WIDTH, type Page, QUADRANTS, type Sheet } from '@nib/glasses'
-import type { Container, Glasses } from './sdk'
+import type { Container, Glasses, Made } from './sdk'
 import type { Screen, Showing } from './session'
 
 /** All the panel asks of the renderer: a page's containers, as bytes. `Sheets`
@@ -92,6 +92,7 @@ export class Panel implements Screen {
   /** True once the image channel has failed in the way no retry helps. */
   private drawnOut = false
   private started = false
+  private made: Made = 'unknown'
 
   constructor(
     private readonly glasses: Glasses,
@@ -100,12 +101,17 @@ export class Panel implements Screen {
 
   /** Makes the page. Called once; a second call is refused by the host, and
    *  refused after blocking for a couple of seconds, so what is latched here is
-   *  that it was called rather than that it worked. */
-  async open(): Promise<boolean> {
-    if (this.started) return true
+   *  that it was called rather than that it worked.
+   *
+   *  Answers in the host's own word, because the four answers are not one thing:
+   *  a page too big for the panel and a page the radio never heard are both a
+   *  dark panel, and only one of them is worth changing anything about. */
+  async open(): Promise<Made> {
+    if (this.started) return this.made
 
     this.started = true
-    return this.glasses.start(skeleton())
+    this.made = await this.glasses.start(skeleton())
+    return this.made
   }
 
   async show(page: Page, showing: Showing): Promise<void> {
