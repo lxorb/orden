@@ -14,6 +14,13 @@ export interface Box {
   height: number
 }
 
+/** A formula's box, and how far of it hangs below the baseline. Without the
+ *  depth an inline formula sits on the line rather than in it, and a fraction
+ *  floats a third of a line above the words around it. */
+export interface MathBox extends Box {
+  depth: number
+}
+
 export interface Measurer {
   /** How much room `text` takes in `style`, in pixels. */
   width(text: string, style: TextStyle): number
@@ -21,8 +28,8 @@ export interface Measurer {
   ascent(style: TextStyle): number
   /** How far below. */
   descent(style: TextStyle): number
-  /** The box a formula draws in. */
-  math(tex: string, display: boolean): Box
+  /** The box a formula draws in, and how much of it is below the baseline. */
+  math(tex: string, display: boolean): MathBox
   /** The box a picture draws in, at most `most` big, or null when nothing is
    *  known about it - a path the app cannot resolve, an address off the net. */
   picture(source: string, most: Box): Box | null
@@ -54,10 +61,12 @@ export function ruler(): Measurer {
     ascent: (style) => style.size * 0.8,
     descent: (style) => style.size * 0.2,
     // A formula is about as wide as its source and a line and a half tall,
-    // which is what KaTeX comes out at for the arithmetic in a note.
+    // which is what KaTeX comes out at for the arithmetic in a note. A quarter
+    // of an inline one hangs below the line, which is where a subscript goes.
     math: (tex, display) => ({
       width: tex.length * (display ? 9 : 7),
       height: display ? 28 : 18,
+      depth: display ? 0 : 4,
     }),
     picture: (_source, most) => ({ width: most.width, height: most.height }),
   }

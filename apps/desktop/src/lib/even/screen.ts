@@ -50,7 +50,6 @@ function skeleton(): unknown {
     containerTotalNum: 1 + TILES.length,
     textObject: [
       {
-        ...CAPTURE,
         containerID: CAPTURE.id,
         containerName: CAPTURE.name,
         xPosition: 0,

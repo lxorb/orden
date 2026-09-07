@@ -24,7 +24,7 @@ import {
 import type { CodeSpan } from './code'
 import { codeGreys } from './grey'
 import { hashOfLines } from './hash'
-import { type Box, leadingOf, type Measurer } from './measure'
+import { leadingOf, type MathBox, type Measurer } from './measure'
 import { TEXT_HEIGHT, TEXT_WIDTH } from './panel'
 import { type Run, textRuns } from './runs'
 import { FURNITURE, type TextStyle } from './style'
@@ -96,6 +96,10 @@ interface Atom {
  *  ideographic space, which no reader of this file could see. */
 const CJK = /[\u3000-\u9fff\uf900-\ufaff\uff00-\uffef]/
 
+/** Where a line may break: any whitespace, the newlines a paragraph was typed
+ *  with included. */
+const SPACE = /\s/
+
 function atomsOf(run: Run, measure: Measurer): Atom[] {
   // Drawn, or a break: one piece, uncuttable.
   if (run.break === true || run.math || run.picture) {
@@ -115,7 +119,7 @@ function atomsOf(run: Run, measure: Measurer): Atom[] {
 
   let word = ''
   for (const character of run.text) {
-    const space = character === ' ' || character === '\t'
+    const space = SPACE.test(character)
     if (!space && !CJK.test(character)) {
       word += character
       continue
@@ -123,7 +127,11 @@ function atomsOf(run: Run, measure: Measurer): Atom[] {
 
     if (word) push(word, false)
     word = ''
-    push(character, space)
+    // A line break inside a paragraph is a space, the way it is on a page: the
+    // lexer hands over the newlines the author typed, and drawing one leaves a
+    // hole in the middle of a sentence. A tab keeps its own width, which is
+    // what indented code is made of.
+    push(character === '\n' || character === '\r' ? ' ' : character, space)
   }
   if (word) push(word, false)
 
@@ -136,13 +144,15 @@ interface Row {
   baseline: number
 }
 
-/** The box a run that is drawn rather than written takes, or null when the run
- *  is words. Measuring a formula means laying it out, so the measurer keeps its
- *  answers; see measure.ts. */
-function drawnBox(run: Run, measure: Measurer): Box | null {
+/** The box a run that is drawn rather than written takes, with how far of it is
+ *  below the baseline, or null when the run is words. Measuring a formula means
+ *  laying it out, so the measurer keeps its answers; see measure.ts. */
+function drawnBox(run: Run, measure: Measurer): MathBox | null {
   if (run.math) return measure.math(run.math.tex, run.math.display)
   if (run.picture) {
-    return measure.picture(run.picture.source, { width: TEXT_WIDTH, height: TEXT_HEIGHT })
+    const box = measure.picture(run.picture.source, { width: TEXT_WIDTH, height: TEXT_HEIGHT })
+    // A picture sits on the line, like a very large letter.
+    return box ? { ...box, depth: 0 } : null
   }
 
   return null
@@ -151,7 +161,7 @@ function drawnBox(run: Run, measure: Measurer): Box | null {
 /** How far a run stands above and below the baseline. */
 function reach(run: Run, measure: Measurer): { up: number; down: number } {
   const drawn = drawnBox(run, measure)
-  if (drawn) return { up: drawn.height, down: 0 }
+  if (drawn) return { up: drawn.height - drawn.depth, down: drawn.depth }
 
   const rise = run.rise ?? 0
   return {
@@ -207,10 +217,14 @@ function wrap(
       continue
     }
 
-    // A space at the start of a line is the one the break already ate.
-    if (!taken.length && atom.blank) continue
-
     if (used + atom.width > width && taken.length) flush()
+
+    // A space at the start of a line is the one the break already ate - whether
+    // the break happened before this atom or is this atom, which is why the
+    // check comes after the width test rather than before it. Only after a
+    // break, though: the spaces a line of code opens with are its indentation,
+    // and losing those would flatten every fence in the note.
+    if (!taken.length && atom.blank && rows.length > 0) continue
 
     // One piece wider than the whole column - a long address, a run of code
     // with no spaces in it - is cut by characters, the only cut left.
@@ -358,12 +372,20 @@ function linesOf(blocks: readonly Block[], options: LayoutOptions): Line[] {
   return out
 }
 
-/** One drawn thing on a line of its own, in the middle of the column. */
+/** One drawn thing on a line of its own, in the middle of the column.
+ *
+ *  Never wider than the column: a formula that would run off the edge is drawn
+ *  smaller instead, which is what a page does with one too. The rasteriser draws
+ *  it into the width placed here, so the two agree without either being told. */
 function centred(run: Run, box: { width: number; height: number }, room: number, air: number): Row {
+  const scale = Math.min(1, room / box.width)
+  const width = Math.floor(box.width * scale)
+  const height = Math.round(box.height * scale)
+
   return {
-    placed: [{ run, x: Math.max(0, Math.round((room - box.width) / 2)), width: box.width }],
-    height: box.height + air,
-    baseline: box.height,
+    placed: [{ run, x: Math.max(0, Math.round((room - width) / 2)), width }],
+    height: height + air,
+    baseline: height,
   }
 }
 
@@ -491,12 +513,15 @@ function tableLines(
 
     widths.forEach((width, column) => {
       const start = (offsets[column] ?? 0) + left
-      const fitted = wrap(row[column] ?? [], width, measure, block.align[column] ?? 'left')[0]
-      if (!fitted) return
+      const cell = row[column] ?? []
+      const align = block.align[column] ?? 'left'
+      const cut = cellLine(cell, width, measure, align)
+      if (!cut) return
 
-      up = Math.max(up, fitted.baseline)
-      down = Math.max(down, fitted.height - fitted.baseline)
-      for (const one of fitted.placed) placed.push({ ...one, x: one.x + start })
+      up = Math.max(up, cut.line.baseline)
+      down = Math.max(down, cut.line.height - cut.line.baseline)
+      for (const one of cut.line.placed) placed.push({ ...one, x: one.x + start })
+      if (cut.mark) placed.push({ ...cut.mark, x: cut.mark.x + start })
     })
 
     const height = Math.max(Math.round(up + down), 12)
@@ -522,6 +547,36 @@ function tableLines(
       glue: at === 1 || (head && afterHeading),
     })
   })
+}
+
+/** One cell on one line, with an ellipsis where it went on.
+ *
+ *  A cell is set on a single line: a panel 288 pixels tall holds about ten of
+ *  them, and a table whose cells wrap spends a whole page on three rows. So a
+ *  cell that does not fit is cut, and says it was cut, rather than stopping mid
+ *  word and leaving the reader to guess whether that was all of it. The mark's
+ *  own room is taken off the column before the words are set, so nothing has to
+ *  be unplaced afterwards. */
+function cellLine(
+  cell: readonly Run[],
+  width: number,
+  measure: Measurer,
+  align: Align,
+): { line: Row; mark: Placed | null } | null {
+  const whole = wrap(cell, width, measure, align)
+  const first = whole[0]
+  if (!first) return null
+  if (whole.length === 1) return { line: first, mark: null }
+
+  const style = first.placed.at(-1)?.run.style
+  if (!style) return { line: first, mark: null }
+
+  const markWidth = measure.width('…', style)
+  const short = wrap(cell, Math.max(4, width - markWidth), measure, align)[0]
+  if (!short) return { line: first, mark: null }
+
+  const used = short.placed.reduce((sum, one) => Math.max(sum, one.x + one.width), 0)
+  return { line: short, mark: { run: { text: '…', style }, x: used, width: markWidth } }
 }
 
 /** Where the glued run that the incoming line belongs to begins, so the whole

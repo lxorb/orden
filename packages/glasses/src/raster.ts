@@ -1,4 +1,4 @@
-/** A page drawn to pixels.
+﻿/** A page drawn to pixels.
  *
  *  The one file here that needs a browser. Everything it does, it does on a
  *  canvas the reader never sees: it measures the app's own faces so the layout
@@ -15,7 +15,7 @@ import type { Block } from './blocks'
 import { ditherToLevels, quantise, type Tile } from './encode'
 import { fontOf, fontsReady } from './fonts'
 import type { Line, Page, Placed } from './layout'
-import type { Box, Measurer } from './measure'
+import type { Box, MathBox, Measurer } from './measure'
 import { BLACK, MARGIN_TOP, MARGIN_X, PANEL_HEIGHT, PANEL_WIDTH, WHITE } from './panel'
 import type { MathRun, Run } from './runs'
 import type { Family, TextStyle } from './style'
@@ -33,7 +33,7 @@ export interface PainterOptions {
 
 /** A formula or a picture, ready to draw. */
 interface Ready {
-  box: Box
+  box: MathBox
   /** Null when the drawing could not be had and the words stand in for it. */
   picture: CanvasImageSource | null
 }
@@ -191,13 +191,17 @@ export class Painter implements Measurer {
     return this.reachOf(style).descent
   }
 
-  math(tex: string, display: boolean): Box {
+  math(tex: string, display: boolean): MathBox {
     const ready = this.formulae.get(`${display ? 'd' : 'i'}${tex}`)
     if (ready) return ready.box
 
     // Not prepared: the source stands in for it, and takes the room the source
     // takes, so the line breaks where it will actually break.
-    return { width: this.width(tex, MATH_FALLBACK), height: Math.round(MATH_FALLBACK.size * 1.2) }
+    return {
+      width: this.width(tex, MATH_FALLBACK),
+      height: Math.round(MATH_FALLBACK.size * 1.2),
+      depth: display ? 0 : Math.round(MATH_FALLBACK.size * 0.2),
+    }
   }
 
   picture(source: string, most: Box): Box | null {
@@ -230,9 +234,9 @@ export class Painter implements Measurer {
     })
 
     const size = one.display ? 19 : 15
-    const box = measureHtml(html, size)
+    const box = measureHtml(html, size, SLACK)
     const fallback: Ready = {
-      box: box ?? { width: this.width(one.tex, MATH_FALLBACK), height: size + 4 },
+      box: box ?? this.math(one.tex, one.display),
       picture: null,
     }
 
@@ -263,7 +267,7 @@ export class Painter implements Measurer {
     if (!loaded || !image.naturalWidth) return
 
     this.images.set(source, {
-      box: { width: image.naturalWidth, height: image.naturalHeight },
+      box: { width: image.naturalWidth, height: image.naturalHeight, depth: 0 },
       picture: image,
     })
   }
@@ -323,12 +327,17 @@ export class Painter implements Measurer {
     if (run.math) {
       const ready = this.formulae.get(`${run.math.display ? 'd' : 'i'}${run.math.tex}`)
       if (ready?.picture) {
+        // Drawn into the width the layout placed it in, which may be less than
+        // it measured: a formula wider than the column is set smaller rather
+        // than run off the edge. See `centred` in layout.ts.
+        const scale = ready.box.width > 0 ? one.width / ready.box.width : 1
+        const height = ready.box.height * scale
         ctx.drawImage(
           ready.picture,
           x,
-          baseline - ready.box.height,
-          ready.box.width,
-          ready.box.height,
+          baseline - (height - ready.box.depth * scale),
+          one.width,
+          height,
         )
         return
       }
@@ -441,6 +450,18 @@ export class Painter implements Measurer {
   }
 }
 
+/** What a display formula's own block is turned into, so that it takes the room
+ *  its formula takes rather than the room the page has. Named once because it is
+ *  applied twice: to the copy that is measured and to the picture that is drawn,
+ *  which have to agree to the pixel. */
+const DISPLAY = { margin: '0', display: 'inline-block', textAlign: 'left' } as const
+
+/** Room left around a formula's picture, in pixels. The edge of a glyph is
+ *  antialiased and the picture clips what falls outside it. */
+/** Room left around a formula's picture, in pixels. The edge of a glyph is
+ *  antialiased, and the picture clips whatever falls outside it. */
+const SLACK = 6
+
 /** The page count in the bottom band. Dim on purpose: it is not the note. */
 const MARK_STYLE: TextStyle = {
   family: 'ui',
@@ -469,23 +490,96 @@ function fit(box: Box, most: Box): Box {
   return { width: Math.floor(box.width * scale), height: Math.floor(box.height * scale) }
 }
 
-/** How big a piece of KaTeX's HTML comes out, measured on the page itself, which
- *  is the only thing that knows the stylesheet. */
-function measureHtml(html: string, size: number): Box | null {
+/** How big a piece of KaTeX's HTML comes out, and how much of it hangs below the
+ *  baseline, measured on the page itself, which is the only thing that knows the
+ *  stylesheet.
+ *
+ *  The depth is read off a marker of no size at all set after the formula: an
+ *  empty inline block sits exactly on its line's baseline, so the distance from
+ *  its top to the bottom of the formula is the formula's depth. Without it an
+ *  inline fraction floats a third of a line above the words beside it. */
+function measureHtml(html: string, size: number, slack: number): MathBox | null {
   if (typeof document === 'undefined') return null
 
   const host = document.createElement('div')
+  // `max-content` is what makes a display formula measure its own width: the
+  // block KaTeX wraps one in is as wide as whatever holds it, and a page-wide
+  // answer would have every formula scaled to nothing.
   host.setAttribute(
     'style',
-    `position:absolute;left:-9999px;top:0;visibility:hidden;font-size:${size}px;line-height:1.2`,
+    `position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;` +
+      `width:max-content;font-size:${size}px;line-height:1.2`,
   )
-  host.innerHTML = html
+  const body = document.createElement('span')
+  body.innerHTML = html
+  const marker = document.createElement('span')
+  marker.setAttribute('style', 'display:inline-block;width:0;height:0')
+  host.append(body, marker)
   document.body.append(host)
+
+  // A display formula is wrapped in a centred block with margins meant for a
+  // page of prose. Both are undone here and again in the picture, by the same
+  // three declarations, so that what is measured is what is drawn.
+  const display = body.querySelector('.katex-display')
+  if (display instanceof HTMLElement) {
+    display.style.margin = DISPLAY.margin
+    display.style.display = DISPLAY.display
+    display.style.textAlign = DISPLAY.textAlign
+  }
+
+  // The host, not the formula inside it: the picture is laid out the same way
+  // from the same top-left corner, so measuring the box the whole thing takes is
+  // what makes the two agree. A span's own rectangle would not do - for an
+  // inline element it is the line boxes its content sits on rather than the
+  // boxes inside it, which for a two-storey fraction is far too short.
   const box = host.getBoundingClientRect()
-  const out = { width: Math.ceil(box.width), height: Math.ceil(box.height) }
+  // The marker answers both questions, and answers them exactly. Its top is the
+  // line's baseline, because an empty inline block sits on one. Its left is
+  // where the formula ends, because that is what inline layout means by ending -
+  // which the box around the formula does not always agree with: KaTeX draws a
+  // big delimiter with negative margins, and a box shrunk to fit around one
+  // comes out narrower than what it holds, so the last symbol of a `$$` block
+  // falls outside the picture and is simply gone.
+  const end = marker.getBoundingClientRect()
+  // And the far edge of everything inside it, which is not the same thing: a
+  // shrink-to-fit box around a big delimiter comes out narrower than what it
+  // holds, so a formula can overflow its own box and lose its last symbol to
+  // the edge of the picture. Every element is asked rather than the outermost.
+  let right = end.left
+  let bottom = box.bottom
+  for (const one of host.querySelectorAll('*')) {
+    const its = one.getBoundingClientRect()
+    right = Math.max(right, its.right)
+    bottom = Math.max(bottom, its.bottom)
+  }
+
+  const width = Math.max(host.scrollWidth, Math.ceil(right - box.left))
+  const height = Math.max(host.scrollHeight, Math.ceil(bottom - box.top))
+  const baseline = end.top
   host.remove()
 
-  return out.width > 0 && out.height > 0 ? out : null
+  const wide = Math.max(Math.ceil(box.width), width)
+  const out = {
+    // The widest answer, and room to spare on top of it.
+    //
+    // The spare room is not politeness. Every way of asking how wide a formula
+    // is - the box, the scroll width, the far edge of everything inside it, the
+    // place inline layout says it ends - agrees to within a pixel, and every one
+    // of them is still short of what the same markup draws inside a picture,
+    // whose viewport then cuts the last symbol off. Rather than keep guessing at
+    // why, the picture is simply given a tenth more than the formula
+    // measured. A `$$` block is centred, so the spare room moves it half of that
+    // to the left of centre, which nobody can see; a `$…$` span carries a few
+    // pixels of it as space before the next word.
+    //
+    // None of this goes downwards: the depth is what puts a formula on the line,
+    // and padding underneath would lift it off.
+    width: wide + Math.ceil(wide / 10) + slack,
+    height: Math.max(Math.ceil(box.height), height),
+    depth: Math.max(0, Math.round(box.bottom - baseline)),
+  }
+
+  return out.width > slack && out.height > 0 ? out : null
 }
 
 /** HTML as a picture the canvas will take.
@@ -502,11 +596,17 @@ async function pictureOfHtml(
 ): Promise<CanvasImageSource | null> {
   if (typeof Image === 'undefined') return null
 
+  // The picture is exactly the box that was measured, and the display block is
+  // undone here the same way it was undone there, so the two agree on where
+  // every glyph is.
+  const undo =
+    `.katex-display{margin:${DISPLAY.margin};display:${DISPLAY.display};` +
+    `text-align:${DISPLAY.textAlign}}`
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${box.width}" height="${box.height}">` +
     `<foreignObject width="100%" height="100%">` +
-    `<div xmlns="http://www.w3.org/1999/xhtml" style="font-size:${size}px;line-height:1.2;color:#fff">` +
-    `<style>${styles}</style>${html}</div>` +
+    `<div xmlns="http://www.w3.org/1999/xhtml" style="font-size:${size}px;line-height:1.2;color:#fff;white-space:nowrap">` +
+    `<style>${styles}${undo}</style>${html}</div>` +
     `</foreignObject></svg>`
 
   const image = new Image()
