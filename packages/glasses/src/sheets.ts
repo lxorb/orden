@@ -12,7 +12,7 @@
 import type { CodePalette, LigatureScope } from '@nib/editor'
 import { blocksOf, familiesUsed, fenceLanguagesIn } from './blocks'
 import { fenceSpans, loadFenceParsers, type Parser } from './code'
-import { blankGray4, packGray4, type Tile } from './encode'
+import { packGray4, type Tile } from './encode'
 import { hashOfBytes } from './hash'
 import { type Page, pagesOf } from './layout'
 import { ruler } from './measure'
@@ -44,12 +44,19 @@ export interface Quadrant {
   at: number
   /** What to send. */
   bytes: Uint8Array
-  /** True when the container has nothing on it, and `bytes` is the one byte the
-   *  firmware tiles across it rather than a whole dark picture. */
+  /** True when there is nothing on it at all. A container starts empty, so a
+   *  blank quadrant on the first page of a note needs no send; see `BLANK`. */
   blank: boolean
-  /** Of the pixels, so a caller can tell this from what it sent last. */
+  /** Of the pixels, so a caller can tell this from what it sent last. Every
+   *  blank quadrant hashes to the same thing on purpose: two thirds of a page of
+   *  prose is empty, and a page turn should not spend a fifth of a second
+   *  sending the same darkness twice. */
   hash: string
 }
+
+/** The hash every empty container shares, and the state a container is in
+ *  before anything has been sent to it. */
+export const BLANK = 'blank'
 
 export interface Sheet {
   /** The page's own hash, which is the key this was kept under. */
@@ -112,14 +119,17 @@ export class Sheets {
     return pages
   }
 
-  /** What the four containers get for this page. */
-  async sheet(page: Page): Promise<Sheet | null> {
-    const kept = this.sheets.get(page.hash)
+  /** What the four containers get for this page. `mark` is the page count drawn
+   *  in the band along the bottom; it is part of the picture, so it is part of
+   *  the key this is kept under. */
+  async sheet(page: Page, mark = ''): Promise<Sheet | null> {
+    const key = `${page.hash}:${mark}`
+    const kept = this.sheets.get(key)
     if (kept) return kept
 
     if (!this.painter) return null
 
-    const panel = this.painter.draw(page)
+    const panel = this.painter.draw(page, mark)
     const tiles = quadrantsOf(panel)
     const quadrants: Quadrant[] = []
 
@@ -130,8 +140,8 @@ export class Sheets {
       quadrants.push(await this.quadrant(at, tile))
     }
 
-    const sheet: Sheet = { hash: page.hash, quadrants }
-    this.sheets.set(page.hash, sheet)
+    const sheet: Sheet = { hash: key, quadrants }
+    this.sheets.set(key, sheet)
 
     // Oldest first, which is what a Map's own order gives.
     while (this.sheets.size > this.keep) {
@@ -144,18 +154,10 @@ export class Sheets {
   }
 
   private async quadrant(at: number, tile: Tile): Promise<Quadrant> {
-    const hash = hashOfBytes(tile.levels)
-
-    // A container with nothing on it takes one byte: the firmware tiles data
-    // that is smaller than the container, and two dark pixels tile to nothing.
-    // Two thirds of a page of prose is empty, so this is most of the saving.
-    if (tile.levels.every((level) => level === 0)) {
-      return { at, bytes: blankGray4(), blank: true, hash: 'blank' }
-    }
-
+    const blank = tile.levels.every((level) => level === 0)
     const bytes =
       this.format === 'gray4' ? packGray4(tile) : ((await this.painter?.png(at)) ?? packGray4(tile))
 
-    return { at, bytes, blank: false, hash }
+    return { at, bytes, blank, hash: blank ? BLANK : hashOfBytes(tile.levels) }
   }
 }

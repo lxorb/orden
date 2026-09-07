@@ -28,7 +28,7 @@ const WRITTEN: Readonly<Record<Family, string>> = {
 }
 
 /** The stack for one family, from the page when there is one. */
-export function fontStack(family: Family): string {
+function fontStack(family: Family): string {
   if (typeof document === 'undefined') return WRITTEN[family]
 
   const token = getComputedStyle(document.documentElement).getPropertyValue(TOKENS[family]).trim()

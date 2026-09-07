@@ -17,6 +17,7 @@
     "@evenrealities/even_hub_sdk": "^0.0.15",
     "@lezer/highlight": "^1.2.3",
     "@nib/editor": "workspace:*",
+    "@nib/glasses": "workspace:*",
     "@nib/markdown": "workspace:*",
     "@nib/themes": "workspace:*",
     "@tauri-apps/api": "^2.11.1",

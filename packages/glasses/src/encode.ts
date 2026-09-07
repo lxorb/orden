@@ -68,13 +68,6 @@ export function unpackGray4(bytes: Uint8Array, width: number, height: number): T
   return { width, height, levels }
 }
 
-/** Two pixels of nothing. Sent to a container that should show nothing: the
- *  firmware tiles data that is smaller than its container, so two dark pixels
- *  fill it, and it costs one packet rather than the container's own size. */
-export function blankGray4(): Uint8Array {
-  return new Uint8Array([0])
-}
-
 /** A channel from 0 to 255 as one of the sixteen levels. */
 export function quantise(value: number): number {
   return Math.min(WHITE, Math.max(0, Math.round((value / 255) * WHITE)))

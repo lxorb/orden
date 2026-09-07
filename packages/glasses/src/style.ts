@@ -53,7 +53,7 @@ export function headingStyle(level: number): TextStyle {
 /** Inline code, and the box drawn behind it. A little smaller than the prose
  *  around it, the way the app sets it, so a mono face beside a proportional one
  *  does not look oversized. */
-export const INLINE_CODE_SIZE = Math.round(BODY_SIZE * 0.94)
+const INLINE_CODE_SIZE = Math.round(BODY_SIZE * 0.94)
 
 export function inlineCodeStyle(): TextStyle {
   return {

@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 
@@ -17,5 +18,14 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    // Two pages out of one bundle: the editor, and the Even Realities plugin.
+    // The plugin is the same app plus the bridge in `src/lib/even`, so almost
+    // all of the output is shared; see docs/even.md.
+    rollupOptions: {
+      input: {
+        main: resolve(import.meta.dirname, 'index.html'),
+        even: resolve(import.meta.dirname, 'even.html'),
+      },
+    },
   },
 })

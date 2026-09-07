@@ -40,7 +40,7 @@ export interface Placed {
 /** A filled rectangle drawn under the runs: a rule, a quote's bar, a fence's
  *  ground, a grid line. In line coordinates: x from the text column's left
  *  edge, y from the line's own top. */
-export interface Fill {
+interface Fill {
   x: number
   y: number
   width: number
@@ -90,8 +90,11 @@ interface Atom {
   blank: boolean
 }
 
-/** Scripts that break between characters rather than at spaces. */
-const CJK = /[　-鿿豈-﫿＀-￯]/
+/** Scripts that break between characters rather than at spaces: the CJK
+ *  punctuation and kana blocks, the ideographs, the compatibility ideographs and
+ *  the fullwidth forms. Written by code point because one of them is an
+ *  ideographic space, which no reader of this file could see. */
+const CJK = /[\u3000-\u9fff\uf900-\ufaff\uff00-\uffef]/
 
 function atomsOf(run: Run, measure: Measurer): Atom[] {
   // Drawn, or a break: one piece, uncuttable.
@@ -136,7 +139,7 @@ interface Row {
 /** The box a run that is drawn rather than written takes, or null when the run
  *  is words. Measuring a formula means laying it out, so the measurer keeps its
  *  answers; see measure.ts. */
-export function drawnBox(run: Run, measure: Measurer): Box | null {
+function drawnBox(run: Run, measure: Measurer): Box | null {
   if (run.math) return measure.math(run.math.tex, run.math.display)
   if (run.picture) {
     return measure.picture(run.picture.source, { width: TEXT_WIDTH, height: TEXT_HEIGHT })
@@ -211,7 +214,7 @@ function wrap(
 
     // One piece wider than the whole column - a long address, a run of code
     // with no spaces in it - is cut by characters, the only cut left.
-    if (atom.width > width && [...atom.run.text].length > 1) {
+    if (atom.width > width && atom.run.text.length > 1) {
       for (const piece of splitToFit(atom.run, width, measure)) {
         if (used + piece.width > width && taken.length) flush()
         taken.push(piece)

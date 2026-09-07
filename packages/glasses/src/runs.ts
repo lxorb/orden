@@ -17,7 +17,7 @@ export interface MathRun {
 }
 
 /** A picture in place of words. */
-export interface PictureRun {
+interface PictureRun {
   source: string
 }
 

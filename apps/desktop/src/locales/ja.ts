@@ -598,4 +598,7 @@ export const ja: Dictionary = {
   INSERT: '挿入',
   VISUAL: 'ビジュアル',
   REPLACE: '置換',
+
+  // Even Realities glasses
+  'Page {page} of {count} on the glasses': 'グラスで {count} ページ中 {page} ページ',
 }

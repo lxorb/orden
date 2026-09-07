@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { blankGray4, ditherToLevels, packGray4, quantise, type Tile, unpackGray4 } from './encode'
+import { ditherToLevels, packGray4, quantise, type Tile, unpackGray4 } from './encode'
 import { GREY_LEVELS, PANEL_HEIGHT, PANEL_WIDTH, WHITE } from './panel'
 
 /** A page's worth of levels with something in every one of them: a gradient
@@ -53,10 +53,10 @@ describe('the four bit buffer', () => {
     expect(() => unpackGray4(new Uint8Array(3), 4, 2)).toThrow(/not a 4x2 tile/)
   })
 
-  test('clears a container with one byte', () => {
-    // Two dark pixels, which the firmware tiles across the whole container.
-    expect(blankGray4()).toEqual(new Uint8Array([0]))
-    expect(unpackGray4(blankGray4(), 2, 1).levels).toEqual(new Uint8Array([0, 0]))
+  test('packs an empty container as nothing lit', () => {
+    const dark = { width: 4, height: 2, levels: new Uint8Array(8) }
+    expect(packGray4(dark)).toEqual(new Uint8Array(4))
+    expect(unpackGray4(packGray4(dark), 4, 2).levels).toEqual(dark.levels)
   })
 })
 

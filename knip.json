@@ -5,9 +5,10 @@
       "entry": ["scripts/**/*.{ts,js,mjs}"]
     },
     "packages/editor": {},
+    "packages/glasses": {},
     "packages/markdown": {},
     "apps/desktop": {
-      "entry": ["src/**/*.svelte", "index.html"],
+      "entry": ["src/**/*.svelte", "index.html", "even.html", "src/even.ts"],
       "ignoreDependencies": ["katex"]
     },
     "services/sync": {},

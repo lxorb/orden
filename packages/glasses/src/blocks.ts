@@ -105,7 +105,7 @@ function rawOf(token: Token): string {
 }
 
 function childrenOf(token: Token): Token[] {
-  return 'tokens' in token && Array.isArray(token.tokens) ? (token.tokens as Token[]) : []
+  return 'tokens' in token && Array.isArray(token.tokens) ? token.tokens : []
 }
 
 /** A callout is a blockquote whose first line names a kind; see `callouts` in
@@ -401,7 +401,7 @@ function onlyPicture(
 ): { kind: 'picture'; source: string; alt: string } | null {
   const shown = tokens.filter((one) => one.type !== 'text' || textOf(one).trim() !== '')
   const first = shown[0]
-  if (shown.length !== 1 || !first || first.type !== 'image') return null
+  if (shown.length !== 1 || first?.type !== 'image') return null
 
   const source = 'href' in first && typeof first.href === 'string' ? first.href : ''
   return source ? { kind: 'picture', source, alt: textOf(first) } : null
@@ -440,14 +440,14 @@ function quote(
 function stripCallout(token: Token): Token {
   const kids = childrenOf(token)
   const first = kids[0]
-  if (first && first.type === 'text') {
+  if (first?.type === 'text') {
     return {
       ...token,
       tokens: [{ ...first, text: textOf(first).replace(CALLOUT, '') }, ...kids.slice(1)],
-    } as Token
+    }
   }
 
-  return { ...token, text: textOf(token).replace(CALLOUT, '') } as Token
+  return { ...token, text: textOf(token).replace(CALLOUT, '') }
 }
 
 function list(token: Token, where: Locator, nest: Nest, options: BlockOptions, out: Block[]): void {
@@ -516,9 +516,7 @@ function table(
     kind: 'table',
     head: cells(one.header, { ...BODY, weight: 'bold' }),
     rows: one.rows.map((row) => cells(row, BODY)),
-    align: one.align.map((given) =>
-      given !== null && ALIGNS.has(given as Align) ? (given as Align) : 'left',
-    ),
+    align: one.align.map((given) => (given !== null && ALIGNS.has(given) ? given : 'left')),
     from: where.take(rawOf(token)),
     ...nest,
   })

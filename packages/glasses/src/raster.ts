@@ -72,7 +72,9 @@ export function drawnIn(blocks: readonly Block[]): Drawn {
       case 'table':
         for (const row of [block.head, ...block.rows]) for (const cell of row) cell.forEach(fromRun)
         break
-      default:
+      case 'code':
+      case 'rule':
+        // Neither holds anything that has to be drawn first.
         break
     }
   }
@@ -266,8 +268,9 @@ export class Painter implements Measurer {
     })
   }
 
-  /** A page as one level per pixel, the whole panel. */
-  draw(page: Page): Tile {
+  /** A page as one level per pixel, the whole panel. `mark` goes in the band
+   *  along the bottom: the page count, and nothing else ever. */
+  draw(page: Page, mark = ''): Tile {
     const ctx = this.panel
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.fillStyle = greyCss(BLACK)
@@ -277,6 +280,12 @@ export class Painter implements Measurer {
     page.lines.forEach((line, at) => {
       this.drawLine(line, MARGIN_TOP + (page.tops[at] ?? 0))
     })
+
+    if (mark) {
+      ctx.font = this.fontFor(MARK_STYLE)
+      ctx.fillStyle = greyCss(MARK_STYLE.grey)
+      ctx.fillText(mark, PANEL_WIDTH - MARGIN_X - this.width(mark, MARK_STYLE), PANEL_HEIGHT - 4)
+    }
 
     return this.read()
   }
@@ -406,7 +415,7 @@ export class Painter implements Measurer {
     if (!scratch) return null
 
     scratch.drawImage(
-      this.panel.canvas as CanvasImageSource,
+      this.panel.canvas,
       quadrant.x,
       quadrant.y,
       quadrant.width,
@@ -430,6 +439,17 @@ export class Painter implements Measurer {
 
     return { width: PANEL_WIDTH, height: PANEL_HEIGHT, levels }
   }
+}
+
+/** The page count in the bottom band. Dim on purpose: it is not the note. */
+const MARK_STYLE: TextStyle = {
+  family: 'ui',
+  size: 10,
+  weight: 'normal',
+  slant: 'normal',
+  grey: 6,
+  underline: false,
+  strike: false,
 }
 
 /** The mono face a formula falls back to, and the size it is measured at. */

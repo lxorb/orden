@@ -599,4 +599,7 @@ export const fr: Dictionary = {
   INSERT: 'INSERTION',
   VISUAL: 'VISUEL',
   REPLACE: 'REMPLACER',
+
+  // Even Realities glasses
+  'Page {page} of {count} on the glasses': 'Page {page} sur {count} dans les lunettes',
 }

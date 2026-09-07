@@ -50,6 +50,9 @@ importers:
       '@nib/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@nib/glasses':
+        specifier: workspace:*
+        version: link:../../packages/glasses
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown

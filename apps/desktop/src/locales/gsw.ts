@@ -599,4 +599,7 @@ export const gsw: Dictionary = {
   INSERT: 'IIFÜEGE',
   VISUAL: 'VISUELL',
   REPLACE: 'ERSETZE',
+
+  // Even Realities glasses
+  'Page {page} of {count} on the glasses': 'Siite {page} vo {count} uf de Brülle',
 }

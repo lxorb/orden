@@ -111,6 +111,22 @@ app.route('/v1', notes)
 
 app.get('/health', (context) => context.json({ ok: true }))
 
+/** The Even Realities plugin, which is the same web app with a bridge to a pair
+ *  of glasses in it. The build writes it as `even.html` beside `index.html`, and
+ *  the assets router's not-found handling would answer `/even/` with the
+ *  editor's own page, so the path is named here and asked for by file name.
+ *  Registered ahead of the catch-all for that reason. See docs/even.md. */
+app.get('/even', (context) => servePlugin(context.env, context.req.url))
+app.get('/even/', (context) => servePlugin(context.env, context.req.url))
+
+function servePlugin(env: Env, from: string): Promise<Response> | Response {
+  if (!env.ASSETS) return new Response('Not found', { status: 404 })
+
+  const url = new URL(from)
+  url.pathname = '/even.html'
+  return env.ASSETS.fetch(new Request(url, { headers: { accept: 'text/html' } }))
+}
+
 /** Anything that is not the API is either a published space, looked up by
  *  hostname, or the app itself. */
 app.all('*', async (context) => {

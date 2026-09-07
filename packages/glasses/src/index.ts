@@ -11,4 +11,4 @@
 export { type Page, pageAt } from './layout'
 export { PANEL_HEIGHT, PANEL_WIDTH } from './panel'
 export { QUADRANTS } from './raster'
-export { type Look, type Quadrant, type Sheet, Sheets } from './sheets'
+export { BLANK, type Look, type Quadrant, type Sheet, Sheets } from './sheets'

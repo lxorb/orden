@@ -12,10 +12,9 @@
 export const PANEL_WIDTH = 576
 export const PANEL_HEIGHT = 288
 
-/** How many grey levels a pixel can be. Four bits, so sixteen: black through
- *  to full brightness. See `encode.ts` for how they are packed. */
+/** How many grey levels a pixel can be. Four bits a pixel, so sixteen: nothing
+ *  lit through to full brightness. See `encode.ts` for how they are packed. */
 export const GREY_LEVELS = 16
-export const GREY_BITS = 4
 /** The brightest a pixel goes, and the level that is simply off. */
 export const WHITE = GREY_LEVELS - 1
 export const BLACK = 0
@@ -25,7 +24,11 @@ export const BLACK = 0
  *  so a line starts where the eye expects it and runs to the far edge. */
 export const MARGIN_X = 10
 export const MARGIN_TOP = 6
-export const MARGIN_BOTTOM = 6
+/** Deeper than the top, because the band along the bottom carries the page
+ *  count. It costs half a line of prose and it is the only thing on the panel
+ *  that is not the note, which is a trade worth making: a reader turning pages
+ *  with their thumb on a temple has no other way to know where they are. */
+const MARGIN_BOTTOM = 14
 
 export const TEXT_WIDTH = PANEL_WIDTH - 2 * MARGIN_X
 export const TEXT_HEIGHT = PANEL_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
