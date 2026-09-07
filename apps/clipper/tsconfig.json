@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // `chrome` is the extension API the whole package talks to; `node` is for
+    // the build script and the tests, which read fixtures off disk.
+    "types": ["svelte", "vite/client", "chrome", "node"],
+    // The build script is JavaScript because Node runs it directly, and it is
+    // held to the same types as everything else here.
+    "allowJs": true,
+    "checkJs": true
+  },
+  // Type-aware linting reads this file to find a project for every source it
+  // sees, so everything the linter visits has to be listed: the two Vite
+  // configs and the build script as much as the sources and the tests.
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "src/**/*.d.ts",
+    "test/**/*.ts",
+    "scripts/**/*.js",
+    "*.config.ts",
+    "*.config.js"
+  ]
+}

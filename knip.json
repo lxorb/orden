@@ -11,6 +11,17 @@
       "entry": ["src/**/*.svelte", "index.html", "even.html", "src/even.ts"],
       "ignoreDependencies": ["katex"]
     },
+    "apps/clipper": {
+      "entry": [
+        "src/**/*.svelte",
+        "src/popup/main.ts",
+        "src/options/main.ts",
+        "src/background/index.ts",
+        "src/content/index.ts",
+        "vite.content.config.ts"
+      ],
+      "ignoreDependencies": ["@nib/themes"]
+    },
     "services/sync": {},
     "packages/themes": {}
   }
