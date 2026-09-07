@@ -212,10 +212,13 @@
   const follows = (_value: unknown) => undefined
 
   // Words that changed under the surface: a version restored, a copy a sync
-  // brought over, the file undo putting one back.
+  // brought over, the file undo putting one back. A plane that had nothing on it
+  // is framed the moment it has something, which is what a blank canvas the
+  // account fills a second later needs.
   $effect(() => {
     follows(tab.note.revision)
     store.follow()
+    if (!store.framed && width && height) store.fit(width, height)
   })
 
   $effect(() => {

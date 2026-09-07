@@ -60,8 +60,13 @@ export class CanvasStore {
     this.tab.camera = { ...next, scale: clampScale(next.scale) }
   }
 
-  /** Whether the view has been settled at all yet, so a canvas that has just
-   *  opened frames itself once and never again. */
+  /** Whether the view has been settled on anything yet, so a canvas frames itself
+   *  once and never again.
+   *
+   *  An empty plane never counts as framed: there is nothing to frame, and the
+   *  cards of one a sync is bringing over arrive a moment after the tab does.
+   *  Panning an empty plane does count, because that is somebody choosing where
+   *  they want to be. */
   get framed(): boolean {
     return this.tab.camera !== undefined
   }
@@ -176,15 +181,13 @@ export class CanvasStore {
   }
 
   /** Everything on the plane in view, with room to spare. What Ctrl+0 does, and
-   *  what a canvas does the first time it is drawn.
+   *  what a canvas does the first time it has anything to show.
    *
-   *  An empty canvas is framed at its natural size around the origin: there is
-   *  nothing to fit, and the first card should land where the pointer is rather
-   *  than somewhere the reader has to go looking for. */
+   *  An empty plane is left exactly where it is. There is nothing to fit, and
+   *  leaving the view unset is also what says the canvas has not been framed yet,
+   *  so the first cards to arrive are framed when they do. */
   fit(width: number, height: number) {
     const box = bounds(this.canvas.nodes)
-    this.camera = box
-      ? framingBox(box, width, height, PADDING)
-      : { x: width / 2, y: height / 2, scale: 1 }
+    if (box) this.camera = framingBox(box, width, height, PADDING)
   }
 }

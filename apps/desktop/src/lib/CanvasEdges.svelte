@@ -34,6 +34,15 @@
   const ARROW = 9
   const LABEL = 12
 
+  /** How much of the plane the layer covers, in plane units, and half of it.
+   *
+   *  An outermost SVG paints nothing outside its own viewport, whatever
+   *  `overflow` says, so the layer cannot be the zero-sized box the cards sit in:
+   *  it needs room of its own. This is far more plane than any canvas anybody
+   *  draws, and the browser only ever rasterises the part that is on screen. */
+  const SPAN = 80000
+  const HALF = SPAN / 2
+
   interface Drawn {
     id: string
     path: string
@@ -75,47 +84,54 @@
   })
 </script>
 
-<svg class="edges" aria-hidden="true">
-  {#each drawn as edge (edge.id)}
-    <g
-      class="edge"
-      class:picked={edge.picked}
-      style:--edge-colour={edge.colour}
-      data-edge={edge.id}
-    >
-      <!-- A wide, invisible line under the visible one, so an edge can be
-           clicked without asking anybody to hit two pixels. -->
-      <path class="reach" d={edge.path} stroke-width={WEIGHT * 6} />
-      <path class="line" d={edge.path} stroke-width={WEIGHT} />
-      {#each edge.heads as head, index (index)}
-        <path
-          class="head"
-          d="M 0 0 L {-ARROW} {-ARROW * 0.5} L {-ARROW} {ARROW * 0.5} Z"
-          transform="translate({head.x} {head.y}) rotate({head.angle})"
-        />
-      {/each}
-      {#if edge.label}
-        <text class="words" x={edge.label.x} y={edge.label.y} font-size={LABEL}>
-          {edge.label.text}
-        </text>
-      {/if}
-    </g>
-  {/each}
+<svg
+  class="edges"
+  aria-hidden="true"
+  width={SPAN}
+  height={SPAN}
+  style:left="{-HALF}px"
+  style:top="{-HALF}px"
+>
+  <!-- The plane's origin, moved to the middle of the layer, so everything inside
+       is written in the coordinates the file uses. -->
+  <g transform="translate({HALF} {HALF})">
+    {#each drawn as edge (edge.id)}
+      <g
+        class="edge"
+        class:picked={edge.picked}
+        style:--edge-colour={edge.colour}
+        data-edge={edge.id}
+      >
+        <!-- A wide, invisible line under the visible one, so an edge can be
+             clicked without asking anybody to hit two pixels. -->
+        <path class="reach" d={edge.path} stroke-width={WEIGHT * 6} />
+        <path class="line" d={edge.path} stroke-width={WEIGHT} />
+        {#each edge.heads as head, index (index)}
+          <path
+            class="head"
+            d="M 0 0 L {-ARROW} {-ARROW * 0.5} L {-ARROW} {ARROW * 0.5} Z"
+            transform="translate({head.x} {head.y}) rotate({head.angle})"
+          />
+        {/each}
+        {#if edge.label}
+          <text class="words" x={edge.label.x} y={edge.label.y} font-size={LABEL}>
+            {edge.label.text}
+          </text>
+        {/if}
+      </g>
+    {/each}
 
-  {#if provisional}
-    <path class="drawing" d={provisional} stroke-width={WEIGHT} />
-  {/if}
+    {#if provisional}
+      <path class="drawing" d={provisional} stroke-width={WEIGHT} />
+    {/if}
+  </g>
 </svg>
 
 <style>
-  /* No size of its own: the paths are in plane coordinates and the layer only
-     has to let them out of its box. */
+  /* Sized rather than clipped to nothing, and offset so the plane's origin falls
+     in the middle of it; see SPAN above. */
   .edges {
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 0;
-    height: 0;
     overflow: visible;
     pointer-events: none;
   }
