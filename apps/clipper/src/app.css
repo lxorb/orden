@@ -1,0 +1,80 @@
+/* The extension's two pages, dressed as the app.
+
+   The tokens are the app's tokens and the base stylesheet is the app's base, so
+   a select, a scrollbar and a selection look the same here as they do in the
+   editor. Only the frame is different: a popup is a small fixed column rather
+   than a window. */
+
+@import '@nib/themes/tokens.css';
+@import '@nib/themes/base.css';
+
+/* The app's base sizes itself to a window. A popup is sized by what is in it,
+   and the options page scrolls like an ordinary page. */
+html,
+body {
+  height: auto;
+  overflow: visible;
+}
+
+/* Every control the extension has, in one shape: the accent one that does the
+   thing, and the quiet one beside it. */
+button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 550;
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-spring),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+/* Everything here waits on a server, so the press has to land before the wait
+   begins. */
+button:active:not(:disabled) {
+  background: var(--accent-press);
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.55;
+}
+
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  outline: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input::placeholder {
+  color: var(--muted);
+}
