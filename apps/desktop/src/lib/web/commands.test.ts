@@ -233,6 +233,75 @@ describe('the tree', () => {
     })
     expect(all.children.map((one) => one.name)).toEqual(['.private.md', 'a.md'])
   })
+
+  test('lists the PDFs beside the notes, and nothing else', async () => {
+    await write('/Notes/a.md')
+    disk.assets.set('/Notes/paper.pdf', {
+      path: '/Notes/paper.pdf',
+      type: 'application/pdf',
+      data: '',
+      modified: 1,
+    })
+    disk.assets.set('/Notes/shot.png', {
+      path: '/Notes/shot.png',
+      type: 'image/png',
+      data: '',
+      modified: 1,
+    })
+    await write('/Notes/paper.pdf.highlights.json', '{}')
+
+    const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
+    expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'paper.pdf'])
+  })
+})
+
+describe("a PDF's highlights", () => {
+  const pdf = '/Notes/paper.pdf'
+  const sidecar = '/Notes/paper.pdf.highlights.json'
+
+  test('are written beside it and read back', async () => {
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
+    expect(await webInvoke<string>('read_highlights', { path: pdf })).toBe('{"version":1}')
+  })
+
+  test('read as nothing for a PDF nobody has marked', async () => {
+    expect(await webInvoke<string>('read_highlights', { path: pdf })).toBe('')
+  })
+
+  test('take the file with them once the last one is gone', async () => {
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+    await webInvoke('write_highlights', { path: pdf, content: '' })
+
+    expect(disk.files.has(sidecar)).toBe(false)
+  })
+
+  test('follow the PDF when it moves, since a folder rename takes both stores', async () => {
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('rename_note', { from: '/Notes', to: '/Reading' })
+
+    expect(disk.assets.has('/Reading/paper.pdf')).toBe(true)
+    expect(disk.files.has('/Reading/paper.pdf.highlights.json')).toBe(true)
+  })
+
+  test('go when the PDF goes', async () => {
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('delete_note', { path: pdf })
+
+    expect(disk.assets.has(pdf)).toBe(false)
+    expect(disk.files.has(sidecar)).toBe(false)
+  })
+
+  test('belong to a PDF and to nothing else', async () => {
+    await expect(webInvoke('read_highlights', { path: '/Notes/Idea.md' })).rejects.toThrow()
+    await expect(
+      webInvoke('write_highlights', { path: '/Notes/Idea.md', content: '{}' }),
+    ).rejects.toThrow()
+  })
 })
 
 describe('a pasted picture', () => {

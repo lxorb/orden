@@ -29,9 +29,16 @@ export function wordsOfRuns(runs: readonly string[], divs: readonly HTMLElement[
 
   for (const [index, run] of runs.entries()) {
     const node = divs[index]?.firstChild
-    if (run && node instanceof Text) words.pieces.push({ node, at })
+    if (run && isText(node)) words.pieces.push({ node, at })
     at += run.length
   }
 
   return words
+}
+
+/** Whether a node is the text inside a span. Read from `nodeType` rather than
+ *  with `instanceof`, so the arithmetic above can be stated in a test without a
+ *  DOM to build it in. Three is what a browser calls a text node. */
+function isText(node: ChildNode | null | undefined): node is Text {
+  return node?.nodeType === 3
 }

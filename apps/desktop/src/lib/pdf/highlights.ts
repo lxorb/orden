@@ -273,12 +273,16 @@ export function joinRuns(boxes: readonly Box[]): Box[] {
 /** What the copy-link action puts on the clipboard: the link, and the words as a
  *  quote, so it pastes into a note as a citation rather than as a bare link. */
 export function citation(name: string, page: number, text: string): string {
-  const quoted = text
-    .trim()
+  const link = `[[${name}#page=${page}]]`
+  // Asked before the quote is built, not after: splitting nothing gives one
+  // empty line, and an empty line quoted is a `>` with nothing after it.
+  const words = text.trim()
+  if (!words) return `${link}\n`
+
+  const quoted = words
     .split('\n')
     .map((line) => `> ${line.trim()}`)
     .join('\n')
-  const link = `[[${name}#page=${page}]]`
 
-  return quoted ? `${quoted}\n\n${link}\n` : `${link}\n`
+  return `${quoted}\n\n${link}\n`
 }
