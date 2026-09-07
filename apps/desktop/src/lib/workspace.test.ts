@@ -116,7 +116,8 @@ describe('keeping a preview tab', () => {
     const tab = await preview('/space/a.md')
     const keep = vi.spyOn(workspace, 'keep')
 
-    workspace.edit('# a, changed')
+    // What a keystroke amounts to: the document changes, and it says so.
+    tab.note.live.replace('# a, changed')
 
     expect(keep).toHaveBeenCalledWith(tab.id)
     expect(workspace.previewTabId).toBeNull()
@@ -323,23 +324,20 @@ describe('where a note was last looked at', () => {
     let clock = Date.now()
     const now = vi.spyOn(Date, 'now').mockImplementation(() => ++clock)
 
+    let last = ''
     for (let index = 0; index < 320; index++) {
-      workspace.tabs = [
-        {
-          id: `t${index}`,
-          kind: 'note',
-          path: `/space/${index}.md`,
-          name: `${index}.md`,
-          doc: '',
-          dirty: false,
-        },
-      ]
-      workspace.activeTabId = `t${index}`
-      workspace.noteView(`t${index}`, index, index)
+      workspace.tabs = []
+      workspace.openBlank(`${index}.md`)
+      const tab = workspace.tabs[0]
+      if (!tab) throw new Error('the note did not open')
+
+      tab.path = `/space/${index}.md`
+      last = tab.id
+      workspace.noteView(tab.id, index, index)
     }
 
     // The session is written on a timer; activating a tab writes it now.
-    workspace.activate('t319')
+    workspace.activate(last)
     now.mockRestore()
 
     const saved = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {

@@ -6,13 +6,27 @@ import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { folderOf as folderIn, insideSpace, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
+import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import { isRecord, stored } from './stored'
-import { type Draft, readSession, type Session, writeSession } from './workspace/session'
+import {
+  type Draft,
+  frameDraft,
+  frameOf,
+  type Layout,
+  panesOf,
+  readSession,
+  type Session,
+  writeSession,
+} from './workspace/session'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { DeviceView } from './workspace/device.svelte'
+import { type DocumentStart, NoteDoc, Tab } from './workspace/documents.svelte'
+import { Layouts } from './workspace/layouts.svelte'
+import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
+import { Panes } from './workspace/panes.svelte'
 import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -44,40 +58,10 @@ export interface Space {
   root: string
 }
 
-/** What a tab holds. Almost always a note; the graph of the space is the one
- *  surface that is a tab without holding one, because a picture of the notes
- *  belongs beside them rather than in a panel. */
-export type TabKind = 'note' | 'graph'
-
-export interface Tab {
-  id: string
-  kind: TabKind
-  path: string | null
-  name: string
-  doc: string
-  dirty: boolean
-  /** Offset of the caret, pixels scrolled, and the position of the line at the
-   *  top, so a note reopens where it was left rather than at the top. The
-   *  line is what is put back; the pixels serve sessions from older builds. */
-  cursor?: number | undefined
-  scroll?: number | undefined
-  anchor?: number | undefined
-  /** Which line the caret is on. The editor knows it without counting, and the
-   *  outline would otherwise walk the note's newlines to work it out again. */
-  line?: number | undefined
-  /** Bumped whenever the text is replaced from outside the editor: a note
-   *  loaded from disk, a version restored, a rename that rewrote the title.
-   *  Typing never bumps it, which is what keeps the view from comparing the
-   *  whole document against itself on every keystroke. */
-  pushed?: number
-}
-
-/** As much of CodeMirror's rope as the workspace needs. A plain string is one
- *  too, which is what the tests and every other caller hand over. */
-export interface DocText {
-  readonly length: number
-  toString(): string
-}
+/** A document is the words and a tab is one pane's view of them; both live in
+ *  workspace/documents.svelte.ts, and are named here because half the app asks
+ *  the workspace for a tab. */
+export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'links'
 
@@ -125,18 +109,6 @@ function lineOfTarget(doc: string, jump: NoteJump): number | null {
   if (jump.heading === null) return null
 
   return lineOfHeading(scanHeadings(doc), jump.heading)
-}
-
-/** Ids handed out within one run of the app: tabs, and the spaces the rail
- *  keeps its order by. The counter is what makes them unique - eight random
- *  characters collide rarely, and rarely is not never, and two tabs sharing an
- *  id would share their saving mark and take each other's place in the strip.
- *  The random part keeps two windows from agreeing on the same id for
- *  different things. */
-let handed = 0
-
-function identifier(): string {
-  return `${(handed++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'created']
@@ -188,12 +160,33 @@ async function pickSavePath(
   return joinPath(target.root, MARKDOWN.test(clean) ? clean : `${clean}.md`)
 }
 
+/** A map read within one call and thrown away. Not one of Svelte's: nothing
+ *  renders from these, and a reactive map would only cost the app the wrappers. */
+function emptyMap<T>(): Map<string, T> {
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  return new Map<string, T>()
+}
+
+function pathsTo(notes: NoteDoc[]): Map<string, NoteDoc> {
+  const out = emptyMap<NoteDoc>()
+  for (const note of notes) if (note.path) out.set(note.path, note)
+
+  return out
+}
+
 class Workspace {
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
   tree = $state<Entry | null>(null)
+  /** Every tab in the window, whichever pane it sits in. One flat list, because
+   *  half of what the app asks is "is this note open" rather than "where": a tab
+   *  says which pane it is in, and a pane's strip is the tabs that name it. */
   tabs = $state<Tab[]>([])
-  activeTabId = $state<string | null>(null)
+  /** How the panes are arranged and which one has the focus; see
+   *  workspace/panes.svelte.ts. */
+  readonly panes = new Panes(() => this.scheduleSession())
+  /** Arrangements someone has named; see workspace/layouts.svelte.ts. */
+  readonly layouts = new Layouts()
   // Hidden until asked for, the way Typora starts.
   panel = $state<Panel | null>(null)
   /** The one tab holding a note that is only being looked at. */
@@ -218,33 +211,64 @@ class Workspace {
   readonly bookmarks = new Bookmarks(() => this.activeSpace?.root ?? null)
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
-  /** Which tabs are being written, and which have just been. The dot beside a
+  /** Which notes are being written, and which have just been. The dot beside a
    *  note's name is the whole report on saving, so it has three things to say:
-   *  there is something unwritten, it is going down now, it is down. Held by id
-   *  rather than on the tab, because "just saved" is about this moment and not
-   *  about the note. */
+   *  there is something unwritten, it is going down now, it is down. Held apart
+   *  from the note because "just saved" is about this moment and not about the
+   *  note, and keyed by document rather than by tab so both panes showing one
+   *  note show the same mark. */
   saveState = $state<Record<string, 'saving' | 'saved'>>({})
   private savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private sessionTimer: ReturnType<typeof setTimeout> | undefined
+  /** Notes waiting to be written when the typing stops. A set rather than one
+   *  note, because two panes may hold two different notes and both be edited
+   *  between one pause and the next. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly waiting = new Set<NoteDoc>()
 
   /** Where each note was last being read; see workspace/positions.ts. */
   private positions = new Positions()
 
-  /** The text the editor holds for the note being typed in, before anything
-   *  has turned it into a string. Turning half a megabyte of rope into a
-   *  string costs the same on every keystroke however small the keystroke is,
-   *  and that alone made a large note feel heavy. So `tab.doc` is allowed to
-   *  lag behind by one pause in the typing: `flush` brings it forward, and
-   *  everything that reads the text - saving, the session, an export - goes
-   *  through it first. */
-  private live: { id: string; text: DocText } | null = null
-
   readonly activeSpace = $derived(
     this.spaces.find((space) => space.id === this.activeSpaceId) ?? null,
   )
+  /** The tab showing in the pane that has the focus. Every key and every
+   *  palette command means this one. */
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
+
+  /** Which tab that is. Setting it shows a tab and moves the focus to the pane
+   *  it is in, which is what every caller means by it. */
+  get activeTabId(): string | null {
+    return this.panes.focused.activeTabId
+  }
+
+  set activeTabId(id: string | null) {
+    const tab = id === null ? null : (this.tabs.find((one) => one.id === id) ?? null)
+    if (id !== null && !tab) return
+
+    const paneId = tab?.paneId ?? this.panes.focusedId
+    this.panes.focus(paneId)
+    this.panes.activate(paneId, tab?.id ?? null)
+  }
+
+  /** One pane's strip, in the order the tabs were opened. */
+  tabsIn(paneId: string): Tab[] {
+    return this.tabs.filter((tab) => tab.paneId === paneId)
+  }
+
+  /** Every open document, once each however many panes are showing it. */
+  private get documents(): NoteDoc[] {
+    const seen: NoteDoc[] = []
+    for (const tab of this.tabs) if (!seen.includes(tab.note)) seen.push(tab.note)
+    return seen
+  }
+
+  /** What the dot beside a name is saying, if anything. */
+  savingOf(tab: Tab): 'saving' | 'saved' | undefined {
+    return this.saveState[tab.note.key]
+  }
 
   /** The note being read, named the way a link names it: relative to the space.
    *  Falls back to the last note that was read, so a tab holding no note - the
@@ -285,6 +309,7 @@ class Workspace {
     }
 
     const state = readSession(stored(STORAGE_KEY))
+    this.layouts.restore()
 
     if (!state) {
       await this.loadSpaces()
@@ -308,77 +333,185 @@ class Workspace {
 
     if (this.activeSpaceId) await this.loadTree()
 
-    if (state.tabs?.length) await this.restoreTabs(state.tabs, state.active ?? 0)
+    if (state.layout) await this.applyLayout(state.layout)
+    else if (state.tabs?.length) await this.restoreStrip(state.tabs, state.active ?? 0)
     else {
       for (const path of state.openPaths ?? []) {
         await this.open(path, { activate: path === state.activePath })
       }
     }
 
+    // A phone shows one note at a time, so an arrangement made on a desktop
+    // arrives as the pane that had the focus, with everything in it.
+    if (viewport.phone) this.collapsePanes()
     if (!this.tabs.length) this.openBlank()
   }
 
-  /** Puts the strip back as it was. A note that was clean is re-read from disk,
-   *  so an edit made elsewhere shows up; a note that was not is restored from
-   *  its draft and stays dirty. Replacing someone's unsaved work with what
-   *  happens to be on disk is the one thing this must never do. */
-  private async restoreTabs(drafts: Draft[], active: number) {
-    const restored: Tab[] = []
+  /** Drafts as tabs. A note that was clean is re-read from disk, so an edit made
+   *  elsewhere shows up; a note that was not is restored from its draft and stays
+   *  dirty. Replacing someone's unsaved work with what happens to be on disk is
+   *  the one thing this must never do.
+   *
+   *  `shared` is what makes two panes that were showing one note show one note
+   *  again rather than two copies of it, and `open` is what keeps a note that is
+   *  already open being the same note when an arrangement is applied over it. */
+  private async tabsFrom(
+    drafts: Draft[],
+    paneId: string,
+    shared: Map<string, NoteDoc>,
+    open: Map<string, NoteDoc>,
+  ): Promise<Tab[]> {
+    const made: Tab[] = []
 
     for (const draft of drafts) {
-      let doc = draft.doc
+      const already =
+        (draft.share ? shared.get(draft.share) : undefined) ??
+        (draft.path ? open.get(draft.path) : undefined)
+
+      if (already) {
+        made.push(this.viewOf(already, paneId, draft))
+        continue
+      }
+
+      let text = draft.doc
 
       if (draft.kind === 'note' && draft.path && !draft.dirty) {
         try {
-          doc = await invoke<string>('read_note', { path: draft.path })
+          text = await invoke<string>('read_note', { path: draft.path })
         } catch {
           // Deleted or moved while Nib was away, and nothing unsaved to keep.
           continue
         }
       }
 
-      restored.push({
-        id: identifier(),
+      const note = this.document({
         kind: draft.kind,
         path: draft.path,
         name: draft.name,
-        doc,
+        text,
         dirty: draft.dirty,
-        cursor: draft.cursor,
-        scroll: draft.scroll,
-        anchor: draft.anchor,
       })
+
+      if (draft.share) shared.set(draft.share, note)
+      if (draft.path) open.set(draft.path, note)
+      made.push(this.viewOf(note, paneId, draft))
     }
 
+    return made
+  }
+
+  private viewOf(note: NoteDoc, paneId: string, draft: Draft): Tab {
+    const tab = new Tab(note, paneId)
+    tab.cursor = draft.cursor
+    tab.scroll = draft.scroll
+    tab.anchor = draft.anchor
+    return tab
+  }
+
+  /** One flat strip of tabs, which is how a session written before there were
+   *  panes reads. All of it goes into the one pane there is. */
+  private async restoreStrip(drafts: Draft[], active: number) {
+    const paneId = this.panes.focusedId
+    const restored = await this.tabsFrom(drafts, paneId, emptyMap(), emptyMap())
+
     this.tabs = restored
-    this.activeTabId = (restored[active] ?? restored[0])?.id ?? null
+    this.panes.activate(paneId, (restored[active] ?? restored[0])?.id ?? null)
+  }
+
+  /** Puts an arrangement in place: the panes, the notes in each of them, which
+   *  one has the focus, and the sidebar. The session on the way in, and a named
+   *  layout whenever one is chosen.
+   *
+   *  A note with unsaved words that the arrangement says nothing about is not
+   *  thrown away: it lands in the pane that ends up with the focus. Arranging
+   *  what is open is never a reason to lose what somebody wrote. */
+  async applyLayout(layout: Layout) {
+    const open = pathsTo(this.documents)
+    const rescued = this.tabs.filter((tab) => tab.dirty)
+    const shared = emptyMap<NoteDoc>()
+    const showing = emptyMap<string | null>()
+    const made: Tab[] = []
+
+    for (const draft of panesOf(layout.frame)) {
+      const tabs = await this.tabsFrom(draft.tabs, draft.id, shared, open)
+      made.push(...tabs)
+      showing.set(draft.id, (tabs[draft.active] ?? tabs[0])?.id ?? null)
+    }
+
+    let frame: Frame = frameOf(layout.frame, (draft) => showing.get(draft.id) ?? null)
+
+    // A pane whose notes have all gone takes no room.
+    for (const empty of panesIn(frame)) {
+      if (!made.some((tab) => tab.paneId === empty.id)) frame = withoutPane(frame, empty.id)
+    }
+
+    this.tabs = made
+    this.panes.restore(frame, layout.focused)
+    this.panel = layout.panel
+
+    for (const tab of rescued) {
+      if (made.some((one) => one.note === tab.note)) continue
+
+      tab.paneId = this.panes.focusedId
+      this.tabs = [...this.tabs, tab]
+    }
+
+    if (!this.tabs.length) this.openBlank()
+    else if (!this.active) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
+
+    // A phone shows one note at a time.
+    if (viewport.phone) this.collapsePanes()
+    this.persist()
+  }
+
+  /** The arrangement as it is written down. What the session holds, and what
+   *  "Save layout" keeps a copy of under a name. */
+  layout(): Layout {
+    this.flush()
+
+    return {
+      frame: frameDraft(this.panes.frame, (pane) => {
+        const tabs = this.tabsIn(pane.id)
+        return {
+          tabs: tabs.map((tab) => this.draftOf(tab)),
+          active: Math.max(
+            0,
+            tabs.findIndex((tab) => tab.id === pane.activeTabId),
+          ),
+        }
+      }),
+      focused: this.panes.focusedId,
+      panel: this.panel,
+    }
+  }
+
+  private draftOf(tab: Tab): Draft {
+    return {
+      kind: tab.kind,
+      path: tab.path,
+      name: tab.name,
+      // Only unsaved words are worth writing down: a note that is on disk is
+      // re-read from there on the way back in (see `tabsFrom`), so its copy here
+      // would never be looked at, and copying a large one every time the typing
+      // pauses is not free.
+      doc: tab.dirty ? tab.doc : '',
+      dirty: tab.dirty,
+      cursor: tab.cursor ?? 0,
+      scroll: tab.scroll ?? 0,
+      anchor: tab.anchor,
+      // Which document this is a view of, so two panes on one note come back as
+      // one note rather than as two copies of it.
+      share: tab.note.key,
+    }
   }
 
   private persist() {
     clearTimeout(this.sessionTimer)
-    this.flush()
 
     const state: Session = {
       spaces: this.spaces,
       activeSpace: this.activeSpaceId,
-      tabs: this.tabs.map((tab) => ({
-        kind: tab.kind,
-        path: tab.path,
-        name: tab.name,
-        // Only unsaved words are worth writing down: a note that is on disk is
-        // re-read from there on the way back in (see `restoreTabs`), so its
-        // copy here would never be looked at, and copying a large one every
-        // time the typing pauses is not free.
-        doc: tab.dirty ? tab.doc : '',
-        dirty: tab.dirty,
-        cursor: tab.cursor ?? 0,
-        scroll: tab.scroll ?? 0,
-        anchor: tab.anchor,
-      })),
-      active: Math.max(
-        0,
-        this.tabs.findIndex((tab) => tab.id === this.activeTabId),
-      ),
+      layout: this.layout(),
       panel: this.panel,
       positions: this.positions.all,
     }
@@ -409,29 +542,41 @@ class Workspace {
   }
 
   openBlank(name = UNTITLED, doc = '') {
-    const tab: Tab = { id: identifier(), kind: 'note', path: null, name, doc, dirty: !!doc }
+    const note = this.document({ kind: 'note', path: null, name, text: doc, dirty: !!doc })
+    this.add(new Tab(note, this.panes.focusedId))
+  }
+
+  /** A document, wired so that every change to it - a keystroke in any pane, an
+   *  undo, a picture dropped in - reaches the app exactly once. */
+  private document(start: DocumentStart): NoteDoc {
+    return new NoteDoc(start, (note) => this.edited(note))
+  }
+
+  /** Puts a tab in its pane and shows it. */
+  private add(tab: Tab, activate = true): Tab {
     this.tabs = [...this.tabs, tab]
-    this.activeTabId = tab.id
+    if (activate) this.panes.activate(tab.paneId, tab.id)
+
+    return tab
   }
 
   /** The graph of the whole space, as a tab of its own. One at a time: a second
    *  picture of the same space says the same thing, so asking again brings the
    *  one already there forward. */
   openGraph() {
-    const existing = this.tabs.find((tab) => tab.kind === 'graph')
+    const paneId = this.panes.focusedId
+    const existing = this.tabs.find((tab) => tab.kind === 'graph' && tab.paneId === paneId)
 
-    if (existing) this.activeTabId = existing.id
+    if (existing) this.panes.activate(paneId, existing.id)
     else {
-      const tab: Tab = {
-        id: identifier(),
+      const note = this.document({
         kind: 'graph',
         path: null,
         name: t('Graph'),
-        doc: '',
+        text: '',
         dirty: false,
-      }
-      this.tabs = [...this.tabs, tab]
-      this.activeTabId = tab.id
+      })
+      this.add(new Tab(note, paneId))
     }
 
     this.persist()
@@ -444,10 +589,14 @@ class Workspace {
    *  A tab that is not a note is never scaffolding: the graph of the space has no
    *  path and nothing unsaved either, and closing it behind the reader's back
    *  because they opened a note would be a surprise. */
-  private dropScaffolding(kept: string) {
-    this.tabs = this.tabs.filter(
-      (other) => other.id === kept || other.kind !== 'note' || other.path !== null || other.dirty,
-    )
+  private dropScaffolding(kept: Tab) {
+    for (const other of this.tabsIn(kept.paneId)) {
+      if (other.id === kept.id || other.kind !== 'note' || other.path !== null || other.dirty) {
+        continue
+      }
+
+      this.close(other.id)
+    }
   }
 
   /** Reads the spaces folder. It is the source of truth, so a space added or
@@ -538,9 +687,9 @@ class Workspace {
     if (!renamed) return
 
     // Open notes point into the old folder, so move them with it.
-    for (const tab of this.tabs) {
-      if (tab.path?.startsWith(space.root)) {
-        tab.path = renamed.path + tab.path.slice(space.root.length)
+    for (const note of this.documents) {
+      if (note.path?.startsWith(space.root)) {
+        note.path = renamed.path + note.path.slice(space.root.length)
       }
     }
 
@@ -734,9 +883,9 @@ class Workspace {
     links.notesMoved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
-    for (const tab of this.tabs.filter((entry) => entry.path === from)) {
-      tab.path = target
-      tab.name = name
+    for (const note of this.documents.filter((entry) => entry.path === from)) {
+      note.path = target
+      note.name = name
     }
 
     await this.loadTree()
@@ -770,23 +919,22 @@ class Workspace {
     // Gone, or unreadable: nothing to open, and no tab that pretends otherwise.
     if (doc === null) return
 
-    // A preview reuses the one preview tab rather than opening another.
+    // A preview reuses the one preview tab rather than opening another, and only
+    // when that tab is in the pane being worked in: taking over a tab in another
+    // pane would change a note nobody was looking at.
     const reusable =
       options.preview &&
-      this.tabs.find((tab) => tab.id === this.previewTabId && tab.kind === 'note' && !tab.dirty)
+      this.tabs.find(
+        (tab) =>
+          tab.id === this.previewTabId &&
+          tab.kind === 'note' &&
+          !tab.dirty &&
+          tab.paneId === this.panes.focusedId,
+      )
 
     if (reusable) {
-      const place = this.positions.of(path)
-      reusable.path = path
-      reusable.name = basename(path)
-      reusable.doc = doc
-      // The tab stays, but the note in it is another one: the view has to be
-      // told, since nothing was typed.
-      reusable.pushed = (reusable.pushed ?? 0) + 1
-      reusable.dirty = false
-      reusable.cursor = place.cursor
-      reusable.scroll = place.scroll
-      reusable.anchor = place.anchor
+      reusable.note.adopt({ path, name: basename(path), text: doc })
+      this.placeAt(reusable, path)
 
       if (options.activate !== false) {
         this.activeTabId = reusable.id
@@ -797,25 +945,31 @@ class Workspace {
       return
     }
 
-    const tab: Tab = {
-      id: identifier(),
+    const note = this.document({
       kind: 'note',
       path,
       name: basename(path),
-      doc,
+      text: doc,
       dirty: false,
-      ...this.positions.of(path),
-    }
-    this.tabs = [...this.tabs, tab]
-    if (options.activate !== false) {
-      this.activeTabId = tab.id
-      this.showNote()
-    }
+    })
+    const tab = new Tab(note, this.panes.focusedId)
+    this.placeAt(tab, path)
+    this.add(tab, options.activate !== false)
+
+    if (options.activate !== false) this.showNote()
     this.previewTabId = options.preview ? tab.id : this.previewTabId
     this.remember(path)
 
-    this.dropScaffolding(tab.id)
+    this.dropScaffolding(tab)
     this.persist()
+  }
+
+  /** Where the note was last being read on this device. */
+  private placeAt(tab: Tab, path: string) {
+    const place = this.positions.of(path)
+    tab.cursor = place.cursor
+    tab.scroll = place.scroll
+    tab.anchor = place.anchor
   }
 
   /** A note named the way the space speaks of it, which is how the link index and
@@ -833,6 +987,17 @@ class Workspace {
     this.persist()
   }
 
+  /** Which pane a key or a command is talking about. */
+  focusPane(id: string) {
+    this.panes.focus(id)
+  }
+
+  /** The tab a pane is showing, which is what the pane is about. */
+  showing(paneId: string): Tab | null {
+    const id = this.panes.at(paneId)?.activeTabId
+    return (id ? this.tabs.find((tab) => tab.id === id) : null) ?? null
+  }
+
   /** Makes a tab that was only previewing its note stay: the italic goes, and
    *  the next single click in the file list gets a tab of its own instead of
    *  taking this one over. Every way of keeping a preview ends up here -
@@ -844,79 +1009,79 @@ class Workspace {
   }
 
   close(id: string) {
-    const index = this.tabs.findIndex((tab) => tab.id === id)
-    if (index < 0) return
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return
 
-    this.tabs = this.tabs.filter((tab) => tab.id !== id)
+    const paneId = tab.paneId
+    const at = this.tabsIn(paneId).findIndex((one) => one.id === id)
 
-    if (this.activeTabId === id) {
-      this.activeTabId = (this.tabs[index] ?? this.tabs[index - 1])?.id ?? null
+    this.tabs = this.tabs.filter((one) => one.id !== id)
+    if (this.previewTabId === id) this.previewTabId = null
+
+    const left = this.tabsIn(paneId)
+
+    // The last tab of a pane takes the pane with it, and the pane beside it
+    // takes the room. The last pane of all stays, with a blank note in it.
+    if (!left.length) {
+      if (!this.panes.close(paneId)) this.openBlank()
+      this.persist()
+      return
     }
-    if (!this.tabs.length) this.openBlank()
+
+    if (this.panes.at(paneId)?.activeTabId === id) {
+      this.panes.activate(paneId, (left[at] ?? left[left.length - 1])?.id ?? null)
+    }
+
     this.persist()
   }
 
-  /** What the editor reports on every keystroke. Nothing here touches the text:
-   *  the rope is held onto as it is and `flush` turns it into a string later,
-   *  so the cost of a keystroke does not grow with the size of the note. What
-   *  does happen at once is the dirty mark, because that is what the writer
-   *  is looking at. */
-  edit(text: DocText) {
-    const tab = this.active
-    if (!tab) return
-
-    this.live = { id: tab.id, text }
-    tab.dirty = true
-
+  /** What a document reports whenever it changes, wherever the change came from:
+   *  a keystroke in either pane, an undo, a picture dropped in. Nothing here
+   *  touches the text - the rope is left as it is and `flush` turns it into a
+   *  string later, so the cost of a keystroke does not grow with the size of the
+   *  note. What happens at once is the dirty mark, because that is what the
+   *  writer is looking at, and the document has already set it. */
+  private edited(note: NoteDoc) {
     // Typing in a note you were only previewing is what makes it yours.
-    this.keep(tab.id)
+    const preview = this.tabs.find((tab) => tab.id === this.previewTabId)
+    if (preview?.note === note) this.keep(preview.id)
 
-    this.scheduleSave()
+    this.scheduleSave(note)
     // Auto-save may be off, or the note may have nowhere to be saved to yet.
     // Either way the words themselves are written down.
     this.scheduleSession()
   }
 
-  /** Brings `tab.doc` up to what the editor holds. Everything that reads the
-   *  text of a note calls this first; it costs one pass over the note, and
-   *  nothing at all when there is nothing waiting. */
+  /** Brings every open note's words up to what its views hold. Everything that
+   *  reads the text of a note calls this first; it costs one pass over the notes
+   *  that have been typed in, and nothing at all when none have. */
   flush() {
-    const live = this.live
-    if (!live) return
-
-    this.live = null
-    const tab = this.tabs.find((one) => one.id === live.id)
-    if (!tab) return
-
-    const text = live.text.toString()
-    if (tab.doc !== text) tab.doc = text
+    for (const note of this.documents) note.flush()
   }
 
   /** Text put into a note from somewhere other than the editor: a version
-   *  restored from the history, a note pulled in by a sync. `pushed` is what
-   *  tells the view to take it, so this is the only way text arrives without
-   *  the writer having typed it. */
+   *  restored from the history, a note pulled in by a sync. It reaches every pane
+   *  showing that note, since they are all views of the one document. */
   replace(text: string, target?: Tab) {
-    const tab = target ?? this.active
-    if (!tab) return
-
-    // Whatever the editor was holding is what this replaces.
-    if (this.live?.id === tab.id) this.live = null
-
-    tab.doc = text
-    tab.dirty = true
-    tab.pushed = (tab.pushed ?? 0) + 1
-    this.scheduleSave()
-    this.scheduleSession()
+    const note = (target ?? this.active)?.note
+    note?.replace(text)
   }
 
   /** Typora saves as you pause; so does this, but only for notes that already
    *  live somewhere. An untitled note waits for you to choose a home. */
-  private scheduleSave() {
-    if (!this.autoSave || !this.active?.path) return
+  private scheduleSave(note: NoteDoc) {
+    if (!this.autoSave || !note.path) return
 
+    this.waiting.add(note)
     clearTimeout(this.saveTimer)
-    this.saveTimer = setTimeout(() => void this.save(), this.autoSaveDelay)
+    this.saveTimer = setTimeout(() => void this.saveWaiting(), this.autoSaveDelay)
+  }
+
+  private async saveWaiting() {
+    const notes = [...this.waiting]
+    this.waiting.clear()
+
+    for (const note of notes) await this.write(note)
   }
 
   /** The dot's three states. `saved` stands for a moment and then goes: it is
@@ -950,25 +1115,27 @@ class Workspace {
   setAutoSave(on: boolean) {
     this.autoSave = on
     localStorage.setItem(AUTO_SAVE_KEY, String(on))
-    if (!on) clearTimeout(this.saveTimer)
+    if (on) return
+
+    clearTimeout(this.saveTimer)
+    this.waiting.clear()
   }
 
-  /** Notes holding work that is not on disk. Whitespace-only scratch does not
+  /** Notes holding work that is not on disk: notes and not tabs, so a note open
+   *  in two panes is one thing to ask about. Whitespace-only scratch does not
    *  count - nobody wants to be asked about an empty note. */
-  get unsaved(): Tab[] {
+  get unsaved(): NoteDoc[] {
     this.flush()
-    return this.tabs.filter((tab) => tab.dirty && tab.doc.trim().length > 0)
+    return this.documents.filter((note) => note.dirty && note.text.trim().length > 0)
   }
 
   async saveAll() {
-    for (const tab of this.unsaved) await this.save(tab)
+    for (const note of this.unsaved) await this.write(note)
   }
 
   async save(target?: Tab) {
     // A table cell holds its text until it loses focus; make sure it landed.
     flushTableEdits()
-    // And the keystrokes since the last pause, which are still only a rope.
-    this.flush()
 
     const tab = target ?? this.active
     if (tab?.kind !== 'note') return
@@ -977,36 +1144,43 @@ class Workspace {
     // at is one to stay from here on, whether or not there was anything to
     // write.
     this.keep(tab.id)
+    await this.write(tab.note)
+  }
 
-    let path = tab.path
+  /** Writes one note down. Everything that saves comes through here, so a note
+   *  open in two panes is written once however the saving was asked for. */
+  private async write(note: NoteDoc) {
+    // The keystrokes since the last pause, which are still only a rope.
+    note.flush()
+    if (note.kind !== 'note') return
+
+    let path = note.path
     if (!path) {
-      const picked = await pickSavePath(this.spaces, this.activeSpaceId, tab.doc, tab.name)
+      const picked = await pickSavePath(this.spaces, this.activeSpaceId, note.text, note.name)
       if (!picked) return
       path = picked
     }
 
-    this.markSaving(tab.id)
+    this.markSaving(note.key)
 
     try {
       // Keep the version that is about to be replaced, before replacing it.
-      if (tab.path) {
-        await invoke('snapshot_note', { path, content: tab.doc }).catch(() => undefined)
+      if (note.path) {
+        await invoke('snapshot_note', { path, content: note.text }).catch(() => undefined)
       }
 
-      await invoke('write_note', { path, content: tab.doc })
+      await invoke('write_note', { path, content: note.text })
     } catch (error) {
-      this.clearSaveState(tab.id)
+      this.clearSaveState(note.key)
       throw error
     }
 
-    tab.path = path
-    tab.name = basename(path)
-    tab.dirty = false
-    this.markSaved(tab.id)
+    note.written(path, basename(path))
+    this.markSaved(note.key)
 
     // The one note that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space.
-    links.noteSaved(path, tab.doc)
+    links.noteSaved(path, note.text)
 
     // Editing the config files in Nib should take effect on save.
     if (/custom\.css$|snippets\.json$/.test(path)) {
@@ -1240,19 +1414,17 @@ class Workspace {
     this.showEntry(this.freshEntry(path, false))
     if (dir !== this.activeSpace?.root) this.device.expand(dir)
 
-    const tab: Tab = {
-      id: identifier(),
+    const note = this.document({
       kind: 'note',
       path,
       name: basename(path),
-      doc: content,
+      text: content,
       dirty: false,
-    }
-    this.tabs = [...this.tabs, tab]
-    this.activeTabId = tab.id
+    })
+    const tab = this.add(new Tab(note, this.panes.focusedId))
     this.showNote()
     this.remember(path)
-    this.dropScaffolding(tab.id)
+    this.dropScaffolding(tab)
     this.startRenaming(path)
 
     await invoke('write_note', { path, content })
@@ -1330,21 +1502,20 @@ class Workspace {
     links.notesMoved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
-    const tab = this.tabs.find((entry) => entry.path === path)
-    if (tab) {
-      this.flush()
+    const note = this.documents.find((entry) => entry.path === path)
+    if (note) {
+      note.flush()
       // A new note is written with its own name as the heading, so renaming it
       // straight afterwards would otherwise leave `# Untitled` at the top. Only
       // while the heading still is the old name; an edited one is the author's.
       const was = `# ${basename(path).replace(MARKDOWN, '')}`
-      if (tab.doc === was || tab.doc.startsWith(was + '\n')) {
-        tab.doc = `# ${clean.replace(MARKDOWN, '')}${tab.doc.slice(was.length)}`
-        // Nobody typed this, so the view has to be told to take it.
-        tab.pushed = (tab.pushed ?? 0) + 1
+      if (note.text === was || note.text.startsWith(was + '\n')) {
+        // Nobody typed this, so it goes in the way any other outside edit does.
+        note.replace(`# ${clean.replace(MARKDOWN, '')}${note.text.slice(was.length)}`, note.dirty)
       }
 
-      tab.path = target
-      tab.name = basename(target)
+      note.path = target
+      note.name = basename(target)
     }
 
     await this.loadTree()
@@ -1455,9 +1626,9 @@ class Workspace {
     await invoke('rename_note', { from: action.to, to: action.from })
     this.positions.move(action.to, action.from)
 
-    for (const tab of this.tabs.filter((entry) => entry.path === action.to)) {
-      tab.path = action.from
-      tab.name = basename(action.from)
+    for (const note of this.documents.filter((entry) => entry.path === action.to)) {
+      note.path = action.from
+      note.name = basename(action.from)
     }
 
     // The rename rewrote every link that pointed at the note; putting the name
@@ -1494,16 +1665,10 @@ class Workspace {
     this.reload(action.from, action.fromContent)
   }
 
-  /** Text written to a note from outside the editor, put into the tab holding it
-   *  if one is open. `pushed` is what tells the view to take it. */
+  /** Text written to a note from outside the editor, put into the document if it
+   *  is open, which puts it into every pane showing it. */
   private reload(path: string, content: string) {
-    const tab = this.tabs.find((one) => one.path === path)
-    if (!tab) return
-
-    if (this.live?.id === tab.id) this.live = null
-    tab.doc = content
-    tab.dirty = false
-    tab.pushed = (tab.pushed ?? 0) + 1
+    this.documents.find((one) => one.path === path)?.replace(content, false)
   }
 
   /** Rewrites every link in the space that points at `from` so it points at `to`.
@@ -1516,10 +1681,11 @@ class Workspace {
     const touched = await links.retarget(from, to, root)
 
     // A note on screen may be one of the notes that was rewritten.
-    for (const tab of this.tabs) {
-      if (!tab.path || tab.dirty) continue
-      const fresh = await invoke<string>('read_note', { path: tab.path }).catch(() => null)
-      if (fresh !== null && fresh !== tab.doc) this.reload(tab.path, fresh)
+    this.flush()
+    for (const note of this.documents) {
+      if (!note.path || note.dirty) continue
+      const fresh = await invoke<string>('read_note', { path: note.path }).catch(() => null)
+      if (fresh !== null && fresh !== note.text) note.replace(fresh, false)
     }
 
     return touched
@@ -1676,20 +1842,19 @@ class Workspace {
     this.showEntry(this.freshEntry(path, false))
     if (dir !== this.activeSpace?.root) this.device.expand(dir)
 
-    const tab: Tab = {
-      id: identifier(),
+    const note = this.document({
       kind: 'note',
       path,
       name: basename(path),
-      doc: content,
+      text: content,
       dirty: false,
-      cursor: content.length,
-    }
-    this.tabs = [...this.tabs, tab]
-    this.activeTabId = tab.id
+    })
+    const tab = new Tab(note, this.panes.focusedId)
+    tab.cursor = content.length
+    this.add(tab)
     this.showNote()
     this.remember(path)
-    this.dropScaffolding(tab.id)
+    this.dropScaffolding(tab)
     // The name is settled and the row is waiting for a title after it; typing
     // one leaves `202609070155 Some title.md`, and pressing Enter with nothing
     // typed leaves the timestamp alone.
@@ -1738,6 +1903,120 @@ class Workspace {
   toggleSidebar() {
     this.panel = this.panel ? null : 'tree'
     this.persist()
+  }
+
+  /** The note beside itself, or below itself: another view of the same document
+   *  in a pane of its own, opened where this one is being read so the split
+   *  starts as two windows onto the same place.
+   *
+   *  Nothing happens on a phone, where there is one pane and the commands for
+   *  this are not offered. */
+  split(along: Along, tabId?: string) {
+    if (viewport.phone) return
+
+    const tab = tabId ? this.tabs.find((one) => one.id === tabId) : this.active
+    if (!tab) return
+
+    const made = this.panes.split(along, tab.paneId)
+    if (!made) return
+
+    const beside = new Tab(tab.note, made.id)
+    beside.cursor = tab.cursor
+    beside.scroll = tab.scroll
+    beside.anchor = tab.anchor
+
+    this.add(beside)
+    this.persist()
+  }
+
+  /** Whether a pane can still be split that way, which is what hides the entry
+   *  rather than offering one that does nothing. */
+  canSplit(along: Along, tabId?: string): boolean {
+    if (viewport.phone) return false
+
+    const tab = tabId ? this.tabs.find((one) => one.id === tabId) : this.active
+    return !!tab && this.panes.splittable(along, tab.paneId)
+  }
+
+  /** A tab dragged into another pane. The pane it came from goes if that was its
+   *  last tab, which is the same rule as closing one. */
+  moveTab(id: string, paneId: string) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab || !this.panes.at(paneId) || tab.paneId === paneId) return
+
+    const from = tab.paneId
+    tab.paneId = paneId
+    // Last in the strip it lands in, which is where a dropped tab belongs.
+    this.tabs = [...this.tabs.filter((one) => one.id !== id), tab]
+
+    const left = this.tabsIn(from)
+    if (!left.length) this.panes.close(from)
+    else if (this.panes.at(from)?.activeTabId === id) {
+      this.panes.activate(from, left[left.length - 1]?.id ?? null)
+    }
+
+    this.activeTabId = id
+    this.persist()
+  }
+
+  /** A tab dropped on a pane: along one of its edges to make a pane of its own,
+   *  or anywhere else in it to join that pane's strip. */
+  dropTab(id: string, paneId: string, along: Along | null) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return
+
+    if (along === null) {
+      this.moveTab(id, paneId)
+      return
+    }
+
+    // The only tab of the pane it would be split off, dropped on that same pane:
+    // it would leave, the pane would empty, and the pane would close again.
+    if (tab.paneId === paneId && this.tabsIn(paneId).length < 2) return
+
+    const made = this.panes.split(along, paneId)
+    if (made) this.moveTab(id, made.id)
+  }
+
+  /** The other panes showing the note this one is showing. What the link toggle
+   *  appears for, and what a linked pane scrolls with. */
+  twins(paneId: string): string[] {
+    const note = this.showing(paneId)?.note
+    if (!note) return []
+
+    return this.panes.all
+      .filter((one) => one.id !== paneId && this.showing(one.id)?.note === note)
+      .map((one) => one.id)
+  }
+
+  /** The link between the panes showing one note, on or off. One toggle for the
+   *  pair rather than one each: it is one relationship, and a pane that says it
+   *  is linked while its twin says it is not would be a lie in one of them. */
+  toggleLink(paneId: string) {
+    const on = !(this.panes.at(paneId)?.linked ?? false)
+    for (const id of [paneId, ...this.twins(paneId)]) this.panes.setLinked(id, on)
+  }
+
+  /** One pane again, with everything in it: what a phone gets, since there is no
+   *  room there to put two notes beside each other. */
+  collapsePanes() {
+    if (this.panes.count < 2) return
+
+    const kept = this.panes.focusedId
+    for (const tab of this.tabs) tab.paneId = kept
+
+    this.panes.collapse()
+    this.persist()
+  }
+
+  /** Keeps the arrangement under a name; see workspace/layouts.svelte.ts. */
+  saveLayout(name: string) {
+    this.layouts.save(name, this.layout())
+  }
+
+  async useLayout(name: string) {
+    const layout = this.layouts.of(name)
+    if (layout) await this.applyLayout(layout)
   }
 }
 
