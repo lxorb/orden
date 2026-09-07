@@ -18,6 +18,13 @@ import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
 import { diagnosis } from './lib/even/diagnosis.svelte'
 import { everywhere } from './lib/even/keep'
+import { fillLocal, installLocal } from './lib/even/local'
+
+// Before anything reads a setting, which is before the first line of the app:
+// this page's own `localStorage` belongs to a port that will never come back.
+// See lib/even/local.ts.
+const local = installLocal()
+void fillLocal(local)
 
 const target = document.getElementById('app')
 if (!target) throw new Error('even.html has no #app to mount into')

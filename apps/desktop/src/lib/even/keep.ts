@@ -58,18 +58,30 @@ const page: Keep = {
 /** A year, which is longer than any sitting and shorter than forever. */
 const COOKIE_LIFE = 60 * 60 * 24 * 365
 
+/** A cookie's value, or null.
+ *
+ *  Synchronous and exported because it is the only durable store a packed
+ *  plugin can read before it paints: a cookie is scoped to the host and ignores
+ *  the port, so it is the same cookie however the local server was numbered this
+ *  launch. See local.ts. */
+export function cookieOf(key: string): string | null {
+  const found = document.cookie
+    .split(';')
+    .map((one) => one.trim())
+    .find((one) => one.startsWith(`${key}=`))
+
+  return some(found ? decodeURIComponent(found.slice(key.length + 1)) : null)
+}
+
+export function writeCookie(key: string, value: string): void {
+  document.cookie = `${key}=${encodeURIComponent(value)};path=/;max-age=${COOKIE_LIFE};samesite=lax`
+}
+
 const cookie: Keep = {
   name: 'cookie',
-  read(key) {
-    const found = document.cookie
-      .split(';')
-      .map((one) => one.trim())
-      .find((one) => one.startsWith(`${key}=`))
-
-    return Promise.resolve(some(found ? decodeURIComponent(found.slice(key.length + 1)) : null))
-  },
+  read: (key) => Promise.resolve(cookieOf(key)),
   write(key, value) {
-    document.cookie = `${key}=${encodeURIComponent(value)};path=/;max-age=${COOKIE_LIFE};samesite=lax`
+    writeCookie(key, value)
     return Promise.resolve(true)
   },
   clear(key) {
@@ -98,7 +110,7 @@ const shelf: Keep = {
   },
 }
 
-const host: Keep = {
+export const hostKeep: Keep = {
   name: 'host',
   async read(key) {
     return some(await (await connectStore())?.read(key))
@@ -134,7 +146,7 @@ export const THIS_PAGE: readonly Keep[] = [page, cookie, shelf]
 
 /** Those, and the phone app's own, which is the only one the platform documents
  *  as surviving and the only one that has to wait for a channel. */
-const KEEPS: readonly Keep[] = [...THIS_PAGE, host]
+const KEEPS: readonly Keep[] = [...THIS_PAGE, hostKeep]
 
 /** The one key this module exists for. */
 const SESSION = 'nib:session'
