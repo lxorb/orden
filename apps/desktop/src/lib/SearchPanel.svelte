@@ -31,6 +31,9 @@
 
   let field = $state<HTMLInputElement>()
   let focused = $state(false)
+  /** Set by Escape, so a popup that was shut stays shut until the next
+   *  keystroke asks for it again. */
+  let shut = $state(false)
   let caret = $state(0)
   let active = $state(0)
 
@@ -59,7 +62,7 @@
   /** What the caret is finishing, and what the space has to finish it with.
    *  Only while the field has the focus: a popup over a panel nobody is
    *  typing in is in the way. */
-  const asking = $derived(focused ? completing(search.text, caret) : null)
+  const asking = $derived(focused && !shut ? completing(search.text, caret) : null)
 
   const suggestions = $derived.by(() => {
     if (!asking) return []
@@ -69,6 +72,12 @@
         workspace.tags.map((one) => one.tag),
       )
     return offered(asking.typed, asking.field === 'path' ? folders : names)
+  })
+
+  // A question asked of another space is not this space's question. The panel
+  // is rebuilt for each space, so this says which one it is showing.
+  $effect(() => {
+    search.forSpace(workspace.activeSpace?.root ?? null)
   })
 
   /** Reads a value for its own sake, so the effect around it follows that
@@ -117,6 +126,7 @@
 
   function typing(event: Event & { currentTarget: HTMLInputElement }) {
     caret = event.currentTarget.selectionStart ?? event.currentTarget.value.length
+    shut = false
     search.ask(event.currentTarget.value)
   }
 
@@ -157,9 +167,9 @@
       }
       if (event.key === 'Escape') {
         event.preventDefault()
-        // Shutting the popup and nothing else: the field keeps what is in it.
-        focused = false
-        queueMicrotask(() => (focused = true))
+        // The popup and nothing else: the field keeps what is in it, and the
+        // replace field below it keeps its place.
+        shut = true
         return
       }
     }

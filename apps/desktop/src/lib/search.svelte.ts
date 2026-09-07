@@ -43,6 +43,8 @@ class Search {
   /** Which search is the latest. Typing outruns the disk, and answers to a
    *  word that is no longer in the field are dropped rather than shown. */
   private round = 0
+  /** Which space the words in the field are a question about. */
+  private about: string | null = null
 
   readonly query = $derived(parseQuery(this.text))
   readonly asks = $derived(this.text.trim().length >= SHORTEST && !isEmpty(this.query))
@@ -62,6 +64,7 @@ class Search {
   /** A new question. Every keystroke comes through here. */
   ask(text: string) {
     this.text = text
+    this.about = workspace.activeSpace?.root ?? null
     clearTimeout(this.timer)
     this.round++
 
@@ -93,9 +96,17 @@ class Search {
     clearTimeout(this.timer)
     this.round++
     this.text = ''
+    this.about = null
     this.hits = []
     this.running = false
     this.skipped.clear()
+  }
+
+  /** The panel saying which space it is showing. A question asked of another
+   *  space is not this space's question, and the lines it found are not in
+   *  front of the reader any more. */
+  forSpace(root: string | null) {
+    if (this.about !== root) this.clear()
   }
 
   private async run() {
