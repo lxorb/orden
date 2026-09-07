@@ -77,7 +77,7 @@ export const ja: Dictionary = {
   Files: 'ファイル',
   Search: '検索',
   'Search this space': 'このスペースを検索',
-  'path: tag: file: -word "phrase" /regex/': 'path: tag: file: -語 "語句" /regex/',
+  'path: tag: file: -word "…" /re/': 'path: tag: file: -語 "…" /re/',
   'Replace with': '置き換える文字列',
   'Nothing found': '見つかりません',
   'Show sidebar': 'サイドバーを表示',

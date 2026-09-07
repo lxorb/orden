@@ -192,7 +192,7 @@
         onblur={() => (focused = false)}
         onkeydown={onKeydown}
         placeholder={focused && !search.text
-          ? t('path: tag: file: -word "phrase" /regex/')
+          ? t('path: tag: file: -word "…" /re/')
           : t('Search this space')}
         spellcheck="false"
         autofocus

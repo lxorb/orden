@@ -80,7 +80,7 @@ export const gsw: Dictionary = {
   Files: 'Dateie',
   Search: 'Sueche',
   'Search this space': 'I dere Ablag sueche',
-  'path: tag: file: -word "phrase" /regex/': 'path: tag: file: -wort "satz" /regex/',
+  'path: tag: file: -word "…" /re/': 'path: tag: file: -wort "…" /re/',
   'Replace with': 'Ersetze dur',
   'Nothing found': 'Nüt gfunde',
   'Show sidebar': 'Sitteleiste zeige',

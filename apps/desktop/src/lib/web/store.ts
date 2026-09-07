@@ -92,9 +92,34 @@ function batch(store: string, queue: (store: IDBObjectStore) => void): Promise<v
   )
 }
 
+/** Every row of a store, one at a time and in key order, which for files is
+ *  path order. What a search reads with: a whole space answers as it is read
+ *  rather than after it, and no copy of the space is held to do it. */
+function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
+  return database().then(
+    (db) =>
+      new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(store, 'readonly')
+        const request = transaction.objectStore(store).openCursor()
+
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (!cursor) return
+
+          visit(cursor.value as FileRow)
+          cursor.continue()
+        }
+
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error ?? new Error(`${store} failed`))
+      }),
+  )
+}
+
 export const files = {
   get: (path: string) => run<FileRow | undefined>('files', 'readonly', (s) => s.get(path)),
   all: () => run<FileRow[]>('files', 'readonly', (s) => s.getAll()),
+  each: (visit: (row: FileRow) => void) => walk('files', visit),
   put: (row: FileRow) => run<IDBValidKey>('files', 'readwrite', (s) => s.put(row)),
   remove: (path: string) => run<undefined>('files', 'readwrite', (s) => s.delete(path)),
   /** Writes `rows` and drops `gone`, all or nothing. What a rename is: every

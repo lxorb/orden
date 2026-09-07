@@ -49,6 +49,10 @@ const DEPTH_LIMIT: usize = 64;
 /// `usize` is never one of them.
 const UNSET: usize = usize::MAX;
 
+/// The most characters worth keeping as the set a match can begin with. Past
+/// this the test stops being a way of skipping work and becomes work of its own.
+const FIRST_LIMIT: usize = 64;
+
 /// One place a pattern matched, as char indices into the text it was given.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Match {
@@ -66,6 +70,19 @@ pub struct Pattern {
     program: Program,
     groups: usize,
     fold: bool,
+    /// What a match can begin with, when that is a short enough list to be sure
+    /// of. Most starting points in a note begin nothing, and stepping over one
+    /// costs a table lookup rather than an attempt at the whole pattern.
+    first: Option<First>,
+}
+
+/// A set of characters small enough to test at every starting point.
+struct First {
+    /// One flag per ASCII character, which is what a search pattern is made of
+    /// nearly all of the time.
+    ascii: [bool; 128],
+    /// The rest, kept as a short list because there are never many.
+    wide: Vec<char>,
 }
 
 /// The instructions of a compiled pattern, the classes they point at, and how
@@ -242,6 +259,7 @@ impl Pattern {
             program,
             groups,
             fold,
+            first: first_of(&node, fold).and_then(|chars| First::new(&chars)),
         })
     }
 
@@ -252,6 +270,11 @@ impl Pattern {
         let mut start = at;
 
         while start <= text.len() {
+            // Nearly every place in a note begins no match at all, and a pattern
+            // whose first character is known walks past those without running
+            // anything at them.
+            start = self.next_start(text, start)?;
+
             if let Some(cells) = self.attempt(text, start, &mut budget) {
                 return Some(self.take(text, &cells, start));
             }
@@ -266,6 +289,21 @@ impl Pattern {
         }
 
         None
+    }
+
+    /// The next place at or after `from` where a match could begin, or `None`
+    /// when the text holds no such place. A pattern that gave no first character
+    /// away answers `from` itself, which is the search this had before.
+    fn next_start(&self, text: &[char], from: usize) -> Option<usize> {
+        let Some(first) = &self.first else {
+            return Some(from);
+        };
+
+        // A pattern with a known first character needs a character to read, so
+        // the end of the text begins nothing either.
+        let rest = text.get(from..)?;
+        let step = rest.iter().position(|&c| first.holds(c, self.fold))?;
+        from.checked_add(step)
     }
 
     /// Runs the program from one starting point, taking up the choices it left
@@ -502,6 +540,22 @@ impl Kind {
             Kind::Word => is_word(c),
             Kind::Space => is_space(c),
         }
+    }
+
+    /// Every character in the set, listed by asking the set itself so that the
+    /// list cannot drift from what a match tests against.
+    fn members(self) -> Vec<char> {
+        let ceiling = match self {
+            // Digits and word characters are ASCII, and the last of the spaces
+            // the browser counts is the byte order mark.
+            Kind::Digit | Kind::Word => 0x7f,
+            Kind::Space => 0xfeff,
+        };
+
+        (0..=ceiling)
+            .filter_map(char::from_u32)
+            .filter(|&c| self.holds(c))
+            .collect()
     }
 }
 
@@ -892,6 +946,151 @@ fn literal_escape(c: char, next: Option<char>) -> Option<char> {
     }
 }
 
+impl First {
+    /// The table for a list of characters, or `None` when there are none, or
+    /// more than the test is worth making for.
+    fn new(chars: &[char]) -> Option<First> {
+        if chars.is_empty() || chars.len() > FIRST_LIMIT {
+            return None;
+        }
+
+        let mut ascii = [false; 128];
+        let mut wide = Vec::new();
+        for &c in chars {
+            let at = usize::try_from(u32::from(c)).unwrap_or(usize::MAX);
+            if let Some(flag) = ascii.get_mut(at) {
+                *flag = true;
+            } else {
+                wide.push(c);
+            }
+        }
+
+        Some(First { ascii, wide })
+    }
+
+    /// Whether the set holds a character. A pattern that ignores case is offered
+    /// both cases of it, exactly as a match against that character would be.
+    fn holds(&self, c: char, fold: bool) -> bool {
+        if self.has(c) {
+            return true;
+        }
+
+        fold && (self.has(folded(c)) || self.has(raised(c)))
+    }
+
+    /// Whether the set holds this very character.
+    fn has(&self, c: char) -> bool {
+        usize::try_from(u32::from(c))
+            .ok()
+            .and_then(|at| self.ascii.get(at))
+            .copied()
+            .unwrap_or_else(|| self.wide.contains(&c))
+    }
+}
+
+/// The characters a match of this node can begin with, or `None` when there is
+/// no answer worth having.
+///
+/// What rests on this is that the list is never short of a character: one left
+/// out is a place the search would step over, so everything uncertain, from a
+/// quantifier that may take nothing to an anchor that takes no character at all,
+/// has to come back as no answer. No answer means no skipping, which is the
+/// search this had before there was a list.
+fn first_of(node: &Node, fold: bool) -> Option<Vec<char>> {
+    match node {
+        Node::Char(c) => {
+            let mut out = Vec::new();
+            spread(&mut out, *c, fold)?;
+            Some(out)
+        }
+        Node::Class(class) => class_first(class, fold),
+        Node::Group(_, inner) => first_of(inner, fold),
+        // Only the head of a sequence can begin it, and a sequence of nothing is
+        // begun by every place there is.
+        Node::Seq(nodes) => first_of(nodes.first()?, fold),
+        Node::Alt(branches) => {
+            let mut out = Vec::new();
+            for branch in branches {
+                for c in first_of(branch, fold)? {
+                    add(&mut out, c)?;
+                }
+            }
+            Some(out)
+        }
+        Node::Repeat(inner, limits) => {
+            // A quantifier that may take nothing leaves whatever follows it to
+            // begin the match, and what follows is not looked at here.
+            if limits.min == 0 {
+                return None;
+            }
+            first_of(inner, fold)
+        }
+        // A dot is very nearly every character there is, and an anchor takes no
+        // character at all, so neither narrows anything down.
+        Node::Any | Node::Start | Node::End | Node::Boundary(_) => None,
+    }
+}
+
+/// The characters a class can begin with, while it lists few enough of them.
+fn class_first(class: &Class, fold: bool) -> Option<Vec<char>> {
+    // A negated class holds nearly everything, which is nothing to skip on.
+    if class.negated {
+        return None;
+    }
+
+    let mut out = Vec::new();
+    for member in &class.members {
+        match *member {
+            Member::One(c) => spread(&mut out, c, fold)?,
+            Member::Span(lo, hi) => {
+                // A long range gives up part way through, since `spread` refuses
+                // once the list is as long as it may be.
+                for value in u32::from(lo)..=u32::from(hi) {
+                    let Some(c) = char::from_u32(value) else {
+                        continue;
+                    };
+                    spread(&mut out, c, fold)?;
+                }
+            }
+            Member::Set(kind, negated) => {
+                if negated {
+                    return None;
+                }
+                for c in kind.members() {
+                    spread(&mut out, c, fold)?;
+                }
+            }
+        }
+    }
+
+    Some(out)
+}
+
+/// Adds a character to the list, with both its cases when the pattern ignores
+/// case, since a match would take either of them here.
+fn spread(out: &mut Vec<char>, c: char, fold: bool) -> Option<()> {
+    add(out, c)?;
+    if fold {
+        add(out, folded(c))?;
+        add(out, raised(c))?;
+    }
+    Some(())
+}
+
+/// Adds a character the list has not got yet, and refuses once it holds as many
+/// as testing every place in a note is worth.
+fn add(out: &mut Vec<char>, c: char) -> Option<()> {
+    if out.contains(&c) {
+        return Some(());
+    }
+    if out.len() >= FIRST_LIMIT {
+        return None;
+    }
+
+    out.push(c);
+    Some(())
+}
+
 impl Program {
     /// Adds an instruction, refusing once the program has grown past anything a
     /// search query could mean.
@@ -1153,6 +1352,31 @@ mod tests {
     /// read most clearly.
     fn words(list: &[&str]) -> Vec<String> {
         list.iter().copied().map(String::from).collect()
+    }
+
+    /// The characters a pattern will consider as a starting point, in order, or
+    /// `None` when it worked out nothing worth knowing.
+    fn starts(source: &str, fold: bool) -> Option<Vec<char>> {
+        let first = Pattern::compile(source, fold)?.first?;
+        let mut out: Vec<char> = (0..128u32)
+            .filter_map(char::from_u32)
+            .filter(|&c| first.has(c))
+            .collect();
+        out.extend(first.wide.iter().copied());
+        out.sort_unstable();
+        Some(out)
+    }
+
+    /// Whether a pattern knows what its match can begin with at all.
+    fn knows_start(source: &str) -> bool {
+        Pattern::compile(source, false).is_some_and(|pattern| pattern.first.is_some())
+    }
+
+    /// The same pattern with the prefilter taken off, which is the search this
+    /// had before there was a set of first characters to skip on.
+    fn without_filter(mut pattern: Pattern) -> Pattern {
+        pattern.first = None;
+        pattern
     }
 
     #[test]
@@ -1466,6 +1690,180 @@ mod tests {
             started.elapsed().as_secs() < 5,
             "the step budget should have stopped this long before now"
         );
+    }
+
+    #[test]
+    fn a_pattern_works_out_what_its_match_can_begin_with() {
+        assert_eq!(starts("abc", false), Some(vec!['a']));
+        assert_eq!(starts("Z[a-z]+q", false), Some(vec!['Z']));
+        assert_eq!(starts("[a-c]x", false), Some(vec!['a', 'b', 'c']));
+        assert_eq!(starts("(foo|bar)", false), Some(vec!['b', 'f']));
+        assert_eq!(starts("x|y|z", false), Some(vec!['x', 'y', 'z']));
+        assert_eq!(starts("a{2,3}", false), Some(vec!['a']));
+        assert_eq!(starts("(?:ab)+", false), Some(vec!['a']));
+        assert_eq!(starts("(a)(b)", false), Some(vec!['a']));
+        assert_eq!(starts(r"\d+", false), Some(('0'..='9').collect()));
+        // A set is listed by asking the set itself, so `\w` is every character
+        // a word is made of and `\s` reaches past ASCII.
+        assert_eq!(starts(r"\w", false).map(|set| set.len()), Some(63));
+        assert_eq!(starts(r"\s", false).map(|set| set.len()), Some(25));
+        assert_eq!(starts("ötest", false), Some(vec!['ö']));
+    }
+
+    #[test]
+    fn folding_puts_both_cases_in_the_set() {
+        assert_eq!(starts("beta", true), Some(vec!['B', 'b']));
+        assert_eq!(
+            starts("[a-c]", true),
+            Some(vec!['A', 'B', 'C', 'a', 'b', 'c'])
+        );
+        assert_eq!(starts(r"\w", true).map(|set| set.len()), Some(63));
+    }
+
+    #[test]
+    fn a_pattern_that_could_begin_anywhere_gives_no_set_away() {
+        for source in [
+            "",
+            "^a",
+            "a?b",
+            ".x",
+            "[^a]b",
+            r"\ba",
+            r"\Ba",
+            r"\b",
+            "$",
+            "(a|.)b",
+            "a*b",
+            "(a|)b",
+            "a{0,2}b",
+            "()a",
+            "(?:a|b*)c",
+            r"\D",
+            r"\W",
+            r"\S",
+            "[^abc]",
+            // A set larger than the test is worth making stops being one.
+            "[ -~]x",
+        ] {
+            assert!(
+                Pattern::compile(source, false).is_some(),
+                "{source} should compile"
+            );
+            assert!(
+                !knows_start(source),
+                "{source} should give no first character away"
+            );
+        }
+    }
+
+    #[test]
+    fn the_set_of_first_characters_changes_no_answer() {
+        let cases = [
+            ("Z[a-z]+q", "the lazy dog, Zooq, and a Zq"),
+            ("B[a-z]+a", "Beta beta BBBa b Bxa"),
+            ("(foo|bar)+baz", "xx foobarbaz yy barbaz"),
+            (r"\d+\.\d+", "a 3.14 b 42 c 1.0"),
+            ("[a-c]x", "zzax bx cx dx"),
+            ("note", "a note of notes"),
+            ("(?:ab)+", "xababy"),
+            ("a{2,3}", "a aa aaaa"),
+            (r"\w+@\w+", "write to bob@host now"),
+            ("ötest", "aa ötest bb"),
+            // A range written in one case has to go on taking the other, and a
+            // character outside ASCII has to be found in the list beside it.
+            ("[A-Z]q", "aq Bq zq"),
+            ("Ötest", "aa ötest bb"),
+            (r"\s+q", "a q  q\tq\u{a0}q"),
+            // The ones that work no set out have to go on answering the same.
+            ("[^a]b", "xb ab"),
+            ("a*b", "xxb"),
+            ("^a.*$", "abc"),
+        ];
+
+        assert!(knows_start("Z[a-z]+q"), "the first case should be filtered");
+
+        for (source, subject) in cases {
+            for fold in [false, true] {
+                let text: Vec<char> = subject.chars().collect();
+                let both = Pattern::compile(source, fold).zip(Pattern::compile(source, fold));
+                assert!(both.is_some(), "{source} should compile");
+
+                let Some((quick, plain)) = both else {
+                    continue;
+                };
+                let plain = without_filter(plain);
+
+                for at in 0..=text.len() {
+                    assert_eq!(
+                        quick.find(&text, at),
+                        plain.find(&text, at),
+                        "{source} over {subject:?} from {at}, with fold {fold}"
+                    );
+                }
+            }
+        }
+    }
+
+    /// A small stream of numbers, so that the patterns tried at random are the
+    /// same ones on every run.
+    fn roll(seed: &mut u64, ceiling: usize) -> usize {
+        *seed = seed
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        let value = usize::try_from(*seed >> 33).unwrap_or(0);
+        if ceiling == 0 {
+            0
+        } else {
+            value % ceiling
+        }
+    }
+
+    #[test]
+    fn no_set_of_first_characters_hides_a_match() {
+        let pieces = [
+            "a", "b", "c", "1", "_", " ", ".", "*", "+", "?", "|", "(", ")", "(?:", "[", "]", "^",
+            "$", "-", r"\d", r"\w", r"\s", r"\b", r"\.", "{2}", "{1,2}", "{0,2}", "a-c", "[^", "A",
+            "Ö", "ö",
+        ];
+        let subjects = [
+            "", "abc", "a1b2 c-_", "aAbB c", "Ö ö a", "  a1 z", "cab-cab",
+        ];
+
+        let mut seed: u64 = 0x5eed_1234;
+        let mut checked = 0;
+
+        for _ in 0..4000 {
+            let mut source = String::new();
+            for _ in 0..=roll(&mut seed, 5) {
+                if let Some(piece) = pieces.get(roll(&mut seed, pieces.len())) {
+                    source.push_str(piece);
+                }
+            }
+
+            let fold = roll(&mut seed, 2) == 0;
+            let Some(subject) = subjects.get(roll(&mut seed, subjects.len())) else {
+                continue;
+            };
+            let Some((quick, plain)) =
+                Pattern::compile(&source, fold).zip(Pattern::compile(&source, fold))
+            else {
+                continue;
+            };
+
+            let plain = without_filter(plain);
+            let text: Vec<char> = subject.chars().collect();
+            for at in 0..=text.len() {
+                assert_eq!(
+                    quick.find(&text, at),
+                    plain.find(&text, at),
+                    "{source} over {subject:?} from {at}, with fold {fold}"
+                );
+            }
+            checked += 1;
+        }
+
+        // The run says nothing if nearly everything it made up was unreadable.
+        assert!(checked > 500, "only {checked} of the patterns compiled");
     }
 
     #[test]

@@ -21,6 +21,7 @@
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
+  import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
   import { start } from './lib/start'
   import { sync } from './lib/sync.svelte'
@@ -157,6 +158,7 @@
         account,
         sync,
         workspace,
+        search,
         settings,
         modes,
         shortcuts,

@@ -56,10 +56,18 @@ const HEADING = /^ {0,3}#{1,6}(\s|$)/
 /** Lowercase without changing the length, so an offset in the folded text is
  *  the same offset in the note. A handful of letters lowercase into two - the
  *  Turkish dotted capital I among them - and those are left as they are rather
- *  than shifting every match after them by one. */
+ *  than shifting every match after them by one.
+ *
+ *  Lowercasing never shortens a letter, so a note that came back the length it
+ *  went in is one where every letter kept its own. That is the ordinary case,
+ *  and it costs a single call rather than a pass letter by letter, which over
+ *  the megabytes a space of notes comes to is most of what a search would
+ *  otherwise spend. */
 function fold(text: string): string {
-  let out = ''
+  const lowered = text.toLowerCase()
+  if (lowered.length === text.length) return lowered
 
+  let out = ''
   for (const letter of text) {
     const lower = letter.toLowerCase()
     out += lower.length === letter.length ? lower : letter

@@ -145,8 +145,25 @@ fn fold_char(one: char) -> char {
     }
 }
 
+/// A whole note folded. Notes are mostly ASCII and a space of them is
+/// megabytes, so the ordinary case is a bytewise pass rather than a
+/// character-by-character one: the same answer, and several times less of the
+/// time a search spends.
 fn fold(text: &str) -> String {
-    text.chars().map(fold_char).collect()
+    if text.is_ascii() {
+        return text.to_ascii_lowercase();
+    }
+
+    let mut out = String::with_capacity(text.len());
+    for one in text.chars() {
+        out.push(if one.is_ascii() {
+            one.to_ascii_lowercase()
+        } else {
+            fold_char(one)
+        });
+    }
+
+    out
 }
 
 /// Where every line of a note starts.
@@ -310,11 +327,16 @@ fn literals(hay: &str, needle: &str, region: Region) -> Option<Vec<Span>> {
 fn patterned(pattern: &Pattern, body: &str, region: Region) -> Option<Vec<Span>> {
     let slice = body.get(region.from..region.to)?;
     let letters: Vec<char> = slice.chars().collect();
+
+    // Asked before the offsets are worked out, because most notes in a space
+    // answer no and paying for a second reading of each of them is what makes
+    // a pattern search feel like one.
+    let first = pattern.find(&letters, 0)?;
     let mut bytes: Vec<usize> = slice.char_indices().map(|(at, _)| at).collect();
     bytes.push(slice.len());
 
     let mut out = Vec::new();
-    let mut at = 0;
+    let mut at = first.from;
 
     while at <= letters.len() {
         let Some(found) = pattern.find(&letters, at) else {

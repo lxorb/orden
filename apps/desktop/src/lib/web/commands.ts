@@ -244,16 +244,16 @@ const BATCH = 24
  *  cannot answer differently; what differs is only where the notes are. */
 async function search(root: string, query: Query, limit: number, onHits: (hits: Hit[]) => void) {
   const base = normalise(root)
-  const rows = (await files.all())
-    .filter((row) => within(base, row.path) && isMarkdown(row.path))
-    .sort((a, b) => (a.path < b.path ? -1 : 1))
-
   const matcher = new Matcher(query)
   let found = 0
   let pending: Hit[] = []
 
-  for (const row of rows) {
-    if (found >= limit) break
+  // A cursor rather than the whole store: the rows come in path order, which
+  // is the order the desktop walks a space in, and the first rows are on
+  // screen while the last folder is still being read.
+  await files.each((row) => {
+    if (found >= limit) return
+    if (!within(base, row.path) || !isMarkdown(row.path)) return
 
     const hits = matcher.hits(
       {
@@ -264,7 +264,7 @@ async function search(root: string, query: Query, limit: number, onHits: (hits: 
       },
       limit - found,
     )
-    if (!hits.length) continue
+    if (!hits.length) return
 
     found += hits.length
     pending.push(...hits)
@@ -273,7 +273,7 @@ async function search(root: string, query: Query, limit: number, onHits: (hits: 
       onHits(pending)
       pending = []
     }
-  }
+  })
 
   if (pending.length) onHits(pending)
 }

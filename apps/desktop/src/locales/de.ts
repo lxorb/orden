@@ -78,7 +78,7 @@ export const de: Dictionary = {
   Files: 'Dateien',
   Search: 'Suche',
   'Search this space': 'In diesem Bereich suchen',
-  'path: tag: file: -word "phrase" /regex/': 'path: tag: file: -wort "satz" /regex/',
+  'path: tag: file: -word "…" /re/': 'path: tag: file: -wort "…" /re/',
   'Replace with': 'Ersetzen durch',
   'Nothing found': 'Nichts gefunden',
   'Show sidebar': 'Seitenleiste zeigen',
