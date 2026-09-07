@@ -29,7 +29,7 @@ const told = vi.hoisted(() => ({ calls: [] as { mode: string; on: boolean }[] })
 
 vi.mock('@nib/editor', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@nib/editor')>()),
-  setReadingMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'reading', on }),
+  setReadOnlyMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'read-only', on }),
   setSourceMode: (_view: unknown, on: boolean) => told.calls.push({ mode: 'source', on }),
 }))
 
@@ -93,65 +93,65 @@ beforeEach(async () => {
   modes = await restarted()
 })
 
-describe('reading mode', () => {
+describe('read-only mode', () => {
   test('starts off', () => {
-    expect(modes.reading).toBe(false)
+    expect(modes.readOnly).toBe(false)
   })
 
   test('is remembered across a restart', async () => {
-    modes.toggleReading()
-    expect(modes.reading).toBe(true)
+    modes.toggleReadOnly()
+    expect(modes.readOnly).toBe(true)
 
-    expect((await restarted()).reading).toBe(true)
+    expect((await restarted()).readOnly).toBe(true)
   })
 
   test('reaches the view it is toggled against', () => {
-    modes.toggleReading(surface())
-    expect(told.calls).toContainEqual({ mode: 'reading', on: true })
+    modes.toggleReadOnly(surface())
+    expect(told.calls).toContainEqual({ mode: 'read-only', on: true })
   })
 
   test('is put back on a view built later', () => {
-    modes.toggleReading()
+    modes.toggleReadOnly()
     told.calls = []
 
     modes.apply(surface())
 
-    expect(told.calls).toContainEqual({ mode: 'reading', on: true })
+    expect(told.calls).toContainEqual({ mode: 'read-only', on: true })
   })
 
   test('and stays off on one when it is off', () => {
     modes.apply(surface())
-    expect(told.calls).toContainEqual({ mode: 'reading', on: false })
+    expect(told.calls).toContainEqual({ mode: 'read-only', on: false })
   })
 })
 
-describe('reading mode and source mode', () => {
+describe('read-only mode and source mode', () => {
   test('are never both on', () => {
     modes.toggleSource()
-    modes.toggleReading()
+    modes.toggleReadOnly()
 
-    expect(modes.reading).toBe(true)
+    expect(modes.readOnly).toBe(true)
     expect(modes.source).toBe(false)
 
     modes.toggleSource()
 
     expect(modes.source).toBe(true)
-    expect(modes.reading).toBe(false)
+    expect(modes.readOnly).toBe(false)
   })
 
   test('cannot both come back from a hand-edited entry', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ source: true, reading: true }))
+    localStorage.setItem('nib:modes', JSON.stringify({ source: true, readOnly: true }))
 
     const restored = await restarted()
     expect(restored.source).toBe(true)
-    expect(restored.reading).toBe(false)
+    expect(restored.readOnly).toBe(false)
   })
 
   test('the one that was on is the one that comes back', async () => {
-    modes.toggleReading()
+    modes.toggleReadOnly()
 
     const restored = await restarted()
-    expect(restored.reading).toBe(true)
+    expect(restored.readOnly).toBe(true)
     expect(restored.source).toBe(false)
   })
 })

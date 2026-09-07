@@ -17,7 +17,7 @@ import {
   setFocusMode,
   setHeadingNumbers,
   setLigatures,
-  setReadingMode,
+  setReadOnlyMode,
   setRightToLeft,
   setSourceMode,
   setTypewriterMode,
@@ -46,11 +46,11 @@ function surface(doc: string, cursor = doc.length) {
 }
 
 /** The class the stylesheet works from, as the editor itself will write it
- *  onto its element - not put there by hand; see readingExtensions. */
-function readingClass(state: EditorState): boolean {
+ *  onto its element - not put there by hand; see readOnlyExtensions. */
+function readOnlyClass(state: EditorState): boolean {
   return state
     .facet(EditorView.editorAttributes)
-    .some((attrs) => typeof attrs === 'object' && attrs.class === 'nib-reading-mode')
+    .some((attrs) => typeof attrs === 'object' && attrs.class === 'nib-read-only')
 }
 
 /** Text the reader never sees: syntax the preview has concealed. */
@@ -85,13 +85,13 @@ function afterCommand(state: EditorState, command: StateCommand): string {
   return written
 }
 
-describe('turning reading mode on', () => {
+describe('turning read-only mode on', () => {
   test('takes the writing surface away from the browser', () => {
     const { view } = surface('# Note')
     expect(view.state.readOnly).toBe(false)
     expect(view.state.facet(EditorView.editable)).toBe(true)
 
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
 
     expect(view.state.readOnly).toBe(true)
     expect(view.state.facet(EditorView.editable)).toBe(false)
@@ -99,17 +99,17 @@ describe('turning reading mode on', () => {
 
   test('marks the editor for the stylesheet', () => {
     const { view } = surface('# Note')
-    setReadingMode(view, true)
-    expect(readingClass(view.state)).toBe(true)
+    setReadOnlyMode(view, true)
+    expect(readOnlyClass(view.state)).toBe(true)
 
-    setReadingMode(view, false)
-    expect(readingClass(view.state)).toBe(false)
+    setReadOnlyMode(view, false)
+    expect(readOnlyClass(view.state)).toBe(false)
   })
 
   test('gives everything back when it goes off', () => {
     const { view } = surface('# Note')
-    setReadingMode(view, true)
-    setReadingMode(view, false)
+    setReadOnlyMode(view, true)
+    setReadOnlyMode(view, false)
 
     expect(view.state.readOnly).toBe(false)
     expect(view.state.facet(EditorView.editable)).toBe(true)
@@ -124,10 +124,10 @@ describe('what the reader sees', () => {
     const { view } = surface('**bold**', 4)
     expect(concealed(view.state)).toEqual([])
 
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
     expect(concealed(view.state)).toEqual(['**', '**'])
 
-    setReadingMode(view, false)
+    setReadOnlyMode(view, false)
     expect(concealed(view.state)).toEqual([])
   })
 
@@ -135,7 +135,7 @@ describe('what the reader sees', () => {
     const { view } = surface('# Title', 3)
     expect(concealed(view.state)).toEqual([])
 
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
     expect(concealed(view.state)).toEqual(['# '])
   })
 
@@ -163,28 +163,28 @@ describe('what the reader sees', () => {
     view.dispatch({ selection: { anchor: 3 } })
     expect(rendered(view.state)).toEqual([])
 
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
     expect(rendered(view.state)).toEqual([doc])
 
-    setReadingMode(view, false)
+    setReadOnlyMode(view, false)
     expect(rendered(view.state)).toEqual([])
   })
 })
 
 describe('what may still change the document', () => {
-  const reading = () => {
+  const locked = () => {
     const { view } = surface('# Note')
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
     return view.state
   }
 
   test('nothing anyone types', () => {
     const typed = { changes: { from: 0, insert: 'x' }, userEvent: 'input.type' }
-    expect(afterChange(reading(), typed)).toBe('# Note')
+    expect(afterChange(locked(), typed)).toBe('# Note')
   })
 
   test('nothing pasted, dropped or dragged out', () => {
-    const state = reading()
+    const state = locked()
 
     for (const userEvent of ['input.paste', 'input.drop', 'delete.selection']) {
       expect(afterChange(state, { changes: { from: 0, insert: 'x' }, userEvent })).toBe('# Note')
@@ -197,7 +197,7 @@ describe('what may still change the document', () => {
   test('and not a widget dispatching straight at the view either', () => {
     // A checkbox, a table cell, the language on a fence: none of them carries
     // a user event, which is why the filter does not look for one.
-    expect(afterChange(reading(), { changes: { from: 2, to: 6, insert: 'Read' } })).toBe('# Note')
+    expect(afterChange(locked(), { changes: { from: 2, to: 6, insert: 'Read' } })).toBe('# Note')
   })
 
   test('a note arriving from outside still lands', () => {
@@ -205,11 +205,11 @@ describe('what may still change the document', () => {
       changes: { from: 0, to: 6, insert: '# Elsewhere' },
       annotations: external.of(true),
     }
-    expect(afterChange(reading(), arriving)).toBe('# Elsewhere')
+    expect(afterChange(locked(), arriving)).toBe('# Elsewhere')
   })
 
   test('the format commands write nothing', () => {
-    const state = reading()
+    const state = locked()
 
     for (const command of [
       toggleWrap('**'),
@@ -222,32 +222,32 @@ describe('what may still change the document', () => {
   })
 
   test('nor does tidying up the note', () => {
-    expect(afterCommand(reading(), reformatDocument)).toBe('# Note')
+    expect(afterCommand(locked(), reformatDocument)).toBe('# Note')
   })
 })
 
-describe('source mode and reading mode', () => {
+describe('source mode and read-only mode', () => {
   /** Whether the live preview is up - which is what source mode takes away. */
   const preview = (state: EditorState) => state.field(blockDecorations, false) !== undefined
 
-  test('are never both on: reading takes source off', () => {
+  test('are never both on: read-only takes source off', () => {
     const { view } = surface('| a |\n| --- |\n| 1 |')
     setSourceMode(view, true)
     expect(preview(view.state)).toBe(false)
 
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
     expect(preview(view.state)).toBe(true)
     expect(view.state.readOnly).toBe(true)
   })
 
-  test('and source takes reading off', () => {
+  test('and source unlocks it', () => {
     const { view } = surface('| a |\n| --- |\n| 1 |')
-    setReadingMode(view, true)
+    setReadOnlyMode(view, true)
 
     setSourceMode(view, true)
     expect(view.state.readOnly).toBe(false)
     expect(preview(view.state)).toBe(false)
-    expect(readingClass(view.state)).toBe(false)
+    expect(readOnlyClass(view.state)).toBe(false)
   })
 })
 

@@ -237,8 +237,8 @@ export class TableView {
   /** Puts the caret in a cell. The cell swaps to its markdown as it takes
    *  focus, so the caret is placed after that, into the source text. */
   focusCell(at: CellAddress, placement: Placement | number): boolean {
-    // A rendered table is something to read like any other block while reading
-    // mode is on; its cells are not fields. The key that asked to walk in gets
+    // A rendered table is something to read like any other block while the note
+    // is read-only; its cells are not fields. The key that asked to walk in gets
     // its answer back and steps over the table instead.
     if (this.editor.state.readOnly) return false
 
@@ -309,7 +309,7 @@ export class TableView {
   /** Writes a model into the document. The new widget then adopts this DOM,
    *  which is where `focusAfter` is acted on. */
   private commit(next: TableModel, focus?: Focus) {
-    // Every edit a table makes comes through here, so this is where reading
+    // Every edit a table makes comes through here, so this is where read-only
     // mode stops them - the buttons in the margins and the idle timer of a
     // cell that was being typed in when the mode came on, both.
     if (this.editor.state.readOnly) {
@@ -420,7 +420,8 @@ export class TableView {
     // click changes as the cell takes focus and shows its markdown. So the
     // caret is placed by hand, once the markdown is up.
     cell.addEventListener('mousedown', (event) => {
-      // Not a caret to place while reading, and not preventDefault either:
+      // Not a caret to place while the note is read-only, and not
+      // preventDefault either:
       // dragging a selection across the table is how a reader copies it.
       if (this.editor.state.readOnly) return
       if (event.button !== 0 || document.activeElement === cell) return

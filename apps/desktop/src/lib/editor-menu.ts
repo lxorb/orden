@@ -25,7 +25,7 @@ import { viewport } from './viewport.svelte'
  *
  *  Everything here calls the same commands the keyboard and the app menu call;
  *  what differs is how much of it is offered. A phone gets the clipboard alone,
- *  and reading mode gets the clipboard plus the way back out - a menu of things
+ *  and a locked note gets the clipboard plus the way back out - a menu of things
  *  that cannot happen is worse than a short one. */
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {
@@ -46,14 +46,14 @@ async function paste(view: EditorView) {
 
 function editorMenu(view: EditorView | undefined): MenuEntry[] {
   const selected = !!view && !view.state.selection.main.empty
-  const reading = !!view && view.state.readOnly
+  const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
 
   const clipboard: MenuEntry[] = [
     {
       label: t('Cut'),
       hint: shortcuts.hint('fixed.cut'),
-      disabled: !selected || reading,
+      disabled: !selected || locked,
       run: cutSelection,
     },
     {
@@ -65,7 +65,7 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
     {
       label: t('Paste'),
       hint: shortcuts.hint('fixed.paste'),
-      disabled: reading,
+      disabled: locked,
       run: () => {
         if (view) void paste(view)
       },
@@ -78,16 +78,16 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
   // they are about.
   if (viewport.phone) return clipboard
 
-  // Reading mode leaves the clipboard rows and the way back out. The rest of
+  // A locked note leaves the clipboard rows and the way back out. The rest of
   // this menu writes.
-  if (reading) {
+  if (locked) {
     return [
       ...clipboard,
       DIVIDER,
       {
-        label: t('Leave reading mode'),
-        hint: shortcuts.hint('app.reading'),
-        run: () => modes.toggleReading(view),
+        label: t('Leave read-only'),
+        hint: shortcuts.hint('app.read-only'),
+        run: () => modes.toggleReadOnly(view),
       },
     ]
   }

@@ -66,7 +66,7 @@ export async function receiveImages(
   if (!paths.length) return
 
   // Asked again, not remembered: the mode can have come on while the picture was
-  // being written, and reading mode refuses every change anyway - it would drop
+  // being written, and read-only mode refuses every change anyway - it would drop
   // the insertion and let the selection through, against a document that never
   // took it.
   if (view.state.readOnly) return

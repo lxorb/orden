@@ -307,7 +307,7 @@
       </div>
 
       {#if workspace.active?.kind !== 'graph'}
-        <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.reading} />
+        <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.readOnly} />
       {/if}
 
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the

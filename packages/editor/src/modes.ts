@@ -30,7 +30,7 @@ const equations = new Compartment()
 const spelling = new Compartment()
 const brackets = new Compartment()
 const glyphs = new Compartment()
-const reading = new Compartment()
+const readOnly = new Compartment()
 const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
 const direction = new Compartment()
@@ -135,7 +135,7 @@ export function modeExtensions(): Extension {
     brackets.of(closeBrackets()),
     // Off until asked for: a note reads as typed unless someone chose otherwise.
     glyphs.of([]),
-    reading.of([]),
+    readOnly.of([]),
     headingNumbers.of([]),
     codeLineNumbers.of([]),
     direction.of(EditorView.contentAttributes.of({ dir: 'ltr' })),
@@ -156,17 +156,17 @@ export function setEquationNumbers(view: EditorView, on: boolean) {
 /** Source mode shows the markdown as written, with no syntax hidden. */
 export function setSourceMode(view: EditorView, on: boolean) {
   flushTableEdits()
-  // Turning it on leaves reading mode: the two are opposite answers to the
-  // same question, and the markdown as written is the writer's answer. See
-  // setReadingMode below.
+  // Turning it on unlocks a note that was read-only: the two are opposite
+  // answers to the same question, and the markdown as written is the writer's
+  // answer. See setReadOnlyMode below.
   view.dispatch({
     effects: on
-      ? [preview.reconfigure([]), reading.reconfigure([])]
+      ? [preview.reconfigure([]), readOnly.reconfigure([])]
       : preview.reconfigure(livePreview()),
   })
 }
 
-/** What reading mode puts over the editor while it is on.
+/** What read-only mode puts over the editor while it is on.
  *
  *  Three locks, because a document can be written to through three different
  *  doors. `editable` takes the contenteditable off the writing surface, so the
@@ -178,7 +178,7 @@ export function setSourceMode(view: EditorView, on: boolean) {
  *  its change straight at the view and asks nobody's permission. Only a change
  *  from outside the editor gets through, so a note being loaded, a version
  *  restored or a sync arriving still lands under the reader's eyes. */
-function readingExtensions(): Extension {
+function readOnlyExtensions(): Extension {
   return [
     EditorView.editable.of(false),
     EditorState.readOnly.of(true),
@@ -196,25 +196,26 @@ function readingExtensions(): Extension {
     // somewhere else. Attributes from this facet are merged into what it
     // writes, so this one is part of the configuration and goes when the
     // compartment is emptied.
-    EditorView.editorAttributes.of({ class: 'nib-reading-mode' }),
+    EditorView.editorAttributes.of({ class: 'nib-read-only' }),
     EditorState.changeFilter.of(isExternal),
   ]
 }
 
-/** Reading mode: the note as it reads, with nothing that writes to it.
+/** Read-only mode: the note laid out as it reads, with nothing that writes to
+ *  it. The app's reading view is a different thing - the note through the
+ *  renderer, in Reading.svelte - and this is the editor with the doors locked.
  *
- *  Source mode is its opposite, so the two are never both on - turning either
- *  one on turns the other off. Reading raw markdown is a contradiction: source
- *  mode is for seeing what you are about to type, and this is for the note
- *  once it is typed. */
-export function setReadingMode(view: EditorView, on: boolean) {
+ *  Source mode is its opposite, so the two are never both on: turning either one
+ *  on turns the other off. Locking raw markdown is a contradiction, since source
+ *  mode is for seeing what you are about to type. */
+export function setReadOnlyMode(view: EditorView, on: boolean) {
   // A cell may be holding an edit that has not reached the document yet, and
   // once this is on nothing can put it there.
   flushTableEdits()
   view.dispatch({
     effects: on
-      ? [reading.reconfigure(readingExtensions()), preview.reconfigure(livePreview())]
-      : reading.reconfigure([]),
+      ? [readOnly.reconfigure(readOnlyExtensions()), preview.reconfigure(livePreview())]
+      : readOnly.reconfigure([]),
   })
 }
 

@@ -952,37 +952,37 @@
    while the surface has focus, and the surface keeps focus here so that arrows,
    Page Down and Ctrl+F still reach it. Nothing styles the layer's display, so
    this is uncontested. */
-.nib-reading-mode .cm-cursorLayer,
-.nib-reading-mode .cm-dropCursor {
+.nib-read-only .cm-cursorLayer,
+.nib-read-only .cm-dropCursor {
   display: none;
 }
 
 /* The box still says whether the task is done. It is no longer a switch. */
-.nib-reading-mode .nib-checkbox {
+.nib-read-only .nib-checkbox {
   pointer-events: none;
 }
 
 /* The fence still says which language it is. The name is no longer a field. */
-.nib-reading-mode .nib-fence-language {
+.nib-read-only .nib-fence-language {
   pointer-events: none;
 }
 
 /* Rows, columns and column widths are all edits. */
-.nib-reading-mode .nib-table-grip,
-.nib-reading-mode .nib-table-columns,
-.nib-reading-mode .nib-table-resize {
+.nib-read-only .nib-table-grip,
+.nib-read-only .nib-table-columns,
+.nib-read-only .nib-table-resize {
   display: none;
 }
 
 /* A picture keeps the two controls that only read - open it, copy its
    address - and loses the alt text, the size, the way into the markup and the
    delete, along with the corner handles that resize it. */
-.nib-reading-mode .nib-image-alt,
-.nib-reading-mode .nib-image-size,
-.nib-reading-mode .nib-image-source,
-.nib-reading-mode .nib-image-delete,
-.nib-reading-mode .nib-image-tools-gap,
-.nib-reading-mode .nib-image-handle {
+.nib-read-only .nib-image-alt,
+.nib-read-only .nib-image-size,
+.nib-read-only .nib-image-source,
+.nib-read-only .nib-image-delete,
+.nib-read-only .nib-image-tools-gap,
+.nib-read-only .nib-image-handle {
   display: none;
 }
 

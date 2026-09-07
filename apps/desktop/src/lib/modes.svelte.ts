@@ -7,7 +7,7 @@ import {
   setLigatures,
   setLineHeight,
   setMeasure,
-  setReadingMode,
+  setReadOnlyMode,
   setRightToLeft,
   setEquationNumbers,
   setSmartPunctuation,
@@ -32,7 +32,7 @@ export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
 interface Saved {
   source: boolean
-  reading: boolean
+  readOnly: boolean
   focus: boolean
   typewriter: boolean
   punctuation: boolean
@@ -84,10 +84,12 @@ function measure(value: unknown, fallback: number): number {
 
 class Modes {
   source = $state(false)
-  /** The note as it reads, with nothing that writes to it. Never on at the
-   *  same time as source mode, and never shared with the account: which of a
-   *  note's two faces is up this minute is not a preference. */
-  reading = $state(false)
+  /** The note laid out as it reads, with nothing that writes to it. The reading
+   *  view is a different thing - the note through the renderer, per tab; this is
+   *  the editor with its doors locked. Never on at the same time as source mode,
+   *  and never shared with the account: whether a note is open for writing this
+   *  minute is not a preference. */
+  readOnly = $state(false)
   focus = $state(false)
   typewriter = $state(false)
   punctuation = $state(true)
@@ -121,7 +123,8 @@ class Modes {
       this.source = saved.source === true
       // Both at once is a state the app cannot get into; a hand-edited entry
       // can say it anyway, and source mode is the one that was written last.
-      this.reading = saved.reading === true && !this.source
+      // `reading` is what a build before the reading view called this.
+      this.readOnly = (saved.readOnly === true || saved.reading === true) && !this.source
       this.focus = saved.focus === true
       this.typewriter = saved.typewriter === true
       this.punctuation = saved.punctuation !== false
@@ -144,7 +147,7 @@ class Modes {
   }
 
   /** Every editor on the page: one for each pane. A mode is the window's rather
-   *  than one pane's - reading mode on in one pane and off in the other would be
+   *  than one pane's - a note locked in one pane and open in the other would be
    *  two different notes to look at - so a change reaches all of them. */
   private readonly views = new Set<EditorView>()
 
@@ -161,7 +164,7 @@ class Modes {
     this.views.add(view)
 
     setSourceMode(view, this.source)
-    setReadingMode(view, this.reading)
+    setReadOnlyMode(view, this.readOnly)
     setFocusMode(view, this.focus)
     setTypewriterMode(view, this.typewriter)
     setSmartPunctuation(view, this.punctuation)
@@ -185,18 +188,18 @@ class Modes {
 
   toggleSource(view?: EditorView) {
     this.source = !this.source
-    if (this.source) this.reading = false
+    if (this.source) this.readOnly = false
     this.each(view, (one) => setSourceMode(one, this.source))
     this.persist()
   }
 
-  /** The editor keeps the same rule on its side, in setReadingMode: the two
+  /** The editor keeps the same rule on its side, in setReadOnlyMode: the two
    *  are opposite answers to the same question, so one going on takes the
    *  other off. Here it is the ticks in the menu that have to agree. */
-  toggleReading(view?: EditorView) {
-    this.reading = !this.reading
-    if (this.reading) this.source = false
-    this.each(view, (one) => setReadingMode(one, this.reading))
+  toggleReadOnly(view?: EditorView) {
+    this.readOnly = !this.readOnly
+    if (this.readOnly) this.source = false
+    this.each(view, (one) => setReadOnlyMode(one, this.readOnly))
     this.persist()
   }
 
@@ -407,7 +410,7 @@ class Modes {
   private persist() {
     const state: Saved = {
       source: this.source,
-      reading: this.reading,
+      readOnly: this.readOnly,
       focus: this.focus,
       typewriter: this.typewriter,
       punctuation: this.punctuation,
