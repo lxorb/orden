@@ -14,6 +14,7 @@
 import type { MarkedExtension, Tokens } from 'marked'
 import { attributeUrl, escape, fragment, safeHref } from './html'
 import { parseWikilink, sectionOf, shownText, slugify, type Wikilink } from './links'
+import { firstStart, lineStart, matchesAt } from './starts'
 
 /** Where a note's name goes on this page: an `href`, or null for a link the
  *  caller cannot place, which renders as the words it showed. `text` is there for
@@ -48,6 +49,16 @@ const INNER = '[^[\\]\\n]+'
  *  a link to it - the same rule the editor draws by. */
 const EMBED_LINE = new RegExp(`^!\\[\\[(${INNER})\\]\\][ \\t]*(?:\\r?\\n+|$)`)
 
+/** The same line, matched where an `![[` the scan found sits; see starts.ts. */
+const EMBED_AT = new RegExp(`!\\[\\[${INNER}\\]\\][ \\t]*(?=\\r?\\n|$)`, 'y')
+
+/** Where the next embed on a line of its own begins: the newline before it, or
+ *  the start of the string when it begins there. */
+function embedLine(src: string, at: number): number | null {
+  const line = lineStart(src, at, { orString: true })
+  return line !== null && matchesAt(EMBED_AT, src, at) ? line : null
+}
+
 /** `[[Note]]`, `[[Note|shown]]`, `[[Note#Heading]]`, `![[Note]]`.
  *
  *  Two extensions, because the two are different shapes of thing. An embed alone
@@ -64,10 +75,7 @@ export function wikilinks(options: {
       {
         name: 'embed',
         level: 'block',
-        start: (src: string) => {
-          const at = src.search(new RegExp(`(^|\\n)!\\[\\[${INNER}\\]\\][ \\t]*(?=\\r?\\n|$)`))
-          return at < 0 ? undefined : at
-        },
+        start: (src: string) => firstStart(src, ['![['], embedLine),
         tokenizer(src: string) {
           const match = EMBED_LINE.exec(src)
           if (!match) return undefined

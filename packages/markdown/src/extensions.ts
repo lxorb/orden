@@ -4,6 +4,7 @@ import 'katex/contrib/mhchem'
 import type { MarkedExtension, Tokens } from 'marked'
 import { get } from 'node-emoji'
 import { escape, fragment } from './html'
+import { firstStart, lineStart, matchesAt } from './starts'
 
 /** Only the three that matter in element content, which is where the source of
  *  an equation that would not parse ends up. */
@@ -93,13 +94,23 @@ export const scripts: MarkedExtension = {
   ],
 }
 
+/** A `$$` that opens a block: on a line of its own, with a closing one under it.
+ *  Confirmed rather than assumed, because `$$` in the middle of a sentence would
+ *  otherwise cut the paragraph in two there and leave a space behind. */
+const MATH_BLOCK = /\$\$\r?\n[\s\S]+?\r?\n\$\$(?:\r?\n|$)/y
+
+function mathBlock(src: string, at: number): number | null {
+  const line = lineStart(src, at, { orString: true })
+  return line !== null && matchesAt(MATH_BLOCK, src, at) ? line : null
+}
+
 /** `$inline$` and a `$$` block on its own lines. */
 export const maths: MarkedExtension = {
   extensions: [
     {
       name: 'blockMath',
       level: 'block',
-      start: (src: string) => src.indexOf('$$'),
+      start: (src: string) => firstStart(src, ['$$'], mathBlock),
       tokenizer(src: string) {
         const match = /^\$\$\r?\n([\s\S]+?)\r?\n\$\$(?:\r?\n|$)/.exec(src)
         if (!match) return undefined
@@ -179,10 +190,13 @@ export const definitionLists: MarkedExtension = {
     {
       name: 'definitionList',
       level: 'block',
-      start: (src: string) => {
-        const at = src.search(/\n[ \t]{0,3}:[ \t]+\S/)
-        return at < 0 ? undefined : at
-      },
+      // No `start`. A list needs its term line, and a paragraph that has already
+      // swallowed the term line is not one this can rescue: cutting the paragraph
+      // short leaves the tokenizer looking at the `:` line alone, which is not a
+      // definition list either way. So the only place one is ever recognised is
+      // where a block begins, which is where the tokenizer runs regardless.
+      // Asking for the earliest colon in the rest of the document instead was
+      // more than half the cost of rendering a large note.
       tokenizer(src: string) {
         const block = /^((?:[^\n:][^\n]*\n(?:[ \t]{0,3}:[ \t]+[^\n]*(?:\n|$))+)+)/.exec(src)?.[1]
         if (block === undefined) return undefined
@@ -230,6 +244,13 @@ export const definitionLists: MarkedExtension = {
   ],
 }
 
+/** An abbreviation being defined, wherever the `*[` the caller found sits. */
+const DEFINITION = /\*\[[^\]\n]+\]:/y
+
+function definition(src: string, at: number): number | null {
+  return matchesAt(DEFINITION, src, at) ? at : null
+}
+
 /** `*[HTML]: HyperText Markup Language` defines it; every later mention of
  *  `HTML` in the document then carries the expansion. */
 export const abbreviations: MarkedExtension = {
@@ -237,10 +258,7 @@ export const abbreviations: MarkedExtension = {
     {
       name: 'abbrDef',
       level: 'block',
-      start: (src: string) => {
-        const at = src.search(/\*\[[^\]\n]+\]:/)
-        return at < 0 ? undefined : at
-      },
+      start: (src: string) => firstStart(src, ['*['], definition),
       tokenizer(src: string) {
         const match = /^\*\[([^\]\n]+)\]:[ \t]*(.*)(?:\r?\n|$)/.exec(src)
         if (!match) return undefined
@@ -294,13 +312,24 @@ export function collectAbbreviations(source: string): Map<string, string> {
   return found
 }
 
+/** A footnote being defined rather than referred to: the colon is the whole
+ *  difference. Confirmed for the same reason the maths block is - a `[^1]` in the
+ *  middle of a sentence used to cut the paragraph in two just before it, which
+ *  left a space in front of every footnote mark in the document. */
+const FOOTNOTE_DEF = /\[\^[^\]\s]+\]:\s*\S/y
+
+function footnoteDefinition(src: string, at: number): number | null {
+  const line = lineStart(src, at, { orString: true })
+  return line !== null && matchesAt(FOOTNOTE_DEF, src, at) ? line : null
+}
+
 /** `[^1]` in the text, `[^1]: …` at the bottom. */
 export const footnotes: MarkedExtension = {
   extensions: [
     {
       name: 'footnoteDef',
       level: 'block',
-      start: (src: string) => src.indexOf('[^'),
+      start: (src: string) => firstStart(src, ['[^'], footnoteDefinition),
       tokenizer(src: string) {
         const match = /^\[\^([^\]\s]+)\]:\s*(.+)(?:\r?\n|$)/.exec(src)
         if (!match) return undefined

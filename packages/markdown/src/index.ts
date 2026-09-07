@@ -2,6 +2,7 @@ import { Marked, Renderer } from 'marked'
 import type { Tokens } from 'marked'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { slugify, withoutBlockIds } from './links'
+import { firstStart, lineStart, matchesAt } from './starts'
 import {
   type EmbedResolver,
   type Embeds,
@@ -78,14 +79,28 @@ const defaults = Renderer.prototype as Renderer
 
 const TOC_MARK = '<!--nib:toc-->'
 
+/** The mark, wherever the closing bracket the scan found sits; see starts.ts.
+ *  The two needles are the `c]` that every spelling of it ends in, in either
+ *  case, which is enough for the pattern here to read the rest. */
+const TOC_AT = /\[toc\][ \t]*(?=\r?\n|$)/iy
+const TOC_NEEDLES = ['c]', 'C]']
+
+/** How far back the `[` is from the `c]` the scan lands on. */
+const TOC_OPEN = 3
+
+function tocLine(src: string, at: number): number | null {
+  const open = at - TOC_OPEN
+  if (open < 0) return null
+
+  const line = lineStart(src, open, { orString: true })
+  return line !== null && matchesAt(TOC_AT, src, open) ? line : null
+}
+
 /** A `[toc]` alone on a line. Inside a sentence it stays text. */
 const toc = {
   name: 'toc',
   level: 'block' as const,
-  start: (src: string) => {
-    const at = src.search(/(^|\n)\[toc\][ \t]*(?=\r?\n|$)/i)
-    return at < 0 ? undefined : at
-  },
+  start: (src: string) => firstStart(src, TOC_NEEDLES, tocLine),
   tokenizer(src: string) {
     const match = /^\[toc\][ \t]*(?:\r?\n+|$)/i.exec(src)
     return match ? { type: 'toc', raw: match[0] } : undefined
