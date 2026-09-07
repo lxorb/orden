@@ -164,16 +164,23 @@ class Shortcuts {
    *  and the palette follow on their own. */
   private settle() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides))
-    if (this.view) setShortcutKeys(this.view, this.overrides)
+    for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
   }
 
-  private view: EditorView | undefined
+  /** Every editor on the page: one for each pane. The keys are the reader's
+   *  rather than one pane's, so a rebind reaches all of them at once. */
+  private readonly views = new Set<EditorView>()
 
   /** A view is built fresh for every note, and starts at the defaults. */
   apply(view: EditorView) {
-    this.view = view
+    this.views.add(view)
     setShortcutKeys(view, this.overrides)
+  }
+
+  /** A view that has left the page. */
+  forget(view: EditorView) {
+    this.views.delete(view)
   }
 
   /** What the app hands the editor when it builds one, so the first keystroke
@@ -202,7 +209,7 @@ class Shortcuts {
 
     this.overrides = usableOnes
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides))
-    if (this.view) setShortcutKeys(this.view, this.overrides)
+    for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 
   /** Tells the account, when there is one. Signed out, the choice is this

@@ -143,13 +143,22 @@ class Modes {
     this.applyZoom()
   }
 
-  /** The view on screen, so a zoom from the keyboard or the menu can tell it
-   *  to measure again. */
-  private view: EditorView | undefined
+  /** Every editor on the page: one for each pane. A mode is the window's rather
+   *  than one pane's - reading mode on in one pane and off in the other would be
+   *  two different notes to look at - so a change reaches all of them. */
+  private readonly views = new Set<EditorView>()
 
-  /** Re-applies every mode to a freshly created view. */
+  /** The one the caller had in mind, and every other one there is. A view is
+   *  built fresh for every tab, so the set is what keeps the panes in step; the
+   *  argument is what makes a brand new view take the modes on the way up. */
+  private each(view: EditorView | undefined, apply: (one: EditorView) => void) {
+    if (view) apply(view)
+    for (const one of this.views) if (one !== view) apply(one)
+  }
+
+  /** Re-applies every mode to a freshly created view, and keeps it. */
   apply(view: EditorView) {
-    this.view = view
+    this.views.add(view)
 
     setSourceMode(view, this.source)
     setReadingMode(view, this.reading)
@@ -169,10 +178,15 @@ class Modes {
     setLigatures(view, this.ligatures)
   }
 
+  /** A view that has left the page. */
+  forget(view: EditorView) {
+    this.views.delete(view)
+  }
+
   toggleSource(view?: EditorView) {
     this.source = !this.source
     if (this.source) this.reading = false
-    if (view) setSourceMode(view, this.source)
+    this.each(view, (one) => setSourceMode(one, this.source))
     this.persist()
   }
 
@@ -182,37 +196,37 @@ class Modes {
   toggleReading(view?: EditorView) {
     this.reading = !this.reading
     if (this.reading) this.source = false
-    if (view) setReadingMode(view, this.reading)
+    this.each(view, (one) => setReadingMode(one, this.reading))
     this.persist()
   }
 
   toggleFocus(view?: EditorView) {
     this.focus = !this.focus
-    if (view) setFocusMode(view, this.focus)
+    this.each(view, (one) => setFocusMode(one, this.focus))
     this.persist()
   }
 
   toggleTypewriter(view?: EditorView) {
     this.typewriter = !this.typewriter
-    if (view) setTypewriterMode(view, this.typewriter)
+    this.each(view, (one) => setTypewriterMode(one, this.typewriter))
     this.persist()
   }
 
   togglePunctuation(view?: EditorView) {
     this.punctuation = !this.punctuation
-    if (view) setSmartPunctuation(view, this.punctuation)
+    this.each(view, (one) => setSmartPunctuation(one, this.punctuation))
     this.persist()
   }
 
   toggleNumbers(view?: EditorView) {
     this.numbers = !this.numbers
-    if (view) setHeadingNumbers(view, this.numbers)
+    this.each(view, (one) => setHeadingNumbers(one, this.numbers))
     this.persist()
   }
 
   toggleLineNumbers(view?: EditorView) {
     this.lineNumbers = !this.lineNumbers
-    if (view) setCodeLineNumbers(view, this.lineNumbers)
+    this.each(view, (one) => setCodeLineNumbers(one, this.lineNumbers))
     this.persist()
   }
 
@@ -220,13 +234,13 @@ class Modes {
    *  fence and the other way round. */
   setCodeTheme(id: string, view?: EditorView) {
     this.codeTheme = id
-    if (view) setCodeTheme(view, id)
+    this.each(view, (one) => setCodeTheme(one, id))
     this.persist()
   }
 
   toggleSpellcheck(view?: EditorView) {
     this.spellcheck = !this.spellcheck
-    if (view) setSpellcheck(view, this.spellcheck, this.dictionary)
+    this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
     this.persist()
   }
 
@@ -238,13 +252,13 @@ class Modes {
 
   setSpellLanguage(value: string, view?: EditorView) {
     this.spellLanguage = value
-    if (view) setSpellcheck(view, this.spellcheck, this.dictionary)
+    this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
     this.persist()
   }
 
   toggleLigatures(view?: EditorView) {
     this.ligatures = !this.ligatures
-    if (view) setLigatures(view, this.ligatures)
+    this.each(view, (one) => setLigatures(one, this.ligatures))
     this.persist()
     this.share({ ligatures: this.ligatures })
   }
@@ -284,7 +298,7 @@ class Modes {
     const theirs = remote.ligatures
     if (typeof theirs === 'boolean' && unheard && theirs !== this.ligatures) {
       this.ligatures = theirs
-      if (this.view) setLigatures(this.view, theirs)
+      this.each(undefined, (one) => setLigatures(one, theirs))
       this.persist()
     }
 
@@ -314,25 +328,25 @@ class Modes {
 
   toggleCloseBrackets(view?: EditorView) {
     this.closeBrackets = !this.closeBrackets
-    if (view) setCloseBrackets(view, this.closeBrackets)
+    this.each(view, (one) => setCloseBrackets(one, this.closeBrackets))
     this.persist()
   }
 
   toggleStrict(view?: EditorView) {
     this.strict = !this.strict
-    if (view) setStrictMode(view, this.strict)
+    this.each(view, (one) => setStrictMode(one, this.strict))
     this.persist()
   }
 
   toggleEquationNumbers(view?: EditorView) {
     this.equationNumbers = !this.equationNumbers
-    if (view) setEquationNumbers(view, this.equationNumbers)
+    this.each(view, (one) => setEquationNumbers(one, this.equationNumbers))
     this.persist()
   }
 
   toggleRightToLeft(view?: EditorView) {
     this.rtl = !this.rtl
-    if (view) setRightToLeft(view, this.rtl)
+    this.each(view, (one) => setRightToLeft(one, this.rtl))
     this.persist()
   }
 
@@ -346,26 +360,26 @@ class Modes {
 
   setWidth(value: number, view?: EditorView) {
     this.width = Math.round(value)
-    if (view) setMeasure(view, this.width)
+    this.each(view, (one) => setMeasure(one, this.width))
     this.persist()
   }
 
   setLineSpacing(value: number, view?: EditorView) {
     this.lineHeight = Math.round(value * 100) / 100
-    if (view) setLineHeight(view, this.lineHeight)
+    this.each(view, (one) => setLineHeight(one, this.lineHeight))
     this.persist()
   }
 
   /** Steps through the widths rather than offering a slider of nothing. */
   stepWidth(direction: number, view?: EditorView) {
     this.width = step(WIDTHS, this.width, direction, 42)
-    if (view) setMeasure(view, this.width)
+    this.each(view, (one) => setMeasure(one, this.width))
     this.persist()
   }
 
   stepLineHeight(direction: number, view?: EditorView) {
     this.lineHeight = step(LINE_HEIGHTS, this.lineHeight, direction, 1.72)
-    if (view) setLineHeight(view, this.lineHeight)
+    this.each(view, (one) => setLineHeight(one, this.lineHeight))
     this.persist()
   }
 
@@ -387,7 +401,7 @@ class Modes {
    *  above, and this. */
   private applyZoom() {
     document.documentElement.style.setProperty('--zoom', String(this.zoom))
-    if (this.view) remeasure(this.view)
+    for (const one of this.views) remeasure(one)
   }
 
   private persist() {

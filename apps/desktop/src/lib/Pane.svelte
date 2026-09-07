@@ -49,7 +49,11 @@
     modes.apply(current)
     shortcuts.apply(current)
 
-    return () => views.forget(pane.id)
+    return () => {
+      views.forget(pane.id)
+      modes.forget(current)
+      shortcuts.forget(current)
+    }
   })
 
   // Reopening a note lands where it was left; see placement.svelte.ts. Per pane,
