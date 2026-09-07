@@ -7,6 +7,7 @@
 //! in it are named after the moment they were taken.
 
 use serde::Serialize;
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -56,8 +57,8 @@ pub fn snapshot_note(app: AppHandle, path: String, content: String) -> Result<()
 
     existing = snapshot_files(&dir);
     if existing.len() > KEEP {
-        for stale in &existing[..existing.len() - KEEP] {
-            let _ = fs::remove_file(stale);
+        for old in &existing[..existing.len() - KEEP] {
+            let _ = fs::remove_file(old);
         }
     }
 
@@ -105,14 +106,14 @@ const DAY: u64 = 24 * HOUR;
 /// rule is the size cap, so a long note written in all day leaves twenty-four
 /// versions of that day behind rather than hundreds.
 ///
-/// The same policy runs in the browser, over IndexedDB; see
-/// src/lib/recovery.ts.
+/// The same policy runs in the browser, over `IndexedDB`; see
+/// `src/lib/recovery.ts`.
 fn stale(taken: &[u64], now: u64, days: u64) -> Vec<u64> {
     let mut newest_first: Vec<u64> = taken.to_vec();
     newest_first.sort_unstable_by(|a, b| b.cmp(a));
 
     let mut stale = Vec::new();
-    let mut hours_kept = std::collections::HashSet::new();
+    let mut hours_kept = HashSet::new();
 
     for at in newest_first {
         let age = now.saturating_sub(at);
