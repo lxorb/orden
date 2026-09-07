@@ -62,6 +62,9 @@ export interface Space {
   blog_title: string | null
   /** When set, the only note published, shown at the root. */
   blog_note: string | null
+  /** What is kept above the space's file list, as a JSON array; see
+   *  spaces/bookmarks.ts. `[]` until something is. */
+  bookmarks: string
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }

@@ -108,11 +108,18 @@ interface DnsRecord {
   note?: string
 }
 
+interface BookmarkView {
+  kind: string
+  path: string
+  text: string
+}
+
 interface SpaceView {
   id: string
   name: string
   position: number
   icon: string | null
+  bookmarks: BookmarkView[]
   createdAt: number
   updatedAt: number
   blog: {
@@ -169,9 +176,10 @@ export interface Reply {
   hash: string
   stored: boolean
 
-  // Spaces and their published address.
+  // Spaces, what they keep above their file list, and their published address.
   space: SpaceView
   spaces: SpaceView[]
+  bookmarks: BookmarkView[]
   deleted: string[]
   available: boolean
   reason: string

@@ -2,6 +2,7 @@
  *  nothing here touches cookies, so it works the same in the app and the web. */
 
 import { isRecord, isString, parsed } from './stored'
+import type { Bookmark } from './workspace/bookmarks.svelte'
 
 export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
 
@@ -18,6 +19,8 @@ export interface RemoteSpace {
   /** Where it sits in the rail, shared across machines. */
   position: number
   icon: string | null
+  /** What is kept above the space's file list, in the order it appears. */
+  bookmarks: Bookmark[]
   createdAt: number
   updatedAt: number
   blog: {
@@ -59,6 +62,8 @@ export interface TrashListing {
  *  there once chosen; a missing one means the machine's own choice stands. */
 export interface AccountSettings {
   ligatures?: boolean
+  /** Where a pasted picture is written; one of attachments.ts's three. */
+  attachments?: string
   /** Keys the reader chose, by shortcut id, as differences from the defaults.
    *  Null where they took a key away. Only the differences travel: a full
    *  dump would freeze today's defaults into every account that ever saved
@@ -176,6 +181,15 @@ export const api = {
 
   setSpaceIcon: (token: string, id: string, icon: string | null) =>
     request<{ space: RemoteSpace }>(`/v1/spaces/${id}`, { method: 'PATCH', token, body: { icon } }),
+
+  /** The whole list, in its order: reordering is a change to the list itself,
+   *  so there is nothing smaller worth sending. */
+  saveBookmarks: (token: string, id: string, bookmarks: Bookmark[]) =>
+    request<{ bookmarks: Bookmark[] }>(`/v1/spaces/${id}/bookmarks`, {
+      method: 'PUT',
+      token,
+      body: { bookmarks },
+    }),
 
   deleteSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),

@@ -10,6 +10,7 @@ import { readBody } from '../body'
 import { newId, now } from '../crypto'
 import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables } from '../types'
+import { bookmarks } from './bookmarks'
 import { publish } from './publish'
 import { ownedSpace, presentSpace } from './space'
 
@@ -74,6 +75,7 @@ spaces.post('/', async (context) => {
     blog_domain: null,
     blog_note: null,
     blog_title: null,
+    bookmarks: '[]',
   }
 
   await context.env.DB.prepare(
@@ -176,6 +178,7 @@ spaces.delete('/:id', async (context) => {
   return context.json({ ok: true })
 })
 
-// Everything about a space's published side answers under these same paths.
+// A space's published side and its bookmarks answer under these same paths.
 // Mounted last, so `/order` above is still read as a word and not as an id.
 spaces.route('/', publish)
+spaces.route('/', bookmarks)

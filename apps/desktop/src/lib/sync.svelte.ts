@@ -97,6 +97,19 @@ class Sync {
     await account.loadSpaces().catch(() => undefined)
   }
 
+  /** The space's bookmarks as they now stand. Signed out, or in a space the
+   *  account has never heard of, they stay on this machine and the next pass
+   *  that pairs the space carries them up. */
+  async pushBookmarks(root: string) {
+    const token = account.token
+    const mirror = this.mirrors[root]
+    if (!token || !mirror) return
+
+    await api
+      .saveBookmarks(token, mirror.spaceId, workspace.bookmarks.of(root))
+      .catch(() => undefined)
+  }
+
   /** Something changed here, so the next pass should not wait out whatever slow
    *  interval the loop had settled into. */
   nudge() {
@@ -214,11 +227,21 @@ class Sync {
       if (root) this.mirrors[root] = { spaceId: space.id, root, cursor: 0, notes: {} }
     }
 
-    // The icon belongs to the space, so it travels with it. Whatever the
-    // account holds wins: it is the one copy every machine can see.
+    // The icon and the bookmarks belong to the space, so they travel with it.
+    // Whatever the account holds wins: it is the one copy every machine can
+    // see. The exception is the first time an account meets a space on this
+    // machine, where whatever was bookmarked here joins the account's list
+    // instead of being replaced by it - and is sent straight back up.
+    const accountId = account.user?.id ?? null
     for (const remote of account.spaces) {
       const mirror = Object.values(this.mirrors).find((one) => one.spaceId === remote.id)
-      if (mirror) workspace.applyIcon(mirror.root, remote.icon ?? null)
+      if (!mirror) continue
+
+      workspace.applyIcon(mirror.root, remote.icon ?? null)
+
+      if (accountId === null) continue
+      const merged = workspace.bookmarks.adopt(mirror.root, remote.bookmarks, accountId)
+      if (merged) await api.saveBookmarks(token, remote.id, merged).catch(() => undefined)
     }
 
     // The account already lists spaces in the order it holds them, so adopting

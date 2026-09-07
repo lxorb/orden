@@ -7,6 +7,7 @@
 
 import { dnsRecords } from './addresses'
 import type { Env, Space } from '../types'
+import { readBookmarks } from './bookmarks'
 
 export async function ownedSpace(env: Env, userId: string, spaceId: string): Promise<Space | null> {
   const space = await env.DB.prepare(
@@ -24,6 +25,10 @@ export function presentSpace(space: Space, env: Env) {
     name: space.name,
     position: space.position,
     icon: space.icon,
+    // Carried on the listing rather than fetched per space: the app reads the
+    // list on every reconcile pass, and one request for every space's
+    // bookmarks would be one request per space.
+    bookmarks: readBookmarks(space.bookmarks),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

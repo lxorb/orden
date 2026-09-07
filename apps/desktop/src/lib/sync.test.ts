@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Bookmark } from './workspace/bookmarks.svelte'
 
 /** Syncing is driven here the way the app drives it, one pass at a time,
  *  against a disk and an account that both live in memory. Under node there is
@@ -27,7 +28,7 @@ const fake = vi.hoisted(() => {
 
   const disk = new Map<string, string>()
   const remote = {
-    spaces: [] as { id: string; name: string }[],
+    spaces: [] as { id: string; name: string; bookmarks?: Bookmark[] }[],
     notes: [] as Note[],
     /** Every write the account received, in order. */
     calls: [] as string[],
@@ -134,10 +135,14 @@ const fake = vi.hoisted(() => {
     hash: await sha256(note.content),
   })
 
-  const listed = (space: { id: string; name: string }, position: number) => ({
+  const listed = (
+    space: { id: string; name: string; bookmarks?: Bookmark[] },
+    position: number,
+  ) => ({
     ...space,
     position,
     icon: null,
+    bookmarks: space.bookmarks ?? [],
     createdAt: 0,
     updatedAt: 0,
     blog: { enabled: false, subdomain: null, domain: null, title: null, note: null, dns: [] },
@@ -216,6 +221,12 @@ const fake = vi.hoisted(() => {
     reorderSpaces: async () => ({ ok: true as const }),
     setSpaceIcon: async () => ({ space: listed(firstRemoteSpace(), 0) }),
     renameSpace: async () => ({ space: listed(firstRemoteSpace(), 0) }),
+    saveBookmarks: async (_token: string, id: string, bookmarks: Bookmark[]) => {
+      remote.calls.push(`saveBookmarks ${id}`)
+      const space = remote.spaces.find((one) => one.id === id)
+      if (space) space.bookmarks = bookmarks
+      return { bookmarks }
+    },
   }
 
   function addRemoteNote(spaceId: string, path: string, content: string) {
@@ -305,6 +316,21 @@ function accountWithNotes() {
 async function signIn() {
   account.email = 'me@example.com'
   expect(await account.verify('123456')).toBe(true)
+}
+
+/** Runs something with the clock far enough on that the loop asks the account
+ *  for its spaces again: within one interval it works from the list it already
+ *  has, which is the whole point of the interval. */
+async function afterTheReconcileInterval(run: () => Promise<unknown>) {
+  const { RECONCILE_INTERVAL } = await import('./backoff')
+
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(Date.now() + RECONCILE_INTERVAL + 1)
+  try {
+    await run()
+  } finally {
+    vi.useRealTimers()
+  }
 }
 
 describe('signing in when the account will not answer', () => {
@@ -421,6 +447,69 @@ describe('a mirror whose folder is gone', () => {
 
     await sync.run()
     expect(fake.remote.calls).toEqual([])
+  })
+})
+
+describe('the bookmarks of a space', () => {
+  /** A machine that has bookmarked a note in the space it holds. */
+  async function machineWithABookmark() {
+    await machineWithNotes()
+    workspace.bookmarks.toggle({ kind: 'note', path: 'Read me.md', text: '' })
+  }
+
+  test('join the account’s own list on the first pass and are sent up', async () => {
+    await machineWithABookmark()
+    fake.remote.spaces.push({
+      id: 's-Notes',
+      name: 'Notes',
+      bookmarks: [{ kind: 'search', path: '', text: 'tea' }],
+    })
+
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    expect(workspace.bookmarks.of('/Notes')).toEqual([
+      { kind: 'search', path: '', text: 'tea' },
+      { kind: 'note', path: 'Read me.md', text: '' },
+    ])
+    expect(fake.remote.calls).toContain('saveBookmarks s-Notes')
+    expect(fake.remote.spaces[0]?.bookmarks).toHaveLength(2)
+  })
+
+  test('follow the account from then on, so one removed elsewhere stays gone', async () => {
+    await machineWithABookmark()
+    fake.remote.spaces.push({ id: 's-Notes', name: 'Notes' })
+
+    await signIn()
+    account.settled()
+    await sync.pass()
+    expect(workspace.bookmarks.of('/Notes')).toHaveLength(1)
+
+    // Another machine dropped it. The pass that next asks the account for its
+    // spaces takes that, rather than offering this machine's copy back.
+    const [space] = fake.remote.spaces
+    if (space) space.bookmarks = []
+    fake.remote.calls.length = 0
+    await afterTheReconcileInterval(() => sync.pass())
+
+    expect(workspace.bookmarks.of('/Notes')).toEqual([])
+    expect(fake.remote.calls).toEqual([])
+  })
+
+  test('are offered to the account as soon as one is added', async () => {
+    await machineWithNotes()
+    fake.remote.spaces.push({ id: 's-Notes', name: 'Notes' })
+
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls.length = 0
+
+    workspace.bookmarks.toggle({ kind: 'folder', path: 'Work', text: '' })
+    await vi.waitFor(() => {
+      expect(fake.remote.calls).toEqual(['saveBookmarks s-Notes'])
+    })
   })
 })
 
