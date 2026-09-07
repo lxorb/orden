@@ -36,9 +36,6 @@ export class CanvasStore {
    *  mounted only for this node, which is what keeps five hundred cards cheap. */
   editing = $state<string | null>(null)
 
-  /** The group or edge whose label is being typed, while one is. */
-  labelling = $state<string | null>(null)
-
   private readonly tab: Tab
   private readonly note: NoteDoc
   private readonly history = new CanvasHistory()
@@ -155,7 +152,6 @@ export class CanvasStore {
     const kept = this.picked.filter((id) => held.has(id))
     if (kept.length !== this.picked.length) this.picked = kept
     if (this.editing !== null && !held.has(this.editing)) this.editing = null
-    if (this.labelling !== null && !held.has(this.labelling)) this.labelling = null
   }
 
   isPicked(id: string): boolean {

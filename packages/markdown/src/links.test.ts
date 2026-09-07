@@ -5,7 +5,9 @@ import {
   findLinks,
   formatWikilink,
   isNoteTarget,
+  isCanvasTarget,
   isPdfTarget,
+  isTabFile,
   linkTarget,
   pageFragment,
   parseWikilink,
@@ -138,6 +140,31 @@ describe('which targets name a PDF', () => {
     expect(isPdfTarget('paper.pdf.md')).toBe(false)
     expect(isPdfTarget('pdf')).toBe(false)
     expect(isPdfTarget('')).toBe(false)
+  })
+})
+
+describe('which targets name a canvas', () => {
+  test('anything ending in the extension, in either case', () => {
+    expect(isCanvasTarget('Board.canvas')).toBe(true)
+    expect(isCanvasTarget('boards/Quarter.CANVAS')).toBe(true)
+    expect(isCanvasTarget('  Board.canvas  ')).toBe(true)
+  })
+
+  test('and nothing else', () => {
+    expect(isCanvasTarget('Board')).toBe(false)
+    expect(isCanvasTarget('Board.canvas.md')).toBe(false)
+    expect(isCanvasTarget('canvas')).toBe(false)
+    expect(isCanvasTarget('')).toBe(false)
+  })
+})
+
+describe('which targets open in a tab of their own', () => {
+  test('a PDF and a canvas, and no other file', () => {
+    expect(isTabFile('paper.pdf')).toBe(true)
+    expect(isTabFile('Board.canvas')).toBe(true)
+    expect(isTabFile('Note.md')).toBe(false)
+    expect(isTabFile('shot.png')).toBe(false)
+    expect(isTabFile('')).toBe(false)
   })
 })
 
