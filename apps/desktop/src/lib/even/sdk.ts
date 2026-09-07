@@ -77,7 +77,11 @@ export interface Glasses {
  *  page's own storage is promised to outlive a launch. See vault.ts. */
 export interface Store {
   read(key: string): Promise<string | null>
-  write(key: string, value: string): Promise<void>
+  /** False when the host would not take it. The SDK answers `false` rather than
+   *  throwing, and a write nobody kept is the difference between a session that
+   *  survives a launch and one that does not, so it is answered rather than
+   *  dropped. */
+  write(key: string, value: string): Promise<boolean>
 }
 
 /** Only the methods the plugin calls. Structural rather than the SDK's own class
@@ -267,7 +271,10 @@ export async function connectStore(): Promise<Store | null> {
     },
 
     async write(key, value) {
-      await bridge.setLocalStorage(key, value)
+      // `true` is the documented answer; a host that hands back the int takes
+      // zero for success the way the rest of this bridge does.
+      const answer = await bridge.setLocalStorage(key, value)
+      return answer === true || answer === 0 || answer === 'success'
     },
   }
 }

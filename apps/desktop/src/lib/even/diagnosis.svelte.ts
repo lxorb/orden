@@ -6,6 +6,7 @@
 
 import manifest from '../../../even.app.json'
 import { bridgeLike, countLaunch, type Fact, hostFacts, pageFacts } from './facts'
+import { read, wrote } from './keep'
 
 class Diagnosis {
   /** Open from the first paint, and stays open until somebody closes it.
@@ -43,8 +44,22 @@ class Diagnosis {
     this.gather()
   }
 
+  /** How long the panel keeps catching up with itself, and how often.
+   *
+   *  The stores answer over the seconds after a launch and the sign-in writes
+   *  later still, so a panel gathered once shows the questions rather than the
+   *  answers. Half a minute covers a launch; after that nothing new arrives. */
+  private static readonly WATCH = 30_000
+  private static readonly TICK = 1000
+
   async start() {
     this.gather()
+
+    const until = Date.now() + Diagnosis.WATCH
+    const ticking = setInterval(() => {
+      this.gather()
+      if (Date.now() >= until) clearInterval(ticking)
+    }, Diagnosis.TICK)
 
     const { before, stores } = await countLaunch()
     this.launches = [
@@ -59,6 +74,17 @@ class Diagnosis {
 
   private launches = $state<Fact[]>([])
 
+  /** What each store did with the token, this launch. The read is from startup
+   *  and the write from the last sign-in, so one screenshot on the launch after
+   *  a sign-in says which store kept it and which lost it. */
+  private token(): Fact[] {
+    const lines: Fact[] = []
+    for (const [name, what] of read) lines.push({ name: `read ${name}`, value: what })
+    for (const [name, what] of wrote) lines.push({ name: `wrote ${name}`, value: what })
+
+    return lines.length ? lines : [{ name: 'token', value: 'no store asked yet' }]
+  }
+
   private gather() {
     const global = globalThis as unknown as Record<string, unknown>
 
@@ -71,6 +97,7 @@ class Diagnosis {
       ...hostFacts(global),
       { name: 'bridge-like globals', value: bridgeLike(Object.keys(global)).join(' ') || '(none)' },
       ...this.launches,
+      ...this.token(),
     ]
   }
 }

@@ -257,9 +257,47 @@ describe('a host that keeps the token too', () => {
     expect(localStorage.getItem('nib:session')).toBe('from-the-host')
   })
 
-  test('prefers the page when it has a token of its own', async () => {
+  test('says it is still looking while the stores are being asked', async () => {
+    // Signed out and not known yet are different states. On a phone the stores
+    // take seconds to answer, and a rail that offers a sign-in inside those
+    // seconds is how a session that was there gets typed in again.
+    let answer: (token: string | null) => void = () => undefined
+    account.alsoKeepIn({
+      read: () =>
+        new Promise<string | null>((resolve) => {
+          answer = resolve
+        }),
+      write: () => Promise.resolve(),
+      clear: () => Promise.resolve(),
+    })
+
+    const restoring = account.restore()
+    await vi.waitFor(() => expect(account.restoring).toBe(true))
+    expect(account.signedIn).toBe(false)
+
+    answer('from-the-host')
+    await restoring
+
+    expect(account.restoring).toBe(false)
+    expect(account.signedIn).toBe(true)
+  })
+
+  test('lets the stores decide between them, rather than the page alone', async () => {
+    // The page's own storage is the one a packed plugin loses, so asking it
+    // first means preferring the empty answer. The vault asks every store at
+    // once and answers with whichever kept a token; which of them wins is its
+    // business, and it puts the page's own first.
     localStorage.setItem('nib:session', 'session')
-    account.alsoKeepIn(vault({ token: 'stale' }))
+    account.alsoKeepIn(vault({ token: 'from-the-host' }))
+
+    await account.restore()
+
+    expect(account.token).toBe('from-the-host')
+  })
+
+  test('falls back to the page when there is no vault at all', async () => {
+    // Which is every browser and the desktop app: nothing registers one there.
+    localStorage.setItem('nib:session', 'session')
 
     await account.restore()
 

@@ -23,9 +23,17 @@ import { connectStore } from './sdk'
 export interface Keep {
   readonly name: string
   read(key: string): Promise<string | null>
-  write(key: string, value: string): Promise<void>
+  /** Answers whether the value is now kept. A store that cannot say answers
+   *  true: only the phone app's own store reports back. */
+  write(key: string, value: string): Promise<boolean>
   clear(key: string): Promise<void>
 }
+
+/** What each store last did, so the diagnosis can say which one lost the token
+ *  rather than only that it was lost. Written here because this is the only
+ *  place that knows. */
+export const wrote = new Map<string, string>()
+export const read = new Map<string, string>()
 
 /** Empty is the same as absent everywhere here: the phone app's store has no way
  *  to take a key away and reads a missing one as the empty string, so no store is
@@ -39,7 +47,7 @@ const page: Keep = {
   read: (key) => Promise.resolve(some(localStorage.getItem(key))),
   write(key, value) {
     localStorage.setItem(key, value)
-    return Promise.resolve()
+    return Promise.resolve(true)
   },
   clear(key) {
     localStorage.removeItem(key)
@@ -62,7 +70,7 @@ const cookie: Keep = {
   },
   write(key, value) {
     document.cookie = `${key}=${encodeURIComponent(value)};path=/;max-age=${COOKIE_LIFE};samesite=lax`
-    return Promise.resolve()
+    return Promise.resolve(true)
   },
   clear(key) {
     document.cookie = `${key}=;path=/;max-age=0`
@@ -82,6 +90,7 @@ const shelf: Keep = {
   async write(key, value) {
     const { meta } = await import('../web/store')
     await meta.put(key, value)
+    return true
   },
   async clear(key) {
     const { meta } = await import('../web/store')
@@ -95,7 +104,13 @@ const host: Keep = {
     return some(await (await connectStore())?.read(key))
   },
   async write(key, value) {
-    await (await connectStore())?.write(key, value)
+    // The one store that answers, and the one worth waiting for: `connectStore`
+    // holds until the channel is on the page, so a write made while the phone
+    // app was still starting lands rather than being lost.
+    const store = await connectStore()
+    if (!store) return false
+
+    return store.write(key, value)
   },
   async clear(key) {
     // The phone app's store has no way to take a key away, so it is emptied.
@@ -112,6 +127,9 @@ export const THIS_PAGE: readonly Keep[] = [page, cookie, shelf]
  *  as surviving and the only one that has to wait for a channel. */
 const KEEPS: readonly Keep[] = [...THIS_PAGE, host]
 
+/** The one key this module exists for. */
+const SESSION = 'nib:session'
+
 /** What each store answered, for the diagnostics to show. A launch that comes
  *  back signed out should say which of the four forgot. */
 export interface Held {
@@ -124,9 +142,12 @@ export async function readAll(key: string, from: readonly Keep[] = KEEPS): Promi
   return Promise.all(
     from.map(async (keep) => {
       try {
-        return { name: keep.name, value: await keep.read(key), failed: false }
-      } catch {
+        const value = await keep.read(key)
+        if (key === SESSION) read.set(keep.name, value === null ? 'nothing' : 'a token')
+        return { name: keep.name, value, failed: false }
+      } catch (error) {
         // A store that throws is a store that was not there.
+        if (key === SESSION) read.set(keep.name, `threw ${String(error).slice(0, 40)}`)
         return { name: keep.name, value: null, failed: true }
       }
     }),
@@ -135,19 +156,21 @@ export async function readAll(key: string, from: readonly Keep[] = KEEPS): Promi
 
 async function writeAll(key: string, value: string): Promise<void> {
   await Promise.all(
-    KEEPS.map((keep) =>
-      keep.write(key, value).catch(() => {
+    KEEPS.map(async (keep) => {
+      try {
+        const kept = await keep.write(key, value)
+        if (key === SESSION) wrote.set(keep.name, kept ? 'kept' : 'refused')
+      } catch (error) {
         // One store failing is why there are four.
-      }),
-    ),
+        if (key === SESSION) wrote.set(keep.name, `threw ${String(error).slice(0, 40)}`)
+      }
+    }),
   )
 }
 
 async function clearAll(key: string): Promise<void> {
   await Promise.all(KEEPS.map((keep) => keep.clear(key).catch(() => undefined)))
 }
-
-const SESSION = 'nib:session'
 
 /** The token, in every store that will have it. */
 export const everywhere: Vault = {

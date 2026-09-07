@@ -54,6 +54,14 @@ class Session {
    *  adopt the account's spaces into the list that erasing then deletes. */
   settling = $state(false)
 
+  /** True while the stores are still being asked whether there is a session.
+   *
+   *  On a phone the answer takes as long as the phone app takes to put its
+   *  channel on the page, which is seconds. Signed out is not the same as not
+   *  known yet, and offering somebody a sign-in form during those seconds is how
+   *  a session that was there all along gets typed in again. */
+  restoring = $state(false)
+
   readonly signedIn = $derived(!!this.token && !!this.user)
   /** When syncing may run: signed in, and not waiting on that question. */
   readonly syncable = $derived(this.signedIn && !this.settling)
@@ -67,7 +75,19 @@ class Session {
   }
 
   async restore() {
-    const saved = localStorage.getItem(STORAGE_KEY) ?? (await this.vault?.read()) ?? null
+    this.restoring = true
+    try {
+      await this.lookForSession()
+    } finally {
+      this.restoring = false
+    }
+  }
+
+  private async lookForSession() {
+    // Every store, together, rather than the page's own first: the page's own is
+    // the one a packed plugin loses, so preferring it means preferring the empty
+    // answer. The vault reads all of them and answers with whichever kept it.
+    const saved = (await this.vault?.read()) ?? localStorage.getItem(STORAGE_KEY)
     if (!saved) return
 
     // Read back out of the other store: the page's own is what everything else

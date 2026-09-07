@@ -232,12 +232,19 @@
     {/if}
 
     <!-- Signing in is the only thing this button is for, so once there is an
-         account it has nothing left to do; the settings sheet owns it. -->
+         account it has nothing left to do; the settings sheet owns it.
+
+         It also waits while the stores are still being asked. Signed out and
+         not known yet are different states, and on a phone the difference is
+         the seconds the phone app takes to answer: a form offered inside them
+         is a session typed in again for nothing. -->
     {#if !account.signedIn}
       <button
         class="add account"
+        class:looking={account.restoring}
         title={t('Sign in')}
         aria-label={t('Sign in')}
+        disabled={account.restoring}
         onclick={() => (account.open = true)}
       >
         <svg viewBox="0 0 14 14"
@@ -545,6 +552,25 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-weight: 620;
+  }
+
+  /* Still asking the stores whether there is a session. Not a spinner and not a
+     sentence: the button that would sign you in simply waits, and breathes
+     while it does. */
+  .looking {
+    animation: looking 1.6s var(--ease-in-out) infinite;
+    cursor: default;
+  }
+
+  @keyframes looking {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+
+    50% {
+      opacity: 0.85;
+    }
   }
 
   svg {
