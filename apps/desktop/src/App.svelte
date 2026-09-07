@@ -299,12 +299,12 @@
         }}
       />
 
-      <!-- Anything slow enough to be waited for draws a line along the top of
-           the document, just under the tabs. -->
-      <Progress />
-
-      <!-- One pane, or up to four of them; see PaneTree.svelte. -->
-      <PaneTree frame={workspace.panes.frame} />
+      <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
+           enough to be waited for draws a line along the top of them. -->
+      <div class="panes">
+        <Progress />
+        <PaneTree frame={workspace.panes.frame} />
+      </div>
 
       {#if workspace.active?.kind !== 'graph'}
         <StatusBar doc={workspace.active?.doc ?? ''} reading={modes.reading} />
@@ -369,6 +369,16 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+  }
+
+  /* Positioned, so the line that says the app is busy draws along the top of
+     the panes rather than over the window's own bar. */
+  .panes {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
   }
 
   /* Sits above the document, clear of the gesture bar. */

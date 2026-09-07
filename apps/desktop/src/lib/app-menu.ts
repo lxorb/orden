@@ -28,6 +28,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { newSpace } from './space-actions'
 import { invoke, isDesktop, openExternal } from './tauri'
 import { stageUpdate } from './updater'
+import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { openFile } from './open-file'
 
@@ -345,6 +346,30 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => modes.toggleFocus(view),
         },
         SPLIT,
+        // The panes. Left out on a phone, which shows one note at a time.
+        ...(viewport.phone
+          ? []
+          : [
+              {
+                label: t('Split right'),
+                hint: shortcuts.hint('pane.split-right'),
+                disabled: !workspace.canSplit('row'),
+                run: () => workspace.split('row'),
+              },
+              {
+                label: t('Split down'),
+                hint: shortcuts.hint('pane.split-down'),
+                disabled: !workspace.canSplit('column'),
+                run: () => workspace.split('column'),
+              },
+              {
+                label: t('Other pane'),
+                hint: shortcuts.hint('pane.focus-next'),
+                disabled: workspace.panes.count < 2,
+                run: () => workspace.panes.focusNext(),
+              },
+              SPLIT,
+            ]),
         {
           label: t('Show sidebar'),
           hint: shortcuts.hint('app.sidebar'),
