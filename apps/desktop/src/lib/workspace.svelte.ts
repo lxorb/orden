@@ -1449,6 +1449,11 @@ class Workspace {
     this.undone.record({ kind: 'replace', notes: done })
     await this.loadTree()
     this.persist()
+
+    // Imported here rather than at the top: syncing reads the workspace, and
+    // the two would import each other. Same as `write` above.
+    const { sync } = await import('./sync.svelte')
+    sync.nudge()
   }
 
   /** Creates `Untitled.md` in a folder, stepping the name until it is free. */
