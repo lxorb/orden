@@ -471,6 +471,48 @@ function spansToRuns(spans: readonly CodeSpan[], greys: Greys, scope: LigatureSc
   })
 }
 
+/** The narrowest a column is ever made. Below this a column holds no word and
+ *  its rule is all that is left of it. */
+const LEAST_COLUMN = 12
+
+/** How much room each column gets.
+ *
+ *  A column takes the width its content needs. When the row will not fit, the
+ *  widest columns give way first and only as far as they have to, so a column of
+ *  two-digit numbers is not squeezed to make room for a column of sentences.
+ *  Cutting a cell short is what happens after that, and it should be rare.
+ *
+ *  Rounded up rather than down, which is the whole of the second bug here: a
+ *  column floored to a whole pixel is a fraction narrower than its own content,
+ *  the widest cell in it wraps, and a wrapped cell is a cut cell. Every table
+ *  came out with an ellipsis in each column, however much room was going spare.
+ *  Sharing the shortfall over every column rather than over the columns that
+ *  caused it was the first bug: two digits in a 556 pixel row were scaled away
+ *  to nothing beside a column of prose. */
+function columnWidths(natural: readonly number[], available: number): number[] {
+  const wanted = natural.reduce((sum, one) => sum + one, 0)
+  const fits = (width: number) => Math.max(LEAST_COLUMN, Math.ceil(width))
+  if (wanted <= available) return natural.map(fits)
+
+  // What the widest columns end up sharing. The columns are taken narrowest
+  // first, and each one that already sits inside its share leaves what it did
+  // not use to those still to come.
+  let left = available
+  let waiting = natural.length
+  let share = available
+  for (const width of [...natural].sort((one, other) => one - other)) {
+    share = left / waiting
+    if (width >= share) break
+
+    left -= width
+    waiting -= 1
+  }
+
+  return natural.map((one) =>
+    one <= share ? fits(one) : Math.max(LEAST_COLUMN, Math.floor(share)),
+  )
+}
+
 /** A table: one line per row, cells cut to their column, and a grid.
  *
  *  A cell is set on one line and cut where it does not fit rather than wrapping.
@@ -493,10 +535,7 @@ function tableLines(
     (cell ?? []).reduce((sum, run) => sum + measure.width(run.text, run.style), 0)
 
   const natural = block.head.map((_cell, at) => Math.max(...rows.map((row) => widthOf(row[at]))))
-  const wanted = natural.reduce((sum, one) => sum + one, 0)
-  const available = Math.max(columns * 12, room - gap * columns)
-  const scale = wanted > available ? available / wanted : 1
-  const widths = natural.map((one) => Math.max(12, Math.floor(one * scale)))
+  const widths = columnWidths(natural, Math.max(columns * LEAST_COLUMN, room - gap * columns))
 
   const offsets: number[] = []
   let x = 0

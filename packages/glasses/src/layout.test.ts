@@ -223,6 +223,37 @@ describe('what a page is made of', () => {
     expect(page?.lines[1]?.glue).toBe(true)
   })
 
+  /** A column used to be floored to a whole pixel after being measured, which
+   *  left it a fraction narrower than its own content. The widest cell in every
+   *  column then wrapped, and a wrapped cell is a cut cell, so a table that had
+   *  room to spare still came out as "Contai…" and "Millisecon…". */
+  test('gives a column the width its content needs', () => {
+    const source =
+      '| Container | Pixels | Milliseconds |\n| --- | --- | --- |\n| Image | 288 | 185 |\n| Text | 576 | 83 |'
+    const [page] = pages(source)
+    const shown = (page?.lines ?? []).map(lineText).join(' ')
+
+    expect(shown).not.toContain('…')
+    expect(shown).toContain('Container')
+    expect(shown).toContain('Milliseconds')
+  })
+
+  test('shrinks the widest column first when the row will not fit', () => {
+    // One column of sentences and two of small numbers. The numbers are not
+    // squeezed to make room for the sentences: they already fit.
+    const long = 'a sentence that is far too long to sit in a column beside anything else at all'
+    const source = `| ${long} | 288 | 185 |\n| --- | --- | --- |\n| ${long} | 576 | 83 |`
+    const [page] = pages(source)
+    const shown = (page?.lines ?? []).map(lineText).join(' ')
+
+    // The numbers survive whole; only the column that could not fit is cut.
+    expect(shown).toContain('288')
+    expect(shown).toContain('185')
+    expect(shown).toContain('576')
+    expect(shown).toContain('83')
+    expect(shown).toContain('…')
+  })
+
   test('turns emphasis into weight and slant', () => {
     const [page] = pages('plain **bold** *slanted* ~~gone~~ `code`')
     const runs = page?.lines.flatMap((line) => line.placed.map((one) => one.run)) ?? []
