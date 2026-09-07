@@ -6,6 +6,7 @@ import {
   insertLink,
   insertMathBlock,
   insertPageBreak,
+  insertSlideBreak,
   insertTableToEdit,
   openFind,
   redoEdit,
@@ -25,6 +26,7 @@ import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
+import { present } from './slides/present.svelte'
 import { newSpace } from './space-actions'
 import { invoke, isDesktop, openExternal } from './tauri'
 import { stageUpdate } from './updater'
@@ -259,6 +261,9 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: () => run(view, insertHorizontalRule),
         },
+        // A rule with a blank line above it, which is what breaks a deck into its
+        // next slide; see packages/markdown/src/slides.ts.
+        { label: t('New slide'), disabled: !writable, run: () => run(view, insertSlideBreak) },
         { label: t('Page break'), disabled: !writable, run: () => run(view, insertPageBreak) },
       ],
     },
@@ -334,6 +339,13 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: !!workspace.active?.reading,
           disabled: workspace.active?.kind !== 'note',
           run: () => workspace.toggleReading(),
+        },
+        {
+          label: t('Present'),
+          hint: shortcuts.hint('app.present'),
+          checked: present.on,
+          disabled: !present.on && !present.available,
+          run: () => present.toggle(),
         },
         {
           label: t('Read-only'),

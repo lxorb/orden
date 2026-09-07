@@ -8,7 +8,14 @@
     "packages/glasses": {},
     "packages/markdown": {},
     "apps/desktop": {
-      "entry": ["src/**/*.svelte", "index.html", "even.html", "src/even.ts"],
+      "entry": [
+        "src/**/*.svelte",
+        "index.html",
+        "even.html",
+        "src/even.ts",
+        "presenter.html",
+        "src/presenter.ts"
+      ],
       "ignoreDependencies": ["katex"]
     },
     "apps/clipper": {

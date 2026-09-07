@@ -16,6 +16,8 @@
   import Sidebar from './lib/Sidebar.svelte'
   import SettingsPanel from './lib/SettingsPanel.svelte'
   import SignIn from './lib/SignIn.svelte'
+  import Slides from './lib/Slides.svelte'
+  import { present } from './lib/slides/present.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
@@ -43,6 +45,9 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+  /** The tab whose note is on the stage, while one is. The deck goes over the
+   *  whole window, and the note stays open behind it. */
+  const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
   let palette = $state(false)
   /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
@@ -111,6 +116,12 @@
   // this window before it was made narrow, comes down to one pane.
   $effect(() => {
     if (viewport.phone) workspace.collapsePanes()
+  })
+
+  // A deck whose tab has been closed from somewhere else is no longer being
+  // presented, and the window goes back to the size it was.
+  $effect(() => {
+    if (present.on && !presenting) present.stop()
   })
 
   // Two panes on one note, scrolling together while the link is on; see
@@ -368,6 +379,12 @@
     </div>
   </div>
 </main>
+
+<!-- Over everything, with no chrome of its own: while a note is being presented
+     the window is the deck. -->
+{#if presenting}
+  <Slides tab={presenting} />
+{/if}
 
 <StorageWarning />
 

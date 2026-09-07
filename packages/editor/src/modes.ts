@@ -38,6 +38,7 @@ const readOnly = new Compartment()
 const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
 const direction = new Compartment()
+const deck = new Compartment()
 
 /** A class the stylesheet works from, handed to the editor rather than put on
  *  its element. CodeMirror writes that element's class attribute out from its
@@ -147,6 +148,10 @@ export function modeExtensions(): Extension {
     headingNumbers.of(headingNumbersFor(false)),
     codeLineNumbers.of(codeLineNumbersFor(false)),
     direction.of(directionFor(false)),
+    // Whether this note is a deck. Not one of the modes: it is a fact about the
+    // note in the editor rather than a choice anybody made, so the app tells
+    // each view about its own note; see setDeck.
+    deck.of(deckFor(false)),
     // Off until asked for. Its compartment lives with the rest of it in
     // vim.ts, which is a mode with a keymap of its own to answer for.
     vimExtensions(),
@@ -230,6 +235,12 @@ const codeLineNumbersFor = once((on: boolean): Extension =>
  *  around it. One switch, because both are the same promise: what you type
  *  lands around what you meant rather than over it. */
 const bracketsFor = once((on: boolean): Extension => (on ? [closeBrackets(), wrapSelection()] : []))
+
+/** A note whose rules break it into slides. Only a class, because that is all
+ *  the difference is: the rules are already decorated, and the stylesheet shows
+ *  which of them are slide breaks while this is on. See
+ *  packages/markdown/src/slides.ts for what makes a note a deck. */
+const deckFor = once((on: boolean): Extension => (on ? editorClass('nib-deck') : []))
 
 /** The writing direction, given to the editor the same way as the class: the
  *  content element's attributes are CodeMirror's to write too. */
@@ -377,6 +388,13 @@ export function setHeadingNumbers(view: EditorView, on: boolean) {
 
 export function setCodeLineNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: codeLineNumbers.reconfigure(codeLineNumbersFor(on)) })
+}
+
+/** Whether the note in this view is a deck, which marks the rules that break it
+ *  into slides. Per view rather than per app: two panes may hold two notes and
+ *  only one of them be a deck. */
+export function setDeck(view: EditorView, on: boolean) {
+  view.dispatch({ effects: deck.reconfigure(deckFor(on)) })
 }
 
 /** Widens or narrows the writing column. */

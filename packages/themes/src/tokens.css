@@ -51,6 +51,11 @@
   --dur-instant: 70ms;
   --dur-fast: 130ms;
   --dur-base: 210ms;
+  /* One slide turning into the next. Between `fast` and `base`, because a slide
+     is a whole screen changing and wants a beat longer than a button, and
+     because anything slower than this is a presenter waiting for their own
+     deck. */
+  --dur-stage: 170ms;
   --dur-slow: 340ms;
   --dur-slower: 520ms;
 }
@@ -174,6 +179,7 @@
     --dur-instant: 0ms;
     --dur-fast: 0ms;
     --dur-base: 0ms;
+    --dur-stage: 0ms;
     --dur-slow: 0ms;
     --dur-slower: 0ms;
   }

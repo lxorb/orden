@@ -270,7 +270,9 @@ export async function renderNote(
   return options.bare || !options.resolveImage ? html : inlineImages(html, options.resolveImage)
 }
 
-async function chooseTarget(name: string, extension: string, label: string) {
+/** Where to write, asked of the system. Exported because a deck is written out
+ *  the same way a document is, only with pages of its own; see slides/file.ts. */
+export async function chooseTarget(name: string, extension: string, label: string) {
   const { save } = await import('@tauri-apps/plugin-dialog')
   return save({
     defaultPath: `${name.replace(/\.[^.]+$/, '')}.${extension}`,
@@ -279,7 +281,7 @@ async function chooseTarget(name: string, extension: string, label: string) {
 }
 
 /** A browser has no file dialog to offer; the file is handed to it to save. */
-function download(name: string, content: string, type: string) {
+export function download(name: string, content: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }))
   const link = document.createElement('a')
   link.href = url
@@ -306,7 +308,7 @@ export async function exportHtml(source: string, name: string, options: HtmlOpti
 /** Shows the page to the browser's print dialog, which is where "Save as PDF"
  *  lives when nothing better is available. The frame is kept until the dialog
  *  has closed; taking it away sooner cancels the print in some engines. */
-function printInFrame(html: string): Promise<void> {
+export function printInFrame(html: string): Promise<void> {
   return new Promise((resolve) => {
     const frame = document.createElement('iframe')
     frame.setAttribute('aria-hidden', 'true')

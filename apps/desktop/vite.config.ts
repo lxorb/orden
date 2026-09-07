@@ -37,13 +37,16 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    // Two pages out of one bundle: the editor, and the Even Realities plugin.
-    // The plugin is the same app plus the bridge in `src/lib/even`, so almost
-    // all of the output is shared; see docs/even.md.
+    // Three pages out of one bundle: the editor, the Even Realities plugin, and
+    // the window a presenter reads their notes in. The plugin is the same app
+    // plus the bridge in `src/lib/even`, so almost all of the output is shared;
+    // see docs/even.md. The presenter's window is a page of its own and carries
+    // none of the app; see docs/slides.md.
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         even: resolve(import.meta.dirname, 'even.html'),
+        presenter: resolve(import.meta.dirname, 'presenter.html'),
       },
     },
   },

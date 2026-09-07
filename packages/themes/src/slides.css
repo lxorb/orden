@@ -1,0 +1,303 @@
+/* A note presented.
+ *
+ * base.css and document.css already dress the prose; this is only the room it
+ * is read in. A slide is laid out on a stage of a fixed size and the whole stage
+ * is scaled to whatever screen it lands on, so a deck written on a laptop is the
+ * deck a projector shows: the words never reflow, they only get bigger.
+ *
+ * One sheet in three places, like document.css: the app's own stage, a deck
+ * exported as a single HTML file, and a published note read as slides. */
+
+/* ── The room ────────────────────────────────────────────────────── */
+
+.deck {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--bg);
+  /* The stage is the only thing on screen, so nothing in it is selectable by
+     accident while a click is being used to move on. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Nothing to point at once the deck has been left alone for a moment. */
+.deck[data-still='yes'] {
+  cursor: none;
+}
+
+/* ── The stage ───────────────────────────────────────────────────── */
+
+.stage {
+  /* How big the body text is on a stage of this size. Everything else on a slide
+     is a multiple of it, the way the prose sheet already sizes headings and code
+     against the body. The stage's own size is written in by whatever put it on
+     the page, so one place knows it: see STAGE_WIDTH in
+     apps/desktop/src/lib/slides/stage.ts. */
+  --stage-text: 26px;
+
+  width: var(--stage-width, 1280px);
+  height: var(--stage-height, 720px);
+  flex: none;
+  transform: scale(var(--stage-scale, 1));
+  transform-origin: center;
+}
+
+.slide {
+  width: 100%;
+  height: 100%;
+  padding: 68px 96px;
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Each slide arrives; see the keyframes at the end. */
+  animation: slide-in var(--dur-stage) var(--ease-out);
+}
+
+/* The writing surface, without the app's column around it: a slide is as wide
+   as the stage, and the stage decides the size of the text. */
+.slide #write {
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: calc(var(--stage-text) * var(--stage-fit, 1));
+}
+
+/* A slide of nothing but headings is a title, and a title sits in the middle of
+   the page. Read off what the slide holds rather than off an annotation, so the
+   markdown stays markdown. */
+.slide[data-shape='title'] #write {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.slide[data-shape='title'] #write h1 {
+  font-size: 2.6em;
+  margin: 0;
+}
+
+.slide[data-shape='title'] #write h2 {
+  font-size: 1.5em;
+  margin: 0.5em 0 0;
+  color: var(--muted-strong);
+  font-weight: 480;
+}
+
+/* One picture and nothing else fills the stage. Contained rather than cropped:
+   a photograph somebody chose should be the photograph they chose. */
+.slide[data-shape='picture'] {
+  padding: 0;
+}
+
+.slide[data-shape='picture'] #write,
+.slide[data-shape='picture'] #write p {
+  display: flex;
+  height: 100%;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.slide[data-shape='picture'] #write img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+/* Nothing on a slide bleeds in the way the editor's own ink does: the words are
+   already there when the slide arrives. */
+.slide #write *,
+.slide #write *::before,
+.slide #write *::after {
+  animation: none;
+}
+
+.slide #write > *:first-child {
+  margin-top: 0;
+}
+
+.slide #write pre {
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* ── Items that wait for a click ─────────────────────────────────── */
+
+/* A `+` bullet arrives on its own press. Held in place rather than removed, so
+   nothing under it moves when it appears. */
+.slide #write li.fragment {
+  opacity: 0;
+  transition: opacity var(--dur-stage) var(--ease-out);
+}
+
+.slide #write li.fragment.shown {
+  opacity: 1;
+}
+
+/* ── The two things that are not the slide ───────────────────────── */
+
+/* How far through the deck, along the bottom edge. */
+.rail {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: var(--line);
+}
+
+.rail .run {
+  height: 100%;
+  width: calc(var(--at, 0) * 100%);
+  background: var(--accent);
+  transition: width var(--dur-stage) var(--ease-out);
+}
+
+/* Which slide, shown when the deck moves and gone again a moment later. */
+.count {
+  position: absolute;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.count[data-shown='yes'] {
+  opacity: 1;
+}
+
+/* ── The presenter's own notes, where there is no second window ───── */
+
+.notes {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  max-height: 45%;
+  overflow-y: auto;
+  padding: var(--space-5) max(var(--space-5), env(safe-area-inset-left))
+    calc(var(--space-5) + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-content);
+  color: var(--text);
+  animation: notes-up var(--dur-base) var(--ease-out);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.notes > :first-child {
+  margin-top: 0;
+}
+
+.notes > :last-child {
+  margin-bottom: 0;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────── */
+
+/* A slide arrives from the side it came from, by a few pixels and no more: at
+   this size a real slide-across reads as a lurch, while a nudge under a fade
+   says which way the deck went. */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--stage-from-x, 0), var(--stage-from-y, 0));
+  }
+}
+
+@keyframes notes-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.deck[data-move='forward'] .slide {
+  --stage-from-x: 28px;
+}
+
+.deck[data-move='back'] .slide {
+  --stage-from-x: -28px;
+}
+
+.deck[data-move='down'] .slide {
+  --stage-from-y: 28px;
+}
+
+.deck[data-move='up'] .slide {
+  --stage-from-y: -28px;
+}
+
+/* ── A deck as a page of its own ─────────────────────────────────── */
+
+/* An exported deck and a published one are the whole page rather than something
+   over an app, and they have no app to take their background from. */
+body.deck-page {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── On paper ────────────────────────────────────────────────────── */
+
+/* One slide to a page, at the stage's own size, so a printed deck is the deck.
+   The stage is not scaled here: the paper is set to its size instead. */
+@media print {
+  /* The app pins the page and scrolls nothing; a deck on paper is as long as it
+     has slides. */
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* A slide is a picture rather than a page of text: its colours are the point,
+     so they are asked for outright rather than left to a printer's habit of
+     dropping backgrounds. */
+  body.deck-page,
+  .deck,
+  .deck .slide {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .deck {
+    position: static;
+    display: block;
+    overflow: visible;
+  }
+
+  .stage {
+    transform: none;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .stage:last-of-type {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .slide {
+    animation: none;
+  }
+
+  /* Everything waiting for a click is out on paper: nobody presses a page. */
+  .slide #write li.fragment {
+    opacity: 1;
+  }
+
+  .rail,
+  .count,
+  .notes {
+    display: none;
+  }
+}

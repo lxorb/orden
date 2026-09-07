@@ -679,6 +679,39 @@
   );
 }
 
+/* ── Where a deck breaks ─────────────────────────────────────────── */
+
+/* A note whose rules break it into slides says so while it is being written: the
+   rule that ends a slide is drawn in the accent instead of the line colour, with
+   a tick out in the margin. Nothing is written anywhere - the mark is the shape
+   of the rule - and an underscore rule stays an ordinary rule, because that is
+   the one that does not break a slide. See packages/markdown/src/slides.ts. */
+.nib-deck .nib-slide-break {
+  position: relative;
+}
+
+.nib-deck .nib-slide-break .nib-rule {
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--accent-line) 6%,
+    var(--accent-line) 94%,
+    transparent
+  );
+}
+
+.nib-deck .nib-slide-break::before {
+  content: '';
+  position: absolute;
+  left: -0.85em;
+  top: calc(50% - 2px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.65;
+}
+
 /* ── Tables ──────────────────────────────────────────────────────── */
 
 /* Source view, shown only while the caret is inside the table's text. */

@@ -22,6 +22,7 @@ import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
 import { settings } from '../settings.svelte'
+import { present } from '../slides/present.svelte'
 import { invoke } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
@@ -369,6 +370,20 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-e',
     run: () => workspace.toggleReading(),
+  },
+  {
+    // The note as a deck, full screen, with nothing else on it. F5 because that
+    // is the key every hand already knows for starting a presentation, and
+    // because the app's other view keys are already along that row. Obsidian's
+    // own Slides plugin ships no key at all, so no preset takes this one back.
+    // A browser keeps F5 for reloading, which the settings list warns about; the
+    // palette and the View menu are the way in there.
+    id: 'app.present',
+    label: () => t('Present'),
+    category: 'view',
+    scope: 'app',
+    key: 'F5',
+    run: () => present.toggle(),
   },
   {
     // The editor with its doors locked, which is a different thing; see

@@ -51,8 +51,11 @@ export function pointer(note: Note): (link: Wikilink) => { href: string | null }
 }
 
 /** Every picture the note names, as something the webview will load. The same
- *  rewrite an export does on its way to `data:` URIs; see inlineImages. */
-function withPictures(html: string, note: Note): string {
+ *  rewrite an export does on its way to `data:` URIs; see inlineImages.
+ *
+ *  Exported because a deck is the same note through the same renderer, one page
+ *  of it at a time; see slides/render.ts. */
+export function withPictures(html: string, note: Note): string {
   return html.replace(
     /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
     (_whole: string, before: string, src: string, after: string) =>

@@ -8,6 +8,7 @@ export {
   insertHorizontalRule,
   insertMathBlock,
   insertPageBreak,
+  insertSlideBreak,
   insertTable,
   openFind,
   setHeading,
@@ -41,6 +42,7 @@ export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {
   setCloseBrackets,
   setCodeLineNumbers,
+  setDeck,
   setEquationNumbers,
   setFocusMode,
   setHeadingNumbers,

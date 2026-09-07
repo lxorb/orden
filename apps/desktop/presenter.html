@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- A second window beside the deck, not an app: no manifest, no install
+         prompt, no icon of its own in a task switcher. It draws what the stage
+         sends it over a broadcast channel and nothing else. -->
+    <meta name="theme-color" content="#0e1013" />
+    <link rel="icon" href="/icon-256.png" />
+
+    <title>Nib</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/presenter.ts"></script>
+  </body>
+</html>

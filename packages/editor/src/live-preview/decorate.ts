@@ -122,6 +122,14 @@ class Decorator {
         this.taskMarker(node)
         return true
       case 'HorizontalRule':
+        // A rule written with hyphens or asterisks is where a deck breaks into
+        // its next slide, and one written with underscores is not; see
+        // @nib/markdown/slides. The line is marked either way and the stylesheet
+        // shows the mark only while the note is a deck, so nothing about an
+        // ordinary note changes. One character read, not a scan.
+        if (/^[-*]/.test(this.state.doc.sliceString(node.from, node.from + 1))) {
+          this.markLines(node, 'nib-slide-break', true)
+        }
         this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
         return true
       case 'Image':

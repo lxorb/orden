@@ -239,6 +239,37 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
 export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }))
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
 
+/** A new slide: the rule that breaks a deck, and the caret on the empty slide
+ *  after it.
+ *
+ *  Not through `insertBlock`, because the blank line above the rule is what makes
+ *  it a break at all: a line of dashes directly under a line of text is the
+ *  underline of a heading in CommonMark, so a rule written without it would turn
+ *  the writer's last line into a heading and break nothing. See
+ *  packages/markdown/src/slides.ts. */
+export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
+  const range = state.selection.main
+  const line = state.doc.lineAt(range.from)
+  const emptyHere = line.text.slice(0, range.from - line.from).trim() === ''
+  const above = line.number > 1 ? state.doc.line(line.number - 1) : null
+  const emptyAbove = above === null || above.text.trim() === ''
+
+  // Nothing to add where the caret already stands under a blank line; one break
+  // where the caret is on an empty line under words; two where it is in them.
+  const lead = emptyHere ? (emptyAbove ? '' : '\n') : '\n\n'
+  const insert = `${lead}---\n\n`
+
+  dispatch(
+    state.update({
+      changes: { from: range.from, to: range.to, insert },
+      selection: { anchor: range.from + insert.length },
+      scrollIntoView: true,
+      userEvent: 'input',
+    }),
+  )
+  return true
+}
+
 /** Markdown has no page break, so this is the HTML every exporter understands. */
 export const insertPageBreak = insertBlock(() => ({
   text: '<div style="page-break-after: always;"></div>\n',

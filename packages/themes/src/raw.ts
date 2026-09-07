@@ -2,6 +2,7 @@ import katex from 'katex/dist/katex.min.css?raw'
 import base from './base.css?raw'
 import note from './document.css?raw'
 import exported from './export.css?raw'
+import stage from './slides.css?raw'
 import tokens from './tokens.css?raw'
 
 /** The stylesheet as text, for baking into an exported document.
@@ -27,6 +28,12 @@ export const exportCss = [note, exported].join('\n')
  *  rules as the page it is a miniature of rather than by a second set written
  *  to look like them. */
 export const proseCss = [base, note].join('\n')
+
+/** The room a note is presented in, on top of the prose sheets: the stage, the
+ *  progress line and the counter. The app loads it with everything else, and a
+ *  deck written out as a file or served from a published note carries it, so all
+ *  three show the same slide. */
+export const slidesCss = stage
 
 /** KaTeX's own stylesheet. Its fonts are referenced by relative path, which
  *  an export resolves before writing the file. */

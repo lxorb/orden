@@ -1,4 +1,12 @@
-import { CODE_PALETTES, type EditorView, reformatDocument, type Transaction } from '@nib/editor'
+import {
+  CODE_PALETTES,
+  EditorView,
+  insertSlideBreak,
+  reformatDocument,
+  type Transaction,
+} from '@nib/editor'
+import { deckOf, isDeck, slideAt } from '@nib/markdown/slides'
+import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
@@ -106,6 +114,38 @@ export function exportCommands(): Command[] {
         }),
     },
   ]
+
+  // A deck goes out as slides as well: one file that turns its own pages, and
+  // one page of paper per slide. Only offered for a note that is a deck, since
+  // for anything else the two rows would do the same as the two above them.
+  if (isDeck(source())) {
+    const deck = () => ({ text: source(), path: note()?.path ?? null })
+    const deckOptions = async () => ({
+      resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
+      ...(await look()),
+    })
+
+    commands.push(
+      {
+        id: 'export-slides-html',
+        label: t('Export slides as HTML'),
+        run: () =>
+          busy.start(t('Exporting'), async () => {
+            const m = await import('./slides/file')
+            await m.exportDeck(deck(), name(), await deckOptions())
+          }),
+      },
+      {
+        id: 'export-slides-pdf',
+        label: t('Export slides as PDF'),
+        run: () =>
+          busy.start(t('Exporting'), async () => {
+            const m = await import('./slides/file')
+            await m.exportDeckPdf(deck(), name(), await deckOptions())
+          }),
+      },
+    )
+  }
 
   if (!settings.pandoc) return commands
 
@@ -249,6 +289,62 @@ async function askWhichLayoutToDelete() {
   if (chosen) workspace.layouts.remove(chosen)
 }
 
+/** Presenting a deck, and the three things a deck needs while it is written.
+ *
+ *  A note becomes a deck by having a rule in it, so New slide is the way in and
+ *  is offered for any note; the rest only make sense once there are slides. */
+function slideCommands(view?: EditorView): Command[] {
+  return [
+    {
+      id: 'present',
+      label: present.on ? t('Leave presenting') : t('Present'),
+      hint: shortcuts.hint('app.present'),
+      disabled: !present.on && !present.available,
+      run: () => present.toggle(),
+    },
+    {
+      id: 'new-slide',
+      label: t('New slide'),
+      disabled: !view || view.state.readOnly,
+      run: () => {
+        if (!view) return
+        insertSlideBreak({ state: view.state, dispatch: (one) => view.dispatch(one) })
+        view.focus()
+      },
+    },
+    {
+      id: 'next-slide',
+      label: t('Next slide'),
+      disabled: !view || !present.available,
+      run: () => view && stepSlide(view, 1),
+    },
+    {
+      id: 'previous-slide',
+      label: t('Previous slide'),
+      disabled: !view || !present.available,
+      run: () => view && stepSlide(view, -1),
+    },
+  ]
+}
+
+/** Puts the caret on the slide before or after the one it is in. Writing a deck
+ *  is writing a note, so this moves through the note rather than opening
+ *  anything: there is one editor, and the slides are places in it. */
+function stepSlide(view: EditorView, direction: number) {
+  const slides = deckOf(view.state.doc.toString())
+  if (slides.length < 2) return
+
+  const here = slideAt(slides, view.state.selection.main.head)
+  const wanted = slides[Math.max(0, Math.min(here + direction, slides.length - 1))]
+  if (!wanted) return
+
+  view.dispatch({
+    selection: { anchor: wanted.from },
+    effects: EditorView.scrollIntoView(wanted.from, { y: 'start', yMargin: 72 }),
+  })
+  view.focus()
+}
+
 /** Everything the palette can do. Labels read as the action, not the setting. */
 export function appCommands(view?: EditorView): Command[] {
   return [
@@ -366,6 +462,7 @@ export function appCommands(view?: EditorView): Command[] {
         }),
     },
 
+    ...slideCommands(view),
     {
       id: 'reading',
       label: workspace.active?.reading ? t('Leave reading') : t('Reading'),

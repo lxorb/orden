@@ -8,7 +8,8 @@
    *  which note a link is being followed from. Two panes on two notes would
    *  otherwise both answer for whichever one had the focus. */
 
-  import { type EditorView, type NoteJump } from '@nib/editor'
+  import { type EditorView, type NoteJump, setDeck } from '@nib/editor'
+  import { isDeck } from '@nib/markdown/slides'
   import type { Tab } from './workspace.svelte'
   import type { Along, Pane } from './workspace/pane-tree'
   import Canvas from './Canvas.svelte'
@@ -73,6 +74,18 @@
     if (!current || !showing) return
 
     return placement.follow(current, showing)
+  })
+
+  // Whether this pane's note is a deck, which is what marks the rules that break
+  // it into slides. Read off the words as of the last pause in the typing, like
+  // the outline: `tab.doc` is only brought forward when the typing stops, so this
+  // costs one scan per pause rather than one per keystroke.
+  $effect(() => {
+    const current = view
+    const words = tab?.doc
+    if (!current || words === undefined) return
+
+    setDeck(current, isDeck(words))
   })
 
   /** A pasted or dropped image, stored once however often it is pasted. A large
