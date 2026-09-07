@@ -22,6 +22,7 @@
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
+  import { recovery } from './lib/recovery.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
   import { start } from './lib/start'
@@ -83,7 +84,14 @@
   // them, so what the modes fetched is handed on rather than asked for twice.
   $effect(() => {
     const token = account.token
-    if (token) void modes.adopt(token).then((remote) => remote && shortcuts.receive(remote))
+    if (token) {
+      void modes.adopt(token).then((remote) => {
+        if (!remote) return
+
+        shortcuts.receive(remote)
+        recovery.receive(remote)
+      })
+    }
   })
 
   // Each pane applies the modes and the keys to its own editor as it builds it;

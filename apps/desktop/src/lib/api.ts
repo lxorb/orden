@@ -86,6 +86,11 @@ export interface AccountSettings {
   /** Modal editing, which is a mode rather than a map: it can be on over any
    *  of the presets. */
   vim?: boolean
+  /** Minutes between the versions kept while a note is being written in, and
+   *  how many days a version is kept for. Zero minutes is off; see
+   *  recovery.ts. */
+  recoveryEvery?: number
+  recoveryDays?: number
 }
 
 export interface DnsRecord {

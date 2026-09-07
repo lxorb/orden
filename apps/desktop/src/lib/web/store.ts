@@ -153,6 +153,8 @@ export const snapshots = {
   remove: (id: number) => run<undefined>('snapshots', 'readwrite', (s) => s.delete(id)),
   forNote: (notePath: string) =>
     run<SnapshotRow[]>('snapshots', 'readonly', (s) => s.index('notePath').getAll(notePath)),
+  /** Every note's versions at once, which is what the retention sweep walks. */
+  all: () => run<SnapshotRow[]>('snapshots', 'readonly', (s) => s.getAll()),
 }
 
 /** Folders have no rows of their own - a folder exists because something is in

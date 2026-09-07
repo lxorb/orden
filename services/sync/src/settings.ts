@@ -25,6 +25,21 @@ const PRESETS = ['default', 'notion', 'obsidian', 'vim', 'custom']
  *  a build with the switch reads `true` where a newer one wrote `all`. */
 const LIGATURE_SCOPES = ['off', 'code', 'all']
 
+/** How often a note being written in is kept, in minutes, and how long what is
+ *  kept lives, in days. A list rather than any number, for the same reason as
+ *  the presets: the app shows each of these as a word in a select, and an
+ *  account should not be able to ask it for a timer every nine milliseconds. */
+const RECOVERY_MINUTES = [0, 1, 5, 15]
+const RECOVERY_DAYS = [1, 7, 30]
+
+/** One of a list of numbers, said the way the app would say it. */
+function oneOf(name: string, allowed: readonly number[]): Check {
+  return (value) =>
+    typeof value === 'number' && allowed.includes(value)
+      ? null
+      : `${name} must be one of ${allowed.join(', ')}`
+}
+
 const KNOWN: Record<string, Check> = {
   ligatures: (value) =>
     typeof value === 'boolean' || (typeof value === 'string' && LIGATURE_SCOPES.includes(value))
@@ -40,6 +55,8 @@ const KNOWN: Record<string, Check> = {
       ? null
       : `preset must be one of ${PRESETS.join(', ')}`,
   shortcuts: shortcutMap,
+  recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
+  recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
 }
 
 /** How much of any of this an account may hold.

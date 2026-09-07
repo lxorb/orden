@@ -10,6 +10,7 @@ import { i18n, t } from './i18n.svelte'
 import { collectErrors } from './log'
 import { modes } from './modes.svelte'
 import { prompt } from './prompt.svelte'
+import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, invoke, isDesktop } from './tauri'
@@ -32,6 +33,7 @@ export function start(): () => void {
   modes.restore()
   shortcuts.restore()
   settings.restore()
+  recovery.restore()
 
   void workspace
     .restore()
@@ -45,11 +47,18 @@ export function start(): () => void {
   void trash.sweep()
   const sweeper = setInterval(() => void trash.sweep(), DAY)
 
+  // The versions kept for recovery: one timer for the app that keeps whatever
+  // is being written in, and a sweep on the same daily rhythm as the trash.
+  const stopRecovery = recovery.start()
+
   void guardClose()
   void updates.check()
   void account.restore()
 
-  return () => clearInterval(sweeper)
+  return () => {
+    clearInterval(sweeper)
+    stopRecovery()
+  }
 }
 
 /** Files named on the command line, and any handed over by a second launch. */

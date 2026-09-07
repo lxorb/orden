@@ -3,6 +3,8 @@ import { CODE_PALETTES } from '@nib/editor'
 import { i18n, LANGUAGES, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
+import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
+import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
 import { theme } from './theme.svelte'
 import { workspace } from './workspace.svelte'
@@ -91,6 +93,36 @@ export function preferences(view?: EditorView): Pane[] {
               unit: 'ms',
               get: () => workspace.autoSaveDelay,
               set: (value) => workspace.setAutoSaveDelay(value),
+            },
+          ],
+        },
+        {
+          // A note being written in is kept every so often on top of what a
+          // save keeps, so a crash between two saves is not the end of the
+          // story; History is where the versions are.
+          title: t('Recovery'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('Keep a version every'),
+              options: SNAPSHOT_MINUTES.map((minutes) => ({
+                value: String(minutes),
+                label: minutes ? t('{count} min', { count: minutes }) : t('Off'),
+              })),
+              initial: String(DEFAULT_MINUTES),
+              get: () => String(recovery.every),
+              set: (value) => recovery.setEvery(Number(value)),
+            },
+            {
+              kind: 'select',
+              label: t('Keep versions for'),
+              options: KEEP_DAYS.map((days) => ({
+                value: String(days),
+                label: days === 1 ? t('1 day') : t('{count} days', { count: days }),
+              })),
+              initial: String(DEFAULT_DAYS),
+              get: () => String(recovery.days),
+              set: (value) => recovery.setDays(Number(value)),
             },
           ],
         },

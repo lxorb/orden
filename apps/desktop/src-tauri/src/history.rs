@@ -75,10 +75,7 @@ pub fn list_snapshots(app: AppHandle, path: String) -> Result<Vec<Snapshot>, Str
     let mut snapshots: Vec<Snapshot> = snapshot_files(&dir)
         .into_iter()
         .filter_map(|file| {
-            let taken_at = file
-                .file_stem()
-                .and_then(OsStr::to_str)
-                .and_then(|stem| stem.parse::<u64>().ok())?;
+            let taken_at = moment(&file)?;
 
             Some(Snapshot {
                 taken_at,
@@ -90,6 +87,90 @@ pub fn list_snapshots(app: AppHandle, path: String) -> Result<Vec<Snapshot>, Str
 
     snapshots.reverse();
     Ok(snapshots)
+}
+
+/// A day and an hour in milliseconds, which is the unit every snapshot's name
+/// is in.
+const HOUR: u64 = 60 * 60 * 1000;
+const DAY: u64 = 24 * HOUR;
+
+/// Which of one note's versions have had their day, given when they were taken
+/// and what time it is now.
+///
+/// Two rules, and a version has to survive both. Nothing older than the
+/// retention is kept, which is what the person asked for. And past the first
+/// day only the last version of each hour is kept: today is when a bad edit is
+/// noticed and every step of it is worth having, while a week ago one version
+/// an hour is a history and the other ninety-nine are a disk full. That second
+/// rule is the size cap, so a long note written in all day leaves twenty-four
+/// versions of that day behind rather than hundreds.
+///
+/// The same policy runs in the browser, over IndexedDB; see
+/// src/lib/recovery.ts.
+fn stale(taken: &[u64], now: u64, days: u64) -> Vec<u64> {
+    let mut newest_first: Vec<u64> = taken.to_vec();
+    newest_first.sort_unstable_by(|a, b| b.cmp(a));
+
+    let mut stale = Vec::new();
+    let mut hours_kept = std::collections::HashSet::new();
+
+    for at in newest_first {
+        let age = now.saturating_sub(at);
+        if age > days * DAY {
+            stale.push(at);
+        } else if age > DAY && !hours_kept.insert(at / HOUR) {
+            // Newest first, so the first version met in an hour is the one that
+            // hour keeps and every older one in it goes.
+            stale.push(at);
+        }
+    }
+
+    stale
+}
+
+/// Sweeps every note's history by the policy above. Answers how many versions
+/// went, which is what the caller logs and nothing else reads.
+#[tauri::command]
+pub fn purge_snapshots(app: AppHandle, days: u64) -> Result<usize, String> {
+    let root = history_dir(&app)?;
+    let Ok(entries) = fs::read_dir(&root) else {
+        // Nothing has ever been kept, so there is nothing to sweep.
+        return Ok(0);
+    };
+
+    let now = clock::now();
+    let mut dropped = 0;
+
+    for note in entries.flatten().map(|entry| entry.path()) {
+        if !note.is_dir() {
+            continue;
+        }
+
+        let files = snapshot_files(&note);
+        let taken: Vec<u64> = files.iter().filter_map(|file| moment(file)).collect();
+
+        for at in stale(&taken, now, days) {
+            if fs::remove_file(note.join(format!("{at}.md"))).is_ok() {
+                dropped += 1;
+            }
+        }
+
+        // A note whose every version has gone leaves an empty folder and the
+        // note's path in it; both go with the last version.
+        if snapshot_files(&note).is_empty() {
+            let _ = fs::remove_file(note.join("origin.txt"));
+            let _ = fs::remove_dir(&note);
+        }
+    }
+
+    Ok(dropped)
+}
+
+/// The moment a snapshot was taken, which is its file name.
+fn moment(file: &Path) -> Option<u64> {
+    file.file_stem()
+        .and_then(OsStr::to_str)
+        .and_then(|stem| stem.parse::<u64>().ok())
 }
 
 /// Reads one kept version back. Only the history folder is readable this way; a
@@ -150,7 +231,54 @@ fn snapshot_files(dir: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{key, snapshot_files};
+    use super::{key, snapshot_files, stale, DAY, HOUR};
+
+    /// A fixed moment, so what the policy answers never depends on the day the
+    /// tests are run.
+    const NOW: u64 = 1_773_500_400_000;
+
+    fn kept(taken: &[u64], days: u64) -> Vec<u64> {
+        let dropped = stale(taken, NOW, days);
+        taken
+            .iter()
+            .copied()
+            .filter(|at| !dropped.contains(at))
+            .collect()
+    }
+
+    #[test]
+    fn everything_from_the_last_day_is_kept() {
+        let today = [NOW - 60_000, NOW - 120_000, NOW - HOUR, NOW - DAY + 1];
+        assert!(stale(&today, NOW, 7).is_empty());
+    }
+
+    #[test]
+    fn nothing_older_than_the_retention_is_kept() {
+        let old = NOW - 8 * DAY;
+        assert_eq!(stale(&[old], NOW, 7), vec![old]);
+        assert!(stale(&[old], NOW, 30).is_empty());
+    }
+
+    #[test]
+    fn one_version_an_hour_past_the_first_day() {
+        let hour = NOW - 2 * DAY;
+        let versions = [hour, hour + 10 * 60_000, hour + 20 * 60_000];
+        assert_eq!(kept(&versions, 7), vec![hour + 20 * 60_000]);
+    }
+
+    #[test]
+    fn a_version_a_minute_for_a_day_thins_to_a_version_an_hour() {
+        let start = NOW - 3 * DAY;
+        let versions: Vec<u64> = (0..24 * 60).map(|minute| start + minute * 60_000).collect();
+
+        assert_eq!(versions.len(), 1440);
+        assert_eq!(kept(&versions, 7).len(), 24);
+    }
+
+    #[test]
+    fn a_note_with_no_versions_has_nothing_to_sweep() {
+        assert!(stale(&[], NOW, 7).is_empty());
+    }
 
     #[test]
     fn the_same_path_always_gets_the_same_folder() {

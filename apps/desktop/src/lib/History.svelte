@@ -1,6 +1,8 @@
 <script lang="ts">
   import { closeOnBack } from './backstack.svelte'
+  import { diffCount, lineDiff, trimmed } from './diff'
   import { overlays } from './overlays'
+  import { recovery } from './recovery.svelte'
   import { scrollbar } from './scrollbar'
   import { t } from './i18n.svelte'
   import { fade, scale } from 'svelte/transition'
@@ -19,6 +21,9 @@
   let snapshots = $state<Snapshot[]>([])
   let selected = $state<Snapshot | null>(null)
   let preview = $state('')
+  /** Whether the version is shown as itself or as what it would change. The
+   *  changes are what somebody looking for a lost paragraph wants first. */
+  let comparing = $state(true)
 
   $effect(() => {
     if (!open) return
@@ -43,10 +48,19 @@
       return
     }
 
-    void invoke<string>('read_snapshot', { path: selected.path })
+    // The note is named as well as the version, because the browser keeps its
+    // versions in one store and the desktop keeps each note's in a folder.
+    void invoke<string>('read_snapshot', {
+      path: selected.path,
+      notePath: workspace.active?.path ?? '',
+    })
       .then((body) => (preview = body))
       .catch(() => (preview = ''))
   })
+
+  /** What this version would change, against the note as it stands now. */
+  const changes = $derived(trimmed(lineDiff(preview, workspace.active?.note.text ?? '')))
+  const counted = $derived(diffCount(lineDiff(preview, workspace.active?.note.text ?? '')))
 
   const when = (stamp: number) =>
     new Date(stamp).toLocaleString(undefined, {
@@ -54,10 +68,13 @@
       timeStyle: 'short',
     })
 
-  /** Restoring is itself an edit, so it lands in the history too. */
-  function restore() {
-    if (!preview || !workspace.active) return
+  /** Restoring is itself an edit, so the words being replaced are kept first:
+   *  putting an old version back is one more version, and undoable like any. */
+  async function restore() {
+    const tab = workspace.active
+    if (!preview || !tab?.path) return
 
+    await recovery.keep(tab.path, tab.note.text)
     workspace.replace(preview)
     open = false
   }
@@ -91,8 +108,40 @@
       </ul>
 
       <div class="preview">
-        <pre>{preview}</pre>
-        <button class="primary" onclick={restore}>{t('Restore this version')}</button>
+        <!-- Two faces of one version: what it would change, and what it says.
+             A pair of tabs rather than a switch, because both are a way of
+             reading the same thing. -->
+        <div class="faces">
+          <button class:on={comparing} onclick={() => (comparing = true)}>{t('Changes')}</button>
+          <button class:on={!comparing} onclick={() => (comparing = false)}>{t('Text')}</button>
+
+          {#if comparing}
+            <span class="tally">
+              {#if counted.added || counted.removed}
+                <ins>+{counted.added}</ins><del>-{counted.removed}</del>
+              {:else}
+                {t('No changes')}
+              {/if}
+            </span>
+          {/if}
+        </div>
+
+        {#if comparing}
+          <div class="diff" use:scrollbar>
+            {#each changes as row, at (at)}
+              <div class="row {row.change}">
+                <span class="gutter">{row.before ?? row.after ?? ''}</span>
+                <span class="text">{row.text || ' '}</span>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <pre>{preview}</pre>
+        {/if}
+
+        <button class="primary" onclick={() => void restore()}>
+          {t('Restore this version')}
+        </button>
       </div>
     {/if}
   </div>
@@ -202,6 +251,107 @@
     line-height: 1.6;
     color: var(--muted-strong);
     white-space: pre-wrap;
+  }
+
+  /* Which face of the version is showing. The same shape as the tabs elsewhere
+     in the app: a word that lights up rather than a control with a label. */
+  .faces {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .faces button {
+    padding: 4px 9px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .faces button:hover {
+    background: var(--item-hover-bg-color);
+  }
+
+  .faces button:active {
+    background: var(--press);
+  }
+
+  .faces button.on {
+    background: var(--accent-soft);
+    color: var(--text-strong);
+  }
+
+  .tally {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .tally ins,
+  .tally del {
+    text-decoration: none;
+  }
+
+  .tally ins {
+    color: var(--success);
+  }
+
+  .tally del {
+    margin-left: var(--space-2);
+    color: var(--danger);
+  }
+
+  /* A line of the diff. The colour is the whole signal, so the gutter stays
+     quiet and the sign is the tint of the line rather than a character. */
+  .diff {
+    flex: 1;
+    overflow: auto;
+    padding: var(--space-2) 0;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+  }
+
+  .row {
+    display: flex;
+    gap: var(--space-3);
+    padding: 0 var(--space-3);
+    color: var(--muted-strong);
+    white-space: pre-wrap;
+  }
+
+  .gutter {
+    flex: none;
+    width: 2.5em;
+    text-align: right;
+    color: var(--muted);
+    user-select: none;
+  }
+
+  .text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .row.added {
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--text-strong);
+  }
+
+  .row.removed {
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+    color: var(--text-strong);
   }
 
   .primary {

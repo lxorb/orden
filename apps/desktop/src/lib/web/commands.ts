@@ -2,6 +2,7 @@
  *  Same names, same shapes - so every call site works on both. */
 
 import { SIDECAR } from '../pdf/highlights'
+import { staleSnapshots } from '../recovery'
 import { scanNote, type SpaceLinks } from '../scan-note'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
@@ -372,12 +373,48 @@ const KEEP_SNAPSHOTS = 40
 
 async function snapshot(path: string, content: string) {
   const notePath = normalise(path)
+  const kept = (await snapshots.forNote(notePath)).sort((a, b) => b.taken_at - a.taken_at)
+  // Nothing to keep when the words have not moved since the last version, which
+  // is what the disk side does too; see src-tauri/src/history.rs.
+  if (kept[0]?.content === content) return
+
   await snapshots.put({ notePath, content, taken_at: now(), size: content.length })
 
-  const kept = (await snapshots.forNote(notePath)).sort((a, b) => b.taken_at - a.taken_at)
-  for (const old of kept.slice(KEEP_SNAPSHOTS)) {
+  for (const old of kept.slice(KEEP_SNAPSHOTS - 1)) {
     if (old.id !== undefined) await snapshots.remove(old.id)
   }
+}
+
+/** The retention sweep, by the same policy the desktop sweeps by: see
+ *  recovery.ts, which both sides read it from. */
+async function purgeSnapshots(days: number): Promise<number> {
+  const all = await snapshots.all()
+  const byNote = new Map<string, { id?: number; taken_at: number }[]>()
+  for (const row of all) {
+    const note = byNote.get(row.notePath) ?? []
+    note.push(row)
+    byNote.set(row.notePath, note)
+  }
+
+  let dropped = 0
+  for (const rows of byNote.values()) {
+    const stale = new Set(
+      staleSnapshots(
+        rows.map((row) => row.taken_at),
+        now(),
+        days,
+      ),
+    )
+
+    for (const row of rows) {
+      if (row.id === undefined || !stale.has(row.taken_at)) continue
+
+      await snapshots.remove(row.id)
+      dropped++
+    }
+  }
+
+  return dropped
 }
 
 /** Commands the browser genuinely cannot serve. Each returns the shape that
@@ -567,10 +604,15 @@ export async function webInvoke<T>(
     }
 
     case 'read_snapshot': {
-      const all = await snapshots.forNote(normalise(args.notePath as string) || '')
-      const found = all.find((row) => String(row.id) === path)
+      // Every note's versions rather than one note's: the row is asked for by
+      // the id the listing gave out, and the caller has no reason to say which
+      // note it belongs to twice.
+      const found = (await snapshots.all()).find((row) => String(row.id) === path)
       return (found?.content ?? '') as T
     }
+
+    case 'purge_snapshots':
+      return (await purgeSnapshots(args.days as number)) as T
 
     case 'read_custom_css':
       return ((await meta.get('custom.css')) ?? '') as T

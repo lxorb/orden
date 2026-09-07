@@ -65,6 +65,29 @@ describe('account settings', () => {
     expect((await patch({ ligatures: 2 })).status).toBe(400)
   })
 
+  describe('how long a note keeps its earlier versions', () => {
+    test('is one of the intervals the app offers', async () => {
+      for (const minutes of [0, 1, 5, 15]) {
+        const set = await patch({ recoveryEvery: minutes })
+        expect(set.status, String(minutes)).toBe(200)
+        expect(set.json.settings.recoveryEvery).toBe(minutes)
+      }
+
+      for (const days of [1, 7, 30]) {
+        const set = await patch({ recoveryDays: days })
+        expect(set.status, String(days)).toBe(200)
+        expect(set.json.settings.recoveryDays).toBe(days)
+      }
+    })
+
+    test('and nothing else', async () => {
+      expect((await patch({ recoveryEvery: 3 })).status).toBe(400)
+      expect((await patch({ recoveryEvery: '5' })).status).toBe(400)
+      expect((await patch({ recoveryDays: 0 })).status).toBe(400)
+      expect((await patch({ recoveryDays: 365 })).status).toBe(400)
+    })
+  })
+
   test('are the account’s alone', async () => {
     const other = await signIn(env, 'c@d.dev')
     await patch({ ligatures: true })

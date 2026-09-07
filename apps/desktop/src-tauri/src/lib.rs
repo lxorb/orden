@@ -94,6 +94,7 @@ pub fn run() {
             history::snapshot_note,
             history::list_snapshots,
             history::read_snapshot,
+            history::purge_snapshots,
             logs::log_dir,
             logs::write_log,
             logs::read_log,
