@@ -144,18 +144,50 @@ function hosted(): boolean {
 const HOST_WAIT = 10_000
 const HOST_LOOK = 50
 
+/** The event the WebView plugin fires when it has finished installing the
+ *  channel.
+ *
+ *  Its own documentation says the channel is injected before the page runs
+ *  *except* on an Android WebView without document-start scripts, where a page
+ *  has to wait for this. Even's own documentation never mentions it. Listened
+ *  for as well as polled rather than instead of, because a page that attaches
+ *  its listener after the event was fired would wait for something that has
+ *  already happened, and the poll is what catches that. */
+const READY = 'flutterInAppWebViewPlatformReady'
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** Resolves the moment the channel appears, or false when it never does. */
 async function waitForHost(): Promise<boolean> {
-  const until = Date.now() + HOST_WAIT
-  while (!hosted()) {
-    if (Date.now() >= until) return false
-    await sleep(HOST_LOOK)
-  }
+  if (hosted()) return true
 
-  return true
+  let announced = (): void => undefined
+  const said = new Promise<void>((resolve) => {
+    announced = () => {
+      resolve()
+    }
+  })
+
+  // A page is not the only place this runs: a test has no window to listen on,
+  // and the poll below is the whole of what is needed there.
+  const listens = typeof globalThis.addEventListener === 'function'
+  if (listens) globalThis.addEventListener(READY, announced)
+
+  try {
+    const until = Date.now() + HOST_WAIT
+    while (!hosted()) {
+      if (Date.now() >= until) return false
+      // Whichever comes first: the announcement, or the next look. The look is
+      // what makes an announcement that came too early harmless.
+      await Promise.race([said, sleep(HOST_LOOK)])
+    }
+
+    return true
+  } finally {
+    if (listens) globalThis.removeEventListener(READY, announced)
+  }
 }
 
 /** A bridge already standing on the page.

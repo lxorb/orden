@@ -150,6 +150,25 @@ describe('finding the glasses', () => {
     expect(await asking({ opensAt: 8000, waits: PAST_WAITING })).not.toBeNull()
   })
 
+  /** The SDK's own readiness is not the question, and this is what stops it
+   *  being mistaken for one.
+   *
+   *  Run against the real 0.0.15: `waitForEvenAppBridge()` resolves in nought
+   *  milliseconds with `ready: true` on a page with no phone app anywhere near
+   *  it, because its readiness is about its own initialisation and the DOM. It
+   *  registers no window event, so there is nothing to have missed by listening
+   *  late. Every call then goes out through `flutter_inappwebview.callHandler`
+   *  and comes back `1`, invalid, with "Flutter handler not available" on the
+   *  console. So a ready SDK says nothing at all about there being glasses, and
+   *  the channel is the only thing that does. */
+  test('does not take a ready SDK for a phone app', async () => {
+    // The SDK is there and answers at once, as it always does. The channel is
+    // not.
+    fromSdk.value = new Host()
+
+    expect(await asking({ waits: PAST_WAITING })).toBeNull()
+  })
+
   test('looks again after a miss rather than remembering it', async () => {
     fromSdk.value = new Host()
     const { connectGlasses: ask } = await freshly()
