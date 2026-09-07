@@ -146,6 +146,11 @@ export const meta = {
   get: (key: string) => run<string | undefined>('meta', 'readonly', (s) => s.get(key)),
   put: (key: string, value: string) =>
     run<IDBValidKey>('meta', 'readwrite', (s) => s.put(value, key)),
+  remove: (key: string) => run<undefined>('meta', 'readwrite', (s) => s.delete(key)),
+  /** Every key, in key order. What the installed themes are listed from: they
+   *  live here under a shared prefix, the way they live in a folder on a
+   *  desktop. */
+  keys: () => run<IDBValidKey[]>('meta', 'readonly', (s) => s.getAllKeys()),
 }
 
 export const snapshots = {

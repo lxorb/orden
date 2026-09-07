@@ -1,5 +1,6 @@
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
-import { invoke, isDesktop } from './tauri'
+import { invoke } from './tauri'
+import { type Stamp, stampOf } from './themes/validate'
 
 export type Scheme = 'dark' | 'light'
 
@@ -7,7 +8,14 @@ interface ThemeInfo {
   id: string
   name: string
   scheme: Scheme
+  /** Which schemes the theme states. A file stating both is a pair: it follows
+   *  the app's light and dark switch instead of being one or the other. */
+  variants: Scheme[]
   path?: string
+  /** What the store wrote into the file when it installed it, for a theme that
+   *  came from there. Absent for a file somebody put in the folder themselves,
+   *  which the store has nothing to say about. */
+  stamp?: Stamp
 }
 
 interface ThemeFile {
@@ -17,6 +25,8 @@ interface ThemeFile {
 }
 
 const STORAGE_KEY = 'nib:theme'
+/** Which side of a theme that states both. */
+const SIDE_KEY = 'nib:theme-side'
 const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
@@ -28,8 +38,8 @@ const SYSTEM = 'system'
 // scheme as well as in a list, so "the dark one" is a lookup and not a search
 // that might come back empty.
 const BY_SCHEME: Record<Scheme, ThemeInfo> = {
-  dark: { id: 'dark', name: 'Dark', scheme: 'dark' },
-  light: { id: 'light', name: 'Light', scheme: 'light' },
+  dark: { id: 'dark', name: 'Dark', scheme: 'dark', variants: ['dark'] },
+  light: { id: 'light', name: 'Light', scheme: 'light', variants: ['light'] },
 }
 
 const BUILT_IN: ThemeInfo[] = [BY_SCHEME.dark, BY_SCHEME.light]
@@ -38,6 +48,21 @@ const ACCENT_KEY = 'nib:accent'
 
 const LIGHT = '(prefers-color-scheme: light)'
 
+/** Which schemes a theme file states.
+ *
+ *  A theme written against the tokens says so outright, in a block per scheme.
+ *  A Typora theme knows nothing about the attribute and only declares its
+ *  `color-scheme`, so that is what is read for one, and it is the one thing it
+ *  is: dropping such a file in has always meant choosing a look, not a pair. */
+function variantsOf(css: string): Scheme[] {
+  const found = (['light', 'dark'] as const).filter((scheme) =>
+    new RegExp(`\\[data-theme\\s*=\\s*['"]?${scheme}['"]?\\s*\\]`).test(css),
+  )
+
+  if (found.length) return [...found]
+  return [/color-scheme\s*:\s*light/.test(css) ? 'light' : 'dark']
+}
+
 class Themes {
   id = $state<string>(SYSTEM)
   accent = $state<string>(DEFAULT_ACCENT)
@@ -45,20 +70,33 @@ class Themes {
   /** What the system currently prefers. Kept up to date, so following it
    *  means following it through the day and not only at launch. */
   private preferred = $state<Scheme>('dark')
+  /** Which side of a theme that states both, once the rail's switch has said.
+   *  Null follows the system, the same as the built-in choice does. */
+  private side = $state<Scheme | null>(null)
 
   readonly accents = ACCENTS
 
-  /** The choice at the top is to follow the system; the rest are themes. */
+  /** The choice at the top is to follow the system; the rest are themes. A
+   *  theme file that states both schemes is shown as whichever it is showing,
+   *  so the accent and the system bars are read off the right one. */
   readonly all = $derived<ThemeInfo[]>([
-    { id: SYSTEM, name: 'Match the system', scheme: this.preferred },
+    { id: SYSTEM, name: 'Match the system', scheme: this.preferred, variants: [this.preferred] },
     ...BUILT_IN,
-    ...this.files,
+    ...this.files.map((file) =>
+      file.variants.length > 1 ? { ...file, scheme: this.side ?? this.preferred } : file,
+    ),
   ])
   readonly active = $derived.by((): ThemeInfo => {
     if (this.id === SYSTEM) return BY_SCHEME[this.preferred]
     return this.all.find((theme) => theme.id === this.id) ?? BY_SCHEME.dark
   })
   readonly current = $derived(this.active.scheme)
+
+  /** What the store has put in the folder, by the id the registry knows it
+   *  under, so the gallery can mark a card installed and offer an update. */
+  readonly installed = $derived(
+    new Map(this.files.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : []))),
+  )
 
   init() {
     const light = window.matchMedia(LIGHT)
@@ -70,28 +108,37 @@ class Themes {
 
     const saved = localStorage.getItem(STORAGE_KEY)
     this.id = saved && saved !== 'null' ? saved : SYSTEM
+    const side = localStorage.getItem(SIDE_KEY)
+    this.side = side === 'light' || side === 'dark' ? side : null
     this.accent = localStorage.getItem(ACCENT_KEY) ?? DEFAULT_ACCENT
     this.apply()
     void this.reload()
   }
 
-  /** Rescans the themes folder, so dropping in a file needs no restart. */
+  /** Rescans the themes folder, so dropping in a file needs no restart, and so
+   *  installing one from the store shows up without one either. Read in
+   *  parallel: this runs at launch, and the files are small. */
   async reload() {
-    if (!isDesktop) return
-
     try {
       const found = await invoke<ThemeFile[]>('list_themes')
-      const loaded: ThemeInfo[] = []
+      const sheets = await Promise.all(
+        found.map((file) => invoke<string>('read_theme', { path: file.path }).catch(() => '')),
+      )
 
-      for (const file of found) {
-        const css = await invoke<string>('read_theme', { path: file.path })
-        loaded.push({
+      this.files = found.map((file, at): ThemeInfo => {
+        const css = sheets[at] ?? ''
+        const stamp = stampOf(css)
+        const variants = variantsOf(css)
+
+        return {
           ...file,
-          scheme: /color-scheme\s*:\s*light/.test(css) ? 'light' : 'dark',
-        })
-      }
-
-      this.files = loaded
+          // The store's own name for it, which is spelled the way its author
+          // spelled it rather than worked out from the file name.
+          ...(stamp ? { name: stamp.name, stamp } : {}),
+          variants,
+          scheme: variants[0] ?? 'dark',
+        }
+      })
     } catch {
       this.files = []
     }
@@ -104,8 +151,6 @@ class Themes {
 
   /** `custom.css` applies on top of whichever theme is active. */
   private async loadCustom() {
-    if (!isDesktop) return
-
     const css = await invoke<string>('read_custom_css').catch(() => '')
     let style = document.getElementById(CUSTOM_ID)
 
@@ -145,9 +190,22 @@ class Themes {
   }
 
   /** The rail's one-click switch: jump to the counterpart scheme. An explicit
-   *  choice, so it stops following the system until that is chosen again. */
+   *  choice, so it stops following the system until that is chosen again.
+   *
+   *  A theme that states both schemes is switched inside itself rather than
+   *  swapped for a built-in: somebody using a pair asked for that theme's dark,
+   *  not for ours. */
   toggle() {
-    this.select(BY_SCHEME[this.current === 'dark' ? 'light' : 'dark'].id)
+    const wanted: Scheme = this.current === 'dark' ? 'light' : 'dark'
+
+    if (this.active.variants.length > 1) {
+      this.side = wanted
+      localStorage.setItem(SIDE_KEY, wanted)
+      this.apply()
+      return
+    }
+
+    this.select(BY_SCHEME[wanted].id)
   }
 
   private apply() {

@@ -8,4 +8,8 @@ interface ImportMetaEnv {
   /** Where the sync service lives, for pointing a development build at a local
    *  one. Unset in a normal build, which sends the app at the hosted service. */
   readonly VITE_NIB_API?: string
+  /** Where the theme store's catalogue is served from, for working on a theme
+   *  before it is published: a local folder, or the registry's raw files.
+   *  Unset in a normal build, which reads it through the sync service. */
+  readonly VITE_NIB_THEMES?: string
 }

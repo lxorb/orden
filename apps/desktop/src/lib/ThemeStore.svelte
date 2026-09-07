@@ -1,0 +1,712 @@
+<script lang="ts">
+  /** The theme store, as a sheet over the settings.
+   *
+   *  A grid of live miniatures rather than a list of names: a theme is a look,
+   *  and the only honest way to offer one is to show it. Each card is the same
+   *  small note drawn with that theme's own tokens by the app's own prose rules,
+   *  so what is on the card is what the reader will get. Clicking one opens it
+   *  larger, with its palette laid out, and the one button that applies to where
+   *  that theme stands. */
+
+  import { closeOnBack } from './backstack.svelte'
+  import { fade, fly, scale } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
+  import { t } from './i18n.svelte'
+  import { overlays } from './overlays'
+  import { scrollbar } from './scrollbar'
+  import Select from './Select.svelte'
+  import { type Scheme, theme } from './theme.svelte'
+  import { viewport } from './viewport.svelte'
+  import type { StoreTheme } from './themes/registry'
+  import { FRAME, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
+  import { PAINT, store } from './themes/store.svelte'
+
+  const STYLE_ID = 'nib-theme-miniatures'
+  const PALETTE_ID = 'nib-theme-palettes'
+
+  /** The tokens the full preview lays out as swatches, in the order somebody
+   *  judging a theme reads them: the ground it sits on, the lines, the words,
+   *  the accent, then the two colours that mean something. */
+  const SWATCHES = [
+    '--bg',
+    '--surface',
+    '--surface-2',
+    '--line-strong',
+    '--muted',
+    '--text',
+    '--text-strong',
+    '--accent',
+    '--danger',
+    '--success',
+  ]
+
+  /** How many cards stand in for the catalogue while it is on its way. Enough
+   *  to fill the first row or two, so the sheet does not jump when they land. */
+  const WAITING = [0, 1, 2, 3, 4, 5]
+
+  /** Which card is under the pointer, so a theme with both schemes can show the
+   *  other one. One piece of state for the whole grid rather than one each. */
+  let hovered = $state<string | null>(null)
+
+  /** Which side of a pair the full preview is showing, once it has been asked
+   *  for. Null follows the app, which is what the grid does. */
+  let previewing = $state<Scheme | null>(null)
+
+  /** The sample note, in whatever language the app is in. Built once per
+   *  language rather than once per card: thirty cards show the same note. */
+  const sample = $derived(sampleHtml())
+
+  // Escape closes whichever overlay is on top, and Back does the same on a
+  // phone. Inside the settings, so this is a second overlay over that one.
+  $effect(() => (store.open ? overlays.show(() => store.close()) : undefined))
+  $effect(() => closeOnBack(store.open, () => store.close()))
+
+  /** Writes a stylesheet into the head, or takes it away again. The app's own
+   *  way of putting a theme on the page; see theme.svelte.ts. */
+  function inject(id: string, css: string) {
+    let style = document.getElementById(id)
+
+    if (!css) {
+      style?.remove()
+      return
+    }
+
+    if (!style) {
+      style = document.createElement('style')
+      style.id = id
+      document.head.append(style)
+    }
+
+    if (style.textContent !== css) style.textContent = css
+  }
+
+  // The miniature's rules: the app's own, re-scoped, once per session. Asked for
+  // when the gallery first opens rather than at startup, because that is when
+  // the text they are built from is worth loading.
+  $effect(() => {
+    if (!store.open || document.getElementById(STYLE_ID)) return
+
+    void miniatureCss().then((css) => inject(STYLE_ID, css))
+  })
+
+  // One block per theme and scheme, rebuilt when the catalogue changes. This is
+  // what a card is painted from: no stylesheet is fetched to draw a miniature.
+  $effect(() => inject(PALETTE_ID, store.open ? paletteCss(store.themes) : ''))
+
+  // How long the grid takes from the catalogue arriving to being on the screen.
+  // Read on the frame after the cards are laid out, which is the number that
+  // matters: the mark is set where the index is parsed.
+  $effect(() => {
+    const themes = store.shown
+    if (!store.open || !themes.length) return
+
+    const frame = requestAnimationFrame(() => {
+      if (performance.getEntriesByName(`${PAINT}:index`).length) {
+        performance.measure(PAINT, `${PAINT}:index`)
+      }
+    })
+
+    return () => cancelAnimationFrame(frame)
+  })
+
+  /** Which scheme a miniature shows.
+   *
+   *  The app's own, so the grid reads as the app reads. A theme that only states
+   *  the other one shows that instead: half a card would be no preview at all.
+   *  `wanted` is what a preview was asked to show; on the grid nothing asks, and
+   *  pointing at a pair shows its other side. */
+  function schemeOf(one: StoreTheme, wanted?: Scheme | null): Scheme {
+    const shows = wanted ?? theme.current
+    if (!one.variants.includes(shows)) return one.variants[0] ?? shows
+
+    const pointed = hovered === one.id && one.variants.length > 1
+    return pointed && !wanted ? (shows === 'dark' ? 'light' : 'dark') : shows
+  }
+
+  /** What the swatches show for the theme being previewed: whichever scheme it
+   *  is being previewed in, with the tokens it does not state left out. */
+  function swatchesOf(one: StoreTheme, scheme: Scheme) {
+    const palette = one.palettes[scheme]
+    return SWATCHES.filter((token) => palette[token]).map((token) => ({
+      token,
+      value: palette[token] ?? '',
+    }))
+  }
+
+  const ORDERS = $derived([
+    { value: 'newest', label: t('Newest') },
+    { value: 'name', label: t('Name') },
+  ])
+</script>
+
+{#if store.open}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => store.close()}></div>
+
+  <div class="sheet" transition:scale={{ duration: 190, start: 0.98, easing: cubicOut }}>
+    <header>
+      {#if store.chosen}
+        <button
+          class="back"
+          onclick={() => {
+            store.opened = null
+            previewing = null
+          }}
+          aria-label={t('Back')}
+        >
+          <svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
+        </button>
+        <p class="title">{store.chosen.name}</p>
+      {:else}
+        <input
+          class="find"
+          bind:value={store.query}
+          placeholder={t('Search themes')}
+          spellcheck="false"
+          aria-label={t('Search themes')}
+        />
+        <div class="sort">
+          <Select
+            value={store.order}
+            options={ORDERS}
+            onchange={(value: string) => (store.order = value === 'name' ? 'name' : 'newest')}
+            label={t('Sort')}
+            plain={viewport.phone}
+          />
+        </div>
+      {/if}
+
+      <button class="shut" onclick={() => store.close()} aria-label={t('Close')}>
+        <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+      </button>
+    </header>
+
+    <div class="body" data-scrolls use:scrollbar={store.opened ?? 'grid'}>
+      {#if store.chosen}
+        {@render preview(store.chosen)}
+      {:else if store.loading && !store.themes.length}
+        <!-- The grid is the report: cards with nothing in them yet, in the shape
+             the real ones will take, so the sheet does not jump when they land. -->
+        <div class="grid">
+          {#each WAITING as slot (slot)}
+            <div class="card waiting"><div class="frame"></div></div>
+          {/each}
+        </div>
+      {:else if store.shown.length}
+        <div class="grid">
+          {#each store.shown as one (one.id)}
+            <button
+              class="card"
+              onclick={() => (store.opened = one.id)}
+              onmouseenter={() => (hovered = one.id)}
+              onmouseleave={() => (hovered = null)}
+              onfocus={() => (hovered = one.id)}
+              onblur={() => (hovered = null)}
+            >
+              <div class="frame {FRAME}" data-palette={one.id} data-theme={schemeOf(one)}>
+                <!-- The same markup the renderer writes, drawn by the same
+                     rules. Ours, not the theme author's: a theme brings colours
+                     and nothing else. -->
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                <div class="nib-mini-page">{@html sample}</div>
+              </div>
+
+              <div class="label">
+                <span class="who">
+                  <span class="name">{one.name}</span>
+                  <span class="by"
+                    >{one.author}{#if one.tags[0]}
+                      · {one.tags[0]}{/if}</span
+                  >
+                </span>
+                {@render mark(one)}
+              </div>
+            </button>
+          {/each}
+        </div>
+      {:else}
+        <p class="note">{store.error ? t(store.error) : t('Nothing matches.')}</p>
+      {/if}
+    </div>
+  </div>
+{/if}
+
+<!-- Where a theme stands, as a shape rather than a sentence: a tick for one in
+     the folder, the accent for the one being used, an arrow for one the store is
+     ahead of. -->
+{#snippet mark(one: StoreTheme)}
+  {#if store.updatable(one)}
+    <svg class="state up" viewBox="0 0 16 16" role="img" aria-label={t('Update')}
+      ><path d="M8 12.5V4M4.5 7.5L8 4l3.5 3.5" /></svg
+    >
+  {:else if store.installed(one.id)}
+    <svg
+      class="state"
+      class:using={store.using(one.id)}
+      viewBox="0 0 16 16"
+      role="img"
+      aria-label={store.using(one.id) ? t('In use') : t('Installed')}
+      ><path d="M3.5 8.5l3 3 6-7" /></svg
+    >
+  {/if}
+{/snippet}
+
+{#snippet preview(one: StoreTheme)}
+  {@const scheme = schemeOf(one, previewing)}
+
+  <div class="full" in:fly={{ y: 8, duration: 180, easing: cubicOut }}>
+    <div class="frame big {FRAME}" data-palette={one.id} data-theme={scheme}>
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+      <div class="nib-mini-page">{@html sample}</div>
+    </div>
+
+    <!-- A pair is looked at from both sides before it is chosen. -->
+    {#if one.variants.length > 1}
+      <div class="sides">
+        {#each one.variants as variant (variant)}
+          <button class="side" class:at={variant === scheme} onclick={() => (previewing = variant)}>
+            {variant === 'light' ? t('Light') : t('Dark')}
+          </button>
+        {/each}
+      </div>
+    {/if}
+
+    <div class="palette">
+      {#each swatchesOf(one, scheme) as swatch (swatch.token)}
+        <span class="chip" style:--chip={swatch.value} title={swatch.token}></span>
+      {/each}
+    </div>
+
+    {#if one.description}
+      <p class="says">{one.description}</p>
+    {/if}
+
+    <div class="facts">
+      <span>{one.author}</span>
+      <span>{one.version}</span>
+      {#if one.licence}<span>{one.licence}</span>{/if}
+      {#each one.tags as tag (tag)}<span class="tag">{tag}</span>{/each}
+    </div>
+
+    <div class="row">
+      {#if store.installed(one.id) && !store.updatable(one)}
+        <button
+          class="primary"
+          disabled={store.using(one.id) || store.working === one.id}
+          onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
+        >
+        <button
+          class="quiet"
+          disabled={store.working === one.id}
+          onclick={() => void store.remove(one.id)}>{t('Remove')}</button
+        >
+      {:else}
+        <button
+          class="primary"
+          disabled={store.working === one.id}
+          onclick={() => void store.install(one)}
+          >{store.updatable(one) ? t('Update') : t('Install')}</button
+        >
+      {/if}
+    </div>
+
+    {#if store.error}
+      <p class="note bad">{t(store.error)}</p>
+    {/if}
+
+    <!-- What the theme asked for and did not get. Said once, plainly, under the
+         thing it is about: a theme with one line the app will not apply is still
+         a theme, and pretending otherwise would be the lie. -->
+    {#if store.refused.length && store.installed(one.id)}
+      <p class="note">
+        {t('{count} things in this theme were left out.', { count: store.refused.length })}
+      </p>
+    {/if}
+  </div>
+{/snippet}
+
+<style>
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+    backdrop-filter: blur(3px);
+    z-index: 44;
+  }
+
+  /* A little inside the settings sheet it sits on, so the one underneath is
+     still visibly there. */
+  .sheet {
+    position: fixed;
+    top: 13vh;
+    left: 50%;
+    translate: -50% 0;
+    width: min(52rem, calc(100vw - 4rem));
+    height: 70vh;
+    z-index: 45;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .find {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 11px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    outline: none;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  .find:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .sort {
+    flex: none;
+    width: 8.5rem;
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--text-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .back,
+  .shut {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .back:hover,
+    .shut:hover {
+      background: var(--surface-2);
+      color: var(--text-strong);
+    }
+  }
+
+  .back:active,
+  .shut:active {
+    background: var(--press);
+  }
+
+  .back svg,
+  .shut svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .body {
+    padding: var(--space-4);
+    overflow-y: auto;
+  }
+
+  /* ── The grid ──────────────────────────────────────────────────── */
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: var(--space-3);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    text-align: left;
+    cursor: default;
+    overflow: hidden;
+    transition:
+      translate var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .card:hover {
+      translate: 0 -2px;
+      border-color: var(--line-strong);
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  .card:active {
+    translate: 0 0;
+  }
+
+  .card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* The miniature. Its own colours come from the theme; the size is the card's
+     business, and the scale is what turns a note into a miniature of one. */
+  .frame {
+    --mini-scale: 0.3;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .frame.big {
+    --mini-scale: 0.62;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+  }
+
+  .card.waiting {
+    /* Nothing to show yet, and nothing to say about it either. */
+    border-style: dashed;
+    opacity: 0.6;
+  }
+
+  .card.waiting .frame {
+    background: var(--surface-3);
+  }
+
+  .label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 9px 11px;
+  }
+
+  .who {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .name {
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    color: var(--text-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .by {
+    font-size: var(--text-xs);
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .state {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .state.using,
+  .state.up {
+    stroke: var(--accent);
+  }
+
+  /* ── The full preview ──────────────────────────────────────────── */
+
+  .full {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .sides {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .side {
+    padding: 4px 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .side.at {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* A ring rather than a border, so the chip is only the colour it names and a
+     colour the same as the surface still has an edge. */
+  .chip {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-sm);
+    background: var(--chip);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+  }
+
+  .says {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--muted-strong);
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .facts .tag {
+    padding: 1px 7px;
+    border-radius: 99px;
+    background: var(--surface-2);
+  }
+
+  .row {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+  }
+
+  .row button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .row .primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  @media (hover: hover) {
+    .row .primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+  }
+
+  .row .primary:active:not(:disabled) {
+    background: var(--accent-press);
+  }
+
+  .row .quiet {
+    background: none;
+    color: var(--muted);
+  }
+
+  @media (hover: hover) {
+    .row .quiet:hover {
+      background: var(--surface-2);
+      color: var(--danger);
+    }
+  }
+
+  .row button:disabled {
+    opacity: 0.5;
+  }
+
+  .note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  .note.bad {
+    color: var(--danger);
+  }
+
+  @media (max-width: 720px) {
+    .sheet {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      translate: none;
+      width: 100%;
+      height: 90dvh;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    }
+  }
+</style>

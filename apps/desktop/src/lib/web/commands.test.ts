@@ -41,6 +41,8 @@ vi.mock('./store', () => ({
   meta: {
     get: (key: string) => Promise.resolve(disk.meta.get(key)),
     put: (key: string, value: string) => Promise.resolve(void disk.meta.set(key, value)),
+    remove: (key: string) => Promise.resolve(void disk.meta.delete(key)),
+    keys: () => Promise.resolve([...disk.meta.keys()].sort()),
   },
   snapshots: {
     put: (row: SnapshotRow) => Promise.resolve(void disk.snapshots.push(row)),
@@ -345,11 +347,55 @@ describe('a pasted picture', () => {
   })
 })
 
+/** The store installs a theme by writing a file into a folder. In a browser the
+ *  folder is a prefix in storage, which is what makes the gallery work in the web
+ *  build as well as on a desktop. */
+describe('installed themes', () => {
+  test('an empty store holds none', async () => {
+    expect(await webInvoke('list_themes')).toEqual([])
+  })
+
+  test('a written theme is listed, read back, and taken away again', async () => {
+    const path = await webInvoke<string>('write_theme', {
+      id: 'warm-paper',
+      css: '/*! nib-theme */',
+    })
+
+    expect(await webInvoke('list_themes')).toEqual([
+      { id: 'file:warm-paper', name: 'Warm paper', path },
+    ])
+    expect(await webInvoke('read_theme', { path })).toBe('/*! nib-theme */')
+
+    await webInvoke('remove_theme', { id: 'warm-paper' })
+    expect(await webInvoke('list_themes')).toEqual([])
+  })
+
+  test('a second write replaces the first, as a file would', async () => {
+    await webInvoke('write_theme', { id: 'mono', css: 'one' })
+    await webInvoke('write_theme', { id: 'mono', css: 'two' })
+
+    expect(await webInvoke('list_themes')).toHaveLength(1)
+    expect(await webInvoke('read_theme', { path: 'themes/mono.css' })).toBe('two')
+  })
+
+  test('an id that is not one never becomes a key', async () => {
+    for (const id of ['../custom', 'Mono', 'a b', '']) {
+      await expect(webInvoke('write_theme', { id, css: 'x' })).rejects.toThrow()
+    }
+
+    expect(await webInvoke('list_themes')).toEqual([])
+  })
+
+  test('a theme that is not there reads as nothing rather than throwing', async () => {
+    expect(await webInvoke('read_theme', { path: 'themes/nothing.css' })).toBe('')
+  })
+})
+
 describe('what the browser cannot do', () => {
   test('answers the shape that makes the app hide the feature', async () => {
     expect(await webInvoke('has_pandoc')).toBe(false)
     expect(await webInvoke('take_startup_files')).toEqual([])
-    expect(await webInvoke('list_themes')).toEqual([])
+    expect(await webInvoke('theme_dir')).toBe('')
   })
 
   test('says so outright for a command nobody has stood in for', async () => {

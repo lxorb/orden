@@ -15,6 +15,12 @@ export const themeCss = [tokens, base].join('\n')
  *  of an app around the text, and how it prints. */
 export const exportCss = [note, exported].join('\n')
 
+/** Everything that dresses a note, without the app around it. The theme
+ *  gallery re-scopes these onto its miniatures, so a card is drawn by the same
+ *  rules as the page it is a miniature of rather than by a second set written
+ *  to look like them. */
+export const proseCss = [base, note].join('\n')
+
 /** KaTeX's own stylesheet. Its fonts are referenced by relative path, which
  *  an export resolves before writing the file. */
 export const katexCss = katex

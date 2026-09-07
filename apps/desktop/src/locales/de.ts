@@ -232,6 +232,33 @@ export const de: Dictionary = {
   'Edit custom CSS': 'Eigenes CSS bearbeiten',
   'Edit snippets': 'Textbausteine bearbeiten',
   'Reload themes and custom CSS': 'Designs und eigenes CSS neu laden',
+
+  // The theme store, and the sample note its cards show
+  Themes: 'Designs',
+  Browse: 'Durchsuchen',
+  'Search themes': 'Designs suchen',
+  Sort: 'Sortieren',
+  Newest: 'Neueste',
+  Install: 'Installieren',
+  Installed: 'Installiert',
+  'In use': 'In Gebrauch',
+  Use: 'Verwenden',
+  Remove: 'Entfernen',
+  '{count} things in this theme were left out.':
+    '{count} Dinge in diesem Design wurden weggelassen.',
+  'A note': 'Eine Notiz',
+  'Words with {bold} and a {link}.': 'Wörter mit {bold} und einem {link}.',
+  bold: 'fett',
+  link: 'Link',
+  'One thing': 'Eine Sache',
+  Another: 'Eine andere',
+  'could not reach the theme store': 'Der Design-Store war nicht erreichbar',
+  'could not fetch that theme': 'Dieses Design konnte nicht geladen werden',
+  'could not install that theme': 'Dieses Design konnte nicht installiert werden',
+  'could not remove that theme': 'Dieses Design konnte nicht entfernt werden',
+  'that theme has nothing a theme may set':
+    'Dieses Design setzt nichts, was ein Design setzen darf',
+
   General: 'Allgemein',
   Editor: 'Editor',
   Markdown: 'Markdown',

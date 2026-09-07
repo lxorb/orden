@@ -25,6 +25,8 @@
   import { sync } from './sync.svelte'
   import { isDesktop } from './tauri'
   import { theme } from './theme.svelte'
+  import ThemeStore from './ThemeStore.svelte'
+  import { store } from './themes/store.svelte'
   import { type Field, preferences, resetPane, resettable } from './preferences'
   import { readableSize, usage } from './usage.svelte'
   import { viewport } from './viewport.svelte'
@@ -56,6 +58,7 @@
       { section: 'account', label: t('Storage'), text: [] },
       { section: 'account', label: account.signedIn ? t('Sign out') : t('Sign in'), text: [] },
       { section: 'appearance', label: t('Accent'), text: theme.accents.map((one) => t(one.name)) },
+      { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
       {
         section: 'export',
         label: t('Page'),
@@ -119,6 +122,12 @@
   // Signing out while one of them is open would leave a pane with nothing in it.
   $effect(() => {
     if (!SECTIONS.some((one) => one.id === settings.section)) settings.section = 'account'
+  })
+
+  // The theme store is a sheet over this one, so closing this one closes it too:
+  // it would otherwise be waiting there the next time the settings opened.
+  $effect(() => {
+    if (!settings.open) store.close()
   })
 
   /** Opens a pane: from the list, from the search results, from anywhere. */
@@ -372,6 +381,9 @@
       </div>
     {/if}
   </div>
+
+  <!-- The theme store, over this sheet and only ever reached from it. -->
+  <ThemeStore />
 {/if}
 
 <!-- What search turned up: each setting with its own control, captioned with
@@ -878,6 +890,16 @@
 {/snippet}
 
 {#snippet appearanceExtras()}
+  <!-- Under the theme it belongs to, without a heading of its own: it is another
+       way of choosing the same thing. Nowhere else in the app says there is a
+       store, so nobody who never opens it ever hears about it. -->
+  <div class="card">
+    <div class="setting">
+      <span class="name">{t('Themes')}</span>
+      <button class="pill" onclick={() => store.show()}>{t('Browse')}</button>
+    </div>
+  </div>
+
   <h3>{t('Accent')}</h3>
   <div class="card">
     <div class="accents">
@@ -1223,6 +1245,36 @@
 
   .action:disabled {
     opacity: 0.5;
+  }
+
+  /* A small action at the end of a row, where the control would be. Quiet
+     until pointed at, like every other action in a pane. */
+  .pill {
+    flex: none;
+    padding: 5px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 99px;
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  .pill:active {
+    background: var(--accent-soft);
   }
 
   /* ── A shortcut and its key ────────────────────────────────────── */

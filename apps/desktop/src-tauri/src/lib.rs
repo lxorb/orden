@@ -80,6 +80,8 @@ pub fn run() {
             themes::theme_dir,
             themes::list_themes,
             themes::read_theme,
+            themes::write_theme,
+            themes::remove_theme,
             themes::custom_css_path,
             themes::read_custom_css,
             themes::snippets_path,

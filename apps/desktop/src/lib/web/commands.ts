@@ -418,6 +418,47 @@ async function purgeSnapshots(days: number): Promise<number> {
   return dropped
 }
 
+/* ── Themes ───────────────────────────────────────────────────────── */
+
+/** Installed themes live under a shared prefix, which is this storage's version
+ *  of the folder the desktop keeps them in. */
+const THEMES = 'themes/'
+
+/** The same shape the crate insists an id has, for the same reason: here it
+ *  becomes a key rather than a path, and a key that could be anything would
+ *  let a theme write over `custom.css`. */
+const THEME_ID = /^[a-z0-9][a-z0-9-]{0,38}$/
+
+const themeKey = (id: string) => `${THEMES}${id}.css`
+
+/** `night-owl` becomes `Night owl`, the way the crate labels a theme file.
+ *  Only what a theme with no stamp of its own is called. */
+function humanise(stem: string): string {
+  const spaced = stem.replace(/[-_]/g, ' ')
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}
+
+async function listThemes(): Promise<{ id: string; name: string; path: string }[]> {
+  const keys = (await meta.keys()).filter(
+    (key): key is string => typeof key === 'string' && key.startsWith(THEMES),
+  )
+
+  return keys
+    .map((key) => {
+      const stem = key.slice(THEMES.length).replace(/\.css$/, '')
+      return { id: `file:${stem}`, name: humanise(stem), path: key }
+    })
+    .sort((a, b) => (a.name < b.name ? -1 : 1))
+}
+
+async function writeTheme(id: string, css: string): Promise<string> {
+  if (!THEME_ID.test(id)) throw new Error(`${id} is not a theme id`)
+
+  const key = themeKey(id)
+  await meta.put(key, css)
+  return key
+}
+
 /** Commands the browser genuinely cannot serve. Each returns the shape that
  *  makes the interface hide the feature rather than break on it. */
 const UNSUPPORTED: Record<string, unknown> = {
@@ -429,7 +470,6 @@ const UNSUPPORTED: Record<string, unknown> = {
   write_log: null,
   read_log: '',
   log_dir: '',
-  list_themes: [],
   theme_dir: '',
   custom_css_path: '/custom.css',
   snippets_path: '/snippets.json',
@@ -614,6 +654,19 @@ export async function webInvoke<T>(
 
     case 'purge_snapshots':
       return (await purgeSnapshots(args.days as number)) as T
+
+    case 'list_themes':
+      return (await listThemes()) as T
+
+    case 'read_theme':
+      return ((await meta.get(path)) ?? '') as T
+
+    case 'write_theme':
+      return (await writeTheme(args.id as string, args.css as string)) as T
+
+    case 'remove_theme':
+      await meta.remove(themeKey(args.id as string))
+      return undefined as T
 
     case 'read_custom_css':
       return ((await meta.get('custom.css')) ?? '') as T

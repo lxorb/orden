@@ -19,6 +19,24 @@ const CUSTOM_CSS: &str = "/* Loaded after the active theme. Anything here wins. 
 /// What `snippets.json` says when it is first made.
 const SNIPPETS: &str = "{\n  \"todo\": \"- [ ] \",\n  \"note\": \"> [!NOTE]\\n> \"\n}\n";
 
+/// The most a theme may be. The store refuses a bigger one before it is offered;
+/// this is the same limit on the side that writes the file, with room for the
+/// line the store stamps on the front.
+const MOST_BYTES: usize = 64 * 1024;
+
+/// Whether a string may name a theme file. Lower-case letters, digits and
+/// hyphens, starting with one of the first two, which is also the shape the
+/// registry gives its folders. Anything else, `..` and a separator included,
+/// is not an id - which is what keeps an id from becoming a path.
+fn is_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= 39
+        && id.starts_with(|first: char| first.is_ascii_lowercase() || first.is_ascii_digit())
+        && id
+            .chars()
+            .all(|one| one.is_ascii_lowercase() || one.is_ascii_digit() || one == '-')
+}
+
 /// One installed theme.
 #[derive(Serialize)]
 pub struct ThemeFile {
@@ -73,6 +91,49 @@ pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
     }
 
     fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))
+}
+
+/// Installs a theme from the store, replacing whatever was under that id.
+///
+/// The stylesheet has already been read down to what a theme may be by the time
+/// it arrives here; what this adds is that the id can only ever name a file in
+/// the themes folder. Written to a neighbour and renamed over the target, so a
+/// theme being updated is either the old one or the new one and never half of
+/// each - a half-written stylesheet is what the window would be showing.
+#[tauri::command]
+pub fn write_theme(app: AppHandle, id: String, css: String) -> Result<String, String> {
+    if !is_id(&id) {
+        return Err(format!("{id} is not a theme id"));
+    }
+
+    if css.len() > MOST_BYTES {
+        return Err("that stylesheet is larger than a theme".into());
+    }
+
+    let dir = themes_root(&app)?;
+    let target = dir.join(format!("{id}.css"));
+    let part = dir.join(format!("{id}.css.part"));
+
+    fs::write(&part, css).map_err(|error| cannot("write", &part, &error))?;
+    fs::rename(&part, &target).map_err(|error| cannot("write", &target, &error))?;
+
+    Ok(target.to_string_lossy().to_string())
+}
+
+/// Takes an installed theme away. A theme that is already gone is not an error:
+/// the folder ends up the way the caller asked for either way.
+#[tauri::command]
+pub fn remove_theme(app: AppHandle, id: String) -> Result<(), String> {
+    if !is_id(&id) {
+        return Err(format!("{id} is not a theme id"));
+    }
+
+    let path = themes_root(&app)?.join(format!("{id}.css"));
+    match fs::remove_file(&path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(cannot("remove", &path, &error)),
+    }
 }
 
 /// Where `custom.css` is, making it first if this is the first time it is asked
@@ -177,8 +238,24 @@ fn humanise(stem: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{humanise, is_css};
+    use super::{humanise, is_css, is_id};
     use std::path::Path;
+
+    #[test]
+    fn an_id_names_a_file_and_never_a_path() {
+        assert!(is_id("warm-paper"));
+        assert!(is_id("2026"));
+        assert!(!is_id(""));
+        assert!(!is_id("-leading"));
+        assert!(!is_id(".."));
+        assert!(!is_id("a/b"));
+        assert!(!is_id("a\\b"));
+        assert!(!is_id("../etc/passwd"));
+        assert!(!is_id("Warm-Paper"));
+        assert!(!is_id("warm paper"));
+        assert!(!is_id("thema.css"));
+        assert!(!is_id(&"a".repeat(40)));
+    }
 
     #[test]
     fn labels_a_theme_the_way_typora_does() {

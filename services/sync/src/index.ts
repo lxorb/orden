@@ -9,6 +9,7 @@ import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
 import { settings } from './settings'
 import { spaces } from './spaces'
+import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
 import type { Env, Variables } from './types'
@@ -38,6 +39,10 @@ app.route('/v1/auth', auth)
 // shared, and a published blog has no reader to authenticate. Registered ahead
 // of the guard below for that reason.
 app.route('/i', publicBlobs)
+
+// The theme store's catalogue. Public, read-only, and asked for by the app
+// before anybody has signed in, so it sits ahead of the guard like the images.
+app.route('/themes', themes)
 
 // The connector carries its own token, so it sits outside the session guard.
 // Open to every origin: LLM clients run anywhere, some of them in a browser.
