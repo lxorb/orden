@@ -182,24 +182,32 @@
   box-decoration-break: clone;
 }
 
-/* The selection is a layer of rectangles. CodeMirror keeps it beneath the
-   text, so anything with a background of its own - an inline code chip, a
-   front matter line - sat on top of it and hid the selection. It is lifted
-   above the text here and blended, so the words keep their colour: screen
-   leaves light text white on a dark page, multiply leaves dark text black on
-   a light one, and over a plain background either comes out the same shade
-   the layer had underneath. CodeMirror writes the layer's depth onto the
-   element itself, which only an important declaration outranks.
+/* The selection is one block per range, traced around the rectangles CodeMirror
+   measures and clipped to that outline; the shape is in selection/shape.ts in
+   @nib/editor and the colour is `--selection`. CodeMirror's own layer is here
+   too: it shows nothing, but a phone's drag handles are its, and both layers
+   behave the same way.
+
+   CodeMirror keeps a selection beneath the text, so anything with a background
+   of its own - an inline code chip, a front matter line - sat on top of it and
+   hid the selection. It is lifted above the text here and blended, so the words
+   keep their colour: screen leaves light text white on a dark page, multiply
+   leaves dark text black on a light one, and over a plain background either
+   comes out the same shade the layer had underneath. CodeMirror writes the
+   layer's depth onto the element itself, which only an important declaration
+   outranks.
 
    Being above the text, the layer would take every click aimed at selected
    text, and a click inside a selection - which should collapse it to a caret
    there - would never reach the editor. So it lets the pointer through. */
+.cm-editor .cm-nib-selection,
 .cm-editor .cm-selectionLayer {
   z-index: 1 !important;
   mix-blend-mode: screen;
   pointer-events: none;
 }
 
+[data-theme='light'] .cm-editor .cm-nib-selection,
 [data-theme='light'] .cm-editor .cm-selectionLayer {
   mix-blend-mode: multiply;
 }

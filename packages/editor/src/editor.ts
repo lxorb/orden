@@ -2,13 +2,7 @@ import { history } from '@codemirror/commands'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches } from '@codemirror/search'
 import { EditorState, Prec, type Text } from '@codemirror/state'
-import {
-  EditorView,
-  drawSelection,
-  dropCursor,
-  highlightActiveLine,
-  keymap,
-} from '@codemirror/view'
+import { EditorView, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
 import { remoteCarets } from './carets'
 import { editorCompletion } from './emoji'
 import { external } from './external'
@@ -21,6 +15,7 @@ import { codeThemeExtension } from './code-theme'
 import { closeFence } from './commands'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richPaste } from './paste'
+import { nibSelection } from './selection/layer'
 import { modeExtensions } from './modes'
 import { type SharedDoc, sharedOf, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
@@ -90,7 +85,9 @@ export function editorState(options: StateOptions): EditorState {
       // The other people in this note, when it is one several devices are
       // writing in; nothing at all until the app says there is somebody.
       remoteCarets(),
-      drawSelection(),
+      // The selection, as one block with its corners smoothed; see
+      // selection/layer.ts. Carries the view's own caret with it.
+      nibSelection(),
       dropCursor(),
       indentOnInput(),
       bracketMatching(),

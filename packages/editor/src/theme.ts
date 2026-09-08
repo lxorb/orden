@@ -25,18 +25,10 @@ export const nibTheme = EditorView.theme({
     borderLeftColor: 'var(--accent)',
     borderLeftWidth: '2px',
   },
-  // `drawSelection` paints the selection itself. The browser's own highlight has
-  // to be turned off inside the editor, or the two stack and the words under
-  // them wash out.
-  //
-  // The focused case has to be written out the long way. CodeMirror's base
-  // theme claims it with `&light.cm-focused > .cm-scroller > .cm-selectionLayer
-  // .cm-selectionBackground` and an opaque pale lavender; a shorter selector
-  // loses to it, which left the dark theme painting light text on a light box.
-  '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground':
-    {
-      backgroundColor: 'var(--selection)',
-    },
+  // The editor paints the selection itself, as one block per range; see
+  // selection/layer.ts, which carries its colour with it. The browser's own
+  // highlight has to be turned off inside the editor, or the two stack and the
+  // words under them wash out.
   '.cm-content ::selection, .cm-content::selection': {
     backgroundColor: 'transparent',
   },

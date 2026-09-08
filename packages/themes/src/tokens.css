@@ -26,6 +26,10 @@
   --radius-sm: 5px;
   --radius-md: 9px;
   --radius-lg: 14px;
+  /* The corner a selected block is drawn with. Its own token because it is read
+     back as a number and traced into the outline rather than declared on a box;
+     see selection/shape.ts in @nib/editor. A plain length, no calc. */
+  --selection-radius: 6px;
 
   /* A press gets its own step past hover: hover says a thing is there, this
      says the click landed - which is what matters where the answer takes a
