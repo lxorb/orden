@@ -191,6 +191,31 @@ export interface Context {
   inkBox: Box | null
   /** The pen as the bar has it set. */
   pen: { tool: InkTool; size: number; color: string }
+  /** Whether a pen has ever been on this glass. */
+  penSeen: boolean
+  /** Whether a finger draws anyway, which is the one way round the above. */
+  fingerDraws: boolean
+}
+
+/** The tools a pen is for. Everything else on the bar is for a finger as much as
+ *  for anything: a card has to be placed and a shape dragged out somehow. */
+const INK: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
+
+/** What a press means with this pointer, which is not always what the bar says.
+ *
+ *  On a tablet with a stylus the two are different instruments. Once a pen has
+ *  been on the glass the finger stops being a nib and goes back to what a finger
+ *  is for - moving the plane, picking things up, holding for the menu - whichever
+ *  pen the bar is holding, because a hand resting on a page while the other one
+ *  writes must not leave a mark. That is what every stylus app does and what
+ *  nobody has to be told.
+ *
+ *  A device that has never seen a pen has no other way to draw, so there the
+ *  finger draws. And a reader who wants it anyway says so once, in the pen's own
+ *  row, and is believed. */
+function toolFor(input: Down, context: Context): Tool {
+  if (input.pointer !== 'touch' || !context.penSeen || context.fingerDraws) return context.tool
+  return INK.has(context.tool) ? 'select' : context.tool
 }
 
 /** One event. The machine and the effects, never a change in place: a reducer
@@ -219,16 +244,24 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
   // A hand resting on the glass while the pen is on it is a hand, not a gesture.
   if (input.pointer === 'touch' && machine.penDown) return { machine, effects: [] }
 
-  const penDown = machine.penDown || input.pointer === 'pen'
+  // A pen arriving is what the hand is drawing with, whatever else is on the
+  // glass. A palm that landed a moment before it began a gesture nobody meant,
+  // and it is dropped here rather than left to drag the plane out from under the
+  // stroke.
+  const now: Machine =
+    input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driving: null } : machine
+
+  const penDown = now.penDown || input.pointer === 'pen'
+  const tool = toolFor(input, context)
 
   // A second finger turns a pan into a pinch, which is the only two-pointer
   // gesture there is. A third is spare and changes nothing.
-  if (input.pointer === 'touch' && machine.gesture) {
-    const first = machine.gesture.kind === 'pan' ? machine.gesture : null
+  if (input.pointer === 'touch' && now.gesture) {
+    const first = now.gesture.kind === 'pan' ? now.gesture : null
     if (first) {
       return {
         machine: {
-          ...machine,
+          ...now,
           penDown,
           gesture: {
             kind: 'pinch',
@@ -243,30 +276,30 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
 
     return {
       machine: {
-        ...machine,
+        ...now,
         penDown,
-        spare: [...machine.spare, { id: input.id, screen: input.screen }],
+        spare: [...now.spare, { id: input.id, screen: input.screen }],
       },
       effects: [],
     }
   }
 
-  if (machine.gesture) return { machine: { ...machine, penDown }, effects: [] }
+  if (now.gesture) return { machine: { ...now, penDown }, effects: [] }
 
-  const held = { ...machine, penDown, driving: input.id }
+  const held = { ...now, penDown, driving: input.id }
 
   // The right button is the menu's, wherever it lands. It starts nothing, so it
   // drives nothing either.
   if (input.button === 2) {
     return {
-      machine: { ...held, driving: machine.driving },
+      machine: { ...held, driving: now.driving },
       effects: [{ do: 'menu', at: input.at }],
     }
   }
 
   // Space, the middle button and the hand tool all pan, over a card as readily
   // as over the plane: a hand that has learned one of them uses it everywhere.
-  if (machine.spacing || input.button === 1 || context.tool === 'hand') {
+  if (now.spacing || input.button === 1 || tool === 'hand') {
     return {
       machine: {
         ...held,
@@ -285,7 +318,7 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
-  switch (context.tool) {
+  switch (tool) {
     case 'draw':
       return {
         machine: {
@@ -337,8 +370,8 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     case 'link':
     case 'group':
       return {
-        machine: { ...held, driving: machine.driving },
-        effects: [{ do: 'place', tool: context.tool, at: input.at }],
+        machine: { ...held, driving: now.driving },
+        effects: [{ do: 'place', tool, at: input.at }],
       }
     case 'rect':
     case 'ellipse':
@@ -347,13 +380,14 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
       return {
         machine: {
           ...held,
-          gesture: { kind: 'shape', tool: context.tool, from: input.at, to: input.at },
+          gesture: { kind: 'shape', tool, from: input.at, to: input.at },
         },
         effects: [],
       }
     case 'select':
       // The hand is not here: it panned above, from anywhere, which is what a
-      // hand does. Only the arrow reaches the rest of this file.
+      // hand does. Only the arrow reaches the rest of this file, and a finger on
+      // a device with a pen reaches it whatever the bar says.
       break
   }
 

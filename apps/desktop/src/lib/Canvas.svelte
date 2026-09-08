@@ -43,6 +43,7 @@
   } from './canvas/edits'
   import { type Canvas as Plane, type InkPoint, readCanvas, writeCanvas } from './canvas/format'
   import { boxOf, GRID, HANDLES, overlaps, type Point, rectBetween } from './canvas/geometry'
+  import { hand } from './canvas/hand.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
   import { assisted, tidyShape, transformed } from './canvas/ink'
   import { DEFAULT_INK, readPalette } from './canvas/palette'
@@ -467,6 +468,8 @@
       scale: camera.scale,
       inkBox: box,
       pen: { ...tools.ink, color: tools.colour },
+      penSeen: hand.penSeen,
+      fingerDraws: hand.fingerDraws,
     })
 
     machine = next.machine
@@ -575,6 +578,9 @@
     began = event.timeStamp
 
     const coarse = event.pointerType === 'touch'
+    // A pen on this glass is remembered for good: from now on the finger moves
+    // the plane about rather than drawing on it. See canvas/hand.svelte.ts.
+    if (event.pointerType === 'pen') hand.sawPen()
     host?.setPointerCapture(event.pointerId)
 
     send({

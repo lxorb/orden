@@ -661,6 +661,7 @@ export const fr: Dictionary = {
   Brush: 'Pinceau',
   Calligraphy: 'Calligraphie',
   'Width {number}': 'Épaisseur {number}',
+  'Finger draws': 'Le doigt dessine',
   'Another colour': 'Autre couleur',
   'Turn into a note': 'Transformer en note',
   'Bring to front': 'Mettre au premier plan',

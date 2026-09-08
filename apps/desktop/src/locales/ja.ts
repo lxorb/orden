@@ -659,6 +659,7 @@ export const ja: Dictionary = {
   Brush: '筆',
   Calligraphy: 'カリグラフィー',
   'Width {number}': '太さ {number}',
+  'Finger draws': '指で描く',
   'Another colour': '別の色',
   'Turn into a note': 'ノートにする',
   'Bring to front': '最前面へ',

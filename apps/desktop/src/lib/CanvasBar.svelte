@@ -16,6 +16,7 @@
 
   import { INK_SIZES, PENS, tools } from './canvas/tools.svelte'
   import { type InkTool } from './canvas/format'
+  import { hand } from './canvas/hand.svelte'
   import { DOTS } from './canvas/palette'
   import { type Tool } from './canvas/pointer'
   import { t } from './i18n.svelte'
@@ -115,6 +116,10 @@
     calligraphy: 'M2.6 10.6 9.8 3M4.2 11.8 11.4 4.2',
   }
 
+  /** A fingertip, for the one switch in the pen's row: whether a finger draws on
+   *  a device that has a pen. Only ever offered where the question exists. */
+  const FINGER = 'M4.6 11.4V8.2a2.4 2.4 0 0 1 4.8 0v3.2M7 8V4.2a1.2 1.2 0 0 1 2.4 0V8M4.6 8.6 3.4 7'
+
   /** How big a glyph reads. A finger and a pen want a bigger target than a
    *  mouse, and a tablet is held further away. */
   const wide = $derived(viewport.phone)
@@ -164,6 +169,23 @@
             <span style:width="{2 + one}px" style:height="{2 + one}px"></span>
           </button>
         {/each}
+
+        <!-- Only where there is a pen to be the other instrument. On a phone the
+             finger is the only one there is, so there is nothing to ask. -->
+        {#if hand.penSeen}
+          <span class="split"></span>
+
+          <button
+            type="button"
+            class:on={hand.fingerDraws}
+            title={t('Finger draws')}
+            aria-label={t('Finger draws')}
+            aria-pressed={hand.fingerDraws}
+            onclick={() => hand.toggleFinger()}
+          >
+            <svg viewBox="0 0 14 14"><path d={FINGER} /></svg>
+          </button>
+        {/if}
       </div>
     </div>
   {/if}

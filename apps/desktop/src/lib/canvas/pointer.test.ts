@@ -26,6 +26,8 @@ function context(over: Partial<Context> = {}): Context {
     scale: 1,
     inkBox: null,
     pen: { tool: 'pen', size: 3, color: '#000' },
+    penSeen: false,
+    fingerDraws: false,
     ...over,
   }
 }
@@ -339,6 +341,29 @@ describe('palm rejection', () => {
     expect(verbs(pen.effects)).toEqual(['stroke'])
   })
 
+  /** The palm usually lands first: a hand comes down on the page and then the nib
+   *  touches it. Whatever the heel of the hand started is not what anybody meant,
+   *  so the pen takes the glass and the plane stays where it was. */
+  test('a pen arriving takes the glass from a palm that got there first', () => {
+    const where = context({ tool: 'draw', penSeen: true })
+    const palm = play([down({ id: 1, pointer: 'touch' })], where)
+    expect(palm.machine.gesture?.kind).toBe('pan')
+
+    const pen = step(palm.machine, down({ id: 2, pointer: 'pen' }), where)
+
+    expect(pen.machine.gesture?.kind).toBe('draw')
+    expect(pen.machine.driving).toBe(2)
+    expect(pen.machine.penDown).toBe(true)
+
+    // And the palm dragging on has nothing to say about the plane.
+    const dragged = step(
+      pen.machine,
+      { kind: 'move', id: 1, at: HERE, screen: { x: 90, y: 0 }, samples: [], hit: NOTHING },
+      where,
+    )
+    expect(dragged.effects).toEqual([])
+  })
+
   test('the glass answers a finger again once the pen is off it', () => {
     const pen = play(
       [
@@ -351,6 +376,138 @@ describe('palm rejection', () => {
     expect(pen.machine.penDown).toBe(false)
     const finger = step(pen.machine, down({ id: 2, pointer: 'touch' }), context())
     expect(finger.machine.gesture?.kind).toBe('pan')
+  })
+})
+
+/** A tablet with a stylus is two instruments. The pen writes and the hand moves
+ *  the page, and it has to be able to do that with an ink tool in hand or there
+ *  is no way to reach the rest of the drawing. A phone has no pen, so there the
+ *  finger draws, because nothing else can. */
+describe('a finger on a device that has a pen', () => {
+  const INK = ['draw', 'erase', 'lasso'] as const
+  const tablet = (over: Partial<Context> = {}) => context({ penSeen: true, ...over })
+
+  test('pans the plane rather than drawing on it, whichever ink tool is in hand', () => {
+    for (const tool of INK) {
+      const { machine, effects } = play([down({ pointer: 'touch' })], tablet({ tool }))
+
+      expect(machine.gesture?.kind, tool).toBe('pan')
+      expect(verbs(effects), tool).toEqual(['leave'])
+    }
+  })
+
+  test('picks a card and carries it, whichever ink tool is in hand', () => {
+    for (const tool of INK) {
+      const { machine, effects } = play(
+        [down({ pointer: 'touch', hit: hit({ node: 'a' }) })],
+        tablet({ tool }),
+      )
+
+      expect(machine.gesture, tool).toMatchObject({ kind: 'drag', ids: ['a'] })
+      expect(verbs(effects), tool).toEqual(['leave', 'pick'])
+    }
+  })
+
+  test('tapped on the plane and lifted clears what was picked', () => {
+    const { effects } = play(
+      [down({ pointer: 'touch' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
+      tablet({ tool: 'draw', picked: ['a'] }),
+    )
+
+    expect(verbs(effects)).toEqual(['leave', 'clear'])
+  })
+
+  test('two of them pinch, with an ink tool in hand as with the arrow', () => {
+    const { machine } = play(
+      [
+        down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
+        down({ id: 2, pointer: 'touch', screen: { x: 100, y: 0 } }),
+      ],
+      tablet({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'pinch', apart: 100 })
+  })
+
+  test('held on the plane asks for the menu, with an ink tool in hand', () => {
+    const { effects } = play(
+      [down({ pointer: 'touch' }), { kind: 'held', at: { x: 7, y: 8 } }],
+      tablet({ tool: 'draw' }),
+    )
+
+    expect(effects.at(-1)).toEqual({ do: 'menu', at: { x: 7, y: 8 } })
+  })
+
+  /** A card has to be placed and a shape dragged out somehow, and on a tablet
+   *  the finger is what does it. Only the pen's own three tools are withheld. */
+  test('still places a card and drags out a shape', () => {
+    const placed = play([down({ pointer: 'touch' })], tablet({ tool: 'text' }))
+    expect(placed.effects).toEqual([{ do: 'place', tool: 'text', at: HERE }])
+
+    const shape = play([down({ pointer: 'touch' })], tablet({ tool: 'rect' }))
+    expect(shape.machine.gesture).toMatchObject({ kind: 'shape', tool: 'rect' })
+  })
+
+  test('still pans with the hand tool', () => {
+    const { machine } = play([down({ pointer: 'touch' })], tablet({ tool: 'hand' }))
+    expect(machine.gesture?.kind).toBe('pan')
+  })
+
+  /** The pen is the instrument. Nothing about it changes. */
+  test('leaves the pen drawing, rubbing out and lassoing as before', () => {
+    const drawn = play([down({ pointer: 'pen' })], tablet({ tool: 'draw' }))
+    expect(drawn.machine.gesture?.kind).toBe('draw')
+
+    const rubbed = play([down({ pointer: 'pen' })], tablet({ tool: 'erase' }))
+    expect(rubbed.machine.gesture?.kind).toBe('erase')
+
+    const caught = play([down({ pointer: 'pen' })], tablet({ tool: 'lasso' }))
+    expect(caught.machine.gesture?.kind).toBe('lasso')
+  })
+
+  /** With the arrow a pen is a mouse: it bands rather than panning, which is what
+   *  a nib on a plane you are not drawing on should do. */
+  test('leaves the pen behaving as a mouse with the arrow', () => {
+    const { machine } = play([down({ pointer: 'pen' })], tablet())
+    expect(machine.gesture?.kind).toBe('band')
+  })
+
+  test('leaves the mouse alone', () => {
+    for (const tool of INK) {
+      const { machine } = play([down({ pointer: 'mouse' })], tablet({ tool }))
+      expect(machine.gesture?.kind, tool).toBe(tool === 'erase' ? 'erase' : tool)
+    }
+  })
+
+  /** The one way round it, for the hand in a hundred that wants it: a switch in
+   *  the pen's own row, and the finger is a nib again. */
+  test('draws again when the reader has asked for it', () => {
+    const { machine } = play(
+      [down({ pointer: 'touch' })],
+      tablet({ tool: 'draw', fingerDraws: true }),
+    )
+
+    expect(machine.gesture?.kind).toBe('draw')
+  })
+})
+
+/** A phone has no pen and never will, so the finger has to draw: there is no
+ *  other way to put a mark on the plane at all. */
+describe('a finger on a device that has never seen a pen', () => {
+  test('draws, rubs out and lassoes as before', () => {
+    const drawn = play([down({ pointer: 'touch' })], context({ tool: 'draw' }))
+    expect(drawn.machine.gesture?.kind).toBe('draw')
+
+    const rubbed = play([down({ pointer: 'touch' })], context({ tool: 'erase' }))
+    expect(rubbed.machine.gesture?.kind).toBe('erase')
+
+    const caught = play([down({ pointer: 'touch' })], context({ tool: 'lasso' }))
+    expect(caught.machine.gesture?.kind).toBe('lasso')
+  })
+
+  test('still pans with the arrow, as it always did', () => {
+    const { machine } = play([down({ pointer: 'touch' })], context())
+    expect(machine.gesture?.kind).toBe('pan')
   })
 })
 

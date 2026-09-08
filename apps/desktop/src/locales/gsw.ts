@@ -660,6 +660,7 @@ export const gsw: Dictionary = {
   Brush: 'Pinsel',
   Calligraphy: 'Kalligrafie',
   'Width {number}': 'Breiti {number}',
+  'Finger draws': 'Finger zeichnet',
   'Another colour': 'Anderi Farb',
   'Turn into a note': 'I e Notiz umwandle',
   'Bring to front': 'Ganz nach vorne',
