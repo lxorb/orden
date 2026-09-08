@@ -29,7 +29,7 @@
   import { store } from './themes/store.svelte'
   import { type Field, preferences, resetPane, resettable } from './preferences'
   import { readableSize, usage } from './usage.svelte'
-  import { viewport } from './viewport.svelte'
+  import { pageHeight, viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
 
   const { view }: { view?: EditorView | undefined } = $props()
@@ -307,7 +307,7 @@
     onclick={() => (settings.open = false)}
   ></div>
 
-  <div class="sheet" class:phone={viewport.phone} transition:appear>
+  <div class="sheet" class:phone={viewport.phone} style:height={pageHeight()} transition:appear>
     {#if viewport.phone}
       <header class="bar">
         {#if !settings.listing}
@@ -985,6 +985,16 @@
     border-right: 1px solid var(--line);
     background: var(--bg);
     overflow-y: auto;
+  }
+
+  /* Everything in the list keeps its own height. As flex items the groups may
+     shrink, and a card that clips what overflows it - which is what gives a
+     phone's group its rounded corners - may shrink to nothing: on a screen too
+     short for the whole list they were squeezed until they fitted, which cut
+     each row in half and left the list with nothing to overflow and so nothing
+     to scroll. A list too long for its box overflows it and is scrolled. */
+  nav > * {
+    flex: none;
   }
 
   nav h1 {
@@ -1831,372 +1841,379 @@
 
   /* A page, not a window: the list of panes first, and the pane chosen from
      it sliding in over it, with its own header to come back by. Everything
-     is grouped into inset cards and sized for a thumb. */
-  @media (max-width: 720px) {
-    .sheet.phone {
-      inset: 0;
-      top: 0;
-      left: 0;
-      translate: none;
-      width: 100%;
-      height: 100dvh;
-      grid-template-columns: 1fr;
-      grid-template-rows: auto 1fr;
-      border: none;
-      border-radius: 0;
-      box-shadow: none;
-      background: var(--bg);
-    }
+     is grouped into inset cards and sized for a thumb.
 
-    .bar {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      height: calc(52px + env(safe-area-inset-top));
-      padding: env(safe-area-inset-top) 6px 0;
-      border-bottom: 1px solid var(--line);
-      background: var(--bg);
-    }
+     Written against the class rather than a width, because the width is not
+     what decides it. The phone app is a phone whatever the screen measures
+     (see viewport.svelte.ts), so held sideways it is wider than any breakpoint
+     a stylesheet would pick: the markup showed the page, the media query did
+     not match, and the header ended up as an unstyled block in a column of a
+     window that was never meant to be there. One flag, read by both. */
+  .sheet.phone {
+    inset: 0;
+    top: 0;
+    left: 0;
+    translate: none;
+    width: 100%;
+    /* The last resort, for the frame before the visual viewport is measured;
+       the height the page is actually given is set from the store. */
+    height: 100dvh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--bg);
+  }
 
-    .bar h1 {
-      flex: 1;
-      min-width: 0;
-      margin: 0;
-      font-family: var(--font-ui);
-      font-size: 17px;
-      font-weight: 620;
-      color: var(--text-strong);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  .sheet.phone .bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: calc(52px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 6px 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
 
-    /* Without a back button before it, the title lines up with the cards. */
-    .bar h1.inset {
-      padding-left: 10px;
-    }
+  .sheet.phone .bar h1 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 17px;
+    font-weight: 620;
+    color: var(--text-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    .bar .icon {
-      flex: none;
-      width: 44px;
-      height: 44px;
-      display: grid;
-      place-items: center;
-      padding: 0;
-      border: none;
-      border-radius: var(--radius-md);
-      background: none;
-      color: var(--text);
-      cursor: default;
-    }
+  /* Without a back button before it, the title lines up with the cards. */
+  .sheet.phone .bar h1.inset {
+    padding-left: 10px;
+  }
 
-    .bar .icon:active {
-      background: var(--surface-2);
-    }
+  .sheet.phone .bar .icon {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--text);
+    cursor: default;
+  }
 
-    .bar .icon svg {
-      width: 20px;
-      height: 20px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.6;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+  .sheet.phone .bar .icon:active {
+    background: var(--surface-2);
+  }
 
-    nav {
-      gap: 0;
-      padding: var(--space-3) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
-      border-right: none;
-      background: none;
-    }
+  .sheet.phone .bar .icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 
-    .search {
-      height: 44px;
-      margin-bottom: var(--space-4);
-      padding: 0 14px;
-      border-color: var(--line);
-      border-radius: var(--radius-md);
-      background: var(--surface);
-    }
+  .sheet.phone nav {
+    gap: 0;
+    padding: var(--space-3) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
+    border-right: none;
+    background: none;
+  }
 
-    .search svg {
-      width: 16px;
-      height: 16px;
-    }
+  .sheet.phone .search {
+    height: 44px;
+    margin-bottom: var(--space-4);
+    padding: 0 14px;
+    border-color: var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
 
-    .search input {
-      /* Sixteen pixels is where iOS stops zooming into a field on focus. */
-      font-size: 16px;
-    }
+  .sheet.phone .search svg {
+    width: 16px;
+    height: 16px;
+  }
 
-    .group {
-      gap: 0;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      overflow: hidden;
-    }
+  .sheet.phone .search input {
+    /* Sixteen pixels is where iOS stops zooming into a field on focus. */
+    font-size: 16px;
+  }
 
-    .group + .group {
-      margin-top: var(--space-4);
-    }
+  .sheet.phone .group {
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
 
-    .item {
-      position: relative;
-      gap: var(--space-3);
-      min-height: 52px;
-      padding: 0 14px;
-      border-radius: 0;
-      color: var(--text);
-      font-size: 15px;
-    }
+  .sheet.phone .group + .group {
+    margin-top: var(--space-4);
+  }
 
-    /* A hairline between rows, starting where the text does. */
-    .item + .item::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 46px;
-      right: 0;
-      height: 1px;
-      background: var(--line);
-    }
+  .sheet.phone .item {
+    position: relative;
+    gap: var(--space-3);
+    min-height: 52px;
+    padding: 0 14px;
+    border-radius: 0;
+    color: var(--text);
+    font-size: 15px;
+  }
 
-    .item:active {
-      background: var(--surface-2);
-    }
+  /* A hairline between rows, starting where the text does. */
+  .sheet.phone .item + .item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 46px;
+    right: 0;
+    height: 1px;
+    background: var(--line);
+  }
 
-    .item .glyph {
-      width: 20px;
-      height: 20px;
-      color: var(--accent);
-      stroke-width: 1.2;
-    }
+  .sheet.phone .item:active {
+    background: var(--surface-2);
+  }
 
-    .item .chevron {
-      display: block;
-      flex: none;
-      width: 16px;
-      height: 16px;
-      fill: none;
-      stroke: var(--muted);
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+  .sheet.phone .item .glyph {
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+    stroke-width: 1.2;
+  }
 
-    .body {
-      padding: var(--space-3) var(--space-4) calc(var(--space-7) + env(safe-area-inset-bottom));
-    }
+  .sheet.phone .item .chevron {
+    display: block;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 
-    .pane {
-      gap: var(--space-4);
-    }
+  .sheet.phone .body {
+    padding: var(--space-3) var(--space-4) calc(var(--space-7) + env(safe-area-inset-bottom));
+  }
 
-    .pane h3 {
-      margin: var(--space-3) 0 calc(-1 * var(--space-2)) 14px;
-      font-size: 13px;
-      color: var(--muted);
-    }
+  .sheet.phone .pane {
+    gap: var(--space-4);
+  }
 
-    .card {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      overflow: hidden;
-    }
+  .sheet.phone .pane h3 {
+    margin: var(--space-3) 0 calc(-1 * var(--space-2)) 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
 
-    .card > .stack {
-      padding: 14px;
-    }
+  .sheet.phone .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
 
-    .card > .accents {
-      padding: 14px;
-    }
+  .sheet.phone .card > .stack {
+    padding: 14px;
+  }
 
-    .setting {
-      position: relative;
-      gap: var(--space-3);
-      min-height: 52px;
-      padding: 8px 14px;
-      font-size: 15px;
-    }
+  .sheet.phone .card > .accents {
+    padding: 14px;
+  }
 
-    .setting .name small {
-      font-size: var(--text-sm);
-    }
+  .sheet.phone .setting {
+    position: relative;
+    gap: var(--space-3);
+    min-height: 52px;
+    padding: 8px 14px;
+    font-size: 15px;
+  }
 
-    .setting + .setting::before,
-    .action + .setting::before,
-    .action + .action::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 14px;
-      right: 0;
-      height: 1px;
-      background: var(--line);
-    }
+  .sheet.phone .setting .name small {
+    font-size: var(--text-sm);
+  }
 
-    button.setting:active {
-      background: var(--surface-2);
-    }
+  .sheet.phone .setting + .setting::before,
+  .sheet.phone .action + .setting::before,
+  .sheet.phone .action + .action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 14px;
+    right: 0;
+    height: 1px;
+    background: var(--line);
+  }
 
-    button.setting:focus-visible {
-      outline-offset: -2px;
-      border-radius: 0;
-    }
+  .sheet.phone button.setting:active {
+    background: var(--surface-2);
+  }
 
-    /* Name and value on one line, the slider full width beneath them. */
-    .setting.sliding {
-      flex-wrap: wrap;
-      padding-bottom: 6px;
-    }
+  .sheet.phone button.setting:focus-visible {
+    outline-offset: -2px;
+    border-radius: 0;
+  }
 
-    .setting .value {
-      width: auto;
-      font-size: var(--text-sm);
-    }
+  /* Name and value on one line, the slider full width beneath them. */
+  .sheet.phone .setting.sliding {
+    flex-wrap: wrap;
+    padding-bottom: 6px;
+  }
 
-    .slider {
-      order: 3;
-      flex: none;
-      width: 100%;
-      height: 32px;
-    }
+  .sheet.phone .setting .value {
+    width: auto;
+    font-size: var(--text-sm);
+  }
 
-    .slider::-webkit-slider-thumb {
-      width: 24px;
-      height: 24px;
-      margin-top: -10px;
-    }
+  .sheet.phone .slider {
+    order: 3;
+    flex: none;
+    width: 100%;
+    height: 32px;
+  }
 
-    .slider::-moz-range-thumb {
-      width: 24px;
-      height: 24px;
-    }
+  .sheet.phone .slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
+  }
 
-    .pick,
-    .pick.wide {
-      width: auto;
-      max-width: 60%;
-    }
+  .sheet.phone .slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
 
-    .action {
-      position: relative;
-      min-height: 52px;
-      padding: 8px 14px;
-      color: var(--accent);
-      font-size: 15px;
-    }
+  .sheet.phone .pick,
+  .sheet.phone .pick.wide {
+    width: auto;
+    max-width: 60%;
+  }
 
-    .action.danger {
-      color: var(--danger);
-    }
+  .sheet.phone .action {
+    position: relative;
+    min-height: 52px;
+    padding: 8px 14px;
+    color: var(--accent);
+    font-size: 15px;
+  }
 
-    .action:active:not(:disabled) {
-      background: var(--surface-2);
-    }
+  .sheet.phone .action.danger {
+    color: var(--danger);
+  }
 
-    .key {
-      min-width: 5.5rem;
-      padding: 7px 10px;
-      font-size: var(--text-sm);
-    }
+  .sheet.phone .action:active:not(:disabled) {
+    background: var(--surface-2);
+  }
 
-    .revert {
-      width: 34px;
-      height: 34px;
-    }
+  .sheet.phone .key {
+    min-width: 5.5rem;
+    padding: 7px 10px;
+    font-size: var(--text-sm);
+  }
 
-    .clash {
-      padding: 10px 14px;
-    }
+  .sheet.phone .revert {
+    width: 34px;
+    height: 34px;
+  }
 
-    .toggle {
-      width: 50px;
-      height: 30px;
-    }
+  .sheet.phone .clash {
+    padding: 10px 14px;
+  }
 
-    .toggle::after {
-      top: 3px;
-      left: 3px;
-      width: 24px;
-      height: 24px;
-    }
+  .sheet.phone .toggle {
+    width: 50px;
+    height: 30px;
+  }
 
-    .toggle.on::after {
-      transform: translateX(20px);
-    }
+  .sheet.phone .toggle::after {
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+  }
 
-    .inline {
-      width: 55%;
-      padding: 8px 10px;
-      font-size: 16px;
-    }
+  .sheet.phone .toggle.on::after {
+    transform: translateX(20px);
+  }
 
-    .setting .text {
-      max-width: 60%;
-      font-size: 15px;
-    }
+  .sheet.phone .inline {
+    width: 55%;
+    padding: 8px 10px;
+    font-size: 16px;
+  }
 
-    .row input,
-    .stack > input {
-      min-height: 46px;
-      padding: 10px 12px;
-      font-size: 16px;
-    }
+  .sheet.phone .setting .text {
+    max-width: 60%;
+    font-size: 15px;
+  }
 
-    .suffix {
-      font-size: var(--text-sm);
-    }
+  .sheet.phone .row input,
+  .sheet.phone .stack > input {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
 
-    .hint,
-    .note {
-      font-size: 14px;
-    }
+  .sheet.phone .suffix {
+    font-size: var(--text-sm);
+  }
 
-    .hint.caption {
-      margin: calc(-1 * var(--space-2)) 14px 0;
-    }
+  .sheet.phone .hint,
+  .sheet.phone .note {
+    font-size: 14px;
+  }
 
-    .lead {
-      font-size: 17px;
-    }
+  .sheet.phone .hint.caption {
+    margin: calc(-1 * var(--space-2)) 14px 0;
+  }
 
-    button.primary {
-      align-self: stretch;
-      min-height: 48px;
-      padding: 12px 16px;
-      font-size: 15px;
-      text-align: center;
-    }
+  .sheet.phone .lead {
+    font-size: 17px;
+  }
 
-    .danger-check {
-      padding: 14px;
-      border-radius: var(--radius-lg);
-      font-size: 14px;
-    }
+  .sheet.phone button.primary {
+    align-self: stretch;
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 15px;
+    text-align: center;
+  }
 
-    .danger-check input {
-      width: 20px;
-      height: 20px;
-      margin-top: 1px;
-    }
+  .sheet.phone .danger-check {
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+  }
 
-    .segmented button {
-      min-height: 40px;
-      font-size: 14px;
-    }
+  .sheet.phone .danger-check input {
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+  }
 
-    .accents {
-      gap: 12px;
-    }
+  .sheet.phone .segmented button {
+    min-height: 40px;
+    font-size: 14px;
+  }
 
-    .swatch {
-      width: 36px;
-      height: 36px;
-    }
+  .sheet.phone .accents {
+    gap: 12px;
+  }
+
+  .sheet.phone .swatch {
+    width: 36px;
+    height: 36px;
   }
 </style>

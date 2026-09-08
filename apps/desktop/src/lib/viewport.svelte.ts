@@ -96,3 +96,15 @@ class Viewport {
 }
 
 export const viewport = new Viewport()
+
+/** How tall a page that fills the screen should be drawn, or nothing while
+ *  there is no measurement yet and the stylesheet's `100dvh` is the best answer
+ *  going.
+ *
+ *  A phone's page is the visual viewport rather than the window: the keyboard
+ *  covers the bottom of the window and takes none of its height away, so a page
+ *  sized from the window ends underneath the keys with its last rows out of
+ *  reach. Everywhere else the window is the page and CSS can say so on its own. */
+export function pageHeight(): string | undefined {
+  return viewport.phone && viewport.height ? `${viewport.height}px` : undefined
+}

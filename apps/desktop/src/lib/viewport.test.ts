@@ -53,10 +53,10 @@ async function started(mobile: boolean) {
   vi.doMock('./tauri', () => ({ isMobile: mobile }))
   vi.stubGlobal('window', window)
 
-  const { viewport } = await import('./viewport.svelte')
+  const { pageHeight, viewport } = await import('./viewport.svelte')
   viewport.start()
 
-  return { viewport, window }
+  return { pageHeight, viewport, window }
 }
 
 beforeAll(async () => {
@@ -133,5 +133,22 @@ describe('the phone layout', () => {
     const { viewport } = await started(false)
     expect(viewport.phone).toBe(false)
     expect(viewport.installed).toBe(false)
+  })
+})
+
+/** A page that fills the screen - the settings are one - is as tall as what is
+ *  on screen, which on a phone is not the window. */
+describe('a page that fills the screen', () => {
+  test('is the viewport, and gives the keyboard its share back', async () => {
+    const { pageHeight, window } = await started(true)
+    expect(pageHeight()).toBe('844px')
+
+    window.keysOver(KEYS)
+    expect(pageHeight()).toBe(`${844 - KEYS}px`)
+  })
+
+  test('is the window everywhere else, which CSS can say on its own', async () => {
+    const { pageHeight } = await started(false)
+    expect(pageHeight()).toBe(undefined)
   })
 })
