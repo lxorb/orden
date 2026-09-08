@@ -22,11 +22,21 @@ export interface Converted {
 export function toMarkdown(html: string): Converted {
   const images: string[] = []
 
+  // The same picture twice in one article is one upload and one blob, so each
+  // address is looked up before it is added. Kept as a map rather than scanned
+  // for in the list: a page whose article the extractor could not read hands
+  // over its whole body, and a gallery of thousands of pictures would otherwise
+  // cost a pass over everything numbered so far for every one of them.
+  const numbered = new Map<string, number>()
+
   const markdown = htmlToMarkdown(html, {
     image: (source) => {
-      // The same picture twice in one article is one upload and one blob.
-      let index = images.indexOf(source)
-      if (index === -1) index = images.push(source) - 1
+      let index = numbered.get(source)
+
+      if (index === undefined) {
+        index = images.push(source) - 1
+        numbered.set(source, index)
+      }
 
       return `${PLACEHOLDER}${index}`
     },
