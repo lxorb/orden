@@ -201,12 +201,17 @@ def opened(page: Page, label: str, device: str) -> None:
     wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
 
     page.evaluate(AS_TABLET if device == "tablet" else AS_PHONE)
-    page.evaluate("() => window.nibApp.workspace.createCanvas()")
-    wait_for(
-        page,
-        "window.nibApp.workspace.active?.path?.endsWith('.canvas')",
-        f"[{label}] the canvas to open",
-    )
+
+    # Asked more than once if it has to be. The space arrives a moment before the
+    # tree under it does, and a canvas asked for in that moment lands nowhere.
+    opened_it = "window.nibApp.workspace.active?.path?.endsWith('.canvas')"
+    for _try in range(4):
+        page.evaluate("() => window.nibApp.workspace.createCanvas()")
+        page.wait_for_timeout(700)
+        if page.evaluate(f"() => !!({opened_it})"):
+            break
+    else:
+        raise SystemExit(f"[{label}] no canvas ever opened")
     # The bar is what everything after this presses.
     page.wait_for_selector('[aria-label="Move the bar"]', timeout=15000)
     page.wait_for_timeout(400)
@@ -221,6 +226,29 @@ def shot(page: Page, name: str) -> None:
 def pen_at(page: Page, index: int):
     """One of the pens in the row, by where it sits."""
     return page.locator(".cluster button.pen-slot").nth(index)
+
+
+def kept_pens(page: Page) -> list[str]:
+    """Which pens the row holds, in the order it holds them."""
+    return page.evaluate(
+        "() => JSON.parse(localStorage.getItem('nib:pens')).pens.map((one) => one.tool)"
+    )
+
+
+def drag(page: Page, one, onto) -> None:
+    """A pen held until the row lets go of it, then dragged onto another. The
+    wait is the whole gesture: a finger that sets off at once is scrolling."""
+    here = one.bounding_box()
+    there = onto.bounding_box()
+    assert here and there
+
+    page.mouse.move(here["x"] + here["width"] / 2, here["y"] + here["height"] / 2)
+    page.mouse.down()
+    page.wait_for_timeout(600)
+    page.mouse.move(there["x"] + there["width"] / 2, there["y"] + there["height"] / 2, steps=10)
+    page.wait_for_timeout(150)
+    page.mouse.up()
+    page.wait_for_timeout(250)
 
 
 def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
@@ -357,23 +385,50 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(350)
         shot(page, f"pen-bar-folded-{device}-{theme}")
 
-        # Unfolded again, and moved to the other edge.
+        # Unfolded again, and one pen dragged along the row past another.
         page.locator('button[aria-label="The pens"]').click()
-        page.wait_for_timeout(300)
-        page.evaluate(
-            "() => { const held = JSON.parse(localStorage.getItem('nib:pens'));"
-            "  held.dock = 'top'; localStorage.setItem('nib:pens', JSON.stringify(held)) }"
-        )
-        page.reload(wait_until="domcontentloaded")
-        opened(page, label, device)
+        page.wait_for_timeout(350)
+
+        was = kept_pens(page)
+        drag(page, pen_at(page, 0), pen_at(page, 2))
+        now = kept_pens(page)
+        if now != [was[1], was[2], was[0]]:
+            failures.append(f"{label}: a pen held and dragged did not move ({was} to {now})")
+        else:
+            say(f"[{label}] a pen held and dragged along the row moved to where it was dropped")
+
+        # And the whole bar dragged by its grip to the other edge.
+        grip = page.locator('[aria-label="Move the bar"]')
+        box = grip.bounding_box()
+        assert box
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.mouse.down()
+        page.mouse.move(box["x"] + box["width"] / 2, 90, steps=12)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+
+        docked = page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).dock")
+        if docked != "top":
+            failures.append(f"{label}: the bar dragged upwards did not dock to the top ({docked})")
+
         pen_at(page, 0).click()
         page.wait_for_timeout(400)
         shot(page, f"pen-bar-docked-top-{device}-{theme}")
 
-        # And the pen it was holding survived the reload, which is the whole
-        # point of keeping the row of them.
-        kept = page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).pens[0]")
-        if kept.get("opacity") != 0.2 or kept.get("size") != 9:
+        # It comes back where it was left, which is the point of remembering.
+        page.reload(wait_until="domcontentloaded")
+        opened(page, label, device)
+        if page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).dock") != "top":
+            failures.append(f"{label}: the bar did not come back against the top edge")
+
+        # And the biro the dials were turned on is still the one they were turned
+        # to, wherever the drag left it in the row. That is the whole point of
+        # keeping a row of pens rather than one width the app shares.
+        kept = page.evaluate(
+            "() => JSON.parse(localStorage.getItem('nib:pens'))"
+            "  .pens.find((one) => one.tool === 'pen')"
+        )
+        if kept.get("opacity") != 0.2 or kept.get("size") != 9 or kept.get("colour") != "4":
             failures.append(f"{label}: the pen was not the one it was left as ({kept})")
         else:
             say(f"[{label}] the pen came back set the way it was left")
