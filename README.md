@@ -41,25 +41,27 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 ## Why nibeditor?
 
-|  | Open source | Built-in MCP | Windows, macOS, Linux | Inline preview | Free sync | Free publishing |
-| --- | :-: | :-: | :-: | :-: | :-: | :-: |
-| **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typora | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| MarkText | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| Obsidian | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| Zettlr | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| Joplin | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ |
-| Logseq | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ |
-| iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Sublime Text | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+|  | Open source | Built-in MCP | Win, mac, Linux | Inline preview | Backlinks & graph | Canvas | Free sync | Free publishing |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Typora | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| MarkText | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Obsidian | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Zettlr | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Joplin | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Logseq | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Sublime Text | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 What the columns mean, so the crosses are fair:
 
 - **Built-in MCP**: an MCP server that ships with the editor. Community MCP bridges exist for Obsidian and Joplin, but none of them are part of the app.
-- **Windows, macOS, Linux**: all three desktops. iA Writer covers macOS, iOS, Windows and Android, and Bear covers the Apple platforms, but neither ships for Linux.
+- **Win, mac, Linux**: all three desktops. iA Writer covers macOS, iOS, Windows and Android, and Bear covers the Apple platforms, but neither ships for Linux.
 - **Inline preview**: formatting rendered in place as you type, instead of a second preview pane.
+- **Backlinks & graph**: `[[wikilinks]]` with a backlinks panel and a graph of the whole space, all built in. Bear and iA Writer have wikilinks, and Bear has backlinks, but neither draws a graph. Joplin needs plugins for both.
+- **Canvas**: an infinite canvas for laying notes out spatially. Logseq calls its version Whiteboards.
 - **Free sync**: device-to-device sync, built in, at no cost. Obsidian, Logseq and Bear all sync well, but behind a subscription. Joplin's is free.
 - **Free publishing**: turning a note into a public page at no cost. Obsidian Publish and Bear's web links are paid. Logseq exports a static site for free.
 
