@@ -500,7 +500,16 @@ real devices look like. The numbers above are from a quiet machine.
 - `apps/desktop/src/lib/sync.test.ts` - a shared space arriving as a folder, one
   shared to read never being written back to, leaving one rather than deleting
   it, the folder of one that stopped being shared going to this device's trash
-  rather than for good, and the mirrors belonging to one account.
+  rather than for good, the mirrors belonging to one account, and the first pass
+  of a session: scheduled for now rather than for an interval, counted against
+  what the account says it holds, and quiet on every machine that has synced
+  before.
+- `apps/desktop/src/lib/arriving.test.ts` - the surface that first pass holds,
+  on its own: waiting before it knows a number, counting, lifting, and the way
+  out that keeps a connection which never comes back from being a trap.
+- `apps/desktop/src/lib/move-targets.test.ts` and `longpress.test.ts` - where a
+  row may be moved to when a finger cannot drag it, and the rule that decides
+  whether a press was a press.
 - `apps/desktop/src/lib/rooms/bind.test.ts` - the binding: convergence, both
   orders of arrival, offline edits, undo staying yours, and the keystroke cost.
 - `apps/desktop/src/lib/rooms/peers.test.ts` - where a caret is, and whether it
