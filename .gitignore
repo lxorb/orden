@@ -13,6 +13,9 @@ target/
 .svelte-kit/
 .wrangler/
 *.log
+# What the end-to-end run photographs. Made fresh every time it runs; see
+# apps/desktop/test/e2e/collaborate.py.
+apps/desktop/test/e2e/shots/
 .env
 .env.*
 !.env.example

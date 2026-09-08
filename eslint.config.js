@@ -13,6 +13,9 @@ export default tseslint.config(
       '**/dist/**',
       '**/dist-even/**',
       '**/target/**',
+      // What running the Worker locally leaves behind: a bundle it made, and the
+      // state of the databases it ran against. Neither is anybody's source.
+      '**/.wrangler/**',
       '.claude/**',
       'packaging/**',
       'apps/desktop/src-tauri/gen/**',

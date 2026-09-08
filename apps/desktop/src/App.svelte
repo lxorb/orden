@@ -228,6 +228,7 @@
     Object.assign(window, {
       nibApp: {
         account,
+        rooms,
         sync,
         workspace,
         search,
