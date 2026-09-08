@@ -342,6 +342,34 @@
     width: 100%;
     max-height: 88dvh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+    padding-bottom: var(--touch-bottom);
+  }
+
+  /* The sheet a note is renamed in, at the size the tree behind it is read at:
+     the field, the buttons under it, and the names it suggests. */
+  :global([data-touch]) input,
+  :global([data-touch]) button,
+  :global([data-touch]) .title {
+    font-size: var(--touch-text);
+  }
+
+  :global([data-touch]) input {
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
+  }
+
+  :global([data-touch]) button {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+  }
+
+  :global([data-touch]) .found-row {
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
+  }
+
+  :global([data-touch]) .detail,
+  :global([data-touch]) .label {
+    font-size: var(--text-base);
   }
 </style>

@@ -1808,7 +1808,7 @@
     display: flex;
     align-items: center;
     gap: 2px;
-    height: calc(52px + var(--inset-top));
+    height: calc(var(--touch-row) + var(--inset-top));
     padding: var(--inset-top) 6px 0;
     border-bottom: 1px solid var(--line);
     background: var(--bg);
@@ -1819,7 +1819,7 @@
     min-width: 0;
     margin: 0;
     font-family: var(--font-ui);
-    font-size: 17px;
+    font-size: var(--touch-text);
     font-weight: 620;
     color: var(--text-strong);
     white-space: nowrap;
@@ -1834,8 +1834,8 @@
 
   .sheet.phone .bar .icon {
     flex: none;
-    width: 44px;
-    height: 44px;
+    width: var(--touch-target);
+    height: var(--touch-target);
     display: grid;
     place-items: center;
     padding: 0;
@@ -1851,8 +1851,8 @@
   }
 
   .sheet.phone .bar .icon svg {
-    width: 20px;
-    height: 20px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
@@ -1862,15 +1862,15 @@
 
   .sheet.phone nav {
     gap: 0;
-    padding: var(--space-3) var(--space-4) calc(var(--space-6) + var(--inset-bottom));
+    padding: var(--space-3) var(--space-4) calc(var(--space-5) + var(--touch-bottom));
     border-right: none;
     background: none;
   }
 
   .sheet.phone .search {
-    height: 44px;
+    height: var(--touch-target);
     margin-bottom: var(--space-4);
-    padding: 0 14px;
+    padding: 0 var(--touch-pad);
     border-color: var(--line);
     border-radius: var(--radius-md);
     background: var(--surface);
@@ -1882,8 +1882,9 @@
   }
 
   .sheet.phone .search input {
-    /* Sixteen pixels is where iOS stops zooming into a field on focus. */
-    font-size: 16px;
+    /* Past sixteen pixels, which is where iOS stops zooming into a field on
+       focus, and the same size as the rows the search leads to. */
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .group {
@@ -1900,20 +1901,21 @@
 
   .sheet.phone .item {
     position: relative;
-    gap: var(--space-3);
-    min-height: 52px;
-    padding: 0 14px;
+    gap: var(--touch-gap);
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
     border-radius: 0;
     color: var(--text);
-    font-size: 15px;
+    font-size: var(--touch-text);
   }
 
-  /* A hairline between rows, starting where the text does. */
+  /* A hairline between rows, starting where the text does: past the row's own
+     padding, the glyph in front of it and the gap after that. */
   .sheet.phone .item + .item::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 46px;
+    left: calc(var(--touch-pad) + var(--touch-icon) + var(--touch-gap));
     right: 0;
     height: 1px;
     background: var(--line);
@@ -1924,8 +1926,8 @@
   }
 
   .sheet.phone .item .glyph {
-    width: 20px;
-    height: 20px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
     color: var(--accent);
     stroke-width: 1.2;
   }
@@ -1933,8 +1935,8 @@
   .sheet.phone .item .chevron {
     display: block;
     flex: none;
-    width: 16px;
-    height: 16px;
+    width: var(--touch-mark);
+    height: var(--touch-mark);
     fill: none;
     stroke: var(--muted);
     stroke-width: 1.5;
@@ -1943,7 +1945,7 @@
   }
 
   .sheet.phone .body {
-    padding: var(--space-3) var(--space-4) calc(var(--space-7) + var(--inset-bottom));
+    padding: var(--space-3) var(--space-4) calc(var(--space-6) + var(--touch-bottom));
   }
 
   .sheet.phone .pane {
@@ -1964,23 +1966,23 @@
   }
 
   .sheet.phone .card > .stack {
-    padding: 14px;
+    padding: var(--touch-pad);
   }
 
   .sheet.phone .card > .accents {
-    padding: 14px;
+    padding: var(--touch-pad);
   }
 
   .sheet.phone .setting {
     position: relative;
-    gap: var(--space-3);
-    min-height: 52px;
-    padding: 8px 14px;
-    font-size: 15px;
+    gap: var(--touch-gap);
+    min-height: var(--touch-row);
+    padding: var(--space-2) var(--touch-pad);
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .setting .name small {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
   }
 
   .sheet.phone .setting + .setting::before,
@@ -1989,7 +1991,7 @@
     content: '';
     position: absolute;
     top: 0;
-    left: 14px;
+    left: var(--touch-pad);
     right: 0;
     height: 1px;
     background: var(--line);
@@ -2012,7 +2014,7 @@
 
   .sheet.phone .setting .value {
     width: auto;
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
   }
 
   .sheet.phone .slider {
@@ -2028,10 +2030,10 @@
 
   .sheet.phone .action {
     position: relative;
-    min-height: 52px;
-    padding: 8px 14px;
+    min-height: var(--touch-row);
+    padding: var(--space-2) var(--touch-pad);
     color: var(--accent);
-    font-size: 15px;
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .action.danger {
@@ -2054,7 +2056,7 @@
   }
 
   .sheet.phone .clash {
-    padding: 10px 14px;
+    padding: 10px var(--touch-pad);
   }
 
   .sheet.phone .toggle {
@@ -2076,50 +2078,50 @@
   .sheet.phone .inline {
     width: 55%;
     padding: 8px 10px;
-    font-size: 16px;
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .setting .text {
     max-width: 60%;
-    font-size: 15px;
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .row input,
   .sheet.phone .stack > input {
-    min-height: 46px;
-    padding: 10px 12px;
-    font-size: 16px;
+    min-height: var(--touch-target);
+    padding: 0 var(--touch-gap);
+    font-size: var(--touch-text);
   }
 
   .sheet.phone .suffix {
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
   }
 
   .sheet.phone .hint,
   .sheet.phone .note {
-    font-size: 14px;
+    font-size: var(--text-base);
   }
 
   .sheet.phone .hint.caption {
-    margin: calc(-1 * var(--space-2)) 14px 0;
+    margin: calc(-1 * var(--space-2)) var(--touch-pad) 0;
   }
 
   .sheet.phone .lead {
-    font-size: 17px;
+    font-size: var(--touch-text);
   }
 
   .sheet.phone button.primary {
     align-self: stretch;
-    min-height: 48px;
+    min-height: var(--touch-target);
     padding: 12px 16px;
-    font-size: 15px;
+    font-size: var(--touch-text);
     text-align: center;
   }
 
   .sheet.phone .danger-check {
-    padding: 14px;
+    padding: var(--touch-pad);
     border-radius: var(--radius-lg);
-    font-size: 14px;
+    font-size: var(--text-base);
   }
 
   .sheet.phone .danger-check input {
@@ -2129,8 +2131,8 @@
   }
 
   .sheet.phone .segmented button {
-    min-height: 40px;
-    font-size: 14px;
+    min-height: var(--touch-target);
+    font-size: var(--text-base);
   }
 
   .sheet.phone .accents {

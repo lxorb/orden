@@ -392,7 +392,7 @@
     max-height: 70dvh;
     display: flex;
     flex-direction: column;
-    padding-bottom: var(--inset-bottom);
+    padding-bottom: var(--touch-bottom);
     background: var(--surface);
     border-top: 1px solid var(--line-strong);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -422,15 +422,15 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    min-height: 48px;
-    padding: 10px 12px;
+    gap: var(--touch-gap);
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
     border: none;
     border-radius: var(--radius-md);
     background: none;
     color: var(--text);
     font-family: var(--font-ui);
-    font-size: 15px;
+    font-size: var(--touch-text);
     text-align: left;
     cursor: default;
   }
@@ -453,14 +453,15 @@
     height: 18px;
   }
 
+  /* A control inside a row, so the floor rather than the row size, and past
+     16px, which is where iOS stops zooming into a control on focus. */
   :global([data-touch]) .trigger {
-    min-height: 46px;
-    /* Sixteen pixels is where iOS stops zooming into a control on focus. */
-    font-size: 16px;
+    min-height: var(--touch-target);
+    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .plain .trigger {
     min-height: 0;
-    font-size: 15px;
+    font-size: var(--touch-text);
   }
 </style>

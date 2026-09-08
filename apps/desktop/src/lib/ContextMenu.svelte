@@ -268,11 +268,11 @@
   /* A whole line for a thumb, and the danger in its colour all the time,
      since there is no hover to bring it out. */
   .touch button {
-    min-height: 44px;
-    padding: 0 14px;
-    gap: var(--space-3);
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
+    gap: var(--touch-gap);
     border-radius: var(--radius-md);
-    font-size: 15px;
+    font-size: var(--touch-text);
   }
 
   .touch button:hover:not(:disabled) {
@@ -320,7 +320,7 @@
     display: flex;
     flex-direction: column;
     max-height: min(72dvh, calc(100dvh - var(--keyboard, 0px) - var(--space-5)));
-    padding: 0 0 var(--inset-bottom);
+    padding: 0 0 var(--touch-bottom);
     border: none;
     border-top: 1px solid var(--line-strong);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -335,12 +335,14 @@
     background: var(--line-strong);
   }
 
+  /* Only ever drawn in the sheet, which is only ever a touch screen, so it is
+     read at the size the rows under it are. */
   .title {
     flex: none;
     margin: 0;
     padding: 10px 20px 4px;
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 600;
     color: var(--muted);
     overflow: hidden;

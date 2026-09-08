@@ -192,6 +192,6 @@
     width: 100%;
     max-height: 88dvh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+    padding-bottom: var(--touch-bottom);
   }
 </style>

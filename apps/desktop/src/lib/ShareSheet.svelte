@@ -546,7 +546,7 @@
   }
 
   :global([data-touch]) .row {
-    min-height: 48px;
+    min-height: var(--touch-target);
   }
 
   /* The address and its role need the width on a phone, so the button goes

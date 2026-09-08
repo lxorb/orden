@@ -217,4 +217,29 @@
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     padding-top: var(--inset-top);
   }
+
+  /* The rows are a list like any other: a thumb lands on one of them, so they
+     are as tall and as legible as the rows in the drawer behind. */
+  :global([data-touch]) input,
+  :global([data-touch]) button {
+    font-size: var(--touch-text);
+  }
+
+  :global([data-touch]) input {
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
+  }
+
+  :global([data-touch]) button {
+    min-height: var(--touch-row);
+    gap: var(--touch-gap);
+    padding: 0 var(--touch-pad);
+  }
+
+  /* Room for more of them, now that each is taller, and the last one clears the
+     gesture bar. */
+  :global([data-touch]) ul {
+    max-height: 60dvh;
+    padding-bottom: var(--touch-bottom);
+  }
 </style>

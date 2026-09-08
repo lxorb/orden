@@ -310,14 +310,16 @@
   }
 
   /* ── On a phone ────────────────────────────────────────────────── */
+  /* Square with the spaces below it in the rail, so the column reads as one
+     stack rather than a button and then a list. */
   :global([data-touch]) .hamburger {
-    width: 48px;
-    height: 48px;
+    width: var(--touch-row);
+    height: var(--touch-row);
   }
 
   :global([data-touch]) .hamburger svg {
-    width: 22px;
-    height: 22px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
   }
 
   /* Dimmed here, where the sheet is a layer over the app rather than a
@@ -336,7 +338,7 @@
     bottom: 0;
     flex-direction: column;
     max-height: 72dvh;
-    padding-bottom: var(--inset-bottom);
+    padding-bottom: var(--touch-bottom);
     border: none;
     border-top: 1px solid var(--line-strong);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -368,12 +370,12 @@
 
   :global([data-touch]) .phone .groups button {
     width: auto;
-    min-height: 36px;
-    padding: 6px 14px;
+    min-height: var(--touch-target);
+    padding: 0 var(--touch-pad);
     border-radius: 99px;
     background: var(--surface-2);
     color: var(--muted-strong);
-    font-size: 14px;
+    font-size: var(--text-base);
     font-weight: 500;
   }
 
@@ -386,15 +388,16 @@
     flex: 1;
     min-width: 0;
     min-height: 0;
-    padding: 6px 8px 8px;
+    padding: 6px var(--space-2) var(--space-2);
     overflow-y: auto;
   }
 
   :global([data-touch]) .phone .row {
-    min-height: 48px;
-    padding: 10px 12px;
+    min-height: var(--touch-row);
+    gap: var(--touch-gap);
+    padding: 0 var(--touch-pad);
     border-radius: var(--radius-md);
-    font-size: 15px;
+    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .phone .row:active:not(:disabled) {

@@ -104,7 +104,7 @@
   }
 
   :global([data-touch]) button {
-    min-height: 44px;
+    min-height: var(--touch-target);
     font-size: var(--text-base);
   }
 </style>

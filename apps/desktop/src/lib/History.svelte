@@ -392,6 +392,21 @@
     width: 100%;
     max-height: 88dvh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+    padding-bottom: var(--touch-bottom);
+  }
+
+  /* A version is a row in a list like any other, and the button that puts one
+     back is the one thing here to press. */
+  :global([data-touch]) .versions button {
+    min-height: var(--touch-row);
+    gap: var(--touch-gap);
+    padding: 0 var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global([data-touch]) .primary {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+    font-size: var(--text-base);
   }
 </style>
