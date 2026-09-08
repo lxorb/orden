@@ -26,6 +26,25 @@
 //! `str` is indexed by. Only what leaves is counted otherwise: a range inside a
 //! shown line is in UTF-16 units, which is how the app measures the string it is
 //! handed.
+//!
+//! What it costs, over 10,000 notes and 47.6 MB held in memory, release build,
+//! best of five, on the machine this was written on. Beside each is what the
+//! browser's twin does on the same corpus; see search/fuzzy.perf.test.ts.
+//!
+//! | | crate | browser |
+//! | --- | --- | --- |
+//! | the exact pass alone, a word every note holds | 74 ms | 85 ms |
+//! | the exact pass alone, a word no note holds | 60 ms | - |
+//! | one loose term, every note answering | 150 ms | 133 ms |
+//! | two loose terms | 171 ms | 165 ms |
+//! | a loose term nothing holds | 95 ms | 17 ms |
+//!
+//! So loose matching adds about 86 ms to a search that already cost 64 ms, and
+//! a whole answer is 150 ms rather than the 100 ms that was asked for. The 64 ms
+//! is the exact search as it was before any of this. What would close the gap is
+//! the two passes sharing one fold of the note instead of making one each, which
+//! means the matcher handing its folded copy on; it is not done here because
+//! that is a change to the exact search's own hot path.
 
 use serde::Serialize;
 
