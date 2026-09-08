@@ -223,11 +223,20 @@ nothing, so the app only speaks when somebody actually moves - and then only aft
 The colour travels as the name of an accent rather than as a colour: the shade a
 colour needs to be readable on white is not the shade it needs on black, so which
 shade is the reader's business. A device picks one accent, once, and keeps it, so
-the phone is the same colour every morning. The label is the *device* - "Windows",
-"Android", "iPhone" - rather than the account's name, because a room today holds
-one person's devices and "Emil" on both carets answers nothing; the question two
-carets actually raise is which of my machines that is. When a space can be shared,
-a caret will carry the person's name and this becomes the fallback.
+the phone is the same colour every morning.
+
+The label is either the *device* - "Windows", "Android", "iPhone" - or the
+*person*, and which one is not the sender's to decide. Two of one person's own
+machines want to be told apart by machine: "Emil" on both carets answers nothing,
+and the question those two carets raise is which of my machines that is. Two
+people in a shared space want the opposite. Nobody knows which case a room is
+until everybody has arrived, so both names travel and the choice belongs to
+whoever is looking: a caret carries the person's name as soon as more than one
+person is in the note, and the device's name otherwise. See `rooms/peers.ts`,
+which is where the count is, and `rooms/who.ts`, which is where the two names
+come from. A person's name is the one on their account, or the part of their
+address in front of the at sign; never the whole address, which is not a name
+and which the other people in a space were not necessarily given.
 
 In the tab, one small dot per other device, in the accent, overlapping into a
 stack, and nothing at all when nobody else is there.
@@ -236,6 +245,141 @@ stack, and nothing at all when nobody else is there.
 document with `addToHistory` off, so pressing undo takes back what you wrote and
 never what somebody else did. CodeMirror maps what the history holds through every
 arriving change, so the position it comes back to is still right.
+
+## Sharing
+
+A room holds whoever may reach the note, and until a space could be shared that
+was one person's devices. This is what changed to make it people.
+
+**A role, per space, per person.** Three of them, ordered: `read` pulls the notes
+and joins rooms without writing in them, `write` edits everything inside the
+space, `owner` is the space itself - its name, its icon, publishing it, deleting
+it, and who else is in it. The line is worth saying plainly, because it is the
+one thing anybody has to learn: **a writer writes in a space; the owner decides
+what the space is.**
+
+**A membership is an address, not an account.** `space_members` is keyed by
+`(space_id, email)` and points at no user row at all. Accounts are keyed by the
+same address and there is exactly one address per account, so the two meet on
+their own: a row written for somebody who has never used Nib is already theirs
+the first time they prove that address. Nothing has to be migrated when they sign
+up, and nothing has to be reconciled if they never do. The owner is not a row
+here - a space already says who owns it, and a second copy of that fact is a
+second thing to keep true.
+
+The whole of the model is `services/sync/migrations/0015_space_sharing.sql`, and
+it is four tables: `space_members` above, carrying the invitation that was sent
+to each row and when it stops being a shortcut; `space_links`, one per space,
+with its role and its mode; `space_requests`, whoever followed a link that asks
+first and what that link promised them, kept so that changing the link afterwards
+does not change what somebody was already offered; and `mailed`, which is only
+when an address was last written to.
+
+**One query answers everything.** `reachedSpace` in `spaces/space.ts` joins the
+space to the membership on the address and returns the role, or nothing at all;
+`atLeast(role)` is the middleware in front of every route that names a space. A
+space nobody may reach is a 404, exactly as an id from another account has always
+been, and one they may reach but not at that role is a 403 - a different thing to
+say, because the space is theirs to see and this button is not theirs to press.
+
+| | read | write | owner |
+| --- | --- | --- | --- |
+| the change feed, reading a note | yes | yes | yes |
+| making, writing, deleting a note | | yes | yes |
+| bookmarks, the files beside the notes | | yes | yes |
+| Recently deleted, for notes | | yes | yes |
+| the connector's `write_note` | | yes | yes |
+| the room's socket | read-only | yes | yes |
+| renaming the space, its icon | | | yes |
+| publishing, and the domain | | | yes |
+| deleting the space | | | yes |
+| inviting, roles, the link, requests | | | yes |
+
+Two things are nobody's role. Images and PDFs are stored per account and served
+by hash, so a writer's paste is their own blob and costs their own quota. And the
+settings are per account rather than per space, so there is nothing there to
+check; the two things a space itself keeps - its bookmarks and its file list -
+are in the table above.
+
+Quotas moved with all this: a note written in a shared space counts against the
+**owner** of the space, because that is whose storage the bytes land in. Before
+this it was counted against whoever was writing, which for one person was the
+same number and for two would have been a way to fill somebody else's account.
+
+**Getting in without an account.** A person is invited by address. The row is
+written at once, so the owner sees them in the sheet immediately, and a mail goes
+out with a link to `nibeditor.com/join/<token>`. The link is a way in rather than
+*the* way in: what actually opens the space is the address being proved, by the
+same emailed code the app has always signed in with. So an invitation forwarded
+to the wrong person opens nothing, and an expired link costs its holder the
+shortcut and not the space. The desktop app registers no URL scheme, so a link
+opened there opens the web app; it is the same account either way.
+
+What a person with no Nib account experiences, in full: they open the link, the
+page says "Emil shared Notes with you" over a field already holding their own
+address, they press Continue, they type the six digits that arrive, and they are
+in the space. There is no sign-up, because proving the address is the sign-up.
+A read-only visitor then sees the space in the rail like any other, opens its
+notes, and finds an editor that will not take a keystroke and a strip that says
+so; their menu on that space offers an icon and a way out of it and nothing else.
+Nothing they do reaches anybody, and the file sync never offers their folder to
+the account: a space shared to read only comes down.
+
+**The link.** One per space, with a role and a mode. `open` lets in anybody who
+follows it and proves an address; `approval` turns the same link into a request
+the owner accepts or declines, and the owner is told by mail that somebody is
+waiting. Changing what the link hands out changes it for the copy already in
+somebody's message, which is what an owner means by changing it; a link that
+should stop working is revoked, and the next one is a new token. It is the one
+secret here stored as it is rather than hashed, because the owner has to be able
+to copy it again tomorrow and a hash cannot be read back.
+
+Mail is rate limited per address, at the same thirty second gap the sign-in code
+keeps and for the same reason: it is the person receiving it who is protected,
+whoever asked for the send. The membership is written whether or not the mail
+went, because a mail that could not go out is not a reason for the sharing not to
+have happened.
+
+**The door, and a reader in a room.** The query at the top of
+`services/sync/src/rooms/index.ts` now answers three things in one round trip -
+whether the session is live, whether the note is in a space this account can
+reach, and what they may do there - and passes the room exactly one bit:
+`x-nib-write`. The room keeps it on the socket, beside the carets that socket
+announced, so an object that slept still knows. A message that would change the
+text is then dropped before it reaches the protocol; `isEdit` in `@nib/rooms`
+is what tells one apart, and a reader may still ask what the room holds and say
+where their caret is. The room learns nothing else about anybody. On the client
+the editor is read-only for the same reason and by the same rule, per pane,
+because the pane beside it may be showing a note of this account's own - the
+machinery was already there, in `packages/editor/src/modes.ts`, and it already
+lets changes from outside the editor through, which is what keeps a reader's view
+live while the others type.
+
+**On this machine.** A shared space is mirrored into a folder like any other, and
+two things about it are not like any other. It never takes a folder of the same
+name that is already here: pairing by name is a guess that this folder is that
+space, and the guess is only safe about a space this account made itself, so
+somebody else's Work is adopted beside your Work rather than into it. And when it
+stops being listed it goes, rather than being uploaded again - a space somebody
+shared is theirs to say exists, and "missing" there means the sharing was taken
+back. Both rules are in `space-plan.ts`, which is a pure function and is tested
+as one. Deleting such a space from the rail leaves it instead: it is not this
+account's to delete, and the same gesture ends the membership and takes the notes
+off this machine only.
+
+The rail's order is the last small thing. `position` is a column on the space, so
+a member reordering their rail would move the owner's; the order endpoint touches
+only spaces the account owns, and a shared space sits after them.
+
+## What it looks like
+
+One sheet, from the space's own menu in the rail and from the palette: the people
+with their role as a small select each and a cross to take them out, an address
+field with a role beside it and one button, the link with its role and a two-word
+segmented control for `Anyone` or `Ask first`, copy, revoke, and whoever is
+waiting with Accept and Decline. A space somebody else is in carries a small
+stack of dots on the corner of its square in the rail - the same two dots a tab
+draws for the devices in a note, because it is the same fact said about a space.
 
 ## Cloudflare
 
@@ -293,15 +437,33 @@ real devices look like. The numbers above are from a quiet machine.
 
 ## Tests
 
-- `packages/rooms` - the wire, both ends of it, and the fold that puts a note
-  written while away back into a room.
+- `packages/rooms` - the wire, both ends of it, which of its messages would write
+  into a room, and the fold that puts a note written while away back into one.
 - `services/sync/test/rooms.test.ts` - the room itself, driven with storage in a
   Map and sockets that record what they were sent: the greeting, two devices
   converging, a device that was away, the settle writing the note, the log folding
   into a snapshot, waking up, asking the devices that were here for what it slept
-  through, and the door turning away a stranger.
+  through, the door turning away a stranger, the door telling the room what each
+  person may do, and a reader who sees every keystroke, keeps a caret, and cannot
+  add a letter by any of the three ways there are to try.
+- `services/sync/test/share.test.ts` - every route that names a space, at every
+  role, plus a stranger: sixty-odd cases from one table, so a route added without
+  a role check is a failing test rather than a hole. Then invitations and links
+  end to end over the API, somebody who had no account when they were invited,
+  the mail's rate limit, roles changing under somebody mid-session, whose quota a
+  shared note costs, and what the connector will and will not do in a space it
+  was lent.
+- `apps/desktop/src/lib/sharing.test.ts` - what the app believes it may do in a
+  folder, and what each control on the Share sheet actually asks for.
+- `apps/desktop/src/lib/space-plan.test.ts` - a shared space never taking a
+  folder that is already here, and going when the sharing is taken back.
+- `apps/desktop/src/lib/sync.test.ts` - a shared space arriving as a folder, one
+  shared to read never being written back to, and leaving one rather than
+  deleting it.
 - `apps/desktop/src/lib/rooms/bind.test.ts` - the binding: convergence, both
   orders of arrival, offline edits, undo staying yours, and the keystroke cost.
+- `apps/desktop/src/lib/rooms/peers.test.ts` - where a caret is, and whether it
+  is labelled with the machine or with the person.
 - `apps/desktop/src/lib/sync/mirror.test.ts` - the file sync leaving a note in a
   room alone, and still writing a conflict copy for one that is not.
 - `packages/editor/src/carets.test.ts` - what the carets draw and where they move.
@@ -310,6 +472,13 @@ real devices look like. The numbers above are from a quiet machine.
   converge and that the account ends up holding what they hold, photographs the
   remote caret and the tab's dots, and reports the timings above. It builds the
   app, starts everything and stops everything again.
+- `apps/desktop/test/e2e/share.py` - three browsers that know nothing about each
+  other. The owner opens the Share sheet from the rail and invites an address;
+  that address has no Nib account, follows the link out of the real message the
+  runtime's mail binding was handed, types the six digits, lands in the space, and
+  writes in the same note as the owner with each caret carrying the other's name.
+  Then a link that anybody may follow to read, and a third person who finds a note
+  they can see, cannot type into, and is offered nothing to change.
 
 The Worker's own suite runs against Node's SQLite rather than on workerd, which is
 how it was already written; the room is tested the same way, with the runtime
@@ -319,15 +488,6 @@ stood in for, and gets its workerd coverage from the end-to-end run. Adding
 with it on, and a dependency whose isolated storage was removed and reinstated
 across the Vitest 4 migration. It was not worth putting the deploy job's tests
 behind that.
-
-## What the sharing batch plugs into
-
-One function: the query at the top of `services/sync/src/rooms/index.ts`, which
-today asks whether the note is in a space this account holds. Membership becomes
-whatever a shared space means, and nothing else about a room changes - it never
-learns who anybody is. The two other places that will want a line each are the
-name on a caret, which should prefer a person's name over the device's when there
-is one, and the tab's dots, which are already a count.
 
 [jupiter]: https://dl.acm.org/doi/10.1145/215585.215706
 [wave]: https://svn.apache.org/repos/asf/incubator/wave/whitepapers/operational-transform/operational-transform.html
