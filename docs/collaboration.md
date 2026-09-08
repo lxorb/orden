@@ -287,19 +287,30 @@ say, because the space is theirs to see and this button is not theirs to press.
 | the change feed, reading a note | yes | yes | yes |
 | making, writing, deleting a note | | yes | yes |
 | bookmarks, the files beside the notes | | yes | yes |
-| Recently deleted, for notes | | yes | yes |
 | the connector's `write_note` | | yes | yes |
 | the room's socket | read-only | yes | yes |
 | renaming the space, its icon | | | yes |
 | publishing, and the domain | | | yes |
 | deleting the space | | | yes |
+| Recently deleted | | | yes |
 | inviting, roles, the link, requests | | | yes |
+
+Recently deleted is the one that could have gone either way. Deleting a note is
+a write, so putting it back looks like one too. But what Recently deleted really
+gives back is storage, and the storage a shared space uses is its owner's: a
+writer emptying their own would reach into somebody else's account and take away
+notes for good. So it holds the account's own spaces and nothing else. A writer
+who deleted something still has it in their own machine's trash, and the owner
+still sees it in theirs.
 
 Two things are nobody's role. Images and PDFs are stored per account and served
 by hash, so a writer's paste is their own blob and costs their own quota. And the
 settings are per account rather than per space, so there is nothing there to
 check; the two things a space itself keeps - its bookmarks and its file list -
-are in the table above.
+are in the table above. The file list has a rule of its own worth saying: an
+entry is kept when the account sending the list holds its bytes **or when the
+space is already serving them**, so a writer's list, which names PDFs they are
+keeping no bytes for, adds their own without dropping anybody else's.
 
 Quotas moved with all this: a note written in a shared space counts against the
 **owner** of the space, because that is whose storage the bytes land in. Before
@@ -377,9 +388,28 @@ as one. Deleting such a space from the rail leaves it instead: it is not this
 account's to delete, and the same gesture ends the membership and takes the notes
 off this machine only.
 
+Two things guard that second rule, because it is the one that reaches into a
+disk. The folder goes to this device's trash rather than for good: a space
+somebody stopped sharing is in nobody's Recently deleted, so the copy here is the
+last one of what was read here. And the mirrors are stamped with the account they
+belong to, so signing into a different one on the same machine starts from
+nothing rather than reading one account's folders as the other account's
+absences. A stored list from before that stamp is taken as the account signing
+in now, which is who it was about: that machine had no other.
+
 The rail's order is the last small thing. `position` is a column on the space, so
 a member reordering their rail would move the owner's; the order endpoint touches
-only spaces the account owns, and a shared space sits after them.
+only spaces the account owns, and a shared space sits after them. Bookmarks stay
+here too for a space shared to read: the account would refuse the list, and
+asking on every pass is a refusal on every pass.
+
+**What is deliberately still open.** An image or a PDF belongs to the account
+that pasted it, and giving it back takes the object away once nobody else keeps
+it - so a writer who leaves and clears their storage takes their pictures out of
+a note that still links them. Reference counting a blob across the spaces it is
+seen in is a piece of work of its own, and this is the same thing that has always
+happened to an image in a published blog. It is the only edge here that ends with
+somebody looking at a broken picture rather than at a refusal.
 
 ## What it looks like
 
@@ -468,8 +498,9 @@ real devices look like. The numbers above are from a quiet machine.
 - `apps/desktop/src/lib/space-plan.test.ts` - a shared space never taking a
   folder that is already here, and going when the sharing is taken back.
 - `apps/desktop/src/lib/sync.test.ts` - a shared space arriving as a folder, one
-  shared to read never being written back to, and leaving one rather than
-  deleting it.
+  shared to read never being written back to, leaving one rather than deleting
+  it, the folder of one that stopped being shared going to this device's trash
+  rather than for good, and the mirrors belonging to one account.
 - `apps/desktop/src/lib/rooms/bind.test.ts` - the binding: convergence, both
   orders of arrival, offline edits, undo staying yours, and the keystroke cost.
 - `apps/desktop/src/lib/rooms/peers.test.ts` - where a caret is, and whether it
