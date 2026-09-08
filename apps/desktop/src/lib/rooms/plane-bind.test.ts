@@ -333,29 +333,23 @@ describe('what a stroke costs the plane it lands on', () => {
     }
   }
 
-  test('costs the stroke and not the plane', () => {
-    const small = Device.opening(plane(50))
-    const large = Device.opening(plane(2000))
-    const other = { small: Device.joining(small), large: Device.joining(large) }
-
-    const took = (from: Device, to: Device) => {
-      const at = performance.now()
-      from.edit(withInk(from.canvas, [...from.canvas.ink, stroke('fresh', 300)]))
-      carry(from, to)
-      return performance.now() - at
+  test('puts the stroke on the wire and never the plane', () => {
+    /** How many bytes a stroke drawn on a plane of this size costs the room. */
+    function sent(strokes: number): number {
+      const device = Device.opening(plane(strokes))
+      const before = Y.encodeStateVector(device.doc)
+      device.edit(withInk(device.canvas, [...device.canvas.ink, stroke('fresh', 300)]))
+      return Y.encodeStateAsUpdate(device.doc, before).length
     }
 
-    // Warm, so what is measured is the work and not the first compile of it.
-    took(small, other.small)
-    took(large, other.large)
+    const one = sent(50)
+    const forty = sent(2000)
 
-    const one = took(small, other.small)
-    const forty = took(large, other.large)
-
-    // Forty times the plane, and well under forty times the work: what a stroke
-    // costs is the stroke, plus one walk of the map to put the plane back in order.
-    expect(forty).toBeLessThan(Math.max(one, 1) * 20)
-    expect(other.large.canvas.ink.at(-1)?.id).toBe('fresh')
+    // Forty times the plane and the same stroke: what crosses is the three hundred
+    // points and the handful of bytes that say where they go. Counted rather than
+    // timed, because a clock measures the machine and this measures the design.
+    expect(forty).toBeLessThan(one * 1.1)
+    expect(one).toBeGreaterThan(1000)
   })
 
   test('and the strokes it did not touch come back as the very same objects', () => {
