@@ -1,4 +1,5 @@
-/** Reading what a request carries, without ever trusting it.
+/** Reading what arrives, without ever trusting it: what a client sent, and what
+ *  a server somebody else named answered with.
  *
  *  A route asks for the fields it knows about, each with what it may be and
  *  how long it may get. Anything wrong - a body that is not a JSON object, a
@@ -16,6 +17,54 @@
 /** Only the body is read, so this takes the smallest thing that has one. */
 interface HasJson {
   req: { json: <T>() => Promise<T> }
+}
+
+/** What a fetched document says, up to a limit, or null when it is longer than
+ *  that. Answers the same question about somebody else's server as everything
+ *  below does about a client, which is why it lives here: a body is untrusted
+ *  whichever direction it arrived from.
+ *
+ *  The limit is applied while reading rather than after. Reading first and
+ *  measuring afterwards is how a Worker with a hundred and twenty-eight megabytes
+ *  of memory is asked to hold a gigabyte, and both callers reach a host somebody
+ *  else named - the URL a client says its description is at, and the theme
+ *  registry. `content-length` is consulted first, so an answer that declares
+ *  itself too big is dropped without being read at all. */
+export async function textAtMost(response: Response, limit: number): Promise<string | null> {
+  const declared = Number(response.headers.get('content-length') ?? '')
+  if (Number.isFinite(declared) && declared > limit) return null
+  if (!response.body) return ''
+
+  // Typed here rather than trusted from the stream: what a reader hands back is
+  // `any` to the runtime's own types, and a chunk is bytes or it is nothing.
+  const reader: { read(): Promise<{ done: boolean; value?: unknown }>; cancel(): Promise<void> } =
+    response.body.getReader()
+
+  const pieces: Uint8Array[] = []
+  let held = 0
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (!(value instanceof Uint8Array)) continue
+
+      held += value.length
+      if (held > limit) return null
+      pieces.push(value)
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined)
+  }
+
+  const whole = new Uint8Array(held)
+  let at = 0
+  for (const piece of pieces) {
+    whole.set(piece, at)
+    at += piece.length
+  }
+
+  return new TextDecoder().decode(whole)
 }
 
 export interface Body {

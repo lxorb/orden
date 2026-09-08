@@ -743,6 +743,64 @@ describe('a client that describes itself at a URL', () => {
     )
     expect(response.status).toBe(400)
   })
+
+  /** Anybody at all names the URL this fetches - it comes off a query string - so
+   *  a host answering with something enormous must not be able to spend the
+   *  Worker's memory on it. It was read whole and measured afterwards. */
+  test('is refused, unread, when it declares itself larger than a document', async () => {
+    const asked = vi.fn(() =>
+      Promise.resolve(
+        new Response('{}', {
+          headers: {
+            'content-type': 'application/json',
+            'content-length': String(64 * 1024 * 1024),
+          },
+        }),
+      ),
+    )
+    vi.stubGlobal('fetch', asked)
+
+    const { challenge } = await pkce()
+    const response = await call(
+      env,
+      authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }),
+    )
+
+    expect(response.status).toBe(400)
+    expect(asked).toHaveBeenCalledOnce()
+  })
+
+  test('is refused when it turns out to be larger than a document', async () => {
+    // No content-length, so the only bound is the one applied while reading.
+    const long = JSON.stringify({
+      client_id: CLAUDE_CODE,
+      client_name: 'x'.repeat(80_000),
+      redirect_uris: [CHATGPT],
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode(long))
+                controller.close()
+              },
+            }),
+            { headers: { 'content-type': 'application/json' } },
+          ),
+        ),
+      ),
+    )
+
+    const { challenge } = await pkce()
+    const response = await call(
+      env,
+      authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }),
+    )
+    expect(response.status).toBe(400)
+  })
 })
 
 describe('what the settings show', () => {

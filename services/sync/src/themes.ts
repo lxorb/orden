@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { textAtMost } from './body'
 import type { Env } from './types'
 
 /** The theme store's catalogue, served from here rather than from where it lives.
@@ -59,8 +60,9 @@ async function fromRegistry(path: string): Promise<string | null> {
 
   if (!response.ok) return null
 
-  const text = await response.text()
-  return new TextEncoder().encode(text).length > MOST_BYTES ? null : text
+  // Bounded while it is read rather than after, so a registry that has gone
+  // wrong cannot be answered by holding all of it in memory first.
+  return await textAtMost(response, MOST_BYTES)
 }
 
 /** Something went wrong, said so the app can read it.

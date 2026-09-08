@@ -139,6 +139,23 @@ describe('a theme stylesheet', () => {
     expect(asked).toEqual([])
   })
 
+  /** A theme is text and nothing here is ever big, so a registry answering with
+   *  something enormous is turned down. Turned down before it is held: reading it
+   *  whole and measuring afterwards is how a Worker with a hundred and twenty-eight
+   *  megabytes of memory is asked to hold more than that. */
+  test('a stylesheet larger than a stylesheet is turned down', async () => {
+    registry(
+      () =>
+        new Response('a'.repeat(600 * 1024), {
+          status: 200,
+          headers: { 'content-length': String(600 * 1024) },
+        }),
+    )
+
+    const answer = await call(env, '/themes/huge/theme.css')
+    expect(answer.status).toBe(404)
+  })
+
   test('an id that tries to be a path is not a theme route at all', async () => {
     // Hono matches one segment, so a path never arrives here as an id. Checked
     // anyway, because what comes back must not be a file from the repository.

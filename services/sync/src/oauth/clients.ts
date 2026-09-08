@@ -7,6 +7,7 @@
  *  they are written down. */
 
 import { Hono } from 'hono'
+import { textAtMost } from '../body'
 import { newId, now, randomToken, sha256 } from '../crypto'
 import type { Env } from '../types'
 import { failure, GRANTS } from './protocol'
@@ -70,8 +71,12 @@ async function clientFromDocument(id: string): Promise<Client | null> {
     })
     if (!response.ok) return null
 
-    const text = await response.text()
-    if (text.length > LONGEST_DOCUMENT) return null
+    // Read up to the limit rather than read and then measured. Anybody at all can
+    // name the URL this fetches - `/oauth/authorize` takes the id from a query
+    // string - so a host answering with something enormous must not be able to
+    // spend this Worker's memory on it.
+    const text = await textAtMost(response, LONGEST_DOCUMENT)
+    if (text === null) return null
 
     const document = JSON.parse(text) as Record<string, unknown>
     if (document.client_id !== id) return null
