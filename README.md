@@ -1,4 +1,4 @@
-# Nib
+# nibeditor
 
 <p align="center">
   <a href="https://github.com/lxorb/nibeditor/releases/latest">
@@ -28,10 +28,10 @@
 </p>
 
 <p align="center">
-  <img alt="Nib: typing markdown that renders as you type, then a look around the tabs, the file tree and four spaces" src="docs/media/live-preview.gif">
+  <img alt="nibeditor: typing markdown that renders as you type, then a look around the tabs, the file tree and four spaces" src="docs/media/live-preview.gif">
 </p>
 
-If you're also annoyed by all the other Markdown Editors out there, you should probably just use Nib. 
+If you're also annoyed by all the other Markdown Editors out there, you should probably just use nibeditor. 
 
 It's extremely fast, lightweight, lets your favorite LLM edit your notes and syncs everything to the cloud - on any platform. 
 
@@ -39,11 +39,11 @@ How much does it cost? Well, it's free.
 
 See for yourself: [nibeditor.com](https://nibeditor.com)
 
-## Why Nib?
+## Why nibeditor?
 
-|  | Open source | MCP | Platform independent | Inline preview | Sync | Publish |
+|  | Open source | Built-in MCP | Windows, macOS, Linux | Inline preview | Free sync | Free publishing |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: |
-| **Nib** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Typora | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
 | MarkText | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
 | Obsidian | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
@@ -54,6 +54,14 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 | Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Sublime Text | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+
+What the columns mean, so the crosses are fair:
+
+- **Built-in MCP**: an MCP server that ships with the editor. Community MCP bridges exist for Obsidian and Joplin, but none of them are part of the app.
+- **Windows, macOS, Linux**: all three desktops. iA Writer covers macOS, iOS, Windows and Android, and Bear covers the Apple platforms, but neither ships for Linux.
+- **Inline preview**: formatting rendered in place as you type, instead of a second preview pane.
+- **Free sync**: device-to-device sync, built in, at no cost. Obsidian, Logseq and Bear all sync well, but behind a subscription. Joplin's is free.
+- **Free publishing**: turning a note into a public page at no cost. Obsidian Publish and Bear's web links are paid. Logseq exports a static site for free.
 
 ## Features
 
@@ -84,8 +92,8 @@ So… long story short: I’ve decided to build my own Markdown Editor. I know t
 
 I aim to keep this free forever (because I really don’t wanna become the Typora 2.0). For now, I’ve limited cloud space usage to 1 GB per account - I believe this should be more than enough, but if you run into any issues, let me know.
 
-If you’re still unsure whether you should use MarkText or Nib, here are a few reasons to use Nib. This is not to say I don’t like MarkText whatsoever, it’s just why I am not satisfied with it:
-- Nib is by construction considerably faster and lighter (around 20x compared to MarkText)
-- Nib has an MCP so your favorite LLM can mess with your notes, MarkText doesn’t
-- Nib has sync on all of your devices, MarkText is just local
+If you’re still unsure whether you should use MarkText or nibeditor, here are a few reasons to use nibeditor. This is not to say I don’t like MarkText whatsoever, it’s just why I am not satisfied with it:
+- nibeditor is by construction considerably faster and lighter (around 20x compared to MarkText)
+- nibeditor has an MCP so your favorite LLM can mess with your notes, MarkText doesn’t
+- nibeditor has sync on all of your devices, MarkText is just local
 - Have you thought about starting an online blog? Well, it’s one click away now.
