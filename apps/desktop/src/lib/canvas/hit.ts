@@ -14,8 +14,8 @@ import {
   awayFromSegment,
   type Box,
   boxOf,
+  edgeCurve,
   edgeEnds,
-  edgePath,
   HANDLES,
   type HandleId,
   nodeAt,
@@ -138,12 +138,18 @@ function portAt(where: Where, point: Point, slack: number): Hit['port'] {
 const SAMPLES = 40
 
 function edgeAt(canvas: Canvas, point: Point, reach: number): string | null {
+  if (!canvas.edges.length) return null
+
+  // The cards by id, once. Looked up per end of per edge, this was the whole
+  // plane walked for every connector on it, on every pointer event.
+  const byId = new Map(canvas.nodes.map((node) => [node.id, node]))
+
   for (let index = canvas.edges.length - 1; index >= 0; index--) {
     const edge = canvas.edges[index]
     if (!edge) continue
 
-    const from = canvas.nodes.find((node) => node.id === edge.fromNode)
-    const to = canvas.nodes.find((node) => node.id === edge.toNode)
+    const from = byId.get(edge.fromNode)
+    const to = byId.get(edge.toNode)
     if (!from || !to) continue
 
     if (onCurve(edgeEnds(edge, boxOf(from), boxOf(to)), point, reach)) return edge.id
@@ -153,46 +159,65 @@ function edgeAt(canvas: Canvas, point: Point, reach: number): string | null {
 }
 
 function onCurve(ends: ReturnType<typeof edgeEnds>, point: Point, reach: number): boolean {
-  const curve = curvePoints(ends)
+  const curve = edgeCurve(ends)
 
-  for (let one = 1; one < curve.length; one++) {
-    const a = curve[one - 1]
-    const b = curve[one]
+  // A cubic never leaves the box round its own four points, so a point outside
+  // that box is on no part of this edge - answered in four comparisons rather
+  // than by walking forty samples of every connector on the plane.
+  if (!nearCurve(curve, point, reach)) return false
+
+  const walked = curvePoints(curve)
+
+  for (let one = 1; one < walked.length; one++) {
+    const a = walked[one - 1]
+    const b = walked[one]
     if (a && b && awayFromSegment(point, a, b) <= reach) return true
   }
 
   return false
 }
 
-/** The cubic the edge is drawn as, walked. Read off the same path string the
- *  drawing uses, so the two cannot disagree about where the line is. */
-function curvePoints(ends: ReturnType<typeof edgeEnds>): Point[] {
-  const numbers = edgePath(ends)
-    .split(/[^\d.-]+/)
-    .filter(Boolean)
-    .map(Number)
+function nearCurve(curve: readonly Point[], point: Point, reach: number): boolean {
+  let least = Infinity
+  let most = -Infinity
+  let lowest = Infinity
+  let highest = -Infinity
 
-  const [x0, y0, x1, y1, x2, y2, x3, y3] = numbers
-  if (
-    x0 === undefined ||
-    y0 === undefined ||
-    x1 === undefined ||
-    y1 === undefined ||
-    x2 === undefined ||
-    y2 === undefined ||
-    x3 === undefined ||
-    y3 === undefined
-  ) {
-    return []
+  for (const at of curve) {
+    if (at.x < least) least = at.x
+    if (at.x > most) most = at.x
+    if (at.y < lowest) lowest = at.y
+    if (at.y > highest) highest = at.y
   }
 
+  return (
+    point.x >= least - reach &&
+    point.x <= most + reach &&
+    point.y >= lowest - reach &&
+    point.y <= highest + reach
+  )
+}
+
+/** The cubic the edge is drawn as, walked. The same four points the drawing is
+ *  made from, so the two cannot disagree about where the line is. */
+function curvePoints(curve: readonly [Point, Point, Point, Point]): Point[] {
+  const [first, second, third, last] = curve
   const out: Point[] = []
+
   for (let step = 0; step <= SAMPLES; step++) {
     const t = step / SAMPLES
     const u = 1 - t
     out.push({
-      x: u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3,
-      y: u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3,
+      x:
+        u * u * u * first.x +
+        3 * u * u * t * second.x +
+        3 * u * t * t * third.x +
+        t * t * t * last.x,
+      y:
+        u * u * u * first.y +
+        3 * u * u * t * second.y +
+        3 * u * t * t * third.y +
+        t * t * t * last.y,
     })
   }
 

@@ -112,18 +112,30 @@ export function edgeEnds(edge: CanvasEdge, from: Box, to: Box): EdgeEnds {
 const LEAN = 0.4
 const LEAST_LEAN = 24
 
-/** The edge as an SVG path: a cubic that leaves each node at a right angle to
- *  the side it meets, which is how a drawn connector reads whichever way the
- *  nodes are arranged. */
-export function edgePath(ends: EdgeEnds): string {
+/** The four points the edge's cubic runs through: where it leaves, the two it
+ *  leans on, and where it arrives. Said once here, so the drawing, the label and
+ *  the hit test cannot come to different conclusions about where the line is. */
+export function edgeCurve(ends: EdgeEnds): [Point, Point, Point, Point] {
   const { from, to } = ends
   const away = Math.hypot(to.x - from.x, to.y - from.y)
   const lean = Math.max(LEAST_LEAN, away * LEAN)
 
   const out = outward(ends.fromSide)
   const back = outward(ends.toSide)
-  const first = { x: from.x + out.x * lean, y: from.y + out.y * lean }
-  const second = { x: to.x + back.x * lean, y: to.y + back.y * lean }
+
+  return [
+    from,
+    { x: from.x + out.x * lean, y: from.y + out.y * lean },
+    { x: to.x + back.x * lean, y: to.y + back.y * lean },
+    to,
+  ]
+}
+
+/** The edge as an SVG path: a cubic that leaves each node at a right angle to
+ *  the side it meets, which is how a drawn connector reads whichever way the
+ *  nodes are arranged. */
+export function edgePath(ends: EdgeEnds): string {
+  const [from, first, second, to] = edgeCurve(ends)
 
   return `M ${round(from.x)} ${round(from.y)} C ${round(first.x)} ${round(first.y)}, ${round(second.x)} ${round(second.y)}, ${round(to.x)} ${round(to.y)}`
 }
@@ -145,17 +157,13 @@ export function arrowAt(point: Point, side: Side): { x: number; y: number; angle
 /** Halfway along the edge, where a label goes. The midpoint of the cubic, which
  *  for these control points is a step out from each end towards the other. */
 export function edgeMiddle(ends: EdgeEnds): Point {
-  const { from, to } = ends
-  const away = Math.hypot(to.x - from.x, to.y - from.y)
-  const lean = Math.max(LEAST_LEAN, away * LEAN)
-  const out = outward(ends.fromSide)
-  const back = outward(ends.toSide)
+  const [from, first, second, to] = edgeCurve(ends)
 
   // The cubic at t = 0.5, which is where the four points average out with the
   // middle pair counting three times each.
   return {
-    x: (from.x + 3 * (from.x + out.x * lean) + 3 * (to.x + back.x * lean) + to.x) / 8,
-    y: (from.y + 3 * (from.y + out.y * lean) + 3 * (to.y + back.y * lean) + to.y) / 8,
+    x: (from.x + 3 * first.x + 3 * second.x + to.x) / 8,
+    y: (from.y + 3 * first.y + 3 * second.y + to.y) / 8,
   }
 }
 
