@@ -34,6 +34,13 @@ vi.mock('../note-images', () => ({
 
 const { readingHtml } = await import('./render')
 
+/** The reading view asks for the exporter the first time it renders a note: the
+ *  diagram drawers, the syntax parsers, KaTeX, most of what the app can load.
+ *  Loaded here rather than by the first test, where it was three seconds on an
+ *  idle machine, past a test's five on a busy one, and every test waiting on the
+ *  same import timed out with it. See docs/conventions.md. */
+await import('../export')
+
 const note = (text: string) => ({ text, path: '/space/Notes/Today.md' })
 
 describe('the space a note is read in', () => {

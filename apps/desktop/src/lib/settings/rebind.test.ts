@@ -26,6 +26,11 @@ let Rebind: typeof import('./rebind.svelte').Rebind
 let shortcuts: typeof import('../shortcuts.svelte').shortcuts
 let rebind: InstanceType<typeof Rebind>
 
+/** The registry reaches most of the app: loaded here rather than by whichever
+ *  `beforeEach` runs first, which was ten seconds of it against a hook's budget
+ *  of thirty. See docs/conventions.md. */
+await Promise.all([import('./rebind.svelte'), import('../shortcuts.svelte')])
+
 /** A keystroke, as the window would hand one over. */
 function press(key: string, held: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
   return {

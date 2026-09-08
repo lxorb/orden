@@ -90,6 +90,11 @@ function surface() {
 
 let modes: typeof import('./modes.svelte').modes
 
+/** The store's graph, loaded here rather than by the first `restarted()`, which
+ *  is a hook with a budget: whichever test ran first spent thirty seconds of it
+ *  compiling. See docs/conventions.md. */
+await import('./modes.svelte')
+
 /** The store as a fresh start of the app would find it. */
 async function restarted() {
   vi.resetModules()

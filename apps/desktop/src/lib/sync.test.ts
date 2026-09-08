@@ -283,6 +283,16 @@ let account: typeof import('./account.svelte').account
 let sync: typeof import('./sync.svelte').sync
 let workspace: typeof import('./workspace.svelte').workspace
 
+/** The store graph, loaded here rather than by whichever `beforeEach` runs
+ *  first, which was seven seconds of it against a hook's budget of thirty. What
+ *  `resetModules` costs each test after this is the re-execution alone, a tenth
+ *  of a second. See docs/conventions.md. */
+await Promise.all([
+  import('./account.svelte'),
+  import('./sync.svelte'),
+  import('./workspace.svelte'),
+])
+
 beforeEach(async () => {
   fake.reset()
   localStorage.clear()

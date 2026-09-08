@@ -72,6 +72,11 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 let account: typeof import('./account.svelte').account
 
+/** The store's graph, loaded here rather than by whichever `beforeEach` runs
+ *  first, which was most of a hook's thirty-second budget spent compiling. See
+ *  docs/conventions.md. */
+await import('./account.svelte')
+
 beforeEach(async () => {
   localStorage.clear()
   server.refuse = false

@@ -32,6 +32,18 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 let registry: typeof import('./shortcuts.svelte')
 
+/** The registry's graph, and the menus and palette that read it, loaded here
+ *  rather than by the first `restarted()` or by the one test that asks for them:
+ *  thirteen seconds of the first test was compiling, and the palette's own
+ *  imports had only a test's five seconds to compile in. See
+ *  docs/conventions.md. */
+await Promise.all([
+  import('./shortcuts.svelte'),
+  import('./modes.svelte'),
+  import('./commands'),
+  import('./app-menu'),
+])
+
 /** The store as a fresh start of the app would find it. */
 async function restarted() {
   vi.resetModules()
