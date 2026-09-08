@@ -91,6 +91,19 @@ class Session {
     this.vault = vault
   }
 
+  /** What else has to be let go of when the session is.
+   *
+   *  Nothing read for one account describes the next, and some of it is a secret:
+   *  the connector's freshly minted token is a bearer credential handed out once.
+   *  Registered from below rather than reached for from here, because everything
+   *  holding such a thing already reads this store and an import the other way
+   *  would be a circle. */
+  private readonly alsoForget = new Set<() => void>()
+
+  forgetWithSession(clear: () => void) {
+    this.alsoForget.add(clear)
+  }
+
   async restore() {
     this.restoring = true
     try {
@@ -144,7 +157,10 @@ class Session {
 
   async requestCode() {
     const address = this.email.trim()
-    if (!address) return
+    // One at a time: Enter in the address field submits the form whatever the
+    // button is doing, and the service invalidates the first code when it writes
+    // the second - which is the one already in the reader's hand.
+    if (!address || this.busy) return
 
     this.busy = true
     this.error = null
@@ -278,6 +294,7 @@ class Session {
     this.settling = false
     this.spaces = []
     this.deletedSpaces = []
+    for (const clear of this.alsoForget) clear()
   }
 
   private resendTimer: ReturnType<typeof setInterval> | undefined

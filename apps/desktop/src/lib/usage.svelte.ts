@@ -43,6 +43,15 @@ class Usage {
 
 export const usage = new Usage()
 
+/** Nothing refreshes these once there is no account to ask about, so without this
+ *  the warning in the corner would go on saying how full somebody else's account
+ *  was, over an app that is signed out. */
+account.forgetWithSession(() => {
+  usage.used = 0
+  usage.limit = 0
+  usage.dismissed = false
+})
+
 /** Bytes as something a person reads, in the units they expect from a disk. */
 export function readableSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`

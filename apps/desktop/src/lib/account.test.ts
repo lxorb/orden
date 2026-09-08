@@ -21,6 +21,8 @@ const server = vi.hoisted(() => ({
   /** The guest session a sign-in handed over, so what a link lent the device
    *  follows it into the account. */
   handedOver: null as string | null | undefined,
+  /** How many codes were asked for, so a double press can be counted. */
+  codes: 0,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -29,7 +31,10 @@ vi.mock('./api', async (importOriginal) => {
   return {
     ...original,
     api: {
-      requestCode: () => Promise.resolve({ ok: true as const, resendIn: server.resendIn }),
+      requestCode: () => {
+        server.codes += 1
+        return Promise.resolve({ ok: true as const, resendIn: server.resendIn })
+      },
       verifyCode: (_email: string, _code: string, guest?: string) => {
         server.handedOver = guest ?? null
         return server.refuse
@@ -60,9 +65,18 @@ vi.mock('./api', async (importOriginal) => {
           ? Promise.reject(new Error('the network is not there yet'))
           : Promise.resolve({ spaces: [], deleted: [] }),
       signOut: () => Promise.resolve({ ok: true as const }),
+      usage: () => Promise.resolve({ used: 0, limit: 0 }),
     },
   }
 })
+
+// The connector store reads `message` from here; the real module pulls the
+// editor package and four dictionaries in behind it, which no test here reads.
+vi.mock('./i18n.svelte', () => ({
+  t: (text: string) => text,
+  message: (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback,
+}))
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -82,11 +96,15 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 let account: typeof import('./account.svelte').account
+let connectors: typeof import('./connectors.svelte').connectors
+let usage: typeof import('./usage.svelte').usage
 
 /** The store's graph, loaded here rather than by whichever `beforeEach` runs
  *  first, which was most of a hook's thirty-second budget spent compiling. See
  *  docs/conventions.md. */
 await import('./account.svelte')
+await import('./connectors.svelte')
+await import('./usage.svelte')
 
 beforeEach(async () => {
   localStorage.clear()
@@ -98,9 +116,14 @@ beforeEach(async () => {
   server.spacesFail = false
   server.meIsAGuest = false
   server.handedOver = undefined
+  server.codes = 0
 
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
+  // Imported for what they register with the session, not for what they hold:
+  // whatever was read for one account has to go when that account does.
+  ;({ connectors } = await import('./connectors.svelte'))
+  ;({ usage } = await import('./usage.svelte'))
   account.email = 'me@example.com'
 })
 
@@ -125,6 +148,16 @@ describe('the countdown to another code', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  test('sends one code however many times the form is submitted', async () => {
+    // Enter in the address field submits the form whatever the button says, so
+    // two quick presses used to be two codes - and the service invalidates the
+    // first when it writes the second, which is the code the reader is reading.
+    await Promise.all([account.requestCode(), account.requestCode()])
+
+    expect(server.codes).toBe(1)
+    expect(account.step).toBe('code')
   })
 
   test('stops once there is nothing left to wait for', async () => {
@@ -177,6 +210,33 @@ describe('a code that is accepted', () => {
     expect(account.token).toBeNull()
     expect(account.spaces).toEqual([])
     expect(localStorage.getItem('nib:session')).toBeNull()
+  })
+
+  test('signing out takes what was read for that account with it', async () => {
+    await account.verify('123456')
+    account.settled()
+
+    // A token the connector minted is a bearer credential shown once, and the
+    // bytes and the clients belong to whoever has just left. None of it is this
+    // machine's to keep, and none of it describes whoever signs in next.
+    connectors.freshToken = 'mcp-secret'
+    connectors.clients = [
+      { id: 'c1', name: 'Claude', readOnly: true, createdAt: 0, lastUsedAt: null },
+    ]
+    connectors.token = { exists: true, readOnly: true, lastUsedAt: null }
+    usage.used = 900
+    usage.limit = 1000
+    usage.dismissed = true
+
+    await account.signOut()
+
+    expect(connectors.freshToken).toBeNull()
+    expect(connectors.clients).toEqual([])
+    expect(connectors.token).toBeNull()
+    // The warning in the corner is drawn from these, so stale numbers are a
+    // toast about somebody else's storage sitting over a signed-out app.
+    expect(usage.limit).toBe(0)
+    expect(usage.warning).toBe(false)
   })
 })
 

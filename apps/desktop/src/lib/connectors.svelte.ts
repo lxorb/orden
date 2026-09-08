@@ -96,8 +96,15 @@ class Connectors {
 
     // Gone from the list at once; the server is told next.
     this.clients = this.clients.filter((one) => one.id !== id)
+    this.error = null
+
     try {
       await api.disconnectClient(account.accountToken, id)
+    } catch (error) {
+      // The row was taken away before the service was asked, so a refusal has to
+      // say so: the reload below puts the client back, and a row that reappears
+      // with nothing beside it reads as the app losing its place.
+      this.error = message(error, 'could not reach the server')
     } finally {
       await this.load()
     }
@@ -126,10 +133,16 @@ class Connectors {
     if (!account.accountToken) return
 
     this.busy = true
+    this.error = null
+
     try {
       await api.revokeConnector(account.accountToken)
       this.freshToken = null
       await this.load()
+    } catch (error) {
+      // Said out loud, because the pane would otherwise read as revoked while
+      // the token went on reaching the notes.
+      this.error = message(error, 'could not reach the server')
     } finally {
       this.busy = false
     }
@@ -142,3 +155,13 @@ class Connectors {
 }
 
 export const connectors = new Connectors()
+
+/** None of this survives the account it was read for. The minted token above all:
+ *  it is a bearer credential the service will never hand back, so the only copy
+ *  of it is the one on this page, and it has nothing to do with whoever signs in
+ *  next. Which client was picked stays, since that is about this machine. */
+account.forgetWithSession(() => {
+  connectors.clients = []
+  connectors.token = null
+  connectors.freshToken = null
+})

@@ -233,11 +233,18 @@ class Settings {
     if (!space || !account.accountToken) return
 
     this.busy = true
+    this.error = null
+
     try {
       await api.unpublish(account.accountToken, space.id)
       this.dns = []
       this.domain = null
       await account.loadSpaces()
+    } catch (error) {
+      // Said out loud, the way publishing says it. Taking a space back off the
+      // web is the half of the pair somebody is anxious about, and a button that
+      // answers nothing at all reads as done.
+      this.error = message(error, 'could not reach the server')
     } finally {
       this.busy = false
     }
