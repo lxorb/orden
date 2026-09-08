@@ -128,6 +128,9 @@ pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{write_bytes, write_note};
+    // The trait the encoding method hangs off. The module above reaches it
+    // through what it imports; a test module is its own scope and has to say so.
+    use base64::Engine;
     use std::fs;
 
     /// The bytes of a two by one PNG, which is a picture rather than text and so
