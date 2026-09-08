@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { MOST_MEMBERS } from '../src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
 const OWNER = 'owner@example.com'
@@ -679,6 +680,68 @@ describe('one person’s role', () => {
 })
 
 /* ── The link ─────────────────────────────────────────────────────────── */
+
+/** The number is on the space rather than on the route that lets somebody in.
+ *  An invitation held itself to it and a link did not, so the link was the way
+ *  round it - and a space past the number is one whose sheet cannot list the
+ *  people in it, which means an owner who can neither see nor take out whoever
+ *  came in last. */
+describe('as many people as one space holds', () => {
+  /** Fills the space to the brim, leaving room for `spare` more. */
+  function fillMembers(spare = 0) {
+    const at = Date.now()
+    for (let one = 0; one < MOST_MEMBERS - spare; one++) {
+      env.db
+        .prepare(
+          'insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)',
+        )
+        .run(space, `filler${one}@example.com`, 'read', at + one)
+    }
+  }
+
+  test('an invitation is refused past it', async () => {
+    fillMembers()
+    const response = await call(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: STRANGER, role: 'read' },
+    })
+
+    expect(response.status).toBe(409)
+    expect(response.json.error).toBe('that is as many people as one space holds')
+  })
+
+  test('an open link is refused past it too', async () => {
+    const token = await shareLink('write', 'open')
+    fillMembers()
+
+    const joined = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+    expect(joined.status).toBe(409)
+    expect(joined.json.error).toBe('that is as many people as one space holds')
+
+    // And nothing was written, so the space still holds what it held.
+    expect((await shareView()).json.members).toHaveLength(MOST_MEMBERS)
+  })
+
+  test('somebody already in is still let in when it is full', async () => {
+    const token = await shareLink('read', 'open')
+    fillMembers(1)
+    await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    // Full now, and the same person comes back to the same link.
+    const again = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+    expect(again.status).toBe(200)
+    expect(again.json.space.role).toBe('read')
+  })
+
+  test('an invitation already written is still redeemable when it is full', async () => {
+    const link = await inviteLink(STRANGER, 'write')
+    fillMembers(1)
+
+    const joined = await call(env, `/v1/join/${link}`, { method: 'POST', token: stranger })
+    expect(joined.status).toBe(200)
+    expect(joined.json.space.role).toBe('write')
+  })
+})
 
 describe('a share link', () => {
   async function link(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {

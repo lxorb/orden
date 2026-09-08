@@ -23,8 +23,10 @@ import type { Env, Space, User, Variables } from '../types'
 import { atLeast, isGiven, spaceOf, type Given } from './space'
 
 /** More people in one space than anyone shares with, and the bound on every
- *  listing below. */
-const MOST = 200
+ *  listing below. Exported because `join.ts` holds a link to the same number: a
+ *  space whose sheet cannot list everybody in it is a space whose owner cannot
+ *  take anybody out. */
+export const MOST_MEMBERS = 200
 export const EMAIL_LIMIT = 320
 /** How long the link in an invitation stays a shortcut. After that the address
  *  still opens the space; only the link has stopped carrying it there. */
@@ -101,7 +103,7 @@ async function membersOf(env: Env, spaceId: string): Promise<MemberRow[]> {
       where m.space_id = ?
       order by m.created_at, m.email limit ?`,
   )
-    .bind(spaceId, MOST)
+    .bind(spaceId, MOST_MEMBERS)
     .all<MemberRow>()
 
   return results
@@ -115,7 +117,7 @@ async function requestsOf(env: Env, spaceId: string): Promise<RequestRow[]> {
       where r.space_id = ?
       order by r.created_at, r.email limit ?`,
   )
-    .bind(spaceId, MOST)
+    .bind(spaceId, MOST_MEMBERS)
     .all<RequestRow>()
 
   return results
@@ -128,7 +130,7 @@ async function guestsOf(env: Env, spaceId: string): Promise<GuestRow[]> {
       where m.space_id = ? and m.declined_at is null
       order by m.created_at, g.id limit ?`,
   )
-    .bind(spaceId, MOST)
+    .bind(spaceId, MOST_MEMBERS)
     .all<GuestRow>()
 
   return results

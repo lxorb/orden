@@ -31,7 +31,7 @@ import { cleanName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../
 import { mailer, mayMail, requestMessage } from '../email'
 import { claimGuest, newGuest, presentGuest } from '../guests'
 import type { Env, Guest, Space, User, Variables } from '../types'
-import { EMAIL_LIMIT, personName } from './share'
+import { EMAIL_LIMIT, MOST_MEMBERS, personName } from './share'
 import { presentSpace, type Given } from './space'
 
 type Mode = 'open' | 'approval'
@@ -110,8 +110,33 @@ function spendInvitation(env: Env, hash: string): Promise<unknown> {
 
 /** The membership, written or found, and the role it actually holds. Somebody
  *  already in the space at a role the owner gave them keeps it: a link is how
- *  they arrived, not what they are. */
-async function memberNow(env: Env, space: Space, email: string, role: Given): Promise<Given> {
+ *  they arrived, not what they are.
+ *
+ *  Null when the space is full and this person is not in it. The invitation route
+ *  holds itself to the same number, and a link that did not would be the way
+ *  round it: past it the Share sheet cannot list the people it holds, so the owner
+ *  can neither see nor take out whoever came in last. */
+async function memberNow(
+  env: Env,
+  space: Space,
+  email: string,
+  role: Given,
+): Promise<Given | null> {
+  const roleOf = () =>
+    env.DB.prepare('select role from space_members where space_id = ? and email = ?')
+      .bind(space.id, email)
+      .first<{ role: Given }>()
+
+  const counted = await env.DB.prepare(
+    'select count(*) as held from space_members where space_id = ?',
+  )
+    .bind(space.id)
+    .first<{ held: number }>()
+
+  // A full space still lets in somebody who is already a member: what is refused
+  // is one more row, not one more visit.
+  if ((counted?.held ?? 0) >= MOST_MEMBERS) return (await roleOf())?.role ?? null
+
   await env.DB.prepare(
     `insert into space_members (space_id, email, role, joined_at, created_at)
      values (?1, ?2, ?3, ?4, ?4)
@@ -120,13 +145,12 @@ async function memberNow(env: Env, space: Space, email: string, role: Given): Pr
     .bind(space.id, email, role, now())
     .run()
 
-  const held = await env.DB.prepare(
-    'select role from space_members where space_id = ? and email = ?',
-  )
-    .bind(space.id, email)
-    .first<{ role: Given }>()
+  return (await roleOf())?.role ?? role
+}
 
-  return held?.role ?? role
+/** What a link says when the space it leads to holds as many people as it can. */
+function spaceIsFull(context: Reply) {
+  return context.json({ error: 'that is as many people as one space holds' }, 409)
 }
 
 /** Whether the space has room for another guest through its link. */
@@ -223,6 +247,7 @@ async function redeemInvitation(context: Reply, found: Leads, guest: Guest | nul
 
   const user = await accountFor(context.env, found.email, context.req.header('accept-language'))
   const role = await memberNow(context.env, found.space, user.email, found.role)
+  if (!role) return spaceIsFull(context)
   await spendInvitation(context.env, found.hash)
 
   // Whatever this device held as a guest, and whatever any guest said it was at
@@ -253,6 +278,8 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
     }
 
     const role = await memberNow(context.env, space, user.email, found.role)
+    if (!role) return spaceIsFull(context)
+
     await spendInvitation(context.env, found.hash)
     return context.json({ space: presentSpace(space, context.env, role, true) })
   }
@@ -280,6 +307,8 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
   }
 
   const role = await memberNow(context.env, space, user.email, found.role)
+  if (!role) return spaceIsFull(context)
+
   return context.json({ space: presentSpace(space, context.env, role, true) })
 }
 
