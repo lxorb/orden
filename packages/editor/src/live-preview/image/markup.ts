@@ -76,6 +76,21 @@ export function withZoom(image: ImageSpec, zoom: number): ImageSpec {
   return { src: image.src, alt: image.alt, title: image.title, zoom }
 }
 
+/** An address as markdown writes it, and as it is read back.
+ *
+ *  Markdown puts an address that holds a space between angle brackets, because
+ *  bare it would read as an address and a title. The brackets are markup rather
+ *  than part of the address, so they come off on the way in and go back on when
+ *  they are needed: a picture whose file has a space in its name was pointing at
+ *  a name with the brackets in it, and drew nothing. */
+function bareAddress(url: string): string {
+  return url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
+}
+
+function writtenAddress(src: string): string {
+  return /[\s<>()]/.test(src) ? `<${src}>` : src
+}
+
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {
   const url = node.getChild('URL')
   if (!url) return null
@@ -86,7 +101,7 @@ function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | n
   const title = node.getChild('LinkTitle')
 
   return {
-    src: state.doc.sliceString(url.from, url.to),
+    src: bareAddress(state.doc.sliceString(url.from, url.to)),
     alt,
     title: title ? state.doc.sliceString(title.from + 1, title.to - 1) : '',
     zoom: 100,
@@ -132,7 +147,7 @@ export function imageEndingAt(state: EditorState, pos: number): ImageSpan | null
 export function imageMarkup(spec: ImageSpec): string {
   const zoomed = spec.zoom !== 100
   if (!zoomed && !spec.width) {
-    return `![${spec.alt}](${spec.src}${spec.title ? ` "${spec.title}"` : ''})`
+    return `![${spec.alt}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
   }
 
   const attrs = [`src="${escapeAttr(spec.src)}"`, `alt="${escapeAttr(spec.alt)}"`]

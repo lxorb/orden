@@ -135,6 +135,17 @@ describe('writing an image back', () => {
     const spec = { src: 'p/a b.png', alt: 'x "y"', title: 'T', zoom: 33 }
     expect(parseHtmlImage(imageMarkup(spec))).toEqual(spec)
   })
+
+  /** An address with a space in it has to be written between angle brackets:
+   *  bare, markdown reads the second word as a title and the picture comes out
+   *  as four words of prose. It is what a paste writes for such an address, and
+   *  what this has to write back. */
+  test('an address with a space is written between brackets', () => {
+    expect(imageMarkup({ src: 'a picture.png', alt: 'x', title: '', zoom: 100 })).toBe(
+      '![x](<a picture.png>)',
+    )
+    expect(imageMarkup({ src: 'a.png', alt: 'x', title: '', zoom: 100 })).toBe('![x](a.png)')
+  })
 })
 
 describe('resizing', () => {
@@ -170,6 +181,15 @@ describe('resizing', () => {
 })
 
 describe('finding images by position', () => {
+  /** Markdown's own way of writing an address that holds a space, and the way
+   *  a pasted page writes one. The brackets are the markup, not the address:
+   *  read as part of it, the picture pointed at a file of that name and drew
+   *  nothing. */
+  test('reads an address written between angle brackets', () => {
+    expect(imageAt(state('![x](<a picture.png>)'), 0)?.src).toBe('a picture.png')
+    expect(imageAt(state('![x](<a.png>)'), 0)?.src).toBe('a.png')
+  })
+
   test('finds the markdown image that starts at a position', () => {
     expect(imageAt(state(`text ${MD}`), 5)).toEqual({
       src: 'cat.png',
