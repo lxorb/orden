@@ -261,14 +261,15 @@ and a Worker that will not deploy takes the website with it.
 
 Measured on one machine running all of it at once: an ARM64 Windows laptop with
 the Worker under `wrangler dev`, whose runtime is the x64 build under emulation,
-and the browsers beside it. Real numbers, and a pessimistic setting - the
-round trip includes a local proxy that a deployed Worker does not have.
+and the browsers beside it. A pessimistic setting - the round trip goes through a
+local proxy a deployed Worker does not have - but an honest one, because nothing
+here is a simulation.
 
 | | budget | measured |
 | --- | --- | --- |
-| A keystroke, in a 100 KB note | under 16 ms | scales with the keystroke, not the note: a hundredfold note is under 8x the cost, asserted in `bind.test.ts` |
-| A letter crossing to another device | under 150 ms | 146 ms, best 96 ms, of ten crossings |
-| A 100 KB note joining a room, cold | under 300 ms | 627 ms here; 445 ms of it is the upgrade, which is a Durable Object cold start, an R2 read and seeding, all under emulation. A warm room upgrades in 98 to 204 ms |
+| A keystroke, in a 100 KB note | under 16 ms | costs the keystroke, not the note: a hundredfold note stays under 8x, asserted in `bind.test.ts` |
+| A letter crossing to another device | under 150 ms | **30 ms**, best 23 ms, over ten crossings |
+| A 100 KB note joining a room, cold | under 300 ms | **225 ms**, from opening the note to the room and the file being one text |
 | A room in memory | - | about 90 KB for a 100 KB note: the note's own characters and little else, because consecutive typing is one item |
 | A room in storage | - | 100 KB for a 100 KB note, snapshot plus log |
 
@@ -276,12 +277,19 @@ The keystroke number is the one that matters most and it is structural rather th
 lucky: a change set is the size of the change, and the shared text takes one
 insert at one position, so nothing on that path walks the note.
 
-Two things were measured and then fixed. Writing every update to the object's
-storage as it arrived cost a keystroke a durable write, which showed up as a
-letter taking over a second to cross when several were typed in a row; updates now
-wait in memory and go down at the settle. And the door to a room asked the
-database three questions - the session, the note, the space - where one does; that
-took the cold upgrade from 754 ms to 445 ms.
+Two things were measured and then fixed, and both were worth several times the
+budget. Writing every update to the object's storage as it arrived cost a
+keystroke a durable write, which showed as a letter taking over a second to cross
+when a few were typed in a row; updates now wait in memory and go down at the
+settle. And the door to a room asked the database three questions - the session,
+the note, the space - where one does; that took a cold upgrade from 754 ms to
+under 200 ms.
+
+What the numbers are sensitive to is the machine rather than the design: the same
+run on the same laptop with a few stray runtimes left over from earlier runs gave
+146 ms for a crossing and 627 ms for a join. Both are the emulated runtime and the
+browsers contending for one laptop, and neither is what a deployed Worker and two
+real devices look like. The numbers above are from a quiet machine.
 
 ## Tests
 
