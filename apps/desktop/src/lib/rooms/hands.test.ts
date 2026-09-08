@@ -89,6 +89,21 @@ describe('whose hand is on the plane', () => {
     expect(handsIn(two.awareness, two.doc, 'light').hands[0]?.colour).not.toBe('#33c7ba')
   })
 
+  test('carries how much of the colour the dial was set to land', () => {
+    const { one, two } = pair()
+    one.awareness.setLocalStateField('who', { name: 'iPhone', accent: 'blue' })
+    one.awareness.setLocalStateField(HAND, saidHand({ x: 0, y: 0 }, { ...stroke(4), opacity: 0.3 }))
+    tell(one, two)
+
+    expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.opacity).toBe(0.3)
+
+    // And a pen nobody turned the dial on says nothing about it, exactly as a
+    // file written before there was a dial says nothing.
+    one.awareness.setLocalStateField(HAND, saidHand({ x: 0, y: 0 }, stroke(4)))
+    tell(one, two)
+    expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.opacity).toBeUndefined()
+  })
+
   test('carries the stroke under the pen, whole', () => {
     const { one, two } = pair()
     one.awareness.setLocalStateField('who', { name: 'iPhone', accent: 'blue' })

@@ -18,7 +18,7 @@
 
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
-import { packed, unpacked } from '@nib/markdown/canvas'
+import { clampOpacity, packed, unpacked } from '@nib/markdown/canvas'
 import { accentColour } from '../accents'
 import { type InkStroke, isInkTool } from '../canvas/format'
 import type { Point } from '../canvas/geometry'
@@ -42,6 +42,9 @@ export function saidHand(at: Point, drawing: InkStroke | null): Record<string, u
             tool: drawing.tool,
             color: drawing.color,
             size: drawing.size,
+            // Only when the dial was turned, so a stroke drawn with the pen as it
+            // comes carries nothing to say about it, exactly as in a file.
+            ...(drawing.opacity === undefined ? {} : { opacity: drawing.opacity }),
             points: packed(drawing.points),
           },
         }
@@ -66,6 +69,7 @@ function inkIn(value: unknown, id: number): InkStroke | null {
     tool: value.tool,
     color: value.color,
     size: value.size,
+    ...(typeof value.opacity === 'number' ? { opacity: clampOpacity(value.opacity) } : {}),
     points,
   }
 }
