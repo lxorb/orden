@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { t } from './lib/i18n.svelte'
-  import { KEYBOARD_THRESHOLD, viewport } from './lib/viewport.svelte'
+  import { viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { EditorView, setVimCommands, showLine, topLine } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
@@ -117,6 +117,21 @@
   // this window before it was made narrow, comes down to one pane.
   $effect(() => {
     if (viewport.phone) workspace.collapsePanes()
+  })
+
+  // The keyboard takes the bottom of the window with it, and the line being
+  // written can be left behind it. The height is read so this runs again at each
+  // step of the keyboard's arrival rather than once, before there is room.
+  $effect(() => {
+    const height = viewport.height
+    if (!viewport.typing || !view || !height) return
+
+    view.dispatch({
+      effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+        y: 'nearest',
+        yMargin: 24,
+      }),
+    })
   })
 
   // A deck whose tab has been closed from somewhere else is no longer being
@@ -382,7 +397,7 @@
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the
            keyboard is up, because then you are already writing one. -->
-      {#if viewport.phone && !workspace.panel && viewport.keyboard < KEYBOARD_THRESHOLD}
+      {#if viewport.phone && !workspace.panel && !viewport.typing}
         <button class="fab" aria-label={t('New note')} onclick={() => workspace.createNote()}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>

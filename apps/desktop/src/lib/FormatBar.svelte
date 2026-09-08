@@ -11,7 +11,7 @@
     type Transaction,
   } from '@nib/editor'
   import { t } from './i18n.svelte'
-  import { KEYBOARD_THRESHOLD, viewport } from './viewport.svelte'
+  import { viewport } from './viewport.svelte'
 
   const { view }: { view?: EditorView | undefined } = $props()
 
@@ -20,7 +20,7 @@
   /** Docked above the keyboard on a phone: there is no hovering over a
    *  selection with a thumb, and the buttons are wanted before the selection
    *  exists rather than after it. */
-  const docked = $derived(viewport.phone && viewport.keyboard > KEYBOARD_THRESHOLD)
+  const docked = $derived(viewport.phone && viewport.typing)
 
   /** Follows the selection, and hides the moment there is nothing selected.
    *  A selected picture has a toolbar of its own, in the same place, and a
