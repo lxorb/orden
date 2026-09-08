@@ -235,6 +235,11 @@ const ATTRIBUTE = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+)))?/g
  *  ampersands spelled out, and never bare. A task list's `<input checked>`
  *  becomes `checked="checked"` - HTML lets the value go, XML does not. A name
  *  written twice keeps its first value, since a repeat is fatal to a parser. */
+/** The alignment a markdown table gives a column. The renderer writes it the way
+ *  HTML has written it since the beginning, and XHTML5 dropped: a reader that
+ *  validates refuses `align` outright, so it becomes the style it stands for. */
+const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
+
 function attributesOf(source: string): string {
   const seen = new Set<string>()
   let out = ''
@@ -245,6 +250,17 @@ function attributesOf(source: string): string {
     seen.add(name)
 
     const value = found[2] ?? found[3] ?? found[4] ?? name
+
+    // An element carrying both is left alone rather than given two `style`
+    // attributes, which no parser takes. The renderer never writes both.
+    if (name.toLowerCase() === 'align' && ALIGNMENTS.has(value.toLowerCase())) {
+      if (seen.has('style')) continue
+
+      seen.add('style')
+      out += ` style="text-align: ${value.toLowerCase()}"`
+      continue
+    }
+
     out += ` ${name}="${escaped(value, true)}"`
   }
 
@@ -278,7 +294,14 @@ function closing(open: string[], name: string | null): string {
  *  fail to parse, silently, and the picture comes out blank. */
 export function toXhtml(html: string): string {
   const open: string[] = []
+  // How deep inside a `foreignObject` we are. Mermaid draws a diagram's labels
+  // as HTML in one, and puts a `<p>` inside a `<span>`, which no reader that
+  // validates will take. Inside one, a paragraph becomes a span: it is a label
+  // either way, and it looks the same.
+  let foreign = 0
   let out = ''
+
+  const renamed = (name: string) => (foreign > 0 && name.toLowerCase() === 'p' ? 'span' : name)
 
   for (const piece of piecesOf(html)) {
     switch (piece.kind) {
@@ -297,18 +320,24 @@ export function toXhtml(html: string): string {
 
       case 'open': {
         const attributes = attributesOf(piece.attributes)
-        if (piece.empty || VOID_ELEMENTS.has(piece.name.toLowerCase())) {
-          out += `<${piece.name}${attributes} />`
+        const name = renamed(piece.name)
+
+        if (piece.empty || VOID_ELEMENTS.has(name.toLowerCase())) {
+          out += `<${name}${attributes} />`
         } else {
-          out += `<${piece.name}${attributes}>`
-          open.push(piece.name)
+          if (name.toLowerCase() === 'foreignobject') foreign++
+          out += `<${name}${attributes}>`
+          open.push(name)
         }
         break
       }
 
-      case 'close':
-        out += closing(open, piece.name)
+      case 'close': {
+        const name = renamed(piece.name)
+        out += closing(open, name)
+        if (piece.name.toLowerCase() === 'foreignobject' && foreign > 0) foreign--
         break
+      }
     }
   }
 
@@ -594,7 +623,7 @@ function ncxDocument(options: EpubOptions, parts: readonly Part[]): string {
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
-<ncx xmlns="http://www.daisy.org/ns/z3986/2005/ncx/" version="2005-1">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
 <head>
 <meta name="dtb:uid" content="${escaped(options.identifier, true)}" />
 <meta name="dtb:depth" content="2" />
@@ -607,12 +636,48 @@ ${points.join('\n')}
 `
 }
 
+/** The stylesheet with the paper rules left out.
+ *
+ *  A book has no sheets, no margins and no print dialog, so an `@media print`
+ *  block is dead weight in one. It is also where the sheet-only rules live that
+ *  a reader's own CSS engine is least likely to understand - the selector that
+ *  prints a link's address after it uses `:has()`, which the checker readers are
+ *  measured against cannot parse at all. Both reasons point the same way. */
+export function forReading(css: string): string {
+  let out = ''
+  let at = 0
+
+  for (;;) {
+    const start = css.indexOf('@media print', at)
+    if (start < 0) return out + css.slice(at)
+
+    const opened = css.indexOf('{', start)
+    if (opened < 0) return out + css.slice(at)
+
+    let depth = 1
+    let scan = opened + 1
+    while (scan < css.length && depth > 0) {
+      const character = css[scan]
+      if (character === '{') depth++
+      else if (character === '}') depth--
+      scan++
+    }
+
+    out += css.slice(at, start)
+    at = scan
+  }
+}
+
 interface ManifestItem {
   id: string
   href: string
   type: string
   /** The navigation document says so, and exactly one item may. */
   nav?: boolean
+  /** A part that draws an SVG of its own has to say so: a reader is allowed to
+   *  refuse a book whose manifest does not declare what its parts use, and
+   *  epubcheck does. */
+  svg?: boolean
 }
 
 function packageDocument(
@@ -621,10 +686,12 @@ function packageDocument(
   spine: readonly string[],
 ): string {
   const manifest = items
-    .map(
-      (item) =>
-        `<item id="${item.id}" href="${item.href}" media-type="${item.type}"${item.nav ? ' properties="nav"' : ''} />`,
-    )
+    .map((item) => {
+      const properties = [item.nav ? 'nav' : '', item.svg ? 'svg' : ''].filter(Boolean).join(' ')
+      const declared = properties ? ` properties="${properties}"` : ''
+
+      return `<item id="${item.id}" href="${item.href}" media-type="${item.type}"${declared} />`
+    })
     .join('\n')
 
   const creator = options.author
@@ -670,6 +737,9 @@ export async function toEpub(options: EpubOptions): Promise<Uint8Array> {
       id: `sec-${index + 1}`,
       href: `text/${part.file}`,
       type: XHTML_TYPE,
+      // A drawn diagram is an SVG inside the part itself, which the manifest has
+      // to declare; see `ManifestItem.svg`.
+      ...((sections[index] ?? '').includes('<svg') ? { svg: true } : {}),
     })),
     ...images.map((image) => ({ id: image.id, href: image.href, type: image.type })),
   ]
@@ -689,7 +759,7 @@ export async function toEpub(options: EpubOptions): Promise<Uint8Array> {
     },
     { path: 'OEBPS/nav.xhtml', body: navDocument(options, parts) },
     { path: 'OEBPS/toc.ncx', body: ncxDocument(options, parts) },
-    { path: `OEBPS/${STYLESHEET}`, body: options.css },
+    { path: `OEBPS/${STYLESHEET}`, body: forReading(options.css) },
     ...sections.map((section, index) => ({
       path: `OEBPS/text/${sectionFile(index)}`,
       body: xhtmlDocument(

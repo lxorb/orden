@@ -44,7 +44,10 @@ select {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background-color: var(--bg);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%238a93a2' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2 4l3 3 3-3'/></svg>");
+  /* The angle brackets are written out: a `data:` URL is a URL, and one with a
+     raw `<` in it is not valid. Browsers forgive it; a book that is checked
+     before it is read does not. */
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%238a93a2' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 10px;

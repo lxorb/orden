@@ -10,7 +10,7 @@
 import { renderMarkdown } from '@nib/markdown'
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
-import { type EpubOptions, sectionsOf, toEpub, toXhtml } from './epub'
+import { type EpubOptions, forReading, sectionsOf, toEpub, toXhtml } from './epub'
 import type { Picture } from './pictures'
 
 /** One of everything a book has to carry: two levels of heading, marked-up
@@ -244,6 +244,14 @@ function firstEntry(bytes: Uint8Array): { name: string; method: number; content:
 const book = await openBook(await toEpub(BASE))
 const halved = await openBook(await toEpub({ ...BASE, splitAt: 2 }))
 
+/** A book of one small note, for a test that is about one thing. */
+const bookOf = async (changed: Partial<EpubOptions>): Promise<Book> =>
+  openBook(await toEpub({ ...BASE, pictures: [], ...changed }))
+
+/** One part of a book as text, by the path it is stored under. */
+const bookText = async (one: Book, path: string): Promise<string> =>
+  new TextDecoder().decode(await one.bytesOf(path))
+
 describe('the package', () => {
   test('opens with an uncompressed mimetype', () => {
     const first = firstEntry(book.bytes)
@@ -326,6 +334,102 @@ describe('the two tables of contents', () => {
 
     const order = [...book.ncx.matchAll(/playOrder="(\d+)"/g)].map(([, at]) => Number(at))
     expect(order).toEqual([1, 2, 3, 4])
+  })
+
+  /** A reader finds the `navMap` by namespace, so one character wrong here and
+   *  the contents are simply not there. Caught by opening a book in a library
+   *  that had never seen this writer; see the note in scripts/export-e2e.py. */
+  test('name the contents in the namespace an older reader looks in', () => {
+    expect(book.ncx).toContain('xmlns="http://www.daisy.org/z3986/2005/ncx/"')
+    expect(book.ncx).toContain('"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd"')
+    expect(book.ncx).not.toContain('/ns/z3986')
+  })
+})
+
+/** What a real reader refuses, found by running epubcheck over a book this very
+ *  writer produced; see scripts/export-e2e.py for how it was run. Each of these
+ *  was an error in that report. */
+describe('what a reader that checks the book insists on', () => {
+  test('a column’s alignment is a style, since XHTML5 dropped the attribute', () => {
+    const aligned = toXhtml(
+      '<table><tr><th align="center">A</th><td align="right">1</td></tr></table>',
+    )
+
+    expect(aligned).toContain('<th style="text-align: center">')
+    expect(aligned).toContain('<td style="text-align: right">')
+    expect(aligned).not.toContain('align="center"')
+  })
+
+  test('an element that already has a style keeps it rather than gaining a second', () => {
+    const both = toXhtml('<td style="color: red" align="left">1</td>')
+
+    expect(both).toContain('style="color: red"')
+    expect([...both.matchAll(/style=/g)]).toHaveLength(1)
+  })
+
+  test('an align nobody recognises is left as the attribute it was', () => {
+    expect(toXhtml('<td align="middle">1</td>')).toContain('align="middle"')
+  })
+
+  test('a paragraph inside a diagram’s label becomes a span, which may hold one', () => {
+    // Mermaid writes its labels as HTML inside a `foreignObject`, and puts a
+    // `<p>` inside a `<span>`, which is not allowed anywhere.
+    const drawn = toXhtml(
+      '<svg><foreignObject><div><span class="nodeLabel"><p>A</p></span></div></foreignObject></svg>',
+    )
+
+    expect(drawn).toContain('<span class="nodeLabel"><span>A</span></span>')
+    expect(drawn).not.toContain('<p>')
+  })
+
+  test('a paragraph outside one is still a paragraph', () => {
+    expect(toXhtml('<svg><foreignObject><p>A</p></foreignObject></svg><p>B</p>')).toContain(
+      '</svg><p>B</p>',
+    )
+  })
+
+  test('a part that draws an SVG says so in the manifest', async () => {
+    const drawn = await bookOf({
+      body: '<h1>Drawn</h1>\n<figure class="diagram"><svg viewBox="0 0 2 2"></svg></figure>',
+    })
+
+    expect(drawn.opf).toMatch(/<item id="sec-1"[^>]*properties="svg"/)
+  })
+
+  test('a part with no SVG in it declares nothing', async () => {
+    const plain = await bookOf({ body: '<h1>Plain</h1>\n<p>words</p>' })
+    expect(plain.opf).not.toMatch(/<item id="sec-1"[^>]*properties=/)
+  })
+
+  test('the paper rules stay out of a book, which has no paper', () => {
+    const css = 'a { color: red }\n@media print {\n  b { color: blue }\n}\ni { color: green }\n'
+
+    // The blank line the block sat on stays: what is cut is the rules, and a
+    // stylesheet is not laid out by whoever reads it.
+    expect(forReading(css)).toBe('a { color: red }\n\ni { color: green }\n')
+  })
+
+  test('a nested block inside the paper rules goes with them', () => {
+    const css = '@media print { @page { margin: 1cm } p { color: red } }\na { color: red }\n'
+
+    expect(forReading(css)).toBe('\na { color: red }\n')
+  })
+
+  test('a stylesheet with no paper rules comes back untouched', () => {
+    const css = 'a { color: red }\n@media screen { b { color: blue } }\n'
+
+    expect(forReading(css)).toBe(css)
+  })
+
+  test('the book’s own stylesheet keeps the prose rules and drops the sheet', async () => {
+    const paged = await bookOf({
+      css: '#write p { color: red }\n@media print {\n  @page { size: A4 }\n  #write a::after { content: attr(href) }\n}\n',
+    })
+
+    const sheet = await bookText(paged, `OEBPS/styles/document.css`)
+    expect(sheet).toContain('#write p { color: red }')
+    expect(sheet).not.toContain('@page')
+    expect(sheet).not.toContain('@media print')
   })
 })
 
