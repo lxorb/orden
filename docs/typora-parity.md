@@ -19,7 +19,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Ordered lists (`1.`), custom start numbers
 - [x] Nested lists, indent/outdent with `Tab` / `Shift+Tab`
 - [x] Loose vs tight list rendering
-- [x] Task lists `- [ ]` / `- [x]`, clickable checkboxes
+- [x] Task lists `- [ ]` / `- [x]`, clickable checkboxes, a menu row that makes
+      one and `Ctrl+Enter` to tick the one under the caret
 - [x] Fenced code blocks with language identifier
 - [x] Indented code blocks
 - [x] Math blocks `$$`
@@ -29,6 +30,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] YAML front matter
 - [x] Table of contents `[toc]`
 - [x] GitHub-style alerts / callouts (`> [!NOTE]` …)
+- [x] HTML comments, hidden in the editor, in the reading view, in every export
+      and on a published page: a note to the writer stays one
 - [x] Page breaks for export
 - [x] Definition lists (Pandoc)
 - [x] Abbreviations (Pandoc)
@@ -136,6 +139,10 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Undo move/rename/delete
 - [x] Auto-save, for a note in a space, where it is not an option but the way the
       note works. A file opened from the computer is saved when asked.
+- [x] A file opened from outside every space is watched: it reloads quietly when
+      another program writes it, and keeps what is in the editor when there is
+      something unsaved to lose
+- [x] The line endings a file already had are the ones it is written back with
 - [x] Version history and recovery
 
 ## 10. Search
@@ -170,9 +177,13 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Select word `Ctrl+D`, select line `Ctrl+L`
 - [x] Clear formatting `Ctrl+\`
 - [x] Change list type via shortcut and context menu
-- [x] Spellcheck (native, in the editor)
+- [x] Spellcheck (native, in the editor), on out of the box, with one switch to
+      turn it off and the dictionary the machine is set to
 - [x] Every shortcut from Typora's table
-- [x] Copy as Markdown / paste as plain text
+- [x] A row in Paragraph for each of the blocks that had none: a task list, a
+      callout, a footnote, a table of contents, front matter and a picture
+- [x] Copy as Markdown / paste as plain text, and a plain copy that carries the
+      note as HTML as well, so a paste into Word or mail keeps its formatting
 - [x] Strict mode
 - [x] Text snippets
 - [x] Convert and reformat markdown
@@ -205,6 +216,7 @@ settings. None of them needs anything installed.
 - [x] Word `.docx`, with real styles, numbering, footnotes and maths as OMML
 - [x] EPUB 3 (epubcheck: no errors, no warnings)
 - [x] Print styles, and a page break before a second top-level heading
+- [x] Print, through the platform's own dialog, off the same page an export writes
 - [x] Pictures carried into every format, off the disk and off the network
 - [x] Export settings (paper size, orientation, margins, header/footer)
 - [x] Per-file export config in YAML front matter (`export:`)
@@ -222,11 +234,11 @@ Still pandoc's, and offered only where pandoc is installed:
 
 ## 15. Import
 
-- [x] Import via pandoc (docx, odt, rst, textile, epub, …)
+- [x] Import via pandoc (docx, odt, rst, textile, epub, …), from the File menu
 
 ## 16. System integration
 
-- [x] Multiple windows
+- [x] Multiple windows, and a window that stays over every other application
 - [x] Open from shell / CLI with arguments
 - [x] File association for `.md`
 - [x] Taskbar Jump List - opened notes go to the shell's own recent documents
