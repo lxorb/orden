@@ -1,6 +1,6 @@
 cask "nib" do
-  version "0.4.0"
-  sha256 "468a88cce9faa1321bb48383714cdf98e9d890dde2e61a0b1e5cd6e203358319"
+  version "0.5.0"
+  sha256 "443b787124334f8fe7e4a9774594261736c95ee5a2438815bcea7e3d5abc33c0"
 
   url "https://github.com/lxorb/nib/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
       verified: "github.com/lxorb/nib/"

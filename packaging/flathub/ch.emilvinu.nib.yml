@@ -54,8 +54,8 @@ modules:
     sources:
       - type: file
         only-arches: [x86_64]
-        url: https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-x64.deb
-        sha256: 937b71072e50b0776497dd0a0031b32ed5947373c30558fdf2a8fad3bc88ec05
+        url: https://github.com/lxorb/nib/releases/download/v0.5.0/Nib-0.5.0-linux-x64.deb
+        sha256: 5ce5f532ce1e48f48b3bf73f8c892a540870c0006df220b157112f672d7646eb
         dest-filename: nib.deb
         x-checker-data:
           type: json
@@ -66,8 +66,8 @@ modules:
             | .browser_download_url
       - type: file
         only-arches: [aarch64]
-        url: https://github.com/lxorb/nib/releases/download/v0.4.0/Nib-0.4.0-linux-arm64.deb
-        sha256: 11a235a343f809acea06dc4cdd98c3b72d4100fc1459a3a1664fea27fbed8d2d
+        url: https://github.com/lxorb/nib/releases/download/v0.5.0/Nib-0.5.0-linux-arm64.deb
+        sha256: 3671983edfdf33a605860136f38946f8b0b982fa4f888abf9ed3fba62de81767
         dest-filename: nib.deb
         x-checker-data:
           type: json

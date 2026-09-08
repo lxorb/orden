@@ -89,7 +89,7 @@ the key have to be yours.
 5. Publish the current release:
 
    ```
-   gh workflow run publish-linux.yml --repo lxorb/nib -f tag=v0.4.0
+   gh workflow run publish-linux.yml --repo lxorb/nib -f tag=v0.5.0
    ```
 
    The AUR creates the package base on first push, so there is nothing to
@@ -100,7 +100,7 @@ If you would rather do the first push yourself:
 ```
 git clone ssh://aur@aur.archlinux.org/nib-bin.git
 cp packaging/aur/nib-bin/{PKGBUILD,.SRCINFO,nib.desktop} nib-bin/
-cd nib-bin && git add -A && git commit -m "nib 0.4.0" && git push
+cd nib-bin && git add -A && git commit -m "nib 0.5.0" && git push
 ```
 
 ## Flathub
@@ -217,7 +217,7 @@ desktop users look for software, and a snap is the only way to be in it.
    rm snapcraft-creds.txt
    ```
 
-4. `gh workflow run publish-linux.yml --repo lxorb/nib -f tag=v0.4.0` uploads
+4. `gh workflow run publish-linux.yml --repo lxorb/nib -f tag=v0.5.0` uploads
    both architectures to the stable channel.
 
 The first upload of a graphical snap goes through a manual review if it asks for
