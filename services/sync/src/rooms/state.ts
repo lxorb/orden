@@ -1,16 +1,19 @@
-/** A room's shared text, and how it survives the object going to sleep.
+/** A room's shared document, and how it survives the object going to sleep.
  *
  *  The document is a Yjs one: a CRDT, so two devices that both wrote while apart
- *  end up with the same text without anyone choosing between them. What has to
+ *  end up with the same content without anyone choosing between them. What has to
  *  be kept is the sequence of updates that built it, and the cheapest way to keep
  *  it is to append each one as it arrives and to fold the pile into a single
  *  snapshot once it grows: appending is one small write per keystroke burst, and
  *  the snapshot is what makes waking up one read instead of a thousand.
  *
+ *  What the document holds is not this file's business. A note's words and a
+ *  canvas's objects are stored, folded and woken exactly alike; the difference is
+ *  one file over, in kind.ts.
+ *
  *  Written against as much of a Durable Object's storage as this needs, so the
  *  whole of it can be driven by a Map in a test. */
 
-import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 
 const SNAPSHOT = 'state:'
@@ -68,7 +71,6 @@ function asUpdate(value: unknown): Uint8Array | null {
 
 export class RoomState {
   readonly doc = new Y.Doc()
-  readonly text = this.doc.getText(TEXT)
 
   private count: Count = { updates: 0, bytes: 0 }
   /** Where the next log entry goes. Reset by every compaction. */
@@ -81,11 +83,6 @@ export class RoomState {
   private writing: Promise<void> = Promise.resolve()
 
   constructor(private readonly storage: RoomStorage) {}
-
-  /** The words, which is what a settle writes into the note store. */
-  get markdown(): string {
-    return this.text.toJSON()
-  }
 
   /** Whether the room holds a document at all. A room nobody has joined yet has
    *  neither a snapshot nor a log, and is seeded from the stored note. */
@@ -117,11 +114,11 @@ export class RoomState {
     return true
   }
 
-  /** The room's first text, from the note as the store holds it. The insert is
-   *  recorded like any other update, so a room seeded here and one built out of
-   *  keystrokes are the same thing afterwards. */
-  async seed(markdown: string): Promise<void> {
-    if (markdown) this.text.insert(0, markdown)
+  /** The room's first content, put in by whoever knows what the document holds;
+   *  see kind.ts. What it writes is recorded like any other update, so a room
+   *  seeded here and one built out of keystrokes are the same thing afterwards. */
+  async seed(fill: (doc: Y.Doc) => void): Promise<void> {
+    this.doc.transact(() => fill(this.doc))
     await this.compact()
   }
 

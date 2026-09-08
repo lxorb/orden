@@ -13,6 +13,7 @@
  *  end-to-end test, where two browsers type into one note; see
  *  test/e2e/collaborate.py. */
 
+import type { RoomKind } from '../src/rooms/kind'
 import { NoteRoom } from '../src/rooms/room'
 import type { Env } from '../src/types'
 
@@ -132,16 +133,17 @@ export function room(env: Env): { room: NoteRoom; state: FakeState } {
 }
 
 /** A device joining, with everything the room greeted it with waiting on it.
- *  `writes` is what the door decided; see rooms/index.ts. */
+ *  `writes` is what the door decided; see rooms/index.ts. `kind` is what the door
+ *  read off the file's name: a note's words, or the objects on a plane. */
 export async function join(
   made: NoteRoom,
-  note: { id: string; spaceId: string },
+  note: { id: string; spaceId: string; kind?: RoomKind },
   writes = true,
 ): Promise<FakeSocket> {
   const socket = new FakeSocket()
   await made.enter(
     socket as unknown as WebSocket,
-    { noteId: note.id, spaceId: note.spaceId },
+    { noteId: note.id, spaceId: note.spaceId, kind: note.kind ?? 'words' },
     writes,
   )
   return socket

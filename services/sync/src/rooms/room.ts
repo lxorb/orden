@@ -1,17 +1,25 @@
-/** One note, being written in by several devices at once.
+/** One file, being written in by several devices at once.
  *
- *  A room is a Durable Object: one instance in the world per note, which is what
- *  makes it the place the sockets meet. It holds the note as a Yjs document, so
+ *  A room is a Durable Object: one instance in the world per file, which is what
+ *  makes it the place the sockets meet. It holds the file as a Yjs document, so
  *  two devices that both wrote - at the same moment, or an hour apart with one of
- *  them on a train - end up with the same text and nobody is asked to choose.
+ *  them on a train - end up with the same content and nobody is asked to choose.
  *
  *  Three things happen here and nothing else does. Sockets are joined and their
  *  messages handed to the protocol (see @nib/rooms, which is the wire). Updates
  *  are written down and folded into a snapshot when the pile grows, so waking a
- *  room is one read. And the words are settled into the note store a moment after
+ *  room is one read. And the content is settled into the note store a moment after
  *  the typing stops, as an ordinary save with the version moved on, so everything
  *  else that reads notes - the file sync, publishing, the connector, the glasses,
  *  exports, search - carries on knowing nothing about any of this.
+ *
+ *  A note and a canvas are both rooms and this is both of them. What differs is
+ *  only what the document holds - one `Y.Text` of prose, or a map of the objects on
+ *  a plane - and that lives in kind.ts, decided from the file's name. One object
+ *  class rather than two, because everything here is the same either way: a room
+ *  is named by the file's id, so there is one instance per file whichever kind it
+ *  is, and a second class would be this whole file again for the sake of one
+ *  seed and one serialiser.
  *
  *  The sockets hibernate: the runtime may take this object out of memory between
  *  messages and put it back on the next one, and while it is away the room costs
@@ -34,6 +42,7 @@ import { byteLength } from '../crypto'
 import { MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
+import { fileOf, fill, kindOf, type RoomKind } from './kind'
 import { RoomState } from './state'
 
 /** How long after the last keystroke the words are written into the note store.
@@ -41,11 +50,13 @@ import { RoomState } from './state'
  *  has stopped typing sees one settle rather than two. */
 const SETTLE_DELAY = 1_200
 
-/** Which note this room is, learned from the first join and kept in storage so
- *  that a room woken by an alarm knows what to write. */
+/** Which file this room is, learned from the first join and kept in storage so
+ *  that a room woken by an alarm knows what to write, and what shape what it
+ *  holds is in. */
 export interface Held {
   noteId: string
   spaceId: string
+  kind: RoomKind
 }
 
 /** What a socket has announced, kept on the socket so that a room which was
@@ -56,11 +67,15 @@ interface Attached {
   mayWrite: boolean
 }
 
-function isHeld(value: unknown): value is Held {
-  if (typeof value !== 'object' || value === null) return false
+/** What a room kept about itself, read back. A room written down before there
+ *  were two kinds says nothing about which it is, and a note is what it was. */
+function heldIn(value: unknown): Held | null {
+  if (typeof value !== 'object' || value === null) return null
 
   const held = value as Partial<Held>
-  return typeof held.noteId === 'string' && typeof held.spaceId === 'string'
+  if (typeof held.noteId !== 'string' || typeof held.spaceId !== 'string') return null
+
+  return { noteId: held.noteId, spaceId: held.spaceId, kind: kindOf(held.kind) }
 }
 
 function attachedTo(socket: WebSocket): Partial<Attached> | null {
@@ -121,8 +136,13 @@ export class NoteRoom implements DurableObject {
     const spaceId = request.headers.get('x-nib-space')
     if (!noteId || !spaceId) return new Response('no note', { status: 400 })
 
+    const kind = kindOf(request.headers.get('x-nib-kind'))
     const pair = new WebSocketPair()
-    await this.enter(pair[1], { noteId, spaceId }, request.headers.get('x-nib-write') !== 'no')
+    await this.enter(
+      pair[1],
+      { noteId, spaceId, kind },
+      request.headers.get('x-nib-write') !== 'no',
+    )
 
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
@@ -187,8 +207,8 @@ export class NoteRoom implements DurableObject {
   private async woken(): Promise<void> {
     if (this.opened) return this.opened
 
-    const held: unknown = await this.ctx.storage.get('note')
-    if (isHeld(held)) await this.open(held)
+    const held = heldIn(await this.ctx.storage.get('note'))
+    if (held) await this.open(held)
   }
 
   /** The room's document, read back out of storage or seeded from the note as the
@@ -202,9 +222,13 @@ export class NoteRoom implements DurableObject {
     this.opened = this.ctx.blockConcurrencyWhile(async () => {
       await this.ctx.storage.put('note', held)
 
+      // A room with nothing stored of its own is filled from the file as the store
+      // holds it. Only ever the first time: a plane somebody emptied is empty, and
+      // seeding it again would put every card back.
       if (!(await this.state.load())) {
         const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
-        await this.state.seed(object ? await object.text() : '')
+        const file = object ? await object.text() : ''
+        await this.state.seed((doc) => fill(held.kind, doc, file))
       }
 
       // Sockets that were already here mean this object was asleep rather than
@@ -265,10 +289,10 @@ export class NoteRoom implements DurableObject {
     origin.serializeAttachment({ clients, mayWrite: mayWrite(origin) } satisfies Attached)
   }
 
-  /** The words as they now stand, written into the note store the way any other
-   *  save writes them: the bytes in R2, the row's version and the space's cursor
-   *  moved on. Every device that is not in the room reads it as an ordinary edit
-   *  made somewhere else, which is exactly what it is. */
+  /** The file as it now stands, written into the note store the way any other save
+   *  writes it: the bytes in R2, the row's version and the space's cursor moved on.
+   *  Every device that is not in the room reads it as an ordinary edit made
+   *  somewhere else, which is exactly what it is. */
   private async settle() {
     const held = this.held
     if (!held) return
@@ -286,8 +310,8 @@ export class NoteRoom implements DurableObject {
     // it into, and putting it back is Recently deleted's job, not a room's.
     if (!note) return
 
-    const markdown = this.state.markdown
-    const size = byteLength(markdown)
+    const settled = fileOf(held.kind, this.state.doc)
+    const size = byteLength(settled)
     if (size > MAX_NOTE_BYTES) return
 
     // Only a note that grew can take an account past what it may keep, and
@@ -304,7 +328,7 @@ export class NoteRoom implements DurableObject {
       if (owner && !(await fits(this.env, owner.user_id, size, note.size))) return
     }
 
-    await saveNote(this.env, note, markdown, note.path)
+    await saveNote(this.env, note, settled, note.path)
   }
 }
 

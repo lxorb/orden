@@ -1,5 +1,5 @@
-/** The door to a room: who may open a note's socket, what they may do once they
- *  are in, and which object it leads to.
+/** The door to a room: who may open a file's socket, what they may do once they
+ *  are in, which object it leads to, and what shape the document in it has.
  *
  *  Everything about who is allowed in is decided here rather than in the room,
  *  because this is where the database is. That is the note's space being one the
@@ -18,6 +18,7 @@ import { Hono } from 'hono'
 import { subprotocol, tokenOf } from '@nib/rooms'
 import { now, sha256 } from '../crypto'
 import type { Env } from '../types'
+import { roomKind } from './kind'
 
 /** All three halves of the question in one round trip: whether the session is
  *  live, whether the note belongs to a space that account can reach, and what
@@ -38,6 +39,7 @@ const ALLOWED = `with me as (
 ),
 reached as (
   select n.space_id as space_id,
+         n.path as path,
          case when sp.user_id = me.user_id then 'owner' else m.role end as role
     from me
     join notes n on n.id = ?3 and n.deleted = 0
@@ -47,6 +49,7 @@ reached as (
 )
 select (select user_id from me) as user_id,
        (select space_id from reached) as space_id,
+       (select path from reached) as path,
        (select role from reached) as role`
 
 export const rooms = new Hono<{ Bindings: Env }>()
@@ -61,7 +64,12 @@ rooms.get('/:noteId', async (context) => {
 
   const allowed = await context.env.DB.prepare(ALLOWED)
     .bind(await sha256(token ?? ''), now(), noteId)
-    .first<{ user_id: string | null; space_id: string | null; role: string | null }>()
+    .first<{
+      user_id: string | null
+      space_id: string | null
+      path: string | null
+      role: string | null
+    }>()
 
   if (!allowed?.user_id) return context.json({ error: 'sign in first' }, 401)
   // A note in a space nobody shared is indistinguishable from one that is not
@@ -78,6 +86,9 @@ rooms.get('/:noteId', async (context) => {
         upgrade: 'websocket',
         'x-nib-note': noteId,
         'x-nib-space': allowed.space_id,
+        // Which shape the room's document is in, which is the file's name and
+        // nothing else. Said here because this is where the row was read.
+        'x-nib-kind': roomKind(allowed.path ?? ''),
         // The one thing the room is told about the person on the other end.
         // A reader is in the room and sees every keystroke; what the room does
         // with this is refuse the messages that would change the text.

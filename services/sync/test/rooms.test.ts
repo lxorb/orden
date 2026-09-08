@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { Awareness } from 'y-protocols/awareness'
+import {
+  type Canvas,
+  type InkStroke,
+  readCanvas,
+  writeCanvas,
+} from '@nib/markdown/canvas'
+import { stamped } from '@nib/markdown/canvas-merge'
 import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
+import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
 import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -444,5 +452,319 @@ describe('the door to a room', () => {
     })
 
     expect(answer.status).toBe(426)
+  })
+
+  test('says which shape the room holds, from the name of the file', async () => {
+    const door = doorway()
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const token = await signIn(env, 'both@example.com')
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })
+    const spaceId = space.json.space.id
+
+    for (const [path, kind] of [
+      ['a.md', 'words'],
+      ['Board.canvas', 'plane'],
+    ] as const) {
+      const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token,
+        body: { path, content: '' },
+      })
+
+      await call(env, `/rooms/${note.json.note.id}`, {
+        headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(token) },
+      })
+
+      expect(door.asked.at(-1)?.get('x-nib-kind'), path).toBe(kind)
+    }
+  })
+})
+
+/** A device on a plane, the way the app's client is one: its own document, and the
+ *  same two maps both ends of the real thing ask for. */
+class Plane {
+  readonly doc = new Y.Doc()
+  readonly awareness = new Awareness(this.doc)
+
+  constructor(readonly socket: FakeSocket) {}
+
+  get canvas(): Canvas {
+    return readPlane(this.doc)
+  }
+
+  /** What this device would send after drawing: the update its own document made. */
+  draws(...strokes: InkStroke[]): Uint8Array {
+    const before = Y.encodeStateVector(this.doc)
+    const was = this.canvas
+    const now = { ...was, ink: [...was.ink, ...strokes] }
+    this.doc.transact(() => pushPlane(this.doc, was, stamped(was, now, 5000)))
+    return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
+  }
+
+  /** A card moved, which is an edit to an object rather than one more of them. */
+  moves(id: string, x: number, y: number): Uint8Array {
+    const before = Y.encodeStateVector(this.doc)
+    const was = this.canvas
+    const now = {
+      ...was,
+      nodes: was.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
+    }
+    this.doc.transact(() => pushPlane(this.doc, was, stamped(was, now, 6000)))
+    return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
+  }
+}
+
+function penStroke(id: string, count: number, colour = '1'): InkStroke {
+  return {
+    id,
+    tool: 'pen',
+    color: colour,
+    size: 6,
+    points: Array.from({ length: count }, (_, at) => ({
+      x: at * 4,
+      y: at * 2,
+      pressure: 0.5,
+      tiltX: 0,
+      tiltY: 0,
+      t: at * 8,
+    })),
+  }
+}
+
+async function onPlane(
+  made: NoteRoom,
+  state: FakeState,
+  note: { id: string; spaceId: string },
+  writes = true,
+): Promise<Plane> {
+  const device = new Plane(await join(made, { ...note, kind: 'plane' }, writes))
+  await say(made, state, device.socket, syncStep1(device.doc))
+  await drain(made, state, [device])
+  return device
+}
+
+/** Everything waiting on the wire, in both directions, until nothing is left.
+ *  The same as `settle` above; a plane's devices are another shape. */
+async function drain(made: NoteRoom, state: FakeState, devices: readonly Plane[]) {
+  for (let round = 0; round < 12; round++) {
+    let moved = false
+
+    for (const device of devices) {
+      for (const message of device.socket.take()) {
+        moved = true
+        const answer = receive(message, device.doc, device.awareness, 'room')
+        if (answer) await say(made, state, device.socket, answer)
+      }
+    }
+
+    if (!moved) return
+  }
+
+  throw new Error('the room and the devices never stopped talking')
+}
+
+describe('a canvas in a room', () => {
+  let env: TestEnv
+  let token: string
+  let spaceId: string
+  let noteId: string
+
+  /** A canvas with one card and one stroke already on it. */
+  const DRAWN: Canvas = {
+    nodes: [{ id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'a card' }],
+    edges: [],
+    ink: [penStroke('first', 5)],
+    at: { card: 1000, first: 1000 },
+    gone: {},
+  }
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'drawer@example.com')
+
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })
+    spaceId = space.json.space.id
+
+    const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+      token,
+      body: { path: 'Board.canvas', content: writeCanvas(DRAWN) },
+    })
+    noteId = note.json.note.id
+  })
+
+  afterEach(() => env.close())
+
+  test('opens on the file as the store holds it', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+
+    expect(writeCanvas(one.canvas)).toBe(writeCanvas(DRAWN))
+  })
+
+  test('carries a stroke to the other device, whole', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+    const two = await onPlane(made, state, { id: noteId, spaceId })
+
+    await say(made, state, one.socket, one.draws(penStroke('mine', 300, '2')))
+    await drain(made, state, [one, two])
+
+    const held = two.canvas.ink.find((stroke) => stroke.id === 'mine')
+    expect(held?.points).toHaveLength(300)
+    expect(held?.color).toBe('2')
+  })
+
+  test('keeps both strokes when two devices draw at once', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+    const two = await onPlane(made, state, { id: noteId, spaceId })
+
+    const first = one.draws(penStroke('from-one', 8))
+    const second = two.draws(penStroke('from-two', 8))
+    await say(made, state, one.socket, first)
+    await say(made, state, two.socket, second)
+    await drain(made, state, [one, two])
+
+    for (const device of [one, two]) {
+      expect(device.canvas.ink.map((stroke) => stroke.id)).toEqual([
+        'first',
+        'from-one',
+        'from-two',
+      ])
+    }
+  })
+
+  test('one card moved on one device and coloured on the other keeps both', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+    const two = await onPlane(made, state, { id: noteId, spaceId })
+
+    const moved = one.moves('card', 400, 120)
+    const coloured = (() => {
+      const was = two.canvas
+      const before = Y.encodeStateVector(two.doc)
+      const now = {
+        ...was,
+        nodes: was.nodes.map((node) => (node.id === 'card' ? { ...node, color: '5' } : node)),
+      }
+      two.doc.transact(() => pushPlane(two.doc, was, stamped(was, now, 6000)))
+      return syncUpdate(Y.encodeStateAsUpdate(two.doc, before))
+    })()
+
+    await say(made, state, one.socket, moved)
+    await say(made, state, two.socket, coloured)
+    await drain(made, state, [one, two])
+
+    for (const device of [one, two]) {
+      expect(device.canvas.nodes[0]).toMatchObject({ x: 400, y: 120, color: '5' })
+    }
+  })
+
+  test('writes the canvas into the note store when the drawing stops', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+
+    await say(made, state, one.socket, one.draws(penStroke('settled', 12, '3')))
+    expect(state.takeAlarm()).not.toBeNull()
+
+    await made.alarm()
+
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    // Exactly the file the app would have written from the same plane, so
+    // Obsidian, the exports and an offline device's merge all read it as one.
+    expect(read.json.content).toBe(writeCanvas(one.canvas))
+    expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual([
+      'first',
+      'settled',
+    ])
+    expect(read.json.note.version).toBe(2)
+  })
+
+  test('writes nothing when nobody drew', async () => {
+    const { room: made, state } = room(env)
+    await onPlane(made, state, { id: noteId, spaceId })
+
+    await made.alarm()
+
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    expect(read.json.note.version).toBe(1)
+  })
+
+  test('a reader sees every stroke and can add none', async () => {
+    const { room: made, state } = room(env)
+    const writer = await onPlane(made, state, { id: noteId, spaceId })
+    const reader = await onPlane(made, state, { id: noteId, spaceId }, false)
+
+    await say(made, state, writer.socket, writer.draws(penStroke('theirs', 6)))
+    await drain(made, state, [writer, reader])
+    expect(reader.canvas.ink.map((stroke) => stroke.id)).toEqual(['first', 'theirs'])
+
+    // And what the reader draws goes nowhere at all.
+    writer.socket.take()
+    await say(made, state, reader.socket, reader.draws(penStroke('refused', 6)))
+    await drain(made, state, [writer])
+
+    expect(writer.canvas.ink.map((stroke) => stroke.id)).toEqual(['first', 'theirs'])
+
+    await made.alarm()
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual([
+      'first',
+      'theirs',
+    ])
+  })
+
+  test('folds the pile of strokes into one snapshot', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+
+    for (let at = 0; at < 240; at++) {
+      await say(made, state, one.socket, one.draws(penStroke(`s${at}`, 4)))
+    }
+
+    const kept = [...state.kept.keys()]
+    expect(kept.filter((key) => key.startsWith('state:')).length).toBeGreaterThan(0)
+    expect(kept.filter((key) => key.startsWith('log:')).length).toBeLessThan(240)
+    // And nothing was lost to the folding.
+    expect(one.canvas.ink).toHaveLength(241)
+  })
+
+  test('reads itself back after the runtime has put it to sleep', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+    await say(made, state, one.socket, one.draws(penStroke('slept-on', 20)))
+    await made.alarm()
+
+    const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+    const back = await onPlane(woken, state, { id: noteId, spaceId })
+
+    expect(back.canvas.ink.map((stroke) => stroke.id)).toEqual(['first', 'slept-on'])
+    // And it knows it is a plane rather than a note, which is what it kept.
+    expect(back.canvas.nodes[0]?.id).toBe('card')
+  })
+
+  test('a card deleted here stays deleted there', async () => {
+    const { room: made, state } = room(env)
+    const one = await onPlane(made, state, { id: noteId, spaceId })
+    const two = await onPlane(made, state, { id: noteId, spaceId })
+
+    const before = one.canvas
+    const without = { ...before, nodes: [] }
+    const sent = (() => {
+      const mark = Y.encodeStateVector(one.doc)
+      one.doc.transact(() => pushPlane(one.doc, before, stamped(before, without, 7000)))
+      return syncUpdate(Y.encodeStateAsUpdate(one.doc, mark))
+    })()
+
+    await say(made, state, one.socket, sent)
+    await drain(made, state, [one, two])
+
+    expect(two.canvas.nodes).toEqual([])
+    expect(two.canvas.gone.card).toBe(7000)
+
+    await made.alarm()
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    expect(readCanvas(read.json.content).gone.card).toBe(7000)
   })
 })

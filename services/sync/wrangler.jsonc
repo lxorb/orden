@@ -15,9 +15,17 @@
     },
   ],
 
-  // One Durable Object per note that is being edited together: the room holds
-  // the CRDT state, the sockets and the awareness, and writes the settled text
+  // One Durable Object per file that is being edited together: the room holds
+  // the CRDT state, the sockets and the awareness, and writes the settled file
   // back into the note store. SQLite-backed, which is what a new class must be.
+  //
+  // One class for both kinds of room. A note holds its words as a Y.Text and a
+  // canvas holds the objects on it as a map by id, and that difference is one
+  // module in the Worker (rooms/kind.ts) rather than a second class: a room is
+  // named by the file's id either way, so there is already one instance per
+  // file, and a second class would mean a second migration tag for the sake of
+  // one seed and one serialiser. No tag is added here for canvases, which is
+  // the point.
   "durable_objects": {
     "bindings": [{ "name": "ROOMS", "class_name": "NoteRoom" }],
   },
