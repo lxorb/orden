@@ -126,6 +126,30 @@ describe('reading the catalogue', () => {
     })
   })
 
+  test('drops a palette value that would swallow the cards after it', () => {
+    // One block per theme in one injected stylesheet: a function left open in
+    // this theme's value takes every block below it into that value, so one bad
+    // entry would paint the rest of the shelf in the app's own colours. A
+    // bracket inside a string is still a letter, which is what keeps a font
+    // called `Half (` on its card.
+    const [theme] = readIndex({
+      themes: [
+        entry({
+          palettes: {
+            light: {
+              '--bg': 'rgb(0,0,0',
+              '--surface': 'red)',
+              '--font-content': `'Half (', serif`,
+            },
+            dark: {},
+          },
+        }),
+      ],
+    })
+
+    expect(theme?.palettes.light).toEqual({ '--font-content': `'Half (', serif` })
+  })
+
   test('keeps a font stack, which is the one token that is a sentence', () => {
     // Long enough to be worth a bound, and the bound has to clear it: a card
     // that dropped it would show a theme in the wrong typeface, which is the

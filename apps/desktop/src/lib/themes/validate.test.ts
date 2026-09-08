@@ -194,6 +194,37 @@ describe('what a theme may not set', () => {
     expect(token.css).toBe('')
   })
 
+  test('refuses a value with a function nobody closed', () => {
+    // A browser reads to the end of the file looking for the `)`, taking the `}`
+    // and every rule after it into the value. The scanner cannot catch this: it
+    // counts braces, and a brace inside an unclosed function is still a brace to
+    // it. So the sheet would install clean and quietly do almost nothing, which
+    // is the one thing this file exists to prevent.
+    const reviewed = review(`[data-theme='dark'] { --bg: rgb(0,0,0 } #write h1 { color: red; }`)
+
+    expect(reviewed.css).not.toContain('rgb(0,0,0')
+    expect(reviewed.refused).toContain('--bg is not a value a theme may set')
+    // The rule after it is still read, which is the point of refusing the value
+    // rather than letting it swallow the rest.
+    expect(reviewed.css).toContain('#write h1')
+  })
+
+  test('refuses a bracket that closes nothing', () => {
+    const reviewed = review(tokens('--bg: red);'))
+
+    expect(reviewed.css).toBe('')
+    expect(reviewed.refused).toEqual(['--bg is not a value a theme may set'])
+  })
+
+  test('a bracket inside a string is not a bracket', () => {
+    // Which is what keeps a font called `'Half ('` working, the same way a
+    // semicolon inside one is left alone.
+    const reviewed = review(tokens(`--font-content: 'Half (', serif;`))
+
+    expect(reviewed.css).toContain(`'Half (', serif`)
+    expect(reviewed.refused).toEqual([])
+  })
+
   test('a brace inside a string costs the rule rather than letting it out', () => {
     // The scanner follows quotes to find the end of the block, so the block ends
     // where it should; a brace left in the body then means either nesting or a

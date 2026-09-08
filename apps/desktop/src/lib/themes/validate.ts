@@ -121,6 +121,35 @@ const PROSE_PROPERTIES = new Set([
  *  past a check like this one. */
 const DANGEROUS = /url\s*\(|image-set\s*\(|element\s*\(|attr\s*\(|expression\s*\(|javascript:|\\/i
 
+/** Whether every bracket in a value is closed, the strings passed over.
+ *
+ *  A `(` left open swallows everything after it: a browser reads to the end of
+ *  the file looking for the `)` and takes the `}`, the next selector and every
+ *  rule below into the value. The scanner cannot catch that the way it catches a
+ *  stray brace, because it counts braces, and a brace inside an unclosed
+ *  function is still a brace to it.
+ *
+ *  Quotes are followed for the same reason `declarationsOf` follows them: a
+ *  bracket inside a string is a letter, which is what keeps a font called
+ *  `'Half ('` working. */
+function bracketsClose(value: string): boolean {
+  let depth = 0
+  let quote = ''
+
+  for (const letter of value) {
+    if (quote) {
+      if (letter === quote) quote = ''
+      continue
+    }
+
+    if (letter === '"' || letter === "'") quote = letter
+    else if (letter === '(') depth++
+    else if (letter === ')' && --depth < 0) return false
+  }
+
+  return depth === 0
+}
+
 /** Whether a value written back out is read back as the same value.
  *
  *  A comment marker would comment out the rest of the file from wherever it
@@ -140,6 +169,7 @@ const DANGEROUS = /url\s*\(|image-set\s*\(|element\s*\(|attr\s*\(|expression\s*\
 function usableValue(value: string): boolean {
   if (!value || DANGEROUS.test(value)) return false
   if (/\/\*|\*\//.test(value) || /\p{Cc}/u.test(value)) return false
+  if (!bracketsClose(value)) return false
 
   const doubles = value.split('"').length - 1
   const singles = value.split("'").length - 1
