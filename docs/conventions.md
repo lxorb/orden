@@ -73,6 +73,14 @@ A bug fix ships with a test that failed before it. Pure logic gets unit tests;
 routes get harness tests; editor behaviour gets state-level tests without a
 DOM where possible. Widgets extend `NibWidget`; a test enforces it.
 
+A test measures the code, not the queue in front of it. Loading a module graph
+is seconds of compiling that belongs to no one test, so a file whose hooks
+re-import the app's stores imports them once at module scope first: a timeout
+that fires is then about the test and not about what else the machine was
+doing. For the same reason a state the editor parses is read through
+`packages/editor/test/parsed.ts` rather than as it comes, and work a whole
+file shares is done once, in a hook.
+
 ## Writing
 
 Comments say why, in plain prose, not what the next line already says. No em
