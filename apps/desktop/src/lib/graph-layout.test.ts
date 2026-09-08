@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 import type { NoteGraph } from './graph'
 import { Layout } from './graph-layout'
 
@@ -190,26 +190,31 @@ describe('a space of two thousand notes and four thousand links', () => {
     return graph(2000, edges)
   }
 
-  test('places them all, at a tick a view can afford', () => {
-    const shape = many()
-    expect(shape.edges).toHaveLength(4000)
+  // Both tests below ask about the same settled arrangement, and settling two
+  // thousand notes is a second and a half of arithmetic: it is done once, in a
+  // hook, rather than twice inside a test's five-second budget. The budget is a
+  // clock, and a clock in a test only says what the machine running it was doing
+  // at the time - here it said the whole suite was running alongside.
+  const shape = many()
+  const layout = new Layout(shape)
 
-    const layout = new Layout(shape)
+  beforeAll(() => {
     layout.tick(30)
     layout.settle()
+  })
+
+  test('places them all, at a tick a view can afford', () => {
+    expect(shape.edges).toHaveLength(4000)
 
     // The cost was measured by hand at 1.3 ms to build, 1.3 ms a tick and
-    // 375 ms for the whole settle; a clock in a test only says what the
-    // machine running it was doing at the time, so this checks the shape.
+    // 375 ms for the whole settle; the numbers are not asserted, for the reason
+    // above, so this checks the shape.
     expect(layout.settled).toBe(true)
     expect(layout.x).toHaveLength(shape.nodes.length)
     expect(layout.x.every((x) => Number.isFinite(x))).toBe(true)
   })
 
   test('nothing lands on top of anything', () => {
-    const layout = new Layout(many())
-    layout.settle()
-
     for (let one = 0; one < 2000; one++) {
       expect(Number.isFinite(layout.x[one])).toBe(true)
       expect(Number.isFinite(layout.y[one])).toBe(true)
