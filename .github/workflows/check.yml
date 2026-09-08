@@ -81,9 +81,16 @@ jobs:
         run: |
           cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
 
+      # `--all-targets` so the tests are linted and, more to the point, compiled:
+      # a test module that does not build is invisible to a plain clippy run, and
+      # the tests it holds then quietly stop running.
       - name: Clippy
         run: |
-          cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml -- -D warnings
+          cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - name: Tests
+        run: |
+          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
   # Whatever is on main is what nibeditor.com serves. Gated on the tests above,
   # so a red build never reaches anyone.
