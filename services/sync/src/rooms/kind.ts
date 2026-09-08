@@ -39,6 +39,17 @@ export function kindOf(value: unknown): RoomKind {
   return KINDS.find((kind) => kind === value) ?? 'words'
 }
 
+/** Whether the door said this socket may write, off the header it said it on.
+ *
+ *  Only the word yes is yes. It is the one flag between a reader and the words,
+ *  and the door is the only thing that can set it, so anything else - a header
+ *  left out, an empty one, a spelling this build does not know - is a socket that
+ *  reads. Here beside `kindOf` because it is the same job: a header value is not
+ *  to be trusted until something has looked at it. */
+export function writesOf(value: unknown): boolean {
+  return value === 'yes'
+}
+
 /** The room's first content, out of the file as the store holds it. */
 export function fill(kind: RoomKind, doc: Y.Doc, stored: string) {
   if (kind === 'plane') {

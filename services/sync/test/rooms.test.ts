@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { Awareness } from 'y-protocols/awareness'
+import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness'
 import { type Canvas, type InkStroke, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { stamped } from '@nib/markdown/canvas-merge'
 import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
+import { writesOf } from '../src/rooms/kind'
 import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
 import { doorway, FakeSocket, type FakeState, join, room, say } from './room'
@@ -358,6 +359,56 @@ describe('a reader in a room', () => {
       who: { name: 'Ada', accent: 'violet' },
     })
   })
+
+  /** A socket's attachment has a hard ceiling of a couple of kilobytes and the
+   *  list of what it announced only ever grew, so one message naming a few hundred
+   *  carets took it past the ceiling - and the write that threw threw inside the
+   *  handler for that message. Which is a room one client stops for everybody. */
+  test('cannot make the room remember an unbounded list of carets', async () => {
+    const { room: made, state } = room(env)
+    const writer = await arrive(made, state, { id: noteId, spaceId })
+    const reader = await reading(made, state)
+
+    // Every caret announced at once, each from a document of its own, which is
+    // what one hand-made awareness message can carry.
+    const crowd = new Awareness(new Y.Doc())
+    crowd.setLocalState(null)
+    for (let one = 0; one < 400; one++) {
+      const each = new Awareness(new Y.Doc())
+      each.setLocalStateField('who', { name: `n${one}` })
+      applyAwarenessUpdate(crowd, encodeAwarenessUpdate(each, [each.doc.clientID]), 'crowd')
+    }
+
+    const named = [...crowd.getStates().keys()]
+    expect(named.length).toBeGreaterThan(300)
+    await say(made, state, reader.socket, awarenessUpdate(crowd, named))
+    await settle(made, state, [writer, reader])
+
+    const kept = reader.socket.deserializeAttachment() as { clients: number[]; mayWrite: boolean }
+    expect(kept.clients.length).toBeLessThanOrEqual(32)
+    expect(JSON.stringify(kept).length).toBeLessThan(2048)
+    // Still a reader, which is the other half of what the attachment carries.
+    expect(kept.mayWrite).toBe(false)
+  })
+
+  test('forgets a caret its socket stopped announcing', async () => {
+    const { room: made, state } = room(env)
+    const writer = await arrive(made, state, { id: noteId, spaceId })
+    const reader = await reading(made, state)
+
+    reader.awareness.setLocalStateField('who', { name: 'Ada' })
+    await say(made, state, reader.socket, awarenessUpdate(reader.awareness, [reader.doc.clientID]))
+    await settle(made, state, [writer, reader])
+    expect((reader.socket.deserializeAttachment() as { clients: number[] }).clients).toContain(
+      reader.doc.clientID,
+    )
+
+    reader.awareness.setLocalState(null)
+    await say(made, state, reader.socket, awarenessUpdate(reader.awareness, [reader.doc.clientID]))
+    await settle(made, state, [writer, reader])
+
+    expect((reader.socket.deserializeAttachment() as { clients: number[] }).clients).toEqual([])
+  })
 })
 
 describe('the door to a room', () => {
@@ -521,6 +572,20 @@ describe('the door to a room', () => {
     })
 
     expect(answer.status).toBe(426)
+  })
+
+  /** Whether a socket may write is the door's to say and the room's to enforce, so
+   *  the room reads the header the door said it on and nothing else. It read
+   *  anything but the word `no` as permission, so a header left out was a socket
+   *  that could write - the wrong way round for the one flag standing between a
+   *  reader and the words, and the opposite of what the room does with an
+   *  attachment it cannot read. */
+  test('only the word yes says a socket may write', () => {
+    expect(writesOf('yes')).toBe(true)
+
+    for (const said of ['no', null, undefined, '', 'YES', 'true', 'maybe', 1, {}]) {
+      expect(writesOf(said), JSON.stringify(said ?? null)).toBe(false)
+    }
   })
 
   test('says which shape the room holds, from the name of the file', async () => {

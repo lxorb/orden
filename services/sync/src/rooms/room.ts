@@ -42,13 +42,19 @@ import { byteLength } from '../crypto'
 import { MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
-import { fileOf, fill, kindOf, type RoomKind } from './kind'
+import { fileOf, fill, kindOf, writesOf, type RoomKind } from './kind'
 import { RoomState } from './state'
 
 /** How long after the last keystroke the words are written into the note store.
  *  The same pause the app waits before it writes a note to disk, so somebody who
  *  has stopped typing sees one settle rather than two. */
 const SETTLE_DELAY = 1_200
+
+/** How many awareness entries one socket is remembered as having announced. A
+ *  device is one caret and announces one; a handful covers a client that reloaded
+ *  its document without closing the socket. The point of the number is that there
+ *  is one: see `announced`. */
+const MOST_ANNOUNCED = 32
 
 /** Which file this room is, learned from the first join and kept in storage so
  *  that a room woken by an alarm knows what to write, and what shape what it
@@ -124,7 +130,7 @@ export class NoteRoom implements DurableObject {
       const clients = [...changed.added, ...changed.updated, ...changed.removed]
       if (!clients.length) return
 
-      this.announced(origin, changed.added)
+      this.announced(origin, changed)
       this.send(awarenessUpdate(this.awareness, clients), origin)
     })
   }
@@ -141,7 +147,7 @@ export class NoteRoom implements DurableObject {
     await this.enter(
       pair[1],
       { noteId, spaceId, kind },
-      request.headers.get('x-nib-write') !== 'no',
+      writesOf(request.headers.get('x-nib-write')),
     )
 
     return new Response(null, { status: 101, webSocket: pair[0] })
@@ -281,11 +287,23 @@ export class NoteRoom implements DurableObject {
   }
 
   /** Which awareness entries a socket announced, kept on the socket itself so the
-   *  room can take them away later even if it slept in between. */
-  private announced(origin: unknown, added: readonly number[]) {
-    if (!added.length || !isSocket(origin)) return
+   *  room can take them away later even if it slept in between.
+   *
+   *  What it stopped announcing goes with what it started, and the list is capped.
+   *  A socket's attachment has a hard ceiling of a couple of kilobytes, and a list
+   *  that only ever grew would reach it: from anything sending awareness for a few
+   *  hundred clients at once, which is one message. Past the ceiling the write
+   *  throws, and it throws inside the handler for the message that caused it -
+   *  which is a room one client can stop working for everybody in it. */
+  private announced(origin: unknown, changed: AwarenessChange) {
+    if (!isSocket(origin)) return
+    if (!changed.added.length && !changed.removed.length) return
 
-    const clients = [...new Set([...announcedBy(origin), ...added])]
+    const gone = new Set(changed.removed)
+    const clients = [...new Set([...announcedBy(origin), ...changed.added])]
+      .filter((one) => !gone.has(one))
+      .slice(-MOST_ANNOUNCED)
+
     origin.serializeAttachment({ clients, mayWrite: mayWrite(origin) } satisfies Attached)
   }
 
