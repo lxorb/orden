@@ -15,12 +15,12 @@
    *  the nib will do, while the slider is still moving. */
 
   import { INK_STYLES } from './canvas/ink'
-  import { FINGER, MARKS, NIBS, PEN_NAMES } from './canvas/glyphs'
+  import { FINGER, MARKS, PEN_NAMES } from './canvas/glyphs'
   import { hand } from './canvas/hand.svelte'
   import { PEN_ART, PEN_BOX, samplePath } from './canvas/nibs'
   import { LEAST_WIDTH, MOST_WIDTH, type Nib, nibFor, MOST_PENS, pens } from './canvas/pens.svelte'
   import { INK_TOOLS, type InkTool } from './canvas/format'
-  import { shownColour } from './canvas/palette'
+  import { shownInk } from './canvas/palette'
   import { tick } from './canvas/tick'
   import CanvasColours from './CanvasColours.svelte'
   import { t } from './i18n.svelte'
@@ -44,7 +44,7 @@
   const TALL = 62
 
   const line = $derived(samplePath(nib, WIDE, TALL))
-  const ink = $derived(shownColour(nib.colour) ?? 'var(--text-strong)')
+  const ink = $derived(shownInk(nib.colour))
   const multiply = $derived(INK_STYLES[nib.tool].multiply)
 
   /** The colour the row shows as on, which is `null` for the theme's own ink: the
@@ -83,7 +83,17 @@
         aria-pressed={nib.tool === tool}
         onclick={() => setTool(tool)}
       >
-        <svg class="glyph" viewBox="0 0 14 14"><path d={NIBS[tool]} /></svg>
+        <svg class="pen" viewBox="0 0 {PEN_BOX.width} {PEN_BOX.height}" aria-hidden="true">
+          <path class="barrel" d={PEN_ART[tool].barrel} />
+          <path class="detail" d={PEN_ART[tool].detail} />
+          <path
+            class="tip"
+            d={PEN_ART[tool].nib}
+            fill-rule="evenodd"
+            style:fill={ink}
+            style:fill-opacity={INK_STYLES[tool].opacity}
+          />
+        </svg>
       </button>
     {/each}
   </div>
@@ -133,17 +143,6 @@
         pens.add(nib.tool)
       }}
     >
-      <svg class="pen" viewBox="0 0 {PEN_BOX.width} {PEN_BOX.height}" aria-hidden="true">
-        <path class="barrel" d={PEN_ART[nib.tool].barrel} />
-        <path class="detail" d={PEN_ART[nib.tool].detail} />
-        <path
-          class="tip"
-          d={PEN_ART[nib.tool].nib}
-          fill-rule="evenodd"
-          style:fill={ink}
-          style:fill-opacity={nib.opacity}
-        />
-      </svg>
       <svg class="glyph" viewBox="0 0 14 14"><path d={MARKS.plus} /></svg>
     </button>
 
@@ -205,15 +204,22 @@
     height: 100%;
   }
 
+  /* The seven, all of them at once. A row that scrolled would hide the last two
+     behind a gesture nothing on it suggests, and there are only ever seven. */
   .kinds {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     gap: 1px;
-    overflow-x: auto;
-    scrollbar-width: none;
   }
 
-  .kinds::-webkit-scrollbar {
-    display: none;
+  .kinds button {
+    min-width: 0;
+    height: 58px;
+  }
+
+  .kinds .pen {
+    width: 22px;
+    height: 44px;
   }
 
   button {
@@ -289,35 +295,19 @@
     gap: 1px;
   }
 
-  /* The button that keeps this pen shows the pen it would keep, with the plus
-     tucked against it. */
-  .rest .pen {
-    width: 15px;
-    height: 30px;
-  }
-
-  .rest .pen + .glyph {
-    width: 13px;
-    height: 13px;
-    margin-left: -2px;
-  }
-
-  .rest button:first-child {
-    min-width: calc(var(--touch-target) + 8px);
-    grid-auto-flow: column;
-    place-items: center;
-  }
-
+  /* The same pen the bar draws; see `CanvasPens.svelte` for why it is outlined. */
   .barrel {
-    fill: var(--line-strong);
+    fill: var(--surface);
+    stroke: var(--line-strong);
+    stroke-width: 0.8;
   }
 
   .detail {
-    fill: var(--muted);
+    fill: var(--line-strong);
   }
 
   .tip {
-    stroke: var(--line-strong);
+    stroke: var(--muted);
     stroke-width: 0.6;
   }
 

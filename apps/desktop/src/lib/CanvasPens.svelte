@@ -21,7 +21,7 @@
   import { MARKS, HOLDING, PEN_NAMES, PLACING } from './canvas/glyphs'
   import { MOST_PENS, type Nib, pens } from './canvas/pens.svelte'
   import { PEN_ART, PEN_BOX } from './canvas/nibs'
-  import { shownColour } from './canvas/palette'
+  import { shownColour, shownInk } from './canvas/palette'
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
   import { type Tool } from './canvas/pointer'
@@ -191,8 +191,16 @@
   /** The nib of a pen, in the ink it writes and at the alpha it writes at, so the
    *  drawing of the pen is also the swatch for its colour. */
   function inkOf(one: Nib): string {
-    return shownColour(one.colour) ?? 'var(--text-strong)'
+    return shownInk(one.colour)
   }
+
+  /** What the dot on the bar is filled with, or nothing for the ring that means
+   *  no colour at all. A pen always has one, even when that one is whatever the
+   *  page is written in; a card that was given none has not. */
+  const swatch = $derived.by(() => {
+    if (drawing) return inkOf(nib)
+    return colour === null ? null : shownColour(colour)
+  })
 </script>
 
 <svelte:window onpointerdown={shut} onblur={shut} />
@@ -410,7 +418,8 @@
           title={t('Colour')}
           aria-label={t('Colour')}
           aria-pressed={open === 'colour'}
-          style:--dot={colour === null ? 'transparent' : (shownColour(colour) ?? 'transparent')}
+          class:bare={swatch === null}
+          style:--dot={swatch ?? 'transparent'}
           onclick={() => {
             tick()
             open = open === 'colour' ? null : 'colour'
@@ -445,7 +454,10 @@
     z-index: 6;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    /* The bar is as wide as what is on it and no wider, centred in the pane, so
+       a tablet in landscape gets a bar and not a shelf. A phone runs out of room
+       and the same rule makes it the full width, scrolling. */
+    align-items: center;
     gap: var(--space-2);
     animation: rise var(--dur-stage) var(--ease-out);
   }
@@ -477,6 +489,7 @@
   }
 
   .bar {
+    max-width: 100%;
     display: flex;
     align-items: stretch;
     gap: var(--space-1);
@@ -490,10 +503,13 @@
   /* One row that scrolls sideways rather than a bar that hides half of itself
      behind a menu, which is what a phone needs and a tablet in portrait wants. */
   .scroller {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
     display: flex;
-    align-items: center;
+    /* Every target is the whole height of the bar, so a thumb landing anywhere
+       above a glyph lands on it: the pens are tall and the glyphs are not, and a
+       row of small buttons floating in a tall bar is most of the bar unpressable. */
+    align-items: stretch;
     gap: 1px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -509,7 +525,7 @@
     display: grid;
     place-items: center;
     min-width: var(--touch-target);
-    height: var(--touch-target);
+    min-height: var(--touch-target);
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
@@ -560,41 +576,36 @@
 
   /* ── The pens ──────────────────────────────────────────────────── */
 
-  /* A pen stands on its nib, pointing away from the edge the bar is against, and
-     the row is tall enough that the one in hand can rise out of it without the
-     scroller clipping it. */
+  /* A pen stands on its nib, whichever edge the bar is against. Nib down is what
+     a pen looks like to everybody; a row of them stood on their tails reads as a
+     row of darts, whatever the geometry says about pointing into the page. */
   .pen-slot {
-    min-width: 40px;
-    height: 60px;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    align-items: end;
+    min-width: 42px;
+    min-height: 62px;
+    align-items: center;
     background: none;
-  }
-
-  .cluster.top .pen-slot {
-    align-items: start;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
 
   .pen {
     width: 24px;
     height: 48px;
-    /* Tucked into the bar until it is the one in hand. */
-    translate: 0 9px;
-    rotate: 180deg;
+    /* Down in the row until it is the one in hand, and lifted out of it when it
+       is: a pen taken out of a tray, and the whole of how the row says which one
+       you are holding. */
+    translate: 0 5px;
     transition:
       translate var(--dur-stage) var(--ease-spring),
       scale var(--dur-fast) var(--ease-out);
   }
 
-  .cluster.top .pen {
-    translate: 0 -9px;
-    rotate: none;
+  .pen-slot.out .pen {
+    translate: 0 -4px;
   }
 
-  .pen-slot.out .pen,
-  .cluster.top .pen-slot.out .pen {
-    translate: 0 0;
+  /* And the accent behind it, since a lift alone is a hard thing to see on a
+     screen somebody is holding at arm's length. */
+  .pen-slot.out {
+    background: var(--accent-soft);
   }
 
   /* The one being dragged along the row comes up off the bar. */
@@ -603,15 +614,19 @@
   }
 
   .pen-slot.lifting .pen {
-    scale: 1.12;
+    scale: 1.14;
   }
 
+  /* Drawn as an object with an edge rather than a grey shape, so a pale barrel
+     is still a pen on a pale bar and the nib is the only thing wearing colour. */
   .barrel {
-    fill: var(--line-strong);
+    fill: var(--surface);
+    stroke: var(--line-strong);
+    stroke-width: 0.8;
   }
 
   .detail {
-    fill: var(--muted);
+    fill: var(--line-strong);
   }
 
   /* A hairline round the nib, so a pen writing in white or in the page's own ink
@@ -622,9 +637,7 @@
   }
 
   .add {
-    min-width: 36px;
-    height: 60px;
-    align-items: center;
+    min-width: 38px;
   }
 
   /* ── The grip, and the handle it folds to ──────────────────────── */
@@ -651,10 +664,9 @@
      there does not open it. */
   .tab {
     align-self: flex-start;
-    min-width: 54px;
-    height: 40px;
+    min-width: 58px;
+    min-height: var(--touch-target);
     margin-left: var(--space-5);
-    align-items: end;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     background: var(--surface-3);
     border: 1px solid var(--line-strong);
@@ -663,7 +675,6 @@
   }
 
   .cluster.top .tab {
-    align-items: start;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     border-bottom: 1px solid var(--line-strong);
     border-top: none;
@@ -672,11 +683,7 @@
   .tab .pen {
     width: 20px;
     height: 40px;
-    translate: 0 4px;
-  }
-
-  .cluster.top .tab .pen {
-    translate: 0 -4px;
+    translate: none;
   }
 
   /* ── The panel over the bar ────────────────────────────────────── */
@@ -684,7 +691,6 @@
   /* Beside the grip rather than across the pane: a panel the width of a tablet
      would be a dialog box. */
   .panel {
-    align-self: flex-start;
     box-sizing: border-box;
     width: min(21rem, 100%);
     padding: var(--space-2);
@@ -737,8 +743,13 @@
     height: 24px;
     border-radius: 50%;
     background: var(--dot);
-    box-shadow: inset 0 0 0 2px var(--muted);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
     transition: scale var(--dur-fast) var(--ease-spring);
+  }
+
+  /* Nothing coloured, drawn as the ring the others fill. */
+  .swatch.bare::after {
+    box-shadow: inset 0 0 0 2px var(--muted);
   }
 
   .swatch:active::after {

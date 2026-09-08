@@ -20,6 +20,18 @@ export function shownColour(colour: CanvasColour | undefined): string | null {
   return colour
 }
 
+/** What a pen writing in this colour looks like on screen.
+ *
+ *  Unlike a card's, a pen's colour is never absent: one with none of its own
+ *  writes in the ink the words on the page are set in, and `ink` is the name for
+ *  that rather than a colour any stylesheet could resolve. Said here so that
+ *  every drawing of a pen answers it the same way; a `fill` of `ink` is not a
+ *  colour at all, and a browser handed one paints black in both themes. */
+export function shownInk(colour: string): string {
+  if (colour === DEFAULT_INK) return 'var(--text-strong)'
+  return shownColour(colour) ?? 'var(--text-strong)'
+}
+
 /** The six, for the row of dots on the floating bar. */
 export const DOTS = PRESET_COLOURS.map((colour) => ({
   colour,

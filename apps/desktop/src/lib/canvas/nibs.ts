@@ -34,48 +34,48 @@ export interface PenArt {
 }
 
 export const PEN_ART: Record<InkTool, PenArt> = {
-  /** A slim barrel and a cone to a fine ball. */
+  /** The slimmest barrel of them, and a cone to a fine ball. */
   pen: {
-    barrel: 'M9.2 2h3.6a1.6 1.6 0 0 1 1.6 1.6V24H7.6V3.6A1.6 1.6 0 0 1 9.2 2z',
+    barrel: 'M9.2 2.4h3.6a1.6 1.6 0 0 1 1.6 1.6V24H7.6V4A1.6 1.6 0 0 1 9.2 2.4z',
     detail: 'M7.6 24h6.8v2.6H7.6z',
-    nib: 'M7.6 26.6h6.8L11.8 38.4 11 42.6l-.8-4.2z',
+    nib: 'M7.6 26.6h6.8l-2.1 9.6-.7 5h-1.2l-.7-5z',
   },
   /** A pointed nib with a slit up the middle of it. */
   fountain: {
-    barrel: 'M8.8 2h4.4a1.6 1.6 0 0 1 1.6 1.6V22H7.2V3.6A1.6 1.6 0 0 1 8.8 2z',
+    barrel: 'M8.8 2.4h4.4a1.6 1.6 0 0 1 1.6 1.6V22H7.2V4a1.6 1.6 0 0 1 1.6-1.6z',
     detail: 'M7.2 22h7.6v2.4H7.2z',
-    nib: 'M7.2 24.4h7.6v7.2L11 42.6 7.2 31.6zM10.5 27.6h1v10.4h-1z',
+    nib: 'M7.2 24.4h7.6v6.8L11 41 7.2 31.2zM10.5 27.4h1v9.4h-1z',
   },
-  /** Hexagonal, and sharpened to a long point. */
+  /** Hexagonal, and sharpened back to a broad wooden cone. */
   pencil: {
-    barrel: 'M7.4 2h7.2v22H7.4z',
-    detail: 'M9.4 2h1.1v22H9.4zM12.1 2h.9v22h-.9z',
-    nib: 'M7.4 24h7.2L11 42.6z',
+    barrel: 'M6.8 2.4h8.4V24H6.8z',
+    detail: 'M9 2.4h1.2V24H9zM12.4 2.4h1V24h-1z',
+    nib: 'M6.8 24h8.4l-2.6 10.6L11 42 9.4 34.6z',
   },
   /** Chunkier, ending in a broad chisel. */
   marker: {
-    barrel: 'M7.4 2h7.2a1.6 1.6 0 0 1 1.6 1.6V20H5.8V3.6A1.6 1.6 0 0 1 7.4 2z',
+    barrel: 'M7.4 2.4h7.2a1.6 1.6 0 0 1 1.6 1.6V20H5.8V4a1.6 1.6 0 0 1 1.6-1.6z',
     detail: 'M5.8 20h10.4v2.6H5.8z',
-    nib: 'M6.4 22.6h9.2v10.8l-2.4 6.4H8.8l-2.4-6.4z',
+    nib: 'M6.4 22.6h9.2v10.4l-2.4 6.2H8.8l-2.4-6.2z',
   },
   /** The widest of them, flat right across. */
   highlighter: {
-    barrel: 'M6.2 2h9.6a1.6 1.6 0 0 1 1.6 1.6V18H4.6V3.6A1.6 1.6 0 0 1 6.2 2z',
+    barrel: 'M6.2 2.4h9.6a1.6 1.6 0 0 1 1.6 1.6V18H4.6V4a1.6 1.6 0 0 1 1.6-1.6z',
     detail: 'M4.6 18h12.8v2.8H4.6z',
-    nib: 'M5 20.8h12v11.4l-1.8 7.6H6.8L5 32.2z',
+    nib: 'M5 20.8h12v11.2l-1.8 7.4H6.8L5 32z',
   },
   /** A soft bundle in a ferrule, coming to a point. */
   brush: {
-    barrel: 'M9.4 2h3.2a1.6 1.6 0 0 1 1.6 1.6V18H7.8V3.6A1.6 1.6 0 0 1 9.4 2z',
+    barrel: 'M9.4 2.4h3.2a1.6 1.6 0 0 1 1.6 1.6V18H7.8V4a1.6 1.6 0 0 1 1.6-1.6z',
     detail: 'M6.6 18h8.8v3.4H6.6z',
-    nib: 'M6.6 21.4c0 4.6.7 8.8 2.1 12.6L11 42.6l2.3-8.6c1.4-3.8 2.1-8 2.1-12.6z',
+    nib: 'M6.6 21.4c0 4.4.7 8.4 2.1 11.9L11 41.4l2.3-8.1c1.4-3.5 2.1-7.5 2.1-11.9z',
   },
   /** A flat nib cut at an angle, which is what makes the line thick one way and
    *  thin the other. */
   calligraphy: {
-    barrel: 'M7.8 2h6.4a1.6 1.6 0 0 1 1.6 1.6V21H6.2V3.6A1.6 1.6 0 0 1 7.8 2z',
+    barrel: 'M7.8 2.4h6.4a1.6 1.6 0 0 1 1.6 1.6V21H6.2V4a1.6 1.6 0 0 1 1.6-1.6z',
     detail: 'M6.2 21h9.6v2.4H6.2z',
-    nib: 'M6.2 23.4h9.6v7L7.6 41.8 6.2 36z',
+    nib: 'M6.2 23.4h9.6v6.8L7.6 41 6.2 35.6z',
   },
 }
 

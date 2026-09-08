@@ -100,10 +100,11 @@ export const FINGER =
 export const MARKS = {
   undo: 'M4.6 4.2 2.2 6.6l2.4 2.4M2.2 6.6h5.6a3.6 3.6 0 0 1 0 7.2',
   redo: 'M9.4 4.2 11.8 6.6 9.4 9M11.8 6.6H6.2a3.6 3.6 0 0 0 0 7.2',
-  /** A stroke, gone whole: a line with a cross through the middle of it. */
-  whole: 'M2 9.6c2.6-4.4 7.4-4.4 10 0M5.4 4.4l3.2 3.2M8.6 4.4 5.4 7.6',
-  /** A hole rubbed in what is under it: a line with a bite out of it. */
-  area: 'M2 9.6h3.2M8.8 9.6H12M7 9.6a1 1 0 0 1 0-.1M5.6 6.6a2.6 2.6 0 0 1 2.8 0',
+  /** A stroke gone whole: a written line, struck right through. */
+  whole: 'M2 10.2c2-3.4 3.9-5.1 4.9-5.1 1 0 3 1.7 5.1 5.1M3.6 11.8 10.4 3.2',
+  /** A hole rubbed in what is under it: the same line with a piece missing, and
+   *  the eraser's round nib sitting in the gap it took. */
+  area: 'M1.8 10.6 4.5 6.5M12.2 10.6 9.5 6.5M9.7 8.9a2.7 2.7 0 1 1-5.4 0 2.7 2.7 0 1 1 5.4 0',
   plus: 'M7 3.4v7.2M3.4 7h7.2',
   less: 'M3.4 7h7.2',
   more: 'M3 7h.1M7 7h.1M11 7h.1',
