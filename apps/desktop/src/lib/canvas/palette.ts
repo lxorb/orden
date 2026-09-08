@@ -8,8 +8,13 @@
  *  Ink is drawn on a 2d context, which does not, so the same six are also read
  *  off the theme as real colours once the surface is on the page. */
 
-import { PRESET_COLOURS, type CanvasColour } from './format'
+import { DEFAULT_INK, PRESET_COLOURS, type CanvasColour } from './format'
 import type { Palette } from './paint'
+
+/** What a pen with no colour of its own writes in. A name rather than a value,
+ *  because the value is whatever the theme says it is. The format allows it, so
+ *  it is said there and read from there; see canvas.ts in @nib/markdown. */
+export { DEFAULT_INK } from './format'
 
 /** The colour as CSS, or null for a card with no colour of its own, which wears
  *  the surface it is drawn on. */
@@ -62,14 +67,10 @@ const TOKENS: readonly [string, string, string][] = [
   ['accent', '--accent', '#4c6ef5'],
   // What a pen writes in when nobody chose a colour: the same ink the words on
   // the page are set in.
-  ['ink', '--text-strong', '#111111'],
+  [DEFAULT_INK, '--text-strong', '#111111'],
   ['text', '--text', '#1f2933'],
   ['muted', '--muted', '#8a9099'],
   ['line', '--line-strong', '#d6d9de'],
   ['surface', '--surface', '#ffffff'],
   ['bg', '--bg', '#fbfbfd'],
 ]
-
-/** What a pen with no colour of its own writes in. A name rather than a value,
- *  because the value is whatever the theme says it is. */
-export const DEFAULT_INK = 'ink'

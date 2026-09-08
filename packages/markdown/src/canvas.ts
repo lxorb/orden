@@ -207,10 +207,25 @@ function colourOf(value: unknown): CanvasColour | undefined {
   return PRESET_COLOURS.some((one) => one === colour) || HEX.test(colour) ? colour : undefined
 }
 
+/** How far from the origin anything on a canvas may be, in plane units.
+ *
+ *  A plane is endless in the sense that nobody reaches the end of one: this is
+ *  further than a hand could drag a card in a lifetime. A file may still say
+ *  otherwise - it can arrive from a share, a room or a paste - and a coordinate
+ *  from past here is not a place but a number, which turns every sum after it
+ *  into infinity: the box round the canvas, the camera that frames it, and every
+ *  hit test from then on. So what a file claims is brought back to somewhere a
+ *  canvas can be looked at. */
+export const FURTHEST = 1e9
+
+function held(value: number): number {
+  return Math.min(FURTHEST, Math.max(-FURTHEST, value))
+}
+
 /** A whole number of pixels. The spec says integers, and a node dragged with a
  *  pointer would otherwise land on a fraction of one. */
 function pixels(value: unknown, fallback: number): number {
-  return isNumber(value) ? Math.round(value) : fallback
+  return isNumber(value) ? held(Math.round(value)) : fallback
 }
 
 /** How big a node is when the file forgot to say. Wide enough to read a line of
@@ -333,21 +348,37 @@ export function packed(points: readonly InkPoint[]): number[] {
   return out
 }
 
+/** The points back out of a file or a message. Every field is held to what a
+ *  digitiser could have said: a pen that reported a pressure of four hundred is a
+ *  file making a claim, and the nib it would draw with is not a nib. */
 export function unpacked(values: readonly number[]): InkPoint[] {
   const out: InkPoint[] = []
 
   for (let index = 0; index + 5 < values.length; index += 6) {
     out.push({
-      x: values[index] ?? 0,
-      y: values[index + 1] ?? 0,
-      pressure: values[index + 2] ?? 0.5,
-      tiltX: values[index + 3] ?? 0,
-      tiltY: values[index + 4] ?? 0,
-      t: values[index + 5] ?? 0,
+      x: held(values[index] ?? 0),
+      y: held(values[index + 1] ?? 0),
+      pressure: Math.min(1, Math.max(0, values[index + 2] ?? 0.5)),
+      tiltX: Math.min(90, Math.max(-90, values[index + 3] ?? 0)),
+      tiltY: Math.min(90, Math.max(-90, values[index + 4] ?? 0)),
+      t: Math.max(0, held(values[index + 5] ?? 0)),
     })
   }
 
   return out
+}
+
+/** What a pen may name rather than state: the ink the words on the page are set
+ *  in, which is a token and not a value, so a stroke drawn in it follows the
+ *  theme. Written into files, so reading has to allow it. */
+export const DEFAULT_INK = 'ink'
+
+/** The colour a stroke writes in. Unlike a card's it is never absent, so a
+ *  colour nothing can draw becomes the ink of the page rather than dropping the
+ *  stroke: the drawing is the point, and its colour is the least of it. */
+function inkColourOf(value: unknown): CanvasColour {
+  if (value === DEFAULT_INK) return DEFAULT_INK
+  return colourOf(value) ?? DEFAULT_INK
 }
 
 function readStroke(value: unknown): InkStroke | null {
@@ -361,8 +392,8 @@ function readStroke(value: unknown): InkStroke | null {
   return {
     id: value.id,
     tool: value.tool,
-    color: value.color,
-    size: Math.max(0.1, isNumber(value.size) ? value.size : 3),
+    color: inkColourOf(value.color),
+    size: Math.min(FURTHEST, Math.max(0.1, isNumber(value.size) ? value.size : 3)),
     ...(isNumber(value.opacity) ? { opacity: clampOpacity(value.opacity) } : {}),
     points,
   }

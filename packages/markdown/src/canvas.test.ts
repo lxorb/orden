@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { blankCanvas, type Canvas, clampOpacity, freshId, readCanvas, writeCanvas } from './canvas'
+import {
+  blankCanvas,
+  type Canvas,
+  clampOpacity,
+  DEFAULT_INK,
+  freshId,
+  FURTHEST,
+  readCanvas,
+  writeCanvas,
+} from './canvas'
 
 /** A canvas written the way the spec's own examples are: every node type, every
  *  optional field, and edges naming their sides and their ends.
@@ -467,5 +476,77 @@ describe('how translucent a stroke was drawn', () => {
     expect(clampOpacity(1)).toBe(1)
     expect(clampOpacity(0.4449)).toBe(0.44)
     expect(clampOpacity(Number.NaN)).toBe(1)
+  })
+})
+
+/** A canvas can arrive from a share, a room or a paste, so what it says about
+ *  where things are is a claim and not a fact. A coordinate from past the plane
+ *  turns every sum after it into infinity - the box round the canvas, the camera
+ *  that frames it, every hit test from then on - so it is brought back to
+ *  somewhere a canvas can be looked at. */
+describe('a canvas from somewhere else', () => {
+  test('brings a node from beyond the plane back onto it', () => {
+    const canvas = readCanvas(
+      JSON.stringify({
+        nodes: [
+          { id: 'a', type: 'text', x: 1e308, y: -1e308, width: 1e308, height: 5, text: 'far' },
+        ],
+      }),
+    )
+
+    const [node] = canvas.nodes
+    expect(node?.x).toBe(FURTHEST)
+    expect(node?.y).toBe(-FURTHEST)
+    expect(node?.width).toBe(FURTHEST)
+    expect(Number.isFinite((node?.x ?? 0) + (node?.width ?? 0))).toBe(true)
+  })
+
+  test('brings a stroke drawn beyond the plane back onto it', () => {
+    const canvas = readCanvas(
+      JSON.stringify({
+        nodes: [],
+        nib: {
+          ink: [
+            {
+              id: 'a',
+              tool: 'pen',
+              color: '1',
+              size: 1e308,
+              points: [1e308, -1e308, 400, 0, 0, 0, 2, 2, 0.5, 0, 0, 8],
+            },
+          ],
+        },
+      }),
+    )
+
+    const stroke = canvas.ink[0]
+    expect(stroke?.points[0]).toMatchObject({ x: FURTHEST, y: -FURTHEST, pressure: 1 })
+    expect(stroke?.size).toBeLessThanOrEqual(FURTHEST)
+  })
+
+  test('drops a stroke colour that is neither a preset, a hex, nor the page ink', () => {
+    const one = (color: unknown) =>
+      readCanvas(
+        JSON.stringify({
+          nodes: [],
+          nib: {
+            ink: [
+              {
+                id: 'a',
+                tool: 'pen',
+                color,
+                size: 2,
+                points: [0, 0, 0.5, 0, 0, 0, 1, 1, 0.5, 0, 0, 8],
+              },
+            ],
+          },
+        }),
+      ).ink[0]?.color
+
+    expect(one('3')).toBe('3')
+    expect(one('#abcdef')).toBe('#abcdef')
+    expect(one(DEFAULT_INK)).toBe(DEFAULT_INK)
+    expect(one('"><script>alert(1)</script><path fill="')).toBe(DEFAULT_INK)
+    expect(one('toString')).toBe(DEFAULT_INK)
   })
 })

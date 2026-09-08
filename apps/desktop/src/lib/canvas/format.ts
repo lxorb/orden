@@ -14,6 +14,7 @@ export {
   type CanvasNode,
   clampOpacity,
   DEFAULT_HEIGHT,
+  DEFAULT_INK,
   DEFAULT_WIDTH,
   emptyCanvas,
   freshId,

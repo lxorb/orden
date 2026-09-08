@@ -13,7 +13,14 @@
 
 import type { InkStroke } from './format'
 import { INK_STYLES, inkOpacity, inkPath, outlineOf } from './ink'
-import type { Palette } from './paint'
+import { inkColour, type Palette } from './paint'
+
+/** A value into an attribute. An SVG is a document and a canvas may have arrived
+ *  from a room, a share or a paste, so a colour a file wrote goes into the
+ *  picture as a colour and can never end the attribute it is written in. */
+function attribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+}
 
 /** Every stroke as one path each, in the order they were drawn.
  *
@@ -28,7 +35,7 @@ export function inkSvg(strokes: readonly InkStroke[], palette: Palette): string 
     const d = inkPath(outlineOf(stroke))
     if (!d) continue
 
-    const colour = palette[stroke.color] ?? stroke.color
+    const colour = attribute(inkColour(stroke.color, palette))
     const blend = INK_STYLES[stroke.tool].multiply ? ' style="mix-blend-mode:multiply"' : ''
 
     out.push(`<path d="${d}" fill="${colour}" fill-opacity="${inkOpacity(stroke)}"${blend}/>`)

@@ -74,3 +74,20 @@ describe('ink written into a picture', () => {
     expect(inkSvg([dot], PALETTE)).toContain('<path ')
   })
 })
+
+/** An SVG is a document, and a canvas may have arrived from a room, a share or a
+ *  paste. So a colour out of a file is written into the picture as a value and
+ *  can never become markup of its own. */
+describe('a colour a file wrote', () => {
+  test('cannot end the attribute it is written into', () => {
+    const hostile = '"><script>alert(1)</script><path fill="'
+    const svg = inkSvg([stroke({ color: hostile })], PALETTE)
+
+    expect(svg).not.toContain('<script')
+    expect(svg.match(/<path /g)).toHaveLength(1)
+  })
+
+  test('is read off the palette and never off its prototype', () => {
+    expect(inkSvg([stroke({ color: 'toString' })], PALETTE)).toContain('fill="toString"')
+  })
+})
