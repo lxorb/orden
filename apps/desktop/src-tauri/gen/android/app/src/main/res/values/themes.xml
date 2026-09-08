@@ -1,8 +1,8 @@
 <resources>
-    <!-- The window Nib is drawn in. The background is the app's own --bg, so a
-         launch shows the page's colour rather than a white flash before the
-         first paint; see packages/themes/src/tokens.css. Edge to edge, with the
-         system bars over the page, is set in MainActivity. -->
+    <!-- The window Nib is drawn in. Its background is the page's own colour, so
+         a launch shows what the app is about to paint rather than a white flash
+         before the first frame; see packages/themes/src/tokens.css. Edge to
+         edge, with the system bars over the page, is set in MainActivity. -->
     <style name="Theme.nib" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/launch</item>
     </style>
