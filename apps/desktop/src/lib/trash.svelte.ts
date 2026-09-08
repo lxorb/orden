@@ -58,7 +58,7 @@ class Trash {
     this.error = null
     const [device, remote] = await Promise.all([
       this.fromDevice(),
-      account.token ? this.fromAccount(account.token) : Promise.resolve([]),
+      account.accountToken ? this.fromAccount(account.accountToken) : Promise.resolve([]),
     ])
     this.items = [...remote, ...device].sort((a, b) => b.deletedAt - a.deletedAt)
     this.loaded = true
@@ -125,7 +125,7 @@ class Trash {
         return
       }
 
-      const token = account.token
+      const token = account.accountToken
       if (!token) return
       if (item.kind === 'space') {
         await api.restoreSpace(token, item.ref)
@@ -145,7 +145,7 @@ class Trash {
         return
       }
 
-      const token = account.token
+      const token = account.accountToken
       if (!token) return
       if (item.kind === 'space') await api.purgeSpace(token, item.ref)
       else await api.purgeNote(token, item.ref)
@@ -166,7 +166,7 @@ class Trash {
       for (const item of this.items.filter((one) => one.source === 'device')) {
         await invoke('purge_trash', { id: item.ref }).catch(() => undefined)
       }
-      if (account.token) await api.emptyTrash(account.token)
+      if (account.accountToken) await api.emptyTrash(account.accountToken)
     })
   }
 

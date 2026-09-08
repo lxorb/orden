@@ -66,7 +66,7 @@ export function sectionGroups(): Item[][] {
     ],
     [
       { id: 'account', label: t('Account') },
-      ...(account.signedIn
+      ...(account.user
         ? [
             { id: 'publish' as Section, label: t('Publish') },
             { id: 'llm' as Section, label: t('LLM access') },

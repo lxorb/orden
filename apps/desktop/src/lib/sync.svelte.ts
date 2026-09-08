@@ -309,9 +309,14 @@ class Sync {
       this.mirrors[root] = newMirror(spaceId, root, mine(spaceId))
     }
 
-    for (const space of plan.upload) {
-      const { space: remote } = await api.createSpace(token, space.name)
-      this.mirrors[space.root] = newMirror(remote.id, space.root)
+    // A guest has no account for a folder to become a space in. What a link
+    // lent them is the whole of what syncing is about for them, and the notes
+    // already on this machine are their own: those stay here.
+    if (account.user) {
+      for (const space of plan.upload) {
+        const { space: remote } = await api.createSpace(token, space.name)
+        this.mirrors[space.root] = newMirror(remote.id, space.root)
+      }
     }
 
     for (const space of plan.adopt) {

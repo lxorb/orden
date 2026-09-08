@@ -772,8 +772,14 @@ export const de: Dictionary = {
   'It stays with everybody else. Its notes go from your computer.':
     'Er bleibt bei allen anderen. Seine Notizen verschwinden von deinem Computer.',
   '{who} shared {space} with you': '{who} hat {space} mit dir geteilt',
-  'Waiting to be let in': 'Wartet auf Einlass',
-  '{who} has been asked about {space}.': '{who} wurde wegen {space} gefragt.',
+  'Shared with you': 'Mit dir geteilt',
   'That link does not open anything': 'Dieser Link öffnet nichts',
   'Ask for another one.': 'Frag nach einem neuen.',
+  // Somebody a share link let in, who has no account
+  Guest: 'Gast',
+  'Ask to join': 'Um Zutritt bitten',
+  Asking: 'Fragt',
+  'Waiting for {who}': 'Wartet auf {who}',
+  '{who} did not let you in': '{who} hat dich nicht reingelassen',
+  'What the others in this space see.': 'Was die anderen in diesem Bereich sehen.',
 }

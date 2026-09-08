@@ -576,8 +576,8 @@ export function appMenu(context: Context): MenuGroup[] {
       label: t('Help'),
       rows: [
         {
-          label: account.signedIn ? t('Sign out') : t('Sign in'),
-          run: () => (account.signedIn ? void account.signOut() : (account.open = true)),
+          label: account.user ? t('Sign out') : t('Sign in'),
+          run: () => (account.user ? void account.signOut() : (account.open = true)),
         },
         SPLIT,
         ...(isDesktop ? [{ label: t('Check for updates'), run: () => void stageUpdate() }] : []),

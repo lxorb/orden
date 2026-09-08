@@ -16,14 +16,11 @@
   import { account } from './account.svelte'
   import { arriving } from './arriving.svelte'
   import { t } from './i18n.svelte'
-  import { called } from './person'
   import Sweep from './Sweep.svelte'
 
-  /** Whose account this is, in one letter. The name they chose or the front of
-   *  their address, which is what everything else in the app calls them. */
-  const initial = $derived(
-    account.user ? called(account.user).trim().charAt(0).toUpperCase() || '?' : '?',
-  )
+  /** Whoever is here, in one letter. The name they chose or the front of their
+   *  address, which is what everything else in the app calls them. */
+  const initial = $derived((account.name ?? '?').trim().charAt(0).toUpperCase())
 
   /** A count while the pass knows one, and the app's own word for this while it
    *  does not. Never both: two things saying one thing is one too many. */

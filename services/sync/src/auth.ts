@@ -35,24 +35,21 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
 }
 
 /** The token an `Authorization` header carries, or nothing. */
-export function bearer(header: string | undefined): string | null {
+function tokenIn(header: string | undefined): string | null {
   return header?.startsWith('Bearer ') ? header.slice(7).trim() : null
-}
-
-/** Rejects the request unless it carries a live session. */
-export async function requireUser(env: Env, header: string | undefined): Promise<User | null> {
-  const token = bearer(header)
-  return token ? userForToken(env, token) : null
 }
 
 /** Whoever the request is from: the account whose session it carries, or the
  *  guest a link handed one to. One lookup each, in that order, because an
- *  account's is much the commoner case and either answer is one round trip. */
+ *  account's is much the commoner case and either answer is one round trip.
+ *
+ *  Nothing else answers this question: a route that wants a session gets one of
+ *  the two kinds there are and says which it can work with. */
 export async function requireWhoever(
   env: Env,
   header: string | undefined,
 ): Promise<Whoever | null> {
-  const token = bearer(header)
+  const token = tokenIn(header)
   if (!token) return null
 
   const user = await userForToken(env, token)

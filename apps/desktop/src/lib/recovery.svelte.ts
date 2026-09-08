@@ -154,7 +154,7 @@ class Recovery {
   }
 
   private share(patch: AccountSettings) {
-    const token = account.token
+    const token = account.accountToken
     if (!token) return
 
     void api.saveSettings(token, patch).catch(() => undefined)

@@ -61,14 +61,14 @@ class Connectors {
   }
 
   async load() {
-    if (!account.token) {
+    if (!account.accountToken) {
       this.clients = []
       this.token = null
       return
     }
 
     try {
-      const listed = await api.connector(account.token)
+      const listed = await api.connector(account.accountToken)
       this.clients = listed.clients
       this.token = {
         exists: listed.exists,
@@ -92,12 +92,12 @@ class Connectors {
   }
 
   async disconnect(id: string) {
-    if (!account.token) return
+    if (!account.accountToken) return
 
     // Gone from the list at once; the server is told next.
     this.clients = this.clients.filter((one) => one.id !== id)
     try {
-      await api.disconnectClient(account.token, id)
+      await api.disconnectClient(account.accountToken, id)
     } finally {
       await this.load()
     }
@@ -105,13 +105,13 @@ class Connectors {
 
   /** Mints a pasted token and shows it once. Any previous one stops working. */
   async createToken() {
-    if (!account.token) return
+    if (!account.accountToken) return
 
     this.busy = true
     this.error = null
 
     try {
-      const { token } = await api.issueConnector(account.token, this.readOnly)
+      const { token } = await api.issueConnector(account.accountToken, this.readOnly)
       this.freshToken = token
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ readOnly: this.readOnly }))
       await this.load()
@@ -123,11 +123,11 @@ class Connectors {
   }
 
   async revokeToken() {
-    if (!account.token) return
+    if (!account.accountToken) return
 
     this.busy = true
     try {
-      await api.revokeConnector(account.token)
+      await api.revokeConnector(account.accountToken)
       this.freshToken = null
       await this.load()
     } finally {

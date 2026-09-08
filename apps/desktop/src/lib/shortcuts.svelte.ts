@@ -255,7 +255,7 @@ class Shortcuts {
    *  The name travels with the map: two machines have to agree on which
    *  keyboard this is, not only on what is in it. */
   private share() {
-    const token = account.token
+    const token = account.accountToken
     if (!token) return
 
     void api

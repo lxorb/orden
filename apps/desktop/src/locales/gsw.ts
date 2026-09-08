@@ -768,8 +768,14 @@ export const gsw: Dictionary = {
   'It stays with everybody else. Its notes go from your computer.':
     'Er bliibt bi allne andere. Sini Notize gönd vo dim Computer wäg.',
   '{who} shared {space} with you': '{who} hät {space} mit dir teilt',
-  'Waiting to be let in': 'Wartet uf Iilass',
-  '{who} has been asked about {space}.': '{who} isch wäge {space} gfrogt worde.',
+  'Shared with you': 'Mit dir teilt',
   'That link does not open anything': 'Dä Link macht nüt uf',
   'Ask for another one.': 'Frag nachemene neue.',
+  // Somebody a share link let in, who has no account
+  Guest: 'Gascht',
+  'Ask to join': 'Um Iilass bitte',
+  Asking: 'Fragt',
+  'Waiting for {who}': 'Wartet uf {who}',
+  '{who} did not let you in': '{who} hät di nöd iiglaa',
+  'What the others in this space see.': 'Was die andere i dem Bereich gsehnd.',
 }

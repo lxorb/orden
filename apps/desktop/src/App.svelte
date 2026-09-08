@@ -16,6 +16,7 @@
   import Sidebar from './lib/Sidebar.svelte'
   import SettingsPanel from './lib/SettingsPanel.svelte'
   import ShareSheet from './lib/ShareSheet.svelte'
+  import JoinSheet from './lib/JoinSheet.svelte'
   import SignIn from './lib/SignIn.svelte'
   import Slides from './lib/Slides.svelte'
   import { present } from './lib/slides/present.svelte'
@@ -97,8 +98,9 @@
   // The account's settings come along with the account: when the session is
   // restored at start, and again on signing in. One request brings all of
   // them, so what the modes fetched is handed on rather than asked for twice.
+  // A guest has no settings on any account, so there is nothing to ask for.
   $effect(() => {
-    const token = account.token
+    const token = account.accountToken
     if (token) {
       void modes.adopt(token).then((remote) => {
         if (!remote) return
@@ -196,7 +198,8 @@
   $effect(() => {
     if (account.syncable) {
       sync.start()
-      void usage.refresh()
+      // The bytes are an account's, and a guest is writing into somebody else's.
+      if (account.user) void usage.refresh()
     } else {
       sync.stop()
       rooms.clear()
@@ -466,6 +469,8 @@
 
 <Palette bind:open={palette} {view} />
 <SignIn />
+<!-- The one word a link owes whoever followed it, when it owes one. -->
+<JoinSheet />
 <SettingsPanel {view} />
 <FormatBar bind:this={formatBar} {view} />
 <History bind:open={settings.historyOpen} />

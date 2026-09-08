@@ -55,6 +55,13 @@ export function canWriteAt(path: string): boolean {
 /** How long the copy button says it copied. */
 const COPIED_FOR = 1600
 
+/** Anybody in a space who is not its owner, as the sheet names them: an address
+ *  they were invited at, or the guest a link handed out. Exactly one of the two. */
+interface Someone {
+  email: string | null
+  guest: string | null
+}
+
 class Share {
   open = $state(false)
   /** The folder the sheet is about, and the space on the account behind it. */
@@ -103,12 +110,24 @@ class Share {
     }
   }
 
-  setRole(email: string, role: GivenRole) {
-    return this.change((token, id) => api.setMemberRole(token, id, email, role))
+  /** The four things the owner can do to somebody, each of which reaches one of
+   *  two routes: a member is an address the owner wrote down, and a guest is
+   *  whoever followed the link. The sheet hands over the person and does not
+   *  have to know which it got. */
+  setRole(person: Someone, role: GivenRole) {
+    return this.change((token, id) =>
+      person.guest
+        ? api.setGuestRole(token, id, person.guest, role)
+        : api.setMemberRole(token, id, person.email ?? '', role),
+    )
   }
 
-  remove(email: string) {
-    return this.change((token, id) => api.removeMember(token, id, email))
+  remove(person: Someone) {
+    return this.change((token, id) =>
+      person.guest
+        ? api.removeGuest(token, id, person.guest)
+        : api.removeMember(token, id, person.email ?? ''),
+    )
   }
 
   /** Makes the link on the first ask and changes what it hands out afterwards.
@@ -122,12 +141,20 @@ class Share {
     return this.change((token, id) => api.revokeShareLink(token, id))
   }
 
-  accept(email: string) {
-    return this.change((token, id) => api.acceptRequest(token, id, email))
+  accept(person: Someone) {
+    return this.change((token, id) =>
+      person.guest
+        ? api.acceptGuest(token, id, person.guest)
+        : api.acceptRequest(token, id, person.email ?? ''),
+    )
   }
 
-  decline(email: string) {
-    return this.change((token, id) => api.declineRequest(token, id, email))
+  decline(person: Someone) {
+    return this.change((token, id) =>
+      person.guest
+        ? api.removeGuest(token, id, person.guest)
+        : api.declineRequest(token, id, person.email ?? ''),
+    )
   }
 
   async copy() {
@@ -155,7 +182,9 @@ class Share {
   }
 
   private async run(work: (token: string) => Promise<Sharing>): Promise<boolean> {
-    const token = account.token
+    // The owner's, always: everything on this sheet is theirs to change, and a
+    // guest has no account for any of it to be about.
+    const token = account.accountToken
     if (!token) return false
 
     this.busy = true
@@ -178,5 +207,5 @@ export const share = new Share()
 /** Whether a space can be shared from here: it is on the account, and it is
  *  this account's to share. */
 export function canShare(space: Space): boolean {
-  return account.signedIn && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
+  return !!account.user && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
 }

@@ -20,7 +20,7 @@ class Usage {
   readonly warning = $derived(this.nearlyFull && !this.dismissed)
 
   async refresh() {
-    const token = account.token
+    const token = account.accountToken
     if (!token) {
       this.used = 0
       this.limit = 0

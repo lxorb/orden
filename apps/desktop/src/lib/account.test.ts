@@ -16,6 +16,11 @@ const server = vi.hoisted(() => ({
   meCalls: 0,
   /** Set to make listing the spaces fail, which is not a failed session. */
   spacesFail: false,
+  /** Set to make `me` answer with a guest a link let in rather than an account. */
+  meIsAGuest: false,
+  /** The guest session a sign-in handed over, so what a link lent the device
+   *  follows it into the account. */
+  handedOver: null as string | null | undefined,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -25,13 +30,15 @@ vi.mock('./api', async (importOriginal) => {
     ...original,
     api: {
       requestCode: () => Promise.resolve({ ok: true as const, resendIn: server.resendIn }),
-      verifyCode: () =>
-        server.refuse
+      verifyCode: (_email: string, _code: string, guest?: string) => {
+        server.handedOver = guest ?? null
+        return server.refuse
           ? Promise.reject(new original.ApiError(400, 'that code is not right'))
           : Promise.resolve({
               token: 'session',
               user: { id: 'u1', email: 'me@example.com', name: null },
-            }),
+            })
+      },
       me: () => {
         server.meCalls += 1
         if (server.meCalls <= server.meFails) {
@@ -42,7 +49,11 @@ vi.mock('./api', async (importOriginal) => {
           )
         }
 
-        return Promise.resolve({ user: { id: 'u1', email: 'me@example.com', name: null } })
+        return Promise.resolve(
+          server.meIsAGuest
+            ? { guest: { id: 'g1', name: 'Windows wren' } }
+            : { user: { id: 'u1', email: 'me@example.com', name: null } },
+        )
       },
       listSpaces: () =>
         server.spacesFail
@@ -85,6 +96,8 @@ beforeEach(async () => {
   server.meStatus = null
   server.meCalls = 0
   server.spacesFail = false
+  server.meIsAGuest = false
+  server.handedOver = undefined
 
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
@@ -318,5 +331,70 @@ describe('a host that keeps the token too', () => {
 
     await account.signOut()
     await vi.waitFor(() => expect(held.token).toBeNull())
+  })
+})
+
+describe('a session a share link handed out', () => {
+  test('is a guest: signed in, with no account behind it', async () => {
+    server.meIsAGuest = true
+    localStorage.setItem('nib:session', 'guest-session')
+
+    await account.restore()
+
+    expect(account.signedIn).toBe(true)
+    expect(account.guest?.name).toBe('Windows wren')
+    expect(account.user).toBeNull()
+    // Which is what everything account-wide asks for, so none of it is asked.
+    expect(account.accountToken).toBeNull()
+    expect(account.name).toBe('Windows wren')
+  })
+
+  test('hands itself to the sign-in, so what a link lent it follows it in', async () => {
+    server.meIsAGuest = true
+    localStorage.setItem('nib:session', 'guest-session')
+    await account.restore()
+
+    expect(await account.verify('123456')).toBe(true)
+
+    expect(server.handedOver).toBe('guest-session')
+    expect(account.guest).toBeNull()
+    expect(account.user?.email).toBe('me@example.com')
+    expect(account.accountToken).toBe('session')
+  })
+
+  test('is not handed over by a sign-in that was nobody', async () => {
+    expect(await account.verify('123456')).toBe(true)
+    expect(server.handedOver).toBeNull()
+  })
+
+  test('arrives from a link rather than from a code, and asks nothing', async () => {
+    await account.arrive('guest-session', { guest: { id: 'g1', name: 'iPhone lark' } })
+
+    expect(account.signedIn).toBe(true)
+    expect(localStorage.getItem('nib:session')).toBe('guest-session')
+    // A guest has no account for the notes already here to join, so syncing is
+    // not held back on a question nobody is going to be asked.
+    expect(account.settling).toBe(false)
+    expect(account.syncable).toBe(true)
+  })
+
+  test('holds syncing back when the link opened an account instead', async () => {
+    await account.arrive('session', { user: { id: 'u1', email: 'ada@example.com', name: null } })
+
+    expect(account.settling).toBe(true)
+    expect(account.syncable).toBe(false)
+    expect(account.accountToken).toBe('session')
+  })
+
+  test('is nobody again once the session is let go of', async () => {
+    server.meIsAGuest = true
+    localStorage.setItem('nib:session', 'guest-session')
+    await account.restore()
+
+    await account.signOut()
+
+    expect(account.guest).toBeNull()
+    expect(account.signedIn).toBe(false)
+    expect(account.name).toBeNull()
   })
 })

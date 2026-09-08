@@ -13,7 +13,6 @@
 import { platform } from '@tauri-apps/plugin-os'
 import { account } from '../account.svelte'
 import { ACCENTS } from '../accents'
-import { called } from '../person'
 import { isNative } from '../tauri'
 
 const KEY = 'nib:device-colour'
@@ -34,10 +33,13 @@ export function deviceName(browser: string): string {
   return NAMES[platform()] ?? browser
 }
 
-/** Whoever is at this device, when the account says so. Undefined while signed
- *  out, where there is nobody to name and the device is the whole answer. */
+/** Whoever is at this device, when there is anybody to name. The name on the
+ *  account, or the one a guest was given by their device and may change: a guest
+ *  a link let in is a person in the note like any other, and the caret beside
+ *  the owner's has to say which person. Undefined while signed out, where there
+ *  is nobody to name and the device is the whole answer. */
 export function personName(): string | undefined {
-  return account.user ? called(account.user) : undefined
+  return account.name ?? undefined
 }
 
 /** One of the accent colours, chosen once for this device and kept. Which one is

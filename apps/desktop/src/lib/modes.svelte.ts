@@ -484,7 +484,7 @@ class Modes {
   private share(patch: AccountSettings) {
     this.sent++
 
-    const token = account.token
+    const token = account.accountToken
     if (!token) return
     void api.saveSettings(token, patch).catch(() => undefined)
   }

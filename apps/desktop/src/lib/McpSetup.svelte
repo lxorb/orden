@@ -67,7 +67,7 @@
   // Kept fresh while the pane shows: the moment a client has signed in, it
   // appears under Connected without anyone reloading anything.
   $effect(() => {
-    if (!account.signedIn) return
+    if (!account.user) return
     return connectors.watch()
   })
 
@@ -91,7 +91,7 @@
 {/snippet}
 
 <div class="llm">
-  {#if !account.signedIn}
+  {#if !account.user}
     <p class="note">{t('Sign in first - the connector reaches the notes in your account.')}</p>
   {:else}
     {#if connected}

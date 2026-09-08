@@ -10,7 +10,7 @@
   import { share } from './sharing.svelte'
   import { called } from './person'
   import { viewport } from './viewport.svelte'
-  import type { GivenRole, Member } from './api'
+  import type { GivenRole, Member, Sharing } from './api'
   import Select from './Select.svelte'
 
   const ROLES = $derived([
@@ -21,15 +21,31 @@
   const who = $derived(share.who)
   const link = $derived(who?.link ?? null)
 
+  /** Somebody waiting to be let in, of either kind. */
+  type Waiting = Sharing['requests'][number]
+
   // Escape closes it, like everything else the app puts over a note.
   $effect(() => (share.open ? overlays.show(() => share.close()) : undefined))
   $effect(() => closeOnBack(share.open, () => share.close()))
 
-  /** The line under the name: the address, which is who they actually are, and
-   *  whether anybody has opened the space under it yet. */
-  function subtitle(person: Member): string {
-    return person.pending ? `${person.email} · ${t('Invited')}` : person.email
+  /** What to call somebody in a list where a guest has no account to name them.
+   *  A guest is given a name by their device and may change it, so there is
+   *  always one; a member without an account yet is named by their address. */
+  function name(person: Member | Waiting): string {
+    return person.email ? called({ name: person.name, email: person.email }) : (person.name ?? '')
   }
+
+  /** The line under the name. For a member it is the address, which is who they
+   *  actually are, and whether anybody has opened the space under it yet. For a
+   *  guest it is the word: a link is how they got here, and anything they typed
+   *  about themselves is what they said rather than what was proved. */
+  function subtitle(person: Member): string {
+    if (person.guest) return person.email ? `${person.email} · ${t('Guest')}` : t('Guest')
+    return person.pending ? `${person.email} · ${t('Invited')}` : (person.email ?? '')
+  }
+
+  /** What names a row, whichever kind of person it is. */
+  const keyOf = (person: Member | Waiting) => person.guest ?? person.email ?? ''
 </script>
 
 {#if share.open}
@@ -53,16 +69,16 @@
       {#if who.requests.length}
         <h3>{t('Waiting')}</h3>
         <div class="card">
-          {#each who.requests as person (person.email)}
+          {#each who.requests as person (keyOf(person))}
             <div class="row" transition:fade={{ duration: 130 }}>
               <span class="name">
-                {called(person)}
-                <small>{person.email}</small>
+                {name(person)}
+                <small>{person.email ?? t('Guest')}</small>
               </span>
-              <button class="pill" onclick={() => void share.accept(person.email)}>
+              <button class="pill" onclick={() => void share.accept(person)}>
                 {t('Accept')}
               </button>
-              <button class="pill quiet" onclick={() => void share.decline(person.email)}>
+              <button class="pill quiet" onclick={() => void share.decline(person)}>
                 {t('Decline')}
               </button>
             </div>
@@ -80,17 +96,17 @@
           <span class="fixed">{t('Owner')}</span>
         </div>
 
-        {#each who.members as person (person.email)}
+        {#each who.members as person (keyOf(person))}
           <div class="row" transition:fade={{ duration: 130 }}>
             <span class="name">
-              {called(person)}
+              {name(person)}
               <small>{subtitle(person)}</small>
             </span>
             <div class="pick">
               <Select
                 value={person.role}
                 options={ROLES}
-                onchange={(role: string) => void share.setRole(person.email, role as GivenRole)}
+                onchange={(role: string) => void share.setRole(person, role as GivenRole)}
                 label={t('Role')}
                 plain={viewport.touch}
               />
@@ -99,7 +115,7 @@
               class="shut"
               aria-label={t('Remove')}
               title={t('Remove')}
-              onclick={() => void share.remove(person.email)}
+              onclick={() => void share.remove(person)}
             >
               <svg viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" /></svg>
             </button>

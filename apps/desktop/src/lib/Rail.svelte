@@ -9,6 +9,7 @@
   import { t } from './i18n.svelte'
   import { DIVIDER, menu, type MenuEntry, revealEntry, trim } from './menu.svelte'
   import { overlays } from './overlays'
+  import { prompt } from './prompt.svelte'
   import { deleteSpace, moveSpace, newSpace, renameSpace, shareSpace } from './space-actions'
   import { settings } from './settings.svelte'
   import { canShare, isShared, roleOf } from './sharing.svelte'
@@ -186,6 +187,24 @@
     return name ? (library[name] ?? null) : null
   }
 
+  /** Who is at this device. Signed out, the sign-in; and for a guest a link let
+   *  in, the name over their caret, which is the one thing they own here. */
+  async function whoIsHere() {
+    const guest = account.guest
+    if (!guest) {
+      account.open = true
+      return
+    }
+
+    const named = await prompt.ask({
+      title: t('Your name'),
+      value: guest.name,
+      placeholder: t('Your name'),
+      confirmLabel: t('Save'),
+    })
+    if (named !== null) await account.rename(named).catch(() => undefined)
+  }
+
   // Only worth loading the set once a space actually uses one.
   $effect(() => {
     if (Object.keys(workspace.device.icons).length && !Object.keys(library).length) {
@@ -317,21 +336,24 @@
       </button>
     {/if}
 
-    <!-- Signing in is the only thing this button is for, so once there is an
-         account it has nothing left to do; the settings sheet owns it.
+    <!-- Who is at this device, which is one of two things. Signed out it is the
+         sign-in, and once there is an account it has nothing left to do; the
+         settings sheet owns it. For a guest a link let in it is their name,
+         because that is the whole of who they are here and the other people in
+         the note are reading it over a caret: one tap changes it.
 
          It also waits while the stores are still being asked. Signed out and
          not known yet are different states, and on a phone the difference is
          the seconds the phone app takes to answer: a form offered inside them
          is a session typed in again for nothing. -->
-    {#if !account.signedIn}
+    {#if !account.user}
       <button
         class="add account"
         class:looking={account.restoring}
-        title={t('Sign in')}
-        aria-label={t('Sign in')}
+        title={account.guest ? account.guest.name : t('Sign in')}
+        aria-label={account.guest ? t('Your name') : t('Sign in')}
         disabled={account.restoring}
-        onclick={() => (account.open = true)}
+        onclick={() => void whoIsHere()}
       >
         <svg viewBox="0 0 14 14"
           ><circle cx="7" cy="4.6" r="2.8" /><path d="M1.6 13a5.4 5.4 0 0 1 10.8 0" /></svg

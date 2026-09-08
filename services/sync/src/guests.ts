@@ -22,7 +22,7 @@ import type { Env, Guest, User } from './types'
 /** How long a guest session lasts. The same as an account's: a guest bound to a
  *  device is that device's way in, and one that expired sooner would be a reader
  *  sent back to a link they no longer have. */
-export const GUEST_TTL = 90 * 24 * 60 * 60 * 1000
+const GUEST_TTL = 90 * 24 * 60 * 60 * 1000
 
 /** Long enough for any platform name and nothing else. */
 const DEVICE_LIMIT = 24
@@ -66,7 +66,7 @@ function device(given: string | null): string | null {
  *  short word, which is the same answer the carets already give for a device.
  *  "Emil's iPad" is not knowable from here and never will be; "iPhone wren" is,
  *  and it tells two guests apart, which is the whole job. */
-export function guestName(hint: string | null): string {
+function guestName(hint: string | null): string {
   const platform = device(hint) ?? 'Guest'
   const word = WORDS[Math.floor(Math.random() * WORDS.length)] ?? WORDS[0] ?? ''
 
@@ -99,7 +99,7 @@ export async function newGuest(
 
 /** A session token for a guest. Sessions that ran out are cleared as new ones
  *  arrive, the way an account's are: nothing else would ever take them away. */
-export async function openGuestSession(env: Env, guestId: string): Promise<string> {
+async function openGuestSession(env: Env, guestId: string): Promise<string> {
   await env.DB.prepare('delete from guest_sessions where expires_at < ?').bind(now()).run()
 
   const token = randomToken()
@@ -159,6 +159,9 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },
+  // Letting themselves out, which is the one thing under `share` that is not
+  // the owner's: being in a space is something a person can stop.
+  { method: 'DELETE', path: /^\/v1\/spaces\/[^/]+\/share\/me$/ },
 ]
 
 export function guestMayReach(method: string, path: string): boolean {

@@ -767,8 +767,14 @@ export const ja: Dictionary = {
   'It stays with everybody else. Its notes go from your computer.':
     '他の人には残ります。このパソコンからはノートが消えます。',
   '{who} shared {space} with you': '{who} が {space} を共有しました',
-  'Waiting to be let in': '承認を待っています',
-  '{who} has been asked about {space}.': '{space} について {who} に確認中です。',
+  'Shared with you': 'あなたに共有されました',
   'That link does not open anything': 'このリンクは何も開きません',
   'Ask for another one.': '新しいものをもらってください。',
+  // Somebody a share link let in, who has no account
+  Guest: 'ゲスト',
+  'Ask to join': '参加を申請',
+  Asking: '申請中',
+  'Waiting for {who}': '{who} の承認待ち',
+  '{who} did not let you in': '{who} は参加を断りました',
+  'What the others in this space see.': 'この共有スペースの他の人に見える名前です。',
 }

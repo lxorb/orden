@@ -56,7 +56,7 @@
       { section: 'account', label: t('Display name'), text: [t('Shown on anything you publish.')] },
       { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
       { section: 'account', label: t('Storage'), text: [] },
-      { section: 'account', label: account.signedIn ? t('Sign out') : t('Sign in'), text: [] },
+      { section: 'account', label: account.user ? t('Sign out') : t('Sign in'), text: [] },
       { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
       {
         section: 'export',
@@ -102,7 +102,7 @@
       })
     }
 
-    if (account.signedIn) {
+    if (account.user) {
       all.push(
         {
           section: 'publish',
@@ -487,14 +487,14 @@
       </div>
     {/if}
   {:else if settings.section === 'account'}
-    {#if account.signedIn}
+    {#if account.user}
       <h3>{t('Account')}</h3>
       <div class="card">
         <label class="setting">
           <span class="name">{t('Display name')}</span>
           <input
             class="inline"
-            value={account.user?.name ?? ''}
+            value={account.user.name ?? ''}
             placeholder={t('Your name')}
             spellcheck="false"
             onchange={(event) => void rename(event.currentTarget.value)}
@@ -502,7 +502,7 @@
         </label>
         <div class="setting">
           <span class="name">{t('Email')}</span>
-          <span class="text">{account.user?.email}</span>
+          <span class="text">{account.user.email}</span>
         </div>
       </div>
       <p class="hint caption">{t('Shown on anything you publish.')}</p>
@@ -543,6 +543,33 @@
       <div class="card">
         <button class="action danger" onclick={() => account.signOut()}>{t('Sign out')}</button>
       </div>
+    {:else if account.guest}
+      <!-- A guest a link let in. There is no account here to show, and the one
+           thing they own is the name the others in the space see. -->
+      <h3>{t('Account')}</h3>
+      <div class="card">
+        <label class="setting">
+          <span class="name">{t('Your name')}</span>
+          <input
+            class="inline"
+            value={account.guest.name}
+            placeholder={t('Your name')}
+            spellcheck="false"
+            onchange={(event) => void rename(event.currentTarget.value)}
+          />
+        </label>
+      </div>
+      <p class="hint caption">{t('What the others in this space see.')}</p>
+
+      <button
+        class="primary"
+        onclick={() => {
+          settings.open = false
+          account.open = true
+        }}
+      >
+        {t('Sign in')}
+      </button>
     {:else}
       <p class="lead">{t('Not signed in')}</p>
       <button

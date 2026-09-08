@@ -36,7 +36,7 @@ export async function storeImage(file: File, notePath: string | null): Promise<s
   const hash = await hashBytes(bytes)
   const extension = extensionFor(file.type, file.name)
 
-  const token = account.token
+  const token = account.accountToken
   if (token) {
     try {
       await api.putBlob(token, hash, file.type || 'image/png', bytes)

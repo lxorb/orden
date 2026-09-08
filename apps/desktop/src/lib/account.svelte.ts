@@ -1,5 +1,6 @@
-import { api, ApiError, type Account, type RemoteSpace } from './api'
+import { api, ApiError, type Account, type Guest, type RemoteSpace } from './api'
 import { arriving } from './arriving.svelte'
+import { called } from './person'
 
 const STORAGE_KEY = 'nib:session'
 
@@ -36,6 +37,10 @@ function wait(ms: number): Promise<void> {
 class Session {
   token = $state<string | null>(null)
   user = $state<Account | null>(null)
+  /** Whoever a share link let in, when that is what the session is. A guest has
+   *  no account: it reaches the spaces its links granted and nothing else, so
+   *  everything account-wide asks for `user` rather than for a session. */
+  guest = $state<Guest | null>(null)
   spaces = $state<RemoteSpace[]>([])
   /** Ids the account says were deleted, so a machine that was away can tell
    *  that apart from a space it has simply not uploaded yet. */
@@ -63,7 +68,18 @@ class Session {
    *  a session that was there all along gets typed in again. */
   restoring = $state(false)
 
-  readonly signedIn = $derived(!!this.token && !!this.user)
+  /** Whether there is a session at all, of either kind. What the rail, the
+   *  syncing and the rooms ask: a guest's spaces come down the same way. */
+  readonly signedIn = $derived(!!this.token && (!!this.user || !!this.guest))
+  /** The session token when it belongs to an account rather than to a guest.
+   *  What everything account-wide asks for - the settings, the storage, Recently
+   *  deleted, the connector, publishing - because a guest has none of those and
+   *  a request the service would refuse is not one worth making. */
+  readonly accountToken = $derived(this.user ? this.token : null)
+  /** What to call whoever is at this device: the name on the account, else the
+   *  part of their address in front of the at sign, else the name a guest was
+   *  given by their device. Null while there is nobody to name. */
+  readonly name = $derived(this.user ? called(this.user) : (this.guest?.name ?? null))
   /** When syncing may run: signed in, and not waiting on that question. */
   readonly syncable = $derived(this.signedIn && !this.settling)
 
@@ -100,7 +116,11 @@ class Session {
       if (pause) await wait(pause)
 
       try {
-        this.user = (await api.me(saved)).user
+        // Either kind of session answers here, and which one it is decides what
+        // the app offers: a guest is somebody in a space, not an account.
+        const who = await api.me(saved)
+        this.user = who.user ?? null
+        this.guest = who.guest ?? null
         break
       } catch (error) {
         // Only the account saying so signs anybody out. A request that never
@@ -145,9 +165,13 @@ class Session {
     this.busy = true
     this.error = null
 
+    // What this device was as a guest, handed over so that whatever a link let
+    // it into follows it into the account; see services/sync/src/guests.ts.
+    const held = this.guest ? this.token : null
+
     let session
     try {
-      session = await api.verifyCode(this.email.trim(), code)
+      session = await api.verifyCode(this.email.trim(), code, held ?? undefined)
     } catch (error) {
       this.error = error instanceof ApiError ? error.message : 'could not reach the server'
       return false
@@ -156,6 +180,7 @@ class Session {
     }
 
     const { token, user } = session
+    this.guest = null
     localStorage.setItem(STORAGE_KEY, token)
     // Nothing waits on the other store: the session is already in hand, and a
     // host that cannot be told is a host that will ask again next launch.
@@ -187,6 +212,31 @@ class Session {
     return true
   }
 
+  /** A session a link established rather than a code: an invitation that proved
+   *  its own address, or a guest the space's own link handed out. Everything the
+   *  sign-in does about a new session happens here too, so a link and a code
+   *  leave the app in the same state.
+   *
+   *  A guest is not asked what should become of the notes already here. There is
+   *  no account for them to join and nothing to erase: what a link lent them is
+   *  a space beside their own writing. */
+  async arrive(token: string, who: { user?: Account; guest?: Guest }) {
+    this.stopResendTimer()
+    localStorage.setItem(STORAGE_KEY, token)
+    void this.vault?.write(token).catch(() => undefined)
+
+    if (who.user) this.settling = true
+    this.token = token
+    this.user = who.user ?? null
+    this.guest = who.guest ?? null
+    this.open = false
+    this.step = 'email'
+    this.email = ''
+
+    arriving.begin()
+    await this.loadSpaces().catch(() => undefined)
+  }
+
   /** The notes already on this machine have been dealt with, one way or the
    *  other. Syncing has been waiting on this. */
   settled() {
@@ -199,11 +249,15 @@ class Session {
     if (token) await api.signOut(token).catch(() => undefined)
   }
 
-  /** The name shown on anything the account publishes. Throws on refusal,
-   *  so the pane asking can say why. */
+  /** What to call whoever is here: the name on anything the account publishes,
+   *  or the one over a guest's caret. Throws on refusal, so whatever is asking
+   *  can say why. */
   async rename(name: string) {
     if (!this.token) return
-    this.user = (await api.rename(this.token, name)).user
+
+    const who = await api.rename(this.token, name)
+    if (who.user) this.user = who.user
+    if (who.guest) this.guest = who.guest
   }
 
   async loadSpaces() {
@@ -220,6 +274,7 @@ class Session {
     this.stopResendTimer()
     this.token = null
     this.user = null
+    this.guest = null
     this.settling = false
     this.spaces = []
     this.deletedSpaces = []

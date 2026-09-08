@@ -185,14 +185,14 @@ class Settings {
   async checkSubdomain(value: string) {
     const check = ++this.checks
 
-    if (!account.token || value.length < 2) {
+    if (!account.accountToken || value.length < 2) {
       this.availability = { checking: false, available: null }
       return
     }
 
     this.availability = { checking: true, available: null }
     try {
-      const result = await api.subdomainAvailable(account.token, value, this.remote?.id)
+      const result = await api.subdomainAvailable(account.accountToken, value, this.remote?.id)
       if (check !== this.checks) return
       this.availability = {
         checking: false,
@@ -212,13 +212,13 @@ class Settings {
     note?: string | null
   }) {
     const space = this.remote
-    if (!space || !account.token) return
+    if (!space || !account.accountToken) return
 
     this.busy = true
     this.error = null
 
     try {
-      const result = await api.publish(account.token, space.id, settings)
+      const result = await api.publish(account.accountToken, space.id, settings)
       this.dns = result.dns
       await account.loadSpaces()
     } catch (error) {
@@ -230,11 +230,11 @@ class Settings {
 
   async unpublish() {
     const space = this.remote
-    if (!space || !account.token) return
+    if (!space || !account.accountToken) return
 
     this.busy = true
     try {
-      await api.unpublish(account.token, space.id)
+      await api.unpublish(account.accountToken, space.id)
       this.dns = []
       this.domain = null
       await account.loadSpaces()
@@ -257,13 +257,13 @@ class Settings {
     const asking = ++this.askings
 
     const space = this.remote
-    if (!space || !account.token || !space.blog.domain) {
+    if (!space || !account.accountToken || !space.blog.domain) {
       this.domain = null
       return
     }
 
     try {
-      const status = await api.domainStatus(account.token, space.id)
+      const status = await api.domainStatus(account.accountToken, space.id)
       if (asking !== this.askings) return
       this.domain = status
     } catch {

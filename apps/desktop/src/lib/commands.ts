@@ -555,10 +555,10 @@ export function appCommands(view?: EditorView): Command[] {
     },
     { id: 'llm', label: t('Connect an LLM to your notes'), run: () => settings.show('llm') },
 
-    account.signedIn
+    account.user
       ? {
           id: 'signout',
-          label: `${t('Sign out')} ${account.user?.email ?? ''}`.trim(),
+          label: `${t('Sign out')} ${account.user.email}`.trim(),
           run: () => void account.signOut(),
         }
       : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },

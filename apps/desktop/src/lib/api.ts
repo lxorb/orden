@@ -21,10 +21,22 @@ export type SpaceRole = 'owner' | 'write' | 'read'
  *  something anybody is given. */
 export type GivenRole = 'write' | 'read'
 
-/** One person a space was shared with. */
+/** Somebody a share link let in, with no account behind them. A name and an id
+ *  is the whole of one; see services/sync/src/guests.ts. */
+export interface Guest {
+  id: string
+  name: string
+}
+
+/** One person a space was shared with. Exactly one of `email` and `guest` names
+ *  them: somebody invited by address is the first, somebody the space's own link
+ *  let in is the second. */
 export interface Member {
-  email: string
-  /** The name on their account, once they have one and have chosen one. */
+  email: string | null
+  /** Their guest id, when a link is how they got here. */
+  guest: string | null
+  /** The name on their account, once they have one and have chosen one, or the
+   *  one a guest was given by their device and may change. */
   name: string | null
   role: GivenRole
   /** Nobody has opened the space under that address yet. */
@@ -39,9 +51,11 @@ export interface ShareLink {
   mode: 'open' | 'approval'
 }
 
-/** Somebody who followed a link that asks first. */
+/** Somebody who followed a link that asks first. Named the same two ways a
+ *  member is: an address they proved, or the guest a link handed out. */
 interface JoinRequest {
-  email: string
+  email: string | null
+  guest: string | null
   name: string | null
   role: GivenRole
   at: number
@@ -57,7 +71,7 @@ export interface Sharing {
 }
 
 /** What a link somebody was sent leads to, answered before there is a session,
- *  because it is what the page shows while they prove their address. */
+ *  because it is what the page shows before there is one to have. */
 export interface Invitation {
   kind: 'invite' | 'link'
   /** The space's name. */
@@ -66,10 +80,31 @@ export interface Invitation {
   /** The address an invitation was written to, so the sign-in is filled in.
    *  Null for a link, which is for whoever has it. */
   email: string | null
-  /** The link asks the owner before it lets anybody in. */
+  /** The link asks the owner before it lets anybody in, which is the one case
+   *  where anything at all is asked of whoever followed it. */
   asks: boolean
   /** What to call whoever shared it. */
   from: string | null
+}
+
+/** What walking through a link answers.
+ *
+ *  A link is its own proof, so most of these carry a session that did not exist
+ *  a moment ago: an invitation opens the account it was written to, and a link
+ *  the space itself holds hands out a guest. */
+export interface Joined {
+  /** The session the link established. Absent when the link was followed by a
+   *  session that was already there. */
+  token?: string
+  /** The account an invitation opened. */
+  user?: Account
+  /** The guest a link handed out, or the one that followed it. */
+  guest?: Guest
+  space?: RemoteSpace
+  /** The owner has been asked, and has not answered. */
+  waiting?: boolean
+  /** The owner said no. */
+  declined?: boolean
 }
 
 export interface RemoteSpace {
@@ -226,16 +261,26 @@ export const api = {
   requestCode: (email: string) =>
     request<{ ok: true; resendIn: number }>('/v1/auth/code', { body: { email } }),
 
-  verifyCode: (email: string, code: string) =>
-    request<{ token: string; user: Account }>('/v1/auth/verify', { body: { email, code } }),
+  /** `guest` is what this device was as a guest, if it was one: handing it over
+   *  is how the spaces a link let the device into follow it into the account. */
+  verifyCode: (email: string, code: string, guest?: string) =>
+    request<{ token: string; user: Account }>('/v1/auth/verify', {
+      body: { email, code, ...(guest ? { guest } : {}) },
+    }),
 
   signOut: (token: string) => request<{ ok: true }>('/v1/auth/signout', { method: 'POST', token }),
 
-  me: (token: string) => request<{ user: Account }>('/v1/me', { token }),
+  /** Whoever the session belongs to: an account, or the guest a link let in. */
+  me: (token: string) => request<{ user?: Account; guest?: Guest }>('/v1/me', { token }),
 
-  /** An empty name takes it away again. */
+  /** What to call whoever is here. An empty name takes an account's away again;
+   *  a guest keeps the one their device gave them. */
   rename: (token: string, name: string) =>
-    request<{ user: Account }>('/v1/me', { method: 'PATCH', token, body: { name } }),
+    request<{ user?: Account; guest?: Guest }>('/v1/me', {
+      method: 'PATCH',
+      token,
+      body: { name },
+    }),
 
   listSpaces: (token: string) =>
     request<{ spaces: RemoteSpace[]; deleted: string[] }>('/v1/spaces', { token }),
@@ -325,6 +370,29 @@ export const api = {
   revokeShareLink: (token: string, id: string) =>
     request<Sharing>(`/v1/spaces/${id}/share/link`, { method: 'DELETE', token }),
 
+  // The same four things, about somebody a link let in rather than an address.
+  // A guest is one row rather than a membership and a request, so letting them
+  // in, changing what they may do and ending it are three verbs on one path.
+  acceptGuest: (token: string, id: string, guest: string) =>
+    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}`, {
+      method: 'POST',
+      token,
+    }),
+
+  setGuestRole: (token: string, id: string, guest: string, role: GivenRole) =>
+    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}`, {
+      method: 'PATCH',
+      token,
+      body: { role },
+    }),
+
+  /** Declining somebody who is waiting, and taking out somebody who is in. */
+  removeGuest: (token: string, id: string, guest: string) =>
+    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}`, {
+      method: 'DELETE',
+      token,
+    }),
+
   acceptRequest: (token: string, id: string, email: string) =>
     request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}`, {
       method: 'POST',
@@ -346,12 +414,25 @@ export const api = {
    *  has not signed in, which is most of the people who follow one. */
   invitation: (key: string) => request<Invitation>(`/v1/join/${key}`),
 
-  /** Walking through it, with the address already proved. Answers the space, or
-   *  that the owner has been asked. */
-  join: (token: string, key: string) =>
-    request<{ space?: RemoteSpace; waiting?: boolean }>(`/v1/join/${key}`, {
+  /** Walking through it, which is also how somebody waiting asks again.
+   *
+   *  Everything is optional. Without a session the link itself is the proof, and
+   *  what comes back is one: an invitation opens the account it was written to,
+   *  and the space's own link hands out a guest. `device` is what to call that
+   *  guest, and `name` or `email` is the one field a link that asks first asks
+   *  for. */
+  join: (
+    key: string,
+    options: { token?: string; device?: string; name?: string; email?: string } = {},
+  ) =>
+    request<Joined>(`/v1/join/${key}`, {
       method: 'POST',
-      token,
+      ...(options.token ? { token: options.token } : {}),
+      body: {
+        ...(options.device ? { device: options.device } : {}),
+        ...(options.name ? { name: options.name } : {}),
+        ...(options.email ? { email: options.email } : {}),
+      },
     }),
 
   changes: (token: string, spaceId: string, since: number) =>

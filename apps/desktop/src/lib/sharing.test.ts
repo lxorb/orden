@@ -6,10 +6,17 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  actually asks for. */
 
 interface Held {
-  email: string
+  /** An address, for somebody invited by one; null for a guest. */
+  email: string | null
+  /** A guest id, for somebody a link let in; null for a member by address. */
+  guest: string | null
   name: string | null
   role: string
 }
+
+/** Somebody in a space, as the sheet hands them back to the store. */
+const member = (email: string, role = 'write') => ({ email, guest: null, name: null, role })
+const guest = (id: string, name: string, role = 'write') => ({ email: null, guest: id, name, role })
 
 interface World {
   /** Which remote space each folder mirrors, if any. */
@@ -60,6 +67,10 @@ vi.mock('./api', async (importOriginal) => {
       setMemberRole: (_token: string, id: string, email: string, role: string) =>
         answer(`${email} is now ${role} in ${id}`),
       removeMember: (_token: string, _id: string, email: string) => answer(`remove ${email}`),
+      setGuestRole: (_token: string, id: string, id2: string, role: string) =>
+        answer(`guest ${id2} is now ${role} in ${id}`),
+      removeGuest: (_token: string, _id: string, id2: string) => answer(`remove guest ${id2}`),
+      acceptGuest: (_token: string, _id: string, id2: string) => answer(`accept guest ${id2}`),
       setShareLink: (_token: string, _id: string, role: string, mode: string) =>
         answer(`link ${role} ${mode}`),
       revokeShareLink: () => answer('revoke'),
@@ -249,13 +260,27 @@ describe('the Share sheet', () => {
   })
 
   test('changes one person’s role and takes another out', async () => {
-    await share.setRole('ada@example.com', 'read')
-    await share.remove('bob@example.com')
+    await share.setRole(member('ada@example.com'), 'read')
+    await share.remove(member('bob@example.com'))
 
     expect(world.asked).toEqual([
       'ada@example.com is now read in space-1',
       'remove bob@example.com',
     ])
+  })
+
+  test('reaches the guest route for somebody a link let in', async () => {
+    await share.setRole(guest('g1', 'Windows wren'), 'read')
+    await share.remove(guest('g2', 'iPhone lark'))
+
+    expect(world.asked).toEqual(['guest g1 is now read in space-1', 'remove guest g2'])
+  })
+
+  test('lets a waiting guest in, and turns another away', async () => {
+    await share.accept(guest('g1', 'Windows wren'))
+    await share.decline(guest('g2', 'iPhone lark'))
+
+    expect(world.asked).toEqual(['accept guest g1', 'remove guest g2'])
   })
 
   test('makes a link, changes what it hands out, and revokes it', async () => {
@@ -267,27 +292,25 @@ describe('the Share sheet', () => {
   })
 
   test('accepts and declines the people waiting', async () => {
-    await share.accept('ada@example.com')
-    await share.decline('bob@example.com')
+    await share.accept(member('ada@example.com'))
+    await share.decline(member('bob@example.com'))
 
     expect(world.asked).toEqual(['accept ada@example.com', 'decline bob@example.com'])
   })
 
   test('draws whatever came back rather than what it asked for', async () => {
-    world.sharing.members = [{ email: 'ada@example.com', name: null, role: 'write', pending: true }]
-    await share.setRole('ada@example.com', 'read')
+    world.sharing.members = [{ ...member('ada@example.com'), pending: true }]
+    await share.setRole(member('ada@example.com'), 'read')
 
-    expect(share.who?.members).toEqual([
-      { email: 'ada@example.com', name: null, role: 'write', pending: true },
-    ])
+    expect(share.who?.members).toEqual([{ ...member('ada@example.com'), pending: true }])
   })
 
   test('says what went wrong and keeps showing what it had', async () => {
-    world.sharing.members = [{ email: 'ada@example.com', name: null, role: 'read', pending: false }]
-    await share.setRole('ada@example.com', 'read')
+    world.sharing.members = [{ ...member('ada@example.com', 'read'), pending: false }]
+    await share.setRole(member('ada@example.com'), 'read')
 
     world.refuse = 'only the owner can do that'
-    await share.remove('ada@example.com')
+    await share.remove(member('ada@example.com'))
 
     expect(share.error).toBe('only the owner can do that')
     expect(share.who?.members).toHaveLength(1)

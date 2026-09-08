@@ -315,13 +315,27 @@ share.delete('/:id/share/members/:email', atLeast('owner'), async (context) => {
 
 /** Somebody letting themselves out. The one thing under this path that is not
  *  the owner's: being in a space is something a person can stop, and having to
- *  ask the owner to do it for them is not a way to leave. */
+ *  ask the owner to do it for them is not a way to leave.
+ *
+ *  Which is as true of a guest, so this is the one route under `share` a guest
+ *  may ask for. A guest who leaves their last space is nobody, and the session
+ *  goes with them: the device is back to the app it had before the link. */
 share.delete('/:id/share/me', atLeast('read'), async (context) => {
   const space = spaceOf(context)
+  const who = context.get('who')
   if (space.role === 'owner') return context.json({ error: 'this space is yours' }, 409)
 
+  if (who.kind === 'guest') {
+    await context.env.DB.prepare('delete from guest_members where space_id = ? and guest_id = ?')
+      .bind(space.id, who.guest.id)
+      .run()
+    await forgetEmptyGuest(context.env, who.guest.id)
+
+    return context.json({ ok: true })
+  }
+
   await context.env.DB.prepare('delete from space_members where space_id = ? and email = ?')
-    .bind(space.id, context.get('user').email)
+    .bind(space.id, who.user.email)
     .run()
 
   return context.json({ ok: true })
