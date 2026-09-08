@@ -95,8 +95,29 @@ export function awarenessState(awareness: Awareness): Uint8Array | null {
  *
  *  `origin` is what marks the changes as having come from this sender, so that
  *  whoever is watching the document for updates knows not to send them back the
- *  way they came. */
+ *  way they came.
+ *
+ *  A message that does not read as one is answered with nothing at all. What
+ *  arrives here is bytes off a socket - from a build that speaks something else,
+ *  a frame that was cut in half, or somebody in the room sending whatever they
+ *  like - and the only thing to do with bytes that are not this protocol is
+ *  drop them. Letting the decoder throw instead would take down the room the
+ *  frame arrived on: on a client an unhandled rejection and a note that never
+ *  finishes joining, and in the Worker a socket that dies mid-conversation. */
 export function receive(
+  message: Uint8Array,
+  doc: Y.Doc,
+  awareness: Awareness,
+  origin: unknown,
+): Uint8Array | null {
+  try {
+    return applied(message, doc, awareness, origin)
+  } catch {
+    return null
+  }
+}
+
+function applied(
   message: Uint8Array,
   doc: Y.Doc,
   awareness: Awareness,
@@ -124,10 +145,18 @@ export function receive(
 /** Whether a message is the other end answering with everything this one was
  *  missing, which is the moment a client knows it has caught up. What tells a
  *  device that has just joined that it may now compare the room's words with the
- *  ones in the file it opened. */
+ *  ones in the file it opened.
+ *
+ *  A message that cannot be read is not that answer, for the reason `receive`
+ *  gives: this is asked of every frame that arrives, and one bad frame must not
+ *  be the end of the conversation. */
 export function isCatchUp(message: Uint8Array): boolean {
-  const decoder = decoding.createDecoder(message)
-  return decoding.readVarUint(decoder) === SYNC && decoding.readVarUint(decoder) === STEP2
+  try {
+    const decoder = decoding.createDecoder(message)
+    return decoding.readVarUint(decoder) === SYNC && decoding.readVarUint(decoder) === STEP2
+  } catch {
+    return false
+  }
 }
 
 /** Whether a message would write into the shared text.

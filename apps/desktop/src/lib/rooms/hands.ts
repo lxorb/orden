@@ -18,12 +18,12 @@
 
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
-import { clampOpacity, packed, unpacked } from '@nib/markdown/canvas'
+import { packed, strokeOf } from '@nib/markdown/canvas'
 import { accentColour } from '../accents'
-import { type InkStroke, isInkTool } from '../canvas/format'
+import type { InkStroke } from '../canvas/format'
 import type { Point } from '../canvas/geometry'
 import type { Hand } from '../canvas/shared'
-import { isRecord, isString } from '../stored'
+import { isRecord } from '../stored'
 import { whoElse } from './peers'
 
 /** The field a device's hand travels in. */
@@ -53,25 +53,21 @@ export function saidHand(at: Point, drawing: InkStroke | null): Record<string, u
 }
 
 /** The stroke a hand is drawing, out of what it said. Null for anything that does
- *  not read as one: a hand with the pen up, or a field written by a newer build. */
+ *  not read as one: a hand with the pen up, or a field written by a newer build.
+ *
+ *  Read by the format's own reader, so a stroke off the wire is held to exactly
+ *  what a stroke in a file is held to - a known tool, a size the paint can use, an
+ *  opacity that leaves it visible - rather than to a second list of rules that
+ *  could drift from it. What arrives here was written by another machine, which is
+ *  the same amount of trust a file on a disk deserves.
+ *
+ *  The id is the one thing not taken off the wire. A live stroke is nobody's
+ *  object yet, and giving it the sender's own id would let it be picked or erased
+ *  here. */
 function inkIn(value: unknown, id: number): InkStroke | null {
   if (!isRecord(value)) return null
-  if (!isInkTool(value.tool) || !isString(value.color)) return null
-  if (typeof value.size !== 'number' || !Array.isArray(value.points)) return null
 
-  const points = unpacked(value.points.filter((one): one is number => typeof one === 'number'))
-  if (points.length < 2) return null
-
-  return {
-    // Not an id off the wire: a live stroke is nobody's object yet, and giving it
-    // the sender's own id would let it be picked or erased here.
-    id: `hand:${id}`,
-    tool: value.tool,
-    color: value.color,
-    size: value.size,
-    ...(typeof value.opacity === 'number' ? { opacity: clampOpacity(value.opacity) } : {}),
-    points,
-  }
+  return strokeOf({ ...value, id: `hand:${id}` })
 }
 
 /** Everybody on the plane but us: how many, and the hands there are to draw.

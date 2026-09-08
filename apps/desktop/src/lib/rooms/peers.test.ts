@@ -179,6 +179,58 @@ describe('what a caret is labelled with', () => {
   })
 })
 
+describe('a caret nothing in this app would have sent', () => {
+  /** One other device in the room, saying whatever it likes about where its
+   *  caret is. What arrives over awareness is JSON from somebody else's machine:
+   *  a build that speaks something else, or a guest a link let in who has read
+   *  the protocol. */
+  function saying(caret: unknown) {
+    const { two } = pair('one\ntwo\n')
+    const other = new Y.Doc()
+    const theirs = new Awareness(other)
+    theirs.setLocalState({ who: { name: 'Mac', accent: 'blue' }, caret })
+    receive(awarenessUpdate(theirs, [other.clientID]), two.doc, two.awareness, 'room')
+
+    return two
+  }
+
+  test('carries a name that is a label rather than a paragraph', () => {
+    const { two } = pair('one\ntwo\n')
+    const other = new Y.Doc()
+    const theirs = new Awareness(other)
+    theirs.setLocalState({
+      who: { name: 'x'.repeat(5000), accent: 'blue' },
+      caret: { anchor: relative(two.text, 0), head: relative(two.text, 0) },
+    })
+    receive(awarenessUpdate(theirs, [other.clientID]), two.doc, two.awareness, 'room')
+
+    const name = peersIn(two.awareness, two.doc, 'dark').carets[0]?.name ?? ''
+    expect(name.length).toBeLessThan(100)
+  })
+
+  /** A position that is a record but not one of Yjs's own: reading it is a
+   *  lookup for a client nobody has heard of. */
+  test('leaves the note with a peer and no caret rather than throwing', () => {
+    const two = saying({ anchor: null, head: { item: 5 } })
+    const found = peersIn(two.awareness, two.doc, 'dark')
+
+    // Still somebody in the note - they are in it - with nothing to draw.
+    expect(found.present).toBe(1)
+    expect(found.carets).toEqual([])
+  })
+
+  test('leaves it out when the position names a place that cannot exist', () => {
+    const two = saying({
+      anchor: { item: { client: 1, clock: 0 } },
+      head: { item: { client: 1, clock: -1 } },
+    })
+    const found = peersIn(two.awareness, two.doc, 'dark')
+
+    expect(found.present).toBe(1)
+    expect(found.carets).toEqual([])
+  })
+})
+
 describe('an unreadable presence', () => {
   test('is left out', () => {
     const { two } = pair('words\n')

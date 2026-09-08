@@ -21,6 +21,33 @@ function applied(held: string, mine: string): string {
   return text.toJSON()
 }
 
+/** Whether a boundary in `text` falls between the two halves of one character. */
+function halved(text: string, at: number): boolean {
+  if (at <= 0 || at >= text.length) return false
+
+  const before = text.charCodeAt(at - 1)
+  return before >= 0xd800 && before <= 0xdbff
+}
+
+/** Whether a string carries half a character of its own: a lead with no trail
+ *  after it, or a trail with no lead in front. */
+function halves(text: string): boolean {
+  const leads = (at: number) => text.charCodeAt(at) >= 0xd800 && text.charCodeAt(at) <= 0xdbff
+  const trails = (at: number) => text.charCodeAt(at) >= 0xdc00 && text.charCodeAt(at) <= 0xdfff
+
+  for (let at = 0; at < text.length; at++) {
+    if (leads(at)) {
+      if (!trails(at + 1)) return true
+      at++
+      continue
+    }
+
+    if (trails(at)) return true
+  }
+
+  return false
+}
+
 describe('folding a text written while away', () => {
   test('has nothing to do when the two agree', () => {
     expect(fold('one two', 'one two')).toBeNull()
@@ -54,6 +81,37 @@ describe('folding a text written while away', () => {
     const change = fold('a👍b', 'a👎b')
     expect(change).not.toBeNull()
     expect(applied('a👍b', 'a👎b')).toBe('a👎b')
+  })
+
+  test('never cuts one in half at the back of the change either', () => {
+    // The emoji is shared and whole, and what differs is the letter in front of
+    // it: the change is that letter and nothing else. A replacement whose end
+    // lands between the two halves of the emoji would put a lone half into the
+    // shared text and hand another one to every other device.
+    expect(fold('a👍', 'b👍')).toEqual({ from: 0, to: 1, insert: 'b' })
+  })
+
+  test('names a change whose ends are both whole characters', () => {
+    const pairs: [string, string][] = [
+      ['a👍', 'b👍'],
+      ['👍a', '👎a'],
+      ['a👍b', 'a👎b'],
+      ['👍', 'a👍'],
+      ['x👍👎', 'y👍👎'],
+      ['👍👎', '👍a👎'],
+    ]
+
+    for (const [held, mine] of pairs) {
+      const change = fold(held, mine)
+      expect(change, `${held} -> ${mine}`).not.toBeNull()
+      if (!change) continue
+
+      const said = `${held} -> ${mine}`
+      expect(halved(held, change.from), said).toBe(false)
+      expect(halved(held, change.to), said).toBe(false)
+      expect(halves(change.insert), said).toBe(false)
+      expect(applied(held, mine), said).toBe(mine)
+    }
   })
 
   test('turns one text into the other, whatever the edit was', () => {

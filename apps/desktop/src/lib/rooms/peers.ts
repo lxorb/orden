@@ -15,7 +15,7 @@ import type { Peer } from '@nib/editor'
 import type { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { accentColour } from '../accents'
-import { isRecord, isString } from '../stored'
+import { isNumber, isRecord, isString } from '../stored'
 
 /** What one device says about itself. Everything in it is JSON, because that is
  *  what the awareness protocol carries.
@@ -48,9 +48,42 @@ export function relative(text: Y.Text, at: number): unknown {
   return Y.relativePositionToJSON(Y.createRelativePositionFromTypeIndex(text, at))
 }
 
+/** A clock or a client id: what Yjs numbers the pieces of a document with. */
+function isCount(value: unknown): boolean {
+  return isNumber(value) && Number.isInteger(value) && value >= 0
+}
+
+function isPlace(value: unknown): boolean {
+  return isRecord(value) && isCount(value.client) && isCount(value.clock)
+}
+
+/** Whether what arrived is one of Yjs's own relative positions, in the shapes it
+ *  reads them in.
+ *
+ *  Checked rather than trusted, because this is JSON from another machine and
+ *  Yjs reads it without an opinion: an `item` that is a number rather than a
+ *  place is then a lookup for a client nobody has heard of, and that throws from
+ *  inside the awareness update which carried it. One peer saying something odd
+ *  would take out every caret in the note, and the note is not the caret's to
+ *  break. Absent and null are both fine on every field: a position at the very
+ *  start of a text names no item, and one against a named type names no id. */
+function isPosition(value: unknown): boolean {
+  if (!isRecord(value)) return false
+
+  const { type, item, tname, assoc } = value
+  if (type !== undefined && type !== null && !isPlace(type)) return false
+  if (item !== undefined && item !== null && !isPlace(item)) return false
+  if (tname !== undefined && tname !== null && !isString(tname)) return false
+
+  return assoc === undefined || assoc === null || isNumber(assoc)
+}
+
 /** And back again, against the text this device holds. Null when the position
- *  cannot be placed - a caret in a paragraph that has since gone. */
+ *  cannot be placed - a caret in a paragraph that has since gone, or one that
+ *  never read as a position at all. */
 function absolute(doc: Y.Doc, held: unknown): number | null {
+  if (!isPosition(held)) return null
+
   const found = Y.createAbsolutePositionFromRelativePosition(
     Y.createRelativePositionFromJSON(held),
     doc,
@@ -59,14 +92,21 @@ function absolute(doc: Y.Doc, held: unknown): number | null {
   return found ? found.index : null
 }
 
+/** As much of a name as goes over a caret. Far more than "Windows" or a person's
+ *  name, and short enough that a name off the wire is a label rather than a
+ *  paragraph: what arrives is whatever another machine chose to send, and it is
+ *  drawn in the note. */
+const LONGEST_NAME = 64
+
 function namedIn(value: unknown): Named | null {
   if (!isRecord(value) || !isRecord(value.who)) return null
   if (!isString(value.who.name) || !isString(value.who.accent)) return null
 
+  const person = value.who.person
   return {
-    name: value.who.name,
+    name: value.who.name.slice(0, LONGEST_NAME),
     accent: value.who.accent,
-    ...(isString(value.who.person) ? { person: value.who.person } : {}),
+    ...(isString(person) ? { person: person.slice(0, LONGEST_NAME) } : {}),
   }
 }
 

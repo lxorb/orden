@@ -178,14 +178,13 @@ class Rooms {
       return
     }
 
-    // The room compares what this device holds with what the room holds, and what
-    // this device holds is the keystrokes since the last pause as well.
-    open.note.flush()
-
+    // The words themselves are not handed over: the room reads them from the
+    // document when it has something to compare them with, which is a round trip
+    // later and may be several keystrokes later. See rooms/room.ts.
     const room = new Room({
       ...shape,
       note: open.note.live,
-      held: { text: open.note.text, hash: open.hash },
+      hash: open.hash,
       digest: sha256,
     })
 

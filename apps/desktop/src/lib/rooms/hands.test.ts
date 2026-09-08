@@ -173,6 +173,30 @@ describe('whose hand is on the plane', () => {
     expect(hand?.stroke).toBeNull()
   })
 
+  test('a stroke is held to what a stroke in a file is held to', () => {
+    const { one, two } = pair()
+    one.awareness.setLocalStateField('who', { name: 'Windows', accent: 'blue' })
+    // A pen no dial in this app can be turned to: what arrives over awareness was
+    // written by another machine, and a size the paint cannot use or an opacity
+    // past one are the same thing here as they are in a file.
+    one.awareness.setLocalStateField(HAND, {
+      x: 1,
+      y: 2,
+      ink: {
+        tool: 'pen',
+        color: '1',
+        size: -4,
+        opacity: 900,
+        points: [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8],
+      },
+    })
+    tell(one, two)
+
+    const drawn = handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke
+    expect(drawn?.size).toBeGreaterThan(0)
+    expect(drawn?.opacity).toBeLessThanOrEqual(1)
+  })
+
   test('is named by the machine among one person, and by the person among two', () => {
     const { one, two } = pair()
     one.awareness.setLocalStateField('who', { name: 'Android', accent: 'teal', person: 'Emil' })

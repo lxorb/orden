@@ -5,6 +5,7 @@ import {
   awarenessState,
   awarenessUpdate,
   forget,
+  isCatchUp,
   isEdit,
   receive,
   syncStep1,
@@ -114,6 +115,44 @@ describe('the wire', () => {
 
   test('answers nothing to a message it does not know', () => {
     expect(new End().hear(new Uint8Array([9, 9, 9]))).toBeNull()
+  })
+
+  test('answers nothing to a message it cannot read at all', () => {
+    // Bytes off a socket are bytes: the other end may be a build that speaks
+    // something else, a proxy that cut a frame in half, or somebody in the room
+    // sending whatever they like. Whichever it is, one unreadable frame must not
+    // take the connection down with it - a throw here is an unhandled rejection
+    // on the client and a room that never finishes joining.
+    const one = new End()
+
+    // Nothing at all, and each kind with its body missing.
+    expect(one.hear(new Uint8Array())).toBeNull()
+    expect(one.hear(new Uint8Array([0]))).toBeNull()
+    expect(one.hear(new Uint8Array([1]))).toBeNull()
+    // A sync message whose body is not one.
+    expect(one.hear(new Uint8Array([0, 2, 200, 200, 200]))).toBeNull()
+    // An awareness message whose body is not one.
+    expect(one.hear(new Uint8Array([1, 3, 200, 200, 200]))).toBeNull()
+  })
+})
+
+describe('which messages are the room catching a device up', () => {
+  test('the answer to a state vector is', () => {
+    const one = new End()
+    one.text.insert(0, 'words\n')
+
+    const answer = one.hear(syncStep1(new End().doc))
+    expect(answer).not.toBeNull()
+    if (answer) expect(isCatchUp(answer)).toBe(true)
+  })
+
+  test('asking what a room holds is not', () => {
+    expect(isCatchUp(syncStep1(new End().doc))).toBe(false)
+  })
+
+  test('and neither is a message that cannot be read', () => {
+    expect(isCatchUp(new Uint8Array())).toBe(false)
+    expect(isCatchUp(new Uint8Array([0]))).toBe(false)
   })
 })
 

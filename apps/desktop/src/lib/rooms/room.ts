@@ -32,12 +32,15 @@ export interface Joining {
   noteId: string
   token: string
   /** The note as the app holds it, which is what every pane showing it is a view
-   *  onto; see shared.ts in the editor package. */
+   *  onto; see shared.ts in the editor package. The words are read from here when
+   *  the room answers rather than kept as a copy from when it was joined: joining
+   *  is a round trip, and whatever was typed during it is part of what this device
+   *  holds. */
   note: SharedDoc
-  /** The words as this device's file holds them, and the account's hash of them as
-   *  of the last sync. A null hash is a note the account has never handed over,
-   *  which is a note with nothing to compare against. */
-  held: { text: string; hash: string | null }
+  /** The account's hash of this file as of the last sync. Null for a note the
+   *  account has never handed over, which is a note with nothing to compare
+   *  against. */
+  hash: string | null
   who: Who
   scheme: 'dark' | 'light'
   /** Told how many other devices are in the note, whenever that changes. */
@@ -114,10 +117,18 @@ export class Room {
    *  to the shared text from here on. Which of the two is news is decided next
    *  door, in join.ts. */
   private async together() {
-    const { note, held, digest } = this.joining
-    const mine = held.text
-    const untouched = held.hash !== null && (await digest(mine)) === held.hash
-    const met = meeting(mine, this.text.toJSON(), untouched)
+    const { note, hash, digest } = this.joining
+    const asked = note.text.toString()
+    const untouched = hash !== null && (await digest(asked)) === hash
+
+    // Both texts are read after the hash rather than before it. The hash is
+    // answered asynchronously, and in that moment a keystroke may land here and
+    // an update may arrive from the room; a change worked out against either text
+    // as it was would then be applied to the other as it is. A note that moved
+    // while the hash was being worked out is this device writing, whatever the
+    // hash came back saying.
+    const mine = note.text.toString()
+    const met = meeting(mine, this.text.toJSON(), untouched && mine === asked)
 
     if (met.kind === 'take') note.arrived([met.change])
     else if (met.kind === 'offer') {

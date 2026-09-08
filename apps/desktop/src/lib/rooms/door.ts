@@ -101,11 +101,20 @@ export class RoomDoor {
     this.socket.start()
   }
 
-  /** Whether the room has said what it holds, and this device's copy has been
-   *  brought together with it. Until then the file is still the best answer
-   *  anybody has; see rooms.svelte.ts. */
+  /** Whether the room has said what it holds, this device's copy has been brought
+   *  together with it, and it can still be reached.
+   *
+   *  All three, because this is what the file sync asks before it leaves a note to
+   *  its room; see rooms.svelte.ts. A socket that has gone carries nothing: an
+   *  update this device makes while it is down is dropped on the floor, and the
+   *  room has no way to write it into the account. Saying "the room has this" then
+   *  would leave the note's words on this machine and nowhere else for as long as
+   *  the connection stayed away - which on a network that allows HTTPS and blocks
+   *  WebSockets is forever, with the light in the corner saying everything is
+   *  synced. While the socket is down the file is again the only way the words
+   *  travel, which is exactly what a pass is for. */
   get caughtUp(): boolean {
-    return this.settled
+    return this.settled && this.socket.open
   }
 
   /** Something this device wants the others to know: where its caret is, where its

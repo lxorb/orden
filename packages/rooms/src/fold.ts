@@ -51,7 +51,11 @@ export function fold(held: string, mine: string): Replacement | null {
   ) {
     back++
   }
-  if (back > 0 && leadsPair(held, held.length - back)) back--
+  // The shared back begins at `held.length - back`, so what would leave half a
+  // character behind is the unit before it being the first half of a pair: the
+  // change would then end between the two, keeping the second half and replacing
+  // the first. One fewer, and both halves are inside the change.
+  if (back > 0 && leadsPair(held, held.length - back - 1)) back--
 
   return { from: front, to: held.length - back, insert: mine.slice(front, mine.length - back) }
 }
