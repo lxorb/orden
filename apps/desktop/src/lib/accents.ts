@@ -31,6 +31,13 @@ function accentById(id: string): Accent {
   return ACCENTS.find((accent) => accent.id === id) ?? VIOLET
 }
 
+/** One accent as the shade this scheme needs. What a caret belonging to another
+ *  device is drawn in: which colour is theirs, which shade of it is the reader's.
+ *  See rooms/peers.ts. */
+export function accentColour(id: string, scheme: 'dark' | 'light'): string {
+  return accentById(id)[scheme]
+}
+
 /** `#rrggbb` to its three channels. */
 function channels(hex: string): [number, number, number] {
   const value = hex.replace('#', '')

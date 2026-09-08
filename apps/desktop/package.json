@@ -20,6 +20,7 @@
     "@nib/editor": "workspace:*",
     "@nib/glasses": "workspace:*",
     "@nib/markdown": "workspace:*",
+    "@nib/rooms": "workspace:*",
     "@nib/themes": "workspace:*",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.3",
@@ -35,7 +36,9 @@
     "marked": "^18.0.11",
     "mermaid": "^11.17.2",
     "pdfjs-dist": "^6.3.289",
-    "perfect-freehand": "^1.2.3"
+    "perfect-freehand": "^1.2.3",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.32"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

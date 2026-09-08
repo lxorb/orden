@@ -5,6 +5,7 @@
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import { rooms } from './rooms.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { inside } from './workspace/zones'
@@ -228,6 +229,20 @@
             </svg>
           {/if}
           {stripped(tab.name)}
+          <!-- Who else is in this note: one dot per other device, in the accent,
+               and nothing at all while nobody is. No word, because the dots are
+               already the whole sentence. -->
+          {#if rooms.present[tab.note.key]}
+            <span
+              class="here"
+              aria-label={t('Also open elsewhere')}
+              title={t('Also open elsewhere')}
+            >
+              {#each { length: Math.min(rooms.present[tab.note.key] ?? 0, 3) } as _, at (at)}
+                <span class="who" transition:fade={{ duration: 190 }}></span>
+              {/each}
+            </span>
+          {/if}
           {#if tab.dirty || workspace.savingOf(tab)}
             <span
               class="dot"
@@ -493,6 +508,29 @@
 
   .dot.writing {
     animation: breathe 900ms var(--ease-in-out) infinite;
+  }
+
+  /* One dot per other device in the note, stacked so they read as a small group
+     rather than as a row of separate marks. Three at most: past that the answer
+     is "several", and counting them is not what anyone is looking for. */
+  .here {
+    display: flex;
+    flex: none;
+    align-items: center;
+    /* Overlapped by a third of themselves, which is what makes a stack. */
+    margin-right: -2px;
+  }
+
+  .who {
+    width: 5px;
+    height: 5px;
+    flex: none;
+    margin-right: -2px;
+    border-radius: 50%;
+    background: var(--accent);
+    /* A ring in the tab's own colour, so two dots against each other still read
+       as two. */
+    box-shadow: 0 0 0 1.5px var(--bg);
   }
 
   .dot.down {

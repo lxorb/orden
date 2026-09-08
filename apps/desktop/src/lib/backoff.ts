@@ -20,3 +20,20 @@ export const RECONCILE_INTERVAL = 300_000
 export function pollDelay(quiet: number, hidden: boolean): number {
   return Math.min(POLL_BUSY * 2 ** quiet, hidden ? POLL_HIDDEN_MAX : POLL_IDLE_MAX)
 }
+
+/** A room's socket, which is a different shape of waiting. The first try is at
+ *  once, because the usual reason a socket closed is a network that came back a
+ *  moment later and a note somebody is writing in should rejoin before they
+ *  notice. After that it doubles, to a cap short enough that a laptop opened after
+ *  lunch is back in the note by the time the words are on screen. */
+const ROOM_FIRST = 400
+const ROOM_MAX = 20_000
+
+/** Spread either side of the wait, so a machine that lost twenty notes at once
+ *  does not ask for all of them in the same millisecond. */
+const ROOM_SPREAD = 0.3
+
+export function roomDelay(tries: number, spread = Math.random()): number {
+  const wait = Math.min(ROOM_FIRST * 2 ** Math.max(0, tries - 1), ROOM_MAX)
+  return Math.round(wait * (1 + ROOM_SPREAD * (spread * 2 - 1)))
+}

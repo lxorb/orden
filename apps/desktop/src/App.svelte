@@ -26,6 +26,7 @@
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
+  import { rooms } from './lib/rooms.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
   import { start } from './lib/start'
@@ -190,7 +191,36 @@
       void usage.refresh()
     } else {
       sync.stop()
+      rooms.clear()
     }
+  })
+
+  // Every open note joins the room its other devices are in. Which notes are open
+  // and what the account holds for each are both things the app already knows, so
+  // this is the whole of the wiring: no call site has to remember to join or to
+  // leave. See rooms.svelte.ts.
+  $effect(() => {
+    const open = account.syncable
+      ? workspace.openNotes.map((one) => ({ ...one, tracked: sync.tracked(one.path) }))
+      : []
+
+    rooms.follow(
+      open
+        .filter((one) => one.tracked !== null)
+        .map((one) => ({
+          key: one.key,
+          note: one.note,
+          noteId: one.tracked?.id ?? '',
+          hash: one.tracked?.hash ?? null,
+        })),
+    )
+  })
+
+  // A caret is drawn in the shade its colour needs on this background, so the
+  // theme changing repaints every room's. Read for its own sake and nothing else:
+  // the scheme is what this listens to.
+  $effect(() => {
+    rooms.repaint(theme.current)
   })
 
   // `window.nib` is the editor view; this is the surrounding app state.

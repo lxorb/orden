@@ -690,4 +690,7 @@ export const ja: Dictionary = {
   'Nudge right': '右へ少し動かす',
   'Nudge up': '上へ少し動かす',
   'Nudge down': '下へ少し動かす',
+  // Writing in a note on several devices at once
+  'Also open elsewhere': '他の端末でも開いています',
+  Browser: 'ブラウザ',
 }

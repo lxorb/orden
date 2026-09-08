@@ -32,6 +32,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import type { Command } from '@codemirror/view'
+import { fold } from '@nib/rooms/fold'
 import { external } from './external'
 
 /** As much of a view as a document needs: the state it is holding, and a way to
@@ -82,6 +83,15 @@ export class SharedDoc {
    *  are open on it. The app writes the words down from here, so it hears about
    *  a keystroke in either pane exactly once. */
   onChange: ((doc: Text) => void) | null = null
+
+  /** Called with the changes made to this note here, whatever made them: a
+   *  keystroke in any pane, an undo, a version put back, a replacement run
+   *  across the space. A note that has joined a room puts them into the text
+   *  the room shares, which is how they reach the other devices.
+   *
+   *  Never called for a change the room brought over. That one is already in
+   *  the shared text; handing it back would be an echo. See `arrived`. */
+  onLocal: ((changes: ChangeSet) => void) | null = null
 
   constructor(doc: string | Text = '') {
     this.state = EditorState.create({ doc, extensions: [history()] })
@@ -134,20 +144,29 @@ export class SharedDoc {
     this.state = this.state.update({ changes, selection }).state
 
     this.carry(changes, from)
-    this.onChange?.(this.state.doc)
+    this.made(changes)
   }
 
   /** Text put into the document from outside: a version restored, a note a sync
    *  brought over, a rename that rewrote the title. Undoable, the way it is in
-   *  a single view. */
+   *  a single view.
+   *
+   *  Put in as the difference rather than as the whole text, for the reason
+   *  `edit` below gives: a change covering the note takes every caret in every
+   *  pane with it, while the piece that actually differs leaves them all where
+   *  they were. It is also what makes this safe in a room - a change that named
+   *  the whole note would take out every character and put it back, and whatever
+   *  another device was writing would go with them. */
   replace(text: string) {
-    const made = this.state.update({
-      changes: { from: 0, to: this.state.doc.length, insert: text },
-    })
+    const held = this.state.doc.toString()
+    if (held === text) return
+
+    const change = fold(held, text) ?? { from: 0, to: held.length, insert: text }
+    const made = this.state.update({ changes: change })
 
     this.state = made.state
     this.carry(made.changes, null)
-    this.onChange?.(this.state.doc)
+    this.made(made.changes)
   }
 
   /** Changes made to the document from outside, as the ranges that actually
@@ -162,7 +181,36 @@ export class SharedDoc {
 
     this.state = made.state
     this.carry(made.changes, null)
+    this.made(made.changes)
+  }
+
+  /** Words another device wrote, brought over by the room this note has joined.
+   *
+   *  Like `edit` in what it does to the text and to every pane's caret, and
+   *  unlike it in two ways. It is not handed back to the room, which already has
+   *  it. And it is kept out of the history: pressing undo takes back what you
+   *  wrote, never what somebody else did, which is what undo has to mean when
+   *  two people are writing at once. */
+  arrived(changes: readonly { from: number; to: number; insert: string }[]) {
+    const made = this.state.update({
+      changes,
+      annotations: Transaction.addToHistory.of(false),
+    })
+
+    this.state = made.state
+    this.carry(made.changes, null)
     this.onChange?.(this.state.doc)
+  }
+
+  /** Something to say to every view of this note that is not a change to the
+   *  words: who else is in it, and where their carets are. Held states hear it
+   *  too, so a tab switched back to already has them. */
+  announce(effects: readonly StateEffect<unknown>[]) {
+    if (!effects.length) return
+
+    for (const view of this.views) {
+      view.dispatch({ effects: [...effects], annotations: external.of(true), filter: false })
+    }
   }
 
   undo(asked: DocView): boolean {
@@ -194,8 +242,15 @@ export class SharedDoc {
 
     this.state = done.state
     this.carry(done.changes, null, { view: asked, selection: done.state.selection })
-    this.onChange?.(this.state.doc)
+    this.made(done.changes)
     return true
+  }
+
+  /** A change made here, reported once: to the app, which writes the words down,
+   *  and to the room, which carries them to the other devices. */
+  private made(changes: ChangeSet) {
+    this.onLocal?.(changes)
+    this.onChange?.(this.state.doc)
   }
 
   /** One change into every view except the one it came from.

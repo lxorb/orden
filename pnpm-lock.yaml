@@ -105,6 +105,9 @@ importers:
       '@nib/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
+      '@nib/rooms':
+        specifier: workspace:*
+        version: link:../../packages/rooms
       '@nib/themes':
         specifier: workspace:*
         version: link:../../packages/themes
@@ -153,6 +156,12 @@ importers:
       perfect-freehand:
         specifier: ^1.2.3
         version: 1.2.3
+      y-protocols:
+        specifier: ^1.0.7
+        version: 1.0.7(yjs@13.6.32)
+      yjs:
+        specifier: ^13.6.32
+        version: 13.6.32
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.3.0
@@ -217,6 +226,9 @@ importers:
       '@nib/markdown':
         specifier: workspace:*
         version: link:../markdown
+      '@nib/rooms':
+        specifier: workspace:*
+        version: link:../rooms
       '@replit/codemirror-lang-nix':
         specifier: ^6.0.1
         version: 6.0.1(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/state@6.7.2)(@codemirror/view@6.43.11)(@lezer/common@1.5.2)(@lezer/highlight@1.2.3)(@lezer/lr@1.4.10)

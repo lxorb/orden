@@ -25,7 +25,7 @@ class End {
   }
 
   get words(): string {
-    return this.text.toString()
+    return this.text.toJSON()
   }
 
   /** A message arriving, and whatever this end says back. */

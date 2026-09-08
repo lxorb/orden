@@ -18,7 +18,7 @@ function applied(held: string, mine: string): string {
     })
   }
 
-  return text.toString()
+  return text.toJSON()
 }
 
 describe('folding a text written while away', () => {

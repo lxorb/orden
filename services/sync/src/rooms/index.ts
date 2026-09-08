@@ -14,27 +14,10 @@
  *  `Authorization`, and a socket has none. */
 
 import { Hono } from 'hono'
+import { subprotocol, tokenOf } from '@nib/rooms'
 import { requireUser } from '../auth'
 import { ownedSpace } from '../spaces/space'
 import type { Env, Note } from '../types'
-
-/** What the token is wrapped in, so the subprotocol is a name and not a secret
- *  by itself. */
-const PREFIX = 'nib.token.'
-
-/** The session token a socket announced, or null. */
-export function tokenOf(header: string | undefined): string | null {
-  const offered = (header ?? '').split(',').map((one) => one.trim())
-  const carrying = offered.find((one) => one.startsWith(PREFIX))
-
-  return carrying ? carrying.slice(PREFIX.length) : null
-}
-
-/** How a client names its token. Exported so the app and the tests build the
- *  same string this reads. */
-export function subprotocol(token: string): string {
-  return `${PREFIX}${token}`
-}
 
 export const rooms = new Hono<{ Bindings: Env }>()
 
@@ -80,8 +63,7 @@ rooms.get('/:noteId', async (context) => {
     status: answer.status,
     statusText: answer.statusText,
     headers,
-    // `webSocket` is not part of the standard Response, and is what carries the
-    // other end of the pair the room made.
+    // What carries the reader's end of the pair the room made.
     webSocket: answer.webSocket,
-  } as ResponseInit)
+  })
 })

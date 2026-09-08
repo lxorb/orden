@@ -1,0 +1,336 @@
+import { describe, expect, test } from 'vitest'
+import { EditorState, SharedDoc } from '@nib/editor'
+import { TEXT } from '@nib/rooms'
+import * as Y from 'yjs'
+import { bind, replace, replacements } from './bind'
+import { meeting } from './join'
+
+/** A device: the note as the app holds it, the room's copy of the words, and the
+ *  binding between them. Which is the whole of the client apart from the socket, so
+ *  what these tests measure is whether two devices end up agreeing rather than
+ *  whether a WebSocket works.
+ *
+ *  Nothing goes through a view. A `SharedDoc` is the document every pane is a window
+ *  onto, and typing into it is what a pane does; see shared.ts in the editor
+ *  package. Joining follows the real thing exactly: the shared text is filled by
+ *  the room first, the file it opened with is met against it once, and only then is
+ *  the note bound. */
+class Device {
+  readonly note: SharedDoc
+  readonly doc = new Y.Doc()
+  readonly text = this.doc.getText(TEXT)
+  private unbind: () => void = () => undefined
+
+  private constructor(file: string) {
+    this.note = new SharedDoc(file)
+  }
+
+  /** The first device in a room. The server has already put the note the account
+   *  holds into it, so the room opens on the same words the file does. */
+  static opening(file: string): Device {
+    const device = new Device(file)
+    device.doc.transact(() => device.text.insert(0, file), 'room')
+    device.arrive(file, true)
+    return device
+  }
+
+  /** A device joining a room that already holds words, with `file` on its own disk.
+   *  `untouched` is whether that file is still what the account last handed it. */
+  static joining(room: Device, file: string, untouched = true): Device {
+    const device = new Device(file)
+    Y.applyUpdate(device.doc, Y.encodeStateAsUpdate(room.doc), 'room')
+    device.arrive(file, untouched)
+    return device
+  }
+
+  private arrive(file: string, untouched: boolean) {
+    const met = meeting(file, this.text.toJSON(), untouched)
+
+    if (met.kind === 'take') this.note.arrived([met.change])
+    else if (met.kind === 'offer') this.doc.transact(() => replace(this.text, met.change), 'here')
+
+    this.unbind = bind(this.note, this.text)
+  }
+
+  /** The words as the note holds them, which is what a pane would be showing. */
+  get words(): string {
+    return this.note.text.toString()
+  }
+
+  /** The words as the room holds them. The same as above at every moment the
+   *  binding is doing its job. */
+  get shared(): string {
+    return this.text.toJSON()
+  }
+
+  /** Somebody typing in a pane. */
+  type(at: number, words: string) {
+    this.note.edit([{ from: at, to: at, insert: words }])
+  }
+
+  cut(from: number, to: number) {
+    this.note.edit([{ from, to, insert: '' }])
+  }
+
+  /** Everything this device has that the other has not, on its way over. */
+  updateFor(other: Device): Uint8Array {
+    return Y.encodeStateAsUpdate(this.doc, Y.encodeStateVector(other.doc))
+  }
+
+  hear(update: Uint8Array) {
+    Y.applyUpdate(this.doc, update, 'room')
+  }
+
+  close() {
+    this.unbind()
+  }
+}
+
+/** Each device told everything the other knows. */
+function exchange(one: Device, two: Device) {
+  const forOne = two.updateFor(one)
+  const forTwo = one.updateFor(two)
+
+  one.hear(forOne)
+  two.hear(forTwo)
+}
+
+/** As much of a view as undo needs, which is a state and somewhere to put a
+ *  transaction. Undo runs on the document's own history; the view it is asked of
+ *  only says which pane should follow the caret. */
+function pane() {
+  return { state: EditorState.create({ doc: '' }), dispatch: () => undefined }
+}
+
+describe('a note bound to a room', () => {
+  test('puts what was typed into the shared text', () => {
+    const one = Device.opening('# Note\n')
+    one.type(7, 'a line\n')
+
+    expect(one.shared).toBe('# Note\na line\n')
+    one.close()
+  })
+
+  test('opens a joining device on the words the room already holds', () => {
+    const one = Device.opening('# Note\nwritten first\n')
+    const two = Device.joining(one, '# Note\nwritten first\n')
+
+    expect(two.words).toBe('# Note\nwritten first\n')
+    expect(two.shared).toBe(two.words)
+    one.close()
+    two.close()
+  })
+
+  test('puts what the room says into the note', () => {
+    const one = Device.opening('# Note\n')
+    const two = Device.joining(one, '# Note\n')
+
+    two.type(7, 'from two\n')
+    one.hear(two.updateFor(one))
+
+    expect(one.words).toBe('# Note\nfrom two\n')
+    expect(one.words).toBe(two.words)
+    one.close()
+    two.close()
+  })
+
+  test('keeps both when two devices write in the same place at once', () => {
+    const one = Device.opening('start\n')
+    const two = Device.joining(one, 'start\n')
+
+    one.type(6, 'one\n')
+    two.type(6, 'two\n')
+    exchange(one, two)
+
+    expect(one.words).toBe(two.words)
+    expect(one.shared).toBe(one.words)
+    expect(one.words).toContain('one')
+    expect(one.words).toContain('two')
+    // Neither run of characters is broken up by the other, which is what the CRDT
+    // is chosen for; see docs/collaboration.md.
+    expect(one.words).toMatch(/start\n(one\ntwo\n|two\none\n)/)
+    one.close()
+    two.close()
+  })
+
+  test('keeps every edit when both wrote while they were apart', () => {
+    const one = Device.opening('# Together\n')
+    const two = Device.joining(one, '# Together\n')
+
+    one.type(11, 'here one\n')
+    one.type(20, 'here two\n')
+    two.type(11, 'there one\n')
+    two.type(0, 'top\n')
+
+    exchange(one, two)
+
+    expect(one.words).toBe(two.words)
+    for (const words of ['here one', 'here two', 'there one', 'top']) {
+      expect(one.words).toContain(words)
+    }
+    one.close()
+    two.close()
+  })
+
+  test('settles a delete against an insert in the same paragraph', () => {
+    const one = Device.opening('alpha beta gamma\n')
+    const two = Device.joining(one, 'alpha beta gamma\n')
+
+    one.cut(6, 11)
+    two.type(16, ' delta')
+    exchange(one, two)
+
+    expect(one.words).toBe(two.words)
+    expect(one.words).toBe('alpha gamma delta\n')
+    one.close()
+    two.close()
+  })
+
+  test('agrees whichever order the updates arrive in', () => {
+    const held: string[] = []
+
+    // The same three edits, played in both orders. A CRDT is worth having exactly
+    // because the answer is not allowed to depend on this.
+    for (const swapped of [false, true]) {
+      const one = Device.opening('one\ntwo\nthree\n')
+      const two = Device.joining(one, 'one\ntwo\nthree\n')
+      const three = Device.joining(one, 'one\ntwo\nthree\n')
+
+      one.type(4, 'A')
+      two.type(8, 'B')
+      three.cut(0, 4)
+
+      const updates = [two.updateFor(one), three.updateFor(one)]
+      for (const update of swapped ? [...updates].reverse() : updates) one.hear(update)
+
+      held.push(one.words)
+      for (const device of [one, two, three]) device.close()
+    }
+
+    expect(held[0]).toBe(held[1])
+  })
+
+  test('folds in a note written while the device was closed', () => {
+    const one = Device.opening('# Journal\nmonday\n')
+
+    // The other device was away and its file says something else. Its hash no
+    // longer matches what the account handed it, so it has words to offer.
+    const two = Device.joining(one, '# Journal\nmonday\ntuesday\n', false)
+
+    expect(two.shared).toBe('# Journal\nmonday\ntuesday\n')
+    one.hear(two.updateFor(one))
+    expect(one.words).toBe('# Journal\nmonday\ntuesday\n')
+    one.close()
+    two.close()
+  })
+
+  test('takes the room&apos;s words when its own file is untouched', () => {
+    const one = Device.opening('# Journal\nmonday\ntuesday\n')
+    const two = Device.joining(one, '# Journal\nmonday\n')
+
+    expect(two.words).toBe('# Journal\nmonday\ntuesday\n')
+    expect(two.shared).toBe(two.words)
+    one.close()
+    two.close()
+  })
+
+  test('undoes what you wrote and never what the other device wrote', () => {
+    const one = Device.opening('base\n')
+    const two = Device.joining(one, 'base\n')
+
+    one.type(5, 'mine\n')
+    two.type(5, 'theirs\n')
+    exchange(one, two)
+
+    expect(one.words).toContain('mine')
+    expect(one.words).toContain('theirs')
+
+    expect(one.note.undo(pane())).toBe(true)
+    expect(one.words).not.toContain('mine')
+    // The other device's words are not this device's to take back.
+    expect(one.words).toContain('theirs')
+
+    // And there is nothing else left to undo, because nothing else was ours.
+    expect(one.note.undo(pane())).toBe(false)
+    one.close()
+    two.close()
+  })
+
+  test('leaves the note where it is when the binding is undone', () => {
+    const one = Device.opening('words\n')
+    one.close()
+
+    one.type(6, 'after\n')
+
+    expect(one.words).toBe('words\nafter\n')
+    // The room heard nothing about it, which is the point of parting.
+    expect(one.shared).toBe('words\n')
+  })
+})
+
+describe('a device meeting the room it joined', () => {
+  test('has nothing to do when the two agree', () => {
+    expect(meeting('same', 'same', true)).toEqual({ kind: 'agreed' })
+    expect(meeting('same', 'same', false)).toEqual({ kind: 'agreed' })
+  })
+
+  test('takes the room&apos;s words when the file is untouched', () => {
+    expect(meeting('one\n', 'one\ntwo\n', true)).toEqual({
+      kind: 'take',
+      change: { from: 4, to: 4, insert: 'two\n' },
+    })
+  })
+
+  test('offers its own when the file has been written in', () => {
+    expect(meeting('one\ntwo\n', 'one\n', false)).toEqual({
+      kind: 'offer',
+      change: { from: 4, to: 4, insert: 'two\n' },
+    })
+  })
+
+  test('never empties a file for a room that holds nothing', () => {
+    // A room with no words is one that has not been given the note yet, not one
+    // where somebody deleted everything.
+    expect(meeting('words\n', '', true)).toEqual({
+      kind: 'offer',
+      change: { from: 0, to: 0, insert: 'words\n' },
+    })
+  })
+})
+
+describe('a delta read as the edits it is', () => {
+  test('reads an insertion', () => {
+    expect(replacements([{ retain: 4 }, { insert: 'new' }])).toEqual([
+      { from: 4, to: 4, insert: 'new' },
+    ])
+  })
+
+  test('reads a deletion', () => {
+    expect(replacements([{ retain: 2 }, { delete: 3 }])).toEqual([{ from: 2, to: 5, insert: '' }])
+  })
+
+  test('reads a delete and the insert after it as one replacement', () => {
+    expect(replacements([{ retain: 1 }, { delete: 2 }, { insert: 'xy' }])).toEqual([
+      { from: 1, to: 3, insert: 'xy' },
+    ])
+  })
+
+  test('reads an insert and the delete after it as one replacement', () => {
+    expect(replacements([{ retain: 1 }, { insert: 'xy' }, { delete: 2 }])).toEqual([
+      { from: 1, to: 3, insert: 'xy' },
+    ])
+  })
+
+  test('reads several edits, each in the positions the note held before any', () => {
+    expect(
+      replacements([{ retain: 2 }, { insert: 'a' }, { retain: 3 }, { delete: 1 }, { insert: 'b' }]),
+    ).toEqual([
+      { from: 2, to: 2, insert: 'a' },
+      { from: 5, to: 6, insert: 'b' },
+    ])
+  })
+
+  test('skips what a note made of plain text never carries', () => {
+    expect(replacements([{ retain: 1 }, { insert: { embedded: true } }])).toEqual([])
+  })
+})

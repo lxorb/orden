@@ -31,10 +31,30 @@ export const TEXT = 'note'
 const SYNC = 0
 const AWARENESS = 1
 
-/** How long a room's own awareness entry is renewed for, and how long after
- *  hearing nothing a client is taken as gone. The protocol's own defaults, named
- *  here because both ends refer to them. */
-export const AWARENESS_TIMEOUT = 30_000
+/** The sync message that carries what the other end was missing. Its own number,
+ *  inside a sync message, and `y-protocols` numbers it. */
+const STEP2 = 1
+
+/** How a socket carries the session it was opened with.
+ *
+ *  In the subprotocol, because a browser will not put a header on a WebSocket and a
+ *  token in the address is a token in a log. A subprotocol is a header the browser
+ *  sets itself, and the server names it back so the handshake completes. Both ends
+ *  are here, so the name the client offers and the name the server reads cannot
+ *  drift apart. */
+const TOKEN = 'nib.token.'
+
+export function subprotocol(token: string): string {
+  return `${TOKEN}${token}`
+}
+
+/** The session token a socket announced, or null. */
+export function tokenOf(header: string | undefined): string | null {
+  const offered = (header ?? '').split(',').map((one) => one.trim())
+  const carrying = offered.find((one) => one.startsWith(TOKEN))
+
+  return carrying ? carrying.slice(TOKEN.length) : null
+}
 
 function framed(kind: number, write: (encoder: encoding.Encoder) => void): Uint8Array {
   const encoder = encoding.createEncoder()
@@ -99,6 +119,15 @@ export function receive(
   return encoding.length(encoder) > 1 ? encoding.toUint8Array(encoder) : null
 }
 
+/** Whether a message is the other end answering with everything this one was
+ *  missing, which is the moment a client knows it has caught up. What tells a
+ *  device that has just joined that it may now compare the room's words with the
+ *  ones in the file it opened. */
+export function isCatchUp(message: Uint8Array): boolean {
+  const decoder = decoding.createDecoder(message)
+  return decoding.readVarUint(decoder) === SYNC && decoding.readVarUint(decoder) === STEP2
+}
+
 /** Takes away the clients a socket had announced. What a room does when one
  *  leaves, so the carets go with it. */
 export function forget(awareness: Awareness, clients: readonly number[], origin: unknown) {
@@ -116,5 +145,10 @@ export function forget(awareness: Awareness, clients: readonly number[], origin:
  *  somebody left. */
 export function unattended(awareness: Awareness) {
   awareness.setLocalState(null)
-  clearInterval(awareness._checkInterval)
+
+  // The protocol's own field, typed as whatever the runtime it was written for
+  // returns from `setInterval`. Read as a number, which is what a browser and
+  // workerd both hand back and what `clearInterval` takes either way.
+  const timer: unknown = awareness._checkInterval
+  if (typeof timer === 'number') clearInterval(timer)
 }

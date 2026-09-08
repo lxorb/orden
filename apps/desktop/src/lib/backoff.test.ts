@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { pollDelay } from './backoff'
+import { pollDelay, roomDelay } from './backoff'
 
 const SECOND = 1000
 
@@ -33,6 +33,39 @@ describe('how often syncing looks for changes', () => {
       for (const hidden of [false, true]) {
         const delay = pollDelay(quiet, hidden)
         expect(Number.isFinite(delay), `${quiet}/${hidden}`).toBe(true)
+        expect(delay).toBeGreaterThan(0)
+      }
+    }
+  })
+})
+
+describe('how long a room waits before trying again', () => {
+  test('tries again almost at once the first time', () => {
+    // A network that came back a moment later is the usual reason a socket went.
+    expect(roomDelay(1, 0.5)).toBe(400)
+  })
+
+  test('doubles for each try after that', () => {
+    expect(roomDelay(2, 0.5)).toBe(800)
+    expect(roomDelay(3, 0.5)).toBe(1600)
+    expect(roomDelay(4, 0.5)).toBe(3200)
+  })
+
+  test('stops at a wait short enough to be back before the words are on screen', () => {
+    expect(roomDelay(20, 0.5)).toBe(20 * SECOND)
+    expect(roomDelay(400, 0.5)).toBe(20 * SECOND)
+  })
+
+  test('spreads either side, so twenty notes do not all ask in one millisecond', () => {
+    expect(roomDelay(1, 0)).toBe(280)
+    expect(roomDelay(1, 1)).toBe(520)
+  })
+
+  test('never returns something a timer cannot use', () => {
+    for (const tries of [0, 1, 2, 9, 60, 5000]) {
+      for (const spread of [0, 0.5, 1]) {
+        const delay = roomDelay(tries, spread)
+        expect(Number.isFinite(delay), `${tries}/${spread}`).toBe(true)
         expect(delay).toBeGreaterThan(0)
       }
     }

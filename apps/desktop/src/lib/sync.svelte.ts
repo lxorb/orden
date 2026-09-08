@@ -9,8 +9,9 @@ import { isRecord, parsed } from './stored'
 import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
+import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
-import { type Mirror, newMirror, pull, push, readMirror } from './sync/mirror'
+import { type Mirror, newMirror, pull, push, readMirror, within } from './sync/mirror'
 import { workspace } from './workspace.svelte'
 
 const STORAGE_KEY = 'nib:mirrors'
@@ -276,6 +277,22 @@ class Sync {
     return this.mirrors[root]?.spaceId ?? null
   }
 
+  /** What the account holds for a note on this machine: the id its room is named
+   *  after, and the hash of the copy the last pass left here.
+   *
+   *  Null for a note in no space, and for one the account has never been handed -
+   *  a note with no id has no room, and a note whose hash nobody knows has nothing
+   *  to be compared against. See rooms.svelte.ts, which asks. */
+  tracked(path: string): { id: string; hash: string } | null {
+    for (const mirror of Object.values(this.mirrors)) {
+      const relative = within(mirror.root, path)
+      const held = relative === null ? undefined : mirror.notes[relative]
+      if (held) return { id: held.id, hash: held.hash }
+    }
+
+    return null
+  }
+
   /** One full pass: take what the server has, then offer what we have. */
   /** One full pass: take what the server has, then offer what we have.
    *  Answers whether anything actually moved, which is what paces the loop. */
@@ -284,6 +301,10 @@ class Sync {
 
     const token = account.token
     const mine = this.generation
+    // Which notes a room is already carrying, read once for the whole pass: they
+    // are the ones a pass leaves alone, and one that changed halfway would leave a
+    // note either pushed twice or not at all.
+    const joined = rooms.joined
     this.running = true
     this.status = 'syncing'
     this.lastError = null
@@ -298,11 +319,11 @@ class Sync {
         // every note as deleted here, and delete them from the account.
         if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
 
-        if (await pull(mirror, token)) {
+        if (await pull(mirror, token, joined)) {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
         }
-        if (await push(mirror, token)) moved = true
+        if (await push(mirror, token, joined)) moved = true
       }
 
       // Nothing else re-reads the folder for notes that arrived from another

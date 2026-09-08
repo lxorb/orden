@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { Awareness } from 'y-protocols/awareness'
-import { awarenessUpdate, receive, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
+import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { NoteRoom } from '../src/rooms/room'
-import { call, type Reply, signIn, type TestEnv, testEnv } from './harness'
+import { call, signIn, type TestEnv, testEnv } from './harness'
 import { FakeSocket, type FakeState, join, room, say } from './room'
 
 /** A device in a room, the way the app's client is one: its own document, its own
@@ -16,7 +16,7 @@ class Device {
   constructor(readonly socket: FakeSocket) {}
 
   get words(): string {
-    return this.text.toString()
+    return this.text.toJSON()
   }
 
   /** What this device would send after typing: the update its own document made. */
@@ -228,8 +228,8 @@ describe('the door to a room', () => {
   afterEach(() => env.close())
 
   test('turns away a socket with no session', async () => {
-    const answer = await call<Reply>(env, '/rooms/whatever', {
-      headers: { upgrade: 'websocket', 'sec-websocket-protocol': 'nib.token.not-a-token' },
+    const answer = await call(env, '/rooms/whatever', {
+      headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol('not-a-token') },
     })
 
     expect(answer.status).toBe(401)
@@ -245,8 +245,8 @@ describe('the door to a room', () => {
       body: { path: 'secret.md', content: 'shh' },
     })
 
-    const answer = await call<Reply>(env, `/rooms/${note.json.note.id}`, {
-      headers: { upgrade: 'websocket', 'sec-websocket-protocol': `nib.token.${mine}` },
+    const answer = await call(env, `/rooms/${note.json.note.id}`, {
+      headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(mine) },
     })
 
     expect(answer.status).toBe(404)
@@ -254,8 +254,8 @@ describe('the door to a room', () => {
 
   test('is not a page to be read', async () => {
     const token = await signIn(env, 'reader@example.com')
-    const answer = await call<Reply>(env, '/rooms/whatever', {
-      headers: { 'sec-websocket-protocol': `nib.token.${token}` },
+    const answer = await call(env, '/rooms/whatever', {
+      headers: { 'sec-websocket-protocol': subprotocol(token) },
     })
 
     expect(answer.status).toBe(426)

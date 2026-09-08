@@ -10,11 +10,8 @@
  *  Written against as much of a Durable Object's storage as this needs, so the
  *  whole of it can be driven by a Map in a test. */
 
+import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
-
-/** The one shared value in a room: the note's markdown. Named on the wire, so
- *  the app's client asks for the same one; see apps/desktop/src/lib/rooms. */
-export const TEXT = 'note'
 
 const SNAPSHOT = 'state:'
 const LOG = 'log:'
@@ -85,7 +82,7 @@ export class RoomState {
 
   /** The words, which is what a settle writes into the note store. */
   get markdown(): string {
-    return this.text.toString()
+    return this.text.toJSON()
   }
 
   /** Whether the room holds a document at all. A room nobody has joined yet has

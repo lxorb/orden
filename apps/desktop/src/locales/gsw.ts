@@ -691,4 +691,7 @@ export const gsw: Dictionary = {
   'Nudge right': 'Nach rächts schiebe',
   'Nudge up': 'Nach obe schiebe',
   'Nudge down': 'Nach une schiebe',
+  // Writing in a note on several devices at once
+  'Also open elsewhere': 'Au susch no offe',
+  Browser: 'Browser',
 }

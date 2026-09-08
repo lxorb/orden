@@ -285,6 +285,18 @@ class Workspace {
     return seen
   }
 
+  /** Every open note that has a file behind it, once each however many panes show
+   *  it. What the rooms store follows, so that a note being written in on two
+   *  devices joins the room the moment it is open on either; see rooms.svelte.ts.
+   *
+   *  Notes only. The graph is drawn from the notes rather than written in, a PDF is
+   *  read, and a canvas is settled its own way. */
+  get openNotes(): { key: string; path: string; note: NoteDoc }[] {
+    return this.documents
+      .filter((note) => note.kind === 'note' && note.path !== null)
+      .map((note) => ({ key: note.key, path: note.path ?? '', note }))
+  }
+
   /** What the dot beside a name is saying, if anything. */
   savingOf(tab: Tab): 'saving' | 'saved' | undefined {
     return this.saveState[tab.note.key]

@@ -28,6 +28,7 @@
   import Pdf from './Pdf.svelte'
   import { placement } from './placement.svelte'
   import Reading from './Reading.svelte'
+  import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
@@ -249,6 +250,8 @@
         onselection={(current: EditorView) => {
           views.moved(current)
           placement.remember(current)
+          // Where the caret is, on its way to the other devices in this note.
+          rooms.moved(current)
         }}
       />
     </div>

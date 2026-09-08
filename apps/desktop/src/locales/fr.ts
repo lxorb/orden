@@ -692,4 +692,7 @@ export const fr: Dictionary = {
   'Nudge right': 'Décaler à droite',
   'Nudge up': 'Décaler vers le haut',
   'Nudge down': 'Décaler vers le bas',
+  // Writing in a note on several devices at once
+  'Also open elsewhere': 'Ouvert ailleurs aussi',
+  Browser: 'Navigateur',
 }

@@ -9,6 +9,7 @@ import {
   highlightActiveLine,
   keymap,
 } from '@codemirror/view'
+import { remoteCarets } from './carets'
 import { editorCompletion } from './emoji'
 import { external } from './external'
 import { imageHandling, imageResolver, type ImageSink } from './images'
@@ -86,6 +87,9 @@ export function editorState(options: StateOptions): EditorState {
     extensions: [
       history(),
       sharing(),
+      // The other people in this note, when it is one several devices are
+      // writing in; nothing at all until the app says there is somebody.
+      remoteCarets(),
       drawSelection(),
       dropCursor(),
       indentOnInput(),

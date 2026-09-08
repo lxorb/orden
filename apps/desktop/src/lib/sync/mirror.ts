@@ -78,6 +78,20 @@ function relative(root: string, absolute: string): string {
     .replace(/\\/g, '/')
 }
 
+/** A file's path as the account names it - relative to the space's folder, with
+ *  forward slashes - or null when the file is not in that folder at all.
+ *
+ *  Which separator a path uses depends on where it came from rather than on what
+ *  it points at, so both are read as the same thing. Exported because a note's
+ *  room is looked up by this name; see sync.svelte.ts. */
+export function within(root: string, path: string): string | null {
+  const folder = root.replace(/\\/g, '/').replace(/\/+$/, '')
+  const file = path.replace(/\\/g, '/')
+
+  if (!file.startsWith(`${folder}/`)) return null
+  return file.slice(folder.length + 1)
+}
+
 /** Where the other side's copy goes when both changed the same note. */
 function conflictPath(path: string): string {
   const stamp = new Date().toISOString().slice(0, 10)
@@ -96,8 +110,22 @@ function flatten(entry: Entry): Entry[] {
   return out
 }
 
+/** The notes that are open in a room, by their id on the account.
+ *
+ *  A note in a room has one truth and it is the room's: every device in it holds
+ *  the same characters, and the room writes them into the account itself. So a
+ *  pass neither pushes such a note - there is nothing here the room has not
+ *  already carried - nor treats a version it has not seen as a disagreement. The
+ *  copy that comes down is simply written, and no conflict copy is ever made for
+ *  it, because two devices typing in one paragraph is exactly what the room has
+ *  already settled.
+ *
+ *  Handed in rather than imported so this file stays about moving files: the store
+ *  next door knows about rooms, and a test can say there are none. */
+export type Joined = ReadonlySet<string>
+
 /** Takes what the account has moved on to. Answers whether anything did. */
-export async function pull(mirror: Mirror, token: string): Promise<boolean> {
+export async function pull(mirror: Mirror, token: string, joined: Joined): Promise<boolean> {
   // Read once: a rename lands in `renamed` while a pass is in the air, and a
   // pass that changed folder halfway would join the new root onto paths it
   // listed under the old one.
@@ -126,8 +154,14 @@ export async function pull(mirror: Mirror, token: string): Promise<boolean> {
       const { content } = await api.readNote(token, remote.id)
 
       // The local file carries edits that never reached the server, and the
-      // server moved too. Overwriting here would throw one of them away.
-      const diverged = tracked && local !== null && (await sha256(local)) !== tracked.hash
+      // server moved too. Overwriting here would throw one of them away - unless
+      // the note is in a room, where the two were settled character by character
+      // before either of them ever became a file.
+      const diverged =
+        tracked &&
+        local !== null &&
+        !joined.has(remote.id) &&
+        (await sha256(local)) !== tracked.hash
 
       if (diverged && local !== content) {
         // A canvas is put back together rather than copied: both drawings are
@@ -158,7 +192,7 @@ export async function pull(mirror: Mirror, token: string): Promise<boolean> {
 }
 
 /** Offers what this machine has. Answers whether anything moved. */
-export async function push(mirror: Mirror, token: string): Promise<boolean> {
+export async function push(mirror: Mirror, token: string, joined: Joined): Promise<boolean> {
   // Read once, for the same reason as in `pull`.
   const root = mirror.root
   const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
@@ -188,6 +222,12 @@ export async function push(mirror: Mirror, token: string): Promise<boolean> {
     }
 
     if (tracked.hash === hash) continue
+
+    // A note in a room has already been carried up by the room, keystroke by
+    // keystroke, and the room is what writes it into the account. Sending the file
+    // as well would be a second writer for one note.
+    if (joined.has(tracked.id)) continue
+
     moved = true
 
     try {
