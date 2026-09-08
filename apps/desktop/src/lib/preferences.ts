@@ -8,7 +8,6 @@ import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './re
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
 import { theme } from './theme.svelte'
-import { workspace } from './workspace.svelte'
 
 /** One control, and how to read and write whatever sits behind it. A field
  *  that says what it starts as can be put back to that; a pane whose fields
@@ -76,27 +75,6 @@ export function preferences(view?: EditorView): Pane[] {
       id: 'general',
       label: t('General'),
       groups: [
-        {
-          title: t('Saving'),
-          fields: [
-            {
-              kind: 'switch',
-              label: t('Save as I type'),
-              get: () => workspace.autoSave,
-              set: (on) => workspace.setAutoSave(on),
-            },
-            {
-              kind: 'slider',
-              label: t('Wait before saving'),
-              min: 400,
-              max: 5000,
-              step: 200,
-              unit: 'ms',
-              get: () => workspace.autoSaveDelay,
-              set: (value) => workspace.setAutoSaveDelay(value),
-            },
-          ],
-        },
         {
           // A note being written in is kept every so often on top of what a
           // save keeps, so a crash between two saves is not the end of the

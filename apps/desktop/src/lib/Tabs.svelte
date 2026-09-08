@@ -156,7 +156,8 @@
   })
 
   /** The dot says one of three things, and says it in words to a reader who
-   *  cannot see it. */
+   *  cannot see it. A note in a space wears no dot at all: nothing about it is
+   *  ever waiting to be written down. */
   function saveLabel(tab: Tab): string {
     const state = workspace.savingOf(tab)
     if (state === 'saving') return t('Saving')
@@ -243,7 +244,7 @@
               {/each}
             </span>
           {/if}
-          {#if tab.dirty || workspace.savingOf(tab)}
+          {#if tab.unsaved || workspace.savingOf(tab)}
             <span
               class="dot"
               class:writing={workspace.savingOf(tab) === 'saving'}

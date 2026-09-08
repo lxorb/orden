@@ -82,7 +82,7 @@
 
   const title = $derived(
     workspace.active
-      ? `${workspace.active.name.replace(/\.(md|markdown|mdown|mkd)$/i, '')}${workspace.active.dirty ? ' ·' : ''}`
+      ? `${workspace.active.name.replace(/\.(md|markdown|mdown|mkd)$/i, '')}${workspace.active.unsaved ? ' ·' : ''}`
       : '',
   )
 

@@ -166,7 +166,6 @@ beforeEach(() => {
   workspace.activeSpaceId = 's'
   workspace.tabs = []
   workspace.undone.stack = []
-  workspace.setAutoSave(false)
   account.token = null
   account.user = null
   trash.items = []

@@ -9,7 +9,16 @@ const notes: Record<string, string> = {
   '/space/a.md': '# a',
   '/space/b.md': '# b',
   '/space/c.md': '# Quarter plan\n\ntext\n\n## Why it works\n\nmore\n',
+  // Two files opened from the computer, outside every space this machine knows of.
+  '/elsewhere/outside.md': '# outside',
+  '/elsewhere/beside it.md': '# beside it',
 }
+
+/** Those files, which are what "external" means: nothing but this disk is holding
+ *  them, so saving them is the reader's to ask for and the only place the app
+ *  still asks anybody about anything. */
+const OUTSIDE = '/elsewhere/outside.md'
+const ALSO_OUTSIDE = '/elsewhere/beside it.md'
 
 /** The path an invoke was given, or an empty one: `args` is a bag of unknowns
  *  and a path that is not a string is not a path. */
@@ -96,8 +105,6 @@ describe('keeping a preview tab', () => {
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
-    // Auto-save would otherwise try to write the note back a moment later.
-    workspace.setAutoSave(false)
   })
 
   afterEach(() => {
@@ -309,7 +316,6 @@ describe('where a note was last looked at', () => {
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
-    workspace.setAutoSave(false)
   })
 
   test('a closed note reopens where it was', async () => {
@@ -448,7 +454,6 @@ function onePane() {
 describe('a note in two panes', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
   })
 
   test('is one document, in a pane of its own', async () => {
@@ -479,13 +484,15 @@ describe('a note in two panes', () => {
   })
 
   test('wears one dirty mark and one place to save to', async () => {
-    await workspace.open('/space/a.md')
+    // A file from outside every space, because that is the note the app still
+    // asks about on the way out - see the rule further down.
+    await workspace.open(OUTSIDE)
     workspace.split('row')
 
     const [left, right] = workspace.tabs
     if (!left || !right) throw new Error('the split did not happen')
 
-    left.note.live.replace('# a, typed in one pane')
+    left.note.live.replace('# outside, typed in one pane')
 
     expect(right.dirty).toBe(true)
     expect(right.doc).toBe(left.doc)
@@ -551,7 +558,6 @@ describe('a note in two panes', () => {
 describe('closing what is in a pane', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
   })
 
   test('the last tab takes the pane with it', async () => {
@@ -610,7 +616,6 @@ describe('closing what is in a pane', () => {
 describe('a tab dropped on another pane', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
   })
 
   /** Two panes: the first holds a and c, the second holds b and is the one
@@ -749,7 +754,6 @@ describe('a tab dropped on another pane', () => {
 describe('the sides a pane offers a drop', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
   })
 
   test('offers none to the only tab of the pane, which would undo itself', async () => {
@@ -796,7 +800,6 @@ describe('the sides a pane offers a drop', () => {
 describe('a note dragged out of the file list onto a pane', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
   })
 
   test('opens in the strip it was dropped into, at that place', async () => {
@@ -833,7 +836,6 @@ describe('a note dragged out of the file list onto a pane', () => {
 describe('an arrangement kept under a name', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
     for (const one of [...workspace.layouts.all]) workspace.layouts.remove(one.name)
   })
 
@@ -898,7 +900,6 @@ describe('an arrangement kept under a name', () => {
 describe('a note being read', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
   })
 
   test('starts being written in', async () => {
@@ -1006,7 +1007,6 @@ describe('a replacement across the space', () => {
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.undone.stack = []
-    workspace.setAutoSave(false)
     sent.length = 0
   })
 
@@ -1081,7 +1081,6 @@ describe('a replacement across the space', () => {
 describe('closing something that holds unsaved work', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
     workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
     workspace.activeSpaceId = 's'
     workspace.closed.stack = []
@@ -1090,6 +1089,12 @@ describe('closing something that holds unsaved work', () => {
     sheet.answer = 'cancel'
     sheet.name = null
     sent.length = 0
+  })
+
+  afterEach(() => {
+    // A note that keeps itself has a write on a timer; the fake clock takes it
+    // with it, so nothing lands in the middle of the next test.
+    vi.useRealTimers()
   })
 
   /** A note open with something typed into it that has not been written. */
@@ -1113,21 +1118,21 @@ describe('closing something that holds unsaved work', () => {
     expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
   })
 
-  test('asks about a note with something typed in it, and Save writes it down', async () => {
-    const tab = await dirty('/space/a.md')
+  test('asks about a file with something typed in it, and Save writes it down', async () => {
+    const tab = await dirty(OUTSIDE)
     sheet.answer = 'save'
 
     await workspace.closeAsking(tab.id)
 
-    expect(sheet.asked).toEqual(['Save a?'])
+    expect(sheet.asked).toEqual(['Save outside?'])
     expect(sent.filter((one) => one.command === 'write_note').map((one) => one.content)).toEqual([
-      '# a, typed',
+      '# outside, typed',
     ])
     expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
   })
 
   test('lets it go on the second answer, without writing anything', async () => {
-    const tab = await dirty('/space/a.md')
+    const tab = await dirty(OUTSIDE)
     sheet.answer = 'discard'
 
     await workspace.closeAsking(tab.id)
@@ -1138,7 +1143,7 @@ describe('closing something that holds unsaved work', () => {
   })
 
   test('leaves the tab where it is on Cancel, and on a question dismissed', async () => {
-    const tab = await dirty('/space/a.md')
+    const tab = await dirty(OUTSIDE)
 
     await workspace.closeAsking(tab.id)
     expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
@@ -1191,7 +1196,7 @@ describe('closing something that holds unsaved work', () => {
   })
 
   test('asks nothing when the note stays open in another pane', async () => {
-    await dirty('/space/a.md')
+    await dirty(OUTSIDE)
     workspace.split('row')
 
     const beside = workspace.active
@@ -1205,22 +1210,22 @@ describe('closing something that holds unsaved work', () => {
 
   test('asks once for each note in a pane that is closing', async () => {
     await workspace.open('/space/a.md')
-    await beside('/space/b.md')
+    await beside(OUTSIDE)
     const paneId = workspace.panes.focusedId
-    await dirty('/space/b.md')
+    await dirty(OUTSIDE)
     sheet.answer = 'discard'
 
     await workspace.closePane(paneId)
 
-    expect(sheet.asked).toEqual(['Save b?'])
+    expect(sheet.asked).toEqual(['Save outside?'])
     expect(workspace.tabs.map((one) => one.path)).toEqual(['/space/a.md'])
   })
 
   test('a pane stays whole when one of its notes is cancelled', async () => {
     await workspace.open('/space/a.md')
-    await beside('/space/b.md')
+    await beside(OUTSIDE)
     const paneId = workspace.panes.focusedId
-    await dirty('/space/b.md')
+    await dirty(OUTSIDE)
 
     await workspace.closePane(paneId)
 
@@ -1229,23 +1234,180 @@ describe('closing something that holds unsaved work', () => {
   })
 
   test('the window asks once per note, and Cancel keeps it open', async () => {
-    await dirty('/space/a.md')
-    await dirty('/space/b.md')
+    await dirty(OUTSIDE)
+    await dirty(ALSO_OUTSIDE)
 
     expect(await workspace.mayCloseWindow()).toBe(false)
-    expect(sheet.asked).toEqual(['Save a?'])
+    expect(sheet.asked).toEqual(['Save outside?'])
 
     sheet.asked = []
     sheet.answer = 'discard'
     expect(await workspace.mayCloseWindow()).toBe(true)
-    expect(sheet.asked).toEqual(['Save a?', 'Save b?'])
+    expect(sheet.asked).toEqual(['Save outside?', 'Save beside it?'])
+  })
+
+  test('asks nothing about a note in a space, whatever was typed in it', async () => {
+    vi.useFakeTimers()
+
+    const tab = await dirty('/space/a.md')
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+    // The write that was waiting, so the queue is empty for the next test.
+    await vi.advanceTimersByTimeAsync(1200)
+  })
+
+  test('and nothing on the way out of the window either', async () => {
+    vi.useFakeTimers()
+
+    await dirty('/space/a.md')
+    await dirty('/space/b.md')
+
+    expect(await workspace.mayCloseWindow()).toBe(true)
+    expect(sheet.asked).toEqual([])
+    await vi.advanceTimersByTimeAsync(1200)
+  })
+
+  test('but asks about a file opened from outside every space', async () => {
+    vi.useFakeTimers()
+
+    const tab = await dirty(OUTSIDE)
+    sheet.answer = 'discard'
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual(['Save outside?'])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+  })
+})
+
+/** Whether saving a note is anybody's job. One question, behind the mark on the
+ *  tab, the question on the way out, and the writing itself.
+ *
+ *  A note in a space keeps itself: Nib writes it as soon as the typing pauses, an
+ *  account carries it away when there is one, and a room carries every keystroke
+ *  while another device is in it. So nothing ever asks anybody about it. A file
+ *  opened from the computer lives outside every space, and nothing here is looking
+ *  after it, so saving that stays the reader's to ask for, mark and all.
+ *
+ *  Whether an account is signed in does not come into it, which is the whole point
+ *  of asking about the space rather than about the mirror: the welcome note a
+ *  browser opens on a first visit is somebody's writing before they have an
+ *  account, and it must not be waiting on a key nobody has been told about. */
+describe('a note that keeps itself, and one that does not', () => {
+  const WELCOME = '/Notes/Read me.md'
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    onePane()
+    workspace.spaces = [
+      { id: 's', name: 'Notes', root: '/space' },
+      // The space a browser seeds on a first visit, which is there before any
+      // account is.
+      { id: 'w', name: 'Read me', root: '/Notes' },
+    ]
+    workspace.activeSpaceId = 's'
+    sheet.asked = []
+    sheet.answer = 'cancel'
+    sent.length = 0
+    notes[WELCOME] = '# Welcome to Nib'
+  })
+
+  afterEach(async () => {
+    // Whatever was waiting to be written goes down now rather than in the middle
+    // of the next test.
+    await vi.advanceTimersByTimeAsync(1200)
+    vi.useRealTimers()
+  })
+
+  /** A note open with something typed into it. */
+  async function typedIn(path: string) {
+    await workspace.open(path)
+    const tab = workspace.tabs.find((one) => one.path === path)
+    if (!tab) throw new Error(`${path} did not open`)
+
+    tab.note.live.replace(`${notes[path] ?? ''}, typed`)
+    return tab
+  }
+
+  const written = () => sent.filter((one) => one.command === 'write_note').map((one) => one.path)
+
+  test('a note in a space goes down as soon as the typing pauses', async () => {
+    const tab = await typedIn('/space/a.md')
+
+    await vi.advanceTimersByTimeAsync(1200)
+
+    expect(written()).toEqual(['/space/a.md'])
+    expect(tab.unsaved).toBe(false)
+    expect(workspace.unsaved).toEqual([])
+  })
+
+  test('and wears no mark at any point, because there is nothing to report', async () => {
+    const tab = await typedIn('/space/a.md')
+
+    // Before the write as much as after it: the words have moved, and that is
+    // the app's business rather than the reader's.
+    expect(tab.dirty).toBe(true)
+    expect(tab.unsaved).toBe(false)
+    expect(workspace.savingOf(tab)).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(1200)
+    expect(workspace.savingOf(tab)).toBeUndefined()
+  })
+
+  test('signing out changes nothing about it: a space is a space', async () => {
+    // Nothing here has ever been told about an account, which is the state a
+    // browser on a first visit and a desktop nobody has signed in on are both in.
+    const tab = await typedIn(WELCOME)
+
+    await vi.advanceTimersByTimeAsync(1200)
+
+    expect(written()).toEqual([WELCOME])
+    expect(tab.unsaved).toBe(false)
+    expect(workspace.keepsItself(WELCOME)).toBe(true)
+  })
+
+  test('a file opened from outside every space waits for the reader, and says so', async () => {
+    const tab = await typedIn(OUTSIDE)
+
+    await vi.advanceTimersByTimeAsync(10_000)
+
+    expect(written()).toEqual([])
+    expect(tab.unsaved).toBe(true)
+    expect(workspace.unsaved).toHaveLength(1)
+    expect(workspace.keepsItself(OUTSIDE)).toBe(false)
+  })
+
+  test('Ctrl+S stays harmless: it writes at once and keeps the preview tab', async () => {
+    const tab = await preview('/space/a.md')
+    tab.note.live.replace('# a, typed')
+
+    await workspace.save()
+
+    expect(written()).toEqual(['/space/a.md'])
+    expect(workspace.previewTabId).toBeNull()
+  })
+
+  test('file recovery is offered a version of both kinds', async () => {
+    await typedIn('/space/a.md')
+    await typedIn(OUTSIDE)
+    // Nowhere to keep a version of, so nothing to offer.
+    workspace.openBlank('Untitled', '# a draft')
+
+    expect(workspace.worthKeeping.map((one) => one.path)).toEqual(['/space/a.md', OUTSIDE])
+    expect(workspace.worthKeeping.every((one) => one.revision > 0)).toBe(true)
+  })
+
+  test('and no version of a note nobody has written in', async () => {
+    await workspace.open('/space/a.md')
+
+    expect(workspace.worthKeeping.map((one) => one.revision)).toEqual([0])
   })
 })
 
 describe('reopening the tab that was closed last', () => {
   beforeEach(() => {
     onePane()
-    workspace.setAutoSave(false)
     workspace.closed.stack = []
     sheet.asked = []
     sheet.answer = 'discard'
@@ -1354,7 +1516,6 @@ describe('the welcome note, once there are real notes', () => {
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
-    workspace.setAutoSave(false)
     notes[WELCOME] = '# Welcome to Nib'
   })
 

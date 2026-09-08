@@ -7,8 +7,8 @@
  *  something behind it. And a sweep, because a note kept every minute for a
  *  month is a disk full; the policy it sweeps by is next door in recovery.ts.
  *
- *  One timer for the app, not one per note: the tick asks the workspace which
- *  notes have been typed in since they were last written and keeps those. It
+ *  One timer for the app, not one per note: the tick asks the workspace for the
+ *  open notes and keeps the ones whose words have moved since it last looked. It
  *  never runs per keystroke, and a note nobody has touched costs nothing. */
 
 import { account } from './account.svelte'
@@ -37,6 +37,11 @@ class Recovery {
 
   private ticker: ReturnType<typeof setInterval> | undefined
   private sweeper: ReturnType<typeof setInterval> | undefined
+  /** Which revision of each open note the last version kept was of, so a note
+   *  nobody has touched since is not copied again. Keyed by document, since that
+   *  is what the words belong to. Nothing renders from it, so it is a plain
+   *  record rather than one of Svelte's. */
+  private taken: Record<string, number> = {}
 
   restore() {
     const saved = stored(STORAGE_KEY)
@@ -49,6 +54,8 @@ class Recovery {
   /** Starts the timers, and sweeps once on the way up the way the trash does.
    *  Answers the teardown for both. */
   start(): () => void {
+    // Nothing has been kept this run, whatever a run before it kept.
+    this.taken = {}
     this.retime()
     void this.sweep()
     this.sweeper = setInterval(() => void this.sweep(), DAY)
@@ -107,13 +114,29 @@ class Recovery {
     await invoke('snapshot_note', { path, content }).catch(() => undefined)
   }
 
-  /** Every note that has been typed in since it was last written down. One pass
-   *  over the open notes, and nothing at all when none of them is dirty; the
-   *  copy itself is skipped by the disk side when the words have not moved. */
+  /** Every note that has been typed in since the last version of it was kept.
+   *  One pass over the open notes, and nothing at all when none of them has
+   *  moved.
+   *
+   *  Which ones those are is asked of the revision each document counts rather
+   *  than of what is unsaved. A note in a space is written down as fast as it is
+   *  typed and so is never unsaved, and that is almost every note there is - the
+   *  ones this is here for. A revision of zero is a note nobody has touched since
+   *  it was opened. */
   private async snapshot() {
-    for (const note of workspace.unsaved) {
-      if (note.path) await this.keep(note.path, note.text)
+    const now: Record<string, number> = {}
+
+    for (const note of workspace.worthKeeping) {
+      const last = this.taken[note.key]
+      now[note.key] = note.revision
+      if (!note.revision || last === note.revision) continue
+
+      await this.keep(note.path, note.text)
     }
+
+    // Notes that have since been closed drop out, so a long sitting does not
+    // leave a key behind for every note that was ever open in it.
+    this.taken = now
   }
 
   private async sweep() {

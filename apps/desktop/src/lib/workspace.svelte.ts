@@ -12,6 +12,7 @@ import { nameFromContent } from './note-name'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import type { Change } from './search/apply'
+import { within } from './sync/mirror'
 import { isRecord, stored } from './stored'
 import {
   type Draft,
@@ -77,12 +78,13 @@ export interface Tag {
 export type { Heading } from './outline'
 
 const STORAGE_KEY = 'nib:workspace'
-const AUTO_SAVE_KEY = 'nib:autosave'
 const TREE_KEY = 'nib:tree'
-const AUTO_SAVE_DELAY = 1200
+/** How long after the last keystroke a note that keeps itself is written, in
+ *  milliseconds. Long enough that a burst of typing is one write rather than
+ *  thirty, short enough that a crash costs a moment. */
+const SAVE_DELAY = 1200
 /** How long the dot stays as a tick once the note is down, in milliseconds. */
 const SAVED_SHOWN = 1400
-const AUTO_SAVE_DELAY_KEY = 'nib:autosave-delay'
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
 const SESSION_DELAY = 400
@@ -215,9 +217,6 @@ class Workspace {
    *  a name of its own - a unique note's timestamp - is waiting for a title
    *  after it, not instead of it. */
   renaming = $state<{ path: string; appending: boolean } | null>(null)
-  autoSave = $state(localStorage.getItem(AUTO_SAVE_KEY) !== 'false')
-  /** How long to wait after the last keystroke before writing. */
-  autoSaveDelay = $state(Number(localStorage.getItem(AUTO_SAVE_DELAY_KEY)) || AUTO_SAVE_DELAY)
   treeOptions = $state<TreeOptions>(readTreeOptions())
   /** The last handful of file operations; see workspace/undo. */
   readonly undone = new FileActions()
@@ -237,7 +236,10 @@ class Workspace {
    *  there is something unwritten, it is going down now, it is down. Held apart
    *  from the note because "just saved" is about this moment and not about the
    *  note, and keyed by document rather than by tab so both panes showing one
-   *  note show the same mark. */
+   *  note show the same mark.
+   *
+   *  Only for a note somebody has to save. A note that keeps itself is never in
+   *  here; see `markSaving`. */
   saveState = $state<Record<string, 'saving' | 'saved'>>({})
   private savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
@@ -636,9 +638,32 @@ class Workspace {
   }
 
   /** A document, wired so that every change to it - a keystroke in any pane, an
-   *  undo, a picture dropped in - reaches the app exactly once. */
+   *  undo, a picture dropped in - reaches the app exactly once, and so that it
+   *  can say whether saving it is anybody's job. */
   private document(start: DocumentStart): NoteDoc {
-    return new NoteDoc(start, (note) => this.edited(note))
+    return new NoteDoc(
+      start,
+      (note) => this.edited(note),
+      (path) => this.keepsItself(path),
+    )
+  }
+
+  /** Whether the note at a path keeps itself, which is to say whether saving it
+   *  is anybody's job. A note in a space is Nib's to look after: it is written as
+   *  soon as the typing pauses, an account carries it away when there is one, and
+   *  a room carries every keystroke while another device is in it. Nobody has to
+   *  save such a note, so nothing asks them to - no mark, no question on the way
+   *  out, and no auto-save to turn on, because it is always on.
+   *
+   *  A file opened from the computer is the other case, and the only one: it lives
+   *  outside every space, nothing here is looking after it, and writing over
+   *  somebody's own file is not something to do behind their back. Saving is
+   *  theirs to ask for, and it wears the mark until they do.
+   *
+   *  Whether an account is signed in does not come into it. A space is a space:
+   *  what the reader sees must not change under them when a sync stops. */
+  keepsItself(path: string | null): boolean {
+    return path !== null && this.spaces.some((one) => within(one.root, path) !== null)
   }
 
   /** Puts a tab in its pane and shows it. */
@@ -706,7 +731,7 @@ class Workspace {
    *  graph is one: asking for a plane that is already open brings it forward.
    *
    *  Its words are the JSON in the file, so the tab holds a document exactly as a
-   *  note's tab does and the dirty mark, Ctrl+S, the auto-save and the closing
+   *  note's tab does: whether it keeps itself, the mark, Ctrl+S and the closing
    *  question all work here without knowing what a canvas is. What differs is the
    *  surface drawn on top of those words. */
   async openCanvas(path: string) {
@@ -1413,8 +1438,8 @@ class Workspace {
     if (preview?.note === note) this.keep(preview.id)
 
     this.scheduleSave(note)
-    // Auto-save may be off, or the note may have nowhere to be saved to yet.
-    // Either way the words themselves are written down.
+    // The note may have nowhere to be written to, or be one nobody has asked to
+    // save yet. Either way the words themselves are written down.
     this.scheduleSession()
   }
 
@@ -1433,14 +1458,20 @@ class Workspace {
     note?.replace(text)
   }
 
-  /** Typora saves as you pause; so does this, but only for notes that already
-   *  live somewhere. An untitled note waits for you to choose a home. */
+  /** A note in a space is written as soon as the typing pauses, because nothing in
+   *  the app is going to ask anybody to save it: it has no mark and no question on
+   *  the way out, and the light in the rail is the whole report on where its words
+   *  have got to.
+   *
+   *  A file opened from the computer is written when the reader says so, and not
+   *  a moment before. That is the only place saving is still a thing somebody
+   *  does, so it is the only place where waiting for them is right. */
   private scheduleSave(note: NoteDoc) {
-    if (!this.autoSave || !note.path) return
+    if (!note.keepsItself) return
 
     this.waiting.add(note)
     clearTimeout(this.saveTimer)
-    this.saveTimer = setTimeout(() => void this.saveWaiting(), this.autoSaveDelay)
+    this.saveTimer = setTimeout(() => void this.saveWaiting(), SAVE_DELAY)
   }
 
   private async saveWaiting() {
@@ -1452,13 +1483,23 @@ class Workspace {
 
   /** The dot's three states. `saved` stands for a moment and then goes: it is
    *  a confirmation, not a status, and a note with nothing to write should not
-   *  wear a mark forever. */
-  private markSaving(id: string) {
+   *  wear a mark forever.
+   *
+   *  A note in a space wears no dot at all. It is written every second or so, and
+   *  a mark that blinks whenever somebody pauses is not a report on anything they
+   *  have to know; the light in the rail says how the space itself is doing. */
+  private markSaving(note: NoteDoc) {
+    if (note.keepsItself) return
+
+    const id = note.key
     this.forgetSavedTimer(id)
     this.saveState = { ...this.saveState, [id]: 'saving' }
   }
 
-  private markSaved(id: string) {
+  private markSaved(note: NoteDoc) {
+    if (note.keepsItself) return
+
+    const id = note.key
     this.saveState = { ...this.saveState, [id]: 'saved' }
     this.savedTimers[id] = setTimeout(() => this.clearSaveState(id), SAVED_SHOWN)
   }
@@ -1473,26 +1514,33 @@ class Workspace {
     this.savedTimers = without(this.savedTimers, id)
   }
 
-  setAutoSaveDelay(ms: number) {
-    this.autoSaveDelay = ms
-    localStorage.setItem(AUTO_SAVE_DELAY_KEY, String(ms))
-  }
-
-  setAutoSave(on: boolean) {
-    this.autoSave = on
-    localStorage.setItem(AUTO_SAVE_KEY, String(on))
-    if (on) return
-
-    clearTimeout(this.saveTimer)
-    this.waiting.clear()
-  }
-
-  /** Notes holding work that is not on disk: notes and not tabs, so a note open
-   *  in two panes is one thing to ask about. What counts is the document's own
-   *  answer; see NoteDoc.unsaved. */
+  /** Notes holding work nothing else has hold of: notes and not tabs, so a note
+   *  open in two panes is one thing to ask about. What counts is the document's
+   *  own answer; see NoteDoc.unsaved. */
   get unsaved(): NoteDoc[] {
     this.flush()
     return this.documents.filter((note) => note.unsaved)
+  }
+
+  /** The open notes a version could be kept of: each one's file, its words as
+   *  they stand, and which revision those words are at.
+   *
+   *  Every note with a file, rather than only the unsaved ones: a note in a space
+   *  is written as fast as it is typed and so is never unsaved, which is to say
+   *  almost every note there is. The revision is how file recovery tells the ones
+   *  that have moved since it last looked. See recovery.svelte.ts. */
+  get worthKeeping(): { key: string; path: string; text: string; revision: number }[] {
+    this.flush()
+    const out: { key: string; path: string; text: string; revision: number }[] = []
+
+    for (const note of this.documents) {
+      const path = note.path
+      if (path === null || (note.kind !== 'note' && note.kind !== 'canvas')) continue
+
+      out.push({ key: note.key, path, text: note.text, revision: note.revision })
+    }
+
+    return out
   }
 
   async save(target?: Tab) {
@@ -1530,7 +1578,7 @@ class Workspace {
       path = picked
     }
 
-    this.markSaving(note.key)
+    this.markSaving(note)
 
     try {
       // Keep the version that is about to be replaced, before replacing it.
@@ -1545,7 +1593,7 @@ class Workspace {
     }
 
     note.written(path, basename(path))
-    this.markSaved(note.key)
+    this.markSaved(note)
 
     // The one file that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space; it

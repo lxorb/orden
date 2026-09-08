@@ -151,11 +151,6 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => void workspace.save(),
         },
         {
-          label: t('Save notes as I type'),
-          checked: workspace.autoSave,
-          run: () => workspace.setAutoSave(!workspace.autoSave),
-        },
-        {
           label: t('Rename'),
           disabled: !workspace.active?.path,
           run: () => {

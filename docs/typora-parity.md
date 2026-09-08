@@ -134,7 +134,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Show hidden files toggle
 - [x] Recent files, and pinning notes and folders
 - [x] Undo move/rename/delete
-- [x] Auto-save
+- [x] Auto-save, for a note in a space, where it is not an option but the way the
+      note works. A file opened from the computer is saved when asked.
 - [x] Version history and recovery
 
 ## 10. Search

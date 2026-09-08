@@ -61,9 +61,20 @@ export class NoteDoc {
    *  which is nothing the app has to be told about; see `replace`. */
   private quiet = false
 
+  /** Whether anything other than somebody saving is keeping these words. Handed
+   *  in rather than read, because the answer is about where the note sits and
+   *  this file is only about what is open; the spaces are the workspace's, and it
+   *  holds these documents. See `workspace.keepsItself`. */
+  private readonly kept: (path: string) => boolean
+
   /** `edited` hears about every change to the words, wherever it came from: a
    *  keystroke in any pane, an undo, a picture dropped in. */
-  constructor(start: DocumentStart, edited: (doc: NoteDoc) => void) {
+  constructor(
+    start: DocumentStart,
+    edited: (doc: NoteDoc) => void,
+    kept: (path: string) => boolean,
+  ) {
+    this.kept = kept
     this.kind = start.kind
     this.path = start.path
     this.name = start.name
@@ -85,17 +96,32 @@ export class NoteDoc {
     return this.words
   }
 
-  /** Whether this document holds work that is not on disk, which is what the
-   *  closing question and Save all both mean by unsaved.
+  /** Whether this note keeps itself, which is to say something other than
+   *  somebody saving it is holding on to the words: it sits in a space, so Nib
+   *  writes it as the typing pauses, and an account carries it away when there is
+   *  one; see `workspace.keepsItself`.
+   *
+   *  Such a note has nothing to save, and so no mark, no question on the way out
+   *  and no key to press. A file opened from the computer lives outside every
+   *  space and has none of that behind it, which is why saving stays the reader's
+   *  to ask for there. */
+  get keepsItself(): boolean {
+    return this.path !== null && this.kept(this.path)
+  }
+
+  /** Whether this document holds work that nothing has hold of, which is what
+   *  the dot, the closing question and the way out of the window all mean by
+   *  unsaved.
    *
    *  A note that has a file is out of step with it whatever it now says, even
    *  when what it says is nothing: emptying a note is an edit like any other. An
    *  untitled one that says nothing has no file and nothing to lose, which is
-   *  exactly the blank page a window starts with.
+   *  exactly the blank page a window starts with. And a note that keeps itself
+   *  is never out of step for long enough to be worth saying so.
    *
    *  Reads the words as of the last flush, like everything else here. */
   get unsaved(): boolean {
-    if (!this.dirty) return false
+    if (!this.dirty || this.keepsItself) return false
     // Only a file with words in it can be out of step with what is on disk. A
     // canvas is words like a note is; the graph of a space is drawn from the
     // notes, and a PDF is read rather than written.
@@ -246,5 +272,13 @@ export class Tab {
 
   set dirty(to: boolean) {
     this.note.dirty = to
+  }
+
+  /** Whether this note holds words nothing has hold of, which is what the mark
+   *  beside its name says. See NoteDoc.unsaved: `dirty` is the mechanical fact
+   *  that the words have moved since they were written, and this is whether that
+   *  is anybody's problem. */
+  get unsaved(): boolean {
+    return this.note.unsaved
   }
 }

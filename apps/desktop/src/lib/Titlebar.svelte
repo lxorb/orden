@@ -27,7 +27,7 @@
   /** A phone shows one document, so the bar says which one. */
   const title = $derived(
     workspace.active
-      ? workspace.active.name.replace(MARKDOWN, '') + (workspace.active.dirty ? ' ·' : '')
+      ? workspace.active.name.replace(MARKDOWN, '') + (workspace.active.unsaved ? ' ·' : '')
       : 'Nib',
   )
 
@@ -39,7 +39,7 @@
       { label: t('Open file'), run: () => void openFile() },
       { label: t('Open notes'), run: () => onopennotes?.() },
       DIVIDER,
-      { label: t('Save'), disabled: !workspace.active?.dirty, run: () => void workspace.save() },
+      { label: t('Save'), disabled: !workspace.active?.unsaved, run: () => void workspace.save() },
     ])
   }
 

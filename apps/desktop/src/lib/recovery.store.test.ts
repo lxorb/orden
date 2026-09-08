@@ -34,15 +34,16 @@ vi.mock('./tauri', () => ({
   isNative: true,
 }))
 
-/** The notes the workspace says have been typed in since they were written. */
+/** The open notes the workspace offers versions of, each with the revision its
+ *  words are at: zero for one nobody has typed in since it was opened. */
 const open = vi.hoisted(() => ({
-  unsaved: [] as { path: string | null; text: string }[],
+  notes: [] as { key: string; path: string; text: string; revision: number }[],
 }))
 
 vi.mock('./workspace.svelte', () => ({
   workspace: {
-    get unsaved() {
-      return open.unsaved
+    get worthKeeping() {
+      return open.notes
     },
   },
 }))
@@ -58,7 +59,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   localStorage.clear()
   sent.calls = []
-  open.unsaved = []
+  open.notes = []
   recovery.setEvery(DEFAULT_MINUTES)
   recovery.setDays(DEFAULT_DAYS)
   sent.calls = []
@@ -80,9 +81,9 @@ describe('the versions kept while a note is being written in', () => {
   })
 
   test('keeps every note that has been typed in, on one timer', async () => {
-    open.unsaved = [
-      { path: '/notes/a.md', text: 'one' },
-      { path: '/notes/b.md', text: 'two' },
+    open.notes = [
+      { key: 'a', path: '/notes/a.md', text: 'one', revision: 1 },
+      { key: 'b', path: '/notes/b.md', text: 'two', revision: 1 },
     ]
 
     const stop = recovery.start()
@@ -105,8 +106,8 @@ describe('the versions kept while a note is being written in', () => {
     stop()
   })
 
-  test('leaves a note with nowhere to be saved alone', () => {
-    open.unsaved = [{ path: null, text: 'untitled' }]
+  test('leaves a note nobody has typed in alone, however long it stays open', () => {
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one', revision: 0 }]
 
     const stop = recovery.start()
     sent.calls = []
@@ -117,7 +118,7 @@ describe('the versions kept while a note is being written in', () => {
   })
 
   test('and one with nothing in it', () => {
-    open.unsaved = [{ path: '/notes/a.md', text: '   \n' }]
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: '   \n', revision: 1 }]
 
     const stop = recovery.start()
     sent.calls = []
@@ -127,8 +128,33 @@ describe('the versions kept while a note is being written in', () => {
     stop()
   })
 
+  /** The note in a synced space is the case this has to hold for: it is written
+   *  as fast as it is typed and so is never unsaved, and it is the note somebody
+   *  is most likely to be in the middle of. What the tick follows is the words
+   *  moving, which is true of both kinds. */
+  test('keeps a version again once the words have moved, and not before', async () => {
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one', revision: 1 }]
+    const stop = recovery.start()
+    sent.calls = []
+
+    await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
+    expect(commands()).toEqual(['snapshot_note'])
+
+    // The same words a tick later: there is nothing to keep a second copy of.
+    sent.calls = []
+    await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
+    expect(commands()).toEqual([])
+
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one, typed', revision: 2 }]
+    await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
+    expect(sent.calls).toEqual([
+      { command: 'snapshot_note', args: { path: '/notes/a.md', content: 'one, typed' } },
+    ])
+    stop()
+  })
+
   test('follows the interval that is chosen', () => {
-    open.unsaved = [{ path: '/notes/a.md', text: 'one' }]
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one', revision: 1 }]
     const stop = recovery.start()
 
     recovery.setEvery(1)
@@ -140,7 +166,7 @@ describe('the versions kept while a note is being written in', () => {
   })
 
   test('and stops altogether when it is off', () => {
-    open.unsaved = [{ path: '/notes/a.md', text: 'one' }]
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one', revision: 1 }]
     const stop = recovery.start()
 
     recovery.setEvery(0)
@@ -152,7 +178,7 @@ describe('the versions kept while a note is being written in', () => {
   })
 
   test('nothing is left running once it is stopped', () => {
-    open.unsaved = [{ path: '/notes/a.md', text: 'one' }]
+    open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one', revision: 1 }]
     recovery.start()()
 
     sent.calls = []

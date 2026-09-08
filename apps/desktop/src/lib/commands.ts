@@ -462,11 +462,6 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.undoFileAction(),
     },
     {
-      id: 'autosave',
-      label: workspace.autoSave ? t('Turn off auto-save') : t('Turn on auto-save'),
-      run: () => workspace.setAutoSave(!workspace.autoSave),
-    },
-    {
       id: 'settings',
       label: t('Settings'),
       hint: shortcuts.hint('app.settings'),
