@@ -5,10 +5,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
  *  stood in for first - which is why the store is imported further down
  *  rather than at the top. */
 
+/** A canvas with one stroke on it, as the format writes one. What a plane that
+ *  has been drawn on and saved looks like on disk. */
+const DRAWN =
+  '{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [' +
+  '{ "id": "s1", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 10, 10, 0.5, 0, 0, 8] }' +
+  ']\n\t}\n}\n'
+
 const notes: Record<string, string> = {
   '/space/a.md': '# a',
   '/space/b.md': '# b',
   '/space/c.md': '# Quarter plan\n\ntext\n\n## Why it works\n\nmore\n',
+  '/space/plan.canvas': DRAWN,
   // Two files opened from the computer, outside every space this machine knows of.
   '/elsewhere/outside.md': '# outside',
   '/elsewhere/beside it.md': '# beside it',
@@ -1573,5 +1581,90 @@ describe('the welcome note, once there are real notes', () => {
     await workspace.leaveTheWelcomeNote()
 
     expect(workspace.tabs.some((one) => one.path === WELCOME)).toBe(true)
+  })
+})
+
+describe('a canvas that comes back after a restart', () => {
+  /** The session as it is written down: one pane holding one tab, with the words
+   *  left out of it, which is what a file that is on disk is written as. */
+  function drafted(kind: 'note' | 'canvas' | 'pdf', path: string) {
+    return {
+      frame: {
+        kind: 'pane' as const,
+        pane: {
+          id: 'p1',
+          active: 0,
+          linked: false,
+          tabs: [
+            {
+              kind,
+              path,
+              name: path.slice(path.lastIndexOf('/') + 1),
+              doc: '',
+              dirty: false,
+              cursor: 0,
+              scroll: 0,
+            },
+          ],
+        },
+      },
+      focused: 'p1',
+      panel: null,
+    }
+  }
+
+  beforeEach(() => {
+    onePane()
+  })
+
+  test('is filled from its file, the way a note is', async () => {
+    // The session writes no copy of words that are already on disk, so a kind
+    // left out of the re-read comes back as an empty plane: every stroke still
+    // in the file and none of them on screen.
+    await workspace.applyLayout(drafted('canvas', '/space/plan.canvas'))
+
+    const tab = workspace.tabs.find((one) => one.path === '/space/plan.canvas')
+    expect(tab?.kind).toBe('canvas')
+    expect(tab?.note.text).toBe(DRAWN)
+    expect(tab?.note.dirty).toBe(false)
+  })
+
+  test('keeps a plane that was drawn on and never saved', async () => {
+    // The other half of the same rule: what is on disk never lands on words
+    // nobody has written down yet.
+    const held = drafted('canvas', '/space/plan.canvas')
+    const [only] = held.frame.pane.tabs
+    if (!only) throw new Error('the draft holds no tab')
+
+    only.doc = '{ "nodes": [], "edges": [] }\n'
+    only.dirty = true
+    await workspace.applyLayout(held)
+
+    const tab = workspace.tabs.find((one) => one.path === '/space/plan.canvas')
+    expect(tab?.note.text).toBe('{ "nodes": [], "edges": [] }\n')
+    expect(tab?.note.dirty).toBe(true)
+  })
+
+  test('a paper is still not read as words', async () => {
+    // A PDF's tab holds none, so nothing is asked of the file.
+    await workspace.applyLayout(drafted('pdf', '/space/paper.pdf'))
+
+    const tab = workspace.tabs.find((one) => one.path === '/space/paper.pdf')
+    expect(tab?.kind).toBe('pdf')
+    expect(tab?.note.text).toBe('')
+  })
+
+  test('and the session keeps no second copy of a plane that is on disk', async () => {
+    await workspace.openCanvas('/space/plan.canvas')
+
+    const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+      layout?: { frame: { pane?: { tabs?: { path: string | null; doc: string }[] } } }
+    }
+    const held = written.layout?.frame.pane?.tabs?.find(
+      (one) => one.path === '/space/plan.canvas',
+    )
+
+    expect(held).toBeDefined()
+    expect(held?.doc).toBe('')
   })
 })

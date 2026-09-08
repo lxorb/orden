@@ -22,6 +22,17 @@ import { identifier } from '../identifier'
  *  its own with its own surface, and its words are the JSON in it. */
 export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas'
 
+/** Whether a tab's words are a file's words: a note, and a canvas, whose words
+ *  are the JSON in it.
+ *
+ *  What the answer decides is every place words cross between a tab and a file:
+ *  whether there is anything unsaved, what a save writes, and what a tab that is
+ *  put back after a restart is filled from. The graph is drawn from the space and
+ *  a PDF is read, so neither has words to write down or to read back. */
+export function holdsWords(kind: TabKind): boolean {
+  return kind === 'note' || kind === 'canvas'
+}
+
 export interface DocumentStart {
   kind: TabKind
   path: string | null
@@ -122,10 +133,8 @@ export class NoteDoc {
    *  Reads the words as of the last flush, like everything else here. */
   get unsaved(): boolean {
     if (!this.dirty || this.keepsItself) return false
-    // Only a file with words in it can be out of step with what is on disk. A
-    // canvas is words like a note is; the graph of a space is drawn from the
-    // notes, and a PDF is read rather than written.
-    if (this.kind !== 'note' && this.kind !== 'canvas') return false
+    // Only a file with words in it can be out of step with what is on disk.
+    if (!holdsWords(this.kind)) return false
 
     return this.path !== null || this.words.trim().length > 0
   }

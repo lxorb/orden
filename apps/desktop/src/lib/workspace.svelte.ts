@@ -27,7 +27,7 @@ import {
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
-import { type DocumentStart, NoteDoc, Tab } from './workspace/documents.svelte'
+import { type DocumentStart, holdsWords, NoteDoc, Tab } from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { type Landing, Panes } from './workspace/panes.svelte'
@@ -395,10 +395,15 @@ class Workspace {
     if (!this.tabs.length) this.openBlank()
   }
 
-  /** Drafts as tabs. A note that was clean is re-read from disk, so an edit made
-   *  elsewhere shows up; a note that was not is restored from its draft and stays
+  /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made
+   *  elsewhere shows up; one that was not is restored from its draft and stays
    *  dirty. Replacing someone's unsaved work with what happens to be on disk is
    *  the one thing this must never do.
+   *
+   *  A canvas is read back exactly as a note is, because its words are a file's
+   *  words too. The session writes no copy of words that are on disk, so a kind
+   *  left out of the re-read comes back with nothing in it: a plane with every
+   *  stroke still in the file and none of them on screen.
    *
    *  `shared` is what makes two panes that were showing one note show one note
    *  again rather than two copies of it, and `open` is what keeps a note that is
@@ -423,7 +428,7 @@ class Workspace {
 
       let text = draft.doc
 
-      if (draft.kind === 'note' && draft.path && !draft.dirty) {
+      if (holdsWords(draft.kind) && draft.path && !draft.dirty) {
         try {
           text = await invoke<string>('read_note', { path: draft.path })
         } catch {
@@ -1535,7 +1540,7 @@ class Workspace {
 
     for (const note of this.documents) {
       const path = note.path
-      if (path === null || (note.kind !== 'note' && note.kind !== 'canvas')) continue
+      if (path === null || !holdsWords(note.kind)) continue
 
       out.push({ key: note.key, path, text: note.text, revision: note.revision })
     }
@@ -1548,7 +1553,7 @@ class Workspace {
     flushTableEdits()
 
     const tab = target ?? this.active
-    if (tab?.kind !== 'note' && tab?.kind !== 'canvas') return
+    if (!tab || !holdsWords(tab.kind)) return
 
     // Saving is as deliberate as it gets: a note that was only being looked
     // at is one to stay from here on, whether or not there was anything to
@@ -1564,7 +1569,7 @@ class Workspace {
   private async write(note: NoteDoc) {
     // The keystrokes since the last pause, which are still only a rope.
     note.flush()
-    if (note.kind !== 'note' && note.kind !== 'canvas') return
+    if (!holdsWords(note.kind)) return
 
     let path = note.path
     if (!path) {
