@@ -77,8 +77,13 @@ pub async fn print_pdf(
     let path = std::env::temp_dir().join(format!("nib-print-{job}.html"));
     std::fs::write(&path, html).map_err(|error| cannot("write", &path, &error))?;
 
-    let url = tauri::Url::from_file_path(&path)
-        .map_err(|()| format!("could not address {}", path.display()))?;
+    // Every road out from here takes the temp file with it. The file is the whole
+    // note, pictures and all, and the temp folder is not where a note belongs a
+    // moment longer than the print needs it.
+    let Ok(url) = tauri::Url::from_file_path(&path) else {
+        let _ = std::fs::remove_file(&path);
+        return Err(format!("could not address {}", path.display()));
+    };
 
     let (done, waited) = mpsc::channel::<Result<(), String>>();
     // The load event can come more than once; the page is printed once.
@@ -112,18 +117,24 @@ pub async fn print_pdf(
                 }
             });
         })
-        .build()
-        .map_err(|error| format!("could not open a window to print in: {error}"))?;
+        .build();
 
-    let outcome = tauri::async_runtime::spawn_blocking(move || waited.recv_timeout(PATIENCE))
-        .await
-        .map_err(|error| format!("the print was interrupted: {error}"))?
-        .unwrap_or_else(|_| Err("the PDF took too long to write".into()));
+    let window = match window {
+        Ok(window) => window,
+        Err(error) => {
+            let _ = std::fs::remove_file(&path);
+            return Err(format!("could not open a window to print in: {error}"));
+        }
+    };
+
+    let waiting = tauri::async_runtime::spawn_blocking(move || waited.recv_timeout(PATIENCE)).await;
 
     let _ = window.destroy();
     let _ = std::fs::remove_file(&path);
 
-    outcome
+    waiting
+        .map_err(|error| format!("the print was interrupted: {error}"))?
+        .unwrap_or_else(|_| Err("the PDF took too long to write".into()))
 }
 
 /// A failure before the printer was even reached cannot use the channel the
