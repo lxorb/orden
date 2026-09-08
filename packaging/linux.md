@@ -86,15 +86,15 @@ the key have to be yours.
 4. Hand the private key and your account details to the repository:
 
    ```
-   gh secret set AUR_USERNAME --repo lxorb/nib --body "<your AUR username>"
-   gh secret set AUR_EMAIL    --repo lxorb/nib --body "<the email on the account>"
-   gh secret set AUR_SSH_PRIVATE_KEY --repo lxorb/nib < ~/.ssh/aur_nib
+   gh secret set AUR_USERNAME --repo lxorb/nibeditor --body "<your AUR username>"
+   gh secret set AUR_EMAIL    --repo lxorb/nibeditor --body "<the email on the account>"
+   gh secret set AUR_SSH_PRIVATE_KEY --repo lxorb/nibeditor < ~/.ssh/aur_nib
    ```
 
 5. Publish the current release:
 
    ```
-   gh workflow run publish-linux.yml --repo lxorb/nib -f tag=v0.5.0
+   gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.5.0
    ```
 
    The AUR creates the package base on first push, so there is nothing to
@@ -218,11 +218,11 @@ desktop users look for software, and a snap is the only way to be in it.
    snapcraft export-login --snaps nib \
      --acls package_access,package_push,package_update,package_release \
      snapcraft-creds.txt
-   gh secret set SNAPCRAFT_STORE_CREDENTIALS --repo lxorb/nib < snapcraft-creds.txt
+   gh secret set SNAPCRAFT_STORE_CREDENTIALS --repo lxorb/nibeditor < snapcraft-creds.txt
    rm snapcraft-creds.txt
    ```
 
-4. `gh workflow run publish-linux.yml --repo lxorb/nib -f tag=v0.5.0` uploads
+4. `gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.5.0` uploads
    both architectures to the stable channel.
 
 The first upload of a graphical snap goes through a manual review if it asks for
@@ -241,8 +241,8 @@ be more discoverable than this flake - a small audience for a large standing
 commitment. The flake costs nothing and works today:
 
 ```
-nix run github:lxorb/nib?dir=packaging/nix
-nix profile install github:lxorb/nib?dir=packaging/nix
+nix run github:lxorb/nibeditor?dir=packaging/nix
+nix profile install github:lxorb/nibeditor?dir=packaging/nix
 ```
 
 There is no `flake.lock` on purpose: pinning nixpkgs here would mean an extra
@@ -258,7 +258,7 @@ makes the validation workflow meaningful. To move them forward by hand:
 
 ```
 version=0.5.0
-base=https://github.com/lxorb/nib/releases/download/v$version
+base=https://github.com/lxorb/nibeditor/releases/download/v$version
 for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.deb" | sha256sum; done
 for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.AppImage" | sha256sum; done
 ```

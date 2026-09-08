@@ -15,7 +15,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
-const REPO = 'lxorb/nib'
+const REPO = 'lxorb/nibeditor'
 
 /** Which Tauri platform key a built file belongs to. Each match names the
  *  architecture as well as the kind of file: two Linux builds each carry an

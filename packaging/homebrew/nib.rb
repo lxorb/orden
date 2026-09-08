@@ -2,8 +2,8 @@ cask "nib" do
   version "0.5.0"
   sha256 "443b787124334f8fe7e4a9774594261736c95ee5a2438815bcea7e3d5abc33c0"
 
-  url "https://github.com/lxorb/nib/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
-      verified: "github.com/lxorb/nib/"
+  url "https://github.com/lxorb/nibeditor/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
+      verified: "github.com/lxorb/nibeditor/"
   name "Nib"
   desc "Markdown editor that styles formatting in place instead of showing syntax"
   homepage "https://nibeditor.com/"

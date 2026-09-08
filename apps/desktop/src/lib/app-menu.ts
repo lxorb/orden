@@ -36,7 +36,7 @@ import { openFile } from './open-file'
 
 /** Where the app is developed, which is the whole of "about" for an open
  *  source editor. */
-export const SOURCE_URL = 'https://github.com/lxorb/nib'
+export const SOURCE_URL = 'https://github.com/lxorb/nibeditor'
 
 interface MenuAction {
   label: string

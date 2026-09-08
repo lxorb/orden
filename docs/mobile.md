@@ -43,7 +43,7 @@ every push and would take an APK uploaded beside it with it.
 
 ## Installing the APK on a phone
 
-1. Open the [`mobile-edge` release](https://github.com/lxorb/nib/releases/tag/mobile-edge)
+1. Open the [`mobile-edge` release](https://github.com/lxorb/nibeditor/releases/tag/mobile-edge)
    in the phone's browser and download `Nib_<version>_android-universal.apk`. It
    carries both architectures, so it is the right file for any phone and for an
    emulator; it is around 19 MB.

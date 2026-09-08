@@ -54,24 +54,24 @@ modules:
     sources:
       - type: file
         only-arches: [x86_64]
-        url: https://github.com/lxorb/nib/releases/download/v0.5.0/Nib-0.5.0-linux-x64.deb
+        url: https://github.com/lxorb/nibeditor/releases/download/v0.5.0/Nib-0.5.0-linux-x64.deb
         sha256: 5ce5f532ce1e48f48b3bf73f8c892a540870c0006df220b157112f672d7646eb
         dest-filename: nib.deb
         x-checker-data:
           type: json
-          url: https://api.github.com/repos/lxorb/nib/releases/latest
+          url: https://api.github.com/repos/lxorb/nibeditor/releases/latest
           version-query: .tag_name | sub("^v"; "")
           url-query: >-
             .assets[] | select(.name == "Nib-" + $version + "-linux-x64.deb")
             | .browser_download_url
       - type: file
         only-arches: [aarch64]
-        url: https://github.com/lxorb/nib/releases/download/v0.5.0/Nib-0.5.0-linux-arm64.deb
+        url: https://github.com/lxorb/nibeditor/releases/download/v0.5.0/Nib-0.5.0-linux-arm64.deb
         sha256: 3671983edfdf33a605860136f38946f8b0b982fa4f888abf9ed3fba62de81767
         dest-filename: nib.deb
         x-checker-data:
           type: json
-          url: https://api.github.com/repos/lxorb/nib/releases/latest
+          url: https://api.github.com/repos/lxorb/nibeditor/releases/latest
           version-query: .tag_name | sub("^v"; "")
           url-query: >-
             .assets[] | select(.name == "Nib-" + $version + "-linux-arm64.deb")

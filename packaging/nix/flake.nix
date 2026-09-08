@@ -6,8 +6,8 @@
   # This is not the nixpkgs package - it is a flake anyone can install from
   # directly, without waiting on a nixpkgs review:
   #
-  #   nix profile install github:lxorb/nib?dir=packaging/nix
-  #   nix run github:lxorb/nib?dir=packaging/nix
+  #   nix profile install github:lxorb/nibeditor?dir=packaging/nix
+  #   nix run github:lxorb/nibeditor?dir=packaging/nix
   description = "Nib, a markdown editor with realtime inline preview";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -39,7 +39,7 @@
           inherit (appimages.${system}) suffix hash;
 
           src = pkgs.fetchurl {
-            url = "https://github.com/lxorb/nib/releases/download/v${version}/Nib-${version}-linux-${suffix}.AppImage";
+            url = "https://github.com/lxorb/nibeditor/releases/download/v${version}/Nib-${version}-linux-${suffix}.AppImage";
             inherit hash;
           };
 
@@ -73,8 +73,8 @@
             meta = {
               description = "Markdown editor with realtime inline preview";
               homepage = "https://nibeditor.com";
-              downloadPage = "https://github.com/lxorb/nib/releases";
-              changelog = "https://github.com/lxorb/nib/releases/tag/v${version}";
+              downloadPage = "https://github.com/lxorb/nibeditor/releases";
+              changelog = "https://github.com/lxorb/nibeditor/releases/tag/v${version}";
               license = nixpkgs.lib.licenses.agpl3Only;
               mainProgram = "nib";
               platforms = systems;

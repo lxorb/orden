@@ -21,7 +21,7 @@ provides=("${_pkgname}=${pkgver}")
 conflicts=("${_pkgname}")
 options=('!strip' '!debug' '!emptydirs')
 
-_url="https://github.com/lxorb/nib/releases/download/v${pkgver}"
+_url="https://github.com/lxorb/nibeditor/releases/download/v${pkgver}"
 source=('nib.desktop')
 # One name for both, since only the running architecture is fetched.
 source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
