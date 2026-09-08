@@ -41,17 +41,17 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 ## Why nibeditor?
 
-|  | Open source | Built-in MCP | Win, mac, Linux, web | Inline preview | Backlinks & graph | Canvas | Free sync | Free publishing |
-| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Notion | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| Obsidian | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Typora | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| MarkText | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Joplin | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Logseq | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+|  | Open source | Built-in MCP | Win, mac, Linux | Web | Android, iOS | Backlinks & graph | Canvas | Pen & pressure | Live collaboration | Free sync | Free publishing |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **nibeditor** | ✅ | ✅ | ✅ | ✅ | not in stores | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Notion | ❌ | ✅ | no Linux | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Obsidian | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Typora | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| MarkText | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Joplin | ✅ | ❌ | ✅ | paid only | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Logseq | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| iA Writer | ❌ | ❌ | no Linux | ❌ | no Android | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Bear | ❌ | ❌ | mac only | beta | no Android | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 ## Features
 
