@@ -599,6 +599,8 @@ export const gsw: Dictionary = {
   'Always on top': 'Immer vorne',
   'What is new': 'Was isch neu',
   'Report an issue': 'Problem mälde',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} het sich uf de Festplatte gänderet. Was im Editor staht, ghört dir.',
   'Move the line up': 'D Zile ufe schiebe',
   'Move the line down': 'D Zile abe schiebe',
   'Copy the line up': 'D Zile ufe kopiere',

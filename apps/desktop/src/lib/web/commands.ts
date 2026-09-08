@@ -423,6 +423,9 @@ async function removeTheme(id: string): Promise<void> {
  *  makes the interface hide the feature rather than break on it. */
 const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
+  // Nothing in a browser is watched: a page's notes come out of its own storage,
+  // and nothing else writes them. See watch.svelte.ts, which never asks here.
+  file_stamp: null,
   take_startup_files: [],
   mcp_config: null,
   new_menu_registered: false,

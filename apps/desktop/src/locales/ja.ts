@@ -598,6 +598,8 @@ export const ja: Dictionary = {
   'Always on top': '常に手前に表示',
   'What is new': '更新情報',
   'Report an issue': '問題を報告',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} がディスク上で変わりました。エディタにあるものがあなたのものです。',
   'Move the line up': '行を上へ移動',
   'Move the line down': '行を下へ移動',
   'Copy the line up': '行を上へ複製',

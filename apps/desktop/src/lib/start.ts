@@ -19,6 +19,7 @@ import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
+import { watch } from './watch.svelte'
 import { workspace } from './workspace.svelte'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -51,6 +52,10 @@ export function start(): () => void {
   // is being written in, and a sweep on the same daily rhythm as the trash.
   const stopRecovery = recovery.start()
 
+  // Files the reader opened from outside every space, which other programs write
+  // too; see watch.svelte.ts.
+  const stopWatching = watch.start()
+
   void guardClose()
   void updates.check()
 
@@ -61,6 +66,7 @@ export function start(): () => void {
   return () => {
     clearInterval(sweeper)
     stopRecovery()
+    stopWatching()
   }
 }
 

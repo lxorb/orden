@@ -603,6 +603,8 @@ export const de: Dictionary = {
   'Always on top': 'Immer im Vordergrund',
   'What is new': 'Was ist neu',
   'Report an issue': 'Problem melden',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} hat sich auf der Festplatte geändert. Was im Editor steht, ist deins.',
   'Move the line up': 'Zeile nach oben schieben',
   'Move the line down': 'Zeile nach unten schieben',
   'Copy the line up': 'Zeile nach oben kopieren',

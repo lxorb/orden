@@ -602,6 +602,8 @@ export const fr: Dictionary = {
   'Always on top': 'Toujours au premier plan',
   'What is new': 'Nouveautés',
   'Report an issue': 'Signaler un problème',
+  '{name} changed on the disk. What is in the editor is yours.':
+    '{name} a changé sur le disque. Ce qui est dans l’éditeur est à vous.',
   'Move the line up': 'Monter la ligne',
   'Move the line down': 'Descendre la ligne',
   'Copy the line up': 'Copier la ligne au-dessus',
