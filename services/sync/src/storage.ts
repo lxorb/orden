@@ -4,13 +4,21 @@ import type { Env } from './types'
 export const QUOTA = 1024 * 1024 * 1024
 
 /** Bytes an account is using: every note it can reach plus every image it is
- *  keeping. Deleted notes are tombstones with no body, so they cost nothing. */
+ *  keeping.
+ *
+ *  A note in Recently deleted counts. Its bytes are still in the bucket - that is
+ *  what being able to put it back means - and leaving them out was a way round the
+ *  whole limit: fill the account, delete the lot, fill it again, and the fourteen
+ *  days each round waits for are fourteen days of storage nobody was charged for.
+ *  What is purged costs nothing because purging sets the size to zero and takes
+ *  the row of a purged space away; see `purgeNote` and `purgeSpace` in trash.ts.
+ *  So the sum over every row is exactly what the bucket holds. */
 export async function usedBytes(env: Env, userId: string): Promise<number> {
   const row = await env.DB.prepare(
     `select
        (select coalesce(sum(n.size), 0)
           from notes n join spaces s on s.id = n.space_id
-         where s.user_id = ?1 and n.deleted = 0) as notes,
+         where s.user_id = ?1) as notes,
        (select coalesce(sum(size), 0) from blobs where user_id = ?1) as blobs`,
   )
     .bind(userId)

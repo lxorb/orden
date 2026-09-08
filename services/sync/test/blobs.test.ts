@@ -157,6 +157,25 @@ describe('the quota', () => {
     expect(usage.json.limit).toBe(QUOTA)
   })
 
+  /** Leaving Recently deleted out was the way round the whole limit: fill the
+   *  account, delete the lot, fill it again, and every round put another copy in
+   *  the bucket for a fortnight that nobody was charged for. */
+  test('counts a note in Recently deleted, whose bytes are still kept', async () => {
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
+    const note = await call(env, `/v1/spaces/${space.json.space.id}/notes`, {
+      token,
+      body: { path: 'a.md', content: 'x'.repeat(5000) },
+    })
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 5000)
+
+    await call(env, `/v1/notes/${note.json.note.id}`, { method: 'DELETE', token })
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 5000)
+
+    // Purged is when the bytes have gone, and only then do they stop counting.
+    await call(env, `/v1/trash/notes/${note.json.note.id}`, { method: 'DELETE', token })
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
+  })
+
   test('is counted per account', async () => {
     const other = await signIn(env, 'other@b.dev')
     const before = (await call(env, '/v1/usage', { token: other })).json.used
