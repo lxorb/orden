@@ -7,13 +7,21 @@ import { describe, expect, test } from 'vitest'
  *  That is how `destroy` went missing and the close button stopped working.
  *
  *  `WindowLike` in `tauri.ts` is the whole set of window commands the app can
- *  reach, so it is the list to check against. */
+ *  reach, so it is the list to check against.
+ *
+ *  There are two capability files, one per kind of build, because the phone app
+ *  is a smaller app: half the plugins are not compiled into it at all, and a
+ *  permission for one that is not there fails the build outright. */
 
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
 
-const capabilities = JSON.parse(read('../src-tauri/capabilities/default.json')) as {
+interface Capability {
+  platforms: string[]
   permissions: string[]
 }
+
+const capabilities = JSON.parse(read('../src-tauri/capabilities/default.json')) as Capability
+const mobile = JSON.parse(read('../src-tauri/capabilities/mobile.json')) as Capability
 
 /** Method name to the permission Tauri wants for it. Events are not commands
  *  and need nothing, so they are left out. */
@@ -85,5 +93,57 @@ describe('window permissions', () => {
       .filter((one) => !used.has(one))
 
     expect(stale).toEqual([])
+  })
+})
+
+/** The plugins the crate compiles only for a desktop, read out of the manifest
+ *  so that moving one can never leave a permission for it behind. A permission
+ *  named after a plugin that is not in the build is not a wasted line: Tauri
+ *  refuses to build at all. */
+function desktopOnlyPlugins(): string[] {
+  const cargo = read('../src-tauri/Cargo.toml')
+  const [, block] =
+    /\[target\.'cfg\(any\(target_os = "windows".*\n([\s\S]*?)(?:\n\[|$)/.exec(cargo) ?? []
+  if (block === undefined) throw new Error('no desktop-only dependencies in Cargo.toml')
+
+  return [...block.matchAll(/^tauri-plugin-([a-z-]+)/gm)].map(([, name = '']) => name)
+}
+
+describe('phone permissions', () => {
+  test('the two files divide the platforms between them', () => {
+    expect([...capabilities.platforms].sort()).toEqual(['linux', 'macOS', 'windows'])
+    expect([...mobile.platforms].sort()).toEqual(['android', 'iOS'])
+
+    const both = mobile.platforms.filter((one) => capabilities.platforms.includes(one))
+    expect(both, 'a platform in both files gets both sets of permissions').toEqual([])
+  })
+
+  test('the phone grants nothing for a plugin it does not have', () => {
+    const plugins = desktopOnlyPlugins()
+    // Guards the test: a rename upstream that emptied this would pass silently.
+    expect(plugins).toContain('updater')
+
+    const wrong = mobile.permissions.filter((one) =>
+      plugins.some((plugin) => one.startsWith(`${plugin}:`)),
+    )
+
+    expect(wrong, `granted to a build without the plugin: ${wrong.join(', ')}`).toEqual([])
+  })
+
+  test('a link tapped in a note can still leave the app', () => {
+    // The one call the phone build makes into a plugin, and the only reason it
+    // has permissions of its own beyond core. Both are needed: the first allows
+    // the command, the second says which addresses it may be given.
+    expect(read('../src/lib/tauri.ts')).toContain('await openUrl(url)')
+    expect(mobile.permissions).toContain('opener:allow-open-url')
+    expect(mobile.permissions).toContain('opener:allow-default-urls')
+  })
+
+  test('the phone has no window commands, because it has no title bar', () => {
+    const chrome = mobile.permissions.filter(
+      (one) => one.startsWith('core:window:allow-') || one.startsWith('core:webview:allow-'),
+    )
+
+    expect(chrome).toEqual([])
   })
 })

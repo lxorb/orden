@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Permissions for the window on a phone, which is a shorter list than the desktop's because the app is smaller there. core:default carries the event channel the app listens for its own commands on, and the read-only window queries the layout asks. The two opener entries are the one thing the phone build reaches outside itself for: a link tapped in a note goes to the browser app, and the second grants http, https, mailto and tel as the addresses it may hand over. Nothing else is granted, because nothing else is called: there is no title bar to minimise or maximise, no second window to present from, no file dialog, no installer to run and no file manager to reveal a note in, so none of those plugins is compiled into this build at all.",
+  "platforms": ["android", "iOS"],
+  "windows": ["main"],
+  "permissions": ["core:default", "opener:allow-open-url", "opener:allow-default-urls"]
+}

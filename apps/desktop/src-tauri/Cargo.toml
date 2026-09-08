@@ -36,16 +36,23 @@ tauri-build = { version = "2", features = [] }
 # `protocol-asset` is what lets the webview load a picture from disk. Without it
 # every local image in a note is a broken image.
 tauri = { version = "2", features = ["protocol-asset"] }
-tauri-plugin-dialog = "2"
+# Links leave the app the same way on every platform: the system browser on a
+# desktop, the browser app on a phone.
 tauri-plugin-opener = "2"
-tauri-plugin-process = "2"
-
-# Desktop only: a second launch should hand its file to the running window.
-[target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
-tauri-plugin-single-instance = "2"
-tauri-plugin-updater = "2"
+# Which platform this is, said once and read from the window. Nothing else tells
+# the frontend apart a phone build from the desktop one.
+tauri-plugin-os = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# Desktop only: a second launch should hand its file to the running window, the
+# app installs its own updates, and files are chosen and saved in a dialog. A
+# phone has none of the three.
+[target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+tauri-plugin-dialog = "2"
+tauri-plugin-process = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
