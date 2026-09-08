@@ -12,7 +12,14 @@ export async function newSpace() {
     confirmLabel: key('Create'),
   })
 
-  if (name) await workspace.addSpace(name)
+  if (!name) return
+  await workspace.addSpace(name)
+
+  // Until a pass has put it on the account there is nothing to share or to
+  // publish, and a quiet loop can be a minute from its next one. Somebody who
+  // has just made a space should not have to wait that out to share it.
+  const { sync } = await import('./sync.svelte')
+  sync.nudge()
 }
 
 /** Moves a space in the rail and tells the account about it, so the order is
