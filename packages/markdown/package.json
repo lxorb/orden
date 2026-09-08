@@ -9,6 +9,7 @@
     "./canvas": "./src/canvas.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
+    "./from-html": "./src/from-html.ts",
     "./links": "./src/links.ts",
     "./slides": "./src/slides.ts"
   },
@@ -19,9 +20,12 @@
   "dependencies": {
     "katex": "^0.18.5",
     "marked": "^18.0.11",
-    "node-emoji": "^2.2.0"
+    "node-emoji": "^2.2.0",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
+    "@types/turndown": "^5.0.6",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"
   }

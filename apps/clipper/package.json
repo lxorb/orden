@@ -10,16 +10,14 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
-    "@nib/themes": "workspace:*",
-    "turndown": "^7.2.2",
-    "turndown-plugin-gfm": "^1.0.2"
+    "@nib/markdown": "workspace:*",
+    "@nib/themes": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@types/chrome": "^0.1.36",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^26.4.1",
-    "@types/turndown": "^5.0.6",
     "jsdom": "^28.0.1",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",

@@ -24,7 +24,7 @@ same commands on every push to `main`.
 | Package | What it owns |
 | --- | --- |
 | `packages/editor` | The CodeMirror 6 live-preview editor: parsing, decorations, widgets, commands. No app concerns. |
-| `packages/markdown` | The renderer used for export and publishing. Pure functions from markdown to HTML. |
+| `packages/markdown` | The renderer used for export and publishing, and the converter back the other way that a paste and the clipper share. Pure functions between markdown and HTML. |
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |

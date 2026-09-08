@@ -1,54 +1,27 @@
 import { describe, expect, test } from 'vitest'
-import { delimitedToTable, htmlToMarkdown } from './paste'
+import { delimitedToTable, pastedMarkdown } from './paste'
 
-describe('pasting a web page', () => {
-  test('headings and emphasis become markdown', () => {
-    expect(htmlToMarkdown('<h2>Title</h2><p><strong>bold</strong> and <em>italic</em></p>')).toBe(
-      '## Title\n\n**bold** and *italic*',
+/** The conversion itself is `@nib/markdown/from-html`, tested there. What is
+ *  tested here is the choosing: a clipboard carries two flavours at once, and
+ *  which of them a paste reads decides what lands in the note. */
+describe('what a clipboard comes to', () => {
+  test('a page arrives as markdown', () => {
+    expect(pastedMarkdown('<h2>Title</h2>', 'Title')).toBe('## Title')
+  })
+
+  test('a spreadsheet arrives as a table, from the plain text beside the HTML', () => {
+    const html = '<table><tr><td>Name</td><td>Size</td></tr><tr><td>a</td><td>1</td></tr></table>'
+    expect(pastedMarkdown(html, 'Name\tSize\na\t1')).toBe(
+      ['| Name | Size |', '| --- | --- |', '| a | 1 |'].join('\n'),
     )
   })
 
-  test('links keep their target', () => {
-    expect(htmlToMarkdown('<a href="https://x.dev">site</a>')).toBe('[site](https://x.dev)')
+  test('plain text with no HTML beside it is nothing to convert', () => {
+    expect(pastedMarkdown('', 'just words')).toBeNull()
   })
 
-  test('lists become markdown lists', () => {
-    expect(htmlToMarkdown('<ul><li>one</li><li>two</li></ul>')).toBe('-   one\n-   two')
-  })
-
-  test('code blocks keep their fence', () => {
-    const markdown = htmlToMarkdown('<pre><code>let x = 1</code></pre>')
-    expect(markdown).toContain('```')
-    expect(markdown).toContain('let x = 1')
-  })
-
-  test('tables survive, via the GFM rules', () => {
-    const markdown = htmlToMarkdown(
-      '<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>',
-    )
-    expect(markdown).toContain('| a | b |')
-    expect(markdown).toContain('| 1 | 2 |')
-  })
-
-  test('strikethrough survives', () => {
-    expect(htmlToMarkdown('<del>gone</del>')).toBe('~~gone~~')
-  })
-
-  test('highlighted text keeps its markdown form', () => {
-    expect(htmlToMarkdown('<mark>kept</mark>')).toBe('==kept==')
-  })
-
-  test('underline has no markdown, so the tag stays', () => {
-    expect(htmlToMarkdown('<u>under</u>')).toBe('<u>under</u>')
-  })
-
-  test('scripts and styles are dropped', () => {
-    const markdown = htmlToMarkdown('<p>text</p><script>alert(1)</script><style>p{}</style>')
-    expect(markdown).toBe('text')
-  })
-
-  test('images become markdown images', () => {
-    expect(htmlToMarkdown('<img src="a.png" alt="alt">')).toBe('![alt](a.png)')
+  test('HTML that comes to nothing is nothing to insert', () => {
+    expect(pastedMarkdown('<style>p{}</style>', '')).toBeNull()
   })
 })
 

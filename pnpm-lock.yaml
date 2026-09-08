@@ -41,15 +41,12 @@ importers:
       '@mozilla/readability':
         specifier: ^0.6.0
         version: 0.6.0
+      '@nib/markdown':
+        specifier: workspace:*
+        version: link:../../packages/markdown
       '@nib/themes':
         specifier: workspace:*
         version: link:../../packages/themes
-      turndown:
-        specifier: ^7.2.2
-        version: 7.2.4
-      turndown-plugin-gfm:
-        specifier: ^1.0.2
-        version: 1.0.2
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.3.0
@@ -63,9 +60,6 @@ importers:
       '@types/node':
         specifier: ^26.4.1
         version: 26.4.1
-      '@types/turndown':
-        specifier: ^5.0.6
-        version: 5.0.6
       jsdom:
         specifier: ^28.0.1
         version: 28.1.0
@@ -259,19 +253,10 @@ importers:
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
-      turndown:
-        specifier: ^7.2.4
-        version: 7.2.4
-      turndown-plugin-gfm:
-        specifier: ^1.0.2
-        version: 1.0.2
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
-      '@types/turndown':
-        specifier: ^5.0.6
-        version: 5.0.6
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -321,7 +306,16 @@ importers:
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
+      turndown:
+        specifier: ^7.2.4
+        version: 7.2.4
+      turndown-plugin-gfm:
+        specifier: ^1.0.2
+        version: 1.0.2
     devDependencies:
+      '@types/turndown':
+        specifier: ^5.0.6
+        version: 5.0.6
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
