@@ -24,6 +24,20 @@ export interface SearchNote {
   relative: string
   name: string
   body: string
+  /** The body folded, made the first time it is asked for and then kept; see
+   *  `foldedOnce`. A note walked by both the exact pass and the loose one is
+   *  given this so the two share one copy, because folding a space of ten
+   *  thousand notes twice over is most of what a loose search would spend.
+   *  Absent for a note nobody offered it to, which folds its own. */
+  folded?: (() => string) | undefined
+}
+
+/** A note's folded text, made when it is first wanted and then the same string
+ *  every time after. Lazy rather than folded up front, because a query that asks
+ *  only about a note's path or its tags never looks at a letter of it. */
+export function foldedOnce(body: string): () => string {
+  let made: string | null = null
+  return () => (made ??= fold(body))
 }
 
 export interface Range {
@@ -182,7 +196,9 @@ interface Facts {
 }
 
 function foldedOf(facts: Facts): string {
-  return (facts.folded ??= fold(facts.note.body))
+  // The note's own copy when it was given one, so the loose pass that follows
+  // this one folds nothing; see `foldedOnce`.
+  return (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
 }
 
 function tagsOf(facts: Facts): string[] {

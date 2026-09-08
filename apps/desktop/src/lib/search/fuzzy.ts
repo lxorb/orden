@@ -359,7 +359,10 @@ export class Fuzzy {
     if (!words.length) return null
 
     const body = note.body
-    const folded = fold(body)
+    // The copy the exact pass already made, when it made one; see `foldedOnce`
+    // in match.ts. Folding a space of notes twice over was most of what a loose
+    // search spent.
+    const folded = note.folded?.() ?? fold(body)
 
     // Where each term's first letter next sits. Only ever moves forward, so
     // the whole note costs one pass per term rather than one pass per line.

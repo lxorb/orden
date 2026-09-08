@@ -19,6 +19,7 @@
 //!
 //! search/match.ts is the twin of this, down to the cases its tests use.
 
+use std::cell::OnceCell;
 use std::collections::HashMap;
 
 use serde::Serialize;
@@ -64,6 +65,12 @@ pub struct Hit {
 }
 
 /// One note as the matcher reads it.
+///
+/// Built rather than written out as a literal, because of the last field: the
+/// folded copy is made the first time somebody asks for it and then belongs to
+/// the note, so the exact pass and the loose pass share one. A space of ten
+/// thousand notes is fifty megabytes, and folding it twice over was most of what
+/// a loose search spent.
 pub struct Note<'a> {
     /// What opening the hit asks for: the note's path as this machine spells it.
     pub path: &'a str,
@@ -73,6 +80,30 @@ pub struct Note<'a> {
     pub name: &'a str,
     /// The words.
     pub body: &'a str,
+    /// The words folded, once asked for. See `folded`.
+    lowered: OnceCell<String>,
+}
+
+impl<'a> Note<'a> {
+    #[must_use]
+    pub fn new(path: &'a str, relative: &'a str, name: &'a str, body: &'a str) -> Self {
+        Self {
+            path,
+            relative,
+            name,
+            body,
+            lowered: OnceCell::new(),
+        }
+    }
+
+    /// The note folded, made the first time it is wanted and kept.
+    ///
+    /// Lazy rather than eager, because a query that asks only about a note's path
+    /// or its tags never looks at a letter of it, and a note nobody folds costs
+    /// nothing to have offered.
+    pub(crate) fn folded(&self) -> &str {
+        self.lowered.get_or_init(|| fold(self.body))
+    }
 }
 
 /// A query with its patterns already compiled and its needles already folded,
@@ -111,19 +142,27 @@ enum Term {
 /// is never worked out, which is what keeps a plain word search to one pass.
 #[derive(Default)]
 struct Needs {
-    folded: bool,
     tags: bool,
     front: bool,
     units: [bool; 3],
 }
 
 /// One note, answered as far as the query asks.
-struct Facts {
-    starts: Vec<usize>,
-    folded: String,
+///
+/// Where every line starts is the one fact worth putting off: a query that
+/// answers nothing never needs it, and that is most of the notes in a space.
+struct Facts<'a> {
+    body: &'a str,
+    starts: OnceCell<Vec<usize>>,
     tags: Vec<String>,
     front: HashMap<String, String>,
     units: [Vec<Region>; 3],
+}
+
+impl Facts<'_> {
+    fn starts(&self) -> &[usize] {
+        self.starts.get_or_init(|| line_starts(self.body))
+    }
 }
 
 /// Which of the three unit lists a group looks in.
@@ -420,11 +459,15 @@ impl Matcher {
         // tag. The first line with words in it stands in, so the row reads
         // like a note rather than like an empty result.
         if spans.is_empty() {
-            let line = (0..facts.starts.len())
-                .find(|&index| !line_text(note.body, &facts.starts, index).trim().is_empty())
+            let line = (0..facts.starts().len())
+                .find(|&index| {
+                    !line_text(note.body, facts.starts(), index)
+                        .trim()
+                        .is_empty()
+                })
                 .unwrap_or(0);
 
-            return vec![row(note, &facts.starts, line, &[])];
+            return vec![row(note, facts.starts(), line, &[])];
         }
 
         spans.sort_by_key(|span| span.from);
@@ -434,10 +477,10 @@ impl Matcher {
         let mut at: Option<usize> = None;
 
         for span in spans {
-            let line = line_at(&facts.starts, span.from);
+            let line = line_at(facts.starts(), span.from);
             if at != Some(line) {
                 if let Some(previous) = at {
-                    out.push(row(note, &facts.starts, previous, &current));
+                    out.push(row(note, facts.starts(), previous, &current));
                     if out.len() >= most {
                         return out;
                     }
@@ -449,18 +492,27 @@ impl Matcher {
         }
 
         if let Some(previous) = at {
-            out.push(row(note, &facts.starts, previous, &current));
+            out.push(row(note, facts.starts(), previous, &current));
         }
 
         out.truncate(most);
         out
     }
 
-    fn facts(&self, body: &str) -> Facts {
-        let starts = line_starts(body);
+    fn facts<'a>(&self, body: &'a str) -> Facts<'a> {
+        // A nearness group is the one thing that has to know where the lines are
+        // before anything has matched, so it is also the one thing that pays for
+        // them up front.
+        let wanted = self.needs.units.iter().any(|one| *one);
+        let starts = if wanted {
+            OnceCell::from(line_starts(body))
+        } else {
+            OnceCell::new()
+        };
+
         let unit_of = |unit: Unit| {
             if self.needs.units[slot(unit)] {
-                units_in(body, &starts, unit)
+                units_in(body, starts.get().map_or(&[][..], Vec::as_slice), unit)
             } else {
                 Vec::new()
             }
@@ -472,11 +524,7 @@ impl Matcher {
         ];
 
         Facts {
-            folded: if self.needs.folded {
-                fold(body)
-            } else {
-                String::new()
-            },
+            body,
             tags: if self.needs.tags {
                 tags_in(body)
                     .iter()
@@ -526,7 +574,7 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
         Term::Not(of) => walk(of, note, facts, region).is_none().then(Vec::new),
 
         Term::Text { needle, folded } => literals(
-            if *folded { &facts.folded } else { note.body },
+            if *folded { note.folded() } else { note.body },
             needle,
             region,
         ),
@@ -632,9 +680,8 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
         Query::Not { of } => Term::Not(Box::new(compile(*of, needs))),
 
         Query::Text { text, fold: folded } => {
-            if folded {
-                needs.folded = true;
-            }
+            // Nothing to note: whether the note gets folded is decided by whether
+            // this term ever asks for it. See `Note::folded`.
             Term::Text {
                 needle: if folded { fold(&text) } else { text },
                 folded,
@@ -696,12 +743,23 @@ mod tests {
     }
 
     fn note(body: &str) -> Note<'_> {
-        Note {
-            path: "/space/Work/Meeting.md",
-            relative: "Work/Meeting.md",
-            name: "Meeting.md",
+        Note::new(
+            "/space/Work/Meeting.md",
+            "Work/Meeting.md",
+            "Meeting.md",
             body,
-        }
+        )
+    }
+
+    /// The twin of "the fold both passes read" in search/fuzzy.test.ts. The
+    /// saving is invisible in an answer, so what is checked is that a second ask
+    /// hands back the first copy rather than making another.
+    #[test]
+    fn a_note_folds_itself_once() {
+        let note = note("The Quarter Plan");
+
+        assert_eq!(note.folded(), "the quarter plan");
+        assert!(std::ptr::eq(note.folded(), note.folded()));
     }
 
     fn answers(json: &str, body: &str) -> bool {

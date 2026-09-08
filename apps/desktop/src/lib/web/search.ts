@@ -8,7 +8,7 @@
  *  surface would pull the app in behind it. */
 
 import { Fuzzy, type FuzzyHit, withoutWords } from '../search/fuzzy'
-import { type Hit, Matcher } from '../search/match'
+import { foldedOnce, type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
 import { basename, isMarkdown, normalise, within } from './paths'
 import { files } from './store'
@@ -62,6 +62,9 @@ export async function searchRows(
       relative: row.path.slice(base === '/' ? 1 : base.length + 1),
       name: basename(row.path),
       body: row.content,
+      // Both passes below read the note; this is what keeps them to one folded
+      // copy of it between them. See `foldedOnce` in search/match.ts.
+      folded: foldedOnce(row.content),
     }
 
     const exact = matcher.hits(note, limit - found)

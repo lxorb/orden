@@ -104,12 +104,7 @@ pub fn search_space(
             .file_name()
             .map_or_else(String::new, |one| one.to_string_lossy().to_string());
 
-        let note = Note {
-            path: &shown,
-            relative: &relative,
-            name: &name,
-            body: &body,
-        };
+        let note = Note::new(&shown, &relative, &name, &body);
 
         let mut hits = matcher.hits(&note, limit.saturating_sub(found));
         if !hits.is_empty() {

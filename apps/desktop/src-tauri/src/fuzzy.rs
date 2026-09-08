@@ -28,23 +28,35 @@
 //! handed.
 //!
 //! What it costs, over 10,000 notes and 47.6 MB held in memory, release build,
-//! best of five, on the machine this was written on. Beside each is what the
-//! browser's twin does on the same corpus; see search/fuzzy.perf.test.ts.
+//! best of five, on the machine this was written on. `before` is with the two
+//! passes each folding the note and the matcher indexing every note's lines
+//! whether or not it answered; `now` is with one fold shared between them and
+//! the lines indexed only once something has matched. See `Note::folded` and
+//! `Facts::starts` in matcher.rs.
 //!
-//! | | crate | browser |
+//! | | before | now |
 //! | --- | --- | --- |
-//! | the exact pass alone, a word every note holds | 74 ms | 85 ms |
-//! | the exact pass alone, a word no note holds | 60 ms | - |
-//! | one loose term, every note answering | 150 ms | 133 ms |
-//! | two loose terms | 171 ms | 165 ms |
-//! | a loose term nothing holds | 95 ms | 17 ms |
+//! | the exact pass alone, a word every note holds | 83 ms | 77 ms |
+//! | the exact pass alone, a typo no note holds | 71 ms | 49 ms |
+//! | the exact pass alone, a word no note holds | 70 ms | 47 ms |
+//! | one loose term, every note answering | 165 ms | 104 ms |
+//! | two loose terms | 189 ms | 126 ms |
+//! | a loose term nothing holds | 104 ms | 50 ms |
 //!
-//! So loose matching adds about 86 ms to a search that already cost 64 ms, and
-//! a whole answer is 150 ms rather than the 100 ms that was asked for. The 64 ms
-//! is the exact search as it was before any of this. What would close the gap is
-//! the two passes sharing one fold of the note instead of making one each, which
-//! means the matcher handing its folded copy on; it is not done here because
-//! that is a change to the exact search's own hot path.
+//! The one loose term with every note answering is the worst there is: every
+//! note in the space is a near miss, so every line of all fifty megabytes is
+//! walked and every note comes back with a row to build. A query that does not
+//! nearly match everything is the 50 ms row. What is left is almost all the one
+//! fold: lowercasing fifty megabytes is a copy of the space, and both passes now
+//! read the same one.
+//!
+//! The browser's twin does the same, in search/fuzzy.ts, and comes out at 92 ms
+//! for the exact pass and 129 ms for one loose term on the same corpus. Sharing
+//! the fold is worth less there and sits inside the run-to-run spread: V8's
+//! lowercase is a good deal quicker than a fresh `String` per note, and the
+//! browser side never had the eager line index to lose. It is written the same
+//! way regardless, because the two are twins and a difference nobody meant is
+//! how they stop being.
 
 use serde::Serialize;
 
@@ -470,7 +482,10 @@ impl Fuzzy {
         }
 
         let body = note.body;
-        let folded = fold(body);
+        // The copy the exact pass already made, when it made one; see
+        // `Note::folded`. Folding a space of notes twice over was most of what a
+        // loose search spent.
+        let folded = note.folded();
 
         // Where each term's first letter next sits. Only ever moves forward, so
         // the whole note costs one pass per term rather than one pass per line.
@@ -499,7 +514,7 @@ impl Fuzzy {
         let mut from = 0;
 
         while from <= body.len() {
-            let broke = find_from(&folded, '\n', from);
+            let broke = find_from(folded, '\n', from);
             let end = broke.unwrap_or(body.len());
 
             if end > from {
@@ -516,7 +531,7 @@ impl Fuzzy {
                     let mut at = next[which];
 
                     if at < from {
-                        let Some(moved) = find_from(&folded, word.head, from) else {
+                        let Some(moved) = find_from(folded, word.head, from) else {
                             // Gone for the rest of the note, so no later line can
                             // hold the term either and the note is answered.
                             return done(
@@ -538,7 +553,7 @@ impl Fuzzy {
                         break;
                     }
 
-                    let Some(found) = fit_at(word, body, &folded, to, at, &mut kept, &mut tried)
+                    let Some(found) = fit_at(word, body, folded, to, at, &mut kept, &mut tried)
                     else {
                         all = false;
                         break;
@@ -778,12 +793,7 @@ mod tests {
     const NOTE: &str = "# Meeting notes\n\nAlpha met Beta on Monday.\n\n## The quarter plan\n\nBeta wrote it up.\n";
 
     fn note<'a>(path: &'a str, body: &'a str) -> Note<'a> {
-        Note {
-            path,
-            relative: "Work/Meeting.md",
-            name: "Meeting.md",
-            body,
-        }
+        Note::new(path, "Work/Meeting.md", "Meeting.md", body)
     }
 
     /// A note's best loose line under a query, as the panel would list it.

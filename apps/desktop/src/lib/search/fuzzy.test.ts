@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { fit, Fuzzy, fuzzyTerms, withoutWords } from './fuzzy'
-import type { SearchNote } from './match'
+import { foldedOnce, Matcher, type SearchNote } from './match'
 import { parseQuery } from './query'
 
 /** The twin of this file is the tests in fuzzy.rs: the same terms, the same
@@ -156,6 +156,69 @@ const note = (over: Partial<SearchNote> = {}): SearchNote => ({
   name: 'Meeting.md',
   body: NOTE,
   ...over,
+})
+
+/** The two passes over a note, and the one folded copy they share.
+ *
+ *  The saving is the whole reason `SearchNote.folded` exists, and it is invisible
+ *  in an answer: both passes give the same rows whether they fold once or twice.
+ *  So it is counted instead. */
+describe('the fold both passes read', () => {
+  function counted(body: string) {
+    const calls = { made: 0 }
+    const make = foldedOnce(body)
+
+    return {
+      calls,
+      note: {
+        path: '/space/a.md',
+        relative: 'a.md',
+        name: 'a.md',
+        body,
+        folded: () => {
+          calls.made++
+          return make()
+        },
+      } satisfies SearchNote,
+    }
+  }
+
+  test('is folded once however often it is asked for', () => {
+    const make = foldedOnce('The Quarter Plan')
+
+    expect(make()).toBe('the quarter plan')
+    // The same string back, not an equal one: the second ask folds nothing.
+    expect(make()).toBe(make())
+    expect(Object.is(make(), make())).toBe(true)
+  })
+
+  test('and both passes read it rather than folding their own', () => {
+    const { calls, note: one } = counted(NOTE)
+    const query = parseQuery('quater plan')
+
+    expect(new Matcher(query).hits(one, 1)).toEqual([])
+    expect(calls.made).toBe(1)
+
+    expect(new Fuzzy(fuzzyTerms(query)).best(one)).not.toBeNull()
+    // Twice asked and, by the test above, once folded.
+    expect(calls.made).toBe(2)
+  })
+
+  test('and not at all for a query that never reads the words', () => {
+    const { calls, note: one } = counted(NOTE)
+
+    // `path:` asks about the note rather than about what it says, so nothing
+    // ever wants the note folded and nothing folds it.
+    expect(new Matcher(parseQuery('path:nowhere')).hits(one, 1)).toEqual([])
+    expect(calls.made).toBe(0)
+  })
+
+  test('and a note offered none folds its own', () => {
+    const query = parseQuery('quater plan')
+    const plain = note()
+
+    expect(new Fuzzy(fuzzyTerms(query)).best(plain)?.text).toBe('## The quarter plan')
+  })
 })
 
 describe('a note, loosely', () => {
