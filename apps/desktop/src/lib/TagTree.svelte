@@ -59,7 +59,10 @@
           use:longPress={(event) => menu.show(event, menuFor(node), { title: node.name })}
         >
           <span class="label">{node.name}</span>
-          <span class="count">{node.total}</span>
+          <!-- `tally` rather than `count`: the slide counter claims that class
+               globally, in packages/themes/src/slides.css, where it is absolutely
+               positioned and transparent until a deck moves. -->
+          <span class="tally">{node.total}</span>
         </button>
       </div>
 
@@ -162,7 +165,7 @@
 
   /* How many notes the row's own search would find. Pushed to the far end, where
      the file tree puts nothing, so the names still read as a column. */
-  .count {
+  .tally {
     margin-left: auto;
     padding-left: var(--space-1);
     color: var(--muted);
