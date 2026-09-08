@@ -23,11 +23,13 @@ function card(id: string, x = 0): CanvasNode {
   return { id, type: 'text', x, y: 0, width: 250, height: 60, text: id }
 }
 
-/** A canvas tab, with the plane it opens on written into its document. */
+/** A canvas tab, with the plane it opens on written into its document. In a space,
+ *  so it keeps itself the way every plane somebody draws on does. */
 function opened(text = blankCanvas()) {
   const note = new NoteDoc(
     { kind: 'canvas', path: '/space/Board.canvas', name: 'Board.canvas', text, dirty: false },
     () => undefined,
+    () => true,
   )
 
   return { store: new CanvasStore(new Tab(note, 'pane')), note }
@@ -38,8 +40,6 @@ function room(): Shared & { pushed: Canvas[]; undone: number } {
   return {
     pushed: [],
     undone: 0,
-    canUndo: true,
-    canRedo: false,
     push(_before: Canvas, after: Canvas) {
       this.pushed.push(after)
     },
@@ -91,8 +91,13 @@ describe('a plane that is in a room', () => {
     expect(held.pushed).toHaveLength(1)
     expect(ids(held.pushed[0] ?? blank())).toEqual(['a'])
 
-    // The room is the history now, so taking something back is asked of it.
+    // The room is the history now, so taking something back is asked of it, and
+    // what the bar's arrows say is what the room last said rather than what this
+    // device happens to remember.
+    expect(store.canUndo).toBe(false)
+    store.historyIs({ undo: true, redo: false })
     expect(store.canUndo).toBe(true)
+
     store.undo()
     expect(held.undone).toBe(1)
   })

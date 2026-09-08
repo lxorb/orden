@@ -2,10 +2,9 @@
  *  looked at from, and what can be taken back.
  *
  *  The file is the document. A canvas tab holds a NoteDoc like a note does, and
- *  its words are the JSON in the file, so the dirty mark, Ctrl+S, the auto-save
- *  setting, the snapshot before a write and the closing question all work here
- *  without knowing a canvas exists. What this adds is a surface on top of those
- *  words instead of an editor.
+ *  its words are the JSON in the file, so keeping itself, Ctrl+S, the snapshot
+ *  before a write and the closing question all work here without knowing a canvas
+ *  exists. What this adds is a surface on top of those words instead of an editor.
  *
  *  The document is written at the end of a gesture and never during one. Dragging
  *  nine cards across the plane is one edit, one undo step and one save, not one
@@ -30,7 +29,7 @@ import { pickedBox } from './edits'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
 import { CanvasHistory } from './history'
-import type { Hand, PlaneSurface, SharedPlane } from './shared'
+import type { Hand, PlaneSurface, Reachable, SharedPlane } from './shared'
 import type { NoteDoc, Tab } from '../workspace/documents.svelte'
 
 /** Room left around the canvas when it is framed, in pixels. */
@@ -72,6 +71,11 @@ export class CanvasStore implements PlaneSurface {
   /** Whose hands are on the plane besides this one, and what each is drawing. Empty
    *  for a plane nobody else is looking at, which is the ordinary case. */
   hands = $state.raw<readonly Hand[]>([])
+
+  /** What the room says there is to take back and to put forward. Held here rather
+   *  than asked of the room, because the bar's two arrows are drawn from it and a
+   *  Yjs undo stack is not something a surface can watch. */
+  private reachable = $state.raw<Reachable>({ undo: false, redo: false })
 
   /** Whether this plane is one to look at rather than one to draw on: a space
    *  somebody shared to read.
@@ -116,11 +120,11 @@ export class CanvasStore implements PlaneSurface {
   }
 
   get canUndo(): boolean {
-    return this.shared?.canUndo ?? this.history.canUndo
+    return this.shared ? this.reachable.undo : this.history.canUndo
   }
 
   get canRedo(): boolean {
-    return this.shared?.canRedo ?? this.history.canRedo
+    return this.shared ? this.reachable.redo : this.history.canRedo
   }
 
   /** The box round everything picked, or null. What the handles are drawn on. */
@@ -201,6 +205,10 @@ export class CanvasStore implements PlaneSurface {
    *  what the surface reads, and what a surface reads is state. */
   handsAre(hands: readonly Hand[]) {
     this.hands = hands
+  }
+
+  historyIs(reachable: Reachable) {
+    this.reachable = reachable
   }
 
   /** Anything owing, written now: the room is being left, or the last tab on this

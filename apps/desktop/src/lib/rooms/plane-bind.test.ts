@@ -10,7 +10,7 @@ import {
   type InkStroke,
   writeCanvas,
 } from '../canvas/format'
-import type { Hand, PlaneSurface, SharedPlane } from '../canvas/shared'
+import type { Hand, PlaneSurface, Reachable, SharedPlane } from '../canvas/shared'
 import { PlaneBinding } from './plane-bind'
 
 /** A device drawing on one plane: the surface, the room's copy of the plane, and
@@ -26,6 +26,9 @@ class Device implements PlaneSurface {
   canvas: Canvas = emptyCanvas()
   shared: SharedPlane | null = null
   hands: readonly Hand[] = []
+  /** What the binding last said there is to take back, which is what the bar's two
+   *  arrows are drawn from. */
+  reachable: Reachable = { undo: false, redo: false }
   /** How many times the surface has been handed a whole plane. What says whether a
    *  stroke arriving cost the plane or cost the stroke. */
   arrivals = 0
@@ -65,6 +68,10 @@ class Device implements PlaneSurface {
     this.hands = hands
   }
 
+  historyIs(reachable: Reachable) {
+    this.reachable = reachable
+  }
+
   /** An edit made here, the way the store makes one: stamped, then whatever changed
    *  written into the room. */
   edit(next: Canvas) {
@@ -83,7 +90,7 @@ class Device implements PlaneSurface {
   }
 
   get canUndo(): boolean {
-    return this.binding.canUndo
+    return this.reachable.undo
   }
 
   /** The plane as the room holds it. The same as `canvas` at every moment the
@@ -99,8 +106,6 @@ class Device implements PlaneSurface {
   private join() {
     this.binding.together()
     this.shared = {
-      canUndo: false,
-      canRedo: false,
       push: (before, after) => this.binding.push(before, after),
       undo: () => this.binding.undo(),
       redo: () => this.binding.redo(),

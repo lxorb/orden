@@ -36,12 +36,16 @@ import { HERE } from './door'
  *  device nor the room, so it is nobody's to undo. */
 const JOINED = 'joined'
 
+/** Every way the pile of what can be taken back changes. */
+const STACK = ['stack-item-added', 'stack-item-popped', 'stack-cleared'] as const
+
 export class PlaneBinding {
   private readonly history: Y.UndoManager
   /** The two root maps the plane lives in; see plane.ts in @nib/rooms. Watched
    *  together, so one gesture that moved a card and deleted another is one step. */
   private readonly watched: Y.Map<unknown>[]
   private readonly heard: (events: Y.YEvent<Y.AbstractType<unknown>>[]) => void
+  private readonly told: () => void
   private watching = false
 
   constructor(
@@ -57,6 +61,15 @@ export class PlaneBinding {
       trackedOrigins: new Set([HERE]),
       captureTimeout: 0,
     })
+
+    // What the bar's two arrows read. Said rather than asked, because a Yjs undo
+    // stack is not a thing a surface can watch, and both arrows change on a push
+    // as well as on a press.
+    this.told = () => {
+      this.surface.historyIs({ undo: this.history.canUndo(), redo: this.history.canRedo() })
+    }
+
+    for (const change of STACK) this.history.on(change, this.told)
 
     this.heard = (events) => {
       const ids = changedIn(events)
@@ -91,14 +104,6 @@ export class PlaneBinding {
     this.doc.transact(() => pushPlane(this.doc, before, after), HERE)
   }
 
-  get canUndo(): boolean {
-    return this.history.canUndo()
-  }
-
-  get canRedo(): boolean {
-    return this.history.canRedo()
-  }
-
   /** Answers whether there was anything to take back. The change lands in the
    *  document and comes back through the observer like any other, so the surface,
    *  the other devices and the file all hear about it the one way. */
@@ -116,6 +121,7 @@ export class PlaneBinding {
       this.watching = false
     }
 
+    for (const change of STACK) this.history.off(change, this.told)
     this.history.destroy()
   }
 

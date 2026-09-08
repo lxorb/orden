@@ -25,12 +25,15 @@ export interface Hand {
   stroke: InkStroke | null
 }
 
+/** What can be taken back and put forward. Per device: an undo never reaches what
+ *  somebody else drew. */
+export interface Reachable {
+  undo: boolean
+  redo: boolean
+}
+
 /** The room, as the surface sees it. */
 export interface SharedPlane {
-  /** Whether there is anything of this device's own to take back. Per device: an
-   *  undo never reaches what somebody else drew. */
-  readonly canUndo: boolean
-  readonly canRedo: boolean
   /** An edit made here, on its way to the others. `after` is already stamped. */
   push: (before: Canvas, after: Canvas) => void
   /** Answers whether there was anything to take back or put forward. */
@@ -52,4 +55,8 @@ export interface PlaneSurface {
   arrived: (canvas: Canvas) => void
   /** Who else is on the plane, for the surface to draw. */
   handsAre: (hands: readonly Hand[]) => void
+  /** What there now is to take back and to put forward. Told rather than asked,
+   *  because the room's history is not a thing a surface can watch, and the bar
+   *  draws its two arrows from it. */
+  historyIs: (reachable: Reachable) => void
 }

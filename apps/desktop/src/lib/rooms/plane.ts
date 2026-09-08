@@ -55,14 +55,6 @@ export class PlaneRoom implements SharedPlane {
     return this.door.caughtUp
   }
 
-  get canUndo(): boolean {
-    return this.binding.canUndo
-  }
-
-  get canRedo(): boolean {
-    return this.binding.canRedo
-  }
-
   push(before: Canvas, after: Canvas) {
     this.binding.push(before, after)
   }
