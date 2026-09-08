@@ -499,6 +499,13 @@ export const fr: Dictionary = {
   'no such note in this space': "Cette note n'existe pas dans cet espace",
   'no such note': "Cette note n'existe pas",
   'no such space': "Cet espace n'existe pas",
+  'you can only read this space': 'Vous pouvez seulement lire cet espace',
+  'only the owner can do that': 'Seul le propriétaire peut faire cela',
+  'this space is already yours': 'Cet espace est déjà le vôtre',
+  'that is as many people as one space holds': 'Un espace ne contient pas plus de personnes',
+  'that invitation was sent to another address':
+    'Cette invitation a été envoyée à une autre adresse',
+  'that link has expired': 'Ce lien a expiré',
   'sign in first': "Connectez-vous d'abord",
   'that code has expired - ask for a new one': 'Ce code a expiré - demandez-en un nouveau',
   'that code is not right': "Ce code n'est pas le bon",

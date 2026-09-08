@@ -497,6 +497,12 @@ export const ja: Dictionary = {
   'no such note': 'そのノートはありません',
   'no such space': 'そのスペースはありません',
   'sign in first': 'まずサインインしてください',
+  'you can only read this space': 'このスペースは閲覧のみです',
+  'only the owner can do that': 'これは所有者だけができます',
+  'this space is already yours': 'このスペースはすでにあなたのものです',
+  'that is as many people as one space holds': '1つのスペースに入れる人数の上限です',
+  'that invitation was sent to another address': 'この招待は別のアドレス宛です',
+  'that link has expired': 'このリンクは期限切れです',
   'that code has expired - ask for a new one':
     'コードの有効期限が切れました - 新しいコードを取得してください',
   'that code is not right': 'コードが違います',

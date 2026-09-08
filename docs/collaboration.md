@@ -348,7 +348,17 @@ reach, and what they may do there - and passes the room exactly one bit:
 announced, so an object that slept still knows. A message that would change the
 text is then dropped before it reaches the protocol; `isEdit` in `@nib/rooms`
 is what tells one apart, and a reader may still ask what the room holds and say
-where their caret is. The room learns nothing else about anybody. On the client
+where their caret is. The room learns nothing else about anybody.
+
+The bit is read once, at the door, which is the one thing to know about it: a
+role taken away or narrowed while somebody has the note open reaches them when
+their socket next opens rather than at once. That is a pass of the file sync
+away, because the pass that stops listing the space closes its notes and their
+rooms with them, and it is the price of a room that costs no query per keystroke.
+Everything over the API is decided per request and changes immediately; the tests
+say so.
+
+On the client
 the editor is read-only for the same reason and by the same rule, per pane,
 because the pane beside it may be showing a note of this account's own - the
 machinery was already there, in `packages/editor/src/modes.ts`, and it already
