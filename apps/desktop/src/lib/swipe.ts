@@ -9,10 +9,18 @@
 export const CLAIM = 12
 
 /** Whether something under the finger scrolls sideways itself - a wide table,
- *  a long line of code. That gesture belongs to it, not to the drawer. */
+ *  a long line of code. That gesture belongs to it, not to the drawer.
+ *
+ *  Wider than its box is not enough: a box that clips what overflows it goes
+ *  nowhere when it is dragged, and the writing surface is one of those. Taking
+ *  those for scrollers left the drawer refusing to open anywhere in a note that
+ *  had a wide table in it. */
 export function scrollsSideways(from: Element | null, stopAt: Element): boolean {
   for (let node: Element | null = from; node && node !== stopAt; node = node.parentElement) {
-    if (node.scrollWidth > node.clientWidth + 1) return true
+    if (node.scrollWidth <= node.clientWidth + 1) continue
+
+    const { overflowX } = getComputedStyle(node)
+    if (overflowX === 'auto' || overflowX === 'scroll') return true
   }
 
   return false

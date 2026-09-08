@@ -1,8 +1,22 @@
 /* Editor-surface styles. Text appearance comes from the syntax highlighter;
    these rules own block-level rhythm, backgrounds and rendered widgets. */
 
+/* A line of writing is scrolled up and down and never sideways, and saying so
+   is what makes a swipe over it a scroll at once.
+
+   The note is the whole screen on a phone, so every drag over the text is one
+   the drawer might claim, and it claims them from a listener that can cancel
+   the scroll. Until that listener has answered, the browser cannot start
+   scrolling and the touch is still an undecided press on editable text: long
+   enough on a busy frame for the press to become a word selection, with the
+   handle, the buzz, and the next drag moving the handle instead of the note.
+   Naming the one gesture a line supports lets the browser scroll without
+   asking, which settles the gesture before any of that can begin. Sideways is
+   left to what actually scrolls sideways: a table's box is a sibling of the
+   lines, not part of one, and keeps its own. */
 .cm-editor .cm-line {
   padding: 0;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* CodeMirror pads every widget with a zero-size <img>. The writing surface

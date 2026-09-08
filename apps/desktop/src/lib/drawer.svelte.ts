@@ -58,12 +58,18 @@ class Drawer {
       event.touches.length === 1 ? event.touches[0] : undefined
 
     const onStart = (event: TouchEvent) => {
-      const touch = single(event)
-      if (!touch) return
-
       claimed = false
       openedByDrag = false
       measured = false
+      // Cleared first, because every way out of this handler is a gesture the
+      // drawer is not in: a width left over from the last one would let the
+      // moves through, measured against a starting point that is no longer on
+      // the screen, and the drawer would leap out under a finger that was
+      // scrolling a table.
+      width = 0
+
+      const touch = single(event)
+      if (!touch) return
 
       // From anywhere on the screen, not just the edge: an edge-only gesture is
       // a thin target and easy to miss. The one thing that outranks it is
