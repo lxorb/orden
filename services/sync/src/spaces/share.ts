@@ -241,7 +241,7 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
   if (email === owner.email) return context.json({ error: 'this space is already yours' }, 409)
 
   const held = await membersOf(context.env, space.id)
-  if (held.length >= MOST && !held.some((one) => one.email === email)) {
+  if (held.length >= MOST_MEMBERS && !held.some((one) => one.email === email)) {
     return context.json({ error: 'that is as many people as one space holds' }, 409)
   }
 
@@ -394,11 +394,16 @@ share.post('/:id/share/requests/:email', atLeast('owner'), async (context) => {
   if (!waiting) return context.json({ error: 'nobody by that address' }, 404)
 
   // Already proved the address to have asked at all, so they are in rather than
-  // invited: joined_at is set now and no mail goes anywhere.
+  // invited: joined_at is set now and no mail goes anywhere. Set on a row that
+  // was already there as well - an invitation nobody had opened - or accepting
+  // the request would leave the sheet saying they are still waiting to arrive
+  // when they have already been.
   await context.env.DB.prepare(
     `insert into space_members (space_id, email, role, joined_at, created_at)
      values (?1, ?2, ?3, ?4, ?4)
-     on conflict(space_id, email) do update set role = excluded.role`,
+     on conflict(space_id, email) do update set
+       role = excluded.role,
+       joined_at = coalesce(space_members.joined_at, excluded.joined_at)`,
   )
     .bind(space.id, email, waiting.role, now())
     .run()

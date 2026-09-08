@@ -846,6 +846,35 @@ describe('a share link', () => {
     expect(json.members).toEqual([])
   })
 
+  /** Accepting is the one thing that settles whether somebody has been in, and it
+   *  wrote the role onto a row that was already there without saying so. No route
+   *  reaches that pair today - an invitation takes any waiting request away, and
+   *  the link hands back the space rather than making a request when a membership
+   *  exists - so the state is arranged here, which is what a clause written for a
+   *  conflict has to be held to. */
+  test('accepting says they have arrived even over a membership that was waiting', async () => {
+    const at = Date.now()
+    env.db
+      .prepare('insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)')
+      .run(space, STRANGER, 'read', at)
+    env.db
+      .prepare('insert into space_requests (space_id, email, role, created_at) values (?, ?, ?, ?)')
+      .run(space, STRANGER, 'write', at)
+
+    expect((await shareView()).json.members[0]?.pending).toBe(true)
+
+    await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    const { json } = await shareView()
+    expect(json.requests).toEqual([])
+    expect(json.members).toEqual([
+      { email: STRANGER, guest: null, name: null, role: 'write', pending: false },
+    ])
+  })
+
   test('keeps what a request was promised when the link changes afterwards', async () => {
     const token = await link('write', 'approval')
     await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
