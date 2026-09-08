@@ -100,12 +100,27 @@ macro_rules! commands {
     };
 }
 
+/// How a phone starts the app. The attribute writes the symbol the Android and
+/// iOS projects load the library through, which a desktop does not have: there
+/// the binary beside this library calls `run` itself.
+///
+/// In a module of its own so that the one item the macro writes without a doc
+/// comment is excepted here rather than crate-wide. Everything of ours is still
+/// documented, and the desktop builds hold the whole crate to that.
+#[cfg(mobile)]
+#[allow(
+    missing_docs,
+    reason = "the entry point is written by a macro, which cannot document it"
+)]
+mod entry {
+    #[tauri::mobile_entry_point]
+    fn start() {
+        super::run();
+    }
+}
+
 /// Starts the app. Returns when the last window has closed, and exits with a
 /// message if the app could not be built at all.
-///
-/// On a phone this is also the entry point the platform calls into: the attribute
-/// writes the symbol the Android and iOS projects load the library through.
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default();
 
