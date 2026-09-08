@@ -197,8 +197,11 @@ export interface Reply {
   detail: string | null
   dns: DnsRecord[]
 
-  // Following a link into a space somebody shared.
+  // Following a link into a space somebody shared, and the guest a link that
+  // asks nothing hands out.
   waiting: boolean
+  declined: boolean
+  guest: { id: string; name: string }
 
   // Notes and the change feed.
   note: NoteView
@@ -242,11 +245,25 @@ export interface Reply {
   scope: string
 }
 
-/** Who else may reach a space, as the Share sheet reads it. */
+/** Who else may reach a space, as the Share sheet reads it. Exactly one of
+ *  `email` and `guest` names each person: a member is an address, a guest is an
+ *  id the space's own link handed out. */
 export interface ShareView {
   owner: { email: string; name: string | null }
-  members: { email: string; name: string | null; role: string; pending: boolean }[]
-  requests: { email: string; name: string | null; role: string; at: number }[]
+  members: {
+    email: string | null
+    guest: string | null
+    name: string | null
+    role: string
+    pending: boolean
+  }[]
+  requests: {
+    email: string | null
+    guest: string | null
+    name: string | null
+    role: string
+    at: number
+  }[]
   link: { url: string; role: string; mode: string } | null
   mailed: boolean
   error: string

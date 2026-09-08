@@ -6,7 +6,7 @@ import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
 import { allows, atLeast, refusal, spaceOf, type Reached } from './spaces/space'
 import { reachedSpace } from './spaces/space'
-import type { Env, Note, User, Variables } from './types'
+import type { Env, Note, Variables, Whoever } from './types'
 
 /** The largest note the API will take. R2 would hold more; a note this size
  *  is already a file that wants to be split, and the ceiling keeps one
@@ -214,24 +214,24 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   return context.json({ note: presentNote(note) }, 201)
 })
 
-/** A note this account can reach, together with the space it sits in and the
- *  role held there. Null when the note is not there or is in a space this
- *  account has nothing to do with, which are the same answer on purpose. */
+/** A note this person can reach, together with the space it sits in and the
+ *  role held there. Null when the note is not there or is in a space they have
+ *  nothing to do with, which are the same answer on purpose. */
 async function reachedNote(
   env: Env,
-  user: User,
+  who: Whoever,
   noteId: string,
 ): Promise<{ note: Note; space: Reached } | null> {
   const note = await env.DB.prepare('select * from notes where id = ?').bind(noteId).first<Note>()
 
   if (!note) return null
 
-  const space = await reachedSpace(env, user, note.space_id)
+  const space = await reachedSpace(env, who, note.space_id)
   return space ? { note, space } : null
 }
 
 notes.get('/notes/:id', async (context) => {
-  const found = await reachedNote(context.env, context.get('user'), context.req.param('id'))
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
   if (!found) return context.json({ error: 'no such note' }, 404)
   const { note } = found
 
@@ -252,7 +252,7 @@ notes.get('/notes/:id', async (context) => {
  *  same time therefore both keep what they drew, and neither ends up with a
  *  second file to go and find. */
 notes.put('/notes/:id', async (context) => {
-  const found = await reachedNote(context.env, context.get('user'), context.req.param('id'))
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
   if (!found) return context.json({ error: 'no such note' }, 404)
   if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
   const { note, space } = found
@@ -305,7 +305,7 @@ notes.put('/notes/:id', async (context) => {
  *  content stays, with its size and hash, so the note can be put back from
  *  Recently deleted; the purge in trash.ts takes it away after 14 days. */
 notes.delete('/notes/:id', async (context) => {
-  const found = await reachedNote(context.env, context.get('user'), context.req.param('id'))
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
   if (!found) return context.json({ error: 'no such note' }, 404)
   if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
   const { note } = found

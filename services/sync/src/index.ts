@@ -1,16 +1,18 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { auth, presentUser, requireUser } from './auth'
+import { auth, presentUser, requireWhoever } from './auth'
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
+import { cleanName, NAME_LIMIT } from './crypto'
+import { guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
 import { rooms } from './rooms'
 import { settings } from './settings'
 import { spaces } from './spaces'
-import { join } from './spaces/share'
+import { join } from './spaces/join'
 import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
@@ -61,10 +63,10 @@ app.route('/mcp', mcp)
 // subprotocol and is let in ahead of the guard below; see rooms/index.ts.
 app.route('/rooms', rooms)
 
-// A link somebody was sent to a shared space. What it is about is answered to
-// anybody, because it is what the page shows before there is a session to have;
-// walking through it needs one, and the route asks for it itself. Registered
-// ahead of the guard below for the first half's sake.
+// A link somebody was sent to a shared space. Both halves sit outside the guard
+// below, because a link is its own proof: what it is about is answered to
+// anybody, and walking through it is what hands out the session. See
+// spaces/join.ts.
 app.route('/v1/join', join)
 
 // How a client finds the sign-in, and the sign-in itself. Registered ahead of
@@ -74,45 +76,66 @@ app.route('/.well-known', oauthMetadata)
 app.use('/oauth/*', anyOrigin)
 app.route('/oauth', oauth)
 
-/** Everything past this point needs a session. */
+/** Everything past this point needs a session, of one of the two kinds there
+ *  are. A guest's reaches the handful of routes `guestMayReach` names and
+ *  nothing else: the spaces its links granted, and who it is. */
 app.use('/v1/*', async (context, next) => {
-  const user = await requireUser(context.env, context.req.header('authorization'))
-  if (!user) return context.json({ error: 'sign in first' }, 401)
+  const who = await requireWhoever(context.env, context.req.header('authorization'))
+  if (!who) return context.json({ error: 'sign in first' }, 401)
 
-  context.set('user', user)
+  context.set('who', who)
+
+  if (who.kind === 'guest') {
+    const path = new URL(context.req.url).pathname
+    if (!guestMayReach(context.req.method, path)) {
+      return context.json({ error: 'sign in to do that' }, 403)
+    }
+    context.set('guest', who.guest)
+  } else {
+    context.set('user', who.user)
+  }
+
   await next()
 })
 
-app.get('/v1/me', (context) => context.json({ user: presentUser(context.get('user')) }))
+app.get('/v1/me', (context) => {
+  const who = context.get('who')
+  // A guest is not an account and is not answered as one: what comes back is a
+  // name, which is all a guest has and all the other people in a note need.
+  return who.kind === 'guest'
+    ? context.json({ guest: presentGuest(who.guest) })
+    : context.json({ user: presentUser(who.user) })
+})
 
-/** Long enough for any name, short enough that a blog footer stays a footer. */
-const NAME_LIMIT = 60
-
-/** The one thing about an account that can be changed: what to call it. */
+/** The one thing about whoever is here that can be changed: what to call them.
+ *  One route for both, because a guest renaming itself so that a caret carries
+ *  something real is the same act as an account choosing a name. */
 app.patch('/v1/me', async (context) => {
-  const user = context.get('user')
+  const who = context.get('who')
   const body = await readBody(context)
   // Read with room to spare, because what is measured is the name that comes
   // out of the cleaning below rather than what arrived.
   const given = body.text('name', NAME_LIMIT * 8)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  // Inner runs of whitespace go too: a name is words, not layout. So do the
-  // other control characters, which nothing can show and which would only
-  // ever arrive by accident or on purpose.
-  const name = (given ?? '')
-    .replace(/\s+/g, ' ')
-    .replace(/\p{Cc}/gu, '')
-    .trim()
+  const name = cleanName(given ?? '')
   if (name.length > NAME_LIMIT) {
     return context.json({ error: `use at most ${NAME_LIMIT} characters` }, 400)
   }
 
+  if (who.kind === 'guest') {
+    // A guest keeps the name it arrived with rather than losing it to an empty
+    // field: a caret with nothing over it is worse than one with a made-up word.
+    const named = name || who.guest.name
+    await renameGuest(context.env, who.guest.id, named)
+    return context.json({ guest: presentGuest({ ...who.guest, name: named }) })
+  }
+
   await context.env.DB.prepare('update users set name = ? where id = ?')
-    .bind(name || null, user.id)
+    .bind(name || null, who.user.id)
     .run()
 
-  return context.json({ user: presentUser({ ...user, name: name || null }) })
+  return context.json({ user: presentUser({ ...who.user, name: name || null }) })
 })
 
 app.get('/v1/usage', async (context) => {

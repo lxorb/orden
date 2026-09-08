@@ -11,8 +11,9 @@ import {
   sha256,
 } from './crypto'
 import { codeMessage, mailer } from './email'
+import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { makeFirstSpace } from './spaces/first'
-import type { Env, User, Variables } from './types'
+import type { Env, User, Variables, Whoever } from './types'
 
 const CODE_TTL = 10 * 60 * 1000
 const RESEND_GAP = 30 * 1000
@@ -33,10 +34,102 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
   return row ?? null
 }
 
+/** The token an `Authorization` header carries, or nothing. */
+export function bearer(header: string | undefined): string | null {
+  return header?.startsWith('Bearer ') ? header.slice(7).trim() : null
+}
+
 /** Rejects the request unless it carries a live session. */
 export async function requireUser(env: Env, header: string | undefined): Promise<User | null> {
-  const token = header?.startsWith('Bearer ') ? header.slice(7).trim() : null
+  const token = bearer(header)
   return token ? userForToken(env, token) : null
+}
+
+/** Whoever the request is from: the account whose session it carries, or the
+ *  guest a link handed one to. One lookup each, in that order, because an
+ *  account's is much the commoner case and either answer is one round trip. */
+export async function requireWhoever(
+  env: Env,
+  header: string | undefined,
+): Promise<Whoever | null> {
+  const token = bearer(header)
+  if (!token) return null
+
+  const user = await userForToken(env, token)
+  if (user) return { kind: 'user', user }
+
+  const guest = await guestForToken(env, token)
+  return guest ? { kind: 'guest', guest } : null
+}
+
+/** A session for an account, and the row behind it. Sessions that ran out are
+ *  cleared as new ones arrive: nothing else would ever take them away, and a
+ *  row nobody can use is only a row. */
+export async function openSession(env: Env, userId: string): Promise<string> {
+  await env.DB.prepare('delete from sessions where expires_at < ?').bind(now()).run()
+
+  const token = randomToken()
+  await env.DB.prepare(
+    'insert into sessions (token_hash, user_id, created_at, expires_at) values (?, ?, ?, ?)',
+  )
+    .bind(await sha256(token), userId, now(), now() + SESSION_TTL)
+    .run()
+
+  return token
+}
+
+/** The account at an address, made on the spot for one seen for the first time:
+ *  signing in and signing up are the same thing, and so is walking through an
+ *  invitation written to an address nobody has ever used.
+ *
+ *  `accepted` is the request's `Accept-Language`, which is the only thing the
+ *  service ever learns about what language somebody reads. It is what the first
+ *  note is written in, and that note is written once, so the header has to
+ *  arrive here rather than be asked for later. */
+export async function accountFor(
+  env: Env,
+  address: string,
+  accepted: string | undefined,
+): Promise<User> {
+  const held = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
+    .bind(address)
+    .first<User>()
+
+  if (held) return held
+
+  const user: User = { id: newId(), email: address, name: null, created_at: now() }
+  await env.DB.prepare('insert into users (id, email, created_at) values (?, ?, ?)')
+    .bind(user.id, user.email, user.created_at)
+    .run()
+
+  try {
+    await makeFirstSpace(env, user.id, accepted)
+  } catch {
+    // An account is worth more than the note it opens with, so a store that
+    // baulks here does not cost somebody their sign-in. Nothing tries again:
+    // only an account being made is given a space, because a later sign-in
+    // cannot tell an empty rail somebody meant from one that went wrong.
+  }
+
+  return user
+}
+
+/** Whatever a guest on this device, or a guest at this address, was already in
+ *  becomes the account's. Called wherever a session for an account begins, so
+ *  that neither way of arriving loses what the person had.
+ *
+ *  `held` is the guest token the app hands over, which is how the device says
+ *  "this was me". Failing to claim is not a failed sign-in: the account is what
+ *  was asked for, and a space that did not follow is one the link opens again. */
+export async function claimWhatWasGuested(
+  env: Env,
+  user: User,
+  held: string | null,
+): Promise<void> {
+  const guest = held ? await guestForToken(env, held) : null
+  if (guest) await claimGuest(env, guest.id, user)
+
+  await claimGuestsAt(env, user)
 }
 
 /** Sends a sign-in code, or says how long until another may go. Always
@@ -81,12 +174,7 @@ export async function sendCode(
 }
 
 /** Checks a code and hands back the account, made on the spot for an address
- *  seen for the first time: signing in and signing up are the same thing.
- *
- *  `accepted` is the request's `Accept-Language`, which is the only thing the
- *  service ever learns about what language somebody reads. It is what the first
- *  note is written in, and that note is written once, so the header has to
- *  arrive here rather than be asked for later. */
+ *  seen for the first time: signing in and signing up are the same thing. */
 export async function verifyCode(
   env: Env,
   address: string,
@@ -122,27 +210,7 @@ export async function verifyCode(
 
   await env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
 
-  let user = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
-    .bind(address)
-    .first<User>()
-
-  if (!user) {
-    user = { id: newId(), email: address, name: null, created_at: now() }
-    await env.DB.prepare('insert into users (id, email, created_at) values (?, ?, ?)')
-      .bind(user.id, user.email, user.created_at)
-      .run()
-
-    try {
-      await makeFirstSpace(env, user.id, accepted)
-    } catch {
-      // An account is worth more than the note it opens with, so a store that
-      // baulks here does not cost somebody their sign-in. Nothing tries again:
-      // only an account being made is given a space, because a later sign-in
-      // cannot tell an empty rail somebody meant from one that went wrong.
-    }
-  }
-
-  return { user }
+  return { user: await accountFor(env, address, accepted) }
 }
 
 export const auth = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -152,6 +220,8 @@ export const auth = new Hono<{ Bindings: Env; Variables: Variables }>()
  *  absurd reaches a query or a mail. */
 const EMAIL_LIMIT = 320
 const CODE_LIMIT = 16
+/** A session token, as the outer bound on the guest one a sign-in hands over. */
+const TOKEN_LIMIT = 128
 
 /** Step one. */
 auth.post('/code', async (context) => {
@@ -170,6 +240,9 @@ auth.post('/verify', async (context) => {
   const body = await readBody(context)
   const email = body.text('email', EMAIL_LIMIT)
   const code = body.text('code', CODE_LIMIT)
+  // What this device was as a guest, if it was one. Handed over so that the
+  // spaces a link let it into follow it into the account.
+  const held = body.text('guest', TOKEN_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   const verified = await verifyCode(
@@ -182,18 +255,9 @@ auth.post('/verify', async (context) => {
   if ('error' in verified) return context.json({ error: verified.error }, verified.status)
   const { user } = verified
 
-  // Sessions that ran out are cleared as new ones arrive: nothing else would
-  // ever take them away, and a row nobody can use is only a row.
-  await context.env.DB.prepare('delete from sessions where expires_at < ?').bind(now()).run()
+  await claimWhatWasGuested(context.env, user, held ?? null)
 
-  const token = randomToken()
-  await context.env.DB.prepare(
-    'insert into sessions (token_hash, user_id, created_at, expires_at) values (?, ?, ?, ?)',
-  )
-    .bind(await sha256(token), user.id, now(), now() + SESSION_TTL)
-    .run()
-
-  return context.json({ token, user: presentUser(user) })
+  return context.json({ token: await openSession(context.env, user.id), user: presentUser(user) })
 })
 
 /** The account as the app sees it: never the session, never the timestamps. */

@@ -331,7 +331,9 @@ describe('an invitation', () => {
     expect(sent).toMatch(/https:\/\/nibeditor\.com\/join\/[a-f0-9]{64}/)
 
     const { json } = await shareView()
-    expect(json.members).toEqual([{ email: READER, name: null, role: 'read', pending: true }])
+    expect(json.members).toEqual([
+      { email: READER, guest: null, name: null, role: 'read', pending: true },
+    ])
   })
 
   test('waits for the address to be proved before anybody has been in', async () => {
@@ -681,7 +683,9 @@ describe('a share link', () => {
 
     const { json } = await shareView()
     expect(json.requests).toEqual([])
-    expect(json.members).toEqual([{ email: STRANGER, name: null, role: 'write', pending: false }])
+    expect(json.members).toEqual([
+      { email: STRANGER, guest: null, name: null, role: 'write', pending: false },
+    ])
 
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
@@ -774,9 +778,13 @@ describe('a share link', () => {
     )
   })
 
-  test('needs a session to walk through, and says which is missing', async () => {
+  test('needs no session at all: it hands out a guest instead', async () => {
     const token = await link('read', 'open')
-    expect((await call(env, `/v1/join/${token}`, { method: 'POST' })).status).toBe(401)
+    const { status, json } = await call(env, `/v1/join/${token}`, { method: 'POST' })
+
+    expect(status).toBe(200)
+    expect(json.token).toBeTruthy()
+    expect(json.guest.name).toBeTruthy()
   })
 })
 

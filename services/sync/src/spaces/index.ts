@@ -10,7 +10,7 @@ import { Hono } from 'hono'
 import { readBody } from '../body'
 import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
-import type { Env, Space, Variables } from '../types'
+import type { Env, Space, Variables, Whoever } from '../types'
 import { bookmarks } from './bookmarks'
 import { spaceFiles } from './files'
 import { publish } from './publish'
@@ -53,25 +53,45 @@ const REACHABLE = `select sp.*,
  order by case when sp.user_id = ?1 then 0 else 1 end, sp.position, sp.created_at
  limit ?4`
 
-spaces.get('/', async (context) => {
-  const user = context.get('user')
-  const { results } = await context.env.DB.prepare(REACHABLE)
-    .bind(user.id, user.email, 0, MOST_IN_ORDER)
+/** And the same listing for a guest, which is only the spaces its links let it
+ *  into: a guest owns nothing, so there is no rail of its own for them to sit
+ *  after and no order but the one their owners put them in. */
+const GUEST_REACHABLE = `select sp.*, g.role as role
+  from spaces sp
+  join guest_members g on g.space_id = sp.id and g.guest_id = ?1
+ where sp.deleted = ?2 and g.joined_at is not null
+ order by sp.position, sp.created_at
+ limit ?3`
+
+/** Every space somebody can reach, alive or deleted. The deleted ones are what
+ *  a machine that has been away needs in order to tell a space that went from
+ *  one it has simply not uploaded yet. */
+function reachable(env: Env, who: Whoever, deleted: 0 | 1) {
+  if (who.kind === 'guest') {
+    return env.DB.prepare(GUEST_REACHABLE)
+      .bind(who.guest.id, deleted, MOST_IN_ORDER)
+      .all<Space & { role: Role }>()
+  }
+
+  return env.DB.prepare(REACHABLE)
+    .bind(who.user.id, who.user.email, deleted, MOST_IN_ORDER)
     .all<Space & { role: Role }>()
+}
+
+spaces.get('/', async (context) => {
+  const who = context.get('who')
+  const mine = who.kind === 'user' ? who.user.id : null
+  const { results } = await reachable(context.env, who, 0)
 
   // Which of them anybody else is in, so the rail can mark them. One query for
   // the listing rather than one per space.
   const shared = await sharedAmong(
     context.env,
-    results.filter((one) => one.user_id === user.id).map((one) => one.id),
+    results.filter((one) => one.user_id === mine).map((one) => one.id),
   )
 
-  // The markers go too. A machine that has been away needs them to tell a
-  // space that was deleted from one it has simply not uploaded yet. A space
-  // somebody shared leaves the same marker for everybody who was in it.
-  const gone = await context.env.DB.prepare(REACHABLE)
-    .bind(user.id, user.email, 1, MOST_IN_ORDER)
-    .all<{ id: string }>()
+  // A space somebody shared leaves the same marker for everybody who was in it.
+  const gone = await reachable(context.env, who, 1)
 
   // How much each of them holds. Read here because a machine that has just
   // signed in reads this listing before it pulls anything, so the listing is

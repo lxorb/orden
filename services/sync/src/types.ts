@@ -51,6 +51,23 @@ export interface User {
   created_at: number
 }
 
+/** Somebody a share link let in, with no account. Reaches the spaces its links
+ *  granted and nothing else; see src/guests.ts. */
+export interface Guest {
+  id: string
+  /** What the carets and the Share sheet call them. Never null: a guest is
+   *  given a name from the device it arrived on, and renames it from there. */
+  name: string
+  /** What a link that asks first asked for, unverified. A label, not a
+   *  credential. */
+  email: string | null
+  created_at: number
+}
+
+/** Whoever a request is from. Every route that names a space asks this and
+ *  nothing more: what may this person do here. */
+export type Whoever = { kind: 'user'; user: User } | { kind: 'guest'; guest: Guest }
+
 export interface Space {
   id: string
   user_id: string
@@ -94,8 +111,17 @@ export interface Note {
 }
 
 /** What the session guard puts on the request for the routes behind it, and
- *  what `atLeast` adds for a route that names a space. */
+ *  what `atLeast` adds for a route that names a space.
+ *
+ *  `who` is always there; `user` and `guest` are the two halves of it, and each
+ *  is set only on a request that is the one kind. A route reads whichever it
+ *  needs: `who` where it only has to reach a space, `user` where it is about
+ *  the account itself - and those routes are closed to a guest, which is what
+ *  makes reading it safe. `space` has always worked that way, being set only
+ *  behind `atLeast`. */
 export interface Variables {
+  who: Whoever
   user: User
+  guest: Guest
   space: Reached
 }

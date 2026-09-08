@@ -58,3 +58,19 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 export function isEmail(email: string): boolean {
   return EMAIL.test(email) && email.length <= 254
 }
+
+/** Long enough for any name, short enough that a blog footer stays a footer and
+ *  a caret's label stays over the caret. */
+export const NAME_LIMIT = 60
+
+/** What somebody is called, as it is stored. Inner runs of whitespace go,
+ *  because a name is words and not layout, and so do the control characters,
+ *  which nothing can show and which would only ever arrive by accident or on
+ *  purpose. One function, because an account and a guest are both a person with
+ *  a name and there is no reason for the two to be cleaned differently. */
+export function cleanName(given: string): string {
+  return given
+    .replace(/\s+/g, ' ')
+    .replace(/\p{Cc}/gu, '')
+    .trim()
+}

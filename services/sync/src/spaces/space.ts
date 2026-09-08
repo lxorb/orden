@@ -11,7 +11,7 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
-import type { Env, Space, User, Variables } from '../types'
+import type { Env, Space, Variables, Whoever } from '../types'
 import { readBookmarks } from './bookmarks'
 
 /** What somebody may do in a space. Ordered: an owner may do what a writer may,
@@ -97,8 +97,8 @@ export interface Reached extends Space {
   role: Role
 }
 
-/** The one question everything here asks: is this space this account's to
- *  reach, and as what.
+/** The one question everything here asks: is this space this person's to reach,
+ *  and as what.
  *
  *  One query, because it runs in front of every request that names a space. The
  *  owner is the space's own column; everybody else is a row keyed by their
@@ -111,10 +111,27 @@ const REACHED = `select sp.*,
   left join space_members m on m.space_id = sp.id and m.email = ?3
  where sp.id = ?1 and sp.deleted = 0`
 
-export async function reachedSpace(env: Env, user: User, spaceId: string): Promise<Reached | null> {
-  const row = await env.DB.prepare(REACHED)
-    .bind(spaceId, user.id, user.email)
-    .first<Space & { role: string | null }>()
+/** And the same question from a guest, whose row is keyed by the guest rather
+ *  than by an address, and who owns nothing. `joined_at` is what says they are
+ *  in: a link that asks first writes the row before the owner has answered. */
+const GUEST_REACHED = `select sp.*, g.role as role
+  from spaces sp
+  join guest_members g on g.space_id = sp.id and g.guest_id = ?2
+ where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
+
+export async function reachedSpace(
+  env: Env,
+  who: Whoever,
+  spaceId: string,
+): Promise<Reached | null> {
+  const row =
+    who.kind === 'user'
+      ? await env.DB.prepare(REACHED)
+          .bind(spaceId, who.user.id, who.user.email)
+          .first<Space & { role: string | null }>()
+      : await env.DB.prepare(GUEST_REACHED)
+          .bind(spaceId, who.guest.id)
+          .first<Space & { role: string | null }>()
 
   if (!row || !isRole(row.role)) return null
   return { ...row, role: row.role }
@@ -133,7 +150,7 @@ export function atLeast(
 }> {
   return async (context, next) => {
     const asked = context.req.param(param) ?? ''
-    const space = await reachedSpace(context.env, context.get('user'), asked)
+    const space = await reachedSpace(context.env, context.get('who'), asked)
     if (!space) return context.json({ error: 'no such space' }, 404)
     if (!allows(space.role, needed)) return context.json({ error: refusal(needed) }, 403)
 
@@ -153,15 +170,19 @@ export function spaceOf(context: Context<{ Bindings: Env; Variables: Variables }
 }
 
 /** Which spaces hold anybody besides their owner, so the rail can mark them.
- *  One query for the whole listing rather than one per space. */
+ *  One query for the whole listing rather than one per space, and a guest counts
+ *  as somebody: the mark says the space is not only yours, and how the other
+ *  person got in is not what it is about. */
 export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promise<Set<string>> {
   if (!spaceIds.length) return new Set<string>()
 
   const places = spaceIds.map(() => '?').join(', ')
   const { results } = await env.DB.prepare(
-    `select distinct space_id from space_members where space_id in (${places})`,
+    `select space_id from space_members where space_id in (${places})
+     union select space_id from guest_members
+      where space_id in (${places}) and joined_at is not null`,
   )
-    .bind(...spaceIds)
+    .bind(...spaceIds, ...spaceIds)
     .all<{ space_id: string }>()
 
   return new Set(results.map((row) => row.space_id))

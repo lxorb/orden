@@ -3,27 +3,29 @@
  *
  *  Everything here is the owner's, which is what `owner` means. What the people
  *  it lets in may then do is decided somewhere else, by `atLeast` in front of
- *  every route that names a space.
+ *  every route that names a space; and how they got in is in `join.ts`.
  *
- *  A membership is an address rather than an account, so somebody with no Nib
- *  account can be given a space today and find it waiting the first time they
- *  prove that address. The mail carries a link, and the link carries nothing
- *  but the space it is about: what actually opens a space is the emailed code
- *  the app already signs in with, so an invitation that is forwarded to the
- *  wrong person opens nothing. */
+ *  Two kinds of person show up in the one sheet. A member is an address rather
+ *  than an account, so somebody with no Nib account can be given a space today
+ *  and find it waiting the first time they prove that address. A guest is
+ *  whoever followed the space's own link, which names nobody and so has no
+ *  address to write down: what the owner sees of them is the name their device
+ *  gave them or the one they typed. Both hold one of the two given roles, and
+ *  the sheet treats them the same because they are the same thing to it: a
+ *  person in a space who is not its owner. */
 
 import { Hono } from 'hono'
 import { readBody } from '../body'
 import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
-import { inviteMessage, mailer, mayMail, requestMessage } from '../email'
-import { requireUser } from '../auth'
+import { inviteMessage, mailer, mayMail } from '../email'
+import { forgetEmptyGuest } from '../guests'
 import type { Env, Space, User, Variables } from '../types'
-import { atLeast, isGiven, presentSpace, spaceOf, type Given } from './space'
+import { atLeast, isGiven, spaceOf, type Given } from './space'
 
 /** More people in one space than anyone shares with, and the bound on every
  *  listing below. */
 const MOST = 200
-const EMAIL_LIMIT = 320
+export const EMAIL_LIMIT = 320
 /** How long the link in an invitation stays a shortcut. After that the address
  *  still opens the space; only the link has stopped carrying it there. */
 const INVITE_TTL = 30 * 24 * 60 * 60 * 1000
@@ -61,6 +63,20 @@ interface LinkRow {
   created_at: number
 }
 
+/** Somebody the space's own link let in. `joined_at` is whether they are in:
+ *  null with no `declined_at` is a request the owner has not answered yet. */
+interface GuestRow {
+  guest_id: string
+  name: string
+  /** What they typed into a link that asks first, unverified. Shown to the owner
+   *  because it is what the request said, and never treated as proved. */
+  email: string | null
+  role: Given
+  joined_at: number | null
+  declined_at: number | null
+  created_at: number
+}
+
 /** Where a link takes somebody. The web app reads this path, and so does the
  *  desktop app when it is what opened it; see docs/collaboration.md. */
 function joinUrl(env: Env, token: string): string {
@@ -70,7 +86,7 @@ function joinUrl(env: Env, token: string): string {
 /** What to call somebody in a sentence: the name on the account, else the part
  *  of the address in front of the at sign. Never the whole address, which is
  *  not a name and which the other person may not have been given. */
-function personName(user: { name: string | null; email: string }): string {
+export function personName(user: { name: string | null; email: string }): string {
   const chosen = user.name?.trim()
   if (chosen) return chosen
 
@@ -105,6 +121,19 @@ async function requestsOf(env: Env, spaceId: string): Promise<RequestRow[]> {
   return results
 }
 
+async function guestsOf(env: Env, spaceId: string): Promise<GuestRow[]> {
+  const { results } = await env.DB.prepare(
+    `select g.id as guest_id, g.name, g.email, m.role, m.joined_at, m.declined_at, m.created_at
+       from guest_members m join guests g on g.id = m.guest_id
+      where m.space_id = ? and m.declined_at is null
+      order by m.created_at, g.id limit ?`,
+  )
+    .bind(spaceId, MOST)
+    .all<GuestRow>()
+
+  return results
+}
+
 async function linkOf(env: Env, spaceId: string): Promise<LinkRow | null> {
   const row = await env.DB.prepare('select * from space_links where space_id = ?')
     .bind(spaceId)
@@ -113,9 +142,13 @@ async function linkOf(env: Env, spaceId: string): Promise<LinkRow | null> {
   return row ?? null
 }
 
+/** One row of the sheet's People list. Whichever kind of person it is, exactly
+ *  one of `email` and `guest` says which and names them: a member is an address,
+ *  a guest is an id, and the sheet keys its rows on whichever it got. */
 function presentMember(member: MemberRow) {
   return {
     email: member.email,
+    guest: null,
     name: member.name,
     role: member.role,
     // Nobody has opened it yet. Shown quietly beside the name rather than as a
@@ -124,27 +157,58 @@ function presentMember(member: MemberRow) {
   }
 }
 
+function presentGuest(guest: GuestRow) {
+  return {
+    email: guest.email,
+    guest: guest.guest_id,
+    name: guest.name,
+    role: guest.role,
+    // A guest who is in has been in: the link they followed was the arriving.
+    pending: false,
+  }
+}
+
 function presentLink(env: Env, link: LinkRow) {
   return { url: joinUrl(env, link.token), role: link.role, mode: link.mode }
 }
 
-/** Everything the sheet draws, in one request. */
+/** Everything the sheet draws, in one request.
+ *
+ *  Members and guests are one list, and so are the two ways of waiting: what the
+ *  owner is being asked is the same question either way, and a sheet with two
+ *  Waiting sections would be saying so twice. */
 async function sharing(env: Env, space: Space, owner: User) {
-  const [members, requests, link] = await Promise.all([
+  const [members, requests, guests, link] = await Promise.all([
     membersOf(env, space.id),
     requestsOf(env, space.id),
+    guestsOf(env, space.id),
     linkOf(env, space.id),
   ])
 
   return {
     owner: { email: owner.email, name: owner.name },
-    members: members.map(presentMember),
-    requests: requests.map((one) => ({
-      email: one.email,
-      name: one.name,
-      role: one.role,
-      at: one.created_at,
-    })),
+    members: [
+      ...members.map(presentMember),
+      ...guests.filter((one) => one.joined_at !== null).map(presentGuest),
+    ],
+    requests: [
+      ...requests.map((one) => ({
+        email: one.email,
+        guest: null,
+        name: one.name,
+        role: one.role,
+        at: one.created_at,
+      })),
+      ...guests
+        .filter((one) => one.joined_at === null)
+        .map((one) => ({
+          email: one.email,
+          guest: one.guest_id,
+          name: one.name,
+          role: one.role,
+          at: one.created_at,
+        })),
+    ],
     link: link ? presentLink(env, link) : null,
   }
 }
@@ -341,139 +405,102 @@ share.delete('/:id/share/requests/:email', atLeast('owner'), async (context) => 
   return context.json(await sharing(context.env, space, context.get('user')))
 })
 
-/* ── Following a link ─────────────────────────────────────────────────── */
+/* ── The guests the link let in ───────────────────────────────────────── */
 
-/** What a token is about. Answered without a session, because it is what the
- *  page shows somebody who has not signed in yet: the space they were sent to,
- *  and what they will be able to do there. A token that names nothing is a 404,
- *  so the endpoint says nothing about spaces to somebody guessing. */
-async function tokenLeadsTo(
-  env: Env,
-  token: string,
-): Promise<
-  | { kind: 'link'; space: Space; role: Given; mode: Mode }
-  | { kind: 'invite'; space: Space; role: Given; email: string }
-  | null
-> {
-  if (!token || token.length > 128) return null
+/** A guest is one row rather than a membership and a request, so the three
+ *  things the owner can do to one are three verbs on one path: let them in,
+ *  change what they may do, and end it. Which of the two lists they were in when
+ *  it happened is the row's own business.
+ *
+ *  Nothing here takes an address, because a guest has none to take. */
 
-  const link = await env.DB.prepare(
-    `select l.role, l.mode, sp.* from space_links l
-       join spaces sp on sp.id = l.space_id
-      where l.token = ? and sp.deleted = 0`,
-  )
-    .bind(token)
-    .first<Space & { role: Given; mode: Mode }>()
+/** An id is a UUID; the length is all this needs to know. */
+const ID_LIMIT = 64
 
-  if (link) return { kind: 'link', space: link, role: link.role, mode: link.mode }
-
-  const invite = await env.DB.prepare(
-    `select m.email, m.role, m.expires_at, sp.* from space_members m
-       join spaces sp on sp.id = m.space_id
-      where m.invite_hash = ? and sp.deleted = 0`,
-  )
-    .bind(await sha256(token))
-    .first<Space & { email: string; role: Given; expires_at: number | null }>()
-
-  if (!invite) return null
-  // The address still opens the space; only the shortcut has run out.
-  if (invite.expires_at !== null && invite.expires_at < now()) return null
-
-  return { kind: 'invite', space: invite, role: invite.role, email: invite.email }
+function guestIdOf(context: { req: { param: (name: string) => string | undefined } }): string {
+  return (context.req.param('guest') ?? '').slice(0, ID_LIMIT)
 }
 
-export const join = new Hono<{ Bindings: Env; Variables: Variables }>()
+/** Letting a waiting guest in, at the role the link promised them. */
+share.post('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
+  const guest = guestIdOf(context)
 
-join.get('/:token', async (context) => {
-  const found = await tokenLeadsTo(context.env, context.req.param('token'))
-  if (!found) return context.json({ error: 'that link has expired' }, 404)
-
-  const owner = await context.env.DB.prepare('select name, email from users where id = ?')
-    .bind(found.space.user_id)
-    .first<{ name: string | null; email: string }>()
-
-  return context.json({
-    kind: found.kind,
-    space: found.space.name,
-    role: found.role,
-    // Which address the invitation was written to, so the sign-in can be filled
-    // in rather than typed. An open link is for whoever has it and names none.
-    email: found.kind === 'invite' ? found.email : null,
-    asks: found.kind === 'link' && found.mode === 'approval',
-    from: owner ? personName(owner) : null,
-  })
-})
-
-/** Coming in, with the address already proved: the session behind this is one
- *  the emailed code handed out, which is the whole of what is asked of somebody
- *  who has never used Nib. */
-join.post('/:token', async (context) => {
-  const user = await requireUser(context.env, context.req.header('authorization'))
-  if (!user) return context.json({ error: 'sign in first' }, 401)
-
-  const found = await tokenLeadsTo(context.env, context.req.param('token'))
-  if (!found) return context.json({ error: 'that link has expired' }, 404)
-
-  const space = found.space
-  if (space.user_id === user.id) {
-    return context.json({ space: presentSpace(space, context.env, 'owner', true) })
-  }
-
-  if (found.kind === 'invite' && found.email !== user.email) {
-    return context.json({ error: 'that invitation was sent to another address' }, 403)
-  }
-
-  if (found.kind === 'link' && found.mode === 'approval') {
-    const already = await context.env.DB.prepare(
-      'select role from space_members where space_id = ? and email = ?',
-    )
-      .bind(space.id, user.email)
-      .first<{ role: Given }>()
-
-    if (already) {
-      return context.json({ space: presentSpace(space, context.env, already.role, true) })
-    }
-
-    await context.env.DB.prepare(
-      `insert into space_requests (space_id, email, role, created_at) values (?1, ?2, ?3, ?4)
-       on conflict(space_id, email) do nothing`,
-    )
-      .bind(space.id, user.email, found.role, now())
-      .run()
-
-    const owner = await context.env.DB.prepare('select name, email from users where id = ?')
-      .bind(space.user_id)
-      .first<{ name: string | null; email: string }>()
-
-    if (owner && (await mayMail(context.env, owner.email))) {
-      const message = requestMessage({
-        space: space.name,
-        who: personName(user),
-        link: context.env.APP_ORIGIN,
-      })
-      await mailer(context.env).send(owner.email, message.subject, message)
-    }
-
-    return context.json({ waiting: true })
-  }
-
-  // An invitation, or a link anybody may walk through. Either way the address
-  // is proved and the row is already theirs, or is written now.
-  await context.env.DB.prepare(
-    `insert into space_members (space_id, email, role, joined_at, created_at)
-     values (?1, ?2, ?3, ?4, ?4)
-     on conflict(space_id, email) do update set joined_at = coalesce(space_members.joined_at, ?4)`,
+  const waiting = await context.env.DB.prepare(
+    `select role from guest_members
+      where space_id = ? and guest_id = ? and joined_at is null and declined_at is null`,
   )
-    .bind(space.id, user.email, found.role, now())
-    .run()
-
-  const held = await context.env.DB.prepare(
-    'select role from space_members where space_id = ? and email = ?',
-  )
-    .bind(space.id, user.email)
+    .bind(space.id, guest)
     .first<{ role: Given }>()
 
-  return context.json({
-    space: presentSpace(space, context.env, held?.role ?? found.role, true),
-  })
+  if (!waiting) return context.json({ error: 'nobody is waiting by that name' }, 404)
+
+  await context.env.DB.prepare(
+    'update guest_members set joined_at = ? where space_id = ? and guest_id = ?',
+  )
+    .bind(now(), space.id, guest)
+    .run()
+
+  return context.json(await sharing(context.env, space, context.get('user')))
+})
+
+share.patch('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
+  const guest = guestIdOf(context)
+
+  const body = await readBody(context)
+  const asked = body.text('role', 16)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+
+  const role = givenRole(asked)
+  if (!role) return context.json({ error: 'say whether they may write or read' }, 400)
+
+  const held = await context.env.DB.prepare(
+    'select role from guest_members where space_id = ? and guest_id = ?',
+  )
+    .bind(space.id, guest)
+    .first<{ role: Given }>()
+
+  if (!held) return context.json({ error: 'nobody by that name' }, 404)
+
+  await context.env.DB.prepare(
+    'update guest_members set role = ? where space_id = ? and guest_id = ?',
+  )
+    .bind(role, space.id, guest)
+    .run()
+
+  return context.json(await sharing(context.env, space, context.get('user')))
+})
+
+/** Declining somebody who is waiting, and taking out somebody who is in. One
+ *  gesture, because to the owner it is one: this person is not in my space.
+ *
+ *  A guest who was waiting keeps their row, stamped, so the calm page they are
+ *  waiting on can say they were told no rather than only stop saying anything. A
+ *  guest who was in loses the row, which is what ends their access on the next
+ *  pass - and loses the guest itself once nothing of theirs is left. */
+share.delete('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
+  const guest = guestIdOf(context)
+
+  const held = await context.env.DB.prepare(
+    'select joined_at from guest_members where space_id = ? and guest_id = ?',
+  )
+    .bind(space.id, guest)
+    .first<{ joined_at: number | null }>()
+
+  if (held?.joined_at === null) {
+    await context.env.DB.prepare(
+      'update guest_members set declined_at = ? where space_id = ? and guest_id = ?',
+    )
+      .bind(now(), space.id, guest)
+      .run()
+  } else {
+    await context.env.DB.prepare('delete from guest_members where space_id = ? and guest_id = ?')
+      .bind(space.id, guest)
+      .run()
+    await forgetEmptyGuest(context.env, guest)
+  }
+
+  return context.json(await sharing(context.env, space, context.get('user')))
 })
