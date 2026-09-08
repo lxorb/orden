@@ -681,4 +681,10 @@ export const ja: Dictionary = {
   'Show the whole canvas': 'キャンバス全体を表示',
   'Export as PNG': 'PNG で書き出す',
   'Export as SVG': 'SVG で書き出す',
+  // キャンバス: そのキーの名前
+  'Delete what is picked': '選択したものを削除',
+  'Nudge left': '左へ少し動かす',
+  'Nudge right': '右へ少し動かす',
+  'Nudge up': '上へ少し動かす',
+  'Nudge down': '下へ少し動かす',
 }

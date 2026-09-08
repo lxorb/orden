@@ -30,7 +30,16 @@ import { workspace } from '../workspace.svelte'
 /** Where an entry sits in the list. The first five are the app's own menus,
  *  so a reader looking for Bold looks under Format either way. */
 export type Category =
-  'file' | 'edit' | 'format' | 'paragraph' | 'view' | 'panel' | 'table' | 'picture' | 'fixed'
+  | 'file'
+  | 'edit'
+  | 'format'
+  | 'paragraph'
+  | 'view'
+  | 'panel'
+  | 'canvas'
+  | 'table'
+  | 'picture'
+  | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'file', label: () => t('File') },
@@ -39,6 +48,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'paragraph', label: () => t('Paragraph') },
   { id: 'view', label: () => t('View') },
   { id: 'panel', label: () => t('File list') },
+  { id: 'canvas', label: () => t('Canvas') },
   { id: 'table', label: () => t('Tables') },
   { id: 'picture', label: () => t('Pictures') },
   { id: 'fixed', label: () => t('Fixed keys') },
@@ -485,6 +495,60 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
 ]
 
+/** The plane's own keys. Read where the plane is - see Canvas.svelte - and only
+ *  while it is the surface in front, which is why they can hold a bare letter
+ *  and the arrows without being in the way of anything anybody is typing.
+ *
+ *  Contextual, like the file list's, so they share Delete and the arrows with it
+ *  rather than being reported as a clash with it. */
+const CANVAS_ENTRIES: Shortcut[] = (
+  [
+    ['canvas.tool.select', () => t('Select'), 'v'],
+    ['canvas.tool.hand', () => t('Pan'), 'h'],
+    ['canvas.tool.draw', () => t('Draw'), 'd'],
+    ['canvas.tool.erase', () => t('Erase'), 'e'],
+    ['canvas.tool.lasso', () => t('Lasso'), 'q'],
+    ['canvas.tool.text', () => t('Card'), 'c'],
+    ['canvas.tool.file', () => t('Note or picture'), 'n'],
+    ['canvas.tool.link', () => t('Link'), 'k'],
+    ['canvas.tool.group', () => t('Group'), 'g'],
+    ['canvas.tool.rect', () => t('Rectangle'), 'r'],
+    ['canvas.tool.ellipse', () => t('Ellipse'), 'o'],
+    ['canvas.tool.line', () => t('Line'), 'l'],
+    ['canvas.tool.arrow', () => t('Arrow'), 'a'],
+    ['canvas.delete', () => t('Delete what is picked'), 'Delete'],
+    ['canvas.duplicate', () => t('Duplicate'), 'Mod-d'],
+    ['canvas.fit', () => t('Fit the canvas'), 'Mod-0'],
+    ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
+    ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
+    ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],
+    ['canvas.forward', () => t('Bring forward'), 'Mod-]'],
+    ['canvas.back', () => t('Send to back'), 'Mod-Shift-['],
+    ['canvas.backward', () => t('Send backward'), 'Mod-['],
+    ['canvas.nudge.left', () => t('Nudge left'), 'ArrowLeft'],
+    ['canvas.nudge.right', () => t('Nudge right'), 'ArrowRight'],
+    ['canvas.nudge.up', () => t('Nudge up'), 'ArrowUp'],
+    ['canvas.nudge.down', () => t('Nudge down'), 'ArrowDown'],
+  ] as const
+).map(([id, label, key]) => ({
+  id,
+  label,
+  category: 'canvas' as const,
+  scope: 'panel' as const,
+  key,
+  contextual: true,
+}))
+
+CANVAS_ENTRIES.push({
+  id: 'canvas.delete.alt',
+  label: () => t('Delete what is picked'),
+  category: 'canvas',
+  scope: 'panel',
+  key: 'Backspace',
+  contextual: true,
+  alias: true,
+})
+
 /** Round the strip of the pane being worked in. Every key stays inside its own
  *  pane: the other pane is somebody's reference, not their next tab. */
 function cycleTab(direction: number) {
@@ -593,6 +657,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...NUMBERED,
   ...EDITOR_SPECS.map(fromEditor),
   ...PANEL_ENTRIES,
+  ...CANVAS_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 

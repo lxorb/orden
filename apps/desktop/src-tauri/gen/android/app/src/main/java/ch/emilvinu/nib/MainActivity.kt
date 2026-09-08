@@ -1,5 +1,6 @@
 package ch.emilvinu.nib
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebView
@@ -31,6 +32,19 @@ class MainActivity : TauriActivity() {
     ViewCompat.setOnApplyWindowInsetsListener(webView) { view: View, insets: WindowInsetsCompat ->
       view.setPadding(0, 0, 0, insets.getInsets(WindowInsetsCompat.Type.ime()).bottom)
       insets
+    }
+
+    // The pen writes on the canvas rather than into a handwriting recogniser.
+    //
+    // Android turns stylus handwriting on for every text field by default from
+    // 14, and Samsung's Direct Writing does the same from Android 11 on its own
+    // devices. Both watch for a stylus over an editable area and then swallow
+    // the touch stream to convert it to text - which over a note being written
+    // in, or over a canvas card, means the pen never reaches the page at all.
+    // Nib draws with the pen itself, so the recogniser is turned off here and
+    // every stylus event arrives as a pointer event; see canvas/ink.ts.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      webView.isAutoHandwritingEnabled = false
     }
   }
 }

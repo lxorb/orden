@@ -3,21 +3,34 @@
  *  SVG is the only drawing here. A PNG is that SVG rasterised by the browser,
  *  and a PDF is that SVG on a page handed to the same printer the notes use, so
  *  there is one description of what a canvas looks like on paper rather than
- *  three that drift apart.
+ *  three that drift apart. Pictures are inlined as data, so the file stands on
+ *  its own once it has left the app.
  *
- *  Cards keep their words. The rendered markdown goes inside a `foreignObject`,
- *  which every browser draws and every browser can rasterise, so an exported
- *  canvas has headings and lists in it rather than grey boxes. Pictures are
- *  inlined as data, so the file stands on its own once it has left the app. */
+ *  Cards keep their words, and how depends on where the picture is going. An SVG
+ *  and a printed page put the rendered markdown inside a `foreignObject`, so a
+ *  heading is a heading and a list is a list. A PNG cannot: a browser marks a
+ *  canvas as tainted the moment an SVG holding a `foreignObject` is drawn on it,
+ *  and a tainted canvas will not hand over its pixels. So the PNG is drawn from
+ *  the same picture with the cards set as plain wrapped lines instead, which is
+ *  the one thing that both reads the same and rasterises at all. */
 
 import { inlineImages, chooseTarget, download, printInFrame } from '../export'
 import { type Canvas, type CanvasNode } from './format'
-import { arrowAt, bounds, boxOf, edgeEnds, edgeMiddle, edgePath, shapeLine } from './geometry'
-import { outlineOf, strokeBox } from './ink'
-import { INK_STYLES } from './ink'
+import {
+  arrowAt,
+  bounds,
+  type Box,
+  boxOf,
+  edgeEnds,
+  edgeMiddle,
+  edgePath,
+  shapeLine,
+} from './geometry'
+import { INK_STYLES, outlineOf, strokeBox } from './ink'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { invoke, isDesktop } from '../tauri'
+import { message, t } from '../i18n.svelte'
 
 /** Room left round the drawing, in plane units. */
 const PADDING = 32
@@ -55,10 +68,85 @@ function styles(palette: Palette): string {
   `
 }
 
+/** Markdown's HTML as XML.
+ *
+ *  An SVG is XML, and an SVG opened as an image is parsed strictly: one `<br>`
+ *  or one bare `&` in a card and the whole picture fails to load with nothing
+ *  said. The browser's own parsers are the only thing that gets this right, so
+ *  the HTML goes through the one that is lenient and comes back out of the one
+ *  that is exact. */
+function asXml(html: string): string {
+  const page = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html')
+  const root = page.body.firstElementChild
+  if (!root) return ''
+
+  return new XMLSerializer().serializeToString(root).replace(/^<div[^>]*>|<\/div>$/g, '')
+}
+
+/** Markdown as the lines a reader would see, with the marks taken off. What a
+ *  card says when it cannot be set as HTML. */
+function plainLines(text: string): string[] {
+  return text.split('\n').map((line) =>
+    line
+      .replace(/^\s{0,3}#{1,6}\s+/, '')
+      .replace(/^\s{0,3}[-*+]\s+/, '• ')
+      .replace(/^\s{0,3}>\s?/, '')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/([*_~`])(.+?)\1/g, '$2')
+      .replace(/!?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_all, target: string, shown?: string) =>
+        (shown ?? target).trim(),
+      )
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1'),
+  )
+}
+
+/** How wide a character is as a share of the font size, and how tall a line is.
+ *  Measuring properly would want a DOM; half the size is close enough for a
+ *  picture nobody is going to typeset from. */
+const PER_CHARACTER = 0.52
+const LINE = 17
+const CARD_FONT = 13
+
+/** The lines of a card, broken to its width. */
+function fitted(text: string, width: number): string[] {
+  const most = Math.max(4, Math.floor((width - 24) / (CARD_FONT * PER_CHARACTER)))
+  const out: string[] = []
+
+  for (const line of plainLines(text)) {
+    let rest = line
+
+    while (rest.length > most) {
+      const space = rest.lastIndexOf(' ', most)
+      const cut = space > most / 2 ? space : most
+      out.push(rest.slice(0, cut))
+      rest = rest.slice(space > most / 2 ? cut + 1 : cut)
+    }
+
+    out.push(rest)
+  }
+
+  return out
+}
+
+/** A card's words as SVG text, for the picture a browser can rasterise. */
+function plainCard(text: string, box: Box, palette: Palette): string {
+  const lines = fitted(text, box.width).slice(0, Math.floor((box.height - 12) / LINE))
+  if (!lines.length) return ''
+
+  const spans = lines
+    .map(
+      (line, index) =>
+        `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escaped(line)}</tspan>`,
+    )
+    .join('')
+
+  return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="label">${spans}</text>`
+}
+
 function cardBody(node: CanvasNode, canvasPath: string | null): string {
   switch (node.type) {
     case 'text':
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${cardHtml(node.text, canvasPath)}</div>`
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath))}</div>`
     case 'link':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escaped(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escaped(node.url)}</span></div>`
     case 'file':
@@ -87,6 +175,7 @@ function drawnNode(
   palette: Palette,
   canvasPath: string | null,
   root: string | null,
+  plain: boolean,
 ): string {
   const box = boxOf(node)
   const line = colourOf(node, palette, palette.line ?? '#d6d9de')
@@ -124,8 +213,28 @@ function drawnNode(
 
   const wash = node.color === undefined ? '' : ` fill-opacity="0.09"`
   const paper = node.color === undefined ? (palette.surface ?? '#fff') : line
+  const card = `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
 
-  return `<g><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/><foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath)}</foreignObject></g>`
+  if (plain) {
+    return `<g>${card}${plainCard(saidBy(node), box, palette)}</g>`
+  }
+
+  return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath)}</foreignObject></g>`
+}
+
+/** What a card says, as words. */
+function saidBy(node: CanvasNode): string {
+  switch (node.type) {
+    case 'text':
+      return node.text
+    case 'link':
+      return `${hostOf(node.url)}\n${node.url}`
+    case 'file':
+      return node.file
+    case 'group':
+    case 'shape':
+      return ''
+  }
 }
 
 function drawnEdges(canvas: Canvas, palette: Palette): string {
@@ -194,6 +303,7 @@ function canvasSvg(
   palette: Palette,
   canvasPath: string | null,
   root: string | null,
+  plain = false,
 ): string {
   const box = bounds(canvas.nodes, canvas.ink.map(strokeBox)) ?? {
     x: 0,
@@ -207,7 +317,9 @@ function canvasSvg(
   const width = Math.max(1, Math.round(box.width + 2 * PADDING))
   const height = Math.max(1, Math.round(box.height + 2 * PADDING))
 
-  const nodes = canvas.nodes.map((node) => drawnNode(node, palette, canvasPath, root)).join('')
+  const nodes = canvas.nodes
+    .map((node) => drawnNode(node, palette, canvasPath, root, plain))
+    .join('')
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
@@ -276,8 +388,8 @@ export interface Drawing {
 }
 
 /** The SVG, with every picture in it inlined so the file stands alone. */
-async function readySvg(drawing: Drawing): Promise<string> {
-  const svg = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root)
+async function readySvg(drawing: Drawing, plain = false): Promise<string> {
+  const svg = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, plain)
   // `inlineImages` matches `<img src>`, which is what a card's markdown holds;
   // an `<image href>` is swapped the same way by asking for the same resolver.
   return inlineImages(svg.replace(/<image /g, '<img ').replace(/href="/g, 'src="'), (src) => src)
@@ -305,8 +417,11 @@ export async function exportCanvasSvg(drawing: Drawing) {
  *  the app's own file commands write text, and a picture is bytes. The browser's
  *  own save is what every other binary download in the app uses too. */
 export async function exportCanvasPng(drawing: Drawing) {
-  const blob = await svgToPng(await readySvg(drawing))
-  if (!blob) return
+  const blob = await svgToPng(await readySvg(drawing, true)).catch(() => null)
+  if (!blob) {
+    message(new Error('that drawing could not be turned into a picture'), t('Nothing here'))
+    return
+  }
 
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

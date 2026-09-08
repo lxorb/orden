@@ -201,6 +201,31 @@ describe('panning', () => {
     expect(machine.gesture?.kind).toBe('pan')
   })
 
+  /** A mouse says "nothing, thank you" the moment it is pressed on the plane. A
+   *  finger cannot, because the same press is how the plane is moved, so it says
+   *  it on the way up instead. */
+  test('a finger tapped on the plane and lifted clears what was picked', () => {
+    const { effects } = play(
+      [down({ pointer: 'touch' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
+      context({ picked: ['a'] }),
+    )
+
+    expect(verbs(effects)).toEqual(['leave', 'clear'])
+  })
+
+  test('a finger that panned and lifted leaves what was picked alone', () => {
+    const { effects } = play(
+      [
+        down({ pointer: 'touch' }),
+        { kind: 'move', id: 1, at: HERE, screen: { x: 60, y: 0 }, samples: [], hit: NOTHING },
+        { kind: 'up', id: 1, at: HERE, screen: { x: 60, y: 0 }, hit: NOTHING },
+      ],
+      context({ picked: ['a'] }),
+    )
+
+    expect(verbs(effects)).toEqual(['leave', 'pan'])
+  })
+
   test('a pan says how far the plane moved, on screen', () => {
     const { effects } = play(
       [
@@ -276,6 +301,42 @@ describe('palm rejection', () => {
     const palm = step(pen.machine, down({ id: 2, pointer: 'touch' }), context({ tool: 'draw' }))
     expect(palm.machine.gesture).toBe(pen.machine.gesture)
     expect(palm.effects).toEqual([])
+  })
+
+  /** A hand coming off the glass is not the pen putting its stroke down. */
+  test('a palm lifting does not end the stroke the pen is still drawing', () => {
+    const where = context({ tool: 'draw' })
+    const drawing = play(
+      [
+        down({ id: 1, pointer: 'pen' }),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 9, y: 9 },
+          screen: HERE,
+          samples: [{ x: 9, y: 9, pressure: 0.7, tiltX: 0, tiltY: 0, t: 8 }],
+          hit: NOTHING,
+        },
+      ],
+      where,
+    )
+
+    const palm = step(
+      drawing.machine,
+      { kind: 'up', id: 7, at: HERE, screen: HERE, hit: NOTHING },
+      where,
+    )
+
+    expect(palm.effects).toEqual([])
+    expect(palm.machine.gesture?.kind).toBe('draw')
+
+    const pen = step(
+      palm.machine,
+      { kind: 'up', id: 1, at: { x: 9, y: 9 }, screen: HERE, hit: NOTHING },
+      where,
+    )
+
+    expect(verbs(pen.effects)).toEqual(['stroke'])
   })
 
   test('the glass answers a finger again once the pen is off it', () => {

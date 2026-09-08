@@ -138,8 +138,7 @@ export function distributed(canvas: Canvas, picked: readonly string[], axis: 'x'
 /** The four ways the z order changes. `front` and `back` go all the way;
  *  `forward` and `backward` go one step, which is what a stack of overlapping
  *  cards needs. */
-const ORDERS = ['front', 'forward', 'backward', 'back'] as const
-export type Order = (typeof ORDERS)[number]
+export type Order = 'front' | 'forward' | 'backward' | 'back'
 
 /** The nodes reordered so the picked ones sit where they were asked to.
  *

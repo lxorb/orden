@@ -682,4 +682,10 @@ export const gsw: Dictionary = {
   'Show the whole canvas': 'Ganzi Liinwand zeige',
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
+  // D Liinwand: wie ihri eigene Tasten heissed
+  'Delete what is picked': 'Uswahl lösche',
+  'Nudge left': 'Nach links schiebe',
+  'Nudge right': 'Nach rächts schiebe',
+  'Nudge up': 'Nach obe schiebe',
+  'Nudge down': 'Nach une schiebe',
 }

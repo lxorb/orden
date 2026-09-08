@@ -94,7 +94,12 @@
 </div>
 
 {#if term && found.length}
-  <ul class="hits">
+  <ul
+    class="hits"
+    onpointerdown={(event) => event.stopPropagation()}
+    onpointermove={(event) => event.stopPropagation()}
+    onpointerup={(event) => event.stopPropagation()}
+  >
     {#each found.slice(0, 12) as one, index (one.id)}
       <li>
         <button

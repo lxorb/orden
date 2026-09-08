@@ -686,4 +686,10 @@ export const de: Dictionary = {
   'Show the whole canvas': 'Ganze Leinwand zeigen',
   'Export as PNG': 'Als PNG exportieren',
   'Export as SVG': 'Als SVG exportieren',
+  // The canvas: what its own keys are called
+  'Delete what is picked': 'Auswahl löschen',
+  'Nudge left': 'Nach links schieben',
+  'Nudge right': 'Nach rechts schieben',
+  'Nudge up': 'Nach oben schieben',
+  'Nudge down': 'Nach unten schieben',
 }

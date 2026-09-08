@@ -39,6 +39,7 @@ import type { Palette } from './paint'
 import type { Hit, PendingStroke, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
+import { shortcuts } from '../shortcuts.svelte'
 import { storeImage } from '../assets'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
@@ -277,67 +278,87 @@ export const run = {
   },
 
   /** The keys the plane answers to on its own. Answers whether it took the key,
-   *  so the surface knows whether to stop it going anywhere else. */
+   *  so the surface knows whether to stop it going anywhere else.
+   *
+   *  Every one of them is in the shortcut registry, so a reader who rebound one
+   *  has their own key here and can see the whole list in the settings. They are
+   *  marked contextual there, which is what lets a plane hold a bare letter and
+   *  the arrows without being a clash with anything the file list holds. */
   keys(store: CanvasStore, event: KeyboardEvent, view: KeyView): boolean {
-    const adds = event.ctrlKey || event.metaKey
+    const tool = TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))
+    if (tool) {
+      tools.choose(tool[1])
+      return true
+    }
+
+    // Shift makes a nudge a grid step, which is the pair every drawing program
+    // has. The key itself is the registry's; the modifier is what it means.
     const step = event.shiftKey ? GRID : NUDGE
+    const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, event))
+    if (nudge) {
+      if (!store.picked.length) return false
 
-    switch (event.key) {
-      case 'Delete':
-      case 'Backspace':
-        if (!store.picked.length) return false
-        run.remove(store)
-        return true
-      case 'ArrowLeft':
-        run.nudge(store, -step, 0)
-        return store.picked.length > 0
-      case 'ArrowRight':
-        run.nudge(store, step, 0)
-        return store.picked.length > 0
-      case 'ArrowUp':
-        run.nudge(store, 0, -step)
-        return store.picked.length > 0
-      case 'ArrowDown':
-        run.nudge(store, 0, step)
-        return store.picked.length > 0
+      run.nudge(store, nudge[1] * step, nudge[2] * step)
+      return true
     }
 
-    if (adds) {
-      switch (event.key.toLowerCase()) {
-        case '0':
-          store.fit(view.width, view.height)
-          return true
-        case '1':
-          store.frame(view.width, view.height)
-          return true
-        case 'd':
-          run.duplicate(store)
-          return true
-        case 'f':
-          view.onfind()
-          return true
-        case ']':
-          run.order(store, event.shiftKey ? 'front' : 'forward')
-          return true
-        case '[':
-          run.order(store, event.shiftKey ? 'back' : 'backward')
-          return true
-      }
+    if (
+      shortcuts.pressed('canvas.delete', event) ||
+      shortcuts.pressed('canvas.delete.alt', event)
+    ) {
+      if (!store.picked.length) return false
+
+      run.remove(store)
+      return true
     }
 
-    // A tool by its own letter, the way every drawing program does it, and only
-    // with no modifier, so Ctrl+V is still a paste.
-    if (!adds && !event.altKey) {
-      const tool = TOOL_KEYS[event.key.toLowerCase()]
-      if (tool) {
-        tools.choose(tool)
-        return true
-      }
+    for (const [id, act] of ACTS) {
+      if (!shortcuts.pressed(id, event)) continue
+
+      act(store, view)
+      return true
     }
 
     return false
   },
 }
+
+/** Which tool each key puts in your hand. */
+const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
+  ['canvas.tool.select', 'select'],
+  ['canvas.tool.hand', 'hand'],
+  ['canvas.tool.draw', 'draw'],
+  ['canvas.tool.erase', 'erase'],
+  ['canvas.tool.lasso', 'lasso'],
+  ['canvas.tool.text', 'text'],
+  ['canvas.tool.file', 'file'],
+  ['canvas.tool.link', 'link'],
+  ['canvas.tool.group', 'group'],
+  ['canvas.tool.rect', 'rect'],
+  ['canvas.tool.ellipse', 'ellipse'],
+  ['canvas.tool.line', 'line'],
+  ['canvas.tool.arrow', 'arrow'],
+]
+
+/** Which way each nudge goes. */
+const NUDGES: readonly (readonly [string, number, number])[] = [
+  ['canvas.nudge.left', -1, 0],
+  ['canvas.nudge.right', 1, 0],
+  ['canvas.nudge.up', 0, -1],
+  ['canvas.nudge.down', 0, 1],
+]
+
+/** Everything else a key does, by the id it is bound to. */
+const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => void])[] = [
+  ['canvas.duplicate', (store) => run.duplicate(store)],
+  ['canvas.fit', (store, view) => store.fit(view.width, view.height)],
+  ['canvas.frame', (store, view) => store.frame(view.width, view.height)],
+  ['canvas.find', (_store, view) => view.onfind()],
+  ['canvas.front', (store) => run.order(store, 'front')],
+  ['canvas.forward', (store) => run.order(store, 'forward')],
+  ['canvas.back', (store) => run.order(store, 'back')],
+  ['canvas.backward', (store) => run.order(store, 'backward')],
+]
 
 export interface KeyView {
   width: number
@@ -346,24 +367,6 @@ export interface KeyView {
   name: string
   palette: Palette
   onfind: () => void
-}
-
-/** One letter each, on the keys they sit under on a keyboard: v for the arrow,
- *  h for the hand, and the first letter of everything else. */
-const TOOL_KEYS: Record<string, Tool | undefined> = {
-  v: 'select',
-  h: 'hand',
-  d: 'draw',
-  e: 'erase',
-  q: 'lasso',
-  c: 'text',
-  n: 'file',
-  k: 'link',
-  g: 'group',
-  r: 'rect',
-  o: 'ellipse',
-  l: 'line',
-  a: 'arrow',
 }
 
 function folderOfPath(path: string): string {

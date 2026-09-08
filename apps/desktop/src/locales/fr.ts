@@ -683,4 +683,10 @@ export const fr: Dictionary = {
   'Show the whole canvas': 'Montrer tout le canevas',
   'Export as PNG': 'Exporter en PNG',
   'Export as SVG': 'Exporter en SVG',
+  // Le canevas : le nom de ses propres touches
+  'Delete what is picked': 'Supprimer la sélection',
+  'Nudge left': 'Décaler à gauche',
+  'Nudge right': 'Décaler à droite',
+  'Nudge up': 'Décaler vers le haut',
+  'Nudge down': 'Décaler vers le bas',
 }

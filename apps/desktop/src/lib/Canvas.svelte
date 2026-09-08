@@ -419,16 +419,38 @@
 
   /** When the stroke in hand began, so its samples carry small numbers. */
   let began = 0
+  /** The timer a still pointer is running down, and where it went still. */
   let holding = 0
+  let held: Point = { x: 0, y: 0 }
+
+  /** How far a pointer may drift and still count as held, in pixels. */
+  const A_TWITCH = 6
 
   function waitForHold(point: Point) {
     window.clearTimeout(holding)
+    held = point
     holding = window.setTimeout(() => send({ kind: 'held', at: point }), HELD)
   }
 
   function stopHolding() {
     window.clearTimeout(holding)
     holding = 0
+  }
+
+  /** Swallows the click that ends the very press that opened the menu.
+   *
+   *  A finger held down opens the menu while it is still on the glass, and the
+   *  click it leaves behind on the way up is what everything else in the app
+   *  uses to close a menu. Without this the menu would open and shut in the same
+   *  gesture, which reads as nothing happening at all. */
+  function swallowTheNextClick() {
+    const stop = (event: MouseEvent) => {
+      event.stopPropagation()
+      event.preventDefault()
+    }
+
+    window.addEventListener('click', stop, { capture: true, once: true })
+    window.setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 900)
   }
 
   /** One event through the machine, and its effects carried out.
@@ -516,6 +538,9 @@
         store.camera = zoomed(camera, width, height, effect.at.x, effect.at.y, effect.by)
         break
       case 'menu':
+        // Only a hold leaves a click behind; the right button does not.
+        if (holding) swallowTheNextClick()
+        stopHolding()
         showMenu(effect.at)
         break
       case 'assist':
@@ -596,8 +621,11 @@
           : []
     }
 
-    // A pointer that is moving is not a pointer being held.
-    if (holding && Math.hypot(point.x - at.x, point.y - at.y) * camera.scale > 4) stopHolding()
+    // A pointer that is moving is not a pointer being held. Measured from where
+    // it went still rather than from where it last was, which is this point.
+    if (holding && Math.hypot(point.x - held.x, point.y - held.y) * camera.scale > A_TWITCH) {
+      stopHolding()
+    }
 
     // Asked for only when it is going to be read. Panning a plane of five
     // thousand strokes does not need to know what is under the pointer, and
@@ -735,7 +763,24 @@
     showMenu(planeAt(event))
   }
 
+  /** Whether the key was typed into something that takes words. The find bar
+   *  and a card's editor are inside the plane, so their keystrokes bubble up to
+   *  it, and the plane's own keys are bare letters: without this, typing "green"
+   *  into the search would put a group, a rectangle and an ellipse on the
+   *  plane. */
+  function typing(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false
+
+    return (
+      target.isContentEditable ||
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement
+    )
+  }
+
   function onKeyDown(event: KeyboardEvent) {
+    if (typing(event.target)) return
+
     if (event.key === ' ' && store.editing === null) {
       // Held rather than pressed: space is a way of holding the plane, not a
       // command, so nothing happens until the pointer moves as well.
@@ -790,7 +835,7 @@
   }
 
   function onKeyUp(event: KeyboardEvent) {
-    if (event.key === ' ') send({ kind: 'space', down: false })
+    if (event.key === ' ' && !typing(event.target)) send({ kind: 'space', down: false })
   }
 
   /** What is picked, as a canvas of its own, so it pastes into another canvas

@@ -19,24 +19,10 @@
 import type { InkPoint, InkTool, Shape, Side } from './format'
 import type { Box, HandleId, Point } from './geometry'
 
-/** What the bar is set to. The first is the one everything else falls back to. */
-const TOOLS = [
-  'select',
-  'hand',
-  'draw',
-  'erase',
-  'lasso',
-  'text',
-  'file',
-  'link',
-  'group',
-  'rect',
-  'ellipse',
-  'line',
-  'arrow',
-] as const
-
-export type Tool = (typeof TOOLS)[number]
+/** What the bar is set to. The arrow is the one everything else falls back to;
+ *  the last four are the shapes, which the format already names. */
+export type Tool =
+  'select' | 'hand' | 'draw' | 'erase' | 'lasso' | 'text' | 'file' | 'link' | 'group' | Shape
 
 type PointerKind = 'mouse' | 'pen' | 'touch'
 
@@ -145,7 +131,7 @@ export interface PendingStroke {
 }
 
 type Gesture =
-  | { kind: 'pan'; id: number; screen: Point }
+  | { kind: 'pan'; id: number; screen: Point; moved: boolean }
   | { kind: 'pinch'; ids: [number, number]; screens: [Point, Point]; apart: number }
   | { kind: 'drag'; ids: string[]; screen: Point; dx: number; dy: number }
   | { kind: 'resize'; ids: string[]; handle: HandleId; screen: Point; dx: number; dy: number }
@@ -159,6 +145,10 @@ type Gesture =
 
 export interface Machine {
   gesture: Gesture | null
+  /** Which pointer the gesture belongs to. A palm coming off the glass must not
+   *  end the stroke the pen is still drawing, and a second finger lifting must
+   *  not end a pan the first is still driving. */
+  driving: number | null
   /** Space held, which turns any drag into a pan. */
   spacing: boolean
   /** Whether a pen is on the glass. Every finger is ignored while it is, which
@@ -173,7 +163,7 @@ export interface Machine {
 }
 
 export function start(): Machine {
-  return { gesture: null, spacing: false, penDown: false, spare: [], hovered: null }
+  return { gesture: null, driving: null, spacing: false, penDown: false, spare: [], hovered: null }
 }
 
 /** How far a pointer may travel and still count as a press rather than a drag,
@@ -216,7 +206,10 @@ export function step(machine: Machine, input: Input, context: Context): Step {
     case 'up':
       return onUp(machine, input, context)
     case 'cancel':
-      return { machine: { ...machine, gesture: null, spare: [], penDown: false }, effects: [] }
+      return {
+        machine: { ...machine, gesture: null, spare: [], penDown: false, driving: null },
+        effects: [],
+      }
     case 'held':
       return onHeld(machine, input.at)
   }
@@ -260,16 +253,25 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
 
   if (machine.gesture) return { machine: { ...machine, penDown }, effects: [] }
 
-  const held = { ...machine, penDown }
+  const held = { ...machine, penDown, driving: input.id }
 
-  // The right button is the menu's, wherever it lands.
-  if (input.button === 2) return { machine: held, effects: [{ do: 'menu', at: input.at }] }
+  // The right button is the menu's, wherever it lands. It starts nothing, so it
+  // drives nothing either.
+  if (input.button === 2) {
+    return {
+      machine: { ...held, driving: machine.driving },
+      effects: [{ do: 'menu', at: input.at }],
+    }
+  }
 
   // Space, the middle button and the hand tool all pan, over a card as readily
   // as over the plane: a hand that has learned one of them uses it everywhere.
   if (machine.spacing || input.button === 1 || context.tool === 'hand') {
     return {
-      machine: { ...held, gesture: { kind: 'pan', id: input.id, screen: input.screen } },
+      machine: {
+        ...held,
+        gesture: { kind: 'pan', id: input.id, screen: input.screen, moved: false },
+      },
       effects: [],
     }
   }
@@ -334,7 +336,10 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     case 'file':
     case 'link':
     case 'group':
-      return { machine: held, effects: [{ do: 'place', tool: context.tool, at: input.at }] }
+      return {
+        machine: { ...held, driving: machine.driving },
+        effects: [{ do: 'place', tool: context.tool, at: input.at }],
+      }
     case 'rect':
     case 'ellipse':
     case 'line':
@@ -399,14 +404,19 @@ function select(machine: Machine, input: Down, context: Context): Step {
 
   // A card being written in keeps the pointer: it is a text field, and a drag in
   // one selects words.
-  if (context.editing !== null && hit.node === context.editing) return { machine, effects: [] }
+  if (context.editing !== null && hit.node === context.editing) {
+    return { machine: { ...machine, driving: null }, effects: [] }
+  }
 
   if (!hit.node) {
     // A finger on the plane moves the plane; there is no second button to pan
     // with and no marquee anybody draws with a thumb.
     if (input.pointer === 'touch') {
       return {
-        machine: { ...machine, gesture: { kind: 'pan', id: input.id, screen: input.screen } },
+        machine: {
+          ...machine,
+          gesture: { kind: 'pan', id: input.id, screen: input.screen, moved: false },
+        },
         effects: [{ do: 'leave' }],
       }
     }
@@ -444,7 +454,7 @@ function select(machine: Machine, input: Down, context: Context): Step {
       ? [...context.picked]
       : [hit.node]
 
-  if (!ids.length) return { machine, effects }
+  if (!ids.length) return { machine: { ...machine, driving: null }, effects }
 
   return {
     machine: {
@@ -470,11 +480,15 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
     case 'pan': {
       if (input.id !== one.id) return { machine, effects: [] }
 
+      const dx = input.screen.x - one.screen.x
+      const dy = input.screen.y - one.screen.y
+
       return {
-        machine: { ...machine, gesture: { ...one, screen: input.screen } },
-        effects: [
-          { do: 'pan', dx: input.screen.x - one.screen.x, dy: input.screen.y - one.screen.y },
-        ],
+        machine: {
+          ...machine,
+          gesture: { ...one, screen: input.screen, moved: one.moved || Math.hypot(dx, dy) > SLOP },
+        },
+        effects: [{ do: 'pan', dx, dy }],
       }
     }
 
@@ -606,7 +620,7 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
   const one = machine.gesture
   const spare = machine.spare.filter((held) => held.id !== input.id)
 
-  if (!one) return { machine: { ...machine, spare, penDown: false }, effects: [] }
+  if (!one) return { machine: { ...machine, spare, penDown: false, driving: null }, effects: [] }
 
   // A pinch that loses one finger goes back to panning with the other.
   if (one.kind === 'pinch' && one.ids.includes(input.id)) {
@@ -615,17 +629,28 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       machine: {
         ...machine,
         spare,
-        penDown: false,
-        gesture: { kind: 'pan', id: one.ids[left], screen: one.screens[left] },
+        driving: one.ids[left],
+        gesture: { kind: 'pan', id: one.ids[left], screen: one.screens[left], moved: true },
       },
       effects: [],
     }
   }
 
-  const rest: Machine = { ...machine, gesture: null, spare, penDown: false }
+  // Somebody else's pointer. A palm coming off the glass is not the pen putting
+  // its stroke down, and a stray finger is not the end of a drag.
+  if (machine.driving !== null && machine.driving !== input.id) {
+    return { machine: { ...machine, spare }, effects: [] }
+  }
+
+  const rest: Machine = { ...machine, gesture: null, spare, penDown: false, driving: null }
 
   switch (one.kind) {
     case 'pan':
+      // A finger that went down and came up without going anywhere is a tap on
+      // the plane, and a tap on the plane means "nothing, thank you". A mouse
+      // says the same thing the moment it is pressed; a finger cannot, because
+      // the same press is how the plane is moved.
+      return { machine: rest, effects: one.moved ? [] : [{ do: 'clear' }] }
     case 'pinch':
       return { machine: rest, effects: [] }
 
