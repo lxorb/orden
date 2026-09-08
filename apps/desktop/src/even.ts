@@ -19,6 +19,11 @@ import { bridge } from './lib/even/bridge.svelte'
 import { diagnosis } from './lib/even/diagnosis.svelte'
 import { everywhere } from './lib/even/keep'
 import { fillLocal, installLocal } from './lib/even/local'
+import { markPlugin } from './lib/plugin'
+
+// Before anything asks: the settings have a section that only makes sense in
+// front of a pair of glasses, and this is what tells them apart. See lib/plugin.
+markPlugin()
 
 // Before anything reads a setting, which is before the first line of the app:
 // this page's own `localStorage` belongs to a port that will never come back.

@@ -6,6 +6,7 @@
  *  out. */
 
 import { account } from '../account.svelte'
+import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
 import type { Section } from '../settings.svelte'
 
@@ -47,7 +48,9 @@ export const ICONS: Record<string, string> = {
  *  Publishing and the LLM connector are both things an account owns, and both
  *  are off until deliberately turned on. Until there is an account they have
  *  nothing to show but an instruction to sign in, so they stay out of the list
- *  rather than sitting there offering nothing. */
+ *  rather than sitting there offering nothing. Glasses is the same argument from
+ *  the other side: outside the plugin there are no glasses to set anything
+ *  about. */
 export function sectionGroups(): Item[][] {
   return [
     [
@@ -57,7 +60,9 @@ export function sectionGroups(): Item[][] {
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
-      { id: 'glasses', label: t('Glasses') },
+      // Only in front of a pair of glasses. Spread rather than hidden, so the
+      // group closes over the gap instead of leaving one.
+      ...(isPlugin() ? [{ id: 'glasses' as Section, label: t('Glasses') }] : []),
     ],
     [
       { id: 'account', label: t('Account') },

@@ -2,6 +2,7 @@ import type { EditorView } from '@nib/editor'
 import { CODE_PALETTES } from '@nib/editor'
 import { i18n, LANGUAGES, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
+import { isPlugin } from './plugin'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
@@ -401,34 +402,41 @@ export function preferences(view?: EditorView): Pane[] {
       ],
     },
 
-    {
-      id: 'glasses',
-      label: t('Glasses'),
-      groups: [
-        {
-          title: t('Even Realities'),
-          fields: [
-            {
-              // How a note reaches the G2. Drawn is the point of the plugin and
-              // the default: the app's own faces, its highlighted code, its
-              // formulae and its tables. Text hands the words to the glasses and
-              // lets the firmware set them, which is one call over the radio
-              // rather than four, so a page turn arrives at once rather than a
-              // quarter at a time. Two words, because there are two answers.
-              kind: 'select',
-              label: t('Display'),
-              options: [
-                { value: 'rendered', label: t('Rendered') },
-                { value: 'text', label: t('Text') },
-              ],
-              initial: 'rendered',
-              get: () => modes.glassesDisplay,
-              set: (value) => modes.setGlassesDisplay(value),
-            },
-          ],
-        },
-      ],
-    },
+    // Only in front of a pair of glasses. Spread rather than left empty, so the
+    // pane does not exist at all outside the plugin: an empty section is a
+    // question nobody asked, and the settings search reads this same list.
+    ...(isPlugin()
+      ? ([
+          {
+            id: 'glasses',
+            label: t('Glasses'),
+            groups: [
+              {
+                title: t('Even Realities'),
+                fields: [
+                  {
+                    // How a note reaches the G2. Drawn is the point of the plugin and
+                    // the default: the app's own faces, its highlighted code, its
+                    // formulae and its tables. Text hands the words to the glasses and
+                    // lets the firmware set them, which is one call over the radio
+                    // rather than four, so a page turn arrives at once rather than a
+                    // quarter at a time. Two words, because there are two answers.
+                    kind: 'select',
+                    label: t('Display'),
+                    options: [
+                      { value: 'rendered', label: t('Rendered') },
+                      { value: 'text', label: t('Text') },
+                    ],
+                    initial: 'rendered',
+                    get: () => modes.glassesDisplay,
+                    set: (value) => modes.setGlassesDisplay(value),
+                  },
+                ],
+              },
+            ],
+          },
+        ] satisfies Pane[])
+      : []),
   ]
 }
 
