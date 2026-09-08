@@ -53,7 +53,7 @@
         <button
           class="row"
           class:nested={!node.children.length}
-          style:padding-left="{depth * 12 + (node.children.length ? 2 : 20)}px"
+          style:--level={depth}
           onclick={() => search.ask(`tag:${node.path}`)}
           oncontextmenu={(event) => menu.show(event, menuFor(node), { title: node.name })}
           use:longPress={(event) => menu.show(event, menuFor(node), { title: node.name })}
@@ -170,8 +170,47 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* One step per level of the tag path, and a lead in front of the label: the
+     width of the twist for a tag that has one, and the same width held empty
+     for a tag that does not, so every name starts at the same place. Both come
+     off properties, so a phone can take a deeper step; see Tree.svelte. */
+  .row {
+    --indent: 12px;
+    --lead: 2px;
+    padding-left: calc(var(--level, 0) * var(--indent) + var(--lead));
+  }
+
+  .row.nested {
+    --lead: 20px;
+  }
+
   :global([data-touch]) .row,
   :global([data-touch]) .twist {
-    min-height: 48px;
+    min-height: var(--touch-row);
+  }
+
+  :global([data-touch]) .row {
+    --indent: var(--touch-indent);
+    --lead: var(--space-1);
+    gap: var(--touch-gap);
+    font-size: var(--touch-text);
+  }
+
+  :global([data-touch]) .row.nested {
+    --lead: calc(var(--touch-mark) + var(--space-3));
+  }
+
+  :global([data-touch]) .twist {
+    padding-left: var(--space-2);
+  }
+
+  :global([data-touch]) .chevron {
+    width: var(--touch-mark);
+    height: var(--touch-mark);
+    stroke-width: 1.1;
+  }
+
+  :global([data-touch]) .count {
+    font-size: var(--text-base);
   }
 </style>

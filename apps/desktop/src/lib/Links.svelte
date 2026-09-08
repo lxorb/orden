@@ -245,12 +245,26 @@
   }
 
   :global([data-touch]) .hit {
-    min-height: 48px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    min-height: var(--touch-row);
+    justify-content: center;
+    padding: var(--space-2) var(--touch-pad);
   }
 
+  /* The line is what the row is about and the note it is in follows it, so the
+     two are the body size and the one under it. */
+  :global([data-touch]) .hit-line {
+    font-size: var(--touch-text);
+  }
+
+  :global([data-touch]) .hit-note,
   :global([data-touch]) .empty-text {
     font-size: var(--text-base);
+  }
+
+  /* A word in capitals over each list, lined up with the rows below it. */
+  :global([data-touch]) .head {
+    margin-left: var(--touch-pad);
+    margin-right: var(--touch-pad);
+    font-size: var(--text-sm);
   }
 </style>

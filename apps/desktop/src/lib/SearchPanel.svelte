@@ -641,11 +641,12 @@
     stroke-linejoin: round;
   }
 
-  /* 16px is where iOS stops zooming into a focused field. */
+  /* The field a search is typed into, at the size the answers are read at.
+     Anything from 16px up is also past where iOS zooms into a focused field. */
   :global([data-touch]) .query {
-    min-height: 44px;
-    padding: 10px 12px;
-    font-size: 16px;
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
+    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .query.wide {
@@ -654,35 +655,40 @@
 
   :global([data-touch]) .swap,
   :global([data-touch]) .apply {
-    min-height: 44px;
+    min-height: var(--touch-target);
   }
 
   :global([data-touch]) .swap {
-    width: 44px;
+    width: var(--touch-target);
   }
 
-  /* Same floor as the tree rows: everything in the drawer is something a
-     thumb has to land on. */
+  /* Same size as the tree rows: everything in the drawer is something a thumb
+     has to land on, and a line of a note is there to be read. */
   :global([data-touch]) .hit {
-    min-height: 48px;
+    min-height: var(--touch-row);
     display: flex;
     align-items: center;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding: 0 var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global([data-touch]) .note {
+    padding: var(--space-2) var(--touch-pad) 2px;
+    font-size: var(--text-base);
   }
 
   :global([data-touch]) .tick {
-    width: 24px;
-    height: 24px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
   }
 
   :global([data-touch]) .tick svg {
-    width: 15px;
-    height: 15px;
+    width: var(--touch-mark);
+    height: var(--touch-mark);
   }
 
   :global([data-touch]) .empty-text {
     margin: var(--space-3) var(--space-2) 0;
-    font-size: var(--text-base);
+    font-size: var(--touch-text);
   }
 </style>

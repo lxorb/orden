@@ -254,7 +254,7 @@
              goes to the end and the space is already there. -->
         <input
           class="rename"
-          style:padding-left="{depth * 12 + 8}px"
+          style:--level={depth}
           value={nameToEdit(entry)}
           spellcheck="false"
           use:rename={workspace.renaming.appending}
@@ -271,7 +271,7 @@
           class="row folder"
           class:dropping={dropTarget === entry.path}
           class:selected={workspace.isSelected(entry.path)}
-          style:padding-left="{depth * 12 + 8}px"
+          style:--level={depth}
           aria-expanded={workspace.isExpanded(entry.path)}
           draggable="true"
           onclick={(event) => pick(event, entry) || workspace.toggleFolder(entry.path)}
@@ -300,7 +300,7 @@
           class:active={workspace.active?.path === entry.path}
           class:dropping={dropTarget === entry.path}
           class:selected={workspace.isSelected(entry.path)}
-          style:padding-left="{depth * 12 + 8}px"
+          style:--level={depth}
           draggable="true"
           onclick={(event) =>
             pick(event, entry) || workspace.openEntry(entry.path, { preview: true })}
@@ -412,6 +412,16 @@
     outline: none;
   }
 
+  /* Each level steps in, and the step is a property rather than a number
+     written into the markup, so a phone can take a deeper one without the
+     component knowing which kind of screen it is on. The outline's rows are
+     indented the same way; see Sidebar.svelte. */
+  .row,
+  .rename {
+    --indent: 12px;
+    padding-left: calc(8px + var(--level, 0) * var(--indent));
+  }
+
   .chevron {
     width: 8px;
     height: 8px;
@@ -436,16 +446,30 @@
   }
 
   /* A 25px row is a desktop row. A thumb needs the whole line, and the tree is
-     the main thing anyone taps in the drawer. */
-  :global([data-touch]) .row {
-    min-height: 48px;
+     the main thing anyone taps in the drawer: the row, the words in it, the
+     mark in front of them and the step per level all come off the touch scale
+     so the list is the same size as every other list in the app. */
+  :global([data-touch]) .row,
+  :global([data-touch]) .rename {
+    --indent: var(--touch-indent);
+    min-height: var(--touch-row);
     padding-top: 0;
     padding-bottom: 0;
-    font-size: var(--text-base);
+    padding-left: calc(var(--touch-pad) + var(--level, 0) * var(--indent));
+    padding-right: var(--touch-pad);
+    font-size: var(--touch-text);
   }
 
-  :global([data-touch]) .rename {
-    min-height: 48px;
-    font-size: var(--text-base);
+  :global([data-touch]) .row {
+    gap: var(--touch-gap);
+  }
+
+  /* Drawn in the slot the file marks sit in, which is a finger's list rather
+     than a pointer's: bigger, and with less stroke for the size, so a twist
+     stays a hairline drawing rather than becoming an arrowhead. */
+  :global([data-touch]) .chevron {
+    width: var(--touch-mark);
+    height: var(--touch-mark);
+    stroke-width: 1.1;
   }
 </style>

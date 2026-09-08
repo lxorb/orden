@@ -69,4 +69,13 @@
     stroke-linejoin: round;
     opacity: 0.75;
   }
+
+  /* The same drawing at a finger's list size. The slot keeps the 9 by 11 the
+     sheets are drawn on, so the mark grows without being stretched, and the
+     stroke comes back down by as much as the box went up. */
+  :global([data-touch]) .mark {
+    width: var(--touch-mark);
+    height: calc(var(--touch-mark) * 11 / 9);
+    stroke-width: 0.8;
+  }
 </style>

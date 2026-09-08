@@ -744,11 +744,13 @@
     stroke: none;
   }
 
-  /* Touch: 30px squares are hard to hit with a thumb. */
+  /* Touch: 30px squares are hard to hit with a thumb. A square here is the
+     column's whole width, so it takes the row size the lists beside it use
+     rather than the bare floor. */
   :global([data-touch]) .space,
   :global([data-touch]) .add {
-    width: var(--touch-target);
-    height: var(--touch-target);
+    width: var(--touch-row);
+    height: var(--touch-row);
   }
 
   :global([data-touch]) nav {
@@ -760,18 +762,16 @@
     padding-bottom: calc(var(--space-3) + var(--inset-bottom));
   }
 
-  :global([data-touch]) svg {
-    width: 22px;
-    height: 22px;
-  }
-
+  :global([data-touch]) svg,
   :global([data-touch]) .glyph {
-    width: 24px;
-    height: 24px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
   }
 
+  /* The letter a space is known by stands in for an icon, so it is drawn at the
+     size of the ones above and below it. */
   :global([data-touch]) .space {
-    font-size: 18px;
+    font-size: var(--touch-icon);
   }
 
   /* No hover on a touch screen, so the label would never show. */
@@ -779,9 +779,10 @@
     display: none;
   }
 
-  /* A thumb's step, and the one place these are ever shown. */
+  /* A thumb's step, and the one place these are ever shown. As wide as the
+     squares it moves between, and no taller than the gap it sits in. */
   :global([data-touch]) .nudge {
-    width: var(--touch-target);
+    width: var(--touch-row);
     height: 34px;
   }
 

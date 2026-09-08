@@ -613,42 +613,59 @@
     padding-top: calc(var(--space-2) + var(--inset-top));
   }
 
+  /* A tab is as tall as a row and as wide as a thumb: five of them have to fit
+     across a drawer, so the width is the floor and the height is the scale. */
   :global([data-touch]) .switch button {
     width: var(--touch-target);
-    height: var(--touch-target);
+    height: var(--touch-row);
   }
 
   :global([data-touch]) .switch button svg {
-    width: 22px;
-    height: 22px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
+  }
+
+  /* The one tab wearing a number rather than a drawing reads at the size the
+     drawings are. */
+  :global([data-touch]) .depth {
+    font-size: var(--touch-text);
   }
 
   /* The last row clears the gesture bar. */
   :global([data-touch]) .body {
-    padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+    padding-bottom: var(--touch-bottom);
   }
 
-  /* Same floor as the tree rows beneath them: everything here is something a
+  /* The same size as the tree rows beneath them: everything here is something a
      thumb has to land on. The same type as those rows, too, and none of the
      desktop's vertical padding: the row is already tall, and 12.5px words in
      it were mostly the row. */
   :global([data-touch]) .row {
-    min-height: var(--touch-target);
-    padding-top: 0;
-    padding-bottom: 0;
-    font-size: var(--text-base);
+    min-height: var(--touch-row);
+    gap: var(--touch-gap);
+    padding: 0 var(--touch-pad);
+    font-size: var(--touch-text);
   }
 
   /* An outline is read more than it is tapped: a shorter row than the tree's,
      still a whole line for a thumb, and a deeper step per level so the
      hierarchy survives the larger type. */
   :global([data-touch]) .heading {
-    --indent: 14px;
-    min-height: 40px;
+    --indent: var(--touch-indent);
+    min-height: var(--touch-target);
+    padding-left: calc(var(--touch-pad) + var(--level) * var(--indent));
+  }
+
+  :global([data-touch]) .empty-text,
+  :global([data-touch]) .empty {
+    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .empty-text {
     margin: var(--space-3) var(--space-2) 0;
-    font-size: var(--text-base);
+  }
+
+  :global([data-touch]) .empty {
+    min-height: var(--touch-row);
   }
 </style>

@@ -283,22 +283,22 @@
     padding-right: var(--inset-right);
   }
 
-  :global([data-touch]) .toggle {
-    width: 52px;
-    height: var(--touch-target);
-  }
-
-  :global([data-touch]) .toggle svg {
-    width: 22px;
-    height: 22px;
-  }
-
+  /* A row's height, which is what an app bar is on both platforms. */
+  :global([data-touch]) .toggle,
   :global([data-touch]) .more {
-    height: var(--touch-target);
+    width: var(--touch-row);
+    height: var(--touch-row);
   }
 
+  :global([data-touch]) .toggle svg,
   :global([data-touch]) .more svg {
-    width: 22px;
-    height: 22px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
+  }
+
+  /* The note's name is the one thing on the bar to read, at the size everything
+     else here is read at. */
+  :global([data-touch]) .title {
+    font-size: var(--touch-text);
   }
 </style>
