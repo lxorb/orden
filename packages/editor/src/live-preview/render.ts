@@ -1,3 +1,4 @@
+import { MOST_EMS } from '@nib/markdown'
 import { NibWidget } from './widget'
 import katex from 'katex'
 // Chemical equations: `\ce{H2O}` and friends, as Typora supports.
@@ -57,6 +58,10 @@ export class MathWidget extends NibWidget {
       // Typora enables these packages by default; matching keeps documents portable.
       trust: false,
       strict: false,
+      // The same ceiling the renderer uses, and for the same reason: a note is
+      // not always the reader's own, and `\rule{99999em}{99999em}` is one line
+      // of TeX that leaves nothing else on screen. See @nib/markdown.
+      maxSize: MOST_EMS,
     })
 
     if (this.number) {

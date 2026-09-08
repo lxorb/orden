@@ -416,6 +416,7 @@ export {
   footnotes,
   highlight,
   maths,
+  MOST_EMS,
   scripts,
 } from './extensions'
 // The link grammar is its own module - `@nib/markdown/links` - so the editor can

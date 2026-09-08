@@ -10,10 +10,27 @@ import { firstStart, lineStart, matchesAt } from './starts'
  *  an equation that would not parse ends up. */
 const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
 
+/** The largest a formula may say one of its own parts is, in ems.
+ *
+ *  TeX lets the formula choose: `\rule`, `\kern`, `\raisebox` and their
+ *  neighbours all take a length, and KaTeX honours whatever they ask for unless
+ *  it is told a ceiling. A note is not always the reader's own - one arrives
+ *  from a share, from a room, or is published to strangers from a domain shared
+ *  with every other blog - so a single line of TeX could hand the reader a box
+ *  tens of thousands of ems tall, which is a page nobody can read or scroll.
+ *  Well past anything a real equation asks for; nothing legible is 100 lines
+ *  tall. Macro depth needs no number here: KaTeX caps expansion by default. */
+export const MOST_EMS = 100
+
 /** Renders TeX, or shows the source when it will not parse. */
 function math(tex: string, display: boolean): string {
   try {
-    return katex.renderToString(tex, { displayMode: display, throwOnError: false, output: 'html' })
+    return katex.renderToString(tex, {
+      displayMode: display,
+      throwOnError: false,
+      output: 'html',
+      maxSize: MOST_EMS,
+    })
   } catch {
     const escaped = tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
     return display ? `<pre class="math-error">${escaped}</pre>` : `<code>${escaped}</code>`

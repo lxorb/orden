@@ -218,6 +218,19 @@ describe('Typora extensions', () => {
     expect(renderMarkdown('costs $5 and $9')).not.toContain('katex')
   })
 
+  /** A formula says how big its own rules and struts are, and a note is not
+   *  always the reader's own: one arrives from a share, from a room, or is
+   *  published to strangers. Left uncapped, one line of TeX was a box tens of
+   *  thousands of ems tall, which is a page nobody can read or scroll. */
+  test('a formula cannot ask for a box bigger than the page', () => {
+    const html = renderMarkdown('$$\\rule{99999em}{99999em}$$')
+    expect(html).toContain('katex')
+    expect(html).not.toContain('99999em')
+    for (const size of html.matchAll(/(\d+(?:\.\d+)?)em/g)) {
+      expect(Number(size[1])).toBeLessThanOrEqual(100)
+    }
+  })
+
   test('emoji shortcodes become characters', () => {
     expect(renderMarkdown('ship it :rocket:')).toContain('🚀')
     expect(renderMarkdown('ship it :rocket:')).not.toContain(':rocket:')
