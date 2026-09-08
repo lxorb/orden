@@ -17,7 +17,7 @@
 import type { Camera } from '../camera'
 import type { InkStroke } from './format'
 import type { Box } from './geometry'
-import { INK_STYLES, outlineOf, strokeBox, traceInk } from './ink'
+import { INK_STYLES, inkOpacity, outlineOf, strokeBox, traceInk } from './ink'
 
 /** Outlines already worked out. Weak, so a stroke that has been erased takes its
  *  path with it without anybody sweeping up. */
@@ -127,7 +127,7 @@ function inkStyle(ctx: CanvasRenderingContext2D, stroke: InkStroke, palette: Pal
   const style = INK_STYLES[stroke.tool]
   const colour = inkColour(stroke.color, palette)
 
-  ctx.globalAlpha = style.opacity
+  ctx.globalAlpha = inkOpacity(stroke)
   ctx.globalCompositeOperation = style.multiply ? 'multiply' : 'source-over'
 
   if (style.grain) {
@@ -187,8 +187,12 @@ export function paintInk(
   for (const stroke of strokes) {
     if (!meets(strokeBox(stroke), box)) continue
 
+    // Ink that is set the same way is one shape to fill. The alpha is part of
+    // being set the same way: two strokes at different opacities cannot share a
+    // fill without one of them coming out at the other's.
     const key = `${stroke.tool}
-${stroke.color}`
+${stroke.color}
+${inkOpacity(stroke)}`
     const held = batches.get(key)
 
     if (held) held.path.addPath(pathOf(stroke))

@@ -171,6 +171,10 @@ export interface InkStroke {
   color: CanvasColour
   /** The nib's width in plane units, before pressure thins it. */
   size: number
+  /** How much of the colour lands, 0 to 1, or absent for however translucent
+   *  this kind of pen is by itself. Absent rather than filled in, so a canvas
+   *  drawn before anybody could turn the dial reads and writes back unchanged. */
+  opacity?: number
   points: InkPoint[]
 }
 
@@ -359,8 +363,16 @@ function readStroke(value: unknown): InkStroke | null {
     tool: value.tool,
     color: value.color,
     size: Math.max(0.1, isNumber(value.size) ? value.size : 3),
+    ...(isNumber(value.opacity) ? { opacity: clampOpacity(value.opacity) } : {}),
     points,
   }
+}
+
+/** An alpha the paint can use. Nought would be a stroke nobody can see or find
+ *  again, so the dial and the file agree on a floor. */
+export function clampOpacity(value: number): number {
+  if (!Number.isFinite(value)) return 1
+  return Math.min(1, Math.max(0.05, Math.round(value * 100) / 100))
 }
 
 function readShape(value: unknown): ShapeNode | null {
@@ -550,6 +562,7 @@ function writtenStroke(stroke: InkStroke): Record<string, unknown> {
     tool: stroke.tool,
     color: stroke.color,
     size: Math.round(stroke.size * 100) / 100,
+    ...(stroke.opacity === undefined ? {} : { opacity: clampOpacity(stroke.opacity) }),
     points,
   }
 }

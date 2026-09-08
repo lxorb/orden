@@ -6,6 +6,8 @@ import {
   assisted,
   erased,
   INK_STYLES,
+  inkOpacity,
+  inkPath,
   insidePolygon,
   nearStroke,
   outlineOf,
@@ -528,5 +530,54 @@ describe('what a held pen meant to draw', () => {
     const radii = tidy.points.map((p) => Math.hypot(p.x - middle.x, p.y - middle.y))
 
     expect(Math.max(...radii) - Math.min(...radii)).toBeLessThan(1)
+  })
+})
+
+describe('how much of the colour a stroke lands', () => {
+  test('is what the stroke says, when it says', () => {
+    expect(inkOpacity(stroke(line(4), { opacity: 0.42 }))).toBe(0.42)
+  })
+
+  test('is what the pen is by itself, when the stroke says nothing', () => {
+    for (const tool of INK_TOOLS) {
+      expect(inkOpacity(stroke(line(4), { tool })), tool).toBe(INK_STYLES[tool].opacity)
+    }
+  })
+
+  /** The whole point of storing it: a highlighter is translucent by nature, and a
+   *  hand that wanted a solid one has to be able to say so. */
+  test('lets a highlighter be turned right up and a biro right down', () => {
+    expect(inkOpacity(stroke(line(4), { tool: 'highlighter', opacity: 1 }))).toBe(1)
+    expect(inkOpacity(stroke(line(4), { tool: 'pen', opacity: 0.1 }))).toBe(0.1)
+  })
+})
+
+describe('a ring as a path', () => {
+  test('is one closed curve through every point of it', () => {
+    const d = inkPath(outlineOf(stroke(line(12))))
+
+    expect(d.startsWith('M')).toBe(true)
+    expect(d).toContain('Q')
+    expect(d.endsWith('Z')).toBe(true)
+  })
+
+  test('is nothing at all for a ring that encloses nothing', () => {
+    expect(inkPath([])).toBe('')
+    expect(
+      inkPath([
+        { x: 0, y: 0 },
+        { x: 1, y: 1 },
+      ]),
+    ).toBe('')
+  })
+
+  test('is rounded to a tenth of a unit, which is finer than any pen is steady', () => {
+    const d = inkPath([
+      { x: 1.23456, y: 2 },
+      { x: 4, y: 5 },
+      { x: 6, y: 7 },
+    ])
+
+    expect(d).not.toContain('1.23456')
   })
 })

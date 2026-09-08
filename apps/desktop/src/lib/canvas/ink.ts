@@ -126,6 +126,16 @@ export const INK_STYLES: Record<InkTool, InkStyle> = {
   },
 }
 
+/** How much of the colour a stroke lands, 0 to 1.
+ *
+ *  A stroke that was drawn with the dial turned says so itself; one that was not
+ *  wears whatever this kind of pen is, which is how a highlighter has always been
+ *  translucent and a biro has not. One answer, read by the two layers on screen
+ *  and by every export, so a drawing looks the same wherever it is painted. */
+export function inkOpacity(stroke: InkStroke): number {
+  return stroke.opacity ?? INK_STYLES[stroke.tool].opacity
+}
+
 /** The outline of a stroke, as a ring of points in plane coordinates.
  *
  *  A flat nib is a ribbon and a round one is what perfect-freehand works out, so
@@ -265,6 +275,23 @@ export function traceInk(ring: readonly Point[], sink: InkSink): void {
   }
 
   sink.closePath()
+}
+
+/** A ring as an SVG path, curved exactly as the app paints it, so a picture that
+ *  has left the app - an export, or the preview in the pen's own popover - is the
+ *  picture that was on screen. */
+export function inkPath(ring: readonly Point[]): string {
+  const out: string[] = []
+  const round = (value: number) => Math.round(value * 10) / 10
+
+  traceInk(ring, {
+    moveTo: (x, y) => out.push(`M${round(x)} ${round(y)}`),
+    quadraticCurveTo: (cx, cy, x, y) =>
+      out.push(`Q${round(cx)} ${round(cy)} ${round(x)} ${round(y)}`),
+    closePath: () => out.push('Z'),
+  })
+
+  return out.join(' ')
 }
 
 /** A flat nib's outline: every point offset by the same vector one way, then the

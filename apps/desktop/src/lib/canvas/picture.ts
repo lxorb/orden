@@ -25,10 +25,10 @@ import {
   edgeEnds,
   edgeMiddle,
   edgePath,
-  type Point,
   shapeLine,
 } from './geometry'
-import { INK_STYLES, outlineOf, strokeBox, traceInk } from './ink'
+import { strokeBox } from './ink'
+import { inkSvg } from './svg'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { invoke, isDesktop } from '../tauri'
@@ -277,42 +277,6 @@ function drawnEdges(canvas: Canvas, palette: Palette): string {
   return out.join('')
 }
 
-/** A stroke's outline as an SVG path, curved exactly as the app paints it, so an
- *  exported picture is the picture that was on screen. */
-function inkPath(ring: Point[]): string {
-  const out: string[] = []
-
-  traceInk(ring, {
-    moveTo: (x, y) => out.push(`M${round(x)} ${round(y)}`),
-    quadraticCurveTo: (cx, cy, x, y) =>
-      out.push(`Q${round(cx)} ${round(cy)} ${round(x)} ${round(y)}`),
-    closePath: () => out.push('Z'),
-  })
-
-  return out.join(' ')
-}
-
-function drawnInk(canvas: Canvas, palette: Palette): string {
-  const out: string[] = []
-
-  for (const stroke of canvas.ink) {
-    const style = INK_STYLES[stroke.tool]
-    const d = inkPath(outlineOf(stroke))
-    if (!d) continue
-
-    const colour = palette[stroke.color] ?? stroke.color
-    const blend = style.multiply ? ' style="mix-blend-mode:multiply"' : ''
-
-    out.push(`<path d="${d}" fill="${colour}" fill-opacity="${style.opacity}"${blend}/>`)
-  }
-
-  return out.join('')
-}
-
-function round(value: number): number {
-  return Math.round(value * 10) / 10
-}
-
 /** The whole plane as one SVG, sized to what is on it. */
 function canvasSvg(
   canvas: Canvas,
@@ -344,7 +308,7 @@ function canvasSvg(
     `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${palette.bg ?? '#fff'}"/>`,
     drawnEdges(canvas, palette),
     nodes,
-    drawnInk(canvas, palette),
+    inkSvg(canvas.ink, palette),
     `</svg>`,
   ].join('')
 }

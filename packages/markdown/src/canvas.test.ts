@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { blankCanvas, type Canvas, freshId, readCanvas, writeCanvas } from './canvas'
+import { blankCanvas, type Canvas, clampOpacity, freshId, readCanvas, writeCanvas } from './canvas'
 
 /** A canvas written the way the spec's own examples are: every node type, every
  *  optional field, and edges naming their sides and their ends.
@@ -388,5 +388,84 @@ describe('what Nib keeps beyond the spec', () => {
       'ray',
       'new',
     ])
+  })
+})
+
+/** How much of the colour a stroke lands is the pen's, not the tool's: a hand
+ *  that turned a highlighter solid or a biro faint has said something about that
+ *  stroke, and the file has to carry it. A stroke that says nothing goes on
+ *  meaning "however this kind of pen comes", so an old canvas is untouched. */
+describe('how translucent a stroke was drawn', () => {
+  const one = (over: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      nodes: [],
+      nib: {
+        ink: [
+          {
+            id: 'a',
+            tool: 'highlighter',
+            color: '2',
+            size: 18,
+            points: [1, 2, 0.5, 0, 0, 0, 9, 8, 0.6, 0, 0, 16],
+            ...over,
+          },
+        ],
+      },
+    })
+
+  test('is not there at all in a canvas that never said', () => {
+    expect(readCanvas(one()).ink[0]?.opacity).toBeUndefined()
+  })
+
+  test('is read back as it was written', () => {
+    expect(readCanvas(one({ opacity: 0.55 })).ink[0]?.opacity).toBe(0.55)
+  })
+
+  test('is written down only by a stroke that has one', () => {
+    const canvas = readCanvas(one())
+    const plain = JSON.parse(writeCanvas(canvas)) as {
+      nib: { ink: Record<string, unknown>[] }
+    }
+
+    expect(plain.nib.ink[0]).not.toHaveProperty('opacity')
+  })
+
+  test('rides through a whole write and read unchanged', () => {
+    const drawn: Canvas = {
+      nodes: [],
+      edges: [],
+      ink: [
+        {
+          id: 'a',
+          tool: 'pen',
+          color: '1',
+          size: 3,
+          opacity: 0.3,
+          points: [
+            { x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
+            { x: 4, y: 4, pressure: 0.5, tiltX: 0, tiltY: 0, t: 8 },
+          ],
+        },
+      ],
+      at: {},
+      gone: {},
+    }
+
+    const written = writeCanvas(drawn)
+    expect(readCanvas(written)).toEqual(drawn)
+    expect(writeCanvas(readCanvas(written))).toBe(written)
+  })
+
+  test('is brought back inside what paint can use when a file says otherwise', () => {
+    expect(readCanvas(one({ opacity: 40 })).ink[0]?.opacity).toBe(1)
+    expect(readCanvas(one({ opacity: -3 })).ink[0]?.opacity).toBe(0.05)
+    expect(readCanvas(one({ opacity: 'blue' })).ink[0]?.opacity).toBeUndefined()
+  })
+
+  test('a stroke nobody can see is not a stroke, so nought is not allowed', () => {
+    expect(clampOpacity(0)).toBe(0.05)
+    expect(clampOpacity(1)).toBe(1)
+    expect(clampOpacity(0.4449)).toBe(0.44)
+    expect(clampOpacity(Number.NaN)).toBe(1)
   })
 })
