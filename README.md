@@ -43,15 +43,15 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 |  | Open source | Built-in MCP | Win, mac, Linux | Web | Android, iOS | Backlinks & graph | Canvas | Pen & pressure | Live collaboration | Free sync | Free publishing |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **nibeditor** | ✅ | ✅ | ✅ | ✅ | not in stores | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Notion | ❌ | ✅ | no Linux | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Notion | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Obsidian | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Typora | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | MarkText | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Joplin | ✅ | ❌ | ✅ | paid only | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Joplin | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Logseq | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| iA Writer | ❌ | ❌ | no Linux | ❌ | no Android | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Bear | ❌ | ❌ | mac only | beta | no Android | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 ## Features
 
