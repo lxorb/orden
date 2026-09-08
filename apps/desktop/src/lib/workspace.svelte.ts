@@ -2510,7 +2510,7 @@ class Workspace {
    *  in the pane being split, which would empty that pane and close it again the
    *  moment the new one opened. What decides which zones a pane offers. */
   canLand(side: Side, paneId: string, tabId: string | null): boolean {
-    if (viewport.phone || !this.panes.splittable(alongOf(side), paneId)) return false
+    if (viewport.device === 'phone' || !this.panes.splittable(alongOf(side), paneId)) return false
 
     const tab = tabId === null ? null : this.tabs.find((one) => one.id === tabId)
     return !(tab?.paneId === paneId && this.tabsIn(paneId).length < 2)
