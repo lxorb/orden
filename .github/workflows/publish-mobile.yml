@@ -1,0 +1,276 @@
+name: publish-mobile
+
+# The phone builds, on the same two occasions the desktop ones happen: every push
+# to main, and a tag `v*`. A tag puts them on that version's own release beside
+# the installers; a build of main goes on a rolling pre-release of its own,
+# `mobile-edge`, rather than the desktop's `edge`, because release.yml deletes and
+# remakes that one on every push and would take an APK uploaded beside it with it.
+#
+# There is no store account behind either platform. The Android side is an APK to
+# sideload; the iOS side is a simulator build, because putting Nib on a real iPhone
+# needs an Apple developer account. See docs/mobile.md for what to add when there
+# is one.
+on:
+  push:
+    tags: ['v*']
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push to main supersedes the build of an older one. A tag is a release
+# of its own and is never cancelled.
+concurrency:
+  group: publish-mobile-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+
+jobs:
+  # What this build is called; see scripts/build-version.sh.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
+      tag: ${{ steps.decide.outputs.tag }}
+      rolling: ${{ steps.decide.outputs.rolling }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The whole history, so the newest tag can be found from main.
+          fetch-depth: 0
+
+      - id: decide
+        shell: bash
+        run: bash scripts/build-version.sh mobile-edge
+
+  android:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # No version here: it comes from the root package.json's packageManager.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The Android Gradle plugin runs on 17; the runner's default is newer.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # The platform and build tools the project asks for, which are newer than
+      # the ones the runner image happens to ship.
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      # The crate is cross-compiled by the NDK on the image, whichever version
+      # that is; the toolchain it ships is the same for every recent one.
+      - name: Point Tauri at the NDK
+        run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >>"$GITHUB_ENV"
+
+      # The two architectures worth shipping: every phone since 2017 is arm64,
+      # and x86_64 is what an emulator runs.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          key: android
+
+      - run: pnpm install --frozen-lockfile
+
+      # An unsigned APK will not install on a phone, so one is always signed.
+      # With the release secrets it is signed with Emil's own key and every build
+      # can replace the last; without them the job makes a key of its own, which
+      # is enough to install but changes from run to run, so the old app has to
+      # come off before the new one goes on. See docs/mobile.md.
+      - name: A key to sign with
+        working-directory: apps/desktop/src-tauri/gen/android
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE" ]; then
+            echo "$KEYSTORE" | base64 -d >release.jks
+            store=$PWD/release.jks
+            password=$KEYSTORE_PASSWORD
+            alias=${KEY_ALIAS:-nib}
+          else
+            store=$PWD/edge.jks
+            password=nib-edge
+            alias=nib
+            keytool -genkeypair -keystore "$store" -alias "$alias" -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$password" -keypass "$password" \
+              -dname 'CN=Nib, O=Emil Vinu'
+          fi
+
+          {
+            echo "storeFile=$store"
+            echo "storePassword=$password"
+            echo "keyAlias=$alias"
+            echo "keyPassword=$password"
+          } >keystore.properties
+
+      # The version is passed in rather than read from tauri.conf.json, so a
+      # build of main is named after the build it came from.
+      - name: Build the APK
+        run: |
+          pnpm --filter @nib/desktop exec tauri android build --apk \
+            --target aarch64 --target x86_64 \
+            --config '{"version":"${{ needs.version.outputs.version }}"}'
+
+      # The lints CI holds the crate to on a desktop, on the target it is built for
+      # here: a cfg gate is the one thing that can be clean on one platform and
+      # not on another. After the build, because the crate embeds the built
+      # frontend and will not compile before there is one.
+      - name: Clippy for the phone
+        run: |
+          cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml \
+            --target aarch64-linux-android -- -D warnings
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nib-android
+          if-no-files-found: error
+          path: apps/desktop/src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
+
+  ios:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The simulator on an Apple silicon Mac, and a real phone. The first is what
+      # can be run without an account; the second is compiled below to prove it
+      # still compiles.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          key: ios
+
+      - run: pnpm install --frozen-lockfile
+
+      # The Xcode project is generated here rather than committed: the CLI writes
+      # it on a macOS machine only, and nothing in it is edited by hand, so there
+      # is nothing a commit would preserve. See docs/mobile.md.
+      - name: The Xcode project
+        env:
+          # Xcode wants a team named even to lay the project out. There is no
+          # account behind this one, and nothing below signs anything, so the
+          # placeholder is only a field being filled in.
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
+        run: pnpm --filter @nib/desktop exec tauri ios init
+
+      - name: Build for the simulator
+        env:
+          APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
+        run: |
+          pnpm --filter @nib/desktop exec tauri ios build --target aarch64-sim \
+            --config '{"version":"${{ needs.version.outputs.version }}"}'
+
+      # What a real phone would run, as far as it can be taken without an Apple
+      # account. An `.xcarchive` cannot: Xcode's own archive refuses to codesign
+      # without a certificate, and it cannot be driven by hand either, because the
+      # project's Rust build phase asks the CLI that started it for its options
+      # over a socket. The library for the device is the part that could break, so
+      # it is built, and the archive waits for an account. See docs/mobile.md.
+      - name: Build for a phone
+        run: |
+          cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml \
+            --lib --release --target aarch64-apple-ios
+
+      - name: Clippy for the phone
+        run: |
+          cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml \
+            --target aarch64-apple-ios -- -D warnings
+
+      # A bundle travels as one file.
+      - name: Collect what was built
+        run: |
+          mkdir -p out
+          app=$(find apps/desktop/src-tauri/gen/apple/build -maxdepth 4 -name '*.app' | head -1)
+          test -n "$app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" out/ios-simulator.app.zip
+          ls -l out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nib-ios
+          if-no-files-found: error
+          path: out/*.zip
+
+  # Only a build of main or of a tag has a release to go on: a manual run on a
+  # branch is somebody checking that the builds work.
+  publish:
+    needs: [version, android, ios]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with: { path: artifacts }
+
+      - name: Name the downloads for humans
+        run: |
+          mkdir -p uploads
+          # Found rather than globbed: an artifact keeps whatever folders its
+          # files needed to tell them apart, and how deep that is depends on how
+          # many APKs the build produced.
+          find artifacts -type f | while read -r file; do
+            name=$(basename "$file")
+            case "$name" in
+              # Tauri names an APK after the architectures inside it, wrapped in
+              # an `app-` and a `-release` that say nothing to anybody who is
+              # about to download one.
+              app-*-release.apk)
+                name=${name#app-}
+                name="android-${name%-release.apk}.apk"
+                ;;
+            esac
+            cp "$file" "uploads/Nib_${VERSION}_$name"
+          done
+          ls -l uploads
+
+      # The rolling release is remade rather than added to, so an old build's
+      # files never sit under a newer one's name.
+      - name: Replace the build of main
+        if: needs.version.outputs.rolling == 'true'
+        run: |
+          gh release delete "$TAG" --cleanup-tag --yes || true
+          gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
+            --title "main on a phone · $VERSION" \
+            --notes "Built from \`${GITHUB_SHA::7}\` on main. Replaced by every push. The APK installs by hand; see docs/mobile.md."
+
+      - name: Publish the release
+        if: needs.version.outputs.rolling != 'true'
+        run: gh release create "$TAG" --title "$TAG" --generate-notes || true
+
+      - name: Upload the files
+        run: gh release upload "$TAG" uploads/* --clobber
