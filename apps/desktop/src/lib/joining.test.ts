@@ -20,8 +20,10 @@ interface World {
   } | null
   /** What walking through it answers. */
   through: Record<string, unknown>
-  /** Set to make walking through it fail. */
+  /** Set to make walking through it fail, the way a link that has run out does. */
   refuse: string | null
+  /** Set to make the request never arrive, which says nothing about the link. */
+  unreachable: boolean
   /** Every call that was made, in order, and what it carried. */
   asked: { key: string; options: Record<string, unknown> }[]
   /** Which space the app was shown, if any. */
@@ -36,6 +38,7 @@ const world = vi.hoisted((): World => ({
   about: null,
   through: {},
   refuse: null,
+  unreachable: false,
   asked: [],
   shown: null,
   passes: 0,
@@ -54,6 +57,7 @@ vi.mock('./api', async (importOriginal) => {
           : Promise.reject(new original.ApiError(404, 'that link has expired')),
       join: (key: string, options: Record<string, unknown> = {}) => {
         world.asked.push({ key, options })
+        if (world.unreachable) return Promise.reject(new Error('the network is not there'))
         if (world.refuse) return Promise.reject(new original.ApiError(404, world.refuse))
 
         return Promise.resolve(world.through)
@@ -142,6 +146,7 @@ beforeEach(async () => {
   world.about = null
   world.through = {}
   world.refuse = null
+  world.unreachable = false
   world.asked = []
   world.shown = null
   world.passes = 0
@@ -342,6 +347,64 @@ describe('a link that asks first', () => {
     await joining.start()
     expect(joining.step).toBe('waiting')
     expect(world.asked[0]?.key).toBe(TOKEN)
+  })
+})
+
+/** The wait is the one state that lasts, and it asks again every three seconds.
+ *
+ *  The bug these are about: every failure used to read as a link that had run
+ *  out, so one dropped request in the three seconds before the owner pressed
+ *  Accept ended the wait, forgot the link, and told somebody to ask for another
+ *  one. The same reasoning as restoring a session in account.svelte.ts: only the
+ *  service refusing it says anything about the credential. */
+describe('waiting on the owner', () => {
+  beforeEach(async () => {
+    world.about = approval
+    world.through = { token: 'guest-session', guest: { id: 'g1', name: 'Ada' }, waiting: true }
+
+    await joining.start()
+    joining.told = 'Ada'
+    await joining.tell()
+  })
+
+  test('keeps waiting when a request never arrives', async () => {
+    world.unreachable = true
+    await joining.walkThrough()
+
+    expect(joining.step).toBe('waiting')
+    // Still remembered, so the next launch picks the wait back up.
+    expect(localStorage.getItem('nib:waiting')).toBe(TOKEN)
+    expect(joining.error).toBe('the network is not there')
+  })
+
+  test('is let in by the ask after the one that did not arrive', async () => {
+    world.unreachable = true
+    await joining.walkThrough()
+
+    world.unreachable = false
+    world.through = { guest: { id: 'g1', name: 'Ada' }, space }
+    await joining.walkThrough()
+
+    expect(joining.step).toBeNull()
+    expect(world.shown).toBe('here')
+  })
+
+  test('ends when the service says the link is finished', async () => {
+    world.refuse = 'that link has expired'
+    await joining.walkThrough()
+
+    expect(joining.step).toBe('gone')
+    expect(localStorage.getItem('nib:waiting')).toBeNull()
+  })
+
+  test('asks once at a time, however often it is asked', async () => {
+    // The timer and the button reach the same method, and two asks in flight
+    // together would land twice: two sessions handed out, and the second answer
+    // applied over the first.
+    const asks = world.asked.length
+    await Promise.all([joining.walkThrough(), joining.walkThrough()])
+
+    expect(world.asked.length).toBe(asks + 1)
   })
 })
 

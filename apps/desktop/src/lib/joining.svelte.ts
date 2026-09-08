@@ -22,7 +22,7 @@
  *  machine and on a phone. The desktop app registers no URL scheme, so a link
  *  opened there opens the web app instead; see docs/collaboration.md. */
 
-import { api, type Invitation, type Joined } from './api'
+import { api, ApiError, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
@@ -53,6 +53,18 @@ export type Step = 'asking' | 'waiting' | 'declined' | 'gone'
  *  telling apart because it is also what later turns the guest into an account. */
 function said(text: string): { name: string } | { email: string } {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text) ? { email: text } : { name: text }
+}
+
+/** Whether the service itself refused the link, rather than the request never
+ *  getting there.
+ *
+ *  A link that has been used or has run out is answered with a status. A dropped
+ *  connection, or a server having a bad minute, says nothing about the link - and
+ *  reading either as a link that is finished ends a wait three seconds before the
+ *  owner presses Accept. The same distinction the session makes when it comes
+ *  back on a machine whose network has not; see account.svelte.ts. */
+function refused(error: unknown): boolean {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500
 }
 
 class Joining {
@@ -117,7 +129,10 @@ class Joining {
    *  answer, so there is one request here and not two. */
   async walkThrough() {
     const token = this.token
-    if (!token) return
+    // One ask at a time: the timer behind the wait and the button both reach
+    // here, and two in flight together would be two sessions handed out with the
+    // second answer applied over the first.
+    if (!token || this.busy) return
 
     this.busy = true
     this.error = null
@@ -133,9 +148,14 @@ class Joining {
         ...(this.told.trim() ? said(this.told.trim()) : {}),
       })
     } catch (error) {
+      this.error = message(error, t('Ask for another one.'))
+      // A wait survives anything but a refusal. The owner may be about to
+      // answer, the next ask is three seconds away, and the link is still
+      // written down for the launch after this one.
+      if (this.step === 'waiting' && !refused(error)) return
+
       this.stopAsking()
       this.step = 'gone'
-      this.error = message(error, t('Ask for another one.'))
       return
     } finally {
       this.busy = false
