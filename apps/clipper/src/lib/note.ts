@@ -30,22 +30,39 @@ export function fits(content: string): boolean {
   return byteLength(content) <= MAX_NOTE_BYTES
 }
 
+/** The longest a page may name itself. A title is a line above an article, and
+ *  a page that hands over a paragraph is handing over content in the wrong
+ *  field. */
+const LONGEST_TITLE = 300
+
+/** One line, however many the page wrote.
+ *
+ *  A title comes from the page - `og:title`, `<title>`, the words a link shows -
+ *  and a page may put anything at all in it. A line break in there would end the
+ *  front matter early, and everything after it would land in the note as
+ *  markdown of the page's choosing; `---` on a line of its own is exactly the
+ *  terminator. So no value in the block above a note is ever more than a line. */
+export function oneLine(value: string): string {
+  return value.replace(/\s+/gu, ' ').trim()
+}
+
 /** A YAML scalar. Plain where that is unambiguous, single quoted where it is
  *  not: a colon and a space open a mapping, a space and a hash open a comment,
- *  and a handful of characters mean something at the start of a value. */
-function scalar(value: string): string {
+ *  and a handful of characters mean something at the start of a value. Every
+ *  value arrives as one line, so nothing here has to think about folding. */
+function scalar(source: string): string {
+  const value = oneLine(source)
+
   const ambiguous =
-    !value ||
-    /:\s|:$|\s#/.test(value) ||
-    /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
-    value !== value.trim()
+    !value || /:\s|:$|\s#/.test(value) || /^[-?:,[\]{}#&*!|>'"%@`]/.test(value)
 
   return ambiguous ? `'${value.replace(/'/g, "''")}'` : value
 }
 
 /** A member of a flow sequence, which is what `tags` is. The same rules, plus
  *  the characters that would end the member or the list itself. */
-function member(value: string): string {
+function member(source: string): string {
+  const value = oneLine(source)
   return /[,[\]{}]/.test(value) ? `'${value.replace(/'/g, "''")}'` : scalar(value)
 }
 
@@ -92,11 +109,15 @@ export function fileName(title: string): string {
 }
 
 /** The whole note. A clipped link has no content of its own, so it says the one
- *  thing it knows: the address, as a link somebody can follow. */
+ *  thing it knows: the address, as a link somebody can follow.
+ *
+ *  The title is settled once, here, so the front matter, the heading and the
+ *  headline the body is checked against are the same words. */
 export function noteFor(origin: Origin, markdown: string, clipped: Date): string {
-  const titled = { ...origin, title: origin.title.trim() || UNTITLED }
-  const body =
-    titled.kind === 'link' ? `<${titled.url}>` : withoutRepeatedTitle(markdown, titled.title)
+  const title = oneLine(origin.title).slice(0, LONGEST_TITLE).trim() || UNTITLED
+  const titled = { ...origin, title }
 
-  return `${frontMatter(titled, clipped)}\n\n# ${titled.title}\n\n${body}\n`
+  const body = titled.kind === 'link' ? `<${titled.url}>` : withoutRepeatedTitle(markdown, title)
+
+  return `${frontMatter(titled, clipped)}\n\n# ${title}\n\n${body}\n`
 }

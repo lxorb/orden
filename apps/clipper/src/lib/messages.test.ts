@@ -38,6 +38,26 @@ describe('a clip arriving from the page', () => {
   test('has no tags when the tags are not a list', () => {
     expect(readClip({ ...CLIP, origin: { ...CLIP.origin, tags: 'a,b' } })?.origin.tags).toEqual([])
   })
+
+  test('is nothing when the address is not one', () => {
+    expect(readClip({ ...CLIP, origin: { ...CLIP.origin, url: 'not an address' } })).toBe(null)
+    expect(readClip({ ...CLIP, origin: { ...CLIP.origin, url: '' } })).toBe(null)
+  })
+
+  // A note records the address, and a clipped link is nothing but the address.
+  test('is nothing when the address is code rather than a place', () => {
+    expect(readClip({ ...CLIP, origin: { ...CLIP.origin, url: 'javascript:alert(1)' } })).toBe(null)
+    expect(readClip({ ...CLIP, origin: { ...CLIP.origin, url: 'data:text/html,<b>' } })).toBe(null)
+  })
+
+  test('writes the address the way a browser does, so nothing is left in it', () => {
+    const read = readClip({ ...CLIP, origin: { ...CLIP.origin, url: 'https://site.example/a b>c' } })
+    expect(read?.origin.url).toBe('https://site.example/a%20b%3Ec')
+  })
+
+  test('is nothing when the instant is not a date', () => {
+    expect(readClip({ ...CLIP, clipped: 'whenever' })).toBe(null)
+  })
 })
 
 describe('what the worker is asked', () => {

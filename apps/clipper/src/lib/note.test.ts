@@ -62,6 +62,25 @@ describe('front matter', () => {
   test('quotes a tag that would break the list', () => {
     expect(frontMatter(origin({ tags: ['a, b'] }), AT)).toContain("tags: ['a, b']")
   })
+
+  // A page names itself in `og:title`, and a page may put anything at all in
+  // there. Without this the block ends where the page said it did and the rest
+  // of what it wrote lands in the note as markdown of its own choosing.
+  test('cannot be ended early by a title with lines in it', () => {
+    const block = frontMatter(origin({ title: 'Fine\n---\n\n<img src=x onerror=alert(1)>' }), AT)
+
+    expect(block.split('\n').filter((line) => line === '---')).toHaveLength(2)
+    expect(block).toContain('title: Fine --- <img src=x onerror=alert(1)>')
+  })
+
+  test('keeps a tag on its own line too', () => {
+    expect(frontMatter(origin({ tags: ['one\n---\ntwo'] }), AT)).toContain('tags: [one --- two]')
+  })
+
+  test('states an address as one line, whatever arrived', () => {
+    const block = frontMatter(origin({ url: 'https://site.example/a\nclipped: never' }), AT)
+    expect(block.split('\n').filter((line) => line.startsWith('clipped:'))).toHaveLength(1)
+  })
 })
 
 describe('the file a clip wants to be', () => {
@@ -139,6 +158,23 @@ describe('the note itself', () => {
 
   test('calls a note with no title at all Untitled', () => {
     expect(noteFor(origin({ title: '   ' }), 'body', AT)).toContain('# Untitled')
+  })
+
+  test('has one heading and one front matter block however the title is written', () => {
+    const note = noteFor(
+      origin({ title: 'Fine\n---\n\n<img src=x onerror=alert(1)>\n\n# Something else' }),
+      'The body.',
+      AT,
+    )
+
+    expect(note.split('\n').filter((line) => line === '---')).toHaveLength(2)
+    expect([...note.matchAll(/^# /gm)]).toHaveLength(1)
+    expect(note.endsWith('The body.\n')).toBe(true)
+  })
+
+  test('shortens a title a page wrote a paragraph into', () => {
+    const note = noteFor(origin({ title: 'a'.repeat(500) }), 'body', AT)
+    expect(note).toContain(`# ${'a'.repeat(300)}\n`)
   })
 })
 

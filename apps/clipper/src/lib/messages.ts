@@ -44,15 +44,38 @@ function readKind(value: unknown): Kind | null {
   return KINDS.find((one) => one === value) ?? null
 }
 
+/** What a note never records as where it came from. A page is fetched over one
+ *  of the ordinary schemes or the extension could never have read it, but a
+ *  right clicked link is whatever the markup wrote, and these three are code
+ *  rather than a place; see `SAFE_SCHEMES` in `@nib/markdown`, which drops them
+ *  again on the way out. */
+const RUNS_CODE = new Set(['javascript:', 'data:', 'vbscript:'])
+
+/** An address, normalised the way a browser writes it, or null for anything
+ *  else. Normalised rather than merely checked: the note states it in its front
+ *  matter and, for a clipped link, as the one thing in its body, so a `>`, a
+ *  space or a line break left in it would end the field it sits in. */
+function readUrl(value: unknown): string | null {
+  if (!isString(value)) return null
+
+  try {
+    const parsed = new URL(value)
+    return RUNS_CODE.has(parsed.protocol) ? null : parsed.href
+  } catch {
+    return null
+  }
+}
+
 function readOrigin(value: unknown): Origin | null {
   if (!isRecord(value)) return null
 
   const kind = readKind(value.kind)
-  if (!kind || !isString(value.url) || !isString(value.title)) return null
+  const url = readUrl(value.url)
+  if (!kind || url === null || !isString(value.title)) return null
 
   return {
     kind,
-    url: value.url,
+    url,
     title: value.title,
     tags: listOf(value.tags, (one) => (isString(one) ? one : null)),
   }
@@ -63,6 +86,10 @@ export function readClip(value: unknown): Clip | null {
 
   const origin = readOrigin(value.origin)
   if (!origin || !isString(value.markdown) || !isString(value.clipped)) return null
+
+  // The instant is written into the front matter as a date, and a `Date` that
+  // did not parse throws on the way there rather than where it was read.
+  if (!Number.isFinite(Date.parse(value.clipped))) return null
 
   return {
     origin,
