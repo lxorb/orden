@@ -44,7 +44,15 @@
     withText,
   } from './canvas/edits'
   import { type Canvas as Plane, type InkPoint, readCanvas, writeCanvas } from './canvas/format'
-  import { boxOf, GRID, HANDLES, overlaps, type Point, rectBetween } from './canvas/geometry'
+  import {
+    boxOf,
+    caught,
+    GRID,
+    HANDLES,
+    overlaps,
+    type Point,
+    rectBetween,
+  } from './canvas/geometry'
   import { hand } from './canvas/hand.svelte'
   import { pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
@@ -257,10 +265,13 @@
   /** The box the handles are drawn on: everything picked, together. */
   const box = $derived(pickedBox(shown, store.picked))
 
+  /** The ink on the plane by id. Off the canvas as it stands rather than off the
+   *  preview: a gesture moves ink about and never renames it, so this is worked
+   *  out when the drawing changes rather than on every pointer event. */
+  const inked = $derived(new Set(store.canvas.ink.map((stroke) => stroke.id)))
+
   /** Whether what is picked is ink, which is what the turn handle belongs to. */
-  const lassoed = $derived(
-    store.picked.length > 0 && store.picked.every((id) => shown.ink.some((one) => one.id === id)),
-  )
+  const lassoed = $derived(store.picked.length > 0 && store.picked.every((id) => inked.has(id)))
 
   /** The card the four dots sit on: whatever is under the pointer, and nothing
    *  while a gesture is under way, a card is being written in, or the tool in
@@ -474,6 +485,10 @@
     holding = 0
   }
 
+  // A surface that has gone has no pointer being held on it: the timer would come
+  // round after the tab closed and ask a plane nobody is looking at for a menu.
+  $effect(() => () => stopHolding())
+
   /** Swallows the click that ends the very press that opened the menu.
    *
    *  A finger held down opens the menu while it is still on the glass, and the
@@ -495,8 +510,14 @@
    *  The plane as it stands is read before the machine moves on, because an
    *  effect that ends a gesture is the gesture's own last word: what is committed
    *  is what was on screen the instant before the pointer came up. */
+  /** Which gesture is under way, counted. The eraser edits on every point of its
+   *  drag, and the count is what tells the store that all of them are one thing
+   *  somebody did; see `edit` in store.svelte.ts. */
+  let gestures = 0
+
   function send(input: Input) {
     const preview = shown
+    const beginning = machine.gesture === null
     const next = step(machine, input, {
       tool: tools.which,
       picked: store.picked,
@@ -509,6 +530,8 @@
       fingerDraws: hand.fingerDraws,
     })
 
+    if (beginning && next.machine.gesture) gestures += 1
+
     machine = next.machine
     for (const effect of next.effects) apply(effect, preview)
   }
@@ -518,6 +541,15 @@
       case 'pick':
         if (effect.ids.length === 1 && effect.ids[0]) store.pick(effect.ids[0], effect.adding)
         else store.pickAll(effect.ids, effect.adding)
+        break
+      case 'band':
+        // What the box covers, worked out here because the machine has no plane
+        // to ask. `was` is what was picked before the band began, so a band held
+        // with the "as well as" key adds to it and a plain one replaces it.
+        store.pickAll([
+          ...effect.was,
+          ...caught(preview.nodes, rectBetween(effect.from, effect.to)),
+        ])
         break
       case 'clear':
         store.clearPicked()
@@ -559,10 +591,10 @@
         predicted = []
         break
       case 'rub':
-        run.rub(store, effect.ids)
+        run.rub(store, effect.ids, `rub:${gestures}`)
         break
       case 'cut':
-        run.cut(store, effect.at, effect.reach)
+        run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'catch':
         run.lasso(store, effect.lasso)

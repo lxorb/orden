@@ -101,6 +101,11 @@ export type Input =
  *  they are; the surface carries them out in order and none of them can fail. */
 export type Effect =
   | { do: 'pick'; ids: string[]; adding: boolean }
+  /** The band as it stands, for the surface to say what it covers: what a box
+   *  caught is the plane's own arithmetic, and the machine has no plane. `was`
+   *  is what was picked before the band began, which a band held with the "as
+   *  well as" key adds to. */
+  | { do: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
   | { do: 'clear' }
   | { do: 'edit'; id: string }
   | { do: 'leave' }
@@ -601,8 +606,15 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [],
       }
 
-    case 'band':
-      return { machine: { ...machine, gesture: { ...one, to: input.at } }, effects: [] }
+    case 'band': {
+      // Answered as it is dragged rather than when it is let go, which is what a
+      // band round a row of files does: what is caught is shown being caught.
+      const band = { ...one, to: input.at }
+      return {
+        machine: { ...machine, gesture: band },
+        effects: [{ do: 'band', from: band.from, to: band.to, was: band.was, adding: band.adding }],
+      }
+    }
 
     case 'connect':
       return { machine: { ...machine, gesture: { ...one, to: input.at } }, effects: [] }

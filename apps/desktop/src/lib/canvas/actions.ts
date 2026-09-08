@@ -94,23 +94,25 @@ export const run = {
   },
 
   /** Whole strokes gone, which is what the stroke eraser does: touch a line
-   *  anywhere and the line goes. */
-  rub(store: CanvasStore, ids: readonly string[]) {
+   *  anywhere and the line goes. `run` names the drag it is part of, so the whole
+   *  drag is one step to take back; see `edit` in store.svelte.ts. */
+  rub(store: CanvasStore, ids: readonly string[], run?: string) {
     if (!ids.length) return
 
     const going = new Set(ids)
-    store.edit({ ...store.canvas, ink: store.canvas.ink.filter((one) => !going.has(one.id)) })
+    store.edit({ ...store.canvas, ink: store.canvas.ink.filter((one) => !going.has(one.id)) }, run)
   },
 
   /** A hole rubbed through whatever is under the eraser, which may leave the two
    *  ends of a line behind. Every point of the drag is one of these, so the plane
-   *  answers under the nib rather than when it is lifted. */
-  cut(store: CanvasStore, at: Point, reach: number) {
+   *  answers under the nib rather than when it is lifted, and all of them are one
+   *  rub. */
+  cut(store: CanvasStore, at: Point, reach: number, run?: string) {
     const next = cutInk(store.canvas, (stroke) =>
       nearStroke(stroke, at, reach) ? erased(stroke, at, reach) : [stroke],
     )
 
-    store.edit(next)
+    store.edit(next, run)
   },
 
   /** What a loop caught. Only strokes a loop went right round, so half a word is

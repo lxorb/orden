@@ -364,6 +364,18 @@ describe('the eraser', () => {
     expect(erased(one, { x: 10, y: 0 }, 100)).toEqual([])
   })
 
+  /** Two strokes on one plane cannot share a name. An edge names its ends by id,
+   *  a merge decides what to keep by id, and reading a file back keeps the first
+   *  of a pair - so a second `s-1` is a piece of the drawing that disappears the
+   *  next time the canvas is opened. */
+  test('names a new piece something no other piece is called', () => {
+    const [, second] = erased(one, { x: 10, y: 0 }, 2)
+    const again = erased(one, { x: 10, y: 0 }, 2)[1]
+
+    expect(second?.id).not.toBe(again?.id)
+    expect(second?.id).not.toBe('s')
+  })
+
   test('a speck with nothing to draw between is not ink', () => {
     // Two points left either side would each be one point on their own.
     expect(

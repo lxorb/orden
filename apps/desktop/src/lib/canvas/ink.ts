@@ -11,7 +11,7 @@
  *  outlines into paint. */
 
 import { getStroke } from 'perfect-freehand'
-import { type InkPoint, type InkStroke, type InkTool } from './format'
+import { freshId, type InkPoint, type InkStroke, type InkTool } from './format'
 import { awayFromSegment, type Box, type Point } from './geometry'
 
 /** How a tool behaves: how much pressure thins it, how translucent it is, how it
@@ -529,7 +529,11 @@ export function erased(stroke: InkStroke, at: Point, reach: number): InkStroke[]
     ...stroke,
     // The first piece keeps the name, so an eraser that only shortened a line
     // leaves the same stroke rather than a new one for a sync to argue over.
-    id: index === 0 ? stroke.id : `${stroke.id}-${index}`,
+    // Every other piece is a stroke that did not exist before and is named like
+    // one: counting from the stroke it came out of would hand the same name out
+    // twice the second time the same line is cut, and the plane would lose a
+    // piece of the drawing the next time the file was read.
+    id: index === 0 ? stroke.id : freshId(),
     points: retimed(points),
   }))
 }

@@ -108,6 +108,53 @@ describe('picking with the arrow', () => {
     expect(machine.gesture?.kind).toBe('band')
   })
 
+  /** A band round three cards picks three cards, the way dragging a box round
+   *  three files does. It says the box rather than the ids, because what a box
+   *  caught is the plane's own arithmetic and not the machine's. */
+  test('a band says what it covers as it is dragged', () => {
+    const { effects } = play(
+      [
+        down(),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 90, y: 60 },
+          screen: { x: 90, y: 60 },
+          samples: [],
+          hit: NOTHING,
+        },
+        { kind: 'up', id: 1, at: { x: 90, y: 60 }, screen: { x: 90, y: 60 }, hit: NOTHING },
+      ],
+      context({ picked: ['a'] }),
+    )
+
+    const bands = effects.filter((one) => one.do === 'band')
+    expect(bands).toEqual([
+      { do: 'band', from: HERE, to: { x: 90, y: 60 }, was: [], adding: false },
+    ])
+  })
+
+  test('a band held with shift keeps what was already picked', () => {
+    const { effects } = play(
+      [
+        down({ shift: true }),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 9, y: 6 },
+          screen: { x: 9, y: 6 },
+          samples: [],
+          hit: NOTHING,
+        },
+      ],
+      context({ picked: ['a'] }),
+    )
+
+    expect(effects.filter((one) => one.do === 'band')).toEqual([
+      { do: 'band', from: HERE, to: { x: 9, y: 6 }, was: ['a'], adding: true },
+    ])
+  })
+
   test('a card being written in keeps its own pointer', () => {
     const { machine, effects } = play(
       [down({ hit: hit({ node: 'a' }) })],

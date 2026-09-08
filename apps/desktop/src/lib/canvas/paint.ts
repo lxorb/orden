@@ -74,8 +74,14 @@ function grainOf(ctx: CanvasRenderingContext2D, colour: string): CanvasPattern |
  *  says what they are; anything else is a colour already. */
 export type Palette = Record<string, string>
 
-function inkColour(colour: string, palette: Palette): string {
-  return palette[colour] ?? colour
+/** What a stroke's colour is on screen and in a picture: the theme's answer for a
+ *  name the palette holds, and the colour itself for anything else.
+ *
+ *  Asked of the palette's own keys and never of what every object inherits, so a
+ *  file that wrote `"toString"` where a colour goes is a colour nothing can draw
+ *  rather than a function turned into a string. */
+export function inkColour(colour: string, palette: Palette): string {
+  return Object.hasOwn(palette, colour) ? (palette[colour] ?? colour) : colour
 }
 
 export interface View {

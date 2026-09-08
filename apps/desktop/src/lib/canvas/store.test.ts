@@ -80,6 +80,62 @@ describe('a plane in a space somebody shared to read', () => {
   })
 })
 
+/** The eraser is the one gesture that cannot wait for the pointer to come up: it
+ *  has to answer under the nib. So it edits on every point of its drag, and the
+ *  plane has to treat the drag as the one thing it is. */
+describe('a gesture that edits as it goes', () => {
+  test('is one step to take back, however many points the drag had', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b'), card('c')] })
+
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b')] }, 'rub:1')
+    store.edit({ ...store.canvas, nodes: [card('a')] }, 'rub:1')
+
+    store.undo()
+    expect(ids(store.canvas)).toEqual(['a', 'b', 'c'])
+    expect(store.canUndo).toBe(true)
+  })
+
+  test('and a second drag is a second step', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a'), card('b')] }, 'rub:1')
+    store.edit({ ...store.canvas, nodes: [card('a')] }, 'rub:2')
+
+    store.undo()
+    expect(ids(store.canvas)).toEqual(['a', 'b'])
+  })
+
+  test('writes the file when the drag has gone quiet rather than on every point', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened()
+      const before = note.text
+
+      store.edit({ ...store.canvas, nodes: [card('a')] }, 'rub:1')
+      expect(ids(store.canvas)).toEqual(['a'])
+      expect(note.text).toBe(before)
+
+      vi.advanceTimersByTime(1300)
+      expect(ids(readCanvas(note.text))).toEqual(['a'])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('and writes it at once when the surface is being taken down', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened()
+      store.edit({ ...store.canvas, nodes: [card('a')] }, 'rub:1')
+
+      store.part()
+      expect(ids(readCanvas(note.text))).toEqual(['a'])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
 describe('a plane that is in a room', () => {
   test('sends what it changed to the room rather than remembering it here', () => {
     const { store } = opened()

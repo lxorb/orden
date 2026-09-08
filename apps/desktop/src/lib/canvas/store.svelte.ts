@@ -11,7 +11,9 @@
  *  per frame: the surface carries the offset while the pointer is down and hands
  *  the result over when it comes up. That is also what keeps a canvas of five
  *  hundred nodes at sixty frames a second, since nothing is serialised in
- *  between.
+ *  between. The eraser is the one gesture that cannot wait - it has to answer
+ *  under the nib - so it names its drag and gets the same three things anyway:
+ *  one undo step, and one write once the drag has gone quiet. See `edit`.
  *
  *  Every edit stamps the things it touched with the time. Nothing else in the
  *  app has to know that, and it is what lets two devices drawing on one file keep
@@ -35,13 +37,14 @@ import type { NoteDoc, Tab } from '../workspace/documents.svelte'
 /** Room left around the canvas when it is framed, in pixels. */
 const PADDING = 48
 
-/** How long after a change arrives from the room the file is written.
+/** How long after the changes stop the file is written.
  *
- *  A stroke crossing from another device has to appear at once, and serialising the
- *  whole plane is the size of the plane rather than the size of the stroke: doing
- *  that per arrival is the one thing a plane of five thousand strokes cannot afford.
- *  The same pause the room's own settle waits, so a device being drawn on and a
- *  device being watched write their file at the same moment. */
+ *  A stroke crossing from another device has to appear at once, and so does the
+ *  hole an eraser is making under the nib; serialising the whole plane is the size
+ *  of the plane rather than the size of what changed, and doing that per event is
+ *  the one thing a plane of five thousand strokes cannot afford. The same pause the
+ *  room's own settle waits, so a device being drawn on and a device being watched
+ *  write their file at the same moment. */
 const WRITE_DELAY = 1_200
 
 export class CanvasStore implements PlaneSurface {
@@ -93,6 +96,8 @@ export class CanvasStore implements PlaneSurface {
    *  from somewhere else and has to be taken on; see `follow`. */
   private at = -1
   private writing: ReturnType<typeof setTimeout> | undefined
+  /** The gesture the last edit belonged to, while one is under way; see `edit`. */
+  private during: string | null = null
 
   constructor(tab: Tab) {
     this.tab = tab
@@ -134,24 +139,35 @@ export class CanvasStore implements PlaneSurface {
 
   /** An edit: remembered so it can be taken back, stamped with the time so two
    *  devices can be put back together, and written into the document so it can be
-   *  saved. Every gesture ends in exactly one of these.
+   *  saved. Almost every gesture ends in exactly one of these.
    *
    *  A canvas that comes back identical is not an edit at all, which is what lets
    *  the operations in edits.ts hand back what they were given when there was
-   *  nothing to do. */
-  edit(next: Canvas) {
+   *  nothing to do.
+   *
+   *  `run` names the gesture an edit belongs to, for the one kind that cannot
+   *  wait for the pointer to come up: an eraser has to answer under the nib, so
+   *  it edits on every point of the drag. Edits that name the same run are one
+   *  thing somebody did - one step to take back - and the file is written when
+   *  the run goes quiet rather than once per point, because writing it is the
+   *  size of the plane and a drag is a hundred events. */
+  edit(next: Canvas, run?: string) {
     if (next === this.canvas || this.readOnly) return
 
     const before = this.canvas
     const after = stamped(before, next, Date.now())
     this.canvas = after
 
+    const carrying = run !== undefined && run === this.during
+    this.during = run ?? null
+
     // In a room the room is the history, and what changed goes to the other devices
     // as the objects it touched. Out of one, the snapshot stack is the history.
     if (this.shared) this.shared.push(before, after)
-    else this.history.record(before)
+    else if (!carrying) this.history.record(before)
 
-    this.commit()
+    if (run === undefined) this.commit()
+    else this.soon()
   }
 
   undo() {
@@ -196,7 +212,14 @@ export class CanvasStore implements PlaneSurface {
   arrived(canvas: Canvas) {
     this.canvas = canvas
     this.keepPicked()
+    this.soon()
+  }
 
+  /** The plane written down once the changes have stopped coming: a gesture that
+   *  edits as it goes, or a stroke after stroke arriving from a room. Serialising
+   *  the plane is the size of the plane, and doing it per event is the one thing a
+   *  canvas of five thousand strokes cannot afford. */
+  private soon() {
     clearTimeout(this.writing)
     this.writing = setTimeout(() => this.commit(), WRITE_DELAY)
   }
@@ -317,7 +340,17 @@ export class CanvasStore implements PlaneSurface {
    *  band that catches something already picked does not pick it twice. */
   pickAll(ids: readonly string[], adding = false) {
     const wanted = adding ? [...this.picked, ...ids] : ids
-    const next = wanted.filter((id, index) => wanted.indexOf(id) === index)
+    // Each id once, in the order they arrived. Through a set rather than by
+    // looking back along the list, because a rubber band answers on every
+    // pointer event and may have caught five hundred cards.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
+    const seen = new Set<string>()
+    const next = wanted.filter((id) => {
+      if (seen.has(id)) return false
+
+      seen.add(id)
+      return true
+    })
     if (next.length === this.picked.length && next.every((id, at) => this.picked[at] === id)) return
 
     this.picked = next

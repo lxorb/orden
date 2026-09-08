@@ -158,16 +158,18 @@
     cursor: pointer;
   }
 
+  /* The six the theme names, round: a wheel of colours nothing else in the app
+     uses would be a second palette. */
   .wheel::after {
     background: conic-gradient(
       from 0deg,
-      #e5484d,
-      #f76b15,
-      #f5d90a,
-      #46a758,
-      #05a2c2,
-      #8e4ec6,
-      #e5484d
+      var(--canvas-1),
+      var(--canvas-2),
+      var(--canvas-3),
+      var(--canvas-4),
+      var(--canvas-5),
+      var(--canvas-6),
+      var(--canvas-1)
     );
   }
 

@@ -71,6 +71,10 @@
 
   let held = 0
 
+  // A bar that has gone is not holding a pen: the timer would come round after
+  // it left and take hold of a button that is no longer on the page.
+  $effect(() => () => window.clearTimeout(held))
+
   /** The tools the bar shows outside the pens: the two a hand uses to get about,
    *  and the two the pens are used with. */
   const ABOUT = HOLDING.filter((one) => one.id === 'select' || one.id === 'hand')
