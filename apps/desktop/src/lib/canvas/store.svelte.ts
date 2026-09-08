@@ -19,14 +19,7 @@
  *  both drawings; see canvas-merge.ts. */
 
 import { type Camera, clampScale, framingBox } from '../camera'
-import {
-  type Canvas,
-  emptyCanvas,
-  merged,
-  readCanvas,
-  stamped,
-  writeCanvas,
-} from './format'
+import { type Canvas, emptyCanvas, merged, readCanvas, stamped, writeCanvas } from './format'
 import { pickedBox } from './edits'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
@@ -37,12 +30,19 @@ import type { NoteDoc, Tab } from '../workspace/documents.svelte'
 const PADDING = 48
 
 export class CanvasStore {
-  /** The plane as it stands. Replaced whole by every edit; see edits.ts. */
-  canvas = $state<Canvas>(emptyCanvas())
+  /** The plane as it stands. Replaced whole by every edit; see edits.ts.
+   *
+   *  Raw, and that is not an optimisation to be tidied away later. A canvas is
+   *  thousands of objects that are never changed in place, and a deep proxy over
+   *  them would wrap every stroke, every point and every card, then charge for
+   *  every read of any of them. Measured on a plane of five thousand strokes, the
+   *  proxy was a fifth of a second on every stroke a pen finished. */
+  canvas = $state.raw<Canvas>(emptyCanvas())
 
   /** What is picked, by id: nodes, edges and strokes of ink together, since
-   *  Delete and the colour dots mean whatever is picked. */
-  picked = $state<string[]>([])
+   *  Delete and the colour dots mean whatever is picked. Replaced whole, like
+   *  the canvas, and raw for the same reason. */
+  picked = $state.raw<string[]>([])
 
   /** The text node being written in, while one is. One at a time: an editor is
    *  mounted only for this node, which is what keeps five hundred cards cheap. */

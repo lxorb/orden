@@ -12,15 +12,7 @@
 
 import { inlineImages, chooseTarget, download, printInFrame } from '../export'
 import { type Canvas, type CanvasNode } from './format'
-import {
-  arrowAt,
-  bounds,
-  boxOf,
-  edgeEnds,
-  edgeMiddle,
-  edgePath,
-  shapeLine,
-} from './geometry'
+import { arrowAt, bounds, boxOf, edgeEnds, edgeMiddle, edgePath, shapeLine } from './geometry'
 import { outlineOf, strokeBox } from './ink'
 import { INK_STYLES } from './ink'
 import type { Palette } from './paint'
@@ -72,7 +64,9 @@ function cardBody(node: CanvasNode, canvasPath: string | null): string {
     case 'file':
       if (isPicture(node.file)) return ''
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml" style="opacity:.75">${escaped(node.file)}</div>`
-    default:
+    case 'group':
+    case 'shape':
+      // Drawn as themselves rather than as a card with words in it.
       return ''
   }
 }
@@ -195,7 +189,7 @@ function round(value: number): number {
 }
 
 /** The whole plane as one SVG, sized to what is on it. */
-export function canvasSvg(
+function canvasSvg(
   canvas: Canvas,
   palette: Palette,
   canvasPath: string | null,
@@ -235,7 +229,7 @@ const PNG_MOST = 8000
 
 /** The SVG rasterised by the browser itself. Nothing else can draw a
  *  `foreignObject`, and nothing else has the fonts. */
-export async function svgToPng(svg: string): Promise<Blob | null> {
+async function svgToPng(svg: string): Promise<Blob | null> {
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
   const height = Number(size?.[4] ?? 600)

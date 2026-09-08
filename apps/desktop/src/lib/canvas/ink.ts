@@ -68,12 +68,12 @@ export const INK_STYLES: Record<InkTool, InkStyle> = {
     thinning: 0.45,
     smoothing: 0.4,
     streamline: 0.35,
-    opacity: 0.82,
+    opacity: 0.9,
     multiply: true,
     taper: 4,
     nib: null,
     grain: true,
-    size: 2.5,
+    size: 3.5,
   },
   /** Broad and flat and solid, like a felt tip. */
   marker: {
@@ -126,10 +126,6 @@ export const INK_STYLES: Record<InkTool, InkStyle> = {
   },
 }
 
-/** The sizes the bar offers, in plane units. Four is as many choices as anybody
- *  wants while writing. */
-export const INK_SIZES = [1.5, 3, 6, 12] as const
-
 /** The outline of a stroke, as a ring of points in plane coordinates.
  *
  *  A flat nib is a ribbon and a round one is what perfect-freehand works out, so
@@ -176,9 +172,27 @@ function ribbon(stroke: InkStroke, style: InkStyle): Point[] {
   return [...forward, ...back]
 }
 
+/** The box of every stroke that has been asked about, kept.
+ *
+ *  A pointer moving over a plane of five thousand strokes asks all five thousand
+ *  where they are, sixty times a second, and walking every point of every one of
+ *  them is the difference between a canvas that pans and one that does not. Weak,
+ *  and keyed on the stroke itself: every edit hands back a new object for what it
+ *  touched, so the answers cannot go stale and nothing has to sweep up. */
+const boxes = new WeakMap<InkStroke, Box>()
+
 /** The box a stroke covers, with room for its own width, so a stroke can be
- *  culled from a frame without working its outline out first. */
+ *  culled from a frame, or from a hit test, without working its outline out. */
 export function strokeBox(stroke: InkStroke): Box {
+  const held = boxes.get(stroke)
+  if (held) return held
+
+  const box = measured(stroke)
+  boxes.set(stroke, box)
+  return box
+}
+
+function measured(stroke: InkStroke): Box {
   const [first] = stroke.points
   if (!first) return { x: 0, y: 0, width: 0, height: 0 }
 
@@ -431,8 +445,12 @@ const STRAIGHT = 0.06
 /** How near the two ends have to be before a stroke counts as closed. */
 const CLOSED = 0.22
 /** How round a closed stroke has to be before it is taken for an ellipse rather
- *  than a rectangle: the spread of its radius about the mean. */
-const ROUND = 0.14
+ *  than a rectangle: the spread of its radius about the mean, as a share of it.
+ *
+ *  A square's own spread is about 0.115, since its corners are half again as far
+ *  from the middle as its sides; a hand-drawn ring wobbling by a tenth comes out
+ *  near 0.06. The line between them is here. */
+const ROUND = 0.08
 
 export type Assisted = 'line' | 'ellipse' | 'rectangle'
 

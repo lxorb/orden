@@ -7,7 +7,7 @@ import {
   pasted,
   placedAt,
   removed,
-  resizedNode,
+  resizedPick,
   subset,
   withLabel,
   withNode,
@@ -21,7 +21,7 @@ function card(id: string, x = 0, y = 0, width = 100, height = 100): CanvasNode {
 }
 
 function canvasOf(nodes: CanvasNode[], edges: Canvas['edges'] = []): Canvas {
-  return { nodes, edges }
+  return { nodes, edges, ink: [], at: {}, gone: {} }
 }
 
 const positions = (canvas: Canvas) => canvas.nodes.map((node) => [node.id, node.x, node.y])
@@ -36,15 +36,23 @@ describe('moving cards', () => {
     ])
   })
 
-  /** Snapping the offset rather than each card keeps a row of cards a row:
-   *  snapping each one on its own would pull them into a single column. */
-  test('snaps the offset, so a selection keeps its shape', () => {
+  /** One offset for the whole selection keeps a row of cards a row: moving each
+   *  one to its own nearest dot would pull them into a single column. Where the
+   *  offset came from is the surface's business; see snap.ts. */
+  test('applies one offset to everything picked, so a selection keeps its shape', () => {
     const off = canvasOf([card('a', 3, 7), card('b', 45, 7)])
-    const moved = movedBy(off, ['a', 'b'], GRID + 2, 0)
+    const moved = movedBy(off, ['a', 'b'], GRID, 0)
 
     expect(positions(moved)).toEqual([
       ['a', 3 + GRID, 7],
       ['b', 45 + GRID, 7],
+    ])
+  })
+
+  test('rounds to whole pixels, which is what the spec says a position is', () => {
+    expect(positions(movedBy(canvas, ['a'], 10.6, -3.2))).toEqual([
+      ['a', 11, -3],
+      ['b', 200, 0],
     ])
   })
 
@@ -60,13 +68,37 @@ describe('moving cards', () => {
   })
 })
 
-describe('resizing a card', () => {
+describe('resizing what is picked', () => {
   test('changes the one card and nothing else', () => {
     const canvas = canvasOf([card('a'), card('b', 300, 0)])
-    const wider = resizedNode(canvas, 'a', 'se', GRID, 0)
+    const wider = resizedPick(canvas, ['a'], 'se', GRID, 0)
 
     expect(wider.nodes[0]).toMatchObject({ width: 100 + GRID, height: 100 })
     expect(wider.nodes[1]).toBe(canvas.nodes[1])
+  })
+
+  /** One box round the lot is pulled and everything keeps where it was in that
+   *  box, which is what a hand dragging a corner of nine cards means. */
+  test('scales several together, keeping each where it was in the box', () => {
+    const canvas = canvasOf([card('a', 0, 0, 100, 100), card('b', 100, 0, 100, 100)])
+    const wider = resizedPick(canvas, ['a', 'b'], 'e', 200, 0)
+
+    expect(wider.nodes[0]).toMatchObject({ x: 0, width: 200 })
+    expect(wider.nodes[1]).toMatchObject({ x: 200, width: 200 })
+  })
+
+  test('pulls the far edge and leaves the near one where it was', () => {
+    const canvas = canvasOf([card('a', 100, 100, 100, 100)])
+    const pulled = resizedPick(canvas, ['a'], 'nw', -40, -40)
+
+    expect(pulled.nodes[0]).toMatchObject({ x: 60, y: 60, width: 140, height: 140 })
+  })
+
+  test('stops rather than turning a card inside out', () => {
+    const canvas = canvasOf([card('a', 0, 0, 100, 100)])
+    const squashed = resizedPick(canvas, ['a'], 'e', -1000, 0)
+
+    expect(squashed.nodes[0]?.width).toBe(GRID * 2)
   })
 })
 
@@ -111,7 +143,7 @@ describe('connecting two cards', () => {
   const canvas = canvasOf([card('a'), card('b', 300, 0)])
 
   test('records both sides', () => {
-    const joined = connected(canvas, 'a', 'right', 'b', 'left')
+    const joined = connected(canvas, 'a', 'right', 'b', 'left').canvas
 
     expect(joined.edges[0]).toMatchObject({
       fromNode: 'a',
@@ -123,16 +155,19 @@ describe('connecting two cards', () => {
   })
 
   test('refuses a card to itself, and a card the canvas does not hold', () => {
-    expect(connected(canvas, 'a', 'right', 'a', 'left')).toBe(canvas)
-    expect(connected(canvas, 'a', 'right', 'gone', 'left')).toBe(canvas)
+    expect(connected(canvas, 'a', 'right', 'a', 'left').canvas).toBe(canvas)
+    expect(connected(canvas, 'a', 'right', 'gone', 'left').canvas).toBe(canvas)
   })
 
-  test('does not draw the same connector twice', () => {
+  test('does not draw the same connector twice, and names the one that was there', () => {
     const once = connected(canvas, 'a', 'right', 'b', 'left')
-    expect(connected(once, 'a', 'right', 'b', 'left')).toBe(once)
+    const again = connected(once.canvas, 'a', 'right', 'b', 'left')
+
+    expect(again.canvas).toBe(once.canvas)
+    expect(again.id).toBe(once.id)
     // The other way round is another connector, and so is another pair of sides.
-    expect(connected(once, 'b', 'left', 'a', 'right').edges).toHaveLength(2)
-    expect(connected(once, 'a', 'top', 'b', 'left').edges).toHaveLength(2)
+    expect(connected(once.canvas, 'b', 'left', 'a', 'right').canvas.edges).toHaveLength(2)
+    expect(connected(once.canvas, 'a', 'top', 'b', 'left').canvas.edges).toHaveLength(2)
   })
 })
 

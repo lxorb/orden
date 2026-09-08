@@ -20,16 +20,11 @@ export {
   type InkStroke,
   type InkTool,
   INK_TOOLS,
-  isInkTool,
-  type NodeKind,
-  packed,
   PRESET_COLOURS,
   readCanvas,
   type Shape,
-  SHAPES,
   type Side,
-  unpacked,
   writeCanvas,
 } from '@nib/markdown/canvas'
 
-export { mergeCanvasFiles, merged, stamped } from '@nib/markdown/canvas-merge'
+export { merged, stamped } from '@nib/markdown/canvas-merge'

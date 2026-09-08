@@ -56,7 +56,11 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
     ...byId(before.edges),
     ...byId(before.ink),
   ])
-  const is = new Map<string, Thing>([...byId(after.nodes), ...byId(after.edges), ...byId(after.ink)])
+  const is = new Map<string, Thing>([
+    ...byId(after.nodes),
+    ...byId(after.edges),
+    ...byId(after.ink),
+  ])
 
   const at: Record<string, number> = {}
 

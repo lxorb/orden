@@ -4,7 +4,13 @@ import { CanvasHistory, KEPT } from './history'
 
 /** A canvas told apart by the id of the one card on it. */
 function step(id: string): Canvas {
-  return { nodes: [{ id, type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }], edges: [] }
+  return {
+    nodes: [{ id, type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
+    edges: [],
+    ink: [],
+    at: {},
+    gone: {},
+  }
 }
 
 const at = (canvas: Canvas | null) => canvas?.nodes[0]?.id

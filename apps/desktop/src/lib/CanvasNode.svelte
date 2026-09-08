@@ -223,7 +223,13 @@
       aria-hidden="true"
     >
       {#if node.shape === 'rect'}
-        <rect x="1" y="1" width={Math.max(0, node.width - 2)} height={Math.max(0, node.height - 2)} rx="4" />
+        <rect
+          x="1"
+          y="1"
+          width={Math.max(0, node.width - 2)}
+          height={Math.max(0, node.height - 2)}
+          rx="4"
+        />
       {:else if node.shape === 'ellipse'}
         <ellipse
           cx={node.width / 2}

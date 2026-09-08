@@ -63,10 +63,7 @@ function chosen(canvas: Canvas, picked: readonly string[]): CanvasNode[] {
 
 /** The offset each node moves by, applied to whatever a drag of it would carry:
  *  a frame lined up left takes its cards with it. */
-function shifted(
-  canvas: Canvas,
-  moves: ReadonlyMap<string, { dx: number; dy: number }>,
-): Canvas {
+function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: number }>): Canvas {
   const byId = new Map<string, { dx: number; dy: number }>()
 
   for (const [id, move] of moves) {
@@ -83,7 +80,9 @@ function shifted(
     ...canvas,
     nodes: canvas.nodes.map((node) => {
       const move = byId.get(node.id)
-      return move ? { ...node, x: Math.round(node.x + move.dx), y: Math.round(node.y + move.dy) } : node
+      return move
+        ? { ...node, x: Math.round(node.x + move.dx), y: Math.round(node.y + move.dy) }
+        : node
     }),
   }
 }
@@ -120,7 +119,8 @@ export function distributed(canvas: Canvas, picked: readonly string[], axis: 'x'
   const last = order[order.length - 1]
   if (!first || !last) return canvas
 
-  const room = along(last) - along(first) - order.slice(0, -1).reduce((sum, one) => sum + size(one), 0)
+  const room =
+    along(last) - along(first) - order.slice(0, -1).reduce((sum, one) => sum + size(one), 0)
   const gap = room / (order.length - 1)
 
   const moves = new Map<string, { dx: number; dy: number }>()
@@ -138,7 +138,7 @@ export function distributed(canvas: Canvas, picked: readonly string[], axis: 'x'
 /** The four ways the z order changes. `front` and `back` go all the way;
  *  `forward` and `backward` go one step, which is what a stack of overlapping
  *  cards needs. */
-export const ORDERS = ['front', 'forward', 'backward', 'back'] as const
+const ORDERS = ['front', 'forward', 'backward', 'back'] as const
 export type Order = (typeof ORDERS)[number]
 
 /** The nodes reordered so the picked ones sit where they were asked to.

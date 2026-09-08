@@ -49,7 +49,7 @@ function nodeById(canvas: Canvas, id: string): CanvasNode | undefined {
 /** Everything an edit acts on: what was picked, whatever a picked group holds,
  *  and the ink that lies inside a picked group. A frame is a thing with room in
  *  it, and dragging one that left the writing behind would be a surprise. */
-export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
+function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
   const going = new Set(dragged(canvas, picked))
   const groups = canvas.nodes.filter((node) => node.type === 'group' && going.has(node.id))
 
@@ -67,6 +67,8 @@ export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
 /** The box round everything picked, or null. What the handles are drawn on and
  *  what a resize scales. */
 export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null {
+  if (!picked.length) return null
+
   const wanted = new Set(picked)
   const boxes = [
     ...canvas.nodes.filter((node) => wanted.has(node.id)).map(boxOf),
@@ -112,7 +114,14 @@ export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, d
     ),
     ink: canvas.ink.map((stroke) =>
       moving.has(stroke.id)
-        ? transformed(stroke, { dx: across, dy: down, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } })
+        ? transformed(stroke, {
+            dx: across,
+            dy: down,
+            sx: 1,
+            sy: 1,
+            turn: 0,
+            about: { x: 0, y: 0 },
+          })
         : stroke,
     ),
   }
@@ -242,18 +251,10 @@ export function withStroke(canvas: Canvas, stroke: InkStroke): Canvas {
   return { ...canvas, ink: [...canvas.ink, stroke] }
 }
 
-export function withStrokes(canvas: Canvas, strokes: readonly InkStroke[]): Canvas {
-  if (!strokes.length) return canvas
-  return { ...canvas, ink: [...canvas.ink, ...strokes] }
-}
-
 /** The strokes an eraser cut through, each in whatever pieces it left. A stroke
  *  the eraser missed is the very same object, so a rub that met nothing costs
  *  nothing at all. */
-export function cutInk(
-  canvas: Canvas,
-  cut: (stroke: InkStroke) => InkStroke[],
-): Canvas {
+export function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]): Canvas {
   let changed = false
   const ink: InkStroke[] = []
 

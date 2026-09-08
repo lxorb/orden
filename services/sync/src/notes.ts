@@ -1,4 +1,6 @@
 import { Hono } from 'hono'
+import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
+import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
@@ -178,8 +180,18 @@ notes.get('/notes/:id', async (context) => {
   return context.json({ note: presentNote(note), content: object ? await object.text() : '' })
 })
 
-/** Optimistic concurrency: send the version you edited. A mismatch comes back
- *  as 409 with the server's copy so the client can keep both. */
+/** Optimistic concurrency: send the version you edited.
+ *
+ *  A mismatch on a note comes back as 409 with the server's copy, so the client
+ *  can keep both: two people typing in one paragraph is not something a machine
+ *  can settle.
+ *
+ *  A mismatch on a canvas is settled here instead. Everything on a canvas has an
+ *  id and a time of its own, so the union of the two copies keeps every card and
+ *  every stroke either device drew, and the same merge runs on the client; see
+ *  packages/markdown/src/canvas-merge.ts. Two tablets drawing on one plane at the
+ *  same time therefore both keep what they drew, and neither ends up with a
+ *  second file to go and find. */
 notes.put('/notes/:id', async (context) => {
   const note = await noteForUser({
     env: context.env,
@@ -195,25 +207,35 @@ notes.put('/notes/:id', async (context) => {
   const baseVersion = body.count('baseVersion')
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const content = sent ?? ''
-  const size = byteLength(content)
-  if (size > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
+  if (byteLength(sent ?? '') > MAX_NOTE_BYTES) {
+    return context.json({ error: 'that note is too large' }, 413)
+  }
 
   const path = given === undefined ? note.path : cleanPath(given)
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
 
+  // Reassigned when a canvas has to be put back together with the copy the
+  // server already holds; see the note above.
+  let content = sent ?? ''
+
   if (baseVersion !== undefined && baseVersion !== note.version) {
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
-    return context.json(
-      {
-        error: 'this note changed elsewhere',
-        note: presentNote(note),
-        content: object ? await object.text() : '',
-      },
-      409,
-    )
+    const held = object ? await object.text() : ''
+
+    if (!isCanvasTarget(path)) {
+      return context.json(
+        { error: 'this note changed elsewhere', note: presentNote(note), content: held },
+        409,
+      )
+    }
+
+    content = mergeCanvasFiles(content, held)
+    if (byteLength(content) > MAX_NOTE_BYTES) {
+      return context.json({ error: 'that note is too large' }, 413)
+    }
   }
 
+  const size = byteLength(content)
   const hash = await sha256(content)
   if (hash === note.hash && path === note.path) return context.json({ note: presentNote(note) })
 

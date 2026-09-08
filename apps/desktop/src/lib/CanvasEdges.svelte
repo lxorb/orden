@@ -25,7 +25,11 @@
     picked: readonly string[]
     /** The connector being dragged out of a card's side, while one is: where it
      *  starts, where the pointer is, and which side it left by. */
-    provisional?: { from: { x: number; y: number }; to: { x: number; y: number }; side: Side } | null
+    provisional?: {
+      from: { x: number; y: number }
+      to: { x: number; y: number }
+      side: Side
+    } | null
   } = $props()
 
   const boxes = $derived(new Map(nodes.map((node) => [node.id, node])))

@@ -231,7 +231,10 @@ export function awayFromSegment(point: Point, from: Point, to: Point): number {
   const length = dx * dx + dy * dy
   if (length === 0) return Math.hypot(point.x - from.x, point.y - from.y)
 
-  const along = Math.max(0, Math.min(1, ((point.x - from.x) * dx + (point.y - from.y) * dy) / length))
+  const along = Math.max(
+    0,
+    Math.min(1, ((point.x - from.x) * dx + (point.y - from.y) * dy) / length),
+  )
   return Math.hypot(point.x - (from.x + along * dx), point.y - (from.y + along * dy))
 }
 

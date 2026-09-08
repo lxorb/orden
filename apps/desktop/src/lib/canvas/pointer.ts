@@ -16,11 +16,11 @@
  *  this much"; the store decides what that is worth remembering. A gesture is one
  *  edit because the machine only ever says so once, when the pointer comes up. */
 
-import type { InkPoint, InkTool, Side } from './format'
+import type { InkPoint, InkTool, Shape, Side } from './format'
 import type { Box, HandleId, Point } from './geometry'
 
 /** What the bar is set to. The first is the one everything else falls back to. */
-export const TOOLS = [
+const TOOLS = [
   'select',
   'hand',
   'draw',
@@ -38,15 +38,7 @@ export const TOOLS = [
 
 export type Tool = (typeof TOOLS)[number]
 
-/** The four tools that put a shape on the plane by being dragged out. */
-export const SHAPE_TOOLS = ['rect', 'ellipse', 'line', 'arrow'] as const
-export type ShapeTool = (typeof SHAPE_TOOLS)[number]
-
-export function isShapeTool(tool: Tool): tool is ShapeTool {
-  return SHAPE_TOOLS.some((one) => one === tool)
-}
-
-export type PointerKind = 'mouse' | 'pen' | 'touch'
+type PointerKind = 'mouse' | 'pen' | 'touch'
 
 /** What the pointer landed on, worked out by the surface before the event gets
  *  here. Everything is a name rather than an object, so a machine state can be
@@ -97,7 +89,7 @@ export interface Down {
   hit: Hit
 }
 
-export interface Move {
+interface Move {
   kind: 'move'
   id: number
   at: Point
@@ -131,7 +123,7 @@ export type Effect =
   /** `auto` lets the store work the far side out from where the two cards
    *  ended up, which is what a hand dropping a line on a card means. */
   | { do: 'connect'; from: string; fromSide: Side; to: string; toSide: Side | 'auto' }
-  | { do: 'shape'; tool: ShapeTool; from: Point; to: Point }
+  | { do: 'shape'; tool: Shape; from: Point; to: Point }
   | { do: 'place'; tool: Tool; at: Point }
   | { do: 'stroke'; stroke: PendingStroke }
   | { do: 'rub'; ids: string[] }
@@ -152,14 +144,14 @@ export interface PendingStroke {
   points: InkPoint[]
 }
 
-export type Gesture =
+type Gesture =
   | { kind: 'pan'; id: number; screen: Point }
   | { kind: 'pinch'; ids: [number, number]; screens: [Point, Point]; apart: number }
   | { kind: 'drag'; ids: string[]; screen: Point; dx: number; dy: number }
   | { kind: 'resize'; ids: string[]; handle: HandleId; screen: Point; dx: number; dy: number }
   | { kind: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
   | { kind: 'connect'; id: string; side: Side; to: Point }
-  | { kind: 'shape'; tool: ShapeTool; from: Point; to: Point }
+  | { kind: 'shape'; tool: Shape; from: Point; to: Point }
   | { kind: 'draw'; stroke: PendingStroke; id: number }
   | { kind: 'erase'; whole: boolean; hit: string[]; id: number }
   | { kind: 'lasso'; points: Point[] }
@@ -186,10 +178,10 @@ export function start(): Machine {
 
 /** How far a pointer may travel and still count as a press rather than a drag,
  *  in plane units at one to one. */
-export const SLOP = 3
+const SLOP = 3
 
 /** How wide the eraser is, in plane units. */
-export const RUB = 10
+const RUB = 10
 
 export interface Step {
   machine: Machine
@@ -257,7 +249,11 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     }
 
     return {
-      machine: { ...machine, penDown, spare: [...machine.spare, { id: input.id, screen: input.screen }] },
+      machine: {
+        ...machine,
+        penDown,
+        spare: [...machine.spare, { id: input.id, screen: input.screen }],
+      },
       effects: [],
     }
   }
@@ -272,7 +268,10 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
   // Space, the middle button and the hand tool all pan, over a card as readily
   // as over the plane: a hand that has learned one of them uses it everywhere.
   if (machine.spacing || input.button === 1 || context.tool === 'hand') {
-    return { machine: { ...held, gesture: { kind: 'pan', id: input.id, screen: input.screen } }, effects: [] }
+    return {
+      machine: { ...held, gesture: { kind: 'pan', id: input.id, screen: input.screen } },
+      effects: [],
+    }
   }
 
   // The pen's own button rubs out whatever the bar says, which is what a stylus
@@ -299,11 +298,15 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
       }
     case 'erase': {
       const whole = input.shift
+      // What was rubbed is remembered, so dragging back over a stroke that has
+      // already gone does not ask for it again.
+      const first = whole && input.hit.stroke ? [input.hit.stroke] : []
+
       return {
-        machine: { ...held, gesture: { kind: 'erase', whole, hit: [], id: input.id } },
+        machine: { ...held, gesture: { kind: 'erase', whole, hit: first, id: input.id } },
         effects: whole
-          ? input.hit.stroke
-            ? [{ do: 'rub', ids: [input.hit.stroke] }]
+          ? first.length
+            ? [{ do: 'rub', ids: first }]
             : []
           : [{ do: 'cut', at: input.at, reach: RUB / context.scale }],
       }
@@ -343,10 +346,9 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
         },
         effects: [],
       }
-    case 'hand':
-      // Already handled above: the hand pans from anywhere.
-      break
     case 'select':
+      // The hand is not here: it panned above, from anywhere, which is what a
+      // hand does. Only the arrow reaches the rest of this file.
       break
   }
 
@@ -386,7 +388,13 @@ function select(machine: Machine, input: Down, context: Context): Step {
   }
 
   if (hit.edge) {
-    return { machine, effects: [{ do: 'pick', ids: [hit.edge], adding: input.adds || input.shift }, { do: 'leave' }] }
+    return {
+      machine,
+      effects: [
+        { do: 'pick', ids: [hit.edge], adding: input.adds || input.shift },
+        { do: 'leave' },
+      ],
+    }
   }
 
   // A card being written in keeps the pointer: it is a text field, and a drag in
@@ -474,7 +482,8 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       const which = one.ids.indexOf(input.id)
       if (which < 0) return { machine, effects: [] }
 
-      const screens: [Point, Point] = which === 0 ? [input.screen, one.screens[1]] : [one.screens[0], input.screen]
+      const screens: [Point, Point] =
+        which === 0 ? [input.screen, one.screens[1]] : [one.screens[0], input.screen]
       const apart = Math.hypot(screens[1].x - screens[0].x, screens[1].y - screens[0].y)
       const middle = {
         x: (screens[0].x + screens[1].x) / 2,
@@ -567,7 +576,14 @@ function inkEffect(one: Extract<Gesture, { kind: 'ink' }>, at: Point): Effect {
   const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 
   if (one.how === 'move') {
-    return { do: 'ink', dx: at.x - one.from.x, dy: at.y - one.from.y, scale: 1, turn: 0, about: middle }
+    return {
+      do: 'ink',
+      dx: at.x - one.from.x,
+      dy: at.y - one.from.y,
+      scale: 1,
+      turn: 0,
+      about: middle,
+    }
   }
 
   if (one.how === 'turn') {
@@ -643,7 +659,10 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
     case 'shape': {
       const span = Math.hypot(one.to.x - one.from.x, one.to.y - one.from.y)
       if (span * context.scale <= SLOP) return { machine: rest, effects: [] }
-      return { machine: rest, effects: [{ do: 'shape', tool: one.tool, from: one.from, to: one.to }] }
+      return {
+        machine: rest,
+        effects: [{ do: 'shape', tool: one.tool, from: one.from, to: one.to }],
+      }
     }
 
     case 'draw': {
@@ -677,11 +696,4 @@ function onHeld(machine: Machine, at: Point): Step {
   }
 
   return { machine, effects: [] }
-}
-
-/** Whether a gesture is one the surface should not interrupt with a re-render of
- *  the whole plane. Read by the surface to keep a stroke's own layer the only
- *  thing that repaints while a pen is down. */
-export function drawing(machine: Machine): boolean {
-  return machine.gesture?.kind === 'draw' || machine.gesture?.kind === 'erase'
 }

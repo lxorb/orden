@@ -210,7 +210,7 @@ export const run = {
   },
 
   /** What a double click means, wherever it landed. */
-  async open(store: CanvasStore, hit: Hit, at: Point, canvasPath: string | null) {
+  async open(store: CanvasStore, hit: Hit, at: Point) {
     if (hit.edge) {
       await askLabel(store, hit.edge)
       return
@@ -243,19 +243,17 @@ export const run = {
         store.pick(node.id)
         break
     }
-
-    void canvasPath
   },
 
   /** A card that has outgrown its box, as a note beside the canvas, with the
    *  card left behind pointing at it. */
   async toNote(store: CanvasStore, canvasPath: string | null) {
     const id = store.picked[0]
-    const node = id ? store.canvas.nodes.find((one) => one.id === id) : null
-    if (!node || node.type !== 'text' || !node.text.trim()) return
+    const node = store.canvas.nodes.find((one) => one.id === id)
+    if (node?.type !== 'text' || !node.text.trim()) return
 
     const root = workspace.activeSpace?.root
-    const folder = canvasPath ? folderOfPath(canvasPath) : root
+    const folder = canvasPath === null ? root : folderOfPath(canvasPath)
     const path = await workspace.noteFrom(node.text, folder ?? undefined)
     if (!path || !root) return
 
@@ -263,7 +261,16 @@ export const run = {
       ...store.canvas,
       nodes: store.canvas.nodes.map((one) =>
         one.id === node.id
-          ? { id: one.id, type: 'file', x: one.x, y: one.y, width: one.width, height: one.height, file: relativeTo(root, path), ...(one.color === undefined ? {} : { color: one.color }) }
+          ? {
+              id: one.id,
+              type: 'file',
+              x: one.x,
+              y: one.y,
+              width: one.width,
+              height: one.height,
+              file: relativeTo(root, path),
+              ...(one.color === undefined ? {} : { color: one.color }),
+            }
           : one,
       ),
     })
@@ -417,8 +424,9 @@ async function askLabel(store: CanvasStore, id: string) {
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
 }
 
-/** What a tool puts on the plane where it was pressed. */
-export async function place(store: CanvasStore, tool: Tool, at: Point, canvasPath: string | null) {
+/** What a tool puts on the plane where it was pressed. A tool that puts nothing
+ *  down - the arrow, the hand, the pen - has nothing to do here. */
+export async function place(store: CanvasStore, tool: Tool, at: Point) {
   switch (tool) {
     case 'text':
       putText(store, '', at, true)
@@ -426,7 +434,9 @@ export async function place(store: CanvasStore, tool: Tool, at: Point, canvasPat
     case 'group': {
       // Room enough to put a handful of cards in, which is what a frame is for.
       const id = freshId()
-      store.edit(withGroup(store.canvas, { ...placedAt(at, GRID * 20, GRID * 12), id, type: 'group' }))
+      store.edit(
+        withGroup(store.canvas, { ...placedAt(at, GRID * 20, GRID * 12), id, type: 'group' }),
+      )
       store.pick(id)
       return
     }
@@ -466,8 +476,18 @@ export async function place(store: CanvasStore, tool: Tool, at: Point, canvasPat
       store.pick(id)
       return
     }
-    default:
-      void canvasPath
+    // A tool that puts nothing down: the arrow, the hand, and the three a pen
+    // wants, which draw rather than place.
+    case 'select':
+    case 'hand':
+    case 'draw':
+    case 'erase':
+    case 'lasso':
+    case 'rect':
+    case 'ellipse':
+    case 'line':
+    case 'arrow':
+      return
   }
 }
 
@@ -488,10 +508,10 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
     store.canvas.nodes.find((one) => one.id === store.picked[0])?.type === 'text'
 
   return [
-    { label: t('Card'), run: () => void place(store, 'text', at, view.path) },
-    { label: t('Note or picture'), run: () => void place(store, 'file', at, view.path) },
-    { label: t('Link'), run: () => void place(store, 'link', at, view.path) },
-    { label: t('Group'), run: () => void place(store, 'group', at, view.path) },
+    { label: t('Card'), run: () => void place(store, 'text', at) },
+    { label: t('Note or picture'), run: () => void place(store, 'file', at) },
+    { label: t('Link'), run: () => void place(store, 'link', at) },
+    { label: t('Group'), run: () => void place(store, 'group', at) },
     DIVIDER,
     { label: t('Duplicate'), disabled: !picked, run: () => run.duplicate(store) },
     { label: t('Delete'), danger: true, disabled: !picked, run: () => run.remove(store) },

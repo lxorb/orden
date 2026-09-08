@@ -34,7 +34,7 @@ export const HANDLE = 9
 export const PORT = 9
 /** How far a finger may miss a handle and still find it. A pen and a mouse are
  *  precise; a thumb is not, and the same numbers have to serve both. */
-export const FORGIVING = 8
+const FORGIVING = 8
 
 export interface Where {
   canvas: Canvas
@@ -61,7 +61,7 @@ export function hitAt(where: Where, point: Point): Hit {
     return where.lassoed ? { ...NOTHING, ink: handle } : { ...NOTHING, handle }
   }
 
-  if (where.lassoed && where.box && turnAt(where.box, point, (HANDLE * 2.4) * unit + slack)) {
+  if (where.lassoed && where.box && turnAt(where.box, point, HANDLE * 2.4 * unit + slack)) {
     return { ...NOTHING, ink: 'turn' }
   }
 
@@ -93,7 +93,7 @@ function handleAt(where: Where, point: Point, slack: number): HandleId | null {
   const box = where.box
   if (!box) return null
 
-  const reach = (HANDLE / 2) / where.scale + slack
+  const reach = HANDLE / 2 / where.scale + slack
 
   for (const handle of HANDLES) {
     const at = {
@@ -121,7 +121,7 @@ function portAt(where: Where, point: Point, slack: number): Hit['port'] {
   const node = where.canvas.nodes.find((one) => one.id === id)
   if (!node) return null
 
-  const reach = (PORT / 2) / where.scale + slack + 2 / where.scale
+  const reach = PORT / 2 / where.scale + slack + 2 / where.scale
   const box = boxOf(node)
 
   for (const side of SIDES) {
@@ -152,11 +152,7 @@ function edgeAt(canvas: Canvas, point: Point, reach: number): string | null {
   return null
 }
 
-function onCurve(
-  ends: ReturnType<typeof edgeEnds>,
-  point: Point,
-  reach: number,
-): boolean {
+function onCurve(ends: ReturnType<typeof edgeEnds>, point: Point, reach: number): boolean {
   const curve = curvePoints(ends)
 
   for (let one = 1; one < curve.length; one++) {

@@ -298,6 +298,14 @@ function readEdge(value: unknown, nodes: ReadonlySet<string>): CanvasEdge | null
   }
 }
 
+/** The flattened points of every stroke that has been written down, kept.
+ *
+ *  A canvas is written whole on every edit, and flattening five thousand strokes
+ *  that have not changed since the last one is most of the cost of doing so.
+ *  Weak and keyed on the stroke, like every other cache in this codebase: a
+ *  stroke that changed is a new object, so the answers cannot go stale. */
+const flattened = new WeakMap<InkStroke, number[]>()
+
 /** The points of a stroke as they go into a file: flattened, six numbers each,
  *  and rounded to a tenth of a unit, which is finer than any pen is steady.
  *
@@ -531,12 +539,18 @@ function writtenShape(node: ShapeNode): Record<string, unknown> {
 }
 
 function writtenStroke(stroke: InkStroke): Record<string, unknown> {
+  let points = flattened.get(stroke)
+  if (!points) {
+    points = packed(stroke.points)
+    flattened.set(stroke, points)
+  }
+
   return {
     id: stroke.id,
     tool: stroke.tool,
     color: stroke.color,
     size: Math.round(stroke.size * 100) / 100,
-    points: packed(stroke.points),
+    points,
   }
 }
 

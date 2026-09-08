@@ -43,14 +43,15 @@ export function matches(canvas: Canvas, term: string): Found[] {
   const found: Found[] = []
 
   for (const node of canvas.nodes) {
+    // An empty one holds nothing, and the term is never empty by here.
     const says = saysOf(node)
-    if (says && says.toLowerCase().includes(wanted)) {
+    if (says.toLowerCase().includes(wanted)) {
       found.push({ id: node.id, says: shortened(says, wanted) })
     }
   }
 
   for (const edge of canvas.edges) {
-    if (edge.label && edge.label.toLowerCase().includes(wanted)) {
+    if (edge.label?.toLowerCase().includes(wanted)) {
       found.push({ id: edge.id, says: shortened(edge.label, wanted) })
     }
   }

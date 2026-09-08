@@ -8,10 +8,17 @@
  *  as it stood after the last pass. A local hash that no longer matches means
  *  the file changed here; a version that has moved means it changed there; and
  *  both at once is the only case that needs a decision. That decision is
- *  always the same one: never silently drop an edit. The other side's copy
- *  lands beside ours with a name that says where it came from. */
+ *  always the same one: never silently drop an edit.
+ *
+ *  For a note that is a conflict copy: the other side's copy lands beside ours
+ *  with a name that says where it came from, because two people typing in one
+ *  paragraph is not something a machine can settle. For a canvas it is a merge,
+ *  because a canvas can be settled: everything on it has an id and a time, so
+ *  the union of the two keeps every card and every stroke either device drew
+ *  and nobody has to go looking for a second file. See canvas-merge.ts. */
 
-import { isPdfTarget } from '@nib/markdown/links'
+import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
+import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { api, ApiError, type SpaceFile } from '../api'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
@@ -123,7 +130,16 @@ export async function pull(mirror: Mirror, token: string): Promise<boolean> {
       const diverged = tracked && local !== null && (await sha256(local)) !== tracked.hash
 
       if (diverged && local !== content) {
-        await invoke('write_note', { path: conflictPath(target), content })
+        // A canvas is put back together rather than copied: both drawings are
+        // kept, and what is written here is already the answer both devices
+        // will settle on, since the merge gives the same file either way round.
+        const together = isCanvasTarget(remote.path) ? mergeCanvasFiles(local, content) : null
+
+        await invoke('write_note', {
+          path: together === null ? conflictPath(target) : target,
+          content: together ?? content,
+        })
+
         // An empty hash guarantees the push below sends our copy, now based
         // on the version we just saw, so it lands as the newest one.
         mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
@@ -272,7 +288,10 @@ function same(was: Record<string, TrackedFile>, now: Record<string, TrackedFile>
   )
 }
 
-/** Never silently drop an edit: the other device's copy lands beside ours. */
+/** Never silently drop an edit. A canvas is merged into one file that has
+ *  everything both devices drew; anything else keeps the other side's copy
+ *  beside ours, since two people typing in one paragraph cannot be settled by a
+ *  machine. */
 async function keepBoth(
   mirror: Mirror,
   path: string,
@@ -286,13 +305,21 @@ async function keepBoth(
   const theirs = isRecord(server.note) ? server.note : null
   if (typeof theirs?.version !== 'number') return
 
-  await invoke('write_note', {
-    path: conflictPath(join(mirror.root, path)),
-    content: isString(server.content) ? server.content : '',
-  })
+  const here = join(mirror.root, path)
+  const sent = isString(server.content) ? server.content : ''
+  const ours = await invoke<string>('read_note', { path: here })
+
+  if (isCanvasTarget(path)) {
+    const together = mergeCanvasFiles(ours, sent)
+    await invoke('write_note', { path: here, content: together })
+    const { note } = await api.writeNote(token, tracked.id, path, together, theirs.version)
+    mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+    return
+  }
+
+  await invoke('write_note', { path: conflictPath(here), content: sent })
 
   // Our version is now the newer one; write it over the server's.
-  const ours = await invoke<string>('read_note', { path: join(mirror.root, path) })
   const { note } = await api.writeNote(token, tracked.id, path, ours, theirs.version)
   mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
 }

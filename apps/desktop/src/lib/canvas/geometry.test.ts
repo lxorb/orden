@@ -14,7 +14,7 @@ import {
   nodeAt,
   overlaps,
   rectBetween,
-  resized,
+  resizedBox,
   sidePoint,
   snapped,
   within,
@@ -163,6 +163,9 @@ describe('what a drag carries', () => {
   const canvas: Canvas = {
     nodes: [group('g', 0, 0, 400, 400), card('in', 50, 50), card('out', 900, 900)],
     edges: [],
+    ink: [],
+    at: {},
+    gone: {},
   }
 
   test('is the cards themselves when no group is among them', () => {
@@ -181,6 +184,9 @@ describe('what a drag carries', () => {
         card('deep', 150, 150),
       ],
       edges: [],
+      ink: [],
+      at: {},
+      gone: {},
     }
 
     expect(dragged(nested, ['outer']).sort()).toEqual(['deep', 'inner', 'outer'])
@@ -196,28 +202,46 @@ describe('what a drag carries', () => {
   })
 })
 
-describe('resizing', () => {
+describe('resizing a box', () => {
   const box = { x: 100, y: 100, width: 200, height: 200 }
+  const least = GRID * 2
 
   test('moves the edges the handle pulls and leaves the others', () => {
-    expect(resized(box, 'se', 40, 40)).toEqual({ x: 100, y: 100, width: 240, height: 240 })
-    expect(resized(box, 'nw', 40, 40)).toEqual({ x: 140, y: 140, width: 160, height: 160 })
-    expect(resized(box, 'e', 40, 40)).toEqual({ x: 100, y: 100, width: 240, height: 200 })
-    expect(resized(box, 'n', 0, -40)).toEqual({ x: 100, y: 60, width: 200, height: 240 })
+    expect(resizedBox(box, 'se', 40, 40, least)).toEqual({
+      x: 100,
+      y: 100,
+      width: 240,
+      height: 240,
+    })
+    expect(resizedBox(box, 'nw', 40, 40, least)).toEqual({
+      x: 140,
+      y: 140,
+      width: 160,
+      height: 160,
+    })
+    expect(resizedBox(box, 'e', 40, 40, least)).toEqual({ x: 100, y: 100, width: 240, height: 200 })
+    expect(resizedBox(box, 'n', 0, -40, least)).toEqual({ x: 100, y: 60, width: 200, height: 240 })
   })
 
-  test('lands on the grid', () => {
-    expect(resized(box, 'se', 27, 27)).toEqual({ x: 100, y: 100, width: 220, height: 220 })
+  /** The offset arrives already snapped, or not, as the surface decided: the
+   *  guides and the grid are settled next door, in snap.ts. */
+  test('takes the offset as it was given, rounded to a whole pixel', () => {
+    expect(resizedBox(box, 'se', 27.4, 27.4, least)).toEqual({
+      x: 100,
+      y: 100,
+      width: 227,
+      height: 227,
+    })
   })
 
   test('stops rather than turning the box inside out', () => {
-    const small = resized(box, 'se', -1000, -1000)
-    expect(small.width).toBe(GRID * 2)
-    expect(small.height).toBe(GRID * 2)
+    const small = resizedBox(box, 'se', -1000, -1000, least)
+    expect(small.width).toBe(least)
+    expect(small.height).toBe(least)
 
-    const other = resized(box, 'nw', 1000, 1000)
-    expect(other.width).toBe(GRID * 2)
-    expect(other.x).toBe(300 - GRID * 2)
+    const other = resizedBox(box, 'nw', 1000, 1000, least)
+    expect(other.width).toBe(least)
+    expect(other.x).toBe(300 - least)
   })
 })
 

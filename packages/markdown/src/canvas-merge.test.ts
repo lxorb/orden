@@ -150,9 +150,7 @@ describe('merging two copies of a canvas', () => {
 
     // Written out rather than compared as objects, because the file is the
     // thing two devices have to agree on.
-    expect(writeCanvas(merged(ours, theirs, 1000))).toBe(
-      writeCanvas(merged(theirs, ours, 1000)),
-    )
+    expect(writeCanvas(merged(ours, theirs, 1000))).toBe(writeCanvas(merged(theirs, ours, 1000)))
   })
 
   test('drops an edge whose card the merge did not keep', () => {
@@ -207,7 +205,9 @@ describe('merging two canvas files', () => {
   })
 
   test('reads back as a canvas', () => {
-    const ours = writeCanvas(stamped(plane(), plane({ nodes: [card('a')], ink: [stroke('s')] }), 100))
+    const ours = writeCanvas(
+      stamped(plane(), plane({ nodes: [card('a')], ink: [stroke('s')] }), 100),
+    )
     const theirs = writeCanvas(stamped(plane(), plane({ nodes: [card('b')] }), 120))
     const both = readCanvas(mergeCanvasFiles(ours, theirs))
 

@@ -365,6 +365,61 @@ describe('notes', () => {
     expect(stale.json.note.version).toBe(2)
   })
 
+  /** A canvas is the one thing a machine can settle on its own: everything on
+   *  it has an id and a time, so the union of the two copies keeps every card
+   *  both devices drew. Nobody gets a second file to go and find. */
+  describe('two devices drawing on one canvas', () => {
+    const card = (id: string, at: number) => ({
+      nodes: [{ id, type: 'text', x: 0, y: 0, width: 100, height: 50, text: id }],
+      edges: [],
+      nib: { version: 1, at: { [id]: at } },
+    })
+
+    async function drawn(id: string, at: number, base: number) {
+      return call(env, `/v1/notes/${canvasId}`, {
+        method: 'PUT',
+        token,
+        body: { content: JSON.stringify(card(id, at)), baseVersion: base },
+      })
+    }
+
+    let canvasId: string
+
+    beforeEach(async () => {
+      const created = await addNote('Plan.canvas', '{"nodes":[],"edges":[]}')
+      canvasId = created.json.note.id
+    })
+
+    test('keeps what both of them drew rather than refusing the second', async () => {
+      await drawn('theirs', 1000, 1)
+      const mine = await drawn('mine', 1010, 1)
+
+      expect(mine.status).toBe(200)
+      expect(mine.json.note.version).toBe(3)
+
+      const held = await call(env, `/v1/notes/${canvasId}`, { token })
+      const canvas = JSON.parse(held.json.content) as { nodes: { id: string }[] }
+      expect(canvas.nodes.map((node) => node.id).sort()).toEqual(['mine', 'theirs'])
+    })
+
+    test('still refuses a stale write to a note beside it', async () => {
+      const created = await addNote('a.md', 'one')
+      await call(env, `/v1/notes/${created.json.note.id}`, {
+        method: 'PUT',
+        token,
+        body: { content: 'server', baseVersion: 1 },
+      })
+
+      const stale = await call(env, `/v1/notes/${created.json.note.id}`, {
+        method: 'PUT',
+        token,
+        body: { content: 'mine', baseVersion: 1 },
+      })
+
+      expect(stale.status).toBe(409)
+    })
+  })
+
   test('renaming moves the note without losing content', async () => {
     const created = await addNote('a.md', 'body')
     const moved = await call(env, `/v1/notes/${created.json.note.id}`, {

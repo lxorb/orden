@@ -13,7 +13,7 @@ import { type Box, GRID, type HandleId, snapped } from './geometry'
 
 /** A line the surface draws while something is being lined up: which axis it
  *  pins, where on that axis it sits, and how far along the other one it runs. */
-export interface Guide {
+interface Guide {
   axis: 'x' | 'y'
   at: number
   from: number
@@ -30,7 +30,7 @@ export const NO_SNAP: Snap = { dx: 0, dy: 0, guides: [] }
 
 /** How far a snap reaches, in plane units at one to one. Half a grid step: near
  *  enough that lining up feels deliberate, far enough that it happens. */
-export const REACH = GRID / 2
+const REACH = GRID / 2
 
 /** One axis of a box: where it starts and how long it is. */
 interface Span {

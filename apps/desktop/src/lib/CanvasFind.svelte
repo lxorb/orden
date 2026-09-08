@@ -28,13 +28,16 @@
 
   const found = $derived(matches(canvas, term))
 
+  /** Reads a value for its own sake, so the effect around it follows it. */
+  const follows = (_value: unknown) => undefined
+
   $effect(() => {
     field?.focus()
   })
 
   // A new search starts at the top of its own answers.
   $effect(() => {
-    void found.length
+    follows(found.length)
     at = 0
   })
 

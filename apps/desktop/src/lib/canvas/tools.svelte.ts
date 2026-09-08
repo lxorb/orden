@@ -10,7 +10,7 @@
  *  coloured after the fact. Two different questions, two different answers. */
 
 import { type InkTool, INK_TOOLS } from './format'
-import { INK_SIZES, INK_STYLES } from './ink'
+import { INK_STYLES } from './ink'
 import { DEFAULT_INK } from './palette'
 import { type Tool } from './pointer'
 
@@ -64,7 +64,7 @@ function drawn(tool: Tool): boolean {
 
 export const tools = new Tools()
 
-/** The pens the bar offers, in the order it shows them. */
+/** The pens the bar offers, in the order it shows them, and the widths. Four
+ *  widths is as many choices as anybody wants while writing. */
 export const PENS = INK_TOOLS
-
-export { INK_SIZES }
+export const INK_SIZES = [1.5, 3, 6, 12] as const

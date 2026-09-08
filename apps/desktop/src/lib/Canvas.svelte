@@ -51,6 +51,7 @@
     type Hit,
     type Input,
     type Machine,
+    NOTHING,
     start,
     step,
   } from './canvas/pointer'
@@ -77,6 +78,16 @@
    *  cards on the page changes at all. */
   const SLACK = 800
 
+  /** How far the view has to move before which cards are on the page is worked
+   *  out again, in plane units.
+   *
+   *  Without this the answer changes on every frame of a pan, and a new list of
+   *  cards means the whole each block is walked and five hundred components are
+   *  handed new props sixty times a second. With it a pan is a transform and
+   *  nothing else until the view has really moved somewhere new, which is what
+   *  keeps a plane of five hundred cards at sixty frames a second. */
+  const QUANTUM = 400
+
   /** Below this the dots are closer together than they are wide, and the grid
    *  stops being a grid and becomes a wash. */
   const DOTS_UNTIL = 7
@@ -92,10 +103,13 @@
   let host = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
-  let machine = $state<Machine>(start())
+  // Raw: the machine is replaced whole by every event and never changed in
+  // place, so there is nothing for a proxy to watch and a great deal for it to
+  // wrap. See the note on the canvas in store.svelte.ts.
+  let machine = $state.raw<Machine>(start())
   /** What the six presets are in this theme, for the ink layer, which paints on
    *  a 2d context and cannot read a custom property. */
-  let palette = $state<Record<string, string>>({})
+  let palette = $state.raw<Record<string, string>>({})
   /** Whether the plane has been put in view yet; see `measure`. */
   let placed = false
   /** Where the pointer last was on the plane, so a paste and a new card land
@@ -164,7 +178,13 @@
   })
 
   /** How far the ink lasso has been dragged, scaled or turned so far. */
-  let carriedInk = $state<{ dx: number; dy: number; scale: number; turn: number; about: Point }>({
+  let carriedInk = $state.raw<{
+    dx: number
+    dy: number
+    scale: number
+    turn: number
+    about: Point
+  }>({
     dx: 0,
     dy: 0,
     scale: 1,
@@ -196,12 +216,26 @@
     return base
   })
 
+  /** Where the view is, rounded. Numbers rather than a box, so that panning a
+   *  few pixels does not count as a change at all; see QUANTUM. */
+  const roughX = $derived(Math.round(camera.x / QUANTUM))
+  const roughY = $derived(Math.round(camera.y / QUANTUM))
+  /** The zoom in quarter octaves, so the set changes on a real change of scale
+   *  rather than on every notch of a wheel. */
+  const roughZoom = $derived(Math.round(Math.log2(camera.scale) * 4))
+
   /** The part of the plane worth drawing. */
-  const inView = $derived({
-    x: camera.x - width / 2 / camera.scale - SLACK,
-    y: camera.y - height / 2 / camera.scale - SLACK,
-    width: width / camera.scale + 2 * SLACK,
-    height: height / camera.scale + 2 * SLACK,
+  const inView = $derived.by(() => {
+    const scale = 2 ** (roughZoom / 4)
+    const across = width / scale + 2 * SLACK
+    const down = height / scale + 2 * SLACK
+
+    return {
+      x: roughX * QUANTUM - across / 2,
+      y: roughY * QUANTUM - down / 2,
+      width: across,
+      height: down,
+    }
   })
 
   /** The cards on the page: what is in view, in the order the file holds them,
@@ -244,7 +278,7 @@
   /** The stroke under the pen, with whatever the browser guesses is coming next
    *  drawn on the end of it. The guess is drawn and never kept: it is there so
    *  the ink reaches the nib, and it is wrong by the next event. */
-  let predicted = $state<InkPoint[]>([])
+  let predicted = $state.raw<InkPoint[]>([])
 
   const live = $derived.by(() => {
     if (gesture?.kind !== 'draw') return null
@@ -259,6 +293,12 @@
   })
 
   const guides = $derived(dragSnap.guides.length ? dragSnap.guides : sizeSnap.guides)
+
+  /** Where in its own tile the grid sits, which is all a repeating pattern needs
+   *  to be moved by. Always positive, unlike the remainder operator. */
+  function modulo(value: number, by: number): number {
+    return by > 0 ? ((value % by) + by) % by : 0
+  }
 
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
@@ -290,7 +330,10 @@
     if (!element || typeof MutationObserver === 'undefined') return
 
     const watcher = new MutationObserver(() => (palette = readPalette(element)))
-    watcher.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] })
+    watcher.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'data-theme'],
+    })
 
     return () => watcher.disconnect()
   })
@@ -429,7 +472,13 @@
         store.edit(preview)
         break
       case 'ink': {
-        carriedInk = { dx: effect.dx, dy: effect.dy, scale: effect.scale, turn: effect.turn, about: effect.about }
+        carriedInk = {
+          dx: effect.dx,
+          dy: effect.dy,
+          scale: effect.scale,
+          turn: effect.turn,
+          about: effect.about,
+        }
         break
       }
       case 'connect':
@@ -440,7 +489,7 @@
         tools.done()
         break
       case 'place':
-        void place(store, effect.tool, effect.at, tab.path)
+        void place(store, effect.tool, effect.at)
         tools.done()
         break
       case 'stroke':
@@ -486,7 +535,10 @@
     const shape = assisted(stroke)
     if (!shape) return
 
-    machine = { ...machine, gesture: { ...one, stroke: { ...one.stroke, points: tidyShape(stroke, shape).points } } }
+    machine = {
+      ...machine,
+      gesture: { ...one, stroke: { ...one.stroke, points: tidyShape(stroke, shape).points } },
+    }
     predicted = []
   }
 
@@ -547,13 +599,18 @@
     // A pointer that is moving is not a pointer being held.
     if (holding && Math.hypot(point.x - at.x, point.y - at.y) * camera.scale > 4) stopHolding()
 
+    // Asked for only when it is going to be read. Panning a plane of five
+    // thousand strokes does not need to know what is under the pointer, and
+    // asking sixty times a second is what a plane that big cannot afford.
+    const wants = !machine.gesture || machine.gesture.kind === 'erase'
+
     send({
       kind: 'move',
       id: event.pointerId,
       at: point,
       screen: screenAt(event),
       samples,
-      hit: hitFor(point, coarse),
+      hit: wants ? hitFor(point, coarse) : NOTHING,
     })
 
     // A pen that has stopped moving is a pen asking for its shape to be tidied.
@@ -639,7 +696,7 @@
    *  the card, and on a frame or a connector it asks for the words it wears. */
   function onDoubleClick(event: MouseEvent) {
     const point = planeAt(event)
-    void run.open(store, hitFor(point, false), point, tab.path)
+    void run.open(store, hitFor(point, false), point)
   }
 
   function showMenu(point: Point) {
@@ -828,15 +885,11 @@
   class:grabbing={gesture?.kind === 'pan' || gesture?.kind === 'pinch'}
   class:spacing={machine.spacing || tools.which === 'hand'}
   class:drawing={tools.which === 'draw' || tools.which === 'erase'}
-  class:dots={stepX >= DOTS_UNTIL}
   class:narrowed
   bind:this={host}
   role="application"
   aria-label={t('Canvas')}
   tabindex="-1"
-  style:--dot-step="{stepX}px"
-  style:--dot-x="{originX}px"
-  style:--dot-y="{originY}px"
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
@@ -855,6 +908,22 @@
   }}
   ondrop={onDrop}
 >
+  <!-- The grid, on a layer of its own that is one tile bigger than the view all
+       round and moved by a transform. Moving a repeating background by its own
+       position repaints the whole view on every frame of a pan; moving a layer
+       is composited and costs nothing. -->
+  {#if stepX >= DOTS_UNTIL}
+    <div
+      class="dots"
+      style:--dot-step="{stepX}px"
+      style:left="{-stepX}px"
+      style:top="{-stepX}px"
+      style:width="{width + 2 * stepX}px"
+      style:height="{height + 2 * stepX}px"
+      style:transform="translate({modulo(originX, stepX)}px, {modulo(originY, stepX)}px)"
+    ></div>
+  {/if}
+
   <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
     <CanvasEdges
       edges={shown.edges}
@@ -963,9 +1032,12 @@
     {#if lasso && lasso.length > 1}
       <svg class="lasso" aria-hidden="true" width="1" height="1" style:overflow="visible">
         <path
-          d="M {lasso.map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`).join(' L ')} Z"
+          d="M {lasso
+            .map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`)
+            .join(' L ')} Z"
           style:stroke-width="{1.5 * unit}px"
-          style:stroke-dasharray="{5 * unit} {4 * unit}"
+          style:stroke-dasharray="{5 * unit}
+          {4 * unit}"
         />
       </svg>
     {/if}
@@ -1013,11 +1085,15 @@
   }
 
   /* The grid, drawn on the view rather than on the plane: a repeating background
-     costs one paint however far the plane reaches. */
-  .canvas.dots {
+     costs one paint however far the plane reaches, and this layer is moved by a
+     transform rather than by its own background position, so panning it is a
+     composite and never a repaint. */
+  .dots {
+    position: absolute;
+    pointer-events: none;
     background-image: radial-gradient(circle at center, var(--canvas-dot) 1px, transparent 1.2px);
     background-size: var(--dot-step) var(--dot-step);
-    background-position: var(--dot-x) var(--dot-y);
+    will-change: transform;
   }
 
   .canvas.spacing {
