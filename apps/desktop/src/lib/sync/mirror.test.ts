@@ -40,7 +40,10 @@ const fake = vi.hoisted(() => {
 
     if (command === 'read_note') {
       const held = disk.get(path)
-      if (held === undefined) throw new Error(`no such file: ${path}`)
+      // Rejected rather than thrown, the way the platform shim answers: a pass
+      // catches the promise, and a file that is not there is the ordinary case
+      // of a note arriving from another machine.
+      if (held === undefined) return Promise.reject(new Error(`no such file: ${path}`))
       return Promise.resolve(held as T)
     }
 
@@ -306,6 +309,62 @@ describe('a note only one side changed', () => {
 
     expect(await push(mirror, 'token', NOBODY)).toBe(true)
     expect(fake.calls).toContain('createNote fresh.md')
+  })
+})
+
+describe('a path the account named', () => {
+  test('is not written outside the folder the space is', async () => {
+    fake.addRemote('../../escape.md', 'somebody else wrote this\n')
+    const mirror = newMirror('s-one', ROOT)
+
+    await pull(mirror, 'token', NOBODY)
+
+    // Nothing on the disk, and nothing tracked: a note that cannot be placed
+    // inside the space is not a note to place.
+    expect(fake.calls).toEqual([])
+    expect([...fake.disk.keys()]).toEqual([])
+  })
+
+  test('is not written outside it with the other separator either', async () => {
+    fake.addRemote('..\\..\\escape.md', 'somebody else wrote this\n')
+    const mirror = newMirror('s-one', ROOT)
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual([])
+    expect([...fake.disk.keys()]).toEqual([])
+  })
+
+  test('is still written when it names a folder inside the space', async () => {
+    fake.addRemote('deep/one.md', 'ours\n')
+    const mirror = newMirror('s-one', ROOT)
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/deep/one.md`)).toBe('ours\n')
+  })
+})
+
+describe('a page of changes that never ends', () => {
+  test('is asked for once rather than forever', async () => {
+    const asking = fake.api.changes
+    let asked = 0
+
+    // A page that says there is more and hands back the cursor it was given.
+    // Following it is a pass that never finishes: the light stays on, the loop
+    // never sets its next timer, and a first sync never lets anybody in.
+    fake.api.changes = (_token: string, _spaceId: string, since: number) => {
+      asked += 1
+      if (asked > 3) throw new Error('asked forever')
+      return Promise.resolve({ notes: [], cursor: since, more: true })
+    }
+
+    try {
+      expect(await pull(newMirror('s-one', ROOT), 'token', NOBODY)).toBe(false)
+      expect(asked).toBe(1)
+    } finally {
+      fake.api.changes = asking
+    }
   })
 })
 

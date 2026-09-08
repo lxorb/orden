@@ -98,6 +98,20 @@ export function within(root: string, path: string): string | null {
   return file.slice(folder.length + 1)
 }
 
+/** Whether a path the account named can be joined onto a space's folder.
+ *
+ *  The listing arrives over the network, and in a shared space the names in it
+ *  were written by somebody else: a path that climbs out with `..`, or names a
+ *  disk of its own, would have the pass write a file anywhere on this machine
+ *  the person can write. Nothing below the folder can say that, so a name that
+ *  does is not a note to place at all. Both separators, because which one a
+ *  path uses says nothing about where it points. */
+function placeable(path: string): boolean {
+  if (!path || /^[a-zA-Z]:/.test(path) || /^[\\/]/.test(path)) return false
+
+  return path.split(/[\\/]/).every((part) => part !== '' && part !== '.' && part !== '..')
+}
+
 /** Where the other side's copy goes when both changed the same note. */
 function conflictPath(path: string): string {
   const stamp = new Date().toISOString().slice(0, 10)
@@ -152,6 +166,10 @@ export async function pull(
     if (page.notes.length) moved = true
 
     for (const remote of page.notes) {
+      // A name that would land outside the space is left where it is; see
+      // `placeable`.
+      if (!placeable(remote.path)) continue
+
       const target = join(root, remote.path)
 
       if (remote.deleted) {
@@ -201,8 +219,12 @@ export async function pull(
       wrote?.()
     }
 
+    // A page saying there is more that hands back the cursor it was given would
+    // be asked for forever: the pass would never end, the loop would never set
+    // its next timer, and a first sync would never let anybody in.
+    const asked = mirror.cursor
     mirror.cursor = page.cursor
-    if (!page.more) break
+    if (!page.more || page.cursor === asked) break
   }
 
   return moved
