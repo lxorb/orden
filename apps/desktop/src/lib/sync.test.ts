@@ -28,7 +28,13 @@ const fake = vi.hoisted(() => {
 
   const disk = new Map<string, string>()
   const remote = {
-    spaces: [] as { id: string; name: string; bookmarks?: Bookmark[] }[],
+    spaces: [] as {
+      id: string
+      name: string
+      bookmarks?: Bookmark[]
+      /** What the account lets this session do here. Absent is its own. */
+      role?: 'owner' | 'write' | 'read'
+    }[],
     notes: [] as Note[],
     /** Every write the account received, in order. */
     calls: [] as string[],
@@ -136,12 +142,14 @@ const fake = vi.hoisted(() => {
   })
 
   const listed = (
-    space: { id: string; name: string; bookmarks?: Bookmark[] },
+    space: { id: string; name: string; bookmarks?: Bookmark[]; role?: string },
     position: number,
   ) => ({
     ...space,
     position,
     icon: null,
+    role: space.role ?? 'owner',
+    shared: (space.role ?? 'owner') !== 'owner',
     bookmarks: space.bookmarks ?? [],
     createdAt: 0,
     updatedAt: 0,
@@ -216,6 +224,10 @@ const fake = vi.hoisted(() => {
     },
     deleteSpace: async (_token: string, id: string) => {
       remote.calls.push(`deleteSpace ${id}`)
+      return { ok: true as const }
+    },
+    leaveSpace: async (_token: string, id: string) => {
+      remote.calls.push(`leaveSpace ${id}`)
       return { ok: true as const }
     },
     reorderSpaces: async () => ({ ok: true as const }),
@@ -520,6 +532,88 @@ describe('the bookmarks of a space', () => {
     await vi.waitFor(() => {
       expect(fake.remote.calls).toEqual(['saveBookmarks s-Notes'])
     })
+  })
+})
+
+describe('a space somebody shared', () => {
+  /** An account holding one space that belongs to somebody else, with a note
+   *  already in it. */
+  function sharedWithMe(role: 'write' | 'read') {
+    fake.remote.spaces.push({ id: 's-Theirs', name: 'Theirs', role })
+    fake.addRemoteNote('s-Theirs', 'Plan.md', '# Their plan')
+  }
+
+  test('arrives as a folder like any other', async () => {
+    sharedWithMe('read')
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    expect(fake.disk.get('/Theirs/Plan.md')).toBe('# Their plan')
+    expect(workspace.spaces.map((one) => one.name)).toEqual(['Theirs'])
+  })
+
+  test('is never written back to when it was shared to read', async () => {
+    sharedWithMe('read')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls = []
+
+    // Something writes into the folder anyway - another program, or a machine
+    // that has since lost the role. The pass says nothing about it, because
+    // saying it would be refused and because a folder somebody is reading is
+    // not a statement about what the space should hold.
+    fake.disk.set('/Theirs/Mine.md', '# not mine to add')
+    await workspace.loadTree()
+    await sync.pass()
+
+    expect(fake.remote.calls).toEqual([])
+  })
+
+  test('is written back to when it was shared to write', async () => {
+    sharedWithMe('write')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls = []
+
+    fake.disk.set('/Theirs/Mine.md', '# mine to add')
+    await workspace.loadTree()
+    await sync.pass()
+
+    expect(fake.remote.calls).toEqual(['createNote Mine.md'])
+  })
+
+  test('is let go of rather than deleted when the folder goes', async () => {
+    sharedWithMe('write')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls = []
+
+    const [space] = workspace.spaces
+    if (space) await sync.forget(space.root)
+
+    expect(fake.remote.calls).toEqual(['leaveSpace s-Theirs'])
+  })
+
+  test('takes its folder with it when the sharing is taken back', async () => {
+    sharedWithMe('write')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    expect(workspace.spaces.map((one) => one.name)).toEqual(['Theirs'])
+
+    // The account stops listing it, with no marker: the space still exists, it
+    // is simply not this one's to reach. Uploading the folder again would put a
+    // copy of somebody else's space into this account.
+    fake.remote.spaces = []
+    fake.remote.calls = []
+    await afterTheReconcileInterval(() => sync.pass())
+
+    expect(workspace.spaces).toEqual([])
+    expect(fake.remote.calls).toEqual([])
   })
 })
 

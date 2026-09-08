@@ -91,3 +91,104 @@ describe('who else is in a note', () => {
     expect(peersIn(two.awareness, two.doc, 'dark').present).toBe(0)
   })
 })
+
+describe('what a caret is labelled with', () => {
+  /** A device announcing itself with a caret at the front of the note. */
+  function announce(
+    end: { doc: Y.Doc; text: Y.Text; awareness: Awareness },
+    who: { name: string; accent: string; person?: string },
+  ) {
+    end.awareness.setLocalStateField('who', who)
+    end.awareness.setLocalStateField('caret', {
+      anchor: relative(end.text, 0),
+      head: relative(end.text, 0),
+    })
+  }
+
+  test('is the device, when the room holds one person’s machines', () => {
+    // The question two carets raise here is which of my machines that is, and
+    // "Emil" on both of them answers nothing.
+    const { one, two } = pair('words\n')
+    announce(one, { name: 'Android', accent: 'teal', person: 'Emil' })
+    announce(two, { name: 'Windows', accent: 'blue', person: 'Emil' })
+    receive(awarenessUpdate(one.awareness, [one.doc.clientID]), two.doc, two.awareness, 'room')
+
+    expect(peersIn(two.awareness, two.doc, 'dark').carets[0]?.name).toBe('Android')
+  })
+
+  test('is the person, once more than one of them is in the note', () => {
+    const { one, two } = pair('words\n')
+    announce(one, { name: 'Android', accent: 'teal', person: 'Ada' })
+    announce(two, { name: 'Windows', accent: 'blue', person: 'Emil' })
+    receive(awarenessUpdate(one.awareness, [one.doc.clientID]), two.doc, two.awareness, 'room')
+
+    expect(peersIn(two.awareness, two.doc, 'dark').carets[0]?.name).toBe('Ada')
+  })
+
+  test('is the person for everybody, including the reader’s own other machine', () => {
+    // Three ends: this reader on two machines, and somebody else on one. Every
+    // caret drawn here carries a person, because that is now the useful
+    // difference between them.
+    const { one, two } = pair('words\n')
+    const third = new Y.Doc()
+    Y.applyUpdate(third, Y.encodeStateAsUpdate(one.doc))
+    const mine = { doc: third, text: third.getText(TEXT), awareness: new Awareness(third) }
+
+    announce(one, { name: 'Android', accent: 'teal', person: 'Ada' })
+    announce(mine, { name: 'Mac', accent: 'rose', person: 'Emil' })
+    announce(two, { name: 'Windows', accent: 'blue', person: 'Emil' })
+
+    for (const end of [one, mine]) {
+      receive(awarenessUpdate(end.awareness, [end.doc.clientID]), two.doc, two.awareness, 'room')
+    }
+
+    const names = peersIn(two.awareness, two.doc, 'dark')
+      .carets.map((caret) => caret.name)
+      .sort()
+    expect(names).toEqual(['Ada', 'Emil'])
+  })
+
+  test('is the device when nobody says who they are, which is a signed-out room', () => {
+    const { one, two } = pair('words\n')
+    announce(one, { name: 'Firefox', accent: 'teal' })
+    announce(two, { name: 'Windows', accent: 'blue' })
+    receive(awarenessUpdate(one.awareness, [one.doc.clientID]), two.doc, two.awareness, 'room')
+
+    expect(peersIn(two.awareness, two.doc, 'dark').carets[0]?.name).toBe('Firefox')
+  })
+
+  test('falls back to the device for whoever did not send a person', () => {
+    // An older build, still saying only which machine it is.
+    const { one, two } = pair('words\n')
+    announce(one, { name: 'Android', accent: 'teal' })
+    announce(two, { name: 'Windows', accent: 'blue', person: 'Emil' })
+
+    const third = new Y.Doc()
+    Y.applyUpdate(third, Y.encodeStateAsUpdate(one.doc))
+    const other = { doc: third, text: third.getText(TEXT), awareness: new Awareness(third) }
+    announce(other, { name: 'Mac', accent: 'rose', person: 'Ada' })
+
+    for (const end of [one, other]) {
+      receive(awarenessUpdate(end.awareness, [end.doc.clientID]), two.doc, two.awareness, 'room')
+    }
+
+    const names = peersIn(two.awareness, two.doc, 'dark')
+      .carets.map((caret) => caret.name)
+      .sort()
+    expect(names).toEqual(['Ada', 'Android'])
+  })
+})
+
+describe('an unreadable presence', () => {
+  test('is left out', () => {
+    const { two } = pair('words\n')
+    // A state from a build that said something else, or from nothing at all.
+    two.awareness.setLocalState({ who: 'Mac' })
+    const other = new Y.Doc()
+    const theirs = new Awareness(other)
+    theirs.setLocalState({ nonsense: true })
+    receive(awarenessUpdate(theirs, [other.clientID]), two.doc, two.awareness, 'room')
+
+    expect(peersIn(two.awareness, two.doc, 'dark').present).toBe(0)
+  })
+})

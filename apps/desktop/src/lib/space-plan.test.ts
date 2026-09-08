@@ -184,3 +184,68 @@ describe('two folders with the same name', () => {
     expect(result.upload).toEqual([])
   })
 })
+
+describe('a space somebody shared', () => {
+  const shared = (name: string, id = `id-${name}`) => ({
+    root: `/spaces/${name}`,
+    spaceId: id,
+    shared: true,
+  })
+
+  test('goes when it stops being listed, because the sharing was taken back', () => {
+    // No marker: the space still exists, it is simply not this account's to
+    // reach any more. Uploading the folder again would put a copy of somebody
+    // else's space into this account.
+    const result = plan({ local: [local('Work')], mirrors: [shared('Work')] })
+
+    expect(result.remove).toEqual(['/spaces/Work'])
+    expect(result.detach).toEqual([])
+    expect(result.upload).toEqual([])
+  })
+
+  test('is still told apart from one of the account’s own that is merely missing', () => {
+    const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
+
+    expect(result.detach).toEqual(['/spaces/Work'])
+    expect(result.remove).toEqual([])
+  })
+
+  test('gets a folder of its own when the name is already answering for another', () => {
+    // Somebody shares their Work with an account that already has one. The
+    // account's own folder keeps its space, and the shared one is adopted.
+    const result = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-mine'), remote('Work', 'id-theirs')],
+      mirrors: [mirror('Work', 'id-mine')],
+    })
+
+    expect(result.adopt.map((one) => one.id)).toEqual(['id-theirs'])
+    expect(result.upload).toEqual([])
+    expect(result.detach).toEqual([])
+  })
+
+  test('is adopted only once, however many passes go by', () => {
+    const first = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-mine'), remote('Work', 'id-theirs')],
+      mirrors: [mirror('Work', 'id-mine')],
+    })
+    expect(first.adopt).toHaveLength(1)
+
+    // The next pass, with the folder the adoption made.
+    const again = plan({
+      local: [local('Work'), { name: 'Work 2', root: '/spaces/Work 2' }],
+      remote: [remote('Work', 'id-mine'), remote('Work', 'id-theirs')],
+      mirrors: [mirror('Work', 'id-mine'), { root: '/spaces/Work 2', spaceId: 'id-theirs' }],
+    })
+
+    expect(again).toEqual({
+      pair: [],
+      upload: [],
+      adopt: [],
+      drop: [],
+      detach: [],
+      remove: [],
+    })
+  })
+})
