@@ -45,6 +45,13 @@ const REPEAT_LIMIT: usize = 1_000;
 /// How deeply groups may nest, which is what bounds the parser's recursion.
 const DEPTH_LIMIT: usize = 64;
 
+/// How long a pattern may be. The program a pattern compiles to is capped, but
+/// the tree it is parsed into is built before that cap is reached, and the source
+/// crosses from the window: a megabyte of `a` is a million nodes held at once for
+/// a program that is refused anyway. Far longer than any pattern typed into a
+/// search field.
+const SOURCE_LIMIT: usize = 4096;
+
 /// A cell nothing has been written to. Cells hold char indices, so the largest
 /// `usize` is never one of them.
 const UNSET: usize = usize::MAX;
@@ -225,6 +232,12 @@ impl Pattern {
     /// which is what a half-typed query looks like.
     #[must_use]
     pub fn compile(source: &str, fold: bool) -> Option<Pattern> {
+        // Before the string is turned into characters, so a pattern too long to
+        // mean anything costs one comparison rather than a copy of itself.
+        if source.len() > SOURCE_LIMIT {
+            return None;
+        }
+
         let src: Vec<char> = source.chars().collect();
         let mut parser = Parser {
             src: &src,
@@ -1690,6 +1703,16 @@ mod tests {
             started.elapsed().as_secs() < 5,
             "the step budget should have stopped this long before now"
         );
+    }
+
+    /// The step budget covers matching; this is the parse. A pattern longer than
+    /// anybody types is a tree of a node per character, held all at once, for a
+    /// program the instruction cap refuses anyway.
+    #[test]
+    fn a_pattern_longer_than_a_search_field_does_not_compile() {
+        assert!(Pattern::compile(&"a".repeat(super::SOURCE_LIMIT), false).is_some());
+        assert!(Pattern::compile(&"a".repeat(super::SOURCE_LIMIT + 1), false).is_none());
+        assert!(Pattern::compile(&"a".repeat(4_000_000), false).is_none());
     }
 
     #[test]
