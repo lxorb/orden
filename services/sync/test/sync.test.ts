@@ -565,6 +565,18 @@ describe('what a note is made of', () => {
     expect(response.status).toBe(400)
   })
 
+  /** A path travels into a published page, a mail, a listing and a file on
+   *  somebody's disk. A newline in one is not a folder, so it is not a path. */
+  test('a control character is not part of a path', async () => {
+    const response = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: `we${String.fromCharCode(7)}ird.md`, content: 'x' },
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.json.error).toBe('that path is not usable')
+  })
+
   test('a space name has to be text', async () => {
     expect((await call(env, '/v1/spaces', { token, body: { name: 7 } })).status).toBe(400)
   })

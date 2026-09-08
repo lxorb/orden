@@ -27,11 +27,18 @@ export const PATH_LIMIT = 400
 const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas)$/i
 
 /** Paths are relative, forward-slashed and named like a note. Nothing escapes
- *  the space. */
+ *  the space.
+ *
+ *  A control character is not part of a name, for the same reason a space's name
+ *  has none: the path travels into a published page, a mail, a listing and a file
+ *  on somebody's disk, and a newline in one is not a folder. Refused rather than
+ *  stripped, because a client that sent one did not mean the name that would be
+ *  left and should be told so. */
 export function cleanPath(input: string): string | null {
   const path = input.replace(/\\/g, '/').replace(/^\/+/, '').trim()
 
   if (!path || path.length > PATH_LIMIT) return null
+  if (/\p{Cc}/u.test(path)) return null
   if (path.split('/').some((part) => !part || part === '.' || part === '..')) return null
   if (!NOTE_PATH.test(path)) return null
 
