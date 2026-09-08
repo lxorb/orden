@@ -511,6 +511,38 @@ describe('one person’s role', () => {
     expect(status).toBe(404)
   })
 
+  test('ends when they let themselves out, without asking the owner', async () => {
+    const gone = await call(env, `/v1/spaces/${space}/share/me`, {
+      method: 'DELETE',
+      token: reader,
+    })
+    expect(gone.status).toBe(200)
+
+    expect((await shareView()).json.members).toEqual([])
+    expect((await call(env, '/v1/spaces', { token: reader })).json.spaces).toEqual([])
+  })
+
+  test('is not something the owner can do to their own space', async () => {
+    const { status, json } = await call(env, `/v1/spaces/${space}/share/me`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect(status).toBe(409)
+    expect(json.error).toBe('this space is yours')
+    // And nothing about the space changed.
+    expect((await call(env, '/v1/spaces', { token: owner })).json.spaces).toHaveLength(1)
+  })
+
+  test('is nothing at all for somebody who was never in it', async () => {
+    const { status } = await call(env, `/v1/spaces/${space}/share/me`, {
+      method: 'DELETE',
+      token: stranger,
+    })
+
+    expect(status).toBe(404)
+  })
+
   test('goes when they are taken out, and the space goes with it', async () => {
     await call(env, `/v1/spaces/${space}/share/members/${READER}`, {
       method: 'DELETE',
