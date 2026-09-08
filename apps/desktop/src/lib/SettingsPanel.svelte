@@ -436,7 +436,7 @@
       >
       <span class="value">{field.get()}{field.unit ?? ''}</span>
       <input
-        class="slider"
+        class="slider nib-slider"
         type="range"
         min={field.min}
         max={field.max}
@@ -1475,72 +1475,10 @@
     transform: translateX(16px);
   }
 
-  /* Drawn by hand, so it matches the switch beside it on every platform: a
-     thin track filled to the value, and a thumb that reads as one. */
+  /* The dial's shape is `.nib-slider` in the theme, which every dial in the app
+     wears; what is left here is how wide this one is in a row of settings. */
   .slider {
-    flex: none;
     width: 11rem;
-    height: 24px;
-    margin: 0;
-    padding: 0;
-    appearance: none;
-    background: none;
-    cursor: default;
-  }
-
-  .slider:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 99px;
-  }
-
-  .slider::-webkit-slider-runnable-track {
-    height: 4px;
-    border-radius: 2px;
-    background:
-      linear-gradient(var(--accent), var(--accent)) 0 / var(--fill) 100% no-repeat,
-      var(--surface-3);
-  }
-
-  .slider::-webkit-slider-thumb {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    margin-top: -6px;
-    border: none;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow:
-      0 0 0 1px rgb(0 0 0 / 0.12),
-      0 1px 3px rgb(0 0 0 / 0.35);
-    transition: transform var(--dur-fast) var(--ease-out);
-  }
-
-  .slider:active::-webkit-slider-thumb {
-    transform: scale(1.12);
-  }
-
-  .slider::-moz-range-track {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--surface-3);
-  }
-
-  .slider::-moz-range-progress {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--accent);
-  }
-
-  .slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border: none;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow:
-      0 0 0 1px rgb(0 0 0 / 0.12),
-      0 1px 3px rgb(0 0 0 / 0.35);
   }
 
   .lead {
@@ -2079,20 +2017,7 @@
 
   .sheet.phone .slider {
     order: 3;
-    flex: none;
     width: 100%;
-    height: 32px;
-  }
-
-  .sheet.phone .slider::-webkit-slider-thumb {
-    width: 24px;
-    height: 24px;
-    margin-top: -10px;
-  }
-
-  .sheet.phone .slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
   }
 
   .sheet.phone .pick,
