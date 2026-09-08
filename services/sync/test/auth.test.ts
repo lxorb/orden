@@ -183,6 +183,36 @@ describe('sessions', () => {
 
     expect((await call(env, '/v1/me', { token })).status).toBe(401)
   })
+
+  /** The scheme is a word, not a spelling: RFC 7235 says it is matched without
+   *  regard to case, and a client that wrote it in lower case was holding a
+   *  perfectly good session and being told to sign in again. */
+  test('the scheme is read whatever its case', async () => {
+    const token = await signIn(env, 'a@b.dev')
+
+    for (const scheme of ['Bearer', 'bearer', 'BEARER', 'BeArEr']) {
+      const me = await call(env, '/v1/me', { headers: { authorization: `${scheme} ${token}` } })
+      expect(me.status, scheme).toBe(200)
+    }
+  })
+
+  test('a header that names no scheme is not a token', async () => {
+    const token = await signIn(env, 'a@b.dev')
+
+    for (const header of [token, `Basic ${token}`, 'Bearer', 'Bearer ']) {
+      expect((await call(env, '/v1/me', { headers: { authorization: header } })).status).toBe(401)
+    }
+  })
+
+  test('signing out reads the scheme the same way', async () => {
+    const token = await signIn(env, 'a@b.dev')
+    await call(env, '/v1/auth/signout', {
+      method: 'POST',
+      headers: { authorization: `bearer ${token}` },
+    })
+
+    expect((await call(env, '/v1/me', { token })).status).toBe(401)
+  })
 })
 
 /** The API is reached by the desktop app and by the web build on the app's own

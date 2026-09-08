@@ -4,6 +4,7 @@
  *  database cannot be used to read anyone's notes. */
 
 import { Hono } from 'hono'
+import { tokenIn } from '../auth'
 import { now, randomToken, sha256 } from '../crypto'
 import { grantForToken } from '../oauth'
 import type { Env, Variables } from '../types'
@@ -37,7 +38,9 @@ async function issueToken(env: Env, userId: string, readOnly: boolean): Promise<
 /** The caller, by the token it sent: one a client got by signing the person
  *  in, or one the person copied out of the settings. */
 export async function bearer(env: Env, header: string | undefined): Promise<TokenRow | null> {
-  const token = header?.replace(/^Bearer\s+/i, '').trim()
+  // Read the same way a session's header is, so the two cannot drift: the whole
+  // of the header was being taken as the token when it named no scheme at all.
+  const token = tokenIn(header)
   if (!token) return null
 
   const grant = await grantForToken(env, token)

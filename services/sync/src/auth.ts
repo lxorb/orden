@@ -34,9 +34,12 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
   return row ?? null
 }
 
-/** The token an `Authorization` header carries, or nothing. */
-function tokenIn(header: string | undefined): string | null {
-  return header?.startsWith('Bearer ') ? header.slice(7).trim() : null
+/** The token an `Authorization` header carries, or nothing. The scheme is read
+ *  without regard to case, as RFC 7235 says it is written: a client that sends
+ *  `bearer` is holding a good session and was being answered 401. */
+export function tokenIn(header: string | undefined): string | null {
+  const token = /^bearer\s+(.+)$/i.exec(header ?? '')?.[1]?.trim()
+  return token ?? null
 }
 
 /** Whoever the request is from: the account whose session it carries, or the
@@ -263,8 +266,7 @@ export function presentUser(user: User) {
 }
 
 auth.post('/signout', async (context) => {
-  const header = context.req.header('authorization')
-  const token = header?.startsWith('Bearer ') ? header.slice(7).trim() : null
+  const token = tokenIn(context.req.header('authorization'))
   if (token) {
     await context.env.DB.prepare('delete from sessions where token_hash = ?')
       .bind(await sha256(token))
