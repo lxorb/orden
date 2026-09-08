@@ -10,7 +10,13 @@
  *  Pure. Nothing here reads a disk or a window, so every writer built on it is
  *  testable on the note alone. */
 
-import { documentTitle, frontMatterValue, lexMarkdown, type Wikilink } from '@nib/markdown'
+import {
+  documentTitle,
+  frontMatterValue,
+  lexMarkdown,
+  type Wikilink,
+  withoutComments,
+} from '@nib/markdown'
 import { shownText, withoutBlockIds } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 
@@ -366,9 +372,11 @@ export function titleOf(source: string, name: string): string {
  *  when neither the front matter nor a first heading gives one. */
 export function documentOf(source: string, name: string): Doc {
   const notes: Footnote[] = []
-  // Front matter is metadata and a block's name is a marker, exactly as the
-  // HTML renderer treats them.
-  const body = withoutBlockIds(source.startsWith('---') ? stripFront(source) : source)
+  // Front matter is metadata, a block's name is a marker and a comment is a note
+  // to the writer, exactly as the HTML renderer treats all three.
+  const body = withoutComments(
+    withoutBlockIds(source.startsWith('---') ? stripFront(source) : source),
+  )
 
   return {
     title: titleOf(source, name),

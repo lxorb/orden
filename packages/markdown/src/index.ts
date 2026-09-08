@@ -1,5 +1,6 @@
 import { Marked, Renderer } from 'marked'
 import type { Token, Tokens } from 'marked'
+import { withoutComments } from './comments'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
@@ -306,9 +307,10 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
       ? publishing
       : trusting
 
-  // Front matter is metadata and a block's name is a marker; neither is a word
-  // of the note, so neither reaches the page.
-  const body = withoutBlockIds(stripFrontMatter(source))
+  // Front matter is metadata, a block's name is a marker and a comment is a note
+  // to the writer; none of the three is a word of the note, so none of them
+  // reaches the page. See comments.ts for why the comment goes before the parse.
+  const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
   let html = marked.parse(body, { async: false })
 
   html = markAbbreviations(html, collectAbbreviations(body))
@@ -405,6 +407,7 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   }
 }
 
+export { withoutComments } from './comments'
 export {
   abbreviations,
   callouts,

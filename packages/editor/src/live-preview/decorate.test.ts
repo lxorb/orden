@@ -290,6 +290,17 @@ describe('extensions', () => {
     expect(concealed('> [!NOTE]\n> careful')).toEqual(['> ', '[!NOTE]', '> '])
   })
 
+  /** A note to the writer, hidden here the way it is hidden in the reading view,
+   *  in every export and on a published page; see comments.ts in @nib/markdown. */
+  test('hides an HTML comment, block or inline', () => {
+    expect(concealed('<!-- a note -->')).toEqual(['<!-- a note -->'])
+    expect(concealed('words <!-- aside --> more')).toEqual(['<!-- aside -->'])
+  })
+
+  test('shows the comment again while the caret is inside it', () => {
+    expect(concealed('<!-- a note -->\n\nbody', 6)).toEqual([])
+  })
+
   test('replaces a mermaid fence with a diagram', () => {
     expect(blocks('```mermaid\ngraph TD;\nA-->B;\n```')).toEqual([
       '```mermaid\ngraph TD;\nA-->B;\n```',

@@ -129,10 +129,12 @@ describe('what a wikilink cannot do to the page', () => {
   })
 
   test('a note cannot write the marker an embed is put in place of', () => {
-    // Raw HTML passes through an export, so the marker is stamped with a number
-    // the note could not have guessed; here the note writes a plausible one.
+    // Two answers to the same attempt. The marker is stamped with a number the
+    // note could not have guessed, and a comment a note writes never reaches the
+    // page at all - see comments.ts - so the plausible one written here is simply
+    // gone and the real embed is unaffected.
     const html = renderMarkdown('<!--nib:embed:0-->\n\n![[plan]]', { resolveEmbed })
-    expect(html).toContain('<!--nib:embed:0-->')
+    expect(html).not.toContain('nib:embed:0')
     expect(html).toContain('The plan')
   })
 })

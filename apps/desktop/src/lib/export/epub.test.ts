@@ -539,8 +539,12 @@ describe('every part of the book', () => {
     }
   })
 
-  test('keeps a comment XML can hold and drops one it cannot', () => {
-    expect(book.sections[0]).toContain('<!-- a plain note -->')
+  /** A comment is a note to the writer and never reaches a rendered page at all;
+   *  see `withoutComments` in @nib/markdown. What the writer of an ePub does with a
+   *  comment handed to it in markup - XML cannot hold `--` inside one - is tested
+   *  against `toXhtml` below. */
+  test('puts none of the writer’s own comments in the book', () => {
+    expect(book.sections[0]).not.toContain('a plain note')
     expect(book.sections[0]).not.toContain('-- here')
   })
 })

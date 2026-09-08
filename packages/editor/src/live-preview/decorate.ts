@@ -133,6 +133,14 @@ class Decorator {
       case 'HTMLTag':
       case 'HTMLBlock':
         return this.htmlImage(node)
+      case 'Comment':
+      case 'CommentBlock':
+        // A note to the writer rather than to the reader. Hidden here the way it
+        // is hidden in the reading view, in every export and on a published page
+        // - see `withoutComments` in @nib/markdown - and shown again the moment
+        // the caret is inside it, so it stays as editable as anything else.
+        this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
+        return false
       case 'Emoji':
         return this.emoji(node)
       case 'InlineMath':

@@ -24,6 +24,26 @@ describe('the document a note comes to', () => {
     expect(words(kind('paragraph')[0]?.spans ?? [])).not.toContain('title:')
   })
 
+  /** The shape every export that is not HTML stands on, so this is where a comment
+   *  is kept out of Word, RTF, ePub and plain text at once; see comments.ts in
+   *  @nib/markdown for the rest of the paths. */
+  test('leaves a comment the writer wrote out of the blocks', () => {
+    const commented = documentOf('# Head\n\n<!-- to myself -->\n\nWords.\n', 'Note.md')
+    const said = commented.blocks
+      .flatMap((block) => ('spans' in block ? block.spans : []))
+      .map((span) => span.text)
+      .join('')
+
+    expect(said).not.toContain('to myself')
+    expect(said).toContain('Words.')
+  })
+
+  test('keeps a comment that is inside a code fence, which the fence is showing', () => {
+    const fenced = documentOf('```html\n<!-- kept -->\n```\n', 'Note.md')
+    expect(fenced.blocks.some((block) => 'code' in block && block.code.includes('<!-- kept -->')))
+      .toBe(true)
+  })
+
   test('keeps the headings with their levels', () => {
     expect(kind('heading').map((one) => [one.level, words(one.spans)])).toEqual([
       [1, 'Export corpus'],
