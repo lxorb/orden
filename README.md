@@ -47,13 +47,13 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 | Typora | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | MarkText | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Obsidian | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Notion | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
 | Zettlr | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Joplin | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
 | Logseq | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Sublime Text | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ## Features
 
