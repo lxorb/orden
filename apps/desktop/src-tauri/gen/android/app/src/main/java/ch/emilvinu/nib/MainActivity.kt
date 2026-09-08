@@ -56,15 +56,18 @@ class MainActivity : TauriActivity() {
     // app does not look like. They are handed to the page as numbers instead,
     // so it draws the whole screen and each bar of its own clears them; see
     // insets.ts and the --inset-* tokens.
-    ViewCompat.setOnApplyWindowInsetsListener(webView) { view: View, insets: WindowInsetsCompat ->
+    // The listener is on the webview, so the webview itself is what every line
+    // below speaks to: only a View arrives in the callback, and running a
+    // script is a WebView's own trick and not a View's.
+    ViewCompat.setOnApplyWindowInsetsListener(webView) { _: View, insets: WindowInsetsCompat ->
       val keys = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-      view.setPadding(0, 0, 0, keys)
+      webView.setPadding(0, 0, 0, keys)
 
       val bars =
         insets.getInsets(
           WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
         )
-      val density = view.resources.displayMetrics.density
+      val density = webView.resources.displayMetrics.density
       fun css(pixels: Int) = (pixels / density).toInt()
 
       // The gesture bar sits behind the keyboard while it is up, and the page
@@ -72,7 +75,7 @@ class MainActivity : TauriActivity() {
       edges =
         "{\"top\":${css(bars.top)},\"right\":${css(bars.right)}," +
           "\"bottom\":${css(maxOf(0, bars.bottom - keys))},\"left\":${css(bars.left)}}"
-      view.evaluateJavascript("window.__nibInsets?.()", null)
+      webView.evaluateJavascript("window.__nibInsets?.()", null)
       insets
     }
 
