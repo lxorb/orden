@@ -6,7 +6,7 @@
  *  leaked database is not a set of keys. */
 
 import { type Context, Hono } from 'hono'
-import { newId, now, randomToken, sha256 } from '../crypto'
+import { equals, newId, now, randomToken, sha256 } from '../crypto'
 import type { Env } from '../types'
 import { clientFor } from './clients'
 import { failure, GRANTS, resourceMatches, resourceUrl, SCOPES, textFields } from './protocol'
@@ -64,7 +64,7 @@ function base64url(bytes: ArrayBuffer): string {
 async function verifierMatches(verifier: string, challenge: string): Promise<boolean> {
   if (!verifier || verifier.length < 43 || verifier.length > 128) return false
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
-  return base64url(digest) === challenge
+  return equals(base64url(digest), challenge)
 }
 
 interface Grant {
@@ -116,9 +116,12 @@ tokens.post('/token', async (context) => {
 
   // A client that registered with a secret has to show it; one without proves
   // itself with PKCE alone, and a secret it sends anyway is ignored.
+  // Compared the way every other secret here is: a digest read a byte at a time
+  // is a digest whose length a caller can measure, and `equals` is what the rest
+  // of the service uses for exactly that reason.
   const client = await clientFor(context.env, id)
   if (!client) return invalidClient()
-  if (client.secretHash && (!secret || (await sha256(secret)) !== client.secretHash)) {
+  if (client.secretHash && (!secret || !equals(await sha256(secret), client.secretHash))) {
     return invalidClient()
   }
 
