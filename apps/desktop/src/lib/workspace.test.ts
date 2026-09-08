@@ -597,13 +597,236 @@ describe('closing what is in a pane', () => {
     const [first] = workspace.panes.all
     if (!moving || !first) throw new Error('the split did not happen')
 
-    workspace.dropTab(moving.id, first.id, null)
+    workspace.dropTab(moving.id, { kind: 'pane', paneId: first.id, zone: 'middle' })
 
     expect(workspace.panes.count).toBe(1)
     expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
       '/space/a.md',
       '/space/b.md',
     ])
+  })
+})
+
+describe('a tab dropped on another pane', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+  })
+
+  /** Two panes: the first holds a and c, the second holds b and is the one
+   *  being worked in. What every drop below starts from. */
+  async function twoPanes() {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    await beside('/space/b.md')
+
+    const [first, second] = workspace.panes.all
+    const moving = workspace.active
+    if (!first || !second || !moving) throw new Error('the split did not happen')
+
+    return { first, second, moving }
+  }
+
+  test('lands in the strip at the place it was let go of', async () => {
+    const { first, moving } = await twoPanes()
+    // A second tab in the pane it leaves, so that pane stays and the strip it
+    // lands in is the only thing that changed.
+    workspace.openBlank()
+
+    workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 1 })
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+      '/space/c.md',
+    ])
+  })
+
+  test('lands last when it was dropped past the end of the strip', async () => {
+    const { first, moving } = await twoPanes()
+    workspace.openBlank()
+
+    workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 2 })
+
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
+      '/space/a.md',
+      '/space/c.md',
+      '/space/b.md',
+    ])
+  })
+
+  test('is the tab showing where it lands, and gives the pane the focus', async () => {
+    const { first, moving } = await twoPanes()
+    workspace.openBlank()
+
+    workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 0 })
+
+    expect(workspace.panes.at(first.id)?.activeTabId).toBe(moving.id)
+    expect(workspace.panes.focusedId).toBe(first.id)
+    expect(workspace.active?.id).toBe(moving.id)
+  })
+
+  /** The last tab of a pane onto the other pane's strip: the two panes merge,
+   *  which is what closing that tab would have done to the arrangement. */
+  test('takes the pane it emptied with it, and the layout closes up', async () => {
+    const { first, second, moving } = await twoPanes()
+
+    workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 1 })
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.panes.at(second.id)).toBeNull()
+    expect(workspace.panes.focusedId).toBe(first.id)
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+      '/space/c.md',
+    ])
+  })
+
+  test('moves along its own strip when it is dropped back into it', async () => {
+    const { second, moving } = await twoPanes()
+    workspace.openBlank('scratch')
+
+    workspace.dropTab(moving.id, { kind: 'strip', paneId: second.id, at: 2 })
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabsIn(second.id).map((tab) => tab.name)).toEqual(['scratch', 'b.md'])
+    expect(workspace.panes.at(second.id)?.activeTabId).toBe(moving.id)
+  })
+
+  test('makes the pane on the side it was held against', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+
+    const [only] = workspace.panes.all
+    const moving = workspace.active
+    if (!only || !moving) throw new Error('nothing opened')
+
+    workspace.dropTab(moving.id, { kind: 'pane', paneId: only.id, zone: 'left' })
+
+    const [left, right] = workspace.panes.all
+    expect(workspace.panes.count).toBe(2)
+    // Laid out left to right, so the pane the drop made comes first.
+    expect(left?.id).not.toBe(only.id)
+    expect(right?.id).toBe(only.id)
+    expect(workspace.tabsIn(left?.id ?? '').map((tab) => tab.path)).toEqual(['/space/c.md'])
+    expect(workspace.panes.frame.kind === 'split' && workspace.panes.frame.along).toBe('row')
+  })
+
+  test('makes the pane above when it was held against the top', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+
+    const [only] = workspace.panes.all
+    const moving = workspace.active
+    if (!only || !moving) throw new Error('nothing opened')
+
+    workspace.dropTab(moving.id, { kind: 'pane', paneId: only.id, zone: 'top' })
+
+    const [above] = workspace.panes.all
+    expect(above?.id).not.toBe(only.id)
+    expect(workspace.tabsIn(above?.id ?? '').map((tab) => tab.path)).toEqual(['/space/c.md'])
+    expect(workspace.panes.frame.kind === 'split' && workspace.panes.frame.along).toBe('column')
+  })
+
+  test('leaves the far sides where they always were', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+
+    const [only] = workspace.panes.all
+    const moving = workspace.active
+    if (!only || !moving) throw new Error('nothing opened')
+
+    workspace.dropTab(moving.id, { kind: 'pane', paneId: only.id, zone: 'bottom' })
+
+    const [above, below] = workspace.panes.all
+    expect(above?.id).toBe(only.id)
+    expect(workspace.tabsIn(below?.id ?? '').map((tab) => tab.path)).toEqual(['/space/c.md'])
+  })
+})
+
+describe('the sides a pane offers a drop', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+  })
+
+  test('offers none to the only tab of the pane, which would undo itself', async () => {
+    await workspace.open('/space/a.md')
+
+    const [only] = workspace.panes.all
+    const alone = workspace.active
+    if (!only || !alone) throw new Error('nothing opened')
+
+    expect(workspace.canLand('left', only.id, alone.id)).toBe(false)
+    expect(workspace.canLand('bottom', only.id, alone.id)).toBe(false)
+    // A note out of the file list leaves no pane behind, so it may.
+    expect(workspace.canLand('left', only.id, null)).toBe(true)
+  })
+
+  test('offers all four once the pane holds a second tab', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+
+    const [only] = workspace.panes.all
+    const moving = workspace.active
+    if (!only || !moving) throw new Error('nothing opened')
+
+    for (const side of ['left', 'right', 'top', 'bottom'] as const) {
+      expect(workspace.canLand(side, only.id, moving.id)).toBe(true)
+    }
+  })
+
+  test('offers none at all once the arrangement is a 2x2', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+    workspace.split('column')
+    workspace.split('column', workspace.tabsIn(workspace.panes.all[0]?.id ?? '')[0]?.id)
+
+    expect(workspace.panes.count).toBe(4)
+    for (const one of workspace.panes.all) {
+      for (const side of ['left', 'right', 'top', 'bottom'] as const) {
+        expect(workspace.canLand(side, one.id, null)).toBe(false)
+      }
+    }
+  })
+})
+
+describe('a note dragged out of the file list onto a pane', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.setAutoSave(false)
+  })
+
+  test('opens in the strip it was dropped into, at that place', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+
+    const [first] = workspace.panes.all
+    if (!first) throw new Error('the split did not happen')
+
+    await workspace.dropNotes(['/space/c.md'], { kind: 'strip', paneId: first.id, at: 0 })
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
+      '/space/c.md',
+      '/space/a.md',
+    ])
+  })
+
+  test('opens in a pane of its own against a side', async () => {
+    await workspace.open('/space/a.md')
+
+    const [only] = workspace.panes.all
+    if (!only) throw new Error('nothing opened')
+
+    await workspace.dropNotes(['/space/b.md'], { kind: 'pane', paneId: only.id, zone: 'top' })
+
+    const [above, below] = workspace.panes.all
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabsIn(above?.id ?? '').map((tab) => tab.path)).toEqual(['/space/b.md'])
+    expect(workspace.tabsIn(below?.id ?? '').map((tab) => tab.path)).toEqual(['/space/a.md'])
   })
 })
 

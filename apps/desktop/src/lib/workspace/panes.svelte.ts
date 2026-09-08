@@ -23,13 +23,19 @@ import {
   withoutPane,
   withSplit,
 } from './pane-tree'
+import type { Zone } from './zones'
 
-/** Where a dragged tab would land: along the right edge of a pane, along its
- *  bottom edge, or in the pane itself. */
-export interface Landing {
-  paneId: string
-  /** The direction the drop would split in, or null to take the tab in. */
-  along: Along | null
+/** Where a dragged tab or note would land: at a place in a pane's strip of tabs,
+ *  in the middle of a pane, or against one of its sides, which makes a pane
+ *  there. */
+export type Landing =
+  { kind: 'strip'; paneId: string; at: number } | { kind: 'pane'; paneId: string; zone: Zone }
+
+/** What is being dragged over the panes, while something is. */
+export interface Dragging {
+  /** The tab being dragged, or null when what is moving came out of the file
+   *  list rather than out of a strip. */
+  tabId: string | null
 }
 
 export class Panes {
@@ -40,9 +46,9 @@ export class Panes {
    *  instead of easing after it. */
   sliding = $state<string | null>(null)
 
-  /** The tab being dragged out of a strip, while it is. What lights the drop
+  /** What is being dragged over the panes, while it is. What lights the drop
    *  zones: they are there to be aimed at, and nothing else should show them. */
-  dragging = $state<string | null>(null)
+  dragging = $state<Dragging | null>(null)
 
   /** The drop zone the dragged tab is over, lit while it is. */
   landing = $state<Landing | null>(null)
@@ -89,13 +95,14 @@ export class Panes {
     return canSplit(this.frame, id, along)
   }
 
-  /** Puts a pane beside or below one, and gives it the focus. Answers the new
-   *  pane, or null when that one has split as far as it may. */
-  split(along: Along, id: string = this.focusedId): Pane | null {
+  /** Puts a pane beside or below one, and gives it the focus. `near` puts it on
+   *  the other side: left of that pane, or above it. Answers the new pane, or
+   *  null when the one being split has split as far as it may. */
+  split(along: Along, id: string = this.focusedId, near = false): Pane | null {
     if (!canSplit(this.frame, id, along)) return null
 
     const made = pane(identifier())
-    this.frame = withSplit(this.frame, id, along, made, identifier())
+    this.frame = withSplit(this.frame, id, along, made, identifier(), near)
     this.focusedId = made.id
     this.changed()
 

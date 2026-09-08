@@ -29,7 +29,8 @@ import { DeviceView } from './workspace/device.svelte'
 import { type DocumentStart, NoteDoc, Tab } from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
-import { Panes } from './workspace/panes.svelte'
+import { type Landing, Panes } from './workspace/panes.svelte'
+import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -1356,7 +1357,7 @@ class Workspace {
       )
       if (!tab) continue
 
-      this.tabs = this.strippedAt(tab, closed.at)
+      this.tabs = this.placed(tab, paneId, closed.at)
       this.panes.activate(paneId, tab.id)
       this.panes.focus(paneId)
       this.persist()
@@ -1364,15 +1365,20 @@ class Workspace {
     }
   }
 
-  /** The flat list with a tab put back where it sat: `at` counts along its own
-   *  pane's strip, so the place in the flat list is the one the tab that now
-   *  holds that spot occupies. */
-  private strippedAt(tab: Tab, at: number): Tab[] {
-    const after = this.tabsIn(tab.paneId)[at]
-    const index = after ? this.tabs.findIndex((one) => one.id === after.id) : -1
-    if (index < 0) return [...this.tabs, tab]
+  /** The flat list with a tab put at a place in a pane's strip: `at` counts along
+   *  that strip, so the place in the flat list is the one the tab that now holds
+   *  the spot occupies. Past the end of the strip, or `null`, means last.
+   *
+   *  The tab itself is taken out first, so this both puts a new one in and moves
+   *  one that is already open. */
+  private placed(tab: Tab, paneId: string, at: number | null): Tab[] {
+    const rest = this.tabs.filter((one) => one.id !== tab.id)
+    const strip = at === null ? [] : rest.filter((one) => one.paneId === paneId)
+    const after = at === null ? undefined : strip[at]
+    const index = after ? rest.findIndex((one) => one.id === after.id) : -1
+    if (index < 0) return [...rest, tab]
 
-    return [...this.tabs.slice(0, index), tab, ...this.tabs.slice(index)]
+    return [...rest.slice(0, index), tab, ...rest.slice(index)]
   }
 
   /** What a document reports whenever it changes, wherever the change came from:
@@ -2421,44 +2427,92 @@ class Workspace {
     return !!tab && this.panes.splittable(along, tab.paneId)
   }
 
-  /** A tab dragged into another pane. The pane it came from goes if that was its
-   *  last tab, which is the same rule as closing one. */
-  moveTab(id: string, paneId: string) {
+  /** A tab dragged into a pane, at a place in its strip: `at` counts along that
+   *  strip, and past its end - or left out - means last, which is where a tab
+   *  dropped on the note rather than on the strip belongs.
+   *
+   *  The pane it came from goes if that was its last tab, which is the same rule
+   *  as closing one: dragging the last tab of a pane onto another pane's strip
+   *  is how the two are merged. */
+  moveTab(id: string, paneId: string, at: number | null = null) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (!tab || !this.panes.at(paneId) || tab.paneId === paneId) return
+    if (!tab || !this.panes.at(paneId)) return
 
     const from = tab.paneId
-    tab.paneId = paneId
-    // Last in the strip it lands in, which is where a dropped tab belongs.
-    this.tabs = [...this.tabs.filter((one) => one.id !== id), tab]
+    // Dropped back where it already is, with no place asked for: nothing moved.
+    if (from === paneId && at === null) return
 
-    const left = this.tabsIn(from)
-    if (!left.length) this.panes.close(from)
-    else if (this.panes.at(from)?.activeTabId === id) {
-      this.panes.activate(from, left[left.length - 1]?.id ?? null)
+    tab.paneId = paneId
+    this.tabs = this.placed(tab, paneId, at)
+
+    if (from !== paneId) {
+      const left = this.tabsIn(from)
+      if (!left.length) this.panes.close(from)
+      else if (this.panes.at(from)?.activeTabId === id) {
+        this.panes.activate(from, left[left.length - 1]?.id ?? null)
+      }
     }
 
     this.activeTabId = id
     this.persist()
   }
 
-  /** A tab dropped on a pane: along one of its edges to make a pane of its own,
-   *  or anywhere else in it to join that pane's strip. */
-  dropTab(id: string, paneId: string, along: Along | null) {
-    const tab = this.tabs.find((one) => one.id === id)
-    if (!tab) return
+  /** A tab dropped where the last drag told it: at a place in a strip, in the
+   *  middle of a pane, or against one of its sides, which makes a pane there. */
+  dropTab(id: string, landing: Landing) {
+    if (!this.tabs.some((one) => one.id === id)) return
 
-    if (along === null) {
-      this.moveTab(id, paneId)
+    if (landing.kind === 'strip') {
+      this.moveTab(id, landing.paneId, landing.at)
+      return
+    }
+    if (landing.zone === 'middle') {
+      this.moveTab(id, landing.paneId)
       return
     }
 
-    // The only tab of the pane it would be split off, dropped on that same pane:
-    // it would leave, the pane would empty, and the pane would close again.
-    if (tab.paneId === paneId && this.tabsIn(paneId).length < 2) return
-
-    const made = this.panes.split(along, paneId)
+    const made = this.panes.split(alongOf(landing.zone), landing.paneId, madeFirst(landing.zone))
     if (made) this.moveTab(id, made.id)
+  }
+
+  /** Notes dragged out of the file list onto a pane, opened where they were
+   *  dropped: at their place in that pane's strip, or in a pane made against the
+   *  side they were held against.
+   *
+   *  Opened first and split afterwards, so a note that turns out not to be there
+   *  to open cannot leave a pane behind with nothing in it. */
+  async dropNotes(paths: string[], landing: Landing) {
+    if (!this.panes.at(landing.paneId)) return
+    this.panes.focus(landing.paneId)
+
+    const opened: string[] = []
+    let at = landing.kind === 'strip' ? landing.at : null
+
+    for (const path of paths) {
+      await this.openEntry(path)
+      const tab = this.active
+      if (!tab) continue
+
+      this.moveTab(tab.id, landing.paneId, at)
+      if (at !== null) at += 1
+      opened.push(tab.id)
+    }
+
+    if (landing.kind === 'strip' || landing.zone === 'middle' || !opened.length) return
+
+    const made = this.panes.split(alongOf(landing.zone), landing.paneId, madeFirst(landing.zone))
+    if (made) for (const id of opened) this.moveTab(id, made.id)
+  }
+
+  /** Whether a tab dropped against that side of a pane would do anything: the
+   *  pane has to be able to split that way, and the tab must not be the only one
+   *  in the pane being split, which would empty that pane and close it again the
+   *  moment the new one opened. What decides which zones a pane offers. */
+  canLand(side: Side, paneId: string, tabId: string | null): boolean {
+    if (viewport.phone || !this.panes.splittable(alongOf(side), paneId)) return false
+
+    const tab = tabId === null ? null : this.tabs.find((one) => one.id === tabId)
+    return !(tab?.paneId === paneId && this.tabsIn(paneId).length < 2)
   }
 
   /** A pane and everything in it, asking about whatever is unsaved among its

@@ -1,12 +1,13 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { carryTab } from './drag-paths'
+  import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { workspace, type Tab } from './workspace.svelte'
+  import { inside } from './workspace/zones'
 
   const { paneId }: { paneId: string } = $props()
 
@@ -106,6 +107,53 @@
   const showMenu = (event: MouseEvent, tab: Tab) =>
     menu.show(event, tabMenu(tab), { title: stripped(tab.name) })
 
+  /** Whether the drag over the panes is one this strip takes: a tab out of any
+   *  strip, or notes out of the file list. */
+  const takes = (transfer: DataTransfer | null) => isTabDrag(transfer) || isTreeDrag(transfer)
+
+  /** Where in the strip the pointer is: before the tab it is over, or after it
+   *  once past the middle. The gap after the last tab is the end of the strip. */
+  function placeIn(event: DragEvent & { currentTarget: HTMLElement }, at: number): number {
+    const box = event.currentTarget.getBoundingClientRect()
+    return event.clientX > box.left + box.width / 2 ? at + 1 : at
+  }
+
+  /** Marks the place between the tabs the drop would take. The pane underneath
+   *  offers the whole of itself and its four sides, so the strip keeps the event
+   *  to itself rather than letting the pane answer for it as well. */
+  function over(event: DragEvent & { currentTarget: HTMLElement }, at: number) {
+    if (!takes(event.dataTransfer)) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+
+    workspace.panes.landing = { kind: 'strip', paneId, at }
+  }
+
+  function drop(event: DragEvent & { currentTarget: HTMLElement }, at: number) {
+    if (!takes(event.dataTransfer)) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const landing = { kind: 'strip', paneId, at } as const
+    const id = draggedTab(event.dataTransfer)
+    const paths = dragged(event.dataTransfer)
+
+    workspace.panes.landing = null
+    workspace.panes.dragging = null
+
+    if (id) workspace.dropTab(id, landing)
+    else if (paths.length) void workspace.dropNotes(paths, landing)
+  }
+
+  /** Where the mark between the tabs sits, or null while the drag is elsewhere. */
+  const mark = $derived.by(() => {
+    const landing = workspace.panes.landing
+    return landing?.kind === 'strip' && landing.paneId === paneId ? landing.at : null
+  })
+
   /** The dot says one of three things, and says it in words to a reader who
    *  cannot see it. */
   function saveLabel(tab: Tab): string {
@@ -117,29 +165,49 @@
 </script>
 
 <div class="strip">
-  <div class="tabs" class:quiet={!focused && !alone}>
-    {#each tabs as tab (tab.id)}
+  <!-- The whole strip takes a drop, so a tab dragged into it lands where it was
+       let go of; past the last tab is the end of the strip. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="tabs"
+    class:quiet={!focused && !alone}
+    ondragover={(event) => over(event, tabs.length)}
+    ondragleave={(event) => {
+      const box = event.currentTarget.getBoundingClientRect()
+      if (mark === null || inside(box, event.clientX, event.clientY)) return
+
+      workspace.panes.landing = null
+    }}
+    ondrop={(event) => drop(event, tabs.length)}
+  >
+    {#each tabs as tab, at (tab.id)}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="tab"
         class:active={tab.id === pane?.activeTabId}
         class:preview={tab.id === workspace.previewTabId}
+        class:before={mark === at}
+        class:after={mark === tabs.length && at === tabs.length - 1}
+        ondragover={(event) => over(event, placeIn(event, at))}
+        ondrop={(event) => drop(event, placeIn(event, at))}
         transition:fly={{ y: -8, duration: 180, easing: cubicOut }}
       >
         <!-- A double click keeps a preview, the way VS Code does it. The two
              single clicks it is made of activate the tab twice, which costs
              nothing: activating the tab that is already active changes nothing.
              A long press stands in for the right click on a touch screen.
-             Dragged, it goes to another pane or to an edge to make one. -->
+             Dragged, it goes along its own strip, into another pane's strip, or
+             against a side of a pane to make one there. -->
         <button
           class="pick"
-          draggable={!alone || workspace.canSplit('row', tab.id)}
+          draggable="true"
           onclick={() => workspace.activate(tab.id)}
           ondblclick={() => workspace.keep(tab.id)}
           oncontextmenu={(event) => showMenu(event, tab)}
           use:longPress={(event) => showMenu(event, tab)}
           ondragstart={(event) => {
             carryTab(event.dataTransfer, tab.id)
-            workspace.panes.dragging = tab.id
+            workspace.panes.dragging = { tabId: tab.id }
           }}
           ondragend={() => {
             workspace.panes.dragging = null
@@ -316,7 +384,9 @@
     position: relative;
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     user-select: none;
-    transition: background var(--dur-fast) var(--ease-out);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
 
   .tab:hover {
@@ -327,6 +397,18 @@
      out - which on a large note is the difference between prompt and slow. */
   .tab:active {
     background: var(--press);
+  }
+
+  /* Where a tab being dragged would land: a line down the edge it arrives at,
+     the accent line the bookmarks draw for a row on its way somewhere. Drawn
+     into the tab rather than beside it, so the underline the active tab wears
+     underneath is left alone. */
+  .tab.before {
+    box-shadow: inset 2px 0 0 0 var(--accent);
+  }
+
+  .tab.after {
+    box-shadow: inset -2px 0 0 0 var(--accent);
   }
 
   /* The active tab is marked by a line that slides in, not by a label. */

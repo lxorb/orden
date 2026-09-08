@@ -27,6 +27,7 @@
   import { folderOf } from './tauri'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
+  import { inside } from './workspace/zones'
   import Tree from './Tree.svelte'
 
   const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
@@ -152,6 +153,14 @@
 
   function startDrag(event: DragEvent, path: string) {
     carry(event.dataTransfer, workspace.dragPayload(path))
+    // The panes light their drop zones for a note out of the list as well as
+    // for a tab out of a strip: both land in the same five places.
+    workspace.panes.dragging = { tabId: null }
+  }
+
+  function endDrag() {
+    workspace.panes.dragging = null
+    workspace.panes.landing = null
   }
 
   function overFolder(event: DragEvent, path: string) {
@@ -168,12 +177,7 @@
    *  it: still inside the box means still over the thing. */
   function stillInside(event: DragEvent): boolean {
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    return (
-      event.clientX >= box.left &&
-      event.clientX <= box.right &&
-      event.clientY >= box.top &&
-      event.clientY <= box.bottom
-    )
+    return inside(box, event.clientX, event.clientY)
   }
 
   function drop(event: DragEvent, folder: string) {
@@ -235,6 +239,7 @@
           oncontextmenu={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
           use:longPress={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
           ondragstart={(event) => startDrag(event, entry.path)}
+          ondragend={endDrag}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => drop(event, entry.path)}
@@ -266,6 +271,7 @@
           use:longPress={(event) =>
             menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
+          ondragend={endDrag}
           ondragover={(event) => overFolder(event, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => dropBeside(event, entry.path)}

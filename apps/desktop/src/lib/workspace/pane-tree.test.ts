@@ -57,6 +57,30 @@ describe('splitting a pane', () => {
     const frame = split(one(), 'nowhere', 'row', 'b')
     expect(frame).toEqual(one())
   })
+
+  /** A tab dropped against the left of a pane, or the top of it, asks for the
+   *  new pane on that side rather than on the far one. */
+  test('puts the new pane on the near side when asked to', () => {
+    const frame = withSplit(one(), 'a', 'row', pane('b'), 's-b', true)
+
+    expect(panesIn(frame).map((each) => each.id)).toEqual(['b', 'a'])
+  })
+
+  test('reaches a pane on the near side of a split it is already in', () => {
+    const beside = withSplit(one(), 'a', 'row', pane('b'), 's-b', true)
+    const frame = withSplit(beside, 'a', 'column', pane('c'), 's-c', true)
+
+    // Laid out left to right and top to bottom: the new pane is above 'a'.
+    expect(panesIn(frame).map((each) => each.id)).toEqual(['b', 'c', 'a'])
+  })
+
+  test('splits no further for having gone the near way', () => {
+    const frame = withSplit(one(), 'a', 'row', pane('b'), 's-b', true)
+
+    expect(canSplit(frame, 'a', 'row')).toBe(false)
+    expect(canSplit(frame, 'b', 'row')).toBe(false)
+    expect(canSplit(frame, 'a', 'column')).toBe(true)
+  })
 })
 
 describe('how far a pane may split', () => {

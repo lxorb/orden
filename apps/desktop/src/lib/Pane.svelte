@@ -11,9 +11,10 @@
   import { type EditorView, type NoteJump, setDeck } from '@nib/editor'
   import { isDeck } from '@nib/markdown/slides'
   import type { Tab } from './workspace.svelte'
-  import type { Along, Pane } from './workspace/pane-tree'
+  import type { Pane } from './workspace/pane-tree'
+  import type { Landing } from './workspace/panes.svelte'
   import Canvas from './Canvas.svelte'
-  import { draggedTab, isTabDrag } from './drag-paths'
+  import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
   import Graph from './Graph.svelte'
@@ -35,6 +36,7 @@
   import { usage } from './usage.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
+  import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
 
   const { pane }: { pane: Pane } = $props()
 
@@ -46,6 +48,8 @@
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along. */
   const stripped = $derived(workspace.panes.count > 1)
+  /** Whether what is showing takes a dropped note itself; see `answers`. */
+  const ownSurface = $derived(tab?.kind === 'canvas')
 
   let view = $state<EditorView>()
 
@@ -118,56 +122,63 @@
     return root ? links.nameBlock(path, line, root) : Promise.resolve(null)
   }
 
-  /** How far into an edge a tab has to be held for the drop to make a pane
-   *  there rather than joining this one's strip. */
-  const EDGE = 0.28
+  /** Which zone of this pane a drop would land in. The sides this pane cannot
+   *  split into are not offered, so a zone that would do nothing never lights;
+   *  see workspace/zones.ts. */
+  function zoneOf(event: DragEvent & { currentTarget: HTMLElement }): Zone {
+    const box = event.currentTarget.getBoundingClientRect()
+    const moving = workspace.panes.dragging?.tabId ?? null
 
-  /** Which of the two edges the pointer is in, or null for the pane itself. The
-   *  corner belongs to whichever edge it is further into. */
-  function edgeAt(box: DOMRect, x: number, y: number): Along | null {
-    const right = (x - box.left) / box.width - (1 - EDGE)
-    const down = (y - box.top) / box.height - (1 - EDGE)
-
-    if (right > 0 && down > 0) return right > down ? 'row' : 'column'
-    if (right > 0) return 'row'
-    if (down > 0) return 'column'
-
-    return null
+    return zoneAt(box, event.clientX, event.clientY, (side) =>
+      workspace.canLand(side, pane.id, moving),
+    )
   }
 
-  /** Where a drop would land, with the edges that this pane cannot split into
-   *  reading as the pane itself: a zone that would do nothing does not light. */
-  function landingAt(box: DOMRect, x: number, y: number): Along | null {
-    const edge = edgeAt(box, x, y)
-    return edge && workspace.panes.splittable(edge, pane.id) ? edge : null
+  /** Whether the pane answers for a drop, or leaves it to what is showing: a
+   *  canvas makes a card of a note dropped on it, so the middle of the pane is
+   *  the canvas's and only the four sides are the pane's. A tab is nothing the
+   *  canvas knows about, so a tab is always the pane's. */
+  function answers(event: DragEvent, zone: Zone): boolean {
+    if (isTabDrag(event.dataTransfer)) return true
+
+    return isTreeDrag(event.dataTransfer) && !(ownSurface && zone === 'middle')
   }
 
   function over(event: DragEvent & { currentTarget: HTMLElement }) {
-    if (!isTabDrag(event.dataTransfer)) return
+    const where = zoneOf(event)
+    if (!answers(event, where)) {
+      if (workspace.panes.landing?.paneId === pane.id) workspace.panes.landing = null
+      return
+    }
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
 
-    const box = event.currentTarget.getBoundingClientRect()
-    workspace.panes.landing = {
-      paneId: pane.id,
-      along: landingAt(box, event.clientX, event.clientY),
-    }
+    workspace.panes.landing = { kind: 'pane', paneId: pane.id, zone: where }
   }
 
   function drop(event: DragEvent & { currentTarget: HTMLElement }) {
-    const id = draggedTab(event.dataTransfer)
-    workspace.panes.landing = null
-    workspace.panes.dragging = null
-    if (!id) return
+    const where = zoneOf(event)
+    if (!answers(event, where)) return
 
     event.preventDefault()
-    const box = event.currentTarget.getBoundingClientRect()
-    workspace.dropTab(id, pane.id, landingAt(box, event.clientX, event.clientY))
+    const landing: Landing = { kind: 'pane', paneId: pane.id, zone: where }
+    const id = draggedTab(event.dataTransfer)
+    const paths = dragged(event.dataTransfer)
+
+    workspace.panes.landing = null
+    workspace.panes.dragging = null
+
+    if (id) workspace.dropTab(id, landing)
+    else if (paths.length) void workspace.dropNotes(paths, landing)
   }
 
-  const landing = $derived(
-    workspace.panes.landing?.paneId === pane.id ? workspace.panes.landing.along : undefined,
+  /** The zone of this pane the drop would land in, or undefined when the drag is
+   *  somewhere else: over another pane, or over a strip, which marks its own
+   *  place between the tabs. */
+  const landing = $derived(workspace.panes.landing)
+  const zone = $derived(
+    landing?.kind === 'pane' && landing.paneId === pane.id ? landing.zone : undefined,
   )
 </script>
 
@@ -176,8 +187,13 @@
   class="pane"
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   ondragover={over}
-  ondragleave={() => {
-    if (workspace.panes.landing?.paneId === pane.id) workspace.panes.landing = null
+  ondragleave={(event) => {
+    // `dragleave` fires for a pointer moving onto the strip or the note inside
+    // this pane as well as for one leaving it. Geometry tells the two apart.
+    const box = event.currentTarget.getBoundingClientRect()
+    if (landing?.paneId !== pane.id || inside(box, event.clientX, event.clientY)) return
+
+    workspace.panes.landing = null
   }}
   ondrop={drop}
 >
@@ -238,12 +254,17 @@
     </div>
   {/if}
 
-  <!-- Lit as the tab nears an edge: this is where the pane would go. -->
+  <!-- Five places a drop can land: the pane itself, and each of its four sides,
+       where a pane of its own would go. Lit as the drag nears one. -->
   {#if workspace.panes.dragging}
-    <div class="zones">
-      <div class="zone right" class:lit={landing === 'row'}></div>
-      <div class="zone down" class:lit={landing === 'column'}></div>
-      <div class="zone whole" class:lit={landing === null}></div>
+    <!-- The bands are drawn as deep as the geometry reads them, from the one
+         number that says how deep that is. -->
+    <div class="zones" class:sides={ownSurface} style:--band="{EDGE * 100}%">
+      <div class="zone whole" class:lit={zone === 'middle'}></div>
+      <div class="zone left" class:lit={zone === 'left'}></div>
+      <div class="zone right" class:lit={zone === 'right'}></div>
+      <div class="zone up" class:lit={zone === 'top'}></div>
+      <div class="zone down" class:lit={zone === 'bottom'}></div>
     </div>
   {/if}
 </div>
@@ -259,8 +280,13 @@
   }
 
   /* A pane beside another one carries its own strip. The window's single pane
-     has none: its tabs are in the titlebar, where a browser puts them. */
+     has none: its tabs are in the titlebar, where a browser puts them.
+
+     Above the drop zones, so a tab dragged onto the strip reaches the strip and
+     lands between the tabs rather than being taken by the pane underneath. */
   .head {
+    position: relative;
+    z-index: 6;
     display: flex;
     align-items: stretch;
     flex: none;
@@ -281,10 +307,19 @@
     position: absolute;
     inset: 0;
     z-index: 5;
+    /* The zones themselves take the drag, not the gaps between them: a canvas
+       has to keep the middle of the pane, which is a card's place to land. */
+    pointer-events: none;
+  }
+
+  /* A surface that takes a note dropped on it keeps the middle of the pane. */
+  .zones.sides .zone.whole {
+    pointer-events: none;
   }
 
   .zone {
     position: absolute;
+    pointer-events: auto;
     background: var(--accent-soft);
     border: 1px solid transparent;
     opacity: 0;
@@ -302,11 +337,23 @@
     inset: 0;
   }
 
+  .zone.left {
+    inset: 0 auto 0 0;
+    width: var(--band);
+  }
+
   .zone.right {
-    inset: 0 0 0 72%;
+    inset: 0 0 0 auto;
+    width: var(--band);
+  }
+
+  .zone.up {
+    inset: 0 0 auto 0;
+    height: var(--band);
   }
 
   .zone.down {
-    inset: 72% 0 0 0;
+    inset: auto 0 0 0;
+    height: var(--band);
   }
 </style>

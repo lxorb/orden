@@ -83,23 +83,31 @@ export function canSplit(frame: Frame, id: string, along: Along): boolean {
   return trail.length === 1 && outer !== undefined && outer.along !== along
 }
 
-/** The pane put beside or below itself, with `made` taking the new side. */
+/** The pane put beside or below itself, with `made` taking the new side. `near`
+ *  puts the new pane on the near side instead: left of the pane it was split
+ *  off, or above it, which is what a drop against those edges asks for. */
 export function withSplit(
   frame: Frame,
   id: string,
   along: Along,
   made: Pane,
   split: string,
+  near = false,
 ): Frame {
   if (frame.kind === 'pane') {
     if (frame.id !== id) return frame
-    return { kind: 'split', id: split, along, fraction: EQUAL, sides: [frame, made] }
+
+    const sides: [Frame, Frame] = near ? [made, frame] : [frame, made]
+    return { kind: 'split', id: split, along, fraction: EQUAL, sides }
   }
 
   const [first, second] = frame.sides
   return {
     ...frame,
-    sides: [withSplit(first, id, along, made, split), withSplit(second, id, along, made, split)],
+    sides: [
+      withSplit(first, id, along, made, split, near),
+      withSplit(second, id, along, made, split, near),
+    ],
   }
 }
 
