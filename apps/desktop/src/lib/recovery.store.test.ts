@@ -31,6 +31,7 @@ vi.mock('./tauri', () => ({
     return Promise.resolve(0)
   },
   isDesktop: true,
+  isNative: true,
 }))
 
 /** The notes the workspace says have been typed in since they were written. */

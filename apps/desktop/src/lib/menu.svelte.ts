@@ -1,5 +1,5 @@
 import { t } from './i18n.svelte'
-import { isDesktop } from './tauri'
+import { isDesktop, isNative } from './tauri'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -74,7 +74,7 @@ export const menu = new ContextMenu()
 
 /** The note's path, which only means something where there is a filesystem. */
 export function copyPathEntry(path: string | null | undefined): MenuEntry[] {
-  if (!isDesktop || !path) return []
+  if (!isNative || !path) return []
 
   return [{ label: t('Copy path'), run: () => void navigator.clipboard.writeText(path) }]
 }

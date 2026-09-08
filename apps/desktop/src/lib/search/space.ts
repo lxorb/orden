@@ -3,10 +3,10 @@
  *  One call, however many notes: the parsed query goes over as a tree and the
  *  space is read once. What comes back arrives in handfuls rather than at the
  *  end, so the first rows are on screen while the last folder is still being
- *  read. On the desktop those handfuls are an event from the crate; in the
- *  browser the notes are already here and the callback is called straight. */
+ *  read. In the app those handfuls are an event from the crate; in the browser
+ *  the notes are already here and the callback is called straight. */
 
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isNative } from '../tauri'
 import type { Hit } from './match'
 import type { Query } from './query'
 
@@ -22,7 +22,7 @@ export async function searchSpace(
   limit: number,
   onHits: (hits: Hit[]) => void,
 ): Promise<void> {
-  if (!isDesktop) {
+  if (!isNative) {
     await invoke('search_space', { root, query, limit, hits: onHits })
     return
   }

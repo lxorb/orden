@@ -13,7 +13,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // time and is the same one under Vite and inside the app bundle. Asking for the
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { invoke, isDesktop } from '../tauri'
+import { invoke, isNative } from '../tauri'
 
 type Library = typeof import('pdfjs-dist')
 
@@ -31,12 +31,12 @@ export function pdfjs(): Promise<Library> {
 
 /** The bytes of a file in a space.
  *
- *  Over the IPC as bytes on the desktop, which is what makes a thirty megabyte
+ *  Over the IPC as bytes in the app, which is what makes a thirty megabyte
  *  PDF one copy rather than a hundred megabytes of JSON numbers. The browser
  *  keeps its files as text and answers with a `data:` URI, so there the bytes are
  *  decoded here. */
 async function bytesOf(path: string): Promise<Uint8Array> {
-  if (isDesktop) return new Uint8Array(await invoke<ArrayBuffer>('read_file', { path }))
+  if (isNative) return new Uint8Array(await invoke<ArrayBuffer>('read_file', { path }))
 
   const uri = await invoke<string>('read_asset', { path })
   const binary = atob(uri.slice(uri.indexOf(',') + 1))

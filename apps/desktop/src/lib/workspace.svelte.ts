@@ -34,7 +34,7 @@ import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
-import { folderOf, invoke, isDesktop, joinPath } from './tauri'
+import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
 
 export interface Entry {
@@ -330,7 +330,7 @@ class Workspace {
 
   async restore() {
     // The browser build starts empty, so give a first visit something to read.
-    if (!isDesktop) {
+    if (!isNative) {
       const { seed } = await import('./web/commands')
       await seed()
     }

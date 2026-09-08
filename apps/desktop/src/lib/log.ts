@@ -1,11 +1,11 @@
-import { invoke, isDesktop } from './tauri'
+import { invoke, isNative } from './tauri'
 
 export type Level = 'info' | 'warn' | 'error'
 
 /** Writes one line to the app's log file. Never throws: a failure to log must
  *  not become a second failure. */
 export function log(level: Level, message: string) {
-  if (!isDesktop) return
+  if (!isNative) return
   void invoke('write_log', { level, message, at: new Date().toISOString() }).catch(() => undefined)
 }
 
@@ -22,7 +22,7 @@ function describe(error: unknown): string {
 
 /** Catches what would otherwise vanish into a console nobody is watching. */
 export function collectErrors() {
-  if (!isDesktop) return
+  if (!isNative) return
 
   window.addEventListener('error', (event) => log('error', describe(event.error ?? event.message)))
   window.addEventListener('unhandledrejection', (event) => log('error', describe(event.reason)))

@@ -1,14 +1,31 @@
-/** Nib runs both as a Tauri app and as a page in a browser. Everything
- *  platform-specific funnels through here so the interface never branches. */
+/** Nib runs three ways: as the desktop app, as the phone app, and as a page in a
+ *  browser. Everything platform-specific funnels through here so the interface
+ *  never branches. */
+
+import { platform } from '@tauri-apps/plugin-os'
+
+/** The two platforms that are a phone app rather than a desktop one. */
+const PHONES = new Set<string>(['android', 'ios'])
 
 // Guarded so this module can be imported where there is no window: tests today,
 // and server-side rendering once the web app is prerendered.
-export const isDesktop = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+/** Inside the Tauri app, whichever platform: the crate answers `invoke`, so
+ *  there are real files behind the notes and the page is nobody's tab. */
+export const isNative = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+/** The phone app. `platform()` reads what the os plugin left in the page before
+ *  the first script ran, so this is known without waiting for anything. */
+export const isMobile = isNative && PHONES.has(platform())
+
+/** The desktop app, which is the only build with a window of its own to
+ *  minimise, a second window to present from, a file dialog, a shell around it
+ *  and an installer to update itself with. */
+export const isDesktop = isNative && !isMobile
 
 /** The browser build answers the same commands from its own storage, so every
- *  call site reads the same on both. */
+ *  call site reads the same on all three. */
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  if (!isDesktop) {
+  if (!isNative) {
     const { webInvoke } = await import('./web/commands')
     return webInvoke<T>(command, args)
   }
@@ -18,7 +35,8 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
 }
 
 /** Stands in for the Tauri window. In a browser a page cannot minimise itself,
- *  so those become no-ops and the buttons that would call them are hidden. */
+ *  so those become no-ops and the buttons that would call them are hidden. The
+ *  phone app has a real window but no title bar, so it never calls them either. */
 interface WindowLike {
   minimize(): Promise<void>
   toggleMaximize(): Promise<void>
@@ -80,7 +98,7 @@ const browserWindow: WindowLike = {
 }
 
 export async function currentWindow(): Promise<WindowLike> {
-  if (!isDesktop) return browserWindow
+  if (!isNative) return browserWindow
 
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
   return getCurrentWindow()
@@ -89,7 +107,7 @@ export async function currentWindow(): Promise<WindowLike> {
 /** A webview cannot load a bare filesystem path; Tauri hands out a URL for one.
  *  In the browser the path is a key into storage, resolved by the image layer. */
 export function assetUrl(path: string): string {
-  if (!isDesktop) return path
+  if (!isNative) return path
 
   const internals = (
     window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } }
@@ -107,10 +125,10 @@ export function joinPath(dir: string, relative: string): string {
   return `${dir}${separator}${relative.split('/').join(separator)}`
 }
 
-/** A link to somewhere outside the app: the system browser on a desktop, a
- *  new tab in a browser. */
+/** A link to somewhere outside the app: the system browser on a desktop, the
+ *  browser app on a phone, a new tab in a browser. */
 export async function openExternal(url: string): Promise<void> {
-  if (!isDesktop) {
+  if (!isNative) {
     window.open(url, '_blank', 'noopener')
     return
   }

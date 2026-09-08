@@ -30,7 +30,7 @@ import {
   SYSTEM_KEYS,
 } from './shortcuts/registry'
 import { isRecord, stored } from './stored'
-import { isDesktop } from './tauri'
+import { isNative } from './tauri'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
@@ -152,7 +152,7 @@ class Shortcuts {
     const taken = (list: string[]) => list.some((one) => sameCombination(one, key, this.platform))
     if (taken(SYSTEM_KEYS[this.platform]))
       return t('Your system takes this key before the app sees it.')
-    if (!isDesktop && taken(BROWSER_KEYS))
+    if (!isNative && taken(BROWSER_KEYS))
       return t('Your browser takes this key before the app sees it.')
 
     return null

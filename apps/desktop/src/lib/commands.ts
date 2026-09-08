@@ -21,7 +21,7 @@ import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop, isNative } from './tauri'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -29,7 +29,7 @@ import { openFile } from './open-file'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
-  if (!isDesktop) return
+  if (!isNative) return
 
   const path = await invoke<string>('custom_css_path')
   await workspace.open(path)
@@ -37,7 +37,7 @@ async function openCustomCss() {
 
 /** Opens `snippets.json`, and reloads it once the file is saved. */
 async function openSnippets() {
-  if (!isDesktop) return
+  if (!isNative) return
 
   const path = await invoke<string>('snippets_path')
   await workspace.open(path)
@@ -52,7 +52,7 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
   const file = theme.active.path
   const sheets = await Promise.all([
     file ? invoke<string>('read_theme', { path: file }).catch(() => '') : '',
-    isDesktop ? invoke<string>('read_custom_css').catch(() => '') : '',
+    isNative ? invoke<string>('read_custom_css').catch(() => '') : '',
   ])
 
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }

@@ -7,7 +7,7 @@ import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
 import { isRecord, isString, stored } from './stored'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop, isNative } from './tauri'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -151,7 +151,7 @@ class Settings {
 
   /** Reads `snippets.json` into the editor's completion source. */
   async loadSnippets() {
-    if (!isDesktop) return
+    if (!isNative) return
 
     const raw = await invoke<string>('read_snippets').catch(() => '{}')
     try {

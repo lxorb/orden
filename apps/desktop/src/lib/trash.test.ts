@@ -34,6 +34,7 @@ const calls: string[] = []
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   isDesktop: true,
+  isNative: true,
   invoke: async (command: string, args?: Record<string, unknown>) => {
     calls.push(command)
     const path = text(args?.path)
