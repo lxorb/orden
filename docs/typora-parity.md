@@ -191,23 +191,33 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 ## 14. Export
 
-- [x] PDF (through the print dialog)
-- [x] HTML with styles, fully self-contained
-- [x] HTML without styles
-- [x] Word `.docx` (pandoc)
-- [x] OpenOffice `.odt` (pandoc)
-- [x] RTF (pandoc)
-- [x] EPUB (pandoc)
-- [x] LaTeX (pandoc)
-- [x] MediaWiki (pandoc)
-- [x] reStructuredText (pandoc)
-- [x] Textile (pandoc)
-- [x] OPML (pandoc)
-- [x] RevealJS presentation (pandoc)
-- [x] Print styles
-- [x] Image export (local images inlined as `data:` URIs)
+Nine formats, in one fixed order in the File menu, the palette and the shortcut
+settings. None of them needs anything installed.
+
+- [x] Plain text (headings as lines, aligned columns, links as `words (url)`)
+- [x] Markdown, as written, with wikilinks turned into relative links
+- [x] TextBundle (version 2), and `.textpack` where a folder cannot be handed over
+- [x] RTF 1.5, with tables, footnotes, links and embedded pictures
+- [x] PDF (the webview's print engine on a desktop, the print dialog elsewhere)
+- [x] JPG and PNG, the whole note at two device pixels
+- [x] HTML with styles, fully self-contained, and HTML without styles
+- [x] Word `.docx`, with real styles, numbering, footnotes and maths as OMML
+- [x] EPUB 3 (epubcheck: no errors, no warnings)
+- [x] Print styles, and a page break before a second top-level heading
+- [x] Pictures carried into every format, off the disk and off the network
 - [x] Export settings (paper size, orientation, margins, header/footer)
 - [x] Per-file export config in YAML front matter (`export:`)
+- [x] A remembered target folder, and the finished file revealed
+
+Still pandoc's, and offered only where pandoc is installed:
+
+- [x] OpenOffice `.odt`
+- [x] LaTeX
+- [x] MediaWiki
+- [x] reStructuredText
+- [x] Textile
+- [x] OPML
+- [x] RevealJS presentation
 
 ## 15. Import
 
