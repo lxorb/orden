@@ -493,13 +493,10 @@ fn decode(target: &str) -> String {
     let mut at = 0;
 
     while at < bytes.len() {
-        if bytes[at] == b'%' && at + 2 < bytes.len() {
-            let pair = &target[at + 1..at + 3];
-            if let Ok(byte) = u8::from_str_radix(pair, 16) {
-                out.push(byte);
-                at += 3;
-                continue;
-            }
+        if let Some(byte) = escape_at(bytes, at) {
+            out.push(byte);
+            at += 3;
+            continue;
         }
         out.push(bytes[at]);
         at += 1;
@@ -509,12 +506,65 @@ fn decode(target: &str) -> String {
     String::from_utf8(out).unwrap_or_else(|_| target.to_string())
 }
 
+/// The byte a `%xx` at this position stands for, or nothing when what is there is
+/// not one.
+///
+/// Read as bytes rather than as a slice of the note. A character wider than the
+/// two bytes an escape is spelled in - `%€` in a link somebody wrote - puts the
+/// second of them inside that character, and slicing a `str` between the bytes of
+/// one character is a panic.
+fn escape_at(bytes: &[u8], at: usize) -> Option<u8> {
+    if bytes.get(at) != Some(&b'%') {
+        return None;
+    }
+
+    let high = hex(*bytes.get(at.checked_add(1)?)?)?;
+    let low = hex(*bytes.get(at.checked_add(2)?)?)?;
+    Some((high << 4) | low)
+}
+
+/// One hexadecimal digit as its value, in either case. By hand rather than
+/// through `from_str_radix`, which also takes a sign: `%+1` is not an escape.
+fn hex(byte: u8) -> Option<u8> {
+    match byte {
+        b'0'..=b'9' => Some(byte - b'0'),
+        b'a'..=b'f' => Some(byte - b'a' + 10),
+        b'A'..=b'F' => Some(byte - b'A' + 10),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{block_id_of, heading_of, headings_in, links_in, without_code};
+    use super::{block_id_of, decode, heading_of, headings_in, links_in, without_code};
 
     fn targets(body: &str) -> Vec<String> {
         links_in(body).into_iter().map(|one| one.target).collect()
+    }
+
+    /// A percent followed by a character wider than the two bytes an escape is
+    /// spelled in. The two bytes after the percent are a slice of the note, and
+    /// the second of them falls inside that character rather than after it.
+    ///
+    /// This is a note's own text, so it reaches here from a file: one written in
+    /// Nib, one that arrived by sync, one somebody sent. The release build aborts
+    /// on a panic, so the whole app went with the scan.
+    #[test]
+    fn a_percent_before_a_wide_character_is_text() {
+        assert_eq!(decode("%€"), "%€");
+        assert_eq!(decode("a%€b"), "a%€b");
+        assert_eq!(decode("%😀 and more"), "%😀 and more");
+        assert_eq!(targets("see [x](%€) now"), vec!["%€"]);
+
+        // And the escapes that are escapes still are.
+        assert_eq!(decode("My%20Note.md"), "My Note.md");
+        assert_eq!(decode("100%"), "100%");
+        assert_eq!(decode("%zz"), "%zz");
+        assert_eq!(decode("%2f"), "/");
+        assert_eq!(decode("%2F"), "/");
+        // A sign is not a hexadecimal digit, whatever `from_str_radix` takes.
+        assert_eq!(decode("%+1"), "%+1");
+        assert_eq!(decode("%-1"), "%-1");
     }
 
     #[test]

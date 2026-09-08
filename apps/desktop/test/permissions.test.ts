@@ -162,11 +162,13 @@ describe('writing an export', () => {
  *  is: every label the counter can produce, and not `nib-presenter`, which is
  *  meant to have nothing. */
 describe('window labels', () => {
-  /** The label format string in the crate, as the digits it can produce. */
+  /** The label format string in `free_label`, which is what a second window is
+   *  named after. Read out of the crate so a rename cannot leave this behind. */
   function labelShape(): string {
     const source = read('../src-tauri/src/launch.rs')
-    const [, format] = /format!\("([^"]+)"/.exec(source) ?? []
-    if (format === undefined) throw new Error('no window label format in launch.rs')
+    const [, block] = /fn free_label\(([\s\S]*?)\n\}/.exec(source) ?? []
+    const [, format] = /format!\("([^"]+)"/.exec(block ?? '') ?? []
+    if (format === undefined) throw new Error('no window label format in free_label')
 
     return format
   }
