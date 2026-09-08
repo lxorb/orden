@@ -59,6 +59,33 @@
   --touch-target: 48px;
   --swipe-edge: 32px;
 
+  /* The rest of the touch scale: what a finger needs from a row, from the words
+     in it, from the marks beside them and from the space between, in one place,
+     so a phone and a tablet come out one size rather than a guess per surface.
+     Only rules under `[data-touch]` read these, which is what keeps a desktop at
+     the sizes it has always had.
+
+     A row in a list is Material's 56dp. A row read more than tapped, and any
+     square that is only a button, stays at the 48dp floor `--touch-target`
+     already names. The words are the platform's own body size, and 17 is both
+     iOS's body and a comfortable Android one. */
+  --touch-row: 56px;
+  --touch-text: 17px;
+  /* An icon that is a button of its own, at Android's 24dp; and the smaller slot
+     a mark beside a row's words is drawn in, which a folder's twist, a file's
+     mark and a tick all share so every name starts at the same place. */
+  --touch-icon: 24px;
+  --touch-mark: 15px;
+  /* Between a mark and the words, and the row's own side padding. */
+  --touch-gap: 12px;
+  --touch-pad: 14px;
+  /* One level of a tree, deep enough to still read as a level under type this
+     size. */
+  --touch-indent: 18px;
+  /* What a sheet leaves under its last row, so the row clears the gesture bar
+     rather than sitting on it. */
+  --touch-bottom: calc(var(--space-4) + var(--inset-bottom));
+
   /* The window's edges the system draws its own things over: a status bar, a
      gesture bar, a notch, a home indicator. A browser answers `env()`; an
      Android webview answers nothing there, so the activity writes real numbers
