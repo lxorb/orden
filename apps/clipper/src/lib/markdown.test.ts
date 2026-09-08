@@ -141,6 +141,21 @@ describe('filling the numbers in', () => {
       'the token nib:0 is not a link',
     )
   })
+
+  // Wikipedia writes them, so this is an ordinary address rather than an
+  // adversarial one; unescaped, the link ends at the first bracket and the rest
+  // of the address turns into prose.
+  test('encodes the brackets that would end the link', () => {
+    expect(fill('![a](nib:0)', ['https://x.example/File_(1).png'])).toBe(
+      '![a](https://x.example/File_%281%29.png)',
+    )
+  })
+
+  test('cannot have markdown of its own put after the link', () => {
+    expect(fill('![a](nib:0)', ['https://x.example/a.png)![](https://evil.example/b.png'])).toBe(
+      '![a](https://x.example/a.png%29!%5B%5D%28https://evil.example/b.png)',
+    )
+  })
 })
 
 describe('what never reaches a note', () => {
