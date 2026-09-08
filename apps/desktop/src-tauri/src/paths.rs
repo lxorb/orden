@@ -261,12 +261,28 @@ pub fn outside_spaces(app: &AppHandle, path: &Path) -> bool {
 #[derive(Default)]
 pub struct Opened(Mutex<HashSet<PathBuf>>);
 
+/// Whether a folder is one whose whole tree a note in it may reach.
+///
+/// What this rules out is the top of a disk. Opening a note gives the folder it
+/// sits in, and everything under that folder, to the picture readers and to the
+/// asset protocol - which for a note at `C:\` or at `/` would be the whole
+/// machine. A note there is a note whose own folder is not a folder anybody meant
+/// to share, so it gets no pictures rather than giving away a disk.
+pub fn a_shareable_folder(folder: &Path) -> bool {
+    folder
+        .parent()
+        .is_some_and(|above| !above.as_os_str().is_empty())
+}
+
 /// Records a note the app was asked to open from outside the spaces folder, so
 /// the pictures beside it can be read and shown as well.
 pub fn note_from_outside(app: &AppHandle, path: &Path) {
     let Some(folder) = path.parent().map(folded) else {
         return;
     };
+    if !a_shareable_folder(&folder) {
+        return;
+    }
 
     if let Some(opened) = app.try_state::<Opened>() {
         if let Ok(mut folders) = opened.0.lock() {
@@ -434,8 +450,8 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::{
-        drop_highlights, files_in, folded, free_spot, highlights_of, inside, is_canvas,
-        is_markdown, is_pdf, move_highlights, space_root, write_atomically,
+        a_shareable_folder, drop_highlights, files_in, folded, free_spot, highlights_of, inside,
+        is_canvas, is_markdown, is_pdf, move_highlights, space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
 
@@ -479,6 +495,28 @@ mod tests {
     #[test]
     fn nothing_is_inside_a_folder_with_no_name() {
         assert!(!inside(Path::new(""), &path(&["a"])));
+    }
+
+    /// Opening a note hands its whole folder to the picture readers and to the
+    /// asset protocol. The top of a disk is not a folder anybody meant by that: a
+    /// note written to `C:\x.md` and then read would otherwise make every file on
+    /// the drive readable.
+    #[test]
+    fn the_top_of_a_disk_is_not_a_folder_a_note_shares() {
+        assert!(a_shareable_folder(&path(&["Users", "me", "Notes"])));
+
+        if cfg!(windows) {
+            assert!(!a_shareable_folder(Path::new(r"C:\")));
+            assert!(!a_shareable_folder(Path::new(r"\\server\share")));
+            assert!(a_shareable_folder(Path::new(r"C:\Notes")));
+        } else {
+            assert!(!a_shareable_folder(Path::new("/")));
+            assert!(a_shareable_folder(Path::new("/Notes")));
+        }
+
+        // A note with no folder above it at all shares nothing either.
+        assert!(!a_shareable_folder(Path::new("")));
+        assert!(!a_shareable_folder(Path::new("Idea.md")));
     }
 
     #[test]

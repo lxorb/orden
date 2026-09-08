@@ -114,10 +114,15 @@ fn stale(taken: &[u64], now: u64, days: u64) -> Vec<u64> {
 
     let mut stale = Vec::new();
     let mut hours_kept = HashSet::new();
+    // The retention comes from the window, and a number of days large enough to
+    // wrap this would come back as a cutoff of nothing, which is every version
+    // there is. Saturating, so an absurd retention keeps everything rather than
+    // sweeping everything.
+    let retention = days.saturating_mul(DAY);
 
     for at in newest_first {
         let age = now.saturating_sub(at);
-        if age > days * DAY {
+        if age > retention {
             stale.push(at);
         } else if age > DAY && !hours_kept.insert(at / HOUR) {
             // Newest first, so the first version met in an hour is the one that
@@ -279,6 +284,18 @@ mod tests {
     #[test]
     fn a_note_with_no_versions_has_nothing_to_sweep() {
         assert!(stale(&[], NOW, 7).is_empty());
+    }
+
+    /// The retention crosses from the window as a number, and a day is 86 400 000
+    /// milliseconds - a multiple of 1024. A retention of 2^54 days multiplies out
+    /// to exactly zero, and a cutoff of zero makes every version of every note
+    /// older than the retention. The whole history is what would go.
+    #[test]
+    fn a_retention_too_large_to_multiply_keeps_everything() {
+        let versions = [NOW - 60_000, NOW - 8 * DAY, NOW - 400 * DAY];
+
+        assert!(stale(&versions, NOW, 1 << 54).is_empty());
+        assert!(stale(&versions, NOW, u64::MAX).is_empty());
     }
 
     #[test]

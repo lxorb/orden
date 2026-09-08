@@ -62,6 +62,13 @@ fn read_sidecar(target: &Path) -> Result<String, String> {
 /// Nothing left to keep takes the file with it, so a PDF whose last highlight was
 /// deleted is a PDF with no sidecar rather than one with an empty one.
 fn write_sidecar(target: &Path, content: &str) -> Result<(), String> {
+    // The same ceiling the reader is held to. Writing past it would leave a
+    // sidecar the reader refuses, so the marks would be on disk and never come
+    // back - which is worse than not taking them.
+    if content.len() > usize::try_from(LIMIT).unwrap_or(usize::MAX) {
+        return Err(format!("{} would hold too much", target.display()));
+    }
+
     if content.is_empty() {
         return match fs::remove_file(target) {
             Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
@@ -144,6 +151,22 @@ mod tests {
         assert!(!target.exists());
         // And clearing one that is already gone is not a failure.
         assert_eq!(write_sidecar(&target, ""), Ok(()));
+    }
+
+    /// The writer is held to the reader's ceiling. Without that, a window could
+    /// write marks that come back as an error for ever after.
+    #[test]
+    fn marks_too_large_to_read_back_are_refused_on_the_way_in() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = sidecar_of(&dir.path().join("paper.pdf")).expect("a sidecar path");
+
+        let too_much = "x".repeat(usize::try_from(LIMIT).unwrap_or(usize::MAX) + 1);
+        assert!(write_sidecar(&target, &too_much).is_err());
+        assert!(!target.exists(), "and nothing was written");
+
+        // What fits still lands, and still reads back.
+        write_sidecar(&target, "{}").expect("the write");
+        assert_eq!(read_sidecar(&target), Ok("{}".to_string()));
     }
 
     #[test]

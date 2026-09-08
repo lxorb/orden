@@ -18,6 +18,7 @@ const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.m
 interface Capability {
   platforms: string[]
   permissions: string[]
+  windows: string[]
 }
 
 const capabilities = JSON.parse(read('../src-tauri/capabilities/default.json')) as Capability
@@ -149,6 +150,51 @@ describe('writing an export', () => {
     // there; see the comment at the top of save.ts.
     expect(read('../src/lib/export/save.ts')).toContain('spaces_root')
     expect(mobile.permissions.filter((one) => one.startsWith('dialog:'))).toEqual([])
+  })
+})
+
+/** A capability is granted to the window labels it names, and a window whose
+ *  label matches none of them is granted nothing: no event channel, no dragging,
+ *  no close. New window opens a second one, so the labels `launch::new_window`
+ *  hands out have to be in the list beside `main`.
+ *
+ *  Tauri matches a label against these as a glob, which is what `nib-[0-9]*`
+ *  is: every label the counter can produce, and not `nib-presenter`, which is
+ *  meant to have nothing. */
+describe('window labels', () => {
+  /** The label format string in the crate, as the digits it can produce. */
+  function labelShape(): string {
+    const source = read('../src-tauri/src/launch.rs')
+    const [, format] = /format!\("([^"]+)"/.exec(source) ?? []
+    if (format === undefined) throw new Error('no window label format in launch.rs')
+
+    return format
+  }
+
+  const matches = (pattern: string, label: string) =>
+    new RegExp(`^${pattern.replace(/\[0-9\]/g, '\\d').replace(/\*/g, '.*')}$`).test(label)
+
+  test('the label the crate hands out is covered', () => {
+    // `nib-{counter}`, and the counter starts at 2 because `main` is the first.
+    expect(labelShape()).toBe('nib-{}')
+
+    for (const label of ['main', 'nib-2', 'nib-3', 'nib-17', 'nib-1000']) {
+      expect(
+        capabilities.windows.some((pattern) => matches(pattern, label)),
+        `${label} is granted nothing`,
+      ).toBe(true)
+    }
+  })
+
+  test('the presenter window is granted nothing, because it calls nothing', () => {
+    const label = /const LABEL = '([^']+)'/.exec(read('../src/lib/slides/presenter.ts'))?.[1]
+    expect(label).toBe('nib-presenter')
+
+    expect(capabilities.windows.some((pattern) => matches(pattern, label ?? ''))).toBe(false)
+  })
+
+  test('the phone has one window and names it', () => {
+    expect(mobile.windows).toEqual(['main'])
   })
 })
 

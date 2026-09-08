@@ -3,6 +3,8 @@
 //! own pictures, and handing a whole file back as bytes for the window to read
 //! itself. Everything here stays inside the folder the note is in.
 
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine as _;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::Read;
@@ -158,10 +160,11 @@ fn trimmed(folder: &str) -> &str {
 /// Where a picture from a note in `note_folder` goes, given the folder relative
 /// to it that the window asked for.
 ///
-/// Refused when the folder is not relative, or when joining it on lands outside
-/// `limit`: `../assets` reaches the space's own folder from a note one level
-/// down, and `../../..` reaches another space, which is not this note's to write
-/// in. Nothing is read from disk, so this is a decision about paths alone.
+/// Refused when the folder is not relative, when it names a hidden folder, or
+/// when joining it on lands outside `limit`: `../assets` reaches the space's own
+/// folder from a note one level down, and `../../..` reaches another space, which
+/// is not this note's to write in. Nothing is read from disk, so this is a
+/// decision about paths alone.
 fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, String> {
     let asked = Path::new(folder);
 
@@ -171,6 +174,19 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
         .components()
         .any(|part| matches!(part, Component::Prefix(_) | Component::RootDir));
     if from_the_root {
+        return Err(format!("{folder} is not a folder inside the space"));
+    }
+
+    // A dot in front is the app's own business - the trash is `.trash` inside the
+    // spaces folder, which a note directly in that folder would otherwise reach -
+    // and a picture there would be invisible anyway: the tree, the search and the
+    // link scan all skip a hidden folder. `..` is not one of these; it is a
+    // component of its own and the check below is what judges it.
+    let hidden = asked.components().any(|part| match part {
+        Component::Normal(name) => name.to_string_lossy().starts_with('.'),
+        _ => false,
+    });
+    if hidden {
         return Err(format!("{folder} is not a folder inside the space"));
     }
 
@@ -226,40 +242,11 @@ fn mime_of(path: &Path) -> &'static str {
     }
 }
 
-/// Base64, by hand. A dependency for forty lines that never change is a
-/// dependency to keep up to date for no reason.
+/// Base64, the same way the byte writer reads it: one encoding for the crate, so
+/// a picture handed to the window and a picture handed back cannot disagree about
+/// what base64 is. The tests below are the RFC's own vectors.
 fn encode(bytes: &[u8]) -> String {
-    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
-
-    for chunk in bytes.chunks(3) {
-        // A short chunk is padded with zeroes and then trimmed back to the
-        // number of characters those bytes are worth.
-        let block = [
-            chunk.first().copied().unwrap_or(0),
-            chunk.get(1).copied().unwrap_or(0),
-            chunk.get(2).copied().unwrap_or(0),
-        ];
-
-        let sextets = [
-            block[0] >> 2,
-            ((block[0] & 0b11) << 4) | (block[1] >> 4),
-            ((block[1] & 0b1111) << 2) | (block[2] >> 6),
-            block[2] & 0b0011_1111,
-        ];
-
-        for (index, sextet) in sextets.iter().enumerate() {
-            // The tail is filled out to a whole quantum with `=`.
-            if index <= chunk.len() {
-                out.push(char::from(ALPHABET[usize::from(*sextet)]));
-            } else {
-                out.push('=');
-            }
-        }
-    }
-
-    out
+    BASE64.encode(bytes)
 }
 
 #[cfg(test)]
@@ -318,6 +305,27 @@ mod tests {
         // Another space is inside the spaces folder and still none of this
         // note's business.
         assert!(asset_dir(&space.join("Work"), "../../Other/assets", &space).is_err());
+    }
+
+    /// A note directly in the spaces folder has that folder as its limit, and the
+    /// trash is a folder inside it. Nothing but the trash commands has any
+    /// business there, and a picture in any hidden folder is one the tree, the
+    /// search and the link scan would all skip.
+    #[test]
+    fn a_hidden_folder_is_refused() {
+        let spaces = path(&["Documents", "Nib"]);
+
+        assert!(asset_dir(&spaces, ".trash", &spaces).is_err());
+        assert!(asset_dir(&spaces, ".trash/1700000000000-0", &spaces).is_err());
+        assert!(asset_dir(&spaces, "assets/.hidden", &spaces).is_err());
+        assert!(asset_dir(&spaces, ".git", &spaces).is_err());
+        // A note whose own folder is hidden still keeps its own folder: what is
+        // judged is the folder that was asked for, not where the note lives.
+        let inside_a_dot = path(&["home", "me", ".config", "notes"]);
+        assert_eq!(
+            asset_dir(&inside_a_dot, "assets", &inside_a_dot),
+            Ok(inside_a_dot.join("assets"))
+        );
     }
 
     #[test]

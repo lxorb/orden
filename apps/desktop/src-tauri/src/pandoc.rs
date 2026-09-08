@@ -12,6 +12,8 @@ use std::process::{Command, Stdio};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
+use crate::paths::chosen;
+
 /// What a document is read in as: plain markdown plus the few extensions the
 /// editor itself understands, so nothing comes back that cannot be shown.
 const READ_AS: &str =
@@ -49,12 +51,15 @@ pub fn has_pandoc() -> bool {
 /// launched from its own shortcut is a folder nobody would think to look in.
 #[tauri::command]
 pub fn import_document(path: String) -> Result<String, String> {
-    let source = Path::new(&path);
+    // The same gate the note readers go through: a file the reader picked in the
+    // dialog, judged as a path before pandoc is handed it.
+    let source = chosen(&path)?;
     let beside = source
         .parent()
         .filter(|parent| parent.is_dir())
         .map(Path::to_path_buf)
         .ok_or_else(|| format!("{path} is not in a folder Nib can write to"))?;
+    let source = source.to_string_lossy().to_string();
 
     let result = command("pandoc")
         .current_dir(&beside)
@@ -65,7 +70,7 @@ pub fn import_document(path: String) -> Result<String, String> {
             "none",
             "--extract-media",
             ".",
-            &path,
+            &source,
         ])
         .output()
         .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
@@ -78,10 +83,35 @@ pub fn import_document(path: String) -> Result<String, String> {
     Err(complaint(&result.stderr, "pandoc could not read that file"))
 }
 
+/// Whether a string is a format pandoc can be asked for by name.
+///
+/// This matters more than it looks. `--to` also takes the path of a Lua script,
+/// which pandoc then runs as a custom writer with its own filesystem and process
+/// access - so a format that could name a file would turn "write this note out"
+/// into "run this program". A writer's name is lower-case letters, digits and the
+/// three joining characters pandoc's own names use, and nothing that could be a
+/// path or an extension.
+fn is_format(format: &str) -> bool {
+    !format.is_empty()
+        && format.len() <= 40
+        && format.starts_with(|first: char| first.is_ascii_lowercase())
+        && format.chars().all(|one| {
+            one.is_ascii_lowercase()
+                || one.is_ascii_digit()
+                || one == '-'
+                || one == '_'
+                || one == '+'
+        })
+}
+
 /// Converts markdown with pandoc, the same way Typora does. The source is piped
 /// in rather than written to a temp file, so nothing is left behind.
 #[tauri::command]
 pub fn run_pandoc(source: String, output: String, format: String) -> Result<(), String> {
+    if !is_format(&format) {
+        return Err(format!("{format} is not a format pandoc writes"));
+    }
+
     let mut child = command("pandoc")
         .args([
             "--from",
@@ -134,7 +164,41 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::complaint;
+    use super::{complaint, is_format};
+
+    /// Every format the window offers; see `src/lib/export-formats.ts`.
+    #[test]
+    fn takes_the_formats_the_window_asks_for() {
+        for format in [
+            "odt",
+            "latex",
+            "mediawiki",
+            "rst",
+            "textile",
+            "opml",
+            "revealjs",
+        ] {
+            assert!(is_format(format), "{format}");
+        }
+        // And the spellings pandoc writes with extensions on them.
+        assert!(is_format("markdown+tex_math_dollars"));
+        assert!(is_format("commonmark_x"));
+    }
+
+    /// `--to` takes the path of a Lua script as readily as a writer's name, and
+    /// pandoc runs that script. Nothing that could be a path is a format.
+    #[test]
+    fn refuses_anything_that_could_name_a_file() {
+        assert!(!is_format("evil.lua"));
+        assert!(!is_format("./evil.lua"));
+        assert!(!is_format("/tmp/evil.lua"));
+        assert!(!is_format(r"C:\Users\me\evil.lua"));
+        assert!(!is_format("../evil"));
+        assert!(!is_format("evil lua"));
+        assert!(!is_format(""));
+        assert!(!is_format("--lua-filter=evil.lua"));
+        assert!(!is_format(&"a".repeat(41)));
+    }
 
     #[test]
     fn repeats_what_pandoc_said() {

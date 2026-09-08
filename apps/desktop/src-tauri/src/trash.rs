@@ -14,7 +14,8 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, free_spot, in_spaces, move_highlights, spaces_root, write_atomically, TRASH,
+    cannot, folded, free_spot, in_spaces, inside, move_highlights, spaces_root, write_atomically,
+    TRASH,
 };
 
 /// The record of what is in the trash, written beside the folders it describes.
@@ -143,6 +144,13 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
         .ok_or("nothing to restore")?;
     let entry = entries[position].clone();
 
+    // Where it is now and where it is going, both judged before anything moves:
+    // the manifest is a file on disk, and a hand-edited one names neither.
+    if !is_slot(&entry.id) {
+        return Err("that is not something in the trash".into());
+    }
+    let target = restore_target(&base, &entry)?;
+
     let slot = dir.join(&entry.id);
     let held = slot.join(&entry.name);
     if !held.exists() {
@@ -151,8 +159,6 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
         return Err("it is already gone".into());
     }
 
-    let wanted = base.join(entry.from.replace('/', MAIN_SEPARATOR_STR));
-    let target = free_spot(&wanted, entry.kind == "note");
     if let Some(parent) = target.parent() {
         fs::create_dir_all(parent).map_err(|error| cannot("create", parent, &error))?;
     }
@@ -171,6 +177,10 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
 /// Takes one thing away for good.
 #[tauri::command]
 pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
+    if !is_slot(&id) {
+        return Err(format!("{id} is not something in the trash"));
+    }
+
     let _guard = locked();
     let dir = trash_dir(&app)?;
 
@@ -224,6 +234,26 @@ fn new_id() -> String {
     )
 }
 
+/// Whether a string is one of the folder names `new_id` hands out, which is the
+/// shape a whole tree is about to be removed under.
+///
+/// The window sends an id back to purge one thing, and `purge` joins it onto the
+/// trash folder. `..` there names the folder above, and `remove_dir_all` on that
+/// takes the notes folder or the documents folder with it, so the id is held to
+/// digits and the one hyphen rather than merely to being a single part.
+fn is_slot(id: &str) -> bool {
+    let Some((moment, counter)) = id.split_once('-') else {
+        return false;
+    };
+
+    !moment.is_empty()
+        && !counter.is_empty()
+        && moment.len() <= 20
+        && counter.len() <= 20
+        && moment.bytes().all(|byte| byte.is_ascii_digit())
+        && counter.bytes().all(|byte| byte.is_ascii_digit())
+}
+
 /// The manifest, or an empty one when there is nothing to read.
 fn read_manifest(dir: &Path) -> Vec<TrashEntry> {
     let path = dir.join(MANIFEST);
@@ -248,15 +278,54 @@ fn write_manifest(dir: &Path, entries: &[TrashEntry]) -> Result<(), String> {
     write_atomically(&dir.join(MANIFEST), text.as_bytes())
 }
 
-/// Forgets one entry and takes its folder with it.
+/// Forgets one entry and takes its folder with it. An id of any other shape is
+/// forgotten without a folder being removed: the manifest is a file on disk and
+/// a hand-edited one must not be able to name a folder outside the trash.
 fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
-    let _ = fs::remove_dir_all(dir.join(id));
+    if is_slot(id) {
+        let _ = fs::remove_dir_all(dir.join(id));
+    }
     entries.retain(|entry| entry.id != id);
+}
+
+/// Where something is put back, given the notes folder and the entry that says
+/// where it came from.
+///
+/// The manifest is a file in the notes folder like any other, so what it says is
+/// read the way anything from outside is: `from` has to land back inside the
+/// notes folder and outside the trash, and the name it was stored under has to be
+/// a name rather than a path.
+fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
+    if !is_name(&entry.name) {
+        return Err("that is not a name Nib stored".into());
+    }
+
+    let wanted = folded(&base.join(entry.from.replace('/', MAIN_SEPARATOR_STR)));
+    if !inside(base, &wanted) || inside(&base.join(TRASH), &wanted) || wanted == folded(base) {
+        return Err("that did not come from the notes folder".into());
+    }
+
+    Ok(free_spot(&wanted, entry.kind == "note"))
+}
+
+/// Whether a string names one file or folder rather than a path to one. What the
+/// trash stores something under is its own name, so nothing else is one.
+fn is_name(name: &str) -> bool {
+    !name.is_empty()
+        && name != "."
+        && name != ".."
+        && !name.contains('/')
+        && !name.contains('\\')
+        && Path::new(name).components().count() == 1
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{read_manifest, write_manifest, TrashEntry, MANIFEST};
+    use super::{
+        is_name, is_slot, purge, read_manifest, restore_target, write_manifest, TrashEntry,
+        MANIFEST,
+    };
+    use std::path::{Path, PathBuf};
 
     fn entry(id: &str, name: &str, from: &str) -> TrashEntry {
         TrashEntry {
@@ -266,6 +335,93 @@ mod tests {
             from: from.into(),
             trashed_at: 1_700_000_000_000,
         }
+    }
+
+    /// Written the way the platform writes them, so the assertions read the same
+    /// on a runner as they do on a laptop.
+    fn path(parts: &[&str]) -> PathBuf {
+        parts.iter().collect()
+    }
+
+    #[test]
+    fn only_a_folder_the_trash_named_itself_is_one() {
+        assert!(is_slot("1700000000000-0"));
+        assert!(is_slot("1-42"));
+        assert!(!is_slot(".."));
+        assert!(!is_slot("../.."));
+        assert!(!is_slot("1700000000000"));
+        assert!(!is_slot("a-0"));
+        assert!(!is_slot("1--0"));
+        assert!(!is_slot(""));
+        assert!(!is_slot("-0"));
+        assert!(!is_slot("1-"));
+    }
+
+    /// The id comes from the window, and `purge` joins it onto the trash folder
+    /// before removing that folder and everything under it. `..` there names the
+    /// notes folder, and the folder above that is the reader's documents.
+    #[test]
+    fn purging_cannot_reach_outside_the_trash() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let trash = dir.path().join("Nib").join(".trash");
+        let elsewhere = dir.path().join("Nib").join("Notes");
+        std::fs::create_dir_all(&trash).expect("the trash");
+        std::fs::create_dir_all(&elsewhere).expect("a space beside it");
+        std::fs::write(elsewhere.join("Idea.md"), "mine").expect("a note in it");
+
+        let mut entries = Vec::new();
+        for id in ["../Notes", "..", r"..\Notes"] {
+            purge(&trash, &mut entries, id);
+        }
+
+        assert!(
+            elsewhere.join("Idea.md").exists(),
+            "the note is still there"
+        );
+        assert!(elsewhere.exists(), "and so is the space");
+    }
+
+    #[test]
+    fn a_stored_name_is_a_name_and_not_a_path() {
+        assert!(is_name("Idea.md"));
+        assert!(is_name("Notizen über Bücher.md"));
+        assert!(!is_name(""));
+        assert!(!is_name("."));
+        assert!(!is_name(".."));
+        assert!(!is_name("Work/Idea.md"));
+        assert!(!is_name(r"..\Idea.md"));
+        assert!(!is_name("/Idea.md"));
+    }
+
+    /// A manifest is a file in the notes folder, so where it says something came
+    /// from is read as warily as anything else from outside.
+    #[test]
+    fn restoring_lands_back_inside_the_notes_folder() {
+        let base = path(&["Documents", "Nib"]);
+
+        assert_eq!(
+            restore_target(&base, &entry("1-0", "Idea.md", "Work/Idea.md")),
+            Ok(base.join("Work").join("Idea.md"))
+        );
+        assert!(restore_target(&base, &entry("1-0", "Idea.md", "../Idea.md")).is_err());
+        assert!(restore_target(&base, &entry("1-0", "Idea.md", "../../../../etc/passwd")).is_err());
+        // Back into the trash is not back where it came from either.
+        assert!(restore_target(&base, &entry("1-0", "Idea.md", ".trash/1-0/Idea.md")).is_err());
+        // Nor is the notes folder itself, which is no note.
+        assert!(restore_target(&base, &entry("1-0", "Idea.md", "")).is_err());
+        // And a name that is a path cannot pick a file out of another folder.
+        assert!(restore_target(&base, &entry("1-0", "../../Idea.md", "Idea.md")).is_err());
+    }
+
+    #[test]
+    fn a_restore_numbers_a_name_whose_place_is_taken() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Idea.md"), "the one that stayed").expect("a note");
+
+        let target = restore_target(base, &entry("1-0", "Idea.md", "Idea.md")).expect("a place");
+        assert_eq!(target, base.join("Idea 2.md"));
+        assert!(Path::new(&target).parent().is_some());
     }
 
     #[test]

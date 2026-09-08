@@ -134,8 +134,9 @@ pub fn search_space(
         // Kept to the best of them as the walk goes, so a space where everything
         // matches loosely does not become a list of the whole space. Trimmed at
         // twice the limit rather than at it, so the sort happens once in a while
-        // rather than once a note.
-        if loose.len() > limit * 2 {
+        // rather than once a note. Saturating, because the limit crosses from the
+        // window and doubling one near the top of a `usize` would wrap.
+        if loose.len() > limit.saturating_mul(2) {
             loose = best(loose, limit);
         }
     }
