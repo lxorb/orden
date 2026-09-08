@@ -27,7 +27,7 @@ import { hashOfLines } from './hash'
 import { leadingOf, type MathBox, type Measurer } from './measure'
 import { TEXT_HEIGHT, TEXT_WIDTH } from './panel'
 import { type Run, textRuns } from './runs'
-import { FURNITURE, type TextStyle } from './style'
+import { BODY, FURNITURE, type TextStyle } from './style'
 
 /** A run at its place on a line, measured. */
 export interface Placed {
@@ -710,4 +710,37 @@ export function pageAt(pages: readonly Page[], position: number): number {
   }
 
   return Math.max(0, pages.length - 1)
+}
+
+/** Whether a page loses nothing by being set as words.
+ *
+ *  Text mode hands the panel a string and the firmware sets it in its one font
+ *  at its one size. That is instant, and for a page of plain prose it is also
+ *  exactly what the drawn page said. For a page with a formula, a table, a
+ *  fence, a picture or so much as a bold word it is not: those come out as their
+ *  own source, their rows, or their letters without the weight.
+ *
+ *  Pure, and what an automatic choice between the two modes would have to stand
+ *  on. The plugin says it in its diagnosis, so somebody who chose speed can see
+ *  which pages it cost something. */
+export function plainPage(page: Page): boolean {
+  return page.lines.every(
+    (line) =>
+      line.fills.length === 0 &&
+      line.placed.every(({ run }) => {
+        if (run.math !== undefined || run.picture !== undefined) return false
+        if (run.box !== undefined || run.over !== undefined || run.rise !== undefined) return false
+
+        const { style } = run
+        return (
+          style.family === BODY.family &&
+          style.size === BODY.size &&
+          style.weight === BODY.weight &&
+          style.slant === BODY.slant &&
+          style.grey === BODY.grey &&
+          !style.underline &&
+          !style.strike
+        )
+      }),
+  )
 }

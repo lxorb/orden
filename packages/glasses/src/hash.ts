@@ -13,7 +13,7 @@ import type { Line } from './layout'
  *  which this process made. Two pages of a note colliding would show the wrong
  *  picture, and at 32 bits over the few dozen pages of a note that is far
  *  rarer than the note being edited under us. */
-function hashOf(text: string): string {
+export function hashOf(text: string): string {
   let hash = 0x811c9dc5
   for (let at = 0; at < text.length; at++) {
     hash ^= text.charCodeAt(at)

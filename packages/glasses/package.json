@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@codemirror/language": "^6.12.4",
+    "@evenrealities/pretext": "^0.1.4",
     "@lezer/highlight": "^1.2.3",
     "@nib/editor": "workspace:*",
     "@nib/markdown": "workspace:*",

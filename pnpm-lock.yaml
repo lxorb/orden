@@ -257,6 +257,9 @@ importers:
       '@codemirror/language':
         specifier: ^6.12.4
         version: 6.12.4
+      '@evenrealities/pretext':
+        specifier: ^0.1.4
+        version: 0.1.4
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
@@ -772,6 +775,9 @@ packages:
   '@evenrealities/even_hub_sdk@0.0.15':
     resolution: {integrity: sha512-N4SuDg/4MIgpah61IJAdtzOMcUg05/x0jz/+FkEdPnd9Dq7pCgOq5AtOSoU2i00hoYCOCdRSlBjWyq8LQCsfDQ==}
     engines: {node: ^20.0.0 || >=22.0.0}
+
+  '@evenrealities/pretext@0.1.4':
+    resolution: {integrity: sha512-gSZk/uxIhZW3geOM5bP1IS0s1sg7cA7KLLpBDgH9T1+ZNHMIFTMcgQN1qw4+/Xi/rcxsDsWZ7UZndIS/s4fRcA==}
 
   '@exodus/bytes@1.15.1':
     resolution: {integrity: sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q==}
@@ -3626,6 +3632,8 @@ snapshots:
       levn: 0.4.1
 
   '@evenrealities/even_hub_sdk@0.0.15': {}
+
+  '@evenrealities/pretext@0.1.4': {}
 
   '@exodus/bytes@1.15.1': {}
 

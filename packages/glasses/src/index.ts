@@ -8,7 +8,8 @@
  *  See docs/even.md for what the panel is, what it costs to send a page to it,
  *  and why a page is drawn rather than written into a text container. */
 
-export { type Page, pageAt } from './layout'
+export { type Page, pageAt, plainPage } from './layout'
 export { PANEL_HEIGHT, PANEL_WIDTH } from './panel'
 export { QUADRANTS } from './raster'
 export { BLANK, type Look, type Quadrant, type Sheet, Sheets } from './sheets'
+export { isTextPage, type TextPage, textPages } from './text'
