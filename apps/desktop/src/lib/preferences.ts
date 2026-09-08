@@ -279,7 +279,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Check spelling'),
-              initial: false,
+              initial: true,
               get: () => modes.spellcheck,
               set: () => modes.toggleSpellcheck(view),
             },

@@ -30,6 +30,7 @@ import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, stored } from './stored'
+import { currentWindow } from './tauri'
 
 const STORAGE_KEY = 'nib:modes'
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
@@ -79,6 +80,7 @@ interface Saved {
   lineHeight: number
   spellcheck: boolean
   spellLanguage: string
+  alwaysOnTop: boolean
   closeBrackets: boolean
   ligatures: LigatureScope
   glassesDisplay: GlassesDisplay
@@ -146,9 +148,17 @@ class Modes {
   zoom = $state(1)
   width = $state(42)
   lineHeight = $state(1.72)
-  spellcheck = $state(false)
-  /** The dictionary to check against; `system` leaves it to the browser. */
+  /** The webview's own spell checker, over the writing surface. On, because a
+   *  typo is worth knowing about and nobody goes looking through settings for
+   *  the checker every other editor has running already. */
+  spellcheck = $state(true)
+  /** The dictionary to check against; `system` leaves it to the browser, which
+   *  reads the language the machine is set to. */
   spellLanguage = $state('system')
+  /** This window over every other application's. A desktop's, and this machine's
+   *  rather than the account's: which window is in front is about the desk it is
+   *  on. */
+  alwaysOnTop = $state(false)
   closeBrackets = $state(true)
   /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
    *  a note, or everywhere in it. Off until chosen; the choice follows the
@@ -208,8 +218,9 @@ class Modes {
       this.zoom = measure(saved.zoom, 1)
       this.width = measure(saved.width, 42)
       this.lineHeight = measure(saved.lineHeight, 1.72)
-      this.spellcheck = saved.spellcheck === true
+      this.spellcheck = saved.spellcheck !== false
       this.spellLanguage = text(saved.spellLanguage, 'system')
+      this.alwaysOnTop = saved.alwaysOnTop === true
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
       this.glassesDisplay = glassesDisplay(saved.glassesDisplay) ?? 'rendered'
@@ -217,6 +228,22 @@ class Modes {
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
     }
     this.applyZoom()
+    if (this.alwaysOnTop) this.applyAlwaysOnTop()
+  }
+
+  toggleAlwaysOnTop() {
+    this.alwaysOnTop = !this.alwaysOnTop
+    this.applyAlwaysOnTop()
+    this.persist()
+  }
+
+  /** Tells the window. A refusal is the window manager's answer and there is
+   *  nothing to say about it: the row goes back to what the window is doing at
+   *  the next start, since nothing was written. */
+  private applyAlwaysOnTop() {
+    void currentWindow()
+      .then((window) => window.setAlwaysOnTop(this.alwaysOnTop))
+      .catch(() => undefined)
   }
 
   /** Every editor on the page: one for each pane. A mode is the window's rather
@@ -558,6 +585,7 @@ class Modes {
       lineHeight: this.lineHeight,
       spellcheck: this.spellcheck,
       spellLanguage: this.spellLanguage,
+      alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
       glassesDisplay: this.glassesDisplay,
