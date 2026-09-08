@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { freeName, freePath, purgeExpired } from '../src/trash'
+import { AT_ONCE, freeName, freePath, purgeExpired } from '../src/trash'
 import { call, signIn, testEnv, type TestEnv, type TrashView } from './harness'
 
 let env: TestEnv
@@ -279,6 +279,42 @@ describe('purging', () => {
       spaces: [],
       notes: [],
     })
+  })
+
+  /** Every row of a space went while only one batch of its bytes did, so the
+   *  notes past the batch were left in the bucket with nothing pointing at them
+   *  and the space no longer listed as having anything to purge. Nothing would
+   *  ever have found them again. */
+  test('a space larger than one batch leaves nothing orphaned', async () => {
+    // Written straight in: what is being measured is the purge, not the route
+    // that makes a note, and a batch and one is a lot of requests.
+    for (let at = 0; at <= AT_ONCE; at++) {
+      const id = `note-${at}`
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values (?, ?, ?, ?, 1, ?, 0, 1, 'h')`,
+        )
+        .run(id, space, `${at}.md`, at + 100, Date.now())
+      await env.NOTES.put(`spaces/${space}/${id}`, 'x')
+    }
+
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+    await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+
+    // Whatever still has a row still has its bytes, and the space still says
+    // there is more to do.
+    const left = env.db.prepare('select id from notes where space_id = ?').all(space) as {
+      id: string
+    }[]
+    expect(left).toHaveLength(1)
+    for (const one of left) expect(await stored(one.id)).not.toBeNull()
+    expect(spaceRow(space)?.deleted_at).not.toBeNull()
+
+    // A second tap finishes it, which is what the button promises.
+    await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+    expect(env.db.prepare('select id from notes where space_id = ?').all(space)).toEqual([])
+    expect(spaceRow(space)).toMatchObject({ deleted: 1, deleted_at: null })
   })
 
   test('everything at once, but only one’s own', async () => {

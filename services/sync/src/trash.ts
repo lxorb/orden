@@ -14,7 +14,7 @@ const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
  *  So both work through a batch at a time. Purging is idempotent, so what is
  *  left over goes on the next tap of the button or the next night's run - the
  *  listing says `more` when there is any. */
-const AT_ONCE = 500
+export const AT_ONCE = 500
 
 /** `wanted` if nobody has it, else the first free `wanted 2`, `wanted 3`... -
  *  the numbering the app gives a new space whose name is taken. */
@@ -110,18 +110,48 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
     .run()
 }
 
-/** Empties a space for good. The row stays as the marker a machine that was
- *  away reads, and stops being listed. */
-async function purgeSpace(env: Env, space: Pick<Space, 'id'>) {
+/** Empties a space for good, a batch of notes at a time. The row stays as the
+ *  marker a machine that was away reads, and stops being listed once the last
+ *  note has gone.
+ *
+ *  Only the rows whose bytes went are taken away. Deleting every row after one
+ *  batch of R2 deletes left the notes past the batch with nothing pointing at
+ *  them: bytes in the bucket, no row to find them by, and the space no longer
+ *  listed as having anything to purge. `deleted_at` stays set while there is more,
+ *  which is what brings the next tap of the button, or the next night's run, back
+ *  here to finish. */
+async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE): Promise<number> {
+  const take = Math.max(0, Math.min(budget, AT_ONCE))
+  if (!take) return 0
+
   const { results } = await env.DB.prepare('select id from notes where space_id = ? limit ?')
-    .bind(space.id, AT_ONCE)
+    .bind(space.id, take)
     .all<{ id: string }>()
+
   await Promise.all(results.map((note) => env.NOTES.delete(noteKey(space.id, note.id))))
-  await env.DB.prepare('delete from notes where space_id = ?').bind(space.id).run()
-  await env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id).run()
+
+  // Exactly the rows whose bytes have gone, so nothing rejected above is left
+  // recorded as purged.
+  if (results.length) {
+    const places = results.map(() => '?').join(', ')
+    await env.DB.prepare(`delete from notes where id in (${places})`)
+      .bind(...results.map((note) => note.id))
+      .run()
+  }
+
+  if (results.length < take) {
+    await env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id).run()
+  }
+
+  return results.length
 }
 
-/** What the daily job does: everything that has waited its 14 days goes. */
+/** What the daily job does: everything that has waited its 14 days goes, up to
+ *  the batch. Spaces are worked through what is left of the batch after the notes,
+ *  because a space holds notes of its own and the ceiling is on the writes rather
+ *  than on the rows: five hundred deleted spaces of five hundred notes each is a
+ *  quarter of a million writes, which is not something one invocation may do. What
+ *  does not fit goes on the next run. */
 export async function purgeExpired(
   env: Env,
   at: number,
@@ -142,9 +172,16 @@ export async function purgeExpired(
   )
     .bind(cutoff, AT_ONCE)
     .all<Pick<Space, 'id'>>()
-  for (const space of spaces.results) await purgeSpace(env, space)
 
-  return { notes: notes.results.length, spaces: spaces.results.length }
+  let budget = AT_ONCE - notes.results.length
+  let emptied = 0
+  for (const space of spaces.results) {
+    if (budget <= 0) break
+    budget -= await purgeSpace(env, space, budget)
+    emptied++
+  }
+
+  return { notes: notes.results.length, spaces: emptied }
 }
 
 export const trash = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -269,13 +306,20 @@ trash.delete('/spaces/:id', async (context) => {
 })
 
 /** Empties the account's Recently deleted now, a batch at a time. Purging is
- *  idempotent, so a second tap finishes what a first left. */
+ *  idempotent, so a second tap finishes what a first left - and the batch is
+ *  counted in writes rather than in rows, for the reason `purgeExpired` gives. */
 trash.delete('/', async (context) => {
   const user = context.get('user')
   const env = context.env
 
-  for (const note of await deletedNotes(env, user.id)) await purgeNote(env, note)
-  for (const space of await deletedSpaces(env, user.id)) await purgeSpace(env, space)
+  const notes = await deletedNotes(env, user.id)
+  for (const note of notes) await purgeNote(env, note)
+
+  let budget = AT_ONCE - notes.length
+  for (const space of await deletedSpaces(env, user.id)) {
+    if (budget <= 0) break
+    budget -= await purgeSpace(env, space, budget)
+  }
 
   return context.json({ ok: true })
 })
