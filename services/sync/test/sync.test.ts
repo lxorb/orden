@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { addNote as makeNote, saveNote } from '../src/notes'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -377,6 +378,50 @@ describe('notes', () => {
     expect(stale.status).toBe(409)
     expect(stale.json.content).toBe('server')
     expect(stale.json.note.version).toBe(2)
+  })
+
+  /** The version a save names is the one it read, so two saves that read the
+   *  same row cannot both land. Without that they both wrote `version + 1`: the
+   *  second replaced the first's bytes under the first's version number, and
+   *  every device that had already seen that number never learned there was
+   *  anything newer. Which is not the case above - a PUT that names a version is
+   *  answered 409 - but the one where a room settles the note a moment after a
+   *  device pushed what it had; see rooms/room.ts. */
+  test('a save from a row that has moved on does not land', async () => {
+    const note = await makeNote(env, space, 'a.md', 'one')
+
+    expect(await saveNote(env, note, 'two', note.path)).not.toBeNull()
+    expect(await saveNote(env, note, 'three', note.path)).toBeNull()
+
+    const held = await env.NOTES.get(`spaces/${space}/${note.id}`)
+    expect(await held?.text()).toBe('two')
+
+    const row = env.db.prepare('select version, hash from notes where id = ?').get(note.id) as {
+      version: number
+    }
+    expect(row.version).toBe(2)
+  })
+
+  test('a save that lost the race is answered with what is held', async () => {
+    const created = await addNote('a.md', 'one')
+    const id = created.json.note.id
+
+    // The row moving on between the read and the write is what a room settling
+    // the same note does, and no order of requests can stand in for it. So the
+    // write is made to lose where it would lose: the statement that names the
+    // version it read reports that it changed nothing.
+    const claimed = env.losing(/update notes set path/)
+
+    const late = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'mine' },
+    })
+
+    expect(claimed()).toBe(1)
+    expect(late.status).toBe(409)
+    expect(late.json.error).toBe('this note changed elsewhere')
+    expect(late.json.content).toBe('one')
   })
 
   /** A canvas is the one thing a machine can settle on its own: everything on

@@ -18,9 +18,15 @@ const MIGRATIONS = readdirSync(FOLDER)
  *  come from; here every read is `unknown`, because only the calling route
  *  knows what it selected. Nothing is `async` that has nothing to await - a
  *  resolved promise is the same thing to the caller and says so. */
-function d1(database: DatabaseSync) {
+/** Whether the statement about to run is one a test asked to lose; see `losing`
+ *  on the environment. Consumed by the statement it matches and by nothing else. */
+type Loses = (sql: string) => boolean
+
+function d1(database: DatabaseSync, loses: Loses) {
   return {
     prepare(sql: string) {
+      const lost = loses(sql)
+
       const statement = {
         args: [] as never[],
         bind(...args: unknown[]) {
@@ -33,9 +39,14 @@ function d1(database: DatabaseSync) {
         all(): Promise<{ results: unknown[] }> {
           return Promise.resolve({ results: database.prepare(sql).all(...statement.args) })
         },
-        run(): Promise<{ success: true }> {
-          database.prepare(sql).run(...statement.args)
-          return Promise.resolve({ success: true })
+        // `meta.changes` is what a conditional write reads to find out whether
+        // it landed; see `saveNote`. Node's driver reports the same number under
+        // the same name, so the fake passes it straight through.
+        run(): Promise<{ success: true; meta: { changes: number } }> {
+          if (lost) return Promise.resolve({ success: true, meta: { changes: 0 } })
+
+          const result = database.prepare(sql).run(...statement.args)
+          return Promise.resolve({ success: true, meta: { changes: Number(result.changes) } })
         },
       }
       return statement
@@ -74,6 +85,11 @@ export interface TestEnv extends Env {
   /** The database underneath, for setting up a state no endpoint can reach -
    *  an account already at its quota, for instance. */
   db: DatabaseSync
+  /** Makes the next write matching `sql` report that it changed nothing, the way
+   *  a conditional write reads when somebody else claimed the row first. Answers
+   *  a function saying how many writes it caught, so a test can say that the
+   *  race it meant to arrange actually happened. */
+  losing(sql: RegExp): () => number
   close(): void
 }
 
@@ -81,14 +97,30 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
   const database = new DatabaseSync(':memory:')
   for (const migration of MIGRATIONS) database.exec(readFileSync(migration, 'utf8'))
 
+  let losing: RegExp | null = null
+  let caught = 0
+
+  const loses: Loses = (sql) => {
+    if (!losing?.test(sql)) return false
+
+    losing = null
+    caught++
+    return true
+  }
+
   return {
-    DB: d1(database) as unknown as D1Database,
+    DB: d1(database, loses) as unknown as D1Database,
     NOTES: bucket() as unknown as R2Bucket,
     BLOG_ROOT: 'nibeditor.com',
     BLOG_CNAME_TARGET: 'cname.nibeditor.com',
     APP_ORIGIN: 'https://nibeditor.com',
     ...overrides,
     db: database,
+    losing: (sql) => {
+      losing = sql
+      const before = caught
+      return () => caught - before
+    },
     close: () => database.close(),
   }
 }

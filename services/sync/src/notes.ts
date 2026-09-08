@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { type Context, Hono } from 'hono'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
@@ -116,11 +116,24 @@ export async function addNote(
  *  it as an ordinary save. Answers the note as it now stands, and the note
  *  untouched when the bytes and the path are already what is held.
  *
+ *  Null when the row has moved on since `note` was read. The write names the
+ *  version it saw, so two saves that read the same row cannot both land: without
+ *  that they both wrote `version + 1`, the second overwrote the first's bytes, and
+ *  every device that had already seen that version number never learned there was
+ *  anything newer. Which is not a race between two clients - one PUT names the
+ *  version it edited and is answered 409 - but between a client and a room
+ *  settling the same note a moment later, and nothing was watching for it.
+ *
  *  Shared by the route below and by a room settling what several devices wrote
  *  together (see rooms/room.ts), so a note that arrives either way lands in one
  *  shape and everything that reads notes - the file sync, publishing, the
  *  connector, the glasses, search - carries on unaware there was a difference. */
-export async function saveNote(env: Env, note: Note, content: string, path: string): Promise<Note> {
+export async function saveNote(
+  env: Env,
+  note: Note,
+  content: string,
+  path: string,
+): Promise<Note | null> {
   const size = byteLength(content)
   const hash = await sha256(content)
   if (hash === note.hash && path === note.path) return note
@@ -136,9 +149,12 @@ export async function saveNote(env: Env, note: Note, content: string, path: stri
     hash,
   }
 
-  await env.NOTES.put(noteKey(note.space_id, note.id), content)
-  await env.DB.prepare(
-    'update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?, hash = ? where id = ?',
+  // The row first, because naming the version in it is what claims the write.
+  // The bytes follow only once that has landed: a save that lost the claim must
+  // not have replaced the bucket's copy, which the winner's row now describes.
+  const written = await env.DB.prepare(
+    `update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?, hash = ?
+      where id = ? and version = ?`,
   )
     .bind(
       updated.path,
@@ -148,9 +164,13 @@ export async function saveNote(env: Env, note: Note, content: string, path: stri
       updated.size,
       updated.hash,
       note.id,
+      note.version,
     )
     .run()
 
+  if (!written.meta.changes) return null
+
+  await env.NOTES.put(noteKey(note.space_id, note.id), content)
   return updated
 }
 
@@ -288,17 +308,10 @@ notes.put('/notes/:id', async (context) => {
   let content = sent ?? ''
 
   if (baseVersion !== undefined && baseVersion !== note.version) {
+    if (!isCanvasTarget(path)) return await conflict(context, note.id)
+
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
-    const held = object ? await object.text() : ''
-
-    if (!isCanvasTarget(path)) {
-      return context.json(
-        { error: 'this note changed elsewhere', note: presentNote(note), content: held },
-        409,
-      )
-    }
-
-    content = mergeCanvasFiles(content, held)
+    content = mergeCanvasFiles(content, object ? await object.text() : '')
     if (byteLength(content) > MAX_NOTE_BYTES) {
       return context.json({ error: 'that note is too large' }, 413)
     }
@@ -311,8 +324,38 @@ notes.put('/notes/:id', async (context) => {
     return context.json({ error: 'out of space' }, 507)
   }
 
-  return context.json({ note: presentNote(await saveNote(context.env, note, content, path)) })
+  const saved = await saveNote(context.env, note, content, path)
+
+  // Somebody else - another device, or the room this note is open in - saved
+  // between the row being read above and the write. The same answer a version
+  // that did not match gets, because it is the same thing to the client: what
+  // it edited is not what is held, and here is what is.
+  if (!saved) return await conflict(context, note.id)
+
+  return context.json({ note: presentNote(saved) })
 })
+
+/** The 409 a save that lost gets: the note as it now stands, with its bytes, so
+ *  the client can keep both copies without a second round trip. */
+async function conflict(
+  context: Context<{ Bindings: Env; Variables: Variables }>,
+  noteId: string,
+): Promise<Response> {
+  const held = await context.env.DB.prepare('select * from notes where id = ?')
+    .bind(noteId)
+    .first<Note>()
+
+  const object = held ? await context.env.NOTES.get(noteKey(held.space_id, held.id)) : null
+
+  return context.json(
+    {
+      error: 'this note changed elsewhere',
+      ...(held ? { note: presentNote(held) } : {}),
+      content: object ? await object.text() : '',
+    },
+    409,
+  )
+}
 
 /** Soft delete: the tombstone is what tells other devices to remove it. The
  *  content stays, with its size and hash, so the note can be put back from

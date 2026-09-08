@@ -328,7 +328,12 @@ export class NoteRoom implements DurableObject {
       if (owner && !(await fits(this.env, owner.user_id, size, note.size))) return
     }
 
-    await saveNote(this.env, note, settled, note.path)
+    // Somebody saved the same note between the row being read above and the
+    // write - a device that was offline pushing what it had, say. The room is
+    // still holding the words, so the answer is to come round again and write
+    // them on top of what landed rather than to write over it from a row that
+    // was already stale.
+    if (!(await saveNote(this.env, note, settled, note.path))) await this.settleSoon()
   }
 }
 

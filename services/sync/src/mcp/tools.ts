@@ -288,8 +288,14 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
 
   // The same two writes the sync API makes, so a note a model wrote is a note
   // like any other: the same version, the same cursor, the same conflict rule.
-  if (existing) await saveNote(env, existing, content, path)
-  else await addNote(env, space.id, path, content)
+  // Which includes losing to somebody who saved while this was being written:
+  // said plainly, because a model that is told so can read the note again.
+  if (existing) {
+    const saved = await saveNote(env, existing, content, path)
+    if (!saved) return `${path} changed while I was writing it. Read it again first.`
+  } else {
+    await addNote(env, space.id, path, content)
+  }
 
   return `Saved ${path}.`
 }
