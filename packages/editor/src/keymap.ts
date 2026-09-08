@@ -12,19 +12,28 @@ import { EditorSelection, type StateCommand } from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
 import {
   clearFormatting,
+  insertCallout,
   insertCodeFence,
+  insertComment,
+  insertFootnote,
+  insertFrontMatter,
   insertHorizontalRule,
   insertImage,
   insertLink,
   insertMathBlock,
+  insertToc,
   setHeading,
   shiftHeading,
   toggleBulletList,
   toggleOrderedList,
   toggleQuote,
+  toggleTask,
+  toggleTaskList,
   toggleWrap,
 } from './commands'
-import { copyMarkdown, pastePlain } from './paste'
+import { findPrevious, openReplace } from './find'
+import { copyMarkdown } from './copy'
+import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
 import { redoEdit, undoEdit } from './shared'
 import { bindings, type BindingSpec } from './shortcuts'
@@ -66,6 +75,9 @@ export const nibBindings: BindingSpec[] = [
   { id: 'format.link', key: 'Mod-k', run: insertLink, preventDefault: true },
   { id: 'format.image', key: 'Mod-Shift-i', run: insertImage, preventDefault: true },
   { id: 'format.clear', key: 'Mod-\\', run: clearFormatting, preventDefault: true },
+  // No key out of the box: a comment is written now and then, and every chord
+  // left free is a chord somebody can spend on what they do write often.
+  { id: 'format.comment', key: null, run: insertComment, preventDefault: true },
 
   { id: 'paragraph.body', key: 'Mod-0', run: setHeading(0), preventDefault: true },
   { id: 'paragraph.heading-1', key: 'Mod-1', run: setHeading(1), preventDefault: true },
@@ -92,12 +104,50 @@ export const nibBindings: BindingSpec[] = [
   { id: 'paragraph.bullet-list', key: 'Mod-Shift-]', run: toggleBulletList, preventDefault: true },
   { id: 'paragraph.rule', key: 'Mod-Shift-r', run: insertHorizontalRule, preventDefault: true },
 
+  // The four blocks that are a menu row and not a chord anybody would guess.
+  // Each is in the list so it can be given one; none takes a key nobody asked
+  // for. Task list is the exception below, because ticking a box is a thing
+  // somebody does over and over.
+  { id: 'paragraph.task-list', key: null, run: toggleTaskList, preventDefault: true },
+  { id: 'paragraph.callout', key: null, run: insertCallout, preventDefault: true },
+  { id: 'paragraph.footnote', key: null, run: insertFootnote, preventDefault: true },
+  { id: 'paragraph.toc', key: null, run: insertToc, preventDefault: true },
+  { id: 'paragraph.front-matter', key: null, run: insertFrontMatter, preventDefault: true },
+
   { id: 'edit.indent', key: 'Mod-[', run: indentMore, preventDefault: true },
   { id: 'edit.outdent', key: 'Mod-]', run: indentLess, preventDefault: true },
 
   // Runs the code fence the caret is in. Falls through to the default when the
   // caret is anywhere else, or the fence is not JavaScript.
   { id: 'edit.run-fence', key: 'Mod-Enter', run: runFenceAtCursor },
+  // Ticks the box on the line the caret is on, and shares the key above: a line
+  // is a task or it is code, and both of these give way when it is not theirs.
+  // Under the fence, so `- [ ] x` written inside one is still code.
+  { id: 'paragraph.task', key: 'Mod-Enter', run: toggleTask, contextual: true },
+
+  // Find with the caret in the replace field, since CodeMirror's own panel holds
+  // both. Ctrl+H is what Typora and Obsidian use; a Mac keeps Cmd+H for hiding
+  // the application, so there it is the Find-and-replace chord instead.
+  { id: 'edit.replace', key: 'Mod-h', mac: 'Mod-Alt-f', run: openReplace, preventDefault: true },
+  // The library pairs previous onto next through a Shift handler; here it is a
+  // command with a name of its own, on the two keys every editor uses for it. The
+  // scope is the library's own for Find: the keys have to work while the keyboard
+  // is in the search panel, which is where it is after Find opened it.
+  {
+    id: 'edit.find-previous',
+    key: 'Mod-Shift-g',
+    run: findPrevious,
+    scope: 'editor search-panel',
+    preventDefault: true,
+  },
+  {
+    id: 'edit.find-previous.alt',
+    key: 'Shift-F3',
+    run: findPrevious,
+    scope: 'editor search-panel',
+    preventDefault: true,
+    alias: true,
+  },
 
   { id: 'edit.select-word', key: 'Mod-d', run: selectWord, preventDefault: true },
   { id: 'edit.select-line', key: 'Mod-l', run: selectLine, preventDefault: true },
@@ -154,6 +204,13 @@ function adopt(
  *  something other than the library's own command answers to it. */
 type Extra = Pick<Partial<BindingSpec>, 'alias' | 'run'>
 
+/** The same binding without the library's Shift partner. */
+function unpaired(spec: BindingSpec): BindingSpec {
+  const alone = { ...spec }
+  delete alone.shift
+  return alone
+}
+
 /** Takes one of the library's bindings over by name, or fails loudly. A key
  *  the library no longer binds would otherwise become a named shortcut with no
  *  command behind it, which reads in the settings as a key that simply does
@@ -201,8 +258,11 @@ export const standardBindings: BindingSpec[] = [
   },
   adopt('edit.select-all', defaultKeymap, 'Mod-a'),
   adopt('edit.find', searchKeymap, 'Mod-f'),
-  adopt('edit.find-next', searchKeymap, 'Mod-g'),
-  adopt('edit.find-next.alt', searchKeymap, 'F3', { alias: true }),
+  // Unpaired: the library carries Find previous on these two as a Shift handler,
+  // and a key that quietly runs a second command is a key nobody can rebind.
+  // Find previous has entries of its own in nibBindings above.
+  unpaired(adopt('edit.find-next', searchKeymap, 'Mod-g')),
+  unpaired(adopt('edit.find-next.alt', searchKeymap, 'F3', { alias: true })),
   adopt('edit.goto-line', searchKeymap, 'Mod-Alt-g'),
   adopt('edit.move-line-up', defaultKeymap, 'Alt-ArrowUp'),
   adopt('edit.move-line-down', defaultKeymap, 'Alt-ArrowDown'),

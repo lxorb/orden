@@ -4,20 +4,29 @@ export { type Peer, peersOf, remoteCarets, setPeers } from './carets'
 export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
 export {
   clearFormatting,
+  insertCallout,
   insertCodeFence,
+  insertComment,
+  insertFootnote,
+  insertFrontMatter,
   insertLink,
   insertHorizontalRule,
   insertMathBlock,
   insertPageBreak,
   insertSlideBreak,
   insertTable,
-  openFind,
+  insertToc,
   setHeading,
+  shiftHeading,
   toggleBulletList,
   toggleOrderedList,
   toggleQuote,
+  toggleTask,
+  toggleTaskList,
   toggleWrap,
 } from './commands'
+export { findNext, findPrevious, openFind, openReplace } from './find'
+export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
 export { DIAGRAM_LANGUAGES, diagramSvg } from './live-preview/render'

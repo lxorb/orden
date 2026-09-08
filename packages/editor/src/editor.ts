@@ -14,8 +14,10 @@ import { type NoteIndex, noteIndexExtension, type NoteJump, noteOpener } from '.
 import { codeThemeExtension } from './code-theme'
 import { closeFence } from './commands'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
+import { richCopy } from './copy'
 import { richPaste } from './paste'
 import { nibSelection } from './selection/layer'
+import { openTail, openTailDown } from './tail'
 import { modeExtensions } from './modes'
 import { type SharedDoc, sharedOf, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
@@ -104,6 +106,9 @@ export function editorState(options: StateOptions): EditorState {
       // Images are checked first, so a screenshot beats the HTML around it.
       ...(onImage ? [imageHandling(onImage)] : []),
       richPaste(),
+      richCopy(),
+      // A click in the space under whatever block ends the note.
+      openTail(),
       ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
       linkClicks,
       ...(openLink ? [linkOpener.of(openLink)] : []),
@@ -128,6 +133,12 @@ export function editorState(options: StateOptions): EditorState {
         ...nibBindings,
         ...standardBindings,
       ]),
+      // Down from the last line of a note that ends in a table, a fence, a formula
+      // or a picture makes the paragraph there is nowhere to stand in otherwise;
+      // see tail.ts. Under the named bindings, so a table still gets the arrow
+      // first, and over the library's own, whose Down at the last line goes
+      // nowhere. Not in the settings, like the other arrow keys.
+      keymap.of([{ key: 'ArrowDown', run: openTailDown }]),
       // What the library binds that nothing here has a name for, underneath
       // everything that does.
       keymap.of(unclaimedKeymap),
