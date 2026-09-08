@@ -761,9 +761,11 @@ real devices look like. The numbers above are from a quiet machine.
   crossing whole, two devices drawing at once, one card moved here and coloured
   there, the settle writing the file `format.ts` would have written, a reader who
   sees every stroke and can add none, five thousand strokes folding into one
-  snapshot, waking up still knowing it is a plane, a delete staying deleted, the
-  door reading the kind off the name of the file, and the door letting in a guest
-  a link handed a session to.
+  snapshot, waking up still knowing it is a plane, a delete staying deleted, and
+  the door reading the kind off the name of the file. Then the same door for a
+  guest a link handed a session to: in at the link's role, told the kind for a
+  canvas exactly as for a note, and given the stranger's 404 while the owner has
+  not answered.
 - `services/sync/test/share.test.ts` - every route that names a space, asked by
   everybody there is to ask: the owner, a writer, a reader, a guest who may write
   and a guest who may read, plus a stranger. A hundred and forty-odd cases from

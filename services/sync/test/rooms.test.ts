@@ -459,6 +459,26 @@ describe('the door to a room', () => {
       expect(door.asked.at(-1)?.get('x-nib-space'), role).toBe(spaceId)
     }
 
+    // A canvas is the same door and the same guest: the kind is read off the
+    // file's name in the very query that answered the guest's session.
+    const boardId = (
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token: owner,
+        body: { path: 'Board.canvas', content: '' },
+      })
+    ).json.note.id
+
+    const drawing = await call(env, `/rooms/${boardId}`, {
+      headers: {
+        upgrade: 'websocket',
+        'sec-websocket-protocol': subprotocol(await guest('write', 'open')),
+      },
+    })
+
+    expect(drawing.status).toBe(200)
+    expect(door.asked.at(-1)?.get('x-nib-kind')).toBe('plane')
+    expect(door.asked.at(-1)?.get('x-nib-write')).toBe('yes')
+
     // Waiting on the owner is not being in, so the note is not there yet.
     const waiting = await call(env, `/rooms/${noteId}`, {
       headers: {
