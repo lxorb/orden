@@ -140,6 +140,21 @@ function inkStyle(ctx: CanvasRenderingContext2D, stroke: InkStroke, palette: Pal
   }
 }
 
+/** A layer wiped back to nothing.
+ *
+ *  Said out loud rather than left to whatever the layer was made with, and from
+ *  a known state, because the ink before it may have been laid down through a
+ *  blend. On a backing that kept no alpha this would leave opaque black instead
+ *  of nothing, which is the trouble `backing.ts` goes to in order never to hand
+ *  one over. */
+function wipe(ctx: CanvasRenderingContext2D, view: View) {
+  const { width, height, ratio } = view
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.globalAlpha = 1
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.clearRect(0, 0, width * ratio, height * ratio)
+}
+
 /** Every stroke in view, in as few fills as there are kinds of ink on it.
  *
  *  Strokes drawn in the same tool and the same colour are one shape as far as
@@ -161,9 +176,7 @@ export function paintInk(
   palette: Palette,
   picked?: ReadonlySet<string>,
 ): number {
-  const { width, height, ratio } = view
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.clearRect(0, 0, width * ratio, height * ratio)
+  wipe(ctx, view)
   place(ctx, view)
 
   const box = seen(view)
@@ -221,9 +234,7 @@ export function paintLive(
   view: View,
   palette: Palette,
 ) {
-  const { width, height, ratio } = view
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.clearRect(0, 0, width * ratio, height * ratio)
+  wipe(ctx, view)
   if (!stroke) return
 
   place(ctx, view)
@@ -232,14 +243,4 @@ export function paintLive(
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'source-over'
-}
-
-/** A 2d context asked to keep up with the pen rather than with the page.
- *
- *  `desynchronized` is a hint and nothing more: the browser may ignore it, and
- *  on Android it bypasses the compositor queue rather than drawing to the front
- *  buffer. Asked for anyway, because where it is honoured it is the difference
- *  between ink under the nib and ink a frame behind it. */
-export function inkContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D | null {
-  return canvas.getContext('2d', { desynchronized: true, alpha: true })
 }

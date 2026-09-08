@@ -15,9 +15,13 @@
    *  than an empty edge. Five thousand strokes is a sixth of a second of
    *  rasterising; doing it sixty times a second is a plane nobody can pan.
    *
-   *  Both are asked for a desynchronised context, which is a hint the browser may
-   *  take or leave. Where it is taken, the ink lands under the nib rather than a
-   *  frame behind it.
+   *  The upper one is asked for a desynchronised context, which is a hint the
+   *  browser may take or leave; where it is taken, the ink lands under the nib
+   *  rather than a frame behind it. The lower one never asks. A desynchronised
+   *  layer has to be the topmost thing on the page to keep its alpha, and this
+   *  one has the other layer over it; nor has it anything to gain, being drawn
+   *  when the view settles rather than under the pen. Whether the upper one is
+   *  given the hint is not this file's to decide: `canvas/backing.ts` says why.
    *
    *  Nothing here handles a pointer. The surface above owns every gesture and
    *  hands this component the stroke to draw, which is why these two elements can
@@ -26,7 +30,8 @@
   import { untrack } from 'svelte'
   import type { Camera } from './camera'
   import type { InkStroke } from './canvas/format'
-  import { inkContext, type Palette, paintInk, paintLive, type View } from './canvas/paint'
+  import { type InkMode, inkLayer, wantedInkMode } from './canvas/backing'
+  import { type Palette, paintInk, paintLive, type View } from './canvas/paint'
 
   const {
     ink,
@@ -86,17 +91,31 @@
     }
   })
 
+  /** Which backing the live layer is drawn on. Decided before it exists, from
+   *  the platform, and narrowed if the context it gets says the backing is not
+   *  the one that was asked for. */
+  let mode = $state<InkMode>(wantedInkMode())
+
   /** One context per element, kept: the attributes cannot be changed after the
    *  first call, so asking twice would silently hand back the first answer
    *  anyway. */
   const contexts = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D | null>()
 
-  function contextOf(element: HTMLCanvasElement): CanvasRenderingContext2D | null {
+  /** The context for a layer, in the mode wanted for it or else in the plain
+   *  one. An element that answered in another mode, or with no context at all,
+   *  can never answer differently, so the mode drops and the live element is
+   *  keyed on it: a new element, and a new context to ask. */
+  function contextOf(element: HTMLCanvasElement, wanted: InkMode): CanvasRenderingContext2D | null {
     const held = contexts.get(element)
     if (held !== undefined) return held
 
-    const context = inkContext(element)
+    const layer = inkLayer(element, wanted)
+    const context = layer?.context ?? null
     contexts.set(element, context)
+
+    // Only a layer that asked for the hint can be let down by it: the plain
+    // backing is the one every browser has.
+    if (wanted === 'latency' && layer?.mode !== 'latency') mode = 'plain'
     return context
   }
 
@@ -110,7 +129,7 @@
       const element = below
       if (!element || !width || !height) return
 
-      const context = contextOf(element)
+      const context = contextOf(element, 'plain')
       if (!context) return
 
       // The layer is the view plus a margin all round, and its middle is the
@@ -208,7 +227,7 @@
     // Read before the camera, so a layer with nothing on it does not follow it.
     if (!element || (!one && !inked)) return
 
-    const context = contextOf(element)
+    const context = contextOf(element, mode)
     if (!context) return
 
     paintLive(context, one, { camera, width, height, ratio }, palette)
@@ -231,15 +250,19 @@
   aria-hidden="true"
 ></canvas>
 
-<canvas
-  class="ink live"
-  bind:this={above}
-  width={Math.max(1, Math.round(width * ratio))}
-  height={Math.max(1, Math.round(height * ratio))}
-  style:width="{width}px"
-  style:height="{height}px"
-  aria-hidden="true"
-></canvas>
+<!-- Keyed on the backing, because an element keeps the context it was first
+     given: the only way to ask for another one is another element. -->
+{#key mode}
+  <canvas
+    class="ink live"
+    bind:this={above}
+    width={Math.max(1, Math.round(width * ratio))}
+    height={Math.max(1, Math.round(height * ratio))}
+    style:width="{width}px"
+    style:height="{height}px"
+    aria-hidden="true"
+  ></canvas>
+{/key}
 
 <style>
   /* Over the cards, because writing on a page goes on top of what is printed
