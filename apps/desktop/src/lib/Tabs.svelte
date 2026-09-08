@@ -203,6 +203,7 @@
         <button
           class="pick"
           draggable="true"
+          title={stripped(tab.name)}
           onclick={() => workspace.activate(tab.id)}
           ondblclick={() => workspace.keep(tab.id)}
           oncontextmenu={(event) => showMenu(event, tab)}
@@ -229,7 +230,11 @@
               <path d="M7 3.2c1.4-1.2 3.1-1.6 5.5-1.6v7.3c-2.4 0-4.1.4-5.5 1.6" />
             </svg>
           {/if}
-          {stripped(tab.name)}
+          <!-- The name in an element of its own: a flex box draws no ellipsis on
+               the text directly inside it, so the words were being cut through
+               the middle of a letter. This is also the only part of the tab that
+               gives way as the strip fills. -->
+          <span class="label">{stripped(tab.name)}</span>
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are
                already the whole sentence. -->
@@ -300,11 +305,16 @@
 </div>
 
 <style>
+  /* The room the tabs get. Measured from what they need (`auto`) and not from
+     nothing: with a basis of zero the strip and the empty stretch it sits
+     beside in the titlebar each took half the row, so the names were cut with
+     half the bar standing empty. Grows into the rest of the row, gives it all
+     back before the window controls do. */
   .strip {
     display: flex;
     align-items: stretch;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
   }
 
   /* Shrinks before the window controls do, and scrolls once it runs out. */
@@ -313,7 +323,7 @@
     align-items: stretch;
     gap: 2px;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
     padding: 0 var(--space-1);
     overflow-x: auto;
     scrollbar-width: none;
@@ -398,11 +408,24 @@
     display: flex;
     align-items: center;
     position: relative;
+    /* As wide as its name needs, capped at `--tab-name` by the name itself.
+       Only once the strip is full do they give way, and never past
+       `--tab-min`: below that the strip scrolls instead. */
+    flex: 0 3 auto;
+    min-width: var(--tab-min);
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     user-select: none;
     transition:
       background var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out);
+      box-shadow var(--dur-fast) var(--ease-out),
+      flex-shrink var(--dur-fast) var(--ease-out);
+  }
+
+  /* The tab being read gives way a third as fast as the rest, so the name of
+     the note in front of you is the last one still worth reading. Eased, so
+     that in a full strip the two tabs trade their width rather than swap it. */
+  .tab.active {
+    flex-shrink: 1;
   }
 
   .tab:hover {
@@ -463,11 +486,20 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    max-width: 15rem;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 7px 4px 7px 10px;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* The name, and the whole of what a tab is as wide as. The dots and the book
+     beside it keep their size; this is the part that shortens. */
+  .label {
+    min-width: 0;
+    max-width: var(--tab-name);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .tab.active .pick {
@@ -557,6 +589,7 @@
   .shut {
     display: grid;
     place-items: center;
+    flex: none;
     width: 20px;
     height: 100%;
     padding: 0 6px 0 0;
