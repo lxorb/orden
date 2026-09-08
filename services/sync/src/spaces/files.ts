@@ -123,15 +123,21 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
     hash: hash.toLowerCase(),
   }))
 
-  // A row pointing at a blob this account does not keep would serve nothing,
-  // and one pointing at somebody else's is not this space's to serve.
+  // A row pointing at a blob nobody in this space keeps would serve nothing, so
+  // an entry is kept when this account holds its bytes or when the space is
+  // already serving them. Both halves matter once a space can be shared: the
+  // writer's own PDFs are theirs to add, and the ones somebody else put here
+  // are not theirs to drop by sending a list that leaves them out.
+  const already = new Set(readSpaceFiles(space.files).map((one) => one.hash))
   const held = await heldBy(
     context.env,
     user.id,
     [...new Set(asked.map((one) => one.hash))].slice(0, MOST),
   )
-  const kept = asked.filter((one) => held.has(one.hash))
-  const missing = [...new Set(asked.filter((one) => !held.has(one.hash)).map((one) => one.hash))]
+
+  const there = (one: SpaceFile) => held.has(one.hash) || already.has(one.hash)
+  const kept = asked.filter(there)
+  const missing = [...new Set(asked.filter((one) => !there(one)).map((one) => one.hash))]
 
   const written = JSON.stringify(kept)
   if (new TextEncoder().encode(written).length > MOST_BYTES) {

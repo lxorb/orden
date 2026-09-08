@@ -72,6 +72,13 @@ export function codeMessage(code: string) {
   }
 }
 
+/** A subject is one line. Everything put into one below comes from a person - a
+ *  space's name, a name somebody chose - and a line break in one of those is not
+ *  part of a name; it is a second header. */
+function oneLine(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
 /** Everything put into the messages below comes from a person: a space's name,
  *  an address, a name somebody chose. None of it may become markup. */
 function escape(value: string): string {
@@ -111,7 +118,7 @@ export function inviteMessage(invite: {
   const what = invite.role === 'write' ? 'write in it' : 'read it'
 
   return {
-    subject: `${invite.from} shared ${invite.space} with you`,
+    subject: oneLine(`${invite.from} shared ${invite.space} with you`),
     ...letter(
       [
         `${invite.from} shared the space ${invite.space} with you on Nib, and you can ${what}.`,
@@ -125,7 +132,7 @@ export function inviteMessage(invite: {
 /** Somebody followed a link that asks first, and is waiting on the owner. */
 export function requestMessage(request: { space: string; who: string; link: string }) {
   return {
-    subject: `${request.who} would like to join ${request.space}`,
+    subject: oneLine(`${request.who} would like to join ${request.space}`),
     ...letter(
       [`${request.who} followed your link to ${request.space} and is waiting to be let in.`],
       { label: 'Open Nib', href: request.link },

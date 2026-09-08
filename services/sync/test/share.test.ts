@@ -385,19 +385,49 @@ describe('an invitation', () => {
   })
 
   test('mails one address at a time, the way a sign-in code is rate limited', async () => {
-    const first = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
+    const sent = await mail(async () => {
+      await call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: READER, role: 'read' },
+      })
+      await call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: READER, role: 'write' },
+      })
+    })
+
+    expect(sent.match(/shared the space Notes with you/g)).toHaveLength(1)
+    // The mail waited; the sharing did not.
+    expect((await shareView()).json.members[0]?.role).toBe('write')
+  })
+
+  test('never says whether the mail went, which would say who else had mailed them', async () => {
+    // The gate is per address across every space there is, so an answer here
+    // would be a way to ask about somebody else's sharing.
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
       token: owner,
       body: { email: READER, role: 'read' },
     })
-    const again = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
+
+    expect(json.mailed).toBeUndefined()
+  })
+
+  test('carries a space name that is one line, whatever the name holds', async () => {
+    await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
       token: owner,
-      body: { email: READER, role: 'write' },
+      body: { name: 'Plans\r\nBcc: somebody@example.com' },
     })
 
-    expect(first.json.mailed).toBe(true)
-    expect(again.json.mailed).toBe(false)
-    // The mail waited; the sharing did not.
-    expect(again.json.members[0]?.role).toBe('write')
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: READER, role: 'read' },
+      }),
+    )
+
+    const subject = /- (.*)/.exec(sent)?.[1] ?? ''
+    expect(subject).toBe('owner shared PlansBcc: somebody@example.com with you')
   })
 
   test('opens nothing when it reaches somebody else', async () => {
@@ -768,33 +798,88 @@ describe('a note written in a space somebody shared', () => {
   })
 })
 
+/* ── The files beside the notes ───────────────────────────────────────── */
+
+describe('the PDFs a shared space keeps', () => {
+  /** A PDF on somebody's account, as the blob store holds it. */
+  function blobOf(email: string, hash: string) {
+    env.db.exec(
+      `insert into blobs (hash, user_id, size, type, created_at)
+       values ('${hash}', (select id from users where email = '${email}'), 10, 'application/pdf', 1)`,
+    )
+  }
+
+  function files(as: string, list: { path: string; hash: string }[]) {
+    return call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token: as,
+      body: { files: list },
+    })
+  }
+
+  const theirs = { path: 'paper.pdf', hash: 'a'.repeat(64) }
+  const mine = { path: 'notes.pdf', hash: 'b'.repeat(64) }
+
+  test('are not dropped by a writer who does not hold their bytes', async () => {
+    blobOf(OWNER, theirs.hash)
+    await files(owner, [theirs])
+
+    writer = await invite(WRITER, 'write')
+    blobOf(WRITER, mine.hash)
+
+    // The writer sends the list as their machine sees it: the owner's paper,
+    // which they are keeping no bytes for, and one of their own.
+    const { json } = await files(writer, [theirs, mine])
+
+    expect(json.files).toEqual([theirs, mine])
+    expect(json.missing).toEqual([])
+  })
+
+  test('still leave out one nobody in the space is keeping', async () => {
+    writer = await invite(WRITER, 'write')
+    const { json } = await files(writer, [mine])
+
+    expect(json.files).toEqual([])
+    expect(json.missing).toEqual([mine.hash])
+  })
+})
+
 /* ── Recently deleted ─────────────────────────────────────────────────── */
 
 describe('recently deleted in a shared space', () => {
-  test('lets the writer who deleted a note put it back', async () => {
+  test('stays the owner’s, whoever deleted the note', async () => {
+    // What Recently deleted gives back is storage, and the storage a shared
+    // space uses is its owner's. A writer emptying their own would otherwise
+    // take away somebody else's notes for good.
     writer = await invite(WRITER, 'write')
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: writer })
 
-    const listed = await call(env, '/v1/trash', { token: writer })
-    expect(listed.json.notes.map((one) => one.path)).toContain('plan.md')
+    expect((await call(env, '/v1/trash', { token: writer })).json.notes).toEqual([])
+    expect(
+      (await call(env, '/v1/trash', { token: owner })).json.notes.map((one) => one.path),
+    ).toEqual(['plan.md'])
+  })
+
+  test('is not a way into somebody else’s notes', async () => {
+    writer = await invite(WRITER, 'write')
+    await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: writer })
+
+    for (const [path, method] of [
+      [`/v1/trash/notes/${note}/restore`, 'POST'],
+      [`/v1/trash/notes/${note}`, 'DELETE'],
+    ] as const) {
+      expect((await call(env, path, { method, token: writer })).status, path).toBe(404)
+    }
+
+    // And emptying their own takes nothing of the owner's with it.
+    await call(env, '/v1/trash', { method: 'DELETE', token: writer })
+    expect((await call(env, '/v1/trash', { token: owner })).json.notes).toHaveLength(1)
 
     const back = await call(env, `/v1/trash/notes/${note}/restore`, {
       method: 'POST',
-      token: writer,
+      token: owner,
     })
     expect(back.status).toBe(200)
-  })
-
-  test('keeps a reader out of it', async () => {
-    reader = await invite(READER, 'read')
-    await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: owner })
-
-    const listed = await call(env, '/v1/trash', { token: reader })
-    expect(listed.json.notes).toEqual([])
-    expect(
-      (await call(env, `/v1/trash/notes/${note}/restore`, { method: 'POST', token: reader }))
-        .status,
-    ).toBe(404)
   })
 
   test('keeps the space itself the owner’s to restore', async () => {

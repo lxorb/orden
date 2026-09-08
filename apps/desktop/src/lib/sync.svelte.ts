@@ -45,7 +45,7 @@ class Sync {
 
   start() {
     this.generation++
-    this.mirrors = this.load()
+    this.mirrors = this.load(account.user?.id ?? null)
     this.quiet = 0
     this.reconciledAt = 0
 
@@ -114,13 +114,15 @@ class Sync {
     await account.loadSpaces().catch(() => undefined)
   }
 
-  /** The space's bookmarks as they now stand. Signed out, or in a space the
-   *  account has never heard of, they stay on this machine and the next pass
-   *  that pairs the space carries them up. */
+  /** The space's bookmarks as they now stand. Signed out, in a space the
+   *  account has never heard of, or in one shared to read, they stay on this
+   *  machine: the first two because there is nowhere to send them yet, and the
+   *  last because what somebody keeps above a file list they may only read is
+   *  their own business and the account would refuse it anyway. */
   async pushBookmarks(root: string) {
     const token = account.token
     const mirror = this.mirrors[root]
-    if (!token || !mirror) return
+    if (!token || !mirror || this.reads(mirror.spaceId)) return
 
     await api
       .saveBookmarks(token, mirror.spaceId, workspace.bookmarks.of(root))
@@ -225,8 +227,13 @@ class Sync {
     // has to settle in a single pass, not leave a gap.
     for (const root of plan.remove) {
       const space = workspace.spaces.find((one) => one.root === root)
+      // A space somebody stopped sharing is in nobody's Recently deleted, so
+      // the copy on this disk is the only one left of what was read here. It
+      // goes to this device's trash rather than for good; a space the account
+      // says was deleted is in the account's own Recently deleted already.
+      const shared = this.mirrors[root]?.shared === true
       this.mirrors = without(this.mirrors, root)
-      if (space) await workspace.deleteSpace(space.id)
+      if (space) await workspace.deleteSpace(space.id, shared)
     }
 
     // Missing without a marker: not uploaded yet as far as anyone can tell, so
@@ -273,7 +280,10 @@ class Sync {
       // changes what happens when it later goes missing from the listing.
       mirror.shared = remote.role !== 'owner'
 
-      if (accountId === null) continue
+      // Whatever this machine had bookmarked in a space it may only read is
+      // its own business: the account would refuse the list, and asking on
+      // every pass is a refusal on every pass.
+      if (accountId === null || remote.role === 'read') continue
       const merged = workspace.bookmarks.adopt(mirror.root, remote.bookmarks, accountId)
       if (merged) await api.saveBookmarks(token, remote.id, merged).catch(() => undefined)
     }
@@ -400,12 +410,21 @@ class Sync {
     return moved
   }
 
-  private load(): Record<string, Mirror> {
+  private load(accountId: string | null): Record<string, Mirror> {
     const saved = parsed(localStorage.getItem(STORAGE_KEY))
     if (!isRecord(saved)) return {}
 
-    // An older version wrapped the mirrors in an object of their own.
+    // An older version wrapped the mirrors in an object of their own, and one
+    // older still kept no account beside them: what is there belongs to
+    // whoever is signing in now, which is what the next pass writes down.
     const held = isRecord(saved.mirrors) ? saved.mirrors : saved
+    const whose = typeof saved.account === 'string' ? saved.account : null
+
+    // A mirror is this machine's relationship with one account. Another
+    // account's mirrors are not spaces that went; they are nothing to do with
+    // this account at all, and reading them as absences would reach into the
+    // disk on the strength of somebody else's listing.
+    if (whose !== null && whose !== accountId) return {}
 
     const out: Record<string, Mirror> = {}
     for (const [root, one] of Object.entries(held)) {
@@ -421,7 +440,10 @@ class Sync {
     // pass changed it. The mirrors themselves are written into in place; this is
     // the one moment that says so out loud.
     this.mirrors = { ...this.mirrors }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mirrors))
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ account: account.user?.id ?? null, mirrors: this.mirrors }),
+    )
   }
 }
 

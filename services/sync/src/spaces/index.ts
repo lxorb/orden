@@ -17,6 +17,13 @@ import { share } from './share'
 import { atLeast, presentSpace, sharedAmong, spaceOf, type Role } from './space'
 
 const NAME_LIMIT = 80
+
+/** A space's name as it is stored. Control characters go: nothing can show
+ *  them, and the name travels into a mail's subject, a published page and a
+ *  folder on somebody's disk, where a newline in one is not part of a name. */
+function cleanName(given: string): string {
+  return given.replace(/\p{Cc}/gu, '').trim()
+}
 /** An id is a UUID; the length is all this needs to know. */
 const ID_LIMIT = 64
 /** More spaces than anyone has, and a bound on the one statement below that
@@ -69,7 +76,7 @@ spaces.post('/', async (context) => {
   const name = body.text('name', NAME_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const label = (name ?? '').trim()
+  const label = cleanName(name ?? '')
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
   const last = await context.env.DB.prepare(
@@ -151,7 +158,7 @@ spaces.patch('/:id', atLeast('owner'), async (context) => {
   const chosen = body.nullableText('icon', ID_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const label = name === undefined ? space.name : name.trim()
+  const label = name === undefined ? space.name : cleanName(name)
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
   // An icon is a name from the set the app ships. One that is not a name from

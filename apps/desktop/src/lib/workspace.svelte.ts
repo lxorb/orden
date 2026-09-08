@@ -1011,7 +1011,10 @@ class Workspace {
 
   /** Deletes the space's folder. The app owns that folder, so dropping it from
    *  the list alone would only bring it back on the next launch. */
-  async deleteSpace(id: string) {
+  /** `keep` puts the folder in this device's trash instead of deleting it, for
+   *  a space that is in nobody's Recently deleted to be put back from - which
+   *  is what a space somebody stopped sharing is. */
+  async deleteSpace(id: string, keep = false) {
     const space = this.spaces.find((entry) => entry.id === id)
     if (!space) return
 
@@ -1019,7 +1022,7 @@ class Workspace {
       // The account keeps a deleted space for 14 days; signed out, this device
       // keeps it in its trash folder instead (see trash.svelte.ts).
       const gone = await (
-        account.signedIn
+        account.signedIn && !keep
           ? invoke('delete_space', { path: space.root })
           : invoke('trash_item', { path: space.root, kind: 'space' })
       )

@@ -196,8 +196,10 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
     .bind(space.id, email)
     .run()
 
-  const sent = await mayMail(context.env, email)
-  if (sent) {
+  // Whether the mail went is not answered back. The gate is per address across
+  // every space there is, so saying so would tell an owner whether somebody
+  // else had just written to that address.
+  if (await mayMail(context.env, email)) {
     const message = inviteMessage({
       space: space.name,
       from: personName(owner),
@@ -207,7 +209,7 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
     await mailer(context.env).send(email, message.subject, message)
   }
 
-  return context.json({ ...(await sharing(context.env, space, owner)), mailed: sent })
+  return context.json(await sharing(context.env, space, owner))
 })
 
 share.patch('/:id/share/members/:email', atLeast('owner'), async (context) => {

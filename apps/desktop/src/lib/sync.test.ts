@@ -38,6 +38,8 @@ const fake = vi.hoisted(() => {
     notes: [] as Note[],
     /** Every write the account received, in order. */
     calls: [] as string[],
+    /** And every folder this machine took away, by how it took it. */
+    local: [] as string[],
     seq: 0,
   }
 
@@ -105,6 +107,10 @@ const fake = vi.hoisted(() => {
         return { name, path: root } as T
       }
       case 'delete_space':
+      case 'trash_item':
+        // Which of the two a folder went through is the difference between
+        // gone and recoverable, so the fake writes it down.
+        remote.local.push(`${command} ${path}`)
         for (const key of [...disk.keys()]) if (key.startsWith(`${path}/`)) disk.delete(key)
         return undefined as T
       case 'read_tree':
@@ -258,6 +264,7 @@ const fake = vi.hoisted(() => {
     remote.spaces = []
     remote.notes = []
     remote.calls = []
+    remote.local = []
     remote.seq = 0
   }
 
@@ -614,6 +621,92 @@ describe('a space somebody shared', () => {
 
     expect(workspace.spaces).toEqual([])
     expect(fake.remote.calls).toEqual([])
+  })
+
+  test('leaves that folder somewhere it can be got back from', async () => {
+    // Nobody's Recently deleted holds a space somebody stopped sharing, so the
+    // copy on this disk is the last one of what was read here.
+    sharedWithMe('write')
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    fake.remote.spaces = []
+    await afterTheReconcileInterval(() => sync.pass())
+
+    expect(fake.remote.local).toEqual(['trash_item /Theirs'])
+  })
+
+  test('is never asked to keep the bookmarks of one shared to read', async () => {
+    sharedWithMe('read')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls = []
+
+    workspace.bookmarks.toggle({ kind: 'note', path: 'Plan.md', text: '' })
+    await afterTheReconcileInterval(() => sync.pass())
+
+    // The account would refuse the list, and asking on every pass is a refusal
+    // on every pass.
+    expect(fake.remote.calls).toEqual([])
+  })
+})
+
+describe('the mirrors this machine remembers', () => {
+  /** Starts the loop, which is what reads them back, with the two globals it
+   *  listens on stood in for. */
+  async function started(): Promise<void> {
+    const listeners = { addEventListener: () => undefined, removeEventListener: () => undefined }
+    vi.stubGlobal('document', { hidden: false, ...listeners })
+    vi.stubGlobal('window', listeners)
+    vi.useFakeTimers()
+
+    await signIn()
+    account.settled()
+    sync.start()
+  }
+
+  function stopped(): void {
+    sync.stop()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  }
+
+  test('belong to one account, and another one starts from nothing', async () => {
+    // Otherwise a folder that mirrored a space somebody shared reads, under the
+    // next account to sign in here, as a space that went - and goes.
+    localStorage.setItem(
+      'nib:mirrors',
+      JSON.stringify({
+        account: 'somebody-else',
+        mirrors: { '/Theirs': { spaceId: 's-Theirs', root: '/Theirs', shared: true } },
+      }),
+    )
+
+    await started()
+    try {
+      expect(sync.remoteIdFor('/Theirs')).toBeNull()
+    } finally {
+      stopped()
+    }
+  })
+
+  test('are kept by a machine that wrote them before there was an account beside them', async () => {
+    // The shape an older version wrote. Whoever signs in now is who they are
+    // about, because they are the only account that machine had.
+    localStorage.setItem(
+      'nib:mirrors',
+      JSON.stringify({ '/Notes': { spaceId: 's-Notes', root: '/Notes' } }),
+    )
+
+    await started()
+    try {
+      expect(sync.remoteIdFor('/Notes')).toBe('s-Notes')
+    } finally {
+      stopped()
+    }
   })
 })
 
