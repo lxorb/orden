@@ -121,6 +121,13 @@ describe('writing a note', () => {
     expect(calls[0]?.body).toBe('{"path":"Reading/A.md","content":"# A"}')
   })
 
+  test('keeps an id inside the segment it was given', async () => {
+    answering(201, { note: { path: 'A.md' } })
+
+    await api.createNote('token', '../../v1/me', 'A.md', '# A')
+    expect(calls[0]?.url).toBe(`${BASE}/v1/spaces/..%2F..%2Fv1%2Fme/notes`)
+  })
+
   test('is a path being taken when the service says so', async () => {
     answering(409, { error: 'a note already lives there' })
 

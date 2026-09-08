@@ -109,9 +109,14 @@ export const api = {
     return spaces.sort((one, other) => one.position - other.position)
   },
 
-  /** 409 when a note already lives at that path; the caller steps the name. */
+  /** 409 when a note already lives at that path; the caller steps the name.
+   *
+   *  The id is encoded rather than pasted in: it comes back from `/v1/spaces`
+   *  or out of storage written by an older version, and a path is not the place
+   *  to find out that one of them was not what it claimed to be. */
   createNote: async (token: string, spaceId: string, path: string, content: string) => {
-    const body = await request(`/v1/spaces/${spaceId}/notes`, { token, body: { path, content } })
+    const where = `/v1/spaces/${encodeURIComponent(spaceId)}/notes`
+    const body = await request(where, { token, body: { path, content } })
     const note = isRecord(body) ? body.note : null
     return { path: text(note, 'path') ?? path }
   },
