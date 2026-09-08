@@ -186,6 +186,20 @@ describe('a note, loosely', () => {
     expect(best('zzz')).toBeNull()
   })
 
+  /** The walk keeps a moving cursor per term, and a term whose first letter runs
+   *  out partway down a note has to end the walk rather than end the term: a line
+   *  where only some of the terms were even looked for is not a line that holds
+   *  them all. */
+  test('and nothing for a note whose lines each hold only one of the terms', () => {
+    const split = { body: 'qqq one\nxyz\nwww three\n' }
+    expect(best('qqq www', split)).toBeNull()
+  })
+
+  test('while a note that answered earlier keeps the line it answered on', () => {
+    const split = { body: 'qqq www\nxyz\nqqq alone\n' }
+    expect(best('qqq www', split)?.text).toBe('qqq www')
+  })
+
   test('and nothing at all when the query is not one to relax', () => {
     expect(best('"quarter plan"')).toBeNull()
   })

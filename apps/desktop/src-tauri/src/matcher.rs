@@ -46,8 +46,10 @@ struct Span {
 /// Where in a shown line a match sits, in UTF-16 units.
 #[derive(Serialize, Clone)]
 pub struct Range {
-    from: usize,
-    to: usize,
+    /// Where the match starts.
+    pub(crate) from: usize,
+    /// Where it ends.
+    pub(crate) to: usize,
 }
 
 /// One matching line, named and placed, so a result reads like the note rather
@@ -149,7 +151,7 @@ fn fold_char(one: char) -> char {
 /// megabytes, so the ordinary case is a bytewise pass rather than a
 /// character-by-character one: the same answer, and several times less of the
 /// time a search spends.
-fn fold(text: &str) -> String {
+pub(crate) fn fold(text: &str) -> String {
     if text.is_ascii() {
         return text.to_ascii_lowercase();
     }
@@ -372,7 +374,7 @@ fn clip(one: Region, other: Region) -> Option<Region> {
 }
 
 /// How far into a string a byte offset is, counted the way the app counts it.
-fn utf16_at(text: &str, byte: usize) -> usize {
+pub(crate) fn utf16_at(text: &str, byte: usize) -> usize {
     text.get(..byte)
         .unwrap_or_default()
         .chars()

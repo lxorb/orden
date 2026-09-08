@@ -13,6 +13,7 @@
 
 mod assets;
 mod clock;
+mod fuzzy;
 mod highlights;
 mod history;
 #[cfg(desktop)]

@@ -9,13 +9,21 @@
 //!
 //! Hits leave as they are found rather than at the end. A reader watching a
 //! list fill is not waiting, and the disk is what a search spends its time on.
+//!
+//! Loose hits are the exception to that: a note the query does not answer is
+//! guessed about instead, and a guess is worth showing in the order its score
+//! puts it rather than in the order the disk handed it over. The scores are not
+//! all in until the space has been read, so they go out with the last handful.
+//! The scoring is in fuzzy.rs, and web/search.ts is the twin of this walk.
 
 use serde::Serialize;
+use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Emitter};
 
+use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
 use crate::matcher::{Hit, Matcher, Note};
 use crate::paths::{files_in, in_spaces, relative_to};
 use crate::query::Query;
@@ -42,24 +50,41 @@ pub struct Tag {
 #[derive(Serialize, Clone)]
 struct Batch {
     id: u32,
+    /// Hits that answer the query as asked, in the order the notes were read.
     hits: Vec<Hit>,
+    /// Notes that answer it only loosely, each with its best line and a score,
+    /// highest first. Only ever in the last handful.
+    loose: Vec<FuzzyHit>,
 }
 
 /// Searches every note in a space, sending hits to the window as they are
 /// found. Stops at `limit` of them, which is what keeps a one-letter query
 /// from answering with the whole space.
+///
+/// `terms` are the query's bare words, to be matched loosely against notes the
+/// query itself does not answer; empty when the query is not one to relax. The
+/// app works them out, because the browser build needs them in front of the
+/// bridge anyway; see fuzzy.rs for the rule they follow.
 #[tauri::command]
 pub fn search_space(
     app: AppHandle,
     root: String,
     query: Query,
+    terms: Vec<String>,
     limit: usize,
     id: u32,
 ) -> Result<(), String> {
     let dir = in_spaces(&app, &root)?;
+    let fuzzy = Fuzzy::new(&terms);
+    // What a note has to answer before its lines are worth guessing about: the
+    // query with its bare words taken out. A query of nothing but words leaves
+    // nothing to answer, which every note does. Read before the exact matcher
+    // takes the query for itself.
+    let narrowed = fuzzy.asks().then(|| Matcher::new(without_words(&query)));
     let matcher = Matcher::new(query);
 
     let mut pending: Vec<Hit> = Vec::new();
+    let mut loose: Vec<FuzzyHit> = Vec::new();
     let mut found = 0;
 
     for path in notes_in(&dir) {
@@ -87,26 +112,54 @@ pub fn search_space(
         };
 
         let mut hits = matcher.hits(&note, limit.saturating_sub(found));
-        if hits.is_empty() {
+        if !hits.is_empty() {
+            found += hits.len();
+            pending.append(&mut hits);
+
+            if pending.len() >= BATCH {
+                send(&app, id, &mut pending, Vec::new());
+            }
             continue;
         }
 
-        found += hits.len();
-        pending.append(&mut hits);
+        // Only a note the query does not answer is worth guessing about, which
+        // is also what keeps the loose pass off every note that already has a
+        // row. It still has to sit where `path:` and its kind said it does.
+        let Some(narrowed) = narrowed.as_ref() else {
+            continue;
+        };
+        if narrowed.hits(&note, 1).is_empty() {
+            continue;
+        }
 
-        if pending.len() >= BATCH {
-            send(&app, id, &mut pending);
+        if let Some(guess) = fuzzy.best(&note) {
+            loose.push(guess);
+        }
+
+        // Kept to the best of them as the walk goes, so a space where everything
+        // matches loosely does not become a list of the whole space. Trimmed at
+        // twice the limit rather than at it, so the sort happens once in a while
+        // rather than once a note.
+        if loose.len() > limit * 2 {
+            loose = best(loose, limit);
         }
     }
 
-    send(&app, id, &mut pending);
+    send(&app, id, &mut pending, best(loose, limit));
     Ok(())
+}
+
+/// The `most` best-scoring of them, highest first.
+fn best(mut loose: Vec<FuzzyHit>, most: usize) -> Vec<FuzzyHit> {
+    loose.sort_by_key(|hit| Reverse(hit.score()));
+    loose.truncate(most);
+    loose
 }
 
 /// Hands whatever has been found to the window. A window that has gone is not
 /// a search failure, so a send that fails is let go.
-fn send(app: &AppHandle, id: u32, pending: &mut Vec<Hit>) {
-    if pending.is_empty() {
+fn send(app: &AppHandle, id: u32, pending: &mut Vec<Hit>, loose: Vec<FuzzyHit>) {
+    if pending.is_empty() && loose.is_empty() {
         return;
     }
 
@@ -115,6 +168,7 @@ fn send(app: &AppHandle, id: u32, pending: &mut Vec<Hit>) {
         Batch {
             id,
             hits: std::mem::take(pending),
+            loose,
         },
     );
 }

@@ -389,6 +389,9 @@ export class Fuzzy {
 
     let line = 0
     let from = 0
+    /** Set when a term's first letter has run out for the rest of the note, so
+     *  no later line can hold every term and the note is answered. */
+    let gone = false
 
     while (from <= body.length) {
       const broke = folded.indexOf('\n', from)
@@ -406,9 +409,11 @@ export class Fuzzy {
 
           if (at < from) {
             at = folded.indexOf(letters[0] ?? '', from)
-            // Gone for the rest of the note, so no later line can hold the term
-            // either and the note is answered.
-            if (at === -1) break
+            if (at === -1) {
+              gone = true
+              all = false
+              break
+            }
             next[which] = at
           }
 
@@ -436,6 +441,8 @@ export class Fuzzy {
           // Copied only when this line is the best so far, which is rare.
           bestPositions = positions.slice()
         }
+
+        if (gone) break
       }
 
       if (broke === -1) break

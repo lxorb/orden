@@ -22,7 +22,11 @@ pub enum Unit {
 
 /// One node of a parsed query. `fold` is case folded, which is the default
 /// everywhere the reader has not said `case:`.
-#[derive(Deserialize, Debug)]
+///
+/// Cloneable because one search asks two questions of it: what the note says
+/// exactly, and, when nothing answers that, what it says loosely with the bare
+/// words taken out. See fuzzy.rs.
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Query {
     /// Every branch answers, which is what a space between two words means.
