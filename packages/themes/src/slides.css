@@ -165,8 +165,13 @@
   transition: width var(--dur-stage) var(--ease-out);
 }
 
-/* Which slide, shown when the deck moves and gone again a moment later. */
-.count {
+/* Which slide, shown when the deck moves and gone again a moment later.
+ *
+ * Scoped to the deck, like the notes below: this stylesheet is on every page of
+ * the app, and a bare `.count` is a name a panel would reach for too. It took
+ * the tag tree's counts out of the sidebar - absolutely positioned, at the
+ * bottom of the window, transparent until a deck moved. */
+.deck .count {
   position: absolute;
   right: max(20px, var(--inset-right));
   bottom: calc(16px + var(--inset-bottom));
@@ -178,7 +183,7 @@
   transition: opacity var(--dur-slow) var(--ease-out);
 }
 
-.count[data-shown='yes'] {
+.deck .count[data-shown='yes'] {
   opacity: 1;
 }
 
@@ -322,7 +327,7 @@ body.deck-page {
   }
 
   .rail,
-  .count,
+  .deck .count,
   .deck .notes {
     display: none;
   }
