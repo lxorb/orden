@@ -197,11 +197,22 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   const buried = buriedOf(doc)
   const was = things(before)
   const is = things(after)
-  let place = nextPlace(plane)
+
+  // Where the next new thing goes, worked out at most once and only for an edit
+  // that adds something. Moving a card, colouring it or rubbing out a stroke needs
+  // no place at all, and asking for one walks the plane.
+  let place: number | null = null
+  const placeFor = (id: string): number => {
+    const held = placeIn(plane, id)
+    if (held !== null) return held
+
+    place = place === null ? nextPlace(plane) : place + 1
+    return place
+  }
 
   for (const [id, thing] of is) {
     if (was.get(id) === thing && plane.has(id)) continue
-    put(plane, thing, after.at[id] ?? 0, placeIn(plane, id) ?? place++)
+    put(plane, thing, after.at[id] ?? 0, placeFor(id))
   }
 
   for (const id of was.keys()) {
@@ -209,14 +220,19 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
   }
 
   // Every tombstone the edit ended up with, whether it came from a delete here or
-  // from a merge that dropped something. A thing that is on the plane again has no
-  // tombstone to carry, which is what lets an undo bring it back.
+  // from a merge that dropped something.
   for (const [id, when] of Object.entries(after.gone)) {
     if (!is.has(id) && buried.get(id) !== when) buried.set(id, when)
   }
 
-  for (const id of [...buried.keys()]) {
-    if (is.has(id)) buried.delete(id)
+  // And none at all for something that is on the plane again: putting a card back
+  // is the newer word on the matter, and it is what lets an undo bring one back.
+  // Walked over the tombstones rather than the objects, because there are few of
+  // the first and thousands of the second.
+  if (buried.size) {
+    for (const id of [...buried.keys()]) {
+      if (is.has(id)) buried.delete(id)
+    }
   }
 }
 

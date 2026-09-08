@@ -380,6 +380,12 @@ such a plane cannot be stored on an account at all. The room holds the same draw
 `format.ts` writes today, or a canvas stops being byte for byte what Obsidian handed
 back - but it is the next thing worth changing about the format.
 
+The numbers above are from a quiet machine, and what they are sensitive to is the
+machine rather than the design, exactly as with the note figures. The same run with a
+build still finishing beside it gave 52 ms for a crossing and 788 ms for the five
+hundred strokes; both are the emulated runtime and three browser contexts contending
+for one laptop, and neither is what a deployed Worker and two real devices look like.
+
 ## Sharing
 
 A room holds whoever may reach the note, and until a space could be shared that
