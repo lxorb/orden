@@ -36,6 +36,9 @@ function spans(doc: string, cursor = 0): string[] {
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
 const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
+/** More prose than the parser covers on its way into a note: what it has not
+ *  reached lands in transactions of its own, later. */
+const FILLER = 'prose with **emphasis** and a [link](x).\n\n'.repeat(200)
 
 describe('block decorations', () => {
   test('records where the constructs that mind the caret are', () => {
@@ -106,12 +109,35 @@ describe('block decorations', () => {
   test('nor by the caret that arrives with a note being opened', () => {
     // Which is the path that matters: the app replaces the whole document for
     // each note, and the caret it maps to is 0 again.
-    const opened = state('x\n').update({
-      changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
-      annotations: external.of(true),
-    }).state
+    const opened = parsed(
+      state('x\n').update({
+        changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+        annotations: external.of(true),
+      }).state,
+    )
 
     expect(opened.field(blockDecorations).decorations.size).toBe(1)
+  })
+
+  test('nor by the parse of a long note catching up with it', () => {
+    // A note longer than the parser's first pass is opened with a partial tree,
+    // and the rest of it arrives in transactions that move neither the caret nor
+    // the text. The caret is still the one the open left, so a first block drawn
+    // on opening has to stay drawn - it used to turn back into markdown as soon
+    // as the parse reached the end, on every note over a few thousand letters.
+    const long = `${TABLE}\n\n${FILLER}`
+
+    expect(state(long).field(blockDecorations).decorations.size).toBe(1)
+  })
+
+  test('nor by a caret a long note is reopened well inside', () => {
+    // The caret a note is reopened at is nobody's decision either, and this one
+    // is past what the parse reaches on the way in: nothing has been found for it
+    // to be clear of, which is not the same as being put clear of everything.
+    const long = `${FILLER}${TABLE}\n\ntail\n`
+    const inside = long.indexOf('| a')
+
+    expect(state(long, inside).field(blockDecorations).decorations.size).toBe(1)
   })
 
   test('but the caret does reveal once it has been put somewhere', () => {
@@ -223,7 +249,7 @@ describe('prose typed away from every construct', () => {
     // viewport plugin steps aside for one, every other decoration with it.
     const plain = 'intro\n\n```\ngraph TD\n```\n\ntail\n'
     const at = plain.indexOf('```') + 3
-    const after = state(plain).update({ changes: { from: at, insert: 'mermaid' } }).state
+    const after = parsed(state(plain).update({ changes: { from: at, insert: 'mermaid' } }).state)
 
     expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual([
       '```mermaid\ngraph TD\n```',
@@ -236,7 +262,9 @@ describe('prose typed away from every construct', () => {
     // panel's replace-all writes it, with the caret left alone.
     const draft = 'intro\n\n[toc] draft\n\n# One\n'
     const from = draft.indexOf('[toc]') + '[toc]'.length
-    const after = state(draft).update({ changes: { from, to: from + ' draft'.length } }).state
+    const after = parsed(
+      state(draft).update({ changes: { from, to: from + ' draft'.length } }).state,
+    )
 
     expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual(['[toc]'])
   })

@@ -73,17 +73,24 @@ interface Blocks {
    *  note, so it is the one construct that changes when a line far from it
    *  does, and the one that rules out the shortcut below. */
   toc: boolean
+  /** Whether the caret is where somebody put it, which is what decides whether
+   *  it reveals; see `buildBlocks`. A caret nobody chose counts as chosen once
+   *  it is clear of every construct in a note that is parsed to the end, since
+   *  from there on it can reveal nothing whatever the answer. Which is also why
+   *  an unchosen caret always crosses one of `spans`, the invariant the
+   *  caret-move shortcut in `update` leans on. */
+  chosen: boolean
 }
 
 /** Builds every block decoration a state gets.
  *
- *  `reveals` is false for the very first build of a state, and only then. A state
- *  is created with a caret at 0 unless someone says otherwise, and 0 is the start
- *  of the document's first block - so a note whose first thing is a table, a
- *  display equation, a diagram or a `[toc]` opened showing its markdown, on every
- *  open and every switch between notes. Nobody put the caret there on purpose, so
- *  nothing is revealed for it. From the first transaction on, the caret's
- *  position is somebody's decision and the ordinary rules apply. */
+ *  `reveals` is false while nobody has put the caret where it is. A state is
+ *  created with a caret at 0 unless someone says otherwise, and 0 is the start of
+ *  the document's first block - so a note whose first thing is a table, a display
+ *  equation, a diagram or a `[toc]` opened showing its markdown, on every open and
+ *  every switch between notes. Nobody put the caret there on purpose, so nothing
+ *  is revealed for it, and it stays that way until a transaction moves the caret
+ *  or changes the note: see `chosen`. */
 function buildBlocks(state: EditorState, reveals = true): Blocks {
   const ranges: Range<Decoration>[] = []
   const spans: { from: number; to: number }[] = []
@@ -238,7 +245,17 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     },
   })
 
-  return { decorations: Decoration.set(ranges, true), spans, toc }
+  // Only once the note is parsed to the end is a caret clear of every construct
+  // clear for good: until then the block it sits in may still be missing from the
+  // tree, which is how a first block longer than the parser's first pass looks.
+  const wholeNoteParsed = syntaxTree(state).length === doc.length
+
+  return {
+    decorations: Decoration.set(ranges, true),
+    spans,
+    toc,
+    chosen: reveals || (wholeNoteParsed && !crosses(spans, state.selection.ranges)),
+  }
 }
 
 /** Exposed for tests: the block decorations a state would get. */
@@ -321,10 +338,15 @@ export const blockDecorations = StateField.define<Blocks>({
   create: (state) => buildBlocks(state, false),
 
   update(value, transaction) {
+    // Moving the caret is choosing where it goes, and so is writing at it. A
+    // transaction that does neither - a setting, or the parse arriving - leaves
+    // the caret as unchosen as it found it.
+    const chosen = value.chosen || transaction.docChanged || transaction.selection !== undefined
+
     // Reading mode holds every reveal shut, and equation numbering changes what
     // every display equation says. Either way the transaction changes neither
     // the document nor the selection.
-    if (settingsChanged(transaction)) return buildBlocks(transaction.state)
+    if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
 
     // Content from outside - a note being opened, a version restored, a sync
     // arriving - brings a caret with it that nobody chose: whatever the old
@@ -334,7 +356,10 @@ export const blockDecorations = StateField.define<Blocks>({
     if (isExternal(transaction)) return buildBlocks(transaction.state, false)
 
     // The parse of a note just opened finishes in transactions of its own;
-    // a block it found late has to be drawn then, not at the next click.
+    // a block it found late has to be drawn then, not at the next click. Such a
+    // transaction rebuilds with `chosen` as it was, or the caret the note opened
+    // with would reveal the first block the moment the parse caught up - which
+    // for a note longer than the parser's first pass is every time it is opened.
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
 
@@ -359,11 +384,16 @@ export const blockDecorations = StateField.define<Blocks>({
     ) {
       const spans = mapSpans(value.spans, transaction.changes)
       if (!crosses(spans, now)) {
-        return { decorations: value.decorations.map(transaction.changes), spans, toc: false }
+        return {
+          decorations: value.decorations.map(transaction.changes),
+          spans,
+          toc: false,
+          chosen,
+        }
       }
     }
 
-    return buildBlocks(transaction.state)
+    return buildBlocks(transaction.state, chosen)
   },
   provide: (field) => [
     EditorView.decorations.from(field, (value) => value.decorations),
