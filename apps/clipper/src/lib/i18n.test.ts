@@ -3,7 +3,7 @@ import { de } from '../locales/de'
 import { fr } from '../locales/fr'
 import { gsw } from '../locales/gsw'
 import { ja } from '../locales/ja'
-import { type Dictionary, LANGUAGES } from './i18n.svelte'
+import { type Dictionary, LANGUAGES } from './translate'
 import { LABELS } from './kinds'
 import { PROBLEMS } from './problems'
 

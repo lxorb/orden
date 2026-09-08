@@ -1,55 +1,27 @@
-import { de } from '../locales/de'
-import { fr } from '../locales/fr'
-import { gsw } from '../locales/gsw'
-import { ja } from '../locales/ja'
-
-/** The English string is its own key. A language that has not translated
- *  something falls back to it, so nothing can ever come out blank. */
-export type Dictionary = Record<string, string>
-
-/** The same list the app offers, in the same order, so the two settings pages
- *  read alike. See `apps/desktop/src/lib/i18n.svelte.ts`.
+/** The language the two pages are drawn in.
  *
- *  Chrome's own `_locales` is not what carries these: it has no Swiss German,
- *  and it picks by the browser's UI language rather than by what somebody
- *  chose. Only the handful of words Chrome itself draws - the tile on
- *  chrome://extensions and the shortcut list - come from `public/_locales`. */
-export const LANGUAGES = [
-  { id: 'system', name: 'Match the system' },
-  { id: 'en', name: 'English' },
-  { id: 'de', name: 'Deutsch' },
-  { id: 'gsw', name: 'Schwiizerdütsch' },
-  { id: 'fr', name: 'Français' },
-  { id: 'ja', name: '日本語' },
-] as const
+ *  A rune around `translate.ts` and nothing else: the choice is state, so every
+ *  `{t('…')}` in the markup redraws when the options page changes it. The
+ *  service worker translates without this, because a worker has no markup to
+ *  redraw and Svelte's client runtime is most of what it would have to load; see
+ *  the header of `translate.ts`. */
 
-const DICTIONARIES: Record<string, Dictionary> = { de, gsw, fr, ja }
-
-function systemLanguage(): string {
-  return (navigator.language || 'en').slice(0, 2).toLowerCase()
-}
+import { languageOf, translate } from './translate'
 
 class I18n {
   /** `system`, or a language chosen explicitly. */
   choice = $state('system')
 
-  readonly language = $derived(this.choice === 'system' ? systemLanguage() : this.choice)
-  private readonly dictionary = $derived(DICTIONARIES[this.language] ?? {})
-
-  /** Called once with what the settings hold, before anything is drawn. */
+  /** Called once with what the settings hold, before anything is drawn, and
+   *  again whenever somebody chooses another language. */
   use(choice: string) {
     this.choice = choice
-    if (typeof document !== 'undefined') document.documentElement.lang = this.language
+    if (typeof document !== 'undefined') document.documentElement.lang = languageOf(choice)
   }
 
   /** Translates one string, filling in `{name}` placeholders. */
   t(source: string, values?: Record<string, string | number>): string {
-    const translated = this.dictionary[source] ?? source
-    if (!values) return translated
-
-    return translated.replace(/\{(\w+)\}/g, (whole, name: string) =>
-      name in values ? String(values[name]) : whole,
-    )
+    return translate(this.choice, source, values)
   }
 }
 

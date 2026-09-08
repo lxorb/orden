@@ -2,11 +2,12 @@
   import { firstOf, refreshSpaces } from '../lib/account'
   import { api, type Space } from '../lib/api'
   import { openShortcuts } from '../lib/browser'
-  import { i18n, LANGUAGES, t } from '../lib/i18n.svelte'
+  import { i18n, t } from '../lib/i18n.svelte'
   import { opened } from '../lib/opened'
   import SignIn from '../lib/SignIn.svelte'
   import { forget, remember, type Theme } from '../lib/settings'
   import { applyTheme, followSystem } from '../lib/theme'
+  import { LANGUAGES } from '../lib/translate'
 
   const held = opened()
 

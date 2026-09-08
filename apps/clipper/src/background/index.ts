@@ -9,11 +9,11 @@
 import { done, failed, working } from './badge'
 import { clip, save } from './clip'
 import { firstOf, refreshSpaces } from '../lib/account'
-import { i18n, t } from '../lib/i18n.svelte'
 import { type Kind, KINDS, LABELS } from '../lib/kinds'
 import { type Answer, type Ask, readAsk } from '../lib/messages'
 import { PROBLEMS } from '../lib/problems'
 import { settings, type Settings } from '../lib/settings'
+import { translate } from '../lib/translate'
 
 type Menus = NonNullable<chrome.contextMenus.CreateProperties['contexts']>
 
@@ -29,18 +29,10 @@ const EVERYWHERE: Menus = ['page', 'selection', 'link', 'image']
 
 const PARENT = 'nib'
 
-/** Storage, read once, with the language already applied to the dictionaries. */
-async function ready(): Promise<Settings> {
-  const held = await settings()
-  i18n.use(held.language)
-
-  return held
-}
-
 /** One entry called Nib with the three actions under it: the same three words
  *  the popup shows, in the same order. */
 async function buildMenus() {
-  await ready()
+  const { language } = await settings()
   await chrome.contextMenus.removeAll()
 
   chrome.contextMenus.create({ id: PARENT, title: 'Nib', contexts: EVERYWHERE })
@@ -49,7 +41,7 @@ async function buildMenus() {
     chrome.contextMenus.create({
       id: kind,
       parentId: PARENT,
-      title: t(LABELS[kind]),
+      title: translate(language, LABELS[kind]),
       contexts: WHERE[kind],
     })
   }
@@ -71,36 +63,38 @@ async function targetSpace(held: Settings): Promise<string> {
 /** A clip with no popup in front of it: the page's own menu, or a shortcut. It
  *  goes where the last one went, and the toolbar button says how it went. */
 async function straightToNotes(kind: Kind, tabId: number, link: string | null) {
-  const held = await ready()
+  const held = await settings()
+  const say = (problem: string) => {
+    failed(tabId, problem, held.language)
+  }
+
   working(tabId)
 
   if (!held.token) {
-    failed(tabId, PROBLEMS.signIn)
+    say(PROBLEMS.signIn)
     return
   }
 
   const spaceId = await targetSpace(held)
   if (!spaceId) {
-    failed(tabId, PROBLEMS.noSpaces)
+    say(PROBLEMS.noSpaces)
     return
   }
 
   const made = await clip(kind, tabId, link)
   if ('problem' in made) {
-    failed(tabId, made.problem)
+    say(made.problem)
     return
   }
 
   const saved = await save(made.clip, spaceId, held.target.folder)
-  if ('problem' in saved) failed(tabId, saved.problem)
+  if ('problem' in saved) say(saved.problem)
   else done(tabId, saved.path)
 }
 
-/** The popup has somewhere to show a sentence itself, so nothing here touches
- *  the badge. */
+/** The popup has somewhere to show a sentence itself, and translates it there,
+ *  so nothing here touches the badge or the dictionaries. */
 async function answer(asked: Ask): Promise<Answer> {
-  await ready()
-
   if (asked.ask === 'save') return save(asked.clip, asked.spaceId, asked.folder)
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
