@@ -9,62 +9,87 @@ import { describe, expect, test } from 'vitest'
 import {
   clearFormatting,
   closeFence,
+  insertCallout,
   insertCodeFence,
+  insertComment,
+  insertFootnote,
+  insertFrontMatter,
   insertLink,
   insertMathBlock,
   insertTable,
+  insertToc,
   setHeading,
   shiftHeading,
   toggleBulletList,
   toggleOrderedList,
   toggleQuote,
+  toggleTask,
+  toggleTaskList,
   toggleWrap,
 } from './commands'
 import { selectWord } from './keymap'
 import { parsed } from '../test/parsed'
 
-/** Runs a command against a document and returns the resulting text.
- *  `|` marks the caret; `[` and `]` mark a selection. */
-function run(command: StateCommand, marked: string): string {
-  const selectionStart = marked.indexOf('[')
-  const selectionEnd = marked.indexOf(']')
-  const caret = marked.indexOf('|')
-
-  const doc = marked.replace(/[[\]|]/g, '')
-  const selection =
-    caret >= 0
-      ? EditorSelection.cursor(caret)
-      : EditorSelection.range(selectionStart, selectionEnd - 1)
-
+/** One command over one document, and everything a test might ask about the
+ *  result: whether it took the keystroke, what the note became, and where the
+ *  caret ended up.
+ *
+ *  Takes the selection as offsets, because a task list and a footnote are written
+ *  with the very brackets the markers below use. */
+function apply(
+  command: StateCommand,
+  doc: string,
+  from: number,
+  to = from,
+): { took: boolean; doc: string; selection: [number, number] } {
   const state = parsed(
     EditorState.create({
       doc,
-      selection,
+      selection: EditorSelection.range(from, to),
       extensions: [markdown({ base: markdownLanguage })],
     }),
   )
 
   let next = state
-  command({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
-  return next.doc.toString()
+  const took = command({
+    state,
+    dispatch: (transaction: Transaction) => (next = transaction.state),
+  })
+
+  return {
+    took,
+    doc: next.doc.toString(),
+    selection: [next.selection.main.from, next.selection.main.to],
+  }
+}
+
+/** A document with the selection written into it: `|` is the caret, `[` and `]`
+ *  are the ends of a selection. */
+function marks(marked: string): { doc: string; from: number; to: number } {
+  const caret = marked.indexOf('|')
+  const doc = marked.replace(/[[\]|]/g, '')
+
+  if (caret >= 0) return { doc, from: caret, to: caret }
+  return { doc, from: marked.indexOf('['), to: marked.indexOf(']') - 1 }
+}
+
+/** Runs a command against a marked document and returns the resulting text. */
+function run(command: StateCommand, marked: string): string {
+  const { doc, from, to } = marks(marked)
+  return apply(command, doc, from, to).doc
+}
+
+/** Whether the command took the keystroke at all, which is how one that gives way
+ *  can share a key with another. */
+function took(command: StateCommand, marked: string): boolean {
+  const { doc, from, to } = marks(marked)
+  return apply(command, doc, from, to).took
 }
 
 /** Same, but reports the selection so caret placement can be checked. */
 function runSelection(command: StateCommand, marked: string): [number, number] {
-  const caret = marked.indexOf('|')
-  const doc = marked.replace(/[[\]|]/g, '')
-
-  const state = parsed(
-    EditorState.create({
-      doc,
-      selection: EditorSelection.cursor(caret),
-      extensions: [markdown({ base: markdownLanguage })],
-    }),
-  )
-
-  let next = state
-  command({ state, dispatch: (transaction: Transaction) => (next = transaction.state) })
-  return [next.selection.main.from, next.selection.main.to]
+  const { doc, from, to } = marks(marked)
+  return apply(command, doc, from, to).selection
 }
 
 describe('inline wrapping', () => {
@@ -239,5 +264,110 @@ describe('pressing Enter after a code fence', () => {
 
   test('does nothing on an ordinary line', () => {
     expect(press('just words|').took).toBe(false)
+  })
+})
+
+describe('a task list', () => {
+  test('makes plain lines into tasks', () => {
+    expect(run(toggleTaskList, '[one\ntwo]')).toBe('- [ ] one\n- [ ] two')
+  })
+
+  test('trades a bullet for a box and keeps the indentation', () => {
+    expect(run(toggleTaskList, '  - |one')).toBe('  - [ ] one')
+  })
+
+  test('trades a number for a box', () => {
+    expect(run(toggleTaskList, '1. |one')).toBe('- [ ] one')
+  })
+
+  test('takes the tasks off again when every line is one', () => {
+    const doc = '- [ ] one\n- [x] two'
+    expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('one\ntwo')
+  })
+
+  test('makes tasks of every line when only some of them are', () => {
+    const doc = '- [x] one\ntwo'
+    expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('- [ ] one\n- [ ] two')
+  })
+})
+
+describe('ticking the task under the caret', () => {
+  test('ticks an empty box', () => {
+    expect(apply(toggleTask, '- [ ] wash up', 10).doc).toBe('- [x] wash up')
+  })
+
+  test('clears a ticked one', () => {
+    expect(apply(toggleTask, '- [x] wash up', 10).doc).toBe('- [ ] wash up')
+  })
+
+  test('ticks every task in the selection', () => {
+    const doc = '- [ ] one\n- [ ] two'
+    expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [x] two')
+  })
+
+  /** Which is what lets it share Ctrl+Enter with running a code fence. */
+  test('gives way on a line that is not a task', () => {
+    expect(took(toggleTask, 'just words|')).toBe(false)
+    expect(took(toggleTask, '- a bullet|')).toBe(false)
+  })
+})
+
+describe('the blocks a menu row inserts', () => {
+  test('a callout is the alert the renderer draws, ready to be written in', () => {
+    expect(run(insertCallout, '|')).toBe('> [!NOTE]\n> ')
+    expect(runSelection(insertCallout, '|')).toEqual([12, 12])
+  })
+
+  test('a table of contents is a line of its own', () => {
+    expect(run(insertToc, 'words\n|')).toBe('words\n[toc]\n')
+  })
+
+  test('front matter goes to the very top, whatever the caret was doing', () => {
+    expect(run(insertFrontMatter, '# Head\n\nwords|')).toBe('---\ntitle: \n---\n\n# Head\n\nwords')
+    expect(runSelection(insertFrontMatter, 'words|')).toEqual([11, 11])
+  })
+
+  test('front matter that is there already gets the caret rather than a second block', () => {
+    const note = '---\ntitle: Hi\n---\n\nwords|'
+    expect(run(insertFrontMatter, note)).toBe('---\ntitle: Hi\n---\n\nwords')
+    expect(runSelection(insertFrontMatter, note)).toEqual([13, 13])
+  })
+
+  test('a comment wraps what is selected, and unwraps it again', () => {
+    expect(run(insertComment, 'a [word] b')).toBe('a <!-- word --> b')
+    expect(run(insertComment, 'a [<!-- word -->] b')).toBe('a word b')
+  })
+
+  test('a comment with nothing selected leaves the caret inside it', () => {
+    expect(run(insertComment, 'a |b')).toBe('a <!--  -->b')
+    expect(runSelection(insertComment, 'a |b')).toEqual([7, 7])
+  })
+})
+
+describe('a footnote', () => {
+  test('marks the caret and puts its definition at the end of the note', () => {
+    expect(run(insertFootnote, 'a claim|\n')).toBe('a claim[^1]\n\n[^1]: ')
+  })
+
+  test('leaves the caret in the definition, ready to write it', () => {
+    expect(runSelection(insertFootnote, 'a claim|\n')).toEqual([19, 19])
+  })
+
+  test('takes the next number the note is not already using', () => {
+    expect(apply(insertFootnote, 'one[^1] two\n\n[^1]: first\n', 11).doc).toBe(
+      'one[^1] two[^2]\n\n[^1]: first\n\n[^2]: ',
+    )
+  })
+
+  test('in an empty note is a mark and the definition under it', () => {
+    expect(apply(insertFootnote, '', 0).doc).toBe('[^1]\n\n[^1]: ')
+  })
+
+  test('goes under the last of the words rather than under the blank lines', () => {
+    expect(apply(insertFootnote, 'a claim\n\n\n', 7).doc).toBe('a claim[^1]\n\n[^1]: ')
+  })
+
+  test('never replaces what is selected: a footnote is added to it', () => {
+    expect(apply(insertFootnote, 'a claim here\n', 2, 7).doc).toBe('a claim[^1] here\n\n[^1]: ')
   })
 })

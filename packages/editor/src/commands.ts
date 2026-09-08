@@ -127,6 +127,61 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
 export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
 export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
 
+/** A line that is already a task, and its box. */
+const TASK = /^\s*[-*+]\s+\[([ xX])\]\s+/
+/** Whatever marker a line already carries, task or plain list. */
+const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
+const INDENT = /^\s*/
+
+/** The selected lines as tasks, or back to plain lines when all of them already
+ *  are. A line that is a bullet or a number keeps its indentation and trades its
+ *  marker for a box; a line that is neither gets both. */
+export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
+  const lines = selectedLines(state)
+  const allTasks = lines.every((line) => TASK.test(line.text))
+
+  const changes: ChangeSpec[] = lines.map((line) => {
+    const indent = (INDENT.exec(line.text)?.[0] ?? '').length
+    const task = TASK.exec(line.text)
+
+    if (allTasks && task) {
+      return { from: line.from + indent, to: line.from + task[0].length, insert: '' }
+    }
+
+    const marker = task ?? MARKER.exec(line.text)
+    return {
+      from: line.from + indent,
+      to: line.from + (marker ? marker[0].length : indent),
+      insert: '- [ ] ',
+    }
+  })
+
+  dispatch(state.update({ changes, userEvent: 'input' }))
+  return true
+}
+
+/** The box on the line the caret is on, ticked or cleared. Gives way where there
+ *  is no task, so it shares its key with running a code fence: a line is one or
+ *  the other and never both. */
+export const toggleTask: StateCommand = ({ state, dispatch }) => {
+  const changes: ChangeSpec[] = []
+
+  for (const line of selectedLines(state)) {
+    const box = TASK.exec(line.text)
+    const mark = box?.[1]
+    if (!box || mark === undefined) continue
+
+    // What is inside the brackets: the only `[` in the run is the box's own.
+    const at = line.from + box[0].indexOf('[') + 1
+    changes.push({ from: at, to: at + 1, insert: mark === ' ' ? 'x' : ' ' })
+  }
+
+  if (!changes.length) return false
+
+  dispatch(state.update({ changes, userEvent: 'input' }))
+  return true
+}
+
 export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
   const pattern = /^\s*\d+[.)]\s+/
@@ -239,6 +294,84 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
 export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }))
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
 
+/** A GitHub alert, which is the callout the renderer draws and the editor marks.
+ *  `NOTE` because it is the one that says nothing beyond "read this"; the other
+ *  four are a word away. See `callouts` in @nib/markdown. */
+export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }))
+
+/** Typora's `[toc]`: a table of contents that follows the headings. */
+export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
+
+/** The note's own metadata, at the top where every parser looks for it. A note
+ *  that already has some gets the caret in it rather than a second block, since
+ *  two front matters are one front matter and a paragraph of colons. */
+export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
+  if (state.doc.line(1).text.trim() === '---') {
+    const inside = state.doc.line(Math.min(2, state.doc.lines))
+    dispatch(state.update({ selection: EditorSelection.cursor(inside.to), scrollIntoView: true }))
+    return true
+  }
+
+  const block = '---\ntitle: \n---\n\n'
+  dispatch(
+    state.update({
+      changes: { from: 0, insert: block },
+      selection: EditorSelection.cursor(block.indexOf('\n---\n')),
+      scrollIntoView: true,
+      userEvent: 'input',
+    }),
+  )
+  return true
+}
+
+/** A footnote: the mark where the caret is, the definition at the end of the
+ *  note, and the caret in the definition ready to write it.
+ *
+ *  Numbered by what the note already uses rather than by counting what is there:
+ *  `[^3]` may well be the only footnote in it. */
+export const insertFootnote: StateCommand = ({ state, dispatch }) => {
+  const text = state.doc.toString()
+  const used = new Set([...text.matchAll(/\[\^([^\]\s]+)\]/g)].map((found) => found[1]))
+
+  let number = 1
+  while (used.has(String(number))) number++
+  const label = `[^${number}]`
+
+  // The definition goes after the last of the note's words, not after the blank
+  // lines under them, so a note is not slowly pushed down its own file.
+  const end = text.replace(/\s+$/, '').length
+  const at = Math.min(state.selection.main.to, end)
+  const definition = `\n\n${label}: `
+
+  // The mark is an insert and never a replacement: a footnote is something added
+  // to what is selected, not instead of it. Where the caret is already at the end
+  // of the words, both inserts land on the same offset and are one change - two
+  // at one offset is not a change set.
+  const changes: ChangeSpec[] =
+    at === end
+      ? [{ from: end, to: state.doc.length, insert: label + definition }]
+      : [
+          { from: at, insert: label },
+          { from: end, to: state.doc.length, insert: definition },
+        ]
+
+  dispatch(
+    state.update({
+      changes,
+      selection: EditorSelection.cursor(end + label.length + definition.length),
+      scrollIntoView: true,
+      userEvent: 'input',
+    }),
+  )
+  return true
+}
+
+/** An HTML comment around the selection. Markdown has no comment of its own, and
+ *  this is the one every editor uses for one; it is hidden wherever the note is
+ *  read, so what it holds is between the writer and the file. See comments.ts in
+ *  @nib/markdown. */
+export const insertComment = toggleWrap('<!-- ', ' -->')
+
 /** A new slide: the rule that breaks a deck, and the caret on the empty slide
  *  after it.
  *
@@ -334,7 +467,6 @@ export const insertImage: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-// Re-exported through here so the app can offer it in a menu without taking a
-// direct dependency on CodeMirror's own packages. Undo and redo are next door
-// in shared.ts, which is where the history of a note in two panes lives.
-export { openSearchPanel as openFind } from '@codemirror/search'
+// Find, Replace and the steps through the matches are next door in find.ts.
+// Undo and redo are in shared.ts, which is where the history of a note open in
+// two panes lives.
