@@ -375,11 +375,13 @@ export function appMenu(context: Context): MenuGroup[] {
         },
         edit('paragraph.task-list', t('Task list'), toggleTaskList),
         SPLIT,
-        // Not through `edit`: the picker is the app's, not the editor's, and it
-        // has its own reason to be greyed out - a note it can write beside.
+        // Not through `edit`: the picker is the app's, not the editor's, and it has
+        // its own reason to be greyed out - a note it can write beside. No hint
+        // either: Ctrl+Shift+I writes empty picture markup, which is a different
+        // thing from choosing a file, and a row that shows a key has to be the row
+        // that key runs.
         {
           label: t('Picture'),
-          hint: shortcuts.hint('format.image'),
           disabled: !canInsertPicture(view),
           run: () => {
             if (view) void insertPicture(view)
