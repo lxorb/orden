@@ -174,7 +174,13 @@ export const notes = new Hono<{ Bindings: Env; Variables: Variables }>()
 notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context) => {
   const space = spaceOf(context)
 
-  const since = Number(context.req.query('since') ?? 0) || 0
+  // A cursor is a whole number this space handed out. Anything else - words, a
+  // fraction, `1e999`, a negative - is read as the beginning, which is what a
+  // client that has never asked before sends. Bound rather than passed on: a
+  // value that is not finite is not something to put in front of a query.
+  const asked = Math.floor(Number(context.req.query('since') ?? 0))
+  const since = Number.isFinite(asked) && asked > 0 ? asked : 0
+
   const { results } = await context.env.DB.prepare(
     'select * from notes where space_id = ? and seq > ? order by seq limit 1000',
   )

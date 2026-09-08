@@ -643,4 +643,17 @@ describe('catching up', () => {
     const all = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
     expect(all.json.notes).toHaveLength(2)
   })
+
+  /** A cursor is a number this space handed out. Anything else reads as the
+   *  beginning rather than reaching a query: `1e999` is `Infinity`, and a bound
+   *  that is not a number is not something to put in front of one. */
+  test('a cursor that is not a number reads as the beginning', async () => {
+    await addNote('one.md', '1')
+
+    for (const since of ['1e999', 'nonsense', '-5', 'NaN', '1.5e400']) {
+      const page = await call(env, `/v1/spaces/${space}/changes?since=${since}`, { token })
+      expect(page.status, since).toBe(200)
+      expect(page.json.notes.length, since).toBeGreaterThan(0)
+    }
+  })
 })
