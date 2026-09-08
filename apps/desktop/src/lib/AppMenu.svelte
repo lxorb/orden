@@ -2,7 +2,7 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
-  import { appMenu, type MenuGroup, SPLIT } from './app-menu'
+  import { appMenu, isSubmenu, type MenuGroup, type MenuRow, SPLIT } from './app-menu'
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { t } from './i18n.svelte'
@@ -17,15 +17,35 @@
   let open = $state(false)
   let groups = $state<MenuGroup[]>([])
   let current = $state('file')
+  /** The submenu that is open, by its label. One at a time, and only ever one
+   *  level deep: a menu that goes deeper than that is a menu nobody can hold in
+   *  their head. */
+  let into = $state<string | null>(null)
 
   function show() {
     // Built on opening, so what is ticked and what is greyed out describes now.
     groups = appMenu({ view, onpalette, onhistory })
     current = groups[0]?.id ?? 'file'
+    into = null
     open = true
   }
 
+  function choose(id: string) {
+    current = id
+    into = null
+  }
+
   const shown = $derived(groups.find((one) => one.id === current))
+
+  /** Whichever list is in front: the group's own rows, or the rows of the
+   *  submenu somebody stepped into. */
+  const rows = $derived.by((): MenuRow[] => {
+    const all = shown?.rows ?? []
+    if (into === null) return all
+
+    const found = all.find((row) => isSubmenu(row) && row.label === into)
+    return found && isSubmenu(found) ? found.rows : all
+  })
 
   /** A popover that grows out of the button on a desktop; a sheet from the
    *  bottom on a phone, where the thumb is. */
@@ -73,8 +93,8 @@
         <li>
           <button
             class:on={group.id === current}
-            onmouseenter={() => (current = group.id)}
-            onclick={() => (current = group.id)}
+            onmouseenter={() => choose(group.id)}
+            onclick={() => choose(group.id)}
           >
             {group.label}
           </button>
@@ -83,26 +103,56 @@
     </ul>
 
     <ul class="rows">
-      {#each shown?.rows ?? [] as row, index (index)}
-        {#if row === SPLIT}
-          <li class="split"></li>
-        {:else}
+      <!-- Inside a submenu the list is its rows, headed by the way back. The
+           same shape on a desktop and under a thumb: one list, one step in, one
+           step out, and nothing that has to be aimed at. -->
+      {#if into !== null}
+        <li>
+          <button class="row back" onclick={() => (into = null)}>
+            <span class="tick" aria-hidden="true">
+              <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+            </span>
+            <span class="label">{into}</span>
+          </button>
+        </li>
+        <li class="split"></li>
+      {/if}
+
+      {#each rows as row, index (index)}
+        <!-- Named apart so each branch has the shape it draws: the markup cannot
+             read a type guard's other half. -->
+        {@const leads = row !== SPLIT && isSubmenu(row) ? row : null}
+        {@const action = row !== SPLIT && !isSubmenu(row) ? row : null}
+
+        {#if leads}
+          <li>
+            <button class="row" disabled={leads.disabled} onclick={() => (into = leads.label)}>
+              <span class="tick"></span>
+              <span class="label">{leads.label}</span>
+              <span class="more" aria-hidden="true">
+                <svg viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+              </span>
+            </button>
+          </li>
+        {:else if action}
           <li>
             <button
               class="row"
-              disabled={row.disabled}
+              disabled={action.disabled}
               onclick={() => {
                 open = false
-                row.run()
+                action.run()
               }}
             >
               <!-- Present only when it means something; the width is held by
                    CSS so the labels still line up. -->
-              <span class="tick">{row.checked ? '✓' : ''}</span>
-              <span class="label">{row.label}</span>
-              {#if row.hint}<span class="hint">{row.hint}</span>{/if}
+              <span class="tick">{action.checked ? '✓' : ''}</span>
+              <span class="label">{action.label}</span>
+              {#if action.hint}<span class="hint">{action.hint}</span>{/if}
             </button>
           </li>
+        {:else}
+          <li class="split"></li>
         {/if}
       {/each}
     </ul>
@@ -215,6 +265,31 @@
     width: 0.9em;
     flex: none;
     color: var(--accent);
+  }
+
+  /* The chevron that says a row leads somewhere, and the one on the way back.
+     Muted: it is a shape, not something to read. */
+  .more,
+  .back .tick {
+    flex: none;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+  }
+
+  .more svg,
+  .back .tick svg {
+    width: 11px;
+    height: 11px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .back .label {
+    color: var(--muted-strong);
   }
 
   .label {
@@ -338,6 +413,14 @@
     order: 2;
     width: auto;
     margin-left: auto;
+  }
+
+  /* The way back keeps its chevron in front of the words, where a back button
+     belongs whatever the machine. */
+  :global([data-touch]) .phone .back .tick {
+    order: 0;
+    width: 0.9em;
+    margin-left: 0;
   }
 
   :global([data-touch]) .phone .hint {

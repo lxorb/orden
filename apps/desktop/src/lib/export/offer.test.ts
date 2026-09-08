@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import type { MenuAction } from '../app-menu'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 import {
   EXPORT_EXTRAS,
@@ -164,27 +165,24 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
  *  app, and compiling that belongs to no one test. See docs/conventions.md. */
 const { workspace } = await import('../workspace.svelte')
 const { exportCommands } = await import('../commands')
-const { appMenu } = await import('../app-menu')
+const { appMenu, isSubmenu } = await import('../app-menu')
 const { SHORTCUTS } = await import('../shortcuts/registry')
 
-/** The export rows the File menu shows, as labels, with the rules left out. */
-function menuLabels(): string[] {
-  const group = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
-    (one) => one.id === 'export',
+/** Every row of Export, which is a submenu of File: rule rows left out. */
+function menuRows(): MenuAction[] {
+  const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
+    (one) => one.id === 'file',
   )
 
-  if (!group) throw new Error('the Export menu group is not there')
-  return group.rows.flatMap((row) => (row === null ? [] : [row.label]))
+  const submenu = file?.rows.find((row) => row !== null && isSubmenu(row))
+  if (!submenu || !isSubmenu(submenu)) throw new Error('Export is not a submenu of File')
+
+  return submenu.rows.filter((row): row is MenuAction => row !== null && !isSubmenu(row))
 }
 
-/** Every row of the File menu's export group, rule rows left out. */
-function menuRows() {
-  const group = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
-    (one) => one.id === 'export',
-  )
-
-  if (!group) throw new Error('the Export menu group is not there')
-  return group.rows.flatMap((row) => (row === null ? [] : [row]))
+/** The same rows as labels. */
+function menuLabels(): string[] {
+  return menuRows().map((row) => row.label)
 }
 
 /** The ids of the format rows the palette offers, in order. */

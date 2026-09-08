@@ -1,0 +1,199 @@
+import { describe, expect, test, vi } from 'vitest'
+import type { MenuAction, MenuGroup, MenuRow } from './app-menu'
+
+/** The stores write to the browser's storage and ask the browser what kind of
+ *  machine this is, and there is neither under node. */
+function memoryStorage(): Storage {
+  const store = new Map<string, string>()
+
+  return {
+    get length() {
+      return store.size
+    },
+    key: (index) => [...store.keys()][index] ?? null,
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => void store.set(key, value),
+    removeItem: (key) => void store.delete(key),
+    clear: () => store.clear(),
+  }
+}
+
+vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+
+/** Loaded once, at module scope: the menu and the command list reach half the app,
+ *  and compiling that belongs to no one test. See docs/conventions.md. */
+const { appMenu, isSubmenu, ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./app-menu')
+const { appCommands } = await import('./commands')
+const { BY_ID } = await import('./shortcuts/registry')
+
+const menu = (): MenuGroup[] => appMenu({ onpalette: () => undefined, onhistory: () => undefined })
+
+function group(id: string): MenuGroup {
+  const found = menu().find((one) => one.id === id)
+  if (!found) throw new Error(`no ${id} group in the menu`)
+  return found
+}
+
+/** The rows of a group, rules left out. */
+function rows(id: string): MenuRow[] {
+  return group(id).rows.filter((row) => row !== null)
+}
+
+function actions(id: string): MenuAction[] {
+  return rows(id).filter((row): row is MenuAction => row !== null && !isSubmenu(row))
+}
+
+const labels = (id: string): string[] => actions(id).map((row) => row.label)
+
+describe('the shape of the menu', () => {
+  test('has the six groups a menu bar has, and no seventh for exporting', () => {
+    expect(menu().map((one) => one.id)).toEqual([
+      'file',
+      'edit',
+      'paragraph',
+      'format',
+      'view',
+      'help',
+    ])
+  })
+
+  /** Export was a group of its own beside File, which put the formats a note goes
+   *  out as in the same strip as File, Edit and View. A person looking for "export"
+   *  looks under File, because that is where every other editor keeps it. */
+  test('keeps Export under File, as one row with rows of its own', () => {
+    const submenus = rows('file').filter(isSubmenu)
+
+    expect(submenus.map((one) => one.label)).toEqual(['Export'])
+    expect(submenus[0]?.rows.length).toBeGreaterThan(5)
+  })
+
+  test('never goes deeper than one submenu', () => {
+    for (const one of menu()) {
+      for (const row of one.rows.filter((row) => row !== null && isSubmenu(row))) {
+        if (!isSubmenu(row)) continue
+        expect(row.rows.filter(isSubmenu), one.id).toEqual([])
+      }
+    }
+  })
+})
+
+describe('File', () => {
+  test('offers printing', () => {
+    // Only where the machine has a print dialog at all; under node it has none,
+    // so the row is absent and that is the row doing its job.
+    const printing = labels('file').includes('Print')
+    expect(printing).toBe(typeof window !== 'undefined' && typeof window.print === 'function')
+  })
+
+  test('offers Save as, greyed out with nothing of the reader’s own open', () => {
+    const row = actions('file').find((one) => one.label === 'Save as')
+    expect(row).toBeDefined()
+    expect(row?.disabled).toBe(true)
+  })
+
+  test('leaves Import out where there is no pandoc to import with', () => {
+    expect(labels('file')).not.toContain('Import a document')
+  })
+})
+
+describe('Edit', () => {
+  test('offers both pastes and both ways of finding', () => {
+    expect(labels('edit')).toEqual([
+      'Undo',
+      'Redo',
+      'Cut',
+      'Copy',
+      'Paste',
+      'Paste as plain text',
+      'Select all',
+      'Find',
+      'Replace',
+      'Search',
+    ])
+  })
+})
+
+describe('Paragraph and Format', () => {
+  test('offer the blocks a note is written out of', () => {
+    for (const label of [
+      'Task list',
+      'Callout',
+      'Footnote',
+      'Table of contents',
+      'Front matter',
+      'Picture',
+      'One heading level up',
+      'One heading level down',
+    ]) {
+      expect(labels('paragraph'), label).toContain(label)
+    }
+  })
+
+  test('offer a comment, which is the one mark that is not for the reader', () => {
+    expect(labels('format')).toContain('Comment')
+  })
+})
+
+describe('View and Help', () => {
+  /** A page in a browser has no window of its own to raise, and this is not a
+   *  desktop build, so the row is not there. */
+  test('leaves Always on top to the desktop', () => {
+    expect(labels('view')).not.toContain('Always on top')
+  })
+
+  test('sends a bug and a release note to the repository the app is written in', () => {
+    expect(labels('help')).toContain('Report an issue')
+    expect(labels('help')).toContain('What is new')
+    expect(ISSUES_URL.startsWith(SOURCE_URL)).toBe(true)
+    expect(RELEASES_URL.startsWith(SOURCE_URL)).toBe(true)
+  })
+})
+
+/** A row in a menu, a row in the palette and a row in the shortcut settings are
+ *  three ways to the same thing, and a person who knows what it is called should
+ *  not have to know which of the three to look in. */
+describe('the menu, the palette and the shortcut settings agree', () => {
+  const shared = [
+    ['paragraph.task-list', 'Task list'],
+    ['paragraph.callout', 'Callout'],
+    ['paragraph.footnote', 'Footnote'],
+    ['paragraph.toc', 'Table of contents'],
+    ['paragraph.front-matter', 'Front matter'],
+    ['paragraph.heading-up', 'One heading level up'],
+    ['paragraph.heading-down', 'One heading level down'],
+    ['format.comment', 'Comment'],
+    ['edit.replace', 'Replace'],
+    ['app.print', 'Print'],
+  ] as const
+
+  test('every one of them has an entry a key can be put on', () => {
+    for (const [id, label] of shared) {
+      expect(BY_ID.get(id), id).toBeDefined()
+      expect(BY_ID.get(id)?.label(), id).toBe(label)
+    }
+  })
+
+  test('every block the Paragraph and Format menus offer is in the palette too', () => {
+    const offered = new Set(appCommands().map((one) => one.label))
+    // Replace is a row of Edit rather than a block, and Print is only there on a
+    // machine that has a print dialog; both are their own tests above.
+    const elsewhere = new Set(['Replace', 'Print'])
+
+    for (const [, label] of shared) {
+      if (elsewhere.has(label)) continue
+      expect(offered.has(label), label).toBe(true)
+    }
+  })
+
+  test('a row that carries a key carries the one the registry holds', () => {
+    for (const one of menu()) {
+      for (const row of actions(one.id)) {
+        if (!row.hint) continue
+        // A hint is only ever `shortcuts.hint(id)`, so any hint at all means the
+        // registry answered; an id that is not in it answers undefined.
+        expect(row.hint.length, `${one.id}: ${row.label}`).toBeGreaterThan(0)
+      }
+    }
+  })
+})

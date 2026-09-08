@@ -1,31 +1,45 @@
 import {
   clearFormatting,
   type EditorView,
+  insertCallout,
   insertCodeFence,
+  insertComment,
+  insertFootnote,
+  insertFrontMatter,
   insertHorizontalRule,
   insertLink,
   insertMathBlock,
   insertPageBreak,
   insertSlideBreak,
   insertTableToEdit,
+  insertToc,
   openFind,
+  openReplace,
+  pasteHere,
+  pastePlain,
   redoEdit,
   setHeading,
+  shiftHeading,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
   toggleQuote,
+  toggleTaskList,
   toggleWrap,
   type Transaction,
   undoEdit,
 } from '@nib/editor'
 import { account } from './account.svelte'
+import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
-import { exportCommands } from './commands'
+import { exportCommands, importCommand } from './commands'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
+import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
+import { canInsertPicture, insertPicture } from './insert-picture'
 import { modes } from './modes.svelte'
+import { canSaveAs, saveAs } from './save-as'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
@@ -40,7 +54,12 @@ import { openFile } from './open-file'
  *  source editor. */
 export const SOURCE_URL = 'https://github.com/lxorb/nibeditor'
 
-interface MenuAction {
+/** Where a bug goes, and where a new version says what changed. Both are pages
+ *  of the same repository, so neither is a second address to keep in step. */
+export const ISSUES_URL = `${SOURCE_URL}/issues`
+export const RELEASES_URL = `${SOURCE_URL}/releases`
+
+export interface MenuAction {
   label: string
   /** Undefined where the action has no key bound to it. */
   hint?: string | undefined
@@ -49,9 +68,22 @@ interface MenuAction {
   run: () => void
 }
 
+/** A row that opens rows of its own: Export under File, whose list is a dozen
+ *  formats and belongs behind one word rather than in front of it. */
+export interface MenuSubmenu {
+  label: string
+  disabled?: boolean
+  rows: MenuRow[]
+}
+
 /** A rule between groups of actions. */
 export const SPLIT = null
-type MenuRow = MenuAction | typeof SPLIT
+export type MenuRow = MenuAction | MenuSubmenu | typeof SPLIT
+
+/** Whether a row leads to more rows. */
+export function isSubmenu(row: MenuRow): row is MenuSubmenu {
+  return row !== SPLIT && 'rows' in row
+}
 
 export interface MenuGroup {
   id: string
@@ -68,8 +100,8 @@ interface Context {
 /** The export rows, with a rule wherever the kind of row changes: the formats
  *  this document goes out as, then the variants of two of them, then the paper
  *  and whatever else the machine can do. The list itself is the command list, so
- *  the menu, the palette and the shortcut settings show the same rows in the same
- *  order, and all three follow what is open; see export/offer.ts. */
+ *  the submenu, the palette and the shortcut settings show the same rows in the
+ *  same order, and all three follow what is open; see export/offer.ts. */
 function exportRows(): MenuRow[] {
   const formats = new Set<string>(
     [...EXPORT_FORMATS, ...EXPORT_EXTRAS].map((one) => `export-${one.id}`),
@@ -125,6 +157,24 @@ export function appMenu(context: Context): MenuGroup[] {
     run: () => run(view, setHeading(level)),
   })
 
+  /** A row that edits the note, named by the shortcut it carries so the key and
+   *  the row can never say different things. */
+  const edit = (id: string, label: string, command: StateCommand): MenuAction => ({
+    label,
+    hint: shortcuts.hint(id),
+    disabled: !writable,
+    run: () => run(view, command),
+  })
+
+  /** A row that runs a command against the view itself rather than against its
+   *  state: whether it did anything is its own answer and no business of a row's. */
+  const onView = (command: (one: EditorView) => boolean) => () => {
+    if (view) command(view)
+  }
+
+  /** Importing, which is offered only where pandoc is installed. */
+  const imported = importCommand()
+
   return [
     {
       id: 'file',
@@ -133,6 +183,7 @@ export function appMenu(context: Context): MenuGroup[] {
         { label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
         { label: t('New canvas'), run: () => void workspace.createCanvas() },
         { label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
+        ...(imported ? [{ label: imported.label, run: imported.run }] : []),
         { label: t('New space'), run: () => void newSpace() },
         ...(isDesktop
           ? [
@@ -150,6 +201,7 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !hasNote,
           run: () => void workspace.save(),
         },
+        { label: t('Save as'), disabled: !canSaveAs(), run: () => void saveAs() },
         {
           label: t('Rename'),
           disabled: !workspace.active?.path,
@@ -158,6 +210,24 @@ export function appMenu(context: Context): MenuGroup[] {
             if (path) workspace.startRenaming(path)
           },
         },
+        SPLIT,
+        // Export is one word here and a dozen rows behind it. It used to be a
+        // menu of its own beside File, which put the formats a note goes out as
+        // in the same strip as File, Edit and View - and a person looking for
+        // "export" looks under File, because that is where every other editor
+        // keeps it. The rows are the export list itself, greyed where the thing
+        // on screen does not go out that way.
+        { label: t('Export'), rows: exportRows() },
+        ...(canPrint
+          ? [
+              {
+                label: t('Print'),
+                hint: shortcuts.hint('app.print'),
+                disabled: workspace.active?.kind !== 'note',
+                run: () => busy.start(t('Printing'), () => printNote()),
+              },
+            ]
+          : []),
         SPLIT,
         { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
         { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
@@ -175,15 +245,6 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => void workspace.reopenClosed(),
         },
       ],
-    },
-
-    // Export is a menu of its own rather than a dozen rows inside File. The
-    // File menu would otherwise be longer than the window, and the group strip
-    // beside it is where a menu bar puts a second menu anyway.
-    {
-      id: 'export',
-      label: t('Export'),
-      rows: exportRows(),
     },
 
     {
@@ -215,6 +276,21 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !selected,
           run: copySelection,
         },
+        // Paste, which reads the clipboard rather than riding on a paste event -
+        // a menu row has none. Rich by default and plain on the row below it, the
+        // same two the keyboard offers.
+        {
+          label: t('Paste'),
+          hint: shortcuts.hint('fixed.paste'),
+          disabled: !writable,
+          run: onView(pasteHere),
+        },
+        {
+          label: t('Paste as plain text'),
+          hint: shortcuts.hint('edit.paste-plain'),
+          disabled: !writable,
+          run: onView(pastePlain),
+        },
         SPLIT,
         {
           label: t('Select all'),
@@ -227,7 +303,13 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Find'),
           hint: shortcuts.hint('edit.find'),
           disabled: !view,
-          run: () => view && openFind(view),
+          run: onView(openFind),
+        },
+        {
+          label: t('Replace'),
+          hint: shortcuts.hint('edit.replace'),
+          disabled: !writable,
+          run: onView(openReplace),
         },
         {
           label: t('Search'),
@@ -248,6 +330,8 @@ export function appMenu(context: Context): MenuGroup[] {
         heading(5),
         heading(6),
         { label: t('Paragraph'), disabled: !writable, run: () => run(view, setHeading(0)) },
+        edit('paragraph.heading-up', t('One heading level up'), shiftHeading(1)),
+        edit('paragraph.heading-down', t('One heading level down'), shiftHeading(-1)),
         SPLIT,
         // Not through `run`: the new table takes the focus into its first cell,
         // and focusing the editor afterwards would take it straight back out.
@@ -275,6 +359,7 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: () => run(view, insertMathBlock),
         },
+        edit('paragraph.callout', t('Callout'), insertCallout),
         SPLIT,
         {
           label: t('Bulleted list'),
@@ -288,6 +373,21 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: () => run(view, toggleOrderedList),
         },
+        edit('paragraph.task-list', t('Task list'), toggleTaskList),
+        SPLIT,
+        // Not through `edit`: the picker is the app's, not the editor's, and it
+        // has its own reason to be greyed out - a note it can write beside.
+        {
+          label: t('Picture'),
+          hint: shortcuts.hint('format.image'),
+          disabled: !canInsertPicture(view),
+          run: () => {
+            if (view) void insertPicture(view)
+          },
+        },
+        edit('paragraph.footnote', t('Footnote'), insertFootnote),
+        edit('paragraph.toc', t('Table of contents'), insertToc),
+        edit('paragraph.front-matter', t('Front matter'), insertFrontMatter),
         SPLIT,
         {
           label: t('Horizontal rule'),
@@ -347,6 +447,7 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: () => run(view, insertLink),
         },
+        edit('format.comment', t('Comment'), insertComment),
         SPLIT,
         {
           label: t('Clear formatting'),
@@ -405,6 +506,17 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: modes.focus,
           run: () => modes.toggleFocus(view),
         },
+        // A window that stays over everything else, for writing beside whatever is
+        // being written about. Only a desktop has a window of its own to raise.
+        ...(isDesktop
+          ? [
+              {
+                label: t('Always on top'),
+                checked: modes.alwaysOnTop,
+                run: () => modes.toggleAlwaysOnTop(),
+              },
+            ]
+          : []),
         SPLIT,
         // The panes. Left out on a phone, which shows one note at a time.
         ...(viewport.touch
@@ -467,6 +579,8 @@ export function appMenu(context: Context): MenuGroup[] {
         },
         SPLIT,
         ...(isDesktop ? [{ label: t('Check for updates'), run: () => void stageUpdate() }] : []),
+        { label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
+        { label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
         { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
       ],
     },

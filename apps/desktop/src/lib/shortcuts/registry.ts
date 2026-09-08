@@ -107,6 +107,7 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'format.link': ['format', () => t('Link')],
   'format.image': ['format', () => t('Image')],
   'format.clear': ['format', () => t('Clear formatting')],
+  'format.comment': ['format', () => t('Comment')],
 
   'paragraph.body': ['paragraph', () => t('Paragraph')],
   'paragraph.heading-1': ['paragraph', () => t('Heading {level}', { level: 1 })],
@@ -124,6 +125,12 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'paragraph.ordered-list': ['paragraph', () => t('Numbered list')],
   'paragraph.bullet-list': ['paragraph', () => t('Bulleted list')],
   'paragraph.rule': ['paragraph', () => t('Horizontal rule')],
+  'paragraph.task-list': ['paragraph', () => t('Task list')],
+  'paragraph.task': ['paragraph', () => t('Tick the task')],
+  'paragraph.callout': ['paragraph', () => t('Callout')],
+  'paragraph.footnote': ['paragraph', () => t('Footnote')],
+  'paragraph.toc': ['paragraph', () => t('Table of contents')],
+  'paragraph.front-matter': ['paragraph', () => t('Front matter')],
 
   'edit.indent': ['edit', () => t('Indent')],
   'edit.outdent': ['edit', () => t('Outdent')],
@@ -137,8 +144,11 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'edit.redo.alt': ['edit', () => t('Redo')],
   'edit.select-all': ['edit', () => t('Select all')],
   'edit.find': ['edit', () => t('Find')],
+  'edit.replace': ['edit', () => t('Replace')],
   'edit.find-next': ['edit', () => t('Find next')],
   'edit.find-next.alt': ['edit', () => t('Find next')],
+  'edit.find-previous': ['edit', () => t('Find previous')],
+  'edit.find-previous.alt': ['edit', () => t('Find previous')],
   'edit.goto-line': ['edit', () => t('Go to line')],
   'edit.move-line-up': ['edit', () => t('Move the line up')],
   'edit.move-line-down': ['edit', () => t('Move the line down')],
@@ -201,6 +211,16 @@ function fromEditor(spec: BindingSpec): Shortcut {
 function runExport(id: ExportId) {
   void import('../commands').then(({ exportCommands }) => {
     const command = exportCommands().find((one) => one.id === `export-${id}`)
+    if (command && !command.disabled) command.run()
+  })
+}
+
+/** Printing, through the same row the File menu and the palette press, and
+ *  imported when the key is pressed for the same reason as the export above: the
+ *  renderer behind it is most of what the app can load. */
+function runPrint() {
+  void import('../commands').then(({ appCommands }) => {
+    const command = appCommands().find((one) => one.id === 'print')
     if (command && !command.disabled) command.run()
   })
 }
@@ -274,6 +294,18 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-,',
     run: () => settings.show(),
+  },
+  {
+    // The note on paper. No key out of the box, because the one every hand
+    // reaches for is Ctrl+P and that is the command palette here, the way it is
+    // in Obsidian and in a code editor. Printing is a row in File and in the
+    // palette, and anybody who prints daily can put it on a key.
+    id: 'app.print',
+    label: () => t('Print'),
+    category: 'file',
+    scope: 'app',
+    key: null,
+    run: () => runPrint(),
   },
   // One row per export there is, in the list's own fixed order, so the settings
   // show every row the File menu and the palette can. All of them are here

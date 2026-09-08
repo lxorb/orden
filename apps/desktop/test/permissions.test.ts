@@ -31,6 +31,7 @@ const NEEDS: Record<string, string> = {
   isMaximized: 'core:window:allow-is-maximized',
   setFullscreen: 'core:window:allow-set-fullscreen',
   isFullscreen: 'core:window:allow-is-fullscreen',
+  setAlwaysOnTop: 'core:window:allow-set-always-on-top',
   close: 'core:window:allow-close',
   destroy: 'core:window:allow-destroy',
   setTitle: 'core:window:allow-set-title',

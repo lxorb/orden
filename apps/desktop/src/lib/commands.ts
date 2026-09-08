@@ -1,8 +1,16 @@
 import {
   CODE_PALETTES,
   EditorView,
+  insertCallout,
+  insertComment,
+  insertFootnote,
+  insertFrontMatter,
   insertSlideBreak,
+  insertToc,
   reformatDocument,
+  shiftHeading,
+  type StateCommand,
+  toggleTaskList,
   type Transaction,
 } from '@nib/editor'
 import { deckOf, slideAt } from '@nib/markdown/slides'
@@ -11,13 +19,15 @@ import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
-import type { HtmlOptions } from './export'
 import type { Exportable } from './export/formats'
+import { look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
+import { canPrint, printNote } from './export/print'
 import { imagePath } from './images'
-import { links } from './link-index.svelte'
+import { canInsertPicture, insertPicture } from './insert-picture'
+import { canSaveAs, saveAs } from './save-as'
 import { prompt } from './prompt.svelte'
 import { newSpace, shareSpace } from './space-actions'
 import { canShare } from './sharing.svelte'
@@ -47,21 +57,6 @@ async function openSnippets() {
   await workspace.open(path)
 }
 
-/** How an exported page should look: the colours chosen for export, or the
- *  ones on screen right now, theme file and custom CSS included. */
-async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
-  const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
-  if (settings.exportAppearance !== 'app') return { ...chosen, scheme: settings.exportAppearance }
-
-  const file = theme.active.path
-  const sheets = await Promise.all([
-    file ? invoke<string>('read_theme', { path: file }).catch(() => '') : '',
-    isNative ? invoke<string>('read_custom_css').catch(() => '') : '',
-  ])
-
-  return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
-}
-
 /** Export entries: what this document goes out as, in the fixed order its kind
  *  keeps, then the variants, then the paper.
  *
@@ -79,7 +74,7 @@ export function exportCommands(): Command[] {
     return note()?.doc ?? ''
   }
   const name = () => note()?.name ?? 'Untitled.md'
-  const target = () => ({ source: source(), name: name(), path: note()?.path ?? null })
+  const target = openTarget
 
   /** What is open, which is what decides the rows. Read once: the list is built
    *  fresh every time the menu or the palette opens, and a document does not
@@ -88,18 +83,10 @@ export function exportCommands(): Command[] {
   const kind = exportKindOf(open ? { kind: open.kind, path: open.path, text: source() } : null)
 
   /** Everything an export needs beyond the note: paper, colours, where the
-   *  pictures it names actually are, and where its links point. */
-  const options = async (): Promise<RunOptions> => ({
-    page: settings.page,
-    resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
-    // An `![[Note]]` in the document brings that note into it, the way it shows
-    // in the editor. Read here rather than in the renderer, which is sync.
-    readNote: (target: string) => links.embedSource(target, note()?.path ?? null),
-    // A wikilink written out as markdown points at the file it named, relative
-    // to this note, so the export reads in any other editor.
-    link: (link) => links.relativeTarget(link, note()?.path ?? null),
-    ...(await look()),
-  })
+   *  pictures it names actually are, and where its links point. Shared with
+   *  printing, which is the same page through the same renderer; see
+   *  export/context.ts. */
+  const options = (): Promise<RunOptions> => renderOptions(target())
 
   /** The note, one of the ten formats or a variant of one. */
   const noteOut = async (id: Exportable) => {
@@ -193,19 +180,6 @@ export function exportCommands(): Command[] {
 
   if (!settings.pandoc) return commands
 
-  // Importing makes a note of its own and has nothing to do with what is open,
-  // so it is offered whatever that is.
-  commands.push({
-    id: 'import',
-    label: t('Import a document'),
-    run: () =>
-      busy.start(t('Importing'), async () => {
-        const m = await import('./export')
-        const imported = await m.importDocument()
-        if (imported) workspace.openBlank(imported.name, imported.markdown)
-      }),
-  })
-
   // Pandoc converts markdown, so it has as little to say about a drawing as Word
   // has. A note's rows get pandoc's; the other kinds keep their own.
   if (!asNote) return commands
@@ -224,6 +198,28 @@ export function exportCommands(): Command[] {
   }
 
   return commands
+}
+
+/** Reading another kind of document in as a note: Word, ODT, ePub, LaTeX and the
+ *  rest, through pandoc, which is what reads them.
+ *
+ *  A row in File rather than in Export, because importing makes a note of its own
+ *  and has nothing to do with what is open - it belongs beside Open file, which is
+ *  the other way a document that is not yet a note becomes one. Null on a machine
+ *  with no pandoc: a row that cannot work is not a row. */
+export function importCommand(): Command | null {
+  if (!settings.pandoc) return null
+
+  return {
+    id: 'import',
+    label: t('Import a document'),
+    run: () =>
+      busy.start(t('Importing'), async () => {
+        const m = await import('./export')
+        const imported = await m.importDocument()
+        if (imported) workspace.openBlank(imported.name, imported.markdown)
+      }),
+  }
 }
 
 /** Shows the log file in the file manager, for when something has gone wrong. */
@@ -378,6 +374,47 @@ function slideCommands(view?: EditorView): Command[] {
   ]
 }
 
+/** The blocks and the marks that are new enough to be worth looking for by name:
+ *  a task list, a callout, a footnote, a table of contents, front matter, a
+ *  picture, a comment, and the two steps between heading levels.
+ *
+ *  Each is a row in the Paragraph or Format menu as well, under the same words -
+ *  app-menu.ts, and a test that holds the two lists to the same labels. Somebody
+ *  who knows what a thing is called should not have to know which menu it is in. */
+function writingCommands(view?: EditorView): Command[] {
+  const writable = !!view && !view.state.readOnly
+  const edit = (id: string, label: string, command: StateCommand): Command => ({
+    id,
+    label,
+    hint: shortcuts.hint(id),
+    disabled: !writable,
+    run: () => {
+      if (!view) return
+      command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
+      view.focus()
+    },
+  })
+
+  return [
+    edit('paragraph.task-list', t('Task list'), toggleTaskList),
+    edit('paragraph.callout', t('Callout'), insertCallout),
+    edit('paragraph.footnote', t('Footnote'), insertFootnote),
+    edit('paragraph.toc', t('Table of contents'), insertToc),
+    edit('paragraph.front-matter', t('Front matter'), insertFrontMatter),
+    edit('paragraph.heading-up', t('One heading level up'), shiftHeading(1)),
+    edit('paragraph.heading-down', t('One heading level down'), shiftHeading(-1)),
+    edit('format.comment', t('Comment'), insertComment),
+    {
+      id: 'picture',
+      label: t('Picture'),
+      disabled: !canInsertPicture(view),
+      run: () => {
+        if (view) void insertPicture(view)
+      },
+    },
+  ]
+}
+
 /** Puts the caret on the slide before or after the one it is in. Writing a deck
  *  is writing a note, so this moves through the note rather than opening
  *  anything: there is one editor, and the slides are places in it. */
@@ -408,6 +445,8 @@ function shareCommand(): Command[] {
 }
 
 export function appCommands(view?: EditorView): Command[] {
+  const imported = importCommand()
+
   return [
     {
       id: 'save',
@@ -432,6 +471,24 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Open file'),
       hint: shortcuts.hint('app.open'),
       run: () => void openFile(),
+    },
+    ...(imported ? [imported] : []),
+    ...(canPrint
+      ? [
+          {
+            id: 'print',
+            label: t('Print'),
+            hint: shortcuts.hint('app.print'),
+            disabled: workspace.active?.kind !== 'note',
+            run: () => busy.start(t('Printing'), () => printNote()),
+          },
+        ]
+      : []),
+    {
+      id: 'save-as',
+      label: t('Save as'),
+      disabled: !canSaveAs(),
+      run: () => void saveAs(),
     },
     {
       id: 'close',
@@ -519,6 +576,7 @@ export function appCommands(view?: EditorView): Command[] {
         }),
     },
 
+    ...writingCommands(view),
     ...slideCommands(view),
     {
       id: 'reading',

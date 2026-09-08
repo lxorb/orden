@@ -43,6 +43,9 @@ interface WindowLike {
   isMaximized(): Promise<boolean>
   setFullscreen(on: boolean): Promise<void>
   isFullscreen(): Promise<boolean>
+  /** Keeps the window over every other application's. A page in a browser has no
+   *  window of its own to raise, so there it does nothing. */
+  setAlwaysOnTop(on: boolean): Promise<void>
   close(): Promise<void>
   destroy(): Promise<void>
   setTitle(title: string): Promise<void>
@@ -65,6 +68,7 @@ const browserWindow: WindowLike = {
     else await document.exitFullscreen().catch(() => undefined)
   },
   isFullscreen: () => Promise.resolve(document.fullscreenElement !== null),
+  setAlwaysOnTop: () => Promise.resolve(),
   close: () => Promise.resolve(),
   destroy: () => Promise.resolve(),
   setTitle: (title: string) => {

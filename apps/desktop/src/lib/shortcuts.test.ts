@@ -536,7 +536,7 @@ describe('what a reader is shown', () => {
     shortcuts.set('app.save', 'Mod-Alt-s')
 
     const { appCommands } = await import('./commands')
-    const { appMenu } = await import('./app-menu')
+    const { appMenu, isSubmenu } = await import('./app-menu')
 
     const command = appCommands().find((one) => one.id === 'save')
     expect(command?.hint).toBe('Ctrl+Alt+S')
@@ -544,8 +544,12 @@ describe('what a reader is shown', () => {
     const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
       (group) => group.id === 'file',
     )
-    const row = file?.rows.find((one) => one !== null && one.label === command?.label)
-    expect(row?.hint).toBe('Ctrl+Alt+S')
+    const row = file?.rows.find(
+      (one) => one !== null && !isSubmenu(one) && one.label === command?.label,
+    )
+    expect(row !== null && row !== undefined && !isSubmenu(row) ? row.hint : null).toBe(
+      'Ctrl+Alt+S',
+    )
   })
 })
 
