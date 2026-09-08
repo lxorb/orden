@@ -132,6 +132,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # To dispatch publish.yml at the end of this job.
+      actions: write
     env:
       TAG: ${{ needs.version.outputs.tag }}
       VERSION: ${{ needs.version.outputs.version }}
@@ -174,3 +176,14 @@ jobs:
           # be a release asset even though nobody clicks it.
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) \
             -exec gh release upload "$TAG" {} --clobber \;
+
+      # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so
+      # the release published above never reaches publish.yml's `on: release`.
+      # workflow_dispatch is the documented exception to that rule, so the
+      # release hands itself over explicitly. Only a real tag: `edge` is remade
+      # on every push to main and is not something to publish anywhere.
+      - name: Hand the release to the package managers
+        if: needs.version.outputs.rolling != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml -f tag="$TAG"

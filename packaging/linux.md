@@ -20,6 +20,11 @@ managers themselves do - `makepkg` in an Arch container, `flatpak-builder` plus
 and the Snap Store. Both jobs build and then stop short of uploading until their
 secrets exist, so the workflow is harmless while the accounts below do not.
 
+`.github/workflows/publish.yml` does the same for winget, Scoop, Homebrew and
+Chocolatey, and also skips every manager whose token is missing, so nothing is
+pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
+`CHOCOLATEY_API_KEY` are set as repository secrets.
+
 ## What Tauri's .deb gives us, and what it gets wrong
 
 ```
