@@ -45,14 +45,13 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Typora | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| MarkText | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Obsidian | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| MarkText | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Notion | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
 | Joplin | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
 | Logseq | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ## Features
 
