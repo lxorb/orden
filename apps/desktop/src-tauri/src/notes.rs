@@ -42,8 +42,8 @@ pub fn write_note(path: String, content: String) -> Result<(), String> {
 /// Writes bytes, under exactly the checks the text writer is held to: any path
 /// the reader chose, the folders above it made, and the file written whole.
 ///
-/// An export is bytes as often as it is text - a Word file, an ePub, a picture,
-/// a TextPack, the pictures inside a TextBundle - and none of those can go
+/// An export is bytes as often as it is text - a Word file, an `ePub`, a
+/// picture, a `TextPack`, the pictures inside a `TextBundle` - none of those go
 /// through `write_note` without being mangled by the string.
 ///
 /// Base64 rather than an array of numbers: a two megabyte picture written out as
