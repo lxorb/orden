@@ -120,6 +120,29 @@ command started the CLI written into it, so the second way bakes one machine's
 node into the project and the build then works nowhere else. Compare
 `buildSrc/.../BuildTask.kt` after, and put the hand-edited files back.
 
+## One size for a finger
+
+A phone is not a narrow desktop. Everything a thumb lands on is sized from one
+scale in `packages/themes/src/tokens.css`, and only rules under `[data-touch]`
+read it, so a desktop keeps the sizes it has always had.
+
+| | | |
+| --- | --- | --- |
+| `--touch-row` | 56px | a row in a list, and the app bar |
+| `--touch-target` | 48px | a square that is only a button, and a row read more than tapped |
+| `--touch-text` | 17px | the words in a row |
+| `--touch-icon` | 24px | an icon that is a button of its own |
+| `--touch-mark` | 15px | the slot a mark beside a row's words is drawn in |
+| `--touch-gap` | 12px | between a mark and the words |
+| `--touch-pad` | 14px | a row's own side padding |
+| `--touch-indent` | 18px | one level of a tree |
+| `--touch-bottom` | | what a sheet leaves under its last row, over the gesture bar |
+
+`apps/desktop/test/touch-scale.test.ts` holds every component to it: a touch rule
+that writes a finger-sized number of its own fails.
+`apps/desktop/test/e2e/touch-scale.py` measures what that comes to on a phone, a
+tablet held both ways and a desktop, and photographs each light and dark.
+
 ## The two things a phone needs that a desktop does not
 
 **The keyboard.** The window draws under the system bars, so Android does not
