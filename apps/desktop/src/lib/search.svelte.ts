@@ -7,6 +7,7 @@
 
 import { SvelteSet } from 'svelte/reactivity'
 import { changesFor } from './search/apply'
+import { fuzzyTerms } from './search/fuzzy'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -28,7 +29,10 @@ const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
 
 class Search {
   text = $state('')
-  hits = $state<Hit[]>([])
+  /** Hits that answer the query as asked, in the order the notes answered. */
+  found = $state<Hit[]>([])
+  /** Notes that answer it only loosely, best score first; see fuzzy.ts. */
+  loose = $state<Hit[]>([])
   /** True from the keystroke until the last note has answered. */
   running = $state(false)
   /** Whether the replacement field is open. */
@@ -48,7 +52,21 @@ class Search {
 
   readonly query = $derived(parseQuery(this.text))
   readonly asks = $derived(this.text.trim().length >= SHORTEST && !isEmpty(this.query))
-  readonly chosen = $derived(this.hits.filter((hit) => !this.skipped.has(keyOf(hit))))
+
+  /** Everything found, exact first.
+   *
+   *  The rule, in one line: a note that answers the query keeps exactly the rows
+   *  and the order it had before there was any loose matching, and the guesses go
+   *  underneath it ranked by score. So nothing can regress - every list the app
+   *  used to show is still the top of the list it shows now - and a query that
+   *  used to find nothing is where the guesses are worth most. */
+  readonly hits = $derived([...this.found, ...this.loose])
+
+  /** What a replacement would be put into: the exact hits that are still ticked.
+   *  A loose hit is never one of them. There is nothing in its line for the query
+   *  to replace, and guessing at what somebody meant is not a thing to do to
+   *  their notes. */
+  readonly chosen = $derived(this.found.filter((hit) => !this.skipped.has(keyOf(hit))))
 
   /** Whether a hit will be replaced. */
   keeps(hit: Hit): boolean {
@@ -69,7 +87,7 @@ class Search {
     this.round++
 
     if (!this.asks) {
-      this.hits = []
+      this.empty()
       this.running = false
       return
     }
@@ -97,9 +115,14 @@ class Search {
     this.round++
     this.text = ''
     this.about = null
-    this.hits = []
+    this.empty()
     this.running = false
     this.skipped.clear()
+  }
+
+  private empty() {
+    this.found = []
+    this.loose = []
   }
 
   /** The panel saying which space it is showing. A question asked of another
@@ -118,13 +141,23 @@ class Search {
       return
     }
 
-    this.hits = []
+    this.empty()
     this.skipped.clear()
 
+    // The words to match loosely, or none. Nothing is relaxed while a
+    // replacement is being written: that is precision work, and a list holding
+    // rows the replacement will not touch would be a list lying about what is
+    // about to happen. See fuzzy.ts for what else is left exact.
+    const terms = this.replacing ? [] : fuzzyTerms(this.query)
+
     // Rows arrive in handfuls and go on the end, so the list fills from the
-    // top while the rest of the space is still being read.
-    await searchSpace(root, this.query, MOST, (found) => {
-      if (round === this.round) this.hits = [...this.hits, ...found]
+    // top while the rest of the space is still being read. The guesses come in
+    // the last handful, already ranked; see space.ts.
+    await searchSpace(root, this.query, terms, MOST, (batch) => {
+      if (round !== this.round) return
+
+      if (batch.hits.length) this.found = [...this.found, ...batch.hits]
+      if (batch.loose.length) this.loose = [...this.loose, ...batch.loose]
     })
 
     if (round === this.round) this.running = false

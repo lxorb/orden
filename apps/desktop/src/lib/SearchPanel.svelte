@@ -97,12 +97,13 @@
   /** Consecutive hits from one note read as that note's hits, with its name
    *  said once above them. */
   const groups = $derived.by(() => {
-    const out: { path: string; name: string; hits: Hit[] }[] = []
+    const out: { path: string; name: string; loose: boolean; hits: Hit[] }[] = []
 
     for (const hit of search.hits) {
       const last = out.at(-1)
       if (last?.path === hit.path) last.hits.push(hit)
-      else out.push({ path: hit.path, name: hit.name, hits: [hit] })
+      // A score is what a loose match has and an exact one has not; see fuzzy.ts.
+      else out.push({ path: hit.path, name: hit.name, loose: hit.score !== undefined, hits: [hit] })
     }
 
     return out
@@ -274,7 +275,14 @@
   <ul>
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
-        <div class="note">{stripped(group.name)}</div>
+        <div class="note">
+          <!-- One character for "near enough", where a word would be prose. The
+               place in the list already says it: the guesses are under the
+               answers. -->
+          {#if group.loose}<span class="guess" title={t('Close match')}>~</span>{/if}{stripped(
+            group.name,
+          )}
+        </div>
 
         {#each group.hits as hit (hit.line)}
           <div class="line">
@@ -515,6 +523,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* The mark on a note found only by a near enough match. Quieter than the name
+     it sits in front of: it says which kind of answer this is, and it is not the
+     answer. */
+  .guess {
+    margin-right: 3px;
+    color: var(--muted);
   }
 
   .line {

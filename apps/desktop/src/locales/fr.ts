@@ -92,6 +92,7 @@ export const fr: Dictionary = {
   'path: tag: file: -word "…" /re/': 'path: tag: file: -mot "…" /re/',
   'Replace with': 'Remplacer par',
   'Nothing found': 'Aucun résultat',
+  'Close match': 'Résultat approchant',
   'Show sidebar': 'Afficher la barre latérale',
   'Hide sidebar': 'Masquer la barre latérale',
   'Go to note, or > for commands': 'Aller à une note, ou > pour les commandes',

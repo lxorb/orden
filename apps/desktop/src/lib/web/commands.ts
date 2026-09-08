@@ -4,8 +4,6 @@
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { scanNote, type SpaceLinks } from '../scan-note'
-import { type Hit, Matcher } from '../search/match'
-import type { Query } from '../search/query'
 import { tagsIn } from '../search/tags'
 import {
   basename,
@@ -285,49 +283,6 @@ async function spaceList() {
     .map((path) => ({ name: basename(path), path }))
 }
 
-/** How many hits are worth handing over at once. The same handful the Rust
- *  side sends, so a list fills the same way on both. */
-const BATCH = 24
-
-/** The same search the desktop runs, over the rows in this browser. The query
- *  arrives already parsed and the matching itself is shared code, so the two
- *  cannot answer differently; what differs is only where the notes are. */
-async function search(root: string, query: Query, limit: number, onHits: (hits: Hit[]) => void) {
-  const base = normalise(root)
-  const matcher = new Matcher(query)
-  let found = 0
-  let pending: Hit[] = []
-
-  // A cursor rather than the whole store: the rows come in path order, which
-  // is the order the desktop walks a space in, and the first rows are on
-  // screen while the last folder is still being read.
-  await files.each((row) => {
-    if (found >= limit) return
-    if (!within(base, row.path) || !isMarkdown(row.path)) return
-
-    const hits = matcher.hits(
-      {
-        path: row.path,
-        relative: row.path.slice(base === '/' ? 1 : base.length + 1),
-        name: basename(row.path),
-        body: row.content,
-      },
-      limit - found,
-    )
-    if (!hits.length) return
-
-    found += hits.length
-    pending.push(...hits)
-
-    if (pending.length >= BATCH) {
-      onHits(pending)
-      pending = []
-    }
-  })
-
-  if (pending.length) onHits(pending)
-}
-
 async function spaceTags(root: string) {
   const rows = (await files.all()).filter(
     (row) => within(normalise(root), row.path) && isMarkdown(row.path),
@@ -521,14 +476,9 @@ export async function webInvoke<T>(
     case 'read_tree':
       return (await tree(root, args.options ?? {})) as T
 
-    case 'search_space':
-      await search(
-        root,
-        args.query as Query,
-        (args.limit as number | undefined) ?? 100,
-        args.hits as (hits: Hit[]) => void,
-      )
-      return undefined as T
+    // Searching a space is not here: it runs in a worker, because reading every
+    // note and scoring every line of them on this thread is keystrokes that do
+    // not appear. See web/search-client.ts, which search/space.ts calls instead.
 
     case 'space_tags':
       return (await spaceTags(root)) as T

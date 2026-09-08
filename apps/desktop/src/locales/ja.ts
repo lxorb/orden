@@ -92,6 +92,7 @@ export const ja: Dictionary = {
   'path: tag: file: -word "…" /re/': 'path: tag: file: -語 "…" /re/',
   'Replace with': '置き換える文字列',
   'Nothing found': '見つかりません',
+  'Close match': '近い一致',
   'Show sidebar': 'サイドバーを表示',
   'Hide sidebar': 'サイドバーを隠す',
   'Go to note, or > for commands': 'ノートへ移動、> でコマンド',

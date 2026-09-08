@@ -94,6 +94,7 @@ export const gsw: Dictionary = {
   'path: tag: file: -word "…" /re/': 'path: tag: file: -wort "…" /re/',
   'Replace with': 'Ersetze dur',
   'Nothing found': 'Nüt gfunde',
+  'Close match': 'Ähnliche Träffer',
   'Show sidebar': 'Sitteleiste zeige',
   'Hide sidebar': 'Sitteleiste uusblände',
   'Go to note, or > for commands': 'Zur Notiz, oder > für Befähl',

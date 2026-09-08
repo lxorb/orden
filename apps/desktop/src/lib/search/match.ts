@@ -46,6 +46,10 @@ export interface Hit {
   /** Where in `text` the match sits. Empty for a note found by its path, its
    *  name or a tag, which no line of it says. */
   ranges: Range[]
+  /** What a loose match was worth, when the hit is one; see fuzzy.ts. Absent on
+   *  a hit that answers the query exactly, which is what tells the two apart in
+   *  the list and what keeps an exact hit's shape unchanged on the wire. */
+  score?: number
 }
 
 /** How much of a matching line is worth showing. The Rust side cuts here too. */
@@ -63,7 +67,7 @@ const HEADING = /^ {0,3}#{1,6}(\s|$)/
  *  and it costs a single call rather than a pass letter by letter, which over
  *  the megabytes a space of notes comes to is most of what a search would
  *  otherwise spend. */
-function fold(text: string): string {
+export function fold(text: string): string {
   const lowered = text.toLowerCase()
   if (lowered.length === text.length) return lowered
 

@@ -4,37 +4,57 @@
  *  space is read once. What comes back arrives in handfuls rather than at the
  *  end, so the first rows are on screen while the last folder is still being
  *  read. In the app those handfuls are an event from the crate; in the browser
- *  the notes are already here and the callback is called straight. */
+ *  they come from a worker, which is where the notes are read and scored so that
+ *  neither the reading nor the scoring is a keystroke that does not appear.
+ *
+ *  Loose hits are the exception to arriving as they are found: a guess is worth
+ *  showing in the order the scores put it, and the scores are not all in until
+ *  the space has been read. Both sides send them last; see fuzzy.ts. */
 
 import { invoke, isNative } from '../tauri'
+import type { FuzzyHit } from './fuzzy'
 import type { Hit } from './match'
 import type { Query } from './query'
 
 const HITS = 'nib://search-hits'
 
-/** Which search a handful belongs to. Typing outruns the disk, and answers to
- *  a word that is no longer in the field would otherwise land in the list. */
+/** One handful, as both sides send it. */
+export interface Found {
+  hits: Hit[]
+  loose: FuzzyHit[]
+}
+
+/** Which search a handful belongs to. Typing outruns the disk, and answers to a
+ *  word that is no longer in the field would otherwise land in the list. */
 let asked = 0
 
 export async function searchSpace(
   root: string,
   query: Query,
+  terms: string[],
   limit: number,
-  onHits: (hits: Hit[]) => void,
+  onFound: (found: Found) => void,
 ): Promise<void> {
   if (!isNative) {
-    await invoke('search_space', { root, query, limit, hits: onHits })
+    const { searchInWorker } = await import('../web/search-client')
+    await searchInWorker(root, query, terms, limit, onFound)
     return
   }
 
   const id = ++asked
   const { listen } = await import('@tauri-apps/api/event')
-  const stop = await listen<{ id: number; hits: Hit[] }>(HITS, (event) => {
-    if (event.payload.id === id) onHits(event.payload.hits)
+  // An event is a boundary, so what it carries is read rather than trusted: a
+  // handful from a crate that has not learnt about loose hits yet is a handful
+  // of exact ones.
+  const stop = await listen<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
+    const batch = event.payload
+    if (batch.id !== id) return
+
+    onFound({ hits: batch.hits ?? [], loose: batch.loose ?? [] })
   })
 
   try {
-    await invoke('search_space', { root, query, limit, id })
+    await invoke('search_space', { root, query, terms, limit, id })
   } finally {
     stop()
   }
