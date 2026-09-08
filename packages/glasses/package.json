@@ -18,7 +18,8 @@
     "@nib/editor": "workspace:*",
     "@nib/markdown": "workspace:*",
     "katex": "^0.18.5",
-    "marked": "^18.0.11"
+    "marked": "^18.0.11",
+    "node-emoji": "^2.2.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

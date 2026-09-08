@@ -287,6 +287,9 @@ importers:
       marked:
         specifier: ^18.0.11
         version: 18.0.11
+      node-emoji:
+        specifier: ^2.2.0
+        version: 2.2.0
     devDependencies:
       typescript:
         specifier: ^5.9.3
