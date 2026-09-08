@@ -86,6 +86,29 @@ function altOf(image: Element): string {
     .trim()
 }
 
+/** A `<` the note would read as the start of a tag, a closing tag, a comment or
+ *  a processing instruction: the four things CommonMark lets raw HTML begin
+ *  with. `a < b` is not one of them and keeps its bracket.
+ *
+ *  Anything else is markup, and a page's words are words. A page showing what a
+ *  tag looks like is the commonest thing anybody copies, and the note that came
+ *  out of it held a tag its writer never wrote - which the reading view, an
+ *  export and a canvas card all render, because a note's own HTML is the note's.
+ *  So the bracket is escaped, which is how markdown writes a literal one. */
+const OPENS_MARKUP = /<(?=[A-Za-z/!?])/g
+
+/** An address as a markdown destination that cannot be broken out of.
+ *
+ *  The same escaping turndown does for a link, said again here because the
+ *  picture rule below writes its own. A `)` in the address used to end the
+ *  destination early and everything after it in the attribute was written into
+ *  the note as markdown of its own; a space made the rest of the address read as
+ *  a title, which left the picture as prose. */
+function destination(address: string): string {
+  const escaped = address.replace(/[\r\n]+/g, ' ').replace(/([<>()])/g, '\\$1')
+  return escaped.includes(' ') ? `<${escaped}>` : escaped
+}
+
 function converter(options: FromHtmlOptions): TurndownService {
   const service = new TurndownService({
     headingStyle: 'atx',
@@ -99,6 +122,14 @@ function converter(options: FromHtmlOptions): TurndownService {
   })
 
   service.use(gfm)
+
+  // Turndown escapes the markdown a page's text would otherwise read as; a `<`
+  // is the one it leaves, and the one that matters most here. Wrapped rather
+  // than replaced, and hung on the instance because that is where turndown looks
+  // it up - and it looks it up only for text that is not inside code, which is
+  // what keeps a fence's own brackets intact.
+  const escapeMarkdown = service.escape.bind(service)
+  service.escape = (text: string) => escapeMarkdown(text).replace(OPENS_MARKUP, '\\<')
 
   // A filter rather than the list itself, because `svg` is not an HTML tag and
   // the list is one. For the clipper this is a second line of defence behind its
@@ -174,7 +205,7 @@ function converter(options: FromHtmlOptions): TurndownService {
       if (!source) return ''
 
       const alt = altOf(node)
-      return `![${alt}](${options.image ? options.image(source, alt) : source})`
+      return `![${alt}](${destination(options.image ? options.image(source, alt) : source)})`
     },
   })
 

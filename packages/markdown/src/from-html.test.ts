@@ -101,6 +101,57 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>before<img alt="none">after</p>')).toBe('beforeafter')
   })
 
+  /** A page's own words are words, and a page showing what a tag looks like is
+   *  the commonest thing anyone copies. Left alone, the `<` came through as
+   *  markup: the note then held a tag its writer never wrote, and the reading
+   *  view, an export and a canvas card all render a note's own HTML. So a `<`
+   *  that would open a tag arrives escaped, which is how markdown writes one. */
+  test('text that looks like a tag stays text', () => {
+    expect(htmlToMarkdown('<p>a &lt;img src=q onerror=alert(1)&gt; b</p>')).toBe(
+      'a \\<img src=q onerror=alert(1)> b',
+    )
+    expect(htmlToMarkdown('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>')).toBe(
+      '\\<script>alert(1)\\</script>',
+    )
+    expect(htmlToMarkdown('<h1>&lt;b&gt;shout&lt;/b&gt;</h1>')).toBe('# \\<b>shout\\</b>')
+  })
+
+  /** Only a `<` that would open something. `a < b` is arithmetic, and escaping
+   *  it would put a backslash in front of every comparison a note quotes. */
+  test('a lone angle bracket is left as it was typed', () => {
+    expect(htmlToMarkdown('<p>1 &lt; 2 and 3 &gt; 2</p>')).toBe('1 < 2 and 3 > 2')
+  })
+
+  /** Code says what it says. Turndown hands a fence its own text rather than the
+   *  escaped kind, and the fence keeps it that way. */
+  test('a tag inside code keeps its brackets', () => {
+    expect(htmlToMarkdown('<pre><code>&lt;img src=q&gt;</code></pre>')).toBe(
+      '```\n<img src=q>\n```',
+    )
+  })
+
+  /** The address is the other way text reached the page as markup: a `)` ends the
+   *  destination early, and whatever followed it in the attribute was written
+   *  into the note as its own markdown. Turndown escapes an address for exactly
+   *  this reason and the rule here has to as well. */
+  test('an address cannot break out of its own brackets', () => {
+    expect(htmlToMarkdown('<img alt="a" src="x)<img src=q onerror=alert(1)>">')).toBe(
+      '![a](<x\\)\\<img src=q onerror=alert\\(1\\)\\>>)',
+    )
+  })
+
+  /** And an address with a space in it is one address, not an address and a
+   *  title: written bare it used to leave the picture as four words of prose. */
+  test('an address with spaces stays one address', () => {
+    expect(htmlToMarkdown('<img alt="a" src="my picture.png">')).toBe('![a](<my picture.png>)')
+  })
+
+  test('an address a caller chose is escaped the same way', () => {
+    expect(htmlToMarkdown('<img alt="a" src="a.png">', { image: () => 'one two.png' })).toBe(
+      '![a](<one two.png>)',
+    )
+  })
+
   /** What the clipper needs: the bytes are still on the site when the conversion
    *  runs, so it numbers the pictures and fills the addresses in afterwards. */
   test('a caller can say what a picture becomes', () => {
