@@ -62,6 +62,7 @@ macro_rules! commands {
             notes::rename_note,
             notes::create_folder,
             notes::delete_folder,
+            notes::file_stamp,
             tree::read_tree,
             assets::read_asset,
             assets::read_file,

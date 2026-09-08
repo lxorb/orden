@@ -6,6 +6,8 @@
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use std::fs;
+use std::io::Read as _;
+use std::path::Path;
 use tauri::AppHandle;
 
 use crate::paths::{
@@ -34,10 +36,65 @@ pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
 ///
 /// Like `read_note` this takes any path the reader chose: a note in a space, a
 /// file opened from elsewhere, or the file an export was pointed at.
+///
+/// The line endings the file already had are kept; see `as_written`.
 #[tauri::command]
 pub fn write_note(path: String, content: String) -> Result<(), String> {
-    write_file(&path, content.as_bytes())
+    let target = chosen(&path)?;
+    let body = as_written(&target, &content);
+    write_file(&path, body.as_bytes())
 }
+
+/// The text with the line endings the file on disk already uses.
+///
+/// The editor holds one line ending, `\n`, whatever the file had: that is
+/// `CodeMirror`'s own convention and the only sane one for a document being
+/// edited. A file written on Windows by another program very often has `\r\n`,
+/// and writing it back with bare newlines rewrites every line of it - which shows
+/// up as a whole-file change in git, in a diff, and in anything watching the
+/// folder, for a note where one word was corrected.
+///
+/// So the file is asked what it uses, and it is written back the same way. A file
+/// that is not there yet is new, and a new file gets `\n`: it is what markdown is
+/// written in and what every editor on every platform reads.
+///
+/// No setting. There is no answer here anybody could want other than "the way it
+/// already was".
+fn as_written(target: &Path, content: &str) -> String {
+    if !crlf(target) {
+        return content.to_owned();
+    }
+
+    // Only the newlines that stand alone: text that already carries `\r\n`, which
+    // a paste can, must not become `\r\r\n`.
+    content.replace("\r\n", "\n").replace('\n', "\r\n")
+}
+
+/// Whether the file at `target` uses `\r\n`, judged by its first line ending. A
+/// file with no line ending at all, one that cannot be read, or one that is not
+/// there says no, which is the `\n` a new note is written in.
+fn crlf(target: &Path) -> bool {
+    let Ok(file) = fs::File::open(target) else {
+        return false;
+    };
+
+    // The first line ending settles it, so only the head of the file is read: a
+    // note is written on every keystroke that is saved, and a megabyte read to
+    // answer a question the first eighty bytes answer is a megabyte wasted.
+    let mut head = [0_u8; HEAD];
+    let Ok(read) = (&file).take(HEAD as u64).read(&mut head) else {
+        return false;
+    };
+
+    head[..read]
+        .iter()
+        .position(|byte| *byte == b'\n')
+        .is_some_and(|at| at > 0 && head[at - 1] == b'\r')
+}
+
+/// How much of a file is read to find its first line ending. Long enough for a
+/// front matter fence and a heading, short enough to cost nothing.
+const HEAD: usize = 8192;
 
 /// Writes bytes, under exactly the checks the text writer is held to: any path
 /// the reader chose, the folders above it made, and the file written whole.
@@ -125,6 +182,50 @@ pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
     fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
 }
 
+/// When a file was last written, and how long it is: enough to tell that
+/// something other than this app has changed it.
+#[derive(serde::Serialize)]
+pub struct Stamp {
+    /// Milliseconds since the epoch, as the window counts time.
+    pub modified: u64,
+    pub len: u64,
+}
+
+/// The stamp of one file, or nothing where there is no file to stamp.
+///
+/// What the window watches an opened file with. A file the reader keeps outside
+/// every space is a file other programs edit - a build writes it, a script
+/// rewrites it, git checks another branch out over it - and the note open in the
+/// editor should follow rather than sit there stale until it is saved over the
+/// top. Two numbers rather than a hash: reading a megabyte every few seconds to
+/// answer a question a stat call answers is a megabyte wasted.
+///
+/// Null rather than an error for a file that is gone: a file being deleted or
+/// replaced is a thing that happens, not a failure to report.
+#[tauri::command]
+pub fn file_stamp(path: String) -> Result<Option<Stamp>, String> {
+    let target = chosen(&path)?;
+    let Ok(data) = fs::metadata(&target) else {
+        return Ok(None);
+    };
+    if !data.is_file() {
+        return Ok(None);
+    }
+
+    let modified = data
+        .modified()
+        .ok()
+        .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |since| {
+            u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
+        });
+
+    Ok(Some(Stamp {
+        modified,
+        len: data.len(),
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::{write_bytes, write_note};
@@ -205,5 +306,99 @@ mod tests {
         write_bytes(target.clone(), super::BASE64.encode(b"old")).expect("the first write");
         write_bytes(target.clone(), super::BASE64.encode(PNG)).expect("the second write");
         assert_eq!(fs::read(&target).expect("the file back"), PNG);
+    }
+
+    /// The editor always hands over `\n`; what reaches the disk is what the file
+    /// already used, so correcting one word in a Windows file is a change to one
+    /// line rather than to every line of it.
+    #[test]
+    fn keeps_the_line_endings_a_file_already_had() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "windows.md");
+
+        fs::write(&target, b"one\r\ntwo\r\n").expect("the file to start out with CRLF");
+        write_note(target.clone(), "one\ntwo!\n".to_string()).expect("the write to land");
+
+        assert_eq!(
+            fs::read(&target).expect("the file back"),
+            b"one\r\ntwo!\r\n"
+        );
+    }
+
+    #[test]
+    fn leaves_a_file_written_with_newlines_alone() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "unix.md");
+
+        fs::write(&target, b"one\ntwo\n").expect("the file to start out with LF");
+        write_note(target.clone(), "one\ntwo!\n".to_string()).expect("the write to land");
+
+        assert_eq!(fs::read(&target).expect("the file back"), b"one\ntwo!\n");
+    }
+
+    #[test]
+    fn writes_a_new_file_with_newlines() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "fresh.md");
+
+        write_note(target.clone(), "one\ntwo\n".to_string()).expect("the write to land");
+        assert_eq!(fs::read(&target).expect("the file back"), b"one\ntwo\n");
+    }
+
+    /// Text that already carries `\r\n` - a paste from somewhere else - must not
+    /// come out as `\r\r\n`.
+    #[test]
+    fn never_doubles_a_carriage_return() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "mixed.md");
+
+        fs::write(&target, b"one\r\n").expect("the file to start out with CRLF");
+        write_note(target.clone(), "one\r\ntwo\n".to_string()).expect("the write to land");
+
+        assert_eq!(fs::read(&target).expect("the file back"), b"one\r\ntwo\r\n");
+    }
+
+    /// A file whose first line is longer than the head that is read still answers,
+    /// because the answer is the first line ending anywhere in that head.
+    #[test]
+    fn reads_only_the_head_of_a_file_to_answer() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "long.md");
+
+        let mut body = "x".repeat(super::HEAD * 2).into_bytes();
+        body.extend_from_slice(b"\r\nafter\r\n");
+        fs::write(&target, &body).expect("a long first line");
+
+        // Nothing was found in the head, so the file is written the way a new one
+        // is. Said out loud because it is a choice: a first line longer than eight
+        // kilobytes is not a line anybody wrote.
+        assert!(!super::crlf(std::path::Path::new(&target)));
+    }
+
+    #[test]
+    fn stamps_a_file_and_says_nothing_of_one_that_is_not_there() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "watched.md");
+
+        assert!(super::file_stamp(target.clone())
+            .expect("no error for a missing file")
+            .is_none());
+
+        fs::write(&target, b"words").expect("the file");
+        let stamp = super::file_stamp(target)
+            .expect("the stamp")
+            .expect("a file that is there");
+
+        assert_eq!(stamp.len, 5);
+        assert!(stamp.modified > 0);
+    }
+
+    #[test]
+    fn does_not_stamp_a_folder() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let inside = path(&dir, "folder");
+        fs::create_dir(&inside).expect("the folder");
+
+        assert!(super::file_stamp(inside).expect("no error").is_none());
     }
 }
