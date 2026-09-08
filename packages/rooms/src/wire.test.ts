@@ -5,6 +5,7 @@ import {
   awarenessState,
   awarenessUpdate,
   forget,
+  isEdit,
   receive,
   syncStep1,
   syncUpdate,
@@ -113,5 +114,38 @@ describe('the wire', () => {
 
   test('answers nothing to a message it does not know', () => {
     expect(new End().hear(new Uint8Array([9, 9, 9]))).toBeNull()
+  })
+})
+
+describe('which messages would write', () => {
+  test('an update would, and so would the answer carrying one', () => {
+    const one = new End()
+    const two = new End()
+    one.text.insert(0, 'words\n')
+
+    expect(isEdit(syncUpdate(Y.encodeStateAsUpdate(one.doc)))).toBe(true)
+
+    // Step 2, which is what one end answers a state vector with.
+    const answer = one.hear(syncStep1(two.doc))
+    expect(answer).not.toBeNull()
+    if (answer) expect(isEdit(answer)).toBe(true)
+  })
+
+  test('asking what a room holds would not', () => {
+    expect(isEdit(syncStep1(new End().doc))).toBe(false)
+  })
+
+  test('a caret would not', () => {
+    const one = new End()
+    one.awareness.setLocalStateField('who', { name: 'Ada', accent: 'violet' })
+
+    expect(isEdit(awarenessUpdate(one.awareness, [one.doc.clientID]))).toBe(false)
+  })
+
+  test('and anything that cannot be read at all counts as one', () => {
+    // The only thing to do with a message like this is drop it, and a reader's
+    // messages are dropped by being called edits.
+    expect(isEdit(new Uint8Array([0]))).toBe(true)
+    expect(isEdit(new Uint8Array())).toBe(true)
   })
 })

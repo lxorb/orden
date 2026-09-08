@@ -70,8 +70,11 @@ function joinUrl(env: Env, token: string): string {
 /** What to call somebody in a sentence: the name on the account, else the part
  *  of the address in front of the at sign. Never the whole address, which is
  *  not a name and which the other person may not have been given. */
-export function personName(user: { name: string | null; email: string }): string {
-  return user.name?.trim() || (user.email.split('@')[0] ?? user.email)
+function personName(user: { name: string | null; email: string }): string {
+  const chosen = user.name?.trim()
+  if (chosen) return chosen
+
+  return user.email.split('@')[0] ?? user.email
 }
 
 async function membersOf(env: Env, spaceId: string): Promise<MemberRow[]> {
@@ -80,7 +83,7 @@ async function membersOf(env: Env, spaceId: string): Promise<MemberRow[]> {
        from space_members m
        left join users u on u.email = m.email
       where m.space_id = ?
-      order by m.created_at limit ?`,
+      order by m.created_at, m.email limit ?`,
   )
     .bind(spaceId, MOST)
     .all<MemberRow>()
@@ -94,7 +97,7 @@ async function requestsOf(env: Env, spaceId: string): Promise<RequestRow[]> {
        from space_requests r
        left join users u on u.email = r.email
       where r.space_id = ?
-      order by r.created_at limit ?`,
+      order by r.created_at, r.email limit ?`,
   )
     .bind(spaceId, MOST)
     .all<RequestRow>()
@@ -226,9 +229,7 @@ share.patch('/:id/share/members/:email', atLeast('owner'), async (context) => {
 
   if (!held) return context.json({ error: 'nobody by that address' }, 404)
 
-  await context.env.DB.prepare(
-    'update space_members set role = ? where space_id = ? and email = ?',
-  )
+  await context.env.DB.prepare('update space_members set role = ? where space_id = ? and email = ?')
     .bind(role, space.id, email)
     .run()
 

@@ -202,9 +202,7 @@ async function reachedNote(
   user: User,
   noteId: string,
 ): Promise<{ note: Note; space: Reached } | null> {
-  const note = await env.DB.prepare('select * from notes where id = ?')
-    .bind(noteId)
-    .first<Note>()
+  const note = await env.DB.prepare('select * from notes where id = ?').bind(noteId).first<Note>()
 
   if (!note) return null
 

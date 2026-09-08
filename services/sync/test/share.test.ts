@@ -1,0 +1,836 @@
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
+
+const OWNER = 'owner@example.com'
+const WRITER = 'writer@example.com'
+const READER = 'reader@example.com'
+const STRANGER = 'nobody@example.com'
+
+let env: TestEnv
+let owner: string
+let writer: string
+let reader: string
+let stranger: string
+let space: string
+let note: string
+
+/** Somebody given the space, and in it: invited, then having proved the address
+ *  by signing in, which is the whole of what joining is. */
+async function invite(email: string, role: 'write' | 'read'): Promise<string> {
+  const link = await inviteLink(email, role)
+  const token = await signIn(env, email)
+  await call(env, `/v1/join/${link}`, { method: 'POST', token })
+  return token
+}
+
+/** The token in the link the invitation mail carried. */
+async function inviteLink(email: string, role: 'write' | 'read'): Promise<string> {
+  const sent = await mail(() =>
+    call(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role } }),
+  )
+
+  const found = /\/join\/([a-f0-9]+)/.exec(sent)
+  if (!found?.[1]) throw new Error(`no invitation was sent:\n${sent}`)
+  return found[1]
+}
+
+function shareView(as = owner) {
+  return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })
+}
+
+beforeEach(async () => {
+  env = testEnv()
+  owner = await signIn(env, OWNER)
+  stranger = await signIn(env, STRANGER)
+
+  space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
+  note = (
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: owner,
+      body: { path: 'plan.md', content: '# Plan\n' },
+    })
+  ).json.note.id
+})
+
+afterEach(() => env.close())
+
+/* ── The matrix ───────────────────────────────────────────────────────── */
+
+interface Route {
+  what: string
+  needs: 'read' | 'write' | 'owner'
+  go: (token: string) => Promise<{ status: number }>
+}
+
+const ROUTES: Route[] = [
+  {
+    what: 'reading what changed',
+    needs: 'read',
+    go: (token) => call(env, `/v1/spaces/${space}/changes?since=0`, { token }),
+  },
+  {
+    what: 'reading a note',
+    needs: 'read',
+    go: (token) => call(env, `/v1/notes/${note}`, { token }),
+  },
+  {
+    what: 'making a note',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'new.md', content: 'hi' } }),
+  },
+  {
+    what: 'writing a note',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/notes/${note}`, { method: 'PUT', token, body: { content: 'changed' } }),
+  },
+  {
+    what: 'deleting a note',
+    needs: 'write',
+    go: (token) => call(env, `/v1/notes/${note}`, { method: 'DELETE', token }),
+  },
+  {
+    what: 'keeping bookmarks',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/bookmarks`, { method: 'PUT', token, body: { bookmarks: [] } }),
+  },
+  {
+    what: 'keeping the files beside the notes',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/files`, { method: 'PUT', token, body: { files: [] } }),
+  },
+  {
+    what: 'renaming the space',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body: { name: 'X' } }),
+  },
+  {
+    what: 'deleting the space',
+    needs: 'owner',
+    go: (token) => call(env, `/v1/spaces/${space}`, { method: 'DELETE', token }),
+  },
+  {
+    what: 'publishing the space',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body: { subdomain: 'plans' } }),
+  },
+  {
+    what: 'unpublishing the space',
+    needs: 'owner',
+    go: (token) => call(env, `/v1/spaces/${space}/blog`, { method: 'DELETE', token }),
+  },
+  {
+    what: 'asking after the domain',
+    needs: 'owner',
+    go: (token) => call(env, `/v1/spaces/${space}/blog/domain`, { token }),
+  },
+  {
+    what: 'reading who else is in it',
+    needs: 'owner',
+    go: (token) => call(env, `/v1/spaces/${space}/share`, { token }),
+  },
+  {
+    what: 'inviting somebody',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/invite`, {
+        token,
+        body: { email: 'else@example.com', role: 'read' },
+      }),
+  },
+  {
+    what: "changing somebody's role",
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/members/${READER}`, {
+        method: 'PATCH',
+        token,
+        body: { role: 'write' },
+      }),
+  },
+  {
+    what: 'taking somebody out',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/members/${READER}`, { method: 'DELETE', token }),
+  },
+  {
+    what: 'making the link',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/link`, {
+        method: 'PUT',
+        token,
+        body: { role: 'read', mode: 'open' },
+      }),
+  },
+  {
+    what: 'revoking the link',
+    needs: 'owner',
+    go: (token) => call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token }),
+  },
+  {
+    what: 'accepting a request',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'POST', token }),
+  },
+  {
+    what: 'declining a request',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'DELETE', token }),
+  },
+]
+
+/** Which roles a route lets through, so each case below reads as one sentence. */
+const RANK = { read: 0, write: 1, owner: 2 }
+
+describe('every route that names a space', () => {
+  beforeEach(async () => {
+    writer = await invite(WRITER, 'write')
+    reader = await invite(READER, 'read')
+
+    // Somebody waiting to be let in, so the two routes about a request have one
+    // to work on rather than answering that there is nothing there.
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'approval' },
+    })
+    const asking = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+    await call(env, `/v1/join/${asking}`, { method: 'POST', token: stranger })
+  })
+
+  for (const route of ROUTES) {
+    for (const [role, holder] of [
+      ['owner', () => owner],
+      ['write', () => writer],
+      ['read', () => reader],
+    ] as const) {
+      const allowed = RANK[role] >= RANK[route.needs]
+
+      test(`${allowed ? 'lets' : 'refuses'} ${role} through ${route.what}`, async () => {
+        const { status } = await route.go(holder())
+
+        if (allowed) expect(status).toBeLessThan(400)
+        else expect(status).toBe(403)
+      })
+    }
+
+    test(`answers a stranger asking about ${route.what} with nothing at all`, async () => {
+      const { status } = await route.go(stranger)
+      expect(status).toBe(404)
+    })
+  }
+})
+
+/* ── The listing ──────────────────────────────────────────────────────── */
+
+describe('the space listing', () => {
+  test('says nothing is shared until somebody is in it', async () => {
+    const { json } = await call(env, '/v1/spaces', { token: owner })
+    expect(json.spaces[0]?.role).toBe('owner')
+    expect(json.spaces[0]?.shared).toBe(false)
+  })
+
+  test("marks the owner's space once somebody is in it", async () => {
+    await invite(READER, 'read')
+
+    const { json } = await call(env, '/v1/spaces', { token: owner })
+    expect(json.spaces[0]?.shared).toBe(true)
+  })
+
+  test('carries a shared space to the person it was shared with, with their role', async () => {
+    reader = await invite(READER, 'read')
+
+    const { json } = await call(env, '/v1/spaces', { token: reader })
+    expect(json.spaces.map((one) => [one.name, one.role, one.shared])).toEqual([
+      ['Notes', 'read', true],
+    ])
+  })
+
+  test('keeps a shared space after the ones the account owns', async () => {
+    writer = await invite(WRITER, 'write')
+    await call(env, '/v1/spaces', { token: writer, body: { name: 'Mine' } })
+
+    const { json } = await call(env, '/v1/spaces', { token: writer })
+    expect(json.spaces.map((one) => one.name)).toEqual(['Mine', 'Notes'])
+  })
+
+  test('leaves nothing of a space nobody shared', async () => {
+    const { json } = await call(env, '/v1/spaces', { token: stranger })
+    expect(json.spaces).toEqual([])
+  })
+
+  test('carries the marker for a shared space that was deleted', async () => {
+    reader = await invite(READER, 'read')
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token: owner })
+
+    const { json } = await call(env, '/v1/spaces', { token: reader })
+    expect(json.spaces).toEqual([])
+    expect(json.deleted).toEqual([space])
+  })
+
+  test('drops the space the moment the membership is taken away', async () => {
+    reader = await invite(READER, 'read')
+    await call(env, `/v1/spaces/${space}/share/members/${READER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    const { json } = await call(env, '/v1/spaces', { token: reader })
+    expect(json.spaces).toEqual([])
+  })
+
+  test('reorders only what the account owns, so a rail cannot move somebody else’s', async () => {
+    writer = await invite(WRITER, 'write')
+    const mine = (await call(env, '/v1/spaces', { token: writer, body: { name: 'Mine' } })).json
+      .space.id
+
+    await call(env, '/v1/spaces/order', {
+      method: 'PUT',
+      token: writer,
+      body: { order: [space, mine] },
+    })
+
+    const { json } = await call(env, '/v1/spaces', { token: owner })
+    expect(json.spaces[0]?.position).toBe(0)
+  })
+})
+
+/* ── Inviting ─────────────────────────────────────────────────────────── */
+
+describe('an invitation', () => {
+  test('puts the person in the space and mails them a link', async () => {
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: READER, role: 'read' },
+      }),
+    )
+
+    expect(sent).toContain(READER)
+    expect(sent).toContain('shared the space Notes with you')
+    expect(sent).toMatch(/https:\/\/nibeditor\.com\/join\/[a-f0-9]{64}/)
+
+    const { json } = await shareView()
+    expect(json.members).toEqual([{ email: READER, name: null, role: 'read', pending: true }])
+  })
+
+  test('waits for the address to be proved before anybody has been in', async () => {
+    const link = await inviteLink(READER, 'read')
+    expect((await shareView()).json.members[0]?.pending).toBe(true)
+
+    const token = await signIn(env, READER)
+    await call(env, `/v1/join/${link}`, { method: 'POST', token })
+
+    expect((await shareView()).json.members[0]?.pending).toBe(false)
+  })
+
+  test('is waiting for somebody who had no account when it was sent', async () => {
+    // Nobody by this address has ever signed in, so there is no account for the
+    // membership to point at - and it does not point at one.
+    await inviteLink('later@example.com', 'write')
+
+    const token = await signIn(env, 'later@example.com')
+    const { json } = await call(env, '/v1/spaces', { token })
+
+    expect(json.spaces.map((one) => [one.name, one.role])).toEqual([['Notes', 'write']])
+  })
+
+  test('reads the address the way the sign-in does, so one spelling is one person', async () => {
+    await call(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: '  Reader@Example.COM ', role: 'read' },
+    })
+
+    const token = await signIn(env, READER)
+    expect((await call(env, '/v1/spaces', { token })).json.spaces).toHaveLength(1)
+  })
+
+  test('says what is wrong with an address that is not one', async () => {
+    const { status, json } = await call(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: 'not an address', role: 'read' },
+    })
+
+    expect(status).toBe(400)
+    expect(json.error).toBe('enter a valid email address')
+  })
+
+  test('refuses a role that is not one to give', async () => {
+    for (const role of ['owner', 'admin', '']) {
+      const { status } = await call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: READER, role },
+      })
+      expect(status, role).toBe(400)
+    }
+  })
+
+  test('will not invite the owner to their own space', async () => {
+    const { status, json } = await call(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: OWNER, role: 'write' },
+    })
+
+    expect(status).toBe(409)
+    expect(json.error).toBe('this space is already yours')
+  })
+
+  test('mails one address at a time, the way a sign-in code is rate limited', async () => {
+    const first = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: READER, role: 'read' },
+    })
+    const again = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: READER, role: 'write' },
+    })
+
+    expect(first.json.mailed).toBe(true)
+    expect(again.json.mailed).toBe(false)
+    // The mail waited; the sharing did not.
+    expect(again.json.members[0]?.role).toBe('write')
+  })
+
+  test('opens nothing when it reaches somebody else', async () => {
+    const link = await inviteLink(READER, 'read')
+
+    const { status, json } = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      token: stranger,
+    })
+
+    expect(status).toBe(403)
+    expect(json.error).toBe('that invitation was sent to another address')
+  })
+
+  test('says who it is from and what it offers, before anybody has signed in', async () => {
+    await call(env, '/v1/me', { method: 'PATCH', token: owner, body: { name: 'Emil' } })
+    const link = await inviteLink(READER, 'read')
+
+    const { status, json } = await call<JoinView>(env, `/v1/join/${link}`)
+
+    expect(status).toBe(200)
+    expect(json).toMatchObject({
+      kind: 'invite',
+      space: 'Notes',
+      role: 'read',
+      email: READER,
+      asks: false,
+      from: 'Emil',
+    })
+  })
+
+  test('names the owner by the front of their address until they choose a name', async () => {
+    const link = await inviteLink(READER, 'read')
+    expect((await call<JoinView>(env, `/v1/join/${link}`)).json.from).toBe('owner')
+  })
+
+  test('stops being a shortcut once it has run out', async () => {
+    const link = await inviteLink(READER, 'read')
+    env.db.exec('update space_members set expires_at = 1')
+
+    expect((await call<JoinView>(env, `/v1/join/${link}`)).status).toBe(404)
+
+    // The address still opens the space, because the address is what opens it.
+    const token = await signIn(env, READER)
+    expect((await call(env, '/v1/spaces', { token })).json.spaces).toHaveLength(1)
+  })
+})
+
+/* ── Roles, one person at a time ──────────────────────────────────────── */
+
+describe('one person’s role', () => {
+  beforeEach(async () => {
+    reader = await invite(READER, 'read')
+  })
+
+  test('changes on its own, leaving everybody else where they were', async () => {
+    writer = await invite(WRITER, 'write')
+
+    await call(env, `/v1/spaces/${space}/share/members/${READER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'write' },
+    })
+
+    const { json } = await shareView()
+    expect(Object.fromEntries(json.members.map((one) => [one.email, one.role]))).toEqual({
+      [WRITER]: 'write',
+      [READER]: 'write',
+    })
+  })
+
+  test('takes effect at once, so the next write is allowed', async () => {
+    const before = await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token: reader,
+      body: { content: 'mine' },
+    })
+    expect(before.status).toBe(403)
+
+    await call(env, `/v1/spaces/${space}/share/members/${READER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'write' },
+    })
+
+    const after = await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token: reader,
+      body: { content: 'mine' },
+    })
+    expect(after.status).toBe(200)
+  })
+
+  test('cannot be raised to owner', async () => {
+    const { status } = await call(env, `/v1/spaces/${space}/share/members/${READER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'owner' },
+    })
+
+    expect(status).toBe(400)
+  })
+
+  test('says so when nobody by that address is in the space', async () => {
+    const { status } = await call(env, `/v1/spaces/${space}/share/members/${STRANGER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'write' },
+    })
+
+    expect(status).toBe(404)
+  })
+
+  test('goes when they are taken out, and the space goes with it', async () => {
+    await call(env, `/v1/spaces/${space}/share/members/${READER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect((await shareView()).json.members).toEqual([])
+    expect((await call(env, `/v1/notes/${note}`, { token: reader })).status).toBe(404)
+  })
+})
+
+/* ── The link ─────────────────────────────────────────────────────────── */
+
+describe('a share link', () => {
+  async function link(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role, mode },
+    })
+
+    const found = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')
+    if (!found?.[1]) throw new Error('no link was made')
+    return found[1]
+  }
+
+  test('is not there until it is asked for', async () => {
+    expect((await shareView()).json.link).toBeNull()
+  })
+
+  test('lets anybody who proves an address in, when it is open', async () => {
+    const token = await link('write', 'open')
+    const joined = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    expect(joined.status).toBe(200)
+    expect(joined.json.space.role).toBe('write')
+
+    const wrote = await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token: stranger,
+      body: { content: 'from the link' },
+    })
+    expect(wrote.status).toBe(200)
+  })
+
+  test('says what it offers to somebody who has not signed in', async () => {
+    const token = await link('read', 'open')
+    const { json } = await call<JoinView>(env, `/v1/join/${token}`)
+
+    expect(json).toMatchObject({ kind: 'link', space: 'Notes', role: 'read', asks: false })
+    // Whoever has it, so it names nobody.
+    expect(json.email).toBeNull()
+  })
+
+  test('asks first when it is set to, and tells the owner somebody is waiting', async () => {
+    const token = await link('read', 'approval')
+
+    const sent = await mail(() =>
+      call(env, `/v1/join/${token}`, { method: 'POST', token: stranger }),
+    )
+    expect(sent).toContain(OWNER)
+    expect(sent).toContain('would like to join Notes')
+
+    const { json } = await shareView()
+    expect(json.requests.map((one) => [one.email, one.role])).toEqual([[STRANGER, 'read']])
+    expect(json.members).toEqual([])
+
+    // Waiting is not being in.
+    expect((await call(env, `/v1/notes/${note}`, { token: stranger })).status).toBe(404)
+  })
+
+  test('says it is waiting rather than handing back a space', async () => {
+    const token = await link('read', 'approval')
+    const { json } = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    expect(json.waiting).toBe(true)
+    expect(json.space).toBeUndefined()
+  })
+
+  test('lets somebody in once the owner accepts, at the role the link offered', async () => {
+    const token = await link('write', 'approval')
+    await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    const { json } = await shareView()
+    expect(json.requests).toEqual([])
+    expect(json.members).toEqual([{ email: STRANGER, name: null, role: 'write', pending: false }])
+
+    const wrote = await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token: stranger,
+      body: { content: 'let in' },
+    })
+    expect(wrote.status).toBe(200)
+  })
+
+  test('leaves them outside when the owner declines', async () => {
+    const token = await link('read', 'approval')
+    await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    const { json } = await shareView()
+    expect(json.requests).toEqual([])
+    expect(json.members).toEqual([])
+  })
+
+  test('keeps what a request was promised when the link changes afterwards', async () => {
+    const token = await link('write', 'approval')
+    await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+
+    await call(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'approval' },
+    })
+    await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    expect((await shareView()).json.members[0]?.role).toBe('write')
+  })
+
+  test('stays the same link when what it hands out changes', async () => {
+    const first = await link('read', 'open')
+    const second = await link('write', 'approval')
+
+    expect(second).toBe(first)
+    expect((await shareView()).json.link).toMatchObject({ role: 'write', mode: 'approval' })
+  })
+
+  test('opens nothing once it is revoked', async () => {
+    const token = await link('read', 'open')
+    await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
+
+    expect((await shareView()).json.link).toBeNull()
+    expect((await call(env, `/v1/join/${token}`)).status).toBe(404)
+    expect((await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })).status).toBe(
+      404,
+    )
+  })
+
+  test('is a fresh one when a revoked space is shared again', async () => {
+    const first = await link('read', 'open')
+    await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
+    const second = await link('read', 'open')
+
+    expect(second).not.toBe(first)
+  })
+
+  test('hands the owner their own space rather than making them a member of it', async () => {
+    const token = await link('read', 'open')
+    const { json } = await call(env, `/v1/join/${token}`, { method: 'POST', token: owner })
+
+    expect(json.space.role).toBe('owner')
+    expect((await shareView()).json.members).toEqual([])
+  })
+
+  test('refuses a mode that is not one', async () => {
+    const { status } = await call(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'sometimes' },
+    })
+
+    expect(status).toBe(400)
+  })
+
+  test('is nothing at all when the token names nothing', async () => {
+    expect((await call(env, '/v1/join/deadbeef')).status).toBe(404)
+    expect((await call(env, '/v1/join/deadbeef', { method: 'POST', token: stranger })).status).toBe(
+      404,
+    )
+  })
+
+  test('needs a session to walk through, and says which is missing', async () => {
+    const token = await link('read', 'open')
+    expect((await call(env, `/v1/join/${token}`, { method: 'POST' })).status).toBe(401)
+  })
+})
+
+/* ── What a shared space costs, and who pays ──────────────────────────── */
+
+describe('a note written in a space somebody shared', () => {
+  test('counts against the owner of the space rather than the writer', async () => {
+    writer = await invite(WRITER, 'write')
+
+    const before = (await call(env, '/v1/usage', { token: owner })).json.used
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: writer,
+      body: { path: 'theirs.md', content: 'x'.repeat(500) },
+    })
+
+    const after = await call(env, '/v1/usage', { token: owner })
+    const mine = await call(env, '/v1/usage', { token: writer })
+
+    expect(after.json.used).toBe(before + 500)
+    expect(mine.json.used).toBe(0)
+  })
+
+  test('is refused once the owner has no room for it, whoever is writing', async () => {
+    writer = await invite(WRITER, 'write')
+    env.db.exec(
+      `insert into blobs (hash, user_id, size, type, created_at)
+       values ('${'f'.repeat(64)}', (select id from users where email = '${OWNER}'),
+               1073741824, 'image/png', 1)`,
+    )
+
+    const { status } = await call(env, `/v1/spaces/${space}/notes`, {
+      token: writer,
+      body: { path: 'theirs.md', content: 'more' },
+    })
+
+    expect(status).toBe(507)
+  })
+})
+
+/* ── Recently deleted ─────────────────────────────────────────────────── */
+
+describe('recently deleted in a shared space', () => {
+  test('lets the writer who deleted a note put it back', async () => {
+    writer = await invite(WRITER, 'write')
+    await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: writer })
+
+    const listed = await call(env, '/v1/trash', { token: writer })
+    expect(listed.json.notes.map((one) => one.path)).toContain('plan.md')
+
+    const back = await call(env, `/v1/trash/notes/${note}/restore`, {
+      method: 'POST',
+      token: writer,
+    })
+    expect(back.status).toBe(200)
+  })
+
+  test('keeps a reader out of it', async () => {
+    reader = await invite(READER, 'read')
+    await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: owner })
+
+    const listed = await call(env, '/v1/trash', { token: reader })
+    expect(listed.json.notes).toEqual([])
+    expect(
+      (await call(env, `/v1/trash/notes/${note}/restore`, { method: 'POST', token: reader }))
+        .status,
+    ).toBe(404)
+  })
+
+  test('keeps the space itself the owner’s to restore', async () => {
+    writer = await invite(WRITER, 'write')
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token: owner })
+
+    expect((await call(env, '/v1/trash', { token: writer })).json.spaces).toEqual([])
+  })
+})
+
+/* ── The connector ────────────────────────────────────────────────────── */
+
+describe('the connector in a shared space', () => {
+  async function connector(session: string): Promise<string> {
+    const { json } = await call(env, '/v1/mcp/token', { token: session, body: { readOnly: false } })
+    return json.token
+  }
+
+  function tool(session: string, name: string, args: Record<string, unknown>) {
+    return call<{ result: { content: { text: string }[] } }>(env, '/mcp', {
+      token: session,
+      body: { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } },
+    })
+  }
+
+  test('lists a space somebody shared alongside the account’s own', async () => {
+    writer = await invite(WRITER, 'write')
+    const said = await tool(await connector(writer), 'list_spaces', {})
+
+    expect(said.json.result.content[0]?.text).toBe('Notes')
+  })
+
+  test('reads a note in it', async () => {
+    reader = await invite(READER, 'read')
+    const said = await tool(await connector(reader), 'read_note', {
+      space: 'Notes',
+      path: 'plan.md',
+    })
+
+    expect(said.json.result.content[0]?.text).toBe('# Plan\n')
+  })
+
+  test('writes in one that was shared to write in', async () => {
+    writer = await invite(WRITER, 'write')
+    const said = await tool(await connector(writer), 'write_note', {
+      space: 'Notes',
+      path: 'plan.md',
+      content: 'rewritten',
+    })
+
+    expect(said.json.result.content[0]?.text).toBe('Saved plan.md.')
+  })
+
+  test('refuses to write in one that was shared to read', async () => {
+    reader = await invite(READER, 'read')
+    const said = await tool(await connector(reader), 'write_note', {
+      space: 'Notes',
+      path: 'plan.md',
+      content: 'rewritten',
+    })
+
+    expect(said.json.result.content[0]?.text).toBe(
+      'Notes was shared with you to read, not to write.',
+    )
+  })
+
+  test('cannot see a space nobody shared', async () => {
+    const said = await tool(await connector(stranger), 'list_spaces', {})
+    expect(said.json.result.content[0]?.text).toBe('No spaces yet.')
+  })
+})

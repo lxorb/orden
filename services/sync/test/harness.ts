@@ -124,6 +124,8 @@ interface SpaceView {
   name: string
   position: number
   icon: string | null
+  role: string
+  shared: boolean
   bookmarks: BookmarkView[]
   createdAt: number
   updatedAt: number
@@ -195,6 +197,9 @@ export interface Reply {
   detail: string | null
   dns: DnsRecord[]
 
+  // Following a link into a space somebody shared.
+  waiting: boolean
+
   // Notes and the change feed.
   note: NoteView
   notes: NoteView[]
@@ -235,6 +240,28 @@ export interface Reply {
   token_type: string
   expires_in: number
   scope: string
+}
+
+/** Who else may reach a space, as the Share sheet reads it. */
+export interface ShareView {
+  owner: { email: string; name: string | null }
+  members: { email: string; name: string | null; role: string; pending: boolean }[]
+  requests: { email: string; name: string | null; role: string; at: number }[]
+  link: { url: string; role: string; mode: string } | null
+  mailed: boolean
+  error: string
+}
+
+/** What a link somebody was sent is about, which names its space by name
+ *  rather than by the shape the sync routes use. */
+export interface JoinView {
+  kind: string
+  space: string
+  role: string
+  email: string | null
+  asks: boolean
+  from: string | null
+  error: string
 }
 
 /** Recently deleted, which names its lists after what they hold rather than
@@ -318,8 +345,9 @@ export async function call<T = Reply>(
   return { status: response.status, json: json as T, text, headers: response.headers }
 }
 
-/** Runs the sign-in flow and returns a usable session token. */
-export async function signIn(env: Env, email: string): Promise<string> {
+/** What the mailer printed while something ran. Without the binding it writes
+ *  to the log instead of sending, so this is the test's mailbox; see email.ts. */
+export async function mail(work: () => Promise<unknown>): Promise<string> {
   const logged: string[] = []
   const original = console.log
   console.log = (message: string) => {
@@ -327,13 +355,20 @@ export async function signIn(env: Env, email: string): Promise<string> {
   }
 
   try {
-    await call(env, '/v1/auth/code', { body: { email } })
+    await work()
   } finally {
     console.log = original
   }
 
-  const code = /(\d{3}) (\d{3})/.exec(logged.join('\n'))
-  if (!code) throw new Error(`no code was sent:\n${logged.join('\n')}`)
+  return logged.join('\n')
+}
+
+/** Runs the sign-in flow and returns a usable session token. */
+export async function signIn(env: Env, email: string): Promise<string> {
+  const logged = await mail(() => call(env, '/v1/auth/code', { body: { email } }))
+
+  const code = /(\d{3}) (\d{3})/.exec(logged)
+  if (!code) throw new Error(`no code was sent:\n${logged}`)
 
   const verified = await call(env, '/v1/auth/verify', {
     body: { email, code: `${code[1]}${code[2]}` },

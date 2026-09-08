@@ -65,7 +65,7 @@ function isHeld(value: unknown): value is Held {
 
 function attachedTo(socket: WebSocket): Partial<Attached> | null {
   const held: unknown = socket.deserializeAttachment()
-  return held && typeof held === 'object' ? (held as Partial<Attached>) : null
+  return held && typeof held === 'object' ? held : null
 }
 
 function announcedBy(socket: WebSocket): number[] {

@@ -4,7 +4,10 @@ import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } fr
 import * as Y from 'yjs'
 import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { FakeSocket, type FakeState, join, room, say } from './room'
+import { doorway, FakeSocket, type FakeState, join, room, say } from './room'
+
+/** What the note holds before anybody writes in it. */
+const OPENING = '# Together\n'
 
 /** A device in a room, the way the app's client is one: its own document, its own
  *  awareness, and the same protocol run over whatever the room says. */
@@ -243,6 +246,117 @@ describe('a room', () => {
   })
 })
 
+describe('a reader in a room', () => {
+  let env: TestEnv
+  let spaceId: string
+  let noteId: string
+
+  beforeEach(async () => {
+    env = testEnv()
+    const token = await signIn(env, 'owner@example.com')
+
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })
+    spaceId = space.json.space.id
+
+    const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+      token,
+      body: { path: 'together.md', content: OPENING },
+    })
+    noteId = note.json.note.id
+  })
+
+  afterEach(() => env.close())
+
+  /** A device the door let in to read and not to write; see rooms/index.ts. */
+  async function reading(made: NoteRoom, state: FakeState): Promise<Device> {
+    const device = new Device(await join(made, { id: noteId, spaceId }, false))
+    await say(made, state, device.socket, syncStep1(device.doc))
+    await settle(made, state, [device])
+    return device
+  }
+
+  test('is given what the room holds', async () => {
+    const { room: made, state } = room(env)
+    const reader = await reading(made, state)
+
+    expect(reader.words).toBe(OPENING)
+  })
+
+  test('sees what somebody else writes, as it is written', async () => {
+    const { room: made, state } = room(env)
+    const writer = await arrive(made, state, { id: noteId, spaceId })
+    const reader = await reading(made, state)
+
+    await say(made, state, writer.socket, writer.type(OPENING.length, 'a line'))
+    await settle(made, state, [writer, reader])
+
+    expect(reader.words).toBe(`${OPENING}a line`)
+  })
+
+  test('cannot write into it, and nobody else hears them try', async () => {
+    const { room: made, state } = room(env)
+    const writer = await arrive(made, state, { id: noteId, spaceId })
+    const reader = await reading(made, state)
+    writer.socket.take()
+
+    await say(made, state, reader.socket, reader.type(0, 'not mine to write'))
+    await settle(made, state, [writer])
+
+    expect(writer.words).toBe(OPENING)
+    expect(writer.socket.take()).toEqual([])
+  })
+
+  test('cannot write into it by having been away, either', async () => {
+    // What a device that was closed sends to put its own words back is an
+    // ordinary update, so it is refused in exactly the same way.
+    const { room: made, state } = room(env)
+    const reader = await reading(made, state)
+
+    reader.text.insert(0, 'written while away')
+    await say(made, state, reader.socket, syncStep1(reader.doc))
+    await settle(made, state, [reader])
+
+    const { room: again, state: theirs } = room(env)
+    theirs.kept.set('note', { noteId, spaceId })
+    const after = await arrive(again, theirs, { id: noteId, spaceId })
+    expect(after.words).not.toContain('written while away')
+  })
+
+  test('leaves the note in the store as it was', async () => {
+    const { room: made, state } = room(env)
+    const reader = await reading(made, state)
+
+    await say(made, state, reader.socket, reader.type(0, 'no'))
+    await state.idle()
+    await made.alarm()
+
+    const token = await signIn(env, 'looking@example.com')
+    // Read through the database, because the account that owns it has already
+    // used its one code above and asking for a second inside the resend gap
+    // gets none.
+    env.db.exec(
+      `insert into space_members (space_id, email, role, created_at)
+       values ('${spaceId}', 'looking@example.com', 'read', 1)`,
+    )
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    expect(read.json.content).toBe(OPENING)
+  })
+
+  test('still has a caret, which everybody else sees', async () => {
+    const { room: made, state } = room(env)
+    const writer = await arrive(made, state, { id: noteId, spaceId })
+    const reader = await reading(made, state)
+
+    reader.awareness.setLocalStateField('who', { name: 'Ada', accent: 'violet' })
+    await say(made, state, reader.socket, awarenessUpdate(reader.awareness, [reader.doc.clientID]))
+    await settle(made, state, [writer, reader])
+
+    expect(writer.awareness.getStates().get(reader.doc.clientID)).toEqual({
+      who: { name: 'Ada', accent: 'violet' },
+    })
+  })
+})
+
 describe('the door to a room', () => {
   let env: TestEnv
 
@@ -251,6 +365,52 @@ describe('the door to a room', () => {
   })
 
   afterEach(() => env.close())
+
+  test('lets in whoever the space was shared with, and says what they may do', async () => {
+    const door = doorway()
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const owner = await signIn(env, 'owner@example.com')
+    const space = await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })
+    const spaceId = space.json.space.id
+    const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+      token: owner,
+      body: { path: 'shared.md', content: 'together' },
+    })
+    const noteId = note.json.note.id
+
+    const sessions: Record<string, string> = { owner }
+    for (const role of ['write', 'read'] as const) {
+      const email = `${role}@example.com`
+      await call(env, `/v1/spaces/${spaceId}/share/invite`, { token: owner, body: { email, role } })
+      sessions[role] = await signIn(env, email)
+    }
+
+    for (const [who, writes] of [
+      ['owner', 'yes'],
+      ['write', 'yes'],
+      ['read', 'no'],
+    ] as const) {
+      const answer = await call(env, `/rooms/${noteId}`, {
+        headers: {
+          upgrade: 'websocket',
+          'sec-websocket-protocol': subprotocol(sessions[who] ?? ''),
+        },
+      })
+
+      expect(answer.status, who).toBe(200)
+      expect(door.asked.at(-1)?.get('x-nib-write'), who).toBe(writes)
+      expect(door.asked.at(-1)?.get('x-nib-space'), who).toBe(spaceId)
+    }
+
+    // And somebody nobody shared it with is a note that is not there.
+    const outside = await signIn(env, 'nobody@example.com')
+    const refused = await call(env, `/rooms/${noteId}`, {
+      headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(outside) },
+    })
+    expect(refused.status).toBe(404)
+  })
 
   test('turns away a socket with no session', async () => {
     const answer = await call(env, '/rooms/whatever', {

@@ -131,14 +131,43 @@ export function room(env: Env): { room: NoteRoom; state: FakeState } {
   return { room: made, state }
 }
 
-/** A device joining, with everything the room greeted it with waiting on it. */
+/** A device joining, with everything the room greeted it with waiting on it.
+ *  `writes` is what the door decided; see rooms/index.ts. */
 export async function join(
   made: NoteRoom,
   note: { id: string; spaceId: string },
+  writes = true,
 ): Promise<FakeSocket> {
   const socket = new FakeSocket()
-  await made.enter(socket as unknown as WebSocket, { noteId: note.id, spaceId: note.spaceId })
+  await made.enter(
+    socket as unknown as WebSocket,
+    { noteId: note.id, spaceId: note.spaceId },
+    writes,
+  )
   return socket
+}
+
+/** A namespace that leads nowhere, so the door can be watched deciding without a
+ *  runtime to make a Durable Object in. What it keeps is the headers the door
+ *  sent, which are the whole of what it tells a room. */
+export function doorway(): { ROOMS: DurableObjectNamespace; asked: Headers[] } {
+  const asked: Headers[] = []
+
+  const stub = {
+    fetch: (request: Request) => {
+      asked.push(request.headers)
+      // Not 101: a Response cannot be built with that status outside the
+      // runtime, and the door only passes on whatever it is handed.
+      return Promise.resolve(new Response(null, { status: 200 }))
+    },
+  }
+
+  const namespace = {
+    idFromName: () => 'one',
+    get: () => stub,
+  }
+
+  return { ROOMS: namespace as unknown as DurableObjectNamespace, asked }
 }
 
 /** A message from a socket to the room, with whatever it set going settled. */

@@ -27,7 +27,7 @@ export function isGiven(value: unknown): value is Given {
   return value === 'write' || value === 'read'
 }
 
-export function isRole(value: unknown): value is Role {
+function isRole(value: unknown): value is Role {
   return value === 'owner' || isGiven(value)
 }
 
@@ -54,11 +54,7 @@ const REACHED = `select sp.*,
   left join space_members m on m.space_id = sp.id and m.email = ?3
  where sp.id = ?1 and sp.deleted = 0`
 
-export async function reachedSpace(
-  env: Env,
-  user: User,
-  spaceId: string,
-): Promise<Reached | null> {
+export async function reachedSpace(env: Env, user: User, spaceId: string): Promise<Reached | null> {
   const row = await env.DB.prepare(REACHED)
     .bind(spaceId, user.id, user.email)
     .first<Space & { role: string | null }>()
@@ -67,24 +63,14 @@ export async function reachedSpace(
   return { ...row, role: row.role }
 }
 
-/** The space the account still owns outright, for the paths that only an owner
- *  has ever been able to take. Kept as its own name because "owned" is what
- *  those routes mean, rather than "reached at the owner role by chance". */
-export async function ownedSpace(env: Env, userId: string, spaceId: string): Promise<Space | null> {
-  const space = await env.DB.prepare(
-    'select * from spaces where id = ? and user_id = ? and deleted = 0',
-  )
-    .bind(spaceId, userId)
-    .first<Space>()
-
-  return space ?? null
-}
-
 /** Middleware: the space named in the path, at the role the route behind it
  *  needs, put on the request. Written once so that no route can forget it and
  *  so that the two answers - not there, not yours to do - are always the same
  *  two answers. */
-export function atLeast(needed: Role, param = 'id'): MiddlewareHandler<{
+export function atLeast(
+  needed: Role,
+  param = 'id',
+): MiddlewareHandler<{
   Bindings: Env
   Variables: Variables
 }> {
