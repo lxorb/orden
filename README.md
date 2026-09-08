@@ -41,16 +41,15 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 ## Why nibeditor?
 
-|  | Open source | Built-in MCP | Win, mac, Linux | Inline preview | Backlinks & graph | Canvas | Free sync | Free publishing |
+|  | Open source | Built-in MCP | Win, mac, Linux, web | Inline preview | Backlinks & graph | Canvas | Free sync | Free publishing |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typora | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| MarkText | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Obsidian | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Typora | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| MarkText | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Obsidian | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Notion | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| Zettlr | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Joplin | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Logseq | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Joplin | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Logseq | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Bear | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | VS Code | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
