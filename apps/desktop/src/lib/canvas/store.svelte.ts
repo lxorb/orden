@@ -73,6 +73,15 @@ export class CanvasStore implements PlaneSurface {
    *  for a plane nobody else is looking at, which is the ordinary case. */
   hands = $state.raw<readonly Hand[]>([])
 
+  /** Whether this plane is one to look at rather than one to draw on: a space
+   *  somebody shared to read.
+   *
+   *  A reader is on the plane and sees every stroke as it is drawn; the one thing
+   *  they may not do is add one. Every gesture on a canvas ends in exactly one
+   *  `edit`, so refusing there is the whole of it, and the room refuses the same
+   *  thing again on its own side. */
+  readOnly = $state(false)
+
   private readonly tab: Tab
   private readonly note: NoteDoc
   private readonly history = new CanvasHistory()
@@ -127,7 +136,7 @@ export class CanvasStore implements PlaneSurface {
    *  the operations in edits.ts hand back what they were given when there was
    *  nothing to do. */
   edit(next: Canvas) {
-    if (next === this.canvas) return
+    if (next === this.canvas || this.readOnly) return
 
     const before = this.canvas
     const after = stamped(before, next, Date.now())

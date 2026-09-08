@@ -67,6 +67,7 @@
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { rooms } from './rooms.svelte'
+  import { canWriteAt } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
@@ -345,6 +346,13 @@
     })
 
     return () => watcher.disconnect()
+  })
+
+  // A space somebody shared to read holds planes to look at. The surface refuses
+  // the edit rather than the gesture, so one rule covers every gesture there is;
+  // see store.svelte.ts. The pane does the same for a note's editor.
+  $effect(() => {
+    store.readOnly = tab.path !== null && !canWriteAt(tab.path)
   })
 
   // This plane is one several devices may be drawing on, so the surface offers

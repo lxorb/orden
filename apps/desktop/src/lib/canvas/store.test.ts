@@ -1,0 +1,147 @@
+import { describe, expect, test, vi } from 'vitest'
+
+/** The surface holds a document, and a document holds the shared text every pane
+ *  is a view onto. Neither needs a browser, but the modules they come from read
+ *  the browser's storage as they load, so it is stood in for first. */
+vi.stubGlobal('localStorage', {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+  clear: () => undefined,
+  key: () => null,
+  length: 0,
+})
+
+const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
+const { CanvasStore } = await import('./store.svelte')
+const { blankCanvas, readCanvas } = await import('./format')
+type Canvas = import('./format').Canvas
+type CanvasNode = import('./format').CanvasNode
+type Shared = import('./shared').SharedPlane
+
+function card(id: string, x = 0): CanvasNode {
+  return { id, type: 'text', x, y: 0, width: 250, height: 60, text: id }
+}
+
+/** A canvas tab, with the plane it opens on written into its document. */
+function opened(text = blankCanvas()) {
+  const note = new NoteDoc(
+    { kind: 'canvas', path: '/space/Board.canvas', name: 'Board.canvas', text, dirty: false },
+    () => undefined,
+  )
+
+  return { store: new CanvasStore(new Tab(note, 'pane')), note }
+}
+
+/** A room, recorded rather than run: what it was pushed, and what it was asked. */
+function room(): Shared & { pushed: Canvas[]; undone: number } {
+  return {
+    pushed: [],
+    undone: 0,
+    canUndo: true,
+    canRedo: false,
+    push(_before: Canvas, after: Canvas) {
+      this.pushed.push(after)
+    },
+    undo() {
+      this.undone++
+      return true
+    },
+    redo() {
+      return false
+    },
+    hand() {
+      return undefined
+    },
+  }
+}
+
+const ids = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
+
+describe('a plane in a space somebody shared to read', () => {
+  test('takes no edit at all', () => {
+    const { store, note } = opened()
+    store.readOnly = true
+
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+
+    expect(store.canvas.nodes).toEqual([])
+    expect(readCanvas(note.text).nodes).toEqual([])
+    expect(note.dirty).toBe(false)
+  })
+
+  test('while one nobody shared takes every edit', () => {
+    const { store, note } = opened()
+
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+
+    expect(ids(store.canvas)).toEqual(['a'])
+    expect(readCanvas(note.text).nodes).toHaveLength(1)
+  })
+})
+
+describe('a plane that is in a room', () => {
+  test('sends what it changed to the room rather than remembering it here', () => {
+    const { store } = opened()
+    const held = room()
+    store.shared = held
+
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+
+    expect(held.pushed).toHaveLength(1)
+    expect(ids(held.pushed[0] ?? blank())).toEqual(['a'])
+
+    // The room is the history now, so taking something back is asked of it.
+    expect(store.canUndo).toBe(true)
+    store.undo()
+    expect(held.undone).toBe(1)
+  })
+
+  test('and still writes the file, so the plane is on this disk too', () => {
+    const { store, note } = opened()
+    store.shared = room()
+
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+
+    expect(ids(readCanvas(note.text))).toEqual(['a'])
+  })
+
+  test('takes on what the room says, and writes it down a moment later', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened()
+      store.shared = room()
+      const before = note.text
+
+      store.arrived({ ...store.canvas, nodes: [card('theirs', 400)], at: { theirs: 1000 } })
+
+      // On screen at once: a stroke somebody else drew appears as they draw it.
+      expect(ids(store.canvas)).toEqual(['theirs'])
+      // And not written per arrival, which would cost the plane every time rather
+      // than costing what arrived.
+      expect(note.text).toBe(before)
+
+      vi.advanceTimersByTime(1300)
+      expect(ids(readCanvas(note.text))).toEqual(['theirs'])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('writes nothing at all when what arrived is what the file already said', () => {
+    vi.useFakeTimers()
+    try {
+      const { store, note } = opened()
+      store.arrived(store.canvas)
+
+      vi.advanceTimersByTime(1300)
+      expect(note.dirty).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+function blank(): Canvas {
+  return { nodes: [], edges: [], ink: [], at: {}, gone: {} }
+}

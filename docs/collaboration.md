@@ -323,6 +323,12 @@ a room is neither pushed nor treated as a disagreement, because the room carried
 every stroke and writes the file itself. A canvas that is *not* in a room still
 merges the two copies rather than leaving a conflict file, exactly as before.
 
+**A reader sees every stroke and can add none.** The door is the same door, and it
+tells the room whether this socket may write exactly as it does for a note; the room
+drops the messages that would change the plane. The surface refuses first, so nobody
+is shown a gesture that would be refused: every gesture on a canvas ends in exactly
+one `edit`, and a plane in a space shared to read takes none.
+
 **Presence** is the note's presence said in the place a plane has: a small dot in the
 other device's accent where its pointer is, its name beside it for a second and a
 half after it moves, and the same stack of dots on the tab. The names follow the same
@@ -663,6 +669,10 @@ real devices look like. The numbers above are from a quiet machine.
   there, a device that drew while it was away, undo taking back what this device
   drew and refusing to touch what somebody else drew, joining not being a step to
   take back, and what a stroke costs a plane forty times the size.
+- `apps/desktop/src/lib/canvas/store.test.ts` - the surface's own end: a plane
+  shared to read taking no edit and writing nothing, an edit in a room going to the
+  room rather than into a local history, and what arrives being on screen at once
+  and in the file a moment later.
 - `apps/desktop/src/lib/rooms/hands.test.ts` - what a hand carries, the stroke
   under the pen arriving whole, a pen lifted leaving the pointer, a live stroke
   belonging to nobody, and the same name rule the carets follow.
