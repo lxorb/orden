@@ -287,15 +287,16 @@ class Workspace {
     return seen
   }
 
-  /** Every open note that has a file behind it, once each however many panes show
-   *  it. What the rooms store follows, so that a note being written in on two
-   *  devices joins the room the moment it is open on either; see rooms.svelte.ts.
+  /** Every open file that has words of its own and a path behind it, once each
+   *  however many panes show it. What the rooms store follows, so that a file being
+   *  worked in on two devices joins the room the moment it is open on either; see
+   *  rooms.svelte.ts.
    *
-   *  Notes only. The graph is drawn from the notes rather than written in, a PDF is
-   *  read, and a canvas is settled its own way. */
+   *  Notes and canvases. The graph is drawn from the notes rather than written in,
+   *  and a PDF is read; neither has anything for a room to hold. */
   get openNotes(): { key: string; path: string; note: NoteDoc }[] {
     return this.documents
-      .filter((note) => note.kind === 'note' && note.path !== null)
+      .filter((note) => holdsWords(note.kind) && note.path !== null)
       .map((note) => ({ key: note.key, path: note.path ?? '', note }))
   }
 

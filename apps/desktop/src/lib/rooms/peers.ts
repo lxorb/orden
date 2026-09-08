@@ -26,16 +26,21 @@ import { isRecord, isString } from '../stored'
  *  by machine - "Emil" on both of them says nothing - while two people want to
  *  be told apart by person. Nobody knows which case it is until everybody has
  *  arrived, so the choice belongs to whoever is looking. */
-interface Presence {
-  who: {
-    /** The device: "Windows", "iPhone", "Firefox". */
-    name: string
-    accent: string
-    /** Whoever is at it, when there is an account to say. */
-    person?: string
-  }
-  /** Absent until the caret has been somewhere. */
-  caret?: { anchor: unknown; head: unknown }
+interface Named {
+  /** The device: "Windows", "iPhone", "Firefox". */
+  name: string
+  accent: string
+  /** Whoever is at it, when there is an account to say. */
+  person?: string
+}
+
+/** One other device in a room: who it says it is, and everything else it said.
+ *  What it said beyond its name is the room's own business - a caret in a note, a
+ *  hand on a plane - so it comes through as it arrived. */
+export interface Here {
+  id: number
+  who: Named
+  said: Record<string, unknown>
 }
 
 /** Where a caret is, as something that survives the text changing under it. */
@@ -54,21 +59,48 @@ function absolute(doc: Y.Doc, held: unknown): number | null {
   return found ? found.index : null
 }
 
-function presenceOf(value: unknown): Presence | null {
+function namedIn(value: unknown): Named | null {
   if (!isRecord(value) || !isRecord(value.who)) return null
   if (!isString(value.who.name) || !isString(value.who.accent)) return null
 
-  const who = {
+  return {
     name: value.who.name,
     accent: value.who.accent,
     ...(isString(value.who.person) ? { person: value.who.person } : {}),
   }
-  if (!isRecord(value.caret)) return { who }
-
-  return { who, caret: { anchor: value.caret.anchor, head: value.caret.head } }
 }
 
-/** Everybody in the room but us, as the editor draws them. A device that has
+/** Everybody in the room but us, and which of the two names to draw them by.
+ *
+ *  Shared by both kinds of room, because who is here and what they are called is
+ *  the same question in a note and on a plane. What each of them then draws - a
+ *  caret in the words, a pointer on the plane - is its own. */
+export function whoElse(
+  awareness: Awareness,
+  doc: Y.Doc,
+): { here: Here[]; nameOf: (who: Named) => string } {
+  const here: Here[] = []
+
+  for (const [id, state] of awareness.getStates()) {
+    if (id === doc.clientID) continue
+
+    const who = namedIn(state)
+    if (who && isRecord(state)) here.push({ id, who, said: state })
+  }
+
+  // Our own counts: a file this account has open on two machines and somebody
+  // else has open on one is a room with two people in it.
+  const people = new Set(
+    [namedIn(awareness.getLocalState()), ...here.map((one) => one.who)]
+      .map((one) => one?.person)
+      .filter((one): one is string => !!one),
+  )
+  const byPerson = people.size > 1
+
+  return { here, nameOf: (who) => (byPerson ? who.person : who.name) ?? who.name }
+}
+
+/** Everybody in the note but us, as the editor draws them. A device that has
  *  announced itself without having put its caret anywhere yet is somebody in the
  *  note rather than somebody with a caret in it, so it counts towards the dots on
  *  the tab and draws nothing in the text. */
@@ -77,37 +109,20 @@ export function peersIn(
   doc: Y.Doc,
   scheme: 'dark' | 'light',
 ): { present: number; carets: Peer[] } {
-  const here: { id: number; presence: Presence }[] = []
-
-  for (const [id, state] of awareness.getStates()) {
-    if (id === doc.clientID) continue
-
-    const presence = presenceOf(state)
-    if (presence) here.push({ id, presence })
-  }
-
-  // Our own counts: a note this account has open on two machines and somebody
-  // else has open on one is a room with two people in it.
-  const people = new Set(
-    [presenceOf(awareness.getLocalState()), ...here.map((one) => one.presence)]
-      .map((one) => one?.who.person)
-      .filter((one): one is string => !!one),
-  )
-  const byPerson = people.size > 1
-
+  const { here, nameOf } = whoElse(awareness, doc)
   const carets: Peer[] = []
 
-  for (const { id, presence } of here) {
-    if (!presence.caret) continue
+  for (const { id, who, said } of here) {
+    if (!isRecord(said.caret)) continue
 
-    const head = absolute(doc, presence.caret.head)
-    const anchor = absolute(doc, presence.caret.anchor)
+    const head = absolute(doc, said.caret.head)
+    const anchor = absolute(doc, said.caret.anchor)
     if (head === null) continue
 
     carets.push({
       id,
-      name: (byPerson ? presence.who.person : presence.who.name) ?? presence.who.name,
-      colour: accentColour(presence.who.accent, scheme),
+      name: nameOf(who),
+      colour: accentColour(who.accent, scheme),
       head,
       anchor: anchor ?? head,
     })

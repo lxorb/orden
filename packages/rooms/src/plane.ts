@@ -71,6 +71,13 @@ export function buriedOf(doc: Y.Doc): Y.Map<number> {
   return doc.getMap(BURIED)
 }
 
+/** Both of them, as things to watch or to undo rather than to read. Together,
+ *  because one gesture may touch both: deleting a card takes it off the plane and
+ *  puts a tombstone in its place, and that is one thing somebody did. */
+export function rootsOf(doc: Y.Doc): Y.Map<unknown>[] {
+  return [doc.getMap(PLANE), doc.getMap(BURIED)]
+}
+
 function isInk(thing: Thing): thing is InkStroke {
   return 'points' in thing
 }

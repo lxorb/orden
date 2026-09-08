@@ -14,9 +14,7 @@
 import type { ChangeSet, SharedDoc } from '@nib/editor'
 import type { Replacement } from '@nib/rooms/fold'
 import * as Y from 'yjs'
-
-/** What marks a change to the shared text as this device's own. */
-export const HERE = 'here'
+import { HERE } from './door'
 
 /** A Yjs delta, as far as a note made of plain text is concerned. A rich text
  *  document would also carry attributes and embedded types; a note does not. */

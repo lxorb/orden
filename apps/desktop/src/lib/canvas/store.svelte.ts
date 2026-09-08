@@ -16,7 +16,13 @@
  *
  *  Every edit stamps the things it touched with the time. Nothing else in the
  *  app has to know that, and it is what lets two devices drawing on one file keep
- *  both drawings; see canvas-merge.ts. */
+ *  both drawings; see canvas-merge.ts.
+ *
+ *  A plane in a room is the same surface with one thing added: every edit also goes
+ *  into the room, and what arrives from the room is taken on the way an edit made
+ *  here is. Which of the two histories undo asks is the only real difference: in a
+ *  room it is the room's, so undo takes back what you drew and never what somebody
+ *  else did. See shared.ts for the contract and rooms/plane.ts for the room. */
 
 import { type Camera, clampScale, framingBox } from '../camera'
 import { type Canvas, emptyCanvas, merged, readCanvas, stamped, writeCanvas } from './format'
@@ -24,12 +30,22 @@ import { pickedBox } from './edits'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
 import { CanvasHistory } from './history'
+import type { Hand, PlaneSurface, SharedPlane } from './shared'
 import type { NoteDoc, Tab } from '../workspace/documents.svelte'
 
 /** Room left around the canvas when it is framed, in pixels. */
 const PADDING = 48
 
-export class CanvasStore {
+/** How long after a change arrives from the room the file is written.
+ *
+ *  A stroke crossing from another device has to appear at once, and serialising the
+ *  whole plane is the size of the plane rather than the size of the stroke: doing
+ *  that per arrival is the one thing a plane of five thousand strokes cannot afford.
+ *  The same pause the room's own settle waits, so a device being drawn on and a
+ *  device being watched write their file at the same moment. */
+const WRITE_DELAY = 1_200
+
+export class CanvasStore implements PlaneSurface {
   /** The plane as it stands. Replaced whole by every edit; see edits.ts.
    *
    *  Raw, and that is not an optimisation to be tidied away later. A canvas is
@@ -48,12 +64,22 @@ export class CanvasStore {
    *  mounted only for this node, which is what keeps five hundred cards cheap. */
   editing = $state<string | null>(null)
 
+  /** The room this plane is in, while it is in one. Raw: it is set once, when the
+   *  room has said what it holds, and read for what it can do rather than for
+   *  anything inside it. */
+  shared = $state.raw<SharedPlane | null>(null)
+
+  /** Whose hands are on the plane besides this one, and what each is drawing. Empty
+   *  for a plane nobody else is looking at, which is the ordinary case. */
+  hands = $state.raw<readonly Hand[]>([])
+
   private readonly tab: Tab
   private readonly note: NoteDoc
   private readonly history = new CanvasHistory()
   /** Which revision of the document this surface has read. Anything past it came
    *  from somewhere else and has to be taken on; see `follow`. */
   private at = -1
+  private writing: ReturnType<typeof setTimeout> | undefined
 
   constructor(tab: Tab) {
     this.tab = tab
@@ -81,11 +107,11 @@ export class CanvasStore {
   }
 
   get canUndo(): boolean {
-    return this.history.canUndo
+    return this.shared?.canUndo ?? this.history.canUndo
   }
 
   get canRedo(): boolean {
-    return this.history.canRedo
+    return this.shared?.canRedo ?? this.history.canRedo
   }
 
   /** The box round everything picked, or null. What the handles are drawn on. */
@@ -103,12 +129,26 @@ export class CanvasStore {
   edit(next: Canvas) {
     if (next === this.canvas) return
 
-    this.history.record(this.canvas)
-    this.canvas = stamped(this.canvas, next, Date.now())
+    const before = this.canvas
+    const after = stamped(before, next, Date.now())
+    this.canvas = after
+
+    // In a room the room is the history, and what changed goes to the other devices
+    // as the objects it touched. Out of one, the snapshot stack is the history.
+    if (this.shared) this.shared.push(before, after)
+    else this.history.record(before)
+
     this.commit()
   }
 
   undo() {
+    // In a room, taking something back is the room's own history: what this device
+    // drew and never what somebody else did. See rooms/plane-bind.ts.
+    if (this.shared) {
+      this.shared.undo()
+      return
+    }
+
     const before = this.history.undo(this.canvas)
     if (!before) return
 
@@ -121,12 +161,43 @@ export class CanvasStore {
   }
 
   redo() {
+    if (this.shared) {
+      this.shared.redo()
+      return
+    }
+
     const after = this.history.redo(this.canvas)
     if (!after) return
 
     this.canvas = stamped(this.canvas, after, Date.now())
     this.keepPicked()
     this.commit()
+  }
+
+  /** The plane as the room now says it is.
+   *
+   *  Taken on at once, so a stroke somebody else drew appears as they draw it, and
+   *  written into the file a moment later rather than on every arrival. The room is
+   *  already writing the file into the account; this is only this device's own copy
+   *  of it catching up. */
+  arrived(canvas: Canvas) {
+    this.canvas = canvas
+    this.keepPicked()
+
+    clearTimeout(this.writing)
+    this.writing = setTimeout(() => this.commit(), WRITE_DELAY)
+  }
+
+  /** Who else is on the plane. Held here rather than in the room because this is
+   *  what the surface reads, and what a surface reads is state. */
+  handsAre(hands: readonly Hand[]) {
+    this.hands = hands
+  }
+
+  /** Anything owing, written now: the room is being left, or the last tab on this
+   *  plane is closing. */
+  part() {
+    if (this.writing !== undefined) this.commit()
   }
 
   /** Brings the surface up to words that changed under it: a version restored, a
@@ -148,7 +219,10 @@ export class CanvasStore {
 
     const arrived = readCanvas(this.note.text)
     const ours = this.canvas
-    const mine = this.history.canUndo || this.note.dirty
+    // A plane in a room always has something of its own: the room's other devices
+    // are holding it, so words arriving under it are one more copy to merge with
+    // rather than the newest word on the subject.
+    const mine = this.shared !== null || this.history.canUndo || this.note.dirty
 
     this.at = this.note.revision
     this.history.clear()
@@ -162,6 +236,8 @@ export class CanvasStore {
     const together = merged(ours, arrived)
     this.canvas = together
     this.keepPicked()
+    // Whatever the merge kept goes to the other devices as the edit it is.
+    this.shared?.push(ours, together)
 
     // Written back only when the merge actually kept something of ours, so a
     // canvas that arrived unchanged does not start a round of writes.
@@ -179,7 +255,13 @@ export class CanvasStore {
    *  on the auto-save. The revision is noted so `follow` can tell our own write
    *  from somebody else's. */
   private commit() {
-    this.note.replace(writeCanvas(this.canvas))
+    clearTimeout(this.writing)
+    this.writing = undefined
+
+    const text = writeCanvas(this.canvas)
+    // A plane that comes back saying exactly what the file says is not an edit, and
+    // marking the note unsaved for it would start a round of writes over nothing.
+    if (text !== this.note.text) this.note.replace(text)
     this.at = this.note.revision
   }
 

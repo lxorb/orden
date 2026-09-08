@@ -28,6 +28,7 @@
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
   import CanvasFind from './CanvasFind.svelte'
+  import CanvasHands from './CanvasHands.svelte'
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPens from './CanvasPens.svelte'
@@ -65,6 +66,7 @@
   import { dragged as draggedPaths, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
+  import { rooms } from './rooms.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
@@ -118,6 +120,10 @@
   /** Where the pointer last was on the plane, so a paste and a new card land
    *  where the reader is looking. */
   let at: Point = { x: 0, y: 0 }
+  /** Where the pointer is, for the other devices in the room. The same point as
+   *  `at`, said as state, because what the other devices are shown is drawn from it
+   *  while `at` is read by a paste rather than followed. Null once it has left. */
+  let pointing = $state.raw<Point | null>(null)
   /** Everything but what is picked, faded back. What "narrow to selection" does:
    *  the rest of the plane is still there, it is just not what this is about. */
   let narrowed = $state(false)
@@ -339,6 +345,26 @@
     })
 
     return () => watcher.disconnect()
+  })
+
+  // This plane is one several devices may be drawing on, so the surface offers
+  // itself to the room its file is in and takes it back when the tab goes. The
+  // rooms store joins the two whichever of them arrives second.
+  $effect(() => {
+    rooms.drawing(tab.note.key, store)
+    return () => {
+      store.part()
+      rooms.drawing(tab.note.key, null)
+    }
+  })
+
+  // Where this hand is and what it is drawing, on its way to the other devices.
+  // Read for their own sake: what travels is the pointer and the stroke under it.
+  $effect(() => {
+    const shared = store.shared
+    if (!shared) return
+
+    shared.hand(pointing, live)
   })
 
   // The pane being worked in takes the keyboard, so Delete and Ctrl+Z reach the
@@ -610,6 +636,7 @@
   function onPointerMove(event: PointerEvent) {
     const point = planeAt(event)
     at = point
+    if (store.shared) pointing = point
     const coarse = event.pointerType === 'touch'
 
     // Every sample since the last event, not just the one that was delivered: a
@@ -953,6 +980,7 @@
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
   onpointercancel={onPointerCancel}
+  onpointerleave={() => (pointing = null)}
   ondblclick={onDoubleClick}
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}
@@ -1100,6 +1128,10 @@
         />
       </svg>
     {/if}
+
+    <!-- The other hands on the plane, over everything on it. Inside the plane, so
+         a pointer somebody else is moving stays where they are pointing. -->
+    <CanvasHands hands={store.hands} {unit} {palette} />
   </div>
 
   <CanvasInk ink={shown.ink} {live} {camera} {width} {height} {picked} {palette} />

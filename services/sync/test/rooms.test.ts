@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { Awareness } from 'y-protocols/awareness'
-import {
-  type Canvas,
-  type InkStroke,
-  readCanvas,
-  writeCanvas,
-} from '@nib/markdown/canvas'
+import { type Canvas, type InkStroke, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { stamped } from '@nib/markdown/canvas-merge'
 import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'

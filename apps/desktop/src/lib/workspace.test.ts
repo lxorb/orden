@@ -1660,9 +1660,7 @@ describe('a canvas that comes back after a restart', () => {
     const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
       layout?: { frame: { pane?: { tabs?: { path: string | null; doc: string }[] } } }
     }
-    const held = written.layout?.frame.pane?.tabs?.find(
-      (one) => one.path === '/space/plan.canvas',
-    )
+    const held = written.layout?.frame.pane?.tabs?.find((one) => one.path === '/space/plan.canvas')
 
     expect(held).toBeDefined()
     expect(held?.doc).toBe('')
