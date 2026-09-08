@@ -24,7 +24,7 @@ export const EXPORT_FORMATS = [
   { id: 'epub', label: 'ePub', extension: 'epub' },
 ] as const
 
-export type ExportFormat = (typeof EXPORT_FORMATS)[number]['id']
+type ExportFormat = (typeof EXPORT_FORMATS)[number]['id']
 
 /** The variants: the same format with one thing done differently. Each is a row
  *  of its own rather than a checkbox, because the choice is made once, at the

@@ -476,6 +476,7 @@ export const de: Dictionary = {
   'Export slides as HTML': 'Folien als HTML exportieren',
   'Export slides as PDF': 'Folien als PDF exportieren',
   'Export as {format}': 'Als {format} exportieren',
+  'Save a copy': 'Kopie speichern',
   'Import a document': 'Dokument importieren',
   'Page setup for export': 'Seiteneinrichtung für den Export',
   Paper: 'Papier',

@@ -18,7 +18,7 @@ import {
   standardBindings,
   tableBindings,
 } from '@nib/editor'
-import { type ExportFormat, EXPORT_FORMATS } from '../export/formats'
+import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
@@ -192,12 +192,16 @@ function fromEditor(spec: BindingSpec): Shortcut {
 /** Runs an export through the very row the palette and the File menu run, so a
  *  key can never do something the menu does not. Imported when the key is
  *  pressed: the command list reaches half the app, and this file is loaded
- *  before anything is on screen. */
-function runExport(id: ExportFormat) {
+ *  before anything is on screen.
+ *
+ *  A key bound to a format the thing on screen does not go out as does nothing: a
+ *  canvas has no Word file in it, and the row is either not on the list or on it
+ *  and greyed out. Nothing to report, either - the answer is the greyed row in
+ *  the menu, not a message about a key. */
+function runExport(id: ExportId) {
   void import('../commands').then(({ exportCommands }) => {
-    exportCommands()
-      .find((command) => command.id === `export-${id}`)
-      ?.run()
+    const command = exportCommands().find((one) => one.id === `export-${id}`)
+    if (command && !command.disabled) command.run()
   })
 }
 
@@ -271,17 +275,20 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-,',
     run: () => settings.show(),
   },
-  // One row per format, in the list's own fixed order, so the settings show the
-  // same nine the File menu and the palette do. None of them starts on a key:
-  // nine defaults would eat the file category, and somebody who exports to one
-  // format every day is exactly the person who will bind it.
-  ...EXPORT_FORMATS.map((format): Shortcut => ({
-    id: `export.${format.id}`,
-    label: () => t('Export as {format}', { format: t(format.label) }),
+  // One row per export there is, in the list's own fixed order, so the settings
+  // show every row the File menu and the palette can. All of them are here
+  // whatever is open, because a key is bound once and pressed with anything in
+  // front of it; a key for a format this document does not go out as does
+  // nothing. None of them starts on a key: fourteen defaults would eat the file
+  // category, and somebody who exports to one format every day is exactly the
+  // person who will bind it.
+  ...EXPORT_KEYS.map((id): Shortcut => ({
+    id: `export.${id}`,
+    label: () => labelOf(id),
     category: 'file',
     scope: 'app',
     key: null,
-    run: () => runExport(format.id),
+    run: () => runExport(id),
   })),
   // Cmd+Tab is the Mac's own application switcher and never reaches a window,
   // so there the note switcher is Ctrl+Tab, which is what a Mac browser uses.

@@ -473,6 +473,7 @@ export const gsw: Dictionary = {
   'Export slides as HTML': 'Folie als HTML exportiere',
   'Export slides as PDF': 'Folie als PDF exportiere',
   'Export as {format}': 'Als {format} exportiere',
+  'Save a copy': 'Kopie speichere',
   'Import a document': 'Es Dokumänt importiere',
   'Page setup for export': 'Sitteiirichtig für de Export',
   Paper: 'Papier',

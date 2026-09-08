@@ -23,6 +23,7 @@ import { account } from './account.svelte'
 import { copySelection, cutSelection } from './clipboard'
 import { exportCommands } from './commands'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
+import { EXPORT_EXTRAS } from './export/offer'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
@@ -64,12 +65,15 @@ interface Context {
   onhistory(): void
 }
 
-/** The export rows, with a rule wherever the kind of row changes: the nine
- *  formats, then the variants of two of them, then the paper and whatever else
- *  the machine can do. The list itself is the command list, so the menu, the
- *  palette and the shortcut settings show the same rows in the same order. */
+/** The export rows, with a rule wherever the kind of row changes: the formats
+ *  this document goes out as, then the variants of two of them, then the paper
+ *  and whatever else the machine can do. The list itself is the command list, so
+ *  the menu, the palette and the shortcut settings show the same rows in the same
+ *  order, and all three follow what is open; see export/offer.ts. */
 function exportRows(): MenuRow[] {
-  const formats = new Set<string>(EXPORT_FORMATS.map((one) => `export-${one.id}`))
+  const formats = new Set<string>(
+    [...EXPORT_FORMATS, ...EXPORT_EXTRAS].map((one) => `export-${one.id}`),
+  )
   const variants = new Set<string>(EXPORT_VARIANTS.map((one) => `export-${one.id}`))
 
   const rows: MenuRow[] = []
@@ -80,7 +84,12 @@ function exportRows(): MenuRow[] {
     if (last !== null && kind !== last) rows.push(SPLIT)
     last = kind
 
-    rows.push({ label: command.label, hint: command.hint, run: command.run })
+    rows.push({
+      label: command.label,
+      hint: command.hint,
+      disabled: !!command.disabled,
+      run: command.run,
+    })
   }
 
   return rows

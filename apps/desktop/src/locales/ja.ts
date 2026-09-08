@@ -471,6 +471,7 @@ export const ja: Dictionary = {
   'Export slides as HTML': 'スライドを HTML として書き出す',
   'Export slides as PDF': 'スライドを PDF として書き出す',
   'Export as {format}': '{format} として書き出す',
+  'Save a copy': 'コピーを保存',
   'Import a document': '文書を読み込む',
   'Page setup for export': '書き出しのページ設定',
   Paper: '用紙',

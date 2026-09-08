@@ -474,6 +474,7 @@ export const fr: Dictionary = {
   'Export slides as HTML': 'Exporter les diapositives en HTML',
   'Export slides as PDF': 'Exporter les diapositives en PDF',
   'Export as {format}': 'Exporter en {format}',
+  'Save a copy': 'Enregistrer une copie',
   'Import a document': 'Importer un document',
   'Page setup for export': "Mise en page pour l'export",
   Paper: 'Papier',

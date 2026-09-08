@@ -5,14 +5,15 @@ import {
   reformatDocument,
   type Transaction,
 } from '@nib/editor'
-import { deckOf, isDeck, slideAt } from '@nib/markdown/slides'
+import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
 import type { HtmlOptions } from './export'
-import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
+import type { Exportable } from './export/formats'
+import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
 import { imagePath } from './images'
@@ -61,10 +62,14 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }
 
-/** Export entries: the formats first, in the one fixed order the list keeps
- *  everywhere, then the variants, then the paper. The pandoc formats only appear
- *  when pandoc is installed, so the list never offers something that cannot
- *  work; everything above them works on every build with nothing installed. */
+/** Export entries: what this document goes out as, in the fixed order its kind
+ *  keeps, then the variants, then the paper.
+ *
+ *  Which rows those are is offer.ts, read here and nowhere else, so the File
+ *  menu, the palette and a key on the keyboard cannot come to different answers
+ *  about a canvas. The pandoc formats only appear when pandoc is installed and
+ *  the document is a note, so the list never offers something that cannot work;
+ *  everything above them works on every build with nothing installed. */
 export function exportCommands(): Command[] {
   const note = () => workspace.active
   // Flushed first: the editor's last few keystrokes are still a rope until
@@ -75,6 +80,12 @@ export function exportCommands(): Command[] {
   }
   const name = () => note()?.name ?? 'Untitled.md'
   const target = () => ({ source: source(), name: name(), path: note()?.path ?? null })
+
+  /** What is open, which is what decides the rows. Read once: the list is built
+   *  fresh every time the menu or the palette opens, and a document does not
+   *  become another kind while its own menu is on screen. */
+  const open = note()
+  const kind = exportKindOf(open ? { kind: open.kind, path: open.path, text: source() } : null)
 
   /** Everything an export needs beyond the note: paper, colours, where the
    *  pictures it names actually are, and where its links point. */
@@ -90,64 +101,100 @@ export function exportCommands(): Command[] {
     ...(await look()),
   })
 
-  /** One export, behind the line at the top of the document: rendering a note
-   *  and handing it to the system takes a moment with nothing on screen to show
-   *  for it. See busy.svelte.ts. */
-  const run = (id: Exportable) => () =>
-    busy.start(t('Exporting'), async () => {
-      const m = await import('./export/run')
-      await m.runExport(id, target(), await options())
-    })
+  /** The note, one of the ten formats or a variant of one. */
+  const noteOut = async (id: Exportable) => {
+    const m = await import('./export/run')
+    await m.runExport(id, target(), await options())
+  }
 
-  const commands: Command[] = [
-    ...EXPORT_FORMATS.map((format) => ({
-      id: `export-${format.id}`,
-      label: t('Export as {format}', { format: t(format.label) }),
-      hint: shortcuts.hint(`export.${format.id}`),
-      run: run(format.id),
-    })),
-    ...EXPORT_VARIANTS.map((variant) => ({
-      id: `export-${variant.id}`,
-      label: t('Export as {format}', { format: t(variant.label) }),
-      run: run(variant.id),
-    })),
-    { id: 'page-setup', label: t('Page setup for export'), run: () => settings.show('export') },
-  ]
-
-  // A deck goes out as slides as well: one file that turns its own pages, and
-  // one page of paper per slide. Only offered for a note that is a deck, since
-  // for anything else the two rows would do the same as the two above them.
-  if (isDeck(source())) {
-    const deck = () => ({ text: source(), path: note()?.path ?? null })
-    const deckOptions = async () => ({
+  /** The deck: one file that turns its own pages, or one sheet of paper per
+   *  slide. Both come out of the slides code, which builds them from one page. */
+  const slidesOut = async (id: 'slides-html' | 'slides-pdf') => {
+    const m = await import('./slides/file')
+    const deck = { text: source(), path: note()?.path ?? null }
+    const options = {
       resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
       ...(await look()),
+    }
+
+    if (id === 'slides-html') await m.exportDeck(deck, name(), options)
+    else await m.exportDeckPdf(deck, name(), options)
+  }
+
+  /** The plane, drawn. One SVG, and the PNG and the PDF made out of it; see
+   *  canvas/picture.ts, which is where the context menu on the plane goes too. */
+  const drawingOut = async (id: ExportId) => {
+    const [picture, { drawingOf }] = await Promise.all([
+      import('./canvas/picture'),
+      import('./export/drawing'),
+    ])
+
+    const drawing = drawingOf({
+      text: source(),
+      name: name(),
+      path: note()?.path ?? null,
+      root: workspace.activeSpace?.root ?? null,
     })
 
-    commands.push(
-      {
-        id: 'export-slides-html',
-        label: t('Export slides as HTML'),
-        run: () =>
-          busy.start(t('Exporting'), async () => {
-            const m = await import('./slides/file')
-            await m.exportDeck(deck(), name(), await deckOptions())
-          }),
-      },
-      {
-        id: 'export-slides-pdf',
-        label: t('Export slides as PDF'),
-        run: () =>
-          busy.start(t('Exporting'), async () => {
-            const m = await import('./slides/file')
-            await m.exportDeckPdf(deck(), name(), await deckOptions())
-          }),
-      },
-    )
+    if (id === 'png') await picture.exportCanvasPng(drawing)
+    else if (id === 'svg') await picture.exportCanvasSvg(drawing)
+    else if (id === 'pdf') await picture.exportCanvasPdf(drawing)
+  }
+
+  /** A paper or a picture the app is only showing, handed over as it stands. */
+  const copyOut = async () => {
+    const path = note()?.path
+    if (path === null || path === undefined) return
+
+    const m = await import('./export/copy')
+    await m.saveCopy(path, name())
+  }
+
+  /** One export, behind the line at the top of the document: rendering a note
+   *  and handing it to the system takes a moment with nothing on screen to show
+   *  for it. See busy.svelte.ts.
+   *
+   *  Whose code answers is the kind's business. A drawing is drawn even when the
+   *  row says PNG, which is the same word a note's picture goes out under: one
+   *  row, one meaning, and the document decides what it is a picture of. */
+  const run = (id: ExportId) => () =>
+    busy.start(t('Exporting'), async () => {
+      if (kind === 'canvas') await drawingOut(id)
+      else if (id === 'slides-html' || id === 'slides-pdf') await slidesOut(id)
+      else if (id === 'copy') await copyOut()
+      else if (isNoteFormat(id)) await noteOut(id)
+    })
+
+  const offered = offeredBy(kind)
+  // Nothing here goes out as anything: the graph of a space, or a pane with
+  // nothing in it. The rows a note would have are shown greyed out rather than
+  // taken away, so the Export menu keeps its shape and says no the way Save and
+  // Rename already do with no note open.
+  const nothing = offered.length === 0
+  /** Whether these are a note's rows, which is what the paper and pandoc are for.
+   *  A drawing has no paper, and a copy is the bytes that are already there. */
+  const asNote = kind === 'note' || kind === 'deck' || nothing
+
+  const commands: Command[] = (nothing ? offeredBy('note') : offered).map((id) => ({
+    id: `export-${id}`,
+    label: labelOf(id),
+    hint: shortcuts.hint(`export.${id}`),
+    disabled: nothing,
+    run: run(id),
+  }))
+
+  if (asNote) {
+    commands.push({
+      id: 'page-setup',
+      label: t('Page setup for export'),
+      run: () => settings.show('export'),
+    })
   }
 
   if (!settings.pandoc) return commands
 
+  // Importing makes a note of its own and has nothing to do with what is open,
+  // so it is offered whatever that is.
   commands.push({
     id: 'import',
     label: t('Import a document'),
@@ -159,10 +206,15 @@ export function exportCommands(): Command[] {
       }),
   })
 
+  // Pandoc converts markdown, so it has as little to say about a drawing as Word
+  // has. A note's rows get pandoc's; the other kinds keep their own.
+  if (!asNote) return commands
+
   for (const format of PANDOC_FORMATS) {
     commands.push({
       id: `export-${format.id}`,
       label: t('Export as {format}', { format: t(format.label) }),
+      disabled: nothing,
       run: () =>
         busy.start(t('Exporting'), async () => {
           const m = await import('./export')
