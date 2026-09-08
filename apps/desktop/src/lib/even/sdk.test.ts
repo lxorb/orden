@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { connectGlasses, connectStore, type Input } from './sdk'
 
 /** What the SDK hands back once the channel is open. The real one puts its
@@ -84,9 +84,18 @@ function channel(open: boolean): void {
   else delete global.flutter_inappwebview
 }
 
+/** The module graph, compiled once and outside anybody's budget. Every launch
+ *  below re-imports the store to get a fresh one, and the first of those would
+ *  otherwise pay for compiling it inside a five second test; see
+ *  docs/conventions.md. */
+beforeAll(async () => {
+  await import('./sdk')
+})
+
 /** A module of its own, so that the one wait it shares between callers is not
  *  also shared between tests. */
 async function freshly(): Promise<typeof import('./sdk')> {
+  vi.useRealTimers()
   vi.resetModules()
   return import('./sdk')
 }

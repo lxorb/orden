@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Two launches of a packed plugin, with the phone app behaving as it does on a
  *  device: the channel is not on the page when the plugin's first line runs, it
@@ -59,13 +59,30 @@ function wipeThePage() {
   vi.stubGlobal('document', { cookie: '' })
 }
 
-/** A launch: fresh modules, a fresh page, and a channel that arrives late. */
+/** The module graph, compiled once and outside anybody's budget.
+ *
+ *  Every launch below re-imports the store to get a fresh one, and the first of
+ *  those would otherwise pay for compiling it inside a five second test. On a
+ *  machine running the rest of the suite beside it that is what times out, and
+ *  the failure then says nothing about the code. Warmed here, a re-import is a
+ *  re-execution and costs nothing worth measuring. */
+beforeAll(async () => {
+  await import('./keep')
+})
+
+/** A launch: fresh modules, a fresh page, and a channel that arrives late.
+ *
+ *  Real timers while the module loads, made-up ones after: a dynamic import is
+ *  not something to run the clock over. */
 async function launch() {
+  vi.useRealTimers()
   vi.resetModules()
   wipeThePage()
   phone.reachable = false
 
   const { everywhere } = await import('./keep')
+
+  vi.useFakeTimers()
   const arriving = setTimeout(() => (phone.reachable = true), CHANNEL_AT)
 
   return {
@@ -79,7 +96,10 @@ async function launch() {
 beforeEach(() => {
   phone.held.clear()
   phone.refusals = 0
-  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('a session across two launches of a packed plugin', () => {
@@ -97,7 +117,6 @@ describe('a session across two launches of a packed plugin', () => {
     expect(phone.held.get('nib:session')).toBe('a-token')
 
     done()
-    vi.useRealTimers()
   })
 
   test('comes back on the next launch, from the only store that kept it', async () => {
@@ -114,7 +133,6 @@ describe('a session across two launches of a packed plugin', () => {
 
     expect(await reading).toBe('a-token')
     second.done()
-    vi.useRealTimers()
   })
 
   test('does not answer before the phone app has had its say', async () => {
@@ -134,7 +152,6 @@ describe('a session across two launches of a packed plugin', () => {
     expect(await reading).toBe('a-token')
 
     done()
-    vi.useRealTimers()
   })
 
   test('puts a token back into the stores that lost it', async () => {
@@ -151,7 +168,6 @@ describe('a session across two launches of a packed plugin', () => {
     expect(localStorage.getItem('nib:session')).toBe('a-token')
 
     done()
-    vi.useRealTimers()
   })
 
   test('keeps trying when the host refuses a write', async () => {
@@ -168,7 +184,6 @@ describe('a session across two launches of a packed plugin', () => {
     expect(phone.refusals).toBe(0)
 
     done()
-    vi.useRealTimers()
   })
 
   test('says which store kept it and which lost it', async () => {
@@ -186,6 +201,5 @@ describe('a session across two launches of a packed plugin', () => {
     expect(read.get('host')).toBe('a token')
 
     done()
-    vi.useRealTimers()
   })
 })

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Device-local settings across launches of a packed plugin.
  *
@@ -27,8 +27,20 @@ vi.mock('./sdk', () => ({
 /** The one thing that outlives a launch on the page's side. */
 let jar = ''
 
-/** A new port, so a new origin, so an empty `localStorage`. The cookie stays. */
+/** The module graph, compiled once and outside anybody's budget. Every launch
+ *  below re-imports the store to get a fresh one, and the first of those would
+ *  otherwise pay for compiling it inside a five second test; see
+ *  docs/conventions.md. */
+beforeAll(async () => {
+  await import('./local')
+})
+
+/** A new port, so a new origin, so an empty `localStorage`. The cookie stays.
+ *
+ *  Real timers while the module loads: a dynamic import is not something to run
+ *  the clock over. */
 async function launch() {
+  vi.useRealTimers()
   vi.resetModules()
 
   vi.stubGlobal('document', {
@@ -57,8 +69,15 @@ async function launch() {
     length: 0,
   })
 
-  return import('./local')
+  const module = await import('./local')
+  vi.useFakeTimers()
+
+  return module
 }
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 beforeEach(() => {
   jar = ''
@@ -68,7 +87,6 @@ beforeEach(() => {
 
 describe('settings across launches', () => {
   test('a setting written in one launch is there in the next', async () => {
-    vi.useFakeTimers()
     const first = await launch()
     const one = first.installLocal()
     localStorage.setItem('nib:theme', 'dark')
@@ -80,11 +98,9 @@ describe('settings across launches', () => {
 
     expect(localStorage.getItem('nib:theme')).toBe('dark')
     expect(one.getItem('nib:theme')).toBe('dark')
-    vi.useRealTimers()
   })
 
   test('it is there at the first paint, without waiting for the phone', async () => {
-    vi.useFakeTimers()
     const first = await launch()
     first.installLocal()
     localStorage.setItem('nib:theme', 'dark')
@@ -97,11 +113,9 @@ describe('settings across launches', () => {
     second.installLocal()
 
     expect(localStorage.getItem('nib:theme')).toBe('dark')
-    vi.useRealTimers()
   })
 
   test('what the cookie could not hold comes back from the phone', async () => {
-    vi.useFakeTimers()
     const first = await launch()
     first.installLocal()
     localStorage.setItem('nib:theme', 'dark')
@@ -117,11 +131,9 @@ describe('settings across launches', () => {
 
     await second.fillLocal(local)
     expect(localStorage.getItem('nib:layouts')).toHaveLength(6000)
-    vi.useRealTimers()
   })
 
   test('a setting changed this launch is not undone by the phone answering late', async () => {
-    vi.useFakeTimers()
     const first = await launch()
     first.installLocal()
     localStorage.setItem('nib:theme', 'dark')
@@ -134,7 +146,6 @@ describe('settings across launches', () => {
 
     await second.fillLocal(local)
     expect(localStorage.getItem('nib:theme')).toBe('light')
-    vi.useRealTimers()
   })
 
   test('the page keeps working when there is no cookie and no phone', async () => {
