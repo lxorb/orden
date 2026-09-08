@@ -36,9 +36,11 @@ describe('the editor package', () => {
   test('installs a keymap of plain bindings in one place only', () => {
     const installers = files.filter((one) => one.text.includes('keymap.of(')).map((one) => one.name)
 
-    // editor.ts holds two of them: Enter closing a code fence, which is fixed
-    // and listed in the settings as such, and the library's own keys
-    // underneath every named one.
+    // editor.ts holds three of them, and all three are keys that belong to the
+    // text rather than choices anybody made: Enter closing a code fence, Down
+    // opening a line under a block that ends the note, and the library's own keys
+    // underneath every named one. The settings list says as much of the arrows and
+    // of Enter; see FIXED_ENTRIES in the registry.
     expect(installers).toEqual(['editor.ts'])
   })
 

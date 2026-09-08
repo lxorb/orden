@@ -1,6 +1,7 @@
 import { EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import type { Command } from '@codemirror/view'
 import type { BindingSpec } from '../../shortcuts'
+import { openParagraphBelow } from '../../tail'
 import { noReveal } from '../reveal'
 import { imageAt, imageEndingAt, type ImageSpan, sourceCaret } from './markup'
 
@@ -96,6 +97,11 @@ function stepOff(forward: boolean): Command {
 
     const start = EditorSelection.cursor(forward ? image.to : image.from)
     const moved = view.moveVertically(start, forward)
+    // A picture that ends the note has nowhere below it, so down makes the line;
+    // see tail.ts. Tried before the move is applied, since the move is a
+    // no-op there and would read as the key doing nothing.
+    if (forward && moved.head === start.head && openParagraphBelow(view)) return true
+
     view.dispatch({
       selection: EditorSelection.create([moved.head === start.head ? start : moved]),
       scrollIntoView: true,
