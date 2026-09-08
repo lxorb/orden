@@ -2,6 +2,11 @@ export interface Env {
   DB: D1Database
   NOTES: R2Bucket
 
+  /** One room per note being written in by more than one device; see
+   *  rooms/room.ts. Absent in the route tests, which reach the room class
+   *  directly rather than through a namespace. */
+  ROOMS?: DurableObjectNamespace
+
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
   /** The host a domain of one's own is CNAMEd to. One fixed name inside

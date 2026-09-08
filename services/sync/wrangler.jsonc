@@ -15,6 +15,14 @@
     },
   ],
 
+  // One Durable Object per note that is being edited together: the room holds
+  // the CRDT state, the sockets and the awareness, and writes the settled text
+  // back into the note store. SQLite-backed, which is what a new class must be.
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "NoteRoom" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NoteRoom"] }],
+
   "r2_buckets": [{ "binding": "NOTES", "bucket_name": "nib-notes" }],
 
   // The built web app. The Worker runs first so a published blog's hostname

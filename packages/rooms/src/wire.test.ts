@@ -1,0 +1,117 @@
+import { describe, expect, test } from 'vitest'
+import { Awareness } from 'y-protocols/awareness'
+import * as Y from 'yjs'
+import {
+  awarenessState,
+  awarenessUpdate,
+  forget,
+  receive,
+  syncStep1,
+  syncUpdate,
+  TEXT,
+  unattended,
+} from './wire'
+
+/** Two ends of a wire, each with its own document, joined by hand: whatever one
+ *  says, the other hears, and whatever it answers goes back. Which is the whole
+ *  of what a room does, without a room. */
+class End {
+  readonly doc = new Y.Doc()
+  readonly awareness: Awareness
+  readonly text = this.doc.getText(TEXT)
+
+  constructor() {
+    this.awareness = new Awareness(this.doc)
+  }
+
+  get words(): string {
+    return this.text.toString()
+  }
+
+  /** A message arriving, and whatever this end says back. */
+  hear(message: Uint8Array): Uint8Array | null {
+    return receive(message, this.doc, this.awareness, 'wire')
+  }
+}
+
+/** Messages passed back and forth until neither end has anything left to say. */
+function exchange(from: End, to: End, first: Uint8Array) {
+  let message: Uint8Array | null = first
+  let side: [End, End] = [to, from]
+
+  for (let round = 0; round < 8 && message; round++) {
+    const [hearing, answering] = side
+    message = hearing.hear(message)
+    side = [answering, hearing]
+  }
+}
+
+describe('the wire', () => {
+  test('brings a fresh end up to what the other holds', () => {
+    const one = new End()
+    const two = new End()
+    one.text.insert(0, '# Note\nwords\n')
+
+    exchange(two, one, syncStep1(two.doc))
+
+    expect(two.words).toBe('# Note\nwords\n')
+  })
+
+  test('leaves both ends with the same text when both wrote at once', () => {
+    const one = new End()
+    const two = new End()
+    one.text.insert(0, 'start\n')
+    exchange(two, one, syncStep1(two.doc))
+
+    const before = { one: Y.encodeStateVector(one.doc), two: Y.encodeStateVector(two.doc) }
+    one.text.insert(6, 'from one\n')
+    two.text.insert(6, 'from two\n')
+
+    two.hear(syncUpdate(Y.encodeStateAsUpdate(one.doc, before.one)))
+    one.hear(syncUpdate(Y.encodeStateAsUpdate(two.doc, before.two)))
+
+    expect(one.words).toBe(two.words)
+    expect(one.words).toContain('from one')
+    expect(one.words).toContain('from two')
+  })
+
+  test('carries who is there and where their caret is', () => {
+    const one = new End()
+    const two = new End()
+
+    one.awareness.setLocalStateField('user', { name: 'One', colour: 'violet' })
+    const message = awarenessState(one.awareness)
+    expect(message).not.toBeNull()
+
+    if (message) two.hear(message)
+
+    expect(two.awareness.getStates().get(one.doc.clientID)).toEqual({
+      user: { name: 'One', colour: 'violet' },
+    })
+  })
+
+  test('has nothing to say about an unattended room', () => {
+    // A room is a place rather than somebody in it, so its own awareness holds
+    // no entry and there is nobody to announce; see `unattended`.
+    const room = new End()
+    unattended(room.awareness)
+
+    expect(awarenessState(room.awareness)).toBeNull()
+  })
+
+  test('takes a caret away again', () => {
+    const one = new End()
+    const two = new End()
+
+    one.awareness.setLocalStateField('user', { name: 'One' })
+    two.hear(awarenessUpdate(one.awareness, [one.doc.clientID]))
+    expect(two.awareness.getStates().has(one.doc.clientID)).toBe(true)
+
+    forget(two.awareness, [one.doc.clientID], 'wire')
+    expect(two.awareness.getStates().has(one.doc.clientID)).toBe(false)
+  })
+
+  test('answers nothing to a message it does not know', () => {
+    expect(new End().hear(new Uint8Array([9, 9, 9]))).toBeNull()
+  })
+})

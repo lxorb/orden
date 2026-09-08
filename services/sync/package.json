@@ -14,7 +14,10 @@
   },
   "dependencies": {
     "@nib/markdown": "workspace:*",
-    "hono": "^4.13.5"
+    "@nib/rooms": "workspace:*",
+    "hono": "^4.13.5",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.32"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260903.1",

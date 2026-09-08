@@ -55,6 +55,49 @@ export async function nextSeq(env: Env, spaceId: string): Promise<number> {
   return row?.seq ?? 1
 }
 
+/** Puts a note's new contents in the store: the bytes in R2, the row in D1, with
+ *  the version and the space's cursor moved on so that every other device reads
+ *  it as an ordinary save. Answers the note as it now stands, and the note
+ *  untouched when the bytes and the path are already what is held.
+ *
+ *  Shared by the route below and by a room settling what several devices wrote
+ *  together (see rooms/room.ts), so a note that arrives either way lands in one
+ *  shape and everything that reads notes - the file sync, publishing, the
+ *  connector, the glasses, search - carries on unaware there was a difference. */
+export async function saveNote(env: Env, note: Note, content: string, path: string): Promise<Note> {
+  const size = byteLength(content)
+  const hash = await sha256(content)
+  if (hash === note.hash && path === note.path) return note
+
+  const updated: Note = {
+    ...note,
+    path,
+    seq: await nextSeq(env, note.space_id),
+    version: note.version + 1,
+    updated_at: now(),
+    deleted: 0,
+    size,
+    hash,
+  }
+
+  await env.NOTES.put(noteKey(note.space_id, note.id), content)
+  await env.DB.prepare(
+    'update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?, hash = ? where id = ?',
+  )
+    .bind(
+      updated.path,
+      updated.seq,
+      updated.version,
+      updated.updated_at,
+      updated.size,
+      updated.hash,
+      note.id,
+    )
+    .run()
+
+  return updated
+}
+
 export function presentNote(note: Note) {
   return {
     id: note.id,
@@ -235,43 +278,13 @@ notes.put('/notes/:id', async (context) => {
     }
   }
 
-  const size = byteLength(content)
-  const hash = await sha256(content)
-  if (hash === note.hash && path === note.path) return context.json({ note: presentNote(note) })
-
   // The note's current bytes come back as it is replaced, so editing a large
   // note that stays the same size is never refused.
-  if (!(await fits(context.env, context.get('user').id, size, note.size))) {
+  if (!(await fits(context.env, context.get('user').id, byteLength(content), note.size))) {
     return context.json({ error: 'out of space' }, 507)
   }
 
-  const updated: Note = {
-    ...note,
-    path,
-    seq: await nextSeq(context.env, note.space_id),
-    version: note.version + 1,
-    updated_at: now(),
-    deleted: 0,
-    size,
-    hash,
-  }
-
-  await context.env.NOTES.put(noteKey(note.space_id, note.id), content)
-  await context.env.DB.prepare(
-    'update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?, hash = ? where id = ?',
-  )
-    .bind(
-      updated.path,
-      updated.seq,
-      updated.version,
-      updated.updated_at,
-      updated.size,
-      updated.hash,
-      note.id,
-    )
-    .run()
-
-  return context.json({ note: presentNote(updated) })
+  return context.json({ note: presentNote(await saveNote(context.env, note, content, path)) })
 })
 
 /** Soft delete: the tombstone is what tells other devices to remove it. The

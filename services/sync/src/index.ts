@@ -7,6 +7,7 @@ import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
+import { rooms } from './rooms'
 import { settings } from './settings'
 import { spaces } from './spaces'
 import { themes } from './themes'
@@ -53,6 +54,11 @@ const anyOrigin = cors({
 })
 app.use('/mcp', anyOrigin)
 app.route('/mcp', mcp)
+
+// A note several devices are writing in at once. A socket rather than a request,
+// and a socket carries no `Authorization` header, so it names its token in the
+// subprotocol and is let in ahead of the guard below; see rooms/index.ts.
+app.route('/rooms', rooms)
 
 // How a client finds the sign-in, and the sign-in itself. Registered ahead of
 // the catch-all, which would otherwise answer with the web app's HTML.
@@ -162,3 +168,7 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
 }
 
 export default { fetch: app.fetch, scheduled }
+
+// Named at the top level because a Durable Object class is looked up on the
+// module, not through a binding.
+export { NoteRoom } from './rooms/room'
