@@ -44,10 +44,10 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 |  | Open source | Built-in MCP | Win, mac, Linux, web | Inline preview | Backlinks & graph | Canvas | Free sync | Free publishing |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | **nibeditor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typora | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Obsidian | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| MarkText | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Notion | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Obsidian | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Typora | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| MarkText | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Joplin | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
 | Logseq | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | iA Writer | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
