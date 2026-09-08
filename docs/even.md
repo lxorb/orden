@@ -533,25 +533,46 @@ npx @evenrealities/evenhub-cli qr --http --port 5173
 
 **Every time, to ship a build**
 
-1. Build and pack:
-   ```sh
-   pnpm --filter @nib/desktop build:even
-   npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
-   ```
-   About 4 MB, well inside the roughly 10 MB the platform is comfortable with.
-   The CLI stamps `min_app_version` from the SDK it reads on npm.
-2. In the portal, open the project and go to **Builds**. Upload `nib.ehpk`. It
-   arrives as **Draft**.
-3. Move the build from Draft to **Test**.
-4. Go to **Beta groups**, make a group (`self-test` will do), and add your own
-   **account email**. Add anybody else's email to have them test the same build.
-5. Push the build to that group.
-6. On the phone: **Even Realities app -> Me -> Beta tester**, find the build, tap
-   **Install**. From there it behaves as a released app: it is launched from the
-   glasses home menu and gets the full lifecycle, real backgrounding included.
+Bump `version` in `apps/desktop/even.app.json` and push it to `main`. That is the
+whole ritual. `.github/workflows/publish-even.yml` sees the bump, builds the
+plugin, packs it, and hands the `.ehpk` to
+[`lxorb/evenhub-publish`](https://github.com/lxorb/evenhub-publish), which
+uploads it and puts it on the `beta` branch. A push that leaves the version alone
+publishes nothing, and a run with no secrets set says so and stops.
 
-A tester needs nothing but the phone app. If a build will not install for
-somebody, the usual cause is a `min_sdk_version` above their firmware.
+Two repository secrets, under **Settings -> Secrets and variables -> Actions**:
+
+- `EVENHUB_EMAIL`, the Even account, the one the phone app uses.
+- `EVENHUB_PASSWORD`, its password.
+
+Optionally a repository variable `EVENHUB_BRANCH` to send builds somewhere other
+than `beta`; a manual run takes the same as an input.
+
+Testers install it the way they always did: **Even Realities app -> Me -> Beta
+tester**, find the build, tap **Install**. From there it behaves as a released
+app: it is launched from the glasses home menu and gets the full lifecycle, real
+backgrounding included. A tester needs nothing but the phone app. If a build will
+not install for somebody, the usual cause is a `min_sdk_version` above their
+firmware.
+
+By hand, if CI is not an option:
+
+```sh
+pnpm --filter @nib/desktop build:even
+npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
+```
+
+About 4 MB, well inside the roughly 10 MB the platform is comfortable with; the
+CLI stamps `min_app_version` from the SDK it reads on npm. Then in the portal:
+**Builds**, upload it, move it from Draft to Test, push it to the beta group.
+
+**What the action talks to.** Even Realities publishes no API, so this is what the
+portal's own bundle and the official CLI use, at `https://hub.evenrealities.com`,
+with the access token from `POST /api/v1/auth/login` in an `X-Even-Authorization`
+header: the `.ehpk` is uploaded to `POST /api/v1/versions/draft`,
+`POST /api/v1/versions/create` turns that draft into a version, and
+`POST /api/v1/apps/branch-version` puts the version on a branch (`beta` for the
+testers, `public` for the store). It will break the day they change any of it.
 
 **The icons**
 
@@ -576,7 +597,8 @@ root page raises the exit dialogue (the plugin calls `shutDownPageContainer(1)`)
 that setup survives a restart, that every permission asked for is actually used,
 and that the app survives the phone being locked for five minutes. Decision
 emails come from `noreply@evenrealities.com` and do not say the outcome; they
-carry a link.
+carry a link. The action submits too, with `review: true` and `branch: public`,
+but nothing here sets either yet.
 
 ---
 

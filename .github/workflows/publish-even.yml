@@ -1,0 +1,105 @@
+name: publish-even
+
+# What gets a new build of the G2 plugin in front of the beta testers. The rule
+# in docs/even.md is that every repack bumps `version` in even.app.json, so that
+# bump is the whole trigger: nothing else in the app can start a publish, and a
+# push that only touches the manifest without moving the version does nothing.
+on:
+  push:
+    branches: [main]
+    paths: [apps/desktop/even.app.json]
+  # A run that failed on a bad secret, or a build that needs to go somewhere
+  # other than the testers, can be sent through by hand.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: The Even Hub branch to put the build on
+        default: beta
+
+concurrency:
+  group: publish-even
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # A job cannot ask `if: secrets.X != ''`, and it cannot read the previous
+  # commit either, so both questions are settled here and passed down as plain
+  # strings.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.gate.outputs.publish }}
+      package: ${{ steps.gate.outputs.package }}
+      version: ${{ steps.gate.outputs.version }}
+      changelog: ${{ steps.gate.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The commit before this one, to compare the manifest against.
+          fetch-depth: 2
+
+      - id: gate
+        env:
+          MANIFEST: apps/desktop/even.app.json
+          # Concatenated only to ask whether both are set; neither is printed.
+          SECRETS: ${{ secrets.EVENHUB_EMAIL }}${{ secrets.EVENHUB_PASSWORD }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          echo "package=$(node -p "require('./$MANIFEST').package_id")" >> "$GITHUB_OUTPUT"
+          version=$(node -p "require('./$MANIFEST').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "changelog=$(printf '%s' "$MESSAGE" | head -1 | cut -c1-500)" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$SECRETS" ]; then
+            echo '::notice::EVENHUB_EMAIL and EVENHUB_PASSWORD are not set - skipping the publish.'
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git show HEAD^:"$MANIFEST" > before.json 2> /dev/null || echo '{}' > before.json
+          if [ "$version" = "$(node -p "require('./before.json').version ?? ''")" ]; then
+            echo "::notice::even.app.json is still at $version, and a repack bumps it - nothing to publish."
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The same two commands docs/even.md gives for doing this by hand.
+      - name: Build the plugin
+        run: pnpm --filter @nib/desktop build:even
+
+      - name: Pack it
+        run: npx --yes @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
+
+      - uses: lxorb/evenhub-publish@v1
+        with:
+          package-id: ${{ needs.gate.outputs.package }}
+          ehpk: nib.ehpk
+          version: ${{ needs.gate.outputs.version }}
+          changelog: ${{ needs.gate.outputs.changelog }}
+          branch: ${{ inputs.branch || vars.EVENHUB_BRANCH || 'beta' }}
+          email: ${{ secrets.EVENHUB_EMAIL }}
+          password: ${{ secrets.EVENHUB_PASSWORD }}
