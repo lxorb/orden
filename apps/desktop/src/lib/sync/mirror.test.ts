@@ -258,6 +258,37 @@ describe('a note both sides changed', () => {
   })
 })
 
+describe('a canvas both sides drew on', () => {
+  /** Two planes with one stroke each, as files. */
+  const plane = (id: string) =>
+    `{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${id}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${id}": 1000 }\n\t}\n}\n`
+
+  test('is merged rather than copied when it is in no room', async () => {
+    const { mirror, id } = await paired('Board.canvas', plane('base'))
+
+    fake.disk.set(`${ROOT}/Board.canvas`, plane('here'))
+    fake.editRemote(id, plane('there'))
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(conflicts()).toEqual([])
+    const held = fake.disk.get(`${ROOT}/Board.canvas`) ?? ''
+    expect(held).toContain('"here"')
+    expect(held).toContain('"there"')
+  })
+
+  test('is left to its room, the same as a note', async () => {
+    const { mirror, id } = await paired('Board.canvas', plane('base'))
+    fake.disk.set(`${ROOT}/Board.canvas`, plane('here'))
+
+    // Every stroke was already carried by the room, so sending the file would be a
+    // second writer for one plane.
+    expect(await push(mirror, 'token', new Set([id]))).toBe(false)
+    expect(fake.calls).toEqual([])
+    expect(fake.remote.get(id)?.content).toBe(plane('base'))
+  })
+})
+
 describe('a note only one side changed', () => {
   test('comes down whether or not it is in a room', async () => {
     const { mirror, id } = await paired('note.md', 'base\n')
