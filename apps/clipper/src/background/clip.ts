@@ -57,6 +57,12 @@ export async function clip(kind: Kind, tabId: number, link: string | null): Prom
   if (!found) return { problem: PROBLEMS.blocked }
   if (kind !== 'link' && !found.markdown) return { problem: PROBLEMS.empty }
 
+  // Said here rather than at the save, which is where the ceiling used to be
+  // met: the markdown alone is already more than a note holds, so the popup
+  // would have spent the wait drawing a preview of something that was never
+  // going to be written, and the pictures would have been uploaded first.
+  if (!fits(found.markdown)) return { problem: PROBLEMS.tooLarge }
+
   return { clip: found }
 }
 
