@@ -1,5 +1,6 @@
 <script lang="ts">
-  /** The canvas's own bar: what your hand is holding, and what colour it is.
+  /** The canvas's own bar for a pointer: what your hand is holding, and what
+   *  colour it is.
    *
    *  One row of glyphs. A shape, not a word, says what each one does, and the one
    *  that is pressed in is the one in your hand. The pen's own row appears above
@@ -10,17 +11,19 @@
    *  is picked, or the pen, or the next shape. One row of colours rather than
    *  three, because there is only ever one answer to "which colour".
    *
+   *  A finger gets `CanvasPens.svelte` instead: a mouse can hit a fourteen-pixel
+   *  glyph and read a row of twenty-two, and a thumb can do neither.
+   *
    *  It stops every pointer at itself. The plane behind it treats a press as a
    *  gesture, and a bar that let one through would clear the selection its own
    *  buttons are for; that is the whole of the bug this replaced. */
 
   import { INK_SIZES, PENS, tools } from './canvas/tools.svelte'
-  import { type InkTool } from './canvas/format'
+  import { FINGER, HOLDING, NIBS, PEN_NAMES, PLACING } from './canvas/glyphs'
   import { hand } from './canvas/hand.svelte'
   import { DOTS } from './canvas/palette'
-  import { type Tool } from './canvas/pointer'
+  import { pens } from './canvas/pens.svelte'
   import { t } from './i18n.svelte'
-  import { viewport } from './viewport.svelte'
 
   const {
     oncolour,
@@ -37,99 +40,12 @@
     /** Whether anything is picked, which is what the dots would colour. */
     colouring: boolean
   } = $props()
-
-  interface Glyph {
-    id: Tool
-    title: string
-    path: string
-  }
-
-  /** What a press on the plane means. The arrow, the hand, and the three a pen
-   *  wants. */
-  const HOLDING: Glyph[] = [
-    {
-      id: 'select',
-      title: t('Select'),
-      path: 'M3.4 2.2 11 6.4l-3.3.9L9 11l-1.5.6-1.3-3.7-2.4 2.2z',
-    },
-    {
-      id: 'hand',
-      title: t('Pan'),
-      path: 'M4 7.5V4.4a.9.9 0 0 1 1.8 0V7m0 0V3.4a.9.9 0 0 1 1.8 0V7m0 0V4.2a.9.9 0 0 1 1.8 0v4.4A3.4 3.4 0 0 1 6 12a3 3 0 0 1-2-2.8z',
-    },
-    {
-      id: 'draw',
-      title: t('Draw'),
-      path: 'M2.6 11.4 3.5 8.6 9 3.1l1.9 1.9-5.5 5.5zM8.3 3.8l1.9 1.9',
-    },
-    {
-      id: 'erase',
-      title: t('Erase'),
-      path: 'M4 11.4h7.4M2.8 8.6l4.3-4.3a1.3 1.3 0 0 1 1.9 0l1.7 1.7a1.3 1.3 0 0 1 0 1.9l-3.4 3.5H5.2z',
-    },
-    {
-      id: 'lasso',
-      title: t('Lasso'),
-      path: 'M7 2.6c2.7 0 4.9 1.6 4.9 3.5S9.7 9.6 7 9.6 2.1 8 2.1 6.1 4.3 2.6 7 2.6M5.6 9.5c0 1.3.4 2 1.3 2',
-    },
-  ]
-
-  /** What a press puts on the plane. */
-  const PLACING: Glyph[] = [
-    { id: 'text', title: t('Card'), path: 'M2 3h10v8H2zM4.5 6h5M4.5 8h3' },
-    { id: 'file', title: t('Note or picture'), path: 'M3.5 2h4l3 3v7h-7zM7.5 2v3h3' },
-    {
-      id: 'link',
-      title: t('Link'),
-      path: 'M5.6 8.4 8.4 5.6M6.6 4 8 2.6a2.8 2.8 0 0 1 4 4L10.6 8M7.4 10 6 11.4a2.8 2.8 0 0 1-4-4L3.4 6',
-    },
-    { id: 'group', title: t('Group'), path: 'M2 4h10v8H2zM2 4V2h4v2' },
-    { id: 'rect', title: t('Rectangle'), path: 'M2.5 3.5h9v7h-9z' },
-    { id: 'ellipse', title: t('Ellipse'), path: 'M11.5 7a4.5 3.6 0 1 1-9 0 4.5 3.6 0 1 1 9 0' },
-    { id: 'line', title: t('Line'), path: 'M2.6 11.4 11.4 2.6' },
-    { id: 'arrow', title: t('Arrow'), path: 'M2.6 11.4 11.4 2.6M11.4 2.6H7.8M11.4 2.6v3.6' },
-  ]
-
-  /** What each pen is called, in words, since a glyph of a nib and a glyph of a
-   *  broad nib are two pictures of the same thing. Only ever read out or shown
-   *  on a hover; the bar itself is glyphs. */
-  const PEN_NAMES: Record<InkTool, string> = {
-    pen: t('Pen'),
-    fountain: t('Fountain pen'),
-    pencil: t('Pencil'),
-    marker: t('Marker'),
-    highlighter: t('Highlighter'),
-    brush: t('Brush'),
-    calligraphy: t('Calligraphy'),
-  }
-
-  /** A glyph each for the seven pens: a nib, a broad nib, a grainy one, a felt
-   *  tip, a wide flat one, a brush and a chisel. */
-  const NIBS: Record<InkTool, string> = {
-    pen: 'M2.6 11.4 3.5 8.6 9 3.1l1.9 1.9-5.5 5.5z',
-    fountain: 'M3 11.4 4.6 7 9.4 2.2l2.4 2.4L7 9.4zM4.6 7l2.4 2.4',
-    pencil:
-      'M2.6 11.4 3.5 8.6 9 3.1l1.9 1.9-5.5 5.5zM4.6 8.2l1.2 1.2M6.2 6.6l1.2 1.2M7.8 5l1.2 1.2',
-    marker: 'M3.4 11.4h7.2M4.4 8.8 8.2 5l2.2 2.2-3.8 3.8H4.4z',
-    highlighter: 'M2.6 11.4h8.8M3.8 8.6 8.6 3.8l2.4 2.4-4.8 4.8H3.8z',
-    brush: 'M3.6 10.6c1.8.8 3.4 0 3.8-1.8M5.2 8.4 10 3.6l1.2 1.2-4.8 4.8z',
-    calligraphy: 'M2.6 10.6 9.8 3M4.2 11.8 11.4 4.2',
-  }
-
-  /** A fingertip, for the one switch in the pen's row: whether a finger draws on
-   *  a device that has a pen. Only ever offered where the question exists. */
-  const FINGER = 'M4.6 11.4V8.2a2.4 2.4 0 0 1 4.8 0v3.2M7 8V4.2a1.2 1.2 0 0 1 2.4 0V8M4.6 8.6 3.4 7'
-
-  /** How big a glyph reads. A finger and a pen want a bigger target than a
-   *  mouse, and a tablet is held further away. */
-  const wide = $derived(viewport.touch)
 </script>
 
 <!-- Every pointer stops here. See the note at the top of the file. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="cluster"
-  class:wide
   onpointerdown={(event) => event.stopPropagation()}
   onpointermove={(event) => event.stopPropagation()}
   onpointerup={(event) => event.stopPropagation()}
@@ -142,10 +58,10 @@
         {#each PENS as pen (pen)}
           <button
             type="button"
-            class:on={tools.pen === pen}
+            class:on={pens.current.tool === pen}
             title={PEN_NAMES[pen]}
             aria-label={PEN_NAMES[pen]}
-            aria-pressed={tools.pen === pen}
+            aria-pressed={pens.current.tool === pen}
             onclick={() => tools.choosePen(pen)}
           >
             <svg viewBox="0 0 14 14" style:stroke-width={pen === 'highlighter' ? 1 : 1.2}>
@@ -262,8 +178,7 @@
 </div>
 
 <style>
-  /* Over the plane, at the bottom of the pane and clear of its corners, with
-     room for a phone's home bar underneath. */
+  /* Over the plane, at the bottom of the pane and clear of its corners. */
   .cluster {
     position: absolute;
     left: 50%;
@@ -302,18 +217,8 @@
     }
   }
 
-  /* A phone has the app's own round button in the bottom right corner, so the
-     bar takes the width that is left rather than sitting under it. */
-  :global([data-touch]) .cluster {
-    left: var(--space-2);
-    right: calc(var(--space-2) + 60px);
-    translate: none;
-    max-width: none;
-    align-items: stretch;
-  }
-
-  /* A phone cannot show twenty glyphs at once, so the row scrolls rather than
-     hiding half of them behind a menu. */
+  /* A narrow window cannot show twenty glyphs at once, so the row scrolls rather
+     than hiding half of them behind a menu. */
   .scroller {
     display: flex;
     align-items: center;
@@ -335,16 +240,6 @@
     stroke-width: 1.2;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-
-  .wide svg {
-    width: 17px;
-    height: 17px;
-  }
-
-  .wide button {
-    min-width: 34px;
-    height: 34px;
   }
 
   button.on {
@@ -380,11 +275,6 @@
       scale var(--dur-fast) var(--ease-spring),
       box-shadow var(--dur-fast) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);
-  }
-
-  .wide .dot {
-    width: 20px;
-    height: 20px;
   }
 
   .dot:hover:not(:disabled) {

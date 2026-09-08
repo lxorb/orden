@@ -30,6 +30,7 @@
   import CanvasFind from './CanvasFind.svelte'
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
+  import CanvasPens from './CanvasPens.svelte'
   import { graphPoint, zoomed } from './camera'
   import { canvasMenu, place, run } from './canvas/actions'
   import {
@@ -44,6 +45,7 @@
   import { type Canvas as Plane, type InkPoint, readCanvas, writeCanvas } from './canvas/format'
   import { boxOf, GRID, HANDLES, overlaps, type Point, rectBetween } from './canvas/geometry'
   import { hand } from './canvas/hand.svelte'
+  import { pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
   import { assisted, tidyShape, transformed } from './canvas/ink'
   import { DEFAULT_INK, readPalette } from './canvas/palette'
@@ -467,7 +469,8 @@
       editing: store.editing,
       scale: camera.scale,
       inkBox: box,
-      pen: { ...tools.ink, color: tools.colour },
+      pen: tools.ink,
+      eraser: pens.eraser,
       penSeen: hand.penSeen,
       fingerDraws: hand.fingerDraws,
     })
@@ -912,7 +915,7 @@
    *  about: what is picked, or the pen in hand. */
   function onColour(colour: string | null) {
     if (tools.which === 'draw') {
-      tools.colour = colour ?? DEFAULT_INK
+      pens.set({ colour: colour ?? DEFAULT_INK })
       return
     }
 
@@ -921,12 +924,17 @@
   }
 
   const barColour = $derived.by(() => {
-    if (tools.which === 'draw') return tools.colour === DEFAULT_INK ? null : tools.colour
-    const first = store.picked[0]
-    if (!first) return null
+    if (tools.which === 'draw') {
+      return pens.current.colour === DEFAULT_INK ? null : pens.current.colour
+    }
 
-    const node = store.canvas.nodes.find((one) => one.id === first)
-    return node?.color ?? store.canvas.edges.find((one) => one.id === first)?.color ?? null
+    const first = store.picked[0]
+    if (first) {
+      const node = store.canvas.nodes.find((one) => one.id === first)
+      return node?.color ?? store.canvas.edges.find((one) => one.id === first)?.color ?? null
+    }
+
+    return tools.colour === DEFAULT_INK ? null : tools.colour
   })
 </script>
 
@@ -1096,13 +1104,29 @@
 
   <CanvasInk ink={shown.ink} {live} {camera} {width} {height} {picked} {palette} />
 
-  <CanvasBar
-    oncolour={onColour}
-    onsize={(size: number) => (tools.size = size)}
-    colour={barColour}
-    size={tools.size}
-    colouring={store.picked.length > 0}
-  />
+  <!-- Two bars, because a thumb and a mouse are not the same hand. A pointer gets
+       the compact row of glyphs; a finger gets the pen bar, whose pens are drawn
+       as pens and whose settings open where it stands. -->
+  {#if viewport.touch}
+    <CanvasPens
+      oncolour={onColour}
+      colour={barColour}
+      colouring={store.picked.length > 0}
+      canundo={store.canUndo}
+      canredo={store.canRedo}
+      onundo={() => store.undo()}
+      onredo={() => store.redo()}
+      onerase={() => run.eraseAll(store)}
+    />
+  {:else}
+    <CanvasBar
+      oncolour={onColour}
+      onsize={(size: number) => pens.set({ size })}
+      colour={barColour}
+      size={pens.current.size}
+      colouring={store.picked.length > 0}
+    />
+  {/if}
 
   {#if finding}
     <CanvasFind
