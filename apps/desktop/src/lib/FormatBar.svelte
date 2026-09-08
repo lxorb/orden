@@ -20,7 +20,7 @@
   /** Docked above the keyboard on a phone: there is no hovering over a
    *  selection with a thumb, and the buttons are wanted before the selection
    *  exists rather than after it. */
-  const docked = $derived(viewport.phone && viewport.typing)
+  const docked = $derived(viewport.touch && viewport.typing)
 
   /** Follows the selection, and hides the moment there is nothing selected.
    *  A selected picture has a toolbar of its own, in the same place, and a
@@ -121,7 +121,7 @@
     right: 0;
     justify-content: space-around;
     gap: 0;
-    padding: 4px max(4px, env(safe-area-inset-left)) 4px max(4px, env(safe-area-inset-right));
+    padding: 4px max(4px, var(--inset-left)) 4px max(4px, var(--inset-right));
     border-radius: 0;
     border-width: 1px 0 0;
   }

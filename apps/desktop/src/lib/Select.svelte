@@ -57,7 +57,7 @@
       options.findIndex((one) => one.value === value),
     )
 
-    if (host && !viewport.phone) {
+    if (host && !viewport.touch) {
       // Measured against the nearest thing that scrolls, which is what would
       // clip a list poking out of its bottom. Scroll containers say so with
       // `data-scrolls`; without one, the window is the limit.
@@ -139,7 +139,7 @@
   // A dropdown can be over another overlay - one inside the settings, say -
   // so Escape closes it and leaves what is underneath standing.
   $effect(() => (open ? overlays.show(close) : undefined))
-  $effect(() => closeOnBack(open && viewport.phone, close))
+  $effect(() => closeOnBack(open && viewport.touch, close))
 </script>
 
 <svelte:window onpointerdown={outside} />
@@ -163,7 +163,7 @@
     <svg class="chevron" viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" /></svg>
   </button>
 
-  {#if open && viewport.phone}
+  {#if open && viewport.touch}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="scrim" transition:fade={{ duration: 130 }} onclick={close}></div>
 
@@ -392,7 +392,7 @@
     max-height: 70dvh;
     display: flex;
     flex-direction: column;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--inset-bottom);
     background: var(--surface);
     border-top: 1px solid var(--line-strong);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -453,16 +453,14 @@
     height: 18px;
   }
 
-  @media (max-width: 720px) {
-    .trigger {
-      min-height: 46px;
-      /* Sixteen pixels is where iOS stops zooming into a control on focus. */
-      font-size: 16px;
-    }
+  :global([data-touch]) .trigger {
+    min-height: 46px;
+    /* Sixteen pixels is where iOS stops zooming into a control on focus. */
+    font-size: 16px;
+  }
 
-    .plain .trigger {
-      min-height: 0;
-      font-size: 15px;
-    }
+  :global([data-touch]) .plain .trigger {
+    min-height: 0;
+    font-size: 15px;
   }
 </style>

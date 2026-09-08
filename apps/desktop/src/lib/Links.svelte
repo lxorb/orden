@@ -244,15 +244,13 @@
     color: var(--muted);
   }
 
-  @media (max-width: 720px) {
-    .hit {
-      min-height: 48px;
-      padding-top: 10px;
-      padding-bottom: 10px;
-    }
+  :global([data-touch]) .hit {
+    min-height: 48px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 
-    .empty-text {
-      font-size: var(--text-base);
-    }
+  :global([data-touch]) .empty-text {
+    font-size: var(--text-base);
   }
 </style>

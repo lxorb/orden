@@ -589,39 +589,37 @@
   }
 
   /* Touch: 30px squares are hard to hit with a thumb. */
-  @media (max-width: 720px) {
-    .space,
-    .add {
-      width: 48px;
-      height: 48px;
-    }
+  :global([data-touch]) .space,
+  :global([data-touch]) .add {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
 
-    nav {
-      width: auto;
-      padding: var(--space-3) var(--space-2);
-      /* Standalone on a phone the rail runs under the status bar, so the
-         menu button has to start below the clock and battery. */
-      padding-top: calc(var(--space-3) + env(safe-area-inset-top));
-      padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
-    }
+  :global([data-touch]) nav {
+    width: auto;
+    padding: var(--space-3) var(--space-2);
+    /* Standalone on a phone the rail runs under the status bar, so the
+       menu button has to start below the clock and battery. */
+    padding-top: calc(var(--space-3) + var(--inset-top));
+    padding-bottom: calc(var(--space-3) + var(--inset-bottom));
+  }
 
-    svg {
-      width: 22px;
-      height: 22px;
-    }
+  :global([data-touch]) svg {
+    width: 22px;
+    height: 22px;
+  }
 
-    .glyph {
-      width: 24px;
-      height: 24px;
-    }
+  :global([data-touch]) .glyph {
+    width: 24px;
+    height: 24px;
+  }
 
-    .space {
-      font-size: 18px;
-    }
+  :global([data-touch]) .space {
+    font-size: 18px;
+  }
 
-    /* No hover on a touch screen, so the label would never show. */
-    .name {
-      display: none;
-    }
+  /* No hover on a touch screen, so the label would never show. */
+  :global([data-touch]) .name {
+    display: none;
   }
 </style>

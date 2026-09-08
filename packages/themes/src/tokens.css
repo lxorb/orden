@@ -43,6 +43,22 @@
   --titlebar-height: 38px;
   --measure: 42rem;
 
+  /* What a thumb needs to land on, and how far a finger has to be from the
+     left edge of the screen for a sideways drag to be the sidebar's rather
+     than the page's. */
+  --touch-target: 48px;
+  --swipe-edge: 32px;
+
+  /* The window's edges the system draws its own things over: a status bar, a
+     gesture bar, a notch, a home indicator. A browser answers `env()`; an
+     Android webview answers nothing there, so the activity writes real numbers
+     over these on the document. Everything that has to clear an edge reads
+     these and never has to know which of the two answered. See insets.ts. */
+  --inset-top: env(safe-area-inset-top, 0px);
+  --inset-right: env(safe-area-inset-right, 0px);
+  --inset-bottom: env(safe-area-inset-bottom, 0px);
+  --inset-left: env(safe-area-inset-left, 0px);
+
   /* Motion. Everything that can move, moves - but on a shared vocabulary
      so the whole app feels like one object rather than many effects. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);

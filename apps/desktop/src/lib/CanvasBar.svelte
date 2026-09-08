@@ -122,7 +122,7 @@
 
   /** How big a glyph reads. A finger and a pen want a bigger target than a
    *  mouse, and a tablet is held further away. */
-  const wide = $derived(viewport.phone)
+  const wide = $derived(viewport.touch)
 </script>
 
 <!-- Every pointer stops here. See the note at the top of the file. -->
@@ -267,7 +267,7 @@
   .cluster {
     position: absolute;
     left: 50%;
-    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--space-4) + var(--inset-bottom));
     translate: -50% 0;
     z-index: 6;
     display: flex;
@@ -304,14 +304,12 @@
 
   /* A phone has the app's own round button in the bottom right corner, so the
      bar takes the width that is left rather than sitting under it. */
-  @media (max-width: 720px) {
-    .cluster {
-      left: var(--space-2);
-      right: calc(var(--space-2) + 60px);
-      translate: none;
-      max-width: none;
-      align-items: stretch;
-    }
+  :global([data-touch]) .cluster {
+    left: var(--space-2);
+    right: calc(var(--space-2) + 60px);
+    translate: none;
+    max-width: none;
+    align-items: stretch;
   }
 
   /* A phone cannot show twenty glyphs at once, so the row scrolls rather than

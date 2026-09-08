@@ -38,7 +38,7 @@ export class SidebarWidth {
    *  `panel` is the element being resized, measured once at the start: reading
    *  it on every move would measure the width this drag has already set. */
   start(event: PointerEvent, panel: HTMLElement | undefined) {
-    if (viewport.phone || event.button !== 0 || !panel) return
+    if (viewport.touch || event.button !== 0 || !panel) return
 
     const handle = event.currentTarget
     if (!(handle instanceof HTMLElement)) return

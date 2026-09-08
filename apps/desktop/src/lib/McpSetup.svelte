@@ -542,6 +542,9 @@
     outline-offset: 2px;
   }
 
+  /* A width and not a device class: this is the panel it sits in running out of
+     room for a label and a field side by side, which happens on a desktop with
+     the window dragged in as readily as on a phone. */
   @media (max-width: 480px) {
     .copyable {
       flex-wrap: wrap;

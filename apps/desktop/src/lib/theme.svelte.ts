@@ -1,4 +1,5 @@
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
+import { tintSystemBars } from './insets'
 import { invoke } from './tauri'
 import { type Stamp, stampOf } from './themes/validate'
 
@@ -281,15 +282,21 @@ class Themes {
       .catch(() => this.inject(applying === this.applied ? '' : null))
   }
 
-  /** Android and iOS tint their own bars from this, which is the difference
-   *  between an installed app that ends at the page and one that does not. */
+  /** The bars the system draws over the page: its clock and battery at the top,
+   *  its gesture bar at the bottom. A browser and an installed web app tint
+   *  them from the meta tag; the Android app draws under them and is asked
+   *  instead which way round the icons go, since nothing in CSS reaches those.
+   *  Either way the difference is an app that ends at the page and one that
+   *  does not. */
   private paintSystemBars() {
     const tag = document.querySelector('meta[name="theme-color"]')
-    if (!tag) return
+    if (tag) {
+      // Read back rather than guessed: a theme file may have replaced --bg.
+      const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+      if (background) tag.setAttribute('content', background)
+    }
 
-    // Read back rather than guessed: a theme file may have replaced --bg.
-    const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
-    if (background) tag.setAttribute('content', background)
+    tintSystemBars(this.current === 'dark')
   }
 
   /** Puts the active theme's stylesheet on the page. Null is an answer that

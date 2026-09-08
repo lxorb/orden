@@ -74,7 +74,7 @@
     </svg>
   </button>
 
-  {#if viewport.phone}
+  {#if viewport.touch}
     <!-- One document at a time, so its name goes here rather than a strip of
          tabs too narrow to read. The rest is behind the overflow. -->
     <h1 class="title">{title}</h1>
@@ -275,29 +275,27 @@
 
   /* A phone has no window to drag and a thumb to hit this with. The bar grows
      to a comfortable target and clears the status bar. */
-  @media (max-width: 720px) {
-    header {
-      height: auto;
-      padding-top: env(safe-area-inset-top);
-    }
+  :global([data-touch]) header {
+    height: auto;
+    padding-top: var(--inset-top);
+  }
 
-    .toggle {
-      width: 52px;
-      height: 48px;
-    }
+  :global([data-touch]) .toggle {
+    width: 52px;
+    height: var(--touch-target);
+  }
 
-    .toggle svg {
-      width: 22px;
-      height: 22px;
-    }
+  :global([data-touch]) .toggle svg {
+    width: 22px;
+    height: 22px;
+  }
 
-    .more {
-      height: 48px;
-    }
+  :global([data-touch]) .more {
+    height: var(--touch-target);
+  }
 
-    .more svg {
-      width: 22px;
-      height: 22px;
-    }
+  :global([data-touch]) .more svg {
+    width: 22px;
+    height: 22px;
   }
 </style>

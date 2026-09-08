@@ -30,8 +30,8 @@
 <style>
   .notice {
     position: fixed;
-    right: max(var(--space-4), env(safe-area-inset-right));
-    bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    right: max(var(--space-4), var(--inset-right));
+    bottom: calc(var(--space-4) + var(--inset-bottom));
     z-index: 40;
     max-width: 22rem;
     display: flex;
@@ -95,23 +95,21 @@
 
   /* A phone has no room beside the text, so the buttons go under it and the
      whole thing spans the screen. */
-  @media (max-width: 720px) {
-    .notice {
-      left: max(var(--space-3), env(safe-area-inset-left));
-      right: max(var(--space-3), env(safe-area-inset-right));
-      max-width: none;
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--space-3);
-    }
+  :global([data-touch]) .notice {
+    left: max(var(--space-3), var(--inset-left));
+    right: max(var(--space-3), var(--inset-right));
+    max-width: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
 
-    .actions {
-      justify-content: flex-end;
-    }
+  :global([data-touch]) .actions {
+    justify-content: flex-end;
+  }
 
-    button {
-      min-height: 44px;
-      padding: 0 var(--space-4);
-    }
+  :global([data-touch]) button {
+    min-height: 44px;
+    padding: 0 var(--space-4);
   }
 </style>

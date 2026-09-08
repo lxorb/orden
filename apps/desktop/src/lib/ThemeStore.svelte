@@ -184,7 +184,7 @@
             options={ORDERS}
             onchange={(value: string) => (store.order = value === 'name' ? 'name' : 'newest')}
             label={t('Sort')}
-            plain={viewport.phone}
+            plain={viewport.touch}
           />
         </div>
       {/if}
@@ -736,25 +736,23 @@
     color: var(--danger);
   }
 
-  @media (max-width: 720px) {
-    .sheet {
-      top: auto;
-      bottom: 0;
-      left: 0;
-      translate: none;
-      width: 100%;
-      height: 90dvh;
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    }
+  :global([data-touch]) .sheet {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    translate: none;
+    width: 100%;
+    height: 90dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
 
-    .grid {
-      grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-    }
+  :global([data-touch]) .grid {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  }
 
-    /* No room for two columns, so the sample and what is known about it stack
-       the way every other pane does on a phone. */
-    .full {
-      grid-template-columns: 1fr;
-    }
+  /* No room for two columns, so the sample and what is known about it stack
+     the way every other pane does on a phone. */
+  :global([data-touch]) .full {
+    grid-template-columns: 1fr;
   }
 </style>

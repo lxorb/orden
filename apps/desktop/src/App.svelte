@@ -116,7 +116,7 @@
   // A phone shows one note at a time, so an arrangement made on a desktop, or on
   // this window before it was made narrow, comes down to one pane.
   $effect(() => {
-    if (viewport.phone) workspace.collapsePanes()
+    if (viewport.touch) workspace.collapsePanes()
   })
 
   // The keyboard takes the bottom of the window with it, and the line being
@@ -173,10 +173,11 @@
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
   // The drawer follows the finger, the way a phone app's does; see
-  // drawer.svelte.ts.
+  // drawer.svelte.ts. Only where the sidebar is a drawer: a tablet on its side
+  // keeps it open beside the note, and a column in the layout is not dragged.
   $effect(() => {
     const host = middle
-    if (!host || !viewport.phone) return
+    if (!host || !viewport.drawer) return
 
     return drawer.follow(host)
   })
@@ -237,9 +238,9 @@
   function goto(line: number) {
     if (!view) return
 
-    // Going somewhere in the note means wanting to see it, and on a phone
-    // the drawer is in the way.
-    if (viewport.phone) workspace.closePanel()
+    // Going somewhere in the note means wanting to see it, and a drawer is in
+    // the way. A sidebar docked beside the note is not, and stays.
+    if (viewport.drawer) workspace.closePanel()
 
     const target = view.state.doc.line(Math.min(line + 1, view.state.doc.lines))
     view.dispatch({
@@ -325,6 +326,7 @@
     <div
       class="panels"
       class:open={!!workspace.panel}
+      class:held={drawer.held}
       class:dragging={drawer.at !== null}
       class:settling={drawer.settle !== null}
       style:transform={drawer.at === null || viewport.narrow
@@ -352,6 +354,7 @@
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
       <div
         class="scrim"
+        class:held={drawer.held}
         class:dragging={drawer.at !== null}
         style:opacity={drawer.at === null || !drawer.width ? undefined : drawer.at / drawer.width}
         onclick={() => workspace.closePanel()}
@@ -365,6 +368,7 @@
     <div
       class="document"
       class:open={!!workspace.panel}
+      class:held={drawer.held}
       class:dragging={drawer.at !== null}
       class:settling={drawer.settle !== null}
       style:transform={drawer.at === null || !viewport.narrow
@@ -397,7 +401,7 @@
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the
            keyboard is up, because then you are already writing one. -->
-      {#if viewport.phone && !workspace.panel && !viewport.typing}
+      {#if viewport.touch && !workspace.panel && !viewport.typing}
         <button class="fab" aria-label={t('New note')} onclick={() => workspace.createNote()}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
@@ -474,8 +478,8 @@
   /* Sits above the document, clear of the gesture bar. */
   .fab {
     position: absolute;
-    right: max(16px, env(safe-area-inset-right));
-    bottom: calc(16px + env(safe-area-inset-bottom));
+    right: max(16px, var(--inset-right));
+    bottom: calc(16px + var(--inset-bottom));
     z-index: 20;
     width: 56px;
     height: 56px;
@@ -503,95 +507,106 @@
     stroke-linecap: round;
   }
 
-  /* ── Phones and narrow windows ─────────────────────────────────── */
+  /* ── Where the sidebar is a drawer over the note ─────────────────── */
 
-  @media (max-width: 720px) {
-    .panels {
-      position: fixed;
-      inset: 0 auto 0 0;
-      z-index: 30;
-      transform: translateX(-100%);
-      transition: transform var(--dur-base) var(--ease-out);
-      box-shadow: var(--shadow-lg);
-      /* Clear of a notch or a rounded corner. */
-      padding-left: env(safe-area-inset-left);
+  :global([data-drawer]) .panels {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: var(--shadow-lg);
+    /* Clear of a notch or a rounded corner. */
+    padding-left: var(--inset-left);
+  }
+
+  :global([data-drawer]) .panels.open {
+    transform: none;
+  }
+
+  /* A finger is down on something that is about to move. Promoting the layer
+     now rather than on the first move means the drag starts on the frame it
+     was asked for, and the hint goes again the moment the finger lifts: a
+     layer nothing is moving is a layer paid for and not used. */
+  :global([data-drawer]) .panels.held,
+  :global([data-drawer]) .document.held {
+    will-change: transform;
+  }
+
+  :global([data-drawer]) .scrim.held {
+    will-change: opacity;
+  }
+
+  /* The finger is the animation while it is down; CSS takes over on release
+     and eases the drawer the rest of the way. */
+  :global([data-drawer]) .panels.dragging,
+  :global([data-drawer]) .scrim.dragging {
+    transition: none;
+    animation: none;
+  }
+
+  /* After a drag: as long as the distance left asks for, on a curve that
+     starts at the finger's pace and eases to a stop rather than snapping. */
+  :global([data-drawer]) .panels.settling {
+    transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Colour and nothing else. A blur here is a filter the compositor has to
+     redraw over the whole screen on every frame of the drag, which is most of
+     what a drawer swipe used to cost. */
+  :global([data-drawer]) .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: color-mix(in srgb, var(--bg) 62%, transparent);
+    animation: scrim-in var(--dur-fast) var(--ease-out);
+  }
+
+  @keyframes scrim-in {
+    from {
+      opacity: 0;
     }
+  }
 
-    .panels.open {
-      transform: none;
-    }
+  /* Full width rather than leaving a sliver of the document showing - and once
+     it covers everything it is no longer a drawer over the note but the layer
+     beneath it. So here the note is what slides: off to the right to uncover
+     the list, back over it when a note is chosen. */
+  :global([data-narrow]) .panels {
+    width: 100%;
+    z-index: 1;
+    transform: none;
+    box-shadow: none;
+    transition: none;
+  }
 
-    /* The finger is the animation while it is down; CSS takes over on release
-       and eases the drawer the rest of the way. */
-    .panels.dragging,
-    .scrim.dragging {
-      transition: none;
-      animation: none;
-    }
+  :global([data-narrow]) .document {
+    position: relative;
+    z-index: 2;
+    background: var(--bg);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
 
-    /* After a drag: as long as the distance left asks for, on a curve that
-       starts at the finger's pace and eases to a stop rather than snapping. */
-    .panels.settling {
-      transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
-    }
+  :global([data-narrow]) .document.open {
+    transform: translateX(100%);
+  }
 
-    .scrim {
-      display: block;
-      position: fixed;
-      inset: 0;
-      z-index: 29;
-      background: color-mix(in srgb, var(--bg) 55%, transparent);
-      backdrop-filter: blur(2px);
-      animation: scrim-in var(--dur-fast) var(--ease-out);
-    }
+  :global([data-narrow]) .document.open,
+  :global([data-narrow]) .document.dragging {
+    box-shadow: -16px 0 40px rgb(0 0 0 / 0.3);
+  }
 
-    @keyframes scrim-in {
-      from {
-        opacity: 0;
-      }
-    }
+  :global([data-narrow]) .document.dragging {
+    transition: none;
+  }
 
-    /* Full width rather than leaving a sliver of the document showing - and
-       once it covers everything it is no longer a drawer over the note but
-       the layer beneath it. So here the note is what slides: off to the right
-       to uncover the list, back over it when a note is chosen. */
-    @media (max-width: 460px) {
-      .panels {
-        width: 100%;
-        z-index: 1;
-        transform: none;
-        box-shadow: none;
-        transition: none;
-      }
+  :global([data-narrow]) .document.settling {
+    transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
+  }
 
-      .document {
-        position: relative;
-        z-index: 2;
-        background: var(--bg);
-        transition: transform var(--dur-base) var(--ease-out);
-      }
-
-      .document.open {
-        transform: translateX(100%);
-      }
-
-      .document.open,
-      .document.dragging {
-        box-shadow: -16px 0 40px rgb(0 0 0 / 0.3);
-      }
-
-      .document.dragging {
-        transition: none;
-      }
-
-      .document.settling {
-        transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
-      }
-
-      /* Nothing to dim: the note is either over the list or off the screen. */
-      .scrim {
-        display: none;
-      }
-    }
+  /* Nothing to dim: the note is either over the list or off the screen. */
+  :global([data-narrow]) .scrim {
+    display: none;
   }
 </style>

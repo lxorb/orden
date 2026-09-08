@@ -35,8 +35,8 @@
 <style>
   .toast {
     position: fixed;
-    left: max(var(--space-4), env(safe-area-inset-left));
-    bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    left: max(var(--space-4), var(--inset-left));
+    bottom: calc(var(--space-4) + var(--inset-bottom));
     z-index: 40;
     max-width: 20rem;
     display: flex;
@@ -83,14 +83,12 @@
     font-weight: 550;
   }
 
-  @media (max-width: 720px) {
-    .toast {
-      right: max(var(--space-4), env(safe-area-inset-right));
-      max-width: none;
-    }
+  :global([data-touch]) .toast {
+    right: max(var(--space-4), var(--inset-right));
+    max-width: none;
+  }
 
-    button {
-      min-height: 44px;
-    }
+  :global([data-touch]) button {
+    min-height: 44px;
   }
 </style>

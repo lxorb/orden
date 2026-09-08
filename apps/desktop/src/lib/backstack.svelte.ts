@@ -61,6 +61,6 @@ const backstack = new BackStack()
 /** For use as the body of an `$effect`: while `open`, back closes this layer.
  *  Only on phones - on a desktop, back means the previous page. */
 export function closeOnBack(open: boolean, close: () => void): (() => void) | undefined {
-  if (!open || !viewport.phone) return
+  if (!open || !viewport.touch) return
   return backstack.open(close)
 }

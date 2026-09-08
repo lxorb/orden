@@ -180,8 +180,8 @@
 <aside
   bind:this={aside}
   class:resizing={size.dragging}
-  style:width={size.pixels !== null && !viewport.phone ? `${size.pixels}px` : undefined}
-  transition:slide={{ axis: 'x', duration: viewport.phone ? 0 : 210, easing: cubicOut }}
+  style:width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
+  transition:slide={{ axis: 'x', duration: viewport.touch ? 0 : 210, easing: cubicOut }}
 >
   <!-- The strip along the right edge that changes the width. Not on a phone,
        where the drawer is as wide as the drawer is. -->
@@ -562,78 +562,86 @@
     stroke-linejoin: round;
   }
 
-  @media (max-width: 720px) {
-    aside {
-      width: min(78vw, 20rem);
-    }
+  /* A drawer is as wide as it needs to be to read a list of names in, and it
+     is never dragged wider: there is no pointer to grab the edge with. */
+  :global([data-drawer]) aside {
+    width: min(78vw, 20rem);
+  }
 
-    .edge {
-      display: none;
-    }
+  :global([data-touch]) .edge {
+    display: none;
+  }
 
-    /* On a narrow screen the rail plus a 20rem sidebar leaves a sliver of the
-       document showing, which reads as a mistake rather than a peek. Past that
-       point the drawer takes the whole width, and this fills whatever the rail
-       does not - measuring it instead would need the rail's mobile width,
-       which is not what `--rail-width` says. */
-    @media (max-width: 460px) {
-      aside {
-        flex: 1;
-        width: auto;
-        min-width: 0;
-        /* The whole screen, so it is a page of its own rather than a panel
-           beside the note, and takes the note's ground rather than the
-           lighter surface a panel has next to it. */
-        background: var(--bg);
-      }
-    }
+  /* On a narrow screen the rail plus a 20rem sidebar leaves a sliver of the
+     document showing, which reads as a mistake rather than a peek. Past that
+     point the drawer takes the whole width, and this fills whatever the rail
+     does not - measuring it instead would need the rail's mobile width, which
+     is not what `--rail-width` says. */
+  :global([data-narrow]) aside {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    /* The whole screen, so it is a page of its own rather than a panel beside
+       the note, and takes the note's ground rather than the lighter surface a
+       panel has next to it. */
+    background: var(--bg);
+  }
 
-    /* Clear of the status bar, the way the titlebar is on the other side. */
-    .switch {
-      padding-top: calc(var(--space-2) + env(safe-area-inset-top));
-    }
+  /* Docked beside the note on a tablet held sideways. It arrives rather than
+     appears, and on the compositor: the column itself is not animated, because
+     animating a width relays out the editor beside it on every frame. */
+  :global([data-touch]:not([data-drawer])) aside {
+    animation: dock var(--dur-base) var(--ease-out);
+  }
 
-    .switch button {
-      width: 48px;
-      height: 48px;
+  @keyframes dock {
+    from {
+      opacity: 0;
+      transform: translateX(-12px);
     }
+  }
 
-    .switch button svg {
-      width: 22px;
-      height: 22px;
-    }
+  /* Clear of the status bar, the way the titlebar is on the other side. */
+  :global([data-touch]) .switch {
+    padding-top: calc(var(--space-2) + var(--inset-top));
+  }
 
-    /* The last row clears the gesture bar. */
-    .body {
-      padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
-    }
+  :global([data-touch]) .switch button {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
 
-    /* Same floor as the tree rows beneath them: everything in the drawer is
-       something a thumb has to land on. */
-    .row {
-      min-height: 48px;
-    }
+  :global([data-touch]) .switch button svg {
+    width: 22px;
+    height: 22px;
+  }
 
-    /* The same type as the tree rows, and none of the desktop's vertical
-       padding: the row is already tall, and 12.5px words in it were mostly
-       the row. */
-    .row {
-      padding-top: 0;
-      padding-bottom: 0;
-      font-size: var(--text-base);
-    }
+  /* The last row clears the gesture bar. */
+  :global([data-touch]) .body {
+    padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+  }
 
-    /* An outline is read more than it is tapped: a shorter row than the
-       tree's, still a whole line for a thumb, and a deeper step per level so
-       the hierarchy survives the larger type. */
-    .heading {
-      --indent: 14px;
-      min-height: 40px;
-    }
+  /* Same floor as the tree rows beneath them: everything here is something a
+     thumb has to land on. The same type as those rows, too, and none of the
+     desktop's vertical padding: the row is already tall, and 12.5px words in
+     it were mostly the row. */
+  :global([data-touch]) .row {
+    min-height: var(--touch-target);
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--text-base);
+  }
 
-    .empty-text {
-      margin: var(--space-3) var(--space-2) 0;
-      font-size: var(--text-base);
-    }
+  /* An outline is read more than it is tapped: a shorter row than the tree's,
+     still a whole line for a thumb, and a deeper step per level so the
+     hierarchy survives the larger type. */
+  :global([data-touch]) .heading {
+    --indent: 14px;
+    min-height: 40px;
+  }
+
+  :global([data-touch]) .empty-text {
+    margin: var(--space-3) var(--space-2) 0;
+    font-size: var(--text-base);
   }
 </style>

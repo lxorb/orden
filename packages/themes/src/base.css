@@ -86,8 +86,8 @@ select option {
   margin: 0 auto;
   padding: var(--space-7) var(--space-5) 45vh;
   /* A phone has no room for a comfortable measure; the screen is the measure. */
-  padding-left: max(var(--space-5), env(safe-area-inset-left));
-  padding-right: max(var(--space-5), env(safe-area-inset-right));
+  padding-left: max(var(--space-5), var(--inset-left));
+  padding-right: max(var(--space-5), var(--inset-right));
   font-family: var(--font-content);
   font-size: var(--text-content);
   line-height: var(--leading-content);
@@ -748,6 +748,10 @@ select option {
 
 /* ── Narrow screens ──────────────────────────────────────────────── */
 
+/* A width, where the app's own chrome asks `html[data-device]` instead. These
+   are the document rather than the app: the same rules dress a published page
+   and a clipped one, where no script is running to say what kind of screen this
+   is, and what they answer to is the width of the column and not the finger. */
 @media (max-width: 720px) {
   #write {
     padding-top: var(--space-5);

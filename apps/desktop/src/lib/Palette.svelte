@@ -209,14 +209,12 @@
     letter-spacing: 0.02em;
   }
 
-  @media (max-width: 720px) {
-    .palette {
-      top: 0;
-      left: 0;
-      translate: none;
-      width: 100%;
-      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-      padding-top: env(safe-area-inset-top);
-    }
+  :global([data-touch]) .palette {
+    top: 0;
+    left: 0;
+    translate: none;
+    width: 100%;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding-top: var(--inset-top);
   }
 </style>

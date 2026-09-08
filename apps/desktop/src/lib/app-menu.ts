@@ -373,7 +373,7 @@ export function appMenu(context: Context): MenuGroup[] {
         },
         SPLIT,
         // The panes. Left out on a phone, which shows one note at a time.
-        ...(viewport.phone
+        ...(viewport.touch
           ? []
           : [
               {

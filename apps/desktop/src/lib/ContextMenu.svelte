@@ -14,14 +14,14 @@
   /** A phone gets a sheet from the bottom, where the thumb is, unless the
    *  menu asked to stay by the finger: then it is a callout, the way a phone
    *  puts Cut and Copy beside a selection rather than over it. */
-  const sheet = $derived(viewport.phone && !menu.near)
-  const callout = $derived(viewport.phone && menu.near)
+  const sheet = $derived(viewport.touch && !menu.near)
+  const callout = $derived(viewport.touch && menu.near)
 
   /** On a phone the destructive entries come last, in a group of their own,
    *  so a thumb finds Delete at the end and nowhere else. A desktop keeps the
    *  order it was given. */
   const entries = $derived.by((): MenuEntry[] => {
-    if (!viewport.phone) return menu.items
+    if (!viewport.touch) return menu.items
 
     const danger = menu.items.filter((item) => item?.danger)
     const rest = menu.items.filter((item) => !item?.danger)
@@ -89,7 +89,7 @@
   // the ground a phone's menu was placed on; it goes rather than floats.
   $effect(() => {
     const seen = window.visualViewport
-    if (!menu.open || !viewport.phone || !seen) return
+    if (!menu.open || !viewport.touch || !seen) return
 
     const hide = () => menu.hide()
     seen.addEventListener('resize', hide)
@@ -121,7 +121,7 @@
 />
 
 {#if menu.open}
-  {#if viewport.phone}
+  {#if viewport.touch}
     <!-- Takes the tap that closes the menu, and the scroll that would
          otherwise reach the list under it. Dimmed under a sheet, which is a
          layer over the app; clear under a callout, which sits beside a
@@ -138,7 +138,7 @@
   <div
     bind:this={element}
     class="menu"
-    class:touch={viewport.phone}
+    class:touch={viewport.touch}
     class:sheet
     class:above
     style:left={sheet ? undefined : `${position.x}px`}
@@ -168,7 +168,7 @@
           >
             <span>{item.label}</span>
             <!-- A shortcut means nothing to a thumb. -->
-            {#if item.hint && !viewport.phone}<kbd>{item.hint}</kbd>{/if}
+            {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
           </button>
         {/if}
       {/each}
@@ -188,10 +188,10 @@
     box-shadow: var(--shadow-lg);
     transform-origin: top left;
     /* Copied here for the script, which places the callout. */
-    --inset-top: env(safe-area-inset-top, 0px);
-    --inset-right: env(safe-area-inset-right, 0px);
-    --inset-bottom: env(safe-area-inset-bottom, 0px);
-    --inset-left: env(safe-area-inset-left, 0px);
+    --inset-top: var(--inset-top);
+    --inset-right: var(--inset-right);
+    --inset-bottom: var(--inset-bottom);
+    --inset-left: var(--inset-left);
   }
 
   button {
@@ -320,7 +320,7 @@
     display: flex;
     flex-direction: column;
     max-height: min(72dvh, calc(100dvh - var(--keyboard, 0px) - var(--space-5)));
-    padding: 0 0 env(safe-area-inset-bottom);
+    padding: 0 0 var(--inset-bottom);
     border: none;
     border-top: 1px solid var(--line-strong);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -353,7 +353,7 @@
   .sheet .rows {
     flex: 1;
     min-height: 0;
-    padding: 6px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left));
+    padding: 6px max(8px, var(--inset-right)) 8px max(8px, var(--inset-left));
     overflow-y: auto;
     overscroll-behavior: contain;
   }

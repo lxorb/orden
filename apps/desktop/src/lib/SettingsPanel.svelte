@@ -281,7 +281,7 @@
   /** A window that grows into place on a desktop; a page that rises from the
    *  bottom on a phone. */
   function appear(node: Element) {
-    return viewport.phone
+    return viewport.touch
       ? fly(node, { y: 40, duration: 240, easing: cubicOut })
       : scale(node, { duration: 200, start: 0.97, easing: cubicOut })
   }
@@ -289,7 +289,7 @@
   /** The list and the pane slide past each other on a phone; a desktop shows
    *  both and has nothing to slide. */
   const enter = (x: number) =>
-    viewport.phone ? { x, duration: 200, easing: cubicOut } : { duration: 0 }
+    viewport.touch ? { x, duration: 200, easing: cubicOut } : { duration: 0 }
 
   // Back closes this before it leaves the app: the pane first, then the sheet.
   // Escape closes it, like everything else the app puts over a note; see
@@ -307,8 +307,8 @@
     onclick={() => (settings.open = false)}
   ></div>
 
-  <div class="sheet" class:phone={viewport.phone} style:height={pageHeight()} transition:appear>
-    {#if viewport.phone}
+  <div class="sheet" class:phone={viewport.touch} style:height={pageHeight()} transition:appear>
+    {#if viewport.touch}
       <header class="bar">
         {#if !settings.listing}
           <button class="icon" aria-label={t('Back')} onclick={() => (settings.listing = true)}>
@@ -326,9 +326,9 @@
       </header>
     {/if}
 
-    {#if !viewport.phone || settings.listing}
+    {#if !viewport.touch || settings.listing}
       <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
-        {#if !viewport.phone}
+        {#if !viewport.touch}
           <h1>{t('Settings')}</h1>
         {/if}
 
@@ -339,7 +339,7 @@
           <input bind:value={query} placeholder={t('Search settings')} spellcheck="false" />
         </label>
 
-        {#if viewport.phone && query}
+        {#if viewport.touch && query}
           {@render results()}
         {:else}
           {#each GROUPS as group, index (index)}
@@ -347,7 +347,7 @@
               {#each group as item (item.id)}
                 <button
                   class="item"
-                  class:active={!viewport.phone && !query && settings.section === item.id}
+                  class:active={!viewport.touch && !query && settings.section === item.id}
                   onclick={() => go(item.id)}
                 >
                   <svg class="glyph" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
@@ -361,9 +361,9 @@
       </nav>
     {/if}
 
-    {#if !viewport.phone || !settings.listing}
+    {#if !viewport.touch || !settings.listing}
       <div class="body" data-scrolls use:scrollbar={settings.section} in:fly={enter(24)}>
-        {#if query && !viewport.phone}
+        {#if query && !viewport.touch}
           <div class="pane">
             <h2>{t('Search settings')}</h2>
             {@render results()}
@@ -372,9 +372,9 @@
           {#key settings.section}
             <div
               class="pane"
-              in:fly={viewport.phone ? { duration: 0 } : { y: 8, duration: 180, easing: cubicOut }}
+              in:fly={viewport.touch ? { duration: 0 } : { y: 8, duration: 180, easing: cubicOut }}
             >
-              {#if !viewport.phone}
+              {#if !viewport.touch}
                 <h2>{titleOf(settings.section)}</h2>
               {/if}
               {@render pane()}
@@ -458,7 +458,7 @@
           options={field.options}
           onchange={(value: string) => field.set(value)}
           label={field.label}
-          plain={viewport.phone}
+          plain={viewport.touch}
         />
       </div>
     </div>
@@ -580,7 +580,7 @@
                   publishing.note = value
                 }}
                 label={t('What to publish')}
-                plain={viewport.phone}
+                plain={viewport.touch}
               />
             </div>
           </div>
@@ -726,7 +726,7 @@
             options={PAPER_SIZES.map((size) => ({ value: size, label: size }))}
             onchange={(value) => settings.setPage({ paper: value as never })}
             label={t('Paper')}
-            plain={viewport.phone}
+            plain={viewport.touch}
           />
         </div>
       </div>
@@ -738,7 +738,7 @@
             options={ORIENTATIONS.map((option) => ({ value: option, label: t(option) }))}
             onchange={(value) => settings.setPage({ orientation: value as never })}
             label={t('Orientation')}
-            plain={viewport.phone}
+            plain={viewport.touch}
           />
         </div>
       </div>
@@ -785,7 +785,7 @@
             ]}
             onchange={(value) => settings.setExportAppearance(value as never)}
             label={t('Appearance')}
-            plain={viewport.phone}
+            plain={viewport.touch}
           />
         </div>
       </div>
@@ -818,7 +818,7 @@
           options={presetChoices}
           onchange={(value: string) => void choosePreset(value)}
           label={t('Shortcuts')}
-          plain={viewport.phone}
+          plain={viewport.touch}
         />
       </div>
     </div>
@@ -1870,8 +1870,8 @@
     display: flex;
     align-items: center;
     gap: 2px;
-    height: calc(52px + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) 6px 0;
+    height: calc(52px + var(--inset-top));
+    padding: var(--inset-top) 6px 0;
     border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
@@ -1924,7 +1924,7 @@
 
   .sheet.phone nav {
     gap: 0;
-    padding: var(--space-3) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
+    padding: var(--space-3) var(--space-4) calc(var(--space-6) + var(--inset-bottom));
     border-right: none;
     background: none;
   }
@@ -2005,7 +2005,7 @@
   }
 
   .sheet.phone .body {
-    padding: var(--space-3) var(--space-4) calc(var(--space-7) + env(safe-area-inset-bottom));
+    padding: var(--space-3) var(--space-4) calc(var(--space-7) + var(--inset-bottom));
   }
 
   .sheet.phone .pane {

@@ -413,17 +413,15 @@
 
   /* A 25px row is a desktop row. A thumb needs the whole line, and the tree is
      the main thing anyone taps in the drawer. */
-  @media (max-width: 720px) {
-    .row {
-      min-height: 48px;
-      padding-top: 0;
-      padding-bottom: 0;
-      font-size: var(--text-base);
-    }
+  :global([data-touch]) .row {
+    min-height: 48px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--text-base);
+  }
 
-    .rename {
-      min-height: 48px;
-      font-size: var(--text-base);
-    }
+  :global([data-touch]) .rename {
+    min-height: 48px;
+    font-size: var(--text-base);
   }
 </style>

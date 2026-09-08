@@ -30,7 +30,7 @@
   /** A popover that grows out of the button on a desktop; a sheet from the
    *  bottom on a phone, where the thumb is. */
   function arrive(node: Element) {
-    if (viewport.phone) return fly(node, { y: 40, duration: 220, easing: cubicOut })
+    if (viewport.touch) return fly(node, { y: 40, duration: 220, easing: cubicOut })
 
     return {
       duration: 220,
@@ -60,8 +60,8 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => (open = false)}></div>
 
-  <div class="menu" class:phone={viewport.phone} transition:arrive>
-    {#if viewport.phone}
+  <div class="menu" class:phone={viewport.touch} transition:arrive>
+    {#if viewport.touch}
       <div class="grip" aria-hidden="true"></div>
     {/if}
 
@@ -235,119 +235,116 @@
   }
 
   /* ── On a phone ────────────────────────────────────────────────── */
+  :global([data-touch]) .hamburger {
+    width: 48px;
+    height: 48px;
+  }
 
-  @media (max-width: 720px) {
-    .hamburger {
-      width: 48px;
-      height: 48px;
-    }
+  :global([data-touch]) .hamburger svg {
+    width: 22px;
+    height: 22px;
+  }
 
-    .hamburger svg {
-      width: 22px;
-      height: 22px;
-    }
+  /* Dimmed here, where the sheet is a layer over the app rather than a
+     popover beside a button. */
+  :global([data-touch]) .scrim {
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+    backdrop-filter: blur(2px);
+  }
 
-    /* Dimmed here, where the sheet is a layer over the app rather than a
-       popover beside a button. */
-    .scrim {
-      background: color-mix(in srgb, var(--bg) 55%, transparent);
-      backdrop-filter: blur(2px);
-    }
+  /* Anchored to the bottom, the full width, and tall enough for the longest
+     group without ever covering the whole screen. */
+  :global([data-touch]) .menu.phone {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+    max-height: 72dvh;
+    padding-bottom: var(--inset-bottom);
+    border: none;
+    border-top: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--surface);
+  }
 
-    /* Anchored to the bottom, the full width, and tall enough for the longest
-       group without ever covering the whole screen. */
-    .menu.phone {
-      top: auto;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      flex-direction: column;
-      max-height: 72dvh;
-      padding-bottom: env(safe-area-inset-bottom);
-      border: none;
-      border-top: 1px solid var(--line-strong);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      background: var(--surface);
-    }
+  :global([data-touch]) .grip {
+    flex: none;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 2px;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
 
-    .grip {
-      flex: none;
-      width: 36px;
-      height: 4px;
-      margin: 8px auto 2px;
-      border-radius: 2px;
-      background: var(--line-strong);
-    }
+  /* The groups as chips that wrap, so all of them are in view at once
+     rather than some of them off the edge of a strip. */
+  :global([data-touch]) .phone .groups {
+    flex: none;
+    width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 14px 10px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    overflow: visible;
+  }
 
-    /* The groups as chips that wrap, so all of them are in view at once
-       rather than some of them off the edge of a strip. */
-    .phone .groups {
-      flex: none;
-      width: auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 8px 14px 10px;
-      border-right: none;
-      border-bottom: 1px solid var(--line);
-      overflow: visible;
-    }
+  :global([data-touch]) .phone .groups button {
+    width: auto;
+    min-height: 36px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--muted-strong);
+    font-size: 14px;
+    font-weight: 500;
+  }
 
-    .phone .groups button {
-      width: auto;
-      min-height: 36px;
-      padding: 6px 14px;
-      border-radius: 99px;
-      background: var(--surface-2);
-      color: var(--muted-strong);
-      font-size: 14px;
-      font-weight: 500;
-    }
+  :global([data-touch]) .phone .groups button.on {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
 
-    .phone .groups button.on {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
+  :global([data-touch]) .phone .rows {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    padding: 6px 8px 8px;
+    overflow-y: auto;
+  }
 
-    .phone .rows {
-      flex: 1;
-      min-width: 0;
-      min-height: 0;
-      padding: 6px 8px 8px;
-      overflow-y: auto;
-    }
+  :global([data-touch]) .phone .row {
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+  }
 
-    .phone .row {
-      min-height: 48px;
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      font-size: 15px;
-    }
+  :global([data-touch]) .phone .row:active:not(:disabled) {
+    background: var(--surface-2);
+  }
 
-    .phone .row:active:not(:disabled) {
-      background: var(--surface-2);
-    }
+  /* Hover has no meaning under a finger; the lit row would just stick. */
+  :global([data-touch]) .phone .row:hover:not(:disabled) {
+    background: none;
+    color: var(--text);
+  }
 
-    /* Hover has no meaning under a finger; the lit row would just stick. */
-    .phone .row:hover:not(:disabled) {
-      background: none;
-      color: var(--text);
-    }
+  /* The tick at the trailing edge, where a phone puts what is on, and no
+     room held for it where there is none. */
+  :global([data-touch]) .phone .tick {
+    order: 2;
+    width: auto;
+    margin-left: auto;
+  }
 
-    /* The tick at the trailing edge, where a phone puts what is on, and no
-       room held for it where there is none. */
-    .phone .tick {
-      order: 2;
-      width: auto;
-      margin-left: auto;
-    }
+  :global([data-touch]) .phone .hint {
+    display: none;
+  }
 
-    .phone .hint {
-      display: none;
-    }
-
-    .phone .split {
-      margin: 6px 12px;
-    }
+  :global([data-touch]) .phone .split {
+    margin: 6px 12px;
   }
 </style>

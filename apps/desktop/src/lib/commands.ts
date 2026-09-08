@@ -209,7 +209,7 @@ export interface Command {
 /** Splitting, moving between panes, and closing one. Left out entirely on a
  *  phone, which shows one note at a time and has no panes to talk about. */
 function paneCommands(): Command[] {
-  if (viewport.phone) return []
+  if (viewport.touch) return []
 
   return [
     {
@@ -246,7 +246,7 @@ function paneCommands(): Command[] {
  *  one go. A saved layout reads as what it will do - "Layout: reading" - so the
  *  palette needs no heading to say what the row is. */
 function layoutCommands(): Command[] {
-  if (viewport.phone) return []
+  if (viewport.touch) return []
 
   const saved = workspace.layouts.all
 

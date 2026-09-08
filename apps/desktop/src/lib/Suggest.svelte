@@ -103,10 +103,8 @@
     font-weight: 600;
   }
 
-  @media (max-width: 720px) {
-    button {
-      min-height: 44px;
-      font-size: var(--text-base);
-    }
+  :global([data-touch]) button {
+    min-height: 44px;
+    font-size: var(--text-base);
   }
 </style>

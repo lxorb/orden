@@ -664,50 +664,48 @@
     stroke-linejoin: round;
   }
 
-  @media (max-width: 720px) {
-    /* 16px is where iOS stops zooming into a focused field. */
-    .query {
-      min-height: 44px;
-      padding: 10px 12px;
-      font-size: 16px;
-    }
+  /* 16px is where iOS stops zooming into a focused field. */
+  :global([data-touch]) .query {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
 
-    .query.wide {
-      padding-right: 60px;
-    }
+  :global([data-touch]) .query.wide {
+    padding-right: 60px;
+  }
 
-    .swap,
-    .apply {
-      min-height: 44px;
-    }
+  :global([data-touch]) .swap,
+  :global([data-touch]) .apply {
+    min-height: 44px;
+  }
 
-    .swap {
-      width: 44px;
-    }
+  :global([data-touch]) .swap {
+    width: 44px;
+  }
 
-    /* Same floor as the tree rows: everything in the drawer is something a
-       thumb has to land on. */
-    .hit {
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      padding-top: 10px;
-      padding-bottom: 10px;
-    }
+  /* Same floor as the tree rows: everything in the drawer is something a
+     thumb has to land on. */
+  :global([data-touch]) .hit {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 
-    .tick {
-      width: 24px;
-      height: 24px;
-    }
+  :global([data-touch]) .tick {
+    width: 24px;
+    height: 24px;
+  }
 
-    .tick svg {
-      width: 15px;
-      height: 15px;
-    }
+  :global([data-touch]) .tick svg {
+    width: 15px;
+    height: 15px;
+  }
 
-    .empty-text {
-      margin: var(--space-3) var(--space-2) 0;
-      font-size: var(--text-base);
-    }
+  :global([data-touch]) .empty-text {
+    margin: var(--space-3) var(--space-2) 0;
+    font-size: var(--text-base);
   }
 </style>

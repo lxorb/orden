@@ -168,8 +168,8 @@
 /* Which slide, shown when the deck moves and gone again a moment later. */
 .count {
   position: absolute;
-  right: max(20px, env(safe-area-inset-right));
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  right: max(20px, var(--inset-right));
+  bottom: calc(16px + var(--inset-bottom));
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
@@ -192,8 +192,8 @@
   z-index: 1;
   max-height: 45%;
   overflow-y: auto;
-  padding: var(--space-5) max(var(--space-5), env(safe-area-inset-left))
-    calc(var(--space-5) + env(safe-area-inset-bottom));
+  padding: var(--space-5) max(var(--space-5), var(--inset-left))
+    calc(var(--space-5) + var(--inset-bottom));
   background: var(--surface);
   border-top: 1px solid var(--line);
   box-shadow: var(--shadow-lg);

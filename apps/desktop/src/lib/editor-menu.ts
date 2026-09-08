@@ -76,7 +76,7 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
   // every other app there. The formatting lives in the bar above the
   // keyboard and in the app menu, and sixteen rows would cover the text
   // they are about.
-  if (viewport.phone) return clipboard
+  if (viewport.touch) return clipboard
 
   // A locked note leaves the clipboard rows and the way back out. The rest of
   // this menu writes.

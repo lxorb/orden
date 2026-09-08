@@ -734,7 +734,7 @@
   }
 
   function showMenu(point: Point) {
-    const found = hitFor(point, viewport.phone)
+    const found = hitFor(point, viewport.touch)
     if (found.node && !store.isPicked(found.node)) store.pick(found.node)
     if (found.edge && !store.isPicked(found.edge)) store.pick(found.edge)
     if (found.stroke && !store.isPicked(found.stroke)) store.pick(found.stroke)
@@ -760,7 +760,7 @@
         },
         onfind: () => (finding = true),
       }),
-      { title: t('Canvas'), near: viewport.phone },
+      { title: t('Canvas'), near: viewport.touch },
     )
   }
 

@@ -326,15 +326,13 @@
     text-align: center;
   }
 
-  @media (max-width: 720px) {
-    .panel {
-      top: auto;
-      bottom: 0;
-      left: 0;
-      translate: none;
-      width: 100%;
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
-    }
+  :global([data-touch]) .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    translate: none;
+    width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: calc(var(--space-5) + var(--inset-bottom));
   }
 </style>

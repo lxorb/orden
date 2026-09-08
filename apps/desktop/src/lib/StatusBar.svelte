@@ -99,10 +99,8 @@
   /* There is no hover on a phone, so this never appears - but it still sits in
      the corner catching taps meant for the button that does. Nor is there a
      keyboard with modes on one. */
-  @media (max-width: 720px) {
-    footer,
-    .mode {
-      display: none;
-    }
+  :global([data-touch]) footer,
+  :global([data-touch]) .mode {
+    display: none;
   }
 </style>

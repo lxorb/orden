@@ -377,7 +377,7 @@ class Workspace {
 
     // A phone shows one note at a time, so an arrangement made on a desktop
     // arrives as the pane that had the focus, with everything in it.
-    if (viewport.phone) this.collapsePanes()
+    if (viewport.touch) this.collapsePanes()
     if (!this.tabs.length) this.openBlank()
   }
 
@@ -497,7 +497,7 @@ class Workspace {
     else if (!this.active) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
 
     // A phone shows one note at a time.
-    if (viewport.phone) this.collapsePanes()
+    if (viewport.touch) this.collapsePanes()
     this.persist()
   }
 
@@ -1095,10 +1095,11 @@ class Workspace {
 
   /** `preview` opens the way a single click in the file list does: one tab,
    *  reused by the next preview, and kept only until something is typed in it. */
-  /** On a phone the drawer covers the note, so choosing one means wanting to
-   *  see it: the drawer goes. A desktop shows both and leaves it be. */
+  /** A drawer covers the note, so choosing one means wanting to see it: the
+   *  drawer goes. A sidebar docked beside the note is not in the way and
+   *  stays, which is how a tablet on its side reads. */
   private showNote() {
-    if (!viewport.phone || !this.panel) return
+    if (!viewport.drawer || !this.panel) return
 
     this.panel = null
     this.persist()
@@ -2401,7 +2402,7 @@ class Workspace {
    *  Nothing happens on a phone, where there is one pane and the commands for
    *  this are not offered. */
   split(along: Along, tabId?: string) {
-    if (viewport.phone) return
+    if (viewport.touch) return
 
     const tab = tabId ? this.tabs.find((one) => one.id === tabId) : this.active
     if (!tab) return
@@ -2421,7 +2422,7 @@ class Workspace {
   /** Whether a pane can still be split that way, which is what hides the entry
    *  rather than offering one that does nothing. */
   canSplit(along: Along, tabId?: string): boolean {
-    if (viewport.phone) return false
+    if (viewport.touch) return false
 
     const tab = tabId ? this.tabs.find((one) => one.id === tabId) : this.active
     return !!tab && this.panes.splittable(along, tab.paneId)

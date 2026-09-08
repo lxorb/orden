@@ -286,17 +286,15 @@
 
   /* Same floor as the tree rows beneath them: everything in the drawer is
      something a thumb has to land on. */
-  @media (max-width: 720px) {
-    .row {
-      min-height: 48px;
-      padding-top: 0;
-      padding-bottom: 0;
-      font-size: var(--text-base);
-    }
+  :global([data-touch]) .row {
+    min-height: 48px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--text-base);
+  }
 
-    svg {
-      width: 14px;
-      height: 14px;
-    }
+  :global([data-touch]) svg {
+    width: 14px;
+    height: 14px;
   }
 </style>
