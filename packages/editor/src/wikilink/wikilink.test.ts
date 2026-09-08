@@ -6,7 +6,7 @@ import { nibMarkdownExtensions } from '../markdown/extensions'
 import { buildBlockDecorations } from '../live-preview/blocks'
 import { buildDecorations } from '../live-preview/decorate'
 import { linkAt } from './at'
-import { embedOfBlock, isImageTarget } from './embed'
+import { embedOfBlock } from './embed'
 import { jumpAt } from './follow'
 import {
   jumpFor,
@@ -426,13 +426,6 @@ describe('an embed', () => {
   test('a picture is a picture wherever it is written', () => {
     expect(blocks('one\n\n![[pic.png]]\n\ntwo')).toEqual([])
     expect(concealed('one\n\n![[pic.png]]\n\ntwo')).toEqual(['![[pic.png]]'])
-  })
-
-  test('which targets are pictures', () => {
-    expect(isImageTarget('a/b/pic.PNG')).toBe(true)
-    expect(isImageTarget('drawing.svg')).toBe(true)
-    expect(isImageTarget('Note.md')).toBe(false)
-    expect(isImageTarget('Note')).toBe(false)
   })
 
   test('the block reading and the inline reading agree', () => {

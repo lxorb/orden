@@ -66,14 +66,6 @@ export function embedOfBlock(state: EditorState, from: number, to: number): Link
   return link && { ...link, kind: 'wikilink', from, to }
 }
 
-const IMAGE = /\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i
-
-/** Whether a target names a picture rather than a note, which `![[…]]` embeds
- *  as an image the way `![](…)` does. */
-export function isImageTarget(target: string): boolean {
-  return IMAGE.test(target)
-}
-
 export class EmbedWidget extends NibWidget {
   constructor(
     private readonly link: LinkSpan,

@@ -6,6 +6,7 @@ import {
   formatWikilink,
   isNoteTarget,
   isCanvasTarget,
+  isImageTarget,
   isPdfTarget,
   isTabFile,
   linkTarget,
@@ -155,6 +156,22 @@ describe('which targets name a canvas', () => {
     expect(isCanvasTarget('Board.canvas.md')).toBe(false)
     expect(isCanvasTarget('canvas')).toBe(false)
     expect(isCanvasTarget('')).toBe(false)
+  })
+})
+
+describe('which targets name a picture', () => {
+  test('every extension a browser draws, in either case', () => {
+    expect(isImageTarget('a/b/pic.PNG')).toBe(true)
+    expect(isImageTarget('shot.jpeg')).toBe(true)
+    expect(isImageTarget('drawing.svg')).toBe(true)
+    expect(isImageTarget('  frame.apng  ')).toBe(true)
+  })
+
+  test('and nothing else', () => {
+    expect(isImageTarget('Note.md')).toBe(false)
+    expect(isImageTarget('Note')).toBe(false)
+    expect(isImageTarget('png')).toBe(false)
+    expect(isImageTarget('')).toBe(false)
   })
 })
 

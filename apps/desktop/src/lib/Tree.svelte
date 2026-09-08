@@ -10,7 +10,9 @@
 <script lang="ts">
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
+  import { isPdfTarget } from '@nib/markdown/links'
+  import { fileMark } from './file-mark'
+  import FileMark from './FileMark.svelte'
   import { t } from './i18n.svelte'
   import {
     bookmarkEntry,
@@ -261,7 +263,7 @@
           class:active={workspace.active?.path === entry.path}
           class:dropping={dropTarget === entry.path}
           class:selected={workspace.isSelected(entry.path)}
-          style:padding-left="{depth * 12 + (isTabFile(entry.name) ? 8 : 20)}px"
+          style:padding-left="{depth * 12 + 8}px"
           draggable="true"
           onclick={(event) =>
             pick(event, entry) || workspace.openEntry(entry.path, { preview: true })}
@@ -276,21 +278,10 @@
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => dropBeside(event, entry.path)}
         >
-          {#if isPdfTarget(entry.name)}
-            <!-- A sheet with its corner turned: the row says what it opens into
-                 without spending a word on it. -->
-            <svg class="glyph" viewBox="0 0 9 11">
-              <path d="M1.2 0.8h3.6l3 3v6.4H1.2z" />
-              <path d="M4.8 0.8v3h3" />
-            </svg>
-          {:else if isCanvasTarget(entry.name)}
-            <!-- Two cards joined: a plane with things on it, said in the same
-                 breath as the sheet above. -->
-            <svg class="glyph canvas" viewBox="0 0 11 11">
-              <path d="M0.8 1.4h4v3h-4zM6.2 6.6h4v3h-4z" />
-              <path d="M4.8 2.9h.9v5.2h.5" />
-            </svg>
-          {/if}
+          <!-- In the slot the chevron sits in, so a name lines up whatever kind
+               of file it is: the row says what it opens into without spending a
+               word on it. -->
+          <FileMark mark={fileMark(entry.name)} />
           <span class="label">{stripped(entry.name)}</span>
         </button>
       {/if}
@@ -399,16 +390,12 @@
     transform: rotate(90deg);
   }
 
-  /* The same slot the chevron sits in, so a PDF's name lines up with a note's. */
-  .glyph {
-    width: 9px;
-    height: 11px;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1;
-    stroke-linejoin: round;
-    opacity: 0.75;
+  /* The open note's mark carries the accent. The name beside it is told apart by
+     weight and colour, and the mark is the one place a colour of its own reads as
+     the file being open rather than as the row being picked. */
+  .note.active :global(.mark) {
+    stroke: var(--accent);
+    opacity: 1;
   }
 
   /* A 25px row is a desktop row. A thumb needs the whole line, and the tree is

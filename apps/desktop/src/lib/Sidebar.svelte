@@ -40,7 +40,14 @@
   }
 
   const PANELS: { id: Panel; label: string; path: string }[] = [
-    { id: 'tree', label: t('Files'), path: 'M1 3.5h4l1 1.5h6v6.5H1z' },
+    // A folder with its corners taken off and its tab eased into the body, so it
+    // sits with the arcs of the three tabs beside it rather than as the one hard
+    // shape in the row. Same bounds as the square one it replaces.
+    {
+      id: 'tree',
+      label: t('Files'),
+      path: 'M2.2 3.5h2.3c.5 0 .7.4 1 .9s.5.6 1 .6h4.3a1.2 1.2 0 0 1 1.2 1.2v4.1a1.2 1.2 0 0 1-1.2 1.2H2.2A1.2 1.2 0 0 1 1 10.3V4.7a1.2 1.2 0 0 1 1.2-1.2z',
+    },
     { id: 'outline', label: t('Outline'), path: 'M2 2.5h9M4 6.5h7M6 10.5h5' },
     { id: 'search', label: t('Search'), path: 'M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3' },
     // Two links of a chain, which is what a link between notes is.

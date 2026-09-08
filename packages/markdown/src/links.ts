@@ -95,6 +95,20 @@ export function isCanvasTarget(target: string): boolean {
   return /\.canvas$/i.test(target.trim())
 }
 
+/** The extensions a picture is written in. `apng` and `ico` are here because a
+ *  browser draws them and somebody's notes may hold one. */
+const IMAGE = /\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i
+
+/** Whether a target names a picture rather than a note, which `![[…]]` embeds as
+ *  an image the way `![](…)` does.
+ *
+ *  Beside the other two kind questions for the same reason they are here: one
+ *  reading of a name, so the editor drawing an embed, the renderer writing an
+ *  `<img>` and the file list marking a row all agree on what a picture is. */
+export function isImageTarget(target: string): boolean {
+  return IMAGE.test(target.trim())
+}
+
 /** Whether a target names a file the app opens in a tab of its own rather than a
  *  note: a PDF, or a canvas.
  *
