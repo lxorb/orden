@@ -5,6 +5,9 @@ the other's caret, both see the words appear as they are typed, and a device tha
 was on a train catches up when it comes back without anybody being asked which
 copy to keep. This is how that works, and why it is built the way it is.
 
+A canvas open on two devices is one canvas in the same way, in a shape of its own,
+and everything here is about both until the Canvas section says otherwise.
+
 ## What everyone else does
 
 **Google Docs** serialises everything through a server, using operational
@@ -136,10 +139,11 @@ the editor            SharedDoc            Room                 NoteRoom
                                                                  (D1 and R2)
 ```
 
-**The room.** One Durable Object per note, named by the note's id, so there is one
+**The room.** One Durable Object per file, named by that file's id, so there is one
 instance of it in the world and that is what makes it the place the sockets meet.
-It holds the note as a `Y.Text`, passes every update on to the other sockets, and
-keeps awareness so a caret arriving is a caret everybody sees. Its sockets
+It holds the note as a `Y.Text`, or a canvas as a map of the objects on it, passes
+every update on to the other sockets, and keeps awareness so a caret arriving is a
+caret everybody sees. Its sockets
 hibernate: the runtime may take the object out of memory between messages, so
 nothing that matters is held in a field. The open sockets come from
 `ctx.getWebSockets()`, what each socket announced is kept on the socket itself
@@ -202,10 +206,10 @@ written and that is all. A note that is *not* in a room behaves exactly as it di
 before, and so does a room that has been opened but has not yet settled with its
 file: until that moment the file is still the best answer anybody has.
 
-**Not canvases.** A `.canvas` is JSON, and merging two drawings as if they were
-prose would make neither. Everything on a canvas has an id and a time of its own,
-which is a better merge than a text CRDT can give it; see
-`packages/markdown/src/canvas-merge.ts`. Rooms are for markdown notes.
+**And canvases, in a shape of their own.** A `.canvas` is JSON, and merging two
+drawings as if they were prose would make neither; a text CRDT would interleave one
+person's line through another's. But a canvas is exactly the thing a map-shaped CRDT
+is for, because everything on it already has an id. See the Canvas section below.
 
 ## Carets and presence
 
@@ -245,6 +249,130 @@ stack, and nothing at all when nobody else is there.
 document with `addToHistory` off, so pressing undo takes back what you wrote and
 never what somebody else did. CodeMirror maps what the history holds through every
 arriving change, so the position it comes back to is still right.
+
+## Drawing on one canvas
+
+A plane open on a laptop and a tablet is one plane. Both people see the other's
+line appear as it is drawn, both see a small named pointer where the other's hand
+is, and neither drawing is ever woven through the other. It is the same room a note
+has, about a different kind of file.
+
+**The same Durable Object class, keyed by the file.** A room is named by the file's
+id, so there is already one instance in the world per file whichever kind of file it
+is; a second class would have been this whole object again for the sake of one seed
+and one serialiser, and a second `[[migrations]]` tag with it. What actually differs
+between a note's room and a canvas's is one module, `services/sync/src/rooms/kind.ts`:
+what fills an empty document, and what the settle writes. The door reads the kind off
+the file's name in the query it was already making and says it in a header; a room
+keeps it in storage beside the note id, so one woken by an alarm knows what it holds.
+Nothing else in the object knows there are two kinds. **No migration was added for
+canvases**, which is the point of doing it this way.
+
+**A map of objects by id.** The shared value is two `Y.Map`s at the root of the
+document: `canvas`, holding everything on the plane keyed by id, and `gone`, holding
+the tombstones. Each value in `canvas` is itself a map of that object's own fields,
+the very fields a file would carry for it, plus three the room needs: which of the
+file's three lists it belongs to, when it was last touched, and where it sits in the
+stack, since a map has no order and a file's order does matter. See
+`packages/rooms/src/plane.ts`.
+
+That shape is the whole design. Two devices moving different cards never meet,
+because they are different keys of the root map. Two devices editing one card both
+win, because moving it writes `x` and `y` while colouring it writes `color`, and
+those are different keys of the object's own map. Two strokes drawn at the same
+moment are two entries that never touch, and each is whole.
+
+**A stroke is one item.** Its points go in flat and packed, exactly as a file writes
+them, rather than as a list of their own. A page of handwriting is tens of thousands
+of points and not one of them is ever edited: the pen lifts and the stroke is
+finished. So a stroke of three hundred points is one entry in the document, and the
+plane costs about what the drawing costs.
+
+**The line as it is being drawn** travels over awareness rather than in the document,
+beside the pointer, in the same message and at the same one-a-frame rate a caret
+moves at. An unfinished stroke is not on the plane: it is not in the file, it is
+nobody's to undo or to erase, and it goes when the device that was drawing it does.
+That is exactly what awareness is for. The finished stroke goes into the document on
+the pen lift, once, as one whole object. See `rooms/hands.ts`.
+
+**The settle writes the file `format.ts` would have written**, byte for byte: the
+room reads its own map back into a `Canvas` and calls `writeCanvas`. So a plane that
+was drawn on together opens in Obsidian, exports as a picture, and merges with an
+offline device's copy exactly as one drawn on alone does. Nothing downstream of a
+settle knows a room was involved.
+
+**Joining does not have to ask which side is ahead.** A note asks whether the file is
+still what the account last handed this device and folds one way or the other; a
+canvas does not need the question, because everything on it has an id and a time. The
+room's plane and this device's file are put through the same symmetric merge two
+files get, in `canvas-merge.ts`, and both drawings are kept whichever device was
+away. Nothing is watched until that has happened, so a plane somebody has been
+drawing on is never replaced by the room's before the two have been compared. See
+`apps/desktop/src/lib/rooms/plane-bind.ts`.
+
+**Undo stays yours**, by a `Y.UndoManager` that tracks only this device's own
+transactions. Pressing undo takes back the last thing you drew and never the last
+thing that happened, and it reaches past whatever arrived in between without
+disturbing it. Joining is marked as neither device's, so the merge that filled the
+plane is not a step to take back. The surface's own snapshot history stands aside
+while a plane is in a room: two histories over one plane would each undo the other's
+work.
+
+**What the file sync does** is what it already did for notes, unchanged: a canvas in
+a room is neither pushed nor treated as a disagreement, because the room carried
+every stroke and writes the file itself. A canvas that is *not* in a room still
+merges the two copies rather than leaving a conflict file, exactly as before.
+
+**Presence** is the note's presence said in the place a plane has: a small dot in the
+other device's accent where its pointer is, its name beside it for a second and a
+half after it moves, and the same stack of dots on the tab. The names follow the same
+rule, so two of one person's machines are told apart by machine and two people by
+person; the reader decides, not the sender. The layer is one SVG inside the plane's
+own transform, drawn with the same outline the export draws with, so a pan costs
+nothing and a stroke never looks one way live and another once it lands.
+
+### What it costs
+
+Measured the same way and on the same machine as the note figures above: an ARM64
+Windows laptop running the Worker under `wrangler dev` on the emulated x64 runtime,
+with three browser contexts beside it. Reported by
+`apps/desktop/test/e2e/draw-together.py`, which draws with real pen events and reads
+the pixels back off the other device's ink.
+
+| | budget | measured |
+| --- | --- | --- |
+| A stroke of 300 points reaching a second device | under 150 ms | **36 ms**, best 32 ms, over five crossings |
+| A plane of 500 strokes joining a room, cold | under 500 ms | **453 ms**, from opening the file to the room and the plane being one |
+| A plane of 5,000 strokes joining a room, cold | under 500 ms | 1,099 ms; see below |
+| A plane of 500 strokes on a device | - | about 4.3 MB of heap, for a 602 KB file |
+| A plane of 5,000 strokes on a device | - | about 33 MB of heap, for a 2.8 MB file |
+| A room in storage | - | smaller than the file: 216 KB against 602 KB for 500 strokes, 1.5 MB against 3.9 MB for 5,000 |
+
+The crossing is the number that matters and it is structural rather than lucky. What
+goes on the wire when a pen lifts is one map entry, worked out by comparing object
+identities: every operation on a canvas hands back the very same objects for what it
+did not touch, so telling what changed never walks the plane. Coming back the other
+way is the same in reverse - what the room says changed names the ids, and every
+object the reader already held comes back as the very same object, so the traced
+outlines of the five thousand strokes that were already there are still cached and
+the layer is not repainted.
+
+Two things did not meet their budget, and both are honest.
+
+A plane of five thousand strokes joins in about a second rather than half of one. It
+is not the room: the file alone is 2.8 MB and reading, parsing and painting it is
+most of that second, which is what opening such a canvas costs whether or not anybody
+else is in it. The room's own share is the 1.5 MB update and the twenty-five
+milliseconds it takes to read five thousand entries back into a canvas. A plane of
+five hundred strokes, which is a full page of handwriting, joins inside the budget.
+
+And a canvas file is far larger than it needs to be. The format writes JSON with
+tabs, which puts every one of a stroke's numbers on a line of its own: five thousand
+strokes of twenty points is a 6 MB file, past the four megabytes a note may be, so
+such a plane cannot be stored on an account at all. The room holds the same drawing in
+2.2 MB. This was left alone deliberately - the settle has to write the file
+`format.ts` writes today, or a canvas stops being byte for byte what Obsidian handed
+back - but it is the next thing worth changing about the format.
 
 ## Sharing
 
@@ -441,6 +569,12 @@ made at all. The configuration was proved with `wrangler deploy --dry-run` befor
 anything else was written, because the deploy job on main runs `wrangler deploy`
 and a Worker that will not deploy takes the website with it.
 
+Canvases added no tag and no binding. `NoteRoom` holds a plane as readily as it
+holds a note, and a migration is the one part of a Worker's configuration that
+cannot be taken back, so not needing one is worth the small awkwardness of a class
+called `NoteRoom` that also holds canvases. Renaming it would itself want a
+`renamed_classes` migration, which is a real risk for a better name.
+
 ## What it costs
 
 Measured on one machine running all of it at once: an ARM64 Windows laptop with
@@ -479,13 +613,25 @@ real devices look like. The numbers above are from a quiet machine.
 
 - `packages/rooms` - the wire, both ends of it, which of its messages would write
   into a room, and the fold that puts a note written while away back into one.
+- `packages/rooms/src/plane.test.ts` - a canvas as a document: a file seeded in and
+  read back out byte for byte, a stroke of three hundred points as one entry,
+  concurrent edits to different objects and to the same one, two strokes drawn at
+  once, a delete travelling, a card put back losing its tombstone, an object the
+  room did not touch coming back as the very same object, and the room settling to
+  what merging the two files would have given.
 - `services/sync/test/rooms.test.ts` - the room itself, driven with storage in a
   Map and sockets that record what they were sent: the greeting, two devices
   converging, a device that was away, the settle writing the note, the log folding
   into a snapshot, waking up, asking the devices that were here for what it slept
   through, the door turning away a stranger, the door telling the room what each
   person may do, and a reader who sees every keystroke, keeps a caret, and cannot
-  add a letter by any of the three ways there are to try.
+  add a letter by any of the three ways there are to try. Then the same room about
+  a canvas: opening on the file the store holds, a stroke of three hundred points
+  crossing whole, two devices drawing at once, one card moved here and coloured
+  there, the settle writing the file `format.ts` would have written, a reader who
+  sees every stroke and can add none, five thousand strokes folding into one
+  snapshot, waking up still knowing it is a plane, a delete staying deleted, and
+  the door reading the kind off the name of the file.
 - `services/sync/test/share.test.ts` - every route that names a space, at every
   role, plus a stranger: sixty-odd cases from one table, so a route added without
   a role check is a failing test rather than a hole. Then invitations and links
@@ -512,16 +658,32 @@ real devices look like. The numbers above are from a quiet machine.
   whether a press was a press.
 - `apps/desktop/src/lib/rooms/bind.test.ts` - the binding: convergence, both
   orders of arrival, offline edits, undo staying yours, and the keystroke cost.
+- `apps/desktop/src/lib/rooms/plane-bind.test.ts` - the same for a plane: two
+  devices drawing at once and in either order, a card moved here and coloured
+  there, a device that drew while it was away, undo taking back what this device
+  drew and refusing to touch what somebody else drew, joining not being a step to
+  take back, and what a stroke costs a plane forty times the size.
+- `apps/desktop/src/lib/rooms/hands.test.ts` - what a hand carries, the stroke
+  under the pen arriving whole, a pen lifted leaving the pointer, a live stroke
+  belonging to nobody, and the same name rule the carets follow.
 - `apps/desktop/src/lib/rooms/peers.test.ts` - where a caret is, and whether it
   is labelled with the machine or with the person.
 - `apps/desktop/src/lib/sync/mirror.test.ts` - the file sync leaving a note in a
-  room alone, and still writing a conflict copy for one that is not.
+  room alone, and still writing a conflict copy for one that is not; and the same
+  for a canvas, which is merged rather than copied when it is in no room.
 - `packages/editor/src/carets.test.ts` - what the carets draw and where they move.
 - `apps/desktop/test/e2e/collaborate.py` - two browsers, real keystrokes, the
   Worker under `wrangler dev` on workerd, a real Durable Object. Asserts that both
   converge and that the account ends up holding what they hold, photographs the
   remote caret and the tab's dots, and reports the timings above. It builds the
   app, starts everything and stops everything again.
+- `apps/desktop/test/e2e/draw-together.py` - two browsers on one plane, with real
+  pen events carrying pressure and tilt. Times five strokes of three hundred points
+  crossing by reading the pixels back off the other device's ink, photographs the
+  line being drawn with the other hand's pointer and name on it, has both browsers
+  draw at once and asserts that they and the account end up holding one file byte
+  for byte, and times a plane of five hundred and one of five thousand strokes
+  joining cold.
 - `apps/desktop/test/e2e/share.py` - three browsers that know nothing about each
   other. The owner opens the Share sheet from the rail and invites an address;
   that address has no Nib account, follows the link out of the real message the
