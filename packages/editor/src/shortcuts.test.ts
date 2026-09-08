@@ -99,4 +99,13 @@ describe('a state built with them', () => {
     expect(keys).not.toContain('Mod-f')
     expect(keys).not.toContain('Alt-ArrowUp')
   })
+
+  /** The bug: Ctrl+/ is source mode, read off the window, and the library binds
+   *  its own comment toggle to the same chord underneath. Both fired, so turning
+   *  source mode on wrapped whatever line the caret was on in `<!--` and `-->`. */
+  test('leaves the library nothing on the key source mode uses', () => {
+    const keys = keysIn(EditorState.create({ extensions: keymap.of(unclaimedKeymap) }))
+
+    expect(keys).not.toContain('Mod-/')
+  })
 })

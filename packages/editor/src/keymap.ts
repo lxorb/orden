@@ -238,6 +238,17 @@ const linuxRedo = claim(
   'the Linux redo',
 )
 
+/** The library's own comment toggle, taken off its key and given no other.
+ *
+ *  `Ctrl+/` is source mode here, which is Typora's key for it and the one the
+ *  settings list shows. The library binds the same chord to its own comment
+ *  command, and both were firing: the mode changed and the line the caret was on
+ *  quietly gained a `<!--` and a `-->`. Claimed rather than adopted, because
+ *  writing a comment is Format's own row now - see `insertComment` - and a second
+ *  command for it on a key that already means something else is exactly the
+ *  invisible binding the specs exist to prevent. */
+claim(defaultKeymap, (binding) => binding.key === 'Mod-/', 'the library comment toggle')
+
 export const standardBindings: BindingSpec[] = [
   // The library's own key, on the app's own undo: a note open in two panes has
   // one history, which lives with the document rather than in either view. See
