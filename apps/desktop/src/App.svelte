@@ -206,6 +206,11 @@
     }
   })
 
+  // The name over a caret is whoever is at this device, and it can change while
+  // the note is open: a guest a link let in renaming themselves, or an account
+  // choosing a name. Every room they are in hears it at once.
+  $effect(() => rooms.rename(account.name ?? undefined))
+
   // Every open note joins the room its other devices are in. Which notes are open
   // and what the account holds for each are both things the app already knows, so
   // this is the whole of the wiring: no call site has to remember to join or to

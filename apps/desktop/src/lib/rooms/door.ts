@@ -60,6 +60,9 @@ export class RoomDoor {
   readonly doc = new Y.Doc()
   readonly awareness = new Awareness(this.doc)
 
+  /** What this device says about itself. Kept because the person at it can be
+   *  renamed while the file is open. */
+  private who: Who
   private readonly socket: RoomSocket
   /** Set once the room has said what it holds and this device has been brought
    *  together with it. */
@@ -74,13 +77,14 @@ export class RoomDoor {
   private timer: ReturnType<typeof setTimeout> | null = null
 
   constructor(private readonly opening: Opening) {
+    this.who = opening.who
     this.socket = new RoomSocket(opening.noteId, opening.token, {
       opened: () => this.greet(),
       heard: (message) => void this.hear(message),
       closed: () => this.alone(),
     })
 
-    this.awareness.setLocalStateField('who', opening.who)
+    this.awareness.setLocalStateField('who', this.who)
 
     this.doc.on('update', (update: Uint8Array, origin: unknown) => {
       // An update that came out of the room is already in the room.
@@ -111,6 +115,23 @@ export class RoomDoor {
   announce(field: string, value: () => unknown) {
     this.saying.set(field, value)
     this.sayLater()
+  }
+
+  /** Whoever is at this device is called something else now: a guest a link let
+   *  in renaming themselves, or an account choosing a name.
+   *
+   *  Said at once rather than coalesced with the rest, and whether or not the
+   *  room has answered yet: what it changes is a word the other people are
+   *  reading over a caret or a hand, and it happens about as often as somebody
+   *  is renamed. */
+  rename(person: string | undefined) {
+    if (person === this.who.person) return
+
+    this.who =
+      person === undefined
+        ? { name: this.who.name, accent: this.who.accent }
+        : { ...this.who, person }
+    this.awareness.setLocalStateField('who', this.who)
   }
 
   leave() {

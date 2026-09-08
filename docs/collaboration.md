@@ -407,20 +407,32 @@ up, and nothing has to be reconciled if they never do. The owner is not a row
 here - a space already says who owns it, and a second copy of that fact is a
 second thing to keep true.
 
-The whole of the model is `services/sync/migrations/0015_space_sharing.sql`, and
-it is four tables: `space_members` above, carrying the invitation that was sent
-to each row and when it stops being a shortcut; `space_links`, one per space,
-with its role and its mode; `space_requests`, whoever followed a link that asks
-first and what that link promised them, kept so that changing the link afterwards
-does not change what somebody was already offered; and `mailed`, which is only
-when an address was last written to.
+Most of the model is `services/sync/migrations/0015_space_sharing.sql`, and it is
+four tables: `space_members` above, carrying the invitation that was sent to each
+row and when it stops being a shortcut; `space_links`, one per space, with its
+role and its mode; `space_requests`, whoever followed a link that asks first and
+what that link promised them, kept so that changing the link afterwards does not
+change what somebody was already offered; and `mailed`, which is only when an
+address was last written to.
+
+`0016_guests.sql` adds three more for the person who has no address to be keyed
+by: `guests`, `guest_sessions` and `guest_members`. See **Getting in without an
+account** below, which is where the rest of that lives.
 
 **One query answers everything.** `reachedSpace` in `spaces/space.ts` joins the
-space to the membership on the address and returns the role, or nothing at all;
-`atLeast(role)` is the middleware in front of every route that names a space. A
-space nobody may reach is a 404, exactly as an id from another account has always
-been, and one they may reach but not at that role is a 403 - a different thing to
-say, because the space is theirs to see and this button is not theirs to press.
+space to the membership and returns the role, or nothing at all; `atLeast(role)`
+is the middleware in front of every route that names a space. A space nobody may
+reach is a 404, exactly as an id from another account has always been, and one
+they may reach but not at that role is a 403 - a different thing to say, because
+the space is theirs to see and this button is not theirs to press.
+
+It takes a *person* rather than an account, which is one of two things: the
+account whose session the request carries, joined on the address, or the guest a
+link handed one to, joined on the guest. `Whoever` in `types.ts` is that union and
+`who` on the request is where it sits; `user` and `guest` are the two halves of
+it, and each is set only on a request that is the one kind. A route reads
+whichever it needs, and the routes that read `user` are exactly the ones a guest
+cannot reach.
 
 | | read | write | owner |
 | --- | --- | --- | --- |
@@ -434,6 +446,14 @@ say, because the space is theirs to see and this button is not theirs to press.
 | deleting the space | | | yes |
 | Recently deleted | | | yes |
 | inviting, roles, the link, requests | | | yes |
+| the settings, the storage, the connector | nothing here is per space |
+
+A guest is not a fourth column. It is either of the first two, held by somebody
+with no account, and no route may tell the difference: how a person arrived is not
+what they may do. `services/sync/test/share.test.ts` runs the whole table above
+against five holders for that reason, two of them guests. What a guest cannot do
+is anything in the last row - which is nobody's role, being account-wide rather
+than per space, and is where the whole of the difference lives.
 
 Recently deleted is the one that could have gone either way. Deleting a note is
 a write, so putting it back looks like one too. But what Recently deleted really
@@ -457,33 +477,114 @@ Quotas moved with all this: a note written in a shared space counts against the
 this it was counted against whoever was writing, which for one person was the
 same number and for two would have been a way to fill somebody else's account.
 
-**Getting in without an account.** A person is invited by address. The row is
-written at once, so the owner sees them in the sheet immediately, and a mail goes
-out with a link to `nibeditor.com/join/<token>`. The link is a way in rather than
-*the* way in: what actually opens the space is the address being proved, by the
-same emailed code the app has always signed in with. So an invitation forwarded
-to the wrong person opens nothing, and an expired link costs its holder the
-shortcut and not the space. The desktop app registers no URL scheme, so a link
-opened there opens the web app; it is the same account either way.
+**Getting in without an account.** If somebody shares something with you, you
+should not have to sign in to see it. The first version of all this ended at the
+emailed six-digit code, which is the right check for an address and the wrong one
+for a link: a link anybody may follow names nobody, so there is no address to
+prove, and asking for one anyway is a sign-up wearing a different hat. So a link
+is now its own proof, and which proof it is depends on which link. All three end
+at `POST /v1/join/:token`, which is also what somebody waiting asks again; the
+whole of it is `services/sync/src/spaces/join.ts`, and the app's side is
+`joining.svelte.ts` with `JoinSheet.svelte` for the two moments that need a word.
 
-What a person with no Nib account experiences, in full: they open the link, the
-page says "Emil shared Notes with you" over a field already holding their own
-address, they press Continue, they type the six digits that arrive, and they are
-in the space. There is no sign-up, because proving the address is the sign-up.
-A read-only visitor then sees the space in the rail like any other, opens its
-notes, and finds an editor that will not take a keystroke and a strip that says
-so; their menu on that space offers an icon and a way out of it and nothing else.
-Nothing they do reaches anybody, and the file sync never offers their folder to
-the account: a space shared to read only comes down.
+**A mailed invitation is proof of its address.** The row is written at once, so
+the owner sees the person in the sheet immediately, and a mail goes out with a
+link to `nibeditor.com/join/<token>`. Following it establishes the session for
+that address, the way a magic link does, and lands in the space: no code, no
+sign-up, nothing on screen at all. Holding the mail is holding the address, which
+is the same thing the code was ever checking. The token is random, hashed at
+rest, bound to the space and the role, expiring, and **single use** - it is spent
+the moment it works, because what it hands out is a session nobody typed a code
+for. A used or expired link says one line, and the code is still there behind it.
+The membership was never the link's to take away, so the address still opens the
+space; only the shortcut has run out. A link written to one address still opens
+nothing for an account signed in as another. Nothing at all happens on the `GET`,
+which is what a mail client follows.
 
-**The link.** One per space, with a role and a mode. `open` lets in anybody who
-follows it and proves an address; `approval` turns the same link into a request
-the owner accepts or declines, and the owner is told by mail that somebody is
-waiting. Changing what the link hands out changes it for the copy already in
-somebody's message, which is what an owner means by changing it; a link that
-should stop working is revoked, and the next one is a new token. It is the one
-secret here stored as it is rather than hashed, because the owner has to be able
-to copy it again tomorrow and a hash cannot be read back.
+**An open link asks nothing.** Following one creates a **guest**: a session with
+no account behind it, in that one space, at that role, at once. For reading that
+is the whole story. For writing the guest is given a name from the device it
+arrived on - "Emil's iPad" is not knowable from a browser, so it is the platform
+and a short word, "Windows wren", exactly the answer the carets already give a
+device - and one tap renames it, from the person button at the foot of the rail or
+from the Account pane. That name is what the other people in the note read over
+the caret, because a guest is a person in a space like any other. The model is
+`services/sync/migrations/0016_guests.sql`: `guests`, `guest_sessions` hashed and
+expiring like an account's, and `guest_members`, which is a role per space and one
+`joined_at` that says whether they are in.
+
+**A link that asks first asks one field.** A name or an address, unverified,
+because the owner has to have something to accept or decline. The guest is made
+straight away with a `guest_members` row whose `joined_at` is null, which is the
+request; the owner is mailed, and the guest waits on a page that is one line and
+a slow pulse. Accepting sets `joined_at` and the page turns into the space;
+declining stamps `declined_at` and the page says so, rather than only stopping.
+Asking again is the same request as walking through, so the wait is one endpoint
+polled every three seconds and no second protocol. The link is remembered under
+`nib:waiting`, so closing the tab while the owner thinks about it goes back to
+waiting rather than to nothing.
+
+**A guest persists, and can be claimed.** The guest token lives in the same
+store as an account's - `nib:session`, and the plugin's vault with it - so a guest
+who closes the tab comes back as the same guest with the same name. Two things
+turn one into an account, and both are the same person turning up: the **device**
+signing in, which the app says by handing its guest token to `POST
+/v1/auth/verify`, and an **address** being proved that a guest had said it was at.
+Either way the `guest_members` rows become `space_members` rows keyed by the
+address, and the guest is deleted, sessions and all. Only what they were actually
+in moves: a request the owner has not answered stays with the guest, because
+`space_members` has no way to say "still waiting" and writing one would turn an
+unanswered request into a way in. A role the owner had already given that address
+wins over the link's, because a link is how somebody arrived and not what they
+are. The mirrors on the machine follow: a guest writes its folder list with no
+account stamped beside it, and an unstamped list belongs to whoever signs in
+next, which is the rule that was already there.
+
+**What a guest may reach, and nothing else.** `guestMayReach` in
+`services/sync/src/guests.ts` is the whole of it, written as what is allowed
+rather than what is refused, so a route added tomorrow is closed until somebody
+says otherwise. It is: who they are and the one thing they can change about it
+(`/v1/me`), the spaces their links granted and what is inside them (the listing,
+the change feed, the notes, the bookmarks and the file list), the room's socket,
+and letting themselves out. Everything else under `/v1` answers 403 "sign in to
+do that": no settings, no storage of their own, no Recently deleted, no
+connector, no publishing, no sharing - which is a space being given away, and
+nobody's to do with a link they were handed. Two more follow from having no
+account: a guest's file list adds nothing, because a guest holds no bytes
+anywhere, and a pasted picture stays beside the note instead of going up. Images
+already answer to anybody who asks by hash, so a guest reading a note sees its
+pictures without being able to add one. The client mirrors all of that - the
+Publish and LLM panes are not in the list, the Share sheet is not offered, and
+`account.accountToken` is what everything account-wide asks for rather than a
+session - but the client is politeness and `guestMayReach` is the enforcement.
+
+Revocation works as it does for a member: the owner takes them out, the space
+stops being listed, and the next pass takes the folder with it. A guest with
+nothing left to reach is nobody, so the row goes and the session with it, and the
+device is back to the app it had before the link.
+
+Redemption is rate limited on the door rather than on whoever knocks, because a
+link anybody may follow is a door with no lock: at most twenty guests through one
+space's link in a minute and two hundred at once.
+
+A read-only visitor, whether a member or a guest, sees the space in the rail like
+any other, opens its notes, and finds an editor that will not take a keystroke and
+a strip that says so; their menu on that space offers an icon and a way out of it
+and nothing else. Nothing they do reaches anybody, and the file sync never offers
+their folder to the account: a space shared to read only comes down. The desktop
+app registers no URL scheme, so a link opened there opens the web app; it is the
+same session either way.
+
+**The link.** One per space, with a role and a mode. `open` hands out a guest to
+anybody who follows it; `approval` turns the same link into a request the owner
+accepts or declines, and the owner is told by mail that somebody is waiting.
+Changing what the link hands out changes it for the copy already in somebody's
+message, which is what an owner means by changing it; a link that should stop
+working is revoked, and the next one is a new token. It is the one secret here
+stored as it is rather than hashed, because the owner has to be able to copy it
+again tomorrow and a hash cannot be read back. Revoking it does not take back
+what it has already handed out, exactly as it does not for a member: those people
+are in the space now, and the sheet is where they are taken out of it.
 
 Mail is rate limited per address, at the same thirty second gap the sign-in code
 keeps and for the same reason: it is the person receiving it who is protected,
@@ -493,13 +594,18 @@ have happened.
 
 **The door, and a reader in a room.** The query at the top of
 `services/sync/src/rooms/index.ts` now answers three things in one round trip -
-whether the session is live, whether the note is in a space this account can
-reach, and what they may do there - and passes the room exactly one bit:
+whether the session is live, whether the note is in a space the person behind it
+can reach, and what they may do there - and passes the room exactly one bit:
 `x-nib-write`. The room keeps it on the socket, beside the carets that socket
 announced, so an object that slept still knows. A message that would change the
 text is then dropped before it reaches the protocol; `isEdit` in `@nib/rooms`
 is what tells one apart, and a reader may still ask what the room holds and say
 where their caret is. The room learns nothing else about anybody.
+
+The `me` half of that query is a union of the two session tables, so a guest's
+token opens a socket the same way an account's does and the room cannot tell them
+apart either. A guest whose request the owner has not answered has no `joined_at`
+and gets the same 404 a stranger does: waiting is not being in.
 
 The bit is read once, at the door, which is the one thing to know about it: a
 role taken away or narrowed while somebody has the note open reaches them when
@@ -560,6 +666,19 @@ segmented control for `Anyone` or `Ask first`, copy, revoke, and whoever is
 waiting with Accept and Decline. A space somebody else is in carries a small
 stack of dots on the corner of its square in the rail - the same two dots a tab
 draws for the devices in a note, because it is the same fact said about a space.
+
+A guest the link let in is a row in the same two lists, named by the name their
+device gave them, with `Guest` under it where a member has their address - and
+with what they typed about themselves before it, when they typed something,
+because that is what they said rather than what was proved. One list and not two,
+because what the owner is being asked is the same question either way.
+
+Whoever followed a link and was owed a word gets `JoinSheet.svelte`, which is the
+sign-in's panel again: the sentence about who shared what, and then either the one
+field a link that asks first asks for, or a line and a slow pulse while the owner
+thinks, or a line saying the owner said no, or a line saying the link opens
+nothing with the sign-in behind it. Every other link draws nothing at all, which
+is the point.
 
 ## Cloudflare
 

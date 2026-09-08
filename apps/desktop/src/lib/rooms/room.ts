@@ -77,6 +77,12 @@ export class Room {
     return this.door.doc.getText(TEXT)
   }
 
+  /** Whoever is at this device is called something else now. Next door, because
+   *  a canvas's room says it the same way; see door.ts. */
+  rename(person: string | undefined) {
+    this.door.rename(person)
+  }
+
   /** The scheme changed, so every caret wants the other shade of its colour. */
   repaint(scheme: 'dark' | 'light') {
     if (scheme === this.scheme) return

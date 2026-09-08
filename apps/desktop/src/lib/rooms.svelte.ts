@@ -145,6 +145,12 @@ class Rooms {
     for (const joined of this.held.values()) joined.room.repaint(scheme)
   }
 
+  /** And so does the name over it, which can change while a file is open: a guest
+   *  a link let in renaming themselves, or an account choosing a name. */
+  rename(person: string | undefined) {
+    for (const joined of this.held.values()) joined.room.rename(person)
+  }
+
   /** Whether there is anything for a room to be about yet. Always, for a note; for
    *  a canvas, once the surface has said it is there. */
   private ready(open: Open): boolean {

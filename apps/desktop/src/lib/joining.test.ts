@@ -81,6 +81,9 @@ vi.mock('./workspace.svelte', () => ({
       world.shown = id
       return Promise.resolve()
     },
+    // A machine with nothing on it, so the question a fresh account's session
+    // asks about the notes already here has nothing to ask about; see settling.ts.
+    hasLocalContent: () => Promise.resolve(false),
   },
 }))
 
@@ -199,6 +202,15 @@ describe('a mailed invitation', () => {
   test('brings the space down in one pass', async () => {
     await joining.start()
     expect(world.passes).toBe(1)
+  })
+
+  test('settles the notes already here before the space arrives', async () => {
+    await joining.start()
+
+    // The answer to that question can be to erase what is here, so it is asked
+    // before the space comes down rather than after; see settling.ts.
+    expect(account.settling).toBe(false)
+    expect(account.syncable).toBe(true)
   })
 })
 

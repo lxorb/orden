@@ -82,6 +82,12 @@ export class PlaneRoom implements SharedPlane {
     this.showHands()
   }
 
+  /** Whoever is at this device is called something else now. Next door, because
+   *  a note's room says it the same way; see door.ts. */
+  rename(person: string | undefined) {
+    this.door.rename(person)
+  }
+
   leave() {
     this.joining.surface.shared = null
     this.joining.surface.handsAre([])
