@@ -7,6 +7,7 @@ import {
   type Input,
   type Machine,
   NOTHING,
+  RUB,
   start,
   step,
   type Tool,
@@ -25,7 +26,8 @@ function context(over: Partial<Context> = {}): Context {
     editing: null,
     scale: 1,
     inkBox: null,
-    pen: { tool: 'pen', size: 3, color: '#000' },
+    pen: { tool: 'pen', size: 3, color: '#000', opacity: 1 },
+    eraser: { whole: false, size: RUB },
     penSeen: false,
     fingerDraws: false,
     ...over,
@@ -610,6 +612,71 @@ describe('rubbing out', () => {
       { do: 'rub', ids: ['s1'] },
       { do: 'rub', ids: ['s2'] },
     ])
+  })
+
+  /** The bar's own row asks the same question shift asks, and asks it for a
+   *  device that has no shift key to ask it with. */
+  test('takes whole strokes when the bar says so, with no key held', () => {
+    const { effects } = play(
+      [down({ hit: hit({ stroke: 's1' }) })],
+      context({ tool: 'erase', eraser: { whole: true, size: RUB } }),
+    )
+
+    expect(effects).toEqual([{ do: 'rub', ids: ['s1'] }])
+  })
+
+  test('says nothing when a whole-stroke rub landed on no stroke', () => {
+    const { machine, effects } = play(
+      [down()],
+      context({ tool: 'erase', eraser: { whole: true, size: RUB } }),
+    )
+
+    expect(machine.gesture?.kind).toBe('erase')
+    expect(effects).toEqual([])
+  })
+
+  test('reaches as far as the bar says, in plane units at this zoom', () => {
+    const { effects } = play(
+      [down()],
+      context({ tool: 'erase', eraser: { whole: false, size: 48 }, scale: 2 }),
+    )
+
+    expect(effects).toEqual([{ do: 'cut', at: HERE, reach: 24 }])
+  })
+
+  test('goes on reaching that far through the whole drag', () => {
+    const { effects } = play(
+      [
+        down(),
+        { kind: 'move', id: 1, at: { x: 5, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
+      ],
+      context({ tool: 'erase', eraser: { whole: false, size: 30 }, scale: 1 }),
+    )
+
+    expect(effects).toEqual([
+      { do: 'cut', at: HERE, reach: 30 },
+      { do: 'cut', at: { x: 5, y: 0 }, reach: 30 },
+    ])
+  })
+
+  /** The stylus button is the eraser, so it rubs the way the bar has the eraser
+   *  set rather than being a second eraser with a mind of its own. */
+  test('the pen button rubs the way the bar is set', () => {
+    const { effects } = play(
+      [down({ pointer: 'pen', eraser: true, hit: hit({ stroke: 's1' }) })],
+      context({ tool: 'draw', eraser: { whole: true, size: RUB } }),
+    )
+
+    expect(effects).toEqual([{ do: 'rub', ids: ['s1'] }])
+  })
+})
+
+describe('the pen the bar is holding', () => {
+  test('goes into the stroke whole, alpha and all', () => {
+    const pen = { tool: 'highlighter', size: 18, color: '#ffcc00', opacity: 0.2 } as const
+    const { machine } = play([down()], context({ tool: 'draw', pen }))
+
+    expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke).toMatchObject(pen)
   })
 })
 

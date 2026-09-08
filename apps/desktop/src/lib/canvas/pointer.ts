@@ -127,6 +127,8 @@ export interface PendingStroke {
   tool: InkTool
   size: number
   color: string
+  /** How much of the colour lands, 0 to 1. */
+  opacity: number
   points: InkPoint[]
 }
 
@@ -170,9 +172,6 @@ export function start(): Machine {
  *  in plane units at one to one. */
 const SLOP = 3
 
-/** How wide the eraser is, in plane units. */
-const RUB = 10
-
 export interface Step {
   machine: Machine
   effects: Effect[]
@@ -190,11 +189,41 @@ export interface Context {
   /** The box round the ink a lasso caught, when there is one. */
   inkBox: Box | null
   /** The pen as the bar has it set. */
-  pen: { tool: InkTool; size: number; color: string }
+  pen: { tool: InkTool; size: number; color: string; opacity: number }
+  /** The eraser as the bar has it set: how wide it is on screen, and whether it
+   *  takes a whole stroke rather than the part under it. */
+  eraser: { whole: boolean; size: number }
   /** Whether a pen has ever been on this glass. */
   penSeen: boolean
   /** Whether a finger draws anyway, which is the one way round the above. */
   fingerDraws: boolean
+}
+
+/** How wide the eraser is when nobody has said, in pixels on screen. */
+export const RUB = 10
+
+/** What the eraser reaches, in plane units, from what the bar says and how far
+ *  in the plane a pixel goes. Held in one place, because a rub answers under the
+ *  nib and again on every point of the drag, and the two have to agree.
+ *
+ *  Shift is the other way of asking for a whole stroke, which is what a keyboard
+ *  had before there was a popover to ask in. */
+function rubbing(context: Context, shift: boolean): { whole: boolean; reach: number } {
+  return {
+    whole: context.eraser.whole || shift,
+    reach: context.eraser.size / context.scale,
+  }
+}
+
+/** What the first touch of the eraser does: take the stroke it landed on whole,
+ *  or bite a hole where it is. */
+function rubbed(
+  rub: { whole: boolean; reach: number },
+  input: Down,
+  hit: readonly string[],
+): Effect[] {
+  if (!rub.whole) return [{ do: 'cut', at: input.at, reach: rub.reach }]
+  return hit.length ? [{ do: 'rub', ids: [...hit] }] : []
 }
 
 /** The tools a pen is for. Everything else on the bar is for a finger as much as
@@ -310,11 +339,18 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
   }
 
   // The pen's own button rubs out whatever the bar says, which is what a stylus
-  // does in every app that has ever had one.
+  // does in every app that has ever had one. Set the way the eraser is set,
+  // because it is the eraser.
   if (input.eraser) {
+    const rub = rubbing(context, input.shift)
+    const first = rub.whole && input.hit.stroke ? [input.hit.stroke] : []
+
     return {
-      machine: { ...held, gesture: { kind: 'erase', whole: false, hit: [], id: input.id } },
-      effects: [{ do: 'cut', at: input.at, reach: RUB / context.scale }],
+      machine: {
+        ...held,
+        gesture: { kind: 'erase', whole: rub.whole, hit: first, id: input.id },
+      },
+      effects: rubbed(rub, input, first),
     }
   }
 
@@ -332,18 +368,17 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
         effects: [{ do: 'leave' }],
       }
     case 'erase': {
-      const whole = input.shift
+      const rub = rubbing(context, input.shift)
       // What was rubbed is remembered, so dragging back over a stroke that has
       // already gone does not ask for it again.
-      const first = whole && input.hit.stroke ? [input.hit.stroke] : []
+      const first = rub.whole && input.hit.stroke ? [input.hit.stroke] : []
 
       return {
-        machine: { ...held, gesture: { kind: 'erase', whole, hit: first, id: input.id } },
-        effects: whole
-          ? first.length
-            ? [{ do: 'rub', ids: first }]
-            : []
-          : [{ do: 'cut', at: input.at, reach: RUB / context.scale }],
+        machine: {
+          ...held,
+          gesture: { kind: 'erase', whole: rub.whole, hit: first, id: input.id },
+        },
+        effects: rubbed(rub, input, first),
       }
     }
     case 'lasso':
@@ -594,7 +629,8 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       if (input.id !== one.id) return { machine, effects: [] }
 
       if (!one.whole) {
-        return { machine, effects: [{ do: 'cut', at: input.at, reach: RUB / context.scale }] }
+        const reach = context.eraser.size / context.scale
+        return { machine, effects: [{ do: 'cut', at: input.at, reach }] }
       }
 
       if (!input.hit.stroke || one.hit.includes(input.hit.stroke)) return { machine, effects: [] }

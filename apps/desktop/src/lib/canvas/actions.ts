@@ -34,7 +34,7 @@ import {
   type Side,
 } from './format'
 import { boxOf, facingSide, GRID, type Point } from './geometry'
-import { erased, nearStroke, strokesInLasso, tidied } from './ink'
+import { erased, INK_STYLES, nearStroke, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
@@ -75,7 +75,22 @@ export const run = {
   stroke(store: CanvasStore, pending: PendingStroke) {
     if (pending.points.length < 2) return
 
-    store.edit(withStroke(store.canvas, tidied({ id: freshId(), ...pending })))
+    // The alpha is written down only where it is not the one this kind of pen has
+    // by itself, so a plane drawn by somebody who never touched the dial is the
+    // same bytes it was before there was a dial.
+    const { opacity, ...rest } = pending
+    const own = INK_STYLES[pending.tool].opacity
+    const stroke = { id: freshId(), ...rest, ...(opacity === own ? {} : { opacity }) }
+
+    store.edit(withStroke(store.canvas, tidied(stroke)))
+  },
+
+  /** Every stroke on the plane, gone, which is what the eraser's own row asks
+   *  for. One edit, so one press of undo brings the drawing back. */
+  eraseAll(store: CanvasStore) {
+    if (!store.canvas.ink.length) return
+
+    store.edit({ ...store.canvas, ink: [] })
   },
 
   /** Whole strokes gone, which is what the stroke eraser does: touch a line
