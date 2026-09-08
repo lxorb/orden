@@ -16,7 +16,7 @@
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import type { Env, Variables } from '../types'
-import { ownedSpace } from './space'
+import { atLeast, spaceOf } from './space'
 
 /** More files than a space of notes keeps beside them, and a bound on the one
  *  statement below that grows with what was sent. */
@@ -103,10 +103,9 @@ async function heldBy(env: Env, userId: string, hashes: readonly string[]): Prom
 
 export const spaceFiles = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-spaceFiles.put('/:id/files', async (context) => {
+spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+  const space = spaceOf(context)
 
   const body = await context.req.json<unknown>().catch(() => null)
   if (!body || typeof body !== 'object' || Array.isArray(body)) {

@@ -55,14 +55,28 @@ async function deletedSpaces(env: Env, userId: string): Promise<Space[]> {
   return results
 }
 
+/** Which spaces a deleted note may be listed from, and put back into: the
+ *  account's own, and the ones somebody shared with it to write in. Deleting a
+ *  note is a write, so undoing it is one too, and a writer who deleted
+ *  something should be able to get it back. Bound as `?1` wherever it appears. */
+const WRITABLE = `(
+    s.user_id = ?1
+    or exists (
+      select 1 from space_members m
+       where m.space_id = s.id
+         and m.role = 'write'
+         and m.email = (select email from users where id = ?1)
+    )
+  )`
+
 /** Deleted notes of live spaces. A deleted space keeps its notes to itself:
  *  they come back with it, not one by one. */
 async function deletedNotes(env: Env, userId: string): Promise<DeletedNote[]> {
   const { results } = await env.DB.prepare(
     `select n.*, s.name as space_name from notes n
        join spaces s on s.id = n.space_id
-      where s.user_id = ? and s.deleted = 0 and n.deleted = 1 and n.deleted_at is not null
-      order by n.deleted_at desc limit ?`,
+      where ${WRITABLE} and s.deleted = 0 and n.deleted = 1 and n.deleted_at is not null
+      order by n.deleted_at desc limit ?2`,
   )
     .bind(userId, AT_ONCE)
     .all<DeletedNote>()
@@ -88,9 +102,9 @@ async function deletedNote(
     (await env.DB.prepare(
       `select n.*, s.deleted as space_deleted from notes n
          join spaces s on s.id = n.space_id
-        where n.id = ? and s.user_id = ? and n.deleted = 1 and n.deleted_at is not null`,
+        where n.id = ?2 and ${WRITABLE} and n.deleted = 1 and n.deleted_at is not null`,
     )
-      .bind(id, userId)
+      .bind(userId, id)
       .first<Note & { space_deleted: number }>()) ?? null
   )
 }

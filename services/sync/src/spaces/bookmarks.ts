@@ -11,7 +11,7 @@
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import type { Env, Variables } from '../types'
-import { ownedSpace } from './space'
+import { atLeast, spaceOf } from './space'
 
 /** More than anyone keeps above a file list, and the same number the app holds
  *  itself to. */
@@ -82,10 +82,10 @@ export const bookmarks = new Hono<{ Bindings: Env; Variables: Variables }>()
 /** The list, whole, in the order it should appear. Reading it needs no route of
  *  its own: the space listing carries it, so one request brings every space's
  *  bookmarks along with its name and its icon. */
-bookmarks.put('/:id/bookmarks', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+// The bookmarks are the space's rather than the reader's: everyone in it sees
+// the same list, so arranging them is writing in the space.
+bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
+  const space = spaceOf(context)
 
   const body = await context.req.json<unknown>().catch(() => null)
   if (!body || typeof body !== 'object' || Array.isArray(body)) {

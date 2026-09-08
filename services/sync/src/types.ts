@@ -1,3 +1,5 @@
+import type { Reached } from './spaces/space'
+
 export interface Env {
   DB: D1Database
   NOTES: R2Bucket
@@ -91,7 +93,9 @@ export interface Note {
   hash: string
 }
 
-/** What the session guard puts on the request for the routes behind it. */
+/** What the session guard puts on the request for the routes behind it, and
+ *  what `atLeast` adds for a route that names a space. */
 export interface Variables {
   user: User
+  space: Reached
 }

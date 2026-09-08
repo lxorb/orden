@@ -31,9 +31,11 @@ export const TEXT = 'note'
 const SYNC = 0
 const AWARENESS = 1
 
-/** The sync message that carries what the other end was missing. Its own number,
- *  inside a sync message, and `y-protocols` numbers it. */
+/** The sync message that carries what the other end was missing, and one update
+ *  on its way round. Their own numbers, inside a sync message, and `y-protocols`
+ *  numbers them. The third, step 1, is a question and writes nothing. */
 const STEP2 = 1
+const UPDATE = 2
 
 /** How a socket carries the session it was opened with.
  *
@@ -126,6 +128,26 @@ export function receive(
 export function isCatchUp(message: Uint8Array): boolean {
   const decoder = decoding.createDecoder(message)
   return decoding.readVarUint(decoder) === SYNC && decoding.readVarUint(decoder) === STEP2
+}
+
+/** Whether a message would write into the shared text.
+ *
+ *  What the room asks before it hands anything from a read-only socket to the
+ *  protocol. Being in a room and reading it are two things a reader may do -
+ *  asking what the room holds, and saying where their caret is - and writing
+ *  into it is the one they may not. A message that cannot be read at all counts
+ *  as an edit: the only thing to do with one is drop it, and dropping it here
+ *  is where that is decided. */
+export function isEdit(message: Uint8Array): boolean {
+  try {
+    const decoder = decoding.createDecoder(message)
+    if (decoding.readVarUint(decoder) !== SYNC) return false
+
+    const kind = decoding.readVarUint(decoder)
+    return kind === STEP2 || kind === UPDATE
+  } catch {
+    return true
+  }
 }
 
 /** Takes away the clients a socket had announced. What a room does when one

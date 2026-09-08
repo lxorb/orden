@@ -3,6 +3,7 @@ export {
   awarenessUpdate,
   forget,
   isCatchUp,
+  isEdit,
   receive,
   subprotocol,
   syncStep1,

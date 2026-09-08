@@ -10,6 +10,7 @@ import { oauth, oauthMetadata } from './oauth'
 import { rooms } from './rooms'
 import { settings } from './settings'
 import { spaces } from './spaces'
+import { join } from './spaces/share'
 import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
@@ -59,6 +60,12 @@ app.route('/mcp', mcp)
 // and a socket carries no `Authorization` header, so it names its token in the
 // subprotocol and is let in ahead of the guard below; see rooms/index.ts.
 app.route('/rooms', rooms)
+
+// A link somebody was sent to a shared space. What it is about is answered to
+// anybody, because it is what the page shows before there is a session to have;
+// walking through it needs one, and the route asks for it itself. Registered
+// ahead of the guard below for the first half's sake.
+app.route('/v1/join', join)
 
 // How a client finds the sign-in, and the sign-in itself. Registered ahead of
 // the catch-all, which would otherwise answer with the web app's HTML.

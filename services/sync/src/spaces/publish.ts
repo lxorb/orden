@@ -1,9 +1,10 @@
 /** Publishing a space: the address it answers on, what it is called there,
  *  and whether one note stands for the whole thing.
  *
- *  Turning a space into a blog publishes every note in it, so everything here
- *  goes through `ownedSpace` first: an id belonging to someone else is a 404,
- *  never a page. */
+ *  Turning a space into a blog publishes every note in it, which is the owner's
+ *  to decide and nobody else's - a writer writes in a space, they do not put it
+ *  on the internet. So everything here asks for `owner` first: an id belonging
+ *  to someone else is a 404, one shared with them is a 403, never a page. */
 
 import { Hono } from 'hono'
 import { readBody } from '../body'
@@ -20,7 +21,7 @@ import {
   reserved,
   SUBDOMAIN,
 } from './addresses'
-import { ownedSpace, presentSpace } from './space'
+import { atLeast, presentSpace, spaceOf } from './space'
 
 /** Long enough for a title, short enough that the column cannot be used as
  *  storage. A name that does not fit was never a title. */
@@ -35,10 +36,8 @@ const DOMAIN_FIELD_LIMIT = DOMAIN_LIMIT + 32
 export const publish = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 /** Turning a space into a blog publishes every note in it. */
-publish.put('/:id/blog', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+publish.put('/:id/blog', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
 
   const body = await readBody(context)
   const subdomain = body.text('subdomain', SUBDOMAIN_LIMIT)?.trim().toLowerCase()
@@ -166,10 +165,8 @@ publish.put('/:id/blog', async (context) => {
  *  publishing resumes; a domain of one's own is let go along with its
  *  certificate, since the owner's DNS keeps working either way and holding
  *  a certificate for a domain that serves nothing helps nobody. */
-publish.delete('/:id/blog', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+publish.delete('/:id/blog', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
 
   await context.env.DB.prepare(
     'update spaces set blog_enabled = 0, blog_domain = null, updated_at = ? where id = ?',
@@ -185,10 +182,8 @@ publish.delete('/:id/blog', async (context) => {
 /** How far along a domain of one's own is, for the pane to keep asking while
  *  the owner adds the record. The records ride along, so one call shows
  *  both what to do and whether it has been done. */
-publish.get('/:id/blog/domain', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+publish.get('/:id/blog/domain', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
 
   if (!space.blog_domain) {
     return context.json({ domain: null, state: 'none', detail: null, dns: [] })

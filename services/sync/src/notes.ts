@@ -4,8 +4,9 @@ import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
-import { ownedSpace } from './spaces/space'
-import type { Env, Note, Variables } from './types'
+import { allows, atLeast, refusal, spaceOf, type Reached } from './spaces/space'
+import { reachedSpace } from './spaces/space'
+import type { Env, Note, User, Variables } from './types'
 
 /** The largest note the API will take. R2 would hold more; a note this size
  *  is already a file that wants to be split, and the ceiling keeps one
@@ -115,10 +116,8 @@ export const notes = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 /** Everything that changed since a cursor, tombstones included, so a client
  *  that has been offline can catch up in one round trip. */
-notes.get('/spaces/:spaceId/changes', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('spaceId'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context) => {
+  const space = spaceOf(context)
 
   const since = Number(context.req.query('since') ?? 0) || 0
   const { results } = await context.env.DB.prepare(
@@ -131,10 +130,8 @@ notes.get('/spaces/:spaceId/changes', async (context) => {
   return context.json({ notes: results.map(presentNote), cursor, more: results.length === 1000 })
 })
 
-notes.post('/spaces/:spaceId/notes', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('spaceId'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context) => {
+  const space = spaceOf(context)
 
   const body = await readBody(context)
   const given = body.text('path', PATH_LIMIT)
@@ -157,8 +154,10 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
   if (existing)
     return context.json({ error: 'a note already lives there', note: presentNote(existing) }, 409)
 
-  // A limit nobody enforces is a number on a settings page.
-  if (!(await fits(context.env, user.id, size))) {
+  // A limit nobody enforces is a number on a settings page. Counted against
+  // whoever owns the space rather than whoever is writing: the bytes land in
+  // their storage, so it is their quota the note has to fit inside.
+  if (!(await fits(context.env, space.user_id, size))) {
     return context.json({ error: 'out of space' }, 507)
   }
 
@@ -195,29 +194,28 @@ notes.post('/spaces/:spaceId/notes', async (context) => {
   return context.json({ note: presentNote(note) }, 201)
 })
 
-async function noteForUser(context: {
-  env: Env
-  userId: string
-  noteId: string
-}): Promise<Note | null> {
-  const note = await context.env.DB.prepare('select * from notes where id = ?')
-    .bind(context.noteId)
+/** A note this account can reach, together with the space it sits in and the
+ *  role held there. Null when the note is not there or is in a space this
+ *  account has nothing to do with, which are the same answer on purpose. */
+async function reachedNote(
+  env: Env,
+  user: User,
+  noteId: string,
+): Promise<{ note: Note; space: Reached } | null> {
+  const note = await env.DB.prepare('select * from notes where id = ?')
+    .bind(noteId)
     .first<Note>()
 
   if (!note) return null
 
-  const space = await ownedSpace(context.env, context.userId, note.space_id)
-  return space ? note : null
+  const space = await reachedSpace(env, user, note.space_id)
+  return space ? { note, space } : null
 }
 
 notes.get('/notes/:id', async (context) => {
-  const note = await noteForUser({
-    env: context.env,
-    userId: context.get('user').id,
-    noteId: context.req.param('id'),
-  })
-
-  if (!note) return context.json({ error: 'no such note' }, 404)
+  const found = await reachedNote(context.env, context.get('user'), context.req.param('id'))
+  if (!found) return context.json({ error: 'no such note' }, 404)
+  const { note } = found
 
   const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
   return context.json({ note: presentNote(note), content: object ? await object.text() : '' })
@@ -236,13 +234,10 @@ notes.get('/notes/:id', async (context) => {
  *  same time therefore both keep what they drew, and neither ends up with a
  *  second file to go and find. */
 notes.put('/notes/:id', async (context) => {
-  const note = await noteForUser({
-    env: context.env,
-    userId: context.get('user').id,
-    noteId: context.req.param('id'),
-  })
-
-  if (!note) return context.json({ error: 'no such note' }, 404)
+  const found = await reachedNote(context.env, context.get('user'), context.req.param('id'))
+  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
+  const { note, space } = found
 
   const body = await readBody(context)
   const given = body.text('path', PATH_LIMIT)
@@ -279,8 +274,9 @@ notes.put('/notes/:id', async (context) => {
   }
 
   // The note's current bytes come back as it is replaced, so editing a large
-  // note that stays the same size is never refused.
-  if (!(await fits(context.env, context.get('user').id, byteLength(content), note.size))) {
+  // note that stays the same size is never refused. Against the space's owner,
+  // for the same reason as above.
+  if (!(await fits(context.env, space.user_id, byteLength(content), note.size))) {
     return context.json({ error: 'out of space' }, 507)
   }
 
@@ -291,13 +287,10 @@ notes.put('/notes/:id', async (context) => {
  *  content stays, with its size and hash, so the note can be put back from
  *  Recently deleted; the purge in trash.ts takes it away after 14 days. */
 notes.delete('/notes/:id', async (context) => {
-  const note = await noteForUser({
-    env: context.env,
-    userId: context.get('user').id,
-    noteId: context.req.param('id'),
-  })
-
-  if (!note) return context.json({ error: 'no such note' }, 404)
+  const found = await reachedNote(context.env, context.get('user'), context.req.param('id'))
+  if (!found) return context.json({ error: 'no such note' }, 404)
+  if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
+  const { note } = found
 
   const at = now()
   await context.env.DB.prepare(

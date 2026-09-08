@@ -13,7 +13,8 @@ import type { Env, Space, Variables } from '../types'
 import { bookmarks } from './bookmarks'
 import { spaceFiles } from './files'
 import { publish } from './publish'
-import { ownedSpace, presentSpace } from './space'
+import { share } from './share'
+import { atLeast, presentSpace, sharedAmong, spaceOf, type Role } from './space'
 
 const NAME_LIMIT = 80
 /** An id is a UUID; the length is all this needs to know. */
@@ -24,24 +25,40 @@ const MOST_IN_ORDER = 500
 
 export const spaces = new Hono<{ Bindings: Env; Variables: Variables }>()
 
+/** Every space this account can reach: its own, and the ones it was shared
+ *  with. Its own come first and keep the order the rail was put in; a shared
+ *  space sits after them, because `position` belongs to the space and moving
+ *  it would move somebody else's rail. */
+const REACHABLE = `select sp.*,
+    case when sp.user_id = ?1 then 'owner' else m.role end as role
+  from spaces sp
+  left join space_members m on m.space_id = sp.id and m.email = ?2
+ where sp.deleted = ?3 and (sp.user_id = ?1 or m.role is not null)
+ order by case when sp.user_id = ?1 then 0 else 1 end, sp.position, sp.created_at
+ limit ?4`
+
 spaces.get('/', async (context) => {
   const user = context.get('user')
-  const { results } = await context.env.DB.prepare(
-    'select * from spaces where user_id = ? and deleted = 0 order by position, created_at limit ?',
+  const { results } = await context.env.DB.prepare(REACHABLE)
+    .bind(user.id, user.email, 0, MOST_IN_ORDER)
+    .all<Space & { role: Role }>()
+
+  // Which of them anybody else is in, so the rail can mark them. One query for
+  // the listing rather than one per space.
+  const shared = await sharedAmong(
+    context.env,
+    results.filter((one) => one.user_id === user.id).map((one) => one.id),
   )
-    .bind(user.id, MOST_IN_ORDER)
-    .all<Space>()
 
   // The markers go too. A machine that has been away needs them to tell a
-  // space that was deleted from one it has simply not uploaded yet.
-  const gone = await context.env.DB.prepare(
-    'select id from spaces where user_id = ? and deleted = 1 limit ?',
-  )
-    .bind(user.id, MOST_IN_ORDER)
+  // space that was deleted from one it has simply not uploaded yet. A space
+  // somebody shared leaves the same marker for everybody who was in it.
+  const gone = await context.env.DB.prepare(REACHABLE)
+    .bind(user.id, user.email, 1, MOST_IN_ORDER)
     .all<{ id: string }>()
 
   return context.json({
-    spaces: results.map((one) => presentSpace(one, context.env)),
+    spaces: results.map((one) => presentSpace(one, context.env, one.role, shared.has(one.id))),
     deleted: gone.results.map((one) => one.id),
   })
 })
@@ -124,10 +141,10 @@ spaces.put('/order', async (context) => {
   return context.json({ ok: true })
 })
 
-spaces.patch('/:id', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+// The space itself - its name, its icon, its address, whether it exists - is
+// the owner's. What is inside it is what a writer writes.
+spaces.patch('/:id', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
 
   const body = await readBody(context)
   const name = body.text('name', NAME_LIMIT)
@@ -157,10 +174,8 @@ spaces.patch('/:id', async (context) => {
   return context.json({ space: presentSpace({ ...space, name: label, icon }, context.env) })
 })
 
-spaces.delete('/:id', async (context) => {
-  const user = context.get('user')
-  const space = await ownedSpace(context.env, user.id, context.req.param('id'))
-  if (!space) return context.json({ error: 'no such space' }, 404)
+spaces.delete('/:id', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
 
   // The notes stay with it, so the space can be put back whole from Recently
   // deleted; the purge in trash.ts empties it after 14 days. Its published
@@ -180,9 +195,10 @@ spaces.delete('/:id', async (context) => {
   return context.json({ ok: true })
 })
 
-// A space's published side, its bookmarks and the files beside its notes answer
-// under these same paths. Mounted last, so `/order` above is still read as a
-// word and not as an id.
+// A space's published side, its bookmarks, the files beside its notes and who
+// else may reach it answer under these same paths. Mounted last, so `/order`
+// above is still read as a word and not as an id.
 spaces.route('/', publish)
 spaces.route('/', bookmarks)
 spaces.route('/', spaceFiles)
+spaces.route('/', share)

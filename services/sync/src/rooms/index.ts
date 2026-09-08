@@ -1,10 +1,11 @@
-/** The door to a room: who may open a note's socket, and which object it leads to.
+/** The door to a room: who may open a note's socket, what they may do once they
+ *  are in, and which object it leads to.
  *
  *  Everything about who is allowed in is decided here rather than in the room,
- *  because this is where the database is. Today that is the note's space
- *  belonging to the account whose session the socket carries - one person's
- *  devices. When a space can be shared, this is the one function that changes:
- *  the room itself never learns who anybody is.
+ *  because this is where the database is. That is the note's space being one the
+ *  account whose session the socket carries can reach: their own space, or one
+ *  somebody shared with them. The room learns one thing from the answer, which
+ *  is whether this socket may write; it never learns who anybody is.
  *
  *  The token rides in the socket's subprotocol rather than in a header or the
  *  address. A browser cannot put a header on a WebSocket, and a token in the
@@ -18,23 +19,35 @@ import { subprotocol, tokenOf } from '@nib/rooms'
 import { now, sha256 } from '../crypto'
 import type { Env } from '../types'
 
-/** Both halves of the question in one round trip: whether the session is live, and
- *  whether the note belongs to a space that account holds.
+/** All three halves of the question in one round trip: whether the session is
+ *  live, whether the note belongs to a space that account can reach, and what
+ *  they may do there.
  *
- *  One query rather than three, because this runs in front of every socket a note
- *  opens and a reader is waiting on it. Both answers come back so the two cases can
- *  still be told apart: without a live session a client has to sign in again, while
- *  a note that is not this account's is a note that does not exist. */
-const ALLOWED = `select
-  (select s.user_id from sessions s where s.token_hash = ?1 and s.expires_at > ?2) as user_id,
-  (select n.space_id
-     from notes n join spaces sp on sp.id = n.space_id
-    where n.id = ?3
-      and n.deleted = 0
-      and sp.deleted = 0
-      and sp.user_id = (
-        select s.user_id from sessions s where s.token_hash = ?1 and s.expires_at > ?2
-      )) as space_id`
+ *  One query rather than four, because this runs in front of every socket a note
+ *  opens and a reader is waiting on it. Each answer comes back on its own so the
+ *  cases can still be told apart: without a live session a client has to sign in
+ *  again, while a note nobody shared is a note that does not exist.
+ *
+ *  The membership is joined on the address rather than on the account id, which
+ *  is what lets somebody invited before they had an account walk straight in on
+ *  the day they prove it. */
+const ALLOWED = `with me as (
+  select u.id as user_id, u.email as email
+    from sessions s join users u on u.id = s.user_id
+   where s.token_hash = ?1 and s.expires_at > ?2
+),
+reached as (
+  select n.space_id as space_id,
+         case when sp.user_id = me.user_id then 'owner' else m.role end as role
+    from me
+    join notes n on n.id = ?3 and n.deleted = 0
+    join spaces sp on sp.id = n.space_id and sp.deleted = 0
+    left join space_members m on m.space_id = sp.id and m.email = me.email
+   where sp.user_id = me.user_id or m.role is not null
+)
+select (select user_id from me) as user_id,
+       (select space_id from reached) as space_id,
+       (select role from reached) as role`
 
 export const rooms = new Hono<{ Bindings: Env }>()
 
@@ -48,10 +61,10 @@ rooms.get('/:noteId', async (context) => {
 
   const allowed = await context.env.DB.prepare(ALLOWED)
     .bind(await sha256(token ?? ''), now(), noteId)
-    .first<{ user_id: string | null; space_id: string | null }>()
+    .first<{ user_id: string | null; space_id: string | null; role: string | null }>()
 
   if (!allowed?.user_id) return context.json({ error: 'sign in first' }, 401)
-  // A note in another account's space is indistinguishable from one that is not
+  // A note in a space nobody shared is indistinguishable from one that is not
   // there, exactly as it is over the rest of the API.
   if (!allowed.space_id) return context.json({ error: 'no such note' }, 404)
 
@@ -65,6 +78,10 @@ rooms.get('/:noteId', async (context) => {
         upgrade: 'websocket',
         'x-nib-note': noteId,
         'x-nib-space': allowed.space_id,
+        // The one thing the room is told about the person on the other end.
+        // A reader is in the room and sees every keystroke; what the room does
+        // with this is refuse the messages that would change the text.
+        'x-nib-write': allowed.role === 'read' ? 'no' : 'yes',
       },
     }),
   )

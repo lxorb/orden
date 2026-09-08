@@ -24,6 +24,7 @@ import {
   awarenessState,
   awarenessUpdate,
   forget,
+  isEdit,
   unattended,
   receive,
   syncStep1,
@@ -48,9 +49,11 @@ export interface Held {
 }
 
 /** What a socket has announced, kept on the socket so that a room which was
- *  asleep still knows whose carets to take away when it closes. */
+ *  asleep still knows whose carets to take away when it closes - and whether it
+ *  was let in to write, which the door decided and this object only enforces. */
 interface Attached {
   clients: number[]
+  mayWrite: boolean
 }
 
 function isHeld(value: unknown): value is Held {
@@ -60,10 +63,21 @@ function isHeld(value: unknown): value is Held {
   return typeof held.noteId === 'string' && typeof held.spaceId === 'string'
 }
 
-function announcedBy(socket: WebSocket): number[] {
+function attachedTo(socket: WebSocket): Partial<Attached> | null {
   const held: unknown = socket.deserializeAttachment()
-  const clients = (held as Partial<Attached> | null)?.clients
+  return held && typeof held === 'object' ? (held as Partial<Attached>) : null
+}
+
+function announcedBy(socket: WebSocket): number[] {
+  const clients = attachedTo(socket)?.clients
   return Array.isArray(clients) ? clients.filter((one) => typeof one === 'number') : []
+}
+
+/** Whether this socket was let in to write. A socket whose attachment says
+ *  nothing may not: the only way to lose the flag is a shape this version did
+ *  not write, and refusing is the safe answer to that. */
+function mayWrite(socket: WebSocket): boolean {
+  return attachedTo(socket)?.mayWrite === true
 }
 
 export class NoteRoom implements DurableObject {
@@ -108,7 +122,7 @@ export class NoteRoom implements DurableObject {
     if (!noteId || !spaceId) return new Response('no note', { status: 400 })
 
     const pair = new WebSocketPair()
-    await this.enter(pair[1], { noteId, spaceId })
+    await this.enter(pair[1], { noteId, spaceId }, request.headers.get('x-nib-write') !== 'no')
 
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
@@ -116,11 +130,11 @@ export class NoteRoom implements DurableObject {
   /** The room's half of a socket, joined and greeted. Apart from `fetch` because
    *  it is the whole of what joining means, and because a test drives it without
    *  a runtime to make the pair or to carry a 101 answer. */
-  async enter(server: WebSocket, held: Held): Promise<void> {
+  async enter(server: WebSocket, held: Held, writes = true): Promise<void> {
     await this.open(held)
 
     this.ctx.acceptWebSocket(server)
-    server.serializeAttachment({ clients: [] } satisfies Attached)
+    server.serializeAttachment({ clients: [], mayWrite: writes } satisfies Attached)
 
     // The greeting, both halves at once: what this room holds, and who is in it.
     server.send(syncStep1(this.state.doc))
@@ -132,8 +146,15 @@ export class NoteRoom implements DurableObject {
     // Everything a room says is bytes. A string is not this protocol.
     if (typeof message === 'string') return
 
+    const said = new Uint8Array(message)
+
+    // A reader is in the room and sees every keystroke as it is typed; what
+    // they may not do is add one. The client does not offer it, and this is
+    // why that is a matter of taste rather than of trust.
+    if (!mayWrite(socket) && isEdit(said)) return
+
     await this.woken()
-    const answer = receive(new Uint8Array(message), this.state.doc, this.awareness, socket)
+    const answer = receive(said, this.state.doc, this.awareness, socket)
     if (answer) socket.send(answer)
   }
 
@@ -241,7 +262,7 @@ export class NoteRoom implements DurableObject {
     if (!added.length || !isSocket(origin)) return
 
     const clients = [...new Set([...announcedBy(origin), ...added])]
-    origin.serializeAttachment({ clients } satisfies Attached)
+    origin.serializeAttachment({ clients, mayWrite: mayWrite(origin) } satisfies Attached)
   }
 
   /** The words as they now stand, written into the note store the way any other

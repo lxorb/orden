@@ -79,7 +79,8 @@ export const TOOLS = [
   },
   {
     name: 'write_note',
-    description: 'Create or replace a note. Refused while the token is read-only.',
+    description:
+      'Create or replace a note. Refused while the token is read-only, and in a space that was shared to read.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -95,6 +96,12 @@ export const TOOLS = [
 interface Space {
   id: string
   name: string
+  /** What the account may do here. A space somebody shared read-only is listed,
+   *  read and searched like any other; writing into it is refused. */
+  role: 'owner' | 'write' | 'read'
+  /** Whose storage a note written here lands in, which is whose quota it has
+   *  to fit inside. */
+  user_id: string
 }
 
 /** An argument the model was asked to send as text. Undefined when it is
@@ -106,9 +113,18 @@ function text(args: Record<string, unknown>, name: string): string | undefined |
   return typeof value === 'string' ? value : null
 }
 
+/** Every space the account can reach: its own, and the ones somebody shared
+ *  with it. The membership is joined on the address, which is how it is joined
+ *  everywhere else; see spaces/space.ts. */
 async function spacesFor(env: Env, userId: string): Promise<Space[]> {
   const { results } = await env.DB.prepare(
-    'select id, name from spaces where user_id = ? and deleted = 0 order by name limit ?',
+    `select sp.id, sp.name, sp.user_id,
+        case when sp.user_id = ?1 then 'owner' else m.role end as role
+      from spaces sp
+      left join space_members m
+        on m.space_id = sp.id and m.email = (select email from users where id = ?1)
+     where sp.deleted = 0 and (sp.user_id = ?1 or m.role is not null)
+     order by sp.name limit ?2`,
   )
     .bind(userId, MOST_SPACES)
     .all<Space>()
@@ -117,8 +133,8 @@ async function spacesFor(env: Env, userId: string): Promise<Space[]> {
 }
 
 /** Accepts a name or an id, so an LLM can use whichever it saw last. Only the
- *  caller's own spaces are ever looked at, so an id from another account is
- *  simply not found. */
+ *  spaces the caller can reach are ever looked at, so an id belonging to
+ *  somebody who shared nothing with them is simply not found. */
 async function findSpace(env: Env, userId: string, wanted: string): Promise<Space | null> {
   const all = await spacesFor(env, userId)
   const needle = wanted.trim().toLowerCase()
@@ -248,12 +264,7 @@ async function listBacklinks(
 /** Writes through the same two limits the sync API applies: a note is at most
  *  so large, and an account holds at most so much. A connector that skipped
  *  them would be the way around the quota. */
-async function writeNote(
-  env: Env,
-  userId: string,
-  space: Space,
-  args: Record<string, unknown>,
-): Promise<string> {
+async function writeNote(env: Env, space: Space, args: Record<string, unknown>): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
@@ -269,7 +280,9 @@ async function writeNote(
     .bind(space.id, path)
     .first<{ id: string; size: number }>()
 
-  if (!(await fits(env, userId, size, existing?.size ?? 0))) {
+  // Against whoever owns the space rather than whoever is writing: the bytes
+  // land in their storage, so it is their quota the note has to fit inside.
+  if (!(await fits(env, space.user_id, size, existing?.size ?? 0))) {
     return 'This account is out of space.'
   }
 
@@ -342,7 +355,10 @@ export async function callTool(
       if (token.read_only) return 'This token may only read. Allow writing in Nib’s settings first.'
 
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string' ? space : writeNote(env, userId, space, args)
+      if (typeof space === 'string') return space
+      if (space.role === 'read') return `${space.name} was shared with you to read, not to write.`
+
+      return writeNote(env, space, args)
     }
 
     default:
