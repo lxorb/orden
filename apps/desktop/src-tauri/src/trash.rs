@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
+use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use tauri::AppHandle;
@@ -310,12 +310,17 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
 
 /// Whether a string names one file or folder rather than a path to one. What the
 /// trash stores something under is its own name, so nothing else is one.
+///
+/// One ordinary part and no other kind: on Windows `C:` is one part too, and it
+/// is a part that `join` puts in place of what it is joined to rather than under
+/// it.
 fn is_name(name: &str) -> bool {
-    !name.is_empty()
-        && name != "."
-        && name != ".."
-        && !name.contains('/')
+    !name.contains('/')
         && !name.contains('\\')
+        && matches!(
+            Path::new(name).components().next(),
+            Some(Component::Normal(_))
+        )
         && Path::new(name).components().count() == 1
 }
 
@@ -391,6 +396,9 @@ mod tests {
         assert!(!is_name("Work/Idea.md"));
         assert!(!is_name(r"..\Idea.md"));
         assert!(!is_name("/Idea.md"));
+        // A drive is one part too, and `join` puts it in place of the folder
+        // rather than under it.
+        assert!(!is_name("C:"));
     }
 
     /// A manifest is a file in the notes folder, so where it says something came
