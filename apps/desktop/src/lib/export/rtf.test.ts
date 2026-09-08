@@ -116,7 +116,7 @@ function adler32(bytes: readonly number[]): number {
 }
 
 function chunk(type: string, data: readonly number[]): number[] {
-  const tagged = [...[...type].map((char) => char.charCodeAt(0)), ...data]
+  const tagged = [...new TextEncoder().encode(type), ...data]
 
   return [...be32Bytes(data.length), ...tagged, ...be32Bytes(crc32(tagged))]
 }
@@ -212,7 +212,9 @@ function words(rtf: string): string {
     }
 
     if (char !== '\\') {
-      out += char
+      // The loop stops at the end of the text, so a character read inside it is
+      // always there; the index type has no way of knowing that.
+      out += char ?? ''
       at += 1
       continue
     }
@@ -256,7 +258,7 @@ function run(on: string, text: string, off: string): string {
 
 /** A document with only what the case under test needs in it. */
 function made(blocks: Doc['blocks'], notes: Doc['notes'] = []): Doc {
-  return { title: 'Made', author: null, lang: 'en', date: null, blocks, notes }
+  return { title: 'Made', named: true, author: null, lang: 'en', date: null, blocks, notes }
 }
 
 const PICTURES = [

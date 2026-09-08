@@ -470,9 +470,7 @@ function itemChildren(
   writer: Writer,
 ): FileChild[] {
   const check =
-    item.checked === null
-      ? []
-      : [new TextRun({ text: item.checked ? CHECKS.done : CHECKS.open })]
+    item.checked === null ? [] : [new TextRun({ text: item.checked ? CHECKS.done : CHECKS.open })]
 
   const own = new Paragraph({
     ...(ordered
@@ -487,11 +485,7 @@ function itemChildren(
 /** A paragraph, and the picture that is sometimes the whole of one. That picture
  *  gets a line to itself with its words under it as a caption, which is what a
  *  picture in a note looks like on a page. */
-function paragraphChildren(
-  spans: readonly Span[],
-  writer: Writer,
-  nesting: Nesting,
-): FileChild[] {
+function paragraphChildren(spans: readonly Span[], writer: Writer, nesting: Nesting): FileChild[] {
   const only = spans.length === 1 ? spans[0] : undefined
   const drawn = only?.picture === undefined ? null : drawnPicture(only.picture, writer)
 
@@ -624,7 +618,9 @@ function childrenOf(blocks: readonly Block[], writer: Writer, nesting: Nesting):
 function titleChildren(doc: Doc): FileChild[] {
   const first = doc.blocks[0]
   const heads = first?.kind === 'heading' && wordsOf(first.spans).trim() === doc.title.trim()
-  if (heads || !doc.title) return []
+  // A title the note never claimed is the file's own name, which is already on
+  // the file; printing it as the first line would be a word nobody wrote.
+  if (heads || !doc.named) return []
 
   return [
     new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: doc.title })] }),

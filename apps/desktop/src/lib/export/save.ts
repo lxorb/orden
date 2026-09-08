@@ -32,7 +32,7 @@ const FOLDER_KEY = 'nib:export-folder'
 /** The folder inside the app's documents folder a phone writes exports into. */
 const EXPORTS = 'Exports'
 
-export function rememberedFolder(): string | null {
+function rememberedFolder(): string | null {
   try {
     return localStorage.getItem(FOLDER_KEY)
   } catch {

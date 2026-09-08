@@ -16,7 +16,7 @@ import { toMarkdown } from './markdown'
 import { type FoundLink } from '@nib/markdown/links'
 
 /** Where the pictures go inside the bundle, as the spec names it. */
-export const ASSETS = 'assets'
+const ASSETS = 'assets'
 
 /** What the readers of this format agree a plain markdown bundle is. */
 const TYPE = 'net.daringfireball.markdown'

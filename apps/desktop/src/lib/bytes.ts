@@ -36,7 +36,9 @@ export function parseDataUri(uri: string): { mime: string; bytes: Uint8Array } |
   const match = /^data:([^;,]*)(;base64)?,([\s\S]*)$/.exec(uri)
   if (!match) return null
 
-  const mime = match[1] || 'application/octet-stream'
+  // `data:,x` is a URI with no type at all, and the standard's own default for
+  // that is text; anything else is the type as written.
+  const mime = match[1] === '' ? 'application/octet-stream' : (match[1] ?? '')
   const body = match[3] ?? ''
 
   return { mime, bytes: match[2] ? fromBase64(body) : new TextEncoder().encode(decodeURI(body)) }

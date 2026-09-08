@@ -63,7 +63,7 @@ export type Block =
   | { kind: 'rule' }
   | { kind: 'break' }
 
-export interface Footnote {
+interface Footnote {
   label: string
   spans: Span[]
 }
@@ -71,6 +71,13 @@ export interface Footnote {
 /** A whole note, ready for a writer. */
 export interface Doc {
   title: string
+  /** Whether the note named itself, in its front matter or in its first heading,
+   *  rather than borrowing the name of the file it is in.
+   *
+   *  What decides whether a writer prints the title as a line of the document. A
+   *  name the note never claimed is already on the file, and putting it at the
+   *  top of the text would be a word nobody wrote. */
+  named: boolean
   author: string | null
   lang: string
   date: string | null
@@ -111,7 +118,7 @@ function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[
 
 function spansOfToken(token: Token, marks: Marks): Span[] {
   const inner = (extra: Marks = {}) =>
-    spansOf((token as Tokens.Generic).tokens as Token[] | undefined, { ...marks, ...extra })
+    spansOf((token as Tokens.Generic).tokens, { ...marks, ...extra })
 
   switch (token.type) {
     case 'strong':
@@ -135,24 +142,28 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
 
     case 'image': {
       const image = token as Tokens.Image
-      return [{ ...marks, text: image.text || image.title || '', picture: image.href }]
+      // The words under a picture: its alt text, or its title where it has no
+      // alt. Both are strings that may be empty, which is why neither is a
+      // nullish fallback.
+      const words = image.text === '' ? (image.title ?? '') : image.text
+      return [{ ...marks, text: words, picture: image.href }]
     }
 
     case 'codespan':
       return [{ ...marks, code: true, text: (token as Tokens.Codespan).text }]
 
     case 'inlineMath':
-      return [{ ...marks, maths: true, text: String((token as Tokens.Generic).text ?? '') }]
+      return [{ ...marks, maths: true, text: String(token.text ?? '') }]
 
     case 'footnoteRef':
-      return [{ ...marks, note: String((token as Tokens.Generic).id ?? ''), text: '' }]
+      return [{ ...marks, note: String(token.id ?? ''), text: '' }]
 
     case 'wikilink':
     case 'embed': {
-      const link = (token as Tokens.Generic).link as Wikilink | undefined
+      const link = token.link as Wikilink | undefined
       // A document has no space around it, so a wikilink reads as the words it
       // showed - the same answer the HTML export gives.
-      return [{ ...marks, text: link ? shownText(link) : String(token.raw) }]
+      return [{ ...marks, text: link ? shownText(link) : token.raw }]
     }
 
     case 'br':
@@ -166,16 +177,18 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'text':
     case 'escape':
     case 'emoji': {
-      const nested = (token as Tokens.Generic).tokens as Token[] | undefined
+      const nested = (token as Tokens.Generic).tokens
       if (nested?.length) return spansOf(nested, marks)
       return [{ ...marks, text: String((token as Tokens.Generic).text ?? '') }]
     }
 
     default: {
-      const nested = (token as Tokens.Generic).tokens as Token[] | undefined
+      const nested = (token as Tokens.Generic).tokens
       if (nested?.length) return spansOf(nested, marks)
 
-      const text = (token as Tokens.Generic).text
+      // A token this does not know may still carry words; anything that carries
+      // none says nothing and comes to no span at all.
+      const text: unknown = (token as Tokens.Generic).text
       return typeof text === 'string' ? [{ ...marks, text }] : []
     }
   }
@@ -217,7 +230,9 @@ function callout(blocks: Block[]): { label: string | null; blocks: Block[] } {
   if (first?.kind !== 'paragraph') return { label: null, blocks }
 
   const opening = first.spans[0]
-  const match = opening && CALLOUT.exec(opening.text)
+  if (!opening) return { label: null, blocks }
+
+  const match = CALLOUT.exec(opening.text)
   if (!match?.[1]) return { label: null, blocks }
 
   const kind = match[1].toLowerCase()
@@ -243,8 +258,8 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
 
       case 'footnoteDef':
         notes.push({
-          label: String((token as Tokens.Generic).id ?? ''),
-          spans: spansOf((token as Tokens.Generic).tokens as Token[] | undefined),
+          label: String(token.id ?? ''),
+          spans: spansOf(token.tokens),
         })
         break
 
@@ -261,7 +276,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       }
 
       case 'text': {
-        const spans = spansOf((token as Tokens.Generic).tokens as Token[] | undefined)
+        const spans = spansOf((token as Tokens.Generic).tokens)
         if (spans.length) out.push({ kind: 'paragraph', spans })
         else if (String((token as Tokens.Generic).text ?? '').trim()) {
           out.push({ kind: 'paragraph', spans: [{ text: String((token as Tokens.Generic).text) }] })
@@ -276,7 +291,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       }
 
       case 'blockMath':
-        out.push({ kind: 'maths', tex: String((token as Tokens.Generic).text ?? '') })
+        out.push({ kind: 'maths', tex: String(token.text ?? '') })
         break
 
       case 'blockquote': {
@@ -311,12 +326,10 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       case 'definitionList':
         out.push({
           kind: 'terms',
-          entries: ((token as Tokens.Generic).items as { term: Token[]; details: Token[][] }[]).map(
-            (entry) => ({
-              term: spansOf(entry.term),
-              details: entry.details.map((detail) => spansOf(detail)),
-            }),
-          ),
+          entries: (token.items as { term: Token[]; details: Token[][] }[]).map((entry) => ({
+            term: spansOf(entry.term),
+            details: entry.details.map((detail) => spansOf(detail)),
+          })),
         })
         break
 
@@ -331,7 +344,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
         break
 
       default: {
-        const spans = spansOf((token as Tokens.Generic).tokens as Token[] | undefined)
+        const spans = spansOf((token as Tokens.Generic).tokens)
         if (spans.length) out.push({ kind: 'paragraph', spans })
         break
       }
@@ -359,6 +372,7 @@ export function documentOf(source: string, name: string): Doc {
 
   return {
     title: titleOf(source, name),
+    named: frontMatterValue(source, 'title') !== null || documentTitle(source) !== null,
     author: frontMatterValue(source, 'author'),
     lang: frontMatterValue(source, 'lang') ?? 'en',
     date: frontMatterValue(source, 'date'),

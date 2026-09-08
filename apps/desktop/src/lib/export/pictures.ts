@@ -55,7 +55,7 @@ export function isRemote(src: string): boolean {
 
 export function mimeOf(src: string, fallback = 'image/png'): string {
   const extension = /\.([a-z0-9]+)(?:[?#]|$)/i.exec(src)?.[1]?.toLowerCase()
-  return (extension && MIMES[extension]) || fallback
+  return (extension === undefined ? undefined : MIMES[extension]) ?? fallback
 }
 
 export function suffixFor(mime: string): string {
@@ -141,7 +141,7 @@ export function swapSources(html: string, wanted: ReadonlyMap<string, string>): 
   if (!wanted.size) return html
 
   return html.replace(
-    /(<img[^>]*?src=")([^"]*)(")/g,
+    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
     (whole: string, before: string, src: string, after: string) =>
       wanted.has(src) ? `${before}${wanted.get(src) ?? src}${after}` : whole,
   )
@@ -166,7 +166,7 @@ export function inlinePictures(html: string, pictures: readonly Picture[]): stri
 export function sourcesIn(html: string): string[] {
   const found = new Set<string>()
 
-  for (const [, src] of html.matchAll(/<img[^>]*?src="([^"]*)"/g)) {
+  for (const [, src] of html.matchAll(/<img\b[^>]*?\bsrc="([^"]*)"/g)) {
     if (src && !src.startsWith('data:')) found.add(src)
   }
 

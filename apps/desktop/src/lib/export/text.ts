@@ -30,13 +30,22 @@ function textOf(spans: readonly Span[]): string {
   return spans.map(spanText).join('')
 }
 
+/** How wide a cell is on screen, counted in the characters a reader sees rather
+ *  than in the units a string is stored as. An emoji is one column wide and two
+ *  code units long, and a column padded by the second number comes out crooked. */
+const GRAPHEMES = new Intl.Segmenter()
+
+function shownWidth(text: string): number {
+  return [...GRAPHEMES.segment(text)].length
+}
+
 /** The width a column needs: the longest line any of its cells holds. */
 function widths(rows: readonly string[][]): number[] {
   const out: number[] = []
 
   for (const row of rows) {
     row.forEach((cell, at) => {
-      out[at] = Math.max(out[at] ?? 0, [...cell].length)
+      out[at] = Math.max(out[at] ?? 0, shownWidth(cell))
     })
   }
 
@@ -48,13 +57,16 @@ function tableLines(block: Extract<Block, { kind: 'table' }>): string[] {
   const body = block.rows.map((row) => row.map(textOf))
   const columns = widths([head, ...body])
 
+  // Padded by what a reader sees rather than by `padEnd`, which counts the units
+  // a string is stored in and would put an emoji's second half in the gap.
+  const padded = (cell: string, width: number, right: boolean) => {
+    const gap = ' '.repeat(Math.max(0, width - shownWidth(cell)))
+    return right ? gap + cell : cell + gap
+  }
+
   const line = (cells: readonly string[]) =>
     cells
-      .map((cell, at) =>
-        block.align[at] === 'right'
-          ? cell.padStart(columns[at] ?? 0)
-          : cell.padEnd(columns[at] ?? 0),
-      )
+      .map((cell, at) => padded(cell, columns[at] ?? 0, block.align[at] === 'right'))
       .join('  ')
       .trimEnd()
 
@@ -143,15 +155,15 @@ function wrapped(text: string, indent: string): string[] {
   return text.split('\n').map((line) => `${indent}${line}`.trimEnd())
 }
 
-/** The document as one plain text file. The title heads it when the front matter
- *  named one the body does not already say, and the footnotes follow at the
- *  bottom, where they are in the note. */
+/** The document as one plain text file. The title heads it when the note named
+ *  one the body does not already say, and the footnotes follow at the bottom,
+ *  where they are in the note. */
 export function toPlainText(doc: Doc): string {
   const lines: string[] = []
   const first = doc.blocks[0]
   const heads = first?.kind === 'heading' && textOf(first.spans).trim() === doc.title.trim()
 
-  if (!heads && doc.title) lines.push(doc.title, '')
+  if (doc.named && !heads) lines.push(doc.title, '')
   lines.push(...blockLines(doc.blocks))
 
   if (doc.notes.length) {

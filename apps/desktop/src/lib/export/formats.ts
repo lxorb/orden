@@ -35,7 +35,7 @@ export const EXPORT_VARIANTS = [
   { id: 'html-bare', label: key('HTML without styles'), extension: 'html' },
 ] as const
 
-export type ExportVariant = (typeof EXPORT_VARIANTS)[number]['id']
+type ExportVariant = (typeof EXPORT_VARIANTS)[number]['id']
 
 /** Anything the export list can be asked for. */
 export type Exportable = ExportFormat | ExportVariant

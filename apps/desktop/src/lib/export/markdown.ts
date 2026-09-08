@@ -45,6 +45,13 @@ function asLink(link: FoundLink, target: string): string {
   return `[${shownText(link)}](${encodeTarget(target)}${fragment})`
 }
 
+/** A picture's new path as it has to be written: inside angle brackets when it
+ *  was written that way, and when it holds a space, since a bare space would end
+ *  the source and turn the rest of the path into a title. */
+function asSource(path: string, written: string): string {
+  return written.startsWith('<') || path.includes(' ') ? `<${path}>` : path
+}
+
 /** Where every picture's source sits in the text, outside code. */
 function pictureEdits(source: string, rename: (src: string) => string | null): Edit[] {
   const edits: Edit[] = []
@@ -61,7 +68,7 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
         if (wanted === null || wanted === bare) continue
 
         const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
-        edits.push({ from, to: from + written.length, text: wanted })
+        edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
       }
     }
 

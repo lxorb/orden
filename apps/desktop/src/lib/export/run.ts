@@ -189,12 +189,12 @@ async function exportMarkdownWithPictures(note: Note, options: RunOptions): Prom
   })
 }
 
+/** The formats that come to one file of text or bytes. The rest each need
+ *  something of their own: a print engine, a canvas, or a folder. */
+type OneFile = Exclude<Exportable, 'pdf' | 'jpg' | 'png' | 'textbundle' | 'md-assets'>
+
 /** What a format comes to, for the formats that are one file of text or bytes. */
-async function payloadFor(
-  id: Exportable,
-  note: Note,
-  options: RunOptions,
-): Promise<Payload | null> {
+async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise<Payload> {
   switch (id) {
     case 'txt':
       return { text: toPlainText(documentOf(note.source, note.name)), mime: 'text/plain' }
@@ -251,9 +251,6 @@ async function payloadFor(
 
       return { bytes, mime: 'application/epub+zip' }
     }
-
-    default:
-      return null
   }
 }
 
@@ -270,7 +267,5 @@ export async function runExport(
   if (id === 'md-assets') return exportMarkdownWithPictures(note, options)
 
   const payload = await payloadFor(id, note, options)
-  if (!payload) return null
-
   return deliver(note.name, extensionFor(id), labelFor(id), payload)
 }

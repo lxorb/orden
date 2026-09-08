@@ -8,6 +8,7 @@ import {
   renderNote,
 } from './export'
 import { titleOf } from './export/document'
+import { EXPORT_FORMATS } from './export/formats'
 
 /** One of everything the renderer knows. */
 const NOTE = `---
@@ -303,22 +304,27 @@ describe('naming the document', () => {
 })
 
 describe('pandoc formats', () => {
-  test('cover what Typora offers', () => {
+  test('cover the rest of what Typora offers', () => {
     const ids = PANDOC_FORMATS.map((format) => format.id)
-    for (const expected of [
-      'docx',
-      'odt',
-      'rtf',
-      'epub',
-      'latex',
-      'mediawiki',
-      'rst',
-      'textile',
-      'opml',
-      'revealjs',
-    ]) {
+    for (const expected of ['odt', 'latex', 'mediawiki', 'rst', 'textile', 'opml', 'revealjs']) {
       expect(ids).toContain(expected)
     }
+  })
+
+  /** Nib writes its own Word, RTF and ePub, with the diagrams drawn, the code
+   *  coloured and the pictures carried. Offering pandoc's as well would mean one
+   *  format came out two ways depending on the machine, and a row that appeared
+   *  only where pandoc happened to be installed. */
+  test('leave out the three Nib writes itself', () => {
+    const ids = PANDOC_FORMATS.map((format) => format.id)
+    for (const own of ['docx', 'rtf', 'epub']) {
+      expect(ids, own).not.toContain(own)
+    }
+  })
+
+  test('never name a format the export list already has', () => {
+    const own = new Set<string>(EXPORT_FORMATS.map((format) => format.id))
+    expect(PANDOC_FORMATS.filter((format) => own.has(format.id))).toEqual([])
   })
 
   test('each names the file extension it produces', () => {

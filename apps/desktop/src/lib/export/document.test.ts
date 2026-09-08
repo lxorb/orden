@@ -39,7 +39,8 @@ describe('the document a note comes to', () => {
 
 describe('the marks on a run', () => {
   const spans = kind('paragraph')[0]?.spans ?? []
-  const marked = (mark: keyof Span) => spans.filter((span) => span[mark] === true).map((s) => s.text)
+  const marked = (mark: keyof Span) =>
+    spans.filter((span) => span[mark] === true).map((s) => s.text)
 
   test('finds bold, italic, struck and marked text', () => {
     expect(marked('bold')).toEqual(['bold'])
@@ -164,10 +165,9 @@ describe('a quote', () => {
 
 describe('the rest of the constructs', () => {
   test('a definition list keeps its term and every meaning under it', () => {
-    expect(kind('terms')[0]?.entries.map((entry) => [words(entry.term), entry.details.map(words)]))
-      .toEqual([
-        ['Markdown', ['A way of writing formatted text.', 'Also the format itself.']],
-      ])
+    expect(
+      kind('terms')[0]?.entries.map((entry) => [words(entry.term), entry.details.map(words)]),
+    ).toEqual([['Markdown', ['A way of writing formatted text.', 'Also the format itself.']]])
   })
 
   test('a rule and a page break are each their own block', () => {
@@ -216,5 +216,12 @@ describe('naming the document', () => {
     expect(titleOf('# Head\n', 'File.md')).toBe('Head')
     expect(titleOf('words\n', 'File.md')).toBe('File')
     expect(titleOf('words\n', 'No extension')).toBe('No extension')
+  })
+
+  test('says whether the note named itself or borrowed the file’s name', () => {
+    expect(documentOf('---\ntitle: Meta\n---\nwords\n', 'File.md').named).toBe(true)
+    expect(documentOf('# Head\n', 'File.md').named).toBe(true)
+    expect(documentOf('just words\n', 'File.md').named).toBe(false)
+    expect(documentOf('just words\n', 'File.md').title).toBe('File')
   })
 })
