@@ -13,6 +13,13 @@ let reader: string
 let stranger: string
 let space: string
 let note: string
+/** Two guests with no account, one at each role a link can hand out. */
+let guestWriter: string
+let guestReader: string
+/** A guest the owner has not answered yet, and one who is in, so that the three
+ *  routes about a guest have somebody to work on. */
+let waitingGuest: string
+let readingGuest: string
 
 /** Somebody given the space, and in it: invited, then having proved the address
  *  by signing in, which is the whole of what joining is. */
@@ -36,6 +43,34 @@ async function inviteLink(email: string, role: 'write' | 'read'): Promise<string
 
 function shareView(as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })
+}
+
+/** The space's own link, set to hand out this role in this mode, as a token. */
+async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
+  const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+    method: 'PUT',
+    token: owner,
+    body: { role, mode },
+  })
+
+  const found = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')
+  if (!found?.[1]) throw new Error('no link was made')
+  return found[1]
+}
+
+/** Somebody with no account who followed the link, and the session it handed
+ *  them. Nothing is typed and nothing is proved: holding the link is the whole
+ *  of it. */
+async function guestAt(role: 'write' | 'read', device = 'Windows'): Promise<string> {
+  const token = await shareLink(role, 'open')
+  const { json } = await call(env, `/v1/join/${token}`, { method: 'POST', body: { device } })
+
+  return json.token
+}
+
+/** Which guest a session belongs to, as the guest itself is told. */
+async function guestOf(token: string): Promise<string> {
+  return (await call(env, '/v1/me', { token })).json.guest.id
 }
 
 /** Every account owns a space called `Notes` from the moment it is made; see
@@ -191,37 +226,76 @@ const ROUTES: Route[] = [
     go: (token) =>
       call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'DELETE', token }),
   },
+  {
+    what: 'letting a guest in',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/guests/${waitingGuest}`, { method: 'POST', token }),
+  },
+  {
+    what: "changing a guest's role",
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/guests/${readingGuest}`, {
+        method: 'PATCH',
+        token,
+        body: { role: 'write' },
+      }),
+  },
+  {
+    what: 'taking a guest out',
+    needs: 'owner',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/share/guests/${readingGuest}`, { method: 'DELETE', token }),
+  },
 ]
 
 /** Which roles a route lets through, so each case below reads as one sentence. */
 const RANK = { read: 0, write: 1, owner: 2 }
+
+/** Everybody a route can be asked by, at the role they hold.
+ *
+ *  A guest is not a fourth role. It is either of the two a link hands out, held
+ *  by somebody with no account at all, and no route may tell the difference:
+ *  whether they proved an address or followed a link is how they arrived, and
+ *  what they may do is their role. Which is why they are a column here rather
+ *  than a file of their own. */
+const HOLDERS: { as: string; role: 'read' | 'write' | 'owner'; token: () => string }[] = [
+  { as: 'the owner', role: 'owner', token: () => owner },
+  { as: 'a writer', role: 'write', token: () => writer },
+  { as: 'a reader', role: 'read', token: () => reader },
+  { as: 'a guest who may write', role: 'write', token: () => guestWriter },
+  { as: 'a guest who may read', role: 'read', token: () => guestReader },
+]
 
 describe('every route that names a space', () => {
   beforeEach(async () => {
     writer = await invite(WRITER, 'write')
     reader = await invite(READER, 'read')
 
-    // Somebody waiting to be let in, so the two routes about a request have one
-    // to work on rather than answering that there is nothing there.
-    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
-      method: 'PUT',
-      token: owner,
-      body: { role: 'read', mode: 'approval' },
-    })
-    const asking = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+    guestWriter = await guestAt('write')
+    guestReader = await guestAt('read')
+    readingGuest = await guestOf(guestReader)
+
+    // Somebody waiting to be let in, of each kind, so the routes about a request
+    // and the routes about a guest have one to work on rather than answering
+    // that there is nothing there.
+    const asking = await shareLink('read', 'approval')
     await call(env, `/v1/join/${asking}`, { method: 'POST', token: stranger })
+
+    const knocked = await call(env, `/v1/join/${asking}`, {
+      method: 'POST',
+      body: { name: 'Ada' },
+    })
+    waitingGuest = knocked.json.guest.id
   })
 
   for (const route of ROUTES) {
-    for (const [role, holder] of [
-      ['owner', () => owner],
-      ['write', () => writer],
-      ['read', () => reader],
-    ] as const) {
-      const allowed = RANK[role] >= RANK[route.needs]
+    for (const holder of HOLDERS) {
+      const allowed = RANK[holder.role] >= RANK[route.needs]
 
-      test(`${allowed ? 'lets' : 'refuses'} ${role} through ${route.what}`, async () => {
-        const { status } = await route.go(holder())
+      test(`${allowed ? 'lets' : 'refuses'} ${holder.as} through ${route.what}`, async () => {
+        const { status } = await route.go(holder.token())
 
         if (allowed) expect(status).toBeLessThan(400)
         else expect(status).toBe(403)

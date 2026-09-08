@@ -6,7 +6,7 @@ import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } fr
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
 import { NoteRoom } from '../src/rooms/room'
-import { call, signIn, type TestEnv, testEnv } from './harness'
+import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
 import { doorway, FakeSocket, type FakeState, join, room, say } from './room'
 
 /** What the note holds before anybody writes in it. */
@@ -413,6 +413,60 @@ describe('the door to a room', () => {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(outside) },
     })
     expect(refused.status).toBe(404)
+  })
+
+  test('lets in a guest a link let in, at what the link said', async () => {
+    const door = doorway()
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const owner = await signIn(env, 'owner@example.com')
+    const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json
+      .space.id
+    const noteId = (
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token: owner,
+        body: { path: 'shared.md', content: 'together' },
+      })
+    ).json.note.id
+
+    /** Somebody with no account who followed the space's link. */
+    async function guest(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
+      const { json } = await call<ShareView>(env, `/v1/spaces/${spaceId}/share/link`, {
+        method: 'PUT',
+        token: owner,
+        body: { role, mode },
+      })
+      const token = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+      const walked = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Ada' } })
+
+      return walked.json.token
+    }
+
+    for (const [role, writes] of [
+      ['write', 'yes'],
+      ['read', 'no'],
+    ] as const) {
+      const answer = await call(env, `/rooms/${noteId}`, {
+        headers: {
+          upgrade: 'websocket',
+          'sec-websocket-protocol': subprotocol(await guest(role, 'open')),
+        },
+      })
+
+      expect(answer.status, role).toBe(200)
+      expect(door.asked.at(-1)?.get('x-nib-write'), role).toBe(writes)
+      expect(door.asked.at(-1)?.get('x-nib-space'), role).toBe(spaceId)
+    }
+
+    // Waiting on the owner is not being in, so the note is not there yet.
+    const waiting = await call(env, `/rooms/${noteId}`, {
+      headers: {
+        upgrade: 'websocket',
+        'sec-websocket-protocol': subprotocol(await guest('write', 'approval')),
+      },
+    })
+    expect(waiting.status).toBe(404)
   })
 
   test('turns away a socket with no session', async () => {

@@ -380,15 +380,17 @@ export async function mail(work: () => Promise<unknown>): Promise<string> {
   return logged.join('\n')
 }
 
-/** Runs the sign-in flow and returns a usable session token. */
-export async function signIn(env: Env, email: string): Promise<string> {
+/** Runs the sign-in flow and returns a usable session token. `guest` is the
+ *  guest session this device was holding, if it was holding one: the app hands
+ *  it over so that whatever a link let the device into follows it in. */
+export async function signIn(env: Env, email: string, guest?: string): Promise<string> {
   const logged = await mail(() => call(env, '/v1/auth/code', { body: { email } }))
 
   const code = /(\d{3}) (\d{3})/.exec(logged)
   if (!code) throw new Error(`no code was sent:\n${logged}`)
 
   const verified = await call(env, '/v1/auth/verify', {
-    body: { email, code: `${code[1]}${code[2]}` },
+    body: { email, code: `${code[1]}${code[2]}`, ...(guest ? { guest } : {}) },
   })
 
   if (verified.status !== 200) throw new Error(`sign-in failed: ${verified.text}`)

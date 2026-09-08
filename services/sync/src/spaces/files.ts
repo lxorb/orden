@@ -104,7 +104,7 @@ async function heldBy(env: Env, userId: string, hashes: readonly string[]): Prom
 export const spaceFiles = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
-  const user = context.get('user')
+  const who = context.get('who')
   const space = spaceOf(context)
 
   const body = await context.req.json<unknown>().catch(() => null)
@@ -128,12 +128,19 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   // already serving them. Both halves matter once a space can be shared: the
   // writer's own PDFs are theirs to add, and the ones somebody else put here
   // are not theirs to drop by sending a list that leaves them out.
+  //
+  // A guest holds no bytes anywhere, because a guest has no storage to hold
+  // them in. So the first half is empty for one, and what stays is what the
+  // space was already serving.
   const already = new Set(readSpaceFiles(space.files).map((one) => one.hash))
-  const held = await heldBy(
-    context.env,
-    user.id,
-    [...new Set(asked.map((one) => one.hash))].slice(0, MOST),
-  )
+  const held =
+    who.kind === 'user'
+      ? await heldBy(
+          context.env,
+          who.user.id,
+          [...new Set(asked.map((one) => one.hash))].slice(0, MOST),
+        )
+      : new Set<string>()
 
   const there = (one: SpaceFile) => held.has(one.hash) || already.has(one.hash)
   const kept = asked.filter(there)
