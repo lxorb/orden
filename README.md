@@ -57,6 +57,8 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 - A **clean** and **modern** UI
 - **Realtime preview** (WYSIWYG)
+- **Wikilinks** with **backlinks** and a **graph** of your notes
+- An infinite **canvas** to arrange notes spatially
 - **Syncing** across different devices
 - An **MCP** to allow LLM read and write access
 - **Paste Images** from Clipboard
