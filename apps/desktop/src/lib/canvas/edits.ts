@@ -1,13 +1,36 @@
 /** Everything that can be done to a canvas, as pure functions from one canvas to
  *  the next.
  *
- *  Nothing here changes a node in place. An edit hands back a new canvas whose
- *  untouched nodes are the very same objects, which is what makes the undo stack
- *  next door cheap and what lets the surface tell in one comparison whether a
- *  node it is drawing has moved. */
+ *  Nothing here changes anything in place. An edit hands back a new canvas whose
+ *  untouched nodes, edges and strokes are the very same objects, which is what
+ *  makes the undo stack next door cheap, what lets the surface tell in one
+ *  comparison whether something it is drawing has moved, and what lets `stamped`
+ *  work out which objects need a new time without diffing anything.
+ *
+ *  What is picked is one list of ids covering all three kinds. A card, a
+ *  connector and a stroke of ink are deleted, coloured, copied and dragged by the
+ *  same four functions rather than by twelve. */
 
-import { type Canvas, type CanvasEdge, type CanvasNode, freshId, type Side } from './format'
-import { boxOf, type Box, dragged, GRID, type HandleId, resized, snapped } from './geometry'
+import {
+  type Canvas,
+  type CanvasEdge,
+  type CanvasNode,
+  freshId,
+  type InkStroke,
+  type Shape,
+  type Side,
+} from './format'
+import {
+  boxOf,
+  type Box,
+  dragged,
+  GRID,
+  type HandleId,
+  insideGroup,
+  resizedBox,
+  snapped,
+} from './geometry'
+import { strokeBox, transformed } from './ink'
 
 /** The canvas with some of its nodes replaced, keeping the order they were in:
  *  the order is the z order, and an edit must never bring a card to the front by
@@ -23,40 +46,152 @@ function nodeById(canvas: Canvas, id: string): CanvasNode | undefined {
   return canvas.nodes.find((node) => node.id === id)
 }
 
-/** Nodes moved by a whole number of pixels, with each landing on the grid.
- *
- *  The offset is snapped rather than each node's own corner, so a selection of
- *  several keeps its shape: snapping every node on its own would pull a row of
- *  cards into a single column the moment it was nudged.
- *
- *  A group among them carries whatever sits inside it; see `dragged`. */
-export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, dy: number): Canvas {
-  const moving = new Set(dragged(canvas, picked))
-  if (!moving.size) return canvas
+/** Everything an edit acts on: what was picked, whatever a picked group holds,
+ *  and the ink that lies inside a picked group. A frame is a thing with room in
+ *  it, and dragging one that left the writing behind would be a surprise. */
+export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
+  const going = new Set(dragged(canvas, picked))
+  const groups = canvas.nodes.filter((node) => node.type === 'group' && going.has(node.id))
 
-  const across = snapped(dx)
-  const down = snapped(dy)
+  if (groups.length) {
+    for (const stroke of canvas.ink) {
+      if (going.has(stroke.id)) continue
+      if (groups.some((group) => insideGroup(boxOf(group), strokeBox(stroke)))) going.add(stroke.id)
+    }
+  }
+
+  for (const id of picked) going.add(id)
+  return going
+}
+
+/** The box round everything picked, or null. What the handles are drawn on and
+ *  what a resize scales. */
+export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null {
+  const wanted = new Set(picked)
+  const boxes = [
+    ...canvas.nodes.filter((node) => wanted.has(node.id)).map(boxOf),
+    ...canvas.ink.filter((stroke) => wanted.has(stroke.id)).map(strokeBox),
+  ]
+
+  const [first] = boxes
+  if (!first) return null
+
+  let least = first.x
+  let most = first.x + first.width
+  let lowest = first.y
+  let highest = first.y + first.height
+
+  for (const box of boxes) {
+    least = Math.min(least, box.x)
+    most = Math.max(most, box.x + box.width)
+    lowest = Math.min(lowest, box.y)
+    highest = Math.max(highest, box.y + box.height)
+  }
+
+  return { x: least, y: lowest, width: most - least, height: highest - lowest }
+}
+
+/** Everything picked moved by a whole number of pixels.
+ *
+ *  The offset is applied whole rather than each thing being snapped on its own,
+ *  so a selection of several keeps its shape: snapping every card would pull a
+ *  row of them into a single column the moment it was nudged. Where the offset
+ *  came from is the surface's business; see snap.ts. */
+export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, dy: number): Canvas {
+  const moving = reach(canvas, picked)
+  if (!moving.size || (!dx && !dy)) return canvas
+
+  const across = Math.round(dx)
+  const down = Math.round(dy)
+  if (!across && !down) return canvas
 
   return {
     ...canvas,
     nodes: canvas.nodes.map((node) =>
       moving.has(node.id) ? { ...node, x: node.x + across, y: node.y + down } : node,
     ),
+    ink: canvas.ink.map((stroke) =>
+      moving.has(stroke.id)
+        ? transformed(stroke, { dx: across, dy: down, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } })
+        : stroke,
+    ),
   }
 }
 
-/** One node after a resize handle has been dragged. */
-export function resizedNode(
+/** How small anything may be dragged, in plane units. Small enough to be a
+ *  marker beside something, big enough to still be grabbed. */
+const LEAST = GRID * 2
+
+/** Everything picked after a resize handle has been dragged.
+ *
+ *  One box round the lot is pulled, and everything inside it keeps where it was
+ *  in that box: one card resizes exactly as it used to, and nine resize together
+ *  the way a hand expects. Ink scales with it, nib and all, so writing pulled to
+ *  twice the size is writing that was written twice as big. */
+export function resizedPick(
   canvas: Canvas,
-  id: string,
+  picked: readonly string[],
   handle: HandleId,
   dx: number,
   dy: number,
 ): Canvas {
-  const node = nodeById(canvas, id)
-  if (!node) return canvas
+  const was = pickedBox(canvas, picked)
+  if (!was || was.width < 1 || was.height < 1) return canvas
 
-  return replacing(canvas, [{ ...node, ...resized(boxOf(node), handle, dx, dy) }])
+  const now = resizedBox(was, handle, dx, dy, LEAST)
+  const sx = now.width / was.width
+  const sy = now.height / was.height
+  if (sx === 1 && sy === 1 && now.x === was.x && now.y === was.y) return canvas
+
+  const wanted = new Set(picked)
+
+  return {
+    ...canvas,
+    nodes: canvas.nodes.map((node) => {
+      if (!wanted.has(node.id)) return node
+
+      return {
+        ...node,
+        x: Math.round(now.x + (node.x - was.x) * sx),
+        y: Math.round(now.y + (node.y - was.y) * sy),
+        width: Math.max(1, Math.round(node.width * sx)),
+        height: Math.max(1, Math.round(node.height * sy)),
+      }
+    }),
+    ink: canvas.ink.map((stroke) =>
+      wanted.has(stroke.id)
+        ? transformed(stroke, {
+            dx: now.x - was.x * sx,
+            dy: now.y - was.y * sy,
+            sx,
+            sy,
+            turn: 0,
+            about: { x: 0, y: 0 },
+          })
+        : stroke,
+    ),
+  }
+}
+
+/** Ink turned about a point. Only strokes turn: a card on a plane is upright,
+ *  which is what makes a plane of cards readable. */
+export function turnedInk(
+  canvas: Canvas,
+  picked: readonly string[],
+  turn: number,
+  about: { x: number; y: number },
+): Canvas {
+  const wanted = new Set(picked)
+  if (!turn) return canvas
+
+  return {
+    ...canvas,
+    ink: canvas.ink.map((stroke) =>
+      wanted.has(stroke.id)
+        ? transformed(stroke, { dx: 0, dy: 0, sx: 1, sy: 1, turn, about })
+        : stroke,
+    ),
+  }
 }
 
 /** A node put on top of the canvas, which is where a new one belongs: the order
@@ -69,6 +204,71 @@ export function withNode(canvas: Canvas, node: CanvasNode): Canvas {
  *  contents it would hide them. */
 export function withGroup(canvas: Canvas, group: CanvasNode): Canvas {
   return { ...canvas, nodes: [group, ...canvas.nodes] }
+}
+
+/** A shape drawn out between two points. Its box is always the right way up and
+ *  `up` remembers which way a line ran, so one box says all four diagonals. */
+export function withShape(
+  canvas: Canvas,
+  shape: Shape,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  colour?: string,
+): { canvas: Canvas; id: string } {
+  const id = freshId()
+  const box = {
+    x: Math.round(Math.min(from.x, to.x)),
+    y: Math.round(Math.min(from.y, to.y)),
+    width: Math.max(1, Math.round(Math.abs(to.x - from.x))),
+    height: Math.max(1, Math.round(Math.abs(to.y - from.y))),
+  }
+
+  const node: CanvasNode = {
+    id,
+    type: 'shape',
+    shape,
+    ...box,
+    ...(colour === undefined ? {} : { color: colour }),
+    ...((to.y - from.y) * (to.x - from.x) < 0 ? { up: true } : {}),
+  }
+
+  return { canvas: withNode(canvas, node), id }
+}
+
+/** A stroke of ink on the plane. Ink is a list of its own rather than a node,
+ *  so a canvas of a thousand strokes and ten cards still stacks its cards by
+ *  the order of ten things. */
+export function withStroke(canvas: Canvas, stroke: InkStroke): Canvas {
+  return { ...canvas, ink: [...canvas.ink, stroke] }
+}
+
+export function withStrokes(canvas: Canvas, strokes: readonly InkStroke[]): Canvas {
+  if (!strokes.length) return canvas
+  return { ...canvas, ink: [...canvas.ink, ...strokes] }
+}
+
+/** The strokes an eraser cut through, each in whatever pieces it left. A stroke
+ *  the eraser missed is the very same object, so a rub that met nothing costs
+ *  nothing at all. */
+export function cutInk(
+  canvas: Canvas,
+  cut: (stroke: InkStroke) => InkStroke[],
+): Canvas {
+  let changed = false
+  const ink: InkStroke[] = []
+
+  for (const stroke of canvas.ink) {
+    const pieces = cut(stroke)
+    if (pieces.length === 1 && pieces[0] === stroke) {
+      ink.push(stroke)
+      continue
+    }
+
+    changed = true
+    ink.push(...pieces)
+  }
+
+  return changed ? { ...canvas, ink } : canvas
 }
 
 export function withText(canvas: Canvas, id: string, text: string): Canvas {
@@ -93,15 +293,43 @@ export function withLabel(canvas: Canvas, id: string, label: string): Canvas {
   }
 }
 
-/** Nodes and edges given a colour, or stripped of one. Both kinds at once,
- *  because the colour dots act on whatever is picked, and a canvas colours its
- *  cards and its connectors the same way. */
+/** Which way an edge's arrow heads point. Both ends at once, because that is how
+ *  the four states read: none, one way, the other, or both. */
+export function withEnds(
+  canvas: Canvas,
+  picked: readonly string[],
+  from: boolean,
+  to: boolean,
+): Canvas {
+  const chosen = new Set(picked)
+
+  return {
+    ...canvas,
+    edges: canvas.edges.map((edge) => {
+      if (!chosen.has(edge.id)) return edge
+
+      // The spec's own defaults are left unwritten, so an edge Nib did not
+      // change comes back byte for byte.
+      const one = put(edge, 'fromEnd', from ? 'arrow' : null)
+      return put(one, 'toEnd', to ? null : 'none')
+    }),
+  }
+}
+
+/** Nodes, edges and ink given a colour, or stripped of one. All three at once,
+ *  because the colour dots act on whatever is picked. */
 export function coloured(canvas: Canvas, picked: readonly string[], colour: string | null): Canvas {
   const chosen = new Set(picked)
 
   return {
+    ...canvas,
     nodes: canvas.nodes.map((node) => (chosen.has(node.id) ? put(node, 'color', colour) : node)),
     edges: canvas.edges.map((edge) => (chosen.has(edge.id) ? put(edge, 'color', colour) : edge)),
+    // A stroke of ink always has a colour: there is no plane showing through a
+    // line, so "none" leaves it as it was.
+    ink: colour
+      ? canvas.ink.map((stroke) => (chosen.has(stroke.id) ? { ...stroke, color: colour } : stroke))
+      : canvas.ink,
   }
 }
 
@@ -119,18 +347,20 @@ function put<T extends object, K extends keyof T & string>(one: T, key: K, value
   return { ...rest, ...(value === null ? {} : { [key]: value }) } as T
 }
 
-/** Nodes and edges gone. A node takes every edge that touched it: an edge from
- *  nothing to nothing is not a connector, and the format has no place to put one.
- *  A group takes its contents with it, the way a drag does. */
+/** Everything picked, gone. A node takes every edge that touched it: an edge
+ *  from nothing to nothing is not a connector, and the format has no place to put
+ *  one. A group takes its contents with it, the way a drag does. */
 export function removed(canvas: Canvas, picked: readonly string[]): Canvas {
-  const going = new Set(dragged(canvas, picked))
+  const going = reach(canvas, picked)
   if (!going.size) return canvas
 
   return {
+    ...canvas,
     nodes: canvas.nodes.filter((node) => !going.has(node.id)),
     edges: canvas.edges.filter(
       (edge) => !going.has(edge.fromNode) && !going.has(edge.toNode) && !going.has(edge.id),
     ),
+    ink: canvas.ink.filter((stroke) => !going.has(stroke.id)),
   }
 }
 
@@ -144,36 +374,39 @@ export function connected(
   fromSide: Side,
   toNode: string,
   toSide: Side,
-): Canvas {
-  if (fromNode === toNode) return canvas
-  if (!nodeById(canvas, fromNode) || !nodeById(canvas, toNode)) return canvas
+): { canvas: Canvas; id: string | null } {
+  if (fromNode === toNode) return { canvas, id: null }
+  if (!nodeById(canvas, fromNode) || !nodeById(canvas, toNode)) return { canvas, id: null }
 
-  const already = canvas.edges.some(
+  const already = canvas.edges.find(
     (edge) =>
       edge.fromNode === fromNode &&
       edge.toNode === toNode &&
       edge.fromSide === fromSide &&
       edge.toSide === toSide,
   )
-  if (already) return canvas
+  if (already) return { canvas, id: already.id }
 
   const edge: CanvasEdge = { id: freshId(), fromNode, fromSide, toNode, toSide }
-  return { ...canvas, edges: [...canvas.edges, edge] }
+  return { canvas: { ...canvas, edges: [...canvas.edges, edge] }, id: edge.id }
 }
 
 /** How far a copy lands from what it was copied from: one grid step each way, so
  *  the copy is visibly its own card and still where the hand left off. */
 const COPY_OFFSET = GRID
 
-/** The picked cards as a canvas of their own, with the edges that ran between
- *  them and nothing else. What a copy puts on the clipboard, so what is pasted
- *  from it is a canvas any app that reads the format can take. */
+/** What is picked as a canvas of its own, with the edges that ran between the
+ *  cards in it and nothing else. What a copy puts on the clipboard, so what is
+ *  pasted from it is a canvas any app that reads the format can take. */
 export function subset(canvas: Canvas, picked: readonly string[]): Canvas {
-  const taking = new Set(dragged(canvas, picked))
+  const taking = reach(canvas, picked)
 
   return {
     nodes: canvas.nodes.filter((node) => taking.has(node.id)),
     edges: canvas.edges.filter((edge) => taking.has(edge.fromNode) && taking.has(edge.toNode)),
+    ink: canvas.ink.filter((stroke) => taking.has(stroke.id)),
+    at: {},
+    gone: {},
   }
 }
 
@@ -190,7 +423,7 @@ export function pasted(
   dx = 0,
   dy = 0,
 ): { canvas: Canvas; ids: string[] } {
-  if (!incoming.nodes.length) return { canvas, ids: [] }
+  if (!incoming.nodes.length && !incoming.ink.length) return { canvas, ids: [] }
 
   const renamed = new Map(incoming.nodes.map((node) => [node.id, freshId()]))
   const nodes: CanvasNode[] = incoming.nodes.map((node) => ({
@@ -209,9 +442,19 @@ export function pasted(
       toNode: renamed.get(edge.toNode) ?? edge.toNode,
     }))
 
+  const ink = incoming.ink.map((stroke) => ({
+    ...transformed(stroke, { dx, dy, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } }),
+    id: freshId(),
+  }))
+
   return {
-    canvas: { nodes: [...canvas.nodes, ...nodes], edges: [...canvas.edges, ...edges] },
-    ids: nodes.map((node) => node.id),
+    canvas: {
+      ...canvas,
+      nodes: [...canvas.nodes, ...nodes],
+      edges: [...canvas.edges, ...edges],
+      ink: [...canvas.ink, ...ink],
+    },
+    ids: [...nodes.map((node) => node.id), ...ink.map((stroke) => stroke.id)],
   }
 }
 

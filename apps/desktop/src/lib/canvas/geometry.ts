@@ -18,6 +18,9 @@ export interface Box extends Point {
   height: number
 }
 
+/** The four sides an edge can leave a card by, in the order they read. */
+export const SIDES: readonly Side[] = ['top', 'right', 'bottom', 'left']
+
 /** How far apart the dots are, and what a dragged node lands on. Obsidian's own
  *  step, so a canvas edited in either app stays on one grid. */
 export const GRID = 20
@@ -177,13 +180,65 @@ export function nodeAt(nodes: readonly CanvasNode[], point: Point, edge = 12): C
     if (!node) continue
 
     const box = boxOf(node)
-    if (!within(box, point)) continue
+    if (!within(grown(box, edge / 2), point)) continue
     if (node.type === 'group' && within(inset(box, edge), point)) continue
+
+    if (node.type === 'shape') {
+      if (!within(box, point) && node.shape !== 'line' && node.shape !== 'arrow') continue
+      // A line is a line, not the triangle of plane beside it, and a hollow
+      // rectangle is its own outline: what looks empty is empty to a click too.
+      if (!onShape(node, point, edge / 2)) continue
+    }
 
     return node
   }
 
   return null
+}
+
+/** Whether a point is on a shape rather than merely in its box: on the line of a
+ *  line, on the ring of an unfilled ellipse, on the frame of an unfilled
+ *  rectangle, and anywhere inside a filled one. */
+function onShape(node: CanvasNode & { type: 'shape' }, point: Point, reach: number): boolean {
+  const box = boxOf(node)
+
+  switch (node.shape) {
+    case 'line':
+    case 'arrow': {
+      const line = shapeLine(node)
+      return awayFromSegment(point, line.from, line.to) <= reach
+    }
+    case 'rect':
+      return node.fill ? within(box, point) : !within(inset(box, reach), point)
+    case 'ellipse': {
+      const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+      const rx = Math.max(0.5, box.width / 2)
+      const ry = Math.max(0.5, box.height / 2)
+      const away = ((point.x - middle.x) / rx) ** 2 + ((point.y - middle.y) / ry) ** 2
+      if (node.fill) return away <= 1
+
+      const slack = reach / Math.min(rx, ry)
+      return away <= (1 + slack) ** 2 && away >= Math.max(0, 1 - slack) ** 2
+    }
+  }
+}
+
+/** How far a point is from a segment. The perpendicular where the foot falls on
+ *  the segment, and the nearer end otherwise. */
+export function awayFromSegment(point: Point, from: Point, to: Point): number {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const length = dx * dx + dy * dy
+  if (length === 0) return Math.hypot(point.x - from.x, point.y - from.y)
+
+  const along = Math.max(0, Math.min(1, ((point.x - from.x) * dx + (point.y - from.y) * dy) / length))
+  return Math.hypot(point.x - (from.x + along * dx), point.y - (from.y + along * dy))
+}
+
+/** The same box with `by` pixels added to every side, which is the forgiveness a
+ *  hand aiming at a thin line needs. */
+function grown(box: Box, by: number): Box {
+  return { x: box.x - by, y: box.y - by, width: box.width + 2 * by, height: box.height + 2 * by }
 }
 
 /** The same box with `by` pixels taken off every side. Empty rather than
@@ -222,9 +277,11 @@ export function caught(nodes: readonly CanvasNode[], band: Box): string[] {
   return nodes.filter((node) => overlaps(boxOf(node), band)).map((node) => node.id)
 }
 
-/** The box around every node, or null for an empty canvas. What Ctrl+0 frames. */
-export function bounds(nodes: readonly CanvasNode[]): Box | null {
-  const [first] = nodes
+/** The box around everything on the plane, or null for an empty one. What Ctrl+0
+ *  frames, so a page of handwriting with no cards on it still frames itself. */
+export function bounds(nodes: readonly CanvasNode[], ink: readonly Box[] = []): Box | null {
+  const boxes = [...nodes.map(boxOf), ...ink]
+  const [first] = boxes
   if (!first) return null
 
   let least = first.x
@@ -232,11 +289,11 @@ export function bounds(nodes: readonly CanvasNode[]): Box | null {
   let lowest = first.y
   let highest = first.y + first.height
 
-  for (const node of nodes) {
-    least = Math.min(least, node.x)
-    most = Math.max(most, node.x + node.width)
-    lowest = Math.min(lowest, node.y)
-    highest = Math.max(highest, node.y + node.height)
+  for (const box of boxes) {
+    least = Math.min(least, box.x)
+    most = Math.max(most, box.x + box.width)
+    lowest = Math.min(lowest, box.y)
+    highest = Math.max(highest, box.y + box.height)
   }
 
   return { x: least, y: lowest, width: most - least, height: highest - lowest }
@@ -293,14 +350,13 @@ export const HANDLES = [
 
 export type HandleId = (typeof HANDLES)[number]['id']
 
-/** How small a node may be dragged, in grid steps: small enough to be a marker
- *  beside something, big enough to still be grabbed. */
-const LEAST = GRID * 2
-
 /** A box after a handle has been dragged by `dx`, `dy`. The edges the handle
- *  pulls move and the others stay, and a side dragged past its opposite stops
- *  rather than turning the box inside out. */
-export function resized(box: Box, handle: HandleId, dx: number, dy: number): Box {
+ *  pulls move and the others stay, and a side dragged past its opposite stops at
+ *  `least` rather than turning the box inside out.
+ *
+ *  The offset arrives already snapped, or not, as the surface decided; see
+ *  snap.ts. Rounding here would fight the guides. */
+export function resizedBox(box: Box, handle: HandleId, dx: number, dy: number, least: number): Box {
   const pull = HANDLES.find((one) => one.id === handle)
   if (!pull) return box
 
@@ -308,19 +364,32 @@ export function resized(box: Box, handle: HandleId, dx: number, dy: number): Box
 
   if (pull.x < 0) {
     const right = x + width
-    x = Math.min(snapped(x + dx), right - LEAST)
+    x = Math.min(Math.round(x + dx), right - least)
     width = right - x
   } else if (pull.x > 0) {
-    width = Math.max(LEAST, snapped(width + dx))
+    width = Math.max(least, Math.round(width + dx))
   }
 
   if (pull.y < 0) {
     const bottom = y + height
-    y = Math.min(snapped(y + dy), bottom - LEAST)
+    y = Math.min(Math.round(y + dy), bottom - least)
     height = bottom - y
   } else if (pull.y > 0) {
-    height = Math.max(LEAST, snapped(height + dy))
+    height = Math.max(least, Math.round(height + dy))
   }
 
   return { x, y, width, height }
+}
+
+/** Where a line or an arrow runs inside its own box: corner to corner, and `up`
+ *  says which pair. One box, all four diagonals. */
+export function shapeLine(node: CanvasNode & { type: 'shape' }): { from: Point; to: Point } {
+  const left = node.x
+  const right = node.x + node.width
+  const top = node.y
+  const bottom = node.y + node.height
+
+  return node.up
+    ? { from: { x: left, y: bottom }, to: { x: right, y: top } }
+    : { from: { x: left, y: top }, to: { x: right, y: bottom } }
 }

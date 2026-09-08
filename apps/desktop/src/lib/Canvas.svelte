@@ -1,80 +1,68 @@
 <script lang="ts">
-  /** A canvas: an endless plane with cards on it, in a tab like a note.
+  /** A canvas: an endless plane with cards, shapes, connectors and ink on it, in
+   *  a tab like a note.
    *
    *  One transform for the whole plane. The cards are ordinary elements at the
    *  coordinates the file gives them, the connectors are one SVG layer beside
-   *  them, and panning and zooming move the plane rather than anything in it - so
-   *  a pan is a composited transform with no layout to redo, whether there are
-   *  five cards or five hundred. Cards far off screen are left out of the page
-   *  altogether; the connectors stay, because a path costs nothing to keep and a
-   *  line that vanished with its card would flicker.
+   *  them, the ink is two 2d canvases over both, and panning and zooming move the
+   *  plane rather than anything in it - so a pan is a composited transform with
+   *  no layout to redo, whether there are five cards or five hundred. Cards far
+   *  off screen are left out of the page altogether.
    *
-   *  A gesture is one edit. Dragging nine cards across the plane carries them by a
-   *  transform while the pointer is down and writes the file once when it comes
-   *  up, so it is one undo step and one save rather than ninety.
+   *  Every gesture goes through the machine in canvas/pointer.ts. This file does
+   *  three things and no more: it works out what is under a point, it hands the
+   *  machine the event, and it carries out the effects it gets back. What a press
+   *  means is not decided here, which is why it can be tested without a browser.
+   *
+   *  A gesture is one edit. What the plane shows while a gesture is under way is
+   *  the same pure function of the canvas that the gesture ends by committing, so
+   *  what you let go of is exactly what you saw, and nothing is written or
+   *  recorded in between.
    *
    *  Keys. Undo, redo and select all are read off the shortcut registry, so a
-   *  reader who rebound them has their own keys here too. Delete, Escape, Ctrl+0
-   *  and Ctrl+D are read straight: they mean something only while a plane is the
-   *  surface in front, so they are not app-wide bindings to go looking for in a
-   *  list. Copy and paste are the browser's own events, which is where they
-   *  belong. */
+   *  reader who rebound them has their own keys here too. The rest mean something
+   *  only while a plane is the surface in front, so they are read straight. */
 
   import { untrack } from 'svelte'
   import type { NoteJump } from '@nib/editor'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
+  import CanvasFind from './CanvasFind.svelte'
+  import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import { graphPoint, zoomed } from './camera'
+  import { canvasMenu, place, run } from './canvas/actions'
   import {
-    type CanvasNode as Card,
-    DEFAULT_HEIGHT,
-    DEFAULT_WIDTH,
-    freshId,
-    type NodeKind,
-    readCanvas,
-    type Side,
-    writeCanvas,
-  } from './canvas/format'
-  import {
-    connected,
-    copied,
     coloured,
     movedBy,
-    pasted,
-    placedAt,
-    removed,
-    resizedNode,
+    pickedBox,
+    resizedPick,
     subset,
-    withGroup,
-    withLabel,
-    withNode,
+    turnedInk,
     withText,
   } from './canvas/edits'
+  import { type Canvas as Plane, type InkPoint, readCanvas, writeCanvas } from './canvas/format'
+  import { boxOf, GRID, HANDLES, overlaps, type Point, rectBetween } from './canvas/geometry'
+  import { hitAt, HANDLE, PORT } from './canvas/hit'
+  import { assisted, tidyShape, transformed } from './canvas/ink'
+  import { DEFAULT_INK, readPalette } from './canvas/palette'
   import {
-    bounds,
-    boxOf,
-    caught,
-    edgePath,
-    facingSide,
-    GRID,
-    HANDLES,
-    type HandleId,
-    nodeAt,
-    overlaps,
-    type Point,
-    rectBetween,
-    sidePoint,
-    snapped,
-  } from './canvas/geometry'
+    type Effect,
+    type Hit,
+    type Input,
+    type Machine,
+    start,
+    step,
+  } from './canvas/pointer'
+  import { NO_SNAP, snapMove, snapResize } from './canvas/snap'
+  import { SIDES, sidePoint } from './canvas/geometry'
   import { CanvasStore } from './canvas/store.svelte'
+  import { tools } from './canvas/tools.svelte'
   import { dragged as draggedPaths, isTreeDrag } from './drag-paths'
-  import { key, t } from './i18n.svelte'
-  import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
-  import { prompt } from './prompt.svelte'
-  import { insideSpace, relativeTo } from './space-paths'
+  import { t } from './i18n.svelte'
+  import { menu } from './menu.svelte'
   import { shortcuts } from './shortcuts.svelte'
-  import { openExternal } from './tauri'
+  import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -89,45 +77,34 @@
    *  cards on the page changes at all. */
   const SLACK = 800
 
-  /** How far a pointer may travel and still count as a click, in pixels. */
-  const A_CLICK = 3
-
-  /** How big the chrome is on screen, in pixels, whatever the zoom. */
-  const HANDLE = 9
-  const PORT = 8
-
   /** Below this the dots are closer together than they are wide, and the grid
    *  stops being a grid and becomes a wash. */
   const DOTS_UNTIL = 7
+
+  /** How long a pointer has to be still before it means something else: the menu
+   *  under a finger, a tidied shape under a pen. */
+  const HELD = 480
 
   /** A card that is not being dragged, so the each block below hands over the
    *  same object every frame rather than a fresh zero. */
   const STILL: Point = { x: 0, y: 0 }
 
-  const SIDES: Side[] = ['top', 'right', 'bottom', 'left']
-
   let host = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
-  /** Space held, which turns a drag anywhere into a pan. */
-  let spacing = $state(false)
+  let machine = $state<Machine>(start())
+  /** What the six presets are in this theme, for the ink layer, which paints on
+   *  a 2d context and cannot read a custom property. */
+  let palette = $state<Record<string, string>>({})
   /** Whether the plane has been put in view yet; see `measure`. */
   let placed = false
   /** Where the pointer last was on the plane, so a paste and a new card land
    *  where the reader is looking. */
   let at: Point = { x: 0, y: 0 }
-
-  type Gesture =
-    | { kind: 'pan'; screen: Point }
-    | { kind: 'drag'; ids: string[]; screen: Point; dx: number; dy: number }
-    | { kind: 'resize'; id: string; handle: HandleId; screen: Point; dx: number; dy: number }
-    | { kind: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
-    | { kind: 'connect'; id: string; side: Side; to: Point }
-
-  let gesture = $state<Gesture | null>(null)
-  /** The card the pointer is over, which is what wears the four dots an edge is
-   *  drawn from. */
-  let hovered = $state<string | null>(null)
+  /** Everything but what is picked, faded back. What "narrow to selection" does:
+   *  the rest of the plane is still there, it is just not what this is about. */
+  let narrowed = $state(false)
+  let finding = $state(false)
 
   const camera = $derived(store.camera)
   /** One screen pixel in plane units. The chrome is sized in these, so it comes
@@ -138,29 +115,85 @@
    *  are both this. */
   const originX = $derived(width / 2 - camera.x * camera.scale)
   const originY = $derived(height / 2 - camera.y * camera.scale)
-  const step = $derived(GRID * camera.scale)
+  const stepX = $derived(GRID * camera.scale)
 
+  const gesture = $derived(machine.gesture)
   const drag = $derived(gesture?.kind === 'drag' ? gesture : null)
-  /** How far the cards being dragged have gone, on the grid. */
-  const carried = $derived(drag ? { x: snapped(drag.dx), y: snapped(drag.dy) } : STILL)
-  const moving = $derived(drag ? new Set(drag.ids) : null)
+  const sizing = $derived(gesture?.kind === 'resize' ? gesture : null)
+  const inking = $derived(gesture?.kind === 'ink' ? gesture : null)
 
-  /** Every card by id, where it is now: the file's position, plus whatever a drag
-   *  has carried. Depends on the cards and on the drag and not on the camera, so a
-   *  pan rebuilds nothing. What the connectors, the handles and the dots are drawn
-   *  from. */
-  const boxes = $derived.by(() => {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole whenever the cards or the drag change
-    const map = new Map<string, Card>()
+  /** Everything a snap could line the moving thing up with: what is on the plane
+   *  and not going with it. */
+  function bystanders(ids: readonly string[]) {
+    const moving = new Set(ids)
+    return store.canvas.nodes.filter((node) => !moving.has(node.id)).map(boxOf)
+  }
 
-    for (const node of store.canvas.nodes) {
-      map.set(
-        node.id,
-        moving?.has(node.id) ? { ...node, x: node.x + carried.x, y: node.y + carried.y } : node,
-      )
+  /** How far a drag has really gone, once the grid and the neighbours have had
+   *  their say, and the lines that say why. */
+  const dragSnap = $derived.by(() => {
+    if (!drag) return NO_SNAP
+
+    const box = pickedBox(store.canvas, drag.ids)
+    if (!box) return NO_SNAP
+
+    const snap = snapMove(
+      { ...box, x: box.x + drag.dx, y: box.y + drag.dy },
+      bystanders(drag.ids),
+      GRID / 2,
+    )
+
+    return { dx: drag.dx + snap.dx, dy: drag.dy + snap.dy, guides: snap.guides }
+  })
+
+  const sizeSnap = $derived.by(() => {
+    if (!sizing) return NO_SNAP
+
+    const box = pickedBox(store.canvas, sizing.ids)
+    if (!box) return NO_SNAP
+
+    const now = {
+      x: box.x + (sizing.handle.includes('w') ? sizing.dx : 0),
+      y: box.y + (sizing.handle.includes('n') ? sizing.dy : 0),
+      width: box.width + (sizing.handle.includes('e') ? sizing.dx : 0),
+      height: box.height + (sizing.handle.includes('s') ? sizing.dy : 0),
     }
 
-    return map
+    const snap = snapResize(now, sizing.handle, bystanders(sizing.ids), GRID / 2)
+    return { dx: sizing.dx + snap.dx, dy: sizing.dy + snap.dy, guides: snap.guides }
+  })
+
+  /** How far the ink lasso has been dragged, scaled or turned so far. */
+  let carriedInk = $state<{ dx: number; dy: number; scale: number; turn: number; about: Point }>({
+    dx: 0,
+    dy: 0,
+    scale: 1,
+    turn: 0,
+    about: STILL,
+  })
+
+  /** The plane as it stands with the gesture applied but not committed.
+   *
+   *  The same pure functions the commit uses, so what is let go of is exactly
+   *  what was on screen. Everything the gesture did not touch comes back as the
+   *  very same object, so a drag of nine cards among five hundred redraws nine. */
+  const shown = $derived.by((): Plane => {
+    const base = store.canvas
+    if (drag) return movedBy(base, drag.ids, dragSnap.dx, dragSnap.dy)
+    if (sizing) return resizedPick(base, sizing.ids, sizing.handle, sizeSnap.dx, sizeSnap.dy)
+
+    if (inking) {
+      const moved = { ...carriedInk, sx: carriedInk.scale, sy: carriedInk.scale }
+      const wanted = new Set(store.picked)
+      return {
+        ...base,
+        ink: base.ink.map((stroke) =>
+          wanted.has(stroke.id) ? transformed(stroke, moved) : stroke,
+        ),
+      }
+    }
+
+    return base
   })
 
   /** The part of the plane worth drawing. */
@@ -173,51 +206,66 @@
 
   /** The cards on the page: what is in view, in the order the file holds them,
    *  which is the order they stack in. */
-  const shown = $derived(
-    store.canvas.nodes.filter((node) => overlaps(boxOf(boxes.get(node.id) ?? node), inView)),
-  )
+  const cards = $derived(shown.nodes.filter((node) => overlaps(boxOf(node), inView)))
 
-  /** The one card that is picked, when exactly one is: what wears the handles.
-   *  Several picked share an outline and no handles, since resizing nine cards at
-   *  once is not a gesture anybody makes. */
-  const only = $derived(
-    store.picked.length === 1 ? (boxes.get(store.picked[0] ?? '') ?? null) : null,
+  const picked = $derived(new Set(store.picked))
+
+  /** The box the handles are drawn on: everything picked, together. */
+  const box = $derived(pickedBox(shown, store.picked))
+
+  /** Whether what is picked is ink, which is what the turn handle belongs to. */
+  const lassoed = $derived(
+    store.picked.length > 0 && store.picked.every((id) => shown.ink.some((one) => one.id === id)),
   )
 
   /** The card the four dots sit on: whatever is under the pointer, and nothing
-   *  while a gesture is under way or a card is being written in. */
+   *  while a gesture is under way, a card is being written in, or the tool in
+   *  hand is not the arrow. */
   const ported = $derived(
-    gesture || store.editing !== null ? null : (boxes.get(hovered ?? '') ?? null),
+    gesture || store.editing !== null || tools.which !== 'select' ? null : machine.hovered,
   )
+
+  const portedBox = $derived(shown.nodes.find((node) => node.id === ported) ?? null)
 
   /** The connector being drawn from a card's side, as a path. */
   const drawing = $derived.by(() => {
     if (gesture?.kind !== 'connect') return null
 
-    const from = boxes.get(gesture.id)
+    const from = shown.nodes.find((node) => node.id === gesture.id)
     if (!from) return null
 
-    const box = boxOf(from)
-    const to = gesture.to
-
-    return edgePath({
-      from: sidePoint(box, gesture.side),
-      to,
-      fromSide: gesture.side,
-      toSide: facingSide({ ...to, width: 0, height: 0 }, box),
-    })
+    return { from: sidePoint(boxOf(from), gesture.side), to: gesture.to, side: gesture.side }
   })
 
   const band = $derived(gesture?.kind === 'band' ? rectBetween(gesture.from, gesture.to) : null)
+  const lasso = $derived(gesture?.kind === 'lasso' ? gesture.points : null)
+  const shaping = $derived(gesture?.kind === 'shape' ? gesture : null)
+
+  /** The stroke under the pen, with whatever the browser guesses is coming next
+   *  drawn on the end of it. The guess is drawn and never kept: it is there so
+   *  the ink reaches the nib, and it is wrong by the next event. */
+  let predicted = $state<InkPoint[]>([])
+
+  const live = $derived.by(() => {
+    if (gesture?.kind !== 'draw') return null
+
+    return {
+      id: 'live',
+      tool: gesture.stroke.tool,
+      color: gesture.stroke.color,
+      size: gesture.stroke.size,
+      points: [...gesture.stroke.points, ...predicted],
+    }
+  })
+
+  const guides = $derived(dragSnap.guides.length ? dragSnap.guides : sizeSnap.guides)
 
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   // Words that changed under the surface: a version restored, a copy a sync
   // brought over, the file undo putting one back. A plane that had nothing on it
-  // is framed the moment something arrives that way, which is what a blank canvas
-  // the account fills a second later needs; a card the reader has just put down
-  // is no reason at all to move the plane out from under them.
+  // is framed the moment something arrives that way.
   $effect(() => {
     follows(tab.note.revision)
     if (store.follow() && !store.framed && width && height) store.fit(width, height)
@@ -230,6 +278,19 @@
     const watcher = new ResizeObserver(() => measure(element))
     watcher.observe(element)
     measure(element)
+    palette = readPalette(element)
+
+    return () => watcher.disconnect()
+  })
+
+  // The theme's own colours, again, whenever the theme changes. The ink layer
+  // paints on a 2d context, which has never heard of a custom property.
+  $effect(() => {
+    const element = host
+    if (!element || typeof MutationObserver === 'undefined') return
+
+    const watcher = new MutationObserver(() => (palette = readPalette(element)))
+    watcher.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] })
 
     return () => watcher.disconnect()
   })
@@ -238,7 +299,7 @@
   // plane the way they reach an editor. Never while a card is being written in:
   // the keys are that card's.
   $effect(() => {
-    if (focused && store.editing === null) host?.focus({ preventScroll: true })
+    if (focused && store.editing === null && !finding) host?.focus({ preventScroll: true })
   })
 
   // Zooming has to stop the page doing anything else with the scroll, and a
@@ -252,16 +313,15 @@
   })
 
   function measure(element: HTMLElement) {
-    const box = element.getBoundingClientRect()
-    if (!box.width || !box.height) return
+    const rect = element.getBoundingClientRect()
+    if (!rect.width || !rect.height) return
 
-    width = Math.round(box.width)
-    height = Math.round(box.height)
+    width = Math.round(rect.width)
+    height = Math.round(rect.height)
 
     // A canvas opens with everything on it in view, and only then: the view is
-    // the reader's from the first frame on, and a window being resized - or a
-    // card being put down, which lays the pane out again - is no reason at all
-    // to move the plane out from under them.
+    // the reader's from the first frame on, and a window being resized is no
+    // reason at all to move the plane out from under them.
     if (placed) return
 
     placed = true
@@ -272,8 +332,279 @@
     const element = host
     if (!element) return { x: 0, y: 0 }
 
-    const box = element.getBoundingClientRect()
-    return graphPoint(camera, width, height, event.clientX - box.left, event.clientY - box.top)
+    const rect = element.getBoundingClientRect()
+    return graphPoint(camera, width, height, event.clientX - rect.left, event.clientY - rect.top)
+  }
+
+  function screenAt(event: { clientX: number; clientY: number }): Point {
+    const rect = host?.getBoundingClientRect()
+    return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) }
+  }
+
+  /** What the point is on, in the shape the machine wants it. */
+  function hitFor(point: Point, coarse: boolean): Hit {
+    return hitAt(
+      {
+        canvas: shown,
+        picked: store.picked,
+        box,
+        scale: camera.scale,
+        ported,
+        coarse,
+        lassoed,
+      },
+      point,
+    )
+  }
+
+  /** A pen sample, in plane units, with everything the digitiser said about it.
+   *
+   *  A device that reports no pressure says so as exactly one half, which is what
+   *  the Pointer Events spec asks for; a stylus reports its own. Tilt comes
+   *  through as written and is zero for a finger and a mouse. */
+  function sampleOf(event: PointerEvent, began: number): InkPoint {
+    const point = planeAt(event)
+    return {
+      x: point.x,
+      y: point.y,
+      pressure: event.pressure > 0 ? event.pressure : 0.5,
+      tiltX: event.tiltX,
+      tiltY: event.tiltY,
+      t: Math.max(0, Math.round(event.timeStamp - began)),
+    }
+  }
+
+  /** When the stroke in hand began, so its samples carry small numbers. */
+  let began = 0
+  let holding = 0
+
+  function waitForHold(point: Point) {
+    window.clearTimeout(holding)
+    holding = window.setTimeout(() => send({ kind: 'held', at: point }), HELD)
+  }
+
+  function stopHolding() {
+    window.clearTimeout(holding)
+    holding = 0
+  }
+
+  /** One event through the machine, and its effects carried out.
+   *
+   *  The plane as it stands is read before the machine moves on, because an
+   *  effect that ends a gesture is the gesture's own last word: what is committed
+   *  is what was on screen the instant before the pointer came up. */
+  function send(input: Input) {
+    const preview = shown
+    const next = step(machine, input, {
+      tool: tools.which,
+      picked: store.picked,
+      editing: store.editing,
+      scale: camera.scale,
+      inkBox: box,
+      pen: { ...tools.ink, color: tools.colour },
+    })
+
+    machine = next.machine
+    for (const effect of next.effects) apply(effect, preview)
+  }
+
+  function apply(effect: Effect, preview: Plane) {
+    switch (effect.do) {
+      case 'pick':
+        if (effect.ids.length === 1 && effect.ids[0]) store.pick(effect.ids[0], effect.adding)
+        else store.pickAll(effect.ids, effect.adding)
+        break
+      case 'clear':
+        store.clearPicked()
+        break
+      case 'leave':
+        if (store.editing !== null) store.editing = null
+        break
+      case 'edit':
+        store.editing = effect.id
+        break
+      case 'move':
+      case 'resize':
+        // The preview is the answer: it is what was drawn, snapped and all.
+        store.edit(preview)
+        break
+      case 'ink': {
+        carriedInk = { dx: effect.dx, dy: effect.dy, scale: effect.scale, turn: effect.turn, about: effect.about }
+        break
+      }
+      case 'connect':
+        run.connect(store, effect.from, effect.fromSide, effect.to, effect.toSide)
+        break
+      case 'shape':
+        run.shape(store, effect.tool, effect.from, effect.to, tools.colour)
+        tools.done()
+        break
+      case 'place':
+        void place(store, effect.tool, effect.at, tab.path)
+        tools.done()
+        break
+      case 'stroke':
+        run.stroke(store, effect.stroke)
+        predicted = []
+        break
+      case 'rub':
+        run.rub(store, effect.ids)
+        break
+      case 'cut':
+        run.cut(store, effect.at, effect.reach)
+        break
+      case 'catch':
+        run.lasso(store, effect.lasso)
+        break
+      case 'pan':
+        store.camera = {
+          ...camera,
+          x: camera.x - effect.dx / camera.scale,
+          y: camera.y - effect.dy / camera.scale,
+        }
+        break
+      case 'zoom':
+        store.camera = zoomed(camera, width, height, effect.at.x, effect.at.y, effect.by)
+        break
+      case 'menu':
+        showMenu(effect.at)
+        break
+      case 'assist':
+        assistShape()
+        break
+    }
+  }
+
+  /** A stroke held still at the end becomes what it was aiming at: a line, a
+   *  ring or a box. The pen is still down, so what changes is the stroke in
+   *  hand and nothing on the plane yet. */
+  function assistShape() {
+    const one = machine.gesture
+    if (one?.kind !== 'draw') return
+
+    const stroke = { id: 'live', ...one.stroke }
+    const shape = assisted(stroke)
+    if (!shape) return
+
+    machine = { ...machine, gesture: { ...one, stroke: { ...one.stroke, points: tidyShape(stroke, shape).points } } }
+    predicted = []
+  }
+
+  function onPointerDown(event: PointerEvent) {
+    if (event.button === 2) return
+
+    const point = planeAt(event)
+    at = point
+    began = event.timeStamp
+
+    const coarse = event.pointerType === 'touch'
+    host?.setPointerCapture(event.pointerId)
+
+    send({
+      kind: 'down',
+      id: event.pointerId,
+      pointer: event.pointerType === 'pen' ? 'pen' : coarse ? 'touch' : 'mouse',
+      at: point,
+      screen: screenAt(event),
+      button: event.button,
+      shift: event.shiftKey,
+      adds: event.ctrlKey || event.metaKey,
+      // Chromium turns a pen held with its button into the eraser bit, and some
+      // devices report the barrel button as the right one instead. Both mean the
+      // same thing to a hand, so both mean it here.
+      eraser:
+        event.pointerType === 'pen' && ((event.buttons & 32) !== 0 || (event.buttons & 2) !== 0),
+      sample: sampleOf(event, began),
+      hit: hitFor(point, coarse),
+    })
+
+    if (coarse) waitForHold(point)
+  }
+
+  function onPointerMove(event: PointerEvent) {
+    const point = planeAt(event)
+    at = point
+    const coarse = event.pointerType === 'touch'
+
+    // Every sample since the last event, not just the one that was delivered: a
+    // fast stroke is drawn through all of them rather than through a fifth of
+    // them. Guarded, because the call is only there in a secure context.
+    const samples =
+      machine.gesture?.kind === 'draw'
+        ? (typeof event.getCoalescedEvents === 'function'
+            ? event.getCoalescedEvents()
+            : [event]
+          ).map((one) => sampleOf(one, began))
+        : []
+
+    if (machine.gesture?.kind === 'draw') {
+      predicted =
+        typeof event.getPredictedEvents === 'function'
+          ? event.getPredictedEvents().map((one) => sampleOf(one, began))
+          : []
+    }
+
+    // A pointer that is moving is not a pointer being held.
+    if (holding && Math.hypot(point.x - at.x, point.y - at.y) * camera.scale > 4) stopHolding()
+
+    send({
+      kind: 'move',
+      id: event.pointerId,
+      at: point,
+      screen: screenAt(event),
+      samples,
+      hit: hitFor(point, coarse),
+    })
+
+    // A pen that has stopped moving is a pen asking for its shape to be tidied.
+    if (machine.gesture?.kind === 'draw') waitForHold(point)
+  }
+
+  function onPointerUp(event: PointerEvent) {
+    stopHolding()
+    if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
+
+    const point = planeAt(event)
+    const wasInk = machine.gesture?.kind === 'ink'
+
+    send({
+      kind: 'up',
+      id: event.pointerId,
+      at: point,
+      screen: screenAt(event),
+      hit: hitFor(point, event.pointerType === 'touch'),
+    })
+
+    if (wasInk) {
+      const moved = carriedInk
+      carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
+      if (moved.dx || moved.dy || moved.scale !== 1 || moved.turn) {
+        const wanted = new Set(store.picked)
+        const turned = turnedInk(store.canvas, store.picked, moved.turn, moved.about)
+        store.edit({
+          ...turned,
+          ink: turned.ink.map((stroke) =>
+            wanted.has(stroke.id)
+              ? transformed(stroke, {
+                  dx: moved.dx,
+                  dy: moved.dy,
+                  sx: moved.scale,
+                  sy: moved.scale,
+                  turn: 0,
+                  about: moved.about,
+                })
+              : stroke,
+          ),
+        })
+      }
+    }
+  }
+
+  function onPointerCancel(event: PointerEvent) {
+    stopHolding()
+    predicted = []
+    carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
+    send({ kind: 'cancel', id: event.pointerId })
   }
 
   function onWheel(event: WheelEvent) {
@@ -281,7 +612,7 @@
     if (!element) return
 
     event.preventDefault()
-    const box = element.getBoundingClientRect()
+    const rect = element.getBoundingClientRect()
 
     // Ctrl and the wheel is zoom, which is also what a trackpad pinch arrives as.
     // The wheel on its own moves the plane, which is what a wheel does everywhere.
@@ -290,8 +621,8 @@
         camera,
         width,
         height,
-        event.clientX - box.left,
-        event.clientY - box.top,
+        event.clientX - rect.left,
+        event.clientY - rect.top,
         Math.exp(-event.deltaY * 0.0035),
       )
       return
@@ -304,331 +635,47 @@
     }
   }
 
-  function onPointerDown(event: PointerEvent) {
-    if (event.button !== 0 && event.button !== 1) return
-
-    const point = planeAt(event)
-    at = point
-
-    // Space, or the middle button, pans from anywhere: a hand that has learned
-    // either uses it over a card as readily as over the plane.
-    if (spacing || event.button === 1) {
-      hold(event, { kind: 'pan', screen: { x: event.clientX, y: event.clientY } })
-      return
-    }
-
-    const element = event.target instanceof Element ? event.target : null
-    const handle = element?.closest('[data-handle]')
-    const port = element?.closest('[data-side]')
-    const edge = element?.closest('[data-edge]')
-
-    if (handle instanceof HTMLElement && only) {
-      const which = handle.dataset.handle
-      const found = HANDLES.find((one) => one.id === which)
-      if (found) {
-        hold(event, {
-          kind: 'resize',
-          id: only.id,
-          handle: found.id,
-          screen: { x: event.clientX, y: event.clientY },
-          dx: 0,
-          dy: 0,
-        })
-      }
-      return
-    }
-
-    if (port instanceof HTMLElement && ported) {
-      const side = SIDES.find((one) => one === port.dataset.side)
-      if (side) hold(event, { kind: 'connect', id: ported.id, side, to: point })
-      return
-    }
-
-    if (edge instanceof SVGElement) {
-      const id = edge.dataset.edge
-      if (id) store.pick(id, adds(event))
-      leaveEditing()
-      return
-    }
-
-    const node = nodeAt(store.canvas.nodes, point)
-
-    // A card being written in keeps the pointer: it is a text field, and a drag
-    // in one selects words.
-    if (store.editing !== null && node?.id === store.editing) return
-
-    if (!node) {
-      leaveEditing()
-      // Dragging the plane moves the plane, which is what the brief and every
-      // hand expect. A rubber band is the same drag with Shift or Ctrl held, and
-      // Ctrl means what it means for a click: add rather than replace.
-      if (event.shiftKey || adds(event)) {
-        if (!adds(event)) store.clearPicked()
-        hold(event, {
-          kind: 'band',
-          from: point,
-          to: point,
-          was: adds(event) ? [...store.picked] : [],
-          adding: adds(event),
-        })
-      } else {
-        store.clearPicked()
-        hold(event, { kind: 'pan', screen: { x: event.clientX, y: event.clientY } })
-      }
-      return
-    }
-
-    leaveEditing()
-    if (adds(event) || !store.isPicked(node.id)) store.pick(node.id, adds(event))
-    if (!store.picked.length) return
-
-    hold(event, {
-      kind: 'drag',
-      ids: [...store.picked],
-      screen: { x: event.clientX, y: event.clientY },
-      dx: 0,
-      dy: 0,
-    })
-  }
-
-  /** Whether the keys held mean "as well as", which is Ctrl on Windows and Linux
-   *  and Cmd on a Mac: added to what is picked, and on its own the key that a
-   *  handful of the plane's own gestures hang off. */
-  function adds(event: { ctrlKey: boolean; metaKey: boolean }): boolean {
-    return event.ctrlKey || event.metaKey
-  }
-
-  function hold(event: PointerEvent, one: Gesture) {
-    host?.setPointerCapture(event.pointerId)
-    gesture = one
-  }
-
-  function onPointerMove(event: PointerEvent) {
-    at = planeAt(event)
-
-    const one = gesture
-    if (!one) {
-      const id = nodeAt(store.canvas.nodes, at)?.id ?? null
-      if (id !== hovered) hovered = id
-      return
-    }
-
-    switch (one.kind) {
-      case 'pan': {
-        const scale = camera.scale
-        store.camera = {
-          x: camera.x - (event.clientX - one.screen.x) / scale,
-          y: camera.y - (event.clientY - one.screen.y) / scale,
-          scale,
-        }
-        gesture = { ...one, screen: { x: event.clientX, y: event.clientY } }
-        break
-      }
-      case 'drag':
-      case 'resize':
-        gesture = {
-          ...one,
-          dx: (event.clientX - one.screen.x) / camera.scale,
-          dy: (event.clientY - one.screen.y) / camera.scale,
-        }
-        break
-      case 'band': {
-        gesture = { ...one, to: at }
-        const inside = caught(store.canvas.nodes, rectBetween(one.from, at))
-        store.pickAll([...one.was, ...inside])
-        break
-      }
-      case 'connect':
-        gesture = { ...one, to: at }
-        break
-    }
-  }
-
-  function onPointerUp(event: PointerEvent) {
-    const one = gesture
-    gesture = null
-    if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
-    if (!one) return
-
-    switch (one.kind) {
-      case 'drag':
-        // A drag that was really a click has nothing to record.
-        if (Math.hypot(one.dx, one.dy) * camera.scale > A_CLICK) {
-          store.edit(movedBy(store.canvas, one.ids, one.dx, one.dy))
-        }
-        break
-      case 'resize':
-        store.edit(resizedNode(store.canvas, one.id, one.handle, one.dx, one.dy))
-        break
-      case 'connect': {
-        const target = nodeAt(store.canvas.nodes, one.to)
-        const from = boxes.get(one.id)
-        if (!target || !from || target.id === one.id) break
-
-        store.edit(
-          connected(
-            store.canvas,
-            one.id,
-            one.side,
-            target.id,
-            facingSide(boxOf(target), boxOf(from)),
-          ),
-        )
-        break
-      }
-      case 'pan':
-      case 'band':
-        break
-    }
-  }
-
   /** A double click on the plane makes a card and opens it; on a card it opens
    *  the card, and on a frame or a connector it asks for the words it wears. */
   function onDoubleClick(event: MouseEvent) {
     const point = planeAt(event)
-    const element = event.target instanceof Element ? event.target : null
-    const edge = element?.closest('[data-edge]')
+    void run.open(store, hitFor(point, false), point, tab.path)
+  }
 
-    if (edge instanceof SVGElement && edge.dataset.edge) {
-      void askForLabel(edge.dataset.edge)
-      return
+  function showMenu(point: Point) {
+    const found = hitFor(point, viewport.phone)
+    if (found.node && !store.isPicked(found.node)) store.pick(found.node)
+    if (found.edge && !store.isPicked(found.edge)) store.pick(found.edge)
+    if (found.stroke && !store.isPicked(found.stroke)) store.pick(found.stroke)
+
+    const rect = host?.getBoundingClientRect()
+    const screen = {
+      clientX: (rect?.left ?? 0) + (point.x - camera.x) * camera.scale + width / 2,
+      clientY: (rect?.top ?? 0) + (point.y - camera.y) * camera.scale + height / 2,
     }
 
-    const node = nodeAt(store.canvas.nodes, point)
-    if (!node) {
-      addNode('text', point)
-      return
-    }
-
-    switch (node.type) {
-      case 'text':
-        store.editing = node.id
-        break
-      case 'group':
-        void askForLabel(node.id)
-        break
-      case 'link':
-        void openExternal(node.url)
-        break
-      case 'file':
-        void openFile(node.file)
-        break
-    }
-  }
-
-  async function openFile(file: string) {
-    const root = workspace.activeSpace?.root
-    if (root) await workspace.openEntry(insideSpace(root, file))
-  }
-
-  async function askForLabel(id: string) {
-    const answer = await prompt.ask({
-      title: t('Name this'),
-      value: labelOf(id),
-      confirmLabel: key('Save'),
-    })
-
-    if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
-  }
-
-  function labelOf(id: string): string {
-    const node = store.canvas.nodes.find((one) => one.id === id)
-    if (node?.type === 'group') return node.label ?? ''
-
-    return store.canvas.edges.find((one) => one.id === id)?.label ?? ''
-  }
-
-  function leaveEditing() {
-    if (store.editing !== null) store.editing = null
-  }
-
-  function addNode(kind: NodeKind, point: Point = at) {
-    switch (kind) {
-      case 'file':
-        void askForFile(point)
-        return
-      case 'link':
-        void askForUrl(point)
-        return
-      case 'group': {
-        // Room enough to put a handful of cards in, which is what a frame is for.
-        const box = placedAt(point, GRID * 20, GRID * 12)
-        const id = freshId()
-        store.edit(withGroup(store.canvas, { ...box, id, type: 'group' }))
-        store.pick(id)
-        return
-      }
-      case 'text': {
-        const box = placedAt(point, DEFAULT_WIDTH, DEFAULT_HEIGHT)
-        const id = freshId()
-        store.edit(withNode(store.canvas, { ...box, id, type: 'text', text: '' }))
-        store.pick(id)
-        // A card made by hand is a card somebody is about to write in.
-        store.editing = id
-      }
-    }
-  }
-
-  async function askForFile(point: Point) {
-    const root = workspace.activeSpace?.root
-    if (!root) return
-
-    const chosen = await prompt.find({
-      title: t('Which note'),
-      placeholder: t('Search'),
-      options: workspace.files.map((one) => {
-        const relative = relativeTo(root, one.path)
-        return { id: relative, label: relative }
+    menu.show(
+      new MouseEvent('contextmenu', screen),
+      canvasMenu(store, point, {
+        path: tab.path,
+        name: tab.name,
+        palette,
+        width,
+        height,
+        narrowed,
+        onnarrow: () => {
+          narrowed = !narrowed
+          if (narrowed) store.frame(width, height)
+        },
+        onfind: () => (finding = true),
       }),
-    })
-
-    if (chosen) putFile(chosen, point)
+      { title: t('Canvas'), near: viewport.phone },
+    )
   }
 
-  function putFile(file: string, point: Point) {
-    const box = placedAt(point, DEFAULT_WIDTH, GRID * 9)
-    const id = freshId()
-    store.edit(withNode(store.canvas, { ...box, id, type: 'file', file }))
-    store.pick(id)
-  }
-
-  async function askForUrl(point: Point) {
-    const url = await prompt.ask({
-      title: t('Which address'),
-      placeholder: t('Address'),
-      confirmLabel: key('Add'),
-    })
-
-    if (url) putLink(url, point)
-  }
-
-  function putLink(url: string, point: Point) {
-    const box = placedAt(point, DEFAULT_WIDTH, GRID * 4)
-    const id = freshId()
-    store.edit(withNode(store.canvas, { ...box, id, type: 'link', url }))
-    store.pick(id)
-  }
-
-  function putText(text: string, point: Point) {
-    const box = placedAt(point, DEFAULT_WIDTH, DEFAULT_HEIGHT)
-    const id = freshId()
-    store.edit(withNode(store.canvas, { ...box, id, type: 'text', text }))
-    store.pick(id)
-  }
-
-  function deletePicked() {
-    if (!store.picked.length) return
-
-    store.edit(removed(store.canvas, store.picked))
-    store.clearPicked()
-  }
-
-  function duplicate() {
-    if (!store.picked.length) return
-
-    const made = copied(store.canvas, store.picked)
-    store.edit(made.canvas)
-    store.pickAll(made.ids)
+  function onContextMenu(event: MouseEvent) {
+    event.preventDefault()
+    showMenu(planeAt(event))
   }
 
   function onKeyDown(event: KeyboardEvent) {
@@ -636,44 +683,40 @@
       // Held rather than pressed: space is a way of holding the plane, not a
       // command, so nothing happens until the pointer moves as well.
       event.preventDefault()
-      spacing = true
+      send({ kind: 'space', down: true })
       return
     }
 
     if (event.key === 'Escape') {
-      if (store.editing !== null) leaveEditing()
+      if (store.editing !== null) store.editing = null
+      else if (narrowed) narrowed = false
+      else if (tools.which !== 'select') tools.choose('select')
       else store.clearPicked()
       return
     }
 
     if (store.editing !== null) return
 
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (!store.picked.length) return
-
+    if (
+      run.keys(store, event, {
+        width,
+        height,
+        path: tab.path,
+        name: tab.name,
+        palette,
+        onfind: () => (finding = true),
+      })
+    ) {
       event.preventDefault()
-      deletePicked()
-      return
-    }
-
-    // Its own key rather than the app's Actual size, which is about how big the
-    // text is: on a plane, zoom is only how much of it is in view, and Ctrl+0 is
-    // what puts all of it there.
-    if (event.key === '0' && adds(event)) {
-      event.preventDefault()
-      store.fit(width, height)
-      return
-    }
-
-    if (event.key.toLowerCase() === 'd' && (event.ctrlKey || event.metaKey)) {
-      event.preventDefault()
-      duplicate()
       return
     }
 
     if (shortcuts.pressed('edit.select-all', event)) {
       event.preventDefault()
-      store.pickAll(store.canvas.nodes.map((node) => node.id))
+      store.pickAll([
+        ...store.canvas.nodes.map((node) => node.id),
+        ...store.canvas.ink.map((stroke) => stroke.id),
+      ])
       return
     }
 
@@ -690,7 +733,7 @@
   }
 
   function onKeyUp(event: KeyboardEvent) {
-    if (event.key === ' ') spacing = false
+    if (event.key === ' ') send({ kind: 'space', down: false })
   }
 
   /** What is picked, as a canvas of its own, so it pastes into another canvas
@@ -702,117 +745,135 @@
     event.clipboardData?.setData('text/plain', writeCanvas(subset(store.canvas, store.picked)))
   }
 
-  /** Cards from another canvas, an address, or some words: a paste is read as
-   *  whichever of the three it turns out to be. */
+  function onCut(event: ClipboardEvent) {
+    if (store.editing !== null || !store.picked.length) return
+
+    onCopy(event)
+    run.remove(store)
+  }
+
+  /** Cards from another canvas, a picture, an address, or some words: a paste is
+   *  read as whichever of the four it turns out to be. */
   function onPaste(event: ClipboardEvent) {
     if (store.editing !== null) return
+
+    const picture = [...(event.clipboardData?.items ?? [])].find((one) =>
+      one.type.startsWith('image/'),
+    )
+
+    if (picture) {
+      const file = picture.getAsFile()
+      if (file) {
+        event.preventDefault()
+        void run.dropImage(store, file, at, tab.path)
+        return
+      }
+    }
 
     const text = event.clipboardData?.getData('text/plain').trim()
     if (!text) return
 
     event.preventDefault()
-    const held = readCanvas(text)
+    run.paste(store, readCanvas(text), text, at)
+  }
 
-    if (held.nodes.length) {
-      // Centred on the pointer, so a paste lands where the reader is looking
-      // rather than where the cards happened to be in the canvas they came from.
-      const box = bounds(held.nodes)
-      const dx = box ? snapped(at.x - box.x - box.width / 2) : 0
-      const dy = box ? snapped(at.y - box.y - box.height / 2) : 0
-      const made = pasted(store.canvas, held, dx, dy)
+  /** A note or a picture dragged out of the file list, or a file from the
+   *  system, becomes a card where it was dropped. */
+  function onDrop(event: DragEvent) {
+    const point = planeAt(event)
+    const paths = draggedPaths(event.dataTransfer)
 
-      store.edit(made.canvas)
-      store.pickAll(made.ids)
+    if (paths.length) {
+      event.preventDefault()
+      run.dropPaths(store, paths, point)
       return
     }
 
-    if (/^[a-z][a-z\d+.-]*:\/\//i.test(text)) putLink(text, at)
-    else putText(text, at)
-  }
-
-  /** A note or a picture dragged out of the file list becomes a card where it was
-   *  dropped. Several of them go one under the other, which is where a hand
-   *  dropping a folder's worth would put them anyway. */
-  function onDrop(event: DragEvent) {
-    const root = workspace.activeSpace?.root
-    const paths = draggedPaths(event.dataTransfer)
-    if (!root || !paths.length) return
+    const files = [...(event.dataTransfer?.files ?? [])].filter((one) =>
+      one.type.startsWith('image/'),
+    )
+    if (!files.length) return
 
     event.preventDefault()
-    const point = planeAt(event)
-
-    for (const [index, path] of paths.entries()) {
-      putFile(relativeTo(root, path), { x: point.x, y: point.y + index * GRID * 10 })
+    for (const [index, file] of files.entries()) {
+      void run.dropImage(store, file, { x: point.x, y: point.y + index * GRID * 10 }, tab.path)
     }
   }
 
-  function onContextMenu(event: MouseEvent) {
-    const point = planeAt(event)
-    const node = nodeAt(store.canvas.nodes, point)
-    if (node && !store.isPicked(node.id)) store.pick(node.id)
+  /** The dots mean "this colour", and what they colour is whatever the moment is
+   *  about: what is picked, or the pen in hand. */
+  function onColour(colour: string | null) {
+    if (tools.which === 'draw') {
+      tools.colour = colour ?? DEFAULT_INK
+      return
+    }
 
-    menu.show(event, planeMenu(point), { title: t('Canvas') })
+    if (store.picked.length) store.edit(coloured(store.canvas, store.picked, colour))
+    else tools.colour = colour ?? DEFAULT_INK
   }
 
-  function planeMenu(point: Point): MenuEntry[] {
-    const picked = store.picked.length > 0
+  const barColour = $derived.by(() => {
+    if (tools.which === 'draw') return tools.colour === DEFAULT_INK ? null : tools.colour
+    const first = store.picked[0]
+    if (!first) return null
 
-    return [
-      { label: t('Card'), run: () => addNode('text', point) },
-      { label: t('Note or picture'), run: () => addNode('file', point) },
-      { label: t('Link'), run: () => addNode('link', point) },
-      { label: t('Group'), run: () => addNode('group', point) },
-      DIVIDER,
-      { label: t('Duplicate'), disabled: !picked, run: duplicate },
-      { label: t('Delete'), danger: true, disabled: !picked, run: deletePicked },
-      DIVIDER,
-      { label: t('Fit the canvas'), run: () => store.fit(width, height) },
-    ]
-  }
+    const node = store.canvas.nodes.find((one) => one.id === first)
+    return node?.color ?? store.canvas.edges.find((one) => one.id === first)?.color ?? null
+  })
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="canvas"
-  class:grabbing={gesture?.kind === 'pan'}
-  class:spacing
-  class:dots={step >= DOTS_UNTIL}
+  class:grabbing={gesture?.kind === 'pan' || gesture?.kind === 'pinch'}
+  class:spacing={machine.spacing || tools.which === 'hand'}
+  class:drawing={tools.which === 'draw' || tools.which === 'erase'}
+  class:dots={stepX >= DOTS_UNTIL}
+  class:narrowed
   bind:this={host}
   role="application"
   aria-label={t('Canvas')}
   tabindex="-1"
-  style:--dot-step="{step}px"
+  style:--dot-step="{stepX}px"
   style:--dot-x="{originX}px"
   style:--dot-y="{originY}px"
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
-  onpointercancel={onPointerUp}
-  onpointerleave={() => (hovered = null)}
+  onpointercancel={onPointerCancel}
   ondblclick={onDoubleClick}
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}
   oncopy={onCopy}
+  oncut={onCut}
   onpaste={onPaste}
   oncontextmenu={onContextMenu}
   ondragover={(event) => {
-    if (isTreeDrag(event.dataTransfer)) event.preventDefault()
+    if (isTreeDrag(event.dataTransfer) || event.dataTransfer?.types.includes('Files')) {
+      event.preventDefault()
+    }
   }}
   ondrop={onDrop}
 >
   <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
-    <CanvasEdges edges={store.canvas.edges} {boxes} picked={store.picked} provisional={drawing} />
+    <CanvasEdges
+      edges={shown.edges}
+      nodes={shown.nodes}
+      picked={store.picked}
+      provisional={drawing}
+    />
 
-    {#each shown as node (node.id)}
+    {#each cards as node (node.id)}
       <CanvasNode
         {node}
         canvasPath={tab.path}
         root={workspace.activeSpace?.root ?? null}
-        picked={store.isPicked(node.id)}
+        picked={picked.has(node.id)}
+        dimmed={narrowed && !picked.has(node.id)}
         editing={store.editing === node.id}
-        offset={moving?.has(node.id) ? carried : STILL}
+        offset={STILL}
         ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
-        onleave={leaveEditing}
+        onleave={() => (store.editing = null)}
         onfollow={(jump: NoteJump) => void workspace.followLink(jump)}
       />
     {/each}
@@ -820,12 +881,11 @@
     <!-- The four dots a connector is drawn from, on whichever card the pointer is
          over. Sized in plane units so they are the same size on screen at any
          zoom. -->
-    {#if ported}
+    {#if portedBox}
       {#each SIDES as side (side)}
-        {@const point = sidePoint(boxOf(ported), side)}
+        {@const point = sidePoint(boxOf(portedBox), side)}
         <div
           class="port"
-          data-side={side}
           style:left="{point.x}px"
           style:top="{point.y}px"
           style:width="{PORT * unit}px"
@@ -834,18 +894,36 @@
       {/each}
     {/if}
 
-    <!-- The eight handles of the one card that is picked. -->
-    {#if only}
+    <!-- What is picked, and the handles that resize it. -->
+    {#if box}
+      <div
+        class="frame"
+        style:left="{box.x}px"
+        style:top="{box.y}px"
+        style:width="{box.width}px"
+        style:height="{box.height}px"
+        style:border-width="{unit}px"
+      ></div>
+
       {#each HANDLES as handle (handle.id)}
         <div
           class="handle"
-          data-handle={handle.id}
-          style:left="{only.x + ((handle.x + 1) / 2) * only.width}px"
-          style:top="{only.y + ((handle.y + 1) / 2) * only.height}px"
+          style:left="{box.x + ((handle.x + 1) / 2) * box.width}px"
+          style:top="{box.y + ((handle.y + 1) / 2) * box.height}px"
           style:width="{HANDLE * unit}px"
           style:height="{HANDLE * unit}px"
         ></div>
       {/each}
+
+      {#if lassoed}
+        <div
+          class="turn"
+          style:left="{box.x + box.width / 2}px"
+          style:top="{box.y - HANDLE * 3.4 * unit}px"
+          style:width="{HANDLE * 2 * unit}px"
+          style:height="{HANDLE * 2 * unit}px"
+        ></div>
+      {/if}
     {/if}
 
     {#if band}
@@ -857,13 +935,65 @@
         style:height="{band.height}px"
       ></div>
     {/if}
+
+    {#if shaping}
+      {@const preview = rectBetween(shaping.from, shaping.to)}
+      <div
+        class="band shaping"
+        class:round={shaping.tool === 'ellipse'}
+        style:left="{preview.x}px"
+        style:top="{preview.y}px"
+        style:width="{preview.width}px"
+        style:height="{preview.height}px"
+      ></div>
+    {/if}
+
+    <!-- The lines that say what a drag lined itself up with. -->
+    {#each guides as guide, index (index)}
+      <div
+        class="guide"
+        class:down={guide.axis === 'y'}
+        style:left="{guide.axis === 'x' ? guide.at : guide.from}px"
+        style:top="{guide.axis === 'y' ? guide.at : guide.from}px"
+        style:width="{guide.axis === 'x' ? unit : guide.to - guide.from}px"
+        style:height="{guide.axis === 'y' ? unit : guide.to - guide.from}px"
+      ></div>
+    {/each}
+
+    {#if lasso && lasso.length > 1}
+      <svg class="lasso" aria-hidden="true" width="1" height="1" style:overflow="visible">
+        <path
+          d="M {lasso.map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`).join(' L ')} Z"
+          style:stroke-width="{1.5 * unit}px"
+          style:stroke-dasharray="{5 * unit} {4 * unit}"
+        />
+      </svg>
+    {/if}
   </div>
 
+  <CanvasInk ink={shown.ink} {live} {camera} {width} {height} {picked} {palette} />
+
   <CanvasBar
-    onadd={(kind: NodeKind) => addNode(kind)}
-    oncolour={(colour: string | null) => store.edit(coloured(store.canvas, store.picked, colour))}
+    oncolour={onColour}
+    onsize={(size: number) => (tools.size = size)}
+    colour={barColour}
+    size={tools.size}
     colouring={store.picked.length > 0}
   />
+
+  {#if finding}
+    <CanvasFind
+      canvas={store.canvas}
+      onpick={(id: string) => {
+        store.pick(id)
+        store.frame(width, height)
+      }}
+      onclose={() => {
+        finding = false
+        host?.focus({ preventScroll: true })
+      }}
+    />
+  {/if}
 </div>
 
 <style>
@@ -898,6 +1028,10 @@
     cursor: grabbing;
   }
 
+  .canvas.drawing {
+    cursor: crosshair;
+  }
+
   /* No size of its own: everything in it is absolute at its own plane
      coordinates, and this one transform is how the whole plane moves. */
   .plane {
@@ -912,10 +1046,12 @@
   /* Centred on the point they mark, so the arithmetic above is about a point
      rather than about a corner. */
   .port,
-  .handle {
+  .handle,
+  .turn {
     position: absolute;
     box-sizing: border-box;
     translate: -50% -50%;
+    z-index: 5;
   }
 
   .port {
@@ -936,11 +1072,62 @@
     border: 1.5px solid var(--accent);
   }
 
+  /* The ring that turns what is picked, above it and clear of every corner. */
+  .turn {
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+  }
+
+  /* The outline round everything picked. Drawn even for one card, so a
+     selection of one and a selection of nine read as the same thing. */
+  .frame {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 5;
+  }
+
   .band {
     position: absolute;
     background: var(--accent-soft);
     border: 1px solid var(--accent-line);
     border-radius: 2px;
     pointer-events: none;
+    z-index: 5;
+  }
+
+  .band.shaping {
+    background: none;
+    border-style: dashed;
+  }
+
+  .band.shaping.round {
+    border-radius: 50%;
+  }
+
+  /* The line that says what a drag lined itself up with: the accent, and only
+     while the pointer is down. */
+  .guide {
+    position: absolute;
+    background: var(--accent);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .lasso {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .lasso path {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
   }
 </style>

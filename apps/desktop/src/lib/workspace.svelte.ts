@@ -1814,6 +1814,34 @@ class Workspace {
     this.persist()
   }
 
+  /** A note made out of words that were somewhere else: a canvas card that has
+   *  outgrown its box. Answers the path it was written to, relative to nothing,
+   *  or null when there is no space to write it in.
+   *
+   *  No tab and no renaming: the card it came from is still what the reader is
+   *  looking at, and a note that opened over the plane would take them away from
+   *  it. The name is stepped like every other new file's. */
+  async noteFrom(text: string, folder?: string): Promise<string | null> {
+    const dir = folder ?? this.activeSpace?.root
+    if (!dir) return null
+
+    const stem = nameFromContent(text) ?? 'Untitled'
+    const taken = new Set(this.notes.map((note) => note.path))
+    let name = `${stem}.md`
+    let counter = 2
+    while (taken.has(joinPath(dir, name))) name = `${stem} ${counter++}.md`
+
+    const path = joinPath(dir, name)
+    this.showEntry(this.freshEntry(path, false))
+
+    await invoke('write_note', { path, content: text })
+    links.noteSaved(path, text)
+    await this.loadTree()
+    this.persist()
+
+    return path
+  }
+
   /** Creates `Untitled.canvas` in a folder and opens it, stepping the name until
    *  it is free the way a new note's is. The file is written straight away, so
    *  the plane on screen and the file on disk say the same thing from the first

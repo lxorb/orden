@@ -8,25 +8,43 @@
    *  Everything is in plane units, lines and arrow heads and labels alike, so the
    *  whole picture scales together the way a drawing should. */
 
-  import type { CanvasEdge, CanvasNode } from './canvas/format'
-  import { arrowAt, boxOf, edgeEnds, edgeMiddle, edgePath } from './canvas/geometry'
+  import type { CanvasEdge, CanvasNode, Side } from './canvas/format'
+  import { arrowAt, boxOf, edgeEnds, edgeMiddle, edgePath, facingSide } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
 
   const {
     edges,
-    boxes,
+    nodes,
     picked,
     provisional = null,
   }: {
     edges: readonly CanvasEdge[]
-    /** The nodes an edge can end on, by id. Handed over already offset by
-     *  whatever a drag has carried, so an edge follows the cards it joins. */
-    boxes: Map<string, CanvasNode>
+    /** The nodes an edge can end on, as the plane currently shows them, so an
+     *  edge follows the cards it joins while they are being dragged. */
+    nodes: readonly CanvasNode[]
     picked: readonly string[]
-    /** The edge being drawn from a node's side, while one is: a path and nothing
-     *  else, since it has no second node yet. */
-    provisional?: string | null
+    /** The connector being dragged out of a card's side, while one is: where it
+     *  starts, where the pointer is, and which side it left by. */
+    provisional?: { from: { x: number; y: number }; to: { x: number; y: number }; side: Side } | null
   } = $props()
+
+  const boxes = $derived(new Map(nodes.map((node) => [node.id, node])))
+
+  /** The connector being drawn, as a path: a curve to the pointer, leaving the
+   *  card at a right angle the way a finished one does. */
+  const drawn = $derived(
+    provisional
+      ? edgePath({
+          from: provisional.from,
+          to: provisional.to,
+          fromSide: provisional.side,
+          toSide: facingSide(
+            { ...provisional.to, width: 0, height: 0 },
+            { ...provisional.from, width: 0, height: 0 },
+          ),
+        })
+      : null,
+  )
 
   /** How thick a line is, how big an arrow head is, and how big a label reads, in
    *  plane units. */
@@ -52,7 +70,7 @@
     label: { x: number; y: number; text: string } | null
   }
 
-  const drawn = $derived.by((): Drawn[] => {
+  const lines = $derived.by((): Drawn[] => {
     const out: Drawn[] = []
 
     for (const edge of edges) {
@@ -95,7 +113,7 @@
   <!-- The plane's origin, moved to the middle of the layer, so everything inside
        is written in the coordinates the file uses. -->
   <g transform="translate({HALF} {HALF})">
-    {#each drawn as edge (edge.id)}
+    {#each lines as edge (edge.id)}
       <g
         class="edge"
         class:picked={edge.picked}
@@ -121,8 +139,8 @@
       </g>
     {/each}
 
-    {#if provisional}
-      <path class="drawing" d={provisional} stroke-width={WEIGHT} />
+    {#if drawn}
+      <path class="drawing" d={drawn} stroke-width={WEIGHT} />
     {/if}
   </g>
 </svg>

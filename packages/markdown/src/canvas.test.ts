@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { blankCanvas, type Canvas, freshId, readCanvas, writeCanvas } from './format'
+import { blankCanvas, type Canvas, freshId, readCanvas, writeCanvas } from './canvas'
 
 /** A canvas written the way the spec's own examples are: every node type, every
  *  optional field, and edges naming their sides and their ends.
@@ -87,10 +87,11 @@ describe('reading a canvas', () => {
   })
 
   test('is an empty canvas for a file that is not one', () => {
-    expect(readCanvas('')).toEqual({ nodes: [], edges: [] })
-    expect(readCanvas('nonsense')).toEqual({ nodes: [], edges: [] })
-    expect(readCanvas('[]')).toEqual({ nodes: [], edges: [] })
-    expect(readCanvas('{}')).toEqual({ nodes: [], edges: [] })
+    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {} }
+    expect(readCanvas('')).toEqual(empty)
+    expect(readCanvas('nonsense')).toEqual(empty)
+    expect(readCanvas('[]')).toEqual(empty)
+    expect(readCanvas('{}')).toEqual(empty)
   })
 })
 
@@ -230,6 +231,9 @@ describe('writing a canvas', () => {
     const written = writeCanvas({
       nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
       edges: [],
+      ink: [],
+      at: {},
+      gone: {},
     })
 
     expect(written).not.toContain('color')
@@ -249,7 +253,9 @@ describe('writing a canvas', () => {
   })
 
   test('holds two empty lists before anybody has drawn on it', () => {
-    expect(readCanvas(blankCanvas())).toEqual({ nodes: [], edges: [] })
+    expect(readCanvas(blankCanvas())).toEqual({ nodes: [], edges: [], ink: [], at: {}, gone: {} })
+    // Nothing of Nib's in a canvas that has none of Nib's in it.
+    expect(blankCanvas()).not.toContain('nib')
     expect(blankCanvas().endsWith('\n')).toBe(true)
   })
 
@@ -265,6 +271,9 @@ describe('writing a canvas', () => {
         text: '',
       })),
       edges: [],
+      ink: [],
+      at: {},
+      gone: {},
     }
 
     expect(readCanvas(writeCanvas(canvas)).nodes.map((node) => node.id)).toEqual(['c', 'a', 'b'])
@@ -279,5 +288,105 @@ describe('a fresh id', () => {
   test('is not the last one', () => {
     const seen = new Set(Array.from({ length: 200 }, () => freshId()))
     expect(seen.size).toBe(200)
+  })
+})
+
+/** What Nib keeps beyond the spec, and where.
+ *
+ *  Obsidian's own reader was checked to settle this: an unknown top-level key is
+ *  kept whole through a load and a save, an unknown key on a node is swept into
+ *  `unknownData` and written back, but a node whose `type` it does not know is
+ *  skipped on load and gone from the file on the next save, taking its edges
+ *  with it. So ink and shapes go under one top-level key and never into `nodes`,
+ *  and these tests hold that line. */
+describe('what Nib keeps beyond the spec', () => {
+  const drawn: Canvas = {
+    nodes: [
+      { id: 'card', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 'hello' },
+      { id: 'box', type: 'shape', shape: 'rect', x: 200, y: 0, width: 80, height: 40, color: '3' },
+      { id: 'ray', type: 'shape', shape: 'arrow', x: 0, y: 200, width: 80, height: 40, up: true },
+    ],
+    edges: [],
+    ink: [
+      {
+        id: 'ink1',
+        tool: 'fountain',
+        color: '#123456',
+        size: 4,
+        points: [
+          { x: 1, y: 2, pressure: 0.4, tiltX: 3, tiltY: -4, t: 0 },
+          { x: 5, y: 6, pressure: 0.8, tiltX: 3, tiltY: -4, t: 16 },
+        ],
+      },
+    ],
+    at: { card: 1000, box: 1001 },
+    gone: { old: 900 },
+  }
+
+  const written = writeCanvas(drawn)
+  const parsed = JSON.parse(written) as Record<string, unknown>
+
+  test('writes the spec half as the spec, with no shape in it', () => {
+    expect((parsed.nodes as { id: string }[]).map((node) => node.id)).toEqual(['card'])
+  })
+
+  test('keeps everything else under one key of its own', () => {
+    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'nib'])
+  })
+
+  test('reads its own file back exactly, shapes, ink, order and times', () => {
+    expect(readCanvas(written)).toEqual(drawn)
+  })
+
+  test('is byte for byte the same on its own output', () => {
+    expect(writeCanvas(readCanvas(written))).toBe(written)
+  })
+
+  test('keeps the z order a shape sits at among the cards', () => {
+    const back: Canvas = { ...drawn, nodes: [drawn.nodes[1]!, drawn.nodes[0]!, drawn.nodes[2]!] }
+    expect(readCanvas(writeCanvas(back)).nodes.map((node) => node.id)).toEqual([
+      'box',
+      'card',
+      'ray',
+    ])
+  })
+
+  test('still opens a canvas whose nib block is nonsense', () => {
+    const canvas = readCanvas(
+      JSON.stringify({
+        nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
+        nib: 'what',
+      }),
+    )
+
+    expect(canvas.nodes).toHaveLength(1)
+    expect(canvas.ink).toEqual([])
+  })
+
+  test('drops a stroke with no points to draw between and a shape with no shape', () => {
+    const canvas = readCanvas(
+      JSON.stringify({
+        nodes: [],
+        nib: {
+          ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [1, 2, 0.5, 0, 0, 0] }],
+          shapes: [{ id: 'b', shape: 'blob', x: 0, y: 0, width: 1, height: 1 }],
+        },
+      }),
+    )
+
+    expect(canvas.ink).toEqual([])
+    expect(canvas.nodes).toEqual([])
+  })
+
+  test('a card Obsidian added to a canvas of ours arrives on top', () => {
+    const theirs = JSON.parse(written) as { nodes: Record<string, unknown>[] }
+    theirs.nodes.push({ id: 'new', type: 'text', x: 9, y: 9, width: 1, height: 1, text: 'theirs' })
+
+    expect(readCanvas(JSON.stringify(theirs)).nodes.map((node) => node.id)).toEqual([
+      'card',
+      'box',
+      'ray',
+      'new',
+    ])
   })
 })

@@ -14,6 +14,7 @@
   import { createEditor, type EditorView, type NoteJump, type Text } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
+  import { shapeLine } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
   import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
@@ -25,6 +26,7 @@
     canvasPath,
     root,
     picked,
+    dimmed = false,
     editing,
     offset,
     ontext,
@@ -37,6 +39,9 @@
     /** The space's folder, which is what a file node's path is relative to. */
     root: string | null
     picked: boolean
+    /** Whether the plane has been narrowed to something else, in which case this
+     *  card is still there but is not what this is about. */
+    dimmed?: boolean
     /** Whether this card is the one being written in. */
     editing: boolean
     /** How far a drag has carried it since the pointer went down. */
@@ -77,6 +82,36 @@
         ? ''
         : cardHtml(source, canvasPath),
   )
+
+  /** Where a line or an arrow runs inside its own box, in the box's own
+   *  coordinates, so the svg scales with the node and the arithmetic stays in
+   *  one place. */
+  const line = $derived.by(() => {
+    if (node.type !== 'shape') return null
+
+    const ends = shapeLine(node)
+    return {
+      x1: ends.from.x - node.x,
+      y1: ends.from.y - node.y,
+      x2: ends.to.x - node.x,
+      y2: ends.to.y - node.y,
+    }
+  })
+
+  /** How far back from the end of a line its arrow head starts, and how wide the
+   *  head is, in the box's own units. */
+  const HEAD = 11
+
+  const head = $derived.by(() => {
+    if (!line) return null
+
+    const dx = line.x2 - line.x1
+    const dy = line.y2 - line.y1
+    const away = Math.hypot(dx, dy) || 1
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI
+
+    return { x: line.x2, y: line.y2, angle, size: Math.min(HEAD, away / 3) }
+  })
 
   /** A link node's host, which is the closest thing to a title that can be known
    *  without asking the web for one. */
@@ -145,7 +180,9 @@
 <div
   class="node"
   class:picked
+  class:dimmed
   class:group={node.type === 'group'}
+  class:shape={node.type === 'shape'}
   class:editing
   class:coloured={colour !== null}
   data-id={node.id}
@@ -177,6 +214,34 @@
       <span class="host">{host}</span>
       <span class="url">{node.url}</span>
     </div>
+  {:else if node.type === 'shape'}
+    <svg
+      class="drawn"
+      viewBox="0 0 {node.width} {node.height}"
+      width={node.width}
+      height={node.height}
+      aria-hidden="true"
+    >
+      {#if node.shape === 'rect'}
+        <rect x="1" y="1" width={Math.max(0, node.width - 2)} height={Math.max(0, node.height - 2)} rx="4" />
+      {:else if node.shape === 'ellipse'}
+        <ellipse
+          cx={node.width / 2}
+          cy={node.height / 2}
+          rx={Math.max(0, node.width / 2 - 1)}
+          ry={Math.max(0, node.height / 2 - 1)}
+        />
+      {:else if line}
+        <line x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} class="stroke" />
+        {#if node.shape === 'arrow' && head}
+          <path
+            class="point"
+            d="M 0 0 L {-head.size} {-head.size * 0.5} L {-head.size} {head.size * 0.5} Z"
+            transform="translate({head.x} {head.y}) rotate({head.angle})"
+          />
+        {/if}
+      {/if}
+    </svg>
   {:else if node.label}
     <span class="label">{node.label}</span>
   {/if}
@@ -206,6 +271,12 @@
     background: color-mix(in srgb, var(--card-colour) 9%, var(--surface));
   }
 
+  /* Narrowed to something else: still there, still where it was, and quietly
+     out of the way. */
+  .node.dimmed {
+    opacity: 0.25;
+  }
+
   .node.picked {
     border-color: var(--accent);
     box-shadow:
@@ -225,6 +296,33 @@
     border-radius: var(--radius-lg);
     box-shadow: none;
     overflow: visible;
+  }
+
+  /* A shape is what it is drawn as: no card behind it, no frame round it. */
+  .node.shape {
+    background: none;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .node.shape.picked {
+    box-shadow: none;
+  }
+
+  .drawn {
+    display: block;
+    overflow: visible;
+    fill: none;
+    stroke: var(--card-colour, var(--text-strong));
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .drawn .point {
+    fill: var(--card-colour, var(--text-strong));
+    stroke: none;
   }
 
   .label {

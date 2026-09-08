@@ -1,0 +1,536 @@
+/** What a pen leaves on the plane: the arithmetic of a stroke.
+ *
+ *  The stroke itself - its points, its pressure, its tilt and its
+ *  timestamps - is part of the file format and lives in `@nib/markdown/canvas`.
+ *  What is here is everything a surface does with one: the outline it paints as,
+ *  how a tool behaves, what an eraser cuts out of it, what a lasso caught, and
+ *  what a held pen meant to draw.
+ *
+ *  Pure, and without a canvas context in sight, because the outline of a stroke
+ *  is arithmetic and arithmetic is testable. `paint.ts` next door turns these
+ *  outlines into paint. */
+
+import { getStroke } from 'perfect-freehand'
+import { type InkPoint, type InkStroke, type InkTool } from './format'
+import { awayFromSegment, type Box, type Point } from './geometry'
+
+/** How a tool behaves: how much pressure thins it, how translucent it is, how it
+ *  sits on what is under it, and whether it is a round nib or a flat one.
+ *
+ *  One table rather than seven branches, so adding a tool is adding a row and
+ *  the renderer never grows a case for it. */
+export interface InkStyle {
+  /** How much of the width pressure takes away, 0 to 1. */
+  thinning: number
+  smoothing: number
+  streamline: number
+  /** 0 to 1, painted straight onto the alpha. */
+  opacity: number
+  /** Whether the tool darkens what it crosses rather than covering it. */
+  multiply: boolean
+  /** Whether the ends taper to a point rather than ending in a cap. */
+  taper: number
+  /** A flat nib at this angle in degrees, or null for a round one. */
+  nib: number | null
+  /** Whether the tool leaves a grain rather than a solid body. */
+  grain: boolean
+  /** The width a fresh tool starts at, in plane units. */
+  size: number
+}
+
+export const INK_STYLES: Record<InkTool, InkStyle> = {
+  /** An even line whatever the hand does, which is what a ballpoint is. */
+  pen: {
+    thinning: 0.12,
+    smoothing: 0.5,
+    streamline: 0.5,
+    opacity: 1,
+    multiply: false,
+    taper: 0,
+    nib: null,
+    grain: false,
+    size: 3,
+  },
+  /** Pressure is the whole point: lean on it and the line swells. */
+  fountain: {
+    thinning: 0.75,
+    smoothing: 0.55,
+    streamline: 0.45,
+    opacity: 1,
+    multiply: false,
+    taper: 12,
+    nib: null,
+    grain: false,
+    size: 4,
+  },
+  /** Grainy, a little translucent, and thin. */
+  pencil: {
+    thinning: 0.45,
+    smoothing: 0.4,
+    streamline: 0.35,
+    opacity: 0.82,
+    multiply: true,
+    taper: 4,
+    nib: null,
+    grain: true,
+    size: 2.5,
+  },
+  /** Broad and flat and solid, like a felt tip. */
+  marker: {
+    thinning: 0,
+    smoothing: 0.6,
+    streamline: 0.55,
+    opacity: 0.95,
+    multiply: false,
+    taper: 0,
+    nib: null,
+    grain: false,
+    size: 8,
+  },
+  /** Wide, translucent and darkening, so two passes over one word do not turn
+   *  it into a block: the whole stroke is one shape drawn once. */
+  highlighter: {
+    thinning: 0,
+    smoothing: 0.7,
+    streamline: 0.6,
+    opacity: 0.32,
+    multiply: true,
+    taper: 0,
+    nib: null,
+    grain: false,
+    size: 18,
+  },
+  /** Pressure and speed both, with ends that come to a point. */
+  brush: {
+    thinning: 0.85,
+    smoothing: 0.6,
+    streamline: 0.4,
+    opacity: 0.95,
+    multiply: false,
+    taper: 26,
+    nib: null,
+    grain: false,
+    size: 7,
+  },
+  /** A flat nib held at an angle: thick across the stroke and thin along it. */
+  calligraphy: {
+    thinning: 0.3,
+    smoothing: 0.5,
+    streamline: 0.45,
+    opacity: 1,
+    multiply: false,
+    taper: 0,
+    nib: -40,
+    grain: false,
+    size: 9,
+  },
+}
+
+/** The sizes the bar offers, in plane units. Four is as many choices as anybody
+ *  wants while writing. */
+export const INK_SIZES = [1.5, 3, 6, 12] as const
+
+/** The outline of a stroke, as a ring of points in plane coordinates.
+ *
+ *  A flat nib is a ribbon and a round one is what perfect-freehand works out, so
+ *  the two kinds of pen are two cases here and one shape everywhere after. */
+export function outlineOf(stroke: InkStroke, finished = true): Point[] {
+  const style = INK_STYLES[stroke.tool]
+  if (style.nib !== null) return ribbon(stroke, style)
+
+  const points = stroke.points.map((point) => [point.x, point.y, point.pressure])
+  const ring = getStroke(points, {
+    size: stroke.size,
+    thinning: style.thinning,
+    smoothing: style.smoothing,
+    streamline: style.streamline,
+    simulatePressure: false,
+    last: finished,
+    ...(style.taper
+      ? { start: { taper: style.taper }, end: { taper: style.taper } }
+      : { start: { cap: true }, end: { cap: true } }),
+  })
+
+  return ring.map(([x, y]) => ({ x, y }))
+}
+
+/** A flat nib's outline: every point offset by the same vector one way, then the
+ *  same points offset the other way on the return leg. Because the offset never
+ *  turns, the stroke is broad across the nib and vanishes along it, which is
+ *  what a chisel-tipped pen does. */
+function ribbon(stroke: InkStroke, style: InkStyle): Point[] {
+  const angle = ((style.nib ?? 0) * Math.PI) / 180
+  const half = stroke.size / 2
+  const ax = Math.cos(angle)
+  const ay = Math.sin(angle)
+
+  const forward: Point[] = []
+  const back: Point[] = []
+
+  for (const point of stroke.points) {
+    const width = half * (1 - style.thinning * (1 - point.pressure))
+    forward.push({ x: point.x + ax * width, y: point.y + ay * width })
+    back.unshift({ x: point.x - ax * width, y: point.y - ay * width })
+  }
+
+  return [...forward, ...back]
+}
+
+/** The box a stroke covers, with room for its own width, so a stroke can be
+ *  culled from a frame without working its outline out first. */
+export function strokeBox(stroke: InkStroke): Box {
+  const [first] = stroke.points
+  if (!first) return { x: 0, y: 0, width: 0, height: 0 }
+
+  let least = first.x
+  let most = first.x
+  let lowest = first.y
+  let highest = first.y
+
+  for (const point of stroke.points) {
+    if (point.x < least) least = point.x
+    if (point.x > most) most = point.x
+    if (point.y < lowest) lowest = point.y
+    if (point.y > highest) highest = point.y
+  }
+
+  const room = stroke.size
+  return {
+    x: least - room,
+    y: lowest - room,
+    width: most - least + 2 * room,
+    height: highest - lowest + 2 * room,
+  }
+}
+
+export function strokesBox(strokes: readonly InkStroke[]): Box | null {
+  const boxes = strokes.map(strokeBox)
+  const [first] = boxes
+  if (!first) return null
+
+  let least = first.x
+  let most = first.x + first.width
+  let lowest = first.y
+  let highest = first.y + first.height
+
+  for (const box of boxes) {
+    least = Math.min(least, box.x)
+    most = Math.max(most, box.x + box.width)
+    lowest = Math.min(lowest, box.y)
+    highest = Math.max(highest, box.y + box.height)
+  }
+
+  return { x: least, y: lowest, width: most - least, height: highest - lowest }
+}
+
+/** How far off the line a point may sit and still be dropped, as a share of the
+ *  nib's width. A pen reports far more samples than a line needs. */
+const TOLERANCE = 0.12
+
+/** The same stroke with the points that say nothing taken out: Ramer, Douglas
+ *  and Peucker, which keeps every corner and drops the middle of every straight
+ *  run. Pressure and tilt ride along on the points that are kept.
+ *
+ *  Done once, when the pen comes up, so what is written down is a tenth of what
+ *  the digitiser said and looks exactly the same. */
+export function simplified(points: readonly InkPoint[], tolerance: number): InkPoint[] {
+  if (points.length < 3) return [...points]
+
+  const keep = new Uint8Array(points.length)
+  keep[0] = 1
+  keep[points.length - 1] = 1
+
+  const stack: [number, number][] = [[0, points.length - 1]]
+
+  while (stack.length) {
+    const span = stack.pop()
+    if (!span) break
+
+    const [from, to] = span
+    const start = points[from]
+    const end = points[to]
+    if (!start || !end || to - from < 2) continue
+
+    let worst = -1
+    let at = -1
+
+    for (let one = from + 1; one < to; one++) {
+      const point = points[one]
+      if (!point) continue
+
+      const away = awayFromSegment(point, start, end)
+      if (away > worst) {
+        worst = away
+        at = one
+      }
+    }
+
+    if (at < 0 || worst <= tolerance) continue
+
+    keep[at] = 1
+    stack.push([from, at], [at, to])
+  }
+
+  return points.filter((_point, index) => keep[index] === 1)
+}
+
+/** A stroke ready to be written down: fewer points, and none of the jitter a
+ *  digitiser reports while the nib is nearly still. */
+export function tidied(stroke: InkStroke): InkStroke {
+  return { ...stroke, points: simplified(stroke.points, stroke.size * TOLERANCE) }
+}
+
+/** Whether a stroke passes within `reach` of a point: what the stroke eraser and
+ *  a tap on a line both ask. The nib's own width counts, so a fat highlighter is
+ *  hit where it looks like it is. */
+export function nearStroke(stroke: InkStroke, point: Point, reach: number): boolean {
+  const room = reach + stroke.size / 2
+  const box = strokeBox(stroke)
+  if (
+    point.x < box.x - room ||
+    point.x > box.x + box.width + room ||
+    point.y < box.y - room ||
+    point.y > box.y + box.height + room
+  ) {
+    return false
+  }
+
+  const points = stroke.points
+  if (points.length === 1) {
+    const only = points[0]
+    return !!only && Math.hypot(point.x - only.x, point.y - only.y) <= room
+  }
+
+  for (let one = 1; one < points.length; one++) {
+    const from = points[one - 1]
+    const to = points[one]
+    if (from && to && awayFromSegment(point, from, to) <= room) return true
+  }
+
+  return false
+}
+
+/** The stroke with the part under the eraser taken out. One stroke goes in and
+ *  nought, one or several come out: rubbing through the middle of a line leaves
+ *  the two ends, which is what a partial eraser means and what a stroke eraser
+ *  deliberately does not do.
+ *
+ *  A piece of one point is dropped: a stroke with nothing to draw between is not
+ *  ink, it is a speck the eraser missed. */
+export function erased(stroke: InkStroke, at: Point, reach: number): InkStroke[] {
+  const room = reach + stroke.size / 2
+  const pieces: InkPoint[][] = []
+  let piece: InkPoint[] = []
+
+  for (const point of stroke.points) {
+    if (Math.hypot(point.x - at.x, point.y - at.y) <= room) {
+      if (piece.length > 1) pieces.push(piece)
+      piece = []
+      continue
+    }
+
+    piece.push(point)
+  }
+
+  if (piece.length > 1) pieces.push(piece)
+
+  // Untouched: the same object back, so a rub that met nothing costs nothing and
+  // the caller can tell in one comparison.
+  if (pieces.length === 1 && pieces[0]?.length === stroke.points.length) return [stroke]
+
+  return pieces.map((points, index) => ({
+    ...stroke,
+    // The first piece keeps the name, so an eraser that only shortened a line
+    // leaves the same stroke rather than a new one for a sync to argue over.
+    id: index === 0 ? stroke.id : `${stroke.id}-${index}`,
+    points: retimed(points),
+  }))
+}
+
+/** Times counted from the first point again, so a piece cut out of the middle of
+ *  a stroke still starts at zero. */
+function retimed(points: readonly InkPoint[]): InkPoint[] {
+  const [first] = points
+  if (!first) return []
+
+  return points.map((point) => ({ ...point, t: point.t - first.t }))
+}
+
+/** Whether a point is inside a closed polygon: the ray-crossing count, which is
+ *  what a lasso asks of everything it might have caught. */
+export function insidePolygon(polygon: readonly Point[], point: Point): boolean {
+  let inside = false
+
+  for (let one = 0, other = polygon.length - 1; one < polygon.length; other = one++) {
+    const a = polygon[one]
+    const b = polygon[other]
+    if (!a || !b) continue
+
+    if (a.y > point.y !== b.y > point.y) {
+      const across = ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x
+      if (point.x < across) inside = !inside
+    }
+  }
+
+  return inside
+}
+
+/** Every stroke a lasso caught: one whose points are all inside it, so half a
+ *  word is never dragged away from the other half. */
+export function strokesInLasso(strokes: readonly InkStroke[], lasso: readonly Point[]): string[] {
+  if (lasso.length < 3) return []
+
+  return strokes
+    .filter((stroke) => stroke.points.every((point) => insidePolygon(lasso, point)))
+    .map((stroke) => stroke.id)
+}
+
+/** A stroke moved, scaled and turned in one pass. The whole of a selection goes
+ *  through this, so a lasso that is dragged, pulled bigger and spun round is one
+ *  arithmetic rather than three. */
+export interface InkTransform {
+  dx: number
+  dy: number
+  /** Multiplied about `about`. One each means no change. */
+  sx: number
+  sy: number
+  /** Radians about `about`. */
+  turn: number
+  about: Point
+}
+
+/** A stroke scaled about a point, turned about it, and moved. One pass, because
+ *  a lasso that is dragged, pulled bigger and spun round is one arithmetic
+ *  rather than three. */
+export function transformed(stroke: InkStroke, by: InkTransform): InkStroke {
+  const cos = Math.cos(by.turn)
+  const sin = Math.sin(by.turn)
+
+  return {
+    ...stroke,
+    // The nib grows with the drawing: writing pulled to twice the size is twice
+    // as thick, the way it would be if it had been written that big. A stroke
+    // stretched one way takes the smaller of the two, since a nib is round.
+    size: stroke.size * Math.min(Math.abs(by.sx), Math.abs(by.sy)),
+    points: stroke.points.map((point) => {
+      const x = (point.x - by.about.x) * by.sx
+      const y = (point.y - by.about.y) * by.sy
+
+      return {
+        ...point,
+        x: by.about.x + x * cos - y * sin + by.dx,
+        y: by.about.y + x * sin + y * cos + by.dy,
+      }
+    }),
+  }
+}
+
+/** How straight a stroke has to be before it is taken for a line, as a share of
+ *  its own length. */
+const STRAIGHT = 0.06
+/** How near the two ends have to be before a stroke counts as closed. */
+const CLOSED = 0.22
+/** How round a closed stroke has to be before it is taken for an ellipse rather
+ *  than a rectangle: the spread of its radius about the mean. */
+const ROUND = 0.14
+
+export type Assisted = 'line' | 'ellipse' | 'rectangle'
+
+/** What a stroke was probably meant to be, or null for one that was meant to be
+ *  itself. Held still at the end of a stroke and this is what it becomes.
+ *
+ *  Three answers rather than a menagerie: a line, a ring and a box are what
+ *  anybody actually draws by hand and wants tidied, and a fourth would only make
+ *  the other three less certain. */
+export function assisted(stroke: InkStroke): Assisted | null {
+  const points = stroke.points
+  const first = points[0]
+  const last = points[points.length - 1]
+  if (!first || !last || points.length < 6) return null
+
+  const box = strokeBox(stroke)
+  const across = box.width - 2 * stroke.size
+  const down = box.height - 2 * stroke.size
+  const span = Math.hypot(across, down)
+  if (span < stroke.size * 4) return null
+
+  const ends = Math.hypot(last.x - first.x, last.y - first.y)
+
+  if (ends > span * CLOSED) {
+    let worst = 0
+    for (const point of points) worst = Math.max(worst, awayFromSegment(point, first, last))
+
+    return worst <= ends * STRAIGHT ? 'line' : null
+  }
+
+  const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  const radii = points.map((point) => Math.hypot(point.x - middle.x, point.y - middle.y))
+  const mean = radii.reduce((sum, one) => sum + one, 0) / radii.length
+  if (mean === 0) return null
+
+  const spread =
+    Math.sqrt(radii.reduce((sum, one) => sum + (one - mean) ** 2, 0) / radii.length) / mean
+
+  return spread <= ROUND ? 'ellipse' : 'rectangle'
+}
+
+/** How many points a tidied shape is drawn with. Enough that an ellipse reads as
+ *  a curve at any zoom the camera allows. */
+const SIDES = 64
+
+/** The stroke a held pen becomes: the same ink, on the shape it was aiming at,
+ *  at an even pressure so a tidied line does not wobble in width. */
+export function tidyShape(stroke: InkStroke, shape: Assisted): InkStroke {
+  const box = strokeBox(stroke)
+  const room = stroke.size
+  const inner = {
+    x: box.x + room,
+    y: box.y + room,
+    width: Math.max(0, box.width - 2 * room),
+    height: Math.max(0, box.height - 2 * room),
+  }
+
+  const last = stroke.points[stroke.points.length - 1]
+  const span = last?.t ?? 0
+  const at = (points: Point[]): InkStroke => ({
+    ...stroke,
+    points: points.map((point, index) => ({
+      ...point,
+      pressure: 0.6,
+      tiltX: 0,
+      tiltY: 0,
+      t: Math.round((span * index) / Math.max(1, points.length - 1)),
+    })),
+  })
+
+  switch (shape) {
+    case 'line': {
+      const first = stroke.points[0]
+      if (!first || !last) return stroke
+      return at([
+        { x: first.x, y: first.y },
+        { x: last.x, y: last.y },
+      ])
+    }
+    case 'rectangle':
+      return at([
+        { x: inner.x, y: inner.y },
+        { x: inner.x + inner.width, y: inner.y },
+        { x: inner.x + inner.width, y: inner.y + inner.height },
+        { x: inner.x, y: inner.y + inner.height },
+        { x: inner.x, y: inner.y },
+      ])
+    case 'ellipse': {
+      const middle = { x: inner.x + inner.width / 2, y: inner.y + inner.height / 2 }
+      const points: Point[] = []
+      for (let one = 0; one <= SIDES; one++) {
+        const angle = (one / SIDES) * Math.PI * 2
+        points.push({
+          x: middle.x + (Math.cos(angle) * inner.width) / 2,
+          y: middle.y + (Math.sin(angle) * inner.height) / 2,
+        })
+      }
+      return at(points)
+    }
+  }
+}
