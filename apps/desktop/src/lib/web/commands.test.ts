@@ -195,6 +195,45 @@ describe('the trash', () => {
     await expect(webInvoke('trash_item', { path: '/', kind: 'space' })).rejects.toThrow()
     await expect(webInvoke('trash_item', { path: '/.trash', kind: 'space' })).rejects.toThrow()
   })
+
+  test('reads a manifest nothing can be made of as an empty one', async () => {
+    // The manifest is a string in the browser's own storage, written by some
+    // version of this app and possibly by one interrupted halfway. Read as the
+    // shape the code wants, a truncated entry is a crash on the way to Recently
+    // deleted - and Recently deleted is where somebody goes to get a note back.
+    for (const held of ['', 'not json', '{"id":"1"}', '42', 'null']) {
+      disk.meta.set('trash', held)
+      expect(await webInvoke('list_trash'), held).toEqual([])
+    }
+
+    // An entry that is not describable goes; the ones around it stay.
+    disk.meta.set(
+      'trash',
+      JSON.stringify([
+        { id: '1', kind: 'note', name: 'a.md', from: '/Notes/a.md', trashedAt: 1 },
+        null,
+        { id: '2', name: 'b.md' },
+        { id: '3', kind: 'note', name: 'c.md', from: '/Notes/c.md', trashedAt: '3' },
+      ]),
+    )
+
+    expect(await webInvoke<{ id: string }[]>('list_trash')).toEqual([
+      { id: '1', kind: 'note', name: 'a.md', from: '/Notes/a.md', trashedAt: 1 },
+    ])
+  })
+
+  test('writing to a manifest nothing can be made of does not lose the note', async () => {
+    disk.meta.set('trash', 'not json')
+    await write('/Notes/Idea.md', '# Idea')
+
+    const entry = await webInvoke<{ id: string }>('trash_item', {
+      path: '/Notes/Idea.md',
+      kind: 'note',
+    })
+
+    expect(await webInvoke('list_trash')).toMatchObject([{ id: entry.id, name: 'Idea.md' }])
+    expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/Idea.md')
+  })
 })
 
 describe('the tree', () => {

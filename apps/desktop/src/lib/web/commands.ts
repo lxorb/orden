@@ -4,6 +4,7 @@
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { scanNote, type SpaceLinks } from '../scan-note'
+import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {
   basename,
@@ -200,9 +201,29 @@ interface TrashEntry {
 
 let trashCounter = 0
 
+/** One row of the manifest, or nothing when it is not one.
+ *
+ *  The manifest is a string in the browser's own storage: written by some version
+ *  of this app, possibly by one interrupted halfway. Read as the shape the code
+ *  wants, half an entry is a throw on the way into Recently deleted - which is
+ *  the one place somebody goes to get a note back. So a bad row costs itself and
+ *  the rest of the list still opens; see stored.ts, which says the same thing
+ *  about the same problem. */
+function entryOf(value: unknown): TrashEntry | null {
+  if (!isRecord(value)) return null
+
+  const { id, kind, name, from, trashedAt } = value
+  if (!isString(id) || !isString(kind) || !isString(name)) return null
+  if (!isString(from) || !isNumber(trashedAt)) return null
+
+  return { id, kind, name, from, trashedAt }
+}
+
 async function trashEntries(): Promise<TrashEntry[]> {
-  const raw = await meta.get('trash')
-  return raw ? (JSON.parse(raw) as TrashEntry[]) : []
+  const held = parsed((await meta.get('trash')) ?? null)
+  if (!Array.isArray(held)) return []
+
+  return held.map(entryOf).filter((one): one is TrashEntry => one !== null)
 }
 
 async function saveTrash(entries: TrashEntry[]) {
