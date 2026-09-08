@@ -44,6 +44,10 @@ tauri-plugin-opener = "2"
 tauri-plugin-os = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Bytes cross the bridge as base64: an export is a Word file, an ePub or a
+# picture, and JSON digits would cost six characters a byte. Already in the lock
+# file as something tauri builds with, so this adds nothing to the build.
+base64 = "0.22"
 
 # Desktop only: a second launch should hand its file to the running window, the
 # app installs its own updates, and files are chosen and saved in a dialog. A

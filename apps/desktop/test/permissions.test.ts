@@ -109,6 +109,48 @@ function desktopOnlyPlugins(): string[] {
   return [...block.matchAll(/^tauri-plugin-([a-z-]+)/gm)].map(([, name = '']) => name)
 }
 
+/** Exporting is the one feature that writes a file the reader named, and every
+ *  byte of it goes through the app's own commands rather than through a plugin.
+ *  That is the whole reason `notes::write_bytes` exists beside `write_note`: a
+ *  command of ours judges the path first, in `paths::chosen`, while the fs plugin
+ *  would write wherever the window asked. */
+describe('writing an export', () => {
+  test('goes through the app’s own commands, so no build grants the fs plugin', () => {
+    for (const [build, granted] of [
+      ['desktop', capabilities.permissions],
+      ['phone', mobile.permissions],
+    ] as const) {
+      expect(
+        granted.filter((one) => one.startsWith('fs:')),
+        `${build} grants the fs plugin`,
+      ).toEqual([])
+    }
+  })
+
+  test('writes bytes through a command the crate registers and the frontend calls', () => {
+    expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
+    expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
+    expect(read('../src/lib/export/save.ts')).toContain("invoke('write_bytes'")
+  })
+
+  test('asks the desktop where to save, which needs the save dialog', () => {
+    expect(read('../src/lib/export/save.ts')).toContain("import('@tauri-apps/plugin-dialog')")
+    expect(capabilities.permissions).toContain('dialog:allow-save')
+  })
+
+  test('shows the finished file in the file manager, which the opener covers', () => {
+    expect(read('../src/lib/export/save.ts')).toContain('revealItemInDir')
+    expect(capabilities.permissions).toContain('opener:default')
+  })
+
+  test('a phone writes into its own documents folder, since it has no dialog', () => {
+    // No dialog and no file manager on a phone, so `deliver` takes neither road
+    // there; see the comment at the top of save.ts.
+    expect(read('../src/lib/export/save.ts')).toContain('spaces_root')
+    expect(mobile.permissions.filter((one) => one.startsWith('dialog:'))).toEqual([])
+  })
+})
+
 describe('phone permissions', () => {
   test('the two files divide the platforms between them', () => {
     expect([...capabilities.platforms].sort()).toEqual(['linux', 'macOS', 'windows'])

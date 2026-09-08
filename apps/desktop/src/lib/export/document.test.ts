@@ -1,0 +1,220 @@
+import { describe, expect, test } from 'vitest'
+import { CORPUS, CORPUS_NAME } from './corpus'
+import { type Block, documentOf, picturesIn, type Span, titleOf } from './document'
+
+const doc = documentOf(CORPUS, CORPUS_NAME)
+
+/** The blocks of one kind, so a test says what it is about rather than counting
+ *  its way to an index. */
+function kind<K extends Block['kind']>(k: K): Extract<Block, { kind: K }>[] {
+  return doc.blocks.filter((block): block is Extract<Block, { kind: K }> => block.kind === k)
+}
+
+const words = (spans: readonly Span[]) => spans.map((span) => span.text).join('')
+
+describe('the document a note comes to', () => {
+  test('takes its title, author, language and date from the front matter', () => {
+    expect(doc.title).toBe('Export corpus')
+    expect(doc.author).toBe('Ada Lovelace')
+    expect(doc.lang).toBe('en')
+    expect(doc.date).toBe('2026-09-08')
+  })
+
+  test('leaves the front matter itself out of the blocks', () => {
+    expect(words(kind('paragraph')[0]?.spans ?? [])).not.toContain('title:')
+  })
+
+  test('keeps the headings with their levels', () => {
+    expect(kind('heading').map((one) => [one.level, words(one.spans)])).toEqual([
+      [1, 'Export corpus'],
+      [2, 'A table'],
+      [2, 'Code'],
+      [2, 'Display maths'],
+      [2, 'Pictures'],
+      [2, 'Links and lists'],
+      [2, 'Diagram'],
+    ])
+  })
+})
+
+describe('the marks on a run', () => {
+  const spans = kind('paragraph')[0]?.spans ?? []
+  const marked = (mark: keyof Span) => spans.filter((span) => span[mark] === true).map((s) => s.text)
+
+  test('finds bold, italic, struck and marked text', () => {
+    expect(marked('bold')).toEqual(['bold'])
+    expect(marked('italic')).toEqual(['italic'])
+    expect(marked('strike')).toEqual(['struck'])
+    expect(marked('mark')).toEqual(['marked'])
+  })
+
+  test('finds code, superscript and subscript', () => {
+    expect(marked('code')).toEqual(['inline code'])
+    expect(marked('sub')).toEqual(['2'])
+    expect(marked('sup')).toEqual(['2'])
+  })
+
+  test('carries a link with the address it points at', () => {
+    const link = spans.find((span) => span.href !== undefined)
+    expect(link).toEqual({ text: 'link', href: 'https://nibeditor.com' })
+  })
+
+  test('carries inline maths as the TeX between the dollars', () => {
+    expect(spans.find((span) => span.maths)?.text).toBe('E = mc^2')
+  })
+
+  test('carries a footnote reference by the label it named', () => {
+    expect(spans.find((span) => span.note !== undefined)?.note).toBe('one')
+  })
+})
+
+describe('footnotes', () => {
+  test('are gathered out of the flow, with their own words', () => {
+    expect(doc.notes).toHaveLength(1)
+    expect(doc.notes[0]?.label).toBe('one')
+    expect(words(doc.notes[0]?.spans ?? [])).toContain("The footnote's own words")
+  })
+
+  test('keep the marks inside them', () => {
+    expect(doc.notes[0]?.spans.some((span) => span.bold)).toBe(true)
+  })
+
+  test('are not left behind as a paragraph as well', () => {
+    const text = kind('paragraph').map((one) => words(one.spans))
+    expect(text.some((one) => one.startsWith("The footnote's own words"))).toBe(false)
+  })
+})
+
+describe('a table', () => {
+  const table = kind('table')[0]
+
+  test('keeps its header, its rows and its alignment', () => {
+    expect(table?.head.map(words)).toEqual(['Left', 'Middle', 'Right'])
+    expect(table?.rows.map((row) => row.map(words))).toEqual([
+      ['one', 'alpha', '1'],
+      ['two', 'beta', '22'],
+    ])
+    expect(table?.align).toEqual(['left', 'center', 'right'])
+  })
+})
+
+describe('a fenced block', () => {
+  test('keeps its language and every character of its code', () => {
+    const code = kind('code')
+    expect(code[0]).toEqual({
+      kind: 'code',
+      language: 'ts',
+      code: 'const answer: number = 42\n  const indented = true',
+    })
+  })
+
+  test('a diagram is a fence like any other, drawn later or not at all', () => {
+    expect(kind('code').at(-1)).toEqual({
+      kind: 'code',
+      language: 'mermaid',
+      code: 'graph TD; A-->B',
+    })
+  })
+})
+
+describe('display maths', () => {
+  test('is its own block, holding the TeX as written', () => {
+    expect(kind('maths')[0]?.tex.trim()).toBe('\\int_0^1 x^2\\,dx = \\frac{1}{3}')
+  })
+})
+
+describe('lists', () => {
+  const lists = kind('list')
+
+  test('tell a bulleted one from a numbered one', () => {
+    expect(lists.map((one) => one.ordered)).toEqual([false, true])
+    expect(lists[1]?.start).toBe(1)
+  })
+
+  test('keep what is nested under an item as blocks of that item', () => {
+    const nested = lists[0]?.items[0]?.blocks[0]
+    expect(nested?.kind).toBe('list')
+    expect(nested?.kind === 'list' && words(nested.items[0]?.spans ?? [])).toBe('nested bullet')
+  })
+
+  test('tell a task apart from a plain item, and done from open', () => {
+    expect(lists[0]?.items.map((item) => item.checked)).toEqual([null, true, false])
+  })
+})
+
+describe('a quote', () => {
+  const quotes = kind('quote')
+
+  test('keeps the blocks inside it and the marks inside those', () => {
+    const inner = quotes[0]?.blocks[0]
+    expect(inner?.kind).toBe('paragraph')
+    expect(inner?.kind === 'paragraph' && inner.spans.some((span) => span.bold)).toBe(true)
+  })
+
+  test('a callout carries its label, and drops the marker from its words', () => {
+    expect(quotes[1]?.label).toBe('Note')
+    const inner = quotes[1]?.blocks[0]
+    expect(inner?.kind === 'paragraph' && words(inner.spans)).toBe('Careful with that.')
+  })
+
+  test('a plain quote has no label', () => {
+    expect(quotes[0]?.label).toBeNull()
+  })
+})
+
+describe('the rest of the constructs', () => {
+  test('a definition list keeps its term and every meaning under it', () => {
+    expect(kind('terms')[0]?.entries.map((entry) => [words(entry.term), entry.details.map(words)]))
+      .toEqual([
+        ['Markdown', ['A way of writing formatted text.', 'Also the format itself.']],
+      ])
+  })
+
+  test('a rule and a page break are each their own block', () => {
+    expect(kind('rule')).toHaveLength(1)
+    expect(kind('break')).toHaveLength(1)
+  })
+
+  test('a wikilink reads as the words it showed, alias and all', () => {
+    const text = kind('paragraph')
+      .map((one) => words(one.spans))
+      .join('\n')
+
+    expect(text).toContain('A wikilink to Another note and one with an alias the other.')
+    expect(text).not.toContain('[[')
+  })
+})
+
+describe('the pictures a document names', () => {
+  test('are found in the order they are written, each once', () => {
+    expect(picturesIn(doc)).toEqual(['assets/pic.png', 'https://nibeditor.com/remote.jpg'])
+  })
+
+  test('carry their words as the span text', () => {
+    const spans = doc.blocks
+      .filter((block): block is Extract<Block, { kind: 'paragraph' }> => block.kind === 'paragraph')
+      .flatMap((block) => block.spans)
+      .filter((span) => span.picture !== undefined)
+
+    expect(spans.map((span) => span.text)).toEqual(['Pasted picture', 'Remote picture'])
+  })
+
+  test('a picture named twice is listed once', () => {
+    const twice = documentOf('![a](x.png)\n\n![b](x.png)\n', 'Note.md')
+    expect(picturesIn(twice)).toEqual(['x.png'])
+  })
+
+  test('one inside a table cell or a list item is found too', () => {
+    const inside = documentOf('| a |\n| - |\n| ![p](t.png) |\n\n- ![q](l.png)\n', 'Note.md')
+    expect(picturesIn(inside).sort()).toEqual(['l.png', 't.png'])
+  })
+})
+
+describe('naming the document', () => {
+  test('prefers the front matter, then the first heading, then the file', () => {
+    expect(titleOf('---\ntitle: Meta\n---\n# Head\n', 'File.md')).toBe('Meta')
+    expect(titleOf('# Head\n', 'File.md')).toBe('Head')
+    expect(titleOf('words\n', 'File.md')).toBe('File')
+    expect(titleOf('words\n', 'No extension')).toBe('No extension')
+  })
+})

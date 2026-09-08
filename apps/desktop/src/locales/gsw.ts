@@ -456,9 +456,11 @@ export const gsw: Dictionary = {
     'En Client, wo sich nöd cha aamälde, überchunnt statt däm es Token. Es wird nume eimal zeigt.',
 
   // Export
-  'Export as PDF': 'Als PDF exportiere',
-  'Export as HTML': 'Als HTML exportiere',
-  'Export as HTML without styles': 'Als HTML ohni Stil exportiere',
+  'Plain text': 'Text',
+  'Markdown with the pictures': 'Markdown mit Bilder',
+  'HTML without styles': 'HTML ohni Stil',
+  Presentation: 'Präsentation',
+  'Nothing came out of that export': 'Bi dem Export isch nüt use cho',
   'Export slides as HTML': 'Folie als HTML exportiere',
   'Export slides as PDF': 'Folie als PDF exportiere',
   'Export as {format}': 'Als {format} exportiere',

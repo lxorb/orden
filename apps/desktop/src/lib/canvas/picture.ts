@@ -14,7 +14,8 @@
  *  the same picture with the cards set as plain wrapped lines instead, which is
  *  the one thing that both reads the same and rasterises at all. */
 
-import { inlineImages, chooseTarget, download, printInFrame } from '../export'
+import { inlineImages, printInFrame } from '../export'
+import { chooseTarget, download } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
 import {
   arrowAt,
@@ -417,7 +418,7 @@ export async function exportCanvasSvg(drawing: Drawing) {
   const file = `${stem(drawing.name)}.svg`
 
   if (!isDesktop) {
-    download(file, svg, 'image/svg+xml')
+    download(file, { text: svg, mime: 'image/svg+xml' })
     return file
   }
 

@@ -12,6 +12,8 @@ import { busy } from './busy.svelte'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
 import type { HtmlOptions } from './export'
+import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
+import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
 import { imagePath } from './images'
 import { links } from './link-index.svelte'
@@ -58,8 +60,10 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }
 
-/** Export entries. The pandoc formats only appear when pandoc is installed,
- *  so the list never offers something that cannot work. */
+/** Export entries: the formats first, in the one fixed order the list keeps
+ *  everywhere, then the variants, then the paper. The pandoc formats only appear
+ *  when pandoc is installed, so the list never offers something that cannot
+ *  work; everything above them works on every build with nothing installed. */
 export function exportCommands(): Command[] {
   const note = () => workspace.active
   // Flushed first: the editor's last few keystrokes are still a rope until
@@ -69,50 +73,44 @@ export function exportCommands(): Command[] {
     return note()?.doc ?? ''
   }
   const name = () => note()?.name ?? 'Untitled.md'
+  const target = () => ({ source: source(), name: name(), path: note()?.path ?? null })
 
-  /** Everything an export needs beyond the note: paper, colours, and where
-   *  the pictures it names actually are. */
-  const options = async (): Promise<HtmlOptions> => ({
+  /** Everything an export needs beyond the note: paper, colours, where the
+   *  pictures it names actually are, and where its links point. */
+  const options = async (): Promise<RunOptions> => ({
     page: settings.page,
     resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
     // An `![[Note]]` in the document brings that note into it, the way it shows
     // in the editor. Read here rather than in the renderer, which is sync.
     readNote: (target: string) => links.embedSource(target, note()?.path ?? null),
+    // A wikilink written out as markdown points at the file it named, relative
+    // to this note, so the export reads in any other editor.
+    link: (link) => links.relativeTarget(link, note()?.path ?? null),
     ...(await look()),
   })
 
-  // Rendering a note and handing it to the system takes a moment with nothing
-  // on screen to show for it, so each of these runs behind the line at the top
-  // of the document. See busy.svelte.ts.
+  /** One export, behind the line at the top of the document: rendering a note
+   *  and handing it to the system takes a moment with nothing on screen to show
+   *  for it. See busy.svelte.ts. */
+  const run = (id: Exportable) => () =>
+    busy.start(t('Exporting'), async () => {
+      const m = await import('./export/run')
+      await m.runExport(id, target(), await options())
+    })
+
   const commands: Command[] = [
-    {
-      id: 'export-pdf',
-      label: t('Export as PDF'),
-      run: () =>
-        busy.start(t('Exporting'), async () => {
-          const m = await import('./export')
-          await m.exportPdf(source(), name(), await options())
-        }),
-    },
-    {
-      id: 'export-html',
-      label: t('Export as HTML'),
-      run: () =>
-        busy.start(t('Exporting'), async () => {
-          const m = await import('./export')
-          await m.exportHtml(source(), name(), await options())
-        }),
-    },
+    ...EXPORT_FORMATS.map((format) => ({
+      id: `export-${format.id}`,
+      label: t('Export as {format}', { format: t(format.label) }),
+      hint: shortcuts.hint(`export.${format.id}`),
+      run: run(format.id),
+    })),
+    ...EXPORT_VARIANTS.map((variant) => ({
+      id: `export-${variant.id}`,
+      label: t('Export as {format}', { format: t(variant.label) }),
+      run: run(variant.id),
+    })),
     { id: 'page-setup', label: t('Page setup for export'), run: () => settings.show('export') },
-    {
-      id: 'export-html-bare',
-      label: t('Export as HTML without styles'),
-      run: () =>
-        busy.start(t('Exporting'), async () => {
-          const m = await import('./export')
-          await m.exportHtml(source(), name(), { bare: true })
-        }),
-    },
   ]
 
   // A deck goes out as slides as well: one file that turns its own pages, and

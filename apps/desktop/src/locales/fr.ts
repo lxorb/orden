@@ -457,9 +457,11 @@ export const fr: Dictionary = {
     'Un client qui ne peut pas se connecter peut recevoir un jeton à la place. Il n’est affiché qu’une fois.',
 
   // Export
-  'Export as PDF': 'Exporter en PDF',
-  'Export as HTML': 'Exporter en HTML',
-  'Export as HTML without styles': 'Exporter en HTML sans styles',
+  'Plain text': 'Texte',
+  'Markdown with the pictures': 'Markdown avec les images',
+  'HTML without styles': 'HTML sans styles',
+  Presentation: 'Présentation',
+  'Nothing came out of that export': 'Cet export n’a rien produit',
   'Export slides as HTML': 'Exporter les diapositives en HTML',
   'Export slides as PDF': 'Exporter les diapositives en PDF',
   'Export as {format}': 'Exporter en {format}',

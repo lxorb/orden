@@ -56,6 +56,7 @@ macro_rules! commands {
         tauri::generate_handler![
             notes::read_note,
             notes::write_note,
+            notes::write_bytes,
             notes::delete_note,
             notes::rename_note,
             notes::create_folder,

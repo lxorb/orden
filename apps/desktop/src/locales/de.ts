@@ -459,9 +459,11 @@ export const de: Dictionary = {
     'Ein Client, der sich nicht anmelden kann, bekommt stattdessen ein Token. Es wird nur einmal angezeigt.',
 
   // Export
-  'Export as PDF': 'Als PDF exportieren',
-  'Export as HTML': 'Als HTML exportieren',
-  'Export as HTML without styles': 'Als HTML ohne Stile exportieren',
+  'Plain text': 'Text',
+  'Markdown with the pictures': 'Markdown mit Bildern',
+  'HTML without styles': 'HTML ohne Stile',
+  Presentation: 'Präsentation',
+  'Nothing came out of that export': 'Bei diesem Export kam nichts heraus',
   'Export slides as HTML': 'Folien als HTML exportieren',
   'Export slides as PDF': 'Folien als PDF exportieren',
   'Export as {format}': 'Als {format} exportieren',

@@ -6,8 +6,8 @@ import {
   prepareEmbeds,
   prepareFences,
   renderNote,
-  titleOf,
 } from './export'
+import { titleOf } from './export/document'
 
 /** One of everything the renderer knows. */
 const NOTE = `---

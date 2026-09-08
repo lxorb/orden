@@ -32,7 +32,15 @@ import {
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
 import { scanCanvas, type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
-import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
+import {
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  nameOf,
+  noteName,
+  relativePath,
+  relativeTo,
+} from './space-paths'
 import { invoke } from './tauri'
 
 /** One place a link was found, as a row in the panel. */
@@ -532,6 +540,24 @@ class Links {
     const found = this.resolveFrom(source ?? '', { kind: 'wikilink', target })
 
     return found === null ? null : this.readNote(found)
+  }
+
+  /** Where a `[[wikilink]]` points, as a path relative to the note it is written
+   *  in, or null when the space holds no such note.
+   *
+   *  What the markdown export writes in place of the brackets: no other editor
+   *  knows what they mean, and a link nobody can follow is worse than the words
+   *  the link showed. The same resolution the editor's own links get, so the
+   *  export points where the app does.
+   *
+   *  `from` is the note's path as the app holds it; a note opened from outside
+   *  the space has no place in the index and resolves to nothing. */
+  relativeTarget(link: FoundLink, from: string | null): string | null {
+    const source = from === null ? null : this.relative(from)
+    if (source === null) return null
+
+    const found = this.resolveFrom(source, link)
+    return found === null ? null : relativePath(folderOf(source), found)
   }
 
   /** Where a picture named by `![[picture.png]]` lives, when the space holds one

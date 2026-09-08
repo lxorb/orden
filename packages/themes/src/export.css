@@ -101,6 +101,13 @@ body {
     print-color-adjust: exact;
   }
 
+  /* A second top-level heading starts a sheet of its own, the way a chapter
+     does. A sibling selector rather than :not(:first-child): the first heading
+     must never break, and what precedes it may be a table of contents. */
+  #write h1 ~ h1 {
+    break-before: page;
+  }
+
   /* A heading stays with what follows it. */
   #write h1,
   #write h2,

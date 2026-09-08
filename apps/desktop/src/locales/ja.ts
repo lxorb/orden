@@ -454,9 +454,11 @@ export const ja: Dictionary = {
     'サインインできないクライアントには、代わりにトークンを渡せます。表示は一度きりです。',
 
   // Export
-  'Export as PDF': 'PDF として書き出す',
-  'Export as HTML': 'HTML として書き出す',
-  'Export as HTML without styles': 'スタイルなしの HTML として書き出す',
+  'Plain text': 'テキスト',
+  'Markdown with the pictures': '画像付き Markdown',
+  'HTML without styles': 'スタイルなし HTML',
+  Presentation: 'プレゼンテーション',
+  'Nothing came out of that export': 'この書き出しからは何も生成されませんでした',
   'Export slides as HTML': 'スライドを HTML として書き出す',
   'Export slides as PDF': 'スライドを PDF として書き出す',
   'Export as {format}': '{format} として書き出す',

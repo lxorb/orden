@@ -1,7 +1,6 @@
 import { CODE_PALETTES, DIAGRAM_LANGUAGES } from '@nib/editor'
 import {
   codeBlocks,
-  documentTitle,
   findLinks,
   frontMatterValue,
   renderMarkdown,
@@ -10,6 +9,9 @@ import {
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
 import { drawDiagram } from './diagrams'
+import { titleOf } from './export/document'
+import { inlinePictures, type Picture, swapSources } from './export/pictures'
+import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 import { highlightCode, loadParsers, type Parser, paletteCss } from './highlight'
 import { mathCss } from './math-fonts'
@@ -18,7 +20,6 @@ import {
   type PageSetup,
   pageCss,
   pageSetupFor,
-  paperInches,
   withRunningText,
 } from './page-setup'
 import { invoke, isDesktop } from './tauri'
@@ -79,10 +80,42 @@ function accentCss(accent: string, scheme: Scheme): string {
   ].join('\n')
 }
 
-/** What the running text calls the document: the front matter's title, else
- *  the first heading, else the file's name. */
-export function titleOf(source: string, name: string): string {
-  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? name.replace(/\.[^.]+$/, '')
+/** The note's own markup, with no page around it. What the standalone page below
+ *  fills its `#write` with, and what a package that brings its own pages - an
+ *  ePub - asks for on its own. One reading of the note either way, so a book and
+ *  a page cannot come out saying different things. */
+export function buildBody(source: string, options: HtmlOptions = {}): string {
+  return renderMarkdown(source, {
+    footnotes: true,
+    toc: true,
+    ...(options.fence ? { code: options.fence } : {}),
+    // No link resolver: an exported document stands on its own, and a link to a
+    // note that is not in it has nowhere to point, so it reads as its own words.
+    ...(options.embed ? { resolveEmbed: options.embed } : {}),
+  })
+}
+
+/** Everything that dresses the note: the maths fonts it uses, the theme, the
+ *  accent, the export sheet, the code palette, the paper, and whatever the
+ *  reader has put on top. Apart from the page for the same reason as the body:
+ *  an ePub carries these in a stylesheet of its own. */
+export function buildStyles(body: string, source: string, options: HtmlOptions = {}): string {
+  // The first palette is the one that follows the theme, and stands in for an
+  // id nothing here recognises - one written by a later build, say.
+  const palette =
+    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES.at(0)
+
+  return [
+    mathCss(body),
+    themeCss,
+    accentCss(options.accent ?? DEFAULT_ACCENT, options.scheme ?? 'light'),
+    exportCss,
+    palette ? paletteCss(palette) : '',
+    pageCss(pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)),
+    options.css ?? '',
+  ]
+    .filter(Boolean)
+    .join('\n')
 }
 
 /** A standalone page: the note, its theme, and nothing else. Pure, so it can
@@ -91,14 +124,7 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
   const title = titleOf(source, name)
   const author = frontMatterValue(source, 'author')
   const lang = frontMatterValue(source, 'lang') ?? 'en'
-  const body = renderMarkdown(source, {
-    footnotes: true,
-    toc: true,
-    ...(options.fence ? { code: options.fence } : {}),
-    // No link resolver: an exported document stands on its own, and a link to a
-    // note that is not in it has nowhere to point, so it reads as its own words.
-    ...(options.embed ? { resolveEmbed: options.embed } : {}),
-  })
+  const body = buildBody(source, options)
 
   const meta = [
     '<meta charset="utf-8">',
@@ -116,23 +142,8 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
   const setup = pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)
   const date =
     options.date ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
-  // The first palette is the one that follows the theme, and stands in for an
-  // id nothing here recognises - one written by a later build, say.
-  const palette =
-    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES.at(0)
 
-  const styles = [
-    mathCss(body),
-    themeCss,
-    accentCss(options.accent ?? DEFAULT_ACCENT, scheme),
-    exportCss,
-    palette ? paletteCss(palette) : '',
-    pageCss(setup),
-    options.css ?? '',
-  ]
-    .filter(Boolean)
-    .join('\n')
-
+  const styles = buildStyles(body, source, options)
   const page = withRunningText(`<div id="write">\n${body}</div>\n`, setup, title, date)
 
   return `<!doctype html>
@@ -248,61 +259,31 @@ export async function inlineImages(
     }),
   )
 
-  return html.replace(
-    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
-    (whole: string, before: string, src: string, after: string) => {
-      const data = inlined.get(src)
-      return data ? `${before}${data}${after}` : whole
-    },
-  )
+  return swapSources(html, inlined)
 }
 
-/** The whole document, ready to write: fences drawn, pictures inside it. */
+/** The whole document, ready to write: fences drawn, pictures inside it.
+ *
+ *  `pictures` are the ones the caller has already read, which is how a picture
+ *  off the network gets into the file as well: without them only the ones beside
+ *  the note are inlined, and a page that still points at a server is a page that
+ *  does not open on a train. */
 export async function renderNote(
   source: string,
   name: string,
   options: HtmlOptions = {},
+  pictures?: readonly Picture[],
 ): Promise<string> {
   const fence = await prepareFences(source, options.scheme ?? 'light', { highlight: !options.bare })
   const embed = options.readNote ? await prepareEmbeds(source, options.readNote) : undefined
   const html = buildHtml(source, name, { ...options, fence, ...(embed ? { embed } : {}) })
 
-  return options.bare || !options.resolveImage ? html : inlineImages(html, options.resolveImage)
-}
+  // A bare page keeps the paths the note wrote: it is going into a site that has
+  // its own pictures beside it.
+  if (options.bare) return html
+  if (pictures) return inlinePictures(html, pictures)
 
-/** Where to write, asked of the system. Exported because a deck is written out
- *  the same way a document is, only with pages of its own; see slides/file.ts. */
-export async function chooseTarget(name: string, extension: string, label: string) {
-  const { save } = await import('@tauri-apps/plugin-dialog')
-  return save({
-    defaultPath: `${name.replace(/\.[^.]+$/, '')}.${extension}`,
-    filters: [{ name: label, extensions: [extension] }],
-  })
-}
-
-/** A browser has no file dialog to offer; the file is handed to it to save. */
-export function download(name: string, content: string, type: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  link.click()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
-export async function exportHtml(source: string, name: string, options: HtmlOptions = {}) {
-  const file = `${name.replace(/\.[^.]+$/, '')}.html`
-
-  if (!isDesktop) {
-    download(file, await renderNote(source, name, options), 'text/html')
-    return file
-  }
-
-  const target = await chooseTarget(name, 'html', 'HTML')
-  if (!target) return
-
-  await invoke('write_note', { path: target, content: await renderNote(source, name, options) })
-  return target
+  return options.resolveImage ? inlineImages(html, options.resolveImage) : html
 }
 
 /** Shows the page to the browser's print dialog, which is where "Save as PDF"
@@ -348,29 +329,6 @@ export function printInFrame(html: string): Promise<void> {
   })
 }
 
-/** Writes a PDF. On a desktop whose webview can print to a file, it goes
- *  straight to disk with the paper from the settings; elsewhere the print
- *  dialog does the saving. Always light: it is going on paper. */
-export async function exportPdf(source: string, name: string, options: HtmlOptions = {}) {
-  const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
-  const target = native ? await chooseTarget(name, 'pdf', 'PDF') : null
-  if (native && !target) return
-
-  const html = await renderNote(source, name, { ...options, scheme: 'light' })
-
-  if (target) {
-    const page = paperInches(pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP))
-    try {
-      await invoke('print_pdf', { html, output: target, page })
-      return target
-    } catch {
-      // The dialog can still save the file, so the person is not left with nothing.
-    }
-  }
-
-  await printInFrame(html)
-}
-
 export async function pandocAvailable(): Promise<boolean> {
   if (!isDesktop) return false
   return invoke<boolean>('has_pandoc').catch(() => false)
@@ -402,7 +360,9 @@ export async function importDocument(): Promise<{ name: string; markdown: string
   return { name: `${name}.md`, markdown }
 }
 
-/** Typora shells out to pandoc for these too; the formats are pandoc's, not ours. */
+/** The formats that are pandoc's rather than ours, for a machine that has it.
+ *  Nib writes its own Word, RTF and ePub, so those are not here: two roads to
+ *  one format would mean a note came out differently depending on the machine. */
 export async function exportPandoc(source: string, name: string, format: PandocFormat) {
   if (!isDesktop) return
 

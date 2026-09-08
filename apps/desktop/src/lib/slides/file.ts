@@ -20,7 +20,9 @@ import {
 import { CODE_PALETTES } from '@nib/editor'
 import { proseCss, slidesCss, tokensCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
-import { chooseTarget, download, inlineImages, printInFrame, titleOf } from '../export'
+import { inlineImages, printInFrame } from '../export'
+import { titleOf } from '../export/document'
+import { chooseTarget, download } from '../export/save'
 import { mathCss } from '../math-fonts'
 import { paletteCss } from '../highlight'
 import type { StageSlide } from './render'
@@ -158,7 +160,7 @@ export async function exportDeck(
   const file = `${name.replace(/\.[^.]+$/, '')}.html`
 
   if (!isDesktop) {
-    download(file, html, 'text/html')
+    download(file, { text: html, mime: 'text/html' })
     return file
   }
 

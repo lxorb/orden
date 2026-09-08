@@ -1,16 +1,18 @@
 import { key } from './i18n.svelte'
 
-/** Formats pandoc can produce, in the order Typora lists them. The labels
- *  are product names and stay as they are; only `Presentation` is a plain
- *  noun, and it is translated where it is shown.
+/** The formats only pandoc can produce, for a machine that has it, in the order
+ *  Typora lists them. The labels are product names and stay as they are; only
+ *  `Presentation` is a plain noun, and it is translated where it is shown.
+ *
+ *  Word, RTF and ePub are not here even though pandoc writes them: Nib writes
+ *  its own, with the diagrams drawn, the code coloured and the pictures carried,
+ *  and one format that came out differently depending on whether a machine
+ *  happened to have pandoc would be worse than either.
  *
  *  Kept apart from the exporter itself, which carries fonts and parsers the
  *  command list has no use for: this is all the palette needs at startup. */
 export const PANDOC_FORMATS = [
-  { id: 'docx', label: 'Word', extension: 'docx' },
   { id: 'odt', label: 'OpenOffice', extension: 'odt' },
-  { id: 'rtf', label: 'RTF', extension: 'rtf' },
-  { id: 'epub', label: 'ePub', extension: 'epub' },
   { id: 'latex', label: 'LaTeX', extension: 'tex' },
   { id: 'mediawiki', label: 'MediaWiki', extension: 'wiki' },
   { id: 'rst', label: 'reStructuredText', extension: 'rst' },

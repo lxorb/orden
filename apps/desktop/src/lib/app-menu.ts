@@ -22,6 +22,7 @@ import {
 import { account } from './account.svelte'
 import { copySelection, cutSelection } from './clipboard'
 import { exportCommands } from './commands'
+import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
@@ -61,6 +62,28 @@ interface Context {
   view?: EditorView | undefined
   onpalette(): void
   onhistory(): void
+}
+
+/** The export rows, with a rule wherever the kind of row changes: the nine
+ *  formats, then the variants of two of them, then the paper and whatever else
+ *  the machine can do. The list itself is the command list, so the menu, the
+ *  palette and the shortcut settings show the same rows in the same order. */
+function exportRows(): MenuRow[] {
+  const formats = new Set<string>(EXPORT_FORMATS.map((one) => `export-${one.id}`))
+  const variants = new Set<string>(EXPORT_VARIANTS.map((one) => `export-${one.id}`))
+
+  const rows: MenuRow[] = []
+  let last: string | null = null
+
+  for (const command of exportCommands()) {
+    const kind = formats.has(command.id) ? 'format' : variants.has(command.id) ? 'variant' : 'rest'
+    if (last !== null && kind !== last) rows.push(SPLIT)
+    last = kind
+
+    rows.push({ label: command.label, hint: command.hint, run: command.run })
+  }
+
+  return rows
 }
 
 /** Runs an editor command against whichever view is on screen. */
@@ -132,8 +155,6 @@ export function appMenu(context: Context): MenuGroup[] {
           },
         },
         SPLIT,
-        ...exportCommands().map((one) => ({ label: one.label, run: one.run })),
-        SPLIT,
         { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
         { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
         SPLIT,
@@ -150,6 +171,15 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => void workspace.reopenClosed(),
         },
       ],
+    },
+
+    // Export is a menu of its own rather than a dozen rows inside File. The
+    // File menu would otherwise be longer than the window, and the group strip
+    // beside it is where a menu bar puts a second menu anyway.
+    {
+      id: 'export',
+      label: t('Export'),
+      rows: exportRows(),
     },
 
     {

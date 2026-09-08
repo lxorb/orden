@@ -13,7 +13,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // time and is the same one under Vite and inside the app bundle. Asking for the
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { invoke, isNative } from '../tauri'
+import { fileBytes } from '../bytes'
 
 type Library = typeof import('pdfjs-dist')
 
@@ -29,23 +29,6 @@ export function pdfjs(): Promise<Library> {
   return loading
 }
 
-/** The bytes of a file in a space.
- *
- *  Over the IPC as bytes in the app, which is what makes a thirty megabyte
- *  PDF one copy rather than a hundred megabytes of JSON numbers. The browser
- *  keeps its files as text and answers with a `data:` URI, so there the bytes are
- *  decoded here. */
-async function bytesOf(path: string): Promise<Uint8Array> {
-  if (isNative) return new Uint8Array(await invoke<ArrayBuffer>('read_file', { path }))
-
-  const uri = await invoke<string>('read_asset', { path })
-  const binary = atob(uri.slice(uri.indexOf(',') + 1))
-  const bytes = new Uint8Array(binary.length)
-  for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
-
-  return bytes
-}
-
 /** A PDF that is open, and the one way to close it. */
 export interface OpenPdf {
   doc: PDFDocumentProxy
@@ -57,7 +40,7 @@ export interface OpenPdf {
 /** Opens a PDF in a space. The library and the bytes are fetched at the same
  *  time, because the first page cannot be drawn until both are here. */
 export async function openDocument(path: string): Promise<OpenPdf> {
-  const [library, data] = await Promise.all([pdfjs(), bytesOf(path)])
+  const [library, data] = await Promise.all([pdfjs(), fileBytes(path)])
 
   // The bytes are handed to the worker, which takes ownership of them: after
   // this the copy on this side is empty, and one document costs one copy.
