@@ -1711,6 +1711,14 @@ class Workspace {
     this.device.toggleFolder(path)
   }
 
+  isTagOpen(path: string): boolean {
+    return this.device.isTagOpen(path)
+  }
+
+  toggleTag(path: string) {
+    this.device.toggleTag(path)
+  }
+
   /** Opens a folder and every folder on the way down to it, so a bookmarked
    *  folder can be shown where it sits rather than only named. */
   revealFolder(path: string) {
@@ -1746,6 +1754,29 @@ class Workspace {
     if (!root) return
 
     this.tags = await invoke<Tag[]>('space_tags', { root }).catch(() => [])
+  }
+
+  /** Renames a tag, and everything under it, in every note of the space.
+   *
+   *  Silently and as one thing to undo, the way renaming a note rewrites every
+   *  link to it: a tag is a name for a set of notes, and nobody who renames one
+   *  wants to be asked about each of them. Answers how many notes were touched.
+   *
+   *  `to` is the path the node becomes, or null to take the tag away. */
+  async retagNotes(from: string, to: string | null): Promise<number> {
+    const { tagChanges } = await import('./tag-edits')
+
+    const changes = await tagChanges(
+      this.notes.map((one) => one.path),
+      from,
+      to,
+      (path) => this.noteText(path),
+    )
+
+    await this.replaceInNotes(changes)
+    // The tree the tags are drawn as is now a tree of the tags that were.
+    await this.loadTags()
+    return changes.length
   }
 
   /** A note's words as they stand: what is on screen when it is open, and what

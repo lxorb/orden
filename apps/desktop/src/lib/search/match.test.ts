@@ -151,6 +151,37 @@ describe('tags', () => {
   test('are not headings', () => {
     expect(answers('tag:Meeting')).toBe(false)
   })
+
+  /** A tag with slashes is a path in a tree of any depth, and an ancestor stands
+   *  for everything beneath it. Which is what the tag tree draws; see
+   *  tag-tree.ts. */
+  test('match at every depth, and narrow as the path grows', () => {
+    const deep = { body: 'words #work/nib/canvas/edges more\n' }
+
+    expect(answers('tag:work', deep)).toBe(true)
+    expect(answers('tag:work/nib', deep)).toBe(true)
+    expect(answers('tag:work/nib/canvas', deep)).toBe(true)
+    expect(answers('tag:work/nib/canvas/edges', deep)).toBe(true)
+    // A longer segment is a different tag, not a child of a shorter one.
+    expect(answers('tag:work/ni', deep)).toBe(false)
+    expect(answers('tag:work/nib/canvas/edges/deeper', deep)).toBe(false)
+  })
+
+  test('and come out of the front matter as well as the words', () => {
+    const listed = { body: '---\ntags: [work/nib, other]\n---\n\nwords\n' }
+
+    expect(answers('tag:work', listed)).toBe(true)
+    expect(answers('tag:work/nib', listed)).toBe(true)
+    expect(answers('tag:other', listed)).toBe(true)
+    expect(answers('tag:missing', listed)).toBe(false)
+  })
+
+  test('written as items under the key, which is Obsidian’s other spelling', () => {
+    const items = { body: '---\ntags:\n  - work/nib\n  - other\n---\n\nwords\n' }
+
+    expect(answers('tag:work/nib', items)).toBe(true)
+    expect(answers('tag:other', items)).toBe(true)
+  })
 })
 
 describe('front matter', () => {

@@ -22,6 +22,7 @@ import { without, withOrWithout } from '../records'
 const RECENT_KEY = 'nib:recent'
 const ICONS_KEY = 'nib:icons'
 const EXPANDED_KEY = 'nib:expanded'
+const TAGS_KEY = 'nib:expanded-tags'
 
 /** Enough that a note opened this morning is still there, short enough that
  *  the list is worth reading. */
@@ -33,6 +34,11 @@ export class DeviceView {
 
   /** Which folders are open, by path. */
   expanded = $state<Record<string, boolean>>(recordOf(stored(EXPANDED_KEY), isBoolean))
+
+  /** Which tags are open, by tag path. Its own record rather than a share of the
+   *  one above: a tag `work/nib` and a folder called `work/nib` are two
+   *  different things to open, and one would otherwise open the other. */
+  expandedTags = $state<Record<string, boolean>>(recordOf(stored(TAGS_KEY), isBoolean))
 
   /** The icon a space wears, keyed by folder rather than by id so it survives
    *  the ids being handed out again on the next launch. */
@@ -58,6 +64,18 @@ export class DeviceView {
       : { ...this.expanded, [path]: true }
 
     localStorage.setItem(EXPANDED_KEY, JSON.stringify(this.expanded))
+  }
+
+  isTagOpen(path: string): boolean {
+    return this.expandedTags[path] === true
+  }
+
+  toggleTag(path: string) {
+    this.expandedTags = this.isTagOpen(path)
+      ? without(this.expandedTags, path)
+      : { ...this.expandedTags, [path]: true }
+
+    localStorage.setItem(TAGS_KEY, JSON.stringify(this.expandedTags))
   }
 
   /** Opens a folder without closing one that is already open: making a note

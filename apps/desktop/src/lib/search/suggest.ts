@@ -4,6 +4,8 @@
  *  value: the operator itself is short enough to type, and a list of three
  *  words is a lesson, not a help. */
 
+import { fit } from './fuzzy'
+
 type Field = 'path' | 'file' | 'tag'
 
 /** The value being typed: which operator it belongs to and where it sits, so
@@ -62,6 +64,26 @@ export function offered(typed: string, values: readonly string[]): string[] {
 /** The query with a chosen value in it, and where the caret lands: after the
  *  value, so the next operator can be typed straight on. A value with a space
  *  in it is quoted, because the grammar ends a bare value at the space. */
+/** The values a half-typed one is nearest to, best first.
+ *
+ *  The same scorer the hit list ranks with, so a tag is found the way a line is:
+ *  `wnc` offers `work/nib/canvas`, and a letter typed wrong still offers what was
+ *  meant. Worth it for a tag and not for a note name because a tag path is long
+ *  and deep, and typing one out to the end is what the tree is there to avoid. */
+export function nearest(typed: string, values: readonly string[]): string[] {
+  const needle = typed.trim()
+  if (!needle) return values.slice(0, MOST)
+
+  return values
+    .flatMap((value) => {
+      const found = fit(needle, value)
+      return found ? [{ value, score: found.score }] : []
+    })
+    .sort((a, b) => b.score - a.score || a.value.localeCompare(b.value))
+    .slice(0, MOST)
+    .map((one) => one.value)
+}
+
 export function chosen(
   source: string,
   at: Completing,

@@ -10,10 +10,12 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { search } from './search.svelte'
-  import { chosen, completing, offered } from './search/suggest'
+  import { chosen, completing, nearest, offered } from './search/suggest'
   import type { Hit, Range } from './search/match'
   import { relativeTo } from './space-paths'
   import Suggest from './Suggest.svelte'
+  import { nodesIn, tagTree } from './tag-tree'
+  import TagTree from './TagTree.svelte'
   import { type Entry, workspace } from './workspace.svelte'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
@@ -59,6 +61,14 @@
 
   const names = $derived([...new Set(workspace.notes.map((note) => stripped(note.name)))].sort())
 
+  /** The space's tags as the tree their slashes describe. */
+  const tags = $derived(tagTree(workspace.tags))
+
+  /** Every node of it, by path, which is what `tag:` is finished with: a path is
+   *  what the operator takes, and every node of the tree is one, so `tag:nib`
+   *  offers `work/nib` as well as the tags spelled that way. */
+  const tagPaths = $derived(nodesIn(tags).map((node) => node.path))
+
   /** What the caret is finishing, and what the space has to finish it with.
    *  Only while the field has the focus: a popup over a panel nobody is
    *  typing in is in the way. */
@@ -66,11 +76,10 @@
 
   const suggestions = $derived.by(() => {
     if (!asking) return []
-    if (asking.field === 'tag')
-      return offered(
-        asking.typed,
-        workspace.tags.map((one) => one.tag),
-      )
+    // A tag path is deep and long, so it is the one value worth finding by a
+    // handful of its letters: `wnc` offers `work/nib/canvas`. The same scorer the
+    // hit list ranks with; see search/fuzzy.ts.
+    if (asking.field === 'tag') return nearest(asking.typed, tagPaths)
     return offered(asking.typed, asking.field === 'path' ? folders : names)
   })
 
@@ -311,18 +320,11 @@
   </ul>
 {:else if search.asks && !search.running}
   <p class="empty-text">{t('Nothing found')}</p>
-{:else if !search.text.trim() && workspace.tags.length}
+{:else if !search.text.trim() && tags.length}
   <!-- An empty search offers the space's own tags, which is how you find out
-       what there is to search for. -->
-  <ul class="tags">
-    {#each workspace.tags as tag (tag.tag)}
-      <li>
-        <button class="tag" onclick={() => search.ask(`tag:${tag.tag}`)}>
-          {tag.tag}<span class="count">{tag.count}</span>
-        </button>
-      </li>
-    {/each}
-  </ul>
+       what there is to search for. As the tree their slashes describe, in the
+       file tree's own rows: `work/nib/canvas` is a path like a folder's. -->
+  <TagTree nodes={tags} />
 {/if}
 
 <style>
@@ -621,47 +623,6 @@
   .tick svg {
     width: 11px;
     height: 11px;
-  }
-
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    padding: var(--space-2) 0;
-  }
-
-  .tag {
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-    padding: 3px 8px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    cursor: default;
-    transition:
-      background var(--dur-instant) var(--ease-out),
-      border-color var(--dur-instant) var(--ease-out),
-      color var(--dur-instant) var(--ease-out);
-  }
-
-  .tag:hover {
-    border-color: var(--accent-line);
-    background: var(--accent-soft);
-    color: var(--text-strong);
-  }
-
-  .tag:active {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 24%, transparent);
-  }
-
-  .count {
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
   }
 
   .empty-text {
