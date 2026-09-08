@@ -247,6 +247,47 @@ function closes(text: string, mark: string): boolean {
   return found.mark.startsWith(mark.charAt(0)) && found.mark.length >= mark.length && !found.info
 }
 
+/** A line that is quote marks and nothing else, with each mark captured so the
+ *  levels can be counted. Up to three spaces of indent, which is as far as
+ *  CommonMark lets a block be pushed in before it is code. */
+const EMPTY_QUOTE = /^ {0,3}((?:> ?)+)$/
+
+/** Enter on an empty quoted line leaves the quote, one level per press.
+ *
+ *  The same thing the writer means by pressing Enter on an empty list item, and
+ *  the same thing it means in Typora, in Obsidian and in GitHub's own editor.
+ *  CodeMirror's markup command ends a quote only once there are two empty quoted
+ *  lines in a row, so the press that should have finished the quote wrote
+ *  another `>` instead and the writer had to press again and then delete a line.
+ *
+ *  Only where the line holds nothing but the marks: a quote with words on it is
+ *  a quote being written, and its next line is quoted too. */
+export const leaveQuote: StateCommand = ({ state, dispatch }) => {
+  const range = state.selection.main
+  if (!range.empty) return false
+
+  const line = state.doc.lineAt(range.head)
+  if (range.head !== line.to) return false
+
+  const marks = EMPTY_QUOTE.exec(line.text)?.[1]
+  if (marks === undefined) return false
+
+  // One level goes; what is left is the quote this line was nested inside, or
+  // an empty line when there was nothing outside it.
+  const levels = marks.split('>').length - 1
+  const kept = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
+
+  dispatch(
+    state.update({
+      changes: { from: line.from, to: line.to, insert: kept },
+      selection: { anchor: line.from + kept.length },
+      scrollIntoView: true,
+      userEvent: 'input',
+    }),
+  )
+  return true
+}
+
 /** Enter at the end of an opening fence closes the fence as well, with the
  *  caret on the blank line between. The parser treats a fence nothing closes
  *  as plain text (see `FencedCode` in markdown/extensions.ts), so this is

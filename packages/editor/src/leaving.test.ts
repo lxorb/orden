@@ -1,0 +1,95 @@
+import { EditorSelection, EditorState, type Transaction } from '@codemirror/state'
+import { keymap } from '@codemirror/view'
+import { describe, expect, test } from 'vitest'
+import { markdownFor } from './modes'
+import { parsed } from '../test/parsed'
+
+/** Every Enter the mode binds, in the order the keymap would try them, read out
+ *  of the mode's own facet rather than imported: what this is about is which
+ *  commands the mode chose, and a test that imported them would agree with
+ *  itself whatever the editor does. */
+function enterCommands(): ((target: {
+  state: EditorState
+  dispatch: (transaction: Transaction) => void
+}) => boolean)[] {
+  const bindings = EditorState.create({ extensions: markdownFor(false) })
+    .facet(keymap)
+    .flat()
+  const found = bindings
+    .filter((binding) => binding.key === 'Enter')
+    .map((binding) => binding.run)
+    .filter((run) => run !== undefined)
+
+  if (!found.length) throw new Error('the markdown mode binds no Enter')
+  return found
+}
+
+/** Pressing Enter, as many times as asked, from the end of the document. The
+ *  first command to take the key ends the press, the way a keymap works. */
+function pressEnter(doc: string, times: number): string {
+  const commands = enterCommands()
+  let state = parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(doc.length),
+      extensions: markdownFor(false),
+    }),
+  )
+
+  for (let press = 0; press < times; press++) {
+    let next = state
+    for (const run of commands) {
+      if (run({ state, dispatch: (transaction) => (next = transaction.state) })) break
+    }
+    state = parsed(next)
+  }
+
+  return state.doc.toString()
+}
+
+/** A list ends where the writer stops writing it, and the way anyone says so is
+ *  by pressing Enter on the empty item. Typora, Obsidian and GitHub all end the
+ *  list on that press, and the editor this one is modelled on is Typora.
+ *
+ *  CodeMirror's own binding takes three presses instead: the first continues the
+ *  list, the second turns a tight list into a loose one by pushing a blank line
+ *  in above the marker, and only the third takes the marker away. The writer is
+ *  left with a stray blank line and a bullet they have to delete by hand. */
+describe('leaving a list', () => {
+  test('a second Enter ends a bullet list', () => {
+    expect(pressEnter('- an item', 2)).toBe('- an item\n')
+  })
+
+  test('a second Enter ends an ordered list', () => {
+    expect(pressEnter('1. one', 2)).toBe('1. one\n')
+  })
+
+  test('a second Enter ends a task list', () => {
+    expect(pressEnter('- [ ] a task', 2)).toBe('- [ ] a task\n')
+  })
+
+  test('a second Enter ends a quote', () => {
+    expect(pressEnter('> a quote', 2)).toBe('> a quote\n')
+  })
+
+  /** One level per press, which is what leaving a nested list does too. */
+  test('a second Enter leaves the inner quote and stays in the outer one', () => {
+    expect(pressEnter('> > deep', 2)).toBe('> > deep\n> ')
+  })
+
+  /** The marks are only the way out when there is nothing else on the line. */
+  test('Enter in the middle of a quoted line still carries the quote down', () => {
+    expect(pressEnter('> a quote', 1)).toBe('> a quote\n> ')
+  })
+
+  test('a second Enter steps out of the inner list, not out of both', () => {
+    expect(pressEnter('- one\n    - two', 2)).toBe('- one\n    - two\n- ')
+  })
+
+  /** The first press is untouched: that is the one that carries the list on. */
+  test('the first Enter still carries the marker down', () => {
+    expect(pressEnter('- an item', 1)).toBe('- an item\n- ')
+    expect(pressEnter('1. one', 1)).toBe('1. one\n2. ')
+    expect(pressEnter('> a quote', 1)).toBe('> a quote\n> ')
+  })
+})
