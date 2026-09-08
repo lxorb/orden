@@ -52,6 +52,14 @@ export function ligatureScope(value: unknown): LigatureScope | null {
   return LIGATURE_SCOPES.find((one) => one === value) ?? null
 }
 
+/** How a note reaches the glasses: drawn by the app, or set by the glasses. */
+export const GLASSES_DISPLAYS = ['rendered', 'text'] as const
+export type GlassesDisplay = (typeof GLASSES_DISPLAYS)[number]
+
+export function glassesDisplay(value: unknown): GlassesDisplay | null {
+  return GLASSES_DISPLAYS.find((one) => one === value) ?? null
+}
+
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
 interface Saved {
@@ -73,6 +81,7 @@ interface Saved {
   spellLanguage: string
   closeBrackets: boolean
   ligatures: LigatureScope
+  glassesDisplay: GlassesDisplay
   vim: boolean
   attachments: string
 }
@@ -145,6 +154,16 @@ class Modes {
    *  a note, or everywhere in it. Off until chosen; the choice follows the
    *  account. */
   ligatures = $state<LigatureScope>('off')
+  /** How a note reaches the Even Realities glasses: drawn by the app, in its own
+   *  faces with its highlighted code and its formulae, or set by the glasses
+   *  themselves in the firmware's one font.
+   *
+   *  Drawn is the point of the plugin and the default. Set is nine times faster
+   *  over the radio - one call rather than four - and a page turn arrives at once
+   *  rather than a quarter at a time, which on a slow link is the difference
+   *  between reading and waiting. Follows the account, because it is a
+   *  preference about reading rather than about a machine. */
+  glassesDisplay = $state<GlassesDisplay>('rendered')
   /** Modal editing. Off until chosen, follows the account, and independent of
    *  which keyboard the shortcuts are on: the Vim preset turns it on, and the
    *  switch in the Editor pane puts it on top of any of the others. */
@@ -193,6 +212,7 @@ class Modes {
       this.spellLanguage = text(saved.spellLanguage, 'system')
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
+      this.glassesDisplay = glassesDisplay(saved.glassesDisplay) ?? 'rendered'
       this.vim = saved.vim === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
     }
@@ -338,6 +358,16 @@ class Modes {
     this.each(view, (one) => setLigatures(one, wanted))
     this.persist()
     this.share({ ligatures: wanted })
+  }
+
+  /** Which of the two ways a note reaches the glasses. */
+  setGlassesDisplay(mode: string) {
+    const wanted = glassesDisplay(mode)
+    if (!wanted || wanted === this.glassesDisplay) return
+
+    this.glassesDisplay = wanted
+    this.persist()
+    this.share({ glassesDisplay: wanted })
   }
 
   toggleVim(view?: EditorView) {
@@ -530,6 +560,7 @@ class Modes {
       spellLanguage: this.spellLanguage,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
+      glassesDisplay: this.glassesDisplay,
       vim: this.vim,
       attachments: this.attachments,
     }

@@ -56,7 +56,7 @@ const DICTIONARIES = [
 
 /** The panes that are only about settings. Account, publishing and the LLM
  *  connector are their own thing and stay written out by hand. */
-type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance'
+type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance' | 'glasses'
 
 export interface Pane {
   id: PaneId
@@ -395,6 +395,35 @@ export function preferences(view?: EditorView): Pane[] {
               options: theme.all.map((one) => ({ value: one.id, label: t(one.name) })),
               get: () => theme.id,
               set: (value) => theme.select(value),
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      id: 'glasses',
+      label: t('Glasses'),
+      groups: [
+        {
+          title: t('Even Realities'),
+          fields: [
+            {
+              // How a note reaches the G2. Drawn is the point of the plugin and
+              // the default: the app's own faces, its highlighted code, its
+              // formulae and its tables. Text hands the words to the glasses and
+              // lets the firmware set them, which is one call over the radio
+              // rather than four, so a page turn arrives at once rather than a
+              // quarter at a time. Two words, because there are two answers.
+              kind: 'select',
+              label: t('Display'),
+              options: [
+                { value: 'rendered', label: t('Rendered') },
+                { value: 'text', label: t('Text') },
+              ],
+              initial: 'rendered',
+              get: () => modes.glassesDisplay,
+              set: (value) => modes.setGlassesDisplay(value),
             },
           ],
         },

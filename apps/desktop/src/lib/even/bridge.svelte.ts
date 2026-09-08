@@ -11,7 +11,7 @@
  *  build imports it. */
 
 import { CODE_PALETTES, type CodePalette } from '@nib/editor'
-import { type Look, Sheets } from '@nib/glasses'
+import { type Look, type Page, plainPage, Sheets, textPages } from '@nib/glasses'
 import { diagnosis } from './diagnosis.svelte'
 import { mathCss } from '../math-fonts'
 import { modes } from '../modes.svelte'
@@ -141,7 +141,7 @@ class Bridge {
       return undefined
     }
 
-    const session = new Session((text) => sheets.pages(text, this.look()), panel)
+    const session = new Session((text) => this.pagesOf(sheets, text), panel)
     this.session = session
     this.health = 'live'
 
@@ -173,6 +173,33 @@ class Bridge {
       look: { scope: modes.ligatures, palette: chosen ?? FOLLOW },
     }
   })
+
+  /** A note as pages, by whichever of the two the reader chose.
+   *
+   *  Both answer `Page[]`, both carry `from` and `to`, and the session cannot
+   *  tell them apart: the paging model, the scroll handling and the map back
+   *  into the note are one. What differs is who sets the words, and therefore
+   *  what a page turn costs. */
+  private async pagesOf(sheets: Sheets, text: string): Promise<Page[]> {
+    const look = this.look()
+    if (modes.glassesDisplay !== 'text') {
+      const drawn = await sheets.pages(text, look)
+      // What text mode would cost this note, said where somebody can see it: a
+      // page of plain prose reads the same either way and arrives nine times
+      // faster, a page with a fence or a formula does not.
+      const plain = drawn.filter((page) => plainPage(page)).length
+      this.said(`plain: ${String(plain)}/${String(drawn.length)}`)
+      return drawn
+    }
+
+    // The firmware's measure, not ours: one font at a fixed 27 pixel line, ten
+    // lines to a panel against our twelve. Paged our way a third of every page
+    // would fall off the bottom. See @nib/glasses text.ts.
+    return textPages(text, {
+      scope: look.scope,
+      fence: () => [],
+    })
+  }
 
   private look(): Look {
     return this.wanted?.look ?? { scope: 'off', palette: FOLLOW }

@@ -24,6 +24,8 @@ const PRESETS = ['default', 'notion', 'obsidian', 'vim', 'custom']
  *  as they arrived: an account is read by every version of the app at once, and
  *  a build with the switch reads `true` where a newer one wrote `all`. */
 const LIGATURE_SCOPES = ['off', 'code', 'all']
+/** How a note reaches the Even Realities glasses; see apps/desktop modes.svelte.ts. */
+const GLASSES_DISPLAYS = ['rendered', 'text']
 
 /** How often a note being written in is kept, in minutes, and how long what is
  *  kept lives, in days. A list rather than any number, for the same reason as
@@ -45,6 +47,10 @@ const KNOWN: Record<string, Check> = {
     typeof value === 'boolean' || (typeof value === 'string' && LIGATURE_SCOPES.includes(value))
       ? null
       : `ligatures must be true, false, or one of ${LIGATURE_SCOPES.join(', ')}`,
+  glassesDisplay: (value) =>
+    typeof value === 'string' && GLASSES_DISPLAYS.includes(value)
+      ? null
+      : `glassesDisplay must be one of ${GLASSES_DISPLAYS.join(', ')}`,
   vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
   attachments: (value) =>
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)

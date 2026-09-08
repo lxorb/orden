@@ -25,6 +25,7 @@ export type Section =
   | 'spelling'
   | 'markdown'
   | 'appearance'
+  | 'glasses'
   | 'account'
   | 'publish'
   | 'llm'

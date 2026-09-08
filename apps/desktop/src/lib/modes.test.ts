@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@nib/editor'
+import { glassesDisplay } from './modes.svelte'
 
 /** The store writes to the browser's storage the moment anything is toggled,
  *  and sets the zoom on the document element. Under node there is neither, so
@@ -132,6 +133,45 @@ describe('read-only mode', () => {
   test('and stays off on one when it is off', () => {
     modes.apply(surface())
     expect(told.calls).toContainEqual({ mode: 'read-only', on: false })
+  })
+})
+
+/** How a note reaches the Even Realities glasses.
+ *
+ *  Written against the live store and the validator rather than through a module
+ *  restart: the restart harness in this file is already at its timeout, and what
+ *  is worth pinning here is the rule, not the reload. */
+describe('the glasses display', () => {
+  test('starts rendered, which is the point of the plugin', () => {
+    expect(modes.glassesDisplay).toBe('rendered')
+  })
+
+  test('is chosen and kept', () => {
+    modes.setGlassesDisplay('text')
+    expect(modes.glassesDisplay).toBe('text')
+
+    modes.setGlassesDisplay('rendered')
+    expect(modes.glassesDisplay).toBe('rendered')
+  })
+
+  test('ignores a mode it does not know', () => {
+    modes.setGlassesDisplay('text')
+    modes.setGlassesDisplay('holograms')
+    expect(modes.glassesDisplay).toBe('text')
+  })
+
+  test('is written down for the next launch', () => {
+    modes.setGlassesDisplay('text')
+    const saved: unknown = JSON.parse(localStorage.getItem('nib:modes') ?? '{}')
+    expect((saved as { glassesDisplay?: string }).glassesDisplay).toBe('text')
+  })
+
+  test('reads only the two modes there are', () => {
+    expect(glassesDisplay('rendered')).toBe('rendered')
+    expect(glassesDisplay('text')).toBe('text')
+    expect(glassesDisplay('holograms')).toBeNull()
+    expect(glassesDisplay(true)).toBeNull()
+    expect(glassesDisplay(undefined)).toBeNull()
   })
 })
 

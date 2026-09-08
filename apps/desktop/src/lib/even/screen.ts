@@ -16,7 +16,15 @@
  *  app - the note is put into the text container as words instead. It loses the
  *  faces, the code colours and the tables, and it is still the note. */
 
-import { BLANK, PANEL_HEIGHT, PANEL_WIDTH, type Page, QUADRANTS, type Sheet } from '@nib/glasses'
+import {
+  BLANK,
+  isTextPage,
+  PANEL_HEIGHT,
+  PANEL_WIDTH,
+  type Page,
+  QUADRANTS,
+  type Sheet,
+} from '@nib/glasses'
 import type { Container, Glasses, Made } from './sdk'
 import type { Screen, Showing } from './session'
 
@@ -115,6 +123,11 @@ export class Panel implements Screen {
   }
 
   async show(page: Page, showing: Showing): Promise<void> {
+    // Text mode. One call of about 83 ms against four image sends of 185 ms
+    // each, and the firmware sets it itself, so the panel changes at once rather
+    // than a quarter at a time. See @nib/glasses text.ts.
+    if (isTextPage(page)) return this.write(page, showing)
+
     if (this.drawnOut) return this.write(page)
 
     const sheet = await this.sheets.sheet(page, `${showing.page + 1}/${showing.count}`)
@@ -151,9 +164,18 @@ export class Panel implements Screen {
     }
   }
 
-  /** The page as words in the capture layer. The fallback, and the only thing
-   *  the glasses can be given when there is no canvas to draw on. */
-  private async write(page: Page): Promise<void> {
-    await this.glasses.words(CAPTURE, wordsOf(page).slice(0, WORD_LIMIT) || EMPTY)
+  /** The page as words in the capture layer.
+   *
+   *  Three things arrive here: text mode, which is a choice; the fallback after
+   *  the image channel has died; and a page with no canvas to draw it on. A page
+   *  the text pager made carries its own words, cut where the firmware will cut
+   *  them; anything else is flattened out of what was drawn. */
+  private async write(page: Page, showing?: Showing): Promise<void> {
+    const words = isTextPage(page) ? page.words : wordsOf(page)
+    // The page count, on its own line at the foot, since a text container has no
+    // corner to put it in.
+    const mark = showing && showing.count > 1 ? `\n${showing.page + 1}/${showing.count}` : ''
+
+    await this.glasses.words(CAPTURE, words.slice(0, WORD_LIMIT - mark.length) + mark || EMPTY)
   }
 }

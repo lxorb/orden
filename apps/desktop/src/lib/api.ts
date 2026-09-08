@@ -73,6 +73,10 @@ export interface AccountSettings {
   /** How much of a note the ligature glyphs are drawn over. A boolean is what
    *  a build that had a switch here wrote, and still reads. */
   ligatures?: boolean | string
+  /** How a note reaches the Even Realities glasses: `rendered` or `text`. A
+   *  preference about reading, so it follows the account rather than the
+   *  machine; see modes.svelte.ts. */
+  glassesDisplay?: string
   /** Where a pasted picture is written; one of attachments.ts's three. */
   attachments?: string
   /** Keys the reader chose, by shortcut id, as differences from the defaults.
