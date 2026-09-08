@@ -216,7 +216,19 @@ class Sync {
 
   private async tick() {
     const mine = this.generation
-    const moved = await this.pass()
+    let moved = false
+
+    try {
+      moved = await this.pass()
+    } catch (error) {
+      // A pass can fail anywhere: a request the account refused, a folder that
+      // would not read. The loop is the thing that must not stop, so what
+      // happened goes on the light and the next pass is scheduled as usual.
+      if (mine === this.generation) {
+        this.status = 'error'
+        this.lastError = error instanceof Error ? error.message : t('sync failed')
+      }
+    }
 
     // Syncing may have been turned off while that pass was in the air. Setting
     // the next timer here would restart a loop that was deliberately stopped.
@@ -231,16 +243,20 @@ class Sync {
   /** One pass: pairs every local space with a remote one, then syncs. What
    *  the loop does on every tick, on its own so it can be driven by hand. */
   async pass(): Promise<boolean> {
-    await this.reconcile()
-
-    // Reconciling is what asks the account what it holds, so this is the first
-    // moment the pass can say how much it is bringing down. Later passes say
-    // nothing: the waiting state ignores both of these unless it is up.
+    // Read before anything is asked of the account, so that whatever the pass
+    // runs into, the one thing somebody is waiting behind is lifted; a pass that
+    // threw on its way through is a pass with nothing more coming.
     const first = this.first
     this.first = false
-    if (first) arriving.expect(this.notesOnTheirWay())
 
     try {
+      await this.reconcile()
+
+      // Reconciling is what asks the account what it holds, so this is the first
+      // moment the pass can say how much it is bringing down. Later passes say
+      // nothing: the waiting state ignores both of these unless it is up.
+      if (first) arriving.expect(this.notesOnTheirWay())
+
       return await this.run()
     } finally {
       if (first) arriving.settled()
@@ -408,7 +424,6 @@ class Sync {
     return null
   }
 
-  /** One full pass: take what the server has, then offer what we have. */
   /** One full pass: take what the server has, then offer what we have.
    *  Answers whether anything actually moved, which is what paces the loop. */
   async run(): Promise<boolean> {

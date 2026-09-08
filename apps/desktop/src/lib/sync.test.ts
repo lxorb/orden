@@ -1014,3 +1014,57 @@ describe('the first pass, which somebody is waiting on', () => {
     stoppedAgain()
   })
 })
+
+describe('a pass that fails partway through', () => {
+  /** The state the app holds the whole surface for; see arriving.svelte.ts. */
+  let arriving: typeof import('./arriving.svelte').arriving
+
+  beforeEach(async () => {
+    standInForTheWindow()
+    ;({ arriving } = await import('./arriving.svelte'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  test('says so, lets anybody waiting in, and leaves the loop looping', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    // Sending this machine's folder up is refused. One request of the several a
+    // pass makes before it starts moving notes, and a network is allowed to
+    // refuse any of them.
+    const real = fake.api.createSpace
+    let asked = 0
+    fake.api.createSpace = () => {
+      asked++
+      return Promise.reject(new Error('offline'))
+    }
+
+    vi.useFakeTimers()
+    try {
+      sync.start()
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(asked).toBe(1)
+      // What happened is on the light rather than nowhere.
+      expect(sync.status).toBe('error')
+      // And nobody is left behind the first-pass state, waiting on a pass that
+      // has already ended.
+      expect(arriving.showing).toBe(false)
+
+      // The loop is still a loop: one refusal is not the end of syncing for the
+      // whole sitting.
+      const { pollDelay } = await import('./backoff')
+      await vi.advanceTimersByTimeAsync(pollDelay(1, false) + 1)
+      expect(asked).toBeGreaterThan(1)
+    } finally {
+      fake.api.createSpace = real
+      sync.stop()
+    }
+  })
+})
