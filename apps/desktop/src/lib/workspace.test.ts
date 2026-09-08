@@ -36,6 +36,10 @@ const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'strin
  *  and what was kept before it. */
 const sent: { command: string; path: string; content: string }[] = []
 
+/** A write held open, for a test about what happens while one is in the air:
+ *  writing a file is a round trip, and somebody may type during it. */
+const holding: { write: Promise<void> | null } = { write: null }
+
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -45,6 +49,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       content: typeof args?.content === 'string' ? args.content : '',
     })
 
+    if (command === 'write_note' && holding.write) await holding.write
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
@@ -1384,6 +1389,28 @@ describe('a note that keeps itself, and one that does not', () => {
     expect(tab.unsaved).toBe(true)
     expect(workspace.unsaved).toHaveLength(1)
     expect(workspace.keepsItself(OUTSIDE)).toBe(false)
+  })
+
+  test('a file typed in while it was being written is still out of step with it', async () => {
+    const tab = await typedIn(OUTSIDE)
+
+    // Writing a file is a round trip, and a keystroke can land inside it. What
+    // went down is the words as they were when the write began; the ones typed
+    // after that are on this machine and nowhere else, so the mark stays and the
+    // way out still asks.
+    let release: () => void = () => undefined
+    holding.write = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const saving = workspace.save(tab)
+    tab.note.live.edit([{ from: 0, to: 0, insert: 'typed during the write\n' }])
+    release()
+    await saving
+    holding.write = null
+
+    expect(tab.unsaved).toBe(true)
+    expect(workspace.unsaved).toHaveLength(1)
   })
 
   test('Ctrl+S stays harmless: it writes at once and keeps the preview tab', async () => {

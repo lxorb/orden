@@ -198,10 +198,14 @@ export class NoteDoc {
    *  first keeps its caret and its place, the second brings its own. */
   arrivals = $state(0)
 
-  written(path: string, name: string) {
+  /** The words are on disk. `revision` is the revision that went down: writing a
+   *  file is a round trip and a keystroke can land inside it, and those words are
+   *  on this machine and nowhere else, so a note that moved while its write was
+   *  in the air is still out of step with its file. */
+  written(path: string, name: string, revision: number) {
     this.path = path
     this.name = name
-    this.dirty = false
+    this.dirty = this.revision !== revision
   }
 }
 

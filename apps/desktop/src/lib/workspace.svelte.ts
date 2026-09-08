@@ -1584,27 +1584,33 @@ class Workspace {
       path = picked
     }
 
+    // The words going down, and which revision of the note they are, both read
+    // once. Writing a file is a round trip: a keystroke landing inside it belongs
+    // to the next write, and the note has to be told which one it just had.
+    const content = note.text
+    const revision = note.revision
+
     this.markSaving(note)
 
     try {
       // Keep the version that is about to be replaced, before replacing it.
       if (note.path) {
-        await invoke('snapshot_note', { path, content: note.text }).catch(() => undefined)
+        await invoke('snapshot_note', { path, content }).catch(() => undefined)
       }
 
-      await invoke('write_note', { path, content: note.text })
+      await invoke('write_note', { path, content })
     } catch (error) {
       this.clearSaveState(note.key)
       throw error
     }
 
-    note.written(path, basename(path))
+    note.written(path, basename(path), revision)
     this.markSaved(note)
 
     // The one file that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space; it
     // knows a canvas from a note by its name.
-    links.noteSaved(path, note.text)
+    links.noteSaved(path, content)
 
     // Editing the config files in Nib should take effect on save.
     if (/custom\.css$|snippets\.json$/.test(path)) {
