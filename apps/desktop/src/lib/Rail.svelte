@@ -8,12 +8,14 @@
   import { longPress } from './longpress'
   import { t } from './i18n.svelte'
   import { DIVIDER, menu, type MenuEntry, revealEntry, trim } from './menu.svelte'
+  import { overlays } from './overlays'
   import { deleteSpace, moveSpace, newSpace, renameSpace, shareSpace } from './space-actions'
   import { settings } from './settings.svelte'
   import { canShare, isShared, roleOf } from './sharing.svelte'
   import { sync } from './sync.svelte'
   import { SOURCE_URL } from './app-menu'
   import { openExternal } from './tauri'
+  import { viewport } from './viewport.svelte'
   import { type Space, workspace } from './workspace.svelte'
   import { theme } from './theme.svelte'
 
@@ -115,6 +117,37 @@
     receiving = null
   }
 
+  /** The space being put somewhere else by hand, where a finger cannot drag.
+   *
+   *  A held finger opens the row's menu before any drag could begin, and the
+   *  browser fires no drag events from a touch anyway, so a thumb had no way to
+   *  reorder the rail at all. The menu offers it instead: the square lifts, and a
+   *  chevron above and below it move it one place at a time. Steps rather than a
+   *  finger following the square, because a step is exact, it works with movement
+   *  turned down, and it needs no second implementation of dragging. */
+  let lifting = $state<string | null>(null)
+
+  /** Where the lifted space sits now, so the chevrons know what is left. */
+  const liftedAt = $derived(workspace.spaces.findIndex((one) => one.id === lifting))
+
+  /** Moves it one place. `moveSpace` places it in front of a space, so going
+   *  down means going in front of the one after next. */
+  async function nudge(by: -1 | 1) {
+    const id = lifting
+    const at = liftedAt
+    if (!id || at < 0) return
+
+    const to = at + by
+    if (to < 0 || to >= workspace.spaces.length) return
+
+    const before = by === -1 ? workspace.spaces[to] : workspace.spaces[to + 1]
+    await moveSpace(id, before?.id ?? null)
+  }
+
+  // Escape puts it down, the way Escape closes everything else the app opens
+  // over a note; see overlays.ts.
+  $effect(() => (lifting ? overlays.show(() => (lifting = null)) : undefined))
+
   /** The same menu whether it was asked for with a right click or a held
    *  finger, so a phone is not missing what a desktop offers. */
   function spaceMenu(space: Space): MenuEntry[] {
@@ -126,6 +159,11 @@
     return trim([
       ...(mine ? [{ label: t('New note'), run: () => void workspace.createNote(space.root) }] : []),
       ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
+      // Only where a drag is impossible. On a desktop the rail is dragged, and
+      // an entry for what the pointer already does would be one more row to read.
+      ...(viewport.touch && workspace.spaces.length > 1
+        ? [{ label: t('Move'), run: () => (lifting = space.id) }]
+        : []),
       { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
       ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
       ...revealEntry(space.root),
@@ -166,23 +204,44 @@
   <div class="spaces">
     {#each workspace.spaces as space, index (space.id)}
       {@const glyph = icon(space.id)}
+      {@const lifted = space.id === lifting}
+
+      <!-- The two steps a lifted square takes, in the gaps either side of it, so
+           the rail stays one column and the row keeps its size. -->
+      {#if lifted && index > 0}
+        <button class="nudge" aria-label={t('Move up')} onclick={() => void nudge(-1)}>
+          <svg viewBox="0 0 16 16"><path d="M4 10l4-4 4 4" /></svg>
+        </button>
+      {/if}
+
       <button
         class="space"
         class:active={space.id === workspace.activeSpaceId}
         class:dragging={space.id === dragging}
+        class:lifted
         class:before={gap === space.id}
         class:after={gap === null && index === workspace.spaces.length - 1}
         class:receiving={receiving === space.id}
         title={space.name}
         aria-label={space.name}
         aria-current={space.id === workspace.activeSpaceId}
+        aria-grabbed={lifted ? true : undefined}
         draggable="true"
         ondragstart={(event) => start(event, space.id)}
         ondragover={(event) => over(event, space.id, workspace.spaces[index + 1]?.id ?? null)}
         ondragleave={(event) => stillInside(event) || (receiving = null)}
         ondrop={(event) => drop(event, space)}
         ondragend={stop}
-        onclick={() => workspace.showSpace(space.id)}
+        onclick={() => {
+          // A square that is up goes down again, and touching any other one puts
+          // it down and shows that space, which is what a tap elsewhere means.
+          if (lifting) {
+            lifting = null
+            if (lifted) return
+          }
+
+          return workspace.showSpace(space.id)
+        }}
         onmouseenter={(event) => showLabel(event, space.name)}
         onmouseleave={() => (label = null)}
         oncontextmenu={(event) => menu.show(event, spaceMenu(space), { title: space.name })}
@@ -208,6 +267,12 @@
           </span>
         {/if}
       </button>
+
+      {#if lifted && index < workspace.spaces.length - 1}
+        <button class="nudge" aria-label={t('Move down')} onclick={() => void nudge(1)}>
+          <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" /></svg>
+        </button>
+      {/if}
     {/each}
 
     <!-- The rail is the list of spaces, so its plus makes one. New notes are
@@ -382,6 +447,48 @@
       box-shadow var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
       transform var(--dur-base) var(--ease-spring);
+  }
+
+  /* Off the surface and lit, so it reads as held rather than selected. The same
+     spring the square already uses for the pointer, at the stage duration. */
+  .space.lifted {
+    background: var(--surface-3);
+    color: var(--text-strong);
+    box-shadow: var(--shadow-lg);
+    transform: scale(1.08);
+    transition: transform var(--dur-stage) var(--ease-spring);
+  }
+
+  /* One step, in the gap the square would move into. Wide as the column so a
+     thumb cannot miss it, and quiet, because the square is the thing being
+     looked at. */
+  .nudge {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 22px;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+  }
+
+  .nudge:hover {
+    background: var(--surface-2);
+    color: var(--text-strong);
+  }
+
+  .nudge:active {
+    background: var(--surface-3);
+  }
+
+  .nudge svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* Not only yours: a small stack of dots on the corner of the square, the same
@@ -670,5 +777,16 @@
   /* No hover on a touch screen, so the label would never show. */
   :global([data-touch]) .name {
     display: none;
+  }
+
+  /* A thumb's step, and the one place these are ever shown. */
+  :global([data-touch]) .nudge {
+    width: var(--touch-target);
+    height: 34px;
+  }
+
+  :global([data-touch]) .nudge svg {
+    width: 18px;
+    height: 18px;
   }
 </style>

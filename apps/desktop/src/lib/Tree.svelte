@@ -23,10 +23,12 @@
     revealEntry,
   } from './menu.svelte'
   import { longPress } from './longpress'
+  import { moveTargets, type MoveTarget } from './move-targets'
   import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
   import { carry, dragged, isTreeDrag } from './drag-paths'
   import { folderOf } from './tauri'
+  import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { inside } from './workspace/zones'
@@ -38,6 +40,39 @@
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
+  /** Moving a row, where a drag is not available.
+   *
+   *  A held finger opens this menu before a drag could start, and the browser
+   *  fires no drag events from a touch anyway, so on a phone or a tablet the only
+   *  outcome of pressing a row was the menu. So the menu offers the move: the
+   *  places it could have been dropped, in the sheet every other question uses.
+   *  Nothing is offered on a desktop, where the pointer already does it. */
+  function moveEntry(entry: Entry): MenuEntry[] {
+    if (!viewport.touch) return []
+
+    const targets = moveTargets({
+      moving: entry.path,
+      tree: workspace.tree,
+      spaces: workspace.spaces,
+      here: workspace.activeSpace?.root ?? null,
+    })
+    if (!targets.length) return []
+
+    return [{ label: t('Move'), run: () => void moveTo(entry, targets) }]
+  }
+
+  async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
+    const { prompt } = await import('./prompt.svelte')
+    const into = await prompt.find({
+      title: t('Move to'),
+      options: targets.map((one) => ({ id: one.id, label: one.label })),
+      placeholder: t('Folder'),
+    })
+
+    // The same call the drop makes, so it is the same move and the same undo.
+    if (into) await workspace.moveMany([entry.path], into)
+  }
+
   function folderMenu(entry: Entry): MenuEntry[] {
     return [
       { label: t('New note'), run: () => void workspace.createNote(entry.path) },
@@ -45,6 +80,7 @@
       { label: t('New folder'), run: () => void workspace.createFolder(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
+      ...moveEntry(entry),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
       ...revealEntry(entry.path),
       DIVIDER,
@@ -122,6 +158,7 @@
       { label: t('Open'), run: () => void workspace.openEntry(entry.path) },
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
+      ...moveEntry(entry),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
       // Duplicating copies a file's words, and a PDF has none: it would come out
       // as an empty file wearing the name of a paper.
