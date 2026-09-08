@@ -69,7 +69,7 @@ export async function save(clip: Clip, spaceId: string, folder: string): Promise
 
   let urls: string[]
   try {
-    urls = await uploaded(token, clip.images)
+    urls = await uploaded(token, clip.images, clip.origin.url)
   } catch (error) {
     return { problem: reason(error) }
   }

@@ -36,6 +36,24 @@ const PATIENCE = 8000
  *  hundreds, and those are decoration rather than content. */
 const MOST = 60
 
+/** Whether a picture belongs to the page being clipped, which is the only case
+ *  in which the person's cookies for it are any of our business.
+ *
+ *  The host itself or a name under it: an article's pictures live on
+ *  `images.site.example` as often as on the site itself, and a signed-in reader
+ *  has one session across both. Anything further away is a third party, which
+ *  could not have used the site's cookies anyway. */
+export function belongsTo(picture: string, page: string): boolean {
+  try {
+    const from = new URL(picture).hostname
+    const here = new URL(page).hostname
+
+    return !!here && (from === here || from.endsWith(`.${here}`) || here.endsWith(`.${from}`))
+  } catch {
+    return false
+  }
+}
+
 function hex(digest: ArrayBuffer): string {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
@@ -53,14 +71,20 @@ function blobUrl(hash: string, type: string): string {
 }
 
 /** One picture on the account, or null to leave it where it is. */
-async function move(token: string, url: string): Promise<string | null> {
+async function move(token: string, url: string, page: string): Promise<string | null> {
   // Already ours: a clip of a page that itself shows a Nib blob.
   if (url.startsWith(`${BASE}/i/`)) return null
 
-  // Cookies go along because the picture is one the person is looking at, and
-  // some of them are only served to a reader who is signed in to the site.
+  // A picture the page carried inside itself, as a `data:` URL. There is no
+  // site to stop depending on and nothing worth a request, so it stays as it is.
+  if (!/^https?:\/\//i.test(url)) return null
+
+  // Cookies go along for the site's own pictures, some of which are served only
+  // to a reader who is signed in. They do not go anywhere else: the extension
+  // holds every host, so a fetch from here carries cookies a page could not
+  // have got sent itself, and the addresses come from markup the page wrote.
   const response = await fetch(url, {
-    credentials: 'include',
+    credentials: belongsTo(url, page) ? 'include' : 'omit',
     signal: AbortSignal.timeout(PATIENCE),
   })
   if (!response.ok) return null
@@ -78,12 +102,13 @@ async function move(token: string, url: string): Promise<string | null> {
 }
 
 /** Every picture's address in the note that is about to be written, in the
- *  order it was asked about. */
-export async function uploaded(token: string, urls: string[]): Promise<string[]> {
+ *  order it was asked about. `page` is where the clip came from, which is what
+ *  says whether a picture is the site's own. */
+export async function uploaded(token: string, urls: string[], page: string): Promise<string[]> {
   const moved = await Promise.all(
     urls.slice(0, MOST).map(async (url) => {
       try {
-        return (await move(token, url)) ?? url
+        return (await move(token, url, page)) ?? url
       } catch (error) {
         // An account with no room left is the person's problem to hear about,
         // not something to paper over with a link back to the site.
