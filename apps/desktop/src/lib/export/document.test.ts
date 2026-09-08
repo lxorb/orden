@@ -40,8 +40,9 @@ describe('the document a note comes to', () => {
 
   test('keeps a comment that is inside a code fence, which the fence is showing', () => {
     const fenced = documentOf('```html\n<!-- kept -->\n```\n', 'Note.md')
-    expect(fenced.blocks.some((block) => 'code' in block && block.code.includes('<!-- kept -->')))
-      .toBe(true)
+    expect(
+      fenced.blocks.some((block) => 'code' in block && block.code.includes('<!-- kept -->')),
+    ).toBe(true)
   })
 
   test('keeps the headings with their levels', () => {

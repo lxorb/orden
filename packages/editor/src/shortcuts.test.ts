@@ -45,9 +45,16 @@ describe('building the keymap', () => {
     // scope would stop it working from inside the panel.
     expect(find?.scope).toBe('editor search-panel')
 
+    // CodeMirror carries Find previous on Find next as a Shift handler, which
+    // would be a second command on a key nobody could see or rebind. It is taken
+    // off, and Find previous is a named entry of its own; see keymap.ts.
     const next = bindings(standardBindings, {}).find((one) => one.key === 'Mod-g')
-    // Shift on Find next is Find previous, in CodeMirror's own binding.
-    expect(typeof next?.shift).toBe('function')
+    expect(next?.shift).toBeUndefined()
+
+    const previous = bindings(nibBindings, {}).find((one) => one.key === 'Mod-Shift-g')
+    expect(typeof previous?.run).toBe('function')
+    // And it has to work from inside the panel Find just opened, like Find itself.
+    expect(previous?.scope).toBe('editor search-panel')
   })
 
   test('drops a platform default the entry does not have', () => {
