@@ -424,6 +424,31 @@ function inOrder(nodes: readonly CanvasNode[], order: readonly string[]): Canvas
 /** A canvas out of the text of a file. An empty one for a file that is not JSON
  *  at all, which is what a new or a truncated file looks like: an empty plane is
  *  something to draw on, and an error message is not. */
+/** Anything on a canvas that carries an id: a node of any of the five kinds, an
+ *  edge, or a stroke of ink. */
+export type Thing = CanvasNode | CanvasEdge | InkStroke
+
+/** One node out of the fields a record holds, whichever of the five kinds it is.
+ *
+ *  A file keeps the four the spec names in `nodes` and the shapes under `nib`, so
+ *  reading a whole file knows which reader to use from where the record was. A
+ *  reader handed one record on its own does not, and asks this. What a room reads
+ *  a stored object back through; see plane.ts in @nib/rooms. */
+export function nodeOf(value: unknown): CanvasNode | null {
+  if (isRecord(value) && value.type === 'shape') return readShape(value)
+  return readNode(value)
+}
+
+/** One edge out of a record, given the nodes there are to end on. */
+export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge | null {
+  return readEdge(value, nodes)
+}
+
+/** One stroke of ink out of a record. */
+export function strokeOf(value: unknown): InkStroke | null {
+  return readStroke(value)
+}
+
 export function readCanvas(text: string): Canvas {
   let parsed: unknown
   try {

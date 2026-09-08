@@ -331,6 +331,9 @@ importers:
 
   packages/rooms:
     dependencies:
+      '@nib/markdown':
+        specifier: workspace:*
+        version: link:../markdown
       lib0:
         specifier: ^0.2.117
         version: 0.2.117

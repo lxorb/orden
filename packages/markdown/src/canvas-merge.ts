@@ -18,22 +18,12 @@
  *  same file, so it does not matter whether the client or the worker does it, or
  *  which device gets there first. */
 
-import {
-  type Canvas,
-  type CanvasEdge,
-  type CanvasNode,
-  type InkStroke,
-  readCanvas,
-  writeCanvas,
-} from './canvas'
+import { type Canvas, readCanvas, type Thing, writeCanvas } from './canvas'
 
 /** How long a tombstone is kept, in milliseconds. Long enough that a tablet left
  *  in a drawer for a month cannot bring a deleted card back, short enough that a
  *  canvas edited for years does not carry a list of everything ever removed. */
 export const TOMBSTONE_KEPT = 90 * 24 * 60 * 60 * 1000
-
-/** Anything on a canvas that carries an id: a node, an edge or a stroke. */
-type Thing = CanvasNode | CanvasEdge | InkStroke
 
 function byId<T extends Thing>(things: readonly T[]): Map<string, T> {
   return new Map(things.map((thing) => [thing.id, thing]))
