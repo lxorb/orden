@@ -384,34 +384,32 @@
       transform var(--dur-base) var(--ease-spring);
   }
 
-  /* Not only yours: a small stack of dots at the foot of the square, the same
+  /* Not only yours: a small stack of dots on the corner of the square, the same
      shape and the same overlap as the devices in a note's tab. Two of them,
-     because the fact is "somebody else" rather than how many. */
+     because the fact is "somebody else" rather than how many, and on the corner
+     rather than under the letter, which is where the letter is.
+
+     The rail is the one place a colour has to be read at four pixels, so the
+     accent is the mark and the rail's own surface is the ring around it. */
   .with {
     position: absolute;
-    bottom: 2px;
-    left: 50%;
-    translate: -50% 0;
+    right: -1px;
+    bottom: -1px;
     display: flex;
     align-items: center;
     pointer-events: none;
   }
 
   .who {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     flex: none;
-    margin-right: -1px;
+    margin-right: -2px;
     border-radius: 50%;
     background: var(--accent);
-    /* A ring in the square's own colour, so two dots against each other still
-       read as two. */
-    box-shadow: 0 0 0 1.5px var(--surface-2);
-  }
-
-  .space:hover .who,
-  .space.active .who {
-    box-shadow: 0 0 0 1.5px var(--surface-3);
+    /* A ring in the rail's own colour, so two dots against each other still
+       read as two, and so the stack lifts off the square under it. */
+    box-shadow: 0 0 0 1.5px var(--surface);
   }
 
   /* Pointer only: a touch browser keeps the last tap "hovered", which left a

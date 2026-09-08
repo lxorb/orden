@@ -25,10 +25,10 @@
   $effect(() => (share.open ? overlays.show(() => share.close()) : undefined))
   $effect(() => closeOnBack(share.open, () => share.close()))
 
-  /** The address under the name, which is only worth the line when the name is
-   *  not already the address said differently. */
-  function subtitle(person: Member | { name: string | null; email: string }): string {
-    return person.name?.trim() ? person.email : ''
+  /** The line under the name: the address, which is who they actually are, and
+   *  whether anybody has opened the space under it yet. */
+  function subtitle(person: Member): string {
+    return person.pending ? `${person.email} · ${t('Invited')}` : person.email
   }
 </script>
 
@@ -36,7 +36,13 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => share.close()}></div>
 
-  <div class="sheet" transition:scale={{ duration: 190, start: 0.97, easing: cubicOut }}>
+  <div
+    class="sheet"
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('Share {name}', { name: share.space?.name ?? '' })}
+    transition:scale={{ duration: 190, start: 0.97, easing: cubicOut }}
+  >
     <p class="title">{t('Share {name}', { name: share.space?.name ?? '' })}</p>
 
     {#if share.error}
@@ -51,7 +57,7 @@
             <div class="row" transition:fade={{ duration: 130 }}>
               <span class="name">
                 {called(person)}
-                {#if subtitle(person)}<small>{subtitle(person)}</small>{/if}
+                <small>{person.email}</small>
               </span>
               <button class="pill" onclick={() => void share.accept(person.email)}>
                 {t('Accept')}
@@ -69,7 +75,7 @@
         <div class="row">
           <span class="name">
             {called(who.owner)}
-            {#if subtitle(who.owner)}<small>{subtitle(who.owner)}</small>{/if}
+            <small>{who.owner.email}</small>
           </span>
           <span class="fixed">{t('Owner')}</span>
         </div>
@@ -78,7 +84,7 @@
           <div class="row" transition:fade={{ duration: 130 }}>
             <span class="name">
               {called(person)}
-              <small>{person.pending ? t('Invited') : subtitle(person)}</small>
+              <small>{subtitle(person)}</small>
             </span>
             <div class="pick">
               <Select

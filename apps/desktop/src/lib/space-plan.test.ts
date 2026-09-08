@@ -186,6 +186,8 @@ describe('two folders with the same name', () => {
 })
 
 describe('a space somebody shared', () => {
+  /** As the account lists it: somebody else's. */
+  const theirs = (name: string, id = `id-${name}`) => ({ id, name, shared: true })
   const shared = (name: string, id = `id-${name}`) => ({
     root: `/spaces/${name}`,
     spaceId: id,
@@ -210,12 +212,25 @@ describe('a space somebody shared', () => {
     expect(result.remove).toEqual([])
   })
 
-  test('gets a folder of its own when the name is already answering for another', () => {
-    // Somebody shares their Work with an account that already has one. The
-    // account's own folder keeps its space, and the shared one is adopted.
+  test('never takes a folder of the same name that is already here', () => {
+    // Somebody shares their Work with an account that has a folder called Work.
+    // Pairing them would put this machine's notes into somebody else's space,
+    // so the shared one is adopted into a folder of its own and the folder here
+    // goes up as the space it has always been.
     const result = plan({
       local: [local('Work')],
-      remote: [remote('Work', 'id-mine'), remote('Work', 'id-theirs')],
+      remote: [theirs('Work')],
+    })
+
+    expect(result.pair).toEqual([])
+    expect(result.adopt.map((one) => one.id)).toEqual(['id-Work'])
+    expect(result.upload.map((one) => one.name)).toEqual(['Work'])
+  })
+
+  test('is adopted beside the account’s own space of the same name', () => {
+    const result = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
       mirrors: [mirror('Work', 'id-mine')],
     })
 
@@ -227,7 +242,7 @@ describe('a space somebody shared', () => {
   test('is adopted only once, however many passes go by', () => {
     const first = plan({
       local: [local('Work')],
-      remote: [remote('Work', 'id-mine'), remote('Work', 'id-theirs')],
+      remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
       mirrors: [mirror('Work', 'id-mine')],
     })
     expect(first.adopt).toHaveLength(1)
@@ -235,8 +250,11 @@ describe('a space somebody shared', () => {
     // The next pass, with the folder the adoption made.
     const again = plan({
       local: [local('Work'), { name: 'Work 2', root: '/spaces/Work 2' }],
-      remote: [remote('Work', 'id-mine'), remote('Work', 'id-theirs')],
-      mirrors: [mirror('Work', 'id-mine'), { root: '/spaces/Work 2', spaceId: 'id-theirs' }],
+      remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
+      mirrors: [
+        mirror('Work', 'id-mine'),
+        { root: '/spaces/Work 2', spaceId: 'id-theirs', shared: true },
+      ],
     })
 
     expect(again).toEqual({

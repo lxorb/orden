@@ -206,7 +206,11 @@ class Sync {
     // can be tested against a plain pair of lists - see `space-plan.ts`.
     const plan = planSpaces({
       local: workspace.spaces.map((space) => ({ name: space.name, root: space.root })),
-      remote: account.spaces.map((space) => ({ id: space.id, name: space.name })),
+      remote: account.spaces.map((space) => ({
+        id: space.id,
+        name: space.name,
+        shared: space.role !== 'owner',
+      })),
       mirrors: Object.values(this.mirrors).map((one) => ({
         root: one.root,
         spaceId: one.spaceId,
@@ -243,12 +247,14 @@ class Sync {
     }
 
     for (const space of plan.adopt) {
-      // A folder of that name that already answers for another space is not
-      // this one's to take, so this one gets a folder of its own.
-      const claimed = workspace.spaces.some(
-        (one) => one.name === space.name && !!this.mirrors[one.root],
-      )
-      const root = await workspace.adoptSpace(space.name, claimed)
+      // A folder of its own where a folder of that name is already here and
+      // already answers for something - and always, for a space somebody
+      // shared, which has no claim on anything on this machine.
+      const taken =
+        mine(space.id) ||
+        workspace.spaces.some((one) => one.name === space.name && !!this.mirrors[one.root])
+
+      const root = await workspace.adoptSpace(space.name, taken)
       if (root) this.mirrors[root] = newMirror(space.id, root, mine(space.id))
     }
 

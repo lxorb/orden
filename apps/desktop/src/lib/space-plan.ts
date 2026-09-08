@@ -20,6 +20,12 @@ export interface LocalSpace {
 export interface RemoteSpace {
   id: string
   name: string
+  /** Whether it belongs to somebody else. A folder here is never paired with
+   *  one of these by name: pairing by name is a guess that this folder is that
+   *  space, and the guess is only ever safe about a space this account made
+   *  itself out of a folder of that name. Somebody else's space has no history
+   *  with anything on this machine, so it is always given a folder of its own. */
+  shared?: boolean
 }
 
 export interface Pairing {
@@ -59,7 +65,8 @@ export function planSpaces(input: {
 
   const mirrorByRoot = new Map(mirrors.map((one) => [one.root, one]))
   const remoteById = new Map(remote.map((one) => [one.id, one]))
-  const remoteByName = new Map(remote.map((one) => [one.name, one]))
+  // Only the account's own: see the note on `shared` above.
+  const remoteByName = new Map(remote.filter((one) => !one.shared).map((one) => [one.name, one]))
   const roots = new Set(local.map((one) => one.root))
 
   const plan: Plan = { pair: [], upload: [], adopt: [], drop: [], detach: [], remove: [] }
@@ -104,8 +111,10 @@ export function planSpaces(input: {
     // A folder of that name is about to be paired with it, or already is -
     // unless that folder is the one being removed, in which case the name is
     // free and this space should take it, or it already answers for a
-    // different space, in which case this one needs a folder of its own.
+    // different space, in which case this one needs a folder of its own. A
+    // space somebody shared always needs one, whatever it is called here.
     if (
+      !space.shared &&
       local.some(
         (one) => one.name === space.name && !removing.has(one.root) && !claimed.has(one.root),
       )

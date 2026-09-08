@@ -1,5 +1,6 @@
 import { key, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
+import { roleOf, share } from './sharing.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Asks for a name and makes the space. Where it lives is the app's business,
@@ -45,7 +46,6 @@ export async function renameSpace(space: Space) {
 
 /** Who else may reach a space, and at what. The one sheet; see ShareSheet.svelte. */
 export async function shareSpace(space: Space) {
-  const { share } = await import('./sharing.svelte')
   await share.show(space)
 }
 
@@ -53,7 +53,6 @@ export async function shareSpace(space: Space) {
  *  gesture and a different sentence: a space that is not yours is not yours to
  *  delete, and leaving it takes its notes off this machine and nowhere else. */
 export async function deleteSpace(space: Space) {
-  const { roleOf } = await import('./sharing.svelte')
   const theirs = roleOf(space.root) !== 'owner'
 
   const sure = await prompt.confirm({

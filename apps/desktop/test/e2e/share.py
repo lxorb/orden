@@ -1,0 +1,655 @@
+"""Sharing a space, end to end, against the real Worker.
+
+Three browser contexts that know nothing about each other. The owner opens the
+Share sheet from the rail and invites somebody by address. That somebody has no
+Nib account at all: they follow the link out of the mail, prove the address with
+the code the dev mailer prints, and land in the space - where they write in the
+same note as the owner and each sees the other's caret with the other's name on
+it. Then the owner makes a link that anybody may follow to read, and a third
+person follows it and finds a note they can see and cannot type into.
+
+Everything here is the real thing: the built web app, the Worker under
+`wrangler dev` on workerd, a Durable Object holding the room, the D1 migrations
+including the sharing one, and the mailer writing where a mail would have gone.
+
+Run it from the repository root:
+
+    python apps/desktop/test/e2e/share.py
+
+It builds the app, applies the migrations, starts the Worker, runs the browsers
+and stops everything again. Nothing it makes outlives it but the screenshots,
+which go beside it under `shots/`.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+import uuid
+from pathlib import Path
+
+from playwright.sync_api import Browser, Page, sync_playwright
+
+ROOT = Path(__file__).resolve().parents[4]
+SERVICE = ROOT / "services" / "sync"
+APP = ROOT / "apps" / "desktop"
+SHOTS = Path(__file__).resolve().parent / "shots"
+
+# A port of this test's own. Never 1420, which is the dev server's, and not the
+# one the collaboration run uses either.
+PORT = 18855
+ORIGIN = f"http://127.0.0.1:{PORT}"
+
+OWNER = "owner@example.com"
+WRITER = "writer@example.com"
+READER = "reader@example.com"
+
+SPACE = "Notes"
+NOTE = "together.md"
+OPENING = "# Together\n\nthe first line\n"
+
+# How long anything is waited for before the test gives up and says what it saw.
+PATIENCE = 40
+
+
+def say(words: str) -> None:
+    print(f"  {words}", flush=True)
+
+
+def npx(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+    """A command from the repository's own node_modules."""
+    executable = shutil.which("npx") or shutil.which("npx.cmd")
+    if not executable:
+        raise SystemExit("npx is not on the path")
+
+    return subprocess.run(
+        [executable, *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+
+
+def chromium() -> str:
+    """The newest chromium Playwright has downloaded."""
+    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
+    found = sorted(
+        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
+        key=lambda path: int(path.parents[1].name.split("-")[1]),
+    )
+    if not found:
+        raise SystemExit("no chromium under %s" % local)
+
+    return str(found[-1])
+
+
+def request(path: str, token: str | None = None, body: dict | None = None, method: str | None = None):
+    data = None if body is None else json.dumps(body).encode()
+    headers = {}
+    if data is not None:
+        headers["content-type"] = "application/json"
+    if token:
+        headers["authorization"] = f"Bearer {token}"
+
+    call = urllib.request.Request(
+        f"{ORIGIN}{path}",
+        data=data,
+        headers=headers,
+        method=method or ("GET" if data is None else "POST"),
+    )
+    with urllib.request.urlopen(call, timeout=20) as answer:
+        return json.loads(answer.read() or b"null")
+
+
+class Worker:
+    """The Worker under wrangler dev, the local database behind it, and the log
+    that stands in for a mailbox."""
+
+    def __init__(self) -> None:
+        self.process: subprocess.Popen[bytes] | None = None
+        # Its output goes to a file rather than to a pipe. A pipe nobody reads
+        # fills up, and a Worker whose output has nowhere to go stops answering.
+        self.log = SHOTS.parent / "share-worker.log"
+        self.opened = None
+
+    def build(self) -> None:
+        say("building the web app against the local Worker")
+        # `vite build` is a production build whatever mode it is given unless the
+        # environment says otherwise, and a production build is the one with the
+        # app's stores hidden. Both are set, so the built page keeps them.
+        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
+        built = subprocess.run(
+            [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+            cwd=APP,
+            env=environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if built.returncode != 0:
+            raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
+
+    def clean(self) -> None:
+        """Everything the last run left. A test that starts from yesterday's
+        state is a test of yesterday."""
+        state = SERVICE / ".wrangler" / "state"
+        if state.exists():
+            say("clearing what the last run left")
+            shutil.rmtree(state, ignore_errors=True)
+        if self.log.exists():
+            self.log.unlink()
+
+    def migrate(self) -> None:
+        say("applying the migrations to the local database")
+        done = npx("wrangler", "d1", "migrations", "apply", "nib", "--local", cwd=SERVICE)
+        if done.returncode != 0:
+            raise SystemExit(f"the migrations failed:\n{done.stdout}\n{done.stderr}")
+
+    def sql(self, statement: str) -> None:
+        done = npx(
+            "wrangler",
+            "d1",
+            "execute",
+            "nib",
+            "--local",
+            f"--command={statement}",
+            cwd=SERVICE,
+        )
+        if done.returncode != 0:
+            raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
+
+    def start(self) -> None:
+        say(f"starting the Worker on {ORIGIN}")
+        self.log.parent.mkdir(parents=True, exist_ok=True)
+        self.opened = self.log.open("wb")
+        self.process = subprocess.Popen(
+            [
+                shutil.which("npx") or "npx",
+                "wrangler",
+                "dev",
+                "--port",
+                str(PORT),
+                "--ip",
+                "127.0.0.1",
+                "--show-interactive-dev-session=false",
+            ],
+            cwd=SERVICE,
+            stdout=self.opened,
+            stderr=subprocess.STDOUT,
+        )
+
+        until = time.monotonic() + 90
+        while time.monotonic() < until:
+            if self.process.poll() is not None:
+                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
+            try:
+                if request("/health").get("ok"):
+                    say("the Worker is answering")
+                    return
+            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
+                time.sleep(1)
+
+        raise SystemExit(f"the Worker never answered:\n{self.said()}")
+
+    def said(self) -> str:
+        """Everything the Worker has printed."""
+        if self.opened:
+            self.opened.flush()
+        if not self.log.exists():
+            return ""
+
+        return self.log.read_text("utf-8", errors="replace")
+
+    def mail_to(self, address: str) -> str:
+        """The last message the Worker handed to the mail binding for this
+        address: its subject, and the words of it.
+
+        `wrangler dev` implements `send_email` rather than leaving it out, so
+        what a run produces is a real message: the runtime writes its parts
+        beside its own state and prints where. This is the test's mailbox, and
+        it holds exactly what a person would have been sent.
+        """
+        lines = self.said().splitlines()
+        found = [at for at, line in enumerate(lines) if line.strip() == f"To: {address}"]
+        if not found:
+            return ""
+
+        message = ""
+        for line in lines[found[-1] : found[-1] + 6]:
+            if line.startswith("Subject: "):
+                message += line[len("Subject: ") :] + "\n"
+            if line.startswith("Text: "):
+                path = Path(line[len("Text: ") :].strip())
+                if path.exists():
+                    message += path.read_text("utf-8", errors="replace")
+
+        return message
+
+    def waits_for_mail(self, address: str, pattern: str, what: str) -> re.Match[str]:
+        """A message to somebody, once one has been sent that says this."""
+        until = time.monotonic() + PATIENCE
+        while time.monotonic() < until:
+            found = re.search(pattern, self.mail_to(address))
+            if found:
+                return found
+            time.sleep(0.3)
+
+        raise SystemExit(
+            f"gave up waiting for {what}. the last message to {address} was:\n"
+            f"{self.mail_to(address)!r}"
+        )
+
+    def stop(self) -> None:
+        if not self.process:
+            return
+
+        say("stopping the Worker")
+        # The whole tree. `wrangler dev` is a wrapper around the runtime itself,
+        # and stopping only the wrapper leaves the runtime holding the port.
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(self.process.pid)],
+                capture_output=True,
+                check=False,
+            )
+        else:
+            self.process.terminate()
+
+        try:
+            self.process.wait(timeout=20)
+        except subprocess.TimeoutExpired:
+            self.process.kill()
+
+        self.process = None
+        if self.opened:
+            self.opened.close()
+            self.opened = None
+
+    def account(self, email: str) -> str:
+        """An account with a live session, put straight into the database. The
+        owner is not what is under test here; everybody else signs in for real.
+        """
+        token = uuid.uuid4().hex + uuid.uuid4().hex
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        now = int(time.time() * 1000)
+        user = str(uuid.uuid4())
+
+        self.sql(
+            f"insert into users (id, email, name, created_at)"
+            f" values ('{user}', '{email}', 'Emil', {now});"
+            f"insert into sessions (token_hash, user_id, created_at, expires_at)"
+            f" values ('{digest}', '{user}', {now}, {now + 86_400_000});"
+        )
+
+        return token
+
+
+def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
+    """Polls a page until the script answers with something truthy."""
+    until = time.monotonic() + patience
+    while time.monotonic() < until:
+        answer = page.evaluate(script)
+        if answer:
+            return answer
+        page.wait_for_timeout(50)
+
+    raise SystemExit(f"gave up waiting for {what}")
+
+
+def note_console(label: str, message) -> None:
+    if message.type in ("error", "warning"):
+        say(f"[{label}] {message.type}: {message.text[:200]}")
+
+
+def fresh(browser: Browser, label: str, at: str = ORIGIN, token: str | None = None) -> Page:
+    """A browser context that has never held anything: its own storage, its own
+    session, and no idea that the other two exist."""
+    context = browser.new_context(viewport={"width": 1180, "height": 760})
+    if token:
+        context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
+
+    page = context.new_page()
+    page.on("console", lambda message: note_console(label, message))
+    page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
+    page.goto(at, wait_until="domcontentloaded")
+
+    wait_for(page, "() => !!window.nibApp", f"[{label}] the app to start")
+    return page
+
+
+def words(page: Page) -> str:
+    return page.evaluate(
+        "() => { window.nibApp.workspace.flush(); return window.nibApp.workspace.active?.doc ?? '' }"
+    )
+
+
+def joined(page: Page, label: str, space_id: str, role: str) -> str:
+    """Waits for the account to list the shared space at that role, and answers
+    what the folder mirroring it is called here.
+
+    Not always what it is called on the account: a machine that already has a
+    folder of that name keeps it, and somebody else's space is given one of its
+    own rather than being folded into it.
+    """
+    wait_for(
+        page,
+        "() => (window.nibApp.account.spaces.find("
+        f"  (one) => one.id === {json.dumps(space_id)}"
+        f") ?? {{}}).role === {json.dumps(role)}",
+        f"[{label}] the shared space to arrive at {role}",
+    )
+
+    return wait_for(
+        page,
+        "() => {"
+        "  const space = window.nibApp.workspace.spaces.find("
+        f"    (one) => window.nibApp.sync.remoteIdFor(one.root) === {json.dumps(space_id)});"
+        "  return space ? space.name : null"
+        "}",
+        f"[{label}] a folder for the shared space",
+    )
+
+
+def open_the_note(page: Page, label: str, note_id: str, space: str) -> None:
+    """Waits for the note to arrive in that folder, opens it, and waits for it
+    to be in its room."""
+    listed = (
+        "() => {"
+        "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
+        f"  return walk(window.nibApp.workspace.tree).includes('/{space}/{NOTE}')"
+        "}"
+    )
+    page.evaluate(
+        "(name) => {"
+        "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
+        "  if (space) window.nibApp.workspace.showSpace(space.id)"
+        "}",
+        space,
+    )
+    wait_for(page, listed, f"[{label}] the note to arrive")
+
+    page.evaluate(f"() => window.nibApp.workspace.open('/{space}/{NOTE}')")
+    wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
+    wait_for(
+        page,
+        f"() => window.nibApp.rooms.joined.has({json.dumps(note_id)})",
+        f"[{label}] the note to join its room",
+    )
+
+
+def open_the_share_sheet(page: Page):
+    """The Share sheet, opened the way anybody opens it: the space's own menu in
+    the rail."""
+    page.locator("nav button.space").first.click(button="right")
+    page.get_by_role("menuitem", name="Share", exact=True).click()
+
+    sheet = page.get_by_role("dialog")
+    sheet.wait_for(state="visible", timeout=10_000)
+    # Drawn once the account has said who is already in it.
+    sheet.get_by_text("People").wait_for(timeout=10_000)
+    return sheet
+
+
+def sign_in(page: Page, worker: Worker, label: str, address: str | None) -> None:
+    """The emailed code, typed for real. `address` is None where the page
+    already knows it, which is what an invitation carries."""
+    if address is not None:
+        page.locator("input[type=email]").fill(address)
+
+    page.get_by_role("button", name="Continue").click()
+
+    wanted = address or page.locator("input[type=email]").input_value()
+    code = worker.waits_for_mail(
+        wanted, r"(\d{6}) is your Nib code", f"[{label}] the sign-in code"
+    ).group(1)
+    say(f"[{label}] the code in the mail is {code}")
+
+    page.locator(".digits input").first.fill(code)
+
+    # A browser that has never held this account has the welcome note in it, and
+    # signing in asks what should become of it. Keeping it is the answer that
+    # loses nothing.
+    keep = page.get_by_role("button", name="Keep them")
+    try:
+        keep.wait_for(timeout=8000)
+        keep.click()
+    except Exception:
+        pass
+
+    wait_for(page, "() => window.nibApp.account.signedIn", f"[{label}] the session")
+
+
+def typed(page: Page, at: int, said: str) -> None:
+    """Real keystrokes into the real editor, at a place in the note."""
+    page.click(".cm-content")
+    page.evaluate(
+        "(at) => {"
+        "  window.nib.dispatch({ selection: { anchor: Math.min(at, window.nib.state.doc.length) } });"
+        "  window.nib.focus()"
+        "}",
+        at,
+    )
+    page.keyboard.type(said, delay=12)
+
+
+def agree(one: Page, two: Page, wanted: str) -> None:
+    """Waits until both pages hold the same words, and those words hold this."""
+    until = time.monotonic() + PATIENCE
+    while time.monotonic() < until:
+        if words(one) == words(two) and wanted in words(one):
+            return
+        one.wait_for_timeout(30)
+
+    raise SystemExit(f"the two never agreed on {wanted!r}:\n{words(one)!r}\n{words(two)!r}")
+
+
+def caret_names(page: Page) -> list[str]:
+    return [
+        name.strip()
+        for name in page.locator(".cm-nib-caret-name").all_inner_texts()
+        if name.strip()
+    ]
+
+
+def main() -> int:
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    worker = Worker()
+    failures: list[str] = []
+
+    def wrong(what: str) -> None:
+        say(f"FAILED: {what}")
+        failures.append(what)
+
+    try:
+        worker.build()
+        worker.clean()
+        worker.migrate()
+        worker.start()
+
+        owner_token = worker.account(OWNER)
+        space = request("/v1/spaces", owner_token, {"name": SPACE})["space"]
+        note = request(
+            f"/v1/spaces/{space['id']}/notes",
+            owner_token,
+            {"path": NOTE, "content": OPENING},
+        )["note"]
+        say(f"the owner holds {SPACE}/{NOTE} as {note['id']}")
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=chromium(),
+                headless=True,
+                args=[
+                    "--disable-background-timer-throttling",
+                    "--disable-backgrounding-occluded-windows",
+                    "--disable-renderer-backgrounding",
+                ],
+            )
+            try:
+                # ── The owner invites somebody by address ──────────────────
+                owner = fresh(browser, "owner", token=owner_token)
+                wait_for(
+                    owner,
+                    f"() => window.nibApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
+                    "[owner] the space to arrive",
+                )
+
+                sheet = open_the_share_sheet(owner)
+                sheet.locator("input[type=email]").fill(WRITER)
+                sheet.get_by_role("button", name="Invite").click()
+                sheet.get_by_text(WRITER).wait_for(timeout=10_000)
+                sheet.get_by_text("Invited").wait_for(timeout=10_000)
+                owner.wait_for_timeout(200)
+                sheet.screenshot(path=str(SHOTS / "share-sheet.png"))
+                say(f"the sheet lists {WRITER} as invited")
+
+                token = worker.waits_for_mail(
+                    WRITER, r"https://nibeditor\.com/join/([a-f0-9]+)", "the invitation"
+                ).group(1)
+                say("the invitation carries a link to nibeditor.com")
+
+                owner.keyboard.press("Escape")
+
+                # ── Somebody with no account at all follows it ─────────────
+                writer = fresh(browser, "writer", at=f"{ORIGIN}/join/{token}")
+                writer.get_by_text(f"Emil shared {SPACE} with you").wait_for(timeout=15_000)
+                writer.wait_for_timeout(200)
+                writer.screenshot(path=str(SHOTS / "invitation-sign-in.png"))
+
+                # The address is already filled in, because the invitation was
+                # written to it. Nothing else is asked for.
+                filled = writer.locator("input[type=email]").input_value()
+                if filled != WRITER:
+                    wrong(f"the sign-in was not filled in with {WRITER}, but with {filled!r}")
+
+                sign_in(writer, worker, "writer", None)
+                theirs = joined(writer, "writer", space["id"], "write")
+                say(f"{WRITER} is in {SPACE} without ever having made an account")
+
+                shared = writer.evaluate(
+                    "(id) => window.nibApp.account.spaces.find((one) => one.id === id)?.shared",
+                    space["id"],
+                )
+                if shared is not True:
+                    wrong(f"the writer's copy of the space says shared={shared!r}")
+
+                # ── Both write in the one note ─────────────────────────────
+                open_the_note(owner, "owner", note["id"], SPACE)
+                open_the_note(writer, "writer", note["id"], theirs)
+
+                typed(owner, len(OPENING), "from the owner\n")
+                typed(writer, 0, "from the writer\n")
+                agree(owner, writer, "from the owner")
+                if "from the writer" not in words(owner):
+                    wrong("what the invited person wrote never reached the owner")
+                say("both of them hold the same words")
+
+                # ── And each sees the other, by name ───────────────────────
+                writer.evaluate(
+                    "() => { window.nib.dispatch({ selection: { anchor: 3 } }); window.nib.focus() }"
+                )
+                owner.wait_for_selector(".cm-nib-caret", timeout=10_000)
+                owner.wait_for_timeout(150)
+                names = caret_names(owner)
+                owner.locator(".cm-editor").first.screenshot(path=str(SHOTS / "named-caret.png"))
+
+                # The name on the account, else the front of the address. This
+                # one never chose a name, so it is `writer`.
+                if names != ["writer"]:
+                    wrong(f"the caret is labelled {names!r} rather than the person")
+                else:
+                    say("the caret carries the person's name rather than the device's")
+
+                # The rail marks the space as one somebody else is in.
+                owner.locator("nav .spaces").screenshot(path=str(SHOTS / "shared-in-the-rail.png"))
+                if not owner.locator("nav button.space .with").count():
+                    wrong("the rail does not mark the space as shared")
+
+                # ── A link anybody may follow, to read ─────────────────────
+                sheet = open_the_share_sheet(owner)
+                sheet.get_by_role("button", name="Make a link").click()
+                sheet.get_by_role("radio", name="Anyone").click()
+                owner.wait_for_timeout(300)
+
+                url = sheet.locator("code").inner_text()
+                sheet.screenshot(path=str(SHOTS / "share-link.png"))
+                say(f"the link is {url}")
+
+                link = re.search(r"/join/([a-f0-9]+)", url)
+                if not link:
+                    raise SystemExit(f"that is not a join link: {url}")
+                owner.keyboard.press("Escape")
+
+                reader = fresh(browser, "reader", at=f"{ORIGIN}/join/{link.group(1)}")
+                reader.get_by_text(f"Emil shared {SPACE} with you").wait_for(timeout=15_000)
+                sign_in(reader, worker, "reader", READER)
+                here = joined(reader, "reader", space["id"], "read")
+                say(f"the link put {READER} in the space, to read")
+
+                # ── Who can see it and cannot type into it ─────────────────
+                open_the_note(reader, "reader", note["id"], here)
+                before = words(reader)
+                if "from the owner" not in before or "from the writer" not in before:
+                    wrong(f"the reader cannot see what was written:\n{before!r}")
+
+                editable = reader.locator(".cm-content").get_attribute("contenteditable")
+                if editable != "false":
+                    wrong(f"the reader's editor says contenteditable={editable!r}")
+
+                reader.click(".cm-content")
+                reader.keyboard.type("this should go nowhere", delay=8)
+                reader.wait_for_timeout(400)
+                if words(reader) != before:
+                    wrong("the reader typed into a note they may only read")
+                reader.locator(".cm-editor").first.screenshot(path=str(SHOTS / "read-only.png"))
+
+                # And nothing of it reached anybody else, or the account.
+                owner.wait_for_timeout(600)
+                if "this should go nowhere" in words(owner):
+                    wrong("what a reader typed crossed to the owner")
+
+                settled = request(f"/v1/notes/{note['id']}", owner_token)["content"]
+                if "this should go nowhere" in settled:
+                    wrong("what a reader typed reached the account")
+
+                # A reader is offered nothing to change the space with either.
+                reader.locator(f'nav button.space[aria-label="{here}"]').click(button="right")
+                reader.wait_for_selector('[role="menu"]', timeout=10_000)
+                offered = reader.locator('[role="menuitem"]').all_inner_texts()
+                reader.keyboard.press("Escape")
+                if any(word in " ".join(offered) for word in ("New note", "Rename", "Share")):
+                    wrong(f"a reader is offered {offered!r}")
+                else:
+                    say(f"a reader's menu offers only {offered!r}")
+
+                say("everything the reader saw, they saw and could not change")
+            finally:
+                browser.close()
+    finally:
+        worker.stop()
+
+    if failures:
+        print("\nFAILED", flush=True)
+        for one in failures:
+            print(f"  - {one}", flush=True)
+        return 1
+
+    print("\na space was shared by mail and by link, and a reader could not type", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
