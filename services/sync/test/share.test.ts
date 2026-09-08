@@ -38,12 +38,17 @@ function shareView(as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })
 }
 
+/** Every account owns a space called `Notes` from the moment it is made; see
+ *  src/spaces/first.ts. The space this file shares is named something else, so
+ *  that a listing, a mail and a connector answer all say which one they mean. */
+const SHARED = 'Plans'
+
 beforeEach(async () => {
   env = testEnv()
   owner = await signIn(env, OWNER)
   stranger = await signIn(env, STRANGER)
 
-  space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
+  space = (await call(env, '/v1/spaces', { token: owner, body: { name: SHARED } })).json.space.id
   note = (
     await call(env, `/v1/spaces/${space}/notes`, {
       token: owner,
@@ -233,17 +238,22 @@ describe('every route that names a space', () => {
 /* ── The listing ──────────────────────────────────────────────────────── */
 
 describe('the space listing', () => {
+  /** The shared space as an account's rail shows it. By id, because the rail
+   *  starts with the space that account was given. */
+  async function inRail(as: string) {
+    const { json } = await call(env, '/v1/spaces', { token: as })
+    return json.spaces.find((one) => one.id === space)
+  }
+
   test('says nothing is shared until somebody is in it', async () => {
-    const { json } = await call(env, '/v1/spaces', { token: owner })
-    expect(json.spaces[0]?.role).toBe('owner')
-    expect(json.spaces[0]?.shared).toBe(false)
+    expect((await inRail(owner))?.role).toBe('owner')
+    expect((await inRail(owner))?.shared).toBe(false)
   })
 
   test("marks the owner's space once somebody is in it", async () => {
     await invite(READER, 'read')
 
-    const { json } = await call(env, '/v1/spaces', { token: owner })
-    expect(json.spaces[0]?.shared).toBe(true)
+    expect((await inRail(owner))?.shared).toBe(true)
   })
 
   test('carries a shared space to the person it was shared with, with their role', async () => {
@@ -251,7 +261,8 @@ describe('the space listing', () => {
 
     const { json } = await call(env, '/v1/spaces', { token: reader })
     expect(json.spaces.map((one) => [one.name, one.role, one.shared])).toEqual([
-      ['Notes', 'read', true],
+      ['Notes', 'owner', false],
+      [SHARED, 'read', true],
     ])
   })
 
@@ -260,12 +271,12 @@ describe('the space listing', () => {
     await call(env, '/v1/spaces', { token: writer, body: { name: 'Mine' } })
 
     const { json } = await call(env, '/v1/spaces', { token: writer })
-    expect(json.spaces.map((one) => one.name)).toEqual(['Mine', 'Notes'])
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes', 'Mine', SHARED])
   })
 
   test('leaves nothing of a space nobody shared', async () => {
     const { json } = await call(env, '/v1/spaces', { token: stranger })
-    expect(json.spaces).toEqual([])
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes'])
   })
 
   test('carries the marker for a shared space that was deleted', async () => {
@@ -273,7 +284,7 @@ describe('the space listing', () => {
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token: owner })
 
     const { json } = await call(env, '/v1/spaces', { token: reader })
-    expect(json.spaces).toEqual([])
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes'])
     expect(json.deleted).toEqual([space])
   })
 
@@ -285,7 +296,7 @@ describe('the space listing', () => {
     })
 
     const { json } = await call(env, '/v1/spaces', { token: reader })
-    expect(json.spaces).toEqual([])
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes'])
   })
 
   test('reorders only what the account owns, so a rail cannot move somebody else’s', async () => {
@@ -316,7 +327,7 @@ describe('an invitation', () => {
     )
 
     expect(sent).toContain(READER)
-    expect(sent).toContain('shared the space Notes with you')
+    expect(sent).toContain(`shared the space ${SHARED} with you`)
     expect(sent).toMatch(/https:\/\/nibeditor\.com\/join\/[a-f0-9]{64}/)
 
     const { json } = await shareView()
@@ -341,7 +352,10 @@ describe('an invitation', () => {
     const token = await signIn(env, 'later@example.com')
     const { json } = await call(env, '/v1/spaces', { token })
 
-    expect(json.spaces.map((one) => [one.name, one.role])).toEqual([['Notes', 'write']])
+    expect(json.spaces.map((one) => [one.name, one.role])).toEqual([
+      ['Notes', 'owner'],
+      [SHARED, 'write'],
+    ])
   })
 
   test('reads the address the way the sign-in does, so one spelling is one person', async () => {
@@ -351,7 +365,8 @@ describe('an invitation', () => {
     })
 
     const token = await signIn(env, READER)
-    expect((await call(env, '/v1/spaces', { token })).json.spaces).toHaveLength(1)
+    const { json } = await call(env, '/v1/spaces', { token })
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
 
   test('says what is wrong with an address that is not one', async () => {
@@ -396,7 +411,7 @@ describe('an invitation', () => {
       })
     })
 
-    expect(sent.match(/shared the space Notes with you/g)).toHaveLength(1)
+    expect(sent.match(/shared the space Plans with you/g)).toHaveLength(1)
     // The mail waited; the sharing did not.
     expect((await shareView()).json.members[0]?.role).toBe('write')
   })
@@ -451,7 +466,7 @@ describe('an invitation', () => {
     expect(status).toBe(200)
     expect(json).toMatchObject({
       kind: 'invite',
-      space: 'Notes',
+      space: SHARED,
       role: 'read',
       email: READER,
       asks: false,
@@ -472,7 +487,8 @@ describe('an invitation', () => {
 
     // The address still opens the space, because the address is what opens it.
     const token = await signIn(env, READER)
-    expect((await call(env, '/v1/spaces', { token })).json.spaces).toHaveLength(1)
+    const { json } = await call(env, '/v1/spaces', { token })
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
 })
 
@@ -549,7 +565,8 @@ describe('one person’s role', () => {
     expect(gone.status).toBe(200)
 
     expect((await shareView()).json.members).toEqual([])
-    expect((await call(env, '/v1/spaces', { token: reader })).json.spaces).toEqual([])
+    const { json } = await call(env, '/v1/spaces', { token: reader })
+    expect(json.spaces.map((one) => one.name)).toEqual(['Notes'])
   })
 
   test('is not something the owner can do to their own space', async () => {
@@ -561,7 +578,8 @@ describe('one person’s role', () => {
     expect(status).toBe(409)
     expect(json.error).toBe('this space is yours')
     // And nothing about the space changed.
-    expect((await call(env, '/v1/spaces', { token: owner })).json.spaces).toHaveLength(1)
+    const { json: rail } = await call(env, '/v1/spaces', { token: owner })
+    expect(rail.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
 
   test('is nothing at all for somebody who was never in it', async () => {
@@ -622,7 +640,7 @@ describe('a share link', () => {
     const token = await link('read', 'open')
     const { json } = await call<JoinView>(env, `/v1/join/${token}`)
 
-    expect(json).toMatchObject({ kind: 'link', space: 'Notes', role: 'read', asks: false })
+    expect(json).toMatchObject({ kind: 'link', space: SHARED, role: 'read', asks: false })
     // Whoever has it, so it names nobody.
     expect(json.email).toBeNull()
   })
@@ -634,7 +652,7 @@ describe('a share link', () => {
       call(env, `/v1/join/${token}`, { method: 'POST', token: stranger }),
     )
     expect(sent).toContain(OWNER)
-    expect(sent).toContain('would like to join Notes')
+    expect(sent).toContain(`would like to join ${SHARED}`)
 
     const { json } = await shareView()
     expect(json.requests.map((one) => [one.email, one.role])).toEqual([[STRANGER, 'read']])
@@ -769,6 +787,7 @@ describe('a note written in a space somebody shared', () => {
     writer = await invite(WRITER, 'write')
 
     const before = (await call(env, '/v1/usage', { token: owner })).json.used
+    const theirs = (await call(env, '/v1/usage', { token: writer })).json.used
     await call(env, `/v1/spaces/${space}/notes`, {
       token: writer,
       body: { path: 'theirs.md', content: 'x'.repeat(500) },
@@ -778,7 +797,8 @@ describe('a note written in a space somebody shared', () => {
     const mine = await call(env, '/v1/usage', { token: writer })
 
     expect(after.json.used).toBe(before + 500)
-    expect(mine.json.used).toBe(0)
+    // Their own account holds what it was given and not a byte of the note.
+    expect(mine.json.used).toBe(theirs)
   })
 
   test('is refused once the owner has no room for it, whoever is writing', async () => {
@@ -909,13 +929,13 @@ describe('the connector in a shared space', () => {
     writer = await invite(WRITER, 'write')
     const said = await tool(await connector(writer), 'list_spaces', {})
 
-    expect(said.json.result.content[0]?.text).toBe('Notes')
+    expect(said.json.result.content[0]?.text).toBe(`Notes\n${SHARED}`)
   })
 
   test('reads a note in it', async () => {
     reader = await invite(READER, 'read')
     const said = await tool(await connector(reader), 'read_note', {
-      space: 'Notes',
+      space: SHARED,
       path: 'plan.md',
     })
 
@@ -925,7 +945,7 @@ describe('the connector in a shared space', () => {
   test('writes in one that was shared to write in', async () => {
     writer = await invite(WRITER, 'write')
     const said = await tool(await connector(writer), 'write_note', {
-      space: 'Notes',
+      space: SHARED,
       path: 'plan.md',
       content: 'rewritten',
     })
@@ -936,18 +956,19 @@ describe('the connector in a shared space', () => {
   test('refuses to write in one that was shared to read', async () => {
     reader = await invite(READER, 'read')
     const said = await tool(await connector(reader), 'write_note', {
-      space: 'Notes',
+      space: SHARED,
       path: 'plan.md',
       content: 'rewritten',
     })
 
     expect(said.json.result.content[0]?.text).toBe(
-      'Notes was shared with you to read, not to write.',
+      `${SHARED} was shared with you to read, not to write.`,
     )
   })
 
   test('cannot see a space nobody shared', async () => {
     const said = await tool(await connector(stranger), 'list_spaces', {})
-    expect(said.json.result.content[0]?.text).toBe('No spaces yet.')
+    // Their own space, and no sign of the one nobody shared with them.
+    expect(said.json.result.content[0]?.text).toBe('Notes')
   })
 })

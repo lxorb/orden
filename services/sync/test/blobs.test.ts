@@ -4,6 +4,9 @@ import { QUOTA } from '../src/storage'
 
 let env: TestEnv
 let token: string
+/** What the account holds before a test uploads anything: a new one is given a
+ *  space with a note in it, and what these tests measure is what images add. */
+let start: number
 
 /** A hash is 64 hex characters; the contents behind it never matter here. */
 const HASH = 'a'.repeat(64)
@@ -12,6 +15,7 @@ const OTHER = 'b'.repeat(64)
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
+  start = (await call(env, '/v1/usage', { token })).json.used
 })
 
 afterEach(() => env.close())
@@ -47,7 +51,7 @@ describe('storing an image', () => {
     await upload(HASH, 4096)
 
     const usage = await call(env, '/v1/usage', { token })
-    expect(usage.json.used).toBe(4096)
+    expect(usage.json.used).toBe(start + 4096)
   })
 
   test('refuses something that is not an image', async () => {
@@ -98,7 +102,7 @@ describe('giving an image back', () => {
     await call(env, `/v1/blobs/${HASH}`, { method: 'DELETE', token })
 
     const usage = await call(env, '/v1/usage', { token })
-    expect(usage.json.used).toBe(0)
+    expect(usage.json.used).toBe(start)
   })
 
   test('leaves it served while another account still keeps it', async () => {
@@ -149,16 +153,17 @@ describe('the quota', () => {
     await upload(HASH, 1500)
 
     const usage = await call(env, '/v1/usage', { token })
-    expect(usage.json.used).toBe(2000)
+    expect(usage.json.used).toBe(start + 2000)
     expect(usage.json.limit).toBe(QUOTA)
   })
 
   test('is counted per account', async () => {
     const other = await signIn(env, 'other@b.dev')
+    const before = (await call(env, '/v1/usage', { token: other })).json.used
     await upload(HASH, 4096)
 
     const theirs = await call(env, '/v1/usage', { token: other })
-    expect(theirs.json.used).toBe(0)
+    expect(theirs.json.used).toBe(before)
   })
 
   test('turns away an image that would not fit', async () => {

@@ -524,7 +524,9 @@ describe('connecting', () => {
       arguments: {},
     })
 
-    expect(spaces.json.result.content[0]!.text).toContain('No spaces')
+    // The account was made by the consent page, so it holds the space every new
+    // account is given and the connector has somewhere to write from the start.
+    expect(spaces.json.result.content[0]!.text).toBe('Notes')
   })
 
   test('takes the token request as JSON too', async () => {

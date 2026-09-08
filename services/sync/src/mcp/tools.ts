@@ -7,10 +7,10 @@
  *  it reaches a query. */
 
 import { findLinks } from '@nib/markdown'
-import { byteLength, newId, now, sha256 } from '../crypto'
-import { cleanPath, MAX_NOTE_BYTES, nextSeq, noteKey } from '../notes'
+import { byteLength } from '../crypto'
+import { addNote, cleanPath, MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
-import type { Env } from '../types'
+import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
 
 /** Enough that an account's notes are all reachable, small enough that one
@@ -275,10 +275,10 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
 
   const existing = await env.DB.prepare(
-    'select id, size from notes where space_id = ? and path = ? and deleted = 0',
+    'select * from notes where space_id = ? and path = ? and deleted = 0',
   )
     .bind(space.id, path)
-    .first<{ id: string; size: number }>()
+    .first<Note>()
 
   // Against whoever owns the space rather than whoever is writing: the bytes
   // land in their storage, so it is their quota the note has to fit inside.
@@ -286,27 +286,10 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
     return 'This account is out of space.'
   }
 
-  const id = existing?.id ?? newId()
-  const seq = await nextSeq(env, space.id)
-  const hash = await sha256(content)
-
-  await env.NOTES.put(noteKey(space.id, id), content)
-
-  if (existing) {
-    await env.DB.prepare(
-      `update notes set version = version + 1, seq = ?, updated_at = ?, size = ?, hash = ?
-       where id = ?`,
-    )
-      .bind(seq, now(), size, hash, id)
-      .run()
-  } else {
-    await env.DB.prepare(
-      `insert into notes (id, space_id, path, seq, version, updated_at, size, hash)
-       values (?, ?, ?, ?, 1, ?, ?, ?)`,
-    )
-      .bind(id, space.id, path, seq, now(), size, hash)
-      .run()
-  }
+  // The same two writes the sync API makes, so a note a model wrote is a note
+  // like any other: the same version, the same cursor, the same conflict rule.
+  if (existing) await saveNote(env, existing, content, path)
+  else await addNote(env, space.id, path, content)
 
   return `Saved ${path}.`
 }

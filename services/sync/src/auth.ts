@@ -11,6 +11,7 @@ import {
   sha256,
 } from './crypto'
 import { codeMessage, mailer } from './email'
+import { makeFirstSpace } from './spaces/first'
 import type { Env, User, Variables } from './types'
 
 const CODE_TTL = 10 * 60 * 1000
@@ -80,11 +81,17 @@ export async function sendCode(
 }
 
 /** Checks a code and hands back the account, made on the spot for an address
- *  seen for the first time: signing in and signing up are the same thing. */
+ *  seen for the first time: signing in and signing up are the same thing.
+ *
+ *  `accepted` is the request's `Accept-Language`, which is the only thing the
+ *  service ever learns about what language somebody reads. It is what the first
+ *  note is written in, and that note is written once, so the header has to
+ *  arrive here rather than be asked for later. */
 export async function verifyCode(
   env: Env,
   address: string,
   code: string,
+  accepted: string | undefined,
 ): Promise<{ user: User } | { error: string; status: 400 | 429 }> {
   const entered = code.replace(/\D/g, '')
 
@@ -124,6 +131,15 @@ export async function verifyCode(
     await env.DB.prepare('insert into users (id, email, created_at) values (?, ?, ?)')
       .bind(user.id, user.email, user.created_at)
       .run()
+
+    try {
+      await makeFirstSpace(env, user.id, accepted)
+    } catch {
+      // An account is worth more than the note it opens with, so a store that
+      // baulks here does not cost somebody their sign-in. Nothing tries again:
+      // only an account being made is given a space, because a later sign-in
+      // cannot tell an empty rail somebody meant from one that went wrong.
+    }
   }
 
   return { user }
@@ -156,7 +172,12 @@ auth.post('/verify', async (context) => {
   const code = body.text('code', CODE_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const verified = await verifyCode(context.env, normaliseEmail(email ?? ''), code ?? '')
+  const verified = await verifyCode(
+    context.env,
+    normaliseEmail(email ?? ''),
+    code ?? '',
+    context.req.header('accept-language'),
+  )
 
   if ('error' in verified) return context.json({ error: verified.error }, verified.status)
   const { user } = verified

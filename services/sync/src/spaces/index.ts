@@ -1,20 +1,29 @@
 /** Spaces: the rail the app shows, in the order the person put them in.
  *
  *  A space is the unit of everything else - notes belong to one, publishing is
- *  a property of one - so this file is only the space itself: making one,
- *  naming it, ordering the rail, taking one away. What a published space
+ *  a property of one - so this file is only the space itself: asking for one,
+ *  naming it, ordering the rail, taking one away. Making one is in space.ts,
+ *  because a new account is given one without asking. What a published space
  *  answers on is in publish.ts, under the same paths. */
 
 import { Hono } from 'hono'
 import { readBody } from '../body'
-import { newId, now } from '../crypto'
+import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables } from '../types'
 import { bookmarks } from './bookmarks'
 import { spaceFiles } from './files'
 import { publish } from './publish'
 import { share } from './share'
-import { atLeast, presentSpace, sharedAmong, spaceOf, type Role } from './space'
+import {
+  addSpace,
+  atLeast,
+  notesAmong,
+  presentSpace,
+  sharedAmong,
+  spaceOf,
+  type Role,
+} from './space'
 
 const NAME_LIMIT = 80
 
@@ -64,8 +73,18 @@ spaces.get('/', async (context) => {
     .bind(user.id, user.email, 1, MOST_IN_ORDER)
     .all<{ id: string }>()
 
+  // How much each of them holds. Read here because a machine that has just
+  // signed in reads this listing before it pulls anything, so the listing is
+  // where it can learn how much is coming.
+  const held = await notesAmong(
+    context.env,
+    results.map((one) => one.id),
+  )
+
   return context.json({
-    spaces: results.map((one) => presentSpace(one, context.env, one.role, shared.has(one.id))),
+    spaces: results.map((one) =>
+      presentSpace(one, context.env, one.role, shared.has(one.id), held.get(one.id) ?? 0),
+    ),
     deleted: gone.results.map((one) => one.id),
   })
 })
@@ -79,36 +98,7 @@ spaces.post('/', async (context) => {
   const label = cleanName(name ?? '')
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
-  const last = await context.env.DB.prepare(
-    'select max(position) as last from spaces where user_id = ? and deleted = 0',
-  )
-    .bind(user.id)
-    .first<{ last: number | null }>()
-
-  const space: Space = {
-    id: newId(),
-    user_id: user.id,
-    name: label,
-    position: (last?.last ?? -1) + 1,
-    icon: null,
-    deleted: 0,
-    deleted_at: null,
-    created_at: now(),
-    updated_at: now(),
-    blog_enabled: 0,
-    blog_subdomain: null,
-    blog_domain: null,
-    blog_note: null,
-    blog_title: null,
-    bookmarks: '[]',
-    files: '[]',
-  }
-
-  await context.env.DB.prepare(
-    'insert into spaces (id, user_id, name, position, created_at, updated_at) values (?, ?, ?, ?, ?, ?)',
-  )
-    .bind(space.id, space.user_id, space.name, space.position, space.created_at, space.updated_at)
-    .run()
+  const space = await addSpace(context.env, user.id, label)
 
   return context.json({ space: presentSpace(space, context.env) }, 201)
 })

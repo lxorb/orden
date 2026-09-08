@@ -330,7 +330,8 @@ describe('writing through it', () => {
       body: { readOnly: false },
     })
 
-    expect(await tool(otherKey.json.token, 'list_spaces')).toContain('No spaces')
+    // Their own account's space, and nothing of this one's.
+    expect(await tool(otherKey.json.token, 'list_spaces')).toBe('Notes')
     expect(
       await tool(otherKey.json.token, 'read_note', { space: 'Work', path: 'plan.md' }),
     ).toContain('No space')

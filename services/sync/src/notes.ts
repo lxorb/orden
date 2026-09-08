@@ -56,6 +56,54 @@ export async function nextSeq(env: Env, spaceId: string): Promise<number> {
   return row?.seq ?? 1
 }
 
+/** Puts a note in a space that has nothing at that path yet: the bytes in R2,
+ *  the row in D1, at the space's next cursor so every other device reads it as
+ *  an ordinary arrival. Answers the note as it now stands.
+ *
+ *  The one place a note comes into being, so the columns a note starts life with
+ *  are decided once. Neither the quota nor the path is checked here: what may be
+ *  written, and by whom, is the caller's question, and the callers ask it
+ *  differently - the route below, the connector, and the note every new account
+ *  is given (see spaces/first.ts). */
+export async function addNote(
+  env: Env,
+  spaceId: string,
+  path: string,
+  content: string,
+): Promise<Note> {
+  const note: Note = {
+    id: newId(),
+    space_id: spaceId,
+    path,
+    seq: await nextSeq(env, spaceId),
+    version: 1,
+    updated_at: now(),
+    deleted: 0,
+    deleted_at: null,
+    size: byteLength(content),
+    hash: await sha256(content),
+  }
+
+  await env.NOTES.put(noteKey(spaceId, note.id), content)
+  await env.DB.prepare(
+    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+     values (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+  )
+    .bind(
+      note.id,
+      note.space_id,
+      note.path,
+      note.seq,
+      note.version,
+      note.updated_at,
+      note.size,
+      note.hash,
+    )
+    .run()
+
+  return note
+}
+
 /** Puts a note's new contents in the store: the bytes in R2, the row in D1, with
  *  the version and the space's cursor moved on so that every other device reads
  *  it as an ordinary save. Answers the note as it now stands, and the note
@@ -161,35 +209,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
     return context.json({ error: 'out of space' }, 507)
   }
 
-  const note: Note = {
-    id: newId(),
-    space_id: space.id,
-    path,
-    seq: await nextSeq(context.env, space.id),
-    version: 1,
-    updated_at: now(),
-    deleted: 0,
-    deleted_at: null,
-    size,
-    hash: await sha256(content),
-  }
-
-  await context.env.NOTES.put(noteKey(space.id, note.id), content)
-  await context.env.DB.prepare(
-    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
-     values (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
-  )
-    .bind(
-      note.id,
-      note.space_id,
-      note.path,
-      note.seq,
-      note.version,
-      note.updated_at,
-      note.size,
-      note.hash,
-    )
-    .run()
+  const note = await addNote(context.env, space.id, path, content)
 
   return context.json({ note: presentNote(note) }, 201)
 })

@@ -204,8 +204,10 @@ describe('restoring a space', () => {
     expect(restored.status).toBe(200)
     expect(restored.json.space).toMatchObject({ id: space, name: 'Work' })
 
+    // Behind the space the account was given, and behind the one made since.
     const listed = await call(env, '/v1/spaces', { token })
-    expect(listed.json.spaces.map((one: { id: string }) => one.id)).toEqual([other, space])
+    expect(listed.json.spaces.map((one) => one.name)).toEqual(['Notes', 'Second', 'Work'])
+    expect(listed.json.spaces.map((one) => one.id)).toContain(other)
     expect(listed.json.deleted).toEqual([])
     expect(row(id)!.deleted).toBe(0)
     expect(spaceRow(space)!.deleted_at).toBeNull()

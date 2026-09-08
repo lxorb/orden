@@ -157,7 +157,12 @@ authorize.post('/authorize', async (context) => {
   }
 
   if (form.action === 'allow') {
-    const verified = await verifyCode(context.env, email, form.code ?? '')
+    const verified = await verifyCode(
+      context.env,
+      email,
+      form.code ?? '',
+      context.req.header('accept-language'),
+    )
     if ('error' in verified) {
       return page(context.env, codeStep(client, ask, { email, error: verified.error }))
     }

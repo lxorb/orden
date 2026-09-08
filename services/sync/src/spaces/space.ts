@@ -1,5 +1,5 @@
-/** One space, as the rest of the service asks for it: what this account may do
- *  in it, and the shape the app reads back.
+/** One space, as the rest of the service asks for it: making one, what this
+ *  account may do in it, and the shape the app reads back.
  *
  *  A space is reached by its owner or by somebody the owner shared it with, and
  *  every route that takes a space id says which of the three roles it needs. An
@@ -9,6 +9,7 @@
  *  space is theirs to see, this button is not theirs to press. */
 
 import type { Context, MiddlewareHandler } from 'hono'
+import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
 import type { Env, Space, User, Variables } from '../types'
 import { readBookmarks } from './bookmarks'
@@ -33,6 +34,62 @@ function isRole(value: unknown): value is Role {
 
 export function allows(held: Role, needed: Role): boolean {
   return RANK[held] >= RANK[needed]
+}
+
+/** Makes a space for an account and hands it back.
+ *
+ *  The one place a space comes into being, so where it lands is decided once: at
+ *  the end of that account's own rail, holding nothing, published nowhere. The
+ *  route below `POST /v1/spaces` calls it for a space somebody asked for, and
+ *  `first.ts` for the one every new account starts with. The name arrives
+ *  cleaned; the icon is a name from the set the app ships, or nothing. */
+export async function addSpace(
+  env: Env,
+  userId: string,
+  name: string,
+  icon: string | null = null,
+): Promise<Space> {
+  const last = await env.DB.prepare(
+    'select max(position) as last from spaces where user_id = ? and deleted = 0',
+  )
+    .bind(userId)
+    .first<{ last: number | null }>()
+
+  const space: Space = {
+    id: newId(),
+    user_id: userId,
+    name,
+    position: (last?.last ?? -1) + 1,
+    icon,
+    deleted: 0,
+    deleted_at: null,
+    created_at: now(),
+    updated_at: now(),
+    blog_enabled: 0,
+    blog_subdomain: null,
+    blog_domain: null,
+    blog_note: null,
+    blog_title: null,
+    bookmarks: '[]',
+    files: '[]',
+  }
+
+  await env.DB.prepare(
+    `insert into spaces (id, user_id, name, position, icon, created_at, updated_at)
+     values (?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      space.id,
+      space.user_id,
+      space.name,
+      space.position,
+      space.icon,
+      space.created_at,
+      space.updated_at,
+    )
+    .run()
+
+  return space
 }
 
 /** A space together with what the account asking may do in it. */
@@ -110,12 +167,45 @@ export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promis
   return new Set(results.map((row) => row.space_id))
 }
 
-export function presentSpace(space: Space, env: Env, role: Role = 'owner', shared = false) {
+/** How many notes each of these spaces holds. One query for the whole listing,
+ *  the way `sharedAmong` is one query rather than one per space.
+ *
+ *  It is what lets a machine that has just signed in say how much of the account
+ *  is still on its way: the number is known before the first note has arrived,
+ *  where counting the pages of a pull only ever knows what has come already. */
+export async function notesAmong(
+  env: Env,
+  spaceIds: readonly string[],
+): Promise<Map<string, number>> {
+  if (!spaceIds.length) return new Map<string, number>()
+
+  const places = spaceIds.map(() => '?').join(', ')
+  const { results } = await env.DB.prepare(
+    `select space_id, count(*) as notes from notes
+      where space_id in (${places}) and deleted = 0
+      group by space_id`,
+  )
+    .bind(...spaceIds)
+    .all<{ space_id: string; notes: number }>()
+
+  return new Map(results.map((row) => [row.space_id, row.notes]))
+}
+
+export function presentSpace(
+  space: Space,
+  env: Env,
+  role: Role = 'owner',
+  shared = false,
+  notes = 0,
+) {
   return {
     id: space.id,
     name: space.name,
     position: space.position,
     icon: space.icon,
+    /** How many notes it holds, so a machine bringing the account down can say
+     *  how far through it is rather than only that it is working. */
+    notes,
     // What this account may do here, so the app knows which affordances to
     // show before it has asked for anything else.
     role,

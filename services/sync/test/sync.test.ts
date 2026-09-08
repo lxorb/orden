@@ -40,8 +40,10 @@ describe('spaces', () => {
     const other = await signIn(env, 'other@b.dev')
     await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
 
+    // `Notes` is the space the account was given when it was made; see
+    // src/spaces/first.ts. It leads the rail everywhere below.
     const mine = await call(env, '/v1/spaces', { token })
-    expect(mine.json.spaces.map((s: { name: string }) => s.name)).toEqual(['Work'])
+    expect(mine.json.spaces.map((one) => one.name)).toEqual(['Notes', 'Work'])
   })
 
   test('another account cannot reach your space', async () => {
@@ -67,7 +69,7 @@ describe('deleting a space', () => {
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
 
     const listed = await call(env, '/v1/spaces', { token })
-    expect(listed.json.spaces).toEqual([])
+    expect(listed.json.spaces.map((one) => one.name)).toEqual(['Notes'])
   })
 
   test('leaves a marker, so a machine that was away learns it went', async () => {
@@ -112,9 +114,16 @@ describe('deleting a space', () => {
 })
 
 describe("a space's icon", () => {
-  test('starts unset', async () => {
+  /** The space this file made, as the listing shows it. Looked up by id rather
+   *  than by position, because the rail starts with the space the account was
+   *  given, which has an icon of its own. */
+  async function inRail() {
     const listed = await call(env, '/v1/spaces', { token })
-    expect(listed.json.spaces[0]!.icon).toBe(null)
+    return listed.json.spaces.find((one) => one.id === space)
+  }
+
+  test('starts unset', async () => {
+    expect((await inRail())?.icon).toBe(null)
   })
 
   test('is remembered, so every machine shows the same one', async () => {
@@ -125,9 +134,7 @@ describe("a space's icon", () => {
     })
 
     expect(response.json.space.icon).toBe('Briefcase')
-
-    const listed = await call(env, '/v1/spaces', { token })
-    expect(listed.json.spaces[0]!.icon).toBe('Briefcase')
+    expect((await inRail())?.icon).toBe('Briefcase')
   })
 
   test('can be taken off again', async () => {
@@ -192,18 +199,25 @@ describe('the order spaces appear in', () => {
   })
 
   test('a new space joins the end', async () => {
-    expect(await order()).toEqual(['Work', 'Ideas', 'Journal'])
+    expect(await order()).toEqual(['Notes', 'Work', 'Ideas', 'Journal'])
   })
 
   test('is whatever was last sent', async () => {
     const response = await call(env, '/v1/spaces/order', {
       method: 'PUT',
       token,
-      body: { order: [await idOf('Journal'), await idOf('Work'), await idOf('Ideas')] },
+      body: {
+        order: [
+          await idOf('Journal'),
+          await idOf('Work'),
+          await idOf('Ideas'),
+          await idOf('Notes'),
+        ],
+      },
     })
 
     expect(response.status).toBe(200)
-    expect(await order()).toEqual(['Journal', 'Work', 'Ideas'])
+    expect(await order()).toEqual(['Journal', 'Work', 'Ideas', 'Notes'])
   })
 
   test('keeps a space the sender left out, rather than losing it', async () => {
@@ -213,7 +227,7 @@ describe('the order spaces appear in', () => {
       body: { order: [await idOf('Journal'), await idOf('Ideas')] },
     })
 
-    expect(await order()).toEqual(['Journal', 'Ideas', 'Work'])
+    expect(await order()).toEqual(['Journal', 'Ideas', 'Notes', 'Work'])
   })
 
   test('ignores ids belonging to someone else', async () => {
@@ -226,7 +240,7 @@ describe('the order spaces appear in', () => {
       body: { order: [theirs.json.space.id, await idOf('Journal')] },
     })
 
-    expect(await order()).toEqual(['Journal', 'Work', 'Ideas'])
+    expect(await order()).toEqual(['Journal', 'Notes', 'Work', 'Ideas'])
   })
 
   test('a reorder cannot touch another account', async () => {
@@ -241,7 +255,7 @@ describe('the order spaces appear in', () => {
     })
 
     const listed = await call(env, '/v1/spaces', { token: other })
-    expect(listed.json.spaces.map((one: { name: string }) => one.name)).toEqual(['First', 'Second'])
+    expect(listed.json.spaces.map((one) => one.name)).toEqual(['Notes', 'First', 'Second'])
   })
 
   test('an order has to be a list', async () => {
@@ -507,8 +521,9 @@ describe('an id belonging to another account', () => {
 
     // And nothing was changed by the asking.
     const mine = await call(env, '/v1/spaces', { token })
-    expect(mine.json.spaces[0]!.name).toBe('Work')
-    expect(mine.json.spaces[0]!.blog.subdomain).toBe('mine')
+    const work = mine.json.spaces.find((one) => one.id === space)
+    expect(work?.name).toBe('Work')
+    expect(work?.blog.subdomain).toBe('mine')
     expect((await call(env, `/v1/notes/${note}`, { token })).json.content).toBe('not yours')
   })
 })
@@ -567,10 +582,13 @@ describe('what a note is made of', () => {
   /** The quota is in bytes, so what is counted has to be bytes. Counting
    *  characters let an account keep four times what it was allowed. */
   test('what a note costs is its bytes, not its characters', async () => {
+    // What the account already holds is the note it was given; what this
+    // measures is what one emoji adds to it.
+    const before = (await call(env, '/v1/usage', { token })).json.used
     const created = await addNote('emoji.md', '🙂')
 
     expect(created.json.note.size).toBe(4)
-    expect((await call(env, '/v1/usage', { token })).json.used).toBe(4)
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(before + 4)
   })
 })
 

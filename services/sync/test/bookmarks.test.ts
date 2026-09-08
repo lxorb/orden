@@ -87,8 +87,10 @@ describe('bookmarks belong to one account', () => {
     const other = await signIn(env, 'c@d.dev')
     await put([note])
 
+    // They see the space their own account was given, and nothing of this one.
     const theirs = await call(env, '/v1/spaces', { token: other })
-    expect(theirs.json.spaces).toEqual([])
+    expect(theirs.json.spaces.map((one) => one.id)).not.toContain(space)
+    expect(theirs.json.spaces.flatMap((one) => one.bookmarks)).toEqual([])
   })
 
   test('need a session at all', async () => {
