@@ -23,7 +23,13 @@ class Sync {
   lastError = $state<string | null>(null)
   lastSyncedAt = $state<number | null>(null)
 
-  private mirrors: Record<string, Mirror> = {}
+  /** What each local folder mirrors on the account, and what the last pass left
+   *  in it. Shallow state rather than plain: a pass gives a new note its id, and
+   *  a note with no id has no room to join, so anything watching for one has to
+   *  hear about the pass that hands it over. `save` is what says so; see
+   *  rooms.svelte.ts. Shallow, because a pass writes into these all the way down
+   *  and a proxy on that path would cost every note in the space. */
+  private mirrors = $state.raw<Record<string, Mirror>>({})
   private timer: ReturnType<typeof setTimeout> | null = null
   private running = false
   /** Passes in a row that found nothing. Each one waits longer than the last. */
@@ -373,6 +379,10 @@ class Sync {
   }
 
   private save() {
+    // A new object, so whoever is watching what the account holds hears that a
+    // pass changed it. The mirrors themselves are written into in place; this is
+    // the one moment that says so out loud.
+    this.mirrors = { ...this.mirrors }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mirrors))
   }
 }
