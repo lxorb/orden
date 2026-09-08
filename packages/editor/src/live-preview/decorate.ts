@@ -151,6 +151,16 @@ class Decorator {
         // Shown alongside the fences it belongs to, not on its own schedule.
         this.conceal(node.from, node.to, revealed(this.state, node))
         return true
+      case 'Escape':
+        // `\*` is a marker saying the next character is a character. The
+        // backslash is syntax like any other, so it goes the way `*` does and
+        // comes back when the caret is on it. What is escaped stays: only the
+        // first of the two characters is hidden. A page pasted into a note
+        // writes its tags this way - see `from-html` in @nib/markdown - and
+        // reading it back with a backslash in front of every one of them is
+        // reading the markup rather than the words.
+        this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to))
+        return true
       case 'TableDelimiter':
         this.tableDelimiter(node)
         return true

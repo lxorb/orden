@@ -167,6 +167,31 @@ describe('code', () => {
   })
 })
 
+/** A backslash before a character is how markdown says "this one is a
+ *  character, not a marker". It is a marker itself, so it is hidden the way
+ *  every other marker is, and shown again when the caret is on it. A pasted tag
+ *  arrives written this way - see `from-html` in @nib/markdown - so a page
+ *  copied into a note used to read back with a backslash in front of every tag. */
+describe('escapes', () => {
+  test('hides the backslash and keeps the character', () => {
+    expect(concealed('a \\* b')).toEqual(['\\'])
+    expect(concealed('a \\< b')).toEqual(['\\'])
+    expect(concealed('a \\[x] b')).toEqual(['\\'])
+  })
+
+  test('shows it again with the caret on it', () => {
+    expect(concealed('a \\* b', 3)).toEqual([])
+  })
+
+  test('leaves a lone backslash alone', () => {
+    expect(concealed('a \\ b')).toEqual([])
+  })
+
+  test('a backslash inside code is code', () => {
+    expect(concealed('`a \\* b`')).toEqual(['`', '`'])
+  })
+})
+
 describe('blocks', () => {
   test('hides the quote marker', () => {
     expect(concealed('> quoted')).toEqual(['> '])
