@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { InkPoint, InkStroke } from './format'
 import { INK_TOOLS } from './format'
+import type { Point } from './geometry'
 import {
   assisted,
   erased,
@@ -14,6 +15,7 @@ import {
   strokesInLasso,
   tidied,
   tidyShape,
+  traceInk,
   transformed,
 } from './ink'
 
@@ -69,6 +71,176 @@ describe('the outline of a stroke', () => {
   })
 })
 
+/** An arc, sampled as densely as asked, which is the shape that used to go hard
+ *  the moment it landed: a curve has no corners, so any corner in it is one the
+ *  drawing put there. */
+function arc(count: number, radius = 60): InkPoint[] {
+  return Array.from({ length: count }, (_one, index) => {
+    const angle = (index / (count - 1)) * Math.PI
+    return {
+      x: Math.cos(angle) * radius,
+      y: -Math.sin(angle) * radius,
+      pressure: 0.5 + 0.25 * Math.sin(angle * 3),
+      tiltX: 0,
+      tiltY: 0,
+      t: index * 6,
+    }
+  })
+}
+
+/** A ring drawn to a path and sampled back as points, so two paths can be
+ *  compared as the shapes they are rather than as the commands they are made of. */
+function drawn(ring: Point[], per = 6): Point[] {
+  const out: Point[] = []
+  let at: Point = { x: 0, y: 0 }
+
+  traceInk(ring, {
+    moveTo: (x, y) => {
+      at = { x, y }
+      out.push(at)
+    },
+    quadraticCurveTo: (cx, cy, x, y) => {
+      const from = at
+      for (let one = 1; one <= per; one++) {
+        const share = one / per
+        const rest = 1 - share
+        out.push({
+          x: rest * rest * from.x + 2 * rest * share * cx + share * share * x,
+          y: rest * rest * from.y + 2 * rest * share * cy + share * share * y,
+        })
+      }
+      at = { x, y }
+    },
+    closePath: () => undefined,
+  })
+
+  return out
+}
+
+/** How far the points of one shape sit from the nearest point of another, as a
+ *  mean and a worst. */
+function apart(one: Point[], other: Point[]): { mean: number; worst: number } {
+  let sum = 0
+  let worst = 0
+
+  for (const here of one) {
+    let near = Infinity
+    for (const there of other) {
+      near = Math.min(near, Math.hypot(here.x - there.x, here.y - there.y))
+    }
+    sum += near
+    worst = Math.max(worst, near)
+  }
+
+  return { mean: sum / Math.max(1, one.length), worst }
+}
+
+describe('drawing an outline', () => {
+  test('is a quadratic through every point of the ring, from middle to middle', () => {
+    const said: string[] = []
+    traceInk(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ],
+      {
+        moveTo: (x, y) => said.push(`M ${x} ${y}`),
+        quadraticCurveTo: (cx, cy, x, y) => said.push(`Q ${cx} ${cy} ${x} ${y}`),
+        closePath: () => said.push('Z'),
+      },
+    )
+
+    expect(said).toEqual(['M 5 5', 'Q 0 0 5 0', 'Q 10 0 10 5', 'Q 10 10 5 5', 'Z'])
+  })
+
+  test('a ring with no room inside it is not drawn at all', () => {
+    const said: string[] = []
+    const sink = {
+      moveTo: () => said.push('M'),
+      quadraticCurveTo: () => said.push('Q'),
+      closePath: () => said.push('Z'),
+    }
+
+    traceInk([], sink)
+    traceInk(
+      [
+        { x: 0, y: 0 },
+        { x: 1, y: 1 },
+      ],
+      sink,
+    )
+
+    expect(said).toEqual([])
+  })
+
+  /** The bug this replaced: a stroke was drawn as straight lines between the
+   *  points of its outline, which is invisible under the nib, where there are
+   *  hundreds of them, and unmistakable the moment it lands with a fraction of
+   *  them left. A curve of no corners must be drawn with none. */
+  test('leaves no corner in a curve however few points it has left', () => {
+    const one = stroke(arc(400), { size: 6 })
+    const few = tidied(one)
+    expect(few.points.length).toBeLessThan(one.points.length / 2)
+
+    const turns = corners(drawn(outlineOf(few)))
+    expect(turns).toBeLessThan(0.2)
+  })
+})
+
+/** The sharpest turn anywhere along a shape, in radians, ignoring the two ends
+ *  of the stroke where a cap really does turn back on itself. */
+function corners(shape: Point[]): number {
+  let sharpest = 0
+
+  for (let one = 2; one < shape.length; one++) {
+    const before = shape[one - 2]
+    const at = shape[one - 1]
+    const after = shape[one]
+    if (!before || !at || !after) continue
+
+    const into = Math.atan2(at.y - before.y, at.x - before.x)
+    const outOf = Math.atan2(after.y - at.y, after.x - at.x)
+    let turn = Math.abs(outOf - into)
+    if (turn > Math.PI) turn = 2 * Math.PI - turn
+    // A cap doubles back; only the body of the stroke is being measured.
+    if (turn > 2) continue
+
+    sharpest = Math.max(sharpest, turn)
+  }
+
+  return sharpest
+}
+
+describe('a stroke written down against the stroke that was drawn', () => {
+  /** What the reader sees is the outline, so that is what has to survive being
+   *  written down: the same curve, within a fraction of a plane unit, for every
+   *  pen on the bar. */
+  test('paints within a fraction of a unit of it, for every tool', () => {
+    for (const tool of INK_TOOLS) {
+      for (const size of [3, 8, 18]) {
+        const live = stroke(arc(400, 20 * size), { tool, size })
+        const gap = apart(drawn(outlineOf(tidied(live))), drawn(outlineOf(live, false)))
+
+        expect(gap.mean, `${tool} ${size}`).toBeLessThan(0.5)
+        expect(gap.worst, `${tool} ${size}`).toBeLessThan(2)
+      }
+    }
+  })
+
+  /** The outliner smooths the points it is handed one at a time, so the same
+   *  curve used to come out a different shape depending on how many samples the
+   *  digitiser happened to report: a hand moving slowly drew a fatter, laggier
+   *  line than the same hand moving fast. */
+  test('does not depend on how densely the pen was sampled', () => {
+    const slow = stroke(arc(600), { size: 6 })
+    const fast = stroke(arc(60), { size: 6 })
+    const gap = apart(drawn(outlineOf(fast)), drawn(outlineOf(slow)))
+
+    expect(gap.mean).toBeLessThan(0.5)
+  })
+})
+
 describe('the box a stroke covers', () => {
   test('holds every point, with room for the nib', () => {
     const box = strokeBox(stroke([point(0, 0), point(100, 50)], { size: 10 }))
@@ -117,6 +289,16 @@ describe('smoothing a stroke', () => {
 
   test('a stroke of two points is already as short as it goes', () => {
     expect(simplified([point(0, 0), point(1, 1)], 0.5)).toHaveLength(2)
+  })
+
+  /** A pen that thins with pressure draws the swell in the middle of a straight
+   *  run, and a point dropped from the middle of a swell is the line visibly
+   *  losing its width. */
+  test('keeps a point the pen leant on, even in the middle of a straight run', () => {
+    const leant = [point(0, 0, 0.2), point(1, 0, 0.9), point(2, 0, 0.2)]
+
+    expect(simplified(leant, 0.5)).toHaveLength(2)
+    expect(simplified(leant, 0.5, 4)).toHaveLength(3)
   })
 
   test('tidying uses the nib as the measure, so a fat pen is smoothed harder', () => {

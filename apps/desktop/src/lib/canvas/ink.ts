@@ -134,7 +134,7 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
   const style = INK_STYLES[stroke.tool]
   if (style.nib !== null) return ribbon(stroke, style)
 
-  const points = stroke.points.map((point) => [point.x, point.y, point.pressure])
+  const points = evenly(stroke.points).map((point) => [point.x, point.y, point.pressure])
   const ring = getStroke(points, {
     size: stroke.size,
     thinning: style.thinning,
@@ -148,6 +148,123 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
   })
 
   return ring.map(([x, y]) => ({ x, y }))
+}
+
+/** How far apart the points the outliner is given are, in plane units. Fine
+ *  enough that handwriting keeps every turn it had. */
+const STEP = 1
+
+/** And never more points than this, however long the stroke is: a line drawn
+ *  right across a plane that has been zoomed out is thousands of units long and
+ *  needs no more of them than a written word does. */
+const MOST = 2000
+
+/** The line walked at an even step, with pressure carried along it.
+ *
+ *  The outliner smooths the points it is handed one at a time, so how smooth a
+ *  stroke comes out depends on how many of them there are. A hand moving slowly
+ *  reports five times as many samples over the same curve as one moving fast,
+ *  and a stroke written down with the points that said nothing dropped has fewer
+ *  again: one curve, three shapes. Walking it at an even step first takes the
+ *  counting out of it, so the stroke that lands on the plane is the stroke that
+ *  was under the nib, and a slow hand and a fast one draw alike.
+ *
+ *  The first and last points are always kept, so the ink starts and ends where
+ *  the pen did. */
+function evenly(points: readonly InkPoint[]): InkPoint[] {
+  const first = points[0]
+  const last = points[points.length - 1]
+  if (!first || !last || points.length < 3) return [...points]
+
+  let length = 0
+  for (let one = 1; one < points.length; one++) {
+    const from = points[one - 1]
+    const to = points[one]
+    if (from && to) length += Math.hypot(to.x - from.x, to.y - from.y)
+  }
+
+  const step = Math.max(STEP, length / MOST)
+  const walked: InkPoint[] = [first]
+  // How far past the last point put down the walk has got, so a step carries on
+  // across a segment boundary rather than starting again at every sample.
+  let over = 0
+
+  for (let one = 1; one < points.length; one++) {
+    const from = points[one - 1]
+    const to = points[one]
+    if (!from || !to) continue
+
+    const span = Math.hypot(to.x - from.x, to.y - from.y)
+    if (span === 0) continue
+
+    for (let at = step - over; at < span; at += step) {
+      walked.push(between(from, to, at / span))
+    }
+
+    over = (over + span) % step
+  }
+
+  walked.push(last)
+  return walked
+}
+
+/** A point part of the way along a segment, with everything the digitiser said
+ *  about the two ends mixed in the same proportion. */
+function between(from: InkPoint, to: InkPoint, share: number): InkPoint {
+  const mix = (a: number, b: number) => a + (b - a) * share
+
+  return {
+    x: mix(from.x, to.x),
+    y: mix(from.y, to.y),
+    pressure: mix(from.pressure, to.pressure),
+    tiltX: mix(from.tiltX, to.tiltX),
+    tiltY: mix(from.tiltY, to.tiltY),
+    t: Math.round(mix(from.t, to.t)),
+  }
+}
+
+/** Somewhere a ring can be drawn to. A `Path2D` is one, and so is the little
+ *  builder the SVG export keeps, so the shape of a stroke is worked out once
+ *  here and every surface that paints one paints the same curve. */
+export interface InkSink {
+  moveTo(x: number, y: number): void
+  quadraticCurveTo(cx: number, cy: number, x: number, y: number): void
+  closePath(): void
+}
+
+/** A ring drawn as one smooth closed curve: a quadratic through every point of
+ *  it, from the middle of one segment to the middle of the next.
+ *
+ *  Drawn as straight segments instead, a ring shows every corner it has the
+ *  moment there are few of them, and that is exactly what a stroke becomes once
+ *  the points that said nothing have been dropped: the curve the pen drew, in
+ *  flats. Under the nib the same ring has hundreds of points and its flats are
+ *  too short to see, so a stroke used to go visibly hard the instant it was
+ *  written down. Curved, twenty points read as a curve, four hundred cost the
+ *  same to paint, and the stroke that lands is the stroke that was drawn.
+ *
+ *  A ring of fewer than three points encloses nothing and is left undrawn. */
+export function traceInk(ring: readonly Point[], sink: InkSink): void {
+  const count = ring.length
+  if (count < 3) return
+
+  const first = ring[0]
+  const last = ring[count - 1]
+  if (!first || !last) return
+
+  sink.moveTo((last.x + first.x) / 2, (last.y + first.y) / 2)
+
+  for (let one = 0; one < count; one++) {
+    const at = ring[one]
+    const next = ring[(one + 1) % count]
+    if (!at || !next) continue
+
+    // The point itself steers and the middle of the next segment is landed on,
+    // so the curve is smooth at every one of them and passes through none.
+    sink.quadraticCurveTo(at.x, at.y, (at.x + next.x) / 2, (at.y + next.y) / 2)
+  }
+
+  sink.closePath()
 }
 
 /** A flat nib's outline: every point offset by the same vector one way, then the
@@ -241,13 +358,30 @@ export function strokesBox(strokes: readonly InkStroke[]): Box | null {
  *  nib's width. A pen reports far more samples than a line needs. */
 const TOLERANCE = 0.12
 
+/** And never further than this, in plane units, whatever the nib.
+ *
+ *  What is dropped here is what the stroke on the plane is drawn from ever
+ *  after, so the tolerance is how far the ink may move when the pen comes up. A
+ *  broad nib hides more than a fine one, but not without limit: at a tenth of a
+ *  plane unit nothing moves that an eye could follow at any zoom, and a
+ *  highlighter smoothed by two units visibly changed shape as it landed. */
+const FURTHEST = 0.3
+
 /** The same stroke with the points that say nothing taken out: Ramer, Douglas
  *  and Peucker, which keeps every corner and drops the middle of every straight
  *  run. Pressure and tilt ride along on the points that are kept.
  *
- *  Done once, when the pen comes up, so what is written down is a tenth of what
- *  the digitiser said and looks exactly the same. */
-export function simplified(points: readonly InkPoint[], tolerance: number): InkPoint[] {
+ *  A point says something in two ways, and both are measured here in the plane
+ *  units the ink moves by. Where it is, which is how far it sits off the line
+ *  between its neighbours; and how hard the pen was pressed there, since on a
+ *  pen that thins with pressure a swell dropped from the middle of a stroke is
+ *  the line visibly changing width. `swell` is what a whole unit of pressure is
+ *  worth in width, so a pen that ignores pressure passes nought and gets plain
+ *  Douglas-Peucker.
+ *
+ *  Done once, when the pen comes up, so what is written down is a fraction of
+ *  what the digitiser said and looks exactly the same. */
+export function simplified(points: readonly InkPoint[], tolerance: number, swell = 0): InkPoint[] {
   if (points.length < 3) return [...points]
 
   const keep = new Uint8Array(points.length)
@@ -272,7 +406,12 @@ export function simplified(points: readonly InkPoint[], tolerance: number): InkP
       const point = points[one]
       if (!point) continue
 
-      const away = awayFromSegment(point, start, end)
+      // Pressure is read off where the point sits between the two ends, which is
+      // how the ink is drawn between them once the point itself has gone.
+      const share = (one - from) / (to - from)
+      const guessed = start.pressure + (end.pressure - start.pressure) * share
+      const away = awayFromSegment(point, start, end) + swell * Math.abs(point.pressure - guessed)
+
       if (away > worst) {
         worst = away
         at = one
@@ -291,7 +430,14 @@ export function simplified(points: readonly InkPoint[], tolerance: number): InkP
 /** A stroke ready to be written down: fewer points, and none of the jitter a
  *  digitiser reports while the nib is nearly still. */
 export function tidied(stroke: InkStroke): InkStroke {
-  return { ...stroke, points: simplified(stroke.points, stroke.size * TOLERANCE) }
+  // Half the width the nib gains between a feather touch and a firm one: what
+  // one whole unit of pressure moves the edge of the stroke by.
+  const swell = (stroke.size * INK_STYLES[stroke.tool].thinning) / 2
+
+  return {
+    ...stroke,
+    points: simplified(stroke.points, Math.min(stroke.size * TOLERANCE, FURTHEST), swell),
+  }
 }
 
 /** Whether a stroke passes within `reach` of a point: what the stroke eraser and

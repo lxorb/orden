@@ -24,9 +24,10 @@ import {
   edgeEnds,
   edgeMiddle,
   edgePath,
+  type Point,
   shapeLine,
 } from './geometry'
-import { INK_STYLES, outlineOf, strokeBox } from './ink'
+import { INK_STYLES, outlineOf, strokeBox, traceInk } from './ink'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
 import { invoke, isDesktop } from '../tauri'
@@ -275,15 +276,29 @@ function drawnEdges(canvas: Canvas, palette: Palette): string {
   return out.join('')
 }
 
+/** A stroke's outline as an SVG path, curved exactly as the app paints it, so an
+ *  exported picture is the picture that was on screen. */
+function inkPath(ring: Point[]): string {
+  const out: string[] = []
+
+  traceInk(ring, {
+    moveTo: (x, y) => out.push(`M${round(x)} ${round(y)}`),
+    quadraticCurveTo: (cx, cy, x, y) =>
+      out.push(`Q${round(cx)} ${round(cy)} ${round(x)} ${round(y)}`),
+    closePath: () => out.push('Z'),
+  })
+
+  return out.join(' ')
+}
+
 function drawnInk(canvas: Canvas, palette: Palette): string {
   const out: string[] = []
 
   for (const stroke of canvas.ink) {
     const style = INK_STYLES[stroke.tool]
-    const ring = outlineOf(stroke)
-    if (ring.length < 3) continue
+    const d = inkPath(outlineOf(stroke))
+    if (!d) continue
 
-    const d = `M ${ring.map((point) => `${round(point.x)} ${round(point.y)}`).join(' L ')} Z`
     const colour = palette[stroke.color] ?? stroke.color
     const blend = style.multiply ? ' style="mix-blend-mode:multiply"' : ''
 

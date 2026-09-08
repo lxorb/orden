@@ -17,7 +17,7 @@
 import type { Camera } from '../camera'
 import type { InkStroke } from './format'
 import type { Box } from './geometry'
-import { INK_STYLES, outlineOf, strokeBox } from './ink'
+import { INK_STYLES, outlineOf, strokeBox, traceInk } from './ink'
 
 /** Outlines already worked out. Weak, so a stroke that has been erased takes its
  *  path with it without anybody sweeping up. */
@@ -29,17 +29,7 @@ function pathOf(stroke: InkStroke, finished = true): Path2D {
   if (held) return held
 
   const path = new Path2D()
-  const ring = outlineOf(stroke, finished)
-  const [first] = ring
-
-  if (first) {
-    path.moveTo(first.x, first.y)
-    for (let one = 1; one < ring.length; one++) {
-      const point = ring[one]
-      if (point) path.lineTo(point.x, point.y)
-    }
-    path.closePath()
-  }
+  traceInk(outlineOf(stroke, finished), path)
 
   if (finished) paths.set(stroke, path)
   return path
