@@ -1,0 +1,419 @@
+"""The pen bar a finger gets, photographed on a tablet and on a phone.
+
+Everything here is the real thing: the built web app in a browser, a canvas made
+through the workspace, and a stroke drawn with real pen events carrying real
+pressure through the Chrome DevTools protocol. No Worker and no account: a plane
+is a file in this browser's own storage, which is all a drawing needs.
+
+What it photographs, in both themes and on both shapes of device:
+
+    the bar, the pen popover, the eraser popover, the bar folded to its handle,
+    the bar docked to the top edge, and a stroke drawn at a fifth of its opacity
+
+Run it from the repository root:
+
+    python apps/desktop/test/e2e/pen-bar.py
+
+It builds the app, serves it, drives the browser and stops everything again.
+Nothing it makes outlives it but the screenshots, which go beside it under
+`shots/`.
+
+The app is built in development mode on purpose, which is what leaves the app's
+own stores reachable from the page: the device class is settled from the window
+and there is no window on a desktop machine that is a tablet, so the test says
+so directly rather than pretending to be Android well enough to fool the whole
+Tauri bridge. Everything the bar itself does is real - real taps on real buttons,
+and the ink read back off the plane.
+"""
+
+from __future__ import annotations
+
+import functools
+import http.server
+import os
+import shutil
+import socket
+import socketserver
+import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
+
+from playwright.sync_api import Page, sync_playwright
+
+HERE = Path(__file__).resolve().parent
+APP = HERE.parent.parent
+SHOTS = HERE / "shots"
+DIST = APP / "dist"
+
+# Its own port, and never 1420, which is the dev server somebody may be using.
+PORT = 18877
+ORIGIN = f"http://127.0.0.1:{PORT}"
+
+
+def say(what: str) -> None:
+    print(f"  {what}", flush=True)
+
+
+def chromium() -> str:
+    """The newest chromium Playwright has downloaded."""
+    local = Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
+    found = sorted(
+        (path for path in local.glob("chromium-*/chrome-win*/chrome.exe")),
+        key=lambda path: int(path.parents[1].name.split("-")[1]),
+    )
+    if not found:
+        raise SystemExit("no chromium under %s" % local)
+
+    return str(found[-1])
+
+
+def build() -> None:
+    say("building the web app")
+    # From nothing. A build over the last one leaves its chunks behind, and a
+    # test that photographs yesterday's bar is worse than no test at all.
+    shutil.rmtree(DIST, ignore_errors=True)
+    environment = {**os.environ, "NODE_ENV": "development"}
+    built = subprocess.run(
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        cwd=APP,
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if built.returncode != 0:
+        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
+
+
+class Quiet(http.server.SimpleHTTPRequestHandler):
+    """A file server that says nothing and is never cached.
+
+    Silent because its log is every asset the app loads and none of it is what
+    this test is about. Uncached because a build names its chunks after their
+    contents and a browser that already has one of those names will not ask for
+    it again: a run against yesterday's bar that says everything is fine is the
+    worst outcome this file has."""
+
+    def log_message(self, format: str, *args: object) -> None:
+        return
+
+    def end_headers(self) -> None:
+        self.send_header("Cache-Control", "no-store, must-revalidate")
+        super().end_headers()
+
+
+class Strict(socketserver.TCPServer):
+    """Never reuses the address.
+
+    Windows reads `SO_REUSEADDR` as leave to bind a port somebody is already
+    listening on, and the one still listening goes on answering: a second run
+    then binds happily, serves nothing, and photographs the first run's build.
+    Refusing the bind turns that into a message instead of an hour."""
+
+    allow_reuse_address = False
+
+
+def serve() -> tuple[Strict, threading.Thread]:
+    say(f"serving {DIST.name} on {ORIGIN}")
+    handler = functools.partial(Quiet, directory=str(DIST))
+    try:
+        server = Strict(("127.0.0.1", PORT), handler)
+    except OSError as error:
+        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    until = time.monotonic() + 20
+    while time.monotonic() < until:
+        try:
+            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
+                return server, thread
+        except OSError:
+            time.sleep(0.2)
+
+    raise SystemExit("the file server never answered")
+
+
+def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
+    until = time.monotonic() + patience
+    while time.monotonic() < until:
+        if page.evaluate(f"() => !!({expression})"):
+            return
+        page.wait_for_timeout(50)
+
+    raise SystemExit(f"gave up waiting for {what}")
+
+
+# Written before any of the app's own scripts run.
+#
+# The os plugin's globals are what `platform()` reads, so anything in the app that
+# asks which platform this is gets an answer; and the pen having been seen is what
+# puts the finger switch in the pen's popover, which is one of the things being
+# photographed. The device class itself is set from the page below: it is settled
+# from the window, and no window on this machine is a tablet.
+PREPARE = """
+window.__TAURI_OS_PLUGIN_INTERNALS__ = {
+  platform: 'android',
+  family: 'unix',
+  os_type: 'android',
+  version: '15.0.0',
+  arch: 'aarch64',
+  exe_extension: '',
+  eol: '\\n',
+};
+localStorage.setItem('nib:pen-seen', 'yes');
+localStorage.setItem('nib:finger-draws', 'yes');
+"""
+
+AS_TABLET = """
+() => {
+  const app = window.nibApp;
+  app.viewport.device = 'tablet';
+  app.viewport.portrait = false;
+  const root = document.documentElement;
+  root.dataset.device = 'tablet';
+  root.toggleAttribute('data-touch', true);
+  root.toggleAttribute('data-drawer', false);
+  root.toggleAttribute('data-narrow', false);
+}
+"""
+
+AS_PHONE = """
+() => {
+  const app = window.nibApp;
+  app.viewport.device = 'phone';
+  const root = document.documentElement;
+  root.dataset.device = 'phone';
+  root.toggleAttribute('data-touch', true);
+  root.toggleAttribute('data-drawer', true);
+  root.toggleAttribute('data-narrow', false);
+}
+"""
+
+
+def opened(page: Page, label: str, device: str) -> None:
+    """The app started, the device settled, and a fresh canvas open on it."""
+    wait_for(page, "!!window.nibApp", f"[{label}] the app to start")
+    wait_for(page, "window.nibApp.workspace.spaces.length > 0", f"[{label}] a space to exist")
+
+    page.evaluate(AS_TABLET if device == "tablet" else AS_PHONE)
+    page.evaluate("() => window.nibApp.workspace.createCanvas()")
+    wait_for(
+        page,
+        "window.nibApp.workspace.active?.path?.endsWith('.canvas')",
+        f"[{label}] the canvas to open",
+    )
+    # The bar is what everything after this presses.
+    page.wait_for_selector('[aria-label="Move the bar"]', timeout=15000)
+    page.wait_for_timeout(400)
+
+
+def shot(page: Page, name: str) -> None:
+    path = SHOTS / f"{name}.png"
+    page.screenshot(path=str(path))
+    say(f"photographed {path.name}")
+
+
+def pen_at(page: Page, index: int):
+    """One of the pens in the row, by where it sits."""
+    return page.locator(".cluster button.pen-slot").nth(index)
+
+
+def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
+    """A stroke drawn with a real stylus: pen events with pressure on them,
+    which is the only way the ink pipeline can be exercised for what it does
+    with pressure and with alpha."""
+
+    def send(kind: str, x: float, y: float, force: float, buttons: int) -> None:
+        cdp.send(
+            "Input.dispatchMouseEvent",
+            {
+                "type": kind,
+                "x": x,
+                "y": y,
+                "button": "left",
+                "buttons": buttons,
+                "clickCount": 1,
+                "pointerType": "pen",
+                "force": force,
+                "tiltX": 0,
+                "tiltY": 0,
+            },
+        )
+
+    first = points[0]
+    send("mousePressed", first[0], first[1], 0.4, 1)
+    for at, (x, y) in enumerate(points[1:], start=1):
+        # Leaning on the middle of the stroke and lifting off, which is what a
+        # hand does and what a pen that thins with pressure is for.
+        share = at / (len(points) - 1)
+        send("mouseMoved", x, y, 0.35 + 0.6 * (1 - abs(0.5 - share) * 2), 1)
+        page.wait_for_timeout(8)
+
+    last = points[-1]
+    send("mouseReleased", last[0], last[1], 0, 0)
+    page.wait_for_timeout(250)
+
+
+def ink_of(page: Page) -> list[dict]:
+    """What the plane holds, read off the open canvas rather than guessed at."""
+    return page.evaluate(
+        "() => JSON.parse(window.nibApp.workspace.active.doc).nib?.ink ?? []",
+    )
+
+
+def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
+    label = f"{device}/{theme}"
+    say(f"--- {label} ---")
+
+    size = {"width": 1180, "height": 820} if device == "tablet" else {"width": 412, "height": 900}
+    context = browser.new_context(
+        viewport=size,
+        color_scheme=theme,
+        has_touch=True,
+        device_scale_factor=2,
+    )
+    context.add_init_script(PREPARE)
+    page = context.new_page()
+    page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
+
+    cdp = context.new_cdp_session(page)
+    cdp.send("Input.setIgnoreInputEvents", {"ignore": False})
+
+    try:
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        opened(page, label, device)
+
+        # The bar as it stands, with a pen in hand.
+        pen_at(page, 0).click()
+        page.wait_for_timeout(350)
+        shot(page, f"pen-bar-{device}-{theme}")
+
+        # Pressing the pen that is already out opens its settings, and the line
+        # across the top of them is drawn with that pen.
+        pen_at(page, 0).click()
+        page.wait_for_selector('input[aria-label="Opacity"]', timeout=5000)
+        page.wait_for_timeout(300)
+        shot(page, f"pen-settings-{device}-{theme}")
+
+        # A colour and an alpha, set with the dials rather than from the console.
+        page.locator('[aria-label="Colour 4"]').first.click()
+        opacity = page.locator('input[aria-label="Opacity"]')
+        opacity.fill("0.2")
+        opacity.dispatch_event("input")
+        width = page.locator('input[aria-label="Width"]').first
+        width.fill("9")
+        width.dispatch_event("input")
+        page.wait_for_timeout(300)
+        shot(page, f"pen-settings-set-{device}-{theme}")
+
+        set_to = page.evaluate("() => window.nibApp && localStorage.getItem('nib:pens')")
+        if '"opacity":0.2' not in (set_to or ""):
+            failures.append(f"{label}: the pen did not remember its alpha ({set_to})")
+
+        # Out of the popover and draw with it.
+        page.keyboard.press("Escape")
+        page.locator(".canvas").first.click(position={"x": 40, "y": 40})
+        page.wait_for_timeout(150)
+        pen_at(page, 0).click()
+        page.wait_for_timeout(250)
+
+        middle = (size["width"] / 2, size["height"] / 2 - 60)
+        stroke(
+            page,
+            cdp,
+            [(middle[0] - 150 + step * 12, middle[1] + (step % 4) * 14) for step in range(26)],
+        )
+
+        drawn = ink_of(page)
+        if not drawn:
+            failures.append(f"{label}: the pen left nothing on the plane")
+        elif drawn[0].get("opacity") != 0.2:
+            failures.append(f"{label}: the stroke did not carry the alpha ({drawn[0]})")
+        else:
+            say(f"[{label}] the stroke landed at {drawn[0]['opacity']} of its colour")
+
+        page.wait_for_timeout(200)
+        shot(page, f"pen-stroke-faint-{device}-{theme}")
+
+        # The eraser, and its own popover on a second press.
+        eraser = page.locator('.cluster button[aria-label="Erase"]')
+        eraser.click()
+        page.wait_for_timeout(200)
+        eraser.click()
+        page.wait_for_selector('button[aria-label="Erase everything drawn"]', timeout=5000)
+        page.wait_for_timeout(300)
+        shot(page, f"eraser-settings-{device}-{theme}")
+
+        # Folded away to its handle, which is what a landscape tablet wants.
+        page.keyboard.press("Escape")
+        page.locator(".canvas").first.click(position={"x": 40, "y": 40})
+        page.locator('[aria-label="Move the bar"]').click()
+        page.wait_for_selector('button[aria-label="The pens"]', timeout=5000)
+        page.wait_for_timeout(350)
+        shot(page, f"pen-bar-folded-{device}-{theme}")
+
+        # Unfolded again, and moved to the other edge.
+        page.locator('button[aria-label="The pens"]').click()
+        page.wait_for_timeout(300)
+        page.evaluate(
+            "() => { const held = JSON.parse(localStorage.getItem('nib:pens'));"
+            "  held.dock = 'top'; localStorage.setItem('nib:pens', JSON.stringify(held)) }"
+        )
+        page.reload(wait_until="domcontentloaded")
+        opened(page, label, device)
+        pen_at(page, 0).click()
+        page.wait_for_timeout(400)
+        shot(page, f"pen-bar-docked-top-{device}-{theme}")
+
+        # And the pen it was holding survived the reload, which is the whole
+        # point of keeping the row of them.
+        kept = page.evaluate("() => JSON.parse(localStorage.getItem('nib:pens')).pens[0]")
+        if kept.get("opacity") != 0.2 or kept.get("size") != 9:
+            failures.append(f"{label}: the pen was not the one it was left as ({kept})")
+        else:
+            say(f"[{label}] the pen came back set the way it was left")
+    finally:
+        context.close()
+
+
+def main() -> int:
+    if SHOTS.exists():
+        shutil.rmtree(SHOTS, ignore_errors=True)
+    SHOTS.mkdir(parents=True, exist_ok=True)
+
+    failures: list[str] = []
+    build()
+    server, thread = serve()
+
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(executable_path=chromium(), headless=True)
+            try:
+                for device in ("tablet", "phone"):
+                    for theme in ("light", "dark"):
+                        photograph(browser, theme, device, failures)
+            finally:
+                browser.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+        say("everything stopped")
+
+    if failures:
+        print("\nwhat went wrong:", flush=True)
+        for one in failures:
+            print(f"  {one}", flush=True)
+        return 1
+
+    print(f"\nall of it held. the pictures are under {SHOTS}", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
