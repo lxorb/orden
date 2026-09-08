@@ -29,9 +29,19 @@
    a long note comes before the first line, and a fence or a list as the first
    line has padding of its own. The margin is the gutter plus half of whatever
    room is left beyond the measure, which centres the column and keeps the
-   gutter on a narrow screen. */
+   gutter on a narrow screen.
+
+   The column is also as wide as the window lets it be and never a pixel wider.
+   Without the zero minimum it is a flex item whose automatic minimum size is
+   its own content's, so one block too wide to fit - a table with eight columns
+   in it - widened the whole writing surface instead. The scroller clips what
+   overflows it (`overflow-x: hidden` in theme.ts), so on a phone the right two
+   thirds of such a table were simply cut off, and the box it scrolls in was off
+   the screen with it. A block wider than the column now overflows the column
+   and scrolls in a box of its own, which is what `.nib-table-scroll` is. */
 .cm-editor #write {
   max-width: calc(var(--measure) - 2 * var(--space-5));
+  min-width: 0;
   margin: 0 max(var(--space-5), calc(50% - var(--measure) / 2 + var(--space-5)));
   padding: var(--space-7) 0 45vh;
 }
