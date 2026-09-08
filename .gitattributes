@@ -2,3 +2,5 @@
 *.png binary
 *.ico binary
 *.icns binary
+# Gradle's wrapper, which the Android project runs itself.
+*.jar binary

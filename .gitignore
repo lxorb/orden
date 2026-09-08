@@ -2,7 +2,14 @@ node_modules/
 dist/
 dist-even/
 target/
-**/src-tauri/gen/
+# What Tauri generates for the mobile targets. The Android project is source:
+# its manifest, its theme and MainActivity are edited by hand, and the files
+# gradle writes inside it are ignored by its own .gitignore. The Xcode project is
+# not, because the CLI only writes it on a macOS machine and nothing in it is
+# edited; the iOS job runs `tauri ios init` before it builds. The schemas beside
+# them are written from the plugins on every build.
+**/src-tauri/gen/*
+!**/src-tauri/gen/android/
 .svelte-kit/
 .wrangler/
 *.log

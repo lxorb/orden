@@ -1,0 +1,6 @@
+<resources>
+    <!-- The same window in the dark, where the launch colour is the dark --bg. -->
+    <style name="Theme.nib" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/launch</item>
+    </style>
+</resources>
