@@ -18,9 +18,22 @@ import { accentColour } from '../accents'
 import { isRecord, isString } from '../stored'
 
 /** What one device says about itself. Everything in it is JSON, because that is
- *  what the awareness protocol carries. */
+ *  what the awareness protocol carries.
+ *
+ *  Both names travel, and which one is drawn is decided here rather than by the
+ *  device that sent them: a caret answers a different question depending on who
+ *  else is in the note. Two of one person's own machines want to be told apart
+ *  by machine - "Emil" on both of them says nothing - while two people want to
+ *  be told apart by person. Nobody knows which case it is until everybody has
+ *  arrived, so the choice belongs to whoever is looking. */
 interface Presence {
-  who: { name: string; accent: string }
+  who: {
+    /** The device: "Windows", "iPhone", "Firefox". */
+    name: string
+    accent: string
+    /** Whoever is at it, when there is an account to say. */
+    person?: string
+  }
   /** Absent until the caret has been somewhere. */
   caret?: { anchor: unknown; head: unknown }
 }
@@ -45,7 +58,11 @@ function presenceOf(value: unknown): Presence | null {
   if (!isRecord(value) || !isRecord(value.who)) return null
   if (!isString(value.who.name) || !isString(value.who.accent)) return null
 
-  const who = { name: value.who.name, accent: value.who.accent }
+  const who = {
+    name: value.who.name,
+    accent: value.who.accent,
+    ...(isString(value.who.person) ? { person: value.who.person } : {}),
+  }
   if (!isRecord(value.caret)) return { who }
 
   return { who, caret: { anchor: value.caret.anchor, head: value.caret.head } }
@@ -60,16 +77,27 @@ export function peersIn(
   doc: Y.Doc,
   scheme: 'dark' | 'light',
 ): { present: number; carets: Peer[] } {
-  const carets: Peer[] = []
-  let present = 0
+  const here: { id: number; presence: Presence }[] = []
 
   for (const [id, state] of awareness.getStates()) {
     if (id === doc.clientID) continue
 
     const presence = presenceOf(state)
-    if (!presence) continue
+    if (presence) here.push({ id, presence })
+  }
 
-    present++
+  // Our own counts: a note this account has open on two machines and somebody
+  // else has open on one is a room with two people in it.
+  const people = new Set(
+    [presenceOf(awareness.getLocalState()), ...here.map((one) => one.presence)]
+      .map((one) => one?.who.person)
+      .filter((one): one is string => !!one),
+  )
+  const byPerson = people.size > 1
+
+  const carets: Peer[] = []
+
+  for (const { id, presence } of here) {
     if (!presence.caret) continue
 
     const head = absolute(doc, presence.caret.head)
@@ -78,12 +106,12 @@ export function peersIn(
 
     carets.push({
       id,
-      name: presence.who.name,
+      name: (byPerson ? presence.who.person : presence.who.name) ?? presence.who.name,
       colour: accentColour(presence.who.accent, scheme),
       head,
       anchor: anchor ?? head,
     })
   }
 
-  return { present, carets }
+  return { present: here.length, carets }
 }

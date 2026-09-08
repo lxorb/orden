@@ -1,0 +1,182 @@
+/** Who else is in a space, from this side of the wire.
+ *
+ *  Two things live here. The first is what everything in the app asks before it
+ *  offers to change anything: what may this account do in the folder in front of
+ *  it. A space nobody shared, and a space on a machine that is signed out, are
+ *  both the reader's own, so the answer is `owner` until the account says
+ *  otherwise; nothing in the app has to know that sharing exists in order to
+ *  behave when it does.
+ *
+ *  The second is the Share sheet: the people, the link, and the requests waiting
+ *  on the owner. Every change answers with the whole of who may reach the space,
+ *  so what is drawn is what came back rather than a guess about what the change
+ *  did - which is also what keeps two machines editing the same list honest. */
+
+import { api, type GivenRole, type RemoteSpace, type Sharing, type SpaceRole } from './api'
+import { account } from './account.svelte'
+import { copyText } from './clipboard'
+import { message } from './i18n.svelte'
+import { within } from './sync/mirror'
+import { sync } from './sync.svelte'
+import { type Space, workspace } from './workspace.svelte'
+
+/** The account's copy of a local folder, once one has been paired with it. */
+function remoteOf(root: string): RemoteSpace | null {
+  const id = sync.remoteIdFor(root)
+  if (!id) return null
+
+  return account.spaces.find((one) => one.id === id) ?? null
+}
+
+/** What this account may do in the space that folder mirrors. */
+export function roleOf(root: string): SpaceRole {
+  return remoteOf(root)?.role ?? 'owner'
+}
+
+/** Whether the space has anybody in it besides its owner, which is the quiet
+ *  mark the rail draws. */
+export function isShared(root: string): boolean {
+  return remoteOf(root)?.shared ?? false
+}
+
+/** Whether this space can be written in. Everything that offers to change a
+ *  note asks this, so a reader is never shown a button that would be refused. */
+function canWrite(root: string): boolean {
+  return roleOf(root) !== 'read'
+}
+
+/** What may be done where a note sits. A path in no space this machine knows
+ *  about is this machine's own, so it can be written in. */
+export function canWriteAt(path: string): boolean {
+  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  return !space || canWrite(space.root)
+}
+
+/** How long the copy button says it copied. */
+const COPIED_FOR = 1600
+
+class Share {
+  open = $state(false)
+  /** The folder the sheet is about, and the space on the account behind it. */
+  space = $state<Space | null>(null)
+  spaceId = $state<string | null>(null)
+
+  /** Who may reach it, as the account last said. Null while it is being read. */
+  who = $state<Sharing | null>(null)
+  busy = $state(false)
+  error = $state<string | null>(null)
+
+  /** The address being typed into the invite field, and the role beside it. */
+  email = $state('')
+  role = $state<GivenRole>('write')
+
+  copied = $state(false)
+  private copiedTimer: ReturnType<typeof setTimeout> | undefined
+
+  async show(space: Space) {
+    const id = sync.remoteIdFor(space.root)
+    if (!id) return
+
+    this.space = space
+    this.spaceId = id
+    this.who = null
+    this.error = null
+    this.email = ''
+    this.role = 'write'
+    this.open = true
+
+    await this.run((token) => api.sharing(token, id))
+  }
+
+  close() {
+    this.open = false
+    clearTimeout(this.copiedTimer)
+    this.copied = false
+  }
+
+  async invite() {
+    const address = this.email.trim()
+    if (!address) return
+
+    if (await this.change((token, id) => api.invite(token, id, address, this.role))) {
+      this.email = ''
+    }
+  }
+
+  setRole(email: string, role: GivenRole) {
+    return this.change((token, id) => api.setMemberRole(token, id, email, role))
+  }
+
+  remove(email: string) {
+    return this.change((token, id) => api.removeMember(token, id, email))
+  }
+
+  /** Makes the link on the first ask and changes what it hands out afterwards.
+   *  The link itself stays the same, so a copy already in somebody's message
+   *  keeps working and starts meaning this instead. */
+  setLink(role: GivenRole, mode: 'open' | 'approval') {
+    return this.change((token, id) => api.setShareLink(token, id, role, mode))
+  }
+
+  revoke() {
+    return this.change((token, id) => api.revokeShareLink(token, id))
+  }
+
+  accept(email: string) {
+    return this.change((token, id) => api.acceptRequest(token, id, email))
+  }
+
+  decline(email: string) {
+    return this.change((token, id) => api.declineRequest(token, id, email))
+  }
+
+  async copy() {
+    const url = this.who?.link?.url
+    if (!url) return
+
+    await copyText(url)
+    this.copied = true
+    clearTimeout(this.copiedTimer)
+    this.copiedTimer = setTimeout(() => {
+      this.copied = false
+    }, COPIED_FOR)
+  }
+
+  /** A change, and then whatever the account says the space now looks like. The
+   *  space listing is asked for again as well: a role that changed here changes
+   *  what the rail and the editor offer. */
+  private async change(work: (token: string, id: string) => Promise<Sharing>): Promise<boolean> {
+    const id = this.spaceId
+    if (!id) return false
+
+    const done = await this.run((token) => work(token, id))
+    if (done) await account.loadSpaces().catch(() => undefined)
+    return done
+  }
+
+  private async run(work: (token: string) => Promise<Sharing>): Promise<boolean> {
+    const token = account.token
+    if (!token) return false
+
+    this.busy = true
+    this.error = null
+
+    try {
+      this.who = await work(token)
+      return true
+    } catch (error) {
+      this.error = message(error, 'could not reach the server')
+      return false
+    } finally {
+      this.busy = false
+    }
+  }
+}
+
+export const share = new Share()
+
+/** Whether a space can be shared from here: it is on the account, and it is
+ *  this account's to share. */
+export function canShare(space: Space): boolean {
+  return account.signedIn && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
+}

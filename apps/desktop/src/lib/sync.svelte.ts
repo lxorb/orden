@@ -82,7 +82,11 @@ class Sync {
 
   /** Deleting a space here deletes it from the account too. Anything less and
    *  the next pass downloads it straight back, on this machine and every
-   *  other one. */
+   *  other one.
+   *
+   *  A space somebody shared is not this account's to delete, so the same
+   *  gesture lets go of it instead: the membership ends, and the space carries
+   *  on being everybody else's. */
   async forget(root: string) {
     const mirror = this.mirrors[root]
     if (!mirror) return
@@ -91,7 +95,13 @@ class Sync {
     this.save()
 
     const token = account.token
-    if (token) await api.deleteSpace(token, mirror.spaceId).catch(() => undefined)
+    if (!token) return
+
+    const letting = mirror.shared
+      ? api.leaveSpace(token, mirror.spaceId)
+      : api.deleteSpace(token, mirror.spaceId)
+
+    await letting.catch(() => undefined)
   }
 
   /** An icon chosen here, sent up so every other machine shows it too. */
@@ -200,6 +210,7 @@ class Sync {
       mirrors: Object.values(this.mirrors).map((one) => ({
         root: one.root,
         spaceId: one.spaceId,
+        shared: one.shared,
       })),
       deleted: account.deletedSpaces,
     })
@@ -220,8 +231,10 @@ class Sync {
       this.mirrors = without(this.mirrors, root)
     }
 
+    const mine = (id: string) => account.spaces.find((one) => one.id === id)?.role !== 'owner'
+
     for (const { root, spaceId } of plan.pair) {
-      this.mirrors[root] = newMirror(spaceId, root)
+      this.mirrors[root] = newMirror(spaceId, root, mine(spaceId))
     }
 
     for (const space of plan.upload) {
@@ -230,8 +243,13 @@ class Sync {
     }
 
     for (const space of plan.adopt) {
-      const root = await workspace.adoptSpace(space.name)
-      if (root) this.mirrors[root] = newMirror(space.id, root)
+      // A folder of that name that already answers for another space is not
+      // this one's to take, so this one gets a folder of its own.
+      const claimed = workspace.spaces.some(
+        (one) => one.name === space.name && !!this.mirrors[one.root],
+      )
+      const root = await workspace.adoptSpace(space.name, claimed)
+      if (root) this.mirrors[root] = newMirror(space.id, root, mine(space.id))
     }
 
     // The icon and the bookmarks belong to the space, so they travel with it.
@@ -245,6 +263,9 @@ class Sync {
       if (!mirror) continue
 
       workspace.applyIcon(mirror.root, remote.icon ?? null)
+      // Kept current, because a space that stops being shared - or starts -
+      // changes what happens when it later goes missing from the listing.
+      mirror.shared = remote.role !== 'owner'
 
       if (accountId === null) continue
       const merged = workspace.bookmarks.adopt(mirror.root, remote.bookmarks, accountId)
@@ -278,9 +299,15 @@ class Sync {
     }
   }
 
-  /** The remote space a local folder mirrors, if any. Publishing needs it. */
+  /** The remote space a local folder mirrors, if any. Publishing needs it, and
+   *  so does everything that asks what may be done in a space. */
   remoteIdFor(root: string): string | null {
     return this.mirrors[root]?.spaceId ?? null
+  }
+
+  /** Whether the account shared this space to be read and not written in. */
+  private reads(spaceId: string): boolean {
+    return account.spaces.find((one) => one.id === spaceId)?.role === 'read'
   }
 
   /** What the account holds for a note on this machine: the id its room is named
@@ -329,6 +356,11 @@ class Sync {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
         }
+
+        // A space shared to read only comes down. Offering what is here would
+        // be refused by the account, and a folder somebody is reading is not a
+        // statement about what the space should hold.
+        if (this.reads(mirror.spaceId)) continue
         if (await push(mirror, token, joined)) moved = true
       }
 

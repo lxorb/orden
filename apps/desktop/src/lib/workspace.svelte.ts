@@ -852,8 +852,12 @@ class Workspace {
    *  Unless nothing is on screen - a machine that has just erased its notes,
    *  or never had any, would otherwise list the account's spaces and show
    *  none of them. */
-  async adoptSpace(name: string): Promise<string | null> {
-    const existing = this.spaces.find((space) => space.name === name)
+  async adoptSpace(name: string, fresh = false): Promise<string | null> {
+    // `fresh` is a space that must have a folder of its own even though one of
+    // that name is already here: two spaces can be called the same thing once
+    // one of them is somebody else's. The folder is then numbered, which is
+    // what create_space does with a name that is taken.
+    const existing = fresh ? undefined : this.spaces.find((space) => space.name === name)
     if (existing) return existing.root
 
     const created = await invoke<{ name: string; path: string }>('create_space', {

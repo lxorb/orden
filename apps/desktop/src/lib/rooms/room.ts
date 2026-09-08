@@ -53,7 +53,7 @@ export interface Joining {
    *  of the last sync. A null hash is a note the account has never handed over,
    *  which is a note with nothing to compare against. */
   held: { text: string; hash: string | null }
-  who: { name: string; accent: string }
+  who: { name: string; accent: string; person?: string | undefined }
   scheme: 'dark' | 'light'
   /** Told how many other devices are in the note, whenever that changes. */
   onPeers: (present: number) => void

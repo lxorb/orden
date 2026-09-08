@@ -5,6 +5,7 @@
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
+  import { joining } from './joining.svelte'
   import { prompt } from './prompt.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -44,7 +45,11 @@
     submitted = entered
     void account.verify(entered).then((accepted) => {
       if (accepted) {
-        void settleLocalNotes()
+        // The notes already on this machine are dealt with first, and only then
+        // is the link walked through: the answer to that question can be to
+        // erase what is here, and the space they came for must not be in it
+        // yet when it is.
+        void settleLocalNotes().then(() => joining.walkThrough())
         return
       }
 
@@ -124,6 +129,17 @@
   <div class="scrim" transition:fade={{ duration: 140 }} onclick={close}></div>
 
   <div class="panel" transition:scale={{ duration: 200, start: 0.96, easing: cubicOut }}>
+    <!-- Somebody sent a link here, so say what it was before asking for an
+         address: signing in is the whole of what it takes to open it. -->
+    {#if joining.invitation}
+      <p class="shared">
+        {t('{who} shared {space} with you', {
+          who: joining.invitation.from ?? t('Somebody'),
+          space: joining.invitation.space,
+        })}
+      </p>
+    {/if}
+
     {#if account.step === 'email'}
       <form
         in:fly={{ x: -14, duration: 200, easing: cubicOut }}
@@ -192,6 +208,14 @@
     background: color-mix(in srgb, var(--bg) 62%, transparent);
     backdrop-filter: blur(3px);
     z-index: 30;
+  }
+
+  /* What the link was about, above the address it asks for. */
+  .shared {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--muted-strong);
   }
 
   .panel {

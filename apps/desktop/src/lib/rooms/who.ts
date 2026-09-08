@@ -1,17 +1,19 @@
 /** What this device calls itself in a room, and the colour it wears there.
  *
- *  A room today holds one person's devices, so the useful label on a caret is the
- *  device rather than the person: "that is my phone" is the question two carets in
- *  one note actually raise, and "Emil" on both of them answers nothing. The
- *  colour is the device's own and is kept, so the phone is the same colour every
- *  morning and two machines of the same make are still told apart.
+ *  Both names travel and neither is the answer on its own. Two of one person's
+ *  own machines want to be told apart by machine - "that is my phone" is the
+ *  question two carets in one note raise, and "Emil" on both of them answers
+ *  nothing - while two people in a shared space want to be told apart by person.
+ *  Which it is depends on who else turns up, so it is decided by whoever is
+ *  looking; see rooms/peers.ts.
  *
- *  When a space can be shared, a caret will carry the person's name instead and
- *  this becomes the fallback for somebody who has not chosen one. Nothing else
- *  about the room changes; see docs/collaboration.md. */
+ *  The colour is the device's own and is kept, so the phone is the same colour
+ *  every morning and two machines of the same make are still told apart. */
 
 import { platform } from '@tauri-apps/plugin-os'
+import { account } from '../account.svelte'
 import { ACCENTS } from '../accents'
+import { called } from '../person'
 import { isNative } from '../tauri'
 
 const KEY = 'nib:device-colour'
@@ -30,6 +32,12 @@ export function deviceName(browser: string): string {
   if (!isNative) return browser
 
   return NAMES[platform()] ?? browser
+}
+
+/** Whoever is at this device, when the account says so. Undefined while signed
+ *  out, where there is nobody to name and the device is the whole answer. */
+export function personName(): string | undefined {
+  return account.user ? called(account.user) : undefined
 }
 
 /** One of the accent colours, chosen once for this device and kept. Which one is

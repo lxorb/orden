@@ -13,12 +13,76 @@ export interface Account {
   name: string | null
 }
 
+/** What this account may do in a space: its own, one somebody shared to write
+ *  in, or one shared to read. */
+export type SpaceRole = 'owner' | 'write' | 'read'
+
+/** A role a person can be given. The third is being the owner, which is not
+ *  something anybody is given. */
+export type GivenRole = 'write' | 'read'
+
+/** One person a space was shared with. */
+export interface Member {
+  email: string
+  /** The name on their account, once they have one and have chosen one. */
+  name: string | null
+  role: GivenRole
+  /** Nobody has opened the space under that address yet. */
+  pending: boolean
+}
+
+/** The one link a space has, when it has one. */
+export interface ShareLink {
+  url: string
+  role: GivenRole
+  /** `open` lets in anybody who has it; `approval` turns it into a request. */
+  mode: 'open' | 'approval'
+}
+
+/** Somebody who followed a link that asks first. */
+interface JoinRequest {
+  email: string
+  name: string | null
+  role: GivenRole
+  at: number
+}
+
+/** Who else may reach a space, which is the whole of what the Share sheet
+ *  draws and what every change to it answers with. */
+export interface Sharing {
+  owner: { email: string; name: string | null }
+  members: Member[]
+  requests: JoinRequest[]
+  link: ShareLink | null
+}
+
+/** What a link somebody was sent leads to, answered before there is a session,
+ *  because it is what the page shows while they prove their address. */
+export interface Invitation {
+  kind: 'invite' | 'link'
+  /** The space's name. */
+  space: string
+  role: GivenRole
+  /** The address an invitation was written to, so the sign-in is filled in.
+   *  Null for a link, which is for whoever has it. */
+  email: string | null
+  /** The link asks the owner before it lets anybody in. */
+  asks: boolean
+  /** What to call whoever shared it. */
+  from: string | null
+}
+
 export interface RemoteSpace {
   id: string
   name: string
   /** Where it sits in the rail, shared across machines. */
   position: number
   icon: string | null
+  /** What this account may do here. Everything the app offers in a space asks
+   *  this first, so a reader is never shown a button that would be refused. */
+  role: SpaceRole
+  /** Whether anybody besides the owner is in it, which is the mark in the rail. */
+  shared: boolean
   /** What is kept above the space's file list, in the order it appears. */
   bookmarks: Bookmark[]
   createdAt: number
@@ -229,6 +293,62 @@ export const api = {
 
   deleteSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),
+
+  // Sharing a space. Every one of these answers with the whole of who may reach
+  // it, so the sheet is drawn from what came back rather than from a guess
+  // about what the change did.
+  sharing: (token: string, id: string) => request<Sharing>(`/v1/spaces/${id}/share`, { token }),
+
+  invite: (token: string, id: string, email: string, role: GivenRole) =>
+    request<Sharing>(`/v1/spaces/${id}/share/invite`, { token, body: { email, role } }),
+
+  setMemberRole: (token: string, id: string, email: string, role: GivenRole) =>
+    request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}`, {
+      method: 'PATCH',
+      token,
+      body: { role },
+    }),
+
+  removeMember: (token: string, id: string, email: string) =>
+    request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+      token,
+    }),
+
+  setShareLink: (token: string, id: string, role: GivenRole, mode: ShareLink['mode']) =>
+    request<Sharing>(`/v1/spaces/${id}/share/link`, { method: 'PUT', token, body: { role, mode } }),
+
+  revokeShareLink: (token: string, id: string) =>
+    request<Sharing>(`/v1/spaces/${id}/share/link`, { method: 'DELETE', token }),
+
+  acceptRequest: (token: string, id: string, email: string) =>
+    request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}`, {
+      method: 'POST',
+      token,
+    }),
+
+  declineRequest: (token: string, id: string, email: string) =>
+    request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+      token,
+    }),
+
+  /** Letting yourself out of a space somebody shared. The owner's own space
+   *  cannot be left, only deleted. */
+  leaveSpace: (token: string, id: string) =>
+    request<{ ok: true }>(`/v1/spaces/${id}/share/me`, { method: 'DELETE', token }),
+
+  /** What a link leads to. No session: this is what the page shows somebody who
+   *  has not signed in, which is most of the people who follow one. */
+  invitation: (key: string) => request<Invitation>(`/v1/join/${key}`),
+
+  /** Walking through it, with the address already proved. Answers the space, or
+   *  that the owner has been asked. */
+  join: (token: string, key: string) =>
+    request<{ space?: RemoteSpace; waiting?: boolean }>(`/v1/join/${key}`, {
+      method: 'POST',
+      token,
+    }),
 
   changes: (token: string, spaceId: string, since: number) =>
     request<{ notes: RemoteNote[]; cursor: number; more: boolean }>(

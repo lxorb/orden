@@ -8,7 +8,7 @@
    *  which note a link is being followed from. Two panes on two notes would
    *  otherwise both answer for whichever one had the focus. */
 
-  import { type EditorView, type NoteJump, setDeck } from '@nib/editor'
+  import { type EditorView, type NoteJump, setDeck, setReadOnlyMode } from '@nib/editor'
   import { isDeck } from '@nib/markdown/slides'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
@@ -30,6 +30,7 @@
   import Reading from './Reading.svelte'
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
+  import { canWriteAt } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
   import Tabs from './Tabs.svelte'
@@ -79,6 +80,18 @@
     if (!current || !showing) return
 
     return placement.follow(current, showing)
+  })
+
+  // A note in a space somebody shared to read is read-only wherever it is shown,
+  // whatever the window's own read-only switch says. The switch is left as the
+  // reader set it; this is the space's answer laid over it, per pane, because a
+  // pane beside this one may be showing a note of this account's own.
+  $effect(() => {
+    const current = view
+    const path = tab?.path
+    if (!current) return
+
+    setReadOnlyMode(current, modes.readOnly || (!!path && !canWriteAt(path)))
   })
 
   // Whether this pane's note is a deck, which is what marks the rules that break

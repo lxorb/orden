@@ -50,12 +50,18 @@ export interface Mirror {
   notes: Record<string, Tracked>
   /** The PDFs beside the notes; see `pushFiles`. */
   files: Record<string, TrackedFile>
+  /** Whether the space belongs to somebody else. Remembered here rather than
+   *  read off the account's listing, because the moment it matters is the
+   *  moment the space has gone from that listing: a folder somebody stopped
+   *  sharing must go, where one of the account's own that is merely missing is
+   *  uploaded again. */
+  shared: boolean
 }
 
 /** A folder just paired with a space, which knows nothing about it yet. One
  *  place, so a new field cannot be forgotten at one of the five call sites. */
-export function newMirror(spaceId: string, root: string): Mirror {
-  return { spaceId, root, cursor: 0, notes: {}, files: {} }
+export function newMirror(spaceId: string, root: string, shared = false): Mirror {
+  return { spaceId, root, cursor: 0, notes: {}, files: {}, shared }
 }
 
 function hex(digest: ArrayBuffer): string {
@@ -378,6 +384,9 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     cursor: typeof value.cursor === 'number' ? value.cursor : 0,
     notes: readTracked(value.notes),
     files: readTrackedFiles(value.files),
+    // Written by every version since sharing; an older entry is the account's
+    // own space, which is what every space was before there were shared ones.
+    shared: value.shared === true,
   }
 }
 

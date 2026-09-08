@@ -17,7 +17,7 @@ import { type EditorView, sharedOf } from '@nib/editor'
 import { account } from './account.svelte'
 import { without } from './records'
 import { Room } from './rooms/room'
-import { deviceAccent, deviceName } from './rooms/who'
+import { deviceAccent, deviceName, personName } from './rooms/who'
 import { t } from './i18n.svelte'
 import { type Scheme, theme } from './theme.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
@@ -132,9 +132,10 @@ class Rooms {
       token,
       note: open.note.live,
       held: { text: open.note.text, hash: open.hash },
-      // The device rather than the account: a room today holds one person's
-      // devices, and "Emil" on both carets answers nothing. See rooms/who.ts.
-      who: { name: deviceName(t('Browser')), accent: deviceAccent() },
+      // Both, because a caret answers a different question depending on who
+      // else is in the note; which one it draws is decided by whoever is
+      // looking. See rooms/peers.ts.
+      who: { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() },
       scheme: theme.current,
       onPeers: (count) => {
         this.present = count ? { ...this.present, [key]: count } : without(this.present, key)

@@ -18,7 +18,8 @@ import { PANDOC_FORMATS } from './export-formats'
 import { imagePath } from './images'
 import { links } from './link-index.svelte'
 import { prompt } from './prompt.svelte'
-import { newSpace } from './space-actions'
+import { newSpace, shareSpace } from './space-actions'
+import { canShare } from './sharing.svelte'
 import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
@@ -344,6 +345,16 @@ function stepSlide(view: EditorView, direction: number) {
 }
 
 /** Everything the palette can do. Labels read as the action, not the setting. */
+/** Sharing the space that is open, when there is one and it is this account's
+ *  to share. A list rather than a disabled row, because a command that cannot
+ *  run is not a command; see `exportCommands`. */
+function shareCommand(): Command[] {
+  const space = workspace.activeSpace
+  if (!space || !canShare(space)) return []
+
+  return [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
+}
+
 export function appCommands(view?: EditorView): Command[] {
   return [
     {
@@ -432,6 +443,7 @@ export function appCommands(view?: EditorView): Command[] {
       })),
 
     ...exportCommands(),
+    ...shareCommand(),
     {
       id: 'publish',
       label: t('Publish this space as a blog'),

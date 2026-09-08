@@ -7,9 +7,10 @@
   import { type IconNode, loadIcons } from './icons'
   import { longPress } from './longpress'
   import { t } from './i18n.svelte'
-  import { DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
-  import { deleteSpace, moveSpace, newSpace, renameSpace } from './space-actions'
+  import { DIVIDER, menu, type MenuEntry, revealEntry, trim } from './menu.svelte'
+  import { deleteSpace, moveSpace, newSpace, renameSpace, shareSpace } from './space-actions'
   import { settings } from './settings.svelte'
+  import { canShare, isShared, roleOf } from './sharing.svelte'
   import { sync } from './sync.svelte'
   import { SOURCE_URL } from './app-menu'
   import { openExternal } from './tauri'
@@ -117,14 +118,24 @@
   /** The same menu whether it was asked for with a right click or a held
    *  finger, so a phone is not missing what a desktop offers. */
   function spaceMenu(space: Space): MenuEntry[] {
-    return [
-      { label: t('New note'), run: () => void workspace.createNote(space.root) },
-      { label: t('Rename'), run: () => void renameSpace(space) },
+    // A space somebody shared to read is theirs; the only thing this menu can
+    // offer about it is a way out of it.
+    const mine = roleOf(space.root) !== 'read'
+    const theirs = roleOf(space.root) !== 'owner'
+
+    return trim([
+      ...(mine ? [{ label: t('New note'), run: () => void workspace.createNote(space.root) }] : []),
+      ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
       { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
+      ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
       ...revealEntry(space.root),
       DIVIDER,
-      { label: t('Delete space'), danger: true, run: () => void deleteSpace(space) },
-    ]
+      {
+        label: theirs ? t('Leave space') : t('Delete space'),
+        danger: true,
+        run: () => void deleteSpace(space),
+      },
+    ])
   }
 
   function initial(name: string): string {
@@ -185,6 +196,16 @@
           </svg>
         {:else}
           {initial(space.name)}
+        {/if}
+
+        <!-- Somebody else is in this space. The same stack of dots a tab draws
+             for the devices in a note, because it is the same fact said about a
+             space: not only yours. -->
+        {#if isShared(space.root)}
+          <span class="with" aria-hidden="true">
+            <span class="who"></span>
+            <span class="who"></span>
+          </span>
         {/if}
       </button>
     {/each}
@@ -361,6 +382,36 @@
       box-shadow var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
       transform var(--dur-base) var(--ease-spring);
+  }
+
+  /* Not only yours: a small stack of dots at the foot of the square, the same
+     shape and the same overlap as the devices in a note's tab. Two of them,
+     because the fact is "somebody else" rather than how many. */
+  .with {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    translate: -50% 0;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .who {
+    width: 4px;
+    height: 4px;
+    flex: none;
+    margin-right: -1px;
+    border-radius: 50%;
+    background: var(--accent);
+    /* A ring in the square's own colour, so two dots against each other still
+       read as two. */
+    box-shadow: 0 0 0 1.5px var(--surface-2);
+  }
+
+  .space:hover .who,
+  .space.active .who {
+    box-shadow: 0 0 0 1.5px var(--surface-3);
   }
 
   /* Pointer only: a touch browser keeps the last tap "hovered", which left a

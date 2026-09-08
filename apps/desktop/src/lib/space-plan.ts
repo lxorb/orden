@@ -25,6 +25,10 @@ export interface RemoteSpace {
 export interface Pairing {
   root: string
   spaceId: string
+  /** Whether the space belongs to somebody else. A shared space is the
+   *  account's word on whether it exists at all, so one that has gone from the
+   *  listing has been taken back rather than merely not uploaded. */
+  shared?: boolean
 }
 
 export interface Plan {
@@ -39,7 +43,8 @@ export interface Plan {
   /** Mirrors whose space is missing from the account without a marker saying
    *  it was deleted. The folder is uploaded again rather than stranded. */
   detach: string[]
-  /** Folders whose space the account says was deleted. These go. */
+  /** Folders whose space the account says was deleted, and folders whose space
+   *  somebody stopped sharing. These go. */
   remove: string[]
 }
 
@@ -86,12 +91,27 @@ export function planSpaces(input: {
     }
   }
 
+  // Which folders are already answering for a space, so a second space of the
+  // same name is adopted under a name of its own rather than being skipped
+  // forever. Two spaces can share a name once one of them is somebody else's.
+  const claimed = new Set([
+    ...mirrors.filter((one) => roots.has(one.root)).map((one) => one.root),
+    ...plan.pair.map((one) => one.root),
+  ])
+
   for (const space of remote) {
     if (spoken.has(space.id)) continue
     // A folder of that name is about to be paired with it, or already is -
     // unless that folder is the one being removed, in which case the name is
-    // free and this space should take it.
-    if (local.some((one) => one.name === space.name && !removing.has(one.root))) continue
+    // free and this space should take it, or it already answers for a
+    // different space, in which case this one needs a folder of its own.
+    if (
+      local.some(
+        (one) => one.name === space.name && !removing.has(one.root) && !claimed.has(one.root),
+      )
+    ) {
+      continue
+    }
 
     plan.adopt.push(space)
     spoken.add(space.id)
@@ -107,7 +127,13 @@ export function planSpaces(input: {
     // of one, so it is safe to act on - which is what lets a deletion win
     // instead of being undone by whichever machine was offline at the time.
     if (gone.has(mirror.spaceId)) plan.remove.push(mirror.root)
-    else if (!remoteById.has(mirror.spaceId)) plan.detach.push(mirror.root)
+    // A space somebody shared is theirs to say exists. Gone from the listing
+    // means the sharing was taken back, and the folder goes with it: uploading
+    // it again would put a copy of somebody else's space in this account.
+    else if (!remoteById.has(mirror.spaceId)) {
+      if (mirror.shared) plan.remove.push(mirror.root)
+      else plan.detach.push(mirror.root)
+    }
   }
 
   return plan

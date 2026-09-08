@@ -15,6 +15,7 @@
   import Rail from './lib/Rail.svelte'
   import Sidebar from './lib/Sidebar.svelte'
   import SettingsPanel from './lib/SettingsPanel.svelte'
+  import ShareSheet from './lib/ShareSheet.svelte'
   import SignIn from './lib/SignIn.svelte'
   import Slides from './lib/Slides.svelte'
   import { present } from './lib/slides/present.svelte'
@@ -29,6 +30,7 @@
   import { rooms } from './lib/rooms.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
+  import { canWriteAt } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { sync } from './lib/sync.svelte'
   import StatusBar from './lib/StatusBar.svelte'
@@ -50,6 +52,10 @@
   /** The tab whose note is on the stage, while one is. The deck goes over the
    *  whole window, and the note stays open behind it. */
   const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
+  /** Whether the note on the stage is one this account may write in. A space
+   *  somebody shared to read says the same word in the strip that the reader's
+   *  own read-only switch does; see sharing.svelte.ts. */
+  const canWriteHere = $derived(!workspace.active?.path || canWriteAt(workspace.active.path))
   let palette = $state(false)
   /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
@@ -424,7 +430,7 @@
       {#if workspace.active?.kind !== 'graph'}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
-          reading={modes.readOnly}
+          reading={modes.readOnly || !canWriteHere}
           vimMode={modes.vimModeOf(view)}
         />
       {/if}
@@ -458,6 +464,7 @@
 <SettingsPanel {view} />
 <FormatBar bind:this={formatBar} {view} />
 <History bind:open={settings.historyOpen} />
+<ShareSheet />
 <PromptSheet />
 <ContextMenu />
 

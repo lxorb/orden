@@ -247,6 +247,20 @@ share.delete('/:id/share/members/:email', atLeast('owner'), async (context) => {
   return context.json(await sharing(context.env, space, context.get('user')))
 })
 
+/** Somebody letting themselves out. The one thing under this path that is not
+ *  the owner's: being in a space is something a person can stop, and having to
+ *  ask the owner to do it for them is not a way to leave. */
+share.delete('/:id/share/me', atLeast('read'), async (context) => {
+  const space = spaceOf(context)
+  if (space.role === 'owner') return context.json({ error: 'this space is yours' }, 409)
+
+  await context.env.DB.prepare('delete from space_members where space_id = ? and email = ?')
+    .bind(space.id, context.get('user').email)
+    .run()
+
+  return context.json({ ok: true })
+})
+
 /** The link, made on the first ask and kept afterwards. Changing what it hands
  *  out changes it for the copy already in somebody's message, which is what an
  *  owner means by changing it; a link that should stop working is revoked. */

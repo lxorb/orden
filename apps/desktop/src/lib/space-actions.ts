@@ -43,11 +43,27 @@ export async function renameSpace(space: Space) {
   await sync.renamed(from, space.root, space.name)
 }
 
+/** Who else may reach a space, and at what. The one sheet; see ShareSheet.svelte. */
+export async function shareSpace(space: Space) {
+  const { share } = await import('./sharing.svelte')
+  await share.show(space)
+}
+
+/** Deleting a space, or letting go of one somebody shared, which is the same
+ *  gesture and a different sentence: a space that is not yours is not yours to
+ *  delete, and leaving it takes its notes off this machine and nowhere else. */
 export async function deleteSpace(space: Space) {
+  const { roleOf } = await import('./sharing.svelte')
+  const theirs = roleOf(space.root) !== 'owner'
+
   const sure = await prompt.confirm({
-    title: t('Delete {name}?', { name: space.name }),
-    detail: t('Every note in this space is deleted from your computer.'),
-    confirmLabel: key('Delete'),
+    title: theirs
+      ? t('Leave {name}?', { name: space.name })
+      : t('Delete {name}?', { name: space.name }),
+    detail: theirs
+      ? t('It stays with everybody else. Its notes go from your computer.')
+      : t('Every note in this space is deleted from your computer.'),
+    confirmLabel: theirs ? key('Leave') : key('Delete'),
     danger: true,
   })
 

@@ -7,6 +7,7 @@
 
 import { account } from './account.svelte'
 import { i18n } from './i18n.svelte'
+import { joining } from './joining.svelte'
 import { collectErrors } from './log'
 import { modes } from './modes.svelte'
 import { recovery } from './recovery.svelte'
@@ -52,7 +53,10 @@ export function start(): () => void {
 
   void guardClose()
   void updates.check()
-  void account.restore()
+
+  // The session first, because a link followed by somebody who is already
+  // signed in walks straight through rather than asking for an address again.
+  void account.restore().then(() => joining.start())
 
   return () => {
     clearInterval(sweeper)
