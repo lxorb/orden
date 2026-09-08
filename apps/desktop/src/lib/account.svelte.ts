@@ -1,4 +1,5 @@
 import { api, ApiError, type Account, type RemoteSpace } from './api'
+import { arriving } from './arriving.svelte'
 
 const STORAGE_KEY = 'nib:session'
 
@@ -170,6 +171,14 @@ class Session {
     this.step = 'email'
     this.email = ''
 
+    // The sheet has closed and the account's own writing is not here yet, so from
+    // here until the first pass lands the surface says so. Raised before the
+    // listing below rather than after it: on a slow connection that request is
+    // itself seconds of a screen that would otherwise be saying nothing. The
+    // loop takes it down again the moment it turns out nothing is coming; see
+    // arriving.svelte.ts and sync.svelte.ts.
+    arriving.begin()
+
     // The spaces are wanted for the question that follows, but failing to
     // fetch them is not a failed sign-in. Letting it read as one would answer
     // false to the caller, which skips the question about the notes already
@@ -205,6 +214,7 @@ class Session {
   }
 
   private forget() {
+    arriving.reset()
     localStorage.removeItem(STORAGE_KEY)
     void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()

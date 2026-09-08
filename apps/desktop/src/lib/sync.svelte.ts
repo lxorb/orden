@@ -4,6 +4,7 @@
  *  Moving the notes of one space is next door, in sync/mirror.ts. */
 
 import { api } from './api'
+import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { isRecord, parsed } from './stored'
 import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
@@ -42,15 +43,38 @@ class Sync {
    *  pass finishes, and without this it would put the light back to "synced"
    *  and set the next timer for an account that is no longer there. */
   private generation = 0
+  /** Whether the next pass is this session's first. Only that one is worth
+   *  holding the app back for; see `pass`. */
+  private first = false
+  /** Whether a pass has ever finished for this account on this machine.
+   *
+   *  Written down beside the mirrors, because it is the same fact about the same
+   *  relationship. It is the whole test for whether the first pass of a session
+   *  is one somebody is waiting behind or one the light in the corner covers, and
+   *  a cursor cannot answer it: a space this machine uploaded and never pulled
+   *  anything from has a cursor of nought for as long as it exists. */
+  private seen = false
 
   start() {
     this.generation++
-    this.mirrors = this.load(account.user?.id ?? null)
+    const held = this.load(account.user?.id ?? null)
+    this.mirrors = held.mirrors
+    this.seen = held.seen
     this.quiet = 0
     this.reconciledAt = 0
+    this.first = true
 
     document.addEventListener('visibilitychange', this.onVisibility)
     window.addEventListener('focus', this.onReturn)
+
+    // Whether the pass about to run is one somebody is waiting on rather than one
+    // the light in the corner covers. Said before the pass asks the account
+    // anything, because the asking is itself a round trip; and said either way,
+    // because signing in raises the wait before there is a loop to judge it and
+    // a machine that already holds everything must not be left behind it. See
+    // arriving.svelte.ts.
+    if (this.seen) arriving.settled()
+    else arriving.begin()
 
     this.schedule(0)
   }
@@ -64,6 +88,31 @@ class Sync {
     window.removeEventListener('focus', this.onReturn)
 
     this.status = 'off'
+    // The waiting state is deliberately left standing. Syncing is stopped for the
+    // whole of the moment between a code being accepted and the question about
+    // the notes already on this machine being answered, which is when somebody is
+    // waiting hardest: taking it down here put it up and straight back down
+    // again, and left a blank screen where the wait should have been. Signing out
+    // is what ends a wait, and it says so itself; see account.svelte.ts.
+  }
+
+  /** How many notes the account holds in the spaces nothing has come down from
+   *  yet. What the waiting state counts against, and zero when the answer is
+   *  that nothing is coming.
+   *
+   *  A mirror whose cursor is still nought has had no page of changes, so every
+   *  note the account holds in that space is one nobody can read here yet. One
+   *  the account has never heard of counts for nothing: it is a folder on its way
+   *  up, not writing on its way down. */
+  private notesOnTheirWay(): number {
+    let waiting = 0
+    for (const mirror of Object.values(this.mirrors)) {
+      if (mirror.cursor !== 0) continue
+
+      waiting += account.spaces.find((one) => one.id === mirror.spaceId)?.notes ?? 0
+    }
+
+    return waiting
   }
 
   /** The folder moved. The account's copy follows it rather than the next pass
@@ -183,7 +232,19 @@ class Sync {
    *  the loop does on every tick, on its own so it can be driven by hand. */
   async pass(): Promise<boolean> {
     await this.reconcile()
-    return this.run()
+
+    // Reconciling is what asks the account what it holds, so this is the first
+    // moment the pass can say how much it is bringing down. Later passes say
+    // nothing: the waiting state ignores both of these unless it is up.
+    const first = this.first
+    this.first = false
+    if (first) arriving.expect(this.notesOnTheirWay())
+
+    try {
+      return await this.run()
+    } finally {
+      if (first) arriving.settled()
+    }
   }
 
   private async reconcile() {
@@ -368,7 +429,7 @@ class Sync {
         // every note as deleted here, and delete them from the account.
         if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
 
-        if (await pull(mirror, token, joined)) {
+        if (await pull(mirror, token, joined, () => arriving.arrived())) {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
         }
@@ -390,6 +451,11 @@ class Sync {
       // own writing is the app failing to notice it has been introduced.
       if (moved) await workspace.leaveTheWelcomeNote()
 
+      // Every mirror has been through, so this machine has now seen the account
+      // and no later launch holds anybody behind a wait. Written here rather than
+      // in `pass` because reaching this line is what finishing means: a pass that
+      // threw is one whose spaces have not all come down.
+      this.seen = true
       this.save()
       // Syncing may have been turned off while the pass was running, and the
       // light is already saying so. What it found is still worth writing down;
@@ -410,9 +476,11 @@ class Sync {
     return moved
   }
 
-  private load(accountId: string | null): Record<string, Mirror> {
+  /** What this machine has written down about its relationship with an account:
+   *  the mirrors, and whether a pass has ever finished. */
+  private load(accountId: string | null): { mirrors: Record<string, Mirror>; seen: boolean } {
     const saved = parsed(localStorage.getItem(STORAGE_KEY))
-    if (!isRecord(saved)) return {}
+    if (!isRecord(saved)) return { mirrors: {}, seen: false }
 
     // An older version wrapped the mirrors in an object of their own, and one
     // older still kept no account beside them: what is there belongs to
@@ -424,15 +492,18 @@ class Sync {
     // account's mirrors are not spaces that went; they are nothing to do with
     // this account at all, and reading them as absences would reach into the
     // disk on the strength of somebody else's listing.
-    if (whose !== null && whose !== accountId) return {}
+    if (whose !== null && whose !== accountId) return { mirrors: {}, seen: false }
 
-    const out: Record<string, Mirror> = {}
+    const mirrors: Record<string, Mirror> = {}
     for (const [root, one] of Object.entries(held)) {
       const mirror = readMirror(root, one)
-      if (mirror) out[root] = mirror
+      if (mirror) mirrors[root] = mirror
     }
 
-    return out
+    // Absent in what an older version wrote. A machine that has mirrors from
+    // before this field existed has plainly seen the account, and reading it as
+    // unseen would hold the app back once, on the next launch only.
+    return { mirrors, seen: saved.seen === true || Object.keys(mirrors).length > 0 }
   }
 
   private save() {
@@ -442,7 +513,11 @@ class Sync {
     this.mirrors = { ...this.mirrors }
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ account: account.user?.id ?? null, mirrors: this.mirrors }),
+      JSON.stringify({
+        account: account.user?.id ?? null,
+        seen: this.seen,
+        mirrors: this.mirrors,
+      }),
     )
   }
 }

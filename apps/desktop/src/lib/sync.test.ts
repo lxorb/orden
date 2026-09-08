@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 
 /** Syncing is driven here the way the app drives it, one pass at a time,
@@ -156,6 +156,9 @@ const fake = vi.hoisted(() => {
     icon: null,
     role: space.role ?? 'owner',
     shared: (space.role ?? 'owner') !== 'owner',
+    // What the account says it holds, which is what a machine bringing it down
+    // for the first time counts against.
+    notes: remote.notes.filter((note) => note.spaceId === space.id && !note.deleted).length,
     bookmarks: space.bookmarks ?? [],
     createdAt: 0,
     updatedAt: 0,
@@ -314,7 +317,10 @@ await Promise.all([
 
 beforeEach(async () => {
   fake.reset()
-  localStorage.clear()
+  // Put back rather than cleared: a test that stubs a global of its own ends by
+  // unstubbing all of them, which takes this one with it. Whichever test runs
+  // next should not be able to tell.
+  vi.stubGlobal('localStorage', memoryStorage())
 
   // The stores are singletons that remember mirrors and tabs from one test to
   // the next, so each test gets freshly made ones.
@@ -322,9 +328,6 @@ beforeEach(async () => {
   ;({ account } = await import('./account.svelte'))
   ;({ sync } = await import('./sync.svelte'))
   ;({ workspace } = await import('./workspace.svelte'))
-
-  // Auto-save would otherwise try to write a note back a moment later.
-  workspace.setAutoSave(false)
 })
 
 /** A machine with one space and a note open in it, the way a browser starts. */
@@ -345,6 +348,14 @@ function accountWithNotes() {
 async function signIn() {
   account.email = 'me@example.com'
   expect(await account.verify('123456')).toBe(true)
+}
+
+/** The two globals the loop listens on, stood in for. It adds and removes
+ *  listeners on both at every start and every stop, and node has neither. */
+function standInForTheWindow(): void {
+  const listeners = { addEventListener: () => undefined, removeEventListener: () => undefined }
+  vi.stubGlobal('document', { hidden: false, ...listeners })
+  vi.stubGlobal('window', listeners)
 }
 
 /** Runs something with the clock far enough on that the loop asks the account
@@ -657,9 +668,7 @@ describe('the mirrors this machine remembers', () => {
   /** Starts the loop, which is what reads them back, with the two globals it
    *  listens on stood in for. */
   async function started(): Promise<void> {
-    const listeners = { addEventListener: () => undefined, removeEventListener: () => undefined }
-    vi.stubGlobal('document', { hidden: false, ...listeners })
-    vi.stubGlobal('window', listeners)
+    standInForTheWindow()
     vi.useFakeTimers()
 
     await signIn()
@@ -718,9 +727,7 @@ describe('turning syncing off while a pass is in the air', () => {
     // One pass first, so there is a mirror for the next one to work on.
     await sync.pass()
 
-    const listeners = { addEventListener: () => undefined, removeEventListener: () => undefined }
-    vi.stubGlobal('document', { hidden: false, ...listeners })
-    vi.stubGlobal('window', listeners)
+    standInForTheWindow()
     vi.useFakeTimers()
 
     // Holds the next pass open on the network, so it is still in flight when
@@ -761,5 +768,249 @@ describe('turning syncing off while a pass is in the air', () => {
       vi.useRealTimers()
       vi.unstubAllGlobals()
     }
+  })
+})
+
+describe('the first pass, which somebody is waiting on', () => {
+  /** The state the app holds the whole surface for; see arriving.svelte.ts. */
+  let arriving: typeof import('./arriving.svelte').arriving
+
+  beforeEach(async () => {
+    standInForTheWindow()
+    ;({ arriving } = await import('./arriving.svelte'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  /** The loop, started with its own first tick held back.
+   *
+   *  Every test below drives the pass itself, and the tick `start` schedules
+   *  would otherwise race it: whichever got there first would take the one thing
+   *  under test, since a session has only one first pass. */
+  function startedWithTheTickHeld(): void {
+    vi.useFakeTimers()
+    sync.start()
+  }
+
+  function stoppedAgain(): void {
+    sync.stop()
+    vi.useRealTimers()
+  }
+
+  test('is scheduled for now rather than for the next interval', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+
+    // Counted rather than looked for on the disk: what is under test is when the
+    // pass begins, and a whole pass finishing is a different claim.
+    const real = fake.api.listSpaces
+    let asked = 0
+    fake.api.listSpaces = () => {
+      asked++
+      return real()
+    }
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      account.settled()
+      sync.start()
+      expect(asked).toBe(0)
+
+      // Nought, not an interval.
+      await vi.advanceTimersByTimeAsync(0)
+      expect(asked).toBe(1)
+    } finally {
+      fake.api.listSpaces = real
+      stoppedAgain()
+    }
+  })
+
+  test('says so the moment the code is accepted, before anything has been asked', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+
+    await signIn()
+
+    // Before the question about the notes already here, before the loop, before
+    // one note has come down. Nothing is claimed about how much yet.
+    expect(arriving.showing).toBe(true)
+    expect(arriving.total).toBe(null)
+    expect(account.syncable).toBe(false)
+  })
+
+  test('stays up across the round trip the pass opens with', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    // Held open on the account's listing, which is the round trip that used to
+    // happen behind a screen saying nothing at all.
+    const real = fake.api.listSpaces
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    fake.api.listSpaces = async () => {
+      await held
+      return real()
+    }
+
+    try {
+      startedWithTheTickHeld()
+      const running = sync.pass()
+      expect(arriving.showing).toBe(true)
+      expect(arriving.total).toBe(null)
+
+      release()
+      await running
+    } finally {
+      fake.api.listSpaces = real
+      stoppedAgain()
+    }
+  })
+
+  test('is taken down again when the machine already holds everything', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    startedWithTheTickHeld()
+    await sync.pass()
+    stoppedAgain()
+
+    // Signing in again on the same machine raises it, because a code being
+    // accepted is all that is known at that point.
+    await signIn()
+    expect(arriving.showing).toBe(true)
+
+    // And the loop, which does know, puts it straight back down: nothing of
+    // theirs is on its way, so there is nothing to hold anybody behind.
+    account.settled()
+    startedWithTheTickHeld()
+    expect(arriving.showing).toBe(false)
+    stoppedAgain()
+  })
+
+  test('counts what it is bringing down, and lifts when it has', async () => {
+    await machineWithNotes()
+    fake.remote.spaces.push({ id: 's-Account', name: 'Account' })
+    for (const name of ['one.md', 'two.md', 'three.md']) {
+      fake.addRemoteNote('s-Account', name, `# ${name}`)
+    }
+
+    await signIn()
+    account.settled()
+
+    startedWithTheTickHeld()
+    await sync.pass()
+
+    // The total came from the account's listing, before the first note landed;
+    // the count is what actually arrived. They agree, and the state has gone.
+    // Read before the loop is stopped, because stopping forgets both.
+    expect(arriving.total).toBe(3)
+    expect(arriving.done).toBe(3)
+    expect(arriving.showing).toBe(false)
+
+    stoppedAgain()
+  })
+
+  test('leaves the rail and the tree holding what came down, with no reload', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    startedWithTheTickHeld()
+    await sync.pass()
+    expect(arriving.showing).toBe(false)
+    stoppedAgain()
+
+    // The rail has the account's space by the time the wait is over, and the
+    // notes are on the disk under it.
+    expect(workspace.spaces.map((space) => space.name)).toContain('Account')
+    expect(fake.disk.get('/Account/Hello.md')).toBe('# Hello from the account')
+
+    // And opening it shows them, without anything being reloaded.
+    const arrived = workspace.spaces.find((space) => space.name === 'Account')
+    expect(arrived).toBeDefined()
+    await workspace.showSpace(arrived?.id ?? '')
+    expect(workspace.tree?.children.map((entry) => entry.name)).toEqual(['Hello.md'])
+  })
+
+  test('says nothing on a machine that has synced before', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    startedWithTheTickHeld()
+    await sync.pass()
+    stoppedAgain()
+
+    // The same machine, come back to. Everything is already here, so the sync
+    // light is the whole report.
+    startedWithTheTickHeld()
+    expect(arriving.showing).toBe(false)
+
+    await sync.pass()
+    expect(arriving.showing).toBe(false)
+    stoppedAgain()
+  })
+
+  test('says nothing on a later pass of the same session', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    startedWithTheTickHeld()
+    await sync.pass()
+    expect(arriving.showing).toBe(false)
+
+    fake.addRemoteNote('s-Account', 'Later.md', '# written elsewhere')
+    await sync.pass()
+
+    expect(arriving.showing).toBe(false)
+    expect(fake.disk.get('/Account/Later.md')).toBe('# written elsewhere')
+    stoppedAgain()
+  })
+
+  test('is taken down by signing out', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    startedWithTheTickHeld()
+    expect(arriving.showing).toBe(true)
+
+    await account.signOut()
+    expect(arriving.showing).toBe(false)
+    stoppedAgain()
+  })
+
+  test('stands through the question about the notes already here', async () => {
+    await machineWithNotes()
+    accountWithNotes()
+
+    // A code accepted raises it, and syncing is held off until that question is
+    // answered - which is the one stretch where somebody is waiting hardest.
+    // Stopping the loop used to take the wait with it, and left a blank screen.
+    await signIn()
+    expect(arriving.showing).toBe(true)
+
+    sync.stop()
+    expect(arriving.showing).toBe(true)
+
+    account.settled()
+    startedWithTheTickHeld()
+    expect(arriving.showing).toBe(true)
+    stoppedAgain()
   })
 })

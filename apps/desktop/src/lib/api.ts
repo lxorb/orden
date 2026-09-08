@@ -83,6 +83,10 @@ export interface RemoteSpace {
   role: SpaceRole
   /** Whether anybody besides the owner is in it, which is the mark in the rail. */
   shared: boolean
+  /** How many notes it holds. What a machine bringing the account down for the
+   *  first time counts against, since it knows this before the first note has
+   *  landed; see arriving.svelte.ts. */
+  notes: number
   /** What is kept above the space's file list, in the order it appears. */
   bookmarks: Bookmark[]
   createdAt: number

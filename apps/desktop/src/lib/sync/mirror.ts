@@ -130,8 +130,17 @@ function flatten(entry: Entry): Entry[] {
  *  next door knows about rooms, and a test can say there are none. */
 export type Joined = ReadonlySet<string>
 
-/** Takes what the account has moved on to. Answers whether anything did. */
-export async function pull(mirror: Mirror, token: string, joined: Joined): Promise<boolean> {
+/** Takes what the account has moved on to. Answers whether anything did.
+ *
+ *  `wrote` is called once for each note that lands, so whoever is waiting on the
+ *  pass can count. Handed in for the same reason `joined` is: this file stays
+ *  about moving files, and the store next door is what knows who is waiting. */
+export async function pull(
+  mirror: Mirror,
+  token: string,
+  joined: Joined,
+  wrote?: () => void,
+): Promise<boolean> {
   // Read once: a rename lands in `renamed` while a pass is in the air, and a
   // pass that changed folder halfway would join the new root onto paths it
   // listed under the old one.
@@ -183,11 +192,13 @@ export async function pull(mirror: Mirror, token: string, joined: Joined): Promi
         // An empty hash guarantees the push below sends our copy, now based
         // on the version we just saw, so it lands as the newest one.
         mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
+        wrote?.()
         continue
       }
 
       await invoke('write_note', { path: target, content })
       mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
+      wrote?.()
     }
 
     mirror.cursor = page.cursor

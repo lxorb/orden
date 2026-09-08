@@ -22,6 +22,8 @@
   import StorageWarning from './lib/StorageWarning.svelte'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
+  import { arriving } from './lib/arriving.svelte'
+  import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
   import { paintCodePalette } from './lib/highlight'
@@ -234,6 +236,7 @@
     Object.assign(window, {
       nibApp: {
         account,
+        arriving,
         rooms,
         sync,
         workspace,
@@ -355,7 +358,9 @@
      document all start on the same line. -->
 <!-- The rail and the sidebar run the full height, so the window's one header
      row sits beside them rather than above everything. -->
-<main class:focus={modes.focus}>
+<!-- Nothing in the app is reachable while the account's writing is still on
+     its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
+<main class:focus={modes.focus} inert={arriving.showing}>
   <div class="middle" bind:this={middle}>
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on
@@ -467,6 +472,7 @@
 <ShareSheet />
 <PromptSheet />
 <ContextMenu />
+<FirstSync />
 
 <style>
   main {
