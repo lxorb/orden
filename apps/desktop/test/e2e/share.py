@@ -1,12 +1,18 @@
 """Sharing a space, end to end, against the real Worker.
 
-Three browser contexts that know nothing about each other. The owner opens the
-Share sheet from the rail and invites somebody by address. That somebody has no
-Nib account at all: they follow the link out of the mail, prove the address with
-the code the dev mailer prints, and land in the space - where they write in the
-same note as the owner and each sees the other's caret with the other's name on
-it. Then the owner makes a link that anybody may follow to read, and a third
-person follows it and finds a note they can see and cannot type into.
+Five browser contexts that know nothing about each other, and none of them types
+a thing to get in. The owner opens the Share sheet from the rail and invites
+somebody by address; that somebody has no Nib account at all, follows the link out
+of the real message the runtime's mail binding was handed, and is in the space -
+no code, no form, nothing on screen. They write in the same note as the owner and
+each sees the other's caret with the other's name on it.
+
+Then the link the space itself holds, three times over. A guest follows it to
+write, arrives named after their device, renames themselves in one tap, and the
+owner's copy of the caret says the new name. A second guest follows the same link
+once it hands out reading, and finds a note they can see and cannot type into. A
+third follows it once it asks first, gives a name, waits on a calm page, and is in
+the moment the owner presses Accept.
 
 Everything here is the real thing: the built web app, the Worker under
 `wrangler dev` on workerd, a Durable Object holding the room, the D1 migrations
@@ -45,12 +51,11 @@ SHOTS = Path(__file__).resolve().parent / "shots"
 
 # A port of this test's own. Never 1420, which is the dev server's, and not the
 # one the collaboration run uses either.
-PORT = 18855
+PORT = 18857
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 OWNER = "owner@example.com"
 WRITER = "writer@example.com"
-READER = "reader@example.com"
 
 SPACE = "Notes"
 NOTE = "together.md"
@@ -403,33 +408,69 @@ def open_the_share_sheet(page: Page):
     return sheet
 
 
-def sign_in(page: Page, worker: Worker, label: str, address: str | None) -> None:
-    """The emailed code, typed for real. `address` is None where the page
-    already knows it, which is what an invitation carries."""
-    if address is not None:
-        page.locator("input[type=email]").fill(address)
+def let_in(page: Page, label: str, keeps: bool = False) -> None:
+    """Waits for the session a link established, having asked for nothing.
 
-    page.get_by_role("button", name="Continue").click()
-
-    wanted = address or page.locator("input[type=email]").input_value()
-    code = worker.waits_for_mail(
-        wanted, r"(\d{6}) is your Nib code", f"[{label}] the sign-in code"
-    ).group(1)
-    say(f"[{label}] the code in the mail is {code}")
-
-    page.locator(".digits input").first.fill(code)
-
-    # A browser that has never held this account has the welcome note in it, and
-    # signing in asks what should become of it. Keeping it is the answer that
-    # loses nothing.
-    keep = page.get_by_role("button", name="Keep them")
-    try:
-        keep.wait_for(timeout=8000)
-        keep.click()
-    except Exception:
-        pass
+    An invitation opens the account it was written to, and that account then meets
+    whatever this browser already holds: keeping it is the answer that loses
+    nothing. A guest is never asked, because a guest has no account for the notes
+    already here to join, which is what `keeps` is about.
+    """
+    if keeps:
+        keep = page.get_by_role("button", name="Keep them")
+        try:
+            keep.wait_for(timeout=10_000)
+            keep.click()
+        except Exception:
+            say(f"[{label}] nothing was asked about the notes already here")
 
     wait_for(page, "() => window.nibApp.account.signedIn", f"[{label}] the session")
+
+
+def asked_nothing(page: Page, label: str, wrong) -> None:
+    """That the link put nobody in front of a form. The sign-in's address field
+    and its row of digit boxes are what would be on screen if it had."""
+    for what, selector in (
+        ("an address field", "input[type=email]"),
+        ("the code boxes", ".digits"),
+    ):
+        if page.locator(selector).count():
+            wrong(f"[{label}] the link asked for {what}")
+
+
+def settled(page: Page, label: str) -> None:
+    """Waits until the surface a first pass holds has lifted, so a photograph of
+    what somebody landed in is of the app rather than of the way in."""
+    wait_for(page, "() => !document.querySelector('.arriving')", f"[{label}] the first pass")
+    page.wait_for_timeout(250)
+
+
+def rename(page: Page, name: str) -> None:
+    """A guest renaming themselves: the person at the foot of the rail, the name
+    already in the field, one word over it."""
+    page.locator("nav button.account").click()
+    sheet = page.locator(".sheet")
+    sheet.wait_for(state="visible", timeout=10_000)
+    sheet.locator("input").first.fill(name)
+    sheet.get_by_role("button", name="Save").click()
+
+    wait_for(
+        page,
+        f"() => window.nibApp.account.guest?.name === {json.dumps(name)}",
+        f"the guest to be called {name}",
+    )
+
+
+def set_link(token: str, space_id: str, role: str, mode: str) -> None:
+    """What the space's one link hands out. The owner's, from the same sheet as
+    everything else about it; asked for here so that one link can be followed at
+    each of the three settings without three sheets in between."""
+    request(
+        f"/v1/spaces/{space_id}/share/link",
+        token,
+        {"role": role, "mode": mode},
+        method="PUT",
+    )
 
 
 def typed(page: Page, at: int, said: str) -> None:
@@ -454,6 +495,18 @@ def agree(one: Page, two: Page, wanted: str) -> None:
         one.wait_for_timeout(30)
 
     raise SystemExit(f"the two never agreed on {wanted!r}:\n{words(one)!r}\n{words(two)!r}")
+
+
+def moved(page: Page, at: int) -> None:
+    """A caret put somewhere, which is what makes its name show on the other
+    screens: the label is drawn for a moment and a half after a caret moves."""
+    page.evaluate(
+        "(at) => {"
+        "  window.nib.dispatch({ selection: { anchor: at } });"
+        "  window.nib.focus()"
+        "}",
+        at,
+    )
 
 
 def caret_names(page: Page) -> list[str]:
@@ -524,20 +577,20 @@ def main() -> int:
                 owner.keyboard.press("Escape")
 
                 # ── Somebody with no account at all follows it ─────────────
+                # No form, no code, no sign-up. The mail was written to that
+                # address, so holding it is holding the address, and opening the
+                # link is the whole of what they do.
                 writer = fresh(browser, "writer", at=f"{ORIGIN}/join/{token}")
-                writer.get_by_text(f"Emil shared {SPACE} with you").wait_for(timeout=15_000)
-                writer.wait_for_timeout(200)
-                writer.screenshot(path=str(SHOTS / "invitation-sign-in.png"))
-
-                # The address is already filled in, because the invitation was
-                # written to it. Nothing else is asked for.
-                filled = writer.locator("input[type=email]").input_value()
-                if filled != WRITER:
-                    wrong(f"the sign-in was not filled in with {WRITER}, but with {filled!r}")
-
-                sign_in(writer, worker, "writer", None)
+                let_in(writer, "writer", keeps=True)
+                asked_nothing(writer, "writer", wrong)
                 theirs = joined(writer, "writer", space["id"], "write")
-                say(f"{WRITER} is in {SPACE} without ever having made an account")
+                settled(writer, "writer")
+                writer.screenshot(path=str(SHOTS / "invited-straight-in.png"))
+                say(f"{WRITER} is in {SPACE} without having typed a thing")
+
+                held = writer.evaluate("() => window.nibApp.account.user?.email ?? null")
+                if held != WRITER:
+                    wrong(f"the link opened {held!r} rather than {WRITER}")
 
                 shared = writer.evaluate(
                     "(id) => window.nibApp.account.spaces.find((one) => one.id === id)?.shared",
@@ -545,6 +598,17 @@ def main() -> int:
                 )
                 if shared is not True:
                     wrong(f"the writer's copy of the space says shared={shared!r}")
+
+                # And the link is spent. What it handed out was a session nobody
+                # typed a code for, so it hands out no second one.
+                spent = fresh(browser, "spent", at=f"{ORIGIN}/join/{token}")
+                spent.get_by_text("That link does not open anything").wait_for(timeout=15_000)
+                spent.wait_for_timeout(250)
+                spent.screenshot(path=str(SHOTS / "used-link.png"))
+                if spent.evaluate("() => window.nibApp.account.signedIn"):
+                    wrong("a used invitation opened a second session")
+                say("the same link twice says so once, with the code behind it")
+                spent.close()
 
                 # ── Both write in the one note ─────────────────────────────
                 open_the_note(owner, "owner", note["id"], SPACE)
@@ -558,9 +622,7 @@ def main() -> int:
                 say("both of them hold the same words")
 
                 # ── And each sees the other, by name ───────────────────────
-                writer.evaluate(
-                    "() => { window.nib.dispatch({ selection: { anchor: 3 } }); window.nib.focus() }"
-                )
+                moved(writer, 3)
                 owner.wait_for_selector(".cm-nib-caret", timeout=10_000)
                 owner.wait_for_timeout(150)
                 names = caret_names(owner)
@@ -578,7 +640,7 @@ def main() -> int:
                 if not owner.locator("nav button.space .with").count():
                     wrong("the rail does not mark the space as shared")
 
-                # ── A link anybody may follow, to read ─────────────────────
+                # ── The link the space itself holds ────────────────────────
                 sheet = open_the_share_sheet(owner)
                 sheet.get_by_role("button", name="Make a link").click()
                 sheet.get_by_role("radio", name="Anyone").click()
@@ -588,22 +650,75 @@ def main() -> int:
                 sheet.screenshot(path=str(SHOTS / "share-link.png"))
                 say(f"the link is {url}")
 
-                link = re.search(r"/join/([a-f0-9]+)", url)
-                if not link:
+                found = re.search(r"/join/([a-f0-9]+)", url)
+                if not found:
                     raise SystemExit(f"that is not a join link: {url}")
+                link = found.group(1)
                 owner.keyboard.press("Escape")
 
-                reader = fresh(browser, "reader", at=f"{ORIGIN}/join/{link.group(1)}")
-                reader.get_by_text(f"Emil shared {SPACE} with you").wait_for(timeout=15_000)
-                sign_in(reader, worker, "reader", READER)
-                here = joined(reader, "reader", space["id"], "read")
-                say(f"the link put {READER} in the space, to read")
+                # What the link hands out is the owner's, from the same sheet.
+                # Set here rather than clicked so the one link can be followed
+                # three times over, which is what the rest of this run does.
+                set_link(owner_token, space["id"], "write", "open")
 
-                # ── Who can see it and cannot type into it ─────────────────
+                # ── A guest, named after their device, writing ─────────────
+                guest = fresh(browser, "guest", at=f"{ORIGIN}/join/{link}")
+                let_in(guest, "guest")
+                asked_nothing(guest, "guest", wrong)
+                mine = joined(guest, "guest", space["id"], "write")
+                say(f"the link put a guest in {SPACE}, to write")
+
+                if guest.evaluate("() => window.nibApp.account.user"):
+                    wrong("the link made an account rather than a guest")
+
+                named = guest.evaluate("() => window.nibApp.account.guest?.name ?? null")
+                if not named or not re.fullmatch(r"Browser \w+", named):
+                    wrong(f"the guest is called {named!r} rather than after its device")
+                else:
+                    say(f"the guest is called {named!r}, after the device it arrived on")
+
+                open_the_note(guest, "guest", note["id"], mine)
+                typed(guest, 0, "from a guest\n")
+                agree(owner, guest, "from a guest")
+                say("what the guest wrote is in the same note as the owner's words")
+
+                moved(guest, 5)
+                owner.wait_for_timeout(250)
+                if named not in caret_names(owner):
+                    wrong(f"the owner sees {caret_names(owner)!r} rather than {named!r}")
+                owner.locator(".cm-editor").first.screenshot(path=str(SHOTS / "guest-caret.png"))
+
+                # ── One tap renames them, and the others see it ────────────
+                rename(guest, "Ada")
+                guest.wait_for_timeout(200)
+                guest.locator("nav .foot").screenshot(path=str(SHOTS / "guest-renamed.png"))
+
+                moved(guest, 7)
+                until = time.monotonic() + PATIENCE
+                while time.monotonic() < until and "Ada" not in caret_names(owner):
+                    moved(guest, 7 if int(time.monotonic() * 2) % 2 else 9)
+                    owner.wait_for_timeout(200)
+
+                if "Ada" not in caret_names(owner):
+                    wrong(f"the rename never reached the owner: {caret_names(owner)!r}")
+                else:
+                    say("the name the guest chose is the name over their caret")
+                owner.locator(".cm-editor").first.screenshot(path=str(SHOTS / "renamed-caret.png"))
+
+                # ── The same link, once it hands out reading ───────────────
+                set_link(owner_token, space["id"], "read", "open")
+
+                reader = fresh(browser, "reader", at=f"{ORIGIN}/join/{link}")
+                let_in(reader, "reader")
+                asked_nothing(reader, "reader", wrong)
+                here = joined(reader, "reader", space["id"], "read")
+                say("the same link put a second guest in the space, to read")
+
                 open_the_note(reader, "reader", note["id"], here)
                 before = words(reader)
-                if "from the owner" not in before or "from the writer" not in before:
-                    wrong(f"the reader cannot see what was written:\n{before!r}")
+                for wanted in ("from the owner", "from the writer", "from a guest"):
+                    if wanted not in before:
+                        wrong(f"the reader cannot see {wanted!r}:\n{before!r}")
 
                 editable = reader.locator(".cm-content").get_attribute("contenteditable")
                 if editable != "false":
@@ -614,15 +729,15 @@ def main() -> int:
                 reader.wait_for_timeout(400)
                 if words(reader) != before:
                     wrong("the reader typed into a note they may only read")
-                reader.locator(".cm-editor").first.screenshot(path=str(SHOTS / "read-only.png"))
+                reader.locator(".cm-editor").first.screenshot(path=str(SHOTS / "guest-read-only.png"))
 
                 # And nothing of it reached anybody else, or the account.
                 owner.wait_for_timeout(600)
                 if "this should go nowhere" in words(owner):
                     wrong("what a reader typed crossed to the owner")
 
-                settled = request(f"/v1/notes/{note['id']}", owner_token)["content"]
-                if "this should go nowhere" in settled:
+                stored = request(f"/v1/notes/{note['id']}", owner_token)["content"]
+                if "this should go nowhere" in stored:
                     wrong("what a reader typed reached the account")
 
                 # A reader is offered nothing to change the space with either.
@@ -635,7 +750,52 @@ def main() -> int:
                 else:
                     say(f"a reader's menu offers only {offered!r}")
 
-                say("everything the reader saw, they saw and could not change")
+                # ── The same link, once it asks first ──────────────────────
+                sheet = open_the_share_sheet(owner)
+                sheet.get_by_role("radio", name="Ask first").click()
+                owner.wait_for_timeout(300)
+                owner.keyboard.press("Escape")
+                say("the owner set the link to ask first")
+
+                waiting = fresh(browser, "waiting", at=f"{ORIGIN}/join/{link}")
+                panel = waiting.get_by_role("dialog")
+                panel.wait_for(state="visible", timeout=15_000)
+                panel.get_by_label("Your name").fill("Grace")
+                waiting.wait_for_timeout(200)
+                waiting.screenshot(path=str(SHOTS / "guest-asked.png"))
+
+                panel.get_by_role("button", name="Ask to join").click()
+                waiting.get_by_text("Waiting for Emil").wait_for(timeout=15_000)
+                waiting.wait_for_timeout(250)
+                waiting.screenshot(path=str(SHOTS / "guest-waiting.png"))
+                say("the visitor gave a name and is waiting on a page that says so")
+
+                if waiting.evaluate(
+                    "(id) => window.nibApp.account.spaces.some((one) => one.id === id)",
+                    space["id"],
+                ):
+                    wrong("somebody waiting to be let in already holds the space")
+
+                sheet = open_the_share_sheet(owner)
+                sheet.get_by_text("Waiting").wait_for(timeout=10_000)
+                sheet.get_by_text("Grace").wait_for(timeout=10_000)
+                owner.wait_for_timeout(200)
+                sheet.screenshot(path=str(SHOTS / "owner-asked.png"))
+                sheet.get_by_role("button", name="Accept").click()
+                owner.wait_for_timeout(300)
+                owner.keyboard.press("Escape")
+                say("the owner pressed Accept")
+
+                # The page that was waiting asks again on its own, and turns into
+                # the space when the answer changes.
+                joined(waiting, "waiting", space["id"], "read")
+                waiting.wait_for_timeout(400)
+                waiting.screenshot(path=str(SHOTS / "guest-let-in.png"))
+                if waiting.get_by_role("dialog").count():
+                    wrong("the waiting page is still up after the owner accepted")
+                say("the calm page turned into the space, with nothing pressed")
+
+                say("nobody typed a code, and everybody who was let in was let in")
             finally:
                 browser.close()
     finally:
@@ -647,7 +807,10 @@ def main() -> int:
             print(f"  - {one}", flush=True)
         return 1
 
-    print("\na space was shared by mail and by link, and a reader could not type", flush=True)
+    print(
+        "\nevery way in opened by itself: a mailed link, two guests, and one that asked first",
+        flush=True,
+    )
     return 0
 
 

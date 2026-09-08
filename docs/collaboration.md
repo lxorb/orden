@@ -761,17 +761,40 @@ real devices look like. The numbers above are from a quiet machine.
   crossing whole, two devices drawing at once, one card moved here and coloured
   there, the settle writing the file `format.ts` would have written, a reader who
   sees every stroke and can add none, five thousand strokes folding into one
-  snapshot, waking up still knowing it is a plane, a delete staying deleted, and
-  the door reading the kind off the name of the file.
-- `services/sync/test/share.test.ts` - every route that names a space, at every
-  role, plus a stranger: sixty-odd cases from one table, so a route added without
-  a role check is a failing test rather than a hole. Then invitations and links
-  end to end over the API, somebody who had no account when they were invited,
-  the mail's rate limit, roles changing under somebody mid-session, whose quota a
-  shared note costs, and what the connector will and will not do in a space it
-  was lent.
+  snapshot, waking up still knowing it is a plane, a delete staying deleted, the
+  door reading the kind off the name of the file, and the door letting in a guest
+  a link handed a session to.
+- `services/sync/test/share.test.ts` - every route that names a space, asked by
+  everybody there is to ask: the owner, a writer, a reader, a guest who may write
+  and a guest who may read, plus a stranger. A hundred and forty-odd cases from
+  one table, so a route added without a role check is a failing test rather than a
+  hole, and a route that can tell a guest from a member is one too. Then
+  invitations and links end to end over the API, somebody who had no account when
+  they were invited, the mail's rate limit, roles changing under somebody
+  mid-session, whose quota a shared note costs, and what the connector will and
+  will not do in a space it was lent.
+- `services/sync/test/guests.test.ts` - getting in without signing in, which is
+  every way there is: the mailed link opening its account with nothing typed, and
+  once only; the open link handing out a named guest who reads, writes, or is
+  refused the keystroke; the link that asks first taking one field, waiting, and
+  turning into the space or saying no. Then what a guest may not reach, one case
+  per account-wide route, a space no link gave them, a session that ran out, being
+  taken out by the owner, and the two ways a guest becomes an account - the device
+  signing in and the address being proved - including what does not move with
+  them.
 - `apps/desktop/src/lib/sharing.test.ts` - what the app believes it may do in a
-  folder, and what each control on the Share sheet actually asks for.
+  folder, and what each control on the Share sheet actually asks for, for a member
+  and for a guest.
+- `apps/desktop/src/lib/joining.test.ts` - which of the join page's states each
+  kind of link ends in, and what it asks for on the way: nothing at all for a
+  mailed link or an open one, one field for a link that asks first, and one line
+  for a link that opens nothing. Also that the wait is picked back up on the next
+  launch, and that a guest is never asked what should become of the notes already
+  on the machine.
+- `apps/desktop/src/lib/account.test.ts` - the session store, including the guest
+  one: what `me` answers, what everything account-wide asks for instead of a
+  session, and the guest token being handed to the sign-in so what a link lent the
+  device follows it in.
 - `apps/desktop/src/lib/space-plan.test.ts` - a shared space never taking a
   folder that is already here, and going when the sharing is taken back.
 - `apps/desktop/src/lib/sync.test.ts` - a shared space arriving as a folder, one
@@ -819,13 +842,19 @@ real devices look like. The numbers above are from a quiet machine.
   draw at once and asserts that they and the account end up holding one file byte
   for byte, and times a plane of five hundred and one of five thousand strokes
   joining cold.
-- `apps/desktop/test/e2e/share.py` - three browsers that know nothing about each
-  other. The owner opens the Share sheet from the rail and invites an address;
-  that address has no Nib account, follows the link out of the real message the
-  runtime's mail binding was handed, types the six digits, lands in the space, and
-  writes in the same note as the owner with each caret carrying the other's name.
-  Then a link that anybody may follow to read, and a third person who finds a note
-  they can see, cannot type into, and is offered nothing to change.
+- `apps/desktop/test/e2e/share.py` - five browsers that know nothing about each
+  other, and not one of them types anything to get in. The owner opens the Share
+  sheet from the rail and invites an address; that address has no Nib account,
+  follows the link out of the real message the runtime's mail binding was handed,
+  and is in the space with no form on screen - which the run asserts by looking for
+  the sign-in's field and its digit boxes and finding neither. They write in the
+  same note as the owner with each caret carrying the other's name, and the same
+  link a second time says it opens nothing. Then the link the space holds, three
+  times over: a guest who arrives named after their device, renames themselves in
+  one tap and is that name on the owner's screen; a second guest, once the link
+  hands out reading, who sees the note, cannot type into it, and is offered nothing
+  to change; and a third, once it asks first, who gives a name, waits on a page
+  that says so, and is in the moment the owner presses Accept.
 
 The Worker's own suite runs against Node's SQLite rather than on workerd, which is
 how it was already written; the room is tested the same way, with the runtime
