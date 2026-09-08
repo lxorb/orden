@@ -67,6 +67,14 @@ export class Room {
   readonly text = this.doc.getText(TEXT)
   readonly awareness = new Awareness(this.doc)
 
+  /** Whether the note and the room now hold the same words, and every keystroke
+   *  from here goes both ways.
+   *
+   *  False for the moment between opening a note and the room answering with what
+   *  it holds. Until then the room is not the note's truth yet, so the file sync
+   *  carries on as it always did; see rooms.svelte.ts. */
+  settled = false
+
   private readonly socket: RoomSocket
   private unbind: (() => void) | null = null
   /** Set once the room has said what it holds, which is when the words this
@@ -185,6 +193,7 @@ export class Room {
     else if (met.kind === 'offer') this.doc.transact(() => replace(this.text, met.change), HERE)
 
     this.unbind = bind(note, this.text)
+    this.settled = true
     this.showPeers()
 
     // The caret was held back until there was a text to place it against.

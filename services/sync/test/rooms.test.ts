@@ -192,6 +192,8 @@ describe('a room', () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
     await say(made, state, one.socket, one.type(11, 'slept on it\n'))
+    // The settle is where what arrived reaches storage; see `record` in state.ts.
+    await made.alarm()
 
     // A second room over the same storage is what waking up looks like: every
     // field is gone, and what matters came back out of the object.
@@ -199,6 +201,29 @@ describe('a room', () => {
     const back = await arrive(woken, state, { id: noteId, spaceId })
 
     expect(back.words).toBe('# Together\nslept on it\n')
+  })
+
+  test('asks the devices that were here for what it slept through', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+    // Typed, and no settle: those keystrokes are in the room's memory and in this
+    // device, and nowhere else.
+    await say(made, state, one.socket, one.type(11, 'never written down\n'))
+    one.socket.take()
+
+    // The same storage, a new object, and the device still connected. Its greeting
+    // is what asks the device to say what it has.
+    const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+    await woken.webSocketMessage(
+      one.socket as unknown as WebSocket,
+      syncStep1(one.doc).slice().buffer,
+    )
+    await state.idle()
+    await settle(woken, state, [one])
+
+    await woken.alarm()
+    const read = await call(env, `/v1/notes/${noteId}`, { token })
+    expect(read.json.content).toBe('# Together\nnever written down\n')
   })
 
   test('takes a caret away when its device leaves', async () => {

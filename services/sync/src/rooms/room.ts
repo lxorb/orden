@@ -73,6 +73,9 @@ export class NoteRoom implements DurableObject {
    *  the note. Held so that two joins landing together do not both seed it. */
   private opened: Promise<void> | null = null
   private held: Held | null = null
+  /** When the settle already on the clock will fire, or null for one this object
+   *  did not put there itself; see `settleSoon`. */
+  private settleAt: number | null = null
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -153,6 +156,7 @@ export class NoteRoom implements DurableObject {
   /** The settle. An alarm rather than a timer, so a room the runtime put to sleep
    *  still writes down what was typed into it. */
   async alarm() {
+    this.settleAt = null
     await this.woken()
     await this.settle()
   }
@@ -176,25 +180,45 @@ export class NoteRoom implements DurableObject {
     // second join that saw an empty room would seed it a second time.
     this.opened = this.ctx.blockConcurrencyWhile(async () => {
       await this.ctx.storage.put('note', held)
-      if (await this.state.load()) return
 
-      const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
-      await this.state.seed(object ? await object.text() : '')
+      if (!(await this.state.load())) {
+        const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
+        await this.state.seed(object ? await object.text() : '')
+      }
+
+      // Sockets that were already here mean this object was asleep rather than
+      // new. What it holds may be a moment behind them - the last keystrokes
+      // before it slept were only in memory - so it asks each of them what they
+      // have, and the answer puts them back. See `record` in state.ts.
+      const waiting = this.ctx.getWebSockets()
+      if (waiting.length) this.send(syncStep1(this.state.doc), null)
     })
 
     return this.opened
   }
 
-  /** An update somebody made: passed on to everyone else, and written down. */
+  /** An update somebody made: passed on to everyone else, and written down.
+   *
+   *  Passed on first and by itself, because that is the part somebody is waiting
+   *  for. Everything after it is bookkeeping, and none of it touches storage in
+   *  the ordinary case: the update waits in memory until the settle, and the
+   *  alarm is asked for once rather than once per keystroke. */
   private async spread(update: Uint8Array, origin: unknown) {
     this.send(syncUpdate(update), origin)
     await this.state.record(update)
+    await this.settleSoon()
+  }
 
-    // Only the first update after a quiet moment sets the alarm, so a note being
-    // typed into steadily settles on a rhythm rather than never.
-    if ((await this.ctx.storage.getAlarm()) === null) {
-      await this.ctx.storage.setAlarm(Date.now() + SETTLE_DELAY)
-    }
+  /** Puts a settle on the clock, once for each burst of typing. The pending time
+   *  is remembered here as well as in the object, so a keystroke does not cost a
+   *  storage read to find out that a settle is already coming. */
+  private async settleSoon() {
+    if (this.settleAt !== null && this.settleAt > Date.now()) return
+    // Nothing is remembered after a sleep, so the object is asked once.
+    if (this.settleAt === null && (await this.ctx.storage.getAlarm()) !== null) return
+
+    this.settleAt = Date.now() + SETTLE_DELAY
+    await this.ctx.storage.setAlarm(this.settleAt)
   }
 
   /** To every socket but the one it came from. */
@@ -228,6 +252,11 @@ export class NoteRoom implements DurableObject {
     const held = this.held
     if (!held) return
 
+    // What arrived since the last settle, written into the room's own storage.
+    // The two copies move together: everything the note store holds is in the
+    // room's snapshot too, and nothing is left only in memory.
+    await this.state.flush()
+
     const note = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
       .bind(held.noteId)
       .first<Note>()
@@ -240,14 +269,19 @@ export class NoteRoom implements DurableObject {
     const size = byteLength(markdown)
     if (size > MAX_NOTE_BYTES) return
 
-    const owner = await this.env.DB.prepare('select user_id from spaces where id = ?')
-      .bind(note.space_id)
-      .first<{ user_id: string }>()
+    // Only a note that grew can take an account past what it may keep, and
+    // working out what an account is using reads every note it holds. A limit
+    // nobody enforces is a number on a settings page; one worked out on every
+    // settle is a note that is slow to write in.
+    if (size > note.size) {
+      const owner = await this.env.DB.prepare('select user_id from spaces where id = ?')
+        .bind(note.space_id)
+        .first<{ user_id: string }>()
 
-    // A limit nobody enforces is a number on a settings page. The words stay in
-    // the room and in every editor showing it; what does not happen is the
-    // account growing past what it may keep.
-    if (owner && !(await fits(this.env, owner.user_id, size, note.size))) return
+      // The words stay in the room and in every editor showing it; what does not
+      // happen is the account growing past its quota.
+      if (owner && !(await fits(this.env, owner.user_id, size, note.size))) return
+    }
 
     await saveNote(this.env, note, markdown, note.path)
   }

@@ -73,6 +73,8 @@ export class RoomState {
   private count: Count = { updates: 0, bytes: 0 }
   /** Where the next log entry goes. Reset by every compaction. */
   private next = 0
+  /** Updates that have arrived and not been written down yet; see `record`. */
+  private pending: Uint8Array[] = []
   /** Writes run one after another. Two updates landing together would otherwise
    *  have the second choosing its log key while the first was compacting, and
    *  the compaction would take the entry away again. */
@@ -123,18 +125,51 @@ export class RoomState {
     await this.compact()
   }
 
-  /** An update that arrived, kept so the room can be put back together. Folds
-   *  the log into the snapshot once the pile has grown enough to be worth it. */
+  /** An update that arrived.
+   *
+   *  Kept in memory rather than written down at once, and written when the typing
+   *  pauses or when enough has piled up - which is what makes a keystroke cost
+   *  nothing at all here. A keystroke that reached a storage write would cost the
+   *  room a row and the reader a wait: a room being typed into is the one moment
+   *  it must not spend its time on the disk.
+   *
+   *  Nothing is at risk while it waits. Every device in the room holds the same
+   *  keystrokes, and a room that came back without its last few asks for them in
+   *  the sync the first socket opens with. */
   record(update: Uint8Array): Promise<void> {
+    this.pending.push(update)
+    this.count = { updates: this.count.updates + 1, bytes: this.count.bytes + update.length }
+
+    // Held only up to a point: past it the pile is worth a write of its own,
+    // whether or not anybody has stopped typing.
+    if (this.count.bytes < MAX_BYTES && this.count.updates < MAX_UPDATES) return Promise.resolve()
+    return this.flush()
+  }
+
+  /** What has piled up, written down: one entry for the lot, or a fresh snapshot
+   *  when the log has grown long enough to be worth folding in.
+   *
+   *  Called when the typing pauses and when the last device leaves. Both come
+   *  through the settle, so the words reaching the note store and the words
+   *  reaching the room's own storage are the same moment. */
+  flush(): Promise<void> {
+    if (!this.pending.length) return Promise.resolve()
+
     return this.queued(async () => {
-      this.count = { updates: this.count.updates + 1, bytes: this.count.bytes + update.length }
+      const waiting = this.pending
+      this.pending = []
+      if (!waiting.length) return
 
       if (this.count.updates >= MAX_UPDATES || this.count.bytes >= MAX_BYTES) {
         await this.write()
         return
       }
 
-      await this.storage.put({ [logKey(this.next++)]: update, [COUNT]: this.count })
+      // Merged, so a burst of keystrokes is one entry rather than one each.
+      const merged = waiting.length === 1 ? waiting[0] : Y.mergeUpdates(waiting)
+      if (!merged) return
+
+      await this.storage.put({ [logKey(this.next++)]: merged, [COUNT]: this.count })
     })
   }
 
@@ -154,6 +189,9 @@ export class RoomState {
   }
 
   private async write(): Promise<void> {
+    // Whatever was still only in memory is in the document already, so a snapshot
+    // of the document is a snapshot of all of it.
+    this.pending = []
     const pieces = chunk(Y.encodeStateAsUpdateV2(this.doc))
     const entries: Record<string, unknown> = { [COUNT]: { updates: 0, bytes: 0 } }
     for (const [at, piece] of pieces.entries()) {

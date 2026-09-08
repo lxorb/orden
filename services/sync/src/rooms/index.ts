@@ -15,9 +15,26 @@
 
 import { Hono } from 'hono'
 import { subprotocol, tokenOf } from '@nib/rooms'
-import { requireUser } from '../auth'
-import { ownedSpace } from '../spaces/space'
-import type { Env, Note } from '../types'
+import { now, sha256 } from '../crypto'
+import type { Env } from '../types'
+
+/** Both halves of the question in one round trip: whether the session is live, and
+ *  whether the note belongs to a space that account holds.
+ *
+ *  One query rather than three, because this runs in front of every socket a note
+ *  opens and a reader is waiting on it. Both answers come back so the two cases can
+ *  still be told apart: without a live session a client has to sign in again, while
+ *  a note that is not this account's is a note that does not exist. */
+const ALLOWED = `select
+  (select s.user_id from sessions s where s.token_hash = ?1 and s.expires_at > ?2) as user_id,
+  (select n.space_id
+     from notes n join spaces sp on sp.id = n.space_id
+    where n.id = ?3
+      and n.deleted = 0
+      and sp.deleted = 0
+      and sp.user_id = (
+        select s.user_id from sessions s where s.token_hash = ?1 and s.expires_at > ?2
+      )) as space_id`
 
 export const rooms = new Hono<{ Bindings: Env }>()
 
@@ -26,31 +43,28 @@ rooms.get('/:noteId', async (context) => {
     return context.json({ error: 'a room is a websocket' }, 426)
   }
 
-  const offered = context.req.header('sec-websocket-protocol')
-  const token = tokenOf(offered)
-  const user = await requireUser(context.env, token ? `Bearer ${token}` : undefined)
-  if (!user) return context.json({ error: 'sign in first' }, 401)
-
+  const token = tokenOf(context.req.header('sec-websocket-protocol'))
   const noteId = context.req.param('noteId')
-  const note = await context.env.DB.prepare('select * from notes where id = ? and deleted = 0')
-    .bind(noteId)
-    .first<Note>()
 
+  const allowed = await context.env.DB.prepare(ALLOWED)
+    .bind(await sha256(token ?? ''), now(), noteId)
+    .first<{ user_id: string | null; space_id: string | null }>()
+
+  if (!allowed?.user_id) return context.json({ error: 'sign in first' }, 401)
   // A note in another account's space is indistinguishable from one that is not
   // there, exactly as it is over the rest of the API.
-  const space = note ? await ownedSpace(context.env, user.id, note.space_id) : null
-  if (!note || !space) return context.json({ error: 'no such note' }, 404)
+  if (!allowed.space_id) return context.json({ error: 'no such note' }, 404)
 
   const namespace = context.env.ROOMS
   if (!namespace) return context.json({ error: 'rooms are not running here' }, 503)
 
-  const room = namespace.get(namespace.idFromName(note.id))
+  const room = namespace.get(namespace.idFromName(noteId))
   const answer = await room.fetch(
     new Request(context.req.url, {
       headers: {
         upgrade: 'websocket',
-        'x-nib-note': note.id,
-        'x-nib-space': note.space_id,
+        'x-nib-note': noteId,
+        'x-nib-space': allowed.space_id,
       },
     }),
   )

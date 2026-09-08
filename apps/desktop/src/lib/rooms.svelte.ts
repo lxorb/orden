@@ -58,10 +58,16 @@ class Rooms {
 
   private readonly held = new Map<string, Joined>()
 
-  /** The notes that are in a room, by their id on the account. What the file sync
-   *  asks, so it can leave those notes to the room; see sync/mirror.ts. */
+  /** The notes a room now holds the truth of, by their id on the account. What the
+   *  file sync asks, so it can leave those notes to the room; see sync/mirror.ts.
+   *
+   *  A room that has been opened but has not yet said what it holds is not in this
+   *  list. Until that moment nothing has been settled and the file is still the
+   *  best answer anybody has, so a pass carries on exactly as it did before. */
   get joined(): Set<string> {
-    return new Set([...this.held.values()].map((one) => one.noteId))
+    return new Set(
+      [...this.held.values()].filter((one) => one.room.settled).map((one) => one.noteId),
+    )
   }
 
   /** The open notes, as the app now has them. Rooms are joined and left to match:

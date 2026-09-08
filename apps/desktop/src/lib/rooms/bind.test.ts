@@ -268,6 +268,38 @@ describe('a note bound to a room', () => {
   })
 })
 
+describe('a keystroke in a note that is in a room', () => {
+  /** How long a hundred keystrokes in the middle of a note of this size take, as
+   *  a keystroke's own average. Everything a keystroke does here has to be the
+   *  size of the keystroke: a change set covers what changed, and the shared text
+   *  takes one insert at one position. */
+  function perKeystroke(size: number): number {
+    const words = 'the room settles two versions of one paragraph. '.repeat(Math.ceil(size / 48))
+    const device = Device.opening(words.slice(0, size))
+    const at = Math.floor(size / 2)
+
+    const started = performance.now()
+    for (let round = 0; round < 100; round++) device.type(at + round, 'x')
+    const each = (performance.now() - started) / 100
+
+    device.close()
+    return each
+  }
+
+  test('costs the keystroke and not the note', () => {
+    // Warm first: what the first call would otherwise measure is the compiler.
+    perKeystroke(2_048)
+
+    const small = perKeystroke(2_048)
+    const large = perKeystroke(200_000)
+
+    // A hundredfold note. Anything that walked it would show up as a hundredfold
+    // keystroke; the allowance is for the cost of the rope growing, which is
+    // logarithmic, and for a machine under load.
+    expect(large).toBeLessThan(Math.max(small * 8, 0.5))
+  })
+})
+
 describe('a device meeting the room it joined', () => {
   test('has nothing to do when the two agree', () => {
     expect(meeting('same', 'same', true)).toEqual({ kind: 'agreed' })
