@@ -10,7 +10,6 @@
  *  Always the light scheme: it is going on paper, and a dark page costs a
  *  cartridge. */
 
-import { printInFrame, renderNote } from '../export'
 import { openTarget, renderOptions } from './context'
 
 /** Whether this build has a print dialog to open at all. A desktop and a browser
@@ -19,6 +18,11 @@ import { openTarget, renderOptions } from './context'
 export const canPrint = typeof window !== 'undefined' && typeof window.print === 'function'
 
 export async function printNote(): Promise<void> {
+  // Asked for when somebody prints rather than at startup: the renderer carries the
+  // diagram drawers, the syntax parsers and the fonts, which is most of what the app
+  // can load, and the row that offers printing is a word.
+  const { printInFrame, renderNote } = await import('../export')
+
   const target = openTarget()
   const options = await renderOptions(target)
   const html = await renderNote(target.source, target.name, { ...options, scheme: 'light' })
