@@ -507,6 +507,12 @@
     stroke-linecap: round;
   }
 
+  /* Clear of a notch or a rounded corner, whether the panels are a drawer over
+     the note or a column beside it. */
+  :global([data-touch]) .panels {
+    padding-left: var(--inset-left);
+  }
+
   /* ── Where the sidebar is a drawer over the note ─────────────────── */
 
   :global([data-drawer]) .panels {
@@ -516,8 +522,6 @@
     transform: translateX(-100%);
     transition: transform var(--dur-base) var(--ease-out);
     box-shadow: var(--shadow-lg);
-    /* Clear of a notch or a rounded corner. */
-    padding-left: var(--inset-left);
   }
 
   :global([data-drawer]) .panels.open {

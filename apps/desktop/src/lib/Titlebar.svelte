@@ -277,7 +277,10 @@
      to a comfortable target and clears the status bar. */
   :global([data-touch]) header {
     height: auto;
+    /* Under the clock and battery, and clear of a cutout on the side a tablet
+       held sideways puts it. */
     padding-top: var(--inset-top);
+    padding-right: var(--inset-right);
   }
 
   :global([data-touch]) .toggle {
