@@ -11,6 +11,7 @@
   import { t } from './i18n.svelte'
   import { bookmarkEntry, menu } from './menu.svelte'
   import { longPress } from './longpress'
+  import { roving } from './roving'
   import { SEARCH_MARK } from './panel-marks'
   import { shownName } from './note-name'
   import { carryBookmark, draggedBookmark, isBookmarkDrag } from './drag-paths'
@@ -150,7 +151,20 @@
 {#if rows.length}
   <p class="nib-section">{t('Bookmarks')}</p>
 
-  <ul>
+  <!-- One tab stop for the whole list, and the arrows inside it, the same as every
+       other list in the app; see roving.ts. Enter opens and the note takes the
+       keyboard, Space opens and leaves the keyboard here. -->
+  <ul
+    use:roving={{
+      current: '.is-on',
+      open: (element) => element.click(),
+      peek: (element) => {
+        element.click()
+        element.focus()
+      },
+      menu: (element, at) => element.dispatchEvent(at),
+    }}
+  >
     {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
       <li>
         <button

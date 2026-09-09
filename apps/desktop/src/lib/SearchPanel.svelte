@@ -11,6 +11,7 @@
   import { t } from './i18n.svelte'
   import { shownName } from './note-name'
   import { SEARCH_MARK } from './panel-marks'
+  import { roving } from './roving'
   import { search } from './search.svelte'
   import { chosen, completing, nearest, offered } from './search/suggest'
   import type { Hit, Range } from './search/match'
@@ -286,7 +287,19 @@
 </div>
 
 {#if groups.length}
-  <ul>
+  <!-- The results are one tab stop and the arrows walk them, the same as every other
+       list; see roving.ts. The rows are the lines found, not the notes they sit in:
+       the name over a group is a heading, not somewhere to stand. -->
+  <ul
+    use:roving={{
+      rows: '.hit',
+      open: (row) => row.click(),
+      peek: (row) => {
+        row.click()
+        row.focus()
+      },
+    }}
+  >
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
         <div class="nib-section note">
@@ -434,7 +447,6 @@
   }
 
   .star:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: -1px;
   }
 
@@ -471,7 +483,6 @@
   }
 
   .swap:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: -1px;
   }
 
@@ -512,7 +523,6 @@
   }
 
   .apply:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
 
@@ -607,7 +617,6 @@
   }
 
   .tick:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
 

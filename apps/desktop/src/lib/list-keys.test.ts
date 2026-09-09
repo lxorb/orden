@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { opensAt, type Walk, walk } from './list-keys'
+import { opensAt, spelled, type Walk, walk } from './list-keys'
 
 /** Walking a dropdown with the keyboard.
  *
@@ -139,5 +139,57 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
     expect(source).not.toMatch(/onmouseenter=\{\(\) => \(walking/)
     // And what the keyboard is on is what a screen reader is told is active.
     expect(source).toContain('aria-activedescendant={open && walking.cursor !== null')
+  })
+})
+
+/** The same spelling every list in the app uses. A dropdown reads it through
+ *  `walk` above; the file tree, the outline, the strip of tabs and the rest read it
+ *  straight, because there the row lives in the page rather than in state. See
+ *  roving.ts. */
+describe('spelling a name', () => {
+  const NAMES = ['Groceries', 'Journal', 'Notes on Kant', 'notes.md', 'Work']
+
+  /** Letters typed one after another, `gap` apart. */
+  function say(letters: string, gap = 100) {
+    let state = { typed: '', typedAt: 0 }
+    let found = -1
+    let at = 1000
+
+    for (const letter of letters) {
+      const next = spelled(state, letter, at, NAMES)
+      state = { typed: next.typed, typedAt: next.typedAt }
+      found = next.found
+      at += gap
+    }
+
+    return { found, typed: state.typed }
+  }
+
+  test('lands on the first row that starts with the letter', () => {
+    expect(say('j').found).toBe(1)
+    expect(say('w').found).toBe(4)
+  })
+
+  test('narrows as more letters arrive', () => {
+    expect(say('n').found).toBe(2)
+    expect(say('note').found).toBe(2)
+    expect(say('notes.').found).toBe(3)
+  })
+
+  test('and pays no attention to case, in the word or in the row', () => {
+    expect(say('N').found).toBe(2)
+    expect(say('GRO').found).toBe(0)
+  })
+
+  /** A pause is how a hand says it has stopped spelling one name and started
+   *  another: "j", then a second later "w", is two names asked for and not a word
+   *  spelled "jw". */
+  test('starts a fresh word after a pause', () => {
+    expect(say('jw', 900).found).toBe(4)
+    expect(say('jw', 900).typed).toBe('w')
+  })
+
+  test('and leaves the keyboard where it was on a word no row starts with', () => {
+    expect(say('zz').found).toBe(-1)
   })
 })

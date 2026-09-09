@@ -12,6 +12,7 @@
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { roving } from './roving'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { search } from './search.svelte'
@@ -34,7 +35,29 @@
   }
 </script>
 
-<ul>
+<!-- One tab stop, the arrows inside it, and left and right on a tag that holds
+     tags - the same walk the file tree takes, because a tag path is the same kind of
+     thing a folder path is. See roving.ts. -->
+<ul
+  use:roving={{
+    inner: depth > 0,
+    rows: '.row',
+    sideways: (key, row) => {
+      const path = row.dataset.tag
+      if (path === undefined || (key !== 'ArrowRight' && key !== 'ArrowLeft')) return false
+      const open = workspace.isTagOpen(path)
+      if (key === 'ArrowRight' ? open : !open) return false
+      workspace.toggleTag(path)
+      return true
+    },
+    open: (row) => row.click(),
+    peek: (row) => {
+      row.click()
+      row.focus()
+    },
+    menu: (row, at) => row.dispatchEvent(at),
+  }}
+>
   {#each nodes as node (node.path)}
     <li>
       <div class="line">
@@ -54,6 +77,7 @@
         <button
           class="nib-row row"
           class:nested={!node.children.length}
+          data-tag={node.path}
           style:--level={depth}
           onclick={() => search.ask(`tag:${node.path}`)}
           oncontextmenu={(event) => menu.show(event, menuFor(node), { title: node.name })}
@@ -101,11 +125,6 @@
     background: none;
     color: var(--muted);
     cursor: default;
-  }
-
-  .twist:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
   }
 
   .chevron {

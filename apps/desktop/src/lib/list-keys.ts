@@ -10,14 +10,19 @@
  *  choosing that turns modal editing on for every device on the account. Nobody
  *  had chosen anything. See Select.svelte. */
 
+/** Letters typed in a row, and the moment the last one landed. Spelling a name
+ *  is how every list in the app is walked, so the accumulating is here rather
+ *  than in each of them; see roving.ts, which spells the file list. */
+export interface Spelling {
+  typed: string
+  typedAt: number
+}
+
 /** Where the keyboard is in a list, and what it has been spelling. */
-export interface Walk {
+export interface Walk extends Spelling {
   /** The row the keyboard is on, or null while it is on none: an empty list, or
    *  a value the list does not hold. A keystroke chooses nothing from null. */
   cursor: number | null
-  /** Letters typed in a row, and the moment the last one landed. */
-  typed: string
-  typedAt: number
 }
 
 /** What one keystroke does to the list. */
@@ -34,6 +39,24 @@ export interface Step {
 
 /** How long letters typed in a row count as one word. */
 const SPELLING = 600
+
+/** What one letter comes to: the word being spelled, and the first row that
+ *  starts with it. `found` is -1 where no row does, which leaves the keyboard
+ *  where it was rather than moving it somewhere arbitrary.
+ *
+ *  A letter after a pause starts a fresh word: the pause is how a hand says it
+ *  has stopped spelling one name and started another. */
+export function spelled(
+  from: Spelling,
+  key: string,
+  at: number,
+  labels: readonly string[],
+): Spelling & { found: number } {
+  const typed = (at - from.typedAt > SPELLING ? '' : from.typed) + key.toLowerCase()
+  const found = labels.findIndex((one) => one.trim().toLowerCase().startsWith(typed))
+
+  return { typed, typedAt: at, found }
+}
 
 /** The list as it opens: on the row the value is, or on none where the list does
  *  not hold it. Nothing is spelled yet. */
@@ -73,10 +96,9 @@ export function walk(key: string, at: number, labels: string[], from: Walk): Ste
     default: {
       if (key.length !== 1) return { walk: stay, took: false }
 
-      const typed = (at - from.typedAt > SPELLING ? '' : from.typed) + key.toLowerCase()
-      const found = labels.findIndex((one) => one.toLowerCase().startsWith(typed))
+      const { typed, typedAt, found } = spelled(from, key, at, labels)
 
-      return { walk: { cursor: found >= 0 ? found : from.cursor, typed, typedAt: at }, took: true }
+      return { walk: { cursor: found >= 0 ? found : from.cursor, typed, typedAt }, took: true }
     }
   }
 }

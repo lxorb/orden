@@ -6,6 +6,7 @@
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { rooms } from './rooms.svelte'
+  import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
@@ -194,8 +195,26 @@
   <!-- The whole strip takes a drop, so a tab dragged into it lands where it was
        let go of; past the last tab is the end of the strip. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- The strip is one tab stop, on whichever note is open, and left and right
+       move along it. Unlike the panel tabs it does not change as it is arrived at:
+       every one of these is a file to be read off a disk, and the ARIA practices
+       say to choose on arrival only where arriving costs nothing. So an arrow moves,
+       Enter opens, and Delete closes - which is what the practices give for a strip
+       whose tabs can be closed. See roving.ts. -->
   <div
     class="tabs"
+    data-region="tabs"
+    use:roving={{
+      across: true,
+      rows: '.pick',
+      current: '.active > .pick',
+      wrap: true,
+      quiet: '.shut',
+      open: (row) => row.click(),
+      peek: (row) => row.click(),
+      remove: (row) => void workspace.closeAsking(row.dataset.tab ?? ''),
+      menu: (row, at) => row.dispatchEvent(at),
+    }}
     class:quiet={!focused && !alone}
     ondragover={(event) => over(event, tabs.length)}
     ondragleave={(event) => {
@@ -226,6 +245,7 @@
              against a side of a pane to make one there. -->
         <button
           class="pick"
+          data-tab={tab.id}
           draggable={!viewport.touch}
           title={tab.shown}
           onclick={() => workspace.activate(tab.id)}
@@ -649,11 +669,6 @@
 
   .shut:active {
     color: color-mix(in srgb, var(--danger) 78%, black);
-  }
-
-  button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
   }
 
   .shut svg {

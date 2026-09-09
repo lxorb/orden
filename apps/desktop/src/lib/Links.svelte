@@ -17,6 +17,19 @@
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
   import { workspace } from './workspace.svelte'
+  import { roving } from './roving'
+
+  /** Every list in this panel walks the same way, so the rules are written once:
+   *  the arrows move, Enter goes to the line and hands the note the keyboard, Space
+   *  goes to it and leaves the keyboard here. See roving.ts. */
+  const WALK = {
+    rows: '.hit',
+    open: (row: HTMLElement) => row.click(),
+    peek: (row: HTMLElement) => {
+      row.click()
+      row.focus()
+    },
+  }
 
   const {
     ongoto,
@@ -105,7 +118,7 @@
   <!-- Backlinks first: what points here is what the panel is opened for. -->
   <p class="nib-section">{t('Backlinks')}<span>{backlinks.length}</span></p>
   {#if backlinks.length}
-    <ul>
+    <ul use:roving={WALK}>
       {#each backlinks as reference, index (`${reference.path}:${reference.line}:${index}`)}
         <li>
           <button class="nib-row hit" onclick={() => openAt(reference)}>
@@ -121,7 +134,7 @@
 
   <p class="nib-section">{t('Links out')}<span>{outgoing.length}</span></p>
   {#if outgoing.length}
-    <ul>
+    <ul use:roving={WALK}>
       {#each outgoing as link, index (`${link.target}:${link.line}:${index}`)}
         <li>
           <button
@@ -141,7 +154,7 @@
 
   {#if mentions.length}
     <p class="nib-section">{t('Mentions')}<span>{mentions.length}</span></p>
-    <ul>
+    <ul use:roving={WALK}>
       {#each mentions as reference, index (`${reference.path}:${reference.line}:${index}`)}
         <li>
           <button class="nib-row hit" onclick={() => openAt(reference)}>

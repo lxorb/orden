@@ -18,6 +18,7 @@
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
   import { shownName } from './note-name'
+  import { roving } from './roving'
   import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
@@ -122,13 +123,18 @@
     return from instanceof HTMLElement ? (from.dataset.path ?? null) : null
   }
 
+  /** The outermost list, which is the one every row is inside: this component
+   *  draws one of itself per folder, and the row being stepped onto is usually in
+   *  another of them. Only the outermost instance binds it, since only that one
+   *  walks. */
+  let list = $state<HTMLUListElement>()
+
   /** Puts the keyboard on a row and makes it the one selected, which is what
    *  arriving at a row in a file list means. The row is found in the page rather
-   *  than held in state, because the list is one component per folder and the row
-   *  being stepped onto is usually in another of them. */
-  function stand(list: HTMLElement, path: string) {
+   *  than held in state, for the reason above. */
+  function stand(path: string) {
     workspace.select(path)
-    const row = list.querySelector(`.row[data-path="${CSS.escape(path)}"]`)
+    const row = list?.querySelector(`.row[data-path="${CSS.escape(path)}"]`)
     if (row instanceof HTMLElement) row.focus()
   }
 
@@ -143,10 +149,15 @@
     return null
   }
 
-  /** Keys that act on the selection or walk the rows, from anywhere in the tree.
-   *  Which keys those are comes from the registry, like every other shortcut;
-   *  they are read here rather than on the window because they only mean
-   *  anything while the focus is in the list. */
+  /** Keys that act on the selection, from anywhere in the tree. Which keys those
+   *  are comes from the registry, like every other shortcut; they are read here
+   *  rather than on the window because they only mean anything while the focus is
+   *  in the list.
+   *
+   *  Walking the rows is not here: up, down, Home, End, spelling a name, Enter,
+   *  Space, the menu key and Escape are the same in every list the app draws and
+   *  are roving.ts, which the `<ul>` below is handed to. What is left is what only
+   *  a list of files has - a selection, renaming, and the two keys that delete. */
   function onKey(event: KeyboardEvent) {
     // A row being renamed is a text field, and Escape, Ctrl+A and the arrows
     // belong to the words in it.
@@ -155,10 +166,6 @@
     if (shortcuts.pressed('tree.select-all', event)) {
       event.preventDefault()
       workspace.selectAll()
-      return
-    }
-    if (shortcuts.pressed('tree.deselect', event)) {
-      workspace.clearSelection()
       return
     }
 
@@ -170,37 +177,68 @@
       return
     }
 
-    const list = event.currentTarget
     const here = rowPath(event)
-    if (!(list instanceof HTMLElement) || here === null) return
+    if (here === null) return
 
     if (shortcuts.pressed('tree.rename', event)) {
       event.preventDefault()
       workspace.startRenaming(here)
+    }
+  }
+
+  /** Left and right in a list that holds lists: right opens a folder and then
+   *  steps into it, left closes one and otherwise steps out to the folder holding
+   *  this row. The rule is tree-keys.ts; up and down are the walk every list
+   *  shares. True when the press was spent. */
+  function sideways(key: string, row: HTMLElement): boolean {
+    const here = row.dataset.path
+    if (here === undefined) return false
+    if (key !== 'ArrowRight' && key !== 'ArrowLeft') return false
+
+    const step = treeStep(key, workspace.visibleTree(), here)
+    if (!step) return false
+
+    if (step.do === 'stand') stand(step.path)
+    else workspace.toggleFolder(step.path)
+
+    return true
+  }
+
+  /** Enter on a row: a folder opens or shuts, and a note opens and the note takes
+   *  the keyboard, which is what `takesCaret` does a frame later. */
+  function openRow(row: HTMLElement) {
+    const here = row.dataset.path
+    if (here === undefined) return
+
+    if (workspace.visibleTree().find((one) => one.path === here)?.folder) {
+      workspace.toggleFolder(here)
+    } else void workspace.openEntry(here)
+  }
+
+  /** Space on a row: the same, except the keyboard stays in the list, so a folder
+   *  can be walked and read down without leaving it. Obsidian has the same idea on
+   *  Ctrl and an arrow. */
+  function peekRow(row: HTMLElement) {
+    const here = row.dataset.path
+    if (here === undefined) return
+
+    if (workspace.visibleTree().find((one) => one.path === here)?.folder) {
+      workspace.toggleFolder(here)
       return
     }
 
-    const key = walkKey(event)
-    const opening = shortcuts.pressed('tree.open', event)
-    if (key === null && !opening) return
+    void workspace.openEntry(here, { preview: true })
+    row.focus()
+  }
 
-    // One walk of the rows on show, which is both what a step is worked out
-    // from and what says whether this row is a folder.
-    const rows = workspace.visibleTree()
+  /** Escape: the selection first, and once there is none the note takes the
+   *  keyboard back. One level at a time, and never an action - the same order
+   *  Obsidian's tree uses. True while the list still had something of its own. */
+  function leaveList(): boolean {
+    if (!workspace.selection.length) return false
 
-    const step = key === null ? null : treeStep(key, rows, here)
-    if (step) {
-      event.preventDefault()
-      if (step.do === 'stand') stand(list, step.path)
-      else workspace.toggleFolder(step.path)
-      return
-    }
-
-    if (opening) {
-      event.preventDefault()
-      if (rows.find((row) => row.path === here)?.folder) workspace.toggleFolder(here)
-      else void workspace.openEntry(here)
-    }
+    workspace.clearSelection()
+    return true
   }
 
   /** Only offered once there is something to take back. */
@@ -296,9 +334,26 @@
   }
 </script>
 
-<!-- Keys are read on the outermost list, where every row's keydown ends up. -->
+<!-- Keys are read on the outermost list, where every row's keydown ends up: the
+     selection keys here, and the walk every list in the app shares through the
+     action; see roving.ts. The rows carry `is-on` for the note that is open, so Tab
+     into the list arrives at the note being read rather than at the top of the
+     space. -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<ul onkeydown={depth === 0 ? onKey : undefined}>
+<ul
+  bind:this={list}
+  onkeydown={depth === 0 ? onKey : undefined}
+  use:roving={{
+    inner: depth > 0,
+    rows: '.row',
+    keyOf: walkKey,
+    sideways,
+    open: openRow,
+    peek: peekRow,
+    menu: (row, at) => row.dispatchEvent(at),
+    leave: leaveList,
+  }}
+>
   {#each entries as entry (entry.path)}
     <li>
       {#if workspace.renaming?.path === entry.path}
