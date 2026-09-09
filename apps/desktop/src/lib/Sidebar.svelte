@@ -604,12 +604,14 @@
     display: none;
   }
 
-  /* On a narrow screen the rail plus a 20rem sidebar leaves a sliver of the
-     document showing, which reads as a mistake rather than a peek. Past that
+  /* On a narrow drawer the rail plus a 20rem sidebar leaves a sliver of the
+     document showing, which reads as a mistake rather than a peek. Only where the
+     sidebar is a drawer: `data-narrow` is the width alone, and a desktop window
+     dragged this narrow keeps its columns. Past that
      point the drawer takes the whole width, and this fills whatever the rail
      does not - measuring it instead would need the rail's mobile width, which
      is not what `--rail-width` says. */
-  :global([data-narrow]) aside {
+  :global([data-drawer][data-narrow]) aside {
     flex: 1;
     width: auto;
     min-width: 0;

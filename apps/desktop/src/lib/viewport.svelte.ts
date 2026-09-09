@@ -7,7 +7,11 @@
  *  The device is settled here, once, and written on the document as well: every
  *  rule that used to key off a width now keys off `html[data-device]` and
  *  `html[data-layout]`, so the markup and the stylesheet cannot come to
- *  different conclusions about the same screen. */
+ *  different conclusions about the same screen.
+ *
+ *  It is settled from the machine rather than from the width; see `deviceFor`.
+ *  A window is not a device, and the width is only ever asked which handheld
+ *  this is. */
 
 import { startInsets } from './insets'
 import { isMobile } from './tauri'
@@ -18,29 +22,80 @@ import { isMobile } from './tauri'
  *  columns and a pointer. */
 export type Device = 'phone' | 'tablet' | 'desktop'
 
-/** At or below this a window is a phone, whatever is running it. */
-const PHONE = 720
-/** And in the app, at or below this on its narrow side: a phone laid on its
- *  side is 844 points wide and still a phone. */
+/** At or below this on its narrow side a handheld is a phone rather than a
+ *  tablet: a phone laid on its side is 844 points wide and still a phone, and a
+ *  small tablet held upright is 600 and still a tablet. */
 const PHONE_SIDE = 500
-/** A phone so narrow that the drawer, open, covers all of it. */
+/** A screen so narrow that the drawer, open, covers all of it. */
 const NARROW = 460
 
 /** How much of the window has to go before it counts as a keyboard rather than
  *  a few pixels of browser chrome sliding away. */
 const KEYBOARD_THRESHOLD = 120
 
-/** Which of the three a window this size is.
+/** The primary pointer is a finger rather than something that can hover. */
+export const FINGER = '(hover: none) and (pointer: coarse)'
+
+/** The tokens a handheld names itself with. A phone says `Mobile` in every
+ *  browser there is, Firefox says `Tablet` on one, and an Android tablet in
+ *  Chrome says only `Android`. Asking a browser for the desktop site takes every
+ *  one of these out of the string, which is exactly what makes the checkbox work
+ *  here.
  *
- *  Width decides first, so a desktop window dragged narrow gets the phone
- *  layout it has always had. Past that width a browser window is a desktop even
- *  on a touch screen, which is what the web app has always done and what a
- *  browser's conventions expect. Only in the app is the other side asked, and
- *  only to keep a phone laid on its side a phone. */
-export function deviceFor(width: number, height: number, mobile: boolean): Device {
-  if (width <= PHONE) return 'phone'
-  if (!mobile) return 'desktop'
+ *  `Macintosh` is in the list because an iPad calls itself one: since iPadOS 13
+ *  Safari there says Macintosh and nothing else, and so does Safari on an iPhone
+ *  asked for the desktop site. It only ever reaches this test with the glass
+ *  under a finger, which no Mac has - a Mac has a trackpad, and answers the
+ *  pointer query with `hover: hover`. */
+const HANDHELD =
+  /Android|iPhone|iPad|iPod|Mobile|Tablet|Silk|Kindle|BlackBerry|Opera Mini|IEMobile|Macintosh/
+
+/** What the app is told about the machine, as against what it can measure about
+ *  the window. */
+export interface Machine {
+  /** The native Android or iOS build, rather than a page in a browser. */
+  native: boolean
+  /** `navigator.userAgentData.mobile`: true on a phone, false on anything else
+   *  that answers it, and null in a browser that has no such thing to ask. */
+  handheld: boolean | null
+  /** The user agent string: the one signal every browser has, and the one that
+   *  "Desktop site" rewrites. */
+  agent: string
+  /** Whether the primary pointer is a finger; see FINGER. */
+  finger: boolean
+}
+
+/** Which of the three this is.
+ *
+ *  The machine decides, and the width only tells a phone from a tablet. That
+ *  order is the whole point: a window is not a device, and a reader who ticks
+ *  "Desktop site" is asking for the desktop app however small the screen is. So
+ *  a browser has to say it is a handheld - in `navigator.userAgentData.mobile`
+ *  or in the tokens of its user agent - and the glass has to be under a finger
+ *  rather than a pointer, and only then is the width asked which handheld it is.
+ *
+ *  Both halves have to agree, which is what keeps a desktop with a touch screen a
+ *  desktop: it has a mouse to hover with, so the pointer half says no. And a
+ *  desktop window dragged narrow stays a desktop, with `data-narrow` left to say
+ *  what the layout should do about the width.
+ *
+ *  The native builds are not asked any of this. An Android or iOS build is a
+ *  handheld because it is one, and only its shape is in question. */
+export function deviceFor(width: number, height: number, machine: Machine): Device {
+  if (!machine.native && !handheld(machine)) return 'desktop'
+
   return Math.min(width, height) <= PHONE_SIDE ? 'phone' : 'tablet'
+}
+
+/** Whether a browser is being read on a handheld at all. */
+function handheld(machine: Machine): boolean {
+  return machine.finger && (machine.handheld === true || HANDHELD.test(machine.agent))
+}
+
+/** `navigator.userAgentData`, which the DOM types have no name for. Only the one
+ *  field is ever read, and a browser without it answers nothing. */
+interface UserAgentData {
+  mobile?: boolean
 }
 
 class Viewport {
@@ -59,7 +114,9 @@ class Viewport {
   /** Taller than it is wide. Only a tablet reads it, to know whether there is
    *  room for the sidebar to stay open beside the note. */
   portrait = $state(false)
-  /** A phone so narrow that the drawer, open, covers all of it. */
+  /** A screen so narrow that a drawer, open, covers all of it. Width alone, so
+   *  it is there to be read by any layout that depends on the width - it says
+   *  nothing about which device this is. */
   narrow = $state(false)
   /** True while the app is running as an installed app rather than a tab. */
   installed = $state(false)
@@ -73,6 +130,11 @@ class Viewport {
   drawer = $derived(this.device === 'phone' || (this.device === 'tablet' && this.portrait))
 
   private started = false
+  /** Whether the primary pointer is a finger, as a query that can be asked again:
+   *  plugging a mouse into a tablet, or unplugging one, changes the answer and
+   *  with it which device this is. */
+  private glass: MediaQueryList | null = null
+
   /** The tallest the page has been since the window was last this wide, which
    *  is the page with no keyboard making room for itself. Per width, so turning
    *  the phone on its side starts the measurement again. */
@@ -87,8 +149,15 @@ class Viewport {
     // activity knows; see insets.ts.
     startInsets()
 
-    this.shape()
     const shape = () => this.shape()
+
+    // Asked before the first shape, since the shape is read off it. A browser
+    // that cannot answer the query at all reads as a pointer, which is the
+    // desktop the web app has always been.
+    this.glass = window.matchMedia(FINGER)
+    this.glass.addEventListener('change', shape)
+
+    this.shape()
     window.addEventListener('resize', shape)
     window.addEventListener('orientationchange', shape)
 
@@ -119,7 +188,7 @@ class Viewport {
   private shape() {
     const width = window.innerWidth
     const height = window.innerHeight
-    this.device = deviceFor(width, height, isMobile)
+    this.device = deviceFor(width, height, this.machine())
     this.portrait = height >= width
     this.narrow = width <= NARROW
 
@@ -128,6 +197,22 @@ class Viewport {
     root.toggleAttribute('data-touch', this.touch)
     root.toggleAttribute('data-drawer', this.drawer)
     root.toggleAttribute('data-narrow', this.narrow)
+  }
+
+  /** What this machine says about itself, read afresh each time the shape is
+   *  settled: the query above can change under a mouse being plugged in, and the
+   *  rest costs nothing to ask again. */
+  private machine(): Machine {
+    const said: (Navigator & { userAgentData?: UserAgentData }) | null =
+      typeof navigator === 'undefined' ? null : navigator
+    const hints = said?.userAgentData
+
+    return {
+      native: isMobile,
+      handheld: typeof hints?.mobile === 'boolean' ? hints.mobile : null,
+      agent: said?.userAgent ?? '',
+      finger: this.glass?.matches ?? false,
+    }
   }
 
   private measure(seen: VisualViewport) {

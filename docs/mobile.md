@@ -157,6 +157,46 @@ that writes a finger-sized number of its own fails.
 `apps/desktop/test/e2e/touch-scale.py` measures what that comes to on a phone, a
 tablet held both ways and a desktop, and photographs each light and dark.
 
+## Which device this is
+
+The machine decides, and the width only tells a phone from a tablet. A window is
+not a device: a reader who ticks "Desktop site" is asking for the desktop app
+however small their screen is, and a desktop window dragged narrow is still a
+desktop. `deviceFor` in `apps/desktop/src/lib/viewport.svelte.ts` is the whole of
+it, and it reads four things - the build, `navigator.userAgentData.mobile`, the
+user agent, and whether the primary pointer is a finger
+(`(hover: none) and (pointer: coarse)`).
+
+A browser has to say it is a handheld *and* have the glass under a finger. Both
+halves are needed: the user agent alone is what a developer's device toolbar
+fakes, and a coarse pointer alone is a desktop with a touch screen.
+
+| What is running it | Says it is mobile | Finger | Device |
+| --- | --- | --- | --- |
+| The Android or iOS build | not asked | not asked | `phone` under 500pt on its narrow side, else `tablet` |
+| Chrome or Safari on a phone | `Mobile` in the user agent, `mobile: true` | yes | `phone` |
+| Chrome on an Android tablet | only `Android`; `mobile: false` | yes | `tablet` |
+| Safari on an iPad | only `Macintosh`, since iPadOS 13 | yes | `tablet` |
+| A phone browser with "Desktop site" ticked | nothing: the tick rewrites the string | yes | `desktop` |
+| A desktop browser, window dragged narrow | nothing | no | `desktop` |
+| A desktop with a touch screen | nothing | either | `desktop` |
+
+Two of those rows are worth saying out loud. `Macintosh` counts as a handheld
+because an iPad calls itself one and no Mac ever answers the pointer query with a
+finger - a Mac has a trackpad, which hovers. And because iOS says `Macintosh`
+either way, a *phone* on iOS asked for the desktop site lands on the tablet
+layout rather than the desktop one: Safari there leaves nothing behind to tell an
+iPhone from an iPad. On Android, which is where the tick is worth having, it
+works exactly as the checkbox suggests.
+
+`data-narrow` is still the width and nothing but the width (460px and under), so
+any layout that depends on how much room there is can read it. It says nothing
+about the device: the rules that turn the drawer into the whole screen ask for
+`[data-drawer][data-narrow]`, so a narrow desktop window keeps its columns.
+
+`apps/desktop/src/lib/viewport.test.ts` covers every row of that table, and both
+halves of the pair on their own.
+
 ## The row along the top
 
 Three things, in the order a thumb reaches them.

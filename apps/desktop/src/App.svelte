@@ -694,9 +694,11 @@
 
   /* Full width rather than leaving a sliver of the document showing - and once
      it covers everything it is no longer a drawer over the note but the layer
-     beneath it. So here the note is what slides: off to the right to uncover
+     beneath it. Only where the panels are a drawer at all: `data-narrow` is the
+     width and nothing else, and a desktop window dragged this narrow still has
+     its columns. So here the note is what slides: off to the right to uncover
      the list, back over it when a note is chosen. */
-  :global([data-narrow]) .panels {
+  :global([data-drawer][data-narrow]) .panels {
     width: 100%;
     z-index: 1;
     transform: none;
@@ -704,32 +706,32 @@
     transition: none;
   }
 
-  :global([data-narrow]) .document {
+  :global([data-drawer][data-narrow]) .document {
     position: relative;
     z-index: 2;
     background: var(--bg);
     transition: transform var(--dur-base) var(--ease-out);
   }
 
-  :global([data-narrow]) .document.open {
+  :global([data-drawer][data-narrow]) .document.open {
     transform: translateX(100%);
   }
 
-  :global([data-narrow]) .document.open,
-  :global([data-narrow]) .document.dragging {
+  :global([data-drawer][data-narrow]) .document.open,
+  :global([data-drawer][data-narrow]) .document.dragging {
     box-shadow: -16px 0 40px rgb(0 0 0 / 0.3);
   }
 
-  :global([data-narrow]) .document.dragging {
+  :global([data-drawer][data-narrow]) .document.dragging {
     transition: none;
   }
 
-  :global([data-narrow]) .document.settling {
+  :global([data-drawer][data-narrow]) .document.settling {
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   /* Nothing to dim: the note is either over the list or off the screen. */
-  :global([data-narrow]) .scrim {
+  :global([data-drawer][data-narrow]) .scrim {
     display: none;
   }
 </style>

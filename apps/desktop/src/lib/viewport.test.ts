@@ -10,9 +10,38 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
  *
  *  The device class is the other: which of phone, tablet and desktop this
  *  window is, said once here and written on the document so no stylesheet can
- *  come to a different conclusion about the same screen. */
+ *  come to a different conclusion about the same screen. It is settled from the
+ *  machine and not from the width - a window is not a device - so what is covered
+ *  is every combination of the three signals that decide it. */
 
 const KEYS = 340
+
+/** What a machine says about itself. The defaults are a plain desktop browser:
+ *  no app around the page, a desktop user agent, and a pointer that hovers. */
+interface Kind {
+  /** The native Android or iOS build. */
+  app?: boolean
+  agent?: string
+  /** `navigator.userAgentData.mobile`, where the browser has it. */
+  mobile?: boolean | null
+  /** Whether the primary pointer is a finger. */
+  finger?: boolean
+}
+
+/** The strings the browsers actually send, trimmed to the tokens that matter. */
+const AGENTS = {
+  desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
+  phone:
+    'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36',
+  // Chrome on an Android tablet says nothing about being one: `Android` is the
+  // whole of it, and `userAgentData.mobile` is false.
+  tablet: 'Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 Chrome/140 Safari/537.36',
+  // What "Desktop site" rewrites the phone's into: a Linux desktop, with every
+  // handheld token gone.
+  asked: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
+  // An iPad, which since iPadOS 13 calls itself a Mac.
+  ipad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17 Safari/605',
+} as const
 
 /** The document as the store writes to it: the attributes it publishes, and
  *  the inline properties the insets would go into. */
@@ -31,7 +60,7 @@ function stubDocument() {
 }
 
 /** A window of a given size, with the two heights a test can move apart. */
-function stubWindow(width = 390, height = 844) {
+function stubWindow(width = 390, height = 844, finger = false) {
   const resized: (() => void)[] = []
   const turned: (() => void)[] = []
 
@@ -47,7 +76,12 @@ function stubWindow(width = 390, height = 844) {
     innerWidth: width,
     innerHeight: height,
     visualViewport: seen,
-    matchMedia: () => ({ matches: false, addEventListener: () => undefined }),
+    // Two queries are asked of this: whether the glass is under a finger, and
+    // whether the page is installed rather than a tab.
+    matchMedia: (query: string) => ({
+      matches: query.includes('pointer: coarse') ? finger : false,
+      addEventListener: () => undefined,
+    }),
     addEventListener: (_kind: string, run: () => void) => void turned.push(run),
     /** What the browser does when the keys come up over the page. */
     keysOver(pixels: number) {
@@ -73,13 +107,17 @@ function stubWindow(width = 390, height = 844) {
 
 /** A fresh store, because whether this is the phone app is decided once, when
  *  the module is first read. */
-async function started(mobile: boolean, width = 390, height = 844) {
-  const window = stubWindow(width, height)
+async function started(kind: Kind = {}, width = 390, height = 844) {
+  const window = stubWindow(width, height, kind.finger ?? false)
   const document = stubDocument()
   vi.resetModules()
-  vi.doMock('./tauri', () => ({ isMobile: mobile }))
+  vi.doMock('./tauri', () => ({ isMobile: kind.app ?? false }))
   vi.stubGlobal('window', window)
   vi.stubGlobal('document', document)
+  vi.stubGlobal('navigator', {
+    userAgent: kind.agent ?? AGENTS.desktop,
+    ...(kind.mobile === undefined || kind.mobile === null ? {} : { userAgentData: { mobile: kind.mobile } }),
+  })
 
   const { pageHeight, viewport } = await import('./viewport.svelte')
   viewport.start()
@@ -87,10 +125,23 @@ async function started(mobile: boolean, width = 390, height = 844) {
   return { pageHeight, viewport, window, root: document.documentElement }
 }
 
+/** The signals `deviceFor` reads, as one of these describes them. */
+async function machine(kind: Kind = {}) {
+  const { deviceFor } = await import('./viewport.svelte')
+
+  return (width: number, height: number) =>
+    deviceFor(width, height, {
+      native: kind.app ?? false,
+      handheld: kind.mobile ?? null,
+      agent: kind.agent ?? AGENTS.desktop,
+      finger: kind.finger ?? false,
+    })
+}
+
 beforeAll(async () => {
   // Reading the store compiles its runes, and on a cold cache that costs more
   // than a test is given. A hook is allowed longer, so the first read is here.
-  await started(false)
+  await started()
   vi.unstubAllGlobals()
 })
 
@@ -101,7 +152,7 @@ afterEach(() => {
 
 describe('the keyboard', () => {
   test('in a browser it covers the page, and the page says by how much', async () => {
-    const { viewport, window } = await started(false)
+    const { viewport, window } = await started()
     expect(viewport.typing).toBe(false)
     expect(viewport.keyboard).toBe(0)
 
@@ -116,7 +167,7 @@ describe('the keyboard', () => {
   })
 
   test('in the app it takes the height instead, and nothing is covered', async () => {
-    const { viewport, window } = await started(true)
+    const { viewport, window } = await started({ app: true })
 
     window.keysBelow(KEYS)
     expect(viewport.keyboard).toBe(0)
@@ -128,21 +179,21 @@ describe('the keyboard', () => {
   })
 
   test('a browser window made shorter by hand is not a keyboard', async () => {
-    const { viewport, window } = await started(false)
+    const { viewport, window } = await started()
 
     window.keysBelow(KEYS)
     expect(viewport.typing).toBe(false)
   })
 
   test('a few pixels of browser chrome sliding away is not one either', async () => {
-    const { viewport, window } = await started(false)
+    const { viewport, window } = await started()
 
     window.keysOver(60)
     expect(viewport.typing).toBe(false)
   })
 
   test('turning the phone is a new window, not a keyboard', async () => {
-    const { viewport, window } = await started(true)
+    const { viewport, window } = await started({ app: true })
 
     window.turned()
     expect(viewport.typing).toBe(false)
@@ -150,51 +201,86 @@ describe('the keyboard', () => {
   })
 })
 
+/** The machine first, the width second. Every case is one of the six ways a
+ *  screen reaches the app. */
 describe('which device this is', () => {
-  test('a narrow window is a phone, whatever is running it', async () => {
-    const { deviceFor } = await import('./viewport.svelte')
+  test('the app on a phone is a phone, either way up', async () => {
+    const device = await machine({ app: true })
 
-    expect(deviceFor(390, 844, true)).toBe('phone')
-    expect(deviceFor(390, 844, false)).toBe('phone')
-    expect(deviceFor(720, 900, false)).toBe('phone')
-  })
-
-  test('a wide one is a tablet in the app and a desktop in a browser', async () => {
-    const { deviceFor } = await import('./viewport.svelte')
-
-    expect(deviceFor(1280, 800, true)).toBe('tablet')
-    expect(deviceFor(1280, 800, false)).toBe('desktop')
-    expect(deviceFor(800, 1280, true)).toBe('tablet')
-  })
-
-  test('a phone on its side is still a phone, and a short browser window is not', async () => {
-    const { deviceFor } = await import('./viewport.svelte')
-
-    expect(deviceFor(844, 390, true)).toBe('phone')
-    // The same shape in a browser is somebody with a short window open.
-    expect(deviceFor(844, 390, false)).toBe('desktop')
+    expect(device(390, 844)).toBe('phone')
+    expect(device(844, 390)).toBe('phone')
   })
 
   test('the app on a tablet is a tablet, not a phone with a big screen', async () => {
-    const { viewport, root } = await started(true, 1280, 800)
+    const device = await machine({ app: true })
 
-    expect(viewport.device).toBe('tablet')
-    expect(viewport.touch).toBe(true)
-    expect(viewport.narrow).toBe(false)
-    expect(root.dataset.device).toBe('tablet')
+    expect(device(800, 1280)).toBe('tablet')
+    expect(device(1280, 800)).toBe('tablet')
+    // A small tablet held upright is still a tablet.
+    expect(device(600, 960)).toBe('tablet')
   })
 
-  test('a browser window this wide is a desktop, which is what the web app was', async () => {
-    const { viewport, root } = await started(false, 1280, 800)
+  test('a phone browser is a phone: it says so, and the glass says so', async () => {
+    const phone = await machine({ agent: AGENTS.phone, mobile: true, finger: true })
 
-    expect(viewport.device).toBe('desktop')
-    expect(viewport.touch).toBe(false)
-    expect(viewport.installed).toBe(false)
-    expect(root.attributes.has('data-touch')).toBe(false)
+    expect(phone(412, 915)).toBe('phone')
+    expect(phone(915, 412)).toBe('phone')
   })
 
-  test('a tablet held upright keeps the drawer; on its side it docks', async () => {
-    const upright = await started(true, 800, 1280)
+  /** A tablet's browser says `mobile: false` and puts no token but `Android` in
+   *  its user agent, so the string is what answers for it. */
+  test('a tablet browser is a tablet, though it calls itself no such thing', async () => {
+    const tablet = await machine({ agent: AGENTS.tablet, mobile: false, finger: true })
+    expect(tablet(800, 1280)).toBe('tablet')
+
+    // And an iPad, which calls itself a Mac: a Mac never has the glass under a
+    // finger, so the pair of signals is unambiguous.
+    const ipad = await machine({ agent: AGENTS.ipad, finger: true })
+    expect(ipad(1024, 768)).toBe('tablet')
+  })
+
+  test('a phone asked for the desktop site is a desktop, which is the point', async () => {
+    // The tick rewrites the user agent and widens the viewport. Nothing about
+    // the glass changes, so the user agent is what has to be believed.
+    const asked = await machine({ agent: AGENTS.asked, mobile: false, finger: true })
+
+    expect(asked(980, 1743)).toBe('desktop')
+    // Even at the width the phone had before the tick.
+    expect(asked(412, 915)).toBe('desktop')
+  })
+
+  test('a desktop window dragged narrow stays a desktop', async () => {
+    const desktop = await machine()
+
+    expect(desktop(420, 900)).toBe('desktop')
+    expect(desktop(320, 700)).toBe('desktop')
+    expect(desktop(1280, 800)).toBe('desktop')
+  })
+
+  test('a desktop with a touch screen is a desktop', async () => {
+    // Whether it reports a fine pointer beside the touch screen or nothing but
+    // a coarse one: no browser on it names a handheld.
+    expect((await machine({ finger: false }))(1280, 800)).toBe('desktop')
+    expect((await machine({ finger: true }))(1280, 800)).toBe('desktop')
+  })
+
+  test('and a touch screen alone is not a handheld either', async () => {
+    // The other half of the pair: a phone's user agent with a pointer that
+    // hovers is a desktop browser pretending, which is what a developer's
+    // device toolbar does.
+    const spoofed = await machine({ agent: AGENTS.phone, mobile: true, finger: false })
+    expect(spoofed(412, 915)).toBe('desktop')
+  })
+})
+
+describe('what the document is told', () => {
+  test('the app on a tablet: touch, and the drawer while it is upright', async () => {
+    const upright = await started({ app: true }, 800, 1280)
+
+    expect(upright.viewport.device).toBe('tablet')
+    expect(upright.viewport.touch).toBe(true)
+    expect(upright.viewport.narrow).toBe(false)
+    expect(upright.root.dataset.device).toBe('tablet')
     expect(upright.viewport.drawer).toBe(true)
     expect(upright.root.attributes.has('data-drawer')).toBe(true)
 
@@ -205,19 +291,35 @@ describe('which device this is', () => {
     expect(upright.root.attributes.has('data-touch')).toBe(true)
   })
 
-  test('a phone is a drawer either way up, and a narrow one says so', async () => {
-    const { viewport, window, root } = await started(true, 390, 844)
+  test('a desktop browser: no touch, and no drawer', async () => {
+    const { viewport, root } = await started({}, 1280, 800)
 
-    expect(viewport.drawer).toBe(true)
-    expect(viewport.narrow).toBe(true)
-    expect(root.attributes.has('data-narrow')).toBe(true)
+    expect(viewport.device).toBe('desktop')
+    expect(viewport.touch).toBe(false)
+    expect(viewport.installed).toBe(false)
+    expect(root.attributes.has('data-touch')).toBe(false)
+  })
 
-    window.turned()
-    expect(viewport.device).toBe('phone')
-    expect(viewport.drawer).toBe(true)
+  /** The width is still published, for whatever layout depends on the width. It
+   *  says nothing about which device this is: a desktop window this narrow wears
+   *  the same flag and keeps its columns. */
+  test('the width, whichever device it is', async () => {
+    const phone = await started({ app: true }, 390, 844)
+    expect(phone.viewport.narrow).toBe(true)
+    expect(phone.root.attributes.has('data-narrow')).toBe(true)
+
+    phone.window.turned()
+    expect(phone.viewport.device).toBe('phone')
+    expect(phone.viewport.drawer).toBe(true)
     // 844 wide is a phone on its side: past the narrow mark, still one column.
-    expect(viewport.narrow).toBe(false)
-    expect(root.attributes.has('data-narrow')).toBe(false)
+    expect(phone.viewport.narrow).toBe(false)
+    expect(phone.root.attributes.has('data-narrow')).toBe(false)
+
+    const window = await started({}, 420, 900)
+    expect(window.viewport.device).toBe('desktop')
+    expect(window.viewport.narrow).toBe(true)
+    expect(window.root.attributes.has('data-narrow')).toBe(true)
+    expect(window.root.attributes.has('data-drawer')).toBe(false)
   })
 })
 
@@ -225,7 +327,7 @@ describe('which device this is', () => {
  *  on screen, which on a touch device is not the window. */
 describe('a page that fills the screen', () => {
   test('is the viewport, and gives the keyboard its share back', async () => {
-    const { pageHeight, window } = await started(true)
+    const { pageHeight, window } = await started({ app: true })
     expect(pageHeight()).toBe('844px')
 
     window.keysOver(KEYS)
@@ -233,7 +335,7 @@ describe('a page that fills the screen', () => {
   })
 
   test('is the window everywhere else, which CSS can say on its own', async () => {
-    const { pageHeight } = await started(false, 1280, 800)
+    const { pageHeight } = await started({}, 1280, 800)
     expect(pageHeight()).toBe(undefined)
   })
 })
