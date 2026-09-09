@@ -60,3 +60,30 @@ describe('what a space offers', () => {
     expect(space).toContain("t('Leave space')")
   })
 })
+
+describe('what the plus in the tab strip offers', () => {
+  const tabs = read('lib/Tabs.svelte')
+  const entries = body(tabs, 'function newMenu()')
+
+  /** The plus button, from its class to the tag that closes it. */
+  const plus = tabs.slice(
+    tabs.indexOf('class="new"'),
+    tabs.indexOf('</button>', tabs.indexOf('class="new"')),
+  )
+
+  test('the two kinds a tab can hold, in the words the other menus use', () => {
+    expect(entries).toContain("t('New note')")
+    expect(entries).toContain("t('New canvas')")
+  })
+
+  test('a plain click still makes a note, so the menu is never in the way', () => {
+    expect(plus).toContain('onclick={() => makeNote()}')
+  })
+
+  /** A right click, the menu key a keyboard has - both arrive as `contextmenu` -
+   *  and a held finger, which is the right click a touch screen has. */
+  test('asked for the way every other menu in the app is', () => {
+    expect(plus).toContain('oncontextmenu={showNewMenu}')
+    expect(plus).toContain('use:longPress={showNewMenu}')
+  })
+})

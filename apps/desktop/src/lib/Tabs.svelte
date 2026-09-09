@@ -107,6 +107,33 @@
   const showMenu = (event: MouseEvent, tab: Tab) =>
     menu.show(event, tabMenu(tab), { title: tab.shown })
 
+  /** The two things a tab can be opened as. A click on the plus makes a note,
+   *  which is what a strip is mostly filled with; asking the plus for a menu is
+   *  where the other kind lives, so a canvas is one gesture away rather than a
+   *  second button in the row. */
+  function newMenu(): MenuEntry[] {
+    return [
+      { label: t('New note'), run: () => makeNote() },
+      { label: t('New canvas'), run: () => void makeCanvas() },
+    ]
+  }
+
+  /** In this pane, whichever way it was asked for: both open in whichever pane
+   *  has the keyboard, so the pane whose plus was pressed takes it first. */
+  function makeNote() {
+    workspace.focusPane(paneId)
+    workspace.openBlank()
+  }
+
+  function makeCanvas() {
+    workspace.focusPane(paneId)
+    return workspace.createCanvas()
+  }
+
+  /** A held finger is the right click a touch screen has, and the menu key is
+   *  the one a keyboard has: all three ask for the same list. */
+  const showNewMenu = (event: MouseEvent) => menu.show(event, newMenu(), { title: t('New') })
+
   /** Whether the drag over the panes is one this strip takes: a tab out of any
    *  strip, or notes out of the file list. */
   const takes = (transfer: DataTransfer | null) => isTabDrag(transfer) || isTreeDrag(transfer)
@@ -270,14 +297,17 @@
       </div>
     {/each}
 
+    <!-- A click makes a note. The menu is the other kind, asked for the way
+         every other menu in the app is: a right click, a held finger, or the
+         key a keyboard has for it. -->
     <button
       class="new"
       title={t('New note')}
       aria-label={t('New note')}
-      onclick={() => {
-        workspace.focusPane(paneId)
-        workspace.openBlank()
-      }}
+      aria-haspopup="menu"
+      onclick={() => makeNote()}
+      oncontextmenu={showNewMenu}
+      use:longPress={showNewMenu}
     >
       <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
     </button>
