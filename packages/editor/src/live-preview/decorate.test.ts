@@ -452,6 +452,19 @@ describe('extensions', () => {
     expect(concealed('words <!-- aside --> more')).toEqual(['<!-- aside -->'])
   })
 
+  test('hides Obsidian’s comment the same way', () => {
+    expect(concealed('%% a note %%')).toEqual(['%% a note %%'])
+    expect(concealed('words %% aside %% more')).toEqual(['%% aside %%'])
+  })
+
+  test('shows Obsidian’s comment again while the caret is inside it', () => {
+    expect(concealed('%% a note %%\n\nbody', 4)).toEqual([])
+  })
+
+  test('leaves a lone pair of percents alone', () => {
+    expect(concealed('a 50%% b')).toEqual([])
+  })
+
   test('shows the comment again while the caret is inside it', () => {
     expect(concealed('<!-- a note -->\n\nbody', 6)).toEqual([])
   })

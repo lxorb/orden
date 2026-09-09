@@ -35,8 +35,10 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       type, and a `-` or `+` after it saying whether it opens shut. A type
       nothing knows is still a callout, under its own name, so a theme can dress
       it with one rule and nothing has to be registered anywhere first
-- [x] HTML comments, hidden in the editor, in the reading view, in every export
-      and on a published page: a note to the writer stays one
+- [x] Comments, hidden in the editor, in the reading view, in every export, on a
+      published page and on the glasses: a note to the writer stays one. Both
+      spellings, the HTML one and Obsidian's `%%like this%%`, read by one scan
+      that leaves code exactly as written
 - [x] Page breaks for export
 - [x] Definition lists (Pandoc)
 - [x] Abbreviations (Pandoc)

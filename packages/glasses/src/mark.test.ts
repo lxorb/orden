@@ -198,6 +198,29 @@ describe('a quote', () => {
   })
 })
 
+/** A note to the writer is not read out to anybody, here either. Both spellings
+ *  go, and the offsets every line carries do not move; see comments.ts. */
+describe('a comment', () => {
+  test('is not set on the panel, whichever way it is written', () => {
+    expect(one('Words %% to myself %% here.\n')).not.toContain('to myself')
+    expect(one('Words <!-- to myself --> here.\n')).not.toContain('to myself')
+  })
+
+  test('leaves the words around it where they were', () => {
+    // Both spaces stay, the one before the comment and the one after it, which
+    // is what the renderer does with them too.
+    expect(lines('Words %% aside %% here.\n')).toEqual(['Words  here.'])
+  })
+
+  test('leaves the line it had to itself behind, so the note keeps its shape', () => {
+    expect(lines('%% a note %%\nSecond line.\n')).toEqual(['Second line.'])
+  })
+
+  test('inside a fence is what the fence is showing', () => {
+    expect(one('```\n%% kept %%\n```\n')).toContain('%% kept %%')
+  })
+})
+
 /** Everything else a note can hold. Nothing here is allowed to disappear. */
 describe('nothing in a note is dropped', () => {
   test('a table becomes columns that line up', () => {

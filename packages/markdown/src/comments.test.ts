@@ -55,6 +55,44 @@ describe('a comment in the source', () => {
   })
 })
 
+/** Obsidian's spelling of the same thing, read by the same scan. */
+describe('a percent comment', () => {
+  test('goes, and the words around it stay', () => {
+    expect(withoutComments('before %%aside%% after')).toBe('before  after')
+  })
+
+  test('goes when it spans several lines, and the lines stay', () => {
+    expect(withoutComments('one\n%% a\nb\nc %%\ntwo')).toBe('one\n\n\n\ntwo')
+  })
+
+  test('is left alone inside a fence, which is showing it', () => {
+    expect(withoutComments('```\n%% kept %%\n```')).toBe('```\n%% kept %%\n```')
+  })
+
+  test('is left alone inside backticks', () => {
+    expect(withoutComments('write `%% this %%` to hide a note')).toBe(
+      'write `%% this %%` to hide a note',
+    )
+  })
+
+  test('that never closes takes the rest of the note with it, as Obsidian does', () => {
+    expect(withoutComments('one\n\n%% open\ntwo')).toBe('one\n\n\n')
+  })
+
+  test('costs nothing to look for in a note that has none', () => {
+    const source = 'a note with 50 per cent and no comment\n'
+    expect(withoutComments(source)).toBe(source)
+  })
+
+  test('stands beside the other spelling in one note', () => {
+    expect(withoutComments('a <!-- one --> b %% two %% c')).toBe('a  b  c')
+  })
+
+  test('whichever opens first is the one that opens', () => {
+    expect(withoutComments('a %% b <!-- c %% d')).toBe('a  d')
+  })
+})
+
 describe('a comment on the page', () => {
   test('is nowhere in the rendered HTML', () => {
     const html = renderMarkdown('# Head\n\n<!-- a note to myself -->\n\nWords.\n')

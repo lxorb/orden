@@ -12,6 +12,7 @@ export const DOLLAR = 36
 export const BACKTICK = 96
 export const TILDE = 126
 export const EQUALS = 61
+export const PERCENT = 37
 export const BRACKET_OPEN = 91
 export const BRACKET_CLOSE = 93
 export const CARET = 94

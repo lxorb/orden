@@ -12,6 +12,7 @@ import {
   EQUALS,
   isSpace,
   NEWLINE,
+  PERCENT,
 } from './syntax'
 
 /** The constructs Typora writes that CommonMark and GFM do not have: a
@@ -28,6 +29,37 @@ import {
 
 // Lezer pairs opening and closing delimiters by object identity, so this has
 // to be one shared instance rather than a literal built per call.
+const COMMENT_DELIMITER = { resolve: 'PercentComment', mark: 'PercentCommentMark' }
+
+/** `%%a note to yourself%%`, Obsidian's comment.
+ *
+ *  The editor's half of it. What takes it out of everything anybody else reads
+ *  is `withoutComments` in @nib/markdown, which reads both spellings; this is
+ *  only so the writer sees it go the way an HTML comment does, and gets it back
+ *  the moment the caret is inside it.
+ *
+ *  A pair of delimiters, so one holds only as far as the paragraph it opened in.
+ *  A comment with a blank line inside it is still taken out of the page, and is
+ *  still its own words in the editor: what would buy the rest is a block parser
+ *  for a construct almost nobody writes that way. */
+const PercentComment: MarkdownConfig = {
+  defineNodes: [
+    { name: 'PercentComment', style: tags.comment },
+    { name: 'PercentCommentMark', style: tags.processingInstruction },
+  ],
+  parseInline: [
+    {
+      name: 'PercentComment',
+      // Ahead of emphasis, so nothing inside a comment is read as anything.
+      before: 'Emphasis',
+      parse(cx, next, pos) {
+        if (next !== PERCENT || cx.char(pos + 1) !== PERCENT) return -1
+        return cx.addDelimiter(COMMENT_DELIMITER, pos, pos + 2, true, true)
+      },
+    },
+  ],
+}
+
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }
 
 /** `==marked==`, Typora's highlight syntax. */
@@ -361,5 +393,6 @@ export {
   FrontMatter,
   Highlight,
   InlineMath,
+  PercentComment,
   Wikilink,
 }

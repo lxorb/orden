@@ -6,6 +6,7 @@ import {
   FrontMatter,
   Highlight,
   InlineMath,
+  PercentComment,
   Wikilink,
 } from './constructs'
 import { FencedCode } from './fences'
@@ -23,6 +24,9 @@ export const nibMarkdownExtensions = [
   // First, so `[[…]]` and `![[…]]` are one link rather than a link or an image
   // wrapped around another one.
   Wikilink,
+  // Before everything else that reads characters: what is inside a comment is
+  // not read as anything.
+  PercentComment,
   Highlight,
   InlineMath,
   BlockMath,

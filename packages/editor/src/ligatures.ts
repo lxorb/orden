@@ -92,6 +92,7 @@ const LEFT_ALONE = new Set([
   'HTMLBlock',
   'Comment',
   'CommentBlock',
+  'PercentComment',
   'ProcessingInstruction',
   'ProcessingInstructionBlock',
   'InlineMath',

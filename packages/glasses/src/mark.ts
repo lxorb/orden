@@ -22,7 +22,7 @@
  *  `firmware.ts`, which is also why a fence is written with `‘‘‘` rather than
  *  ``` - the font has no backtick, and three of them drew nothing at all. */
 
-import { lexMarkdown, stripFrontMatter } from '@nib/markdown'
+import { lexMarkdown, stripFrontMatter, withoutComments } from '@nib/markdown'
 import { calloutOf } from '@nib/markdown/callouts'
 import type { Token, Tokens } from 'marked'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
@@ -920,10 +920,19 @@ function footnote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void 
  *  though front matter is not set: it is the note's own metadata and a page does
  *  not show it either. */
 export function markLines(source: string, options: MarkOptions): Line[] {
-  const body = stripFrontMatter(source)
-  // The locator searches the whole file, so an offset it finds is the file's.
-  const sheet = new Sheet(new Lines(source), options.inner, options)
-  walk(lexMarkdown(body), new Locator(source), { depth: 0, quote: 0 }, sheet)
+  // A note to the writer is not read out on a pair of glasses either, so it goes
+  // before anything is measured. Everything below counts offsets against this
+  // rather than against the file, which in a note that holds a comment moves the
+  // lines under it along by what the comment took. Blanking it instead would
+  // keep those offsets exact and leave a run of spaces mid-sentence, or an
+  // indent deep enough to read as code: a gap on a 27 pixel line is worse than
+  // a tap landing a few characters early.
+  const kept = withoutComments(source)
+  const body = stripFrontMatter(kept)
+  // The locator searches the whole of what was kept, so an offset it finds is
+  // an offset into that.
+  const sheet = new Sheet(new Lines(kept), options.inner, options)
+  walk(lexMarkdown(body), new Locator(kept), { depth: 0, quote: 0 }, sheet)
 
   return sheet.lines
 }

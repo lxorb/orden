@@ -149,6 +149,7 @@ class Decorator {
         return this.htmlImage(node)
       case 'Comment':
       case 'CommentBlock':
+      case 'PercentComment':
         // A note to the writer rather than to the reader. Hidden here the way it
         // is hidden in the reading view, in every export and on a published page
         // - see `withoutComments` in @nib/markdown - and shown again the moment
