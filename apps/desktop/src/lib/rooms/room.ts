@@ -48,12 +48,30 @@ export interface Joining {
   /** The hash of a string. Asked of the app because the platform answers it
    *  asynchronously and a room should not have a second way of doing it. */
   digest: (text: string) => Promise<string>
+  /** Whether the document above is still on the file this room was joined for.
+   *
+   *  A document outlives the file in it: the one tab that previews a note takes
+   *  another note on in the same document rather than being swapped for another,
+   *  and which document belongs in which room is worked out in an effect - which
+   *  cannot run inside the click that moved it. So for that beat the room is still
+   *  joined to words that are now another note's, and this is what says so.
+   *
+   *  Everything a room does to the words asks this first. Without it, a single
+   *  click from one note to the next offers the second note's words to the first
+   *  note's room, which settles them into the account, which is one note
+   *  overwritten by another. See rooms.svelte.ts, which answers it. */
+  holds: () => boolean
 }
 
 export class Room {
   private readonly door: RoomDoor
   private unbind: (() => void) | null = null
   private scheme: 'dark' | 'light'
+  /** Whether this room has been left. A greeting is a round trip and the answer to
+   *  it lands whenever it lands, which can be after the last tab holding the note
+   *  closed or after the document moved on; what it was about to do must not happen
+   *  behind the room's back. */
+  private left = false
 
   constructor(private readonly joining: Joining) {
     this.scheme = joining.scheme
@@ -106,11 +124,19 @@ export class Room {
   }
 
   leave() {
+    this.left = true
     this.unbind?.()
     this.unbind = null
     this.door.leave()
     this.joining.note.announce([setPeers.of([])])
     this.joining.onPeers(0)
+  }
+
+  /** Whether this room is still about the words it was joined to: it has not been
+   *  left, and the document is still on the file it was joined for. Asked before
+   *  anything at all is done to the words; see `Joining.holds`. */
+  private holds(): boolean {
+    return !this.left && this.joining.holds()
   }
 
   /** The room's words and this device's file, brought together, and the note joined
@@ -120,6 +146,12 @@ export class Room {
     const { note, hash, digest } = this.joining
     const asked = note.text.toString()
     const untouched = hash !== null && (await digest(asked)) === hash
+
+    // The hash is answered asynchronously, and a click can land inside that
+    // moment: the tab moves on to another note and this room is about a file these
+    // words are no longer. Neither text is anybody's news then, and binding would
+    // leave the note writing into a room it has left.
+    if (!this.holds()) return
 
     // Both texts are read after the hash rather than before it. The hash is
     // answered asynchronously, and in that moment a keystroke may land here and
@@ -135,7 +167,7 @@ export class Room {
       this.door.doc.transact(() => replace(this.text, met.change), HERE)
     }
 
-    this.unbind = bind(note, this.text)
+    this.unbind = bind(note, this.text, () => this.holds())
   }
 
   /** Who is in the note, told to every pane showing it and counted for the tab. */

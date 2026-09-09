@@ -128,6 +128,9 @@ function joining(file: string, words: string) {
     scheme: 'dark',
     onPeers: () => undefined,
     digest: (text: string) => Promise.resolve(text),
+    // One note the whole way through here; a tab moving on to another one is
+    // switching.test.ts.
+    holds: () => true,
   })
 
   return { note, room, server, socket: socketOf() }

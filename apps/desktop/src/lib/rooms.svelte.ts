@@ -178,6 +178,17 @@ class Rooms {
       return
     }
 
+    // Which note this document is on, as of now. A document outlives the file in
+    // it: the one tab that previews a note takes another note on rather than being
+    // swapped for another document, and `follow` above is an effect, so it hears
+    // about that a beat after the click. For that beat the room below is joined to
+    // words that are another note's, and `holds` is how it knows: the file it was
+    // joined for, and how many notes the document had held by then. See
+    // NoteDoc.arrivals, and rooms/room.ts.
+    const path = open.note.path
+    const arrivals = open.note.arrivals
+    const holds = () => open.note.path === path && open.note.arrivals === arrivals
+
     // The words themselves are not handed over: the room reads them from the
     // document when it has something to compare them with, which is a round trip
     // later and may be several keystrokes later. See rooms/room.ts.
@@ -186,6 +197,7 @@ class Rooms {
       note: open.note.live,
       hash: open.hash,
       digest: sha256,
+      holds,
     })
 
     this.held.set(key, { room, noteId: open.noteId, note: open.note })

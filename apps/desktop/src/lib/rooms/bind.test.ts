@@ -62,7 +62,9 @@ class Device {
     if (met.kind === 'take') this.note.arrived([met.change])
     else if (met.kind === 'offer') this.doc.transact(() => replace(this.text, met.change), 'here')
 
-    this.unbind = bind(this.note, this.text)
+    // A device here is one note the whole way through, so the binding is always
+    // about the file it was made for; switching between notes is switching.test.ts.
+    this.unbind = bind(this.note, this.text, () => true)
   }
 
   /** The words as the note holds them, which is what a pane would be showing. */

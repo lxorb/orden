@@ -62,6 +62,16 @@ export function replacements(delta: readonly Op[]): Replacement[] {
   return edits
 }
 
+/** A change that was refused because the document has moved on to another file.
+ *
+ *  Said out loud rather than swallowed. Nothing is lost by refusing - the room
+ *  about to be joined is the one these words belong to - but a binding still being
+ *  asked after the document left it means something let go a beat too late, and
+ *  that is worth seeing in a console rather than inferring from a note. */
+function moved(what: string) {
+  console.warn(`nib: ${what} was refused - the document is on another note now`)
+}
+
 /** One replacement, made to the shared text. What folding a note written in while
  *  away into the room comes down to, and the piece a change set is made of. */
 export function replace(text: Y.Text, change: Replacement) {
@@ -83,18 +93,36 @@ function apply(text: Y.Text, changes: ChangeSet) {
   })
 }
 
-/** Joins a note to a room's text. Answers how to part them again. */
-export function bind(note: SharedDoc, text: Y.Text): () => void {
+/** Joins a note to a room's text. Answers how to part them again.
+ *
+ *  `holds` is whether the document is still the file this binding was made for. A
+ *  document outlives the file in it - the one tab that previews a note takes
+ *  another note on rather than being swapped for another document - and the
+ *  pairing of documents to rooms is worked out in an effect, which cannot be
+ *  synchronous with the click that moves it. So for the beat between the two, this
+ *  is the only thing that knows: a change either way is about a file that is no
+ *  longer these words, and applying it would write one note over another. See
+ *  room.ts, and `adopt` in workspace/documents.svelte.ts. */
+export function bind(note: SharedDoc, text: Y.Text, holds: () => boolean): () => void {
   const doc = text.doc
   if (!doc) throw new Error('a shared text with no document behind it')
 
   note.onLocal = (changes: ChangeSet) => {
+    if (!holds()) {
+      moved('a change made in it')
+      return
+    }
+
     doc.transact(() => apply(text, changes), HERE)
   }
 
   const heard = (event: Y.YTextEvent, transaction: Y.Transaction) => {
     // Ours, on its way out. It is already in the note.
     if (transaction.origin === HERE) return
+    if (!holds()) {
+      moved('a change from another device')
+      return
+    }
 
     const edits = replacements(event.delta as readonly Op[])
     if (edits.length) note.arrived(edits)
