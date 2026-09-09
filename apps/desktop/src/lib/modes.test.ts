@@ -150,10 +150,12 @@ describe('the glasses settings', () => {
   const saved = () =>
     JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
 
-  test('start a page at H2 and above, with numbers and a page count', () => {
+  test('start a page at H2 and above, with the note’s own line numbers', () => {
     expect(modes.glassesBreak).toBe(2)
     expect(modes.glassesLineNumbers).toBe(true)
-    expect(modes.glassesPageNumber).toBe(true)
+    // There is no page-number setting: the scroll mode decides it. See
+    // even/settings.ts.
+    expect(modes.glassesScroll).toBe('paged')
   })
 
   test('start with the microphone off, which is the only defensible default', () => {
@@ -190,13 +192,11 @@ describe('the glasses settings', () => {
     expect(glassesBreak(undefined)).toBeNull()
   })
 
-  test('take the three switches and write them down', () => {
+  test('take the two switches and write them down', () => {
     modes.setGlassesLineNumbers(false)
-    modes.setGlassesPageNumber(false)
     modes.setGlassesVoice(true)
 
     expect(saved().glassesLineNumbers).toBe(false)
-    expect(saved().glassesPageNumber).toBe(false)
     expect(saved().glassesVoice).toBe(true)
   })
 

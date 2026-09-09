@@ -41,7 +41,6 @@ const WORLD: World = {
   pageNumber: () => true,
   atSpace: () => '',
   atNote: () => '',
-  whole: () => null,
 }
 
 class FakeSettings implements Settings {

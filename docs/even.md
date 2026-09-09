@@ -319,8 +319,12 @@ So the page number sits at the **right of the head band**, beside the corner the
 microphone lights, and the last line of the panel is the note. A text container has
 no alignment, so the gap between the section and the number is padded in the
 firmware's own measure - which is what makes the number land on the right pixel
-whatever the section is called. A word just heard takes the head for a moment,
-because that is the one thing more urgent than where you are.
+whatever the section is called, and the microphone's dot sits immediately to its
+right. A word just heard takes the head for a moment, because that is the one thing
+more urgent than where you are - but **the microphone never does**. It used to flash
+"Voice on" and "Voice off" there, and Emil found "Voice off" sitting where the
+section he was reading should have been. Turning it on or off is answered by the dot
+appearing and going, which is where it always was and what a corner light is for.
 
 The rule and the section are worth a line each. The rule is the only structure a
 panel with one font in one size has, and a section heading that stays put while its
@@ -543,41 +547,65 @@ The page on the glasses and the scroll on the phone are one place in the note.
   nothing at all, which is what `Session.holds` is for.
 - Turning a page on the glasses scrolls the phone to the same words, through the
   app's own `workspace.goto`.
-- A **card** in the plugin marks exactly the region on the panel: a white card over
-  those words with the rest of the note faded behind it, drawn from the editor's own
-  `coordsAtPos` so it lands on the pixel the words do. A card rather than the
-  outline it used to be, because an outline is a border somebody has to look for and
-  this has to answer a glance.
-- The card **follows the words while the finger drags and springs into place when it
-  lets go**, over 170 ms. There is no event for a scroll that has stopped, so 90 ms
-  of quiet after the last one is the whole of what "let go" can mean; a card that
-  eased its way down a drag would lag behind the words it is around. It is hidden
-  the moment anything is over the note - a sheet, the settings, the sign-in - because
-  a mark on a note has no business floating over a panel. The states are
+- A **frame** in the plugin marks exactly the region on the panel: a rounded outline
+  in the accent around those words, drawn from the editor's own `coordsAtPos` so it
+  lands on the pixel the words do, and **nothing at all over the words themselves**.
+- It **follows the words while the finger drags and springs into place when it lets
+  go**, over 170 ms. There is no event for a scroll that has stopped, so 90 ms of
+  quiet after the last one is the whole of what "let go" can mean; a frame that eased
+  its way down a drag would lag behind the words it is around. It is hidden the moment
+  anything is over the note - a sheet, the settings, the sign-in - because a mark on a
+  note has no business floating over a panel. The states are
   `even/frame.svelte.ts`, which is the one part of it that is a decision rather than
   a measurement and the one part with a test.
+
+  For one release it was a white card with the rest of the note faded behind it, and
+  that is worth writing down because of how it failed. The hole in the fade was cut
+  with `mix-blend-mode: destination-out` - which is not a blend mode: the value
+  belongs to canvas compositing, the declaration was dropped, no hole was ever cut,
+  and every note on the phone took a shade over the whole of it. Emil: *"the note on
+  the phone is very dark and hardly visible."* A mark on a note is not worth one pixel
+  of the note's own contrast, so it is an edge and it will stay one.
 
 The two ends would chase each other round the note, so a page turn opens a 500 ms
 window in which a scroll on the phone is the plugin's own doing and is ignored.
 
-**Or the glasses can do the scrolling.** A setting, `paged` or `native`:
+**Or the note can scroll instead of turning.** A setting, `paged` or `native`:
 
 - `paged`, the default, is all of the above. The app cuts the note into panels of
-  exactly eight lines, sends one, and a flick of a temple sends the next. Every page
-  is one send of about 83 ms and nothing on the glass was wrapped by anybody but the
-  app.
-- `native` hands the **whole note over as one band** and lets the firmware scroll it.
-  One send for the note rather than one per page, and the scrolling is the firmware's
-  own, which is smoother than a radio can be.
+  eight lines, sends one, and a flick of a temple sends the next. A section starts at
+  the top of a panel, its heading stays above every page of it, and the head says
+  which page of how many.
+- `native` **scrolls**. The note is cut a line at a time and the panel is filled from
+  wherever the reader is, so a flick moves the note by one of its own lines rather
+  than by a whole panel. There are no pages, so the head says no page number: a note
+  moving a line at a time has no page three of twelve, and a number counting rows
+  would say 41/380 and mean nothing.
 
-What the firmware actually does with a band longer than its container is not
-documented and no offset is reported back, so in `native` the app goes on paging the
-note for itself underneath: the page it thinks the reader is on is what the card on
-the phone marks, and a flick of a temple still moves it. The line numbers go, because
-a column of numbers cannot line up with a band somebody else is scrolling. If the
-firmware scrolls, the reader sees it scroll; if it does not, they see the first panel
-of the note and `paged` is one setting away. **This is the one thing in this document
-that has not been seen working on a device.**
+The second one was written the other way round first - the whole note in one band for
+the firmware to scroll itself - and that is worth writing down, because it is the
+first thing in this file that a device disproved. Emil: *"native glasses scroll mode
+is broken on the device: the bar at the side shows but scrolling does nothing."* The
+bar was the firmware saying the band overflowed its container; nothing scrolled it.
+There is no call in the SDK that does, and a flick only turned a page the reader could
+not see, because the band on the glass was the same band either way.
+
+So the app scrolls it, which is one `textContainerUpgrade` of about 83 ms a flick -
+the same as a page turn - and it moves. `TextContainerUpgrade` does carry
+`contentOffset` and `contentLength`, which if the host honours them would make a
+scroll a few bytes instead of a panel of words; both are undocumented, neither is
+used, and that is the one saving left on the table here.
+
+Two things came out of making it work, and both are better everywhere:
+
+- **A row carries the offset of its own line of the file.** Every row of a
+  soft-wrapped paragraph used to claim to begin where the paragraph did, so nothing
+  downstream could tell one row from another - which is why the frame on the phone sat
+  still while the note moved.
+- **A part of a block is glued to the one before it only where the split can only be
+  a hard break the author wrote**, which is the top compaction. At the other two a
+  line of the note may start a page of its own; glued, a thirty line paragraph was one
+  unbreakable run and a scroll moved by the whole of it.
 
 ![The plugin, with the frame around the page on the glasses](even/phone-frame.png)
 
@@ -633,22 +661,29 @@ things were wrong and both were invisible.
    a moment after starting was left running, and nothing fell back.
 
 Neither of those could be seen from outside, and nobody can read a log off a pair of
-glasses. So the evidence is now **real UI on the phone**, beside the voice
-indicator: which way the plugin is listening (`Phone recogniser`, `Glasses
-microphone`, `No way to listen`), how many frames of sound have actually arrived -
-**zero on the glasses path is the whole diagnosis** - the last thing it heard or
-`Nothing heard` when an utterance came back empty, and one short line when something
-refused, with the platform's own error name beside it, untranslated.
+glasses. So the plugin keeps the evidence: which way it is listening (`webview`,
+`glasses`, `none`), how many frames of sound have actually arrived - **zero on the
+glasses path is the whole diagnosis** - the last thing it heard, whether an utterance
+came back empty, and one line about whatever refused with the platform's own error
+name beside it.
 
-The microphone being open with no sound arriving is the case that used to look
-exactly like everything working, so it says so on its own: **two seconds** with no
-frame and the line reads "no sound from the glasses". Frames come fifty times a
-second, so two seconds of nothing is not a pause.
+The microphone being open with no sound arriving is the case that looks exactly like
+everything working, so it is said on its own: **two seconds** with no frame and the
+answer reads "no sound from the glasses". Frames come fifty times a second, so two
+seconds of nothing is not a pause.
 
-One screenshot of that line says which of the four steps failed, which is what it is
-for.
+For one release all of that was **drawn on the phone**, in a panel beside the note.
+Emil: *"that ugly listening overlay."* He is right: it is four facts that answer a
+question nobody asks while a note is going well, and the price was a panel over the
+reading. So it is not drawn at all. It lives in an element the page never shows -
+`[data-voice]`, and `hidden` - which the browser drive reads and a reader never
+sees, and which costs nothing on screen at all. **Nothing about the voice is drawn on
+the phone**: no listening panel, no transcript, and not the question or the answer
+either.
 
-![What the phone says about the voice](even/phone-voice.png)
+The panel on the glasses is where a reader is told: the dot in the corner while the
+microphone is open, the word just heard in the head for a moment, and the answer on
+its own screen.
 
 The commands, which are a table and a couple of numbers rather than a model:
 
@@ -1182,7 +1217,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 60 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 67 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1192,6 +1227,12 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 60 checks:
   level one, the note's own line numbers in their column, **which page of how many at
   the right of the head beside the microphone's corner**, no foot band at all, and
   never more than eight rows in the body;
+- the note on the phone has **nothing laid over it**: one frame around the words the
+  glasses are showing, sized to them, and no element covering the page;
+- the glasses' own scroll mode was chosen from the settings on the glasses, the page
+  number went with the pages, **a flick moved the note by one of its own lines** with
+  everything below it still there, and choosing the paged mode back brought the number
+  back;
 - a scroll off a temple turned the page, and **only the bands that changed were
   sent**: three of them, about 249 ms of radio, with the head and the rule left
   alone because the section had not changed;
@@ -1203,12 +1244,12 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 60 checks:
   space listed the spaces; **the notes opened with the cursor on the note the reader
   was in**; change note opened a folder where it stood and then opened a note;
 - the settings screen listed every setting with what it says now and the reset at the
-  foot of them; a tap on a toggle flipped it where it stood; **the page number left
-  the panel at once and came back at once**, which is the bug Emil found;
-- the phone said which way the plugin was listening, so one screenshot answers where
-  the voice breaks;
-- the region on the panel was marked as a **card with the rest of the note faded**,
-  sized to what the glasses show;
+  foot of them, and **no page number among them**; a tap on a toggle flipped it where
+  it stood and flipping it back was the same as never having touched it, which is the
+  mechanism behind the bug Emil found;
+- **nothing about the voice was drawn on the phone** - no listening panel, no
+  question, no answer - and the diagnostics were still readable from the element the
+  page never shows;
 - the microphone opened, the corner lit, and six spoken commands were obeyed:
   next, back, spaces view, close, "open page three" and "go to line forty";
 - a spoken question put the question up, asked **Nib** for it - the question, the

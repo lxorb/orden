@@ -108,10 +108,6 @@ class Fake implements World {
   note_ = ''
   atSpace = () => this.space_
   atNote = () => this.note_
-  /** The whole note, when the glasses are scrolling it themselves. Null here: the
-   *  paged mode is what every one of these tests is about. */
-  wholeNote: string | null = null
-  whole = () => this.wholeNote
 
   numbered = true
 }
@@ -294,7 +290,10 @@ describe('the modal', () => {
     expect(body).toContain('Settings')
   })
 
-  test('turns the microphone on and says so, then closes', () => {
+  /** And says so with the dot in the corner and nothing else. It used to flash the
+   *  words in the head, where the heading a reader is under belongs: Emil, on his own
+   *  glasses, found "Voice off" sitting where the section should be. */
+  test('turns the microphone on, and the head keeps the heading', () => {
     shell.handle('hold')
     shell.handle('down')
     shell.handle('down')
@@ -302,7 +301,10 @@ describe('the modal', () => {
 
     expect(world.on).toBe(true)
     expect(shell.screen.kind).toBe('note')
-    expect(shell.view().head.trimStart().startsWith('Voice on')).toBe(true)
+    expect(shell.view().head).toContain('THE TITLE')
+    expect(shell.view().head).not.toContain('Voice')
+    // The dot is the answer, beside the page number.
+    expect(shell.view().mic).toBe('●')
   })
 
   test('offers to turn it off once it is on', () => {
@@ -414,20 +416,12 @@ describe('the view', () => {
     expect(shell.view().head).toBe('Work')
   })
 
-  /** The scroll mode the glasses do themselves. Nothing about the rest of the
-   *  screen changes, which is the point: the app goes on paging the note underneath,
-   *  so the frame on the phone still marks a page-sized window and a flick of a
-   *  temple still moves it. */
-  test('hands the whole note over when the glasses are scrolling it', () => {
-    world.wholeNote = 'every row of the note, all of it, in one band'
+  test('leaves the page number out where there are no pages to count', () => {
+    world.numbered = false
 
-    const view = shell.view()
-    expect(view.body).toBe('every row of the note, all of it, in one band')
-    // And no numbers: a column of them cannot line up with a band somebody else is
-    // scrolling.
-    expect(view.nums).toBe('')
-    // The head still says where the reader is.
-    expect(view.head).toContain('THE TITLE')
+    const head = shell.view().head
+    expect(head).toContain('THE TITLE')
+    expect(head.trimEnd()).not.toMatch(/\d+\/\d+$/)
   })
 
   test('lights the corner while the microphone is open', () => {

@@ -22,22 +22,10 @@
    *  the glasses go to the page that holds it. */
 
   import { onMount } from 'svelte'
-  import { cubicOut } from 'svelte/easing'
-  import { fly } from 'svelte/transition'
   import { bridge } from './bridge.svelte'
   import { Frame, MOVE } from './frame.svelte'
-  import { key, t } from '../i18n.svelte'
   import { views } from '../views.svelte'
-  import type { Path } from './voice'
   import { workspace } from '../workspace.svelte'
-
-  /** Which way the plugin is listening, in a word a reader can act on. Named here
-   *  rather than in voice.ts, which has no locale in it. */
-  const PATH_WORDS: Record<Path, string> = {
-    webview: key('Phone recogniser'),
-    glasses: key('Glasses microphone'),
-    none: key('No way to listen'),
-  }
 
   const voice = $derived(bridge.voiceState)
 
@@ -205,67 +193,33 @@
   })
 </script>
 
-<!-- What the glasses are hearing and saying, on the phone too. Nothing at all
-     while the microphone is shut and nothing has gone wrong, which is every moment
-     nobody asked for it.
-
-     The second line is the evidence path, and it is here rather than in a
-     diagnosis panel because nobody can read a log off a pair of glasses: "voice
-     mode simply doesn't work whatever I say" is four faults wearing one face, and
-     one screenshot of this line says which. Which way the plugin is listening,
-     how much sound has actually arrived, and what refused. -->
-{#if bridge.listening || bridge.asked || voice.trouble}
-  <div class="voice" spellcheck="false" transition:fly={{ y: 12, duration: 170, easing: cubicOut }}>
-    {#if bridge.asked}
-      <p class="asked">{bridge.asked}</p>
-      {#if bridge.answer}
-        <p class="answer">{bridge.answer.split('\n')[0]}</p>
-      {:else}
-        <p class="answer waiting">{t('Thinking')}</p>
-      {/if}
-    {:else}
-      <span class="dot" class:off={!voice.on} aria-hidden="true"></span>
-      <div class="said">
-        <p class="asked">{voice.heard || t('Listening')}</p>
-        <p class="path">
-          {t(PATH_WORDS[voice.path])}
-          {#if voice.path === 'glasses' && voice.on}
-            · {voice.frames === 0
-              ? t('no sound yet')
-              : t('{count} frames', { count: voice.frames })}
-          {/if}
-          {#if voice.nothing}· {t('Nothing heard')}{/if}
-          {#if voice.trouble}· <span class="bad">{t(voice.trouble)}</span>{/if}
-          {#if voice.detail}<span class="code"> {voice.detail}</span>{/if}
-        </p>
-      </div>
-    {/if}
-  </div>
-{/if}
+<!-- Which way the plugin is listening, and how far it got, for the browser drive
+     and for nothing else. Hidden: it is four facts that answer "why did the voice do
+     nothing", and they cost a reader a panel over their note to look at. Emil, on his
+     own glasses, on that panel: "that ugly listening overlay". So it went, and the
+     facts are still here, at no cost on screen at all. See voice.ts. -->
+<div
+  hidden
+  data-voice="{voice.path} {voice.on ? 'on' : 'off'} {String(voice.frames)} frames{voice.nothing
+    ? ' nothing'
+    : ''}{voice.trouble ? ` ${voice.trouble}` : ''}{voice.detail ? ` ${voice.detail}` : ''}"
+  data-heard={voice.heard}
+></div>
 
 <!-- What the glasses are showing, marked on the note.
 
-     A white card over the region with everything outside it faded, rather than an
-     outline around it: an outline is a border somebody has to look for, and the
-     point of this is that a glance says "the glasses are showing *that*". The
-     screenshot Emil sent is what it looks like.
+     One outline in the accent around exactly those characters, and **nothing over the
+     words**. It was a white card with the rest of the note faded behind it, and on a
+     phone that came out as a note nobody could read: the hole in the fade was cut with
+     `mix-blend-mode: destination-out`, which is not a blend mode at all - the value
+     belongs to canvas compositing - so no hole was ever cut and the whole note took a
+     shade over it. Emil: "the note on the phone is very dark and hardly visible."
 
-     Two layers, so the card is not a rectangle of paint over the words: the fade is
-     four shades over the note with a hole where the card is, and the card itself is
-     the shadow and the rounded edge. Hidden the moment anything covers the note, so
-     it never floats over the sidebar or a sheet. -->
+     So the mark is back to what it was and will stay there. A frame around the words
+     costs the reading nothing, and nothing that dims a note is worth a mark on it. -->
 {#if box && !frame.covered}
-  <div class="fade" class:moving={frame.moving} aria-hidden="true" style:--move="{MOVE}ms">
-    <div
-      class="hole"
-      style:top="{box.top}px"
-      style:left="{box.left}px"
-      style:width="{box.width}px"
-      style:height="{box.height}px"
-    ></div>
-  </div>
   <div
-    class="card"
+    class="frame"
     class:moving={frame.moving}
     class:cut={box.cut}
     aria-hidden="true"
@@ -278,148 +232,31 @@
 {/if}
 
 <style>
-  /* Everything outside the region, quietened. One element with a hole in it rather
-     than four strips: `clip-path` with the hole cut out of it is one paint and no
-     arithmetic about which strip is where.
+  /* The app's own shape: the same radius, the same accent, the same easing as
+     anything else that marks a region. Fixed, because the measurement is in the
+     window's pixels and a plugin must not have to find a positioned ancestor inside
+     somebody else's component.
 
-     Fixed, because the measurement is in the window's pixels and a plugin must not
-     have to find a positioned ancestor inside somebody else's component. Below the
-     card and above the note; nowhere near the sidebar or a sheet, which sit far
-     above both and are what `covered` is for. */
-  .fade {
-    position: fixed;
-    z-index: 2;
-    inset: 0;
-    background: var(--surface);
-    opacity: 0.62;
-    pointer-events: none;
-  }
-
-  /* The hole. Painted as the one thing that is *not* faded: the mask is the fade's
-     own background, cut away where the card is. */
-  .hole {
-    position: fixed;
-    border-radius: var(--radius-md);
-    background: #000;
-    /* Cuts the hole out of the parent's paint rather than drawing over it. */
-    mix-blend-mode: destination-out;
-  }
-
-  /* The card. The words are the note's own, showing through: this is the edge and
-     the lift, nothing more. */
-  .card {
+     No background and no shadow. The words inside it are the note's own and are read
+     through it, so the frame is an edge and nothing else; see the markup above for
+     what happened the one time it was more than that. */
+  .frame {
     position: fixed;
     z-index: 3;
     box-sizing: border-box;
+    border: 1.5px solid var(--accent);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    opacity: 0.5;
     pointer-events: none;
   }
 
-  /* While the page is turning, or while the finger has let go: a short spring into
-     place. Not while the reader is dragging - a card that eases its way down a
-     scroll lags behind the words it is supposed to be around. */
+  /* While the page is turning, or while a drag has just let go: a short spring into
+     place. Not while the reader is dragging - a frame that eases its way down a
+     scroll lags behind the words it is meant to be around. */
   .moving {
     transition:
       top var(--move) var(--ease-spring),
       height var(--move) var(--ease-spring);
-  }
-
-  /* What the glasses are hearing, in the corner the app keeps for things it is
-     doing rather than things it is asking. One line, because a panel of seven lines
-     is no place for a paragraph and neither is this. */
-  .voice {
-    position: fixed;
-    /* Clear of the button the app floats in that corner: two things in one place
-       is one of them covering the other. */
-    right: calc(var(--space-3) + 60px);
-    bottom: var(--space-3);
-    left: var(--space-3);
-    z-index: 2000;
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    pointer-events: none;
-  }
-
-  .said {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .asked {
-    flex: 1;
-    margin: 0;
-    overflow: hidden;
-    color: var(--text);
-    font-size: var(--text-sm);
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  /* The evidence line. Quieter than the words above it, because it is only ever
-     read when something is wrong - and then it is the only thing worth reading. */
-  .path {
-    margin: 0;
-    overflow: hidden;
-    color: var(--muted-strong);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .bad {
-    color: var(--danger);
-  }
-
-  /* A platform's own error name, never translated: `network` said in German is
-     still `network`, and it is what somebody would search for. */
-  .code {
-    font-family: var(--font-mono);
-  }
-
-  /* The microphone is shut and this line is only up because something refused. */
-  .dot.off {
-    animation: none;
-    background: var(--danger);
-  }
-
-  .answer {
-    margin: 0;
-    overflow: hidden;
-    max-width: 45%;
-    color: var(--muted-strong);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  /* The one moving thing on the page, and it stops the moment there is an answer. */
-  .waiting,
-  .dot {
-    animation: waiting 1.4s var(--ease-in-out) infinite;
-  }
-
-  .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-
-  @keyframes waiting {
-    0%,
-    100% {
-      opacity: 0.35;
-    }
-
-    50% {
-      opacity: 1;
-    }
   }
 
   /* Part of the region is off the screen, so the frame is not the whole of it: the

@@ -86,7 +86,10 @@ export interface World {
   listen: (on: boolean) => void
   /** Whether it is on now. */
   listening: () => boolean
-  /** Whether the foot says which page of how many. The reader's own setting. */
+  /** Whether a page number means anything: true where the app is cutting the note
+   *  into panels and turning them, false where the glasses are scrolling it, because
+   *  a note being scrolled a line at a time has no pages to count. Not a setting any
+   *  more - the scroll mode decides it. See even/scroll.ts. */
   pageNumber: () => boolean
   /** The space the reader is in, by the id its row carries, so a list of spaces
    *  opens with the cursor on the one they are already in rather than at the top. */
@@ -94,16 +97,6 @@ export interface World {
   /** The note on the glasses, by the id its row carries. Same reason: a list you
    *  opened to change something starts where you are. */
   atNote: () => string
-  /** The whole note as rows, when the reader asked the glasses to scroll it
-   *  themselves rather than have the app turn pages; null otherwise, which is the
-   *  default. See even/scroll.ts.
-   *
-   *  The body band gets all of it in one send and the firmware scrolls it. The rest
-   *  of the screen is unchanged, which is the point: the page the app thinks the
-   *  reader is on still moves with a flick of a temple, so the frame on the phone
-   *  still marks a page-sized window, and the line numbers go - a column of numbers
-   *  cannot line up with a band somebody else is scrolling. */
-  whole: () => string | null
 }
 
 /** The glasses' own settings, as rows the cursor walks.
@@ -612,11 +605,12 @@ export class Shell {
         return 'draw'
 
       case 'voice': {
-        // Answered on the panel rather than silently: the microphone is the one
-        // thing on these glasses with no light of its own.
-        const on = !this.world.listening()
-        this.world.listen(on)
-        this.flash(on ? this.words.voiceOn : this.words.voiceOff)
+        // Answered by the dot in the corner and by nothing else. It used to flash the
+        // words in the head, and the head is where the heading a reader is under
+        // belongs: Emil, on his own glasses, found "Voice off" sitting where the
+        // section should be. The dot is beside the page number, which is where it was
+        // before any of this.
+        this.world.listen(!this.world.listening())
         return this.close()
       }
     }
@@ -694,17 +688,20 @@ export class Shell {
     // a word just heard takes the line for a moment, because that is the one thing
     // more urgent than where you are.
     const where = page.section === '' ? showing.name : page.section
-    const whole = this.world.whole()
     return {
       head: this.top(this.flashed || where, this.place(showing)),
       rule: ruleOf(page.rule, BODY_INNER),
-      body: whole ?? page.words,
-      nums: whole === null ? page.numbers : '',
+      body: this.session.words,
+      nums: this.session.numbers,
       mic: '',
     }
   }
 
-  /** Which page of how many, or nothing when the reader turned it off. */
+  /** Which page of how many, or nothing where there are no pages to count.
+   *
+   *  Shown wherever the app is turning the pages, and never where the glasses are
+   *  scrolling: a note moving a line at a time has no page three of twelve, and a
+   *  number that counted rows would say 41/380 and mean nothing. */
   private place(showing: { page: number; count: number }): string {
     if (!this.world.pageNumber()) return ''
     return `${String(showing.page + 1)}/${String(showing.count)}`

@@ -322,15 +322,18 @@ export class Voice {
     return this.on
   }
 
-  /** Which of the two paths this device has, as it stands.
+  /** Which of the two paths this device is on, as it stands.
    *
-   *  Read afresh rather than decided once: a recogniser that has since refused is
-   *  no recogniser, and whether there is a key is a question about the account,
-   *  which arrives a moment after the plugin does. */
+   *  Read afresh rather than decided once: a recogniser that has since refused is no
+   *  recogniser.
+   *
+   *  Whether there is a key to transcribe with is a different question and not this
+   *  one. The glasses have a microphone either way, and it opens either way: a reader
+   *  who has not set a key should see the microphone light and be told what is
+   *  missing, not be told there is no way to listen at all. */
   get path(): Path {
     if (this.recogniser) return 'webview'
-    if (!this.hopeless && recogniserOf()) return 'webview'
-    return this.ears.canTranscribe() ? 'glasses' : 'none'
+    return this.hopeless || !recogniserOf() ? 'glasses' : 'webview'
   }
 
   /** Everything a screenshot of the phone has to answer. */
@@ -380,20 +383,17 @@ export class Voice {
    *  turns out not to work, which is what makes the fallback an order rather than
    *  a choice made once at the start. */
   private async listenThere(): Promise<boolean> {
-    if (!this.ears.canTranscribe()) {
-      // No recogniser and no key: there is nothing to listen with, and saying so
-      // is better than a microphone that is on and deaf.
-      this.on = false
-      this.wrong('no recognition')
-      return false
-    }
-
     const opened = await this.ears.microphone(true)
     this.on = opened
     if (!opened) {
       this.wrong('no microphone')
       return false
     }
+
+    // Open, and with nothing to turn the sound into words. Said rather than refused:
+    // the microphone is on and the reader can see that it is, and what is missing is
+    // one line in Settings rather than anything about this device.
+    if (!this.ears.canTranscribe()) this.wrong('voice needs an OpenAI key')
 
     // Frames come fifty times a second. If none has, something between the
     // permission and the radio is not running, and the phone says which.
@@ -443,6 +443,13 @@ export class Voice {
 
   private async transcribe(pcm: Uint8Array, ended: number): Promise<void> {
     if (this.busy) return
+    if (!this.ears.canTranscribe()) {
+      // Nothing to send it to. Said again here rather than only when the microphone
+      // opened, because a reader who has been talking wants to know why nothing
+      // happened, and a line from a minute ago is not an answer.
+      this.wrong('voice needs an OpenAI key')
+      return
+    }
 
     this.busy = true
     try {

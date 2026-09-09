@@ -139,6 +139,9 @@ const KNOWN: Record<string, Check> = {
       : `ligatures must be true, false, or one of ${LIGATURE_SCOPES.join(', ')}`,
   glassesBreak: oneOf('glassesBreak', GLASSES_BREAKS),
   glassesLineNumbers: switched('glassesLineNumbers'),
+  // Still accepted, and no longer sent: the app decides a page number from the
+  // scroll mode now, and refusing this would fail an older build's patch for a
+  // setting it is right to have written. See apps/desktop/src/lib/even/settings.ts.
   glassesPageNumber: switched('glassesPageNumber'),
   glassesVoice: switched('glassesVoice'),
   glassesCompaction: wordOf('glassesCompaction', GLASSES_COMPACTIONS),

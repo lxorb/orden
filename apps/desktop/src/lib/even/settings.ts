@@ -23,6 +23,15 @@ import type { Field, Group } from '../preferences'
 import { commandWords, DEFAULT_WORDS } from './commands'
 import { SCROLLS } from './scroll'
 
+/** There is no page-number setting.
+ *
+ *  There was, and Emil turned it off and on again and found it broken; the mechanism
+ *  is fixed, but the setting itself was the wrong idea. A page number means something
+ *  exactly where the app is cutting the note into panels and turning them, and means
+ *  nothing at all where the glasses are scrolling it a line at a time. So the scroll
+ *  mode decides it and nothing else does. A value an older build saved is ignored.
+ *  See shell.ts's `place` and even/scroll.ts. */
+
 /** One setting, and where it appears. */
 export interface Setting {
   /** What the glasses name it in a tap. Also what the reset walks. */
@@ -122,18 +131,6 @@ export function glassesSettings(): Setting[] {
         initial: true,
         get: () => modes.glassesLineNumbers,
         set: (on) => modes.setGlassesLineNumbers(on),
-      },
-    },
-    {
-      id: 'pageNumber',
-      group: reading,
-      onGlasses: true,
-      field: {
-        kind: 'switch',
-        label: t('Page number'),
-        initial: true,
-        get: () => modes.glassesPageNumber,
-        set: (on) => modes.setGlassesPageNumber(on),
       },
     },
     {

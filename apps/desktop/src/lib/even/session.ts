@@ -44,15 +44,55 @@ export interface Showing {
   lastLine: number
 }
 
+/** How many of the panel's rows a window fills, and how far it may be scrolled.
+ *
+ *  Zero rows is the ordinary mode: the app has already cut the note into panels and
+ *  one page *is* the panel. Anything else is the mode where the glasses scroll: the
+ *  note is cut a line at a time and the panel is filled from wherever the reader is,
+ *  so a flick moves the note by one line rather than by eight.
+ *
+ *  `last` is the furthest a window may start and still fill the panel, worked out
+ *  once when the note is paged: a scroll that ran past it would show four rows and a
+ *  gap, and a reader would read that as the end of the note rather than as the end of
+ *  the scroll. */
+interface Rolling {
+  rows: number
+  last: number
+}
+
 interface Shown {
   key: string
   name: string
   pages: Page[]
   page: number
+  /** Null in the ordinary mode. */
+  rolling: Rolling | null
 }
 
 function clamp(page: number, count: number): number {
   return Math.min(Math.max(0, page), Math.max(0, count - 1))
+}
+
+/** How many of the panel's rows a page takes. A page with nothing in it takes none,
+ *  which is what a blank line between two blocks comes to at the top compaction. */
+function rowsIn(page: Page | undefined): number {
+  const words = page?.words ?? ''
+  return words === '' ? 0 : words.split('\n').length
+}
+
+/** The furthest a window may start and still fill the panel.
+ *
+ *  Walked back from the end of the note rather than forward from the start: what is
+ *  wanted is the first place from which everything left over fills the panel, and
+ *  from the end that is one pass and no arithmetic about wrapped lines. */
+function lastFilling(pages: readonly Page[], rows: number): number {
+  let taken = 0
+  for (let at = pages.length - 1; at >= 0; at--) {
+    taken += rowsIn(pages[at])
+    if (taken >= rows) return at
+  }
+
+  return 0
 }
 
 export class Session {
@@ -68,25 +108,79 @@ export class Session {
     return this.shown?.pages ?? []
   }
 
+  /** The first page of the window: what the head band and the rule are drawn from. */
   get page(): Page | null {
     const shown = this.shown
     return shown?.pages[shown.page] ?? null
   }
 
+  /** Every page on the panel: one of them in the ordinary mode, and as many as fill
+   *  it where the glasses are scrolling. */
+  get onPanel(): readonly Page[] {
+    const shown = this.shown
+    if (!shown) return []
+    if (!shown.rolling) {
+      const only = shown.pages[shown.page]
+      return only ? [only] : []
+    }
+
+    const out: Page[] = []
+    let rows = 0
+    for (const page of shown.pages.slice(shown.page)) {
+      const took = rowsIn(page)
+      if (rows + took > shown.rolling.rows) break
+
+      out.push(page)
+      rows += took
+    }
+
+    // One line longer than the whole panel: something has to give, and showing it
+    // cut is better than showing nothing at all.
+    const first = shown.pages[shown.page]
+    if (!out.length && first) out.push(first)
+
+    return out
+  }
+
+  /** What the body band is given. */
+  get words(): string {
+    return this.onPanel
+      .map((one) => one.words)
+      .filter((one) => one !== '')
+      .join('\n')
+  }
+
+  /** What the column of line numbers is given, one line for one line of `words`. */
+  get numbers(): string {
+    const shown = this.onPanel.filter((one) => one.words !== '')
+    return shown.map((one) => one.numbers).join('\n')
+  }
+
+  /** Whether the glasses are scrolling rather than the app turning pages, which is
+   *  what says a page number would be a lie. Only the caller decides whether to show
+   *  one; see shell.ts. */
+  get windowed(): boolean {
+    return this.shown !== null && this.shown.rolling !== null
+  }
+
   get showing(): Showing | null {
     const shown = this.shown
-    const page = shown?.pages[shown.page]
-    if (!shown || !page) return null
+    const panel = this.onPanel
+    const first = panel[0]
+    const last = panel.at(-1)
+    if (!shown || !first || !last) return null
 
     return {
       key: shown.key,
       name: shown.name,
       page: shown.page,
-      count: shown.pages.length,
-      from: page.from,
-      to: page.to,
-      firstLine: page.firstLine,
-      lastLine: page.lastLine,
+      // How many panels the note comes to, which where the glasses are scrolling is
+      // how many places there are to stand rather than how many pages.
+      count: Math.max(1, (shown.rolling?.last ?? shown.pages.length - 1) + 1),
+      from: first.from,
+      to: last.to,
+      firstLine: first.firstLine,
+      lastLine: last.lastLine,
     }
   }
 
@@ -96,12 +190,18 @@ export class Session {
    *  the radio: the same words and the same page of the same count hash alike, so
    *  an edit further down the note costs nothing at all. */
   get moved(): boolean {
-    return (this.page?.hash ?? '') !== this.sent
+    return this.stamp !== this.sent
   }
 
   /** Remembers what is now on the glass. Called by whoever sent it. */
   drew(): void {
-    this.sent = this.page?.hash ?? ''
+    this.sent = this.stamp
+  }
+
+  /** Every page on the panel, as one short string: the whole window rather than the
+   *  first of it, or a scroll of one line would send nothing. */
+  private get stamp(): string {
+    return this.onPanel.map((one) => one.hash).join('|')
   }
 
   /** The note the plugin has active, or null when it has none.
@@ -109,7 +209,7 @@ export class Session {
    *  Null leaves the glasses as they are: that is the rule about closing a note,
    *  and it needs no state of its own, because this is only ever told what *is*
    *  active. */
-  follow(open: OpenNote | null, paging: Paging): void {
+  follow(open: OpenNote | null, paging: Paging, rows = 0): void {
     if (!open) return
 
     const before = this.shown
@@ -137,8 +237,9 @@ export class Session {
         ? pageAt(pages, showed.from)
         : clamp(this.places.get(open.key) ?? 0, pages.length)
 
-    const at = clamp(page, pages.length)
-    this.shown = { key: open.key, name: open.name, pages, page: at }
+    const rolling = rows > 0 ? { rows, last: lastFilling(pages, rows) } : null
+    const at = clamp(page, (rolling?.last ?? pages.length - 1) + 1)
+    this.shown = { key: open.key, name: open.name, pages, page: at, rolling }
     this.places.set(open.key, at)
   }
 
@@ -156,7 +257,9 @@ export class Session {
     const shown = this.shown
     if (!shown) return
 
-    const at = clamp(page, shown.pages.length)
+    // The last place is the one that still fills the panel, not the last page: a
+    // window of eight rows stops eight rows from the end of the note.
+    const at = clamp(page, (shown.rolling?.last ?? shown.pages.length - 1) + 1)
     shown.page = at
     this.places.set(shown.key, at)
   }
@@ -178,7 +281,7 @@ export class Session {
    *  pixels and the glasses in pages, so most of a scroll is inside the page that
    *  is already up and means nothing at all. */
   holds(offset: number): boolean {
-    const page = this.page
-    return page !== null && offset >= page.from && offset < page.to
+    const showing = this.showing
+    return showing !== null && offset >= showing.from && offset < showing.to
   }
 }

@@ -581,14 +581,34 @@ def main() -> int:
             # A white card over the region with the rest of the note faded, which is
             # the screenshot Emil sent; see even/Glasses.svelte.
             report.ok(
-                "the plugin marks the region as a card with the rest faded",
-                page.locator(".card").count() == 1 and page.locator(".fade").count() == 1,
+                "the plugin marks the region with one frame around the words",
+                page.locator(".frame").count() == 1,
             )
             report.ok(
-                "and the card is sized to what the glasses show",
+                "and the frame is sized to what the glasses show",
                 page.evaluate(
-                    "() => { const c = document.querySelector('.card'); "
-                    "return c ? c.getBoundingClientRect().height > 12 : false }"
+                    "() => { const one = document.querySelector('.frame'); "
+                    "return one ? one.getBoundingClientRect().height > 12 : false }"
+                ),
+            )
+            # Emil: "the note on the phone is very dark and hardly visible." Nothing
+            # covers the note and nothing paints over the words.
+            report.ok(
+                "and nothing is laid over the note to dim it",
+                page.evaluate(
+                    "() => { const over = [...document.querySelectorAll('body *')].filter((one) => {"
+                    " const box = one.getBoundingClientRect();"
+                    " const style = getComputedStyle(one);"
+                    " if (style.position !== 'fixed' || style.visibility === 'hidden') return false;"
+                    " if (box.width < innerWidth * 0.9 || box.height < innerHeight * 0.9) return false;"
+                    " const paint = style.backgroundColor;"
+                    " return paint !== 'rgba(0, 0, 0, 0)' && paint !== 'transparent' });"
+                    " return over.map((one) => one.className).join(', ') }"
+                )
+                == "",
+                page.evaluate(
+                    "() => { const one = document.querySelector('.frame');"
+                    " return one ? getComputedStyle(one).backgroundColor : 'no frame' }"
                 ),
             )
             page.screenshot(path=str(OUT / "phone-frame.png"))
@@ -747,8 +767,12 @@ def main() -> int:
             rows = settings.get("nibBody", "")
             report.ok(
                 "a hold reaches the settings, with every setting and what it says now",
-                "Line numbers" in rows and "Page number" in rows and "On" in rows,
+                "Line numbers" in rows and "Scrolling" in rows and "On" in rows,
                 rows.replace(chr(10), " | "),
+            )
+            report.ok(
+                "and no page-number setting, because the scroll mode decides that",
+                "Page number" not in rows,
             )
             screens.append({"name": "settings", "lineNumbers": True, **naming(settings)})
 
@@ -764,39 +788,103 @@ def main() -> int:
             )
 
             # A tap on a toggle flips it where it stands, and the panel says so at
-            # once. This is Emil's page number: he turned it off and on again and it
-            # never came back, because nothing was sent when the page had not changed.
-            def flip_page_number():
-                open_settings()
-                page.evaluate("window.__gesture('down')")
-                page.evaluate("window.__gesture('down')")
-                page.evaluate("window.__gesture('tap')")
-                page.wait_for_timeout(400)
-                answer = page.evaluate("window.__bands()")
-                page.evaluate("window.__gesture('double')")
-                page.evaluate("window.__gesture('double')")
-                page.wait_for_timeout(700)
-                return answer
-
-            off = flip_page_number()
+            # once. This is the mechanism behind Emil's page number: he turned a
+            # setting off and on again and it never came back, because nothing was sent
+            # when the page had not changed a character.
+            open_settings()
+            page.evaluate("window.__gesture('down')")
+            page.evaluate("window.__gesture('tap')")
+            page.wait_for_timeout(400)
+            off = page.evaluate("window.__bands()")
             report.ok(
                 "a tap on a toggle flips it, and the row says so at once",
                 "Off" in off.get("nibBody", ""),
                 off.get("nibBody", "").replace(chr(10), " | "),
             )
-            without = page.evaluate("window.__bands()")
-            report.ok(
-                "and the page number is gone from the panel, without a keystroke",
-                re.search(r"\d+/\d+$", without.get("nibHead", "").rstrip()) is None,
-                without.get("nibHead", "").rstrip(),
-            )
-
-            flip_page_number()
-            again = page.evaluate("window.__bands()")
+            page.evaluate("window.__gesture('tap')")
+            page.wait_for_timeout(400)
             report.ok(
                 "off and then on again is the same as never having touched it",
-                re.search(r"\d+/\d+$", again.get("nibHead", "").rstrip()) is not None,
-                again.get("nibHead", "").rstrip(),
+                "On" in page.evaluate("window.__bands()").get("nibBody", ""),
+            )
+            page.evaluate("window.__gesture('double')")
+            page.evaluate("window.__gesture('double')")
+            page.wait_for_timeout(700)
+
+            # The glasses' own scroll mode: the note moves by a line rather than by a
+            # panel, and there is no page of how many to say. Emil, on the device: "the
+            # bar at the side shows but scrolling does nothing" - which is this.
+            #
+            # Against the long note, because a note of one row has nothing to scroll.
+            open_note(page, "Even Realities glasses")
+            paged = page.evaluate("window.__bands()")
+            report.ok(
+                "the page number is there while Nib is turning the pages",
+                re.search(r"\d+/\d+$", paged.get("nibHead", "").rstrip()) is not None,
+                paged.get("nibHead", "").rstrip(),
+            )
+
+            def walk_to(word: str) -> bool:
+                """The cursor onto the row whose label holds `word`. Walked to rather
+                than counted to, so another setting between them changes nothing."""
+                for _one in range(40):
+                    rows_now = page.evaluate("window.__bands()").get("nibBody", "")
+                    on = next((one for one in rows_now.split(chr(10)) if one.startswith("▶")), "")
+                    if word in on:
+                        return True
+                    page.evaluate("window.__gesture('down')")
+                return False
+
+            def choose_scrolling(word: str):
+                """The Scrolling row, and one of its choices by name. Its list opens with
+                the cursor on the value it already has, so the top is walked to."""
+                open_settings()
+                found = walk_to("Scrolling")
+                page.evaluate("window.__gesture('tap')")
+                page.wait_for_timeout(300)
+                for _one in range(6):
+                    page.evaluate("window.__gesture('up')")
+                chose = walk_to(word)
+                page.evaluate("window.__gesture('tap')")
+                page.wait_for_timeout(400)
+                page.evaluate("window.__gesture('double')")
+                page.evaluate("window.__gesture('double')")
+                page.wait_for_timeout(700)
+                return found and chose
+
+            report.ok(
+                "the scroll mode is reachable on the glasses, and one of its choices",
+                choose_scrolling("glasses scroll"),
+            )
+            rolling = page.evaluate("window.__bands()")
+            report.ok(
+                "no page number where the glasses are scrolling, because there are none",
+                re.search(r"\d+/\d+$", rolling.get("nibHead", "").rstrip()) is None,
+                rolling.get("nibHead", "").rstrip(),
+            )
+
+            first = rolling.get("nibBody", "").split(chr(10))
+            page.evaluate("window.__gesture('down')")
+            page.wait_for_timeout(500)
+            moved = page.evaluate("window.__bands()").get("nibBody", "").split(chr(10))
+
+            # One line of the note, which is one or two rows of the panel where that
+            # line wrapped: the note moves under the reader rather than jumping a panel
+            # at a time. Everything that was below the top is still there, one line up.
+            step = moved[0] in first and first.index(moved[0]) or 0
+            report.ok(
+                "a scroll moves the note by one of its own lines, not by a panel",
+                0 < step <= 2 and first[step:] == moved[: len(first) - step],
+                json.dumps({"step": step, "top": moved[0][:30]}),
+            )
+            screens.append({"name": "rolling", "lineNumbers": True, **naming(page.evaluate("window.__bands()"))})
+
+            choose_scrolling("turns the pages")
+            back = page.evaluate("window.__bands()")
+            report.ok(
+                "and the page number comes back with the pages",
+                re.search(r"\d+/\d+$", back.get("nibHead", "").rstrip()) is not None,
+                back.get("nibHead", "").rstrip(),
             )
 
             # Voice, driven through a recogniser of our own: the words arrive exactly
@@ -844,11 +932,19 @@ def main() -> int:
                 took = page.evaluate("window.__wroteAt - window.__heardAt")
                 worst = max(worst, float(took or 0))
 
-            heard_on = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""
+            # Nothing on the phone about the voice. Emil, on the panel this used to
+            # put over his note: "that ugly listening overlay". The facts are still
+            # here, in an element that is never drawn, so the drive can read them and a
+            # reader is never shown them.
             report.ok(
-                "says on the phone which way it is listening, so one screenshot answers",
-                "Phone recogniser" in heard_on,
-                heard_on.replace(chr(10), " / "),
+                "puts no listening panel on the note at all",
+                page.locator(".voice").count() == 0,
+            )
+            said = page.get_attribute("[data-voice]", "data-voice") or ""
+            report.ok(
+                "and still says which way it is listening, at no cost on screen",
+                "webview" in said,
+                said,
             )
             page.screenshot(path=str(OUT / "phone-voice.png"))
 
@@ -864,11 +960,9 @@ def main() -> int:
                 "what did i decide" in asking.get("nibHead", "").lower(),
                 asking.get("nibHead", ""),
             )
-            said = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""
             report.ok(
-                "shows the question and the waiting on the phone too",
-                "what did i decide" in said.lower(),
-                said.replace("\n", " / "),
+                "and puts nothing over the note on the phone while it waits",
+                page.locator(".voice").count() == 0,
             )
             page.screenshot(path=str(OUT / "phone-asking.png"))
             screens.append({"name": "asking", "lineNumbers": True, **naming(asking)})
@@ -898,11 +992,9 @@ def main() -> int:
                 bool(hosts) and set(hosts) == {"nibeditor.com"},
                 json.dumps(sorted(set(hosts))),
             )
-            phone = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""
             report.ok(
-                "shows the answer's first sentence on the phone too",
-                "firmware font" in phone,
-                phone.replace("\n", " / "),
+                "and nothing over the note on the phone when it comes back",
+                page.locator(".voice").count() == 0,
             )
             page.screenshot(path=str(OUT / "phone-answer.png"))
             screens.append({"name": "answer", "lineNumbers": True, **naming(answered)})
@@ -920,11 +1012,12 @@ def main() -> int:
 
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(400)
+            closed = page.evaluate("window.__bands()")
             report.ok(
                 "a double tap closes the answer, back to the note",
-                "READING LIST" in page.evaluate("window.__bands()").get("nibHead", "")
-                or "GLASSES" in page.evaluate("window.__bands()").get("nibHead", ""),
-                page.evaluate("window.__bands()").get("nibHead", ""),
+                "firmware font only" not in closed.get("nibBody", "")
+                and closed.get("nibNums", "").strip() != "",
+                closed.get("nibHead", "").rstrip(),
             )
 
             # The frame, and the note on the phone, with the glasses on page one.

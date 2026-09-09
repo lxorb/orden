@@ -17,7 +17,7 @@
  *  None of it runs in the plain web build, because nothing in the plain web build
  *  imports it. */
 
-import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging, pagesOf } from '@nib/glasses'
+import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@nib/glasses'
 import { account } from '../account.svelte'
 import { api } from '../api'
 import { bestOf, type Command, commandIn } from './commands'
@@ -65,11 +65,6 @@ const FLASH = 1400
  *  this window is that scroll coming back, and acting on it is the two ends of the
  *  binding chasing each other round the note. */
 const STEERING = 500
-
-/** How many rows a page holds when the glasses are doing the scrolling: enough
- *  that a note is one page. The container itself caps what it will take, so a note
- *  longer than that arrives cut rather than refused; see even/screen.ts. */
-const WHOLE = 10_000
 
 /** Whether a folder in a list can be shut. `null` when every one of them is open
  *  and no tap could change that, which is the sidebar. */
@@ -306,35 +301,14 @@ class Bridge {
       enter: (id) => void workspace.showSpace(id),
       listen: (on) => void this.listen(on),
       listening: () => this.listening,
-      pageNumber: () => modes.glassesPageNumber,
+      // Wherever the app is turning the pages. A note the glasses are scrolling a
+      // line at a time has no page three of twelve to say.
+      pageNumber: () => modes.glassesScroll === 'paged',
       atSpace: () => workspace.activeSpace?.id ?? '',
       // By path, because that is what a row in these lists is named by. The note
       // the glasses are on is the note the plugin has active; see session.ts.
       atNote: () => workspace.active?.path ?? '',
-      whole: () => this.wholeNote(),
     }
-  }
-
-  /** The whole note as rows, for the reader who asked the glasses to scroll it.
-   *
-   *  Paged with room for the whole thing rather than for a panel, so there is one
-   *  page and its words are all of it. Null in the ordinary mode, where the app cuts
-   *  the note into panels and turns them.
-   *
-   *  What the firmware does with a band longer than its container is not documented
-   *  and there is no offset reported back, which is why the app goes on paging the
-   *  note for itself underneath: the page it thinks the reader is on is what the
-   *  frame on the phone marks, and a flick of a temple still moves it. If the
-   *  firmware scrolls, the reader sees it scroll; if it does not, they see the first
-   *  panel of the note and the paged mode is one setting away. */
-  private wholeNote(): string | null {
-    if (modes.glassesScroll !== 'native') return null
-
-    const reading = this.reading
-    if (!reading) return null
-
-    const pages = pagesOf(reading.note.text, { ...this.paging(), gutter: 0, rows: WHOLE })
-    return pages.map((one) => one.words).join('\n')
   }
 
   /** The words the glasses say for themselves, translated once. */
@@ -408,10 +382,24 @@ class Bridge {
       breakAt: modes.glassesBreak,
       gutter: modes.glassesLineNumbers ? GUTTER : 0,
       inner: BODY_INNER,
-      rows: BODY_ROWS,
+      // One row a page where the glasses are scrolling, and the panel then shows a
+      // window of eight of them: a flick moves the note by a line rather than by a
+      // panel. See even/scroll.ts and `Session.follow`.
+      rows: this.rolling() ? 1 : BODY_ROWS,
       marks: modes.glassesMarks,
       compaction: modes.glassesCompaction,
     }
+  }
+
+  /** Whether the glasses are doing the scrolling. */
+  private rolling(): boolean {
+    return modes.glassesScroll === 'native'
+  }
+
+  /** How many of the panel's rows a window fills: none in the ordinary mode, where a
+   *  page already is the panel, and all eight where the glasses are scrolling. */
+  private window(): number {
+    return this.rolling() ? BODY_ROWS : 0
   }
 
   /** Everything that decides what the glasses show, in one value.
@@ -501,7 +489,11 @@ class Bridge {
     const reading = this.reading
     if (reading) {
       const name = reading.note.name.replace(/\.md$/iu, '')
-      this.session.follow({ key: reading.note.key, name, text: reading.note.text }, this.paging())
+      this.session.follow(
+        { key: reading.note.key, name, text: reading.note.text },
+        this.paging(),
+        this.window(),
+      )
     }
 
     this.showing = this.session.showing
@@ -518,7 +510,7 @@ class Bridge {
 
   /** The note, paged, and the panel brought up to date if anything moved. */
   private follow(note: OpenNote | null): void {
-    this.session.follow(note, this.paging())
+    this.session.follow(note, this.paging(), this.window())
     this.showing = this.session.showing
       ? {
           from: this.session.showing.from,

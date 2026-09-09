@@ -114,20 +114,22 @@ describe('the Glasses settings', () => {
     expect(labels).not.toContain('Voice commands')
   })
 
-  test('carry the line numbers and the page count as switches', async () => {
+  test('carry the line numbers as a switch, and no page number', async () => {
     const inside = await page(true)
     const pane = inside.panes.find((one) => one.id === 'glasses')
     const fields = pane?.groups.flatMap((group) => group.fields) ?? []
 
     const switches = fields.filter((one) => one.kind === 'switch').map((one) => one.label)
-    // The reading switches first, then the markers, then the microphone: the order
-    // the one schema lists them in; see even/settings.ts.
-    expect(switches.slice(0, 2)).toEqual(['Line numbers', 'Page number'])
+    // The reading switch first, then the markers, then the microphone: the order the
+    // one schema lists them in; see even/settings.ts.
+    expect(switches[0]).toBe('Line numbers')
     expect(switches).toContain('Voice commands')
-    // Both on by default: they are what says where in a note the reader is.
-    for (const one of fields.slice(0, 3)) {
-      if (one.kind === 'switch') expect(one.initial).toBe(true)
-    }
+    // On by default: it is what "go to line forty" is answered with.
+    const numbers = fields.find((one) => one.label === 'Line numbers')
+    expect(numbers?.initial).toBe(true)
+
+    // And no page-number setting anywhere: the scroll mode decides that now.
+    expect(switches).not.toContain('Page number')
   })
 
   /** Every phrase a spoken command answers to is a field somebody can type in, and

@@ -255,6 +255,12 @@ class Lines {
     }
   }
 
+  /** Where a line of the file begins, counting the line from one. Undefined past the
+   *  end of the file, which is a line nothing asks about. */
+  startOf(line: number): number | undefined {
+    return this.starts[line - 1]
+  }
+
   at(offset: number): number {
     let low = 0
     let high = this.starts.length - 1
@@ -582,11 +588,26 @@ class Sheet {
       const whole = fold(`${lead}${at === 0 ? part : hang + part.trimStart()}`)
       if (at === 0) hang = hangOf(whole)
 
+      // Each part is a line of the file in its own right, so it carries that line's
+      // own offset rather than the block's. Asked of the line index rather than
+      // counted through the text, because the text has had its marks taken off and is
+      // no longer the length of what it came from. Without this every row of a
+      // soft-wrapped paragraph claimed to begin where the paragraph did, and nothing
+      // downstream could tell one row from another - which is what left the frame on
+      // the phone still while the glasses scrolled.
+      const began = at === 0 ? from : (this.where.startOf(first + at) ?? from)
+
       this.lines.push({
         text: whole,
-        from,
+        from: began,
         at: first + at,
-        glued: at > 0 || options.glued === true,
+        // A part after the first is glued to the one before it only where the split
+        // can only have come from a hard break the author wrote - which is the top
+        // compaction, where a soft wrap is a space. At the other two a part is a line
+        // of the note in its own right and may start a page of its own; glued, a
+        // thirty line paragraph was one unbreakable run and a scroll moved by all of
+        // it at once.
+        glued: (at > 0 && this.flow) || options.glued === true,
         level: at === 0 ? (options.level ?? 0) : 0,
         under: at === 0 && options.under === true,
       })

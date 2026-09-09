@@ -228,14 +228,30 @@ describe('listening', () => {
     expect(voice.listening).toBe(false)
   })
 
-  test('says so rather than listening deaf when there is no way to recognise', async () => {
+  /** Emil's account had no key at all, and the plugin answered "no way to listen".
+   *  It was telling the truth and it was the wrong thing to say: the glasses have a
+   *  microphone either way, so it opens either way, and what is missing is one line
+   *  in Settings rather than anything about the device. */
+  test('opens the microphone even with no key, and says what is missing', async () => {
     const { ears: one, failed } = ears({ canTranscribe: () => false })
     const voice = new Voice(one)
 
-    expect(voice.path).toBe('none')
-    expect(await voice.start()).toBe(false)
-    expect(failed).toEqual(['no recognition'])
-    expect(one.microphone).not.toHaveBeenCalled()
+    expect(voice.path).toBe('glasses')
+    expect(await voice.start()).toBe(true)
+    expect(one.microphone).toHaveBeenCalledWith(true)
+    expect(failed).toEqual(['voice needs an OpenAI key'])
+  })
+
+  test('and says it again when something was said, rather than sending it nowhere', async () => {
+    const { ears: one, failed } = ears({ canTranscribe: () => false })
+    const voice = new Voice(one)
+    await voice.start()
+
+    for (let at = 0; at < 25; at++) voice.frame(SPEECH)
+    for (let at = 0; at < 40; at++) voice.frame(SILENCE)
+
+    expect(one.transcribe).not.toHaveBeenCalled()
+    expect(failed).toEqual(['voice needs an OpenAI key', 'voice needs an OpenAI key'])
   })
 
   test('says so when the host would not open the microphone', async () => {
@@ -444,15 +460,17 @@ describe('the fallback order', () => {
     expect(voice.path).toBe('glasses')
   })
 
-  test('says there is no way to listen when neither path is there', async () => {
+  test('says there is no way to listen when the microphone will not open either', async () => {
     const made = withRecogniser()
     made.throws = 'no'
-    const { ears: one, failed } = ears({ canTranscribe: () => false })
+    const { ears: one, failed } = ears({
+      canTranscribe: () => false,
+      microphone: vi.fn(async () => false),
+    })
     const voice = new Voice(one)
 
     expect(await voice.start()).toBe(false)
-    expect(failed).toEqual(['no recognition'])
-    expect(voice.state.path).toBe('none')
+    expect(failed).toEqual(['no microphone'])
   })
 
   /** The key lives on the account and the account answers a moment after the
@@ -462,10 +480,17 @@ describe('the fallback order', () => {
     const { ears: one } = ears({ canTranscribe: () => key })
     const voice = new Voice(one)
 
-    expect(voice.path).toBe('none')
+    // The microphone opens either way; what changes is whether anything can be made
+    // of what it hears, and that is asked when an utterance arrives.
+    await voice.start()
+    for (let at = 0; at < 25; at++) voice.frame(SPEECH)
+    for (let at = 0; at < 40; at++) voice.frame(SILENCE)
+    expect(one.transcribe).not.toHaveBeenCalled()
+
     key = true
-    expect(voice.path).toBe('glasses')
-    expect(await voice.start()).toBe(true)
+    for (let at = 0; at < 25; at++) voice.frame(SPEECH)
+    for (let at = 0; at < 40; at++) voice.frame(SILENCE)
+    await vi.waitFor(() => expect(one.transcribe).toHaveBeenCalled())
   })
 })
 

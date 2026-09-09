@@ -93,7 +93,6 @@ interface Saved {
   ligatures: LigatureScope
   glassesBreak: GlassesBreak
   glassesLineNumbers: boolean
-  glassesPageNumber: boolean
   glassesVoice: boolean
   glassesCompaction: string
   glassesMarks: Marks
@@ -228,8 +227,6 @@ class Modes {
    *  a tenth of its width, and turning them off is the one setting that rebuilds
    *  the page; see even/screen.ts. */
   glassesLineNumbers = $state(true)
-  /** Which page of how many, in the foot of the panel. */
-  glassesPageNumber = $state(true)
   /** Whether the microphone is listening for commands.
    *
    *  Off until asked for, which is the only defensible default for a microphone:
@@ -311,7 +308,6 @@ class Modes {
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
       this.glassesBreak = glassesBreak(saved.glassesBreak) ?? 2
       this.glassesLineNumbers = saved.glassesLineNumbers !== false
-      this.glassesPageNumber = saved.glassesPageNumber !== false
       this.glassesVoice = saved.glassesVoice === true
       if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
       this.glassesMarks = marksOf(saved.glassesMarks)
@@ -502,14 +498,6 @@ class Modes {
     this.share({ glassesLineNumbers: on })
   }
 
-  setGlassesPageNumber(on: boolean) {
-    if (on === this.glassesPageNumber) return
-
-    this.glassesPageNumber = on
-    this.persist()
-    this.share({ glassesPageNumber: on })
-  }
-
   setGlassesVoice(on: boolean) {
     if (on === this.glassesVoice) return
 
@@ -698,9 +686,6 @@ class Modes {
     if (typeof remote.glassesLineNumbers === 'boolean') {
       took(remote.glassesLineNumbers, (on) => (this.glassesLineNumbers = on))
     }
-    if (typeof remote.glassesPageNumber === 'boolean') {
-      took(remote.glassesPageNumber, (on) => (this.glassesPageNumber = on))
-    }
     if (typeof remote.glassesVoice === 'boolean') {
       took(remote.glassesVoice, (on) => (this.glassesVoice = on))
     }
@@ -845,7 +830,6 @@ class Modes {
       ligatures: this.ligatures,
       glassesBreak: this.glassesBreak,
       glassesLineNumbers: this.glassesLineNumbers,
-      glassesPageNumber: this.glassesPageNumber,
       glassesVoice: this.glassesVoice,
       glassesCompaction: this.glassesCompaction,
       glassesMarks: this.glassesMarks,

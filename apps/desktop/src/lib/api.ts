@@ -186,10 +186,12 @@ export interface AccountSettings {
   glassesBreak?: number
   /** A gutter of the note's own line numbers down the left of the panel. */
   glassesLineNumbers?: boolean
-  /** Which page of how many, in the foot of the panel. */
-  glassesPageNumber?: boolean
   /** Whether the glasses' microphone listens for spoken commands. */
   glassesVoice?: boolean
+  /* `glassesPageNumber` was here. A page number means something where the app turns
+     the pages and nothing where the glasses scroll, so the scroll mode decides it and
+     there is no setting; a value an older build saved is ignored. The service still
+     accepts the field so an older build's patch is not refused. */
   /** How much of a note's own white space reaches the panel: `none`, `collapse`
    *  or `aggressive`; see `Compaction` in @nib/glasses. */
   glassesCompaction?: string
