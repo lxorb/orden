@@ -974,8 +974,17 @@ def main() -> int:
         finally:
             browser.close()
 
+    # The pictures docs/even.md shows are these, so they are put where it looks for
+    # them rather than copied by hand: a document with last month's panel in it is
+    # worse than one with none.
+    DOCS.mkdir(parents=True, exist_ok=True)
+    for one in sorted(OUT.glob("*.png")):
+        if one.name == "debug.png":
+            continue
+        (DOCS / one.name).write_bytes(one.read_bytes())
+
     report.say("")
-    report.say(f"pictures in {OUT}")
+    report.say(f"pictures in {OUT}, and in {DOCS}")
     report.show()
     return 1 if report.bad else 0
 
