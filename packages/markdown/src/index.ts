@@ -1,6 +1,7 @@
 import { Marked, Renderer } from 'marked'
 import type { Token, Tokens } from 'marked'
 import { withoutComments } from './comments'
+import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
@@ -212,31 +213,11 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 const trusting = renderer({}, [], embedSink())
 const publishing = renderer({ escapeHtml: true }, [], embedSink())
 
-/** Strips YAML front matter, which is metadata rather than content. */
-export function stripFrontMatter(source: string): string {
-  return source.startsWith('---') ? source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '') : source
-}
-
-export function frontMatter(source: string): string | null {
-  return /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? null
-}
-
-/** A top-level `key: value` from the front matter, quotes stripped. Nested
- *  keys are not reached: `paper` under `export:` is not a document field. */
-export function frontMatterValue(source: string, key: string): string | null {
-  const block = frontMatter(source)
-  if (!block) return null
-
-  for (const line of block.split('\n')) {
-    const pair = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(line)
-    if (pair?.[1]?.toLowerCase() !== key.toLowerCase()) continue
-
-    const value = (pair[2] ?? '').trim().replace(/^(["'])(.*)\1$/, '$2')
-    return value || null
-  }
-
-  return null
-}
+/** The note's metadata block lives in front-matter.ts, which knows how to change
+ *  a key as well as how to read one. Named here as well because a renderer, an
+ *  export and a document title are all callers of this module and all ask about
+ *  it, and one import of `@nib/markdown` is what they should need. */
+export { frontMatter, frontMatterValue, stripFrontMatter } from './front-matter'
 
 /** The first heading, or null when the note has none. */
 export function documentTitle(source: string): string | null {

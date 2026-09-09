@@ -37,6 +37,98 @@ export function shapeFor(
   return chosen ? (library[chosen] ?? null) : null
 }
 
+/** What an `icon:` in a note's front matter means: one of Lucide's, or an emoji
+ *  written in its place.
+ *
+ *  Two conventions are read and one is written. Nib writes Lucide's own plain
+ *  name, `file-text`, because that is what the library calls the icon and what
+ *  anybody reading the file can look up. Obsidian's Iconize plugin writes
+ *  `LiFileText`, a prefix per icon pack, and an emoji as the character itself, so
+ *  a vault arriving from there keeps the icons somebody already chose there.
+ *
+ *  Anything else - an icon from a pack this app has never heard of, a word
+ *  somebody typed - is a name the library does not hold, and the row falls back
+ *  to the mark its kind wears. Which is what it showed before, so nothing is
+ *  ever a blank space where an icon should be. */
+export type WrittenIcon = { kind: 'lucide'; name: string } | { kind: 'emoji'; text: string }
+
+/** An emoji rather than a name: the pictures, the modifiers that follow one, and
+ *  a pair of regional indicators, which is what a flag is written as. */
+const EMOJI = /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\p{Regional_Indicator})+$/u
+
+/** At least one of it has to be an actual picture: the components alone are
+ *  digits and hashes, and `2` is not an icon. */
+const PICTURE = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
+
+/** How long a value may be and still be an emoji. A flag with a skin tone on it
+ *  is nowhere near this; a sentence somebody wrote under `icon:` is past it. */
+const LONGEST = 16
+
+/** What a note's `icon:` says, or null when it says nothing this app can draw. */
+export function readIcon(value: string | null | undefined): WrittenIcon | null {
+  const said = (value ?? '').trim()
+  if (!said) return null
+
+  if (said.length <= LONGEST && PICTURE.test(said) && EMOJI.test(said)) {
+    return { kind: 'emoji', text: said }
+  }
+
+  return { kind: 'lucide', name: said }
+}
+
+/** A name as letters and digits alone, which is how two spellings of the same
+ *  icon are told to be the same one. */
+function squash(name: string): string {
+  return name.replace(/[^A-Za-z0-9]/g, '').toLowerCase()
+}
+
+/** Every icon under its squashed name. Built once per library rather than per
+ *  row of a file list: a tree of a thousand notes asks this a thousand times. */
+let squashed: { of: Record<string, IconNode>; names: Map<string, string> } | null = null
+
+function squashedNames(library: Record<string, IconNode>): Map<string, string> {
+  if (squashed?.of === library) return squashed.names
+
+  const names = new Map<string, string>()
+  for (const key of Object.keys(library)) {
+    if (!names.has(squash(key))) names.set(squash(key), key)
+  }
+
+  squashed = { of: library, names }
+  return names
+}
+
+/** Which icon of the library a written name means, whichever way it was written:
+ *  `file-text`, `FileText`, `file_text` and Iconize's `LiFileText` all reach the
+ *  same one. Null where the library holds nothing by that name.
+ *
+ *  Letters and digits alone decide, because the two conventions disagree about
+ *  where the dashes go and Lucide itself is not consistent about the numbers:
+ *  `grid-2x2` and `arrow-up-0-1` are one icon each. The `li` in front of an
+ *  Iconize name is only dropped when the whole name found nothing, so `link` and
+ *  `list` are still themselves. */
+export function keyNamed(library: Record<string, IconNode>, name: string): string | null {
+  const names = squashedNames(library)
+  const asked = squash(name)
+
+  return names.get(asked) ?? (asked.startsWith('li') ? (names.get(asked.slice(2)) ?? null) : null)
+}
+
+/** What a note writes to wear an icon: Lucide's own name for it, `file-text` for
+ *  `FileText`.
+ *
+ *  A handful of the names with digits in them come out with one dash more than
+ *  Lucide writes - `grid-2x-2` for `grid-2x2` - because no rule fits both that
+ *  and `gamepad-2`. Both read back as the same icon, here and in a vault, since
+ *  reading compares letters and digits only. */
+export function iconValue(name: string): string {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+    .replace(/([A-Za-z])(\d)/g, '$1-$2')
+    .toLowerCase()
+}
+
 /** What a space with no shape shows: the first letter of its name, and a dot for a
  *  name that is nothing but spaces. */
 export function initial(name: string): string {

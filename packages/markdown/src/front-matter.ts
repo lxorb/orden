@@ -1,0 +1,210 @@
+/** The block of metadata a note may open with, and the surgery on one key of it.
+ *
+ *  YAML between two `---` fences, which is Obsidian's convention and so this
+ *  app's: a note that says what it is says it there, and every other editor that
+ *  reads markdown leaves the block alone. What the app keeps in it today is the
+ *  title, the author, the language and the date an export reads, the `tags:` a
+ *  search reads, and the `icon:` a row in the file list wears.
+ *
+ *  Reading a key is one line of prose; changing one is not, which is why this is
+ *  a module. A note is somebody's file: setting a key has to leave every other
+ *  line of the block exactly as it was, taking one away has to leave no empty
+ *  block behind, and the change has to come out as an edit of the few characters
+ *  that moved rather than as a rewritten note - because a note open in a pane
+ *  takes the edit and keeps every caret in it where its reader left it.
+ *
+ *  Top-level keys only. A key indented under another one belongs to that one:
+ *  `paper` under `export:` is not the note's paper, and nothing here pretends
+ *  otherwise. */
+
+/** Where a note's front matter sits.
+ *
+ *  All four offsets, because the four questions differ: what the block says is
+ *  `body`, what comes after it starts at `to`, a new key goes in at `close`, and
+ *  taking the block away is `from` to `to`. */
+export interface FrontMatterBlock {
+  /** The start of the note, which is the only place a block can open. */
+  from: number
+  /** Past the closing fence and its line break: where the note's words start. */
+  to: number
+  /** The lines between the fences, the last one's break included. */
+  body: { from: number; to: number }
+  /** Where the closing fence's own line begins. */
+  close: number
+}
+
+/** One key's line, as it is written. `value` is what follows the colon, so a key
+ *  with nothing after it has an empty one. */
+interface KeyLine {
+  /** The whole line, its break not included. */
+  from: number
+  to: number
+  /** The value alone: from just past the colon to the end of the line. */
+  value: { from: number; to: number }
+}
+
+/** A top-level `key:` and whatever follows it on the line. Indented lines are
+ *  somebody else's key, and a line that is only a value is part of a list. */
+const KEY = /^([A-Za-z_][\w-]*)[ \t]*:/
+
+/** Quotes around a whole value, which YAML reads as one string. */
+const QUOTED = /^(["'])([\s\S]*)\1$/
+
+/** Where the front matter block sits, or null when the note opens with anything
+ *  else - which is most notes.
+ *
+ *  The opening fence has to be the note's first line and the closing one a line
+ *  that says nothing but `---`, so a horizontal rule in the middle of a note
+ *  cannot be read as the end of a block that never started. */
+export function frontMatterBlock(source: string): FrontMatterBlock | null {
+  if (!source.startsWith('---')) return null
+
+  const first = source.indexOf('\n')
+  if (first === -1 || source.slice(0, first).trim() !== '---') return null
+
+  let at = first + 1
+  while (at <= source.length) {
+    const end = source.indexOf('\n', at)
+    const stop = end === -1 ? source.length : end
+
+    if (source.slice(at, stop).trim() === '---') {
+      return {
+        from: 0,
+        to: end === -1 ? source.length : end + 1,
+        body: { from: first + 1, to: at },
+        close: at,
+      }
+    }
+
+    if (end === -1) break
+    at = end + 1
+  }
+
+  return null
+}
+
+/** The block's own lines as text, or null where there is no block. */
+export function frontMatter(source: string): string | null {
+  const block = frontMatterBlock(source)
+  if (!block) return null
+
+  return source.slice(block.body.from, block.body.to).replace(/\r?\n$/, '')
+}
+
+/** The note without its front matter, which is what a renderer is handed:
+ *  metadata is not content. */
+export function stripFrontMatter(source: string): string {
+  const block = frontMatterBlock(source)
+  return block ? source.slice(block.to) : source
+}
+
+/** A top-level `key: value` from the front matter, quotes stripped, or null when
+ *  the note has no block, no such key, or nothing after the colon. */
+export function frontMatterValue(source: string, key: string): string | null {
+  const block = frontMatterBlock(source)
+  if (!block) return null
+
+  const line = keyLine(source, block, key)
+  if (!line) return null
+
+  const value = source.slice(line.value.from, line.value.to).trim()
+  return unquoted(value) || null
+}
+
+/** The line a key is written on, or null when the block has no such key. The
+ *  first one wins, the way YAML reads a duplicated key. */
+function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine | null {
+  const wanted = key.toLowerCase()
+  let at = block.body.from
+
+  while (at < block.body.to) {
+    const end = source.indexOf('\n', at)
+    const stop = end === -1 || end > block.body.to ? block.body.to : end
+    const found = KEY.exec(source.slice(at, stop))
+
+    if (found?.[1]?.toLowerCase() === wanted) {
+      return { from: at, to: stop, value: { from: at + found[0].length, to: stop } }
+    }
+
+    if (end === -1) break
+    at = end + 1
+  }
+
+  return null
+}
+
+/** A value with the quotes YAML would take off taken off. */
+function unquoted(value: string): string {
+  return QUOTED.exec(value)?.[2] ?? value
+}
+
+/** One edit that sets a top-level key to `value`, or takes the key away when it
+ *  is null. Null when the note already says that, so a caller writes no file.
+ *
+ *  What it does in each of the cases a note can be in:
+ *
+ *  - the key is there: the value after the colon is replaced, and the rest of
+ *    the line, the rest of the block and every other key stay as they were.
+ *  - the block is there without the key: the key goes in as the last line of the
+ *    block, in front of the closing fence.
+ *  - there is no block: one is opened at the top of the note, which is where
+ *    every reader of a markdown file looks for it.
+ *  - taking the key away: its line goes. A block that held nothing else goes
+ *    with it, along with the blank lines it was standing on, because an empty
+ *    pair of fences at the top of a note is litter rather than metadata.
+ *
+ *  The line ending is whatever the note already uses, so a file written on
+ *  Windows does not come back with one line in the other convention. */
+export function frontMatterEdit(
+  source: string,
+  key: string,
+  value: string | null,
+): { from: number; to: number; insert: string } | null {
+  const nl = source.includes('\r\n') ? '\r\n' : '\n'
+  const block = frontMatterBlock(source)
+
+  if (!block) {
+    if (value === null) return null
+    return { from: 0, to: 0, insert: `---${nl}${key}: ${value}${nl}---${nl}` }
+  }
+
+  const line = keyLine(source, block, key)
+
+  if (value === null) {
+    if (!line) return null
+
+    // What the block would say without this line. Nothing worth keeping means
+    // the fences go too, and the blank lines under them with it.
+    const rest =
+      source.slice(block.body.from, line.from) + source.slice(cutTo(source, line), block.body.to)
+    if (!rest.trim()) return { from: block.from, to: blankAfter(source, block.to), insert: '' }
+
+    return { from: line.from, to: cutTo(source, line), insert: '' }
+  }
+
+  if (line) {
+    const said = source.slice(line.value.from, line.value.to).trim()
+    if (unquoted(said) === value) return null
+
+    return { from: line.value.from, to: line.value.to, insert: ` ${value}` }
+  }
+
+  return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }
+}
+
+/** Where the cut of a key's line ends: past its line break, so the line is gone
+ *  rather than left behind as an empty one. */
+function cutTo(source: string, line: KeyLine): number {
+  return source.startsWith('\r\n', line.to) ? line.to + 2 : Math.min(line.to + 1, source.length)
+}
+
+/** Past the empty lines that follow an offset. What a note that opened with
+ *  nothing but a block of metadata should start with is its first real line. */
+function blankAfter(source: string, at: number): number {
+  let over = at
+  for (;;) {
+    if (source.startsWith('\r\n', over)) over += 2
+    else if (source.startsWith('\n', over)) over += 1
+    else return over
+  }
+}
