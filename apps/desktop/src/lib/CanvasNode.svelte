@@ -24,6 +24,7 @@
   const {
     node,
     canvasPath,
+    trusted,
     root,
     picked,
     dimmed = false,
@@ -36,6 +37,10 @@
     node: CanvasNode
     /** The canvas's own path, so a link in a card resolves from where it lives. */
     canvasPath: string | null
+    /** Whether the HTML in this plane is markup rather than the characters it is
+     *  made of. A card is a small page, and a plane arrives through a room card by
+     *  card; see trust.ts. */
+    trusted: boolean
     /** The space's folder, which is what a file node's path is relative to. */
     root: string | null
     picked: boolean
@@ -77,10 +82,10 @@
    *  has not changed costs nothing however often the plane moves. */
   const html = $derived(
     node.type === 'text'
-      ? cardHtml(node.text, canvasPath)
+      ? cardHtml(node.text, canvasPath, trusted)
       : source === null
         ? ''
-        : cardHtml(source, canvasPath),
+        : cardHtml(source, canvasPath, trusted),
   )
 
   /** Where a line or an arrow runs inside its own box, in the box's own

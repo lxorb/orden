@@ -148,7 +148,11 @@ function plainCard(text: string, box: Box, palette: Palette): string {
 function cardBody(node: CanvasNode, canvasPath: string | null): string {
   switch (node.type) {
     case 'text':
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath))}</div>`
+      // Trusting, like every other export: a picture is a file somebody asked for
+      // and takes away, and nothing in it runs - an SVG drawn as an image has no
+      // scripts. The rule about whose HTML runs is about the app's own surfaces;
+      // see trust.ts.
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, true))}</div>`
     case 'link':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escaped(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escaped(node.url)}</span></div>`
     case 'file':

@@ -75,7 +75,8 @@
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { rooms } from './rooms.svelte'
-  import { canWriteAt } from './sharing.svelte'
+  import { canWriteAt, trustsHtmlIn } from './sharing.svelte'
+  import { pastesMarkup } from './trust'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
@@ -951,6 +952,11 @@
     const text = event.clipboardData?.getData('text/plain').trim()
     if (!text) return
 
+    // Markup that arrived from outside the app is not this person's own writing,
+    // so the plane's cards stop running their HTML; see trust.ts.
+    const types = [...(event.clipboardData?.types ?? [])]
+    if (pastesMarkup(types, text)) tab.note.pasted = true
+
     event.preventDefault()
     run.paste(store, readCanvas(text), text, at)
   }
@@ -1063,6 +1069,7 @@
       <CanvasNode
         {node}
         canvasPath={tab.path}
+        trusted={trustsHtmlIn(tab.note)}
         root={workspace.activeSpace?.root ?? null}
         picked={picked.has(node.id)}
         dimmed={narrowed && !picked.has(node.id)}

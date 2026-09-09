@@ -68,6 +68,11 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] HTML escaping in image attributes (XSS-safe)
 - [x] HTML preserved through export
 - [x] HTML escaped when publishing (blogs share a domain)
+- [x] HTML escaped for a document that is not the reader's own: one in a space
+      somebody else can reach, one being typed in by a peer in a room, anything
+      a guest's session can see, and anything markup has been pasted into. The
+      passthrough above is a feature of a local document, and this is where a
+      document stops being local; the rule is `apps/desktop/src/lib/trust.ts`
 
 ## 4. Math and academic
 

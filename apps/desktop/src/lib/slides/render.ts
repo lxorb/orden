@@ -39,7 +39,14 @@ export interface StageSlide {
  *  able to ask what the page cost. */
 const MEASURE = 'nib:deck'
 
-export async function deckHtml(note: Note, scheme: Scheme): Promise<StageSlide[]> {
+/** `trusted` is whether the HTML in the note is markup rather than the characters
+ *  it is made of; the same question the reading view asks, on the same note. See
+ *  trust.ts. */
+export async function deckHtml(
+  note: Note,
+  scheme: Scheme,
+  trusted: boolean,
+): Promise<StageSlide[]> {
   const slides = deckOf(note.text)
 
   // The exporter carries the diagram drawers and the syntax parsers, which are
@@ -55,10 +62,11 @@ export async function deckHtml(note: Note, scheme: Scheme): Promise<StageSlide[]
 
   const at = performance.now()
   const resolveLink = pointer(note)
+  const shared = { code: fence, resolveEmbed: embed, resolveLink, escapeHtml: !trusted }
 
   const pages = slides.map((slide) => ({
-    html: page(slide.markdown, note, { code: fence, resolveEmbed: embed, resolveLink }),
-    notes: page(slide.notes, note, { code: fence, resolveEmbed: embed, resolveLink }),
+    html: page(slide.markdown, note, shared),
+    notes: page(slide.notes, note, shared),
     vertical: slide.vertical,
     fragments: slide.fragments,
     shape: slide.shape,

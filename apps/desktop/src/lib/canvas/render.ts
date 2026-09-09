@@ -24,18 +24,24 @@ const cache = new Map<string, string>()
  *  renamed changes which links resolve, so the answers are no longer answers. */
 let at = -1
 
-export function cardHtml(text: string, canvasPath: string | null): string {
+/** `trusted` is whether the HTML in this plane is markup rather than the
+ *  characters it is made of. A plane arrives through a room card by card, so the
+ *  words in one may be anybody's who is in the space; the rule is trust.ts, and
+ *  the caller has already asked it. It is part of the key as well, because a
+ *  space becoming shared changes the answer for cards already rendered. */
+export function cardHtml(text: string, canvasPath: string | null, trusted: boolean): string {
   if (at !== links.version) {
     at = links.version
     cache.clear()
   }
 
-  const key = `${canvasPath ?? ''}\n${text}`
+  const key = `${trusted ? 'own' : 'theirs'}\n${canvasPath ?? ''}\n${text}`
   const held = cache.get(key)
   if (held !== undefined) return held
 
   const html = renderMarkdown(text, {
     footnotes: true,
+    escapeHtml: !trusted,
     resolveLink: pointer({ text, path: canvasPath }),
   })
 

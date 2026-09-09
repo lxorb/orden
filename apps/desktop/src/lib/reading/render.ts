@@ -68,7 +68,11 @@ export function withPictures(html: string, note: Note): string {
  *  the page, so it is worth being able to ask. */
 const MEASURE = 'nib:reading'
 
-export async function readingHtml(note: Note, scheme: Scheme): Promise<string> {
+/** `trusted` is whether the HTML in the note is markup rather than the characters
+ *  it is made of. A note the reader wrote is rendered the way Typora renders one;
+ *  a note from a shared space, a room, a guest or a paste is not. The rule is
+ *  trust.ts, and the caller has already asked it. */
+export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean): Promise<string> {
   // The exporter carries the diagram drawers and the syntax parsers, which are
   // most of what the app can load; asked for here rather than at startup, since
   // a note is read after the app is open.
@@ -84,6 +88,7 @@ export async function readingHtml(note: Note, scheme: Scheme): Promise<string> {
     renderMarkdown(note.text, {
       footnotes: true,
       toc: true,
+      escapeHtml: !trusted,
       code: fence,
       resolveLink: pointer(note),
       resolveEmbed: embed,

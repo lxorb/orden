@@ -17,6 +17,7 @@
   import { claimsGesture } from './swipe'
   import { menu } from './menu.svelte'
   import { overlays } from './overlays'
+  import { trustsHtmlIn } from './sharing.svelte'
   import { deckHtml, type StageSlide } from './slides/render'
   import {
     openPresenter,
@@ -97,7 +98,11 @@
   async function draw() {
     const mine = ++latest
     tab.note.flush()
-    const built = await deckHtml({ text: tab.doc, path: tab.path }, theme.current)
+    const built = await deckHtml(
+      { text: tab.doc, path: tab.path },
+      theme.current,
+      trustsHtmlIn(tab.note),
+    )
     if (mine !== latest) return
 
     slides = built

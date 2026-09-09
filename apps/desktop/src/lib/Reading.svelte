@@ -21,6 +21,7 @@
   import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
   import { type Anchor, headingOffsets, positionAt, topFor } from './reading/places'
   import { readingHtml } from './reading/render'
+  import { trustsHtmlIn } from './sharing.svelte'
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { openExternal } from './tauri'
@@ -59,7 +60,7 @@
   async function draw() {
     const mine = ++latest
     const source = note()
-    const next = await readingHtml(source, theme.current)
+    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note))
     if (mine !== latest) return
 
     html = next
@@ -82,7 +83,9 @@
   // drawn for changes.
   $effect(() => {
     // Read, not used: these are what this effect is watching for.
-    const reasons = [tab.note.revision, theme.current]
+    // Trust among them: a space becoming shared, or a paste landing, changes
+    // whether the HTML in the note is markup or the characters it is made of.
+    const reasons = [tab.note.revision, theme.current, trustsHtmlIn(tab.note)]
     if (!reasons.length) return
 
     if (!drawn) {

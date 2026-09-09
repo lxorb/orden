@@ -38,6 +38,7 @@
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
+  import { pastesMarkup } from './trust'
   import type { Tab } from './workspace.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
@@ -213,7 +214,21 @@
   })
 </script>
 
-<div class="surface" class:rise bind:this={host}></div>
+<!-- What is pasted, noticed on its way down before the editor takes the event.
+     Markup that arrived from outside the app is not this person's own writing, so
+     the note stops running its HTML and shows it as the characters it is made of;
+     see trust.ts. -->
+<div
+  class="surface"
+  class:rise
+  bind:this={host}
+  onpastecapture={(event: ClipboardEvent) => {
+    const carried = event.clipboardData
+    if (carried && pastesMarkup([...carried.types], carried.getData('text/plain'))) {
+      tab.note.pasted = true
+    }
+  }}
+></div>
 
 <style>
   .surface {

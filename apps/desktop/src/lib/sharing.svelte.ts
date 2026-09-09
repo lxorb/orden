@@ -16,8 +16,11 @@ import { api, type GivenRole, type RemoteSpace, type Sharing, type SpaceRole } f
 import { account } from './account.svelte'
 import { copyText } from './clipboard'
 import { message } from './i18n.svelte'
+import { rooms } from './rooms.svelte'
 import { within } from './sync/mirror'
 import { sync } from './sync.svelte'
+import { type Origin, originOf, trustsHtml } from './trust'
+import type { NoteDoc } from './workspace/documents.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** The account's copy of a local folder, once one has been paired with it. */
@@ -50,6 +53,37 @@ function canWrite(root: string): boolean {
 export function canWriteAt(path: string): boolean {
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
   return !space || canWrite(space.root)
+}
+
+/** Whether the space a note sits in is one somebody else can reach: shared with
+ *  anybody, or somebody else's to begin with. A note in no space at all is this
+ *  machine's own. */
+function sharedAt(path: string | null): boolean {
+  if (path === null) return false
+
+  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  if (!space) return false
+
+  return isShared(space.root) || roleOf(space.root) !== 'owner'
+}
+
+/** Where a document's words came from, as much as this side of the wire knows:
+ *  who may reach the space it sits in, whether anybody else is in the file right
+ *  now, and whether markup has been pasted into it. What the answer means is
+ *  trust.ts, which is the one place that decides it. */
+export function originOfDocument(note: NoteDoc): Origin {
+  return originOf({
+    guest: account.guest !== null,
+    pasted: note.pasted,
+    shared: sharedAt(note.path),
+    peers: (rooms.present[note.key] ?? 0) > 0,
+  })
+}
+
+/** Whether this document's raw HTML is markup rather than characters. What the
+ *  reading view and a canvas card both ask before they render one. */
+export function trustsHtmlIn(note: NoteDoc): boolean {
+  return trustsHtml(originOfDocument(note))
 }
 
 /** How long the copy button says it copied. */

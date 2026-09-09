@@ -120,6 +120,14 @@ export class NoteDoc {
     return this.words
   }
 
+  /** Whether markup has been pasted into this document from outside the app.
+   *
+   *  Once it has, the HTML in it is not only this person's own writing, so it is
+   *  rendered as the characters it is made of rather than run; see trust.ts. It
+   *  stays set for the sitting, because a note is rendered whole and there is no
+   *  saying which part of it the paste became. */
+  pasted = $state(false)
+
   /** Whether nobody has given this note a name: no file, and the placeholder
    *  `openBlank` hands out. Such a note is called after its own first words. */
   private get unnamed(): boolean {

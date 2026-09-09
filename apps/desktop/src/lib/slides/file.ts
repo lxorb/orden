@@ -144,7 +144,11 @@ async function renderDeck(note: Note, name: string, options: DeckExport): Promis
   // arithmetic and string work - needs nothing of the running app around it.
   const { deckHtml } = await import('./render')
 
-  const slides = await deckHtml(note, options.scheme ?? 'dark')
+  // Trusting, like every other export: a file somebody asked for and takes away
+  // keeps the HTML the note wrote, which is what the parity list promises and
+  // what every other format here does. The rule about whose HTML runs is about
+  // the app's own surfaces; see trust.ts.
+  const slides = await deckHtml(note, options.scheme ?? 'dark', true)
   const html = buildDeckHtml(slides, titleOf(note.text, name), options)
 
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html

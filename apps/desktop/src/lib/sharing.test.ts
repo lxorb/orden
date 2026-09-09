@@ -108,8 +108,18 @@ vi.mock('./i18n.svelte', () => ({
 // Imported once, at module scope: a hook that re-imported the store graph would
 // charge whichever test ran first for compiling it.
 import { account } from './account.svelte'
-import { canShare, canWriteAt, isShared, roleOf, share } from './sharing.svelte'
+import { rooms } from './rooms.svelte'
+import {
+  canShare,
+  canWriteAt,
+  isShared,
+  originOfDocument,
+  roleOf,
+  share,
+  trustsHtmlIn,
+} from './sharing.svelte'
 import type { RemoteSpace } from './api'
+import type { NoteDoc } from './workspace/documents.svelte'
 
 /** A space on the account, with only the fields any of this reads. */
 function remote(id: string, role: 'owner' | 'write' | 'read', shared = false): RemoteSpace {
@@ -180,6 +190,85 @@ describe('what may be done in a space', () => {
     account.spaces = [remote('space-1', 'read', true)]
 
     expect(canWriteAt('/elsewhere/loose.md')).toBe(true)
+  })
+})
+
+/** Which is what decides whether the HTML in it is markup or is words. The rule
+ *  itself is trust.ts; this is the app answering it about a real space. */
+describe('where a document’s words came from', () => {
+  /** As much of a document as any of this reads. */
+  const document = (path: string | null, pasted = false) =>
+    ({ path, key: 'k1', pasted }) as unknown as NoteDoc
+
+  test('is the reader’s own, for a note in a space nobody else is in', () => {
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'owner')]
+
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('own')
+    expect(trustsHtmlIn(document('Notes/plan.md'))).toBe(true)
+  })
+
+  test('is the reader’s own, for a note in no space at all', () => {
+    expect(originOfDocument(document('/elsewhere/loose.md'))).toBe('own')
+    expect(originOfDocument(document(null))).toBe('own')
+  })
+
+  test('is the space, once somebody else is in it', () => {
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'owner', true)]
+
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+    expect(trustsHtmlIn(document('Notes/plan.md'))).toBe(false)
+  })
+
+  /** A space this account did not make is somebody else's whether or not the
+   *  sheet has got round to saying it is shared. */
+  test('is the space, for one somebody shared with the reader', () => {
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'read')]
+
+    expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+  })
+
+  test('is a paste, once markup has been put in from outside', () => {
+    expect(originOfDocument(document('/elsewhere/loose.md', true))).toBe('paste')
+    expect(trustsHtmlIn(document('/elsewhere/loose.md', true))).toBe(false)
+  })
+
+  test('is a guest, for a session a link let in', () => {
+    account.guest = { id: 'g1', name: 'Someone' }
+    try {
+      expect(originOfDocument(document('/elsewhere/loose.md'))).toBe('guest')
+      expect(trustsHtmlIn(document('/elsewhere/loose.md'))).toBe(false)
+    } finally {
+      account.guest = null
+    }
+  })
+
+  test('is the room, while somebody else is in the file', () => {
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'owner', true)]
+    rooms.present = { k1: 1 }
+
+    try {
+      expect(originOfDocument(document('Notes/plan.md'))).toBe('room')
+    } finally {
+      rooms.present = {}
+    }
+  })
+
+  /** The other device in a room is this same person's, unless somebody else can
+   *  reach the space at all. */
+  test('is still the reader’s own with a second device in an unshared space', () => {
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'owner')]
+    rooms.present = { k1: 1 }
+
+    try {
+      expect(originOfDocument(document('Notes/plan.md'))).toBe('own')
+    } finally {
+      rooms.present = {}
+    }
   })
 })
 
