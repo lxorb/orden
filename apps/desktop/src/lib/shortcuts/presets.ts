@@ -69,14 +69,16 @@ OBSIDIAN['canvas.frame'] = null
  *
  *  Notion writes its number shortcuts as Ctrl+Shift on Windows and Linux and
  *  Cmd+Option on a Mac; one map covers both, since `Mod` is already whichever
- *  of the two this machine uses. Ctrl+Shift+4, 7 and 9 are a checkbox, a toggle
- *  list and a sub-page, none of which Nib has, and are left alone.
+ *  of the two this machine uses. Ctrl+Shift+7 and 9 are a toggle list and a
+ *  sub-page, neither of which Nib has, and are left alone.
  *
- *  Four of Notion's keys land on something of Nib's own. Ctrl+E is inline code
- *  there and the reading view here; Ctrl+backslash is the sidebar there and
- *  clear formatting here; Ctrl+Shift+0 is paragraph there and actual size here;
- *  Ctrl+Shift+3 is heading three there and the file list here. Notion's action
- *  takes the key and Nib's is left without one. */
+ *  Two of Notion's keys land on something of Nib's own: Ctrl+E is inline code
+ *  there and the reading view here, and Ctrl+backslash is the sidebar there and
+ *  clear formatting here. Notion's action takes the key and Nib's is left without
+ *  one.
+ *
+ *  Nib's own digits are all on Ctrl+Alt, and its panels are on letters, so
+ *  Notion's block types have the whole Ctrl+Shift row to themselves. */
 const NOTION: KeyOverrides = {
   'app.sidebar': 'Mod-\\',
   'format.clear': null,
@@ -84,11 +86,11 @@ const NOTION: KeyOverrides = {
   'app.reading': null,
   'format.strikethrough': 'Mod-Shift-s',
   'paragraph.body': 'Mod-Shift-0',
-  'app.zoom-reset': null,
   'paragraph.heading-1': 'Mod-Shift-1',
   'paragraph.heading-2': 'Mod-Shift-2',
   'paragraph.heading-3': 'Mod-Shift-3',
-  'app.files': null,
+  // Notion's fourth digit is a to-do, which Nib does have.
+  'paragraph.task-list': 'Mod-Shift-4',
   'paragraph.bullet-list': 'Mod-Shift-5',
   'paragraph.ordered-list': 'Mod-Shift-6',
   'paragraph.code-block': 'Mod-Shift-8',

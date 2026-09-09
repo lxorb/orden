@@ -19,10 +19,14 @@ import {
   tableBindings,
 } from '@nib/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
+import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
 import { settings } from '../settings.svelte'
+// The space actions are already in the first chunk, since the sidebar and the app
+// menu both reach them, so this costs nothing to load early.
+import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
 import { invoke } from '../tauri'
 import type { Platform } from '../keys'
@@ -306,6 +310,25 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => settings.show(),
   },
   {
+    // Every key there is, which is this list, in the pane that can also change
+    // them. One list and not two: a compact sheet of "the keys worth knowing"
+    // would be a second copy of half of this, and the copy is the one that goes
+    // stale. It is searchable, it says which key each thing is on right now
+    // rather than which key it shipped on, and every row can be rebound where it
+    // is read.
+    //
+    // Discord and half the web open theirs with Ctrl+/. Here that is Source mode
+    // and has been since the first version, so this is the shifted one, which on
+    // most keyboards is the question mark - which is what asking for help looks
+    // like.
+    id: 'app.keys',
+    label: () => t('Keyboard shortcuts'),
+    category: 'file',
+    scope: 'app',
+    key: 'Mod-Shift-/',
+    run: () => settings.show('shortcuts'),
+  },
+  {
     // The note on paper. No key out of the box, because the one every hand
     // reaches for is Ctrl+P and that is the command palette here, the way it is
     // in Obsidian and in a code editor. Printing is a row in File and in the
@@ -394,13 +417,39 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-l',
     run: () => workspace.toggleSidebar(),
   },
+  // The four panels. One key each, and the same key back: it opens the panel and
+  // puts the keyboard in it, and pressing it again while the keyboard is already
+  // there gives the note the keyboard back. Two keys for one journey - one to go
+  // and one nobody remembers for coming back - is how a panel becomes somewhere
+  // you get stuck.
+  //
+  // Letters rather than the digits they were on. Ctrl+Shift and a digit is not a
+  // key a text editor can spend: on a layout where the digit itself is the shifted
+  // character - French, and every other AZERTY - the editor underneath reads the
+  // press as Ctrl and the digit and sets a heading level, so Ctrl+Shift+3 both
+  // opened the file list and turned the line into a heading. A letter cannot be
+  // read that way round, because the shifted letter and the letter are different
+  // names for the key. See runHandlers in @codemirror/view.
+  //
+  // Obsidian ships `file-explorer:open` and `outline:open` with no key at all and
+  // Notion has nothing of the kind, so three of these are Nib's own; Ctrl+Shift+E
+  // for the files is what VS Code puts its explorer on, and Ctrl+Shift+F for
+  // search is already Obsidian's.
   {
     id: 'app.files',
     label: () => t('Files'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-Shift-3',
-    run: () => workspace.showPanel('tree'),
+    key: 'Mod-Shift-e',
+    run: () => revealPanel('tree'),
+  },
+  {
+    id: 'app.outline',
+    label: () => t('Outline'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-o',
+    run: () => revealPanel('outline'),
   },
   {
     id: 'app.search',
@@ -408,7 +457,70 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-f',
-    run: () => workspace.showPanel('search'),
+    run: () => revealPanel('search'),
+  },
+  {
+    // What links here and what this links to. On B for the backlinks half, which
+    // is what the panel is called everywhere else; L is the sidebar's own key.
+    id: 'app.links',
+    label: () => t('Links'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-b',
+    run: () => revealPanel('links'),
+  },
+  // Round the regions of the window: the sidebar's header, its panel tabs, the
+  // search pill, the list, the strip of notes, the note, the bar under it.
+  //
+  // The one key Tab cannot be. Tab indents in a note - Obsidian and Notion both
+  // spend it that way, and a markdown editor has to - so there has to be a key
+  // that walks out of the note, and F6 is the one every hand already has: Windows
+  // cycles a window's elements with it, VS Code moves between its parts with it,
+  // and Discord moves between its sections with it. Shift+F6 goes back.
+  {
+    id: 'app.region-next',
+    label: () => t('Next section'),
+    category: 'view',
+    scope: 'app',
+    key: 'F6',
+    run: () => void stepRegionFocus(1),
+  },
+  {
+    id: 'app.region-previous',
+    label: () => t('Previous section'),
+    category: 'view',
+    scope: 'app',
+    key: 'Shift-F6',
+    run: () => void stepRegionFocus(-1),
+  },
+  // The spaces. Discord switches servers with Ctrl+Alt and an arrow, which is the
+  // same shape of thing; here both of those arrows are the panes', so the two keys
+  // every app uses for the one before and the one after take it instead.
+  {
+    id: 'space.previous',
+    label: () => t('Previous space'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-,',
+    run: () => stepSpace(-1),
+  },
+  {
+    id: 'space.next',
+    label: () => t('Next space'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-.',
+    run: () => stepSpace(1),
+  },
+  {
+    // The header's own menu, from anywhere: which space this is, the others, and
+    // making one. On the space bar, because that is where the word is written.
+    id: 'space.switcher',
+    label: () => t('Spaces'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-Space',
+    run: () => openSpaces(),
   },
   {
     // The space drawn as a map of its links. No key out of the box - it opens
@@ -504,11 +616,17 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => modes.stepZoom(-1),
   },
   {
+    // Not on Ctrl+Shift+0, where the other two zoom keys would put it. Ctrl+0 is
+    // Paragraph in the editor, and on a layout where the digit is the shifted
+    // character - French, and every other AZERTY - the editor reads Ctrl+Shift+0 as
+    // Ctrl+0 as well and flattens the heading the caret is in. So it goes one
+    // modifier over, where it still reads as the 0 every browser resets with.
+    // See the digit rule in shortcuts.test.ts.
     id: 'app.zoom-reset',
     label: () => t('Actual size'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-Shift-0',
+    key: 'Mod-Alt-0',
     run: () => modes.resetZoom(),
   },
 ]
@@ -618,6 +736,27 @@ const PANEL_ENTRIES: Shortcut[] = [
     scope: 'panel',
     key: 'F2',
     contextual: true,
+  },
+  // The row's own menu, which every row in every list already has on a right
+  // click and a held finger. Shift+F10 is the key a window manager has used for it
+  // for thirty years, and the key beside the right Ctrl is the one with the picture
+  // of a menu printed on it.
+  {
+    id: 'list.menu',
+    label: () => t('Menu for this row'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Shift-F10',
+    contextual: true,
+  },
+  {
+    id: 'list.menu.alt',
+    label: () => t('Menu for this row'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'ContextMenu',
+    contextual: true,
+    alias: true,
   },
 ]
 

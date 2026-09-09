@@ -657,6 +657,62 @@ describe('what a reader is shown', () => {
   })
 })
 
+/** Getting around with nothing but a keyboard; see docs/keyboard.md. */
+describe('the keys that move the keyboard about', () => {
+  test('walk the regions of the window, both ways', () => {
+    expect(registry.shortcuts.keyFor('app.region-next')).toBe('F6')
+    expect(registry.shortcuts.keyFor('app.region-previous')).toBe('Shift-F6')
+  })
+
+  test('reach every panel, and toggle the sidebar', () => {
+    for (const id of ['app.files', 'app.outline', 'app.search', 'app.links', 'app.sidebar']) {
+      expect(registry.shortcuts.keyFor(id), id).toBeTruthy()
+    }
+  })
+
+  test('reach the spaces and the switcher', () => {
+    expect(registry.shortcuts.keyFor('space.next')).toBeTruthy()
+    expect(registry.shortcuts.keyFor('space.previous')).toBeTruthy()
+    expect(registry.shortcuts.keyFor('space.switcher')).toBeTruthy()
+  })
+
+  test('and the list of every key there is', () => {
+    expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
+  })
+
+  /** The rule that cost a day.
+   *
+   *  CodeMirror reads a character key held with a modifier twice: once as it
+   *  arrived and once without the shift, because on a great many layouts the shift
+   *  is how you type that character at all. For a letter that is harmless, since
+   *  the shifted letter and the letter are different names for the key. For a
+   *  digit it is not: on AZERTY the digit *is* the shifted character, so
+   *  Ctrl+Shift+3 arrives as Ctrl+Shift+"3", is read a second time as Ctrl+3, and
+   *  fires the heading level as well as whatever the app meant by it.
+   *
+   *  So no app key may be Mod+Shift and a digit the editor holds on Mod alone.
+   *  See runHandlers in @codemirror/view. */
+  test.each(PLATFORMS)('never shadow an editor digit through the shift (%s)', (platform) => {
+    const editorDigits = new Set(
+      registry.SHORTCUTS.filter((one) => one.scope === 'editor')
+        .map((one) => defaultKeyFor(one, platform))
+        .filter((key): key is string => !!key)
+        .map((key) => /^Mod-([0-9])$/.exec(key)?.[1])
+        .filter((digit): digit is string => !!digit),
+    )
+
+    const guilty = registry.SHORTCUTS.filter((one) => one.scope === 'app')
+      .map((one) => ({ id: one.id, key: defaultKeyFor(one, platform) }))
+      .filter((one) => {
+        const digit = one.key === null ? undefined : /^Mod-Shift-([0-9])$/.exec(one.key)?.[1]
+        return !!digit && editorDigits.has(digit)
+      })
+      .map((one) => `${one.id} on ${one.key ?? ''}`)
+
+    expect(guilty, `these fire an editor command as well: ${guilty.join(', ')}`).toEqual([])
+  })
+})
+
 describe('on a Mac', () => {
   test('the keys are written as a Mac writes them', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })

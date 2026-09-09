@@ -45,7 +45,8 @@ import { canInsertPicture, insertPicture } from './insert-picture'
 import { canSaveAs, saveAs } from './save-as'
 import { moveTargets } from './move-targets'
 import { prompt } from './prompt.svelte'
-import { newSpace, publishSpace, shareSpace } from './space-actions'
+import { openSpaces, revealPanel, stepRegionFocus } from './focus'
+import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { canPublish } from './publishing.svelte'
 import { canShare } from './sharing.svelte'
 import { updates } from './updates.svelte'
@@ -897,24 +898,76 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.sidebar'),
       run: () => workspace.toggleSidebar(),
     },
+    // The four panels. Each opens and takes the keyboard, which is what its key
+    // does, so choosing one here and pressing its chord land in the same place;
+    // see focus.ts.
     {
       id: 'files',
       label: t('Files'),
       hint: shortcuts.hint('app.files'),
-      run: () => workspace.showPanel('tree'),
+      run: () => revealPanel('tree'),
+    },
+    {
+      id: 'outline-panel',
+      label: t('Outline'),
+      hint: shortcuts.hint('app.outline'),
+      run: () => revealPanel('outline'),
     },
     {
       id: 'search-space',
       label: t('Search this space'),
       hint: shortcuts.hint('app.search'),
-      run: () => workspace.showPanel('search'),
+      run: () => revealPanel('search'),
     },
     {
       id: 'links-panel',
       label: t('Links'),
-      run: () => workspace.showPanel('links'),
+      hint: shortcuts.hint('app.links'),
+      run: () => revealPanel('links'),
     },
     { id: 'graph', label: t('Graph'), run: () => workspace.openGraph() },
+    // Round the regions of the window, and round the spaces. Here as well as on a
+    // key, because the palette is where somebody looks for a thing they have not
+    // learned the key for yet - and because a browser may take F6 before the app
+    // sees it.
+    {
+      id: 'region-next',
+      label: t('Next section'),
+      hint: shortcuts.hint('app.region-next'),
+      run: () => void stepRegionFocus(1),
+    },
+    {
+      id: 'region-previous',
+      label: t('Previous section'),
+      hint: shortcuts.hint('app.region-previous'),
+      run: () => void stepRegionFocus(-1),
+    },
+    {
+      id: 'spaces',
+      label: t('Spaces'),
+      hint: shortcuts.hint('space.switcher'),
+      run: () => openSpaces(),
+    },
+    {
+      id: 'space-next',
+      label: t('Next space'),
+      hint: shortcuts.hint('space.next'),
+      disabled: workspace.spaces.length < 2,
+      run: () => stepSpace(1),
+    },
+    {
+      id: 'space-previous',
+      label: t('Previous space'),
+      hint: shortcuts.hint('space.previous'),
+      disabled: workspace.spaces.length < 2,
+      run: () => stepSpace(-1),
+    },
+    {
+      id: 'keys',
+      label: t('Keyboard shortcuts'),
+      hint: shortcuts.hint('app.keys'),
+      run: () => settings.show('shortcuts'),
+    },
 
     ...composerCommands(view),
   ]

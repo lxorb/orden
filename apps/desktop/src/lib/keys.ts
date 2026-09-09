@@ -207,6 +207,9 @@ const SHOWN: Record<string, string> = {
   PageUp: 'PgUp',
   PageDown: 'PgDn',
   ' ': 'Space',
+  // The key beside the right Ctrl with a picture of a menu on it. `ContextMenu` is
+  // a browser's word for it and is printed on no keyboard anywhere.
+  ContextMenu: 'Menu',
 }
 
 /** The combination as a reader sees it: `⌘⇧K` on a Mac, `Ctrl+Shift+K`

@@ -25,6 +25,22 @@ export async function newSpace() {
   sync.nudge()
 }
 
+/** The space before or after this one, from anywhere in the app.
+ *
+ *  The ends meet, because one key has to be able to walk round: a chord that
+ *  stops on the last space and does nothing is a chord that reads as broken. In
+ *  the order the spaces are in, which is the order the reader put them in.
+ *
+ *  One space is not a ring, and the key does nothing at all. */
+export function stepSpace(direction: number) {
+  const spaces = workspace.spaces
+  if (spaces.length < 2) return
+
+  const at = spaces.findIndex((one) => one.id === workspace.activeSpaceId)
+  const next = spaces[(at < 0 ? 0 : at + direction + spaces.length) % spaces.length]
+  if (next && next.id !== workspace.activeSpaceId) void workspace.showSpace(next.id)
+}
+
 /** Moves a space in the switcher and tells the account about it, so the order is
  *  the same on the next machine. Lives here rather than on the workspace,
  *  which knows nothing about syncing. */
