@@ -7,7 +7,7 @@
   import { type IconNode, loadIcons } from './icons'
   import { longPress } from './longpress'
   import { t } from './i18n.svelte'
-  import { DIVIDER, menu, type MenuEntry, revealEntry, trim } from './menu.svelte'
+  import { DIVIDER, menu, type MenuEntry, trim } from './menu.svelte'
   import { overlays } from './overlays'
   import { prompt } from './prompt.svelte'
   import { deleteSpace, moveSpace, newSpace, renameSpace, shareSpace } from './space-actions'
@@ -154,11 +154,13 @@
   function spaceMenu(space: Space): MenuEntry[] {
     // A space somebody shared to read is theirs; the only thing this menu can
     // offer about it is a way out of it.
-    const mine = roleOf(space.root) !== 'read'
     const theirs = roleOf(space.root) !== 'owner'
 
+    // What a space is, rather than what to put in it: the file list's own menu
+    // makes notes, and it is where somebody looking for a new note already is.
+    // The folder behind the space is not what the rail is about either, so
+    // revealing it went with the note.
     return trim([
-      ...(mine ? [{ label: t('New note'), run: () => void workspace.createNote(space.root) }] : []),
       ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
       // Only where a drag is impossible. On a desktop the rail is dragged, and
       // an entry for what the pointer already does would be one more row to read.
@@ -167,7 +169,6 @@
         : []),
       { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
       ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
-      ...revealEntry(space.root),
       DIVIDER,
       {
         label: theirs ? t('Leave space') : t('Delete space'),
