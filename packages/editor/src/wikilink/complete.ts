@@ -62,28 +62,60 @@ function folderOf(path: string): string | undefined {
   return at === -1 ? undefined : path.slice(0, at)
 }
 
-function noteOptions(index: NoteIndex, typed: string): Completion[] {
-  const needle = typed.trim().toLowerCase()
+/** A note's own row, and one for every other name it answers to.
+ *
+ *  An alias row carries the note's real name where a plain row carries the
+ *  folder, so choosing one is never a guess about which note it writes. What it
+ *  writes is the alias itself: that is the name the writer gave the note for
+ *  reading, and a link is words as much as it is a target. */
+function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] {
+  const rows: Completion[] = []
+  const folder = folderOf(note.path)
 
-  return index.notes
-    .filter((note) => !needle || matches(note, needle))
-    .slice(0, MOST_SHOWN)
-    .map((note) => {
-      const folder = folderOf(note.path)
-      return {
-        label: note.name,
-        ...(folder === undefined ? {} : { detail: folder }),
-        apply: insert(nameFor(index, note)),
-        type: 'text',
-      }
+  if (!needle || matches(note, needle)) {
+    rows.push({
+      label: note.name,
+      ...(folder === undefined ? {} : { detail: folder }),
+      apply: insert(nameFor(index, note)),
+      type: 'text',
     })
+  }
+
+  for (const alias of note.aliases) {
+    if (!alias.trim()) continue
+    if (needle && !alias.toLowerCase().includes(needle)) continue
+
+    rows.push({ label: alias, detail: note.name, apply: insert(alias), type: 'text' })
+  }
+
+  return rows
 }
 
-/** A note matches what has been typed when its name or its path contains it.
- *  Substring rather than fuzzy: the palette's fuzzy matching is for finding a
- *  note by a few letters, and a link is being written, not searched for. */
+function noteOptions(index: NoteIndex, typed: string): Completion[] {
+  const needle = typed.trim().toLowerCase()
+  const rows: Completion[] = []
+
+  // Cut after the rows are built rather than before: an alias is a row of its
+  // own, and slicing the notes first would drop it for a reason nobody could
+  // see.
+  for (const note of index.notes) {
+    rows.push(...rowsFor(index, note, needle))
+    if (rows.length >= MOST_SHOWN) break
+  }
+
+  return rows.slice(0, MOST_SHOWN)
+}
+
+/** A note matches what has been typed when its name, its path or one of the
+ *  other names it answers to contains it. Substring rather than fuzzy: the
+ *  palette's fuzzy matching is for finding a note by a few letters, and a link
+ *  is being written, not searched for. */
 function matches(note: NoteRef, needle: string): boolean {
-  return note.name.toLowerCase().includes(needle) || note.path.toLowerCase().includes(needle)
+  return (
+    note.name.toLowerCase().includes(needle) ||
+    note.path.toLowerCase().includes(needle) ||
+    note.aliases.some((alias) => alias.toLowerCase().includes(needle))
+  )
 }
 
 function headingOptions(note: NoteRef, typed: string): Completion[] {

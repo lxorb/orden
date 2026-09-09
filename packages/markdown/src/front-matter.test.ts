@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { frontMatter, frontMatterEdit, frontMatterValue, stripFrontMatter } from './front-matter'
+import {
+  frontMatter,
+  frontMatterEdit,
+  frontMatterList,
+  frontMatterValue,
+  stripFrontMatter,
+} from './front-matter'
 
 /** What the block is read as. The three readers of it - an export, a search and
  *  the icon a row wears - all come through these. */
@@ -32,6 +38,46 @@ describe('reading the front matter', () => {
 
   test('a key with nothing after it says nothing', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
+  })
+})
+
+/** The shapes a note may write a list in. Obsidian writes `aliases` all three
+ *  ways depending on how it was typed, so all three are read. */
+describe('reading a key as a list', () => {
+  const front = (body: string) => `---\n${body}\n---\n\nWords.\n`
+
+  test('reads a flow sequence', () => {
+    expect(frontMatterList(front('aliases: [One, Two]'), 'aliases')).toEqual(['One', 'Two'])
+  })
+
+  test('reads the lines written under the key', () => {
+    expect(frontMatterList(front('aliases:\n  - One\n  - Two'), 'aliases')).toEqual(['One', 'Two'])
+    expect(frontMatterList(front('aliases:\n- One\n- Two'), 'aliases')).toEqual(['One', 'Two'])
+  })
+
+  test('reads a single value as a list of one', () => {
+    expect(frontMatterList(front('aliases: One'), 'aliases')).toEqual(['One'])
+  })
+
+  test('takes the quotes off, whichever they are', () => {
+    expect(frontMatterList(front('aliases: ["One", \'Two\']'), 'aliases')).toEqual(['One', 'Two'])
+    expect(frontMatterList(front('aliases:\n  - "One two"'), 'aliases')).toEqual(['One two'])
+  })
+
+  test('stops at the next key of the note’s own', () => {
+    const body = 'aliases:\n  - One\ntitle: Not an alias\n'
+    expect(frontMatterList(front(body), 'aliases')).toEqual(['One'])
+  })
+
+  test('is nothing where there is nothing to read', () => {
+    expect(frontMatterList('Words.\n', 'aliases')).toEqual([])
+    expect(frontMatterList(front('title: A note'), 'aliases')).toEqual([])
+    expect(frontMatterList(front('aliases:'), 'aliases')).toEqual([])
+    expect(frontMatterList(front('aliases: []'), 'aliases')).toEqual([])
+  })
+
+  test('is not read from a key indented under another', () => {
+    expect(frontMatterList(front('export:\n  aliases: [One]'), 'aliases')).toEqual([])
   })
 })
 

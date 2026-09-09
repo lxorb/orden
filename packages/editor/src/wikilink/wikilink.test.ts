@@ -22,12 +22,18 @@ import { parsed } from '../../test/parsed'
 /** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
-function note(path: string, headings: string[] = [], blocks: string[] = []): NoteRef {
+function note(
+  path: string,
+  headings: string[] = [],
+  blocks: string[] = [],
+  aliases: string[] = [],
+): NoteRef {
   return {
     path,
     name: (path.split('/').pop() ?? path).replace(/\.[^.]+$/, ''),
     headings,
     blocks,
+    aliases,
   }
 }
 
@@ -275,6 +281,44 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, '../Spark.md')?.path).toBe('ideas/Spark.md')
     expect(resolveRelative(here, '../../Plan.md')?.path).toBe('Plan.md')
     expect(resolveRelative(here, './Nothing.md')).toBeNull()
+  })
+})
+
+/** A name a note gave itself in its own front matter. A file always wins: the
+ *  aliases are only looked at when nothing in the space is called that. */
+describe('a name a note answers to', () => {
+  test('finds the note that declared it', () => {
+    const notes = [note('Plan.md', [], [], ['Roadmap', 'The plan'])]
+    expect(resolveNote(index(notes), 'Roadmap')?.path).toBe('Plan.md')
+    expect(resolveNote(index(notes), 'The plan')?.path).toBe('Plan.md')
+  })
+
+  test('is read whatever case it is written in', () => {
+    const notes = [note('Plan.md', [], [], ['Roadmap'])]
+    expect(resolveNote(index(notes), 'roadmap')?.path).toBe('Plan.md')
+  })
+
+  test('gives way to a file of that name', () => {
+    const notes = [note('Plan.md', [], [], ['Roadmap']), note('Roadmap.md')]
+    expect(resolveNote(index(notes), 'Roadmap')?.path).toBe('Roadmap.md')
+  })
+
+  test('picks the nearest where two notes answer to it', () => {
+    const notes = [
+      note('far/Plan.md', [], [], ['Roadmap']),
+      note('here/Other.md', [], [], ['Roadmap']),
+    ]
+    expect(resolveNote(index(notes, 'here/Note.md'), 'Roadmap')?.path).toBe('here/Other.md')
+  })
+
+  test('is a link that resolves, so it is not drawn as a name nothing answers to', () => {
+    const notes = [note('Plan.md', [], [], ['Roadmap'])]
+    const link = { target: 'Roadmap', heading: null, block: null, alias: null, embed: false }
+    expect(resolves(index(notes), link, 'wikilink')).toBe(true)
+  })
+
+  test('is nothing when no note claims it', () => {
+    expect(resolveNote(index([note('Plan.md')]), 'Roadmap')).toBeNull()
   })
 })
 

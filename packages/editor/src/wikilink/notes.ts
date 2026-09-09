@@ -20,6 +20,9 @@ export interface NoteRef {
   headings: readonly string[]
   /** Every block name in the note: the `^abc123` at the end of a paragraph. */
   blocks: readonly string[]
+  /** The other names the note gave itself, in its own front matter. A link may
+   *  use any of them; see `resolveNote`. */
+  aliases: readonly string[]
 }
 
 export interface NoteIndex {
@@ -156,7 +159,17 @@ export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
     return path === wanted || path.endsWith(`/${wanted}`)
   })
 
-  return found.length ? nearest(found, index.path) : null
+  if (found.length) return nearest(found, index.path)
+
+  // Nothing in the space is called that. A note may still answer to it: an
+  // alias is a name a note gave itself in its front matter. Looked at only once
+  // no file is named that, so a real file always wins, which is the order
+  // Obsidian reads them in too.
+  const named = index.notes.filter((note) =>
+    note.aliases.some((alias) => comparable(alias) === wanted),
+  )
+
+  return named.length ? nearest(named, index.path) : null
 }
 
 /** The note a relative markdown target names: `../ideas/Plan.md` beside the note

@@ -217,7 +217,7 @@ const publishing = renderer({ escapeHtml: true }, [], embedSink())
  *  a key as well as how to read one. Named here as well because a renderer, an
  *  export and a document title are all callers of this module and all ask about
  *  it, and one import of `@nib/markdown` is what they should need. */
-export { frontMatter, frontMatterValue, stripFrontMatter } from './front-matter'
+export { frontMatter, frontMatterList, frontMatterValue, stripFrontMatter } from './front-matter'
 
 /** The first heading, or null when the note has none. */
 export function documentTitle(source: string): string | null {

@@ -3,8 +3,8 @@ import { describe, expect, test, vi } from 'vitest'
 /** The space around the note, stood in for: what the reading view has to get
  *  right is that it asks, and what it does with the answers. */
 const NOTES = [
-  { path: 'Plan.md', name: 'Plan', headings: ['Why it works'], blocks: [] },
-  { path: 'ideas/Later.md', name: 'Later', headings: [], blocks: [] },
+  { path: 'Plan.md', name: 'Plan', headings: ['Why it works'], blocks: [], aliases: [] },
+  { path: 'ideas/Later.md', name: 'Later', headings: [], blocks: [], aliases: [] },
 ]
 
 const bodies: Record<string, string> = {

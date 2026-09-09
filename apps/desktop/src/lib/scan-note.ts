@@ -6,7 +6,7 @@
  *  function, so a note re-read after a save cannot come back looking different
  *  from the same note read by the first scan. */
 
-import { frontMatterValue } from '@nib/markdown/front-matter'
+import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { readCanvas } from './canvas/format'
 
@@ -37,6 +37,10 @@ export interface ScannedNote {
    *  null where it says nothing. Read in this pass rather than in one of its own:
    *  every row of the tree wants it, and the space has already been read here. */
   icon: string | null
+  /** The other names the note gave itself, as its front matter lists them.
+   *  Read on this pass for the same reason the icon is: the space is already
+   *  being read. */
+  aliases: string[]
 }
 
 export interface SpaceLinks {
@@ -58,6 +62,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     headings: headingsOf(content),
     blocks: blockIds(content).map((one) => one.id),
     icon: frontMatterValue(content, 'icon'),
+    aliases: frontMatterList(content, 'aliases'),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,
@@ -94,6 +99,8 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     // it wears. Its own file could hold one under the `nib` key that already
     // carries the ink; nothing writes one yet.
     icon: null,
+    // Nor any other name for itself, for the same reason.
+    aliases: [],
     links: canvas.nodes
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
       .map((node) => ({

@@ -78,6 +78,13 @@ function comparable(path: string): string {
   return path.replace(/\\/g, '/').replace(MARKDOWN, '').toLowerCase()
 }
 
+/** Every name a note answers to, folded: the last part of its path, and the
+ *  aliases it gave itself in its own front matter. */
+function namesOf(note: { path: string; aliases: readonly string[] }): ReadonlySet<string> {
+  const folded = note.aliases.map((alias) => comparable(alias.trim())).filter(Boolean)
+  return new Set([comparable(nameOf(note.path)), ...folded])
+}
+
 class Links {
   private notes = $state<ScannedNote[]>([])
   private files = $state<string[]>([])
@@ -102,6 +109,7 @@ class Links {
       name: note.name,
       headings: note.headings,
       blocks: note.blocks,
+      aliases: note.aliases,
     })),
   )
 
@@ -351,10 +359,13 @@ class Links {
     const map = new Map<string, NoteRef[]>()
 
     for (const ref of this.refs) {
-      const key = comparable(nameOf(ref.path))
-      const held = map.get(key)
-      if (held) held.push(ref)
-      else map.set(key, [ref])
+      // Under its own name, and under every other name it gave itself, or a
+      // link by an alias would never reach the resolver at all.
+      for (const key of namesOf(ref)) {
+        const held = map.get(key)
+        if (held) held.push(ref)
+        else map.set(key, [ref])
+      }
     }
 
     return map
@@ -408,10 +419,17 @@ class Links {
    *  The last part of a target has to be the note's own name for either spelling
    *  to reach it, which turns twenty thousand links into twenty thousand string
    *  comparisons and a handful of lookups. */
-  private couldName(link: { target: string }, name: string): boolean {
+  private couldName(link: { target: string }, names: ReadonlySet<string>): boolean {
     if (!link.target) return false
-    const last = comparable(link.target).split('/').pop()
-    return last === name
+    const last = comparable(link.target).split('/').pop() ?? ''
+    return names.has(last)
+  }
+
+  /** Every name a note in the space answers to, by its path relative to the
+   *  space. Its own name where the space has never heard of it. */
+  private namesFor(relative: string): ReadonlySet<string> {
+    const note = this.notes.find((one) => one.path === relative)
+    return namesOf(note ?? { path: relative, aliases: [] })
   }
 
   /** Every link in the space that points at this note. */
@@ -419,14 +437,16 @@ class Links {
     const relative = this.relative(path)
     if (!relative) return []
 
-    const name = comparable(nameOf(relative))
+    // Its own name and every other name it answers to, so a link written with an
+    // alias counts as a link here.
+    const names = this.namesFor(relative)
     const out: Reference[] = []
 
     for (const note of this.notes) {
       if (note.path === relative) continue
 
       for (const link of note.links) {
-        if (!this.couldName(link, name)) continue
+        if (!this.couldName(link, names)) continue
         if (this.resolveFrom(note.path, link) !== relative) continue
         out.push({ path: note.path, name: note.name, line: link.line, text: link.text })
       }
@@ -463,21 +483,36 @@ class Links {
     const relative = this.relative(path)
     if (!relative) return []
 
-    const name = noteName(relative)
-    if (name.trim().length < 2) return []
+    // Its own name, and every other name it answers to: somebody writing the
+    // alias has mentioned this note as surely as somebody writing the filename.
+    const note = this.notes.find((one) => one.path === relative)
+    const written = [noteName(relative), ...(note?.aliases ?? [])]
+      .map((one) => one.trim())
+      .filter((one) => one.length >= 2)
+    if (!written.length) return []
 
-    const hits = await invoke<{ path: string; name: string; line: number; text: string }[]>(
-      'search_space',
-      { root, query: name, limit: MOST_MENTIONS },
-    ).catch(() => [])
+    const found = await Promise.all(
+      written.map((query) =>
+        invoke<{ path: string; name: string; line: number; text: string }[]>('search_space', {
+          root,
+          query,
+          limit: MOST_MENTIONS,
+        }).catch(() => []),
+      ),
+    )
 
     const linked = new Set(
       this.backlinks(path).map((reference) => `${reference.path}\0${reference.line}`),
     )
-    const needle = name.toLowerCase()
+    const needles = written.map((one) => one.toLowerCase())
+    // One line mentioning two of the names is one mention of the note. A list
+    // rather than a set: a few hundred lines come back at most, and a set in a
+    // reactive file would have to be a reactive one for no reason at all.
+    const seen: string[] = []
 
     return (
-      hits
+      found
+        .flat()
         .map((hit) => ({
           path: this.relative(hit.path) ?? hit.path,
           name: hit.name.replace(MARKDOWN, ''),
@@ -488,7 +523,13 @@ class Links {
         // A line that already links here is a backlink, not a mention of one.
         .filter((hit) => !linked.has(`${hit.path}\0${hit.line}`))
         // And the name has to stand as a word rather than inside a longer one.
-        .filter((hit) => standsAlone(hit.text.toLowerCase(), needle))
+        .filter((hit) => needles.some((needle) => standsAlone(hit.text.toLowerCase(), needle)))
+        .filter((hit) => {
+          const key = `${hit.path}\0${hit.line}`
+          if (seen.includes(key)) return false
+          seen.push(key)
+          return true
+        })
     )
   }
 
@@ -503,13 +544,17 @@ class Links {
     const now = this.relative(to)
     if (!was || !now || was === now) return 0
 
-    const name = comparable(nameOf(was))
+    // The file's own name and nothing else. A rename rewrites the links that
+    // spelled out the name that changed; a link written with an alias still says
+    // what the note still answers to, so rewriting it would turn a name the
+    // writer chose into a filename they did not.
+    const byFile = new Set([comparable(nameOf(was))])
     const move = { from: was, to: now }
     let touched = 0
 
     for (const note of [...this.notes]) {
       // Whether this note is worth reading at all, decided from the index.
-      const candidates = note.links.filter((link) => this.couldName(link, name))
+      const candidates = note.links.filter((link) => this.couldName(link, byFile))
       if (!candidates.length) continue
       if (!candidates.some((link) => this.resolveFrom(note.path, link) === was)) continue
 

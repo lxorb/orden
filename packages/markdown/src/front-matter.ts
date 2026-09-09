@@ -98,6 +98,62 @@ export function stripFrontMatter(source: string): string {
   return block ? source.slice(block.to) : source
 }
 
+/** A dash and a space at the start of a line, however far it is indented: the
+ *  way YAML writes a list under the key it belongs to. */
+const ITEM = /^[ \t]*-[ \t]+(.*)$/
+
+/** A top-level key read as a list.
+ *
+ *  YAML writes one three ways and a note may use any of them:
+ *
+ *      aliases: [One, Two]
+ *      aliases:
+ *        - One
+ *        - Two
+ *      aliases: One
+ *
+ *  The last is a list of one, because a reader asking for a list wants the
+ *  answer in one shape. Empty where the note has no block, no such key, or
+ *  nothing under it. Still not a YAML parser: what it reads is what a note
+ *  written by hand or by Obsidian actually holds. */
+export function frontMatterList(source: string, key: string): string[] {
+  const block = frontMatterBlock(source)
+  if (!block) return []
+
+  const line = keyLine(source, block, key)
+  if (!line) return []
+
+  const value = source.slice(line.value.from, line.value.to).trim()
+
+  // On the line: a flow sequence, or a single value standing for a list of one.
+  if (value) {
+    const flow = /^\[([\s\S]*)\]$/.exec(value)
+    const parts = flow ? (flow[1] ?? '').split(',') : [value]
+    return parts.map((one) => unquoted(one.trim())).filter(Boolean)
+  }
+
+  // Under it: the `- item` lines, up to the next key of the note's own.
+  const out: string[] = []
+  let at = line.to + 1
+
+  while (at < block.body.to) {
+    const end = source.indexOf('\n', at)
+    const stop = end === -1 || end > block.body.to ? block.body.to : end
+    const text = source.slice(at, stop)
+
+    if (text.trim()) {
+      const item = ITEM.exec(text)
+      if (!item) break
+      out.push(unquoted((item[1] ?? '').trim()))
+    }
+
+    if (end === -1) break
+    at = end + 1
+  }
+
+  return out.filter(Boolean)
+}
+
 /** A top-level `key: value` from the front matter, quotes stripped, or null when
  *  the note has no block, no such key, or nothing after the colon. */
 export function frontMatterValue(source: string, key: string): string | null {
