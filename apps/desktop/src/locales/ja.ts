@@ -707,6 +707,7 @@ export const ja: Dictionary = {
   'Next note': '次のノート',
   'Previous note': '前のノート',
   Fullscreen: '全画面',
+  'Leave fullscreen': '全画面を終了',
   'Moving the caret': 'カーソル移動',
   'Deleting a character': '文字の削除',
   'New line': '改行',

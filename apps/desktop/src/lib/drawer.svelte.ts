@@ -9,6 +9,7 @@ import {
   SETTLE_MIN,
   settleOpen,
 } from './swipe'
+import { fullscreen } from './fullscreen.svelte'
 import { dur } from './motion'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -104,6 +105,11 @@ class Drawer {
 
       const touch = single(event)
       if (!touch || !isFinger(pointer) || isStylus(touch)) return
+
+      // Full screen has taken the drawer away, so there is nothing to drag out:
+      // a swipe there would open a file list nobody can see. See
+      // fullscreen.svelte.ts.
+      if (fullscreen.on) return
 
       // Whatever is under the finger gets first refusal: a table that scrolls
       // sideways, a strip of tabs, a canvas being drawn on.

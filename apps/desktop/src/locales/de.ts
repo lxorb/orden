@@ -713,6 +713,7 @@ export const de: Dictionary = {
   'Next note': 'Nächste Notiz',
   'Previous note': 'Vorherige Notiz',
   Fullscreen: 'Vollbild',
+  'Leave fullscreen': 'Vollbild verlassen',
   'Moving the caret': 'Cursor bewegen',
   'Deleting a character': 'Zeichen löschen',
   'New line': 'Neue Zeile',

@@ -31,6 +31,7 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
+  import { fullscreen } from './lib/fullscreen.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
   import { recovery } from './lib/recovery.svelte'
@@ -191,6 +192,16 @@
     }),
   )
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
+
+  // Full screen is one more thing Escape leaves, and one more layer back closes:
+  // a screen with nothing on it but the document has to be as easy to leave as
+  // everything else the app puts over it.
+  $effect(() => (fullscreen.on ? overlays.show(() => void fullscreen.leave()) : undefined))
+  $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
+
+  // And it belongs to the document it was entered on: closing that brings the app
+  // back rather than leaving a window with nothing in it. See fullscreen.svelte.ts.
+  $effect(() => fullscreen.watch(workspace.tabs.map((tab) => tab.id)))
 
   // The drawer follows the finger, the way a phone app's does; see
   // drawer.svelte.ts. Only where the sidebar is a drawer: a tablet on its side
@@ -369,16 +380,9 @@
     return () => cancelAnimationFrame(frame)
   })
 
-  async function toggleFullscreen() {
-    if (!isDesktop) return
-    const window = await currentWindow()
-    await window.setFullscreen(!(await window.isFullscreen()))
-  }
-
   /** Every app-level key comes from one registry, so a rebind reaches the
-   *  keyboard, the menus and the palette at once. The two things it cannot
-   *  reach on its own are here: the palette is this component's own state,
-   *  and full screen is a property of this window. */
+   *  keyboard, the menus and the palette at once. The one thing it cannot reach
+   *  on its own is here: the palette is this component's own state. */
   function onKeydown(event: KeyboardEvent) {
     // Escape closes whatever is over the note, newest first: the settings, a
     // sheet, the palette, a menu, a dropdown inside one of them. Only when
@@ -398,7 +402,9 @@
       palette: () => {
         palette = true
       },
-      fullscreen: () => void toggleFullscreen(),
+      // The document alone, with the app out of the way and the window's own
+      // frame with it; see fullscreen.svelte.ts.
+      fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
     })
   }
 </script>
@@ -407,6 +413,8 @@
 <svelte:window
   onkeydown={onKeydown}
   oncontextmenu={(event: MouseEvent) => event.preventDefault()}
+  onpointermove={() => fullscreen.stir()}
+  onpointerdown={() => fullscreen.stir()}
 />
 
 <!-- The titlebar spans the whole window, so the rail, the sidebar and the
@@ -415,7 +423,7 @@
      row sits beside them rather than above everything. -->
 <!-- Nothing in the app is reachable while the account's writing is still on
      its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
-<main class:focus={modes.focus} inert={arriving.showing}>
+<main class:focus={modes.focus} class:full={fullscreen.on} inert={arriving.showing}>
   <div class="middle" bind:this={middle}>
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on
@@ -426,35 +434,40 @@
          announced or reachable by a key either - which is what keeps the rail's
          own sidebar button from being read out on a phone held sideways, where
          the only thing a thumb can reach is the bar's. -->
-    <div
-      class="panels"
-      inert={viewport.drawer && !workspace.panel}
-      class:open={!!workspace.panel}
-      class:held={drawer.held}
-      class:dragging={drawer.at !== null}
-      class:settling={drawer.settle !== null}
-      style:transform={drawer.at === null || viewport.narrow
-        ? undefined
-        : `translateX(${drawer.at - drawer.width}px)`}
-      style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
-      ontransitionend={(event) => drawer.arrived(event)}
-    >
-      <Rail
-        {view}
-        onpalette={() => {
-          palette = true
-        }}
-        onhistory={() => {
-          settings.historyOpen = true
-        }}
-      />
+    <!-- Full screen leaves the document and nothing else: no rail, no file
+         list, no bars. Left out rather than slid away, so nothing in them can
+         be reached by a key while they are gone; see fullscreen.svelte.ts. -->
+    {#if !fullscreen.on}
+      <div
+        class="panels"
+        inert={viewport.drawer && !workspace.panel}
+        class:open={!!workspace.panel}
+        class:held={drawer.held}
+        class:dragging={drawer.at !== null}
+        class:settling={drawer.settle !== null}
+        style:transform={drawer.at === null || viewport.narrow
+          ? undefined
+          : `translateX(${drawer.at - drawer.width}px)`}
+        style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
+        ontransitionend={(event) => drawer.arrived(event)}
+      >
+        <Rail
+          {view}
+          onpalette={() => {
+            palette = true
+          }}
+          onhistory={() => {
+            settings.historyOpen = true
+          }}
+        />
 
-      {#if workspace.panel}
-        <Sidebar ongoto={goto} />
-      {/if}
-    </div>
+        {#if workspace.panel}
+          <Sidebar ongoto={goto} />
+        {/if}
+      </div>
+    {/if}
 
-    {#if workspace.panel}
+    {#if workspace.panel && !fullscreen.on}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
       <div
         class="scrim"
@@ -484,15 +497,17 @@
       <!-- The three dots at the right end of it open the whole of the app on a
            phone and a tablet, which is why the bar is handed what the menu needs;
            see AppMenu.svelte. -->
-      <Titlebar
-        {view}
-        onpalette={() => {
-          palette = true
-        }}
-        onhistory={() => {
-          settings.historyOpen = true
-        }}
-      />
+      {#if !fullscreen.on}
+        <Titlebar
+          {view}
+          onpalette={() => {
+            palette = true
+          }}
+          onhistory={() => {
+            settings.historyOpen = true
+          }}
+        />
+      {/if}
 
       <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
            enough to be waited for draws a line along the top of them. -->
@@ -501,7 +516,7 @@
         <PaneTree frame={workspace.panes.frame} />
       </div>
 
-      {#if workspace.active?.kind !== 'graph'}
+      {#if workspace.active?.kind !== 'graph' && !fullscreen.on}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
           reading={modes.readOnly || !canWriteHere}
@@ -512,9 +527,28 @@
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the
            keyboard is up, because then you are already writing one. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing}
+      {#if viewport.touch && !workspace.panel && !viewport.typing && !fullscreen.on}
         <button class="fab" aria-label={t('New note')} onclick={() => workspace.createNote()}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+      {/if}
+
+      <!-- The way back out of full screen, in the corner the bar's own buttons
+           were in. It fades once nothing has moved for a while - it is a way out,
+           not part of what is being read - and stays there faintly rather than
+           going, because a screen with no way off it is the one thing this must
+           never be. Escape, back on Android and the menu row do the same. -->
+      {#if fullscreen.on}
+        <button
+          class="leave"
+          class:idle={fullscreen.idle}
+          title={t('Leave fullscreen')}
+          aria-label={t('Leave fullscreen')}
+          onclick={() => void fullscreen.leave()}
+        >
+          <svg viewBox="0 0 16 16">
+            <path d="M6.5 2.5v4h-4M9.5 2.5v4h4M6.5 13.5v-4h-4M9.5 13.5v-4h4" />
+          </svg>
         </button>
       {/if}
     </div>
@@ -592,6 +626,96 @@
     min-width: 0;
     min-height: 0;
     display: flex;
+  }
+
+  /* Full screen: the panes are the whole window, so what the system keeps for
+     its clock, its cutout and its gesture bar is kept clear here instead of by
+     the bars that have gone. */
+  main.full .panes {
+    padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
+  }
+
+  /* The way back, in the corner the window's own buttons were in. Small, and
+     quieter still once nothing has moved for a while - but never gone: it stays
+     reachable by a finger and by a key. */
+  .leave {
+    position: absolute;
+    top: max(var(--space-2), var(--inset-top));
+    right: max(var(--space-2), var(--inset-right));
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--surface-3) 82%, transparent);
+    color: var(--muted-strong);
+    box-shadow: var(--shadow-sm);
+    cursor: default;
+    width: 30px;
+    height: 30px;
+    transition:
+      opacity var(--dur-slow) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  /* Arrives with the screen it belongs to rather than appearing on it. In CSS,
+     so it goes with the tokens under reduced motion. */
+  .leave {
+    animation: arrive var(--dur-base) var(--ease-out);
+  }
+
+  @keyframes arrive {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .leave.idle {
+    opacity: 0.22;
+  }
+
+  @media (hover: hover) {
+    .leave:hover {
+      opacity: 1;
+      background: var(--surface-3);
+      color: var(--text-strong);
+    }
+  }
+
+  .leave:active {
+    opacity: 1;
+    background: var(--press);
+    color: var(--text-strong);
+  }
+
+  .leave:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .leave svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* A thumb's target rather than a pointer's, and drawn at the size every other
+     icon on a touch screen is. */
+  :global([data-touch]) .leave {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  :global([data-touch]) .leave svg {
+    width: var(--touch-icon);
+    height: var(--touch-icon);
   }
 
   /* Sits above the document, clear of the gesture bar. */

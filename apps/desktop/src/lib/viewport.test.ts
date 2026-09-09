@@ -35,7 +35,8 @@ const AGENTS = {
     'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36',
   // Chrome on an Android tablet says nothing about being one: `Android` is the
   // whole of it, and `userAgentData.mobile` is false.
-  tablet: 'Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 Chrome/140 Safari/537.36',
+  tablet:
+    'Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 Chrome/140 Safari/537.36',
   // What "Desktop site" rewrites the phone's into: a Linux desktop, with every
   // handheld token gone.
   asked: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
@@ -116,7 +117,9 @@ async function started(kind: Kind = {}, width = 390, height = 844) {
   vi.stubGlobal('document', document)
   vi.stubGlobal('navigator', {
     userAgent: kind.agent ?? AGENTS.desktop,
-    ...(kind.mobile === undefined || kind.mobile === null ? {} : { userAgentData: { mobile: kind.mobile } }),
+    ...(kind.mobile === undefined || kind.mobile === null
+      ? {}
+      : { userAgentData: { mobile: kind.mobile } }),
   })
 
   const { pageHeight, viewport } = await import('./viewport.svelte')

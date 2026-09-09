@@ -234,6 +234,28 @@ window that has just become one of these devices - and `onlyOne` is the rule
 itself, on every way a document opens. `apps/desktop/src/lib/one-document.test.ts`
 holds both to it, and holds the desktop to keeping every tab it has always had.
 
+## Full screen
+
+The document and nothing else: the rail with the spaces, the file list, the title
+bar and the status bar all leave, and the panes fill the window behind whatever
+the system keeps for its clock and its gesture bar. Where there is a window to
+ask, it drops its frame too - the desktop's chrome, the browser's own bars.
+
+It is one command, `app.fullscreen`, which is F11 and which the View menu and the
+three dots both show. Nothing about it is written down: it belongs to the document
+it was entered on and to this sitting, so closing that document brings the app
+back, and so does starting the app again.
+
+Four ways out, because a screen with nothing on it must not be a trap: the small
+button in the corner the window's buttons were in, which fades to a fifth of
+itself once nothing has moved for a while and lights again at the first touch;
+Escape; back, on Android; and the same menu row that turned it on.
+
+What stays is the document, so anything the document draws over itself stays with
+it - the canvas keeps its floating bar. The drawer keeps its hands off while it is
+on: there is no file list to drag out. `apps/desktop/src/lib/fullscreen.svelte.ts`
+holds the state, `fullscreen.test.ts` holds both halves to it.
+
 ## The two things a phone needs that a desktop does not
 
 **The keyboard.** The window draws under the system bars, so Android does not

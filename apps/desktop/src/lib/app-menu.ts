@@ -33,6 +33,7 @@ import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
 import { exportCommands, importCommand } from './commands'
+import { fullscreen } from './fullscreen.svelte'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printNote } from './export/print'
@@ -522,6 +523,14 @@ export function appMenu(context: Context): MenuGroup[] {
           hint: shortcuts.hint('app.focus'),
           checked: modes.focus,
           run: () => modes.toggleFocus(view),
+        },
+        // The document and nothing else: the rail, the file list and both bars
+        // leave. The same command the key is bound to; see fullscreen.svelte.ts.
+        {
+          label: t('Fullscreen'),
+          hint: shortcuts.hint('app.fullscreen'),
+          checked: fullscreen.on,
+          run: () => void fullscreen.toggle(workspace.activeTabId),
         },
         // A window that stays over everything else, for writing beside whatever is
         // being written about. Only a desktop has a window of its own to raise.

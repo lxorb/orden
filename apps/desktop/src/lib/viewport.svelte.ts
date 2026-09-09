@@ -34,7 +34,7 @@ const NARROW = 460
 const KEYBOARD_THRESHOLD = 120
 
 /** The primary pointer is a finger rather than something that can hover. */
-export const FINGER = '(hover: none) and (pointer: coarse)'
+const FINGER = '(hover: none) and (pointer: coarse)'
 
 /** The tokens a handheld names itself with. A phone says `Mobile` in every
  *  browser there is, Firefox says `Tablet` on one, and an Android tablet in

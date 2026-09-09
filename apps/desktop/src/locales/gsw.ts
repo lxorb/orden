@@ -708,6 +708,7 @@ export const gsw: Dictionary = {
   'Next note': 'Nächschti Notiz',
   'Previous note': 'Vorherigi Notiz',
   Fullscreen: 'Vollbild',
+  'Leave fullscreen': 'Vollbild verlaa',
   'Moving the caret': 'De Cursor bewege',
   'Deleting a character': 'Es Zeiche lösche',
   'New line': 'Nöii Zile',

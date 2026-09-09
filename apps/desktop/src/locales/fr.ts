@@ -712,6 +712,7 @@ export const fr: Dictionary = {
   'Next note': 'Note suivante',
   'Previous note': 'Note précédente',
   Fullscreen: 'Plein écran',
+  'Leave fullscreen': 'Quitter le plein écran',
   'Moving the caret': 'Déplacer le curseur',
   'Deleting a character': 'Supprimer un caractère',
   'New line': 'Nouvelle ligne',
