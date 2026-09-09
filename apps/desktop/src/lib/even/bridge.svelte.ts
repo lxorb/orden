@@ -31,6 +31,7 @@ import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
 import { type Row, Shell, type Wish, type Words, type World } from './shell'
 import { Voice } from './voice'
+import { rooms } from '../rooms.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
 
 /** How long after a keystroke the glasses are brought up to date.
@@ -40,12 +41,18 @@ import { type Entry, workspace } from '../workspace.svelte'
  *  putting the phone down and looking up shows the sentence just typed. */
 const SETTLE = 700
 
-/** How long an edit arriving from somebody else waits.
+/** How long a change to a note somebody else is also in waits.
  *
- *  Much shorter, because it is not this reader's typing: a collaborator's paragraph
- *  should appear, and it does not arrive one character at a time. Long enough to
- *  fold a burst of them into one send. See docs/collaboration.md. */
-const ARRIVAL = 80
+ *  Much shorter, because most of what changes in a shared note is not this reader's
+ *  typing: a collaborator's paragraph should appear rather than sit behind three
+ *  quarters of a second, and it does not arrive one character at a time. Long enough
+ *  to fold a burst of them into one send. See docs/collaboration.md.
+ *
+ *  Told apart by whether anybody else is in the note rather than by where the change
+ *  came from, because that is the honest signal the app already has: `rooms.present`
+ *  counts the other devices in each open file. Alone, the point is keeping a
+ *  keystroke off the radio; together, the point is that the note is live. */
+const SHARED = 80
 
 /** How long a word heard, or a word about what went wrong, stays in the foot. */
 const FLASH = 1400
@@ -300,7 +307,7 @@ class Bridge {
     return {
       note,
       revision: note.revision,
-      arrivals: note.arrivals,
+      shared: (rooms.present[note.key] ?? 0) > 0,
       breakAt: modes.glassesBreak,
       lineNumbers: modes.glassesLineNumbers,
       pageNumber: modes.glassesPageNumber,
@@ -316,14 +323,13 @@ class Bridge {
         const { note } = reading
         clearTimeout(this.timer)
 
-        // Only this reader's typing waits the full pause. A switch to another note
-        // and the first page of a sitting are somebody asking for a note and then
-        // watching the glass; an edit arriving from a collaborator is a paragraph
-        // appearing, and neither should sit behind three quarters of a second.
+        // Only this reader's typing, alone in a note, waits the full pause. A switch
+        // to another note and the first page of a sitting are somebody asking for a
+        // note and then watching the glass; a change to a note somebody else is in
+        // is a paragraph appearing. Neither should sit behind three quarters of a
+        // second.
         const switching = this.session.showing?.key !== note.key
-        const arriving = reading.arrivals > this.arrived
-        this.arrived = reading.arrivals
-        const wait = switching ? 0 : arriving ? ARRIVAL : SETTLE
+        const wait = switching ? 0 : reading.shared ? SHARED : SETTLE
 
         this.timer = setTimeout(() => {
           note.flush()
@@ -347,9 +353,6 @@ class Bridge {
       })
     })
   }
-
-  /** How many arrivals from other people this note had last time round. */
-  private arrived = 0
 
   /** The note, paged, and the panel brought up to date if anything moved. */
   private follow(note: OpenNote | null): void {

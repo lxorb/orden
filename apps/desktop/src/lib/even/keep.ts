@@ -29,7 +29,7 @@ export interface Keep {
   clear(key: string): Promise<void>
 }
 
-/** What each store last did, so the diagnosis can say which one lost the token
+/** What each store last did, so a launch that lost the token can say which store
  *  rather than only that it was lost. Written here because this is the only
  *  place that knows. */
 export const wrote = new Map<string, string>()

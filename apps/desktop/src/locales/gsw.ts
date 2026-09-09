@@ -279,6 +279,7 @@ export const gsw: Dictionary = {
   'Voice on': 'Schtimm aa',
   'Voice off': 'Schtimm us',
   Thinking: 'Dänkt naa',
+  Listening: 'Lost zue',
   'No answer': 'Kei Antwort',
   Light: 'Hell',
   Dark: 'Dunkel',

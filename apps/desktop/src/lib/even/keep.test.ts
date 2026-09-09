@@ -195,7 +195,8 @@ describe('a session across two launches of a packed plugin', () => {
     await vi.advanceTimersByTimeAsync(CHANNEL_AT + 100)
     await reading
 
-    // What the diagnosis panel shows, and what turns one screenshot into an
+    // What a launch that lost the token can say for itself, and what turns one
+    // reading into an
     // answer about which of the four forgot.
     expect(read.get('localStorage')).toBe('nothing')
     expect(read.get('host')).toBe('a token')

@@ -727,6 +727,13 @@ def main() -> int:
                 "what did i decide" in asking.get("nibHead", "").lower(),
                 asking.get("nibHead", ""),
             )
+            said = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""
+            report.ok(
+                "shows the question and the waiting on the phone too",
+                "what did i decide" in said.lower(),
+                said.replace("\n", " / "),
+            )
+            page.screenshot(path=str(OUT / "phone-asking.png"))
             screens.append({"name": "asking", "lineNumbers": True, **naming(asking)})
 
             page.wait_for_timeout(1200)
@@ -754,6 +761,13 @@ def main() -> int:
                 bool(hosts) and set(hosts) == {"api.openai.com"},
                 json.dumps(sorted(set(hosts))),
             )
+            phone = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""
+            report.ok(
+                "shows the answer's first sentence on the phone too",
+                "firmware font" in phone,
+                phone.replace("\n", " / "),
+            )
+            page.screenshot(path=str(OUT / "phone-answer.png"))
             screens.append({"name": "answer", "lineNumbers": True, **naming(answered)})
 
             # A scroll goes down the answer a line at a time.

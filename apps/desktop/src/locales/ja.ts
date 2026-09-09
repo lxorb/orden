@@ -277,6 +277,7 @@ export const ja: Dictionary = {
   'Voice on': '音声オン',
   'Voice off': '音声オフ',
   Thinking: '考えています',
+  Listening: '聞いています',
   'No answer': '回答なし',
   Light: 'ライト',
   Dark: 'ダーク',

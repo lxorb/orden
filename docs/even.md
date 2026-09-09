@@ -512,6 +512,8 @@ off the error it answers an invalid one with.
 
 ![The answer, one sentence first](even/answer.png)
 
+![The phone says what was asked and the first line of what came back](even/phone-answer.png)
+
 ---
 
 ## 6. The files

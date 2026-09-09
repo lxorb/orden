@@ -277,6 +277,7 @@ export const fr: Dictionary = {
   'Voice on': 'Voix activée',
   'Voice off': 'Voix désactivée',
   Thinking: 'Réflexion',
+  Listening: 'À l’écoute',
   'No answer': 'Pas de réponse',
   Light: 'Clair',
   Dark: 'Sombre',

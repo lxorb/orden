@@ -16,7 +16,10 @@
    *  the glasses go to the page that holds it. */
 
   import { onMount } from 'svelte'
+  import { cubicOut } from 'svelte/easing'
+  import { fly } from 'svelte/transition'
   import { bridge } from './bridge.svelte'
+  import { t } from '../i18n.svelte'
   import { views } from '../views.svelte'
   import { workspace } from '../workspace.svelte'
 
@@ -178,6 +181,24 @@
   })
 </script>
 
+<!-- What the glasses are hearing and saying, on the phone too. Nothing at all
+     while the microphone is shut, which is every moment nobody asked for it. -->
+{#if bridge.listening || bridge.asked}
+  <div class="voice" spellcheck="false" transition:fly={{ y: 12, duration: 170, easing: cubicOut }}>
+    {#if bridge.asked}
+      <p class="asked">{bridge.asked}</p>
+      {#if bridge.answer}
+        <p class="answer">{bridge.answer.split('\n')[0]}</p>
+      {:else}
+        <p class="answer waiting">{t('Thinking')}</p>
+      {/if}
+    {:else}
+      <span class="dot" aria-hidden="true"></span>
+      <p class="asked">{t('Listening')}</p>
+    {/if}
+  </div>
+{/if}
+
 {#if box}
   <div
     class="frame"
@@ -213,6 +234,71 @@
     transition:
       top var(--move) var(--ease-out),
       height var(--move) var(--ease-out);
+  }
+
+  /* What the glasses are hearing, in the corner the app keeps for things it is
+     doing rather than things it is asking. One line, because a panel of seven lines
+     is no place for a paragraph and neither is this. */
+  .voice {
+    position: fixed;
+    /* Clear of the button the app floats in that corner: two things in one place
+       is one of them covering the other. */
+    right: calc(var(--space-3) + 60px);
+    bottom: var(--space-3);
+    left: var(--space-3);
+    z-index: 2000;
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    pointer-events: none;
+  }
+
+  .asked {
+    flex: 1;
+    margin: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .answer {
+    margin: 0;
+    overflow: hidden;
+    max-width: 45%;
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* The one moving thing on the page, and it stops the moment there is an answer. */
+  .waiting,
+  .dot {
+    animation: waiting 1.4s var(--ease-in-out) infinite;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  @keyframes waiting {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+
+    50% {
+      opacity: 1;
+    }
   }
 
   /* Part of the region is off the screen, so the frame is not the whole of it: the
