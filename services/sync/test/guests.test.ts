@@ -287,6 +287,29 @@ describe('a link anybody may follow', () => {
     expect((await shareView()).json.members).toHaveLength(1)
   })
 
+  /** Two tabs of the same guest arriving together. What `guestStanding` read a
+   *  moment ago is not a lock on the row, so the second write met the first and
+   *  came back as a 500. The other tab's row goes in at the one moment that
+   *  matters; see `justBefore`. */
+  test('one guest at the link twice at once is still one row', async () => {
+    const link = await shareLink('read', 'open')
+    const arrived = await follow(link)
+    const guest = arrived.json.guest.id
+
+    env.db.prepare('delete from guest_members where guest_id = ?').run(guest)
+    env.justBefore(/insert into guest_members/, () => {
+      env.db
+        .prepare(
+          'insert into guest_members (space_id, guest_id, role, joined_at, created_at) values (?, ?, ?, ?, ?)',
+        )
+        .run(space, guest, 'read', Date.now(), Date.now())
+    })
+
+    const again = await follow(link, { as: arrived.json.token })
+    expect(again.status).not.toBe(500)
+    expect((await shareView()).json.members).toHaveLength(1)
+  })
+
   test('opens nothing once it is revoked, and ends what it opened', async () => {
     const link = await shareLink('read', 'open')
     const { json } = await follow(link)

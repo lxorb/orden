@@ -183,9 +183,12 @@ function writeGuestMember(
   role: Given,
   waiting: boolean,
 ): Promise<unknown> {
+  // A guest arriving twice at once is one row, not a 500: what `guestStanding`
+  // read a moment ago is not a lock on it.
   return env.DB.prepare(
     `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
-     values (?, ?, ?, ?, ?)`,
+     values (?, ?, ?, ?, ?)
+     on conflict(space_id, guest_id) do nothing`,
   )
     .bind(spaceId, guestId, role, waiting ? null : now(), now())
     .run()
