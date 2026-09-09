@@ -517,6 +517,8 @@ nothing holds a second copy.
 The one thing that is on the phone only is the wording of the spoken commands: a
 phrase is typed, and a pair of glasses has nothing to type with.
 
+![The settings, on the glasses: every one of them, and what it says now](even/settings.png)
+
 **Every setting applies at once.** A stamp of every setting's value is watched, and
 any change re-cuts the page and sends whatever moved. That is a fix rather than a
 feature: Emil turned the page number off and on again and it never came back,
