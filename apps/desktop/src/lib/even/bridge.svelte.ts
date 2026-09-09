@@ -68,6 +68,10 @@ const STEERING = 500
 /** How many notes a search hands the model at once. */
 const HITS = 20
 
+/** Whether a folder in a list can be shut. `null` when every one of them is open
+ *  and no tap could change that, which is the sidebar. */
+type Folds = ((path: string) => boolean) | null
+
 /** Whatever was thrown, in as few words as carry the reason. */
 function why(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -86,26 +90,28 @@ type Health = 'alone' | 'reaching' | 'live' | 'stalled' | 'failed'
  *  pictures go the same way for the same reason, and the deviation is written down
  *  in docs/even.md rather than left to be discovered.
  *
- *  `expanded` decides whether a folder's children are listed at all: the sidebar
- *  shows everything open, the note picker follows the folds the reader has made. */
-function rowsOf(entry: Entry | null, expanded: (path: string) => boolean, depth = 0): Row[] {
+ *  `folds` says whether a folder can be shut at all: `null` is the sidebar, where
+ *  everything is open and a folder is a label, and a function is the picker, where
+ *  it follows the folds the reader has made and a tap changes them. */
+function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
   if (!entry) return []
 
   const out: Row[] = []
   for (const child of entry.children) {
     if (child.is_dir) {
-      const open = expanded(child.path)
-      // A folder in a list where everything is open has nothing a tap could do, so
-      // the cursor steps over it and its name is a label. See `Row.pick`.
+      const open = folds === null || folds(child.path)
+      // A folder in a list where every folder is already open has nothing a tap
+      // could do, so the cursor steps over it and its name is a label; see
+      // `Row.pick`. In the picker it opens and shuts, so it is a row like any other.
       out.push({
         label: child.name,
         depth,
         folder: true,
         open,
-        pick: !alwaysOpen(expanded),
+        pick: folds !== null,
         id: child.path,
       })
-      if (open) out.push(...rowsOf(child, expanded, depth + 1))
+      if (open) out.push(...rowsOf(child, folds, depth + 1))
       continue
     }
 
@@ -122,13 +128,6 @@ function rowsOf(entry: Entry | null, expanded: (path: string) => boolean, depth 
   }
 
   return out
-}
-
-/** The sidebar's own answer to "is this folder open": always. Told apart from the
- *  picker's by identity, which is what lets one walk serve both. */
-const OPEN_ALL = (): boolean => true
-function alwaysOpen(expanded: (path: string) => boolean): boolean {
-  return expanded === OPEN_ALL
 }
 
 class Bridge {
@@ -239,7 +238,7 @@ class Bridge {
   private world(): World {
     return {
       space: () => workspace.activeSpace?.name ?? t('Notes'),
-      contents: () => rowsOf(workspace.tree, OPEN_ALL),
+      contents: () => rowsOf(workspace.tree, null),
       spaces: () =>
         workspace.spaces.map((one) => ({
           label: one.name,

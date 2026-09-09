@@ -9,6 +9,7 @@ import { folderOf as folderIn, insideSpace, noteName, relativeTo } from './space
 import { key, t } from './i18n.svelte'
 import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
+import { isPlugin } from './plugin'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import type { Change } from './search/apply'
@@ -819,6 +820,12 @@ class Workspace {
     }
 
     if (isCanvasTarget(path)) {
+      // Not in front of a pair of glasses. A canvas is a plane of cards and the
+      // panel is one font on seven lines, so a canvas open in the plugin is a tab
+      // the glasses cannot follow and a reader cannot get out of by looking up.
+      // The glasses' own lists never name one either; see lib/even/bridge.
+      if (isPlugin()) return
+
       await this.openCanvas(path)
       return
     }
