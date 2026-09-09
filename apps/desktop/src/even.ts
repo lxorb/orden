@@ -56,6 +56,7 @@ rememberSeedIn(seedFlag)
 // read as "this account has never seen these notes".
 void filling.then(() => {
   workspace.device.reread()
+  workspace.folderIcons.reread()
   sync.reread()
   recovery.restore()
 })

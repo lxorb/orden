@@ -85,6 +85,12 @@ const HOST_ONLY = new Set([
   'nib:expanded',
   'nib:expanded-tags',
   'nib:icons',
+  // The icons a reader gave the folders inside each space, and the colours they are
+  // drawn in. Both are a map per space of path to name, so both grow with the vault
+  // rather than with the settings - which is the shape `nib:mirrors` had when it was
+  // dropped smallest-first and written back as nothing.
+  'nib:folder-icons',
+  'nib:icon-tints',
 ])
 
 /** What the cookie may carry, which is everything that is not bookkeeping. */

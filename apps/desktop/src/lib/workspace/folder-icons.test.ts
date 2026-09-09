@@ -229,3 +229,50 @@ describe('reading a map somebody else wrote', () => {
     expect(icons.iconOf('/space/Folder 0')).toBe('anchor')
   })
 })
+
+/** Storage that answers in two goes, which is what a packed plugin has: this map is
+ *  one entry per folder somebody gave an icon to, so it grows with the vault and
+ *  rides the phone app's own store rather than the cookie - and that store answers
+ *  seconds after this was built. See lib/even/local.ts. */
+describe('a map that lands after the store was built', () => {
+  test('is read again, and is there', () => {
+    expect(icons.iconOf('/space/Work')).toBeNull()
+
+    localStorage.setItem(
+      'nib:folder-icons',
+      JSON.stringify({ [ROOT]: { icons: { Work: 'briefcase' }, colors: {}, account: null } }),
+    )
+    icons.reread()
+
+    expect(icons.iconOf('/space/Work')).toBe('briefcase')
+  })
+
+  test('and does not undo what was chosen while it was on its way', () => {
+    icons.set('/space/Reading', 'book')
+
+    // The phone app answers with the map as it was before that choice.
+    localStorage.setItem(
+      'nib:folder-icons',
+      JSON.stringify({ [ROOT]: { icons: { Work: 'briefcase' }, colors: {}, account: null } }),
+    )
+    icons.reread()
+
+    expect(icons.iconOf('/space/Reading')).toBe('book')
+  })
+
+  test('and a space this launch knows nothing about comes along whole', () => {
+    icons.set('/space/Reading', 'book')
+
+    localStorage.setItem(
+      'nib:folder-icons',
+      JSON.stringify({
+        [ROOT]: { icons: {}, colors: {}, account: null },
+        '/other': { icons: { Notes: 'file-text' }, colors: {}, account: null },
+      }),
+    )
+    icons.reread()
+
+    expect(icons.of('/other')).toEqual({ Notes: 'file-text' })
+    expect(icons.iconOf('/space/Reading')).toBe('book')
+  })
+})

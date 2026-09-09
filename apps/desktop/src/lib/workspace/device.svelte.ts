@@ -24,7 +24,7 @@ export const ICONS_KEY = 'nib:icons'
 /** The colour each of those icons is drawn in. Its own key rather than a second
  *  field in the one above, because that map is a map of strings that older builds
  *  read and write back, and a value that is not a string is a value they drop. */
-const ICON_TINTS_KEY = 'nib:icon-tints'
+export const ICON_TINTS_KEY = 'nib:icon-tints'
 export const EXPANDED_KEY = 'nib:expanded'
 export const TAGS_KEY = 'nib:expanded-tags'
 

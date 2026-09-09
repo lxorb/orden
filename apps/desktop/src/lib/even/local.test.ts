@@ -2,7 +2,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vi
 import { forTheCookie } from './local'
 import { STORAGE_KEY as RECOVERY_KEY } from '../recovery.svelte'
 import { STORAGE_KEY as MIRRORS_KEY } from '../sync.svelte'
-import { EXPANDED_KEY, ICONS_KEY, RECENT_KEY, TAGS_KEY } from '../workspace/device.svelte'
+import { STORAGE_KEY as FOLDER_ICONS_KEY } from '../workspace/folder-icons.svelte'
+import {
+  EXPANDED_KEY,
+  ICON_TINTS_KEY,
+  ICONS_KEY,
+  RECENT_KEY,
+  TAGS_KEY,
+} from '../workspace/device.svelte'
 
 /** Device-local settings across launches of a packed plugin.
  *
@@ -276,7 +283,17 @@ describe('which store a key rides in', () => {
    *  bug that hid the space icons. So the names are held to the modules that own them
    *  here instead. */
   test('names the keys those stores actually use', () => {
-    const owned = [MIRRORS_KEY, RECOVERY_KEY, RECENT_KEY, EXPANDED_KEY, TAGS_KEY, ICONS_KEY]
+    const owned = [
+      MIRRORS_KEY,
+      RECOVERY_KEY,
+      RECENT_KEY,
+      EXPANDED_KEY,
+      TAGS_KEY,
+      ICONS_KEY,
+      ICON_TINTS_KEY,
+      FOLDER_ICONS_KEY,
+    ]
+
     expect(forTheCookie(Object.fromEntries(owned.map((one) => [one, 'x'])))).toEqual({})
   })
 })

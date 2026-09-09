@@ -26,7 +26,7 @@ import { relativeTo } from '../space-paths'
 import { isRecord, isString, stored } from '../stored'
 import { without, withOrWithout } from '../records'
 
-const STORAGE_KEY = 'nib:folder-icons'
+export const STORAGE_KEY = 'nib:folder-icons'
 
 /** How many folders of one space may wear an icon.
  *
@@ -116,6 +116,31 @@ export class FolderIcons {
   /** Which space the rows on screen belong to. A function rather than a value
    *  because the workspace decides that, and it changes as spaces are picked. */
   constructor(private readonly root: () => string | null) {}
+
+  /** Reads the map again, once the storage that holds it has answered.
+   *
+   *  For the plugin. This map is one entry per folder somebody gave an icon to, so it
+   *  grows with the vault rather than with the settings, and a packed plugin keeps
+   *  anything that shape in the phone app's own store - which answers seconds after
+   *  this store was built and read an empty one. See lib/even/local.ts, and `reread`
+   *  in device.svelte.ts, which is the same fact about the same storage.
+   *
+   *  Filled in per space, never replaced: what is here was written this launch and is
+   *  newer than anything storage is only now getting round to mentioning. */
+  reread(): void {
+    const held = read()
+    const spaces = { ...this.spaces }
+    let grew = false
+
+    for (const [root, kept] of Object.entries(held)) {
+      if (spaces[root]) continue
+
+      spaces[root] = kept
+      grew = true
+    }
+
+    if (grew) this.spaces = spaces
+  }
 
   of(root: string): Record<string, string> {
     return this.spaces[root]?.icons ?? {}
