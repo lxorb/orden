@@ -516,6 +516,22 @@ describe('what the microphone heard', () => {
     expect(tried).toEqual(['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'])
   })
 
+  /** The key only says which model is asked first. An account with one whose key has
+   *  expired still has a Worker with a model on it. */
+  test('falls to Workers AI where the key bought nothing', async () => {
+    const asked: string[] = []
+    env.AI = {
+      run(model: string) {
+        asked.push(model)
+        return Promise.resolve({ text: 'heard it anyway' })
+      },
+    }
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('no', { status: 401 })))
+
+    expect((await heard(new Uint8Array([1]))).json.said).toBe('heard it anyway')
+    expect(asked).toEqual(['@cf/openai/whisper-large-v3-turbo'])
+  })
+
   test('answers null where none of them heard anything', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('', { status: 500 })))
     expect((await heard(new Uint8Array([1]))).json.said).toBeNull()
@@ -535,6 +551,155 @@ describe('what the microphone heard', () => {
         })
       ).status,
     ).toBe(413)
+  })
+})
+
+/* ── An utterance with no OpenAI key at all ─────────────────── */
+
+/** Emil has no OpenAI account at all, and the plugin answered "no way to listen" to
+ *  somebody wearing a pair of glasses with a working microphone. The microphone is
+ *  there, and so is a model - Whisper on Workers AI, on the same Worker that is
+ *  already answering the request - so a key decides which model listens and nothing
+ *  more.
+ *
+ *  Nothing on the glasses does this: the SDK hands a plugin raw PCM and there is no
+ *  speech to text anywhere in `@evenrealities/even_hub_sdk` 0.0.15. */
+describe('what the microphone heard with no key', () => {
+  /** A WAV header saying what the glasses send: 16 kHz, sixteen bit, one channel,
+   *  `seconds` of it. Built as a real header because the cap is measured in seconds
+   *  off the header own fields, which is the whole point of reading them. */
+  function wav(seconds: number): Uint8Array {
+    const rate = 16_000
+    const bytes = Math.round(seconds * rate * 2)
+    const file = new Uint8Array(44 + bytes)
+    const view = new DataView(file.buffer)
+    const write = (at: number, text: string) => {
+      for (let step = 0; step < text.length; step++) file[at + step] = text.charCodeAt(step)
+    }
+
+    write(0, 'RIFF')
+    view.setUint32(4, 36 + bytes, true)
+    write(8, 'WAVEfmt ')
+    view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true)
+    view.setUint16(22, 1, true)
+    view.setUint32(24, rate, true)
+    view.setUint32(28, rate * 2, true)
+    view.setUint16(32, 2, true)
+    view.setUint16(34, 16, true)
+    write(36, 'data')
+    view.setUint32(40, bytes, true)
+    return file
+  }
+
+  /** The Workers AI binding, as a fake: which models were asked and with what, and
+   *  a model with no answer here throws the way one that has been retired does. */
+  function workersAi(answers: Record<string, unknown>) {
+    const asked: { model: string; input: unknown }[] = []
+    const AI = {
+      run(model: string, input: unknown): Promise<unknown> {
+        asked.push({ model, input })
+        const answer = answers[model]
+        if (answer === undefined) return Promise.reject(new Error('no such model'))
+        return Promise.resolve(answer)
+      },
+    }
+
+    return { AI, asked }
+  }
+
+  function heard(body: BodyInit, as = token) {
+    return call(env, '/v1/ask/heard', {
+      method: 'POST',
+      token: as,
+      raw: body,
+      headers: { 'content-type': 'audio/wav' },
+    })
+  }
+
+  test('listens on Workers AI, and never asks OpenAI for anything', async () => {
+    const { AI, asked } = workersAi({
+      '@cf/openai/whisper-large-v3-turbo': { text: ' open page four ' },
+    })
+    env.AI = AI
+    vi.stubGlobal('fetch', () => {
+      throw new Error('no key, so nothing may leave for OpenAI')
+    })
+
+    const { status, json } = await heard(wav(1.5))
+    expect(status).toBe(200)
+    expect(json.said).toBe('open page four')
+    expect(asked.map((one) => one.model)).toEqual(['@cf/openai/whisper-large-v3-turbo'])
+    // The turbo model takes the file as base64, not as bytes.
+    expect(typeof (asked[0]?.input as { audio: unknown }).audio).toBe('string')
+  })
+
+  test('falls to the older Whisper where turbo will not take it', async () => {
+    const { AI, asked } = workersAi({ '@cf/openai/whisper': { text: 'next one' } })
+    env.AI = AI
+
+    expect((await heard(wav(1))).json.said).toBe('next one')
+    expect(asked.map((one) => one.model)).toEqual([
+      '@cf/openai/whisper-large-v3-turbo',
+      '@cf/openai/whisper',
+    ])
+    // And that one takes its bytes.
+    expect(Array.isArray((asked[1]?.input as { audio: unknown }).audio)).toBe(true)
+  })
+
+  test('answers nothing rather than an error where neither model heard a word', async () => {
+    const { AI } = workersAi({
+      '@cf/openai/whisper-large-v3-turbo': { text: '   ' },
+      '@cf/openai/whisper': {},
+    })
+    env.AI = AI
+
+    const { status, json } = await heard(wav(1))
+    expect(status).toBe(200)
+    expect(json.said).toBeNull()
+  })
+
+  test('and where the binding is not there at all, which is a server not ready', async () => {
+    const { status, json } = await heard(wav(1))
+    expect(status).toBe(200)
+    expect(json.said).toBeNull()
+  })
+
+  /** A spoken command is a second or two. Twelve seconds of anything arrived from a
+   *  pocket or a room rather than from somebody talking to their glasses, and the
+   *  seconds are read off the header so that the ceiling means the same thing at any
+   *  sample rate. */
+  test('refuses more audio than a spoken command, by its seconds', async () => {
+    const { AI, asked } = workersAi({
+      '@cf/openai/whisper-large-v3-turbo': { text: 'never asked' },
+    })
+    env.AI = AI
+
+    expect((await heard(wav(11.5))).status).toBe(200)
+
+    const long = await heard(wav(13))
+    expect(long.status).toBe(413)
+    expect(long.json.error).toContain('spoken command')
+    expect(asked).toHaveLength(1)
+  })
+
+  test('counts every utterance against the same ceiling, key or no key', async () => {
+    const { AI } = workersAi({ '@cf/openai/whisper-large-v3-turbo': { text: 'again' } })
+    env.AI = AI
+    // Six hundred already said this hour, without six hundred round trips.
+    env.db
+      .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
+      .run('said', userId(), 600, Date.now() + 60 * 60 * 1000)
+
+    const over = await heard(wav(1))
+    expect(over.status).toBe(429)
+    expect(over.json.error).toContain('a lot of listening')
+  })
+
+  test('a guest may not listen either', async () => {
+    const { AI } = workersAi({ '@cf/openai/whisper-large-v3-turbo': { text: 'never asked' } })
+    env.AI = AI
+    expect((await heard(wav(1), 'not-a-session')).status).toBe(401)
   })
 })
 

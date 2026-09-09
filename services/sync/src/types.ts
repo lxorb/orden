@@ -31,6 +31,11 @@ export interface Env {
   EMAIL?: EmailSender
   MAIL_FROM?: string
 
+  /** Workers AI, which is what listens for an account with no OpenAI key of its own;
+   *  see ask/heard.ts. Absent in tests, which hand in a fake, and in a Worker that has
+   *  not had the binding added - and a plugin then simply hears nothing. */
+  AI?: { run(model: string, input: unknown): Promise<unknown> }
+
   /** What the account's OpenAI key is encrypted under; see ask/key.ts.
    *
    *  Set with `wrangler secret put OPENAI_KEY_SECRET`. Without it the Worker

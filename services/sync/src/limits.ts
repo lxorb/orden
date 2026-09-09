@@ -119,8 +119,9 @@ export function mayTellTheOwner(env: Env, spaceId: string): Promise<boolean> {
 /** How many questions one account may ask the model in an hour, and how many
  *  utterances it may have turned into words.
  *
- *  These cost somebody money - the account's own OpenAI credit - and the Worker is
- *  what spends it now that the key never leaves the Worker. So the ceiling is not
+ *  These cost somebody money - the account's own OpenAI credit, or Nib's own Workers
+ *  AI allowance where an account has no key - and the Worker is what spends it now
+ *  that the key never leaves the Worker. So the ceiling is not
  *  about Nib's reputation like the mail ones; it is about a bug, or a phone in a
  *  pocket, not being able to run through a month's credit in an afternoon.
  *

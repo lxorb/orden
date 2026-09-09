@@ -33,6 +33,13 @@
 
   "r2_buckets": [{ "binding": "NOTES", "bucket_name": "nib-notes" }],
 
+  // Workers AI. What listens for an account with no OpenAI key of its own: the
+  // glasses hand a plugin raw PCM and nothing on the device turns it into words, so
+  // `POST /v1/ask/heard` runs Whisper here instead. Nothing to set up beyond this
+  // line; there is a free daily allowance and it is billed per neuron past it, and a
+  // spoken command is a second or two of audio. See src/ask/heard.ts.
+  "ai": { "binding": "AI" },
+
   // The built web app. The Worker runs first so a published blog's hostname
   // still wins over the editor - but not for the bundle itself. Hashed assets
   // are the same bytes for everyone and no blog ever asks for them, so they

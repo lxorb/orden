@@ -244,38 +244,3 @@ export async function askAbout(
 
   return ''
 }
-
-/** The models that turn sound into words, in the order they are tried.
- *
- *  Verified against `GET /v1/models` on 2026-09-09. The first that the account
- *  actually has is used; `whisper-1` has been there for years and is the floor. */
-const TRANSCRIBERS = ['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'] as const
-
-/** One utterance, as words.
- *
- *  Only reached where the WebView has no recogniser of its own; see the plugin's
- *  voice.ts. What arrives is a WAV built out of the frames the glasses sent, which
- *  every transcription endpoint takes. Null when none of the three answered, which
- *  is the plugin's cue to say it did not hear. */
-export async function heard(wav: ArrayBuffer, key: string): Promise<string | null> {
-  for (const model of TRANSCRIBERS) {
-    const form = new FormData()
-    form.append('file', new Blob([wav], { type: 'audio/wav' }), 'said.wav')
-    form.append('model', model)
-    // A command is English or the reader's own language; left to the model, which
-    // does better at guessing than a setting nobody will find.
-    form.append('response_format', 'text')
-
-    const answered = await fetch(`${OPENAI}/v1/audio/transcriptions`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${key}` },
-      body: form,
-    })
-    if (!answered.ok) continue
-
-    const said = (await answered.text()).trim()
-    if (said) return said
-  }
-
-  return null
-}

@@ -69,13 +69,13 @@ interface Heard {
 export interface Ears {
   /** Opens or closes the glasses' own microphone. */
   microphone: (open: boolean) => Promise<boolean>
-  /** Whether anything could turn sound into words right now.
+  /** Whether an utterance has anywhere to go: an account, in practice. Which model
+   *  listens is not this plugin's business; see services/sync/src/ask/heard.ts.
    *
    *  Asked rather than handed over, and that is the whole of one of the two bugs
-   *  behind "voice mode simply doesn't work whatever I say": it used to be a
-   *  function or null, decided once when the bridge came up. The key moved onto
-   *  the account, so at that moment the settings had not arrived yet, the answer
-   *  was always null, and the second path was dead for the whole sitting. */
+   *  behind "voice mode simply doesn't work whatever I say": it used to be a function
+   *  or null, decided once when the bridge came up, before the account had answered
+   *  anything at all. */
   canTranscribe: () => boolean
   /** Turns one utterance of PCM into words, or null when it could not. */
   transcribe: (wav: Uint8Array<ArrayBuffer>) => Promise<string | null>
@@ -390,10 +390,9 @@ export class Voice {
       return false
     }
 
-    // Open, and with nothing to turn the sound into words. Said rather than refused:
-    // the microphone is on and the reader can see that it is, and what is missing is
-    // one line in Settings rather than anything about this device.
-    if (!this.ears.canTranscribe()) this.wrong('voice needs an OpenAI key')
+    // Open, and with nowhere to send what it hears: no account. Said rather than
+    // refused, because the microphone is on and the reader can see that it is.
+    if (!this.ears.canTranscribe()) this.wrong('sign in first')
 
     // Frames come fifty times a second. If none has, something between the
     // permission and the radio is not running, and the phone says which.
@@ -444,10 +443,10 @@ export class Voice {
   private async transcribe(pcm: Uint8Array, ended: number): Promise<void> {
     if (this.busy) return
     if (!this.ears.canTranscribe()) {
-      // Nothing to send it to. Said again here rather than only when the microphone
+      // Nowhere to send it. Said again here rather than only when the microphone
       // opened, because a reader who has been talking wants to know why nothing
       // happened, and a line from a minute ago is not an answer.
-      this.wrong('voice needs an OpenAI key')
+      this.wrong('sign in first')
       return
     }
 

@@ -228,30 +228,32 @@ describe('listening', () => {
     expect(voice.listening).toBe(false)
   })
 
-  /** Emil's account had no key at all, and the plugin answered "no way to listen".
-   *  It was telling the truth and it was the wrong thing to say: the glasses have a
-   *  microphone either way, so it opens either way, and what is missing is one line
-   *  in Settings rather than anything about the device. */
-  test('opens the microphone even with no key, and says what is missing', async () => {
-    const { ears: one, failed } = ears({ canTranscribe: () => false })
+  /** Emil's account had no OpenAI key at all, and the plugin answered "no way to
+   *  listen". It was telling the truth about the key and it was the wrong thing to
+   *  say: the glasses have a microphone either way, so it opens either way, and which
+   *  model makes words of what it hears is the Worker's business. What is left here is
+   *  the one case where an utterance has nowhere to go at all: no account. */
+  test('opens the microphone whatever the account has, and says nothing about it', async () => {
+    const { ears: one, failed } = ears()
     const voice = new Voice(one)
 
     expect(voice.path).toBe('glasses')
     expect(await voice.start()).toBe(true)
     expect(one.microphone).toHaveBeenCalledWith(true)
-    expect(failed).toEqual(['voice needs an OpenAI key'])
+    expect(failed).toEqual([])
   })
 
-  test('and says it again when something was said, rather than sending it nowhere', async () => {
+  test('says so where there is no account to send an utterance to', async () => {
     const { ears: one, failed } = ears({ canTranscribe: () => false })
     const voice = new Voice(one)
-    await voice.start()
+
+    expect(await voice.start()).toBe(true)
+    expect(one.microphone).toHaveBeenCalledWith(true)
+    expect(failed).toEqual(['sign in first'])
 
     for (let at = 0; at < 25; at++) voice.frame(SPEECH)
     for (let at = 0; at < 40; at++) voice.frame(SILENCE)
-
     expect(one.transcribe).not.toHaveBeenCalled()
-    expect(failed).toEqual(['voice needs an OpenAI key', 'voice needs an OpenAI key'])
   })
 
   test('says so when the host would not open the microphone', async () => {

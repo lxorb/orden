@@ -251,12 +251,12 @@ class Bridge {
     this.shell = new Shell(this.world(), this.words(), this.session, this.settings())
     this.voice = new Voice({
       microphone: (open) => glasses.microphone(open),
-      // Asked every time rather than answered once. The key is on the account now,
-      // and the account answers a moment after the bridge comes up: decided here,
-      // the answer was always "no key" and the glasses' microphone was never
-      // opened for the whole sitting. That was half of "voice mode simply doesn't
-      // work whatever I say".
-      canTranscribe: () => glassesKey.set && !!account.accountToken,
+      // A session, and nothing else. Which model turns the sound into words is the
+      // Worker's business: the account's own OpenAI key where there is one, and
+      // Whisper on Workers AI where there is not. Emil has no OpenAI account and the
+      // plugin used to answer "no way to listen", which was true of the key and
+      // useless to somebody wearing a microphone. See services/sync/src/ask/heard.ts.
+      canTranscribe: () => !!account.accountToken,
       transcribe: (wav) => this.transcribe(wav),
       heard: (heard) => this.heard(heard.said, heard.ended),
       failed: (said) => this.flash(said),

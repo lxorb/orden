@@ -27,7 +27,8 @@ import { Hono } from 'hono'
 import { readBody } from '../body'
 import { mayAsk, mayTranscribe } from '../limits'
 import type { Env, Variables } from '../types'
-import { askAbout, type Effort, EFFORTS, heard } from './asking'
+import { askAbout, type Effort, EFFORTS } from './asking'
+import { heard, shortEnough } from './heard'
 import { forgetKey, keyFor, mayStore, setKey } from './key'
 import { forgetModels, modelsFor } from './models'
 
@@ -141,12 +142,17 @@ ask.post('/heard', async (context) => {
   if (!wav.byteLength) return context.json({ error: 'send some audio' }, 400)
   if (wav.byteLength > MOST_WAV) return context.json({ error: 'that is too much audio' }, 413)
 
-  const key = await keyFor(context.env, user.id)
-  if (!key) return context.json({ error: 'set an OpenAI key in Nib’s settings first' }, 400)
+  // Nothing about a key here. With one, OpenAI listens; without one, Whisper on
+  // Workers AI does. A reader with no OpenAI account still has a microphone and still
+  // has this Worker, and "no way to listen" was the wrong answer to give them.
+  if (!shortEnough(wav)) {
+    return context.json({ error: 'that is more than a spoken command' }, 413)
+  }
 
   if (!(await mayTranscribe(context.env, user.id))) {
     return context.json({ error: 'that is a lot of listening - try again later' }, 429)
   }
 
-  return context.json({ said: await heard(wav, key) })
+  const key = await keyFor(context.env, user.id)
+  return context.json({ said: await heard(context.env, wav, key) })
 })

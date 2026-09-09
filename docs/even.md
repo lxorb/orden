@@ -641,7 +641,11 @@ are two paths because the platform gives two and neither is everywhere:
 2. **The glasses' own microphone**, under `g2-microphone`.
    `audioControl(true, glasses)` streams processed PCM through `onEvenHubEvent`.
    Nothing on the device turns that into words, so an utterance is cut out of the
-   stream and sent to a transcription API with the account's own key.
+   stream and sent to `POST /v1/ask/heard`, which transcribes it with the account's
+   own OpenAI key where there is one and otherwise with Whisper on Workers AI
+   (`@cf/openai/whisper-large-v3-turbo`, falling back to `@cf/openai/whisper`), which
+   has a free daily allowance and costs neurons past it - so a reader with no OpenAI
+   account at all can still talk to their glasses.
 
 The second path is where the plugin's own latency comes from: an utterance ends
 after **600 ms** of quiet. Under about four hundred and the gap between "switch
@@ -659,6 +663,13 @@ things were wrong and both were invisible.
    yet and the answer was always "no key". It is asked every time now.
 2. **The first path never gave up.** A recogniser that answered `service-not-allowed`
    a moment after starting was left running, and nothing fell back.
+3. **And then it still did not work, because Emil has no OpenAI account at all.**
+   The readout said "No way to listen", reason "no recogniser", which was true and
+   was the wrong thing to say: the glasses have a microphone, and asking a reader to
+   go and buy API credit before they may say "next" is not a product. So the key
+   only decides which model listens - see the path above - and the plugin never says
+   it cannot listen while a microphone can be opened. The question feature stays
+   key-only: that one really is the account spending its own credit on a model.
 
 Neither of those could be seen from outside, and nobody can read a log off a pair of
 glasses. So the plugin keeps the evidence: which way it is listening (`webview`,
@@ -758,7 +769,7 @@ The routes, all behind the session guard:
 | `DELETE /v1/ask/key` | takes it away |
 | `GET /v1/ask/models` | which models this key may choose, kept for a day |
 | `POST /v1/ask` | a question, answered out of the account's own notes |
-| `POST /v1/ask/heard` | a WAV, as words, where the WebView has no recogniser |
+| `POST /v1/ask/heard` | a WAV, as words, where the WebView has no recogniser; the account's key where there is one, Workers AI Whisper where there is not |
 
 **A guest cannot ask**, and that is not a check in any of them: the session guard
 opens only what `guestMayReach` names, everything account-wide is left out of that
