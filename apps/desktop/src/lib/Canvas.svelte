@@ -240,8 +240,16 @@
     const node = shown.nodes.find((one) => one.id === found.node)
     if (!node) return null
 
+    const from = shown.nodes.find((one) => one.id === pulling.fromNode)
     const side = facingSide(boxOf(node), { ...pulling.from, width: 0, height: 0 })
-    return { id: node.id, side, at: sidePoint(boxOf(node), side) }
+    // Where the line will really leave the first card, so the dashed preview is the
+    // connector it is about to become rather than a line from wherever the press
+    // happened to land inside the card.
+    const leaves = from
+      ? sidePoint(boxOf(from), facingSide(boxOf(from), boxOf(node)))
+      : pulling.from
+
+    return { id: node.id, side, at: sidePoint(boxOf(node), side), leaves }
   })
 
   /** Where the far corner of something being pulled out has really got to, once the
@@ -398,8 +406,12 @@
   const band = $derived(gesture?.kind === 'band' ? rectBetween(gesture.from, gesture.to) : null)
   const lasso = $derived(gesture?.kind === 'lasso' ? gesture.points : null)
 
+  /** Where a pull begins: the press, or the anchor of the card a connector is about to
+   *  leave. */
+  const pullFrom = $derived(joining?.leaves ?? pulling?.from ?? null)
+
   /** The box something being pulled out of the bar will land in, snapped. */
-  const pullBox = $derived(pulling && pullTo ? rectBetween(pulling.from, pullTo) : null)
+  const pullBox = $derived(pullFrom && pullTo ? rectBetween(pullFrom, pullTo) : null)
 
   /** Which of the things a press puts down are drawn as a plain box while they are
    *  being pulled out. The rest are drawn as themselves; see pulledPath. */
@@ -420,6 +432,27 @@
     const d = `M ${points.map((one) => `${Math.round(one.x)} ${Math.round(one.y)}`).join(' L ')}`
     return line ? d : `${d} Z`
   }
+
+  /** How big the head on an arrow being dragged out is, in plane units. */
+  const HEAD = 11
+
+  /** The head on the end of an arrow being pulled out. An arrow without one is a line,
+   *  and which of the two is being drawn is the whole question a preview answers. */
+  const pullHead = $derived.by(() => {
+    if (pulling?.tool !== 'arrow' || !pullFrom || !pullTo) return null
+
+    const dx = pullTo.x - pullFrom.x
+    const dy = pullTo.y - pullFrom.y
+    const away = Math.hypot(dx, dy)
+    if (away < 1) return null
+
+    return {
+      x: pullTo.x,
+      y: pullTo.y,
+      angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+      size: Math.min(HEAD, away / 3),
+    }
+  })
 
   /** The two ends of every picked connector, which is what an end is dragged by.
    *  Nothing at all while a gesture is under way: the handles are what start one. */
@@ -1609,7 +1642,7 @@
     <!-- What is being pulled out of the bar, drawn the whole way. Every one of them:
          a card, a frame, a picture, a body and a line alike, so nothing on the bar is
          invisible until it is let go of. -->
-    {#if pulling && pullBox && pullTo}
+    {#if pulling && pullBox && pullTo && pullFrom}
       {#if PLAIN.has(pulling.tool)}
         <div
           class="band pulling"
@@ -1624,11 +1657,22 @@
       {:else}
         <svg class="drawing" aria-hidden="true" width="1" height="1" style:overflow="visible">
           <path
-            d={pulledPath(pulling.tool, pulling.from, pullTo, pullBox)}
+            d={pulledPath(pulling.tool, pullFrom, pullTo, pullBox)}
             style:stroke-width="{2 * unit}px"
             style:stroke-dasharray="{6 * unit}
             {5 * unit}"
           />
+          <!-- An arrow wears its head while it is being dragged out: an arrow with no
+               head on it is a line, and which of the two this is is the whole question
+               a preview answers. -->
+          {#if pullHead}
+            <path
+              class="point"
+              d="M 0 0 L {-pullHead.size} {-pullHead.size * 0.5} L {-pullHead.size} {pullHead.size *
+                0.5} Z"
+              transform="translate({pullHead.x} {pullHead.y}) rotate({pullHead.angle})"
+            />
+          {/if}
         </svg>
       {/if}
     {/if}
@@ -1933,6 +1977,13 @@
     stroke: var(--accent);
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  /* The head is solid: a dashed triangle is a puzzle rather than an arrow. */
+  .drawing path.point {
+    fill: var(--accent);
+    stroke: none;
+    stroke-dasharray: none;
   }
 
   /* The line that says what a drag lined itself up with: the accent, and only

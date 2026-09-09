@@ -596,6 +596,10 @@
      across. One bar, one order, one design; only the axis turns. */
   .cluster.standing .bar {
     flex-direction: column;
+    /* As tall as the pane and no taller: a bar of fifteen buttons on a short screen
+       scrolls inside itself rather than off the end of it. */
+    max-width: none;
+    max-height: 100%;
   }
 
   .cluster.standing .scroller {

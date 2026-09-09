@@ -32,11 +32,20 @@ export function snapped(value: number): number {
 
 /** How close the dots may come on screen before the pattern stops being a
  *  pattern and becomes a wash, in pixels. */
-const CLOSEST = 9
+const CLOSEST = 12
 
-/** The steps the pattern coarsens through: every dot, every second, every fifth,
- *  and so on up. A decade of them is a zoom range no plane reaches the end of. */
-const COARSER = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000] as const
+/** Where the level being left behind starts to go, as a share of CLOSEST. It is
+ *  gone by the time its dots have closed to that, so there is a stretch of zoom with
+ *  two patterns easing across each other rather than one blinking into the next. */
+const FADES_FROM = 0.7
+
+/** The steps the pattern coarsens through: every dot, every second, every fifth, and
+ *  so on up.
+ *
+ *  Far past the zoom anybody can reach - the camera stops at a twenty-fifth; see
+ *  camera.ts - because a canvas can arrive from a file, a share or a room with a camera
+ *  in it that nobody in this app chose. */
+const COARSER = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000] as const
 
 /** One layer of the background pattern: how far apart its dots are on screen, and
  *  how much of it is showing. */
@@ -71,9 +80,10 @@ export function gridLevels(scale: number): GridLevel[] {
 
   if (finer !== undefined) {
     const step = GRID * finer * scale
-    // Full where it is still comfortably open and gone by the time it closes up:
+    const goes = CLOSEST * FADES_FROM
+    // Full where it is still comfortably open and gone by the time it has closed up:
     // the two levels cross over each other and the eye sees one pattern easing.
-    const showing = Math.min(1, Math.max(0, (step - CLOSEST / 2) / (CLOSEST / 2)))
+    const showing = Math.min(1, Math.max(0, (step - goes) / (CLOSEST - goes)))
     if (showing > 0.01) levels.push({ every: finer, step, showing })
   }
 

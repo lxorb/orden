@@ -254,12 +254,15 @@ describe('resizing a box', () => {
  *  wash, so it coarsens instead - every second dot, then every fifth - and the level
  *  being left behind fades out rather than blinking off. */
 describe('the background pattern', () => {
+  /** Well past the zoom the camera itself allows - a quarter to a twenty-fifth; see
+   *  camera.ts - because a canvas can arrive from a file, a share or a room carrying a
+   *  camera nobody in this app chose. */
   test('is one level of dots at every zoom, however far out', () => {
-    for (const scale of [4, 1, 0.5, 0.2, 0.05, 0.01, 0.002, 0.0005]) {
+    for (const scale of [4, 1, 0.5, 0.2, 0.05, 0.04, 0.01, 0.002, 0.0005]) {
       const levels = gridLevels(scale)
       expect(levels.length, String(scale)).toBeGreaterThan(0)
       // Whatever the zoom, the dots the reader sees are far enough apart to be dots.
-      expect(levels[0]!.step, String(scale)).toBeGreaterThanOrEqual(9)
+      expect(levels[0]!.step, String(scale)).toBeGreaterThanOrEqual(12)
     }
   })
 

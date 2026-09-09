@@ -9,16 +9,26 @@
    *  which key does it: this panel is where somebody stops using it. */
 
   import CanvasIcon from './CanvasIcon.svelte'
+  import { isShape } from './canvas/format'
   import { hinted, PLACING } from './canvas/glyphs'
   import { type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
 
   const { onchoose }: { onchoose: (tool: Tool) => void } = $props()
+
+  /** Which of them is the first shape, so the five things a note taker puts down and
+   *  the seven a diagram is drawn out of read as two groups rather than one list of
+   *  twelve. */
+  const firstShape = $derived(PLACING.findIndex((one) => isShape(one.id)))
 </script>
 
 <div class="place">
-  {#each PLACING as one (one.id)}
+  {#each PLACING as one, index (one.id)}
+    {#if index === firstShape}
+      <span class="split"></span>
+    {/if}
+
     <button
       type="button"
       class:on={tools.which === one.id}
@@ -41,6 +51,15 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1px;
+  }
+
+  /* The line between what a note taker puts down and what a diagram is drawn out of.
+     Across both columns, so the shapes begin a row of their own. */
+  .split {
+    grid-column: 1 / -1;
+    height: 1px;
+    margin: var(--space-1) 0;
+    background: var(--line);
   }
 
   button {
