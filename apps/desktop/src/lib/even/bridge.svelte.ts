@@ -1,152 +1,212 @@
-/** What ties the plugin's own tab strip to the glasses.
+/** What ties the plugin's own editor to the glasses.
  *
- *  The whole of the app is here already: the same stores, the same notes, the
- *  same account, the same sync. So this is small on purpose. It watches the
- *  active tab and the note's revision, hands the words to the session, and hands
- *  the session the gestures that come back. Nothing goes over the network: the
- *  note is in memory, and the glasses are on the other end of a link the phone
- *  owns.
+ *  The whole of the app is already here: the same stores, the same notes, the same
+ *  account, the same sync, the same rooms. So this is small on purpose. It watches
+ *  the active note and the reader's own settings, hands the words to the session,
+ *  hands the session's page to the panel, and hands the gestures and the words it
+ *  hears back to the shell.
  *
- *  None of it runs in the plain web build, because nothing in the plain web
- *  build imports it. */
+ *  Four things live here because they are the four that need the app:
+ *
+ *  - **the world**, which is the space's own contents as rows on the glasses;
+ *  - **the binding**, which keeps the phone's scroll and the page on the panel the
+ *    same place in the note, in both directions;
+ *  - **the voice**, which is a microphone, a grammar and a model;
+ *  - **the settle**, which is the 700 ms that keeps a keystroke off the radio.
+ *
+ *  None of it runs in the plain web build, because nothing in the plain web build
+ *  imports it. */
 
-import { CODE_PALETTES, type CodePalette } from '@nib/editor'
-import { type Look, type Page, plainPage, Sheets, textPages } from '@nib/glasses'
-import { diagnosis } from './diagnosis.svelte'
-import { mathCss } from '../math-fonts'
+import { BODY_ROWS, bandsOf, type Page } from '@nib/glasses'
+import { askAbout, type Found, TRANSCRIBERS, transcribeWith } from './ask'
+import { bestOf, type Command, commandIn } from './commands'
+import { fileMark } from '../file-mark'
+import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
-import { notePicture } from '../note-images'
 import { Panel } from './screen'
+import { parseQuery } from '../search/query'
+import { fuzzyTerms } from '../search/fuzzy'
+import { searchSpace } from '../search/space'
 import { connectGlasses, type Glasses, type Input } from './sdk'
-import { type OpenNote, Session, type Showing } from './session'
-import { workspace } from '../workspace.svelte'
+import { type OpenNote, Session } from './session'
+import { type Row, Shell, type Wish, type Words, type World } from './shell'
+import { Voice } from './voice'
+import { type Entry, workspace } from '../workspace.svelte'
 
 /** How long after a keystroke the glasses are brought up to date.
  *
- *  Far longer than the editor's own idle: a page on the glasses costs the best
- *  part of a second over the radio, so the last thing anybody wants is one send
- *  per word. Short enough that putting the phone down and looking up shows the
- *  sentence just typed. */
+ *  Far longer than the editor's own idle. A band on the panel costs about 83 ms of
+ *  radio, so the last thing anybody wants is one send per word; short enough that
+ *  putting the phone down and looking up shows the sentence just typed. */
 const SETTLE = 700
 
-/** The palette an unknown code theme falls back to.
+/** How long an edit arriving from somebody else waits.
  *
- *  The editor's list is a constant whose first entry is the one that follows the
- *  app's own theme, so the assertion stands on the shape of that constant rather
- *  than on hope; see code-theme.ts. */
-const FOLLOW: CodePalette = CODE_PALETTES[0]!
+ *  Much shorter, because it is not this reader's typing: a collaborator's paragraph
+ *  should appear, and it does not arrive one character at a time. Long enough to
+ *  fold a burst of them into one send. See docs/collaboration.md. */
+const ARRIVAL = 80
 
-/** How the bridge is getting on, in one word.
- *
- *  `alone` is every browser: no phone app behind the page, so there is nothing to
- *  show and nothing to say. The other four are only ever reached on a phone. */
-type Health = 'alone' | 'reaching' | 'live' | 'stalled' | 'failed'
+/** How long a word heard, or a word about what went wrong, stays in the foot. */
+const FLASH = 1400
 
-/** How many lines of what happened are kept.
- *
- *  Enough to hold a whole launch and nothing more. This is the only evidence
- *  anybody gets off a phone, and it is read by being looked at, so it has to fit
- *  on a corner of a screen. */
-const TRAIL = 8
+/** How many notes a search hands the model at once. */
+const HITS = 20
 
 /** Whatever was thrown, in as few words as carry the reason. */
 function why(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-class Bridge {
-  /** What the glasses are showing, so the plugin can say so in a corner. Null
-   *  while there is no pair in front of us, which is every browser. */
-  showing = $state<Showing | null>(null)
-  /** True when the last thing asked of the glasses did not happen. The plugin
-   *  dims its corner rather than putting a sentence up: nobody writing a note
-   *  wants a dialog about a radio. */
-  stalled = $state(false)
-  /** How it is getting on, for the dot in the corner. */
-  health = $state<Health>('reaching')
-  /** What happened, newest last, in the platform's own words.
-   *
-   *  A phone has no console anybody can reach, so a launch that goes wrong on a
-   *  device is otherwise a dark panel and no reason. This is that reason, short
-   *  enough to be read off a screenshot. */
-  readonly trail = $state<string[]>([])
+/** How the bridge is getting on, in one word.
+ *
+ *  `alone` is every browser: no phone app behind the page, so there is nothing to
+ *  show and nothing to say. The others are only ever reached on a phone. */
+type Health = 'alone' | 'reaching' | 'live' | 'stalled' | 'failed'
 
-  private session: Session | null = null
-  private timer: ReturnType<typeof setTimeout> | undefined
+/** The rows of a space, as the glasses list them.
+ *
+ *  Folders and notes. Canvases are never listed, which is Emil's rule and also the
+ *  only sane one: a canvas cannot be set in one font on seven lines. PDFs and
+ *  pictures go the same way for the same reason, and the deviation is written down
+ *  in docs/even.md rather than left to be discovered.
+ *
+ *  `expanded` decides whether a folder's children are listed at all: the sidebar
+ *  shows everything open, the note picker follows the folds the reader has made. */
+function rowsOf(entry: Entry | null, expanded: (path: string) => boolean, depth = 0): Row[] {
+  if (!entry) return []
 
-  /** Writes down one step, and keeps the last few. */
-  private said(line: string): void {
-    this.trail.push(line)
-    if (this.trail.length > TRAIL) this.trail.shift()
+  const out: Row[] = []
+  for (const child of entry.children) {
+    if (child.is_dir) {
+      const open = expanded(child.path)
+      // A folder in a list where everything is open has nothing a tap could do, so
+      // the cursor steps over it and its name is a label. See `Row.pick`.
+      out.push({
+        label: child.name,
+        depth,
+        folder: true,
+        open,
+        pick: !alwaysOpen(expanded),
+        id: child.path,
+      })
+      if (open) out.push(...rowsOf(child, expanded, depth + 1))
+      continue
+    }
+
+    if (fileMark(child.name) !== 'note') continue
+
+    out.push({
+      label: child.name.replace(/\.md$/i, ''),
+      depth,
+      folder: false,
+      open: false,
+      pick: true,
+      id: child.path,
+    })
   }
 
-  /** Brings the glasses up and starts following the active tab. Answers with a
+  return out
+}
+
+/** The sidebar's own answer to "is this folder open": always. Told apart from the
+ *  picker's by identity, which is what lets one walk serve both. */
+const OPEN_ALL = (): boolean => true
+function alwaysOpen(expanded: (path: string) => boolean): boolean {
+  return expanded === OPEN_ALL
+}
+
+class Bridge {
+  /** What the glasses are showing, so the plugin can draw a frame around it. Null
+   *  while there is no pair in front of us, which is every browser. */
+  showing = $state<{ from: number; to: number; page: number; count: number } | null>(null)
+  /** How it is getting on. The plugin shows nothing about this unless it is
+   *  wrong: nobody writing a note wants a dialog about a radio. */
+  health = $state<Health>('reaching')
+  /** How long the plugin itself took over the last command it heard, from the end
+   *  of the speech to the panel being asked to change.
+   *
+   *  Ours, and not the recogniser's: what it took to hear the words is the
+   *  recogniser's own and is not ours to measure. Kept rather than logged so that a
+   *  test and a screenshot can both read it. */
+  latency = $state(0)
+  /** What the reader is being asked or told, for the phone to show too: the
+   *  question that went to the model, and whether the microphone is open. */
+  asked = $state('')
+  answer = $state('')
+  listening = $state(false)
+
+  private glasses: Glasses | null = null
+  private panel: Panel | null = null
+  private shell: Shell | null = null
+  private voice: Voice | null = null
+  private readonly session = new Session()
+  private timer: ReturnType<typeof setTimeout> | undefined
+  private flashing: ReturnType<typeof setTimeout> | undefined
+  /** One draw at a time. A burst of scrolls moves the target and nothing else; see
+   *  `pump`. */
+  private drawing: Promise<void> | null = null
+  private wanted = false
+  /** True while the phone is being scrolled because the glasses turned a page, so
+   *  that the scroll it causes is not read as the reader scrolling. */
+  private steering = false
+
+  /** Brings the glasses up and starts following the active note. Answers with a
    *  teardown either way, so the entry hands it to `onDestroy` without asking
    *  whether anything happened. */
   start(): () => void {
     let stop: (() => void) | undefined
-    // A pair of glasses that cannot be reached leaves the plugin a working
-    // editor, which is the whole of what to do about it.
     void this.connect().then(
       (teardown) => {
         stop = teardown
       },
       (error: unknown) => {
         this.health = 'failed'
-        this.said(`bridge: ${why(error)}`)
+        console.warn('nib for g2:', why(error))
       },
     )
 
     return () => {
       clearTimeout(this.timer)
+      clearTimeout(this.flashing)
+      void this.voice?.stop()
       stop?.()
     }
   }
 
   private async connect(): Promise<(() => void) | undefined> {
-    const at = performance.now()
     const glasses = await connectGlasses()
-    const waited = performance.now() - at
-
     if (!glasses) {
-      // No phone app behind this page. Every browser ends here, and so does a
-      // packed plugin whose host never put its channel on the page - which is
-      // the one case worth being loud about, so the diagnosis opens itself.
+      // No phone app behind this page. Every browser ends here, and the plugin is
+      // then simply the editor.
       this.health = 'alone'
-      this.said('no host')
-      diagnosis.settled('not found', waited)
       return undefined
     }
 
-    this.said('host')
-    diagnosis.settled('found', waited)
-
-    const sheets = new Sheets({
-      // KaTeX's own stylesheet with its faces inside it, which is what lets a
-      // formula be drawn as a picture rather than read as its source.
-      mathStyles: (html) => mathCss(html),
-      resolvePicture: (source) =>
-        notePicture(source, workspace.active?.path ?? null, workspace.active?.doc ?? ''),
-    })
-
-    const panel = new Panel(glasses, sheets)
+    this.glasses = glasses
+    const panel = new Panel(glasses, modes.glassesLineNumbers)
     const made = await panel.open()
-    this.said(`page: ${made}`)
     if (made !== 'made') {
       // The page is asked for exactly once a launch, so there is nothing to try
-      // again: whatever the host answered is the answer for this sitting, and it
-      // is written down above so that it is not a mystery.
+      // again: whatever the host answered is the answer for this sitting.
       this.health = 'failed'
-      this.stalled = true
+      console.warn('nib for g2: the page was not made:', made)
       return undefined
     }
 
-    const session = new Session((text) => this.pagesOf(sheets, text), panel)
-    this.session = session
+    this.panel = panel
+    this.shell = new Shell(this.world(), this.words(), this.session)
+    this.voice = new Voice({
+      microphone: (open) => glasses.microphone(open),
+      transcribe: modes.glassesKey ? (wav) => this.transcribe(wav) : null,
+      heard: (heard) => this.heard(heard.said, heard.ended),
+      failed: (said) => this.flash(said),
+    })
     this.health = 'live'
 
-    const listening = glasses.listen((input) => this.heard(glasses, input))
+    const listening = glasses.listen((input) => this.input(input))
     const watching = this.watch()
+    if (modes.glassesVoice) void this.listen(true)
 
     return () => {
       listening()
@@ -154,141 +214,471 @@ class Bridge {
     }
   }
 
-  /** Every reason to redraw, in one value: which note is active, how many times
-   *  it has changed, and the two settings that decide how it is set. Derived
-   *  rather than read one at a time inside the effect, so that the effect depends
-   *  on all of it and the timer below sees one thing rather than four.
+  /** The space's own contents, and what the glasses may do to them. */
+  private world(): World {
+    return {
+      space: () => workspace.activeSpace?.name ?? t('Notes'),
+      contents: () => rowsOf(workspace.tree, OPEN_ALL),
+      spaces: () =>
+        workspace.spaces.map((one) => ({
+          label: one.name,
+          depth: 0,
+          folder: false,
+          open: false,
+          pick: true,
+          id: one.id,
+        })),
+      tree: () => rowsOf(workspace.tree, (path) => workspace.isExpanded(path)),
+      open: (id) => {
+        // Notes only. A canvas is never in a list the glasses show, and this is the
+        // second lock on the same door.
+        if (fileMark(id.split(/[\\/]/).at(-1) ?? '') !== 'note') return
+        void workspace.openEntry(id)
+      },
+      fold: (id) => workspace.toggleFolder(id),
+      enter: (id) => void workspace.showSpace(id),
+      listen: (on) => void this.listen(on),
+      listening: () => this.listening,
+      pageNumber: () => modes.glassesPageNumber,
+    }
+  }
+
+  /** The words the glasses say for themselves, translated once. */
+  private words(): Words {
+    return {
+      spaces: t('Spaces'),
+      notes: t('Notes'),
+      switchSpace: t('Switch space'),
+      changeNote: t('Change note'),
+      voiceOn: t('Voice on'),
+      voiceOff: t('Voice off'),
+      thinking: t('Thinking'),
+      nothingHere: t('Nothing here'),
+      noAnswer: t('No answer'),
+    }
+  }
+
+  /** How the reader wants a note paged, as the pager takes it.
    *
-   *  `revision` is what makes a keystroke reach here, whichever pane it was
-   *  typed in; see NoteDoc in workspace/documents.svelte.ts. */
-  private readonly wanted = $derived.by(() => {
+   *  The body's width follows the line numbers, because their column is part of the
+   *  page's geometry rather than part of its text; see panel.ts in @nib/glasses. */
+  private paging() {
+    const bands = bandsOf(modes.glassesLineNumbers)
+    return {
+      breakAt: modes.glassesBreak,
+      gutter: bands.nums.width,
+      inner: bands.body.width,
+      rows: BODY_ROWS,
+    }
+  }
+
+  /** Everything that decides what the glasses show, in one value.
+   *
+   *  Derived rather than read one at a time inside the effect, so the effect depends
+   *  on all of it and the timer below sees one thing rather than seven. `revision`
+   *  is what makes a keystroke reach here, and what makes an edit arriving through a
+   *  room reach here too: a room writes into the same document. */
+  private readonly reading = $derived.by(() => {
     const tab = workspace.active
     const note = tab?.kind === 'note' ? tab.note : null
     if (!note) return null
 
-    const chosen = CODE_PALETTES.find((one) => one.id === modes.codeTheme)
     return {
       note,
       revision: note.revision,
-      look: { scope: modes.ligatures, palette: chosen ?? FOLLOW },
+      arrivals: note.arrivals,
+      breakAt: modes.glassesBreak,
+      lineNumbers: modes.glassesLineNumbers,
+      pageNumber: modes.glassesPageNumber,
     }
   })
-
-  /** A note as pages, by whichever of the two the reader chose.
-   *
-   *  Both answer `Page[]`, both carry `from` and `to`, and the session cannot
-   *  tell them apart: the paging model, the scroll handling and the map back
-   *  into the note are one. What differs is who sets the words, and therefore
-   *  what a page turn costs. */
-  private async pagesOf(sheets: Sheets, text: string): Promise<Page[]> {
-    const look = this.look()
-    if (modes.glassesDisplay !== 'text') {
-      const drawn = await sheets.pages(text, look)
-      // What text mode would cost this note, said where somebody can see it: a
-      // page of plain prose reads the same either way and arrives nine times
-      // faster, a page with a fence or a formula does not.
-      const plain = drawn.filter((page) => plainPage(page)).length
-      this.said(`plain: ${String(plain)}/${String(drawn.length)}`)
-      return drawn
-    }
-
-    // The firmware's measure, not ours: one font at a fixed 27 pixel line, ten
-    // lines to a panel against our twelve. Paged our way a third of every page
-    // would fall off the bottom. See @nib/glasses text.ts.
-    return textPages(text, {
-      scope: look.scope,
-      fence: () => [],
-    })
-  }
-
-  private look(): Look {
-    return this.wanted?.look ?? { scope: 'off', palette: FOLLOW }
-  }
 
   private watch(): () => void {
     return $effect.root(() => {
       $effect(() => {
-        const wanted = this.wanted
-        // No note active: the glasses keep the one they have. That is the rule
-        // about closing a note, and it needs nothing done to hold.
-        if (!wanted) return
+        const reading = this.reading
+        if (!reading) return
 
-        const { note } = wanted
+        const { note } = reading
         clearTimeout(this.timer)
-        // Only an edit waits. The pause is there so that a page does not go over
-        // the radio once per word, and neither the first page of a sitting nor a
-        // switch to another note is a word: both are somebody asking for a
-        // different note and then watching the glass. Waiting out the typing
-        // pause before either was most of a second of nothing happening, on top
-        // of the second the page itself costs.
-        const switching = this.showing?.key !== note.key
-        this.timer = setTimeout(
-          () => {
-            note.flush()
-            void this.follow({ key: note.key, name: note.name, text: note.text })
-          },
-          switching ? 0 : SETTLE,
-        )
+
+        // Only this reader's typing waits the full pause. A switch to another note
+        // and the first page of a sitting are somebody asking for a note and then
+        // watching the glass; an edit arriving from a collaborator is a paragraph
+        // appearing, and neither should sit behind three quarters of a second.
+        const switching = this.session.showing?.key !== note.key
+        const arriving = reading.arrivals > this.arrived
+        this.arrived = reading.arrivals
+        const wait = switching ? 0 : arriving ? ARRIVAL : SETTLE
+
+        this.timer = setTimeout(() => {
+          note.flush()
+          this.follow({ key: note.key, name: note.name, text: note.text })
+        }, wait)
+      })
+
+      // The line numbers move the body, and geometry is fixed when the page is
+      // made, so this is the one setting that rebuilds it.
+      $effect(() => {
+        const numbered = modes.glassesLineNumbers
+        const panel = this.panel
+        if (!panel) return
+
+        void panel.renumber(numbered).then(() => {
+          this.follow(null)
+        })
       })
     })
   }
 
-  private async follow(note: OpenNote): Promise<void> {
-    const session = this.session
-    if (!session) return
+  /** How many arrivals from other people this note had last time round. */
+  private arrived = 0
 
-    try {
-      await session.follow(note)
-      this.stalled = false
-      this.health = 'live'
-    } catch (error) {
-      // The plugin is an editor first. A page that did not reach the glasses
-      // dims the corner and nothing else.
-      this.stalled = true
-      this.health = 'stalled'
-      this.said(`note: ${why(error)}`)
-    }
-    this.showing = session.showing
+  /** The note, paged, and the panel brought up to date if anything moved. */
+  private follow(note: OpenNote | null): void {
+    this.session.follow(note, this.paging())
+    this.showing = this.session.showing
+      ? {
+          from: this.session.showing.from,
+          to: this.session.showing.to,
+          page: this.session.showing.page,
+          count: this.session.showing.count,
+        }
+      : null
+
+    // Nothing the reader can see has moved, so nothing is sent. This is the whole
+    // of what keeps a keystroke off the radio.
+    if (!this.session.moved && this.shell?.screen.kind === 'note') return
+
+    this.draw()
   }
 
-  private heard(glasses: Glasses, input: Input): void {
-    const session = this.session
-    if (!session) return
+  /** One gesture, one frame of sound, or one lifecycle event. */
+  private input(input: Input): void {
+    if (input.kind === 'audio') {
+      this.voice?.frame(input.pcm)
+      return
+    }
 
     if (input.kind === 'life') {
       // The host clears the page when it puts a layer of its own up, so coming
-      // back to the front means drawing what is there again.
-      if (input.life === 'foreground') void this.settle(session.repaint())
+      // back to the front means drawing all of it again.
+      if (input.life === 'foreground') {
+        this.panel?.forget()
+        this.draw()
+      }
       return
     }
 
-    // A double press is the way out of the app, and the glasses put their own
-    // question up rather than this deciding for anybody. Required of every app
-    // on its own root page.
-    if (input.gesture === 'double') {
-      void this.settle(glasses.leave())
-      return
-    }
-
-    const by = input.gesture === 'up' ? -1 : input.gesture === 'down' ? 1 : 0
-    if (!by) return
-
-    void this.settle(session.turn(by))
+    this.act(this.shell?.handle(input.gesture) ?? 'none')
   }
 
-  /** Runs one thing asked of the glasses, and says in the corner whether it
-   *  happened. The one place a failure out here is dealt with. */
-  private async settle(work: Promise<void>): Promise<void> {
-    try {
-      await work
-      this.stalled = false
-      this.health = 'live'
-    } catch (error) {
-      this.stalled = true
-      this.health = 'stalled'
-      this.said(`turn: ${why(error)}`)
+  /** What the shell asked for, done. */
+  private act(wish: Wish): void {
+    if (wish === 'leave') {
+      // The system's own leave-this-app question, which every app is checked for on
+      // its root page.
+      void this.glasses?.leave()
+      return
     }
-    this.showing = this.session?.showing ?? null
+
+    if (wish === 'draw') {
+      this.showing = this.session.showing
+        ? {
+            from: this.session.showing.from,
+            to: this.session.showing.to,
+            page: this.session.showing.page,
+            count: this.session.showing.count,
+          }
+        : null
+      // A page turned on the glasses scrolls the phone to the same words. The other
+      // half of the binding; the flag is what stops the two chasing each other.
+      this.steer()
+      this.draw()
+    }
+  }
+
+  /** The phone, scrolled to where the glasses are.
+   *
+   *  Half of item three's binding. `goto` is the app's own way of saying "open this
+   *  note at this line", which the pane reads and clears; see workspace.svelte.ts. */
+  private steer(): void {
+    const showing = this.session.showing
+    const path = workspace.active?.path
+    if (!showing || !path || this.shell?.screen.kind !== 'note') return
+
+    this.steering = true
+    workspace.goto = { path, line: showing.firstLine }
+    // Cleared on the next turn of the loop, by which time the scroll it caused has
+    // been and gone.
+    setTimeout(() => {
+      this.steering = false
+    }, 0)
+  }
+
+  /** The glasses, taken to where the phone is.
+   *
+   *  The other half. Called by the plugin's own editor as it scrolls, with the
+   *  offset of the first character on screen. Most of a scroll is inside the page
+   *  that is already up and means nothing at all, which is what `holds` is for.
+   *
+   *  Ignored while the phone is being scrolled *because* of a page turn, or the two
+   *  would chase each other round the note. */
+  scrolled(offset: number): void {
+    if (this.steering || !this.panel) return
+    if (this.shell?.screen.kind !== 'note') return
+    if (this.session.holds(offset)) return
+
+    this.session.goToOffset(offset)
+    this.showing = this.session.showing
+      ? {
+          from: this.session.showing.from,
+          to: this.session.showing.to,
+          page: this.session.showing.page,
+          count: this.session.showing.count,
+        }
+      : null
+    this.draw()
+  }
+
+  /** Draws, once, and again if something changed while it was drawing.
+   *
+   *  A band costs about 83 ms over the radio, so five flicks of the ring used to
+   *  start five sends that queued behind each other: the reader asked to be on page
+   *  six and watched pages two to five go by. The target moves; the draw catches up.
+   *  Concurrent sends are also the documented way to wedge the host's channel. */
+  private draw(): void {
+    this.wanted = true
+    if (this.drawing) return
+
+    this.drawing = this.pump()
+    void this.drawing.finally(() => {
+      this.drawing = null
+      if (this.wanted) this.draw()
+    })
+  }
+
+  private async pump(): Promise<void> {
+    const panel = this.panel
+    const shell = this.shell
+    if (!panel || !shell) return
+
+    while (this.wanted) {
+      this.wanted = false
+      try {
+        await panel.show(shell.view())
+        if (shell.screen.kind === 'note') this.session.drew()
+        this.health = 'live'
+      } catch (error) {
+        // The plugin is an editor first. A page that did not reach the glasses
+        // says so here and nowhere else.
+        this.health = 'stalled'
+        console.warn('nib for g2:', why(error))
+        return
+      }
+    }
+  }
+
+  /** A word in the foot of the panel for a moment: a command heard, or a reason. */
+  private flash(said: string): void {
+    this.shell?.flash(said)
+    this.draw()
+    clearTimeout(this.flashing)
+    this.flashing = setTimeout(() => {
+      this.shell?.clearFlash()
+      this.draw()
+    }, FLASH)
+  }
+
+  /** The microphone, on or off. Kept on the account, so it is on next launch. */
+  private async listen(on: boolean): Promise<void> {
+    const voice = this.voice
+    if (!voice) return
+
+    if (on) {
+      const opened = await voice.start()
+      this.listening = opened
+    } else {
+      await voice.stop()
+      this.listening = false
+    }
+
+    modes.setGlassesVoice(this.listening)
+    this.draw()
+  }
+
+  /** One utterance, as words. Only reached where the WebView has no recogniser. */
+  private async transcribe(wav: Uint8Array<ArrayBuffer>): Promise<string | null> {
+    for (const model of TRANSCRIBERS) {
+      const said = await transcribeWith(wav, modes.glassesKey, model)
+      if (said !== null) return said
+    }
+
+    return null
+  }
+
+  /** Something was said. What it means, and how long it took to mean it.
+   *
+   *  `ended` is when the reader stopped talking, which is the only honest place to
+   *  measure a command's latency from; see voice.ts. */
+  private heard(said: string, ended: number): void {
+    const command = commandIn(said)
+    if (!command) return
+
+    this.flash(said.slice(0, 40))
+    this.obey(command)
+    // The plugin's own share of the latency, from the end of the speech to the
+    // panel being asked to change. What the recogniser took before that is the
+    // recogniser's, and is not ours to measure.
+    this.latency = performance.now() - ended
+  }
+
+  private obey(command: Command): void {
+    const shell = this.shell
+    if (!shell) return
+
+    switch (command.kind) {
+      case 'next':
+        this.act(shell.handle('down'))
+        return
+
+      case 'back':
+        // One page back, or out of whatever is open: the same word for the same
+        // idea, which is what the gesture does too.
+        this.act(shell.open ? shell.back() : shell.handle('up'))
+        return
+
+      case 'close':
+        this.act(shell.close())
+        return
+
+      case 'spaces':
+        this.act(shell.show('spaces'))
+        return
+
+      case 'notes':
+        this.act(shell.show('tree'))
+        return
+
+      case 'switchSpace': {
+        const spaces = workspace.spaces
+        const name = bestOf(
+          command.name,
+          spaces.map((one) => one.name),
+        )
+        const found = spaces.find((one) => one.name === name)
+        if (!found) {
+          // The picker rather than nothing: they asked to change space, and the
+          // name did not land.
+          this.act(shell.show('spaces'))
+          return
+        }
+
+        void workspace.showSpace(found.id)
+        this.act(shell.close())
+        return
+      }
+
+      case 'switchNote': {
+        const notes = workspace.notes
+        const name = bestOf(
+          command.name,
+          notes.map((one) => one.name.replace(/\.md$/i, '')),
+        )
+        const found = notes.find((one) => one.name.replace(/\.md$/i, '') === name)
+        if (!found) {
+          this.act(shell.show('tree'))
+          return
+        }
+
+        void workspace.openEntry(found.path)
+        this.act(shell.close())
+        return
+      }
+
+      case 'page':
+        this.act(shell.goToPage(command.number))
+        return
+
+      case 'line':
+        this.act(shell.goToLine(command.number))
+        return
+
+      case 'voice':
+        void this.listen(command.on)
+        return
+
+      case 'question':
+        void this.ask(command.asked)
+        return
+    }
+  }
+
+  /** A question, asked of the model and answered on the glasses. */
+  private async ask(question: string): Promise<void> {
+    const shell = this.shell
+    if (!shell) return
+
+    this.asked = question
+    this.answer = ''
+    this.act(shell.asking(question))
+
+    try {
+      const answer = await askAbout(question, {
+        key: modes.glassesKey,
+        model: modes.glassesModel,
+        effort: modes.glassesEffort,
+        notes: {
+          search: (query) => this.searchNotes(query),
+          read: (name) => this.readNote(name),
+        },
+      })
+      this.answer = answer
+      this.act(shell.answered(question, answer))
+    } catch (error) {
+      this.answer = ''
+      this.act(shell.answered(question, why(error)))
+    }
+  }
+
+  /** Every note in the account whose words match, across every space.
+   *
+   *  Every space, because a question is about what the person knows rather than
+   *  about which folder they happen to have open. The app's own search does one
+   *  space at a time, so this asks each of them. */
+  private async searchNotes(query: string): Promise<Found[]> {
+    const parsed = parseQuery(query)
+    const terms = fuzzyTerms(parsed)
+    const out: Found[] = []
+
+    for (const space of workspace.spaces) {
+      if (out.length >= HITS) break
+
+      await searchSpace(space.root, parsed, terms, HITS, ({ hits }) => {
+        for (const hit of hits) {
+          out.push({ note: hit.name.replace(/\.md$/i, ''), line: hit.line, text: hit.text })
+        }
+      })
+    }
+
+    return out.slice(0, HITS)
+  }
+
+  /** One note by name, out of any space the account has. */
+  private async readNote(name: string): Promise<string | null> {
+    const wanted = name.replace(/\.md$/i, '').toLowerCase()
+    const found = workspace.notes.find(
+      (one) => one.name.replace(/\.md$/i, '').toLowerCase() === wanted,
+    )
+    if (!found) return null
+
+    return workspace.noteText(found.path)
+  }
+
+  /** The page the glasses are on, for the frame the plugin draws. Null when there
+   *  is nothing on them. */
+  get page(): Page | null {
+    return this.session.page
   }
 }
 

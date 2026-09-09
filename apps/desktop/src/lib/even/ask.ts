@@ -280,7 +280,7 @@ export const TRANSCRIBERS = ['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whispe
  *  file is a WAV built out of the frames the glasses sent, which every
  *  transcription endpoint takes. */
 export async function transcribeWith(
-  wav: Uint8Array,
+  wav: Uint8Array<ArrayBuffer>,
   key: string,
   model: string,
   send: typeof fetch = fetch,

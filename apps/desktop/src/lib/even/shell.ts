@@ -26,7 +26,16 @@
  *  `World` handed in and the words from a `Words` handed in, which is what makes
  *  the table above a test rather than a hope. */
 
-import { BODY_INNER, BODY_ROWS, fit, pageOfLine, ruleOf, wrap } from '@nib/glasses'
+import {
+  BODY_INNER,
+  BODY_ROWS,
+  fit,
+  pageOfLine,
+  rightward,
+  ruleOf,
+  spread,
+  wrap,
+} from '@nib/glasses'
 import type { Session } from './session'
 
 /** One row of a list on the glasses. */
@@ -39,6 +48,13 @@ export interface Row {
   folder: boolean
   /** True when it is a folder that is open. */
   open: boolean
+  /** Whether the cursor may land on it at all.
+   *
+   *  False for a folder in the sidebar, where every folder is already open and
+   *  there is nothing a tap on one could do. The names still show, because they are
+   *  what says where a note lives; the cursor steps over them, so every tap the
+   *  reader makes opens something. A dead gesture is worse than a plain label. */
+  pick: boolean
   /** What the world calls it: a path, a space id, a choice. */
   id: string
 }
@@ -69,6 +85,8 @@ export interface World {
   listen: (on: boolean) => void
   /** Whether it is on now. */
   listening: () => boolean
+  /** Whether the foot says which page of how many. The reader's own setting. */
+  pageNumber: () => boolean
 }
 
 /** The handful of words the glasses say for themselves, already translated.
@@ -146,6 +164,24 @@ function clamp(at: number, count: number): number {
   return Math.min(Math.max(0, at), Math.max(0, count - 1))
 }
 
+/** The next row the cursor may land on, going `by` from `at`.
+ *
+ *  Answers where it started when there is nowhere to go, which is what makes the
+ *  end of a list feel like the end of a list rather than like a dropped gesture. */
+function nextPick(rows: readonly Row[], at: number, by: number): number {
+  for (let to = at + by; to >= 0 && to < rows.length; to += by) {
+    if (rows[to]?.pick) return to
+  }
+
+  return at
+}
+
+/** The first row the cursor may land on. Where a list opens. */
+function firstPick(rows: readonly Row[]): number {
+  const at = rows.findIndex((row) => row.pick)
+  return at < 0 ? 0 : at
+}
+
 export class Shell {
   /** The note is the floor and is never popped. */
   private stack: Screen[] = [{ kind: 'note' }]
@@ -175,8 +211,7 @@ export class Shell {
       case 'hold':
         // From anywhere, including from inside another screen: a hold is the way
         // to the modal and never has to be reached for twice.
-        this.stack = [{ kind: 'note' }, { kind: 'modal', at: 0 }]
-        return 'draw'
+        return this.show('modal')
 
       case 'double':
         return this.back()
@@ -208,8 +243,22 @@ export class Shell {
 
   /** Puts a screen up by name. What a spoken command asks for. */
   show(kind: 'sidebar' | 'modal' | 'spaces' | 'tree'): Wish {
-    this.stack = [{ kind: 'note' }, { kind, at: 0 }]
+    this.stack = [{ kind: 'note' }, { kind, at: firstPick(this.rowsFor(kind)) }]
     return 'draw'
+  }
+
+  /** The rows a screen is made of, by its name. */
+  private rowsFor(kind: 'sidebar' | 'modal' | 'spaces' | 'tree'): Row[] {
+    switch (kind) {
+      case 'sidebar':
+        return this.world.contents()
+      case 'spaces':
+        return this.world.spaces()
+      case 'tree':
+        return this.world.tree()
+      case 'modal':
+        return this.choices()
+    }
   }
 
   /** Back to the note, whatever was over it. */
@@ -278,16 +327,16 @@ export class Shell {
         return this.turn(by)
 
       case 'sidebar':
-        return this.step(screen, by, this.world.contents().length)
+        return this.step(screen, this.world.contents(), by)
 
       case 'spaces':
-        return this.step(screen, by, this.world.spaces().length)
+        return this.step(screen, this.world.spaces(), by)
 
       case 'tree':
-        return this.step(screen, by, this.world.tree().length)
+        return this.step(screen, this.world.tree(), by)
 
       case 'modal':
-        return this.step(screen, by, CHOICES.length)
+        return this.step(screen, this.choices(), by)
 
       case 'answer': {
         const most = Math.max(0, screen.rows.length - SHOWN)
@@ -305,8 +354,8 @@ export class Shell {
     }
   }
 
-  private step(screen: { at: number }, by: number, count: number): Wish {
-    const at = clamp(screen.at + by, count)
+  private step(screen: { at: number }, rows: readonly Row[], by: number): Wish {
+    const at = nextPick(rows, clamp(screen.at, rows.length), by)
     if (at === screen.at) return 'none'
 
     screen.at = at
@@ -322,7 +371,7 @@ export class Shell {
 
       case 'sidebar': {
         const row = this.world.contents()[screen.at]
-        if (!row) return 'none'
+        if (!row?.pick) return 'none'
 
         this.world.open(row.id)
         return this.close()
@@ -352,7 +401,7 @@ export class Shell {
       }
 
       case 'modal':
-        return this.take(CHOICES[screen.at] ?? 'space')
+        return this.take(CHOICES[clamp(screen.at, CHOICES.length)] ?? 'space')
 
       case 'answer':
       case 'asking':
@@ -363,11 +412,11 @@ export class Shell {
   private take(choice: Choice): Wish {
     switch (choice) {
       case 'space':
-        this.stack.push({ kind: 'spaces', at: 0 })
+        this.stack.push({ kind: 'spaces', at: firstPick(this.world.spaces()) })
         return 'draw'
 
       case 'note':
-        this.stack.push({ kind: 'tree', at: 0 })
+        this.stack.push({ kind: 'tree', at: firstPick(this.world.tree()) })
         return 'draw'
 
       case 'voice': {
@@ -434,7 +483,7 @@ export class Shell {
 
   /** The note itself: the section in the head, seven lines in the body, the note's
    *  own name and which page of how many in the foot. */
-  private note(): Omit<View, 'mic'> {
+  private note(): View {
     const page = this.session.page
     const showing = this.session.showing
     if (!page || !showing) {
@@ -449,9 +498,19 @@ export class Shell {
       rule: ruleOf(page.rule, BODY_INNER),
       body: page.words,
       nums: page.numbers,
-      foot: this.flashed || fit(showing.name, 300),
+      foot: this.flashed || this.noteFoot(showing),
       mic: '',
     }
+  }
+
+  /** The foot of the note screen: which note, and which page of how many.
+   *
+   *  Both in one band rather than two, because a band costs 83 ms of radio and a
+   *  page turn changes them both: one send rather than two, every page, for ever. */
+  private noteFoot(showing: { name: string; page: number; count: number }): string {
+    if (!this.world.pageNumber()) return fit(showing.name, BODY_INNER)
+
+    return spread(showing.name, `${String(showing.page + 1)}/${String(showing.count)}`, BODY_INNER)
   }
 
   /** A list: its name over a rule, seven rows of it, and where in it the cursor is.
@@ -459,7 +518,7 @@ export class Shell {
    *  The window follows the cursor rather than paging, and the cursor is a triangle
    *  in a column of its own so that every row's words start at the same pixel
    *  whether it is the chosen one or not. */
-  private list(title: string, rows: readonly Row[], at: number): Omit<View, 'mic'> {
+  private list(title: string, rows: readonly Row[], at: number): View {
     const from = windowOf(at, rows.length)
     const shown = rows.slice(from, from + SHOWN)
     const body = shown.map((row, index) => {
@@ -473,28 +532,33 @@ export class Shell {
       rule: ruleOf('─', BODY_INNER),
       body: (rows.length ? body : [this.words.nothingHere]).join('\n'),
       nums: '',
-      foot: rows.length ? `${String(at + 1)}/${String(rows.length)}` : '',
+      foot: rows.length ? rightward(`${String(at + 1)}/${String(rows.length)}`, BODY_INNER) : '',
       mic: '',
     }
   }
 
   /** The three choices a hold puts up. Deliberately the same shape as a list, so a
    *  reader who has used one has used the other. */
-  private modal(at: number): Omit<View, 'mic'> {
+  private modal(at: number): View {
+    return this.list(this.world.space(), this.choices(), at)
+  }
+
+  /** The three choices, as rows like any other list's. Said once, so that the
+   *  cursor and the drawing cannot disagree about what is on the screen. */
+  private choices(): Row[] {
     const said: Record<Choice, string> = {
       space: this.words.switchSpace,
       note: this.words.changeNote,
       voice: this.world.listening() ? this.words.voiceOff : this.words.voiceOn,
     }
 
-    const rows: Row[] = CHOICES.map((choice) => ({
+    return CHOICES.map((choice) => ({
       label: said[choice],
       depth: 0,
       folder: false,
       open: false,
+      pick: true,
       id: choice,
     }))
-
-    return this.list(this.world.space(), rows, at)
   }
 }

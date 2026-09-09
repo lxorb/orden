@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@nib/editor'
-import { glassesDisplay } from './modes.svelte'
+import { glassesBreak } from './modes.svelte'
 
 /** The store writes to the browser's storage the moment anything is toggled,
  *  and sets the zoom on the document element. Under node there is neither, so
@@ -141,42 +141,85 @@ describe('read-only mode', () => {
   })
 })
 
-/** How a note reaches the Even Realities glasses.
+/** The Glasses section, which only the Even Hub plugin shows.
  *
  *  Written against the live store and the validator rather than through a module
  *  restart: the restart harness in this file is already at its timeout, and what
  *  is worth pinning here is the rule, not the reload. */
-describe('the glasses display', () => {
-  test('starts rendered, which is the point of the plugin', () => {
-    expect(modes.glassesDisplay).toBe('rendered')
+describe('the glasses settings', () => {
+  const saved = () =>
+    JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+
+  test('start a page at H2 and above, with numbers and a page count', () => {
+    expect(modes.glassesBreak).toBe(2)
+    expect(modes.glassesLineNumbers).toBe(true)
+    expect(modes.glassesPageNumber).toBe(true)
   })
 
-  test('is chosen and kept', () => {
-    modes.setGlassesDisplay('text')
-    expect(modes.glassesDisplay).toBe('text')
-
-    modes.setGlassesDisplay('rendered')
-    expect(modes.glassesDisplay).toBe('rendered')
+  test('start with the microphone off, which is the only defensible default', () => {
+    expect(modes.glassesVoice).toBe(false)
   })
 
-  test('ignores a mode it does not know', () => {
-    modes.setGlassesDisplay('text')
-    modes.setGlassesDisplay('holograms')
-    expect(modes.glassesDisplay).toBe('text')
+  test('start with no key and no model, because there is nothing to guess', () => {
+    expect(modes.glassesKey).toBe('')
+    expect(modes.glassesModel).toBe('')
+    expect(modes.glassesEffort).toBe('low')
   })
 
-  test('is written down for the next launch', () => {
-    modes.setGlassesDisplay('text')
-    const saved: unknown = JSON.parse(localStorage.getItem('nib:modes') ?? '{}')
-    expect((saved as { glassesDisplay?: string }).glassesDisplay).toBe('text')
+  test('take a heading level and write it down', () => {
+    modes.setGlassesBreak('3')
+    expect(modes.glassesBreak).toBe(3)
+    expect(saved().glassesBreak).toBe(3)
+
+    modes.setGlassesBreak('0')
+    expect(modes.glassesBreak).toBe(0)
   })
 
-  test('reads only the two modes there are', () => {
-    expect(glassesDisplay('rendered')).toBe('rendered')
-    expect(glassesDisplay('text')).toBe('text')
-    expect(glassesDisplay('holograms')).toBeNull()
-    expect(glassesDisplay(true)).toBeNull()
-    expect(glassesDisplay(undefined)).toBeNull()
+  test('ignore a heading level there is no such thing as', () => {
+    modes.setGlassesBreak('2')
+    modes.setGlassesBreak('9')
+    modes.setGlassesBreak('nowhere')
+    expect(modes.glassesBreak).toBe(2)
+  })
+
+  test('read a level whether it arrives as a number or as a word', () => {
+    expect(glassesBreak(2)).toBe(2)
+    expect(glassesBreak('2')).toBe(2)
+    expect(glassesBreak(0)).toBe(0)
+    expect(glassesBreak(7)).toBeNull()
+    expect(glassesBreak(true)).toBeNull()
+    expect(glassesBreak(undefined)).toBeNull()
+  })
+
+  test('take the three switches and write them down', () => {
+    modes.setGlassesLineNumbers(false)
+    modes.setGlassesPageNumber(false)
+    modes.setGlassesVoice(true)
+
+    expect(saved().glassesLineNumbers).toBe(false)
+    expect(saved().glassesPageNumber).toBe(false)
+    expect(saved().glassesVoice).toBe(true)
+  })
+
+  test('trim a key pasted off a web page, which brings a newline with it', () => {
+    // A header with a newline in it is not sent at all.
+    modes.setGlassesKey('  sk-proj-example\n')
+    expect(modes.glassesKey).toBe('sk-proj-example')
+    expect(saved().glassesKey).toBe('sk-proj-example')
+  })
+
+  test('take a model and an effort the API knows', () => {
+    modes.setGlassesModel('gpt-6-astra')
+    modes.setGlassesEffort('high')
+
+    expect(saved().glassesModel).toBe('gpt-6-astra')
+    expect(saved().glassesEffort).toBe('high')
+  })
+
+  test('ignore an effort the API does not take', () => {
+    modes.setGlassesEffort('medium')
+    modes.setGlassesEffort('banana')
+    expect(modes.glassesEffort).toBe('medium')
   })
 })
 

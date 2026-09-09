@@ -24,8 +24,48 @@ const PRESETS = ['default', 'notion', 'obsidian', 'vim', 'custom']
  *  as they arrived: an account is read by every version of the app at once, and
  *  a build with the switch reads `true` where a newer one wrote `all`. */
 const LIGATURE_SCOPES = ['off', 'code', 'all']
-/** How a note reaches the Even Realities glasses; see apps/desktop modes.svelte.ts. */
-const GLASSES_DISPLAYS = ['rendered', 'text']
+/** The Glasses section, which only the Even Hub plugin shows.
+ *
+ *  At which heading level a new page starts on the panel, and how hard the model
+ *  that answers a spoken question is asked to think. Lists rather than any number
+ *  or any string, for the same reason as the presets below: the app shows each of
+ *  these in a select, and an account should not be able to put a sentence in one.
+ *  The efforts are the API's own, read off the error it answers an invalid one
+ *  with on 2026-09-09. */
+const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6]
+const GLASSES_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
+
+/** How long an OpenAI key may be.
+ *
+ *  Never read here and never sent anywhere by us: the account carries it so that a
+ *  key typed on a desktop reaches the phone, and the phone sends it to OpenAI
+ *  itself. Bounded because everything on this row is, and because a field with no
+ *  bound is a field somebody stores a novel in. */
+const MOST_KEY = 200
+
+/** A model id, which is a name and not a sentence. */
+const MOST_MODEL = 100
+
+/** A string within a length, said the way the app would say it. */
+function shortEnough(name: string, most: number): Check {
+  return (value) =>
+    typeof value === 'string' && value.length <= most
+      ? null
+      : `${name} must be a string of at most ${String(most)} characters`
+}
+
+/** One of a list of words. */
+function wordOf(name: string, allowed: readonly string[]): Check {
+  return (value) =>
+    typeof value === 'string' && allowed.includes(value)
+      ? null
+      : `${name} must be one of ${allowed.join(', ')}`
+}
+
+/** True or false, said the way the app would say it. */
+function switched(name: string): Check {
+  return (value) => (typeof value === 'boolean' ? null : `${name} must be true or false`)
+}
 
 /** How often a note being written in is kept, in minutes, and how long what is
  *  kept lives, in days. A list rather than any number, for the same reason as
@@ -47,10 +87,13 @@ const KNOWN: Record<string, Check> = {
     typeof value === 'boolean' || (typeof value === 'string' && LIGATURE_SCOPES.includes(value))
       ? null
       : `ligatures must be true, false, or one of ${LIGATURE_SCOPES.join(', ')}`,
-  glassesDisplay: (value) =>
-    typeof value === 'string' && GLASSES_DISPLAYS.includes(value)
-      ? null
-      : `glassesDisplay must be one of ${GLASSES_DISPLAYS.join(', ')}`,
+  glassesBreak: oneOf('glassesBreak', GLASSES_BREAKS),
+  glassesLineNumbers: switched('glassesLineNumbers'),
+  glassesPageNumber: switched('glassesPageNumber'),
+  glassesVoice: switched('glassesVoice'),
+  glassesKey: shortEnough('glassesKey', MOST_KEY),
+  glassesModel: shortEnough('glassesModel', MOST_MODEL),
+  glassesEffort: wordOf('glassesEffort', GLASSES_EFFORTS),
   vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
   attachments: (value) =>
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)

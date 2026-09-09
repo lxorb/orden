@@ -317,8 +317,12 @@ function madeOf(answer: unknown): Made {
  *  `number[]` or a base64 string, and different host versions send different ones.
  *  Read at the boundary, once, like everything else here. */
 function pcmOf(found: unknown): Uint8Array | null {
-  if (found instanceof Uint8Array) return found
-  if (Array.isArray(found)) return Uint8Array.from(found.map((one) => Number(one) & 0xff))
+  // An empty frame is not sound. The host sends one at the ends of a stream, and
+  // reading it as sound is a phrase that begins with nothing.
+  if (found instanceof Uint8Array) return found.length ? found : null
+  if (Array.isArray(found)) {
+    return found.length ? Uint8Array.from(found.map((one) => Number(one) & 0xff)) : null
+  }
 
   if (typeof found === 'string' && found !== '') {
     try {

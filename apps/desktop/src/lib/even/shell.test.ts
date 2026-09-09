@@ -29,7 +29,7 @@ const NOTE = [
 ].join('\n')
 
 function row(label: string, over: Partial<Row> = {}): Row {
-  return { label, depth: 0, folder: false, open: false, id: label, ...over }
+  return { label, depth: 0, folder: false, open: false, pick: true, id: label, ...over }
 }
 
 /** A world that answers like the app's own, and writes down what it was asked. */
@@ -59,6 +59,9 @@ class Fake implements World {
     this.on = on
   }
   listening = () => this.on
+  pageNumber = () => this.numbered
+
+  numbered = true
 }
 
 let world: Fake
@@ -226,12 +229,20 @@ describe('the view', () => {
     }
   })
 
-  test('says the section in the head and the note in the foot', () => {
+  test('says the section in the head, and the note and the page in the foot', () => {
     const view = shell.view()
 
     expect(view.head).toBe('THE TITLE')
-    expect(view.foot).toBe('A note')
     expect(view.rule).toMatch(/^═+$/)
+    // One band, with the count pushed against the right hand edge: a text container
+    // has no alignment, so the gap is spent on spaces.
+    expect(view.foot.trimEnd()).toMatch(/^A note {2,}1\/\d+$/)
+  })
+
+  test('leaves the page count out when the reader asked it to', () => {
+    world.numbered = false
+
+    expect(shell.view().foot).toBe('A note')
   })
 
   test('falls back to the note name when a note opens without a heading', () => {
@@ -261,7 +272,31 @@ describe('the view', () => {
     shell.handle('tap')
     shell.handle('down')
 
-    expect(shell.view().foot).toBe('2/4')
+    // Against the right hand edge, where the page count goes on the note screen: one
+    // place on the panel means one thing, whichever screen is up.
+    expect(shell.view().foot.trim()).toBe('2/4')
+    expect(shell.view().foot.startsWith(' ')).toBe(true)
+  })
+
+  test('steps the cursor over a folder in the sidebar, so every tap opens a note', () => {
+    // Every folder in the sidebar is already open, so a tap on one could do nothing
+    // at all. Its name still shows, because that is what says where a note lives.
+    world.contentRows = [
+      row('Inbox', { folder: true, open: true, pick: false }),
+      row('Monday standup', { depth: 1 }),
+      row('Archive', { folder: true, open: true, pick: false }),
+      row('Older', { depth: 1 }),
+    ]
+    shell.handle('tap')
+
+    // Opens on the first note rather than on the folder above it.
+    expect(shell.view().foot.trim()).toBe('2/4')
+    shell.handle('down')
+    // And steps straight over the second folder to the note under it.
+    expect(shell.view().foot.trim()).toBe('4/4')
+
+    shell.handle('tap')
+    expect(world.opened).toEqual(['Older'])
   })
 
   test('scrolls the window only when the cursor would leave it', () => {
@@ -411,6 +446,6 @@ describe('what a command asks for', () => {
     expect(shell.view().foot).toBe('Next')
 
     shell.clearFlash()
-    expect(shell.view().foot).toBe('A note')
+    expect(shell.view().foot).toContain('A note')
   })
 })

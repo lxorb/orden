@@ -465,6 +465,26 @@ export function rightward(text: string, inner: number): string {
   return gap > 0 ? ' '.repeat(gap) + whole : whole
 }
 
+/** Two pieces on one line, one against each edge of `inner` pixels.
+ *
+ *  What a foot is: a name on the left and a number on the right, in one container
+ *  rather than two. That matters more than it looks - a container costs about 83 ms
+ *  of radio every time it changes, and both halves of a foot change on every page
+ *  turn - so a foot that is one send rather than two saves 83 ms on every page of
+ *  every note for ever.
+ *
+ *  The gap is spent on spaces, which are five pixels each, so the right hand piece
+ *  lands within five pixels of the edge. `left` is cut before `right` is: the number
+ *  is short and exact and the name is neither. */
+export function spread(left: string, right: string, inner: number): string {
+  const end = fold(right)
+  const room = inner - getTextWidth(end) - SPACE * 2
+  const start = fit(left, Math.max(0, room))
+  const gap = Math.floor((inner - getTextWidth(start) - getTextWidth(end)) / SPACE)
+
+  return start + ' '.repeat(Math.max(1, gap)) + end
+}
+
 /** A run of one glyph, as wide as it goes without passing `inner`.
  *
  *  What a rule is made of. Every box drawing character is exactly twenty pixels,

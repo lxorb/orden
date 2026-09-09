@@ -174,6 +174,83 @@ describe('modal editing on an account', () => {
   })
 })
 
+/** The Glasses section, which only the Even Hub plugin shows.
+ *
+ *  All of it is on the account rather than on the machine, because the plugin runs
+ *  on a phone and is set up on a desktop. That is the whole reason the Worker has
+ *  to know these names at all: a key it does not know is a 400, so a setting that
+ *  is not here cannot travel. */
+describe('the glasses an account reads on', () => {
+  test('start a page at a heading level, or at none', async () => {
+    expect((await patch({ glassesBreak: 2 })).json.settings.glassesBreak).toBe(2)
+    expect((await patch({ glassesBreak: 0 })).json.settings.glassesBreak).toBe(0)
+    expect((await patch({ glassesBreak: 6 })).json.settings.glassesBreak).toBe(6)
+  })
+
+  test('refuse a heading level there is no such thing as', async () => {
+    expect((await patch({ glassesBreak: 7 })).status).toBe(400)
+    expect((await patch({ glassesBreak: -1 })).status).toBe(400)
+    expect((await patch({ glassesBreak: '2' })).status).toBe(400)
+  })
+
+  test('carry the three switches', async () => {
+    const set = await patch({
+      glassesLineNumbers: false,
+      glassesPageNumber: true,
+      glassesVoice: true,
+    })
+
+    expect(set.json.settings).toMatchObject({
+      glassesLineNumbers: false,
+      glassesPageNumber: true,
+      glassesVoice: true,
+    })
+  })
+
+  test('refuse a switch that is not one', async () => {
+    for (const name of ['glassesLineNumbers', 'glassesPageNumber', 'glassesVoice']) {
+      expect((await patch({ [name]: 'yes' })).status, name).toBe(400)
+    }
+  })
+
+  test('carry the key, the model and the effort', async () => {
+    const set = await patch({
+      glassesKey: 'sk-proj-example',
+      glassesModel: 'gpt-6-astra',
+      glassesEffort: 'high',
+    })
+
+    expect(set.json.settings).toMatchObject({
+      glassesKey: 'sk-proj-example',
+      glassesModel: 'gpt-6-astra',
+      glassesEffort: 'high',
+    })
+  })
+
+  test('refuse an effort the model API does not take', async () => {
+    // The list is the API's own, read off the error it answers an invalid one with.
+    expect((await patch({ glassesEffort: 'max' })).status).toBe(200)
+    expect((await patch({ glassesEffort: 'banana' })).status).toBe(400)
+  })
+
+  test('refuse a key or a model long enough to be a novel', async () => {
+    expect((await patch({ glassesKey: 'x'.repeat(201) })).status).toBe(400)
+    expect((await patch({ glassesModel: 'x'.repeat(101) })).status).toBe(400)
+    // And the sizes a real one is.
+    expect((await patch({ glassesKey: `sk-proj-${'x'.repeat(150)}` })).status).toBe(200)
+  })
+
+  test('never read the key here, only carry it', async () => {
+    // Nothing of ours talks to OpenAI: the phone does, with this. So the only
+    // thing the Worker promises about it is that it comes back as it went up.
+    const key = 'sk-proj-AbC123-_xyz'
+    await patch({ glassesKey: key })
+
+    const read = await call(env, '/v1/settings', { token })
+    expect(read.json.settings.glassesKey).toBe(key)
+  })
+})
+
 describe('a name that is not a setting', () => {
   /** `KNOWN[name]` reaches Object's own properties for these, and what came
    *  back was called as though it were a check: a 500 from a body a client is

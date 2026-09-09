@@ -28,6 +28,7 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, stored } from './stored'
 import { currentWindow } from './tauri'
@@ -53,12 +54,16 @@ export function ligatureScope(value: unknown): LigatureScope | null {
   return LIGATURE_SCOPES.find((one) => one === value) ?? null
 }
 
-/** How a note reaches the glasses: drawn by the app, or set by the glasses. */
-export const GLASSES_DISPLAYS = ['rendered', 'text'] as const
-export type GlassesDisplay = (typeof GLASSES_DISPLAYS)[number]
+/** At which heading a new page starts on the glasses.
+ *
+ *  Written as the level and read as "this level and above", so two is "H2 and
+ *  above" and zero is a note that runs on without breaks. */
+export const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6] as const
+export type GlassesBreak = (typeof GLASSES_BREAKS)[number]
 
-export function glassesDisplay(value: unknown): GlassesDisplay | null {
-  return GLASSES_DISPLAYS.find((one) => one === value) ?? null
+export function glassesBreak(value: unknown): GlassesBreak | null {
+  const wanted = typeof value === 'string' ? Number(value) : value
+  return GLASSES_BREAKS.find((one) => one === wanted) ?? null
 }
 
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
@@ -83,7 +88,13 @@ interface Saved {
   alwaysOnTop: boolean
   closeBrackets: boolean
   ligatures: LigatureScope
-  glassesDisplay: GlassesDisplay
+  glassesBreak: GlassesBreak
+  glassesLineNumbers: boolean
+  glassesPageNumber: boolean
+  glassesVoice: boolean
+  glassesKey: string
+  glassesModel: string
+  glassesEffort: string
   vim: boolean
   attachments: string
 }
@@ -164,16 +175,42 @@ class Modes {
    *  a note, or everywhere in it. Off until chosen; the choice follows the
    *  account. */
   ligatures = $state<LigatureScope>('off')
-  /** How a note reaches the Even Realities glasses: drawn by the app, in its own
-   *  faces with its highlighted code and its formulae, or set by the glasses
-   *  themselves in the firmware's one font.
+  /** At which heading a new page starts on the Even Realities glasses.
    *
-   *  Drawn is the point of the plugin and the default. Set is nine times faster
-   *  over the radio - one call rather than four - and a page turn arrives at once
-   *  rather than a quarter at a time, which on a slow link is the difference
-   *  between reading and waiting. Follows the account, because it is a
-   *  preference about reading rather than about a machine. */
-  glassesDisplay = $state<GlassesDisplay>('rendered')
+   *  Two, which is H2 and above: it is what makes the panel read as a document
+   *  rather than as a scroll, because a section then begins at the top of a panel
+   *  and its heading stays in the head band for every page of it. Zero for a note
+   *  that runs on without breaks.
+   *
+   *  Every setting in this section follows the account rather than the machine.
+   *  The plugin runs on a phone and is set up on a desktop, and nobody wants to
+   *  type an API key into a WebView with a thumb. */
+  glassesBreak = $state<GlassesBreak>(2)
+  /** A gutter of the note's own line numbers down the left of the panel.
+   *
+   *  On, because they are what "go to line forty" is answered with and what tells
+   *  a reader glancing up how far into a note they are. They cost the body about
+   *  a tenth of its width, and turning them off is the one setting that rebuilds
+   *  the page; see even/screen.ts. */
+  glassesLineNumbers = $state(true)
+  /** Which page of how many, in the foot of the panel. */
+  glassesPageNumber = $state(true)
+  /** Whether the microphone is listening for commands.
+   *
+   *  Off until asked for, which is the only defensible default for a microphone:
+   *  it is turned on from the hold modal on the glasses, or here. */
+  glassesVoice = $state(false)
+  /** The account's own OpenAI key, for the questions asked after the word
+   *  "question".
+   *
+   *  It goes from this device to api.openai.com and nowhere else: not through
+   *  Nib's own Worker, not through anything of ours. See even/ask.ts. */
+  glassesKey = $state('')
+  /** Which model answers. Empty until the reader has chosen one from the list the
+   *  API itself gave; see even/models.ts. */
+  glassesModel = $state('')
+  /** How hard it is asked to think, from the API's own list. */
+  glassesEffort = $state<Effort>('low')
   /** Modal editing. Off until chosen, follows the account, and independent of
    *  which keyboard the shortcuts are on: the Vim preset turns it on, and the
    *  switch in the Editor pane puts it on top of any of the others. */
@@ -223,7 +260,13 @@ class Modes {
       this.alwaysOnTop = saved.alwaysOnTop === true
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
-      this.glassesDisplay = glassesDisplay(saved.glassesDisplay) ?? 'rendered'
+      this.glassesBreak = glassesBreak(saved.glassesBreak) ?? 2
+      this.glassesLineNumbers = saved.glassesLineNumbers !== false
+      this.glassesPageNumber = saved.glassesPageNumber !== false
+      this.glassesVoice = saved.glassesVoice === true
+      this.glassesKey = text(saved.glassesKey, '')
+      this.glassesModel = text(saved.glassesModel, '')
+      this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
     }
@@ -388,13 +431,65 @@ class Modes {
   }
 
   /** Which of the two ways a note reaches the glasses. */
-  setGlassesDisplay(mode: string) {
-    const wanted = glassesDisplay(mode)
-    if (!wanted || wanted === this.glassesDisplay) return
+  /** At which heading level a new page starts on the glasses. */
+  setGlassesBreak(level: string) {
+    const wanted = glassesBreak(level)
+    if (wanted === null || wanted === this.glassesBreak) return
 
-    this.glassesDisplay = wanted
+    this.glassesBreak = wanted
     this.persist()
-    this.share({ glassesDisplay: wanted })
+    this.share({ glassesBreak: wanted })
+  }
+
+  setGlassesLineNumbers(on: boolean) {
+    if (on === this.glassesLineNumbers) return
+
+    this.glassesLineNumbers = on
+    this.persist()
+    this.share({ glassesLineNumbers: on })
+  }
+
+  setGlassesPageNumber(on: boolean) {
+    if (on === this.glassesPageNumber) return
+
+    this.glassesPageNumber = on
+    this.persist()
+    this.share({ glassesPageNumber: on })
+  }
+
+  setGlassesVoice(on: boolean) {
+    if (on === this.glassesVoice) return
+
+    this.glassesVoice = on
+    this.persist()
+    this.share({ glassesVoice: on })
+  }
+
+  /** The account's own key. Trimmed, because a key pasted off a web page brings a
+   *  newline with it and a header with a newline in it is not sent at all. */
+  setGlassesKey(given: string) {
+    const wanted = given.trim()
+    if (wanted === this.glassesKey) return
+
+    this.glassesKey = wanted
+    this.persist()
+    this.share({ glassesKey: wanted })
+  }
+
+  setGlassesModel(model: string) {
+    if (model === this.glassesModel) return
+
+    this.glassesModel = model
+    this.persist()
+    this.share({ glassesModel: model })
+  }
+
+  setGlassesEffort(effort: string) {
+    if (!isEffort(effort) || effort === this.glassesEffort) return
+
+    this.glassesEffort = effort
+    this.persist()
+    this.share({ glassesEffort: effort })
   }
 
   toggleVim(view?: EditorView) {
@@ -471,7 +566,56 @@ class Modes {
       this.persist()
     }
 
+    // The Glasses section. All of it comes back down, which is the whole reason it
+    // is on the account rather than on the machine: the plugin runs on a phone and
+    // is set up on a desktop, and typing a key into a phone through a WebView is
+    // nobody's idea of an evening.
+    if (unheard) this.adoptGlasses(remote)
+
     return remote
+  }
+
+  /** The Glasses settings, as the account has them.
+   *
+   *  Kept apart from `adopt` because it is seven fields of the same shape and one
+   *  more `if` in that method would have made it unreadable. Each is taken only
+   *  when the account actually said something about it: an account written by a
+   *  build that had no such setting says nothing, and nothing is not `false`. */
+  private adoptGlasses(remote: AccountSettings): void {
+    let moved = false
+    const took = <T>(value: T | undefined, take: (one: T) => void) => {
+      if (value === undefined) return
+
+      take(value)
+      moved = true
+    }
+
+    const level = glassesBreak(remote.glassesBreak)
+    if (level !== null && level !== this.glassesBreak) {
+      this.glassesBreak = level
+      moved = true
+    }
+
+    if (typeof remote.glassesLineNumbers === 'boolean') {
+      took(remote.glassesLineNumbers, (on) => (this.glassesLineNumbers = on))
+    }
+    if (typeof remote.glassesPageNumber === 'boolean') {
+      took(remote.glassesPageNumber, (on) => (this.glassesPageNumber = on))
+    }
+    if (typeof remote.glassesVoice === 'boolean') {
+      took(remote.glassesVoice, (on) => (this.glassesVoice = on))
+    }
+    if (typeof remote.glassesKey === 'string') {
+      took(remote.glassesKey, (given) => (this.glassesKey = given))
+    }
+    if (typeof remote.glassesModel === 'string') {
+      took(remote.glassesModel, (model) => (this.glassesModel = model))
+    }
+    if (isEffort(remote.glassesEffort)) {
+      took(remote.glassesEffort, (effort) => (this.glassesEffort = effort))
+    }
+
+    if (moved) this.persist()
   }
 
   /** How many choices this machine has made since it started. Counted whether
@@ -588,7 +732,13 @@ class Modes {
       alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
-      glassesDisplay: this.glassesDisplay,
+      glassesBreak: this.glassesBreak,
+      glassesLineNumbers: this.glassesLineNumbers,
+      glassesPageNumber: this.glassesPageNumber,
+      glassesVoice: this.glassesVoice,
+      glassesKey: this.glassesKey,
+      glassesModel: this.glassesModel,
+      glassesEffort: this.glassesEffort,
       vim: this.vim,
       attachments: this.attachments,
     }

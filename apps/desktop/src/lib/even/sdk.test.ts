@@ -18,8 +18,8 @@ vi.mock('@evenrealities/even_hub_sdk', () => ({
 class Host {
   readonly calls: { method: string; payload: unknown }[] = []
   push: (event: unknown) => void = () => undefined
-  /** What the host answers to an image send. */
-  answer: unknown = 'success'
+  /** What the host answers to a rebuild or to the microphone. */
+  answer: unknown = true
   page: unknown = 0
 
   createStartUpPageContainer(page: unknown): Promise<unknown> {
@@ -27,8 +27,13 @@ class Host {
     return Promise.resolve(this.page)
   }
 
-  updateImageRawData(data: unknown): Promise<unknown> {
-    this.calls.push({ method: 'image', payload: data })
+  rebuildPageContainer(page: unknown): Promise<unknown> {
+    this.calls.push({ method: 'rebuild', payload: page })
+    return Promise.resolve(this.answer)
+  }
+
+  audioControl(open: boolean, source?: string): Promise<unknown> {
+    this.calls.push({ method: 'microphone', payload: { open, source } })
     return Promise.resolve(this.answer)
   }
 
@@ -308,39 +313,80 @@ describe('what the plugin asks of the glasses', () => {
     }
   })
 
-  test('sends an image as the numbers the host takes best', async () => {
+  test('rebuilds the page, which is how the line numbers get a column', async () => {
     const host = new Host()
     put(host)
     const glasses = await connectGlasses()
-    expect(await glasses?.image({ id: 11, name: 'nib1' }, new Uint8Array([1, 255, 0]))).toBe('ok')
 
-    expect(host.calls).toEqual([
-      {
-        method: 'image',
-        payload: { containerID: 11, containerName: 'nib1', imageData: [1, 255, 0] },
-      },
-    ])
+    expect(await glasses?.rebuild({ containerTotalNum: 1 })).toBe(true)
+    expect(host.calls).toEqual([{ method: 'rebuild', payload: { containerTotalNum: 1 } }])
   })
 
-  test('tells a failure worth retrying from the one that is not', async () => {
+  test('takes the host at its word about a rebuild, in any of its three shapes', async () => {
     for (const [answer, wanted] of [
-      ['success', 'ok'],
-      [0, 'ok'],
-      ['imageException', 'again'],
-      ['imageToGray4Failed', 'again'],
-      ['sendFailed', 'dead'],
-      [3, 'dead'],
-      [undefined, 'again'],
+      [true, true],
+      [0, true],
+      ['success', true],
+      [false, false],
+      [undefined, false],
     ] as const) {
       const host = new Host()
       host.answer = answer
       put(host)
       const glasses = await connectGlasses()
-      expect(
-        await glasses?.image({ id: 11, name: 'nib1' }, new Uint8Array(1)),
-        String(answer),
-      ).toBe(wanted)
+      expect(await glasses?.rebuild({}), String(answer)).toBe(wanted)
     }
+  })
+
+  test('opens and closes the glasses own microphone', async () => {
+    const host = new Host()
+    put(host)
+    const glasses = await connectGlasses()
+
+    expect(await glasses?.microphone(true)).toBe(true)
+    await glasses?.microphone(false)
+
+    // The glasses rather than the phone: the reader is speaking into the glasses
+    // and the phone may be in a pocket.
+    expect(host.calls).toEqual([
+      { method: 'microphone', payload: { open: true, source: 'glasses' } },
+      { method: 'microphone', payload: { open: false, source: 'glasses' } },
+    ])
+  })
+
+  test('reads a frame of sound in any of the three shapes a host sends it', async () => {
+    const host = new Host()
+    put(host)
+    const glasses = await connectGlasses()
+    const heard: number[][] = []
+    glasses?.listen((input) => {
+      if (input.kind === 'audio') heard.push([...input.pcm])
+    })
+
+    host.push({ audioEvent: { audioPcm: new Uint8Array([1, 2, 3]) } })
+    host.push({ audioEvent: { audioPcm: [4, 5, 6] } })
+    host.push({ audioEvent: { audioPcm: 'BwgJ' } })
+
+    expect(heard).toEqual([
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+    ])
+  })
+
+  test('never reads a frame of sound as a tap', async () => {
+    // Protobuf leaves a zero field out and a tap is zero, so anything read with
+    // the wrong default becomes a tap. An audio frame arrives fifty times a
+    // second, which would be fifty taps a second.
+    const host = new Host()
+    put(host)
+    const glasses = await connectGlasses()
+    const seen: string[] = []
+    glasses?.listen((input) => void seen.push(input.kind))
+
+    host.push({ audioEvent: { audioPcm: [1, 2] } })
+
+    expect(seen).toEqual(['audio'])
   })
 
   test('asks the glasses to put their own question up on the way out', async () => {

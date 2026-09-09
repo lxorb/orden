@@ -176,10 +176,29 @@ export interface AccountSettings {
   /** How much of a note the ligature glyphs are drawn over. A boolean is what
    *  a build that had a switch here wrote, and still reads. */
   ligatures?: boolean | string
-  /** How a note reaches the Even Realities glasses: `rendered` or `text`. A
-   *  preference about reading, so it follows the account rather than the
-   *  machine; see modes.svelte.ts. */
-  glassesDisplay?: string
+  /** The Glasses section, which the Even Hub plugin is the only thing that shows.
+   *
+   *  All of it follows the account rather than the machine: the plugin runs on a
+   *  phone and is set up on a desktop, and typing an API key into a WebView with a
+   *  thumb is nobody's evening. See modes.svelte.ts and lib/even.
+   *
+   *  At which heading level a new page starts on the panel; 0 for none. */
+  glassesBreak?: number
+  /** A gutter of the note's own line numbers down the left of the panel. */
+  glassesLineNumbers?: boolean
+  /** Which page of how many, in the foot of the panel. */
+  glassesPageNumber?: boolean
+  /** Whether the glasses' microphone listens for spoken commands. */
+  glassesVoice?: boolean
+  /** The account's own OpenAI key, for a question asked out loud.
+   *
+   *  It is on the account so that it reaches the phone, and it goes from the phone
+   *  to api.openai.com and nowhere else. Nothing of ours ever reads it. */
+  glassesKey?: string
+  /** Which model answers, out of the families the API itself listed. */
+  glassesModel?: string
+  /** How hard it is asked to think, from the API's own list of efforts. */
+  glassesEffort?: string
   /** Where a pasted picture is written; one of attachments.ts's three. */
   attachments?: string
   /** Keys the reader chose, by shortcut id, as differences from the defaults.

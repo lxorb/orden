@@ -70,14 +70,21 @@ describe('the Glasses settings', () => {
     expect(ids(groups)).toContain('glasses')
   })
 
-  test('carry the display choice, and only in the plugin', async () => {
+  test('carry where a page begins, and only in the plugin', async () => {
     const inside = await page(true)
     const pane = inside.panes.find((one) => one.id === 'glasses')
     const field = pane?.groups.flatMap((group) => group.fields).find((one) => one.kind === 'select')
 
+    // Every heading level, and the choice of no breaks at all. Written as the level
+    // and read as "this level and above"; see modes.svelte.ts.
     expect(field?.kind === 'select' && field.options.map((one) => one.value)).toEqual([
-      'rendered',
-      'text',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '0',
     ])
 
     // And nowhere to be found outside it, which is what the settings search
@@ -86,7 +93,21 @@ describe('the Glasses settings', () => {
     const labels = outside.panes.flatMap((one) =>
       one.groups.flatMap((group) => group.fields.map((field) => field.label)),
     )
-    expect(labels).not.toContain('Display')
+    expect(labels).not.toContain('New page at')
+    expect(labels).not.toContain('Voice commands')
+  })
+
+  test('carry the line numbers and the page count as switches', async () => {
+    const inside = await page(true)
+    const pane = inside.panes.find((one) => one.id === 'glasses')
+    const fields = pane?.groups.flatMap((group) => group.fields) ?? []
+
+    const switches = fields.filter((one) => one.kind === 'switch').map((one) => one.label)
+    expect(switches).toEqual(['Line numbers', 'Page number', 'Voice commands'])
+    // Both on by default: they are what says where in a note the reader is.
+    for (const one of fields) {
+      if (one.kind === 'switch' && one.label !== 'Voice commands') expect(one.initial).toBe(true)
+    }
   })
 
   test('leave no gap where the section was', async () => {

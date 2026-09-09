@@ -58,7 +58,7 @@ const SHORTEST = 250
  *  `ended` is the whole point of the shape: the latency of a command is measured
  *  from the moment the reader stopped talking to the moment the panel changed, and
  *  only the thing that noticed the silence knows when that was. */
-export interface Heard {
+interface Heard {
   said: string
   /** `performance.now()` at the end of the speech that produced it. */
   ended: number
@@ -71,7 +71,7 @@ export interface Ears {
   /** Turns one utterance of PCM into words, or null when it could not.
    *  `null` for a reader with no key set, which is also how the second path is
    *  told it cannot work. */
-  transcribe: ((wav: Uint8Array) => Promise<string | null>) | null
+  transcribe: ((wav: Uint8Array<ArrayBuffer>) => Promise<string | null>) | null
   /** What was heard, whichever path heard it. */
   heard: (heard: Heard) => void
   /** Something went wrong, in as few words as carry the reason. */
@@ -121,7 +121,7 @@ function recogniserOf(): RecogniserMaker | null {
  *  cheapest file there is: forty four bytes in front of the samples that already
  *  arrived. Nothing is re-sampled and nothing is re-encoded, so a phrase costs one
  *  allocation and no arithmetic at all. */
-export function wavOf(pcm: Uint8Array, rate = RATE): Uint8Array {
+export function wavOf(pcm: Uint8Array, rate = RATE): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(44 + pcm.length)
   const view = new DataView(out.buffer)
   const ascii = (at: number, text: string) => {

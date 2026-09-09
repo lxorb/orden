@@ -28,11 +28,17 @@
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
   import { type Field, preferences, resetPane, resettable } from './preferences'
+  import { EFFORT_WORDS, Offered } from './even/offered.svelte'
+  import { modes } from './modes.svelte'
   import { readableSize, usage } from './usage.svelte'
   import { pageHeight, viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
 
   const { view }: { view?: EditorView | undefined } = $props()
+
+  /** Which models the account's own key may choose, asked of the API. Built here
+   *  rather than in `preferences.ts` because the list arrives after the pane does. */
+  const offered = new Offered()
 
   const GROUPS = $derived(sectionGroups())
 
@@ -480,6 +486,10 @@
       {@render appearanceExtras()}
     {/if}
 
+    {#if settings.section === 'glasses'}
+      {@render glassesExtras()}
+    {/if}
+
     <!-- Everything above, back to how it came. -->
     {#if resettable(current)}
       <div class="card">
@@ -921,6 +931,61 @@
   <div class="card">
     <button class="action" onclick={() => shortcuts.resetAll()}>{t('Reset all shortcuts')}</button>
   </div>
+{/snippet}
+
+<!-- The key, the model and how hard it thinks. Written out rather than declared
+     with the rows above it because a key is a text field and the settings
+     vocabulary has none: it has a switch, a slider and a select, which is three
+     more than most panes need and one fewer than this one does. -->
+{#snippet glassesExtras()}
+  <h3>{t('Questions')}</h3>
+  <div class="card">
+    <label class="setting">
+      <span class="name">{t('OpenAI key')}</span>
+      <input
+        class="inline"
+        type="password"
+        value={modes.glassesKey}
+        placeholder="sk-"
+        spellcheck="false"
+        autocomplete="off"
+        onchange={(event) => offered.take(event.currentTarget.value)}
+      />
+    </label>
+
+    {#if offered.models.length}
+      <div class="setting">
+        <span class="name">{t('Model')}</span>
+        <div class="pick">
+          <Select
+            value={modes.glassesModel}
+            options={offered.models.map((one) => ({ value: one, label: one }))}
+            onchange={(value: string) => modes.setGlassesModel(value)}
+            label={t('Model')}
+            plain={viewport.touch}
+          />
+        </div>
+      </div>
+      <div class="setting">
+        <span class="name">{t('Reasoning')}</span>
+        <div class="pick">
+          <Select
+            value={modes.glassesEffort}
+            options={EFFORT_WORDS.map((one) => ({ value: one.value, label: t(one.label) }))}
+            onchange={(value: string) => modes.setGlassesEffort(value)}
+            label={t('Reasoning')}
+            plain={viewport.touch}
+          />
+        </div>
+      </div>
+    {/if}
+  </div>
+
+  <!-- Said in one line, because it is the one thing somebody typing a key here
+       wants to know. -->
+  <p class="hint caption">
+    {#if offered.said}{offered.said}{:else}{t('Asked from your glasses, never through Nib.')}{/if}
+  </p>
 {/snippet}
 
 {#snippet appearanceExtras()}

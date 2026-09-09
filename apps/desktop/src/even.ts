@@ -16,7 +16,6 @@ import App from './App.svelte'
 import { account } from './lib/account.svelte'
 import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
-import { diagnosis } from './lib/even/diagnosis.svelte'
 import { everywhere } from './lib/even/keep'
 import { fillLocal, installLocal } from './lib/even/local'
 import { markPlugin } from './lib/plugin'
@@ -42,14 +41,11 @@ document.getElementById('boot')?.remove()
 // plugin's page has no store it can count on. See lib/even/keep.ts.
 account.alsoKeepIn(everywhere)
 
-// Counts this launch and reads what the last one left, which is how one
-// screenshot answers whether anything survives at all.
-void diagnosis.start()
-
 const app = mount(App, { target })
 // After the app, so the workspace has restored its tabs before the glasses are
-// asked what is active.
-const corner = mount(Glasses, { target })
+// asked what is active. The frame marks the region of the note that is on the
+// panel; it is the only thing the plugin adds to the page.
+const frame = mount(Glasses, { target })
 bridge.start()
 
-export default { app, corner }
+export default { app, frame }

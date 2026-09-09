@@ -12,7 +12,8 @@ function model(turns: readonly unknown[]) {
   let at = 0
 
   const send = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
-    sent.push(JSON.parse(String(init?.body ?? '{}')))
+    // Always a string here: the flow sends `JSON.stringify` and nothing else.
+    sent.push(JSON.parse(typeof init?.body === 'string' ? init.body : '{}'))
     const body = turns[Math.min(at++, turns.length - 1)]
     return new Response(JSON.stringify(body), {
       status: 200,
@@ -264,12 +265,7 @@ describe('the models on offer', () => {
 describe('turning an utterance into words', () => {
   test('sends a wav and answers with what came back', async () => {
     const send = vi.fn(async () => new Response('open page four', { status: 200 }))
-    const said = await transcribeWith(
-      new Uint8Array(64),
-      'sk-test',
-      'gpt-transcribe',
-      send as unknown as typeof fetch,
-    )
+    const said = await transcribeWith(new Uint8Array(64), 'sk-test', 'gpt-transcribe', send)
 
     expect(said).toBe('open page four')
   })

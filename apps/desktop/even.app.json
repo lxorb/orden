@@ -10,7 +10,11 @@
     {
       "name": "network",
       "desc": "Sign in and keep your notes in step with your Nib account.",
-      "whitelist": ["https://nibeditor.com"]
+      "whitelist": ["https://nibeditor.com", "https://api.openai.com"]
+    },
+    {
+      "name": "microphone",
+      "desc": "Say next, close or a question, and Nib answers on the glasses."
     }
   ],
   "supported_languages": ["en", "de", "fr", "ja"]

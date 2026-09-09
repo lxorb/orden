@@ -324,7 +324,7 @@ function heading(level: number, words: string, from: number, nest: Nest, sheet: 
 }
 
 /** How a column's cells sit in it. The table's own alignment, as written. */
-export type Align = 'left' | 'center' | 'right'
+type Align = 'left' | 'center' | 'right'
 
 const ALIGNS = new Set<Align>(['left', 'center', 'right'])
 

@@ -390,24 +390,54 @@ export function preferences(view?: EditorView): Pane[] {
             label: t('Glasses'),
             groups: [
               {
-                title: t('Even Realities'),
+                title: t('Reading'),
                 fields: [
                   {
-                    // How a note reaches the G2. Drawn is the point of the plugin and
-                    // the default: the app's own faces, its highlighted code, its
-                    // formulae and its tables. Text hands the words to the glasses and
-                    // lets the firmware set them, which is one call over the radio
-                    // rather than four, so a page turn arrives at once rather than a
-                    // quarter at a time. Two words, because there are two answers.
+                    // Where a page begins. The one setting that changes how the
+                    // panel reads rather than what is on it: a section that starts
+                    // at the top of a panel, with its heading staying put above
+                    // every page of it, is a document; a note cut every seven lines
+                    // wherever they fall is a scroll.
                     kind: 'select',
-                    label: t('Display'),
+                    label: t('New page at'),
                     options: [
-                      { value: 'rendered', label: t('Rendered') },
-                      { value: 'text', label: t('Text') },
+                      { value: '1', label: t('H1') },
+                      { value: '2', label: t('H2 and above') },
+                      { value: '3', label: t('H3 and above') },
+                      { value: '4', label: t('H4 and above') },
+                      { value: '5', label: t('H5 and above') },
+                      { value: '6', label: t('Every heading') },
+                      { value: '0', label: t('Never') },
                     ],
-                    initial: 'rendered',
-                    get: () => modes.glassesDisplay,
-                    set: (value) => modes.setGlassesDisplay(value),
+                    initial: '2',
+                    get: () => String(modes.glassesBreak),
+                    set: (value) => modes.setGlassesBreak(value),
+                  },
+                  {
+                    kind: 'switch',
+                    label: t('Line numbers'),
+                    initial: true,
+                    get: () => modes.glassesLineNumbers,
+                    set: (on) => modes.setGlassesLineNumbers(on),
+                  },
+                  {
+                    kind: 'switch',
+                    label: t('Page number'),
+                    initial: true,
+                    get: () => modes.glassesPageNumber,
+                    set: (on) => modes.setGlassesPageNumber(on),
+                  },
+                ],
+              },
+              {
+                title: t('Voice'),
+                fields: [
+                  {
+                    kind: 'switch',
+                    label: t('Voice commands'),
+                    initial: false,
+                    get: () => modes.glassesVoice,
+                    set: (on) => modes.setGlassesVoice(on),
                   },
                 ],
               },
