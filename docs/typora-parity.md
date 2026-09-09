@@ -29,7 +29,12 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Horizontal rules (`***`, `---`, `___`)
 - [x] YAML front matter
 - [x] Table of contents `[toc]`
-- [x] GitHub-style alerts / callouts (`> [!NOTE]` …)
+- [x] Callouts: GitHub's alerts and Obsidian's syntax in one. Thirteen types and
+      the other names for them (`tldr` and `summary` are `abstract`, `hint` is
+      `tip`), each with its own icon and colour, a title of your own after the
+      type, and a `-` or `+` after it saying whether it opens shut. A type
+      nothing knows is still a callout, under its own name, so a theme can dress
+      it with one rule and nothing has to be registered anywhere first
 - [x] HTML comments, hidden in the editor, in the reading view, in every export
       and on a published page: a note to the writer stays one
 - [x] Page breaks for export
@@ -266,6 +271,15 @@ Features Typora does not have, which are the reason this exists.
 - [x] MCP server exposing notes to any LLM client
 - [x] Command palette
 - [x] Motion system across the whole interface
+- [x] Folding: a chevron in the margin beside anything that folds, `Ctrl+Alt+[`
+      for whatever the caret is in, `Ctrl+Alt+]` to open all of it, and a row in
+      View for folding the note down to its headings. Headings, list items with
+      children, indented blocks, fences and callouts all fold, and the caret is
+      never folded out of sight: it comes up to the line that owns the fold.
+      What is folded is remembered per note per device and never written into
+      the note, with one exception that is not ours. Obsidian's `-` after a
+      callout's type says that callout opens shut, so nib reads it, folds it on
+      the way in and never rewrites it
 - [x] Recently deleted: notes and spaces wait 14 days before they are gone
 - [x] Selecting several notes with Ctrl and Shift, moved or deleted together
 - [x] Running a JavaScript fence from the note (`Ctrl+Enter`, or the play button

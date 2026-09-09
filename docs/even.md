@@ -381,7 +381,7 @@ columns, a picture as what it was described as, a fence line by line.
 | a numbered item | its own number and a full stop | as it was numbered |
 | a task, open or done | `□` `■` | the font has no ballot box and no check mark at all |
 | a quote | `│ `, one bar a level | the bar is kept on every wrapped row |
-| a callout | its kind in capitals, on its own line | capitals are the only emphasis one font has |
+| a callout of any kind | its kind in capitals on a line of its own, or the writer's own title as written | one grammar reads a callout everywhere, so the panel knows every kind and every other name for one that the editor does; capitals are the only emphasis one font has, and a whole title in them is shouting |
 | a table | columns aligned in pixels, a rule under the head | the font is proportional, so a column is measured rather than counted |
 | a table too wide | every column gives up the same share, cells cut with an ellipsis | wrapping would put half of row four under column two |
 | a horizontal rule | a rule the width of the body | |
