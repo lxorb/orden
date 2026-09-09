@@ -14,7 +14,16 @@
     view,
     onpalette,
     onhistory,
-  }: { view?: EditorView | undefined; onpalette: () => void; onhistory: () => void } = $props()
+    dots = false,
+  }: {
+    view?: EditorView | undefined
+    onpalette: () => void
+    onhistory: () => void
+    /** Three dots rather than three bars: what a phone and a tablet put at the
+     *  right end of the title bar, where a thumb finds "the rest of the app".
+     *  The menu it opens is the same menu. */
+    dots?: boolean
+  } = $props()
 
   let open = $state(false)
   let groups = $state<MenuGroup[]>([])
@@ -182,13 +191,24 @@
 </script>
 
 <button
-  class="hamburger"
+  class="trigger"
+  class:dots
   title={t('Menu')}
   aria-label={t('Menu')}
   aria-expanded={open}
   onclick={() => (open ? (open = false) : show())}
 >
-  <svg viewBox="0 0 16 16"><path d="M1.5 4h13M1.5 8h13M1.5 12h13" /></svg>
+  {#if dots}
+    <svg viewBox="0 0 16 16"
+      ><circle cx="8" cy="3" r="1.35" /><circle cx="8" cy="8" r="1.35" /><circle
+        cx="8"
+        cy="13"
+        r="1.35"
+      /></svg
+    >
+  {:else}
+    <svg viewBox="0 0 16 16"><path d="M1.5 4h13M1.5 8h13M1.5 12h13" /></svg>
+  {/if}
 </button>
 
 {#if open}
@@ -306,7 +326,7 @@
 {/if}
 
 <style>
-  .hamburger {
+  .trigger {
     width: 30px;
     height: 30px;
     display: grid;
@@ -324,19 +344,30 @@
   }
 
   @media (hover: hover) {
-    .hamburger:hover {
+    .trigger:hover {
       background: var(--surface-2);
       color: var(--text-strong);
     }
   }
 
-  .hamburger svg {
+  .trigger svg {
     width: 17px;
     height: 17px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
     stroke-linecap: round;
+  }
+
+  /* Dots are drawn rather than stroked, and a shade stronger than the bars: they
+     sit alone at the end of a bar rather than in a column of icons. */
+  .trigger.dots svg {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .trigger.dots {
+    color: var(--muted-strong);
   }
 
   .scrim {
@@ -465,14 +496,13 @@
   }
 
   /* ── On a phone ────────────────────────────────────────────────── */
-  /* Square with the spaces below it in the rail, so the column reads as one
-     stack rather than a button and then a list. */
-  :global([data-touch]) .hamburger {
+  /* A thumb's row, at the right end of the title bar. */
+  :global([data-touch]) .trigger {
     width: var(--touch-row);
     height: var(--touch-row);
   }
 
-  :global([data-touch]) .hamburger svg {
+  :global([data-touch]) .trigger svg {
     width: var(--touch-icon);
     height: var(--touch-icon);
   }

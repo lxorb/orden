@@ -21,6 +21,7 @@
     shareSpace,
   } from './space-actions'
   import { settings } from './settings.svelte'
+  import SidebarToggle from './SidebarToggle.svelte'
   import { canShare, isShared, roleOf } from './sharing.svelte'
   import { sync } from './sync.svelte'
   import { SOURCE_URL } from './app-menu'
@@ -214,10 +215,17 @@
 
 <nav>
   <!-- Above the spaces and set apart from them: this is the whole application,
-       not one more place to keep notes. -->
-  <div class="top">
-    <AppMenu {view} {onpalette} {onhistory} />
-  </div>
+       not one more place to keep notes.
+       On a desktop that is the menu. Where the sidebar is a drawer it is the
+       button that shuts the drawer instead: the drawer covers the title bar this
+       button otherwise sits at the left of, and the app itself is behind the
+       three dots at the other end of that bar. So one control at the top left of
+       the screen, wherever the screen puts it. -->
+  {#if viewport.drawer}
+    <div class="top"><SidebarToggle /></div>
+  {:else if !viewport.touch}
+    <div class="top"><AppMenu {view} {onpalette} {onhistory} /></div>
+  {/if}
 
   <div class="spaces">
     {#each workspace.spaces as space, index (space.id)}

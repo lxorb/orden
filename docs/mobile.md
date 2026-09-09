@@ -157,6 +157,22 @@ that writes a finger-sized number of its own fails.
 `apps/desktop/test/e2e/touch-scale.py` measures what that comes to on a phone, a
 tablet held both ways and a desktop, and photographs each light and dark.
 
+## The row along the top
+
+Three things, in the order a thumb reaches them.
+
+| | |
+| --- | --- |
+| Left | The button that opens and shuts the file list - `SidebarToggle.svelte`, the same one the desktop title bar has, with the panel's edge sliding out of the window as the list arrives |
+| Middle | The document's name, with the mark its kind wears in every list that shows it |
+| Right | Three dots, which open the menu the desktop's menu bar holds: the same groups, the same rows, the same submenus, as one sheet - `AppMenu.svelte` with `dots` |
+
+There is no hamburger on a phone or a tablet. The rail's menu button is the
+desktop's; where the sidebar is a drawer the rail carries the sidebar button
+instead, because a drawer over the note covers the bar that button otherwise sits
+in and the top left of the screen should mean the same thing either way.
+`apps/desktop/test/mobile-header.test.ts` holds the row to all of that.
+
 ## One document at a time
 
 A phone and a tablet hold one document, and one pane. A strip of tabs on a

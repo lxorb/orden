@@ -1,16 +1,21 @@
 <script lang="ts">
+  import type { EditorView } from '@nib/editor'
+  import AppMenu from './AppMenu.svelte'
   import FileMark from './FileMark.svelte'
   import { markOf } from './file-mark'
   import { t } from './i18n.svelte'
-  import { DIVIDER, menu } from './menu.svelte'
+  import SidebarToggle from './SidebarToggle.svelte'
   import Tabs from './Tabs.svelte'
   import { currentWindow, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
-  import { openFile } from './open-file'
 
-  const { onopennotes }: { onopennotes?: () => void } = $props()
+  const {
+    view,
+    onpalette,
+    onhistory,
+  }: { view?: EditorView | undefined; onpalette: () => void; onhistory: () => void } = $props()
 
   /** What the middle button says. Read off the window itself rather than off its
    *  own clicks, because dragging a maximised window off the top of the screen
@@ -32,18 +37,6 @@
   )
   const mark = $derived(workspace.active ? markOf(workspace.active.kind) : null)
 
-  /** What the tab strip and the rail offer on a desktop, where a phone has
-   *  room for neither. */
-  function overflow(event: MouseEvent) {
-    menu.show(event, [
-      { label: t('New note'), run: () => void workspace.createNote() },
-      { label: t('Open file'), run: () => void openFile() },
-      { label: t('Open notes'), run: () => onopennotes?.() },
-      DIVIDER,
-      { label: t('Save'), disabled: !workspace.active?.unsaved, run: () => void workspace.save() },
-    ])
-  }
-
   async function minimize() {
     if (isDesktop) await (await currentWindow()).minimize()
   }
@@ -59,21 +52,11 @@
 </script>
 
 <!-- One row: the sidebar toggle, the open notes, and the window's own buttons.
-     The note's name lives in its tab, so there is no separate title. -->
+     On a desktop the note's name lives in its tab, so there is no separate
+     title; a phone and a tablet hold one document, so the name is the middle of
+     the row and the whole of the app is behind the dots at the end of it. -->
 <header>
-  <button
-    class="toggle"
-    class:on={!!workspace.panel}
-    title={workspace.panel ? t('Hide sidebar') : t('Show sidebar')}
-    aria-label={workspace.panel ? t('Hide sidebar') : t('Show sidebar')}
-    aria-pressed={!!workspace.panel}
-    onclick={() => workspace.toggleSidebar()}
-  >
-    <svg viewBox="0 0 14 14">
-      <rect x="1" y="2.5" width="12" height="9" rx="1.5" />
-      <path d="M5.5 2.5v9" />
-    </svg>
-  </button>
+  <SidebarToggle />
 
   {#if viewport.touch}
     <!-- One document at a time, so its name goes here rather than a strip of
@@ -84,15 +67,10 @@
       <span class="name">{title}</span>
     </h1>
 
-    <button class="more" onclick={overflow} aria-label={t('More')}>
-      <svg viewBox="0 0 14 14"
-        ><circle cx="7" cy="2.5" r="1.2" /><circle cx="7" cy="7" r="1.2" /><circle
-          cx="7"
-          cy="11.5"
-          r="1.2"
-        /></svg
-      >
-    </button>
+    <!-- Everything the desktop's menu bar holds, as one menu with its groups and
+         their submenus: the same rows, the same order, asked for with the three
+         dots a phone puts at this end of a bar. See AppMenu.svelte. -->
+    <AppMenu {view} {onpalette} {onhistory} dots />
   {:else}
     <!-- One pane keeps its tabs up here, where a browser puts them. Split, each
          pane carries its own strip instead, so which tabs belong to which pane
@@ -140,49 +118,6 @@
   .drag {
     flex: 1;
     min-width: var(--space-5);
-  }
-
-  .toggle {
-    width: 38px;
-    flex: none;
-    display: grid;
-    place-items: center;
-    border: none;
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition:
-      color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  /* Only where there is a pointer to hover with. A touch browser pretends the
-     last finger is still hovering, which left this lit after every swipe from
-     the corner it sits in. */
-  @media (hover: hover) {
-    .toggle:hover {
-      background: var(--surface-2);
-      color: var(--text-strong);
-    }
-  }
-
-  /* Answered under the finger, not when the sidebar has finished moving. */
-  .toggle:active,
-  .more:active {
-    background: var(--press);
-    color: var(--text-strong);
-  }
-
-  .toggle.on {
-    color: var(--accent);
-  }
-
-  .toggle svg {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.2;
   }
 
   .controls {
@@ -270,24 +205,6 @@
     text-overflow: ellipsis;
   }
 
-  .more {
-    width: 48px;
-    flex: none;
-    display: grid;
-    place-items: center;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    cursor: default;
-  }
-
-  .more svg {
-    width: 18px;
-    height: 18px;
-    fill: currentColor;
-    stroke: none;
-  }
-
   /* A phone has no window to drag and a thumb to hit this with. The bar grows
      to a comfortable target and clears the status bar. */
   :global([data-touch]) header {
@@ -298,21 +215,9 @@
     padding-right: var(--inset-right);
   }
 
-  /* A row's height, which is what an app bar is on both platforms. */
-  :global([data-touch]) .toggle,
-  :global([data-touch]) .more {
-    width: var(--touch-row);
-    height: var(--touch-row);
-  }
-
-  :global([data-touch]) .toggle svg,
-  :global([data-touch]) .more svg {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
-  }
-
   /* The note's name is the one thing on the bar to read, at the size everything
-     else here is read at. */
+     else here is read at. The two buttons either side of it are sized where they
+     are drawn: SidebarToggle.svelte and AppMenu.svelte. */
   :global([data-touch]) .title {
     font-size: var(--touch-text);
   }

@@ -424,8 +424,8 @@
          narrow end it is behind the note, and above that it is slid off to the
          side. Either way nothing in it can be reached, so nothing in it is
          announced or reachable by a key either - which is what keeps the rail's
-         hamburger from being read out on a phone held sideways, where the only
-         thing a thumb can reach is the bar's own sidebar button. -->
+         own sidebar button from being read out on a phone held sideways, where
+         the only thing a thumb can reach is the bar's. -->
     <div
       class="panels"
       inert={viewport.drawer && !workspace.panel}
@@ -481,9 +481,16 @@
       style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
       ontransitionend={(event) => drawer.arrived(event)}
     >
+      <!-- The three dots at the right end of it open the whole of the app on a
+           phone and a tablet, which is why the bar is handed what the menu needs;
+           see AppMenu.svelte. -->
       <Titlebar
-        onopennotes={() => {
+        {view}
+        onpalette={() => {
           palette = true
+        }}
+        onhistory={() => {
+          settings.historyOpen = true
         }}
       />
 
