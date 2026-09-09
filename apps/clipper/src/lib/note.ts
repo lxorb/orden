@@ -42,7 +42,7 @@ const LONGEST_TITLE = 300
  *  front matter early, and everything after it would land in the note as
  *  markdown of the page's choosing; `---` on a line of its own is exactly the
  *  terminator. So no value in the block above a note is ever more than a line. */
-export function oneLine(value: string): string {
+function oneLine(value: string): string {
   return value.replace(/\s+/gu, ' ').trim()
 }
 
