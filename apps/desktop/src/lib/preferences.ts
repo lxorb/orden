@@ -67,8 +67,8 @@ const DICTIONARIES = [
   { id: 'ja', name: '日本語' },
 ] as const
 
-/** The panes that are only about settings. Account, publishing and the LLM
- *  connector are their own thing and stay written out by hand. */
+/** The panes that are only about settings. The account and the LLM connector are
+ *  their own thing and stay written out by hand. */
 type PaneId = 'general' | 'editor' | 'spelling' | 'markdown' | 'appearance' | 'glasses'
 
 export interface Pane {
