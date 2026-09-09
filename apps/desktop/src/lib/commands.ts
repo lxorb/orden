@@ -412,7 +412,10 @@ function foldingCommands(view?: EditorView): Command[] {
     disabled: !view,
     run: () => {
       if (!view) return
-      command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
+      // The view itself, not a state and a dispatch made out of it: a fold moves
+      // the lines it hides out of sight before it lands, and only something
+      // holding the view can move anything. See fold-motion.ts in @nib/editor.
+      command(view)
       view.focus()
     },
   })

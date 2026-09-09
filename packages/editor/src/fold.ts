@@ -32,7 +32,7 @@
  *  A fold is view state and never touches the file: see foldLines below, which
  *  is what the app writes down per note per device. */
 
-import { codeFolding, foldable, foldedRanges, foldEffect, unfoldEffect } from '@codemirror/language'
+import { codeFolding, foldable, foldedRanges, foldEffect } from '@codemirror/language'
 import type { EditorState, Extension, Line, StateCommand, TransactionSpec } from '@codemirror/state'
 import {
   Decoration,
@@ -43,15 +43,18 @@ import {
 } from '@codemirror/view'
 import { calloutOf } from '@nib/markdown/callouts'
 import { CHEVRON } from '@nib/markdown/icons'
+import {
+  foldMovement,
+  type FoldRange,
+  openFolds,
+  shutFolds,
+  shuttingAt,
+  shuttingChanged,
+  stopShutting,
+} from './fold-motion'
 import { iconElement } from './icon'
 import { label } from './labels'
 import { NibWidget } from './live-preview/widget'
-
-/** Where a fold starts and ends, in document offsets. */
-interface FoldRange {
-  from: number
-  to: number
-}
 
 /** A fold as it is written down: the line that owns it and the last line it
  *  covers, counting from one.
@@ -100,21 +103,18 @@ function enclosingFold(state: EditorState, pos: number): FoldRange | null {
   return null
 }
 
-/** Folds a range, keeping the caret somewhere it can still be seen.
+/** Where the caret has to go for a fold to hold, when it is in the way.
  *
  *  A fold starts at the end of the line that owns it, so putting the caret
  *  there is putting it on the one line of the fold that stays on screen. The
  *  library drops any fold that covers the selection head, and a head exactly on
  *  a fold's first offset does not count as covered - which is why this is the
  *  one place the caret may be moved and the fold still holds. */
-function foldWithCaret(state: EditorState, range: FoldRange): TransactionSpec {
+function caretFor(state: EditorState, range: FoldRange): TransactionSpec {
   const head = state.selection.main.head
   const swallowed = head > range.from && head < range.to
 
-  return {
-    effects: foldEffect.of(range),
-    ...(swallowed ? { selection: { anchor: range.from } } : {}),
-  }
+  return swallowed ? { selection: { anchor: range.from } } : {}
 }
 
 /** Folds what the caret is in, or opens it again.
@@ -122,19 +122,27 @@ function foldWithCaret(state: EditorState, range: FoldRange): TransactionSpec {
  *  The caret's own line first: pressing the key on a heading folds that
  *  heading, and pressing it again opens it. Only when the caret's line owns no
  *  fold does this look outwards for the one the caret is inside. */
-export const toggleFold: StateCommand = ({ state, dispatch }) => {
+export const toggleFold: StateCommand = (target) => {
+  const { state } = target
   const line = state.doc.lineAt(state.selection.main.head)
+
+  // A fold whose lines are still on their way out gives way: pressing again
+  // before it has landed is changing your mind, and nothing folds.
+  if (target instanceof EditorView && shuttingAt(state, line.from, line.to)) {
+    stopShutting(target)
+    return true
+  }
 
   const open = foldedAtLine(state, line)
   if (open) {
-    dispatch(state.update({ effects: unfoldEffect.of(open) }))
+    openFolds(target, [open])
     return true
   }
 
   const range = enclosingFold(state, state.selection.main.head)
   if (!range) return false
 
-  dispatch(state.update(foldWithCaret(state, range)))
+  shutFolds(target, [range], caretFor(state, range))
   return true
 }
 
@@ -144,7 +152,8 @@ export const toggleFold: StateCommand = ({ state, dispatch }) => {
  *  folding those as well would be work nobody can see. Walking past a folded
  *  section rather than into it also keeps the ranges from nesting, so exactly
  *  one of them can hold the caret. */
-export const foldHeadings: StateCommand = ({ state, dispatch }) => {
+export const foldHeadings: StateCommand = (target) => {
+  const { state } = target
   const ranges: FoldRange[] = []
   const head = state.selection.main.head
   let holder: FoldRange | null = null
@@ -163,25 +172,20 @@ export const foldHeadings: StateCommand = ({ state, dispatch }) => {
 
   if (!ranges.length) return false
 
-  dispatch(
-    state.update({
-      effects: ranges.map((range) => foldEffect.of(range)),
-      ...(holder ? { selection: { anchor: holder.from } } : {}),
-    }),
-  )
+  shutFolds(target, ranges, holder ? { selection: { anchor: holder.from } } : {})
   return true
 }
 
 /** Opens all of it. */
-export const unfoldEverything: StateCommand = ({ state, dispatch }) => {
+export const unfoldEverything: StateCommand = (target) => {
   const open: FoldRange[] = []
-  foldedRanges(state).between(0, state.doc.length, (from, to) => {
+  foldedRanges(target.state).between(0, target.state.doc.length, (from, to) => {
     open.push({ from, to })
   })
 
   if (!open.length) return false
 
-  dispatch(state.update({ effects: open.map((range) => unfoldEffect.of(range)) }))
+  openFolds(target, open)
   return true
 }
 
@@ -351,12 +355,17 @@ class FoldWidget extends NibWidget {
       event.preventDefault()
       const pos = view.posAtDOM(hinge)
       const line = view.state.doc.lineAt(pos)
-      const open = foldedAtLine(view.state, line)
 
-      if (open) view.dispatch({ effects: unfoldEffect.of(open) })
+      if (shuttingAt(view.state, line.from, line.to)) {
+        stopShutting(view)
+        return
+      }
+
+      const open = foldedAtLine(view.state, line)
+      if (open) openFolds(view, [open])
       else {
         const range = foldAtLine(view.state, line)
-        if (range) view.dispatch(foldWithCaret(view.state, range))
+        if (range) shutFolds(view, [range], caretFor(view.state, range))
       }
     })
 
@@ -370,13 +379,26 @@ class FoldWidget extends NibWidget {
 }
 
 /** What is left where a fold took the words away: a mark that says there is
- *  more, in no words at all. */
-function placeholder(_view: EditorView, onclick: (event: Event) => void): HTMLElement {
+ *  more, in no words at all.
+ *
+ *  Its click opens the fold the same way the chevron does, movement and all,
+ *  rather than through the library's own handler: one gesture with two answers
+ *  would be two gestures. The handler is still there for a mark whose fold
+ *  cannot be found, which nothing has produced but which is what it is for. */
+function placeholder(view: EditorView, onclick: (event: Event) => void): HTMLElement {
   const more = document.createElement('span')
   more.className = 'nib-folded'
   more.setAttribute('aria-label', label('unfold'))
   more.textContent = '⋯'
-  more.addEventListener('click', onclick)
+
+  more.addEventListener('click', (event) => {
+    const line = view.state.doc.lineAt(view.posAtDOM(more))
+    const open = foldedAtLine(view.state, line)
+
+    if (open) openFolds(view, [open])
+    else onclick(event)
+  })
+
   return more
 }
 
@@ -392,7 +414,12 @@ const hinges = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate) {
-      if (update.docChanged || update.viewportChanged || foldsChanged(update)) {
+      if (
+        update.docChanged ||
+        update.viewportChanged ||
+        foldsChanged(update) ||
+        shuttingChanged(update)
+      ) {
         this.decorations = build(update.view)
       }
     }
@@ -409,10 +436,13 @@ function build(view: EditorView): DecorationSet {
       const line = state.doc.lineAt(pos)
 
       if (COULD_FOLD.test(line.text)) {
-        const folded = foldedAtLine(state, line)
+        // A fold on its way shut counts as shut: the chevron turns as the lines
+        // start to go rather than once they have gone, so the mark leads the
+        // movement instead of catching up with it.
+        const folded = !!foldedAtLine(state, line) || shuttingAt(state, line.from, line.to)
         if (folded || foldAtLine(state, line)) {
           marks.push(
-            Decoration.widget({ widget: new FoldWidget(!!folded), side: -1 }).range(line.from),
+            Decoration.widget({ widget: new FoldWidget(folded), side: -1 }).range(line.from),
           )
         }
       }
@@ -426,7 +456,8 @@ function build(view: EditorView): DecorationSet {
 }
 
 /** Everything folding needs to work: the state the folds live in, the mark left
- *  behind, and the chevron that reaches them with a pointer. */
+ *  behind, the chevron that reaches them with a pointer, and the movement that
+ *  gets the lines out of the way and back again; see fold-motion.ts. */
 export function folding(): Extension {
-  return [codeFolding({ placeholderDOM: placeholder }), hinges]
+  return [codeFolding({ placeholderDOM: placeholder }), hinges, foldMovement()]
 }

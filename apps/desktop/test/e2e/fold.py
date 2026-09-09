@@ -96,6 +96,69 @@ STATE = """
 })
 """
 
+PLACEMENT = """
+() => [...document.querySelectorAll('.nib-fold-hinge')].map((hinge) => {
+  const line = hinge.closest('.cm-line')
+  const box = line.getBoundingClientRect()
+  const mark = hinge.getBoundingClientRect()
+  const row = Number.parseFloat(getComputedStyle(line).lineHeight) || box.height
+
+  return {
+    kind: [...line.classList].filter((one) => one.startsWith('nib-')).join(' ') || 'plain',
+    text: line.textContent.trim().slice(0, 22),
+    gap: Math.round(box.left - mark.right),
+    left: Math.round(box.left),
+    // How far below the top of the block the chevron's middle sits, against the
+    // height of one row of it: on the first row, or not.
+    into: Math.round(mark.top + mark.height / 2 - box.top),
+    row: Math.round(row),
+  }
+})
+"""
+
+MOTION = """
+(selector) => {
+  const lines = [...document.querySelectorAll('.cm-content .cm-line')]
+  const moving = document.getAnimations().filter((one) => {
+    const target = one.effect?.target
+    return target instanceof Element && target.classList.contains('cm-line')
+  })
+
+  return {
+    moving: moving.length,
+    marks: document.querySelectorAll('.nib-folded').length,
+    folded: document.querySelector(selector)?.querySelector('.nib-fold-hinge')?.dataset.folded
+      ?? null,
+    tall: Math.round(document.querySelector('.cm-content').getBoundingClientRect().height),
+    lines: lines.length,
+  }
+}
+"""
+
+# Presses the chevron and reads the answer back without waiting a frame, so what
+# a movement does at its very first moment is a fact rather than a race.
+PRESS = """
+(selector) => {
+  const hinge = document.querySelector(selector).querySelector('.nib-fold-hinge')
+  const box = hinge.getBoundingClientRect()
+  // Where the pointer would be, because the press reaches the editor as well as
+  // the chevron and an event at 0,0 would leave a selection behind it.
+  const where = {
+    bubbles: true,
+    button: 0,
+    buttons: 1,
+    // One press. Without it the event carries a count of none, which the editor
+    // reads as something other than a click and answers with a selection.
+    detail: 1,
+    clientX: box.left + box.width / 2,
+    clientY: box.top + box.height / 2,
+  }
+  hinge.dispatchEvent(new MouseEvent('mousedown', where))
+  hinge.dispatchEvent(new MouseEvent('mouseup', { ...where, buttons: 0 }))
+  return (%s)(selector)
+}
+""" % MOTION.strip()
+
 failures: list[str] = []
 
 
@@ -196,12 +259,102 @@ def folds(page: Page) -> list[list[int]]:
     return page.evaluate("() => window.nibApp.workspace.active?.folds ?? []")
 
 
-def fresh(browser: Browser, label: str, finger: bool) -> Page:
+def audit_placement(page: Page, label: str, what: str) -> None:
+    """Where every chevron on the page sits, against the block it belongs to."""
+    rows = page.evaluate(PLACEMENT)
+    say(f"[{label}] the chevrons {what}:")
+    for one in rows:
+        say(
+            f"    {one['kind']:<30} {one['text']!r:<26}"
+            f" gap {one['gap']}px, {one['into']}px into a {one['row']}px row"
+        )
+
+    if len(rows) < 4:
+        wrong(f"[{label}] too few chevrons {what} to compare: {len(rows)}")
+        return
+
+    gaps = sorted({one["gap"] for one in rows})
+    if len(gaps) != 1:
+        wrong(f"[{label}] the chevrons {what} do not stand in one column: gaps {gaps}")
+    if gaps[0] < 4:
+        wrong(f"[{label}] a chevron {what} is on its block, not beside it: gaps {gaps}")
+
+    edges = sorted({one["left"] for one in rows})
+    if len(edges) != 1:
+        wrong(f"[{label}] the lines {what} do not share a left edge: {edges}")
+
+    for one in rows:
+        if not 0 <= one["into"] <= one["row"] + 24:
+            wrong(
+                f"[{label}] the chevron of {one['kind']} is not on the block's"
+                f" first row: {one['into']}px into a {one['row']}px row"
+            )
+
+
+def drive_motion(page: Page, label: str, selector: str, at: int) -> None:
+    """A fold as a movement: the lines go, and only then does the fold land."""
+    say(f"[{label}] folding {selector} as a movement")
+    page.locator(selector).first.hover()
+    page.wait_for_timeout(250)
+
+    start = page.evaluate(MOTION, selector)
+    pressed = page.evaluate(PRESS, selector)
+    say(f"[{label}] pressed: {json.dumps(pressed)}")
+
+    if pressed["moving"] < 1:
+        wrong("nothing moved when a fold was asked for")
+    if pressed["marks"]:
+        wrong("the fold landed before the lines it hides had gone")
+    if pressed["folded"] != "true":
+        wrong("the chevron did not turn as the movement started")
+    if pressed["tall"] < start["tall"] - 2:
+        wrong(f"the words below jumped up: {start['tall']}px became {pressed['tall']}px at once")
+
+    page.wait_for_timeout(70)
+    midway = page.evaluate(MOTION, selector)
+    say(f"[{label}] midway: {json.dumps(midway)}")
+    shot(page, f"{at}-folding-midway")
+    if midway["tall"] >= start["tall"]:
+        wrong("the block did not shrink while it was shutting")
+
+    page.wait_for_timeout(600)
+    landed = page.evaluate(MOTION, selector)
+    say(f"[{label}] landed: {json.dumps(landed)}")
+    if landed["moving"]:
+        wrong("the movement never ended")
+    if landed["marks"] != 1:
+        wrong("the fold never landed")
+
+    # And back the other way: the fold comes off first, so what has to not happen
+    # is the whole block arriving in one frame.
+    opened = page.evaluate(PRESS, selector)
+    say(f"[{label}] opening: {json.dumps(opened)}")
+    if opened["marks"]:
+        wrong("the fold was still on while the lines grew back")
+    if opened["moving"] < 1:
+        wrong("the lines did not move on the way back")
+    if opened["tall"] > landed["tall"] + 4:
+        wrong(f"the note jumped open: {landed['tall']}px became {opened['tall']}px at once")
+
+    page.wait_for_timeout(70)
+    shot(page, f"{at + 1}-unfolding-midway")
+    page.wait_for_timeout(600)
+    back = page.evaluate(MOTION, selector)
+    say(f"[{label}] open again: {json.dumps(back)}")
+    if back["moving"]:
+        wrong("the movement never ended on the way back")
+    if back["tall"] < start["tall"] - 2:
+        wrong(f"the lines did not grow all the way back: {back['tall']} of {start['tall']}px")
+    shot(page, f"{at + 2}-open-after-moving")
+
+
+def fresh(browser: Browser, label: str, finger: bool, still: bool = False) -> Page:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820} if not finger else {"width": 420, "height": 880},
         color_scheme="light",
         has_touch=finger,
         is_mobile=finger,
+        reduced_motion="reduce" if still else "no-preference",
         **(
             {}
             if not finger
@@ -340,6 +493,14 @@ def drive_pointer(browser: Browser) -> None:
     page.wait_for_timeout(600)
     shot(page, "07-palette")
     page.keyboard.press("Enter")
+
+    # Every section that is on screen goes at once, on one clock; the ones below
+    # the window simply fold, which nobody is there to see.
+    together = page.evaluate(MOTION, ".cm-line.nib-h1")
+    say(f"[desktop] folding everything: {json.dumps(together)}")
+    if together["moving"] < 1:
+        wrong("folding everything moved nothing")
+
     page.wait_for_timeout(700)
     outline = state(page)
     say(f"[desktop] the outline: {json.dumps(outline['shown'])}")
@@ -386,6 +547,12 @@ def drive_pointer(browser: Browser) -> None:
     # Unfold everything, on its chord.
     page.locator(".cm-content").click()
     page.keyboard.press("Control+Alt+BracketRight")
+
+    apart = page.evaluate(MOTION, ".cm-line.nib-h1")
+    say(f"[desktop] unfolding everything: {json.dumps(apart)}")
+    if apart["moving"] < 1:
+        wrong("unfolding everything moved nothing")
+
     page.wait_for_timeout(600)
     opened = state(page)
     say(f"[desktop] unfolded: {opened['marks']} marks, {opened['lines']} lines")
@@ -409,6 +576,29 @@ def drive_pointer(browser: Browser) -> None:
     if over["marks"] != 1:
         wrong("folding over a rendered diagram did not hold")
 
+    # Where the chevrons stand. Everything open again first, so every kind of
+    # foldable block on the page has one to compare.
+    page.keyboard.press("Control+Alt+BracketRight")
+    page.wait_for_timeout(700)
+    audit_placement(page, "desktop", "beside their blocks")
+    page.locator(".cm-line.nib-code-open").first.hover()
+    page.wait_for_timeout(300)
+    shot(page, "14-chevron-beside-a-fence")
+
+    # Line numbers push a fence's text further in, and the chevron keeps out of
+    # that column too.
+    page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
+    page.wait_for_timeout(500)
+    audit_placement(page, "desktop", "with line numbers on")
+    shot(page, "15-chevron-with-line-numbers")
+    page.evaluate("() => window.nibApp.modes.toggleLineNumbers(window.nib)")
+    page.wait_for_timeout(400)
+
+    # A fence, which is small, and a whole chapter, which is most of a screen:
+    # both move, and neither jumps.
+    drive_motion(page, "desktop", ".cm-line.nib-code-open", 16)
+    drive_motion(page, "desktop", ".cm-line.nib-h1", 19)
+
     page.context.close()
 
 
@@ -431,6 +621,8 @@ def drive_finger(browser: Browser) -> None:
     if box["height"] < 44:
         wrong(f"the tap target is smaller than a thumb: {box['height']}px tall")
 
+    audit_placement(page, "phone", "at a thumb's size")
+
     page.locator(".nib-fold-hinge").first.tap()
     page.wait_for_timeout(700)
     tapped = state(page)
@@ -438,6 +630,24 @@ def drive_finger(browser: Browser) -> None:
     shot(page, "21-phone-folded")
     if tapped["marks"] != 1:
         wrong("a tap folded nothing")
+
+    page.context.close()
+
+
+def drive_still(browser: Browser) -> None:
+    """Somebody who asked their system for as little movement as possible: the
+    fold simply happens, with nothing moving at all."""
+    page = fresh(browser, "still", finger=False, still=True)
+    open_chapter(page, "still")
+
+    pressed = page.evaluate(PRESS, ".cm-line.nib-h1")
+    say(f"[still] pressed: {json.dumps(pressed)}")
+    shot(page, "30-still-folded")
+
+    if pressed["moving"]:
+        wrong("a fold moved for somebody who asked for no movement")
+    if pressed["marks"] != 1:
+        wrong("the fold did not simply happen")
 
     page.context.close()
 
@@ -455,6 +665,8 @@ def main() -> int:
                 drive_pointer(browser)
                 say("--- a finger ---")
                 drive_finger(browser)
+                say("--- as little movement as possible ---")
+                drive_still(browser)
             finally:
                 browser.close()
     finally:

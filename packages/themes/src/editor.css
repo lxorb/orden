@@ -1571,6 +1571,9 @@
   color: var(--text-strong);
 }
 
+/* The turn takes as long as the block takes to go, and starts with it, so the
+   two read as one movement rather than a mark that changed its mind and a block
+   that followed. What moves the block is fold-motion.ts in @nib/editor. */
 .nib-fold-hinge svg {
   width: 13px;
   height: 13px;
@@ -1579,7 +1582,7 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 /* Pointing at what it holds when it holds it shut, and down at what it has let
@@ -1609,8 +1612,13 @@
 }
 
 /* What is left where a fold took the words away. No wording: a mark that reads
-   as "there is more" and opens on a click. */
+   as "there is more" and opens on a click.
+
+   It fades in rather than appearing, because it arrives at the end of the
+   movement that took the lines away: they shrink out of sight, the fold lands,
+   and the mark is what is left. */
 .nib-folded {
+  animation: fade-in var(--dur-fast) var(--ease-out);
   display: inline-block;
   padding: 0 0.45em;
   border-radius: var(--radius-sm);

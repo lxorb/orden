@@ -1261,6 +1261,29 @@ textarea.nib-field {
   transform: rotate(90deg);
 }
 
+/* And it opens and shuts the way a fold does in the editor: the body grows into
+   place instead of appearing. No script and no measuring - the browser's own
+   folding, moved - which is also why it is written as an enhancement: an engine
+   that has never heard of `::details-content` drops the whole rule and folds the
+   way it always did. `interpolate-size` is what lets a height of auto be
+   animated towards at all; on its own it changes nothing that was moving
+   already. */
+:root {
+  interpolate-size: allow-keywords;
+}
+
+#write details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size var(--dur-base) var(--ease-out),
+    content-visibility var(--dur-base) var(--ease-out) allow-discrete;
+}
+
+#write details[open]::details-content {
+  block-size: auto;
+}
+
 /* Nothing above the first paragraph or below the last: the box's own padding is
    the room, and a callout of one line should be one line tall. */
 #write .callout-body {

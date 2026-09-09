@@ -12,7 +12,6 @@ import {
   type StateCommand,
   toggleFold,
   toggleWrap,
-  type Transaction,
   undoEdit,
   unfoldEverything,
 } from '@nib/editor'
@@ -133,7 +132,10 @@ function exportRows(): MenuRow[] {
 function run(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
 
-  command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
+  // The view rather than a pair made out of it, so a command that can do more
+  // with one does: folding moves the lines it hides before it hides them, which
+  // needs something that can measure them. See fold-motion.ts in @nib/editor.
+  command(view)
   view.focus()
 }
 
