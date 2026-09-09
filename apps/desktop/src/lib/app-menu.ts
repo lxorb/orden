@@ -2,31 +2,15 @@ import {
   clearFormatting,
   type EditorView,
   foldHeadings,
-  insertCallout,
-  insertCodeFence,
   insertComment,
-  insertFootnote,
-  insertFrontMatter,
-  insertHorizontalRule,
   insertLink,
-  insertMathBlock,
-  insertPageBreak,
-  insertSlideBreak,
-  insertTableToEdit,
-  insertToc,
   openFind,
   openReplace,
   pasteHere,
   pastePlain,
   redoEdit,
-  setHeading,
-  shiftHeading,
   type StateCommand,
-  toggleBulletList,
   toggleFold,
-  toggleOrderedList,
-  toggleQuote,
-  toggleTaskList,
   toggleWrap,
   type Transaction,
   undoEdit,
@@ -35,13 +19,12 @@ import {
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
-import { exportCommands, importCommand } from './commands'
+import { blockCommands, exportCommands, importCommand } from './commands'
 import { fullscreen } from './fullscreen.svelte'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
-import { canInsertPicture, insertPicture } from './insert-picture'
 import { modes } from './modes.svelte'
 import { canSaveAs, saveAs } from './save-as'
 import { settings } from './settings.svelte'
@@ -169,13 +152,6 @@ export function appMenu(context: Context): MenuGroup[] {
    *  when it is pressed. */
   const writable = !!view && !view.state.readOnly
 
-  const heading = (level: number): MenuAction => ({
-    label: t('Heading {level}', { level }),
-    hint: shortcuts.hint(`paragraph.heading-${level}`),
-    disabled: !writable,
-    run: () => run(view, setHeading(level)),
-  })
-
   /** A row that edits the note, named by the shortcut it carries so the key and
    *  the row can never say different things. */
   const edit = (id: string, label: string, command: StateCommand): MenuAction => ({
@@ -190,6 +166,25 @@ export function appMenu(context: Context): MenuGroup[] {
   const onView = (command: (one: EditorView) => boolean) => () => {
     if (view) command(view)
   }
+
+  /** Rows for the blocks named, in the order they are named, out of the one list
+   *  the palette and the editor's `/` menu read too. A `Command` is a `MenuAction`
+   *  with an id on it, so only the id comes off. */
+  const written = blockCommands(view)
+  const blocks = (...ids: string[]): MenuAction[] =>
+    ids.flatMap((id) => {
+      const found = written.find((one) => one.id === id)
+      if (!found) return []
+
+      return [
+        {
+          label: found.label,
+          ...(found.hint === undefined ? {} : { hint: found.hint }),
+          ...(found.disabled === undefined ? {} : { disabled: found.disabled }),
+          run: found.run,
+        },
+      ]
+    })
 
   /** Importing, which is offered only where pandoc is installed. */
   const imported = importCommand()
@@ -341,85 +336,29 @@ export function appMenu(context: Context): MenuGroup[] {
     {
       id: 'paragraph',
       label: t('Paragraph'),
+      // Every row of it comes from `blockCommands`, which the palette and the
+      // editor's `/` menu read as well: one list, three ways in. Only the rules
+      // between the groups are the menu's own.
       rows: [
-        heading(1),
-        heading(2),
-        heading(3),
-        heading(4),
-        heading(5),
-        heading(6),
-        { label: t('Paragraph'), disabled: !writable, run: () => run(view, setHeading(0)) },
-        edit('paragraph.heading-up', t('One heading level up'), shiftHeading(1)),
-        edit('paragraph.heading-down', t('One heading level down'), shiftHeading(-1)),
+        ...blocks('paragraph.heading-1', 'paragraph.heading-2', 'paragraph.heading-3'),
+        ...blocks('paragraph.heading-4', 'paragraph.heading-5', 'paragraph.heading-6'),
+        ...blocks('paragraph.body', 'paragraph.heading-up', 'paragraph.heading-down'),
         SPLIT,
-        // Not through `run`: the new table takes the focus into its first cell,
-        // and focusing the editor afterwards would take it straight back out.
-        {
-          label: t('Table'),
-          hint: shortcuts.hint('paragraph.table'),
-          disabled: !writable,
-          run: () => view && insertTableToEdit(view),
-        },
-        {
-          label: t('Code block'),
-          hint: shortcuts.hint('paragraph.code-block'),
-          disabled: !writable,
-          run: () => run(view, insertCodeFence),
-        },
-        {
-          label: t('Quote'),
-          hint: shortcuts.hint('paragraph.quote'),
-          disabled: !writable,
-          run: () => run(view, toggleQuote),
-        },
-        {
-          label: t('Math block'),
-          hint: shortcuts.hint('paragraph.math-block'),
-          disabled: !writable,
-          run: () => run(view, insertMathBlock),
-        },
-        edit('paragraph.callout', t('Callout'), insertCallout),
+        ...blocks(
+          'paragraph.table',
+          'paragraph.code-block',
+          'paragraph.quote',
+          'paragraph.math-block',
+          'paragraph.callout',
+        ),
         SPLIT,
-        {
-          label: t('Bulleted list'),
-          hint: shortcuts.hint('paragraph.bullet-list'),
-          disabled: !writable,
-          run: () => run(view, toggleBulletList),
-        },
-        {
-          label: t('Numbered list'),
-          hint: shortcuts.hint('paragraph.ordered-list'),
-          disabled: !writable,
-          run: () => run(view, toggleOrderedList),
-        },
-        edit('paragraph.task-list', t('Task list'), toggleTaskList),
+        ...blocks('paragraph.bullet-list', 'paragraph.ordered-list', 'paragraph.task-list'),
         SPLIT,
-        // Not through `edit`: the picker is the app's, not the editor's, and it has
-        // its own reason to be greyed out - a note it can write beside. No hint
-        // either: Ctrl+Shift+I writes empty picture markup, which is a different
-        // thing from choosing a file, and a row that shows a key has to be the row
-        // that key runs.
-        {
-          label: t('Picture'),
-          disabled: !canInsertPicture(view),
-          run: () => {
-            if (view) void insertPicture(view)
-          },
-        },
-        edit('paragraph.footnote', t('Footnote'), insertFootnote),
-        edit('paragraph.toc', t('Table of contents'), insertToc),
-        edit('paragraph.front-matter', t('Front matter'), insertFrontMatter),
+        ...blocks('picture', 'paragraph.footnote', 'paragraph.toc', 'paragraph.front-matter'),
         SPLIT,
-        {
-          label: t('Horizontal rule'),
-          hint: shortcuts.hint('paragraph.rule'),
-          disabled: !writable,
-          run: () => run(view, insertHorizontalRule),
-        },
-        // A rule with a blank line above it, which is what breaks a deck into its
-        // next slide; see packages/markdown/src/slides.ts.
-        { label: t('New slide'), disabled: !writable, run: () => run(view, insertSlideBreak) },
-        { label: t('Page break'), disabled: !writable, run: () => run(view, insertPageBreak) },
+        // A new slide is a rule with a blank line above it, which is what breaks
+        // a deck into its next one; see packages/markdown/src/slides.ts.
+        ...blocks('paragraph.rule', 'slide-break', 'page-break'),
       ],
     },
 

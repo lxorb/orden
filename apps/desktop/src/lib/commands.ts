@@ -3,15 +3,26 @@ import {
   EditorView,
   foldHeadings,
   insertCallout,
+  insertCodeFence,
   insertComment,
   insertFootnote,
   insertFrontMatter,
+  insertHorizontalRule,
+  insertLink,
+  insertMathBlock,
+  insertPageBreak,
   insertSlideBreak,
+  insertTableToEdit,
   insertToc,
   reformatDocument,
+  setHeading,
   shiftHeading,
+  type SlashBlock,
   type StateCommand,
+  toggleBulletList,
   toggleFold,
+  toggleOrderedList,
+  toggleQuote,
   toggleTaskList,
   type Transaction,
   unfoldEverything,
@@ -410,45 +421,109 @@ function foldingCommands(view?: EditorView): Command[] {
   ]
 }
 
-/** The blocks and the marks that are new enough to be worth looking for by name:
- *  a task list, a callout, a footnote, a table of contents, front matter, a
- *  picture, a comment, and the two steps between heading levels.
+/** One block a note can be written out of.
  *
- *  Each is a row in the Paragraph or Format menu as well, under the same words -
- *  app-menu.ts, and a test that holds the two lists to the same labels. Somebody
- *  who knows what a thing is called should not have to know which menu it is in. */
-function writingCommands(view?: EditorView): Command[] {
-  const writable = !!view && !view.state.readOnly
-  const edit = (id: string, label: string, command: StateCommand): Command => ({
-    id,
-    label,
-    hint: shortcuts.hint(id),
-    disabled: !writable,
-    run: () => {
-      if (!view) return
-      command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
-      view.focus()
-    },
-  })
+ *  `apply` takes the view rather than closing over one, because the same block
+ *  is offered in three places and one of them - the editor's `/` menu - runs it
+ *  against whichever pane it opened in, which is not always the pane the row was
+ *  built for. `label` is a thunk for the same reason it is in the shortcut
+ *  registry: the words follow the language without the list being rebuilt. */
+interface Block {
+  id: string
+  label: () => string
+  apply: (view: EditorView) => void
+  /** Whether a view can take it. A block writes, so the default is a view that
+   *  is not read-only. */
+  ready?: (view: EditorView | undefined) => boolean
+}
 
-  return [
-    edit('paragraph.task-list', t('Task list'), toggleTaskList),
-    edit('paragraph.callout', t('Callout'), insertCallout),
-    edit('paragraph.footnote', t('Footnote'), insertFootnote),
-    edit('paragraph.toc', t('Table of contents'), insertToc),
-    edit('paragraph.front-matter', t('Front matter'), insertFrontMatter),
-    edit('paragraph.heading-up', t('One heading level up'), shiftHeading(1)),
-    edit('paragraph.heading-down', t('One heading level down'), shiftHeading(-1)),
-    edit('format.comment', t('Comment'), insertComment),
-    {
-      id: 'picture',
-      label: t('Picture'),
-      disabled: !canInsertPicture(view),
-      run: () => {
-        if (view) void insertPicture(view)
-      },
+/** A state command as something to do to a view. */
+function on(command: StateCommand) {
+  return (view: EditorView) => {
+    command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
+    view.focus()
+  }
+}
+
+function block(id: string, label: () => string, command: StateCommand): Block {
+  return { id, label, apply: on(command) }
+}
+
+/** Every block and mark a note is written out of, as one list.
+ *
+ *  Three ways in read from this and nothing else: the Paragraph menu, the
+ *  command palette, and the `/` menu in the editor. A row in one of them and not
+ *  the others is a thing you can only reach if you already know where it is, and
+ *  a second list is how that happens. The ids are the shortcut ids, so a row's
+ *  key and its words can never say different things.
+ *
+ *  In the order the Paragraph menu shows them, which is the order the `/` menu
+ *  offers them in before anything is typed. */
+const BLOCKS: Block[] = [
+  ...[1, 2, 3, 4, 5, 6].map((level) =>
+    block(`paragraph.heading-${level}`, () => t('Heading {level}', { level }), setHeading(level)),
+  ),
+  block('paragraph.body', () => t('Paragraph'), setHeading(0)),
+  block('paragraph.heading-up', () => t('One heading level up'), shiftHeading(1)),
+  block('paragraph.heading-down', () => t('One heading level down'), shiftHeading(-1)),
+  // Not through `on`: a new table takes the focus into its first cell, and
+  // focusing the editor afterwards would take it straight back out.
+  {
+    id: 'paragraph.table',
+    label: () => t('Table'),
+    apply: (view) => {
+      insertTableToEdit(view)
     },
-  ]
+  },
+  block('paragraph.code-block', () => t('Code block'), insertCodeFence),
+  block('paragraph.quote', () => t('Quote'), toggleQuote),
+  block('paragraph.math-block', () => t('Math block'), insertMathBlock),
+  block('paragraph.callout', () => t('Callout'), insertCallout),
+  block('paragraph.bullet-list', () => t('Bulleted list'), toggleBulletList),
+  block('paragraph.ordered-list', () => t('Numbered list'), toggleOrderedList),
+  block('paragraph.task-list', () => t('Task list'), toggleTaskList),
+  // The picker is the app's, not the editor's, and it has its own reason to be
+  // greyed out: a note it can write beside. No key either, since the one that
+  // looks like it writes empty picture markup rather than choosing a file.
+  {
+    id: 'picture',
+    label: () => t('Picture'),
+    apply: (view) => void insertPicture(view),
+    ready: (view) => canInsertPicture(view),
+  },
+  block('format.link', () => t('Link'), insertLink),
+  block('paragraph.footnote', () => t('Footnote'), insertFootnote),
+  block('paragraph.toc', () => t('Table of contents'), insertToc),
+  block('paragraph.front-matter', () => t('Front matter'), insertFrontMatter),
+  block('format.comment', () => t('Comment'), insertComment),
+  block('paragraph.rule', () => t('Horizontal rule'), insertHorizontalRule),
+  // A new slide is a rule with a blank line above it, which is what breaks a
+  // deck into its next one; see packages/markdown/src/slides.ts.
+  block('slide-break', () => t('New slide'), insertSlideBreak),
+  block('page-break', () => t('Page break'), insertPageBreak),
+]
+
+export function blockCommands(view?: EditorView): Command[] {
+  return BLOCKS.map((one) => {
+    const hint = shortcuts.hint(one.id)
+    const ready = one.ready ? one.ready(view) : !!view && !view.state.readOnly
+
+    return {
+      id: one.id,
+      label: one.label(),
+      ...(hint === undefined ? {} : { hint }),
+      disabled: !ready,
+      run: () => {
+        if (view) one.apply(view)
+      },
+    }
+  })
+}
+
+/** The same blocks as the editor's `/` menu takes them: words and something to
+ *  do to the view the menu opened in. */
+export function blockRows(): SlashBlock[] {
+  return BLOCKS.map((one) => ({ label: one.label(), run: one.apply }))
 }
 
 /** Puts the caret on the slide before or after the one it is in. Writing a deck
@@ -623,7 +698,7 @@ export function appCommands(view?: EditorView): Command[] {
         }),
     },
 
-    ...writingCommands(view),
+    ...blockCommands(view),
     ...slideCommands(view),
     // Folding changes what is on screen and never the note, so these three are
     // not among the writing rows above and are not greyed out on a note nobody

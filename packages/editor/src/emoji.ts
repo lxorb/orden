@@ -5,6 +5,7 @@ import {
 } from '@codemirror/autocomplete'
 import type { Extension } from '@codemirror/state'
 import { get, search } from 'node-emoji'
+import { slashCompletions } from './slash'
 import { snippetCompletions } from './snippets'
 import { wikilinkCompletions } from './wikilink/complete'
 
@@ -33,12 +34,16 @@ function completions(context: CompletionContext): CompletionResult | null {
   }
 }
 
-/** Emoji shortcodes, user snippets and the notes a `[[` link can name all share
- *  one popup: each source answers for the characters that open it, so only one
- *  of them ever has anything to say. */
+/** The blocks a `/` offers, emoji shortcodes, user snippets and the notes a
+ *  `[[` link can name all share one popup: each source answers for the
+ *  characters that open it, so only one of them ever has anything to say.
+ *
+ *  The slash comes first because it is the only one whose opening character the
+ *  others could also be sitting on: a `/` is not a word, and a source that has
+ *  something to say about one has the first word. */
 export function editorCompletion(): Extension {
   return autocompletion({
-    override: [completions, snippetCompletions, wikilinkCompletions],
+    override: [slashCompletions, completions, snippetCompletions, wikilinkCompletions],
     icons: false,
   })
 }

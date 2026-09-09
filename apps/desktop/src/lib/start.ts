@@ -5,7 +5,9 @@
  *  because a launch that has to be read in order should be readable in one
  *  place. */
 
+import { setBlocks } from '@nib/editor'
 import { account } from './account.svelte'
+import { blockRows } from './commands'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
@@ -35,6 +37,12 @@ export function start(): () => void {
   shortcuts.restore()
   settings.restore()
   recovery.restore()
+
+  // The blocks the editor's `/` menu offers, which are the app's rows rather
+  // than a list the editor keeps: handed over as a function so the words follow
+  // the language without anything having to hand them over again. See
+  // packages/editor/src/slash.ts.
+  setBlocks(blockRows)
 
   /** What the files handed over by a second launch are heard on, once there is
    *  something listening. Torn down with everything else. */
