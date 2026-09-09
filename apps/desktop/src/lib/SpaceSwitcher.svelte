@@ -13,8 +13,6 @@
    *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
    *  pointer gets. */
   import { arrive, leave, LIST_STEP } from './slide'
-  import Icon from './Icon.svelte'
-  import { initial, readIcon } from './icons'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
   import NameField from './NameField.svelte'
@@ -22,6 +20,7 @@
   import { roving } from './roving'
   import { trap } from './trap'
   import { commitSpaceName, newSpace, spaceMenu } from './space-actions'
+  import SpaceMark from './SpaceMark.svelte'
   import { t } from './i18n.svelte'
   import { isShared } from './sharing.svelte'
   import { type Space, workspace } from './workspace.svelte'
@@ -41,12 +40,6 @@
    *  hairline in red exactly as a row does; the field is what knows why. */
   let wrong = $state(false)
 
-  /** What a space wears, read the way every row in the file list reads it: any of
-   *  the three sets, and any spelling a value can be written in. A space kept the
-   *  library's own key before there was one format for all of them, and `readIcon`
-   *  still answers for those. */
-  const glyph = (space: Space) => readIcon(workspace.iconFor(space.id))
-
   function choose(space: Space) {
     open = false
     if (space.id !== workspace.activeSpaceId) void workspace.showSpace(space.id)
@@ -60,9 +53,9 @@
   // what is under it; see overlays.ts.
   $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
 
-  // Which set a badge wants is the badge's own business now, and asking for it is
-  // Icon.svelte's; the holder fetches each once for the app. See
-  // icon-library.svelte.ts.
+  // What a space wears in its badge, and which set has to be fetched to draw it,
+  // are the badge's own business: SpaceMark.svelte reads what was chosen and
+  // Icon.svelte draws whichever of the three kinds it is.
 </script>
 
 {#if here && workspace.naming?.path === here.root}
@@ -124,7 +117,6 @@
     out:leave={{ y: -LIST_STEP }}
   >
     {#each workspace.spaces as space (space.id)}
-      {@const shape = glyph(space)}
       <div class="line">
         <button
           class="nib-row"
@@ -134,12 +126,12 @@
           oncontextmenu={(event) => about(event, space)}
           use:longPress={(event) => about(event, space)}
         >
-          <span class="badge" class:here={space.id === workspace.activeSpaceId} aria-hidden="true">
-            {#if shape}
-              <span class="glyph"><Icon icon={shape} tint={workspace.tintFor(space.id)} /></span>
-            {:else}
-              {initial(space.name)}
-            {/if}
+          <span
+            class="nib-badge"
+            class:is-on={space.id === workspace.activeSpaceId}
+            aria-hidden="true"
+          >
+            <SpaceMark id={space.id} name={space.name} />
           </span>
 
           <span class="nib-row-label">{space.name}</span>
@@ -181,7 +173,7 @@
         void newSpace()
       }}
     >
-      <span class="badge plus" aria-hidden="true">
+      <span class="nib-badge is-quiet" aria-hidden="true">
         <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
       </span>
       <span class="nib-row-label">{t('New space')}</span>
@@ -284,47 +276,10 @@
     min-width: 0;
   }
 
-  /* The mark a space is known by: its drawing, or the letter it starts with when
-     it has none. A square with a corner a third of its side, which is the shape
-     the squares down the side of the window wore. */
-  .badge {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: var(--row-height-sm);
-    height: var(--row-height-sm);
-    border-radius: calc(var(--row-height-sm) * 0.32);
-    background: var(--surface-2);
-    color: var(--muted-strong);
-    font-size: calc(var(--row-height-sm) * 0.46);
-    font-weight: 620;
-    letter-spacing: 0.01em;
-  }
-
-  /* The space you are in wears the accent on its mark, and the row it is in is
-     filled the way the note you have open is; that fill is `.nib-row.is-on` in
-     the themes package and is not restated here. */
-  .badge.here {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  /* The box Icon.svelte fills, and the size an emoji in it is set at: an emoji is
-     type, and a glyph has no width of its own to be stretched. */
-  .glyph {
-    display: block;
-    width: var(--icon-md);
-    height: var(--icon-md);
-    font-size: var(--icon-md);
-    stroke: currentColor;
-    stroke-width: 1.7;
-  }
-
-  .badge.plus {
-    background: none;
-    color: var(--muted);
-  }
-
+  /* The mark a space is known by - its drawing, or the letter it starts with
+     when it has none - is `.nib-badge` in the themes package, and what goes in it
+     is SpaceMark.svelte. Neither is drawn again here: the space you are in wears
+     the accent on its badge, which is `is-on`. */
   /* Somebody else is in this space. A dot at the end of the row, where every
      other list in the app puts what it has to add about a name. */
   .with {

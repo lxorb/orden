@@ -14,12 +14,21 @@
   const {
     value,
     wide = false,
+    word = '',
+    disabled = false,
   }: {
     /** What lands on the clipboard. */
     value: string
     /** Room for the longer of the two words in either language, for a button
      *  that stands on its own under a block rather than beside a field. */
     wide?: boolean
+    /** What the button says before it has copied, where `Copy` on its own is not
+     *  specific enough: `Copy link` beside a share link. Already translated by
+     *  whoever passes it. */
+    word?: string
+    /** Nothing to copy yet: a share link that has not been made. The button stays
+     *  where it is rather than appearing as the thing beside it is turned on. */
+    disabled?: boolean
   } = $props()
 
   let said = $state(false)
@@ -36,8 +45,8 @@
   $effect(() => () => clearTimeout(saying))
 </script>
 
-<button class="copy" class:wide class:done={said} onclick={() => void copy()}>
-  {said ? t('Copied') : t('Copy')}
+<button class="copy" class:wide class:done={said} {disabled} onclick={() => void copy()}>
+  {said ? t('Copied') : word || t('Copy')}
 </button>
 
 <style>
@@ -71,14 +80,18 @@
   }
 
   @media (hover: hover) {
-    .copy:hover:not(.done) {
+    .copy:hover:not(.done):not(:disabled) {
       border-color: var(--accent);
       color: var(--accent);
     }
   }
 
-  .copy:active {
+  .copy:active:not(:disabled) {
     background: var(--press);
+  }
+
+  .copy:disabled {
+    opacity: 0.5;
   }
 
   .copy:focus-visible {

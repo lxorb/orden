@@ -11,6 +11,8 @@
     value,
     label = '',
     plain = false,
+    word = '',
+    disabled = false,
   }: {
     /** What is shown, and what the button copies. */
     value: string
@@ -19,13 +21,18 @@
     label?: string
     /** Set for a value that is a word rather than a thing to take away. */
     plain?: boolean
+    /** What the button says, where `Copy` alone is not specific enough. */
+    word?: string
+    /** There is nothing here yet: a link that has not been made. The row is drawn
+     *  where it will be rather than appearing once it can be used. */
+    disabled?: boolean
   } = $props()
 </script>
 
 <div class="copyable">
   {#if label}<span class="label">{label}</span>{/if}
-  <code class="value" class:plain>{value}</code>
-  {#if !plain}<CopyButton {value} />{/if}
+  <code class="value" class:plain class:off={disabled}>{value}</code>
+  {#if !plain}<CopyButton {value} {word} {disabled} />{/if}
 </div>
 
 <style>
@@ -59,6 +66,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Nothing in it yet, so it reads as the place the value will be. */
+  .value.off {
+    color: var(--muted);
   }
 
   /* A word rather than a value: no field around it, and set like the words

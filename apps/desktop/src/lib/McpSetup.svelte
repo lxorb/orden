@@ -225,7 +225,8 @@
                   onclick={() => connectors.setReadOnly(!connectors.readOnly)}
                 >
                   <span class="name">{t('Let it write to my notes, not only read them')}</span>
-                  <span class="toggle" class:on={!connectors.readOnly} aria-hidden="true"></span>
+                  <span class="nib-switch" class:on={!connectors.readOnly} aria-hidden="true"
+                  ></span>
                 </button>
 
                 {#if connectors.freshToken}
@@ -554,38 +555,5 @@
   .switch:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
-  }
-
-  .toggle {
-    flex: none;
-    width: 38px;
-    height: 22px;
-    border-radius: 99px;
-    background: var(--surface-3);
-    position: relative;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--muted-strong);
-    transition:
-      transform var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .toggle.on {
-    background: var(--accent);
-  }
-
-  .toggle.on::after {
-    background: #fff;
-    transform: translateX(16px);
   }
 </style>

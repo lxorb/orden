@@ -422,7 +422,7 @@
       }}
     >
       {@render named(field, where)}
-      <span class="toggle" class:on={field.get()} aria-hidden="true"></span>
+      <span class="nib-switch" class:on={field.get()} aria-hidden="true"></span>
     </div>
   {:else if field.kind === 'slider'}
     <div class="setting sliding">
@@ -1492,39 +1492,6 @@
     color: var(--danger);
   }
 
-  .toggle {
-    flex: none;
-    width: 38px;
-    height: 22px;
-    border-radius: 99px;
-    background: var(--surface-3);
-    position: relative;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--muted-strong);
-    transition:
-      transform var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .toggle.on {
-    background: var(--accent);
-  }
-
-  .toggle.on::after {
-    background: #fff;
-    transform: translateX(16px);
-  }
-
   /* The dial's shape is `.nib-slider` in the theme, which every dial in the app
      wears; what is left here is how wide this one is in a row of settings. */
   .slider {
@@ -2017,22 +1984,6 @@
 
   .sheet.phone .clash {
     padding: 10px var(--touch-pad);
-  }
-
-  .sheet.phone .toggle {
-    width: 50px;
-    height: 30px;
-  }
-
-  .sheet.phone .toggle::after {
-    top: 3px;
-    left: 3px;
-    width: 24px;
-    height: 24px;
-  }
-
-  .sheet.phone .toggle.on::after {
-    transform: translateX(20px);
   }
 
   .sheet.phone .inline {

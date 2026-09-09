@@ -208,6 +208,77 @@ describe('the ring a keyboard leaves', () => {
   })
 })
 
+/** The rounded square in front of a name that belongs to somebody or somewhere:
+ *  a space's mark in the switcher, the face in the panel's foot, a person in the
+ *  Share sheet. Two components had the same nine lines of it, and the sheet would
+ *  have been a third. See docs/design.md. */
+describe('the badge in front of a name', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    expect(shared).toContain('.nib-badge')
+    expect(draw(/\.nib-badge/)).toEqual([])
+  })
+
+  test('and the surfaces that show one wear the class', () => {
+    const wearing = components
+      .filter((one) => one.text.includes('class="nib-badge'))
+      .map((one) => one.name)
+      .sort()
+
+    expect(wearing).toEqual([
+      'lib/ShareSheet.svelte',
+      'lib/Sheet.svelte',
+      'lib/SidebarFoot.svelte',
+      'lib/SpaceSwitcher.svelte',
+    ])
+  })
+
+  /** What goes inside it is one component too: the drawing a space was given, or
+   *  the first letter of its name until it has one. */
+  test('and what a space puts in it is asked for once', () => {
+    const asking = components
+      .filter((one) => one.text.includes('<SpaceMark '))
+      .map((one) => one.name)
+      .sort()
+
+    expect(asking).toEqual([
+      'lib/PublishSheet.svelte',
+      'lib/ShareSheet.svelte',
+      'lib/SpaceSwitcher.svelte',
+    ])
+  })
+})
+
+/** One thing that is on or off. Two panels had the same thirty lines of track and
+ *  knob - a setting, an assistant's write access - and the Share sheet's link
+ *  would have been a third. `.toggle` is not the signal: the button that opens the
+ *  drawer is called that and is not a switch. */
+describe('the switch', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    expect(shared).toContain('.nib-switch')
+    // Including what a finger makes of it, which is one block there rather than
+    // one per surface; see touch-scale.test.ts.
+    expect(shared).toContain('[data-touch] .nib-switch')
+    expect(draw(/nib-switch/)).toEqual([])
+  })
+
+  test('and every surface that has one wears the class', () => {
+    const wearing = components
+      .filter((one) => one.text.includes('nib-switch'))
+      .map((one) => one.name)
+      .sort()
+
+    expect(wearing).toEqual([
+      'lib/McpSetup.svelte',
+      'lib/SettingsPanel.svelte',
+      'lib/ShareSheet.svelte',
+    ])
+  })
+})
+
 describe('the segmented control', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')

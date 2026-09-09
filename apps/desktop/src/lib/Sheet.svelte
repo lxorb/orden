@@ -4,8 +4,14 @@
    *  Sharing a space and publishing one are the same gesture from the same menu
    *  and ask the same kind of question, so they are the same sheet: it rises in
    *  the middle of a window and from the bottom of a phone, it is dismissed by
-   *  the scrim, by Escape and by back, and the rows, cards and buttons inside it
-   *  are one set of shapes rather than two that drift.
+   *  the scrim, by Escape, by the cross and by back, and the rows, cards and
+   *  buttons inside it are one set of shapes rather than two that drift.
+   *
+   *  Three parts: a head that says what the sheet is about and how to leave, a
+   *  body that scrolls, and cards in it. A card is a filled surface rather than a
+   *  run of rows on the sheet's own background, which is what Proton Drive and the
+   *  settings sheet on a phone both do: two or three groups on one sheet read as
+   *  groups without a word being spent on saying so.
    *
    *  What is here is the box and those shapes. What each sheet is about is its
    *  own component; see ShareSheet.svelte and PublishSheet.svelte. */
@@ -13,19 +19,25 @@
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
+  import { t } from './i18n.svelte'
   import { overlays } from './overlays'
+  import { scrollbar } from './scrollbar'
   import { dur } from './motion'
   import { trap } from './trap'
 
   const {
     open,
     title,
+    mark,
     onclose,
     children,
   }: {
     open: boolean
     /** What the sheet is about, which is its heading and what it is read out as. */
     title: string
+    /** The badge in front of the title: the space's own mark, so the sheet says
+     *  which space it is about the way the switcher does. */
+    mark?: Snippet
     onclose: () => void
     children: Snippet
   } = $props()
@@ -47,8 +59,22 @@
     aria-label={title}
     transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >
-    <p class="title">{title}</p>
-    {@render children()}
+    <!-- The subject, then the way out, which is where every window in the world
+         keeps it. The scrim, Escape and back all close it too; nothing here is
+         confirmed, so there is no button that says Done. -->
+    <div class="head">
+      {#if mark}
+        <span class="nib-badge" aria-hidden="true">{@render mark()}</span>
+      {/if}
+      <p class="title">{title}</p>
+      <button class="shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
+        <svg viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" /></svg>
+      </button>
+    </div>
+
+    <div class="body" data-scrolls use:scrollbar>
+      {@render children()}
+    </div>
   </div>
 {/if}
 
@@ -68,23 +94,82 @@
     translate: -50% 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
     width: min(27rem, calc(100vw - 3rem));
     max-height: 72vh;
-    overflow-y: auto;
+    overflow: hidden;
     z-index: 51;
-    padding: var(--space-5);
     background: var(--surface);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
   }
 
+  /* The head stays while the cards under it scroll: on a phone the sheet is most
+     of the screen, and the name of the thing being shared is what says what all
+     of this is about. */
+  .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4) var(--space-3);
+  }
+
   .title {
-    margin: 0 0 var(--space-2);
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--text-base);
-    font-weight: 550;
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
+  }
+
+  /* The way out: the same cross a tab closes with. */
+  .shut {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--muted);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .shut svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  @media (hover: hover) {
+    .shut:hover {
+      background: var(--surface-2);
+      color: var(--text-strong);
+    }
+  }
+
+  /* Cards, one under the next, and the one thing that scrolls. */
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    overflow-y: auto;
+    padding: 0 var(--space-2) var(--space-3);
   }
 
   /* ── The shapes inside ───────────────────────────────────────────
@@ -94,25 +179,52 @@
 
   /* What went wrong, above whatever asked for it. */
   .sheet :global(.wrong) {
-    margin: 0;
+    margin: 0 var(--space-2);
     font-size: var(--text-sm);
     color: var(--danger);
   }
 
   .sheet :global(h3) {
-    margin: var(--space-3) 0 var(--space-1);
+    margin: 0;
+    padding: 0 var(--space-2);
     font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-weight: var(--weight-strong);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
   }
 
-  /* A run of rows. */
+  /* A group on the sheet: a filled surface with rows in it. Two of them side by
+     side say they are two things without a line or a word. */
   .sheet :global(.card) {
     display: flex;
     flex-direction: column;
     width: 100%;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+
+  /* A label inside a card, over the rows it is about. */
+  .sheet :global(.card h3) {
+    padding: var(--space-2) 0 var(--space-1);
+  }
+
+  /* The row a card is headed by: what the card is about, and the one control
+     that turns the whole of it on. */
+  .sheet :global(.card-head) {
+    font-weight: var(--weight-strong);
+    color: var(--text-strong);
+  }
+
+  /* Under a card's head, before the rows it governs. Full width of the card,
+     because a line that stops short of the edge is a line about one row. */
+  .sheet :global(.line) {
+    width: auto;
+    height: 1px;
+    margin: var(--space-1) calc(-1 * var(--space-2));
+    border: none;
+    background: var(--line);
   }
 
   /* A column of things that are not rows: a field and what it says about
@@ -129,9 +241,9 @@
   .sheet :global(.row) {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-3);
     width: 100%;
-    min-height: 38px;
+    min-height: 34px;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--text);
@@ -173,7 +285,7 @@
 
   /* A sentence of its own, which may carry a link. */
   .sheet :global(.note) {
-    margin: 0;
+    margin: 0 var(--space-2);
     font-size: var(--text-sm);
     color: var(--muted-strong);
     line-height: 1.6;
@@ -309,7 +421,21 @@
     width: 100%;
     max-height: 88dvh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: calc(var(--space-4) + var(--inset-bottom));
+  }
+
+  :global([data-touch]) .body {
+    padding-bottom: var(--touch-bottom);
+  }
+
+  :global([data-touch]) .shut {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    margin-right: calc(-1 * var(--space-2));
+  }
+
+  :global([data-touch]) .shut svg {
+    width: var(--icon-md);
+    height: var(--icon-md);
   }
 
   :global([data-touch]) .sheet :global(.row) {

@@ -14,6 +14,7 @@
   import { shownName } from './note-name'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
+  import SpaceMark from './SpaceMark.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
@@ -85,6 +86,10 @@
   title={t('Publish {name}', { name: publish.space?.name ?? '' })}
   onclose={() => publish.close()}
 >
+  {#snippet mark()}
+    <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
+  {/snippet}
+
   {#if publish.error}
     <p class="wrong">{t(publish.error)}</p>
   {/if}

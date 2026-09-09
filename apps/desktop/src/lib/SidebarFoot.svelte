@@ -51,7 +51,7 @@
     disabled={account.restoring}
     onclick={() => settings.show('account')}
   >
-    <span class="face" aria-hidden="true">
+    <span class="nib-badge" aria-hidden="true">
       {#if who}
         {initial(who)}
       {:else}
@@ -176,23 +176,6 @@
 
   /* The letter whoever is here is known by, in the square a space wears its own
      mark in, so the two marks in the panel are the same shape. */
-  .face {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: var(--row-height-sm);
-    height: var(--row-height-sm);
-    border-radius: calc(var(--row-height-sm) * 0.32);
-    background: var(--surface-2);
-    font-size: calc(var(--row-height-sm) * 0.46);
-    font-weight: 620;
-  }
-
-  .face svg {
-    width: var(--icon-md);
-    height: var(--icon-md);
-  }
-
   /* Still asking the stores whether there is a session. Not a spinner and not a
      sentence: the row that would sign you in simply waits, and breathes while
      it does. */
@@ -224,7 +207,7 @@
     height: var(--row-height);
   }
 
-  svg {
+  .act svg {
     width: var(--icon-lg);
     height: var(--icon-lg);
     fill: none;
@@ -233,7 +216,7 @@
     stroke-linecap: round;
   }
 
-  .gear {
+  .act .gear {
     stroke-width: 1.6;
     stroke-linejoin: round;
   }

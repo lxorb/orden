@@ -483,6 +483,120 @@ select option {
   font-size: var(--text-sm);
 }
 
+/* ── Badges ────────────────────────────────── */
+
+/* The rounded square in front of a name when the name belongs to somebody or
+   somewhere rather than to a file: a space's mark in the switcher, the face in
+   the panel's foot, a person in the Share sheet. One shape, at the row scale,
+   with a corner a third of its side, so it is the same object at 24px under a
+   pointer and at 48 under a thumb; see docs/design.md.
+
+   What fills it is the caller's: `--badge-fill` and `--badge-ink` are set per
+   badge for a person, who wears their own colour, and left alone everywhere
+   else. */
+.nib-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--row-height-sm);
+  height: var(--row-height-sm);
+  border-radius: calc(var(--row-height-sm) * 0.32);
+  background: var(--badge-fill, var(--surface-2));
+  color: var(--badge-ink, var(--muted-strong));
+  font-family: var(--font-ui);
+  font-size: calc(var(--row-height-sm) * 0.46);
+  font-weight: 620;
+  letter-spacing: 0.01em;
+  user-select: none;
+}
+
+/* The space you are in, and the mark of anything else that is the thing: the
+   accent, which is what the open note's mark wears too. */
+.nib-badge.is-on {
+  --badge-fill: var(--accent);
+  --badge-ink: #fff;
+}
+
+/* A badge that is a place for a mark rather than an object: the plus at the
+   foot of the switcher. */
+.nib-badge.is-quiet {
+  --badge-fill: transparent;
+  --badge-ink: var(--muted);
+}
+
+/* A mark inside a badge is a mark in front of a name, so it is `--icon-md` like
+   every other one. */
+.nib-badge svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Switches ──────────────────────────────── */
+
+/* One thing that is on or off. Three surfaces wanted the same track and the same
+   knob - a setting, an assistant's write access, a space's link - which is three
+   chances for one of them to be a different width. So it is drawn here, and the
+   row it sits in says what it is about; the row is the switch, so a screen reader
+   is told by the row's own `role` and this is `aria-hidden`. */
+.nib-switch {
+  flex: none;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.nib-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted-strong);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.nib-switch.on {
+  background: var(--accent);
+}
+
+.nib-switch.on::after {
+  background: #fff;
+  transform: translateX(16px);
+}
+
+/* Out of anybody's hands right now: the same fade every other disabled control
+   in the app wears. */
+.nib-switch.off {
+  opacity: 0.4;
+}
+
+/* A thumb gets a bigger one, because it is aimed at rather than pointed at. */
+[data-touch] .nib-switch {
+  width: 50px;
+  height: 30px;
+}
+
+[data-touch] .nib-switch::after {
+  width: 24px;
+  height: 24px;
+}
+
+[data-touch] .nib-switch.on::after {
+  transform: translateX(20px);
+}
+
 /* ── Fields ────────────────────────────────── */
 
 /* One box for anything typed into or standing in for something typed into: the

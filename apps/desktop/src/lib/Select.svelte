@@ -16,6 +16,10 @@
   interface Option {
     value: string
     label: string
+    /** A choice that takes something away rather than changing it: taking
+     *  somebody out of a space. Last in the list, and in the one colour the app
+     *  says that in. */
+    danger?: boolean
   }
 
   const {
@@ -176,7 +180,7 @@
             aria-selected={option.value === value}
             class:chosen={option.value === value}
           >
-            <button type="button" onclick={() => choose(option.value)}>
+            <button type="button" class:danger={option.danger} onclick={() => choose(option.value)}>
               <span class="text">{option.label}</span>
               {#if option.value === value}
                 <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 5" /></svg>
@@ -205,6 +209,7 @@
           aria-selected={option.value === value}
           class:cursor={index === lit}
           class:chosen={option.value === value}
+          class:danger={option.danger}
           onmouseenter={() => (hovered = index)}
           onclick={() => choose(option.value)}
         >
@@ -359,6 +364,17 @@
 
   .list li.chosen {
     color: var(--text-strong);
+  }
+
+  /* A choice that takes something away. The colour is the whole of the warning:
+     it is still a row in the list, and it is still one press. */
+  .list li.danger,
+  .sheet li button.danger {
+    color: var(--danger);
+  }
+
+  .list li.danger.cursor {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
   }
 
   .tick {
