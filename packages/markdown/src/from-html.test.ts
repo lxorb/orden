@@ -97,6 +97,16 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<img src="a.png" alt="a [b] c">')).toBe('![a \\[b\\] c](a.png)')
   })
 
+  /** The backslash was the way out of the brackets that was left. Escaping only
+   *  the brackets, alt text ending in one escaped the escape instead: the words
+   *  closed early, the address the picture came with became the text after them,
+   *  and the picture in the note pointed at the host the alt text named. */
+  test('a backslash in alt text cannot escape the escaping', () => {
+    expect(
+      htmlToMarkdown('<img src="https://x.test/ok.png" alt="a\\](https://evil.test/b.png)![b">'),
+    ).toBe('![a\\\\\\](https://evil.test/b.png)!\\[b](https://x.test/ok.png)')
+  })
+
   test('an image with no address is nothing to point at', () => {
     expect(htmlToMarkdown('<p>before<img alt="none">after</p>')).toBe('beforeafter')
   })
@@ -132,24 +142,68 @@ describe('a page as markdown', () => {
 
   /** The address is the other way text reached the page as markup: a `)` ends the
    *  destination early, and whatever followed it in the attribute was written
-   *  into the note as its own markdown. Turndown escapes an address for exactly
-   *  this reason and the rule here has to as well. */
+   *  into the note as its own markdown - a second picture, pointing at a host the
+   *  pasted HTML chose. Percent encoded, the whole attribute is one address. */
   test('an address cannot break out of its own brackets', () => {
+    expect(
+      htmlToMarkdown('<img alt="a" src="https://x.test/a.png)![](https://evil.test/b.png">'),
+    ).toBe('![a](https://x.test/a.png%29![]%28https://evil.test/b.png)')
+
     expect(htmlToMarkdown('<img alt="a" src="x)<img src=q onerror=alert(1)>">')).toBe(
-      '![a](<x\\)\\<img src=q onerror=alert\\(1\\)\\>>)',
+      '![a](x%29%3Cimg%20src=q%20onerror=alert%281%29%3E)',
+    )
+  })
+
+  /** Escaping the brackets left the escape itself: a `\` the page put in the
+   *  address escaped the backslash that was protecting the bracket, and the
+   *  bracket ended the destination after all. */
+  test('a backslash in an address cannot escape the escaping', () => {
+    expect(
+      htmlToMarkdown('<img alt="a" src="https://x.test/a.png\\)![](https://evil.test/b.png">'),
+    ).toBe('![a](https://x.test/a.png%5C%29![]%28https://evil.test/b.png)')
+  })
+
+  /** An address with brackets in it is ordinary rather than adversarial -
+   *  Wikipedia writes them - and the note has to hold it as the one address it
+   *  is. Encoded rather than escaped, because what is being written is a URL and
+   *  a URL says the same thing either way. */
+  test('the brackets an ordinary address carries survive as one address', () => {
+    expect(htmlToMarkdown('<img alt="a" src="https://x.test/File_(1).png">')).toBe(
+      '![a](https://x.test/File_%281%29.png)',
     )
   })
 
   /** And an address with a space in it is one address, not an address and a
-   *  title: written bare it used to leave the picture as four words of prose. */
-  test('an address with spaces stays one address', () => {
-    expect(htmlToMarkdown('<img alt="a" src="my picture.png">')).toBe('![a](<my picture.png>)')
+   *  title: written bare it used to leave the picture as four words of prose. A
+   *  tab or a control character ends a destination the same way. */
+  test('a blank in an address cannot end it', () => {
+    expect(htmlToMarkdown('<img alt="a" src="my picture.png">')).toBe('![a](my%20picture.png)')
+    expect(htmlToMarkdown('<img alt="a" src="a&#9;b.png">')).toBe('![a](a%09b.png)')
   })
 
-  test('an address a caller chose is escaped the same way', () => {
-    expect(htmlToMarkdown('<img alt="a" src="a.png">', { image: () => 'one two.png' })).toBe(
-      '![a](<one two.png>)',
+  /** An address that already carries escapes is left as the address it was: the
+   *  percent is not encoded again, so `a%20b.png` stays one file rather than
+   *  becoming a name with `%2520` in it. */
+  test('an address that is already encoded is not encoded twice', () => {
+    expect(htmlToMarkdown('<img alt="a" src="https://x.test/a%20b.png">')).toBe(
+      '![a](https://x.test/a%20b.png)',
     )
+  })
+
+  test('an address a caller chose is encoded the same way', () => {
+    expect(htmlToMarkdown('<img alt="a" src="a.png">', { image: () => 'one two.png' })).toBe(
+      '![a](one%20two.png)',
+    )
+  })
+
+  /** A picture says two things here and no more. A title would be a third string
+   *  to break out of, and the quote that opens it is on any page that quotes
+   *  somebody; it would also sit between the brackets the clipper fills its
+   *  numbers in by. So the page's own is dropped. */
+  test('a title is not markdown a page can write', () => {
+    expect(
+      htmlToMarkdown('<img alt="a" src="a.png" title="he said &quot;hi&quot;) ![](b.png">'),
+    ).toBe('![a](a.png)')
   })
 
   /** What the clipper needs: the bytes are still on the site when the conversion

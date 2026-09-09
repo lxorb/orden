@@ -78,11 +78,15 @@ function indexIn(parent: Element | null, node: Node): number {
   return 0
 }
 
-/** Alt text that cannot break out of its own brackets. */
+/** Alt text that cannot break out of its own brackets.
+ *
+ *  A backslash is one of the ways out, and the one that was left: alt text
+ *  ending in `\` had its escaped bracket escaped instead, the words closed early
+ *  and the address after them was the page's rather than the picture's. */
 function altOf(image: Element): string {
   return (image.getAttribute('alt') ?? '')
     .replace(/\s+/g, ' ')
-    .replace(/([[\]])/g, '\\$1')
+    .replace(/([\\[\]])/g, '\\$1')
     .trim()
 }
 
@@ -97,16 +101,35 @@ function altOf(image: Element): string {
  *  So the bracket is escaped, which is how markdown writes a literal one. */
 const OPENS_MARKUP = /<(?=[A-Za-z/!?])/g
 
+/** Everything markdown reads inside a destination: the brackets that end one,
+ *  the angle brackets that open and close the other spelling of one, the
+ *  backslash that escapes any of them, the quote that opens a title, and the
+ *  blanks and control characters that end a bare destination. */
+const IN_DESTINATION = /[\s\p{Cc}()<>\\"]/gu
+
+/** The two `encodeURIComponent` keeps, which are the two that end a destination. */
+const KEPT: Record<string, string> = { '(': '%28', ')': '%29' }
+
 /** An address as a markdown destination that cannot be broken out of.
  *
- *  The same escaping turndown does for a link, said again here because the
- *  picture rule below writes its own. A `)` in the address used to end the
- *  destination early and everything after it in the attribute was written into
- *  the note as markdown of its own; a space made the rest of the address read as
- *  a title, which left the picture as prose. */
+ *  Percent encoded rather than escaped with backslashes. Escaping is what
+ *  turndown does for a link and what this copied, and it left the escape itself:
+ *  a `\` the page put in the address escaped the backslash turndown wrote, the
+ *  destination ended at the bracket after it, and the rest of the attribute was
+ *  written into the note as markdown of its own - a second picture, pointing at
+ *  whatever host the pasted HTML named. An address is a URL and a URL says the
+ *  same thing percent encoded, so there is nothing left to escape and nothing
+ *  left to end early. `File_(1).png`, which Wikipedia writes, comes out as one
+ *  address rather than as an address and a bracket of prose.
+ *
+ *  The same shape the clipper's placeholders are filled with afterwards, so both
+ *  halves of a clip say it the same way. The percent itself is not touched: an
+ *  address that already carries escapes stays the address it was rather than
+ *  becoming one that escapes its own escapes. */
 function destination(address: string): string {
-  const escaped = address.replace(/[\r\n]+/g, ' ').replace(/([<>()])/g, '\\$1')
-  return escaped.includes(' ') ? `<${escaped}>` : escaped
+  return address.replace(IN_DESTINATION, (character) => {
+    return KEPT[character] ?? encodeURIComponent(character)
+  })
 }
 
 function converter(options: FromHtmlOptions): TurndownService {
@@ -198,6 +221,12 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
+  // The two things a picture says, and no `title`: nothing in a note shows one,
+  // and a caller's address arrives afterwards - the clipper fills its numbers in
+  // by the shape `](nib:0)`, so a title written between them would leave the
+  // placeholder in the note. So there is no third string here to break out of a
+  // title's quotes, and a page's own `title` is dropped with the rest of the
+  // attributes.
   service.addRule('picture', {
     filter: 'img',
     replacement: (_content, node) => {
