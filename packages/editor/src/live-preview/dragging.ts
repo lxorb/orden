@@ -1,14 +1,25 @@
 import { StateEffect, StateField } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 
-const setDragging = StateEffect.define<boolean>()
+/** Said by the watcher below when the button goes down and when it comes up.
+ *  Exported so a test can drive a drag without a pointer or a DOM. */
+export const setDragging = StateEffect.define<boolean>()
 
 /** True while a selection is being dragged out with the mouse.
  *
  *  Revealing syntax as the selection moves would reflow the line under the
  *  pointer mid-drag: `**bold**` growing by four characters shifts everything
  *  after it, and the selection ends somewhere nobody pointed at. So the reveal
- *  state holds still until the button comes back up. */
+ *  state holds still until the button comes back up.
+ *
+ *  A whole block is worse than a line. A rendered table, diagram or display
+ *  equation is not the height of the markdown behind it, so swapping the two
+ *  moves the text under the pointer by rows rather than by characters: the next
+ *  pointer event reads a position on the other side of the block's edge, the
+ *  reveal changes its mind, the text moves back, and the two go round as fast as
+ *  the events arrive. That is the flicker a selection dragged into a table used
+ *  to set off, so the block field holds still on this as well as the inline
+ *  decorations - see blocks.ts and decorate.ts. */
 export const dragging = StateField.define<boolean>({
   create: () => false,
   update(value, transaction) {

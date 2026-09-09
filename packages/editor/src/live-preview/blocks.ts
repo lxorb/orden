@@ -16,6 +16,7 @@ import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { noteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
+import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps } from './reveal'
 import {
   DIAGRAM_LANGUAGES,
@@ -362,7 +363,27 @@ export const blockDecorations = StateField.define<Blocks>({
     // with would reveal the first block the moment the parse caught up - which
     // for a note longer than the parser's first pass is every time it is opened.
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
+
+    // A drag that has just ended. The reveal was held still for as long as the
+    // button was down, so this is where it catches up with where the selection
+    // finally landed - one settle rather than one per pointer event. Asked
+    // before the shortcuts below, because releasing the button moves neither the
+    // document nor the caret and every one of them would return the held value.
+    const held = transaction.state.field(dragging, false) === true
+    if (transaction.startState.field(dragging, false) === true && !held) {
+      return buildBlocks(transaction.state, chosen)
+    }
+
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
+
+    // A selection being dragged out with the pointer. Swapping a rendered block
+    // for its source moves the text under the pointer by whole rows, so the next
+    // pointer event reads a position on the other side of the block's edge and
+    // the reveal changes its mind again - which is the flicker. Nothing about
+    // what is drawn changes until the button comes up; see dragging.ts.
+    if (held && !transaction.docChanged && !reparsed) {
+      return chosen === value.chosen ? value : { ...value, chosen }
+    }
 
     const was = transaction.startState.selection.ranges
     const now = transaction.state.selection.ranges

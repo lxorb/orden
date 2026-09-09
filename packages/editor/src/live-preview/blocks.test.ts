@@ -2,6 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
+import { dragFreeze, setDragging } from './dragging'
 import { external } from '../external'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
@@ -13,6 +14,10 @@ function state(doc: string, cursor = 0) {
       selection: EditorSelection.cursor(cursor),
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        // The field reads whether a pointer drag is in progress, and a state
+        // without it behaves as though none ever is - which is every test here
+        // but the drag ones below.
+        dragFreeze,
         blockDecorations,
       ],
     }),
@@ -267,5 +272,112 @@ describe('prose typed away from every construct', () => {
     )
 
     expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual(['[toc]'])
+  })
+})
+
+/** A selection dragged out with the pointer, over a block that is drawn rather
+ *  than written.
+ *
+ *  The reveal and the pointer used to answer each other. A rendered table is not
+ *  the height of the three lines of markdown behind it, so the moment the
+ *  selection touched it and the source came back, everything from there down
+ *  moved by rows - and the next pointer event, read against the new layout,
+ *  landed on the other side of the table's edge. That took the selection off the
+ *  table again, the table was drawn again, the text moved back, and the two went
+ *  round as fast as the events arrived: a table flickering between itself and its
+ *  markdown for as long as the button was held.
+ *
+ *  So that is what these drive: a pointer standing still, and a document position
+ *  under it that depends on which of the two states is drawn. */
+describe('a selection dragged over a rendered block', () => {
+  /** Whether the block is still drawn rather than shown as its source. */
+  function shown(state: EditorState): boolean {
+    return state.field(blockDecorations).decorations.size > 0
+  }
+
+  /** A drag: the button goes down, `events` pointer reads follow, the button
+   *  comes up. Each read lands on `inside` while the block is drawn and on
+   *  `outside` once its source is showing, which is the loop above.
+   *
+   *  Answers with what was drawn at every step, and what is drawn once the button
+   *  is up. */
+  function dragged(doc: string, inside: number, outside: number, events = 6) {
+    let now = state(doc, 0).update({ effects: setDragging.of(true) }).state
+    const steps = [shown(now)]
+
+    for (let event = 0; event < events; event++) {
+      const head = shown(now) ? inside : outside
+      now = now.update({
+        selection: EditorSelection.range(0, head),
+        userEvent: 'select.pointer',
+      }).state
+      steps.push(shown(now))
+    }
+
+    return { steps, settled: shown(now.update({ effects: setDragging.of(false) }).state) }
+  }
+
+  const blocks: [string, string][] = [
+    ['a table', TABLE],
+    ['a display equation', '$$\nx = 1\n$$'],
+    ['a diagram', '```mermaid\ngraph TD\n```'],
+  ]
+
+  for (const [what, block] of blocks) {
+    const doc = `${PROSE}${block}`
+    // A read that reaches the block, and one that falls short of it in the prose
+    // above - the two positions one point on the screen stood for.
+    const inside = PROSE.length + 2
+    const outside = 4
+
+    test(`${what} keeps one state for as long as the button is down`, () => {
+      expect(new Set(dragged(doc, inside, outside).steps)).toEqual(new Set([true]))
+    })
+
+    test(`${what} settles once, on the way up`, () => {
+      // Held all the way, so the selection ends where the pointer was rather than
+      // where a reflow put it - and then, once, the source comes back.
+      expect(dragged(doc, inside, outside).settled).toBe(false)
+    })
+  }
+
+  test('a caret moved by the keyboard still reveals as it goes', () => {
+    // Nothing here is a general freeze: only the pointer holds the reveal, and
+    // only while its button is down.
+    const doc = `${PROSE}${TABLE}`
+    const { is } = afterMove(doc, 0, doc.length - 2)
+    expect(is.decorations.size).toBe(0)
+  })
+
+  test('a drag interrupted anywhere leaves nothing held', () => {
+    // The window losing focus, or the selection being carried off as a drag and
+    // drop, ends a drag without a mouseup; dragging.ts listens for both. What
+    // matters here is that the release rebuilds however it arrives.
+    const doc = `${PROSE}${TABLE}`
+    const held = state(doc, 0)
+      .update({ effects: setDragging.of(true) })
+      .state.update({
+        selection: EditorSelection.range(0, doc.length - 2),
+        userEvent: 'select.pointer',
+      }).state
+
+    expect(held.field(blockDecorations).decorations.size).toBe(1)
+    const released = held.update({ effects: setDragging.of(false) }).state
+    expect(released.field(blockDecorations).decorations.size).toBe(0)
+  })
+
+  test('a note swapped in under a held pointer is still drawn for its reader', () => {
+    // Content from outside is not the pointer's doing and does not wait for it: a
+    // sync arriving, or a version restored, brings a caret nobody chose, and what
+    // it brings has to be drawn rather than left as markdown.
+    const held = state('x\n', 0).update({ effects: setDragging.of(true) }).state
+    const opened = parsed(
+      held.update({
+        changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+        annotations: external.of(true),
+      }).state,
+    )
+
+    expect(opened.field(blockDecorations).decorations.size).toBe(1)
   })
 })
