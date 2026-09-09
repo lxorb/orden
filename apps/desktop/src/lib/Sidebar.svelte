@@ -120,11 +120,16 @@
    *  rather than a second plus in the rail. */
   function switcherMenu(): MenuEntry[] {
     const here = workspace.activeSpace
-    const others: MenuEntry[] = workspace.spaces.map((space) => ({
-      label: space.name,
-      disabled: space.id === here?.id,
-      run: () => workspace.showSpace(space.id),
-    }))
+    // Only where there is somewhere to switch to: one space listed once, greyed
+    // out because it is where you already are, is a row that says nothing.
+    const others: MenuEntry[] =
+      workspace.spaces.length > 1
+        ? workspace.spaces.map((space) => ({
+            label: space.name,
+            disabled: space.id === here?.id,
+            run: () => workspace.showSpace(space.id),
+          }))
+        : []
 
     return [
       ...others,

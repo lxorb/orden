@@ -159,7 +159,8 @@ Four sizes in the chrome, and the document's own on top of them.
 | `--text-xs` | 11px | section labels, counts, keys, second lines |
 | `--text-sm` | 12.5px | meta beside a name |
 | `--text-row` | 13.5px | **new** - the name in any row: tree, menu, palette, tab |
-| `--text-base` | 15px | a header: the panel's title, a sheet's title |
+| `--text-base` | 15px | a sheet's title, a field over a list |
+| `--text-head` | 15px | **new** - what a bar across the top of a column is titled with: the space's name over the list, the note's name over the page. 19px under a thumb, so a header is a step above the rows under it on either kind of screen |
 | `--text-content` | 16.5px × zoom | the note |
 
 Two emphasis levels and no more: `--weight-row` (450) for a row at rest,
@@ -180,7 +181,7 @@ One size per context, so a glyph's size says what kind of thing it is.
 | `--icon-sm` | 13px | a mark inside a row that is not the row's own: a tab's kind, a bookmark's kind |
 | `--icon-md` | 16px | **the mark in front of a name** - tree, bookmarks, tags, menus |
 | `--icon-lg` | 18px | a glyph that is a button: panel tabs, title bar, rail feet |
-| `--icon-rail` | 20px | the drawing inside a space badge |
+| `--icon-rail` | 18px | the drawing inside a space badge, which is `--rail-badge` across - 30px under a pointer, `--touch-target` under a thumb, its corner a third of its side either way |
 
 On a touch screen `--icon-md` becomes `--touch-mark`, raised from 15px to 20px,
 and `--icon-lg` becomes `--touch-icon` (24px). The mark is then within three
@@ -290,15 +291,22 @@ order and Notion's:
    place, at the same height, with the same radius and the same magnifier, drawn
    from the same `.nib-field` class. It is one control that becomes editable, not
    two controls that look alike.
-3. **The panel tabs**, full width, one quarter each, with a filled active tab
-   rather than a faint tint - the same fill a selected row wears, so "this one"
-   looks the same everywhere in the app.
+3. **The panel tabs**, full width, one quarter each - the segmented control the
+   settings sheet already uses, so the tab you are on is raised out of its groove
+   exactly the way every other "this one" in the app is.
 
-Then the list, with section labels over each group.
+The tabs sit between the name and the search entry rather than under both: the
+entry has to be in one place whether it is the pill or the field, and the field
+belongs to the Search panel, which begins under the tabs. So the order on the
+screen is name, tabs, entry, list - and the entry never moves.
 
 ### The rail
 
-Spaces, and nothing that is not a space or the app itself. The plus goes: making
+Spaces, and nothing that is not a space or the app itself. A badge is
+`--rail-badge` across with a corner a third of its side, so a pointer's 30px
+square and a thumb's 48 are the same shape, and the space you are in wears a pill
+against the column's edge as well as the accent - Discord's marker, which reads
+before any colour does. The plus goes: making
 a space is a row in the header's menu, which is where a workspace switcher keeps
 it. The GitHub mark goes: it is in Help. What is left at the foot is settings
 with its sync light, the account while there is none, and the theme, under a
@@ -320,9 +328,12 @@ until it is looked at.
 
 ### Tables
 
-Hairlines: `--table-border-color` drops from `--line-strong` to `--line`, the
-header keeps a stronger rule under it alone, and the outer edge is rounded to
-`--radius-md` so the table is a block on the page rather than a grid drawn on it.
+Hairlines: `--table-border-color` drops from `--line-strong` to `--line`, and
+the one rule left worth reading is the one under the header, which keeps
+`--line-strong`. The grid recedes to what it is for - keeping the columns apart -
+and the words in the table become the darkest thing in it. The same three lines
+dress the table in the editor, on paper and on a published page; see
+`editor.css`.
 
 ### On a phone
 

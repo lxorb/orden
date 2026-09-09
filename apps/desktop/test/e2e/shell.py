@@ -155,6 +155,8 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         device_scale_factor=2,
     )
     page = context.new_page()
+    # A scratch drive should say what it could not reach rather than sit on it.
+    page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
@@ -173,12 +175,26 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(600)
     shot("files")
 
+    # The space's own menu, which is what the name at the top of the panel is.
+    switcher = page.locator("aside .name")
+    if switcher.count():
+        try:
+            switcher.click(force=True)
+            page.wait_for_timeout(400)
+            shot("spaces")
+        except Exception as why:
+            say(f"[{name}] no switcher: {why}")
+        dismiss(page)
+
     # A row's own menu, asked for the way a pointer asks and a thumb asks.
     rows = page.locator("aside .row")
     if rows.count():
-        rows.nth(2).click(button="right", force=True)
-        page.wait_for_timeout(400)
-        shot("rowmenu")
+        try:
+            rows.nth(2).click(button="right", force=True)
+            page.wait_for_timeout(400)
+            shot("rowmenu")
+        except Exception as why:
+            say(f"[{name}] no row menu: {why}")
         dismiss(page)
 
     page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
@@ -189,8 +205,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(400)
     box = page.locator("aside input").first
     if box.count():
-        box.fill("wind")
-        page.wait_for_timeout(900)
+        try:
+            box.fill("wind")
+            page.wait_for_timeout(900)
+        except Exception as why:
+            say(f"[{name}] nothing to type in: {why}")
     shot("search")
 
     page.evaluate("() => window.nibApp.workspace.showPanel('links')")
@@ -215,9 +234,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         else page.locator("nav .top button").first
     )
     if trigger.count():
-        trigger.click(force=True)
-        page.wait_for_timeout(500)
-        shot("menu")
+        try:
+            trigger.click(force=True)
+            page.wait_for_timeout(500)
+            shot("menu")
+        except Exception as why:
+            say(f"[{name}] no menu: {why}")
         dismiss(page)
 
     page.evaluate("() => window.nibApp.settings.show()")
