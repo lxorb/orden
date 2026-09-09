@@ -769,6 +769,7 @@ export const ja: Dictionary = {
   'Save layout': 'レイアウトを保存',
   'Name this layout': 'レイアウトに名前を付ける',
   'Layout: {name}': 'レイアウト: {name}',
+  'Space: {name}': 'スペース: {name}',
   'Theme: {name}': 'テーマ: {name}',
   'Code theme: {name}': 'コードテーマ: {name}',
   'Recent: {name}': '最近: {name}',

@@ -1,7 +1,9 @@
+import { iconChoice } from './icon-choice.svelte'
 import { key, t } from './i18n.svelte'
+import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
-import { publish } from './publishing.svelte'
-import { roleOf, share } from './sharing.svelte'
+import { canPublish, publish } from './publishing.svelte'
+import { canShare, roleOf, share } from './sharing.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Asks for a name and makes the space. Where it lives is the app's business,
@@ -23,17 +25,82 @@ export async function newSpace() {
   sync.nudge()
 }
 
-/** Moves a space in the rail and tells the account about it, so the order is
+/** Moves a space in the switcher and tells the account about it, so the order is
  *  the same on the next machine. Lives here rather than on the workspace,
  *  which knows nothing about syncing. */
-export async function moveSpace(id: string, beforeId: string | null) {
+async function moveSpace(id: string, beforeId: string | null) {
   if (!workspace.moveSpace(id, beforeId)) return
 
   const { sync } = await import('./sync.svelte')
   void sync.pushSpaceOrder()
 }
 
-export async function renameSpace(space: Space) {
+/** Whether a space has anywhere to go in that direction. */
+function canNudge(space: Space, by: -1 | 1): boolean {
+  const at = workspace.spaces.findIndex((one) => one.id === space.id)
+  const to = at + by
+  return at >= 0 && to >= 0 && to < workspace.spaces.length
+}
+
+/** One place up or down the list.
+ *
+ *  Steps rather than a drag. The column of squares this order used to be read in
+ *  is gone, and the switcher is a menu that opens over the panel: a drag inside
+ *  something that closes when the pointer leaves it is a gesture that fights
+ *  itself. A step is exact, it is the same on a phone as on a desktop, it works
+ *  for somebody who has asked for less movement, and it needs no second
+ *  implementation of dragging.
+ *
+ *  `moveSpace` places a space in front of another, so going down means going in
+ *  front of the one after next. */
+async function nudgeSpace(space: Space, by: -1 | 1) {
+  const at = workspace.spaces.findIndex((one) => one.id === space.id)
+  if (at < 0) return
+
+  const to = at + by
+  if (to < 0 || to >= workspace.spaces.length) return
+
+  const before = by === -1 ? workspace.spaces[to] : workspace.spaces[to + 1]
+  await moveSpace(space.id, before?.id ?? null)
+}
+
+/** What a space itself offers, wherever it is asked: from the switcher's own
+ *  button on the row, from a right click on it, or from a held finger.
+ *
+ *  What a space *is* rather than what to put in it - the file list's own menu
+ *  makes notes, and it is where somebody looking for a new note already is. The
+ *  folder behind the space is not what this is about either. */
+export function spaceMenu(space: Space): MenuEntry[] {
+  // A space somebody shared to read is theirs; the only thing this menu can
+  // offer about it is a way out of it.
+  const theirs = roleOf(space.root) !== 'owner'
+
+  return trim([
+    ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
+    { label: t('Choose an icon'), run: () => iconChoice.space(space.id) },
+    ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
+    // Beside it, because it is the same question about the same folder: who
+    // else may read this.
+    ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
+    DIVIDER,
+    // Where a space sits in the list. Left out at the ends rather than offered
+    // as a row that does nothing.
+    ...(canNudge(space, -1)
+      ? [{ label: t('Move up'), run: () => void nudgeSpace(space, -1) }]
+      : []),
+    ...(canNudge(space, 1)
+      ? [{ label: t('Move down'), run: () => void nudgeSpace(space, 1) }]
+      : []),
+    DIVIDER,
+    {
+      label: theirs ? t('Leave space') : t('Delete space'),
+      danger: true,
+      run: () => void deleteSpace(space),
+    },
+  ])
+}
+
+async function renameSpace(space: Space) {
   const name = await prompt.ask({
     title: t('Rename the space'),
     value: space.name,
@@ -66,7 +133,7 @@ export function publishSpace(space: Space) {
 /** Deleting a space, or letting go of one somebody shared, which is the same
  *  gesture and a different sentence: a space that is not yours is not yours to
  *  delete, and leaving it takes its notes off this machine and nowhere else. */
-export async function deleteSpace(space: Space) {
+async function deleteSpace(space: Space) {
   const theirs = roleOf(space.root) !== 'owner'
 
   const sure = await prompt.confirm({

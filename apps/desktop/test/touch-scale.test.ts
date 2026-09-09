@@ -51,9 +51,7 @@ const ROW_SCALE = {
   '--header-height': 'var(--touch-row)',
   '--icon-md': 'var(--touch-mark)',
   '--icon-lg': 'var(--touch-icon)',
-  '--icon-rail': 'var(--touch-icon)',
   '--text-row': 'var(--touch-text)',
-  '--rail-badge': 'var(--touch-target)',
 }
 
 /** The surfaces a thumb spends its time in: the drawer, the lists in it, and
@@ -65,9 +63,10 @@ const SURFACES = [
   'lib/ContextMenu.svelte',
   'lib/Links.svelte',
   'lib/Palette.svelte',
-  'lib/Rail.svelte',
   'lib/SearchPanel.svelte',
   'lib/Sidebar.svelte',
+  'lib/SidebarFoot.svelte',
+  'lib/SpaceSwitcher.svelte',
   'lib/TagTree.svelte',
   'lib/Titlebar.svelte',
   'lib/Tree.svelte',
@@ -186,7 +185,7 @@ describe('the touch scale', () => {
 
   test('the surfaces a thumb lands on read one of the two scales', () => {
     const scale =
-      /var\(--(touch-(row|target|text|icon|mark|pad|gap|indent)|row-(height|height-sm|pad|gap|indent)|text-row|text-head|icon-(md|lg|rail)|rail-badge)\)/
+      /var\(--(touch-(row|target|text|icon|mark|pad|gap|indent)|row-(height|height-sm|pad|gap|indent)|text-row|text-head|icon-(md|lg))\)/
 
     const missing = SURFACES.filter((name) => {
       const one = components.find((component) => component.name === name)

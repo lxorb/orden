@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
@@ -15,8 +16,27 @@ import { describe, expect, test } from 'vitest'
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
 
+/** Which components hold a given drawing. What says a glyph is drawn in one
+ *  place: not "these two do not have it" but "nothing else does". */
+function componentsWith(glyph: string): string[] {
+  const found: string[] = []
+
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name)
+      if (entry.isDirectory()) walk(path)
+      else if (entry.name.endsWith('.svelte') && readFileSync(path, 'utf8').includes(glyph)) {
+        found.push(path.slice(SOURCE.length).replace(/\\/g, '/'))
+      }
+    }
+  }
+
+  walk(SOURCE)
+  return found.sort()
+}
+
 const titlebar = read('lib/Titlebar.svelte')
-const rail = read('lib/Rail.svelte')
+const sidebar = read('lib/Sidebar.svelte')
 const appMenu = read('lib/AppMenu.svelte')
 const toggle = read('lib/SidebarToggle.svelte')
 
@@ -32,11 +52,19 @@ describe('the button that opens the file list', () => {
 
     for (const [name, text] of [
       ['lib/Titlebar.svelte', titlebar],
-      ['lib/Rail.svelte', rail],
+      ['lib/Sidebar.svelte', sidebar],
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
       expect(text, `${name} uses the component`).toContain('<SidebarToggle />')
     }
+  })
+
+  /** One glyph and one movement, wherever it is drawn: the bar over the note and
+   *  the drawer's own head show the same button in the same state. Nothing else
+   *  in the app draws a sidebar button of its own. */
+  test('and nothing else anywhere draws one', () => {
+    const others = componentsWith(PANEL).filter((name) => name !== 'lib/SidebarToggle.svelte')
+    expect(others, `these draw the sidebar glyph again: ${others.join(', ')}`).toEqual([])
   })
 
   /** The glyph says what the press does, and moves while it does it: the panel's
@@ -48,10 +76,11 @@ describe('the button that opens the file list', () => {
   })
 
   /** Where the sidebar is a drawer it covers the bar the button sits in, so the
-   *  drawer carries the same button at the same corner of the screen - and only
-   *  there, or a tablet with the sidebar docked beside the note would have two. */
-  test('is at the top of the rail exactly where the sidebar is a drawer', () => {
-    expect(rail).toContain('{#if viewport.drawer}\n    <div class="top"><SidebarToggle /></div>')
+   *  drawer's own head carries the same button at the same corner of the screen -
+   *  and only there, or a tablet with the sidebar docked beside the note would
+   *  have two of them in one row. */
+  test('is in the drawer head exactly where the sidebar is a drawer', () => {
+    expect(sidebar).toContain('{#if viewport.drawer}\n      <SidebarToggle />\n    {/if}')
   })
 })
 
@@ -73,11 +102,13 @@ describe('the three dots at the other end', () => {
 describe('the hamburger', () => {
   test('is drawn in one place and is not what a phone or a tablet gets', () => {
     expect(appMenu).toContain(BARS)
-    expect(titlebar).not.toContain(BARS)
-    expect(rail).not.toContain(BARS)
+    expect(componentsWith(BARS)).toEqual(['lib/AppMenu.svelte'])
 
-    // The rail's menu button is the desktop's; a touch screen reaches the app
-    // through the dots instead.
-    expect(rail).toContain('{:else if !viewport.touch}')
+    // The bars are the desktop's, at the left end of the bar where the column of
+    // spaces used to keep them; a touch screen reaches the app through the dots
+    // at the other end of that same row instead.
+    expect(titlebar).toContain(
+      '{#if !viewport.touch}\n    <AppMenu {view} {onpalette} {onhistory} />',
+    )
   })
 })

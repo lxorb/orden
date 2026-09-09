@@ -216,11 +216,18 @@ Three things, in the order a thumb reaches them.
 | Middle | The document's name, with the mark its kind wears in every list that shows it |
 | Right | Three dots, which open the menu the desktop's menu bar holds: the same groups, the same rows, the same submenus, as one sheet - `AppMenu.svelte` with `dots` |
 
-There is no hamburger on a phone or a tablet. The rail's menu button is the
-desktop's; where the sidebar is a drawer the rail carries the sidebar button
-instead, because a drawer over the note covers the bar that button otherwise sits
-in and the top left of the screen should mean the same thing either way.
-`apps/desktop/test/mobile-header.test.ts` holds the row to all of that.
+There is no hamburger on a phone or a tablet: the bars are the desktop's, at the
+left of its title bar, and a touch screen reaches the same menu through the dots
+at the other end of this row.
+
+The sidebar button is one component and one drawing, wherever it appears. Where
+the sidebar is a drawer it covers the bar this button sits in, so the drawer's
+own head carries the same button at the same corner of the screen - shut it is a
+plain window, open it has the panel's edge inside it, and the edge slides in from
+the left as the list arrives and back out as it goes. Nothing else in the app
+draws that glyph, and a tablet with the panel docked beside the note has only the
+bar's. `apps/desktop/test/mobile-header.test.ts` holds all of that: one component,
+one glyph, one place each.
 
 ## One document at a time
 
@@ -235,25 +242,30 @@ right of the list panel's header, and it is the only one on the screen. A press
 makes a note; a held finger offers a canvas and a folder too, which is what the
 desktop strip's plus does under a right click. See `docs/design.md`.
 
-## What the drawer is headed with
+## What the drawer is headed with, and footed with
 
 Three rows above the list, in the order identity, view, action - the shape
 Discord's channel list has, at the touch scale:
 
 | | |
 | --- | --- |
-| The name | The space, at `--text-head`, with a chevron. The rail is a column of wordless squares and on a phone it is behind this, so the name is what says where you are - and it is the switcher: the other spaces are rows in its menu, and making one is a row there rather than a second plus in the rail |
-| The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is |
+| The head | The sidebar button, then the space at `--text-head` with a chevron beside the word, then the one plus. The name is what says where you are, and it is the switcher: pressing it drops the other spaces out of the header as rows inside the panel, each with its own mark, and making one is a row at the foot of that list |
+| The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is, and the fill slides between them rather than blinking |
 | The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike |
 
 Then the list, with a word in capitals over each group and the note you have
 open filled - `.nib-row.is-on`, the same fill its tab wears on a desktop.
 
+Under the list, `SidebarFoot.svelte`: who is at this device as a face and a name,
+and the theme and the settings at the other end. It is `--header-height` tall, so
+the list sits between two matching bars, and it keeps clear of the gesture bar
+with `--inset-bottom`. The same component and the same three controls a desktop
+has, because a drawer is the sidebar.
+
 There is no bottom bar. Discord earns one because it has three unrelated
 app-level places; nib has one - your notes - and the other two candidates are
 already where they belong: search is the pill at the top of the list, and who
-you are is a row in settings, one tap from the rail's foot. The reasoning is in
-`docs/design.md`.
+you are is the first thing in that foot. The reasoning is in `docs/design.md`.
 
 Nothing is lost in the trade. What was open goes on the closed stack with its
 words (`workspace/closed.svelte.ts`), so back - the gesture on Android, `Reopen
@@ -269,7 +281,7 @@ holds both to it, and holds the desktop to keeping every tab it has always had.
 
 ## Full screen
 
-The document and nothing else: the rail with the spaces, the file list, the title
+The document and nothing else: the file list, the title
 bar and the status bar all leave, and the panes fill the window behind whatever
 the system keeps for its clock and its gesture bar. Where there is a window to
 ask, it drops its frame too - the desktop's chrome, the browser's own bars.

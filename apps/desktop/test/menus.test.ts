@@ -58,8 +58,7 @@ function moduleBody(text: string, signature: string): string {
 }
 
 describe('what a space offers', () => {
-  const rail = read('lib/Rail.svelte')
-  const space = body(rail, 'function spaceMenu(space: Space)')
+  const space = moduleBody(read('lib/space-actions.ts'), 'export function spaceMenu(space: Space)')
 
   test('the space itself: its name, its mark, who may reach it', () => {
     for (const entry of ["t('Rename')", "t('Choose an icon')", "t('Share')", "t('Publish')"]) {
@@ -84,6 +83,24 @@ describe('what a space offers', () => {
 
   test('a shared space still offers the way out of it', () => {
     expect(space).toContain("t('Leave space')")
+  })
+
+  /** The column of squares this order used to be dragged in is gone, so the
+   *  menu is the whole of how a space is moved - and it is the same two rows on
+   *  a desktop as under a thumb. */
+  test('and where it sits, as a step in each direction', () => {
+    expect(space).toContain("t('Move up')")
+    expect(space).toContain("t('Move down')")
+  })
+
+  /** One list of entries, reached from the row in the switcher, from a right
+   *  click on it and from a held finger. */
+  test('through the one menu the switcher opens, however it is asked for', () => {
+    const switcher = read('lib/SpaceSwitcher.svelte')
+
+    expect(switcher).toContain('menu.show(event, spaceMenu(space)')
+    expect(switcher).toContain('oncontextmenu={(event) => about(event, space)}')
+    expect(switcher).toContain('use:longPress={(event) => about(event, space)}')
   })
 })
 

@@ -14,7 +14,7 @@
   import { longPress } from './longpress'
   import { movesInto } from './move-targets'
   import { FILES_MARK, GRAPH_MARK, LINKS_MARK, OUTLINE_MARK, SEARCH_MARK } from './panel-marks'
-  import { newSpace, renameSpace } from './space-actions'
+  import { newSpace } from './space-actions'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import type { Panel, SortKey } from './workspace.svelte'
@@ -26,6 +26,9 @@
   import Bookmarks from './Bookmarks.svelte'
   import Links from './Links.svelte'
   import SearchPanel from './SearchPanel.svelte'
+  import SidebarFoot from './SidebarFoot.svelte'
+  import SidebarToggle from './SidebarToggle.svelte'
+  import SpaceSwitcher from './SpaceSwitcher.svelte'
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
   import { dur } from './motion'
@@ -122,36 +125,6 @@
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
       { label: t('New folder'), run: () => void workspace.createFolder() },
-    ]
-  }
-
-  /** The header's own menu: which space this is, and what a space is.
-   *
-   *  A rail of wordless squares says which space is open only to somebody who
-   *  already knows the squares, and on a phone the rail is behind the drawer's
-   *  own list. So the name is a control: the other spaces are rows in it, this
-   *  one is a row that is already where you are, and making a space is here
-   *  rather than a second plus in the rail. */
-  function switcherMenu(): MenuEntry[] {
-    const here = workspace.activeSpace
-    // Only where there is somewhere to switch to: one space listed once, greyed
-    // out because it is where you already are, is a row that says nothing.
-    const others: MenuEntry[] =
-      workspace.spaces.length > 1
-        ? workspace.spaces.map((space) => ({
-            label: space.name,
-            disabled: space.id === here?.id,
-            run: () => workspace.showSpace(space.id),
-          }))
-        : []
-
-    return [
-      ...others,
-      DIVIDER,
-      { label: t('New space'), run: () => void newSpace() },
-      ...(here ? [{ label: t('Rename'), run: () => void renameSpace(here) }] : []),
-      DIVIDER,
-      ...spaceMenu(),
     ]
   }
 
@@ -341,18 +314,20 @@
   ></div>
 
   <!-- Which space this is. A panel with no subject is a list of names belonging
-       to nobody, so the name comes first and is itself the switcher: the rail
-       does the same job on a desktop, and on a phone the rail is behind this. -->
+       to nobody, so the name comes first and is itself the switcher: every other
+       space is a row in it, with its own mark, and there is no second column of
+       wordless squares saying the same thing. See SpaceSwitcher.svelte. -->
   <div class="head">
-    <button
-      class="name"
-      title={workspace.activeSpace?.name ?? t('Spaces')}
-      aria-haspopup="menu"
-      onclick={(event) => menu.show(event, switcherMenu(), titleOfSpace())}
-    >
-      <span class="nib-row-label">{workspace.activeSpace?.name ?? t('Spaces')}</span>
-      <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
-    </button>
+    <!-- Where the panel is a drawer over the note it covers the bar the sidebar
+         button sits in, so the drawer carries the same button at the same corner
+         of the screen - one component, one glyph, one movement; see
+         SidebarToggle.svelte. A docked panel leaves the bar's own button where
+         it is and has none of its own. -->
+    {#if viewport.drawer}
+      <SidebarToggle />
+    {/if}
+
+    <SpaceSwitcher />
 
     <!-- The one plus. A desktop's lives at the end of the tab strip, where a
          browser puts it; a handheld has no tab strip, so it is here. Either way
@@ -532,6 +507,12 @@
       {/if}
     </div>
   {/key}
+
+  <!-- Who is at this device, the theme and the settings, in a quiet row at the
+       bottom of the panel: the three things the column of spaces used to carry
+       under it, which belong to the app rather than to any one note. The same
+       row on a desktop and in a drawer; see SidebarFoot.svelte. -->
+  <SidebarFoot />
 </aside>
 
 <style>
@@ -579,52 +560,17 @@
      them is `--row-pad` in from that, so the words in the header, the words in
      the search pill and the marks in the rows below all start on one line down
      the panel; see docs/design.md. */
+  /* Positioned, because the list of spaces drops out of it: the head spans the
+     panel, so a list hung from it lines up with the search pill and the rows
+     under it without anything being measured. See SpaceSwitcher.svelte. */
   .head {
+    position: relative;
     flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-1);
     min-height: var(--header-height);
     padding: 0 var(--space-1);
-  }
-
-  /* The space's name, and the whole of what the switcher is. */
-  .name {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-height: var(--row-height);
-    padding: 0 calc(var(--row-pad) - var(--space-1));
-    border: none;
-    border-radius: var(--radius-row);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    text-align: left;
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .name:hover {
-      background: var(--surface-hover);
-    }
-  }
-
-  .name:active {
-    background: var(--surface-press);
-  }
-
-  /* Says the name can be pressed. */
-  .chevron {
-    flex: none;
-    width: var(--icon-sm);
-    height: var(--icon-sm);
-    color: var(--muted);
   }
 
   .new {
@@ -914,9 +860,10 @@
     padding-top: var(--inset-top);
   }
 
-  /* The last row clears the gesture bar. */
+  /* Room under the last row. What clears the gesture bar is the foot below
+     this, which is the thing actually at the bottom of the screen. */
   :global([data-touch]) .body {
-    padding-bottom: var(--touch-bottom);
+    padding-bottom: var(--space-4);
   }
 
   :global([data-touch]) .empty-text,

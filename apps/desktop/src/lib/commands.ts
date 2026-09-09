@@ -557,6 +557,19 @@ function spaceCommands(): Command[] {
   if (!space) return []
 
   return [
+    // Which space is open. The switcher at the top of the list panel is the
+    // pointer's way in; this is the keyboard's, and the only one there is while
+    // the panel is shut. A row each, with the one you are in ticked, which is
+    // how the palette offers every other set of things to pick from.
+    ...(workspace.spaces.length > 1
+      ? workspace.spaces.map((one) => ({
+          id: `space:${one.id}`,
+          label: t('Space: {name}', { name: one.name }),
+          checked: one.id === space.id,
+          run: () => void workspace.showSpace(one.id),
+        }))
+      : []),
+    { id: 'new-space', label: t('New space'), run: () => void newSpace() },
     ...(canShare(space)
       ? [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
       : []),

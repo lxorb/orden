@@ -198,6 +198,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(600)
     shot("files")
 
+    # The quiet row at the bottom of the panel: who is here, the theme and the
+    # settings. The same three on every device, which is the point of it.
+    strip("foot", "aside .foot")
+
     # The two rows a handheld reads the app through, close up: the bar over the
     # note with the sidebar button at the left of it, and the drawer's own head
     # with the same button in the same corner. One glyph, one animation, and
@@ -262,12 +266,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("palette")
         dismiss(page)
 
-    # The app's own menu: the rail's button on a desktop, the three dots on a
-    # handheld.
+    # The app's own menu: the bars at the left of the title bar on a desktop, the
+    # three dots at the right of it on a handheld.
     trigger = (
         page.locator("header button[aria-label]").last
         if finger
-        else page.locator("nav .top button").first
+        else page.locator("header button[aria-label]").first
     )
     if trigger.count():
         try:

@@ -51,12 +51,30 @@
   }
 </script>
 
-<!-- One row: the sidebar toggle, the open notes, and the window's own buttons.
-     On a desktop the note's name lives in its tab, so there is no separate
-     title; a phone and a tablet hold one document, so the name is the middle of
-     the row and the whole of the app is behind the dots at the end of it. -->
+<!-- One row: what the app is, the button that opens the file list, the open
+     notes, and the window's own buttons. On a desktop the note's name lives in
+     its tab, so there is no separate title; a phone and a tablet hold one
+     document, so the name is the middle of the row and the whole of the app is
+     behind the dots at the end of it. -->
 <header>
+  <!-- The application itself, at the top left corner of the screen, which is
+       where it was when there was a column of spaces to put it above. A phone
+       reaches it through the three dots at the other end of this same row
+       instead: there the left corner is the file list. -->
+  {#if !viewport.touch}
+    <AppMenu {view} {onpalette} {onhistory} />
+  {/if}
+
   <SidebarToggle />
+
+  <!-- With the list shut there is nothing on the screen saying which space
+       these notes are in, and the panel's own header is what usually says it.
+       So the name stands here while the panel is away, and goes again the moment
+       it is back - a word, not a control: what opens the list is the button
+       beside it. -->
+  {#if !viewport.touch && !workspace.panel && workspace.activeSpace}
+    <span class="space">{workspace.activeSpace.name}</span>
+  {/if}
 
   {#if viewport.touch}
     <!-- One document at a time, so its name goes here rather than a strip of
@@ -203,6 +221,22 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  /* Which space these notes are in, while the panel that usually says so is
+     shut. Quiet: it is a fact about what is open, not something to press. */
+  .space {
+    flex: none;
+    max-width: 12rem;
+    align-self: center;
+    padding-right: var(--space-2);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+    font-weight: var(--weight-strong);
+    color: var(--muted-strong);
   }
 
   /* A phone has no window to drag and a thumb to hit this with. The bar grows

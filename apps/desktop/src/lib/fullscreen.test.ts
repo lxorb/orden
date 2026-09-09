@@ -168,14 +168,13 @@ describe('the shell', () => {
     return found
   }
 
-  test('the app leaves: the rail and the file list, both bars, the round button', () => {
+  test('the app leaves: the file list, both bars, the round button', () => {
     expect(app).toContain('{#if !fullscreen.on}')
     expect(app).toContain("{#if workspace.active?.kind !== 'graph' && !fullscreen.on}")
     expect(app).toContain('&& !fullscreen.on}\n        <button class="fab"')
 
     const gone = branches(app).find((one) => one.includes('class="panels"'))
     expect(gone, 'the panels are not left out').toBeDefined()
-    expect(gone).toContain('<Rail')
     expect(gone).toContain('<Sidebar')
   })
 

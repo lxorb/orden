@@ -14,13 +14,7 @@
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { t } from './i18n.svelte'
-  import {
-    bookmarkEntry,
-    DIVIDER,
-    iconEntries,
-    menu,
-    type MenuEntry,
-  } from './menu.svelte'
+  import { bookmarkEntry, DIVIDER, iconEntries, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
   import { shownName } from './note-name'

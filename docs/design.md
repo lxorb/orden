@@ -79,9 +79,11 @@ component that writes a finger-sized number of its own. That instinct - state it
 once, then guard it - is the right one, and this pass extends it rather than
 inventing a second way.
 
-The structure. A rail of spaces, one document at a time on a handheld, the
-sidebar as a drawer over the note. That is Discord's structure, and it is the
-correct one for what nib is.
+The structure. One document at a time on a handheld, the sidebar as a drawer
+over the note, and a panel that is a place with a name at the top of it. That is
+Discord's structure, and it is the correct one for what nib is - all of it
+except the rail, which is where a place with a hundred servers keeps its
+identity and nib has three spaces. See "The rail is gone".
 
 ## What nib gets wrong
 
@@ -179,14 +181,17 @@ One size per context, so a glyph's size says what kind of thing it is.
 | Token | Size | Where |
 | --- | --- | --- |
 | `--icon-sm` | 13px | a mark inside a row that is not the row's own: a tab's kind, a bookmark's kind |
-| `--icon-md` | 16px | **the mark in front of a name** - tree, bookmarks, tags, menus |
-| `--icon-lg` | 18px | a glyph that is a button: panel tabs, title bar, rail feet |
-| `--icon-rail` | 18px | the drawing inside a space badge, which is `--rail-badge` across - 30px under a pointer, `--touch-target` under a thumb, its corner a third of its side either way |
+| `--icon-md` | 16px | **the mark in front of a name** - tree, bookmarks, tags, menus, and the drawing inside a space's badge, which is a mark in front of a name too |
+| `--icon-lg` | 18px | a glyph that is a button: panel tabs, title bar, the panel's foot |
 
 On a touch screen `--icon-md` becomes `--touch-mark`, raised from 15px to 20px,
 and `--icon-lg` becomes `--touch-icon` (24px). The mark is then within three
 pixels of the 17px words beside it, which is the proportion Notion and Obsidian
 both hold.
+
+A space's badge and the face in the panel's foot are `--row-height-sm` square
+with a corner a third of their side, so they are the same shape at 24px under a
+pointer and at 48 under a thumb, and neither needs a size of its own.
 
 ### Rows
 
@@ -231,7 +236,7 @@ Elevation follows the same three:
 | --- | --- | --- | --- |
 | 0 | none | none | in a panel - surfaces only |
 | 1 | `--shadow-sm` | none | raised out of a control it sits in: the chosen half of a segmented control, the tab you are on |
-| 2 | `--shadow-md` | `--line-strong` | a small bar over the text: the format bar, a PDF's two actions, the name beside the rail |
+| 2 | `--shadow-md` | `--line-strong` | a small bar over the text: the format bar, a PDF's two actions |
 | 3 | `--shadow-lg` | `--line-strong` | a layer over the app: a menu, the palette, a sheet, a space lifted to be moved |
 
 A shadow above zero always comes with a hairline border, and nothing at zero has
@@ -280,12 +285,14 @@ in the tree panel, the two lists of links, a note's name over its search hits.
 Three rows of chrome, in the order identity, action, view - which is Discord's
 order and Notion's:
 
-1. **The header**, `--header-height`: the space's name at `--text-base` and
-   `--weight-strong`, with a chevron. The chevron is the space's menu: switch to
-   another space, make one, rename this one, new note, new folder, reveal. On a
-   desktop the rail is still the switcher and the chevron is the shortcut; on a
-   phone, where the rail is a column of wordless squares, the name is the only
-   thing that says where you are.
+1. **The header**, `--header-height`: the space's name at `--text-head` and
+   `--weight-strong`, with a chevron beside the word rather than at the far end
+   of the bar - the two are one control. Pressing it drops the list of spaces out
+   of the header, inside the panel: the panel is the anchor, so the list is the
+   width of the list of notes and there is nothing to measure, nothing to flip at
+   an edge and no second sheet written for a phone. Where the panel is a drawer,
+   the sidebar button stands in front of the name, because a drawer covers the
+   bar that button otherwise sits in.
 2. **The search entry.** One field, one mechanism. Outside the Search panel it
    is a pill that opens it; inside, it is the panel's own field, in the same
    place, at the same height, with the same radius and the same magnifier, drawn
@@ -300,17 +307,50 @@ entry has to be in one place whether it is the pill or the field, and the field
 belongs to the Search panel, which begins under the tabs. So the order on the
 screen is name, tabs, entry, list - and the entry never moves.
 
-### The rail
+### The rail is gone
 
-Spaces, and nothing that is not a space or the app itself. A badge is
-`--rail-badge` across with a corner a third of its side, so a pointer's 30px
-square and a thumb's 48 are the same shape, and the space you are in wears a pill
-against the column's edge as well as the accent - Discord's marker, which reads
-before any colour does. The plus goes: making
-a space is a row in the header's menu, which is where a workspace switcher keeps
-it. The GitHub mark goes: it is in Help. What is left at the foot is settings
-with its sync light, the account while there is none, and the theme, under a
-hairline that groups them the way the top one groups the menu.
+There were two ways to choose a space, and the header's is the better one,
+because it says the name. A column of wordless squares is only legible to
+somebody who already knows the squares; the header says where you are before it
+offers to take you elsewhere, which is the order Notion and Discord both put
+identity in. So the column goes, on every device, and everything it carried has
+a home:
+
+| What the rail did | Where it is now |
+| --- | --- |
+| Which space you are in | The panel's header, and the title bar while the panel is shut |
+| Switching to another one | Rows in that header's switcher, each with the space's own mark and a dot where somebody else is in it |
+| Making one | A row at the foot of the same list, where a workspace switcher keeps it - and in the palette and the File menu, as before |
+| A space's own menu | The same entries, on the space's own row: a button at the end of it, a right click, or a held finger |
+| Reordering by dragging | `Move up` and `Move down` in that menu, on every device |
+| The account | The left of the panel's foot row, as a face and a name |
+| The theme, and settings with its sync light | The right of that same row |
+| The three bars | The left end of the title bar, which is the corner of the screen they were already in |
+| The sidebar button, where the panel is a drawer | The drawer's own head, which is the corner of the screen it was already in |
+
+Two things are better for it rather than merely relocated. The switcher's rows
+are rows - a mark, a name, a dot - so a space is read the way a note is, and a
+space's name is never a tooltip that has to be hovered for. And the app now has
+exactly one thing at the top left of the window on every device: the bars on a
+desktop, the file list on a handheld, where the bar under a drawer would be
+unreachable anyway.
+
+What is lost is the marker against the edge, which said which space you were in
+without a word. The filled row in the switcher says it instead, in the same
+grammar as the note you have open - and the name is on the screen the whole
+time, which the marker never was.
+
+### The panel's foot
+
+`--header-height` tall, so the list sits between two bars of one height, with a
+hairline over it and the safe-area inset under it. Three things, and the same
+three on every device, because it is one component: the account at the left as a
+face and a name, opening the account pane - signing in, the name a shared space
+shows, storage and signing out are all there, so who you are is one place rather
+than a sheet here and a pane there; then the theme and the settings at the right,
+where a switch goes. The theme is off while the theme in force has only the one
+scheme. The settings button carries the sync light, as it did in the rail. The
+GitHub mark does not come back: it is a row in Help.
 
 ### One plus
 
@@ -337,21 +377,24 @@ dress the table in the editor, on paper and on a published page; see
 
 ### On a phone
 
-Modelled on Discord, because the structure is already the same:
+Modelled on Discord, because the structure is already the same - minus the rail,
+which Discord earns and nib does not:
 
-- The drawer is the rail of space badges, round, `--touch-target` across, with
-  the one you are in marked by a pill against the left edge rather than by the
-  square turning into a colour.
-- Beside it the list panel with the header, the search pill, section labels and
-  filled rows - the same three rows the desktop has, at the touch scale.
+- The drawer is the list panel, the whole width of the screen, with the same
+  four rows the desktop has at the touch scale: the head, the tabs, the search
+  pill, the list, and the foot under them.
+- The head carries the sidebar button, then the space's name and its chevron,
+  then the one plus. The button is the same component the title bar has, in the
+  same corner of the screen, so the top left means one thing whether the drawer
+  is open or shut.
 - **No bottom bar.** Discord earns one because it has three unrelated app-level
   places: servers, notifications, and you. nib has one place - your notes - and
   the other two candidates are already where they belong: search is the pill at
-  the top of the list, and "you" is a row in settings, which is one tap from the
-  rail's foot. A bar of three tabs where one is always selected would spend 56px
-  of a phone screen and a permanent line of chrome to move two rarely-pressed
-  things one tap closer, and it would put a second navigation model beside the
-  drawer that already navigates. For a notes app it is bloat. It is not built.
+  the top of the list, and "you" is the first thing in the panel's own foot. A
+  bar of three tabs where one is always selected would spend 56px of a phone
+  screen and a permanent line of chrome to move two rarely-pressed things one tap
+  closer, and it would put a second navigation model beside the drawer that
+  already navigates. For a notes app it is bloat. It is not built.
 - The document does not peek from the right. One document at a time, the drawer
   over it, the sidebar button at the top left and the three dots at the top
   right, all unchanged.

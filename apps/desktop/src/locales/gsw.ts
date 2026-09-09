@@ -770,6 +770,7 @@ export const gsw: Dictionary = {
   'Save layout': 'Layout spichere',
   'Name this layout': 'Layout benäme',
   'Layout: {name}': 'Layout: {name}',
+  'Space: {name}': 'Ablag: {name}',
   'Theme: {name}': 'Design: {name}',
   'Code theme: {name}': 'Code-Design: {name}',
   'Recent: {name}': 'Zletscht: {name}',

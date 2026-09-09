@@ -773,6 +773,7 @@ export const fr: Dictionary = {
   'Save layout': 'Enregistrer la disposition',
   'Name this layout': 'Nommer la disposition',
   'Layout: {name}': 'Disposition : {name}',
+  'Space: {name}': 'Espace : {name}',
   'Theme: {name}': 'Thème : {name}',
   'Code theme: {name}': 'Thème du code : {name}',
   'Recent: {name}': 'Récent : {name}',

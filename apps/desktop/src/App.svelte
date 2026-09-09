@@ -16,7 +16,6 @@
   import Palette from './lib/Palette.svelte'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
-  import Rail from './lib/Rail.svelte'
   import Sidebar from './lib/Sidebar.svelte'
   import SettingsPanel from './lib/SettingsPanel.svelte'
   import ShareSheet from './lib/ShareSheet.svelte'
@@ -439,10 +438,9 @@
   onpointerdown={() => fullscreen.stir()}
 />
 
-<!-- The titlebar spans the whole window, so the rail, the sidebar and the
-     document all start on the same line. -->
-<!-- The rail and the sidebar run the full height, so the window's one header
-     row sits beside them rather than above everything. -->
+<!-- The sidebar runs the full height, so the window's one header row sits beside
+     it rather than above everything, and the panel and the document start on
+     the same line. -->
 <!-- Nothing in the app is reachable while the account's writing is still on
      its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
 <main class:focus={modes.focus} class:full={fullscreen.on} inert={arriving.showing}>
@@ -453,12 +451,12 @@
     <!-- Wherever the panels are a drawer, a shut drawer is off screen: at the
          narrow end it is behind the note, and above that it is slid off to the
          side. Either way nothing in it can be reached, so nothing in it is
-         announced or reachable by a key either - which is what keeps the rail's
-         own sidebar button from being read out on a phone held sideways, where
-         the only thing a thumb can reach is the bar's. -->
-    <!-- Full screen leaves the document and nothing else: no rail, no file
-         list, no bars. Left out rather than slid away, so nothing in them can
-         be reached by a key while they are gone; see fullscreen.svelte.ts. -->
+         announced or reachable by a key either - which is what keeps the
+         drawer's own sidebar button from being read out on a phone held
+         sideways, where the only thing a thumb can reach is the bar's. -->
+    <!-- Full screen leaves the document and nothing else: no file list, no
+         bars. Left out rather than slid away, so nothing in them can be reached
+         by a key while they are gone; see fullscreen.svelte.ts. -->
     {#if !fullscreen.on}
       <div
         class="panels"
@@ -473,16 +471,6 @@
         style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
         ontransitionend={(event) => drawer.arrived(event)}
       >
-        <Rail
-          {view}
-          onpalette={() => {
-            palette = true
-          }}
-          onhistory={() => {
-            settings.historyOpen = true
-          }}
-        />
-
         {#if workspace.panel}
           <Sidebar ongoto={goto} onmovesection={moveSectionTo} />
         {/if}

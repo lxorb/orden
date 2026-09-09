@@ -50,12 +50,12 @@
 
   /* Icons, one size per context, so how big a glyph is says what kind of thing
      it is. A mark inside a row that is not the row's own; the mark in front of a
-     name, which is the one a file list is read by; a glyph that is a button; and
-     the drawing inside a space's badge. */
+     name, which is the one a file list is read by - and the one inside a space's
+     badge, which is a mark in front of a name too; and a glyph that is a
+     button. */
   --icon-sm: 13px;
   --icon-md: 16px;
   --icon-lg: 18px;
-  --icon-rail: 18px;
 
   /* A row, everywhere there is a list of names. The tall one is for a row that
      is tapped, the short one for a row that is read - an outline, a line of a
@@ -91,11 +91,6 @@
   --scrollbar-width: 10px;
   --scrollbar-thumb: 6px;
 
-  --rail-width: 46px;
-  /* A space's badge, and every button in the rail's foot: one square, so the
-     column reads as one column. Its corner is a third of its side, so it is the
-     same shape at either size. */
-  --rail-badge: 30px;
   --sidebar-width: 252px;
   --titlebar-height: 38px;
   /* The bar across the top of a column: the title bar over the note, and the
@@ -189,13 +184,8 @@
   --header-height: var(--touch-row);
   --icon-md: var(--touch-mark);
   --icon-lg: var(--touch-icon);
-  --icon-rail: var(--touch-icon);
   --text-row: var(--touch-text);
   --text-head: 19px;
-  /* A thumb's badge. The floor rather than the row: a square that is only ever
-     pressed needs `--touch-target`, and a column of 56px squares is a column
-     nothing else fits beside. */
-  --rail-badge: var(--touch-target);
 }
 
 :root,

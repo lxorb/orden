@@ -775,6 +775,7 @@ export const de: Dictionary = {
   'Save layout': 'Layout speichern',
   'Name this layout': 'Layout benennen',
   'Layout: {name}': 'Layout: {name}',
+  'Space: {name}': 'Bereich: {name}',
   'Theme: {name}': 'Design: {name}',
   'Code theme: {name}': 'Code-Design: {name}',
   'Recent: {name}': 'Zuletzt: {name}',
