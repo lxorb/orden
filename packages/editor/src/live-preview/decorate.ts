@@ -23,7 +23,9 @@ import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { noteIndex, resolves } from '../wikilink/notes'
+import { webEmbed } from '@nib/markdown/providers'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
+import { WebEmbedWidget } from './web'
 import {
   BulletWidget,
   CalloutWidget,
@@ -478,6 +480,14 @@ class Decorator {
 
     const image = imageOfNode(this.state, node)
     if (!image) return true
+
+    // An address a provider answers for is that page, not a picture. Asked here
+    // rather than in image.ts because it is the same question the renderer asks:
+    // what did the note point at?
+    if (webEmbed(image.src)) {
+      this.inlineWidget(node, new WebEmbedWidget(image.src), false)
+      return false
+    }
 
     this.inlineWidget(node, new ImageWidget(image), false)
     // Its marks live inside the replacement now; decorating them would overlap.

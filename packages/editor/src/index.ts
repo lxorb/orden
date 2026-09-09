@@ -56,6 +56,7 @@ export {
   setNoteIndex,
 } from './wikilink/notes'
 export { setBlocks, type SlashBlock } from './slash'
+export { embedClicks, loadEmbed } from './web-frame'
 export { setSnippets, snippets } from './snippets'
 export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {

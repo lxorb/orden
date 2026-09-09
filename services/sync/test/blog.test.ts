@@ -266,6 +266,46 @@ describe('a published note cannot script the reader', () => {
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
   })
 
+  test('a video a note embeds is a card that goes to the video, and loads nothing', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: {
+        path: 'watch.md',
+        content: '# Watch\n\n![](https://youtu.be/dQw4w9WgXcQ)\n',
+      },
+    })
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/watch', { host: 'field.nibeditor.com' })
+
+    // The card is here, and it is a link: this page runs no script, so a click
+    // takes the reader to the video rather than loading one in place.
+    expect(response.text).toContain('class="embed-web embed-wide"')
+    expect(response.text).toContain('href="https://youtu.be/dQw4w9WgXcQ"')
+    expect(response.text).toContain('YouTube')
+    // Nothing a browser fetches from anybody on its way to reading the note.
+    expect(response.text).not.toContain('<iframe')
+    // Which is why no frame needs letting through, and none is.
+    const policy = response.headers.get('content-security-policy') ?? ''
+    expect(policy).toContain("default-src 'none'")
+    expect(policy).not.toContain('frame-src')
+  })
+
+  test('a recording a note embeds is a player the policy allows', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'listen.md', content: '# Listen\n\n![[take.mp3]]\n' },
+    })
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/listen', { host: 'field.nibeditor.com' })
+
+    expect(response.text).toContain('<audio class="embed-media" controls preload="metadata"')
+    expect(response.headers.get('content-security-policy') ?? '').toContain(
+      'media-src https: data:',
+    )
+  })
+
   test('markdown still renders fully', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,

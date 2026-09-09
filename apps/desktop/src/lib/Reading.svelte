@@ -27,7 +27,7 @@
   import { openExternal } from './tauri'
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
-  import { resolveFile, resolveNote, resolveRelative } from '@nib/editor'
+  import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
   import { isTabFile, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
 
@@ -195,6 +195,16 @@
   /** A link, as the reading view has to read it: a place on this page, a note in
    *  this space, or the web. */
   function follow(event: MouseEvent) {
+    // A card standing in for a page somewhere else shows that page here, in the
+    // frame and the sandbox the provider needs, rather than sending the reader
+    // out of the app. The card is a link so that a published page - which runs no
+    // script - still goes somewhere; here there is a script.
+    const card = (event.target as Element | null)?.closest('.embed-web')
+    if (card instanceof HTMLElement && loadEmbed(card)) {
+      event.preventDefault()
+      return
+    }
+
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
     if (!anchor || !href) return

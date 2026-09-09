@@ -323,6 +323,11 @@ figure.embed-file{display:flex;align-items:center;gap:.55em;padding:.5em 1.15rem
 figure.embed-file a{border:0;color:inherit}
 figure.embed-file a:hover{color:var(--accent)}
 .embed-icon{flex:none;width:1.05em;height:1.05em;color:var(--muted)}
+.embed-web{display:block;margin:1.5em 0;height:var(--embed-height,auto);border:1px solid var(--line);border-radius:9px;background:var(--surface);overflow:hidden}
+.embed-web.embed-wide{aspect-ratio:16/9;height:auto}
+.embed-play{display:flex;align-items:center;justify-content:center;gap:.5em;width:100%;height:100%;min-height:4.5em;border:0;color:var(--muted);font-size:.9em}
+.embed-play:hover{background:var(--surface);color:var(--accent)}
+.embed-play .embed-icon{width:1.15em;height:1.15em;color:inherit}
 footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.82em}
 .by{margin:-.4em 0 2.2em;color:var(--muted);font-size:.94em}
 .back{margin:0 0 1.6em;font-size:.88em}

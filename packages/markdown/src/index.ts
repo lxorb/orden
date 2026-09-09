@@ -5,6 +5,7 @@ import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
+import { webCard } from './web-embed'
 import {
   type EmbedResolver,
   type Embeds,
@@ -161,6 +162,12 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
       /** The same, for a picture. `data:` is allowed here and nowhere else:
        *  it is how a small image travels inside the document. */
       image(token: Tokens.Image) {
+        // An address one of the handful of providers answers for is that page,
+        // shown where it stands rather than a picture that was never there. A
+        // card until the reader asks for it; see web-embed.ts.
+        const card = webCard(token.href)
+        if (card) return card
+
         // Through the text renderer, so markdown in the alt text comes out as
         // the words it stands for rather than as tags inside an attribute.
         const alt = this.parser.parseInline(token.tokens, this.parser.textRenderer)

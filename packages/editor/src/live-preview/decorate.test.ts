@@ -374,6 +374,19 @@ describe('images', () => {
   test('treats a flow fence as a diagram', () => {
     expect(blocks('```flow\nst=>start: Go\n```')).toEqual(['```flow\nst=>start: Go\n```'])
   })
+
+  test('an address a provider answers for is that page, not a picture', () => {
+    const written = '![](https://youtu.be/dQw4w9WgXcQ)'
+    expect(concealed(written)).toEqual([written])
+    // And the markup is reachable, like every other rendered thing.
+    expect(concealed(written, 4)).toEqual([])
+  })
+
+  test('an address nobody answers for is still a picture', () => {
+    expect(concealed('![](https://example.test/a.png)')).toEqual([
+      '![](https://example.test/a.png)',
+    ])
+  })
 })
 
 describe('extensions', () => {

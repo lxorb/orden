@@ -11,7 +11,9 @@
  *  whole set. */
 
 import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
+import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs'
 import FileText from 'lucide/dist/esm/icons/file-text.mjs'
+import Play from 'lucide/dist/esm/icons/play.mjs'
 import Shapes from 'lucide/dist/esm/icons/shapes.mjs'
 
 /** An icon as data: the elements it is drawn from, in order. Lucide's own
@@ -44,6 +46,16 @@ export const CHEVRON: IconParts = ChevronRight
  *  so an embed of either is a card that says which file it is and opens it. */
 export const DOCUMENT: IconParts = FileText
 export const PLANE: IconParts = Shapes
+
+/** What the card standing in for a page somewhere else says it will do. Two marks
+ *  and not one: a video is played and a map is opened, and a triangle over a map
+ *  would be a small lie told ten times a note. See providers.ts. */
+export const PLAY: IconParts = Play
+export const OPEN: IconParts = ExternalLink
+
+/** The marks a web embed's card can carry, by name, so the renderer and the
+ *  editor pick from one list. */
+export const MARKS: Readonly<Record<'play' | 'open', IconParts>> = { play: PLAY, open: OPEN }
 
 function attributes(written: Readonly<Record<string, string | number | undefined>>): string {
   return Object.entries(written)
