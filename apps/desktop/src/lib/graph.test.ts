@@ -52,10 +52,42 @@ describe('the space as a graph', () => {
     expect(joins(graph)).toEqual(['Ideas - Plan', 'Notes - Plan'])
   })
 
-  test('one edge for a pair that links both ways', () => {
+  test('one edge for a pair that links both ways, marked as both', () => {
     const graph = space({ 'One.md': 'see [[Two]]', 'Two.md': 'see [[One]]' })
 
     expect(joins(graph)).toEqual(['One - Two'])
+    expect(graph.edges.map((edge) => edge.both)).toEqual([true])
+  })
+
+  test('and an edge one way round knows which way that is', () => {
+    const graph = space({ 'One.md': 'see [[Two]]', 'Two.md': '' })
+    const [edge] = graph.edges
+
+    expect(edge?.both).toBe(false)
+    expect(graph.nodes[edge?.a ?? -1]?.name).toBe('One')
+    expect(graph.nodes[edge?.b ?? -1]?.name).toBe('Two')
+  })
+
+  test('a note linking a canvas is joined to it, since a canvas is a node', () => {
+    const graph = space({
+      'One.md': 'the board: [[Board.canvas]]',
+      'Board.canvas': '{"nodes":[],"edges":[]}',
+    })
+
+    expect(joins(graph)).toEqual(['Board.canvas - One'])
+  })
+
+  test('a note carries its tags into the picture', () => {
+    const graph = space({ 'One.md': '#Work/Nib and #plans', 'Two.md': 'nothing' })
+
+    expect(graph.nodes.find((node) => node.name === 'One')?.tags).toEqual(['work/nib', 'plans'])
+    expect(graph.nodes.find((node) => node.name === 'Two')?.tags).toEqual([])
+  })
+
+  test('and a note the space does not hold carries none', () => {
+    const graph = space({ 'One.md': 'see [[Elsewhere]]' })
+
+    expect(graph.nodes.find((node) => node.path === null)?.tags).toEqual([])
   })
 
   test('one edge however many times a note links to the same one', () => {

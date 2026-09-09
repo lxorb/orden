@@ -1,9 +1,10 @@
 /** The space as a graph, and the neighbourhood of one note in it.
  *
- *  A node per note, an edge per link between two notes. Direction is dropped:
- *  the graph answers "these two are connected", which is the question a picture
- *  of a space is looked at for, and it is what lets one edge stand for a pair of
- *  notes that link both ways.
+ *  A node per note, an edge per link between two notes. An edge answers "these
+ *  two are connected", which is the question a picture of a space is looked at
+ *  for, and it is what lets one edge stand for a pair of notes that link both
+ *  ways. It remembers which end reached for which all the same, because that is
+ *  what an arrowhead says and the only thing in the picture that can say it.
  *
  *  Built from what the link index already holds rather than from the notes
  *  again: the index hands over its notes and the resolver it caches, so a graph
@@ -15,7 +16,7 @@
 import type { LinkKind } from '@nib/markdown/links'
 import type { ScannedNote } from './scan-note'
 
-interface GraphNode {
+export interface GraphNode {
   /** A note's path relative to the space, or `?name` for a target the space
    *  holds no note for. Stable across a rebuild, which is what lets the view
    *  keep saying "this one" while the index changes underneath it. */
@@ -26,12 +27,22 @@ interface GraphNode {
   path: string | null
   /** How many edges touch it, which is what its size says. */
   degree: number
+  /** The tags the note carries, folded and without the hash, which is what a
+   *  filter and a colour group ask about. Empty for a note the space does not
+   *  hold, since there is nothing to read them out of. */
+  tags: string[]
 }
 
-/** One connection, as the two places in `nodes` it joins. */
-interface GraphEdge {
+/** One connection: the note the link was written in, and the note it named.
+ *
+ *  Undirected for the layout's purposes - a spring pulls both ways - but the two
+ *  ends are not interchangeable, and an arrowhead is the only thing in the picture
+ *  that says which note reached for which. `both` is a pair that link each way,
+ *  drawn with a head at each end. */
+export interface GraphEdge {
   a: number
   b: number
+  both: boolean
 }
 
 export interface NoteGraph {
@@ -44,18 +55,23 @@ export interface NoteGraph {
 export type Resolve = (from: string, link: { kind: LinkKind; target: string }) => string | null
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+const CANVAS = /\.canvas$/i
 const EXTENSION = /\.[A-Za-z0-9]{1,8}$/
 
 /** What marks an id as a target nothing answers. A path never starts with it,
  *  so the two kinds of node cannot collide. */
 const MISSING = '?'
 
-/** Whether a target names a note rather than something else in the space.
+/** Whether a target names something the space draws as a node.
+ *
  *  `![[shot.png]]` brings a picture into a note; it is not a link to one, and a
- *  hollow node called `shot.png` would be a lie about the space. */
+ *  hollow node called `shot.png` would be a lie about the space. A canvas is the
+ *  other way round: the index reads one as a note, so it is already a node, and a
+ *  note writing `[[Board.canvas]]` is reaching for it exactly as it would reach
+ *  for a note. Without this the canvas sat in the picture as an island. */
 function namesNote(target: string): boolean {
   const last = target.split('/').pop() ?? target
-  return !EXTENSION.test(last) || MARKDOWN.test(last)
+  return !EXTENSION.test(last) || MARKDOWN.test(last) || CANVAS.test(last)
 }
 
 /** The node a target with nowhere to go gets, made once however many notes
@@ -69,7 +85,7 @@ function missing(nodes: GraphNode[], at: Map<string, number>, target: string): n
   if (held !== undefined) return held
 
   at.set(id, nodes.length)
-  nodes.push({ id, name, path: null, degree: 0 })
+  nodes.push({ id, name, path: null, degree: 0, tags: [] })
   return nodes.length - 1
 }
 
@@ -80,11 +96,13 @@ export function buildGraph(notes: readonly ScannedNote[], resolve: Resolve): Not
     name: note.name,
     path: note.path,
     degree: 0,
+    tags: note.tags,
   }))
   const at = new Map(nodes.map((node, index) => [node.id, index]))
   const edges: GraphEdge[] = []
-  // A pair of notes gets one edge however often they link to each other.
-  const drawn = new Set<string>()
+  // A pair of notes gets one edge however often they link to each other, and
+  // which edge that is, so the second direction can add its arrowhead to it.
+  const drawn = new Map<string, number>()
 
   for (const note of notes) {
     const from = at.get(note.path)
@@ -99,10 +117,17 @@ export function buildGraph(notes: readonly ScannedNote[], resolve: Resolve): Not
       if (to === undefined || to === from) continue
 
       const pair = from < to ? `${from} ${to}` : `${to} ${from}`
-      if (drawn.has(pair)) continue
-      drawn.add(pair)
+      const already = drawn.get(pair)
+      if (already !== undefined) {
+        // The two notes are already joined. A link the other way adds nothing to
+        // the connection and one arrowhead to the drawing of it.
+        const edge = edges[already]
+        if (edge && edge.a !== from) edge.both = true
+        continue
+      }
 
-      edges.push({ a: from, b: to })
+      drawn.set(pair, edges.length)
+      edges.push({ a: from, b: to, both: false })
       count(nodes, from)
       count(nodes, to)
     }
@@ -171,7 +196,7 @@ export function neighbourhood(graph: NoteGraph, centre: string, depth: number): 
     const b = place.get(edge.b)
     if (a === undefined || b === undefined) continue
 
-    edges.push({ a, b })
+    edges.push({ a, b, both: edge.both })
     count(nodes, a)
     count(nodes, b)
   }

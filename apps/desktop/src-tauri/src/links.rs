@@ -17,6 +17,7 @@ use std::fs;
 use tauri::AppHandle;
 
 use crate::paths::{files_in, in_spaces, is_canvas, relative_to};
+use crate::tags::tags_in;
 
 /// How much of a line is worth keeping as the context a result is read in. The
 /// same as a search hit shows, so the two panels read alike.
@@ -51,6 +52,11 @@ pub struct Note {
     /// The `^abc123` names blocks in this note carry.
     blocks: Vec<String>,
     links: Vec<Link>,
+    /// The tags the note carries, folded and without the hash, each once. Read on
+    /// this pass because the space is already being read, and because the picture
+    /// of the space colours and filters by them: a graph that had to ask the disk
+    /// which notes are tagged `#work` would ask once per note.
+    tags: Vec<String>,
     /// What the note's front matter says it wears in the file list, as written:
     /// `file-text`, Iconize's `LiFileText` or an emoji. None where it says
     /// nothing, which is almost every note. Read here because the pass over the
@@ -106,6 +112,7 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
             headings: headings_in(&body),
             blocks: block_ids_in(&body),
             links: links_in(&body),
+            tags: note_tags(&body),
             icon: front_matter_value(&body, "icon"),
             icon_color: front_matter_value(&body, "icon-color"),
             aliases: front_matter_list(&body, "aliases"),
@@ -226,12 +233,33 @@ fn canvas_note(relative: String, body: &str) -> Note {
         headings: Vec::new(),
         blocks: Vec::new(),
         links,
+        // A drawing carries no tags: `#work` in a card is a word somebody wrote
+        // on the plane, not a tag the space is filed under.
+        tags: Vec::new(),
         // A value that is nothing but spaces is not an icon; what the words
         // themselves may say is read in the app's icons.ts.
         icon: said(read.nib.icon),
         icon_color: said(read.nib.icon_color),
         aliases: Vec::new(),
     }
+}
+
+/// The tags of one note as the index keeps them: each once, folded, and without
+/// the hash, which is what the `tag:` operator compares against.
+///
+/// `tags_in` answers once per use and with the hash, because the tag tree counts
+/// uses; a picture of the space asks whether a note carries a tag at all.
+fn note_tags(body: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+
+    for tag in tags_in(body) {
+        let folded = tag.trim_start_matches('#').to_lowercase();
+        if !folded.is_empty() && !out.contains(&folded) {
+            out.push(folded);
+        }
+    }
+
+    out
 }
 
 /// Where the front matter's own lines sit: from just past the opening fence to
@@ -842,7 +870,7 @@ fn hex(byte: u8) -> Option<u8> {
 mod tests {
     use super::{
         block_id_of, canvas_note, decode, front_matter_list, front_matter_value, heading_of,
-        headings_in, links_in, without_code,
+        headings_in, links_in, note_tags, without_code,
     };
 
     fn targets(body: &str) -> Vec<String> {
@@ -1163,5 +1191,24 @@ mod tests {
         assert_eq!(read.links[1].heading.as_deref(), Some("Later"));
         assert_eq!(read.links[2].block.as_deref(), Some("abc123"));
         assert!(read.headings.is_empty());
+    }
+
+    #[test]
+    fn the_index_keeps_each_tag_once_folded_and_without_the_hash() {
+        assert_eq!(
+            note_tags("#Work/Nib twice: #work/nib and #plans"),
+            vec!["work/nib".to_string(), "plans".to_string()]
+        );
+        assert!(note_tags("nothing here").is_empty());
+    }
+
+    #[test]
+    fn a_canvas_carries_no_tags() {
+        let read = canvas_note(
+            "Board.canvas".to_string(),
+            r#"{"nodes":[{"id":"a","type":"text","text":"#work"}],"edges":[]}"#,
+        );
+
+        assert!(read.tags.is_empty());
     }
 }

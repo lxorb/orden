@@ -10,6 +10,7 @@ import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { readCanvas } from './canvas/format'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
+import { tagsIn } from './search/tags'
 
 /** One link out of a note. Named for the shape below rather than for a caller:
  *  everything outside reads a whole note, never one of its links. */
@@ -34,6 +35,12 @@ export interface ScannedNote {
   headings: string[]
   blocks: string[]
   links: ScannedLink[]
+  /** The tags the note carries, folded and without the hash, each once - which is
+   *  what the `tag:` operator compares against. Read on this pass because the
+   *  space is already being read, and because the picture of the space colours and
+   *  filters by them: a graph that had to ask the disk which notes carry `#work`
+   *  would ask once per note. */
+  tags: string[]
   /** What the note's front matter says it wears in the file list, as written, or
    *  null where it says nothing. Read in this pass rather than in one of its own:
    *  every row of the tree wants it, and the space has already been read here. */
@@ -66,6 +73,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     name: (path.split('/').pop() ?? path).replace(MARKDOWN, ''),
     headings: headingsOf(content),
     blocks: blockIds(content).map((one) => one.id),
+    tags: noteTags(content),
     icon: frontMatterValue(content, ICON_KEY),
     iconColor: frontMatterValue(content, ICON_COLOUR_KEY),
     aliases: frontMatterList(content, 'aliases'),
@@ -101,6 +109,9 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     name: path.split('/').pop() ?? path,
     headings: [],
     blocks: [],
+    // A drawing carries no tags: `#work` written on a card is a word on the plane
+    // rather than a tag the space is filed under.
+    tags: [],
     // Under the `nib` key that already carries the ink, since a JSON file has no
     // front matter: the same value a note keeps under `icon:`, read by the same
     // icons.ts. See canvas.ts for why it lives in the file rather than beside it.
@@ -125,6 +136,15 @@ export function scanCanvas(path: string, content: string): ScannedNote {
         text: node.file,
       })),
   }
+}
+
+/** The tags of one note as the index keeps them: each once, folded, without the
+ *  hash. `tagsIn` answers once per use and with the hash, because the tag tree
+ *  counts uses; a picture of the space asks whether a note carries a tag at all.
+ *
+ *  The twin of `note_tags` in links.rs. */
+function noteTags(content: string): string[] {
+  return [...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase()))]
 }
 
 /** Which line an offset falls on, counting from zero. */
