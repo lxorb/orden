@@ -205,9 +205,13 @@ describe('an edit under the reader', () => {
       paging,
     )
 
-    // The same words, one page further down, or as near as a rewritten page
-    // allows.
-    expect(session.page?.words).toBe(words)
+    // The words the reader was looking at, still in front of them - which is the
+    // rule. Not necessarily at the top of the page any more: an insertion moves
+    // where the pages are cut, and the page that holds those words now holds a
+    // little of what came before them too.
+    const first = words?.split('\n')[0] ?? ''
+    expect(first).not.toBe('')
+    expect(session.page?.words).toContain(first)
   })
 
   test('keeps the place in the note when the page itself was rewritten', () => {

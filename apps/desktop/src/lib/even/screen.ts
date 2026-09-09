@@ -1,12 +1,12 @@
 /** The page the glasses hold, and how a view reaches it.
  *
- *  Six text containers and nothing else. No image container is made at all: text
+ *  Five text containers and nothing else. No image container is made at all: text
  *  mode is the only mode, and a page of words is one `textContainerUpgrade` of
  *  about 83 ms against four image sends of about 185 ms each. See docs/even.md.
  *
  *  The page is made **once** and never rebuilt while it is up, because a rebuild
  *  costs a flat 165 ms. Every screen the plugin shows - the note, the sidebar, the
- *  modal, the two pickers, an answer from the model - is the same six bands with
+ *  modal, the two pickers, an answer from the model - is the same five bands with
  *  different words in them, so switching screens costs only the bands that
  *  actually changed. A page turn is two of them; opening the sidebar is three.
  *
@@ -40,13 +40,12 @@ const IDS: Record<BandName, Container> = {
   rule: { id: 3, name: 'nibRule' },
   nums: { id: 4, name: 'nibNums' },
   body: { id: 5, name: 'nibBody' },
-  foot: { id: 6, name: 'nibFoot' },
   mic: { id: 7, name: 'nibMic' },
 }
 
 /** The order the bands are sent in, which is the order they are read in: a reader
  *  glancing up while a page lands sees the top of it first. */
-const ORDER: readonly BandName[] = ['head', 'rule', 'nums', 'body', 'foot', 'mic']
+const ORDER: readonly BandName[] = ['head', 'rule', 'nums', 'body', 'mic']
 
 /** What `textContainerUpgrade` will take at once. A page of the firmware's own type
  *  is nowhere near it; an answer from a model could be. */

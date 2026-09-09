@@ -24,6 +24,7 @@ import http.server
 import json
 import os
 import pathlib
+import re
 import socket
 import subprocess
 import sys
@@ -536,7 +537,7 @@ def main() -> int:
             report.ok("sets the note into the body band", "panel is 576" in body, body[:40])
             report.ok(
                 "puts the heading in the head band, not in the body",
-                bands.get("nibHead", "").strip() == "EVEN REALITIES GLASSES",
+                bands.get("nibHead", "").startswith("EVEN REALITIES GLASSES"),
                 bands.get("nibHead", ""),
             )
             report.ok(
@@ -545,7 +546,7 @@ def main() -> int:
             )
             report.ok(
                 "never sends more rows than the panel holds",
-                len(body.split("\n")) <= 7,
+                len(body.split("\n")) <= 8,
                 f"{len(body.split(chr(10)))} rows",
             )
             report.ok(
@@ -554,26 +555,42 @@ def main() -> int:
                 bands.get("nibNums", "").replace("\n", "|"),
             )
             report.ok(
-                "says the note and the page in the foot",
-                "Even Realities glasses" in bands.get("nibFoot", "")
-                and "/" in bands.get("nibFoot", ""),
-                bands.get("nibFoot", "").strip(),
+                "says which page of how many in the top right, beside the microphone",
+                re.search(r"\S {2,}1/\d+$", bands.get("nibHead", "").rstrip()) is not None,
+                bands.get("nibHead", "").rstrip(),
+            )
+            report.ok(
+                "keeps the last line of the panel for the note",
+                "nibFoot" not in bands,
+                ", ".join(sorted(bands)),
             )
             screens.append({"name": "glasses-1", "lineNumbers": True, **naming(bands)})
 
             # A scroll off a temple turns the page, and the frame in the plugin
             # follows it.
-            before = bands.get("nibFoot", "")
+            before = bands.get("nibHead", "")
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(500)
             turned = page.evaluate("window.__bands()")
             report.ok(
                 "a scroll off a temple turns the page",
-                turned.get("nibFoot") != before and turned.get("nibBody") != body,
-                turned.get("nibFoot", "").strip(),
+                turned.get("nibHead") != before and turned.get("nibBody") != body,
+                turned.get("nibHead", "").rstrip(),
             )
-            frame = page.locator(".frame")
-            report.ok("the plugin draws a frame around the page on the glasses", frame.count() == 1)
+
+            # A white card over the region with the rest of the note faded, which is
+            # the screenshot Emil sent; see even/Glasses.svelte.
+            report.ok(
+                "the plugin marks the region as a card with the rest faded",
+                page.locator(".card").count() == 1 and page.locator(".fade").count() == 1,
+            )
+            report.ok(
+                "and the card is sized to what the glasses show",
+                page.evaluate(
+                    "() => { const c = document.querySelector('.card'); "
+                    "return c ? c.getBoundingClientRect().height > 12 : false }"
+                ),
+            )
             page.screenshot(path=str(OUT / "phone-frame.png"))
 
             # Sent again only where it changed: the head and the rule did not.
@@ -583,7 +600,7 @@ def main() -> int:
             sent = [one["name"] for one in page.evaluate("window.__even.calls") if one["method"] == "words"]
             report.ok(
                 "a page turn sends only the bands that changed",
-                "nibHead" not in sent and "nibRule" not in sent and "nibBody" in sent,
+                "nibRule" not in sent and "nibBody" in sent,
                 ", ".join(sent),
             )
             report.say(f"a page turn is {len(sent)} bands, about {len(sent) * 83} ms of radio")
@@ -597,7 +614,7 @@ def main() -> int:
             side = page.evaluate("window.__bands()")
             report.ok(
                 "a tap opens the sidebar, with the space at the top",
-                side.get("nibHead", "").strip() == "Notes",
+                side.get("nibHead", "").startswith("Notes"),
                 side.get("nibHead", ""),
             )
             report.ok(
@@ -622,7 +639,7 @@ def main() -> int:
             report.ok(
                 "a scroll in the sidebar moves the cursor",
                 moved.get("nibBody") != side.get("nibBody"),
-                moved.get("nibFoot", "").strip(),
+                moved.get("nibHead", "").rstrip(),
             )
 
             # A double tap closes it rather than leaving the app.
@@ -633,7 +650,7 @@ def main() -> int:
             left = [one for one in page.evaluate("window.__even.calls") if one["method"] == "leave"]
             report.ok(
                 "a double tap closes the sidebar instead of leaving the app",
-                not left and after.get("nibHead", "").strip() != "Notes",
+                not left and not after.get("nibHead", "").startswith("Notes"),
                 after.get("nibHead", ""),
             )
 
@@ -666,12 +683,14 @@ def main() -> int:
             spaces = page.evaluate("window.__bands()")
             report.ok(
                 "switch space lists the spaces",
-                spaces.get("nibHead", "").strip() == "Spaces",
+                spaces.get("nibHead", "").startswith("Spaces"),
                 spaces.get("nibBody", "").replace("\n", " | "),
             )
             screens.append({"name": "spaces", "lineNumbers": True, **naming(spaces)})
 
-            # Change note is the tree, with folders that open and shut.
+            # Change note is the tree, with folders that open and shut. It opens with
+            # the cursor on the note the reader is in, which is Emil's rule, so the
+            # folder above it is one step up.
             page.evaluate("window.__gesture('hold')")
             page.wait_for_timeout(300)
             page.evaluate("window.__gesture('down')")
@@ -679,8 +698,15 @@ def main() -> int:
             page.wait_for_timeout(400)
             tree = page.evaluate("window.__bands()")
             report.ok(
+                "the notes open with the cursor on the note the reader is in",
+                "▶ Even Realities glasses" in tree.get("nibBody", ""),
+                tree.get("nibBody", "").replace("\n", " | "),
+            )
+            page.evaluate("window.__gesture('up')")
+            page.wait_for_timeout(200)
+            report.ok(
                 "change note is the tree, with a folder shut",
-                tree.get("nibHead", "").strip() == "Notes" and "▶ Inbox" in tree.get("nibBody", ""),
+                tree.get("nibHead", "").startswith("Notes") and "▶ Inbox" in tree.get("nibBody", ""),
                 tree.get("nibBody", "").replace("\n", " | "),
             )
 
@@ -703,6 +729,74 @@ def main() -> int:
                 "a tap on a note opens it on the glasses",
                 "READING LIST" in switched.get("nibHead", ""),
                 switched.get("nibHead", ""),
+            )
+
+            # The settings, on the glasses. Every one of them is reachable without the
+            # phone, and the rows come from the one schema the phone's own Settings
+            # section is drawn from; see even/settings.ts.
+            def open_settings():
+                page.evaluate("window.__gesture('hold')")
+                page.wait_for_timeout(300)
+                for _one in range(3):
+                    page.evaluate("window.__gesture('down')")
+                page.evaluate("window.__gesture('tap')")
+                page.wait_for_timeout(400)
+
+            open_settings()
+            settings = page.evaluate("window.__bands()")
+            rows = settings.get("nibBody", "")
+            report.ok(
+                "a hold reaches the settings, with every setting and what it says now",
+                "Line numbers" in rows and "Page number" in rows and "On" in rows,
+                rows.replace(chr(10), " | "),
+            )
+            screens.append({"name": "settings", "lineNumbers": True, **naming(settings)})
+
+            # The reset is at the foot of them, where an action belongs. Walked to
+            # rather than looked for: the cursor stops at the end of the list.
+            seen = []
+            for _step in range(40):
+                seen.append(page.evaluate("window.__bands()").get("nibBody", ""))
+                page.evaluate("window.__gesture('down')")
+            report.ok(
+                "and the reset at the foot of them",
+                any("Reset glasses settings" in one for one in seen),
+            )
+
+            # A tap on a toggle flips it where it stands, and the panel says so at
+            # once. This is Emil's page number: he turned it off and on again and it
+            # never came back, because nothing was sent when the page had not changed.
+            def flip_page_number():
+                open_settings()
+                page.evaluate("window.__gesture('down')")
+                page.evaluate("window.__gesture('down')")
+                page.evaluate("window.__gesture('tap')")
+                page.wait_for_timeout(400)
+                answer = page.evaluate("window.__bands()")
+                page.evaluate("window.__gesture('double')")
+                page.evaluate("window.__gesture('double')")
+                page.wait_for_timeout(700)
+                return answer
+
+            off = flip_page_number()
+            report.ok(
+                "a tap on a toggle flips it, and the row says so at once",
+                "Off" in off.get("nibBody", ""),
+                off.get("nibBody", "").replace(chr(10), " | "),
+            )
+            without = page.evaluate("window.__bands()")
+            report.ok(
+                "and the page number is gone from the panel, without a keystroke",
+                re.search(r"\d+/\d+$", without.get("nibHead", "").rstrip()) is None,
+                without.get("nibHead", "").rstrip(),
+            )
+
+            flip_page_number()
+            again = page.evaluate("window.__bands()")
+            report.ok(
+                "off and then on again is the same as never having touched it",
+                re.search(r"\d+/\d+$", again.get("nibHead", "").rstrip()) is not None,
+                again.get("nibHead", "").rstrip(),
             )
 
             # Voice, driven through a recogniser of our own: the words arrive exactly
@@ -734,10 +828,9 @@ def main() -> int:
                 # command asked for is up. Both are the command having been obeyed.
                 report.ok(
                     f'hears "{said}" and {wanted}',
-                    said.split()[0] in heard.get("nibFoot", "").lower()
-                    or what in heard.get("nibFoot", "")
+                    said.split()[0] in heard.get("nibHead", "").lower()
                     or what in heard.get("nibHead", ""),
-                    f'{heard.get("nibHead", "").strip()} / {heard.get("nibFoot", "").strip()}',
+                    heard.get("nibHead", "").rstrip(),
                 )
 
             # How long the plugin itself takes over a command, from the words arriving
@@ -750,6 +843,14 @@ def main() -> int:
                 page.wait_for_timeout(220)
                 took = page.evaluate("window.__wroteAt - window.__heardAt")
                 worst = max(worst, float(took or 0))
+
+            heard_on = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""
+            report.ok(
+                "says on the phone which way it is listening, so one screenshot answers",
+                "Phone recogniser" in heard_on,
+                heard_on.replace(chr(10), " / "),
+            )
+            page.screenshot(path=str(OUT / "phone-voice.png"))
 
             report.ok("answers a spoken command inside one frame", worst < 16, f"{worst:.2f} ms worst")
             report.say(f"a command costs the plugin {worst:.2f} ms from the word to the panel")
@@ -896,7 +997,7 @@ def naming(bands: dict) -> dict:
         "rule": bands.get("nibRule", ""),
         "nums": bands.get("nibNums", ""),
         "body": bands.get("nibBody", ""),
-        "foot": bands.get("nibFoot", ""),
+        "foot": "",
         "mic": bands.get("nibMic", ""),
     }
 

@@ -95,7 +95,7 @@ the notes in step, and asking a question. See section 5.
   black. So a page is drawn as light on nothing.
 - At most **four image containers and eight text or list containers**, twelve in
   all, and exactly one of them must carry `isEventCapture: 1`. The plugin makes
-  seven text containers and no image container at all; see section 2.
+  six text containers and no image container at all; see section 2.
 - An **image container is at most 288 wide and 144 tall**, so a panel takes exactly
   four of them, which is also the most that are allowed. None is made.
 - An image container **cannot** capture events, and neither can a text container
@@ -294,26 +294,38 @@ against pretext's own `measureTextWrap`, which is a second model of the same fon
 
 ### The bands
 
-Ten lines fit on the panel and the page keeps three of them:
+Ten lines fit on the panel and the page keeps two of them:
 
 ```
-  2  ┌───────────────────────────────────────────────────┬────┐
-     │ THE SECTION                                       │ ●  │  head, mic
- 29  ├───────────────────────────────────────────────────┴────┤
+  2  ┌──────────────────────────────────────────┬────────┬────┐
+     │ THE SECTION                              │  3/12  │ ●  │  head, mic
+ 29  ├──────────────────────────────────────────┴────────┴────┤
      │ ═══════════════════════════════════════════════════════ │  rule
  56  ├────┬───────────────────────────────────────────────────┤
-     │ 12 │ seven lines of the note, wrapped where the         │
+     │ 12 │ eight lines of the note, wrapped where the         │
      │ 13 │ firmware would wrap them, with the note's own      │  nums, body
      │ 14 │ line numbers in a column of their own              │
-245  ├────┴───────────────────────────────────────────────────┤
-256  │ what the gesture would do                        3/12  │  foot
-283  └────────────────────────────────────────────────────────┘
+272  └────┴───────────────────────────────────────────────────┘
 ```
 
-Three lines of furniture for seven of the note is a deliberate trade. The rule is
-the only structure a panel with one font in one size has, and a section heading
-that stays put while its pages turn is what makes the glasses read as a document
-rather than as a scroll.
+Two lines of furniture for eight of the note. It was three and seven: the last line
+held the note's name and which page of how many. Emil, having read on a pair: *"I
+don't want to use the last line for showing stuff like the page number or whether
+voice mode is on. That should all be part of the top."* He is right, and it is
+worth more than the tidiness - it is a seventh more of every note on every page,
+for ever.
+
+So the page number sits at the **right of the head band**, beside the corner the
+microphone lights, and the last line of the panel is the note. A text container has
+no alignment, so the gap between the section and the number is padded in the
+firmware's own measure - which is what makes the number land on the right pixel
+whatever the section is called. A word just heard takes the head for a moment,
+because that is the one thing more urgent than where you are.
+
+The rule and the section are worth a line each. The rule is the only structure a
+panel with one font in one size has, and a section heading that stays put while its
+pages turn is what makes the glasses read as a document rather than as a scroll. A
+page number is not worth a third.
 
 **The geometry never changes.** A container's position and size are fixed when the
 page is made and can only be changed by rebuilding it, which costs a flat 165 ms.
@@ -385,6 +397,49 @@ Line numbers are the note's own, counted from the first byte of the file with th
 front matter included, so "go to line forty" reaches the line an editor would call
 forty.
 
+### What the reader may overrule
+
+The table above is the default, not the law. Two settings change it, and both are on
+the glasses as well as on the phone.
+
+**Which markers are drawn**, per construct: the `#` of a heading, the `**` of bold,
+the `*` of italic, strikethrough, highlight, the backticks of inline code, the ```
+lines of a fence, and the brackets of a link. The defaults are rule one - code
+marked, everything that only styles words dropped, headings without their hashes -
+and somebody proof-reading their own markdown can have any of them back. A switch
+each rather than one "show markdown" switch, because the answer is different for a
+fence and for a bold word and that difference *is* the rule.
+
+**How much white space reaches the panel**, in three levels. Eight lines is not many
+and how they are spent is a real choice. Emil's three, in his words:
+
+| Level | `A
+B` | `A
+
+
+
+B` |
+| --- | --- | --- |
+| `none` - every line break as written | two lines | two lines, three blank between |
+| `collapse` - one break between blocks | two lines | two lines, nothing between |
+| `aggressive` - as little as possible | **one line** | two lines, nothing between |
+
+`aggressive` is what the plugin did before there was a choice, and is still the
+default: markdown says a soft wrap inside a paragraph is a space, and reading it as a
+break made every hard-wrapped paragraph in every note come out as a ragged column.
+
+**A line number is the line of the file at every level.** That is the whole point of
+the numbers: a row that says 12 is line 12 of the note, whether ten of its lines were
+folded into that row or none were.
+
+**Indentation is spent on nesting and not on the root level.** Emil: *"indentation is
+not forbidden, but not at the root level, that wastes space."* The root level of a
+note never carried a step; what did was the blocks *inside* a list item - a second
+paragraph, a fence, a quote - which used to begin three spaces further in than the
+item's own words. Those come back to the item's own indent. A list nested inside a
+list still steps, because that step is what says which list an item belongs to and
+three bullet glyphs cannot carry it alone.
+
 ![Bold, italic and marked reduced to their words; inline code keeping its ticks](even/glasses-3.png)
 
 ![Tasks as boxes, a quote with its bar, and a callout saying which kind it is](even/glasses-2.png)
@@ -422,15 +477,52 @@ which every app is checked for on its root page.
   because every folder in that list is already open and there is nothing a tap on
   one could do; the cursor steps over them, so **every tap the reader makes opens
   something**.
-- **The modal** is three rows: switch space, change note, and the microphone.
-- **Switch space** is the spaces; a tap confirms.
+- **The modal** is four rows: switch space, change note, the microphone, and the
+  settings.
+- **Switch space** is the spaces; a tap confirms **and goes straight into that
+  space's notes**. Emil's rule, and the obvious one: nobody switches space to look
+  at the note they were already reading.
 - **Change note** is the same tree with folders that open and shut, which is the
   one list where a tap does two different things.
+- **The settings** are every setting the glasses have, as rows the cursor walks;
+  see below.
 - **The answer view** is the question over the answer, scrolled a line at a time.
+
+**A list opens on where the reader already is.** The spaces open on the space they
+are in, the notes on the note they are reading. A list of five spaces that always
+opened on the first cost four scrolls to say "not that one, the one I am in", and
+the cursor is now an answer to "where am I" as well as a way to choose.
 
 The cursor is a triangle in a column of its own, so every row's words start at the
 same pixel whether it is the chosen one or not, and the window follows the cursor
 rather than paging.
+
+### The settings, on the glasses
+
+A Settings row in the hold modal opens a screen of the glasses' own settings: one
+row each, what it is called on the left and what it says now on the right, with
+**Reset glasses settings** at the foot of them where an action belongs. A tap flips
+a toggle where it stands; a tap on a choice opens its options as a list like any
+other, with the cursor on the value it already has, and a double tap leaves without
+choosing.
+
+**One schema, two surfaces.** The rows are not a list of their own: they come from
+`even/settings.ts`, which is the same list the phone's Glasses pane is drawn from.
+A setting is one entry there - its label, its kind (a toggle, a choice, a number),
+how to read it and how to write it - and the phone's pane, the glasses' rows, the
+reset on both, and the settings search all follow. Adding a setting is adding an
+entry; nothing else has to be touched, and nothing can be forgotten, because
+nothing holds a second copy.
+
+The one thing that is on the phone only is the wording of the spoken commands: a
+phrase is typed, and a pair of glasses has nothing to type with.
+
+**Every setting applies at once.** A stamp of every setting's value is watched, and
+any change re-cuts the page and sends whatever moved. That is a fix rather than a
+feature: Emil turned the page number off and on again and it never came back,
+because the page had not changed a character, so nothing was sent, so the panel kept
+the words it had. The stamp is built from the schema, so a setting added later is
+watched by having been added.
 
 ![The sidebar: the space, and everything in it](even/sidebar.png)
 
@@ -449,13 +541,41 @@ The page on the glasses and the scroll on the phone are one place in the note.
   nothing at all, which is what `Session.holds` is for.
 - Turning a page on the glasses scrolls the phone to the same words, through the
   app's own `workspace.goto`.
-- A frame in the plugin marks exactly the region on the panel: a rounded outline in
-  the accent, drawn from the editor's own `coordsAtPos` so it lands on the pixel the
-  words do, easing over 170 ms when the page turns and following without easing
-  when the reader scrolls.
+- A **card** in the plugin marks exactly the region on the panel: a white card over
+  those words with the rest of the note faded behind it, drawn from the editor's own
+  `coordsAtPos` so it lands on the pixel the words do. A card rather than the
+  outline it used to be, because an outline is a border somebody has to look for and
+  this has to answer a glance.
+- The card **follows the words while the finger drags and springs into place when it
+  lets go**, over 170 ms. There is no event for a scroll that has stopped, so 90 ms
+  of quiet after the last one is the whole of what "let go" can mean; a card that
+  eased its way down a drag would lag behind the words it is around. It is hidden
+  the moment anything is over the note - a sheet, the settings, the sign-in - because
+  a mark on a note has no business floating over a panel. The states are
+  `even/frame.svelte.ts`, which is the one part of it that is a decision rather than
+  a measurement and the one part with a test.
 
 The two ends would chase each other round the note, so a page turn opens a 500 ms
 window in which a scroll on the phone is the plugin's own doing and is ignored.
+
+**Or the glasses can do the scrolling.** A setting, `paged` or `native`:
+
+- `paged`, the default, is all of the above. The app cuts the note into panels of
+  exactly eight lines, sends one, and a flick of a temple sends the next. Every page
+  is one send of about 83 ms and nothing on the glass was wrapped by anybody but the
+  app.
+- `native` hands the **whole note over as one band** and lets the firmware scroll it.
+  One send for the note rather than one per page, and the scrolling is the firmware's
+  own, which is smoother than a radio can be.
+
+What the firmware actually does with a band longer than its container is not
+documented and no offset is reported back, so in `native` the app goes on paging the
+note for itself underneath: the page it thinks the reader is on is what the card on
+the phone marks, and a flick of a temple still moves it. The line numbers go, because
+a column of numbers cannot line up with a band somebody else is scrolling. If the
+firmware scrolls, the reader sees it scroll; if it does not, they see the first panel
+of the note and `paged` is one setting away. **This is the one thing in this document
+that has not been seen working on a device.**
 
 ![The plugin, with the frame around the page on the glasses](even/phone-frame.png)
 
@@ -478,6 +598,16 @@ are two paths because the platform gives two and neither is everywhere:
    Whether the host gates it behind `phone-microphone` is not documented, so the
    permission is asked for: a path that silently cannot hear is the worst of the
    ways this could go wrong.
+
+   **The constructor being on the page says nothing.** Chromium's recogniser reaches
+   Google's own speech service to do the recognising, which an embedded WebView
+   usually cannot: `start()` returns perfectly happily and a moment later `onerror`
+   says `network` or `service-not-allowed`. So any of `network`,
+   `service-not-allowed`, `not-allowed`, `audio-capture` or
+   `language-not-supported` - and a constructor that throws - means this WebView has
+   no recogniser whatever is on it, and **the glasses' microphone is opened at
+   once**. `no-speech` and `aborted` are not that: they are what a recogniser says
+   every time somebody stops talking.
 2. **The glasses' own microphone**, under `g2-microphone`.
    `audioControl(true, glasses)` streams processed PCM through `onEvenHubEvent`.
    Nothing on the device turns that into words, so an utterance is cut out of the
@@ -487,6 +617,36 @@ The second path is where the plugin's own latency comes from: an utterance ends
 after **600 ms** of quiet. Under about four hundred and the gap between "switch
 space" and "to work" ends the phrase; over about eight hundred and every command
 waits noticeably after the reader has stopped talking.
+
+### Why it did not work, and how the phone now says so
+
+Emil, on his own glasses: *"voice mode simply doesn't work whatever I say."* Two
+things were wrong and both were invisible.
+
+1. **The second path was dead for the whole sitting.** Whether there is a key to
+   transcribe with was decided once, when the bridge came up - and the key moved onto
+   the account in the batch before, so at that moment the settings had not arrived
+   yet and the answer was always "no key". It is asked every time now.
+2. **The first path never gave up.** A recogniser that answered `service-not-allowed`
+   a moment after starting was left running, and nothing fell back.
+
+Neither of those could be seen from outside, and nobody can read a log off a pair of
+glasses. So the evidence is now **real UI on the phone**, beside the voice
+indicator: which way the plugin is listening (`Phone recogniser`, `Glasses
+microphone`, `No way to listen`), how many frames of sound have actually arrived -
+**zero on the glasses path is the whole diagnosis** - the last thing it heard or
+`Nothing heard` when an utterance came back empty, and one short line when something
+refused, with the platform's own error name beside it, untranslated.
+
+The microphone being open with no sound arriving is the case that used to look
+exactly like everything working, so it says so on its own: **two seconds** with no
+frame and the line reads "no sound from the glasses". Frames come fifty times a
+second, so two seconds of nothing is not a pause.
+
+One screenshot of that line says which of the four steps failed, which is what it is
+for.
+
+![What the phone says about the voice](even/phone-voice.png)
 
 The commands, which are a table and a couple of numbers rather than a model:
 
@@ -627,7 +787,7 @@ API's own, read off the error it answers an invalid one with.
 | `packages/glasses/pages.ts` | those lines as pages, cut at a heading |
 | `packages/glasses/panel.ts` | the bands, in pixels, which both ends agree on |
 | `even/sdk.ts` | the Even Hub bridge, read field by field at the boundary |
-| `even/screen.ts` | the six containers, and how a view reaches them |
+| `even/screen.ts` | the five containers, and how a view reaches them |
 | `even/session.ts` | which note, which page, and the scroll binding |
 | `even/shell.ts` | which screen, and what a gesture does to it |
 | `even/commands.ts` | what was said, as something to do |
@@ -635,8 +795,13 @@ API's own, read off the error it answers an invalid one with.
 | `even/models.ts` | how hard the model is asked to think, and nothing else |
 | `even/key.svelte.ts` | the two facts about the key this machine may know |
 | `even/offered.svelte.ts` | the models on offer, and the line under the field |
+| `even/settings.ts` | every glasses setting, once, for both surfaces |
+| `even/scroll.ts` | who scrolls the note: the app, or the glasses |
+| `even/frame.svelte.ts` | following a finger, or springing into place |
 | `even/bridge.svelte.ts` | the tie to the app's own stores |
-| `even/Glasses.svelte` | the frame, and the phone's half of the binding |
+| `even/Glasses.svelte` | the card, the voice readout, and the phone's half of the binding |
+| `welcome.ts` | the one note a first visit is given, and how to tell it from writing |
+| `seeded.ts` | whether this device has been given it, where the answer lasts |
 | `sync/src/ask/key.ts` | the key, sealed and opened; the only thing that opens one |
 | `sync/src/ask/asking.ts` | the question to the model, and an utterance as words |
 | `sync/src/ask/notes.ts` | the two tools, over the account's own notes |
@@ -681,6 +846,33 @@ catch-all and ask for `/even.html` by name.
 That page is for trying the glasses in a phone's browser without packing
 anything. **It is not what goes on a phone.** The package is a build of its own,
 below, and the difference between the two is the point of the next section.
+
+### What the plugin must never write into an account
+
+A packed plugin is served by a local HTTP server on a port picked afresh every
+launch, so **its page storage is empty on every launch** - see below. Anything that
+reads emptiness as "this is the first time" is therefore wrong every single launch,
+and one thing did: the browser shim seeds a welcome note when there are no files, and
+the sync then offered it to the account. Emil: *"on the plugin every time I open it it
+creates and syncs the default note onto my account. This is so annoying."* Every
+launch put it back, including the launches after he deleted it.
+
+Three rules came out of that, in three places, and any one of them fixes it:
+
+1. **The plugin never seeds at all.** A signed-in plugin brings the account's notes
+   and a signed-out one shows the sign-in; neither wants a welcome note.
+2. **A device is seeded once**, remembered where the answer outlives a launch - the
+   cookie and the phone app's own store, the same places the session token lives. A
+   reader who deletes every note has still been introduced.
+3. **An untouched seed never travels.** Exactly untouched: a character typed into it
+   makes it theirs and it syncs like any other note.
+
+And one more that is not about the seed at all: a path the account already holds is
+now **paired** with rather than pushed over. The service allows one live note per
+path and answers 409 with the note that is there; that used to throw and take the
+whole pass with it, and the pass came round again to throw again. Same words on both
+sides is a pairing and nothing is sent; different words is the conflict this repo has
+always had an answer for, and neither copy is dropped.
 
 ### Where a packed plugin actually runs, and what it may keep
 
@@ -988,15 +1180,16 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 46 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 60 checks:
 
-- the plugin booted, found the bridge and made its page: **seven text containers
+- the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
   unique, and nothing reaching past 576 by 288;
 - the capture layer holds a single space, so a scroll reaches the app;
 - a note reached the bands: the heading in the head, the heavy rule under a first
-  level one, the note's own line numbers in their column, the note and the page in
-  the foot, and never more than seven rows in the body;
+  level one, the note's own line numbers in their column, **which page of how many at
+  the right of the head beside the microphone's corner**, no foot band at all, and
+  never more than eight rows in the body;
 - a scroll off a temple turned the page, and **only the bands that changed were
   sent**: three of them, about 249 ms of radio, with the head and the rule left
   alone because the section had not changed;
@@ -1004,8 +1197,16 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 46 checks:
   note; a canvas was not in it; a folder was;
 - a double tap closed the sidebar, and a second one on the note called
   `shutDownPageContainer(1)`, which is what a review checks for;
-- a hold offered switch space, change note and the microphone; switch space listed
-  the spaces; change note opened a folder where it stood and then opened a note;
+- a hold offered switch space, change note, the microphone and the settings; switch
+  space listed the spaces; **the notes opened with the cursor on the note the reader
+  was in**; change note opened a folder where it stood and then opened a note;
+- the settings screen listed every setting with what it says now and the reset at the
+  foot of them; a tap on a toggle flipped it where it stood; **the page number left
+  the panel at once and came back at once**, which is the bug Emil found;
+- the phone said which way the plugin was listening, so one screenshot answers where
+  the voice breaks;
+- the region on the panel was marked as a **card with the rest of the note faded**,
+  sized to what the glasses show;
 - the microphone opened, the corner lit, and six spoken commands were obeyed:
   next, back, spaces view, close, "open page three" and "go to line forty";
 - a spoken question put the question up, asked **Nib** for it - the question, the
@@ -1056,16 +1257,19 @@ is no radio, no firmware and no microphone in a browser.
 
 In rough order of how much rests on it:
 
-1. **The seven container page is accepted**, and `createStartUpPageContainer`
-   answers success rather than `invalid` or `outOfMemory`.
+1. **The six container page is accepted**, and `createStartUpPageContainer`
+   answers success rather than `invalid` or `outOfMemory`. One fewer than before: the
+   foot band is gone and the body has its line.
 2. **The font draws what pretext says it draws.** Every glyph in the mapping was
    chosen off the metrics in `@evenrealities/pretext` and not off a photograph:
    the bullets, `□` and `■`, the box rules, `▶` and `▼`, the raised digits, `√`,
    and the left quote a fence is written with. One photograph of the mapping page
    settles all of them.
 3. **A line wraps where we wrapped it.** The rows are pre-wrapped at pretext's own
-   advances; if the firmware breaks one row into two, a page has eight lines and
-   the last is off the bottom.
+   advances; if the firmware breaks one row into two, a page has nine lines and the
+   last is off the bottom. **Eight rows now rather than seven**, so the bottom of the
+   body sits at 272 of 288 pixels and there is less room for a mistake here than
+   there was.
 4. **The `nums` container laid over the left of `body` draws the way it looks
    here**, and neither container clips or displaces the other.
 5. **A page turn's real cost.** Three `textContainerUpgrade` calls: is it three
@@ -1084,6 +1288,22 @@ In rough order of how much rests on it:
    plugin is consuming double taps everywhere else.
 10. **A question actually leaves the WebView**, now that `nibeditor.com` is the one
     origin on the whitelist and the whole flow goes through it.
+11. **The page number lands in the top right of the head band**, beside the
+    microphone's corner, with no gap that reads as two words and nothing clipped.
+    `spread` pads it in the firmware's own measure; a font that measures differently
+    would put it a few pixels off.
+12. **Which of the two voice paths this WebView is on**, read straight off the line
+    on the phone. `Phone recogniser` and a transcript is the first path working;
+    `Glasses microphone` with frames counting up is the second; `Glasses microphone`
+    with "no sound yet" after two seconds is `audioControl` having answered true and
+    sent nothing, which is the one case that used to look like everything working.
+13. **Whether the firmware scrolls a band longer than its container**, which is the
+    whole of the `native` scroll mode and the one thing here that has never been seen
+    working. If it does not, the reader sees the first panel and `paged` is one
+    setting away.
+14. **That a launch of the plugin no longer writes anything into the account.** The
+    welcome note was created on every launch; three separate rules now stop it, and
+    the check is that a fresh launch on a signed-in account adds no note at all.
 
 ---
 

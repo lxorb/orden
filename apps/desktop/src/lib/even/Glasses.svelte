@@ -1,10 +1,16 @@
 <script lang="ts">
   /** The region of the note that is on the glasses, marked in the plugin.
    *
-   *  A rounded outline in the accent, drawn around exactly the characters the panel
-   *  is showing and moving with the page as it turns. It is the one thing the plugin
-   *  adds to the editor, and it is what makes the binding legible: without it the
-   *  glasses are a second screen showing something; with it they are showing *that*.
+   *  A white card over exactly the characters the panel is showing, with the rest of
+   *  the note faded behind it. It is the one thing the plugin adds to the editor, and
+   *  it is what makes the binding legible: without it the glasses are a second screen
+   *  showing something; with it they are showing *that*.
+   *
+   *  A card rather than an outline, which is what it was: an outline is a border
+   *  somebody has to look for, and this has to answer a glance. It follows the words
+   *  while the finger drags and springs into place when it lets go, and it is hidden
+   *  the moment anything is over the note - a sheet, the settings - because a mark on
+   *  a note has no business floating over a panel.
    *
    *  Drawn from the editor's own coordinates rather than guessed at from a fraction
    *  of the document. `coordsAtPos` is what CodeMirror uses to put its own cursor
@@ -19,13 +25,21 @@
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { bridge } from './bridge.svelte'
-  import { t } from '../i18n.svelte'
+  import { Frame, MOVE } from './frame.svelte'
+  import { key, t } from '../i18n.svelte'
   import { views } from '../views.svelte'
+  import type { Path } from './voice'
   import { workspace } from '../workspace.svelte'
 
-  /** How long the frame takes to reach the next page. The app's own duration for
-   *  something that moves because something else did; see tokens.css. */
-  const MOVE = 170
+  /** Which way the plugin is listening, in a word a reader can act on. Named here
+   *  rather than in voice.ts, which has no locale in it. */
+  const PATH_WORDS: Record<Path, string> = {
+    webview: key('Phone recogniser'),
+    glasses: key('Glasses microphone'),
+    none: key('No way to listen'),
+  }
+
+  const voice = $derived(bridge.voiceState)
 
   /** How often the phone's own scroll is turned into a page.
    *
@@ -48,10 +62,10 @@
   }
 
   let box = $state<Box | null>(null)
-  /** True while the frame is moving because the page turned, rather than because
-   *  the reader is scrolling. Only then does it ease: a frame that eases its way
-   *  down a scroll lags behind the words it is supposed to be around. */
-  let moving = $state(false)
+  /** Following a finger, or springing into place, or neither; and whether anything is
+   *  over the note. The one part of this that is a decision rather than a
+   *  measurement, and the part with a test; see frame.svelte.ts. */
+  const frame = new Frame()
 
   const showing = $derived(bridge.showing)
 
@@ -111,28 +125,36 @@
 
   onMount(() => {
     let waiting: ReturnType<typeof setTimeout> | undefined
-    let easing: ReturnType<typeof setTimeout> | undefined
-    let frame = 0
+    let painting = 0
     let watched: HTMLElement | null = null
 
     const remeasure = () => {
-      cancelAnimationFrame(frame)
+      cancelAnimationFrame(painting)
       // After the browser has laid out whatever moved: an edit, a page turn, a
       // resize. One frame is enough and two would be a flicker.
-      frame = requestAnimationFrame(() => {
+      painting = requestAnimationFrame(() => {
         box = measure()
       })
     }
 
     const scrolled = () => {
-      // Following the words rather than easing towards them.
-      moving = false
+      frame.scrolled()
       remeasure()
       clearTimeout(waiting)
       waiting = setTimeout(() => {
         const at = atTop()
         if (at !== null) bridge.scrolled(at)
       }, SCROLLED)
+    }
+
+    /** Whether anything is over the note. Read off the page rather than from a store,
+     *  because there are half a dozen things that can be over it - a sheet, the
+     *  settings, the sign-in, a picker - and they have one thing in common: they are
+     *  in the document. One query beats six imports and cannot fall behind one of
+     *  them being added. */
+    const look = () => {
+      frame.covered =
+        document.querySelector('.sheet, .settings, dialog[open], [role="dialog"]') !== null
     }
 
     // The scroller is the editor's own, and a pane rebuilds its editor when it
@@ -148,21 +170,22 @@
     }
 
     const every = setInterval(follow, 250)
+    // The same beat looks for anything over the note. A quarter of a second is far
+    // faster than a reader can open a sheet and read what is in it, and it costs one
+    // selector query.
+    const watching = setInterval(look, 250)
     window.addEventListener('resize', remeasure)
     follow()
+    look()
 
-    // The page turned: ease to it, once, for as long as the app eases anything.
+    // The page turned: spring to it, once.
     let was = -1
     const turned = $effect.root(() => {
       $effect(() => {
         const page = showing?.page ?? -1
         if (page !== was) {
           was = page
-          moving = true
-          clearTimeout(easing)
-          easing = setTimeout(() => {
-            moving = false
-          }, MOVE)
+          frame.turned()
         }
 
         remeasure()
@@ -172,9 +195,10 @@
     return () => {
       turned()
       clearInterval(every)
+      clearInterval(watching)
       clearTimeout(waiting)
-      clearTimeout(easing)
-      cancelAnimationFrame(frame)
+      frame.stop()
+      cancelAnimationFrame(painting)
       window.removeEventListener('resize', remeasure)
       watched?.removeEventListener('scroll', scrolled)
     }
@@ -182,8 +206,15 @@
 </script>
 
 <!-- What the glasses are hearing and saying, on the phone too. Nothing at all
-     while the microphone is shut, which is every moment nobody asked for it. -->
-{#if bridge.listening || bridge.asked}
+     while the microphone is shut and nothing has gone wrong, which is every moment
+     nobody asked for it.
+
+     The second line is the evidence path, and it is here rather than in a
+     diagnosis panel because nobody can read a log off a pair of glasses: "voice
+     mode simply doesn't work whatever I say" is four faults wearing one face, and
+     one screenshot of this line says which. Which way the plugin is listening,
+     how much sound has actually arrived, and what refused. -->
+{#if bridge.listening || bridge.asked || voice.trouble}
   <div class="voice" spellcheck="false" transition:fly={{ y: 12, duration: 170, easing: cubicOut }}>
     {#if bridge.asked}
       <p class="asked">{bridge.asked}</p>
@@ -193,16 +224,49 @@
         <p class="answer waiting">{t('Thinking')}</p>
       {/if}
     {:else}
-      <span class="dot" aria-hidden="true"></span>
-      <p class="asked">{t('Listening')}</p>
+      <span class="dot" class:off={!voice.on} aria-hidden="true"></span>
+      <div class="said">
+        <p class="asked">{voice.heard || t('Listening')}</p>
+        <p class="path">
+          {t(PATH_WORDS[voice.path])}
+          {#if voice.path === 'glasses' && voice.on}
+            · {voice.frames === 0
+              ? t('no sound yet')
+              : t('{count} frames', { count: voice.frames })}
+          {/if}
+          {#if voice.nothing}· {t('Nothing heard')}{/if}
+          {#if voice.trouble}· <span class="bad">{t(voice.trouble)}</span>{/if}
+          {#if voice.detail}<span class="code"> {voice.detail}</span>{/if}
+        </p>
+      </div>
     {/if}
   </div>
 {/if}
 
-{#if box}
+<!-- What the glasses are showing, marked on the note.
+
+     A white card over the region with everything outside it faded, rather than an
+     outline around it: an outline is a border somebody has to look for, and the
+     point of this is that a glance says "the glasses are showing *that*". The
+     screenshot Emil sent is what it looks like.
+
+     Two layers, so the card is not a rectangle of paint over the words: the fade is
+     four shades over the note with a hole where the card is, and the card itself is
+     the shadow and the rounded edge. Hidden the moment anything covers the note, so
+     it never floats over the sidebar or a sheet. -->
+{#if box && !frame.covered}
+  <div class="fade" class:moving={frame.moving} aria-hidden="true" style:--move="{MOVE}ms">
+    <div
+      class="hole"
+      style:top="{box.top}px"
+      style:left="{box.left}px"
+      style:width="{box.width}px"
+      style:height="{box.height}px"
+    ></div>
+  </div>
   <div
-    class="frame"
-    class:moving
+    class="card"
+    class:moving={frame.moving}
     class:cut={box.cut}
     aria-hidden="true"
     style:top="{box.top}px"
@@ -214,26 +278,51 @@
 {/if}
 
 <style>
-  /* The app's own shape: the same radius, the same accent, the same easing as
-     anything else that marks a region. Fixed, because the measurement is in the
-     window's pixels and a plugin must not have to find a positioned ancestor
-     inside somebody else's component. */
-  .frame {
+  /* Everything outside the region, quietened. One element with a hole in it rather
+     than four strips: `clip-path` with the hole cut out of it is one paint and no
+     arithmetic about which strip is where.
+
+     Fixed, because the measurement is in the window's pixels and a plugin must not
+     have to find a positioned ancestor inside somebody else's component. Below the
+     card and above the note; nowhere near the sidebar or a sheet, which sit far
+     above both and are what `covered` is for. */
+  .fade {
     position: fixed;
-    z-index: 3;
-    box-sizing: border-box;
-    border: 1.5px solid var(--accent);
-    border-radius: var(--radius-md);
-    opacity: 0.5;
+    z-index: 2;
+    inset: 0;
+    background: var(--surface);
+    opacity: 0.62;
     pointer-events: none;
   }
 
-  /* Only while the page is turning. A frame that eases its way down a scroll lags
-     behind the words it is meant to be around. */
+  /* The hole. Painted as the one thing that is *not* faded: the mask is the fade's
+     own background, cut away where the card is. */
+  .hole {
+    position: fixed;
+    border-radius: var(--radius-md);
+    background: #000;
+    /* Cuts the hole out of the parent's paint rather than drawing over it. */
+    mix-blend-mode: destination-out;
+  }
+
+  /* The card. The words are the note's own, showing through: this is the edge and
+     the lift, nothing more. */
+  .card {
+    position: fixed;
+    z-index: 3;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+  }
+
+  /* While the page is turning, or while the finger has let go: a short spring into
+     place. Not while the reader is dragging - a card that eases its way down a
+     scroll lags behind the words it is supposed to be around. */
   .moving {
     transition:
-      top var(--move) var(--ease-out),
-      height var(--move) var(--ease-out);
+      top var(--move) var(--ease-spring),
+      height var(--move) var(--ease-spring);
   }
 
   /* What the glasses are hearing, in the corner the app keeps for things it is
@@ -257,6 +346,11 @@
     pointer-events: none;
   }
 
+  .said {
+    flex: 1;
+    min-width: 0;
+  }
+
   .asked {
     flex: 1;
     margin: 0;
@@ -265,6 +359,33 @@
     font-size: var(--text-sm);
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  /* The evidence line. Quieter than the words above it, because it is only ever
+     read when something is wrong - and then it is the only thing worth reading. */
+  .path {
+    margin: 0;
+    overflow: hidden;
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .bad {
+    color: var(--danger);
+  }
+
+  /* A platform's own error name, never translated: `network` said in German is
+     still `network`, and it is what somebody would search for. */
+  .code {
+    font-family: var(--font-mono);
+  }
+
+  /* The microphone is shut and this line is only up because something refused. */
+  .dot.off {
+    animation: none;
+    background: var(--danger);
   }
 
   .answer {

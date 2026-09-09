@@ -352,10 +352,13 @@ describe('where a page is', () => {
   })
 
   test('says which lines of the note it shows', () => {
-    const [first, second] = pages('one\n\ntwo\n\nthree\n\nfour\n\nfive\n\nsix\n\nseven\n\neight\n')
+    const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+    const [first, second] = pages(`${words.join('\n\n')}\n`)
 
+    // Ten paragraphs, a blank line between each: the eight rows of a page reach line
+    // fifteen, which is the eighth paragraph, and the ninth starts the next page.
     expect(first?.firstLine).toBe(1)
-    expect(first?.lastLine).toBe(13)
+    expect(first?.lastLine).toBe(15)
     expect(second?.firstLine).toBeGreaterThan(first?.lastLine ?? 0)
   })
 })

@@ -28,7 +28,9 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { type Compaction, isCompaction, MARKS, type Marks } from '@nib/glasses'
 import { glassesKey } from './even/key.svelte'
+import { isScroll, type Scroll } from './even/scroll'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, stored } from './stored'
@@ -93,6 +95,11 @@ interface Saved {
   glassesLineNumbers: boolean
   glassesPageNumber: boolean
   glassesVoice: boolean
+  glassesCompaction: string
+  glassesMarks: Marks
+  glassesScroll: string
+  glassesWords: Record<string, unknown>
+  glassesSeen: boolean
   glassesModel: string
   glassesEffort: string
   vim: boolean
@@ -137,6 +144,34 @@ function text(value: unknown, fallback: string): string {
  *  reads as nothing written. */
 function measure(value: unknown, fallback: number): number {
   return isNumber(value) && value !== 0 ? value : fallback
+}
+
+/** Which markers to draw, out of whatever was stored or came down from the
+ *  account. Read switch by switch, so a build that has never heard of one of them
+ *  keeps its own default rather than the whole object being thrown away. */
+function marksOf(value: unknown): Marks {
+  if (!isRecord(value)) return { ...MARKS }
+
+  const out = { ...MARKS }
+  for (const name of Object.keys(MARKS) as (keyof Marks)[]) {
+    const found = value[name]
+    if (typeof found === 'boolean') out[name] = found
+  }
+
+  return out
+}
+
+/** The phrases a reader has changed, out of whatever was stored. Only strings,
+ *  and only short ones: this is a spoken phrase, not a paragraph. */
+function wordsOf(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {}
+
+  const out: Record<string, string> = {}
+  for (const [id, phrase] of Object.entries(value)) {
+    if (isString(phrase) && phrase.trim() && phrase.length <= 60) out[id] = phrase.trim()
+  }
+
+  return out
 }
 
 class Modes {
@@ -200,6 +235,25 @@ class Modes {
    *  Off until asked for, which is the only defensible default for a microphone:
    *  it is turned on from the hold modal on the glasses, or here. */
   glassesVoice = $state(false)
+  /** How much of a note's own white space reaches the panel; see `Compaction` in
+   *  @nib/glasses. `aggressive` is what the plugin did before there was a choice. */
+  glassesCompaction = $state<Compaction>('aggressive')
+  /** Which of a note's markers are drawn. Rule one as it stands, until a reader
+   *  overrules it per construct; see `Marks` in @nib/glasses. */
+  glassesMarks = $state<Marks>({ ...MARKS })
+  /** Whether the app pages the note and turns the pages, or hands the whole note
+   *  over and lets the glasses scroll it; see even/screen.ts. */
+  glassesScroll = $state<Scroll>('paged')
+  /** The phrases each spoken command answers to, where the reader has changed
+   *  them. Only the differences travel, the way the shortcuts do: a full dump
+   *  would freeze today's wording into every account that ever saved one. */
+  glassesWords = $state<Record<string, string>>({})
+  /** Whether this account has ever had the plugin in front of a pair of glasses.
+   *
+   *  What the Glasses section on every other device waits for: somebody who has
+   *  never worn a pair should not be offered a pane of settings about them. Set
+   *  once, by the plugin, the first time a bridge answers. */
+  glassesSeen = $state(false)
   /** Which model answers. Empty until the reader has chosen one from the list the
    *  API itself gave; see even/models.ts. */
   glassesModel = $state('')
@@ -258,6 +312,11 @@ class Modes {
       this.glassesLineNumbers = saved.glassesLineNumbers !== false
       this.glassesPageNumber = saved.glassesPageNumber !== false
       this.glassesVoice = saved.glassesVoice === true
+      if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
+      this.glassesMarks = marksOf(saved.glassesMarks)
+      if (isScroll(saved.glassesScroll)) this.glassesScroll = saved.glassesScroll
+      this.glassesWords = wordsOf(saved.glassesWords)
+      this.glassesSeen = saved.glassesSeen === true
       this.glassesModel = text(saved.glassesModel, '')
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
@@ -458,6 +517,57 @@ class Modes {
     this.share({ glassesVoice: on })
   }
 
+  setGlassesCompaction(level: string) {
+    if (!isCompaction(level) || level === this.glassesCompaction) return
+
+    this.glassesCompaction = level
+    this.persist()
+    this.share({ glassesCompaction: level })
+  }
+
+  setGlassesScroll(mode: string) {
+    if (!isScroll(mode) || mode === this.glassesScroll) return
+
+    this.glassesScroll = mode
+    this.persist()
+    this.share({ glassesScroll: mode })
+  }
+
+  /** One marker on or off. Written whole rather than as a difference, because
+   *  there are eight of them and the account holds one small object either way. */
+  setGlassesMark(name: keyof Marks, on: boolean) {
+    if (this.glassesMarks[name] === on) return
+
+    this.glassesMarks = { ...this.glassesMarks, [name]: on }
+    this.persist()
+    this.share({ glassesMarks: { ...this.glassesMarks } })
+  }
+
+  /** What a spoken command answers to. An empty phrase is the default put back,
+   *  which is why the map holds only the differences. */
+  setGlassesWord(id: string, phrase: string) {
+    const wanted = phrase.trim().toLowerCase()
+    // Built rather than deleted from: an empty phrase is the default put back, and
+    // "the entries that are not this one" says that without reaching for `delete`.
+    const words = Object.fromEntries(
+      Object.entries(this.glassesWords).filter(([one]) => one !== id),
+    )
+    if (wanted) words[id] = wanted
+
+    this.glassesWords = words
+    this.persist()
+    this.share({ glassesWords: words })
+  }
+
+  /** Said once by the plugin, the first time a pair of glasses answers. */
+  sawGlasses() {
+    if (this.glassesSeen) return
+
+    this.glassesSeen = true
+    this.persist()
+    this.share({ glassesSeen: true })
+  }
+
   setGlassesModel(model: string) {
     if (model === this.glassesModel) return
 
@@ -593,6 +703,21 @@ class Modes {
     if (typeof remote.glassesVoice === 'boolean') {
       took(remote.glassesVoice, (on) => (this.glassesVoice = on))
     }
+    if (isCompaction(remote.glassesCompaction)) {
+      took(remote.glassesCompaction, (level) => (this.glassesCompaction = level))
+    }
+    if (remote.glassesMarks !== undefined) {
+      took(marksOf(remote.glassesMarks), (marks) => (this.glassesMarks = marks))
+    }
+    if (isScroll(remote.glassesScroll)) {
+      took(remote.glassesScroll, (mode) => (this.glassesScroll = mode))
+    }
+    if (remote.glassesWords !== undefined) {
+      took(wordsOf(remote.glassesWords), (words) => (this.glassesWords = words))
+    }
+    if (remote.glassesSeen === true) {
+      took(true, (seen) => (this.glassesSeen = seen))
+    }
     if (typeof remote.glassesModel === 'string') {
       took(remote.glassesModel, (model) => (this.glassesModel = model))
     }
@@ -721,6 +846,11 @@ class Modes {
       glassesLineNumbers: this.glassesLineNumbers,
       glassesPageNumber: this.glassesPageNumber,
       glassesVoice: this.glassesVoice,
+      glassesCompaction: this.glassesCompaction,
+      glassesMarks: this.glassesMarks,
+      glassesScroll: this.glassesScroll,
+      glassesWords: this.glassesWords,
+      glassesSeen: this.glassesSeen,
       glassesModel: this.glassesModel,
       glassesEffort: this.glassesEffort,
       vim: this.vim,

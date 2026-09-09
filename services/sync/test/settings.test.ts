@@ -228,6 +228,50 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesEffort: 'banana' })).status).toBe(400)
   })
 
+  test('carry how much white space reaches the panel, and who scrolls', async () => {
+    for (const level of ['none', 'collapse', 'aggressive']) {
+      expect((await patch({ glassesCompaction: level })).status, level).toBe(200)
+    }
+    for (const mode of ['paged', 'native']) {
+      expect((await patch({ glassesScroll: mode })).status, mode).toBe(200)
+    }
+
+    expect((await patch({ glassesCompaction: 'a bit' })).status).toBe(400)
+    expect((await patch({ glassesScroll: 'sideways' })).status).toBe(400)
+  })
+
+  /** Which of a note's markers are drawn, by construct. Named rather than accepted
+   *  as any object, so an account cannot carry a switch no version of the app has
+   *  ever heard of. */
+  test('carry the markers a reader turned on, and only the ones there are', async () => {
+    const set = await patch({ glassesMarks: { fence: true, bold: true } })
+    expect(set.status).toBe(200)
+    expect(set.json.settings.glassesMarks).toEqual({ fence: true, bold: true })
+
+    expect((await patch({ glassesMarks: { subheading: true } })).status).toBe(400)
+    expect((await patch({ glassesMarks: { bold: 'yes' } })).status).toBe(400)
+    expect((await patch({ glassesMarks: [true] })).status).toBe(400)
+  })
+
+  /** The phrases a spoken command answers to. The ids are the app's own and are not
+   *  listed on the server, for the same reason the shortcut ids are not. */
+  test('carry the phrases a reader rebound', async () => {
+    const set = await patch({ glassesWords: { next: 'vorwärts', close: 'zu' } })
+    expect(set.status).toBe(200)
+    expect(set.json.settings.glassesWords).toEqual({ next: 'vorwärts', close: 'zu' })
+
+    expect((await patch({ glassesWords: { next: 'x'.repeat(61) } })).status).toBe(400)
+    expect((await patch({ glassesWords: { 'Not An Id': 'no' } })).status).toBe(400)
+    expect((await patch({ glassesWords: { next: 12 } })).status).toBe(400)
+  })
+
+  /** What the Glasses section on every other device waits for. */
+  test('remember that a pair of glasses has answered', async () => {
+    expect((await patch({ glassesSeen: true })).status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.glassesSeen).toBe(true)
+    expect((await patch({ glassesSeen: 'yes' })).status).toBe(400)
+  })
+
   test('refuse a model long enough to be a novel', async () => {
     expect((await patch({ glassesModel: 'x'.repeat(101) })).status).toBe(400)
     expect((await patch({ glassesModel: 'gpt-6-astra' })).status).toBe(200)

@@ -7,23 +7,27 @@
  *  those rows are sent to.
  *
  *  ```
- *   2  ┌───────────────────────────────────────────────────┬────┐
- *      │ THE SECTION                                       │ ●  │  head, mic
- *  29  ├───────────────────────────────────────────────────┴────┤
+ *   2  ┌──────────────────────────────────────────┬────────┬────┐
+ *      │ THE SECTION                              │  3/12  │ ●  │  head, mic
+ *  29  ├──────────────────────────────────────────┴────────┴────┤
  *      │ ═══════════════════════════════════════════════════════ │  rule
  *  56  ├────┬───────────────────────────────────────────────────┤
- *      │ 12 │ seven lines of the note, wrapped where the         │
+ *      │ 12 │ eight lines of the note, wrapped where the         │
  *      │ 13 │ firmware would wrap them, with the note's own      │  nums, body
  *      │ 14 │ line numbers in a column of their own              │
- * 245  ├────┴───────────────────────────────────────────────────┤
- * 256  │ what the gesture would do                        3/12  │  foot
- * 283  └────────────────────────────────────────────────────────┘
+ * 272  └────┴───────────────────────────────────────────────────┘
  *  ```
  *
- *  Three of the ten lines are the page's own furniture and seven are the note.
- *  That is a deliberate trade: the rule is the only structure a panel with one
- *  font in one size has, and a section heading that stays put while its pages turn
- *  is what makes the glasses read as a document rather than as a scroll.
+ *  Two of the ten lines are the page's own furniture and eight are the note. It
+ *  was three and seven: the last line held the note's name and which page of how
+ *  many. Emil, having read on a pair: "I don't want to use the last line for
+ *  showing stuff like the page number or whether voice mode is on. That should all
+ *  be part of the top." So it is, and the last line of the panel is the note.
+ *
+ *  The rule is the only structure a panel with one font in one size has, and a
+ *  section heading that stays put while its pages turn is what makes the glasses
+ *  read as a document rather than as a scroll. Those two are worth a line each; a
+ *  page number is not worth a third.
  *
  *  **The geometry never changes.** A container's position and size are fixed when
  *  the page is made and can only be changed by rebuilding it, which costs a flat
@@ -55,8 +59,16 @@ export const LINE = 27
  *  last character of a full line reaches. */
 const MARGIN = 8
 
-/** How many of the firmware's lines the body holds. */
-export const BODY_ROWS = 7
+/** How many of the firmware's lines the body holds.
+ *
+ *  Eight. It was seven, and the eighth used to be the foot: the note's name and
+ *  which page of how many. Emil, having read on a pair: "I don't want to use the
+ *  last line for showing stuff like the page number or whether voice mode is on.
+ *  That should all be part of the top." He is right, and it is worth more than the
+ *  tidiness - it is a seventh more of every note on every page, for ever. So the
+ *  page number sits at the right of the head band beside the microphone's corner,
+ *  and the last line of the panel is the note. */
+export const BODY_ROWS = 8
 
 /** How wide the column of line numbers is, and the gap after it.
  *
@@ -78,7 +90,7 @@ export interface Band {
   height: number
 }
 
-export type BandName = 'head' | 'mic' | 'rule' | 'nums' | 'body' | 'foot'
+export type BandName = 'head' | 'mic' | 'rule' | 'nums' | 'body'
 
 /** Where the bands are, given whether the reader asked for line numbers.
  *
@@ -100,18 +112,20 @@ export function bandsOf(lineNumbers: boolean): Record<BandName, Band> {
     // constant indent to clear it. See the header above.
     nums: { x: MARGIN, y: 56, width: lineNumbers ? NUMS_WIDTH : 0, height: rows },
     body: { x: MARGIN, y: 56, width: PANEL_WIDTH - 2 * MARGIN, height: rows },
-    // What the gesture in front of the reader would do, and where they are.
-    foot: { x: MARGIN, y: 256, width: PANEL_WIDTH - 2 * MARGIN, height: LINE },
   }
 }
 
 /** How wide the body is: the whole panel less its margins, on every screen. */
 export const BODY_INNER = PANEL_WIDTH - 2 * MARGIN
 
+/** How wide the head is: the same, less the corner the microphone's dot sits in.
+ *  What the section and the page number are spread across. */
+export const HEAD_INNER = PANEL_WIDTH - MARGIN - 42
+
 /** How bright each band is set, from the firmware's five levels.
  *
- *  The head and the body are the note and get the top level. The rule, the
- *  numbers and the foot are furniture and are stepped down, so a glance at the
+ *  The head and the body are the note and get the top level. The rule and the
+ *  numbers are furniture and are stepped down, so a glance at the
  *  panel lands on the words rather than on the page number. Brightness is the only
  *  typographic weight a single font has, and it is worth spending carefully. */
 export const BRIGHT: Record<BandName, number> = {
@@ -120,5 +134,4 @@ export const BRIGHT: Record<BandName, number> = {
   rule: 2,
   nums: 2,
   body: 4,
-  foot: 2,
 }

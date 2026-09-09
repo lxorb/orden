@@ -29,6 +29,9 @@ function memoryStorage(): Storage {
 }
 
 vi.stubGlobal('localStorage', memoryStorage())
+// The store sets the zoom on the document element when it is restored. There is no
+// document here and none of this is about the zoom.
+vi.stubGlobal('document', { documentElement: { style: { setProperty: () => undefined } } })
 
 /** The module graph, compiled once and outside anybody's budget: the settings
  *  pull in most of the app. See docs/conventions.md. */
@@ -42,6 +45,9 @@ async function page(asPlugin: boolean) {
   vi.resetModules()
 
   if (asPlugin) (await import('./plugin')).markPlugin()
+  // As a start of the app would: the Glasses section also appears once the account
+  // says a pair has answered, and that lives in the store.
+  ;(await import('./modes.svelte')).modes.restore()
 
   return {
     panes: (await import('./preferences')).preferences(),
@@ -65,6 +71,17 @@ describe('the Glasses settings', () => {
 
   test('are there in the plugin', async () => {
     const { panes, groups } = await page(true)
+
+    expect(panes.map((one) => one.id)).toContain('glasses')
+    expect(ids(groups)).toContain('glasses')
+  })
+
+  /** And on the desktop beside it, once there is a pair to be about. The plugin
+   *  says so on its first contact with a bridge and the account carries it; before
+   *  that, somebody who has never worn a pair is not offered a pane about them. */
+  test('are there on any device once a pair has answered', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ glassesSeen: true }))
+    const { panes, groups } = await page(false)
 
     expect(panes.map((one) => one.id)).toContain('glasses')
     expect(ids(groups)).toContain('glasses')
@@ -103,10 +120,30 @@ describe('the Glasses settings', () => {
     const fields = pane?.groups.flatMap((group) => group.fields) ?? []
 
     const switches = fields.filter((one) => one.kind === 'switch').map((one) => one.label)
-    expect(switches).toEqual(['Line numbers', 'Page number', 'Voice commands'])
+    // The reading switches first, then the markers, then the microphone: the order
+    // the one schema lists them in; see even/settings.ts.
+    expect(switches.slice(0, 2)).toEqual(['Line numbers', 'Page number'])
+    expect(switches).toContain('Voice commands')
     // Both on by default: they are what says where in a note the reader is.
-    for (const one of fields) {
-      if (one.kind === 'switch' && one.label !== 'Voice commands') expect(one.initial).toBe(true)
+    for (const one of fields.slice(0, 3)) {
+      if (one.kind === 'switch') expect(one.initial).toBe(true)
+    }
+  })
+
+  /** Every phrase a spoken command answers to is a field somebody can type in, and
+   *  only on the phone: a pair of glasses has nothing to type with. */
+  test('carry a phrase for every spoken command, as text', async () => {
+    const inside = await page(true)
+    const pane = inside.panes.find((one) => one.id === 'glasses')
+    const group = pane?.groups.find((one) => one.title === 'Spoken commands')
+    const fields = group?.fields ?? []
+
+    expect(fields.length).toBeGreaterThan(5)
+    for (const field of fields) {
+      expect(field.kind).toBe('text')
+      // The placeholder is what the app answers to now, so an empty field is the
+      // default put back.
+      expect(field.kind === 'text' && field.placeholder).toBeTruthy()
     }
   })
 

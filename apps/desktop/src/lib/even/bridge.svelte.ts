@@ -17,10 +17,11 @@
  *  None of it runs in the plain web build, because nothing in the plain web build
  *  imports it. */
 
-import { BODY_INNER, BODY_ROWS, GUTTER, type Page } from '@nib/glasses'
+import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging, pagesOf } from '@nib/glasses'
 import { account } from '../account.svelte'
 import { api } from '../api'
 import { bestOf, type Command, commandIn } from './commands'
+import type { Field } from '../preferences'
 import { fileMark } from '../file-mark'
 import { t } from '../i18n.svelte'
 import { glassesKey } from './key.svelte'
@@ -28,8 +29,9 @@ import { modes } from '../modes.svelte'
 import { Panel } from './screen'
 import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
-import { type Row, Shell, type Wish, type Words, type World } from './shell'
-import { Voice } from './voice'
+import { glassesSettings, glassesStamp, resetGlasses } from './settings'
+import { type Row, type Settings, Shell, type Wish, type Words, type World } from './shell'
+import { type Listening, Voice } from './voice'
 import { rooms } from '../rooms.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
 
@@ -64,9 +66,27 @@ const FLASH = 1400
  *  binding chasing each other round the note. */
 const STEERING = 500
 
+/** How many rows a page holds when the glasses are doing the scrolling: enough
+ *  that a note is one page. The container itself caps what it will take, so a note
+ *  longer than that arrives cut rather than refused; see even/screen.ts. */
+const WHOLE = 10_000
+
 /** Whether a folder in a list can be shut. `null` when every one of them is open
  *  and no tap could change that, which is the sidebar. */
 type Folds = ((path: string) => boolean) | null
+
+/** What a setting says now, as one word for the right of its row.
+ *
+ *  A switch is on or off, a choice is the label of the option it is on, a number is
+ *  the number. Translated by whoever built the field, so this only picks. */
+function saying(field: Field): string {
+  if (field.kind === 'switch') return field.get() ? t('On') : t('Off')
+  if (field.kind === 'slider') return `${String(field.get())}${field.unit ?? ''}`
+  if (field.kind === 'text') return field.get() || field.placeholder
+
+  const value = field.get()
+  return field.options.find((one) => one.value === value)?.label ?? value
+}
 
 /** Whatever was thrown, in as few words as carry the reason. */
 function why(error: unknown): string {
@@ -145,6 +165,22 @@ class Bridge {
   asked = $state('')
   answer = $state('')
   listening = $state(false)
+  /** Where the voice is, in the few facts one screenshot has to answer with.
+   *
+   *  Real UI rather than a dev panel, because "voice mode simply doesn't work
+   *  whatever I say" is four different faults wearing one face - no recogniser, a
+   *  microphone that was refused, frames that never arrive, a transcription that
+   *  was turned down - and nobody can read a log off a pair of glasses. See
+   *  voice.ts, and the readout in Glasses.svelte. */
+  voiceState = $state<Listening>({
+    on: false,
+    path: 'none',
+    frames: 0,
+    heard: '',
+    nothing: false,
+    trouble: '',
+    detail: '',
+  })
 
   private glasses: Glasses | null = null
   private panel: Panel | null = null
@@ -200,6 +236,12 @@ class Bridge {
     }
 
     this.glasses = glasses
+    // A pair of glasses answered, once, ever. What the Glasses section on every
+    // other device waits for: somebody who has never worn a pair should not be
+    // offered a pane of settings about them, and the account is the only place that
+    // can carry the answer between devices. See preferences.ts.
+    modes.sawGlasses()
+
     const panel = new Panel(glasses, modes.glassesLineNumbers)
     const made = await panel.open()
     if (made !== 'made') {
@@ -211,12 +253,21 @@ class Bridge {
     }
 
     this.panel = panel
-    this.shell = new Shell(this.world(), this.words(), this.session)
+    this.shell = new Shell(this.world(), this.words(), this.session, this.settings())
     this.voice = new Voice({
       microphone: (open) => glasses.microphone(open),
-      transcribe: glassesKey.set ? (wav) => this.transcribe(wav) : null,
+      // Asked every time rather than answered once. The key is on the account now,
+      // and the account answers a moment after the bridge comes up: decided here,
+      // the answer was always "no key" and the glasses' microphone was never
+      // opened for the whole sitting. That was half of "voice mode simply doesn't
+      // work whatever I say".
+      canTranscribe: () => glassesKey.set && !!account.accountToken,
+      transcribe: (wav) => this.transcribe(wav),
       heard: (heard) => this.heard(heard.said, heard.ended),
       failed: (said) => this.flash(said),
+      said: (state) => {
+        this.voiceState = state
+      },
     })
     this.health = 'live'
 
@@ -256,7 +307,34 @@ class Bridge {
       listen: (on) => void this.listen(on),
       listening: () => this.listening,
       pageNumber: () => modes.glassesPageNumber,
+      atSpace: () => workspace.activeSpace?.id ?? '',
+      // By path, because that is what a row in these lists is named by. The note
+      // the glasses are on is the note the plugin has active; see session.ts.
+      atNote: () => workspace.active?.path ?? '',
+      whole: () => this.wholeNote(),
     }
+  }
+
+  /** The whole note as rows, for the reader who asked the glasses to scroll it.
+   *
+   *  Paged with room for the whole thing rather than for a panel, so there is one
+   *  page and its words are all of it. Null in the ordinary mode, where the app cuts
+   *  the note into panels and turns them.
+   *
+   *  What the firmware does with a band longer than its container is not documented
+   *  and there is no offset reported back, which is why the app goes on paging the
+   *  note for itself underneath: the page it thinks the reader is on is what the
+   *  frame on the phone marks, and a flick of a temple still moves it. If the
+   *  firmware scrolls, the reader sees it scroll; if it does not, they see the first
+   *  panel of the note and the paged mode is one setting away. */
+  private wholeNote(): string | null {
+    if (modes.glassesScroll !== 'native') return null
+
+    const reading = this.reading
+    if (!reading) return null
+
+    const pages = pagesOf(reading.note.text, { ...this.paging(), gutter: 0, rows: WHOLE })
+    return pages.map((one) => one.words).join('\n')
   }
 
   /** The words the glasses say for themselves, translated once. */
@@ -271,6 +349,52 @@ class Bridge {
       thinking: t('Thinking'),
       nothingHere: t('Nothing here'),
       noAnswer: t('No answer'),
+      settings: t('Settings'),
+      reset: t('Reset glasses settings'),
+      done: t('Done'),
+    }
+  }
+
+  /** The glasses' own settings screen, from the one schema the phone's Settings
+   *  section is drawn from too. Nothing about which settings there are lives here;
+   *  see even/settings.ts. */
+  private settings(): Settings {
+    const found = (id: string) => glassesSettings().find((one) => one.id === id)
+
+    return {
+      rows: () =>
+        glassesSettings()
+          .filter((one) => one.onGlasses)
+          .map((one) => ({ id: one.id, label: one.field.label, value: saying(one.field) })),
+
+      tap: (id) => {
+        const field = found(id)?.field
+        if (!field) return null
+
+        // A toggle flips where it stands. A choice hands its options back for the
+        // shell to put up as a list; a number steps to the next value it has, which
+        // is the only thing a tap can mean for one.
+        if (field.kind === 'switch') {
+          field.set(!field.get())
+          return null
+        }
+
+        if (field.kind === 'select') return field.options
+
+        if (field.kind === 'slider') {
+          const next = field.get() + field.step
+          field.set(next > field.max ? field.min : next)
+        }
+
+        return null
+      },
+
+      pick: (id, value) => {
+        const field = found(id)?.field
+        if (field?.kind === 'select') field.set(value)
+      },
+
+      reset: () => resetGlasses(),
     }
   }
 
@@ -279,12 +403,14 @@ class Bridge {
    *  The body is the whole width on every screen; the line numbers are a column laid
    *  over its left, and the note's own rows carry a constant indent to clear it. See
    *  panel.ts in @nib/glasses for why that is the shape. */
-  private paging() {
+  private paging(): Paging {
     return {
       breakAt: modes.glassesBreak,
       gutter: modes.glassesLineNumbers ? GUTTER : 0,
       inner: BODY_INNER,
       rows: BODY_ROWS,
+      marks: modes.glassesMarks,
+      compaction: modes.glassesCompaction,
     }
   }
 
@@ -299,13 +425,14 @@ class Bridge {
     const note = tab?.kind === 'note' ? tab.note : null
     if (!note) return null
 
+    // The reader's own settings are deliberately not in here: they belong to the
+    // effect below, which applies them at once rather than after the settle. A
+    // setting that waits three quarters of a second for a keystroke is a setting
+    // that looks broken.
     return {
       note,
       revision: note.revision,
       shared: (rooms.present[note.key] ?? 0) > 0,
-      breakAt: modes.glassesBreak,
-      lineNumbers: modes.glassesLineNumbers,
-      pageNumber: modes.glassesPageNumber,
     }
   })
 
@@ -343,10 +470,50 @@ class Bridge {
         if (!panel) return
 
         void panel.renumber(numbered).then(() => {
-          this.follow(null)
+          this.again()
         })
       })
+
+      // Any glasses setting at all, applied at once.
+      //
+      // This is Emil's page number: he turned it off and on again and it never came
+      // back. Nothing was wrong with the setting - the page had not changed a
+      // character, so `follow` sent nothing, so the panel kept the words it had. A
+      // setting that waits for the next keystroke is a setting that looks broken, so
+      // a change to any of them re-cuts the page and draws whatever moved, whether
+      // or not the note did. The stamp is built from the schema, so a setting added
+      // later is watched by having been added; see even/settings.ts.
+      $effect(() => {
+        const stamp = glassesStamp()
+        if (!this.panel || !stamp) return
+
+        this.again()
+      })
     })
+  }
+
+  /** The note as it stands, re-paged with the settings as they stand, and drawn.
+   *
+   *  Unconditionally: the panel itself sends only the bands whose words changed, so
+   *  a draw that changes nothing costs nothing, and a setting that changes only the
+   *  head - the page number - is the case that has to reach the glass anyway. */
+  private again(): void {
+    const reading = this.reading
+    if (reading) {
+      const name = reading.note.name.replace(/\.md$/iu, '')
+      this.session.follow({ key: reading.note.key, name, text: reading.note.text }, this.paging())
+    }
+
+    this.showing = this.session.showing
+      ? {
+          from: this.session.showing.from,
+          to: this.session.showing.to,
+          page: this.session.showing.page,
+          count: this.session.showing.count,
+        }
+      : null
+
+    this.draw()
   }
 
   /** The note, paged, and the panel brought up to date if anything moved. */
@@ -519,18 +686,16 @@ class Bridge {
 
   /** One utterance, as words. Only reached where the WebView has no recogniser of
    *  its own, which is the phone doing this for nothing where it can. Through Nib,
-   *  for the same reason a question goes through it: the key is there. */
+   *  for the same reason a question goes through it: the key is there.
+   *
+   *  Whatever it refuses with is thrown rather than swallowed. "Nothing was heard"
+   *  and "the account is over its ceiling" are different faults and only the phone
+   *  can tell anybody which; see the readout in Glasses.svelte. */
   private async transcribe(wav: Uint8Array<ArrayBuffer>): Promise<string | null> {
     const token = account.accountToken
-    if (!token) return null
+    if (!token) throw new Error('sign in first')
 
-    try {
-      return (await api.askHeard(token, wav)).said
-    } catch {
-      // A phone with no signal, an account over its ceiling: nothing was heard,
-      // which is what the voice does something sensible with.
-      return null
-    }
+    return (await api.askHeard(token, wav)).said
   }
 
   /** Something was said. What it means, and how long it took to mean it.

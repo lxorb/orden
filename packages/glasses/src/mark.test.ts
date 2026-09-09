@@ -143,8 +143,17 @@ describe('a list', () => {
     }
   })
 
-  test('sets what follows an item under the words of the item', () => {
-    expect(lines('- one\n\n  more about one\n')).toEqual(['• one', '   more about one'])
+  /** Emil: "indentation is not forbidden, but not at the root level, that wastes
+   *  space." A block inside a top level item is at the root level of the note, so
+   *  it begins where the item does. A list inside a list still steps, because that
+   *  step is what says which list an item belongs to. */
+  test('sets what follows an item at the item’s own indent', () => {
+    expect(lines('- one\n\n  more about one\n')).toEqual(['• one', 'more about one'])
+    expect(lines('- one\n  - inside\n\n    under it\n')).toEqual([
+      '• one',
+      '   · inside',
+      '   under it',
+    ])
   })
 })
 
@@ -248,7 +257,9 @@ describe('nothing in a note is dropped', () => {
   })
 
   test('a definition list keeps the colon that ties it together', () => {
-    expect(lines('Term\n: what it means\n')).toEqual(['Term', '   : what it means'])
+    // At the margin, because the colon is the marker and the note is at its root
+    // level; see the list case above.
+    expect(lines('Term\n: what it means\n')).toEqual(['Term', ': what it means'])
   })
 
   test('an emoji written as a name is the emoji the font can draw', () => {

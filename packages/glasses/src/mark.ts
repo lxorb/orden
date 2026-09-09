@@ -52,10 +52,81 @@ export interface Line {
   under: boolean
 }
 
+/** Which of a note's own markers are drawn on the glasses.
+ *
+ *  Rule one above says which are worth drawing, and the defaults are that rule.
+ *  This is the reader overruling it, per construct: somebody proof-reading their
+ *  own markdown wants to see the asterisks, and somebody reading a note does not.
+ *  A switch each rather than one "show markdown" switch, because the answer is
+ *  different for a fence and for a bold word and that difference is the rule. */
+export interface Marks {
+  /** The `#` in front of a heading. Off: the capitals say what it is. */
+  heading: boolean
+  bold: boolean
+  italic: boolean
+  strike: boolean
+  highlight: boolean
+  /** The backticks around inline code. On: whether something is code changes
+   *  what it means. */
+  code: boolean
+  /** The ``` lines around a fence. On, for the same reason. */
+  fence: boolean
+  /** The brackets and the address of a link. Off: the words it shows are what
+   *  there is to read. */
+  link: boolean
+}
+
+/** What a note shows with nobody having said otherwise: code marked, style marks
+ *  dropped, headings without their hashes. Emil's rule, as a value. */
+export const MARKS: Marks = {
+  heading: false,
+  bold: false,
+  italic: false,
+  strike: false,
+  highlight: false,
+  code: true,
+  fence: true,
+  link: false,
+}
+
+/** How much of a note's own white space reaches the panel.
+ *
+ *  Seven lines is not many, and how they are spent is a real choice rather than a
+ *  detail. Emil's three, in his words:
+ *
+ *  - `none` shows every line break as written, even ten in a row;
+ *  - `collapse` folds runs of blank lines into one break, so A, blank, blank, B
+ *    shows A then B on the next line, while A, newline, B keeps two lines;
+ *  - `aggressive` joins A, newline, B into one line, and only two or more
+ *    newlines start a new line.
+ *
+ *  Whatever the level, **a line number is the line of the file**. That is the
+ *  point of the numbers: a row that says 12 is line 12 of the note, whether ten
+ *  lines were folded into it or none were. */
+export type Compaction = 'none' | 'collapse' | 'aggressive'
+
+export const COMPACTIONS: readonly Compaction[] = ['none', 'collapse', 'aggressive']
+
+export function isCompaction(value: unknown): value is Compaction {
+  return typeof value === 'string' && (COMPACTIONS as readonly string[]).includes(value)
+}
+
 export interface MarkOptions {
   /** How wide the body is, in pixels. Rules reach exactly this far and a table's
    *  columns are fitted into it. */
   inner: number
+  /** Which markers to draw. The defaults above when nobody has said. */
+  marks?: Marks
+  /** How much white space reaches the panel. `aggressive` when nobody has said,
+   *  which is what the plugin did before there was a choice. */
+  compaction?: Compaction
+  /** Whether the first level of a note is indented at all.
+   *
+   *  Emil: "indentation is not forbidden, but not at the root level, that wastes
+   *  space." A list at the root of a note starts at the margin and its own nesting
+   *  still steps in; 560 pixels is not enough to spend fifteen of them saying
+   *  "this is the top". */
+  rootIndent?: boolean
 }
 
 /** How far one step of list nesting pushes a line in.
@@ -214,8 +285,37 @@ const CALLOUT = /^\s*\[!(note|tip|important|warning|caution)\]\s*/i
  *  numbered with the line the paragraph started on, and the panel held half as much
  *  as it should. A hard break, which the author wrote two spaces for, is a `br`
  *  token and still breaks. */
-function flowing(text: string): string {
+function flowing(text: string, flow: boolean): string {
+  // Only at the compaction the plugin has always had. At the other two a newline
+  // the author wrote is a line the reader asked for; see `Compaction`.
+  if (!flow) return text.replace(/[ \t]*\n[ \t]*/gu, '\n')
   return text.replace(/[ \t]*\n[ \t]*/gu, ' ')
+}
+
+/** The marks a styling token was written with, put back on when the reader asked
+ *  to see them. Off, the words are the whole of it, which is rule one. */
+const AROUND: Readonly<Record<string, [string, keyof Marks]>> = {
+  strong: ['**', 'bold'],
+  em: ['*', 'italic'],
+  del: ['~~', 'strike'],
+  highlight: ['==', 'highlight'],
+}
+
+function around(words: string, type: string, marks: Marks): string {
+  const found = AROUND[type]
+  if (!found || !marks[found[1]]) return words
+
+  return `${found[0]}${words}${found[0]}`
+}
+
+/** A link, as the reader asked to see it: the words it shows, or the markdown it
+ *  was written as. */
+function linked(token: Token, kids: readonly Token[], marks: Marks, flow: boolean): string {
+  const shown = kids.length ? inlineWords(kids, marks, flow) : textOf(token)
+  if (!marks.link) return shown
+
+  const href = 'href' in token && typeof token.href === 'string' ? token.href : ''
+  return href ? `[${shown}](${href})` : shown
 }
 
 /** The words of a run of inline tokens, with every mark that only styles them
@@ -224,7 +324,7 @@ function flowing(text: string): string {
  *  This is rule one, and it is the whole of why it is short: `strong`, `em`,
  *  `del`, `highlight` and the rest simply recurse. Their children are the words,
  *  and the words are what a reader wants. */
-function inlineWords(tokens: readonly Token[]): string {
+function inlineWords(tokens: readonly Token[], marks: Marks, flow: boolean): string {
   let out = ''
 
   for (const token of tokens) {
@@ -236,13 +336,13 @@ function inlineWords(tokens: readonly Token[]): string {
       case 'em':
       case 'del':
       case 'highlight':
-        out += inlineWords(kids)
+        out += around(inlineWords(kids, marks, flow), token.type, marks)
         break
 
       // Code, which is the one inline mark that changes what the words mean, so
       // it keeps the ticks it was written with.
       case 'codespan':
-        out += `\`${textOf(token)}\``
+        out += marks.code ? `\`${textOf(token)}\`` : textOf(token)
         break
 
       // Maths is source too, and its dollars say so.
@@ -252,7 +352,7 @@ function inlineWords(tokens: readonly Token[]): string {
 
       case 'superscript':
       case 'subscript': {
-        const inside = kids.length ? inlineWords(kids) : textOf(token)
+        const inside = kids.length ? inlineWords(kids, marks, flow) : textOf(token)
         const digits = token.type === 'superscript' ? SUPERS : SUBS
         // The font has the ten digits raised and nothing else, so anything else
         // is set on the line rather than guessed at.
@@ -263,7 +363,7 @@ function inlineWords(tokens: readonly Token[]): string {
       case 'link':
         // The words it shows. A link with nothing to show is its own address,
         // which is then the only thing there is to read.
-        out += kids.length ? inlineWords(kids) : textOf(token)
+        out += linked(token, kids, marks, flow)
         break
 
       case 'wikilink':
@@ -298,13 +398,13 @@ function inlineWords(tokens: readonly Token[]): string {
       case 'emoji':
       case 'escape':
       case 'text':
-        out += kids.length ? inlineWords(kids) : flowing(textOf(token))
+        out += kids.length ? inlineWords(kids, marks, flow) : flowing(textOf(token), flow)
         break
 
       default:
         // Anything the grammar knows and this does not yet: its words, which is
         // better than a hole in the note.
-        out += kids.length ? inlineWords(kids) : flowing(textOf(token))
+        out += kids.length ? inlineWords(kids, marks, flow) : flowing(textOf(token), flow)
     }
   }
 
@@ -325,8 +425,11 @@ const CHEVRON = '›'
 const UNDERLINES: Readonly<Record<number, string>> = { 1: '═', 2: '─' }
 
 function heading(level: number, words: string, from: number, nest: Nest, sheet: Sheet): void {
+  // The hashes only where the reader asked for them: the capitals already say it
+  // is a heading and the chevrons already say which level.
+  const hashes = sheet.marks.heading ? `${'#'.repeat(level)} ` : ''
   const lead = level >= 4 ? `${CHEVRON.repeat(level - 3)} ` : ''
-  sheet.add(`${lead}${words.toUpperCase()}`, from, nest, { level })
+  sheet.add(`${hashes}${lead}${words.toUpperCase()}`, from, nest, { level })
 
   // The first two levels are underlined, and that underline is furniture rather
   // than a line of the note: when the heading opens a page it becomes the head
@@ -403,20 +506,50 @@ function tableLines(
   return [line(head), ruleOf('─', Math.min(inner, across)), ...rows.map((row) => line(row))]
 }
 
-/** How deep a line sits, and how many quote bars stand to its left. */
+/** How deep a line sits, how many quote bars stand to its left, and whether the
+ *  depth is a list's own nesting rather than a block sitting inside an item. Only
+ *  the first of those is worth a step; see `stepsAt`. */
 interface Nest {
   depth: number
   quote: number
+  listed?: boolean
 }
 
 /** Everything the walk is putting a note into. */
 class Sheet {
   readonly lines: Line[] = []
+  readonly marks: Marks
+  /** Whether a single newline is a space, which is the top compaction only. */
+  readonly flow: boolean
+  readonly compaction: Compaction
+  private readonly rootIndent: boolean
 
   constructor(
     private readonly where: Lines,
     private readonly inner: number,
-  ) {}
+    options: MarkOptions,
+  ) {
+    this.marks = options.marks ?? MARKS
+    this.compaction = options.compaction ?? 'aggressive'
+    this.flow = this.compaction === 'aggressive'
+    this.rootIndent = options.rootIndent ?? false
+  }
+
+  /** How far in a line at this depth sits.
+   *
+   *  Emil: "indentation is not forbidden, but not at the root level, that wastes
+   *  space." The root level of a note is depth zero and has never carried a step,
+   *  so what is left is the one case that does: the blocks *inside* a list item - a
+   *  second paragraph, a fence, a quote - which used to begin three spaces further
+   *  in than the item's own words. Those come back to the item's own indent, and a
+   *  list nested inside a list still steps, because that step is what says which
+   *  list an item belongs to and the bullets alone cannot carry three levels.
+   *
+   *  `rootIndent` puts the old behaviour back for anybody who wants it. */
+  private stepsAt(depth: number, listed: boolean): number {
+    if (this.rootIndent || listed) return depth
+    return Math.max(0, depth - 1)
+  }
 
   /** One line, with its indentation and its quote bars put on the front. */
   add(
@@ -425,11 +558,15 @@ class Sheet {
     nest: Nest,
     options: { glued?: boolean; level?: number; under?: boolean } = {},
   ): void {
-    const lead = QUOTE.repeat(nest.quote) + STEP.repeat(nest.depth)
-    // A line that only breaks because the author wrote a hard break inside it.
-    // The halves are one block, so the second hangs under the first's words the
-    // same way a wrapped row does.
+    const lead =
+      QUOTE.repeat(nest.quote) + STEP.repeat(this.stepsAt(nest.depth, nest.listed === true))
+    // A line that only breaks because the author wrote a hard break inside it, or
+    // because the reader asked for the note's own breaks. The halves are one
+    // block, so the second hangs under the first's words the same way a wrapped
+    // row does - and each carries its own line of the file, because a number that
+    // says 12 has to be line 12 whatever was folded into it.
     let hang = ''
+    const first = this.where.at(from)
     for (const [at, part] of text.split('\n').entries()) {
       // Folded here, at the one place a line is made, so that every line of a
       // note is a line the firmware can actually draw. See `firmware.ts`.
@@ -439,12 +576,22 @@ class Sheet {
       this.lines.push({
         text: whole,
         from,
-        at: this.where.at(from),
+        at: first + at,
         glued: at > 0 || options.glued === true,
         level: at === 0 ? (options.level ?? 0) : 0,
         under: at === 0 && options.under === true,
       })
     }
+  }
+
+  /** A blank row, for the compaction that draws the note's own empty lines. */
+  blank(from: number, line: number): void {
+    this.lines.push({ text: '', from, at: line, glued: false, level: 0, under: false })
+  }
+
+  /** Which line of the file an offset is on. */
+  lineAt(from: number): number {
+    return this.where.at(from)
   }
 
   /** A run of lines that belong together: the first may start a page, the rest
@@ -472,7 +619,22 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   switch (token.type) {
     // A blank line, a link definition, an abbreviation: none of them is content,
     // and none of them shows on a page either.
-    case 'space':
+    case 'space': {
+      // The blank lines between two blocks. Nothing at all at the two compactions
+      // that fold them, and one row each at the one that does not: "every line
+      // break as written, even ten in a row". Each row carries its own line of the
+      // file, so the numbers down the side still count what is there.
+      const from = where.take(raw)
+      if (sheet.compaction !== 'none') break
+
+      // The run begins with the newline that ended the block above, so the first
+      // blank line of the note is the line after the one that offset is on.
+      const blanks = (raw.match(/\n/gu)?.length ?? 0) - 1
+      const first = sheet.lineAt(from) + 1
+      for (let at = 0; at < blanks; at++) sheet.blank(from, first + at)
+      break
+    }
+
     case 'def':
     case 'abbrDef':
       where.take(raw)
@@ -480,7 +642,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
     case 'heading': {
       const level = 'depth' in token && typeof token.depth === 'number' ? token.depth : 1
-      heading(level, inlineWords(kids), where.take(raw), nest, sheet)
+      heading(level, inlineWords(kids, sheet.marks, sheet.flow), where.take(raw), nest, sheet)
       break
     }
 
@@ -504,12 +666,16 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
       const from = where.take(raw)
       const picture = onlyPicture(kids)
       if (picture) sheet.add(`${PICTURE} ${picture}`, from, nest)
-      else sheet.add(inlineWords(kids), from, nest)
+      else sheet.add(inlineWords(kids, sheet.marks, sheet.flow), from, nest)
       break
     }
 
     case 'text':
-      sheet.add(kids.length ? inlineWords(kids) : textOf(token), where.take(raw), nest)
+      sheet.add(
+        kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token),
+        where.take(raw),
+        nest,
+      )
       break
 
     case 'html':
@@ -556,12 +722,18 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   // line" reaches a line of code.
   let inside = from + Math.max(0, raw.indexOf(code))
 
-  sheet.add(`${FENCE}${language}`, from, nest)
-  for (const line of code.split('\n')) {
-    sheet.add(line, inside, nest, { glued: true })
+  // The ``` lines are the one thing a reader cannot work out for themselves, so
+  // they are on unless the reader turned them off. Off, the code is still every
+  // line of it, glued together and unwrapped: rule two.
+  const marked = sheet.marks.fence
+  if (marked) sheet.add(`${FENCE}${language}`, from, nest)
+  for (const [at, line] of code.split('\n').entries()) {
+    sheet.add(line, inside, nest, { glued: marked || at > 0 })
     inside += line.length + 1
   }
-  sheet.add(FENCE, from + Math.max(0, raw.length - FENCE.length - 1), nest, { glued: true })
+  if (marked) {
+    sheet.add(FENCE, from + Math.max(0, raw.length - FENCE.length - 1), nest, { glued: true })
+  }
 }
 
 /** A paragraph that holds one picture and nothing else. */
@@ -637,8 +809,14 @@ function list(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     // block at the same indentation.
     const lead = kids[0]
     const leads = lead !== undefined && isLeading(lead)
-    const words = leads ? inlineWords(childrenOf(lead).length ? childrenOf(lead) : [lead]) : ''
-    sheet.add(`${marker} ${words}`.trimEnd(), from, { depth: nest.depth, quote: nest.quote })
+    const words = leads
+      ? inlineWords(childrenOf(lead).length ? childrenOf(lead) : [lead], sheet.marks, sheet.flow)
+      : ''
+    sheet.add(`${marker} ${words}`.trimEnd(), from, {
+      depth: nest.depth,
+      quote: nest.quote,
+      listed: true,
+    })
     if (leads) where.take(rawOf(lead))
 
     walk(leads ? kids.slice(1) : kids, where, inside, sheet)
@@ -652,7 +830,8 @@ function isLeading(token: Token): boolean {
 
 function table(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const one = token as Tokens.Table
-  const cells = (row: readonly Tokens.TableCell[]) => row.map((cell) => inlineWords(cell.tokens))
+  const cells = (row: readonly Tokens.TableCell[]) =>
+    row.map((cell) => inlineWords(cell.tokens, sheet.marks, sheet.flow))
 
   sheet.addAll(
     tableLines(
@@ -676,11 +855,14 @@ function definitions(token: Token, where: Locator, nest: Nest, sheet: Sheet): vo
   const from = where.take(rawOf(token))
 
   for (const item of items) {
-    sheet.add(inlineWords(item.term), from, nest)
+    sheet.add(inlineWords(item.term, sheet.marks, sheet.flow), from, nest)
     for (const detail of item.details) {
       // The `:` the definition was written with, which is what says the line
       // below is the one above explained.
-      sheet.add(`: ${inlineWords(detail)}`, from, { depth: nest.depth + 1, quote: nest.quote })
+      sheet.add(`: ${inlineWords(detail, sheet.marks, sheet.flow)}`, from, {
+        depth: nest.depth + 1,
+        quote: nest.quote,
+      })
     }
   }
 }
@@ -702,7 +884,7 @@ function footnote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void 
 export function markLines(source: string, options: MarkOptions): Line[] {
   const body = stripFrontMatter(source)
   // The locator searches the whole file, so an offset it finds is the file's.
-  const sheet = new Sheet(new Lines(source), options.inner)
+  const sheet = new Sheet(new Lines(source), options.inner, options)
   walk(lexMarkdown(body), new Locator(source), { depth: 0, quote: 0 }, sheet)
 
   return sheet.lines

@@ -38,6 +38,61 @@ const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6]
 /** The API's own list, from the one module that talks to it. */
 const GLASSES_EFFORTS: readonly string[] = EFFORTS
 
+/** How much of a note's white space reaches the panel, and who scrolls it. Lists
+ *  rather than any string, for the same reason as everything else on this row: the
+ *  app shows each of these in a select. */
+const GLASSES_COMPACTIONS = ['none', 'collapse', 'aggressive']
+const GLASSES_SCROLLS = ['paged', 'native']
+
+/** Which of a note's markers may be turned on, by construct. Named here rather
+ *  than accepted as any object, so an account cannot carry a switch no version of
+ *  the app has ever heard of. */
+const GLASSES_MARKS = ['heading', 'bold', 'italic', 'strike', 'highlight', 'code', 'fence', 'link']
+
+/** How many phrases a reader may rebind, and how long one may be. A spoken
+ *  command is a phrase, not a paragraph. */
+const MOST_WORDS = 40
+const LONGEST_WORD = 60
+
+/** An object of named switches, each of which must be one of a list. */
+function switchMap(name: string, allowed: readonly string[]): Check {
+  return (value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return `${name} must be an object`
+    }
+
+    for (const [key, on] of Object.entries(value as Record<string, unknown>)) {
+      if (!allowed.includes(key)) return `${name} has no ${key}`
+      if (typeof on !== 'boolean') return `${name}.${key} must be true or false`
+    }
+
+    return null
+  }
+}
+
+/** The phrases a spoken command answers to, by command id.
+ *
+ *  The ids are the app's own and are not listed here, for the same reason the
+ *  shortcut ids are not: a server that knew them would have to be deployed before
+ *  every new command. What is checked is the shape and the size. */
+function phraseMap(value: unknown): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return 'glassesWords must be an object'
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>)
+  if (entries.length > MOST_WORDS) return `glassesWords holds at most ${MOST_WORDS} phrases`
+
+  for (const [id, phrase] of entries) {
+    if (id.length > LONGEST_ID || !ID.test(id)) return `${id} is not a command`
+    if (typeof phrase !== 'string' || phrase.length > LONGEST_WORD) {
+      return `${id} must be a phrase of at most ${LONGEST_WORD} characters`
+    }
+  }
+
+  return null
+}
+
 /** A model id, which is a name and not a sentence. */
 const MOST_MODEL = 100
 
@@ -86,6 +141,11 @@ const KNOWN: Record<string, Check> = {
   glassesLineNumbers: switched('glassesLineNumbers'),
   glassesPageNumber: switched('glassesPageNumber'),
   glassesVoice: switched('glassesVoice'),
+  glassesCompaction: wordOf('glassesCompaction', GLASSES_COMPACTIONS),
+  glassesScroll: wordOf('glassesScroll', GLASSES_SCROLLS),
+  glassesMarks: switchMap('glassesMarks', GLASSES_MARKS),
+  glassesWords: phraseMap,
+  glassesSeen: switched('glassesSeen'),
   // `glassesKey` was here, and was a plaintext OpenAI key in a column that every
   // read handed back. It is not a setting any more: it is encrypted on the user's
   // row and written through `PUT /v1/ask/key`, which is the only way in. An older

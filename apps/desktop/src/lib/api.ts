@@ -190,6 +190,19 @@ export interface AccountSettings {
   glassesPageNumber?: boolean
   /** Whether the glasses' microphone listens for spoken commands. */
   glassesVoice?: boolean
+  /** How much of a note's own white space reaches the panel: `none`, `collapse`
+   *  or `aggressive`; see `Compaction` in @nib/glasses. */
+  glassesCompaction?: string
+  /** Which of a note's markers are drawn on the panel, by construct. */
+  glassesMarks?: Record<string, boolean>
+  /** Who scrolls the note: the app, page by page, or the glasses themselves. */
+  glassesScroll?: string
+  /** The phrases a spoken command answers to, where the reader changed them.
+   *  Only the differences travel, the way the shortcuts do. */
+  glassesWords?: Record<string, string>
+  /** Whether this account has ever had the plugin in front of a pair of glasses.
+   *  What the Glasses section on every other device waits for. */
+  glassesSeen?: boolean
   /** Which model answers, out of the families the API itself listed. */
   glassesModel?: string
   /** How hard it is asked to think, from the API's own list of efforts. */

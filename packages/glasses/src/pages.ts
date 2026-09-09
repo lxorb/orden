@@ -26,6 +26,7 @@
 
 import { fit, fold, rightward, SPACE, width, wrap } from './firmware'
 import { hashOf } from './hash'
+import type { Compaction, Marks } from './mark'
 import { hangOf, type Line, markLines } from './mark'
 
 /** How the reader wants a note paged. Their settings, straight through. */
@@ -43,6 +44,12 @@ export interface Paging {
   inner: number
   /** How many of the firmware's lines the body container holds. */
   rows: number
+  /** Which of a note's markers are drawn, and how much of its white space
+   *  reaches the panel. The reader's own settings, straight through to the
+   *  mapping; see `mark.ts`. */
+  marks?: Marks
+  compaction?: Compaction
+  rootIndent?: boolean
 }
 
 /** One page of a note, ready for the bands of the panel. */
@@ -98,7 +105,12 @@ function empty(section: string, rule: string): Taking {
 
 /** A note as pages, cut where the firmware will cut them. */
 export function pagesOf(source: string, paging: Paging): Page[] {
-  const marked = markLines(source, { inner: paging.inner })
+  const marked = markLines(source, {
+    inner: paging.inner,
+    ...(paging.marks ? { marks: paging.marks } : {}),
+    ...(paging.compaction ? { compaction: paging.compaction } : {}),
+    ...(paging.rootIndent === undefined ? {} : { rootIndent: paging.rootIndent }),
+  })
   if (!marked.length) return []
 
   // A constant indent rather than a padded number: constant is what has no jitter

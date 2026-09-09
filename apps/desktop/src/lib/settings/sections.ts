@@ -6,6 +6,7 @@
  *  out. */
 
 import { account } from '../account.svelte'
+import { modes } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
 import type { Section } from '../settings.svelte'
@@ -49,8 +50,8 @@ export const ICONS: Record<string, string> = {
  *  are off until deliberately turned on. Until there is an account they have
  *  nothing to show but an instruction to sign in, so they stay out of the list
  *  rather than sitting there offering nothing. Glasses is the same argument from
- *  the other side: outside the plugin there are no glasses to set anything
- *  about. */
+ *  the other side: somebody who has never had a pair in front of the plugin has
+ *  no glasses to set anything about. */
 export function sectionGroups(): Item[][] {
   return [
     [
@@ -60,9 +61,13 @@ export function sectionGroups(): Item[][] {
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
-      // Only in front of a pair of glasses. Spread rather than hidden, so the
-      // group closes over the gap instead of leaving one.
-      ...(isPlugin() ? [{ id: 'glasses' as Section, label: t('Glasses') }] : []),
+      // Only for somebody who has a pair: in the plugin always, and on any other
+      // device once the plugin has answered one, which the account remembers.
+      // Spread rather than hidden, so the group closes over the gap instead of
+      // leaving one. See preferences.ts, which gates the pane on the same answer.
+      ...(isPlugin() || modes.glassesSeen
+        ? [{ id: 'glasses' as Section, label: t('Glasses') }]
+        : []),
     ],
     [
       { id: 'account', label: t('Account') },

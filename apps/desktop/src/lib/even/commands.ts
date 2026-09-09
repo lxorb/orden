@@ -15,6 +15,8 @@
  *  Nothing here touches the glasses, the workspace or a clock, which is what makes
  *  each phrase in the table a test. */
 
+import { key } from '../i18n.svelte'
+
 /** What the reader asked for. */
 export type Command =
   | { kind: 'next' }
@@ -156,27 +158,108 @@ export function bestOf(heard: string, names: readonly string[]): string | null {
   return best
 }
 
-/** The phrases, longest first, so that "voice commands off" is not read as
- *  "voice commands on" with a stray word after it. */
-const PHRASES: readonly { words: string[]; of: (rest: string) => Command | null }[] = [
-  { words: ['voice', 'commands', 'on'], of: () => ({ kind: 'voice', on: true }) },
-  { words: ['voice', 'commands', 'off'], of: () => ({ kind: 'voice', on: false }) },
-  { words: ['voice', 'on'], of: () => ({ kind: 'voice', on: true }) },
-  { words: ['voice', 'off'], of: () => ({ kind: 'voice', on: false }) },
-  { words: ['switch', 'space', 'to'], of: (rest) => named('switchSpace', rest) },
-  { words: ['switch', 'note', 'to'], of: (rest) => named('switchNote', rest) },
-  { words: ['switch', 'space'], of: () => ({ kind: 'spaces' }) },
-  { words: ['switch', 'note'], of: () => ({ kind: 'notes' }) },
-  { words: ['spaces', 'view'], of: () => ({ kind: 'spaces' }) },
-  { words: ['notes', 'view'], of: () => ({ kind: 'notes' }) },
-  { words: ['open', 'page'], of: (rest) => counted('page', rest) },
-  { words: ['go', 'to', 'line'], of: (rest) => counted('line', rest) },
-  { words: ['go', 'to', 'page'], of: (rest) => counted('page', rest) },
-  { words: ['question'], of: (rest) => (rest ? { kind: 'question', asked: rest } : null) },
-  { words: ['next'], of: () => ({ kind: 'next' }) },
-  { words: ['back'], of: () => ({ kind: 'back' }) },
-  { words: ['close'], of: () => ({ kind: 'close' }) },
+/** The phrases, by the id a reader may rebind each under.
+ *
+ *  Longest first, so that "voice commands off" is not read as "voice commands on"
+ *  with a stray word after it - and sorted again at match time, because a reader
+ *  who rebinds one changes how long it is.
+ *
+ *  `shown` is the one a reader edits. The others are aliases the app keeps
+ *  whatever anybody types: "spaces view" and "switch space" are two ways of asking
+ *  for one thing, and taking the second away because somebody rebound the first
+ *  would be a command that stopped working for no reason they can see. */
+interface Phrase {
+  id: string
+  words: string[]
+  of: (rest: string) => Command | null
+  /** What the settings pane calls it, for the phrases a reader may change. */
+  label?: string
+}
+
+const PHRASES: readonly Phrase[] = [
+  {
+    id: 'voice-on',
+    words: ['voice', 'commands', 'on'],
+    of: () => ({ kind: 'voice', on: true }),
+    label: key('Turn the microphone on'),
+  },
+  {
+    id: 'voice-off',
+    words: ['voice', 'commands', 'off'],
+    of: () => ({ kind: 'voice', on: false }),
+    label: key('Turn the microphone off'),
+  },
+  { id: 'voice-on-short', words: ['voice', 'on'], of: () => ({ kind: 'voice', on: true }) },
+  { id: 'voice-off-short', words: ['voice', 'off'], of: () => ({ kind: 'voice', on: false }) },
+  {
+    id: 'switch-space-to',
+    words: ['switch', 'space', 'to'],
+    of: (rest) => named('switchSpace', rest),
+    label: key('Go to a space by name'),
+  },
+  {
+    id: 'switch-note-to',
+    words: ['switch', 'note', 'to'],
+    of: (rest) => named('switchNote', rest),
+    label: key('Go to a note by name'),
+  },
+  {
+    id: 'spaces',
+    words: ['switch', 'space'],
+    of: () => ({ kind: 'spaces' }),
+    label: key('Open the spaces'),
+  },
+  {
+    id: 'notes',
+    words: ['switch', 'note'],
+    of: () => ({ kind: 'notes' }),
+    label: key('Open the notes'),
+  },
+  { id: 'spaces-view', words: ['spaces', 'view'], of: () => ({ kind: 'spaces' }) },
+  { id: 'notes-view', words: ['notes', 'view'], of: () => ({ kind: 'notes' }) },
+  {
+    id: 'page',
+    words: ['open', 'page'],
+    of: (rest) => counted('page', rest),
+    label: key('Go to a page'),
+  },
+  {
+    id: 'line',
+    words: ['go', 'to', 'line'],
+    of: (rest) => counted('line', rest),
+    label: key('Go to a line'),
+  },
+  { id: 'page-alias', words: ['go', 'to', 'page'], of: (rest) => counted('page', rest) },
+  {
+    id: 'question',
+    words: ['question'],
+    of: (rest) => (rest ? { kind: 'question', asked: rest } : null),
+    label: key('Ask a question'),
+  },
+  { id: 'next', words: ['next'], of: () => ({ kind: 'next' }), label: key('Next page') },
+  { id: 'back', words: ['back'], of: () => ({ kind: 'back' }), label: key('Previous page') },
+  {
+    id: 'close',
+    words: ['close'],
+    of: () => ({ kind: 'close' }),
+    label: key('Close what is open'),
+  },
 ]
+
+/** What each phrase is with nobody having changed it. */
+export const DEFAULT_WORDS: Readonly<Record<string, string>> = Object.fromEntries(
+  PHRASES.map((one) => [one.id, one.words.join(' ')]),
+)
+
+/** The phrases a reader may change, for the settings pane: the id to write under,
+ *  what to call it, and what it says with nobody having said otherwise. */
+export function commandWords(): { id: string; label: string; said: string }[] {
+  return PHRASES.filter((one) => one.label !== undefined).map((one) => ({
+    id: one.id,
+    label: one.label ?? '',
+    said: one.words.join(' '),
+  }))
+}
 
 /** A switch to a name, or the picker when the name did not arrive.
  *
@@ -198,15 +281,29 @@ function counted(kind: 'page' | 'line', rest: string): Command | null {
  *  A phrase has to start what was heard, because a recogniser hands over whole
  *  utterances and "the next thing to do" is not a page turn. The one exception is
  *  "question", which takes everything after it whatever that is. */
-export function commandIn(said: string): Command | null {
-  const words = bare(said).split(' ').filter(Boolean)
-  if (!words.length) return null
+export function commandIn(
+  said: string,
+  words: Readonly<Record<string, string>> = {},
+): Command | null {
+  const heard = bare(said).split(' ').filter(Boolean)
+  if (!heard.length) return null
 
-  for (const phrase of PHRASES) {
-    if (phrase.words.length > words.length) continue
-    if (!phrase.words.every((word, at) => words[at] === word)) continue
+  // Longest first, whatever a reader rebound them to: a phrase that is a prefix of
+  // another has to be tried second or the longer one is never reached.
+  const phrases = PHRASES.map((one) => ({
+    of: one.of,
+    words: bare(words[one.id] ?? one.words.join(' '))
+      .split(' ')
+      .filter(Boolean),
+  }))
+    .filter((one) => one.words.length > 0)
+    .sort((a, b) => b.words.length - a.words.length)
 
-    return phrase.of(words.slice(phrase.words.length).join(' '))
+  for (const phrase of phrases) {
+    if (phrase.words.length > heard.length) continue
+    if (!phrase.words.every((word, at) => heard[at] === word)) continue
+
+    return phrase.of(heard.slice(phrase.words.length).join(' '))
   }
 
   return null

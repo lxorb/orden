@@ -31,9 +31,10 @@ import {
   BODY_ROWS,
   fit,
   pageOfLine,
-  rightward,
   ruleOf,
+  HEAD_INNER,
   spread,
+  width,
   wrap,
 } from '@nib/glasses'
 import type { Session } from './session'
@@ -87,6 +88,56 @@ export interface World {
   listening: () => boolean
   /** Whether the foot says which page of how many. The reader's own setting. */
   pageNumber: () => boolean
+  /** The space the reader is in, by the id its row carries, so a list of spaces
+   *  opens with the cursor on the one they are already in rather than at the top. */
+  atSpace: () => string
+  /** The note on the glasses, by the id its row carries. Same reason: a list you
+   *  opened to change something starts where you are. */
+  atNote: () => string
+  /** The whole note as rows, when the reader asked the glasses to scroll it
+   *  themselves rather than have the app turn pages; null otherwise, which is the
+   *  default. See even/scroll.ts.
+   *
+   *  The body band gets all of it in one send and the firmware scrolls it. The rest
+   *  of the screen is unchanged, which is the point: the page the app thinks the
+   *  reader is on still moves with a flick of a temple, so the frame on the phone
+   *  still marks a page-sized window, and the line numbers go - a column of numbers
+   *  cannot line up with a band somebody else is scrolling. */
+  whole: () => string | null
+}
+
+/** The glasses' own settings, as rows the cursor walks.
+ *
+ *  Handed in rather than reached for, like the world and the words, so that this
+ *  file knows nothing about the app's stores and the whole screen is a test. What
+ *  is on the other end is one schema shared with the phone's own Settings section;
+ *  see even/settings.ts. Adding a setting adds a row here and a row there, and
+ *  nothing in this file changes. */
+export interface Settings {
+  /** Every setting, in order: what it is called and what it says now. Read afresh
+   *  every draw, like the lists, so a setting changed on the phone is changed here
+   *  before the reader's thumb is off the temple. */
+  rows: () => SettingRow[]
+  /** A tap on one. Answers the choices to put up when it is a choice, and null
+   *  when the tap was the whole of it - a toggle flips where it stands. */
+  tap: (id: string) => readonly Option[] | null
+  /** One of those choices, chosen. */
+  pick: (id: string, value: string) => void
+  /** Every glasses setting back to what it started as. */
+  reset: () => void
+}
+
+export interface SettingRow {
+  id: string
+  label: string
+  /** What it says now, already translated: `On`, `H2 and above`, a phrase. Empty
+   *  for the row that is an action rather than a setting. */
+  value: string
+}
+
+export interface Option {
+  value: string
+  label: string
 }
 
 /** The handful of words the glasses say for themselves, already translated.
@@ -103,6 +154,9 @@ export interface Words {
   thinking: string
   nothingHere: string
   noAnswer: string
+  settings: string
+  reset: string
+  done: string
 }
 
 /** What the reader is looking at. */
@@ -112,6 +166,8 @@ export type Screen =
   | { kind: 'modal'; at: number }
   | { kind: 'spaces'; at: number }
   | { kind: 'tree'; at: number }
+  | { kind: 'settings'; at: number }
+  | { kind: 'choice'; id: string; title: string; rows: readonly Option[]; at: number }
   | { kind: 'asking'; question: string }
   | { kind: 'answer'; question: string; rows: readonly string[]; at: number }
 
@@ -122,13 +178,12 @@ export interface View {
   rule: string
   body: string
   nums: string
-  foot: string
   mic: string
 }
 
 /** The three choices the hold gesture puts up. In this order, because the first is
  *  the one somebody holding the temple most often wants. */
-const CHOICES = ['space', 'note', 'voice'] as const
+const CHOICES = ['space', 'note', 'voice', 'settings'] as const
 type Choice = (typeof CHOICES)[number]
 
 /** What a gesture is, once `sdk.ts` has read it off the wire. */
@@ -140,6 +195,10 @@ export type Gesture = 'tap' | 'double' | 'hold' | 'up' | 'down'
  *  business and a page is the radio's: both belong to the caller, and a shell that
  *  did them itself could not be tested without either. */
 export type Wish = 'none' | 'leave' | 'draw'
+
+/** The id of the row that is an action rather than a setting. A name no setting
+ *  can have, because a setting's id names a field. */
+const RESET = 'reset:action'
 
 const CURSOR = '▶ '
 const NOWHERE = '  '
@@ -176,10 +235,33 @@ function nextPick(rows: readonly Row[], at: number, by: number): number {
   return at
 }
 
-/** The first row the cursor may land on. Where a list opens. */
+/** One setting's choices, as rows like any other list's. */
+function optionRows(options: readonly Option[]): Row[] {
+  return options.map((one) => ({
+    label: one.label,
+    depth: 0,
+    folder: false,
+    open: false,
+    pick: true,
+    id: one.value,
+  }))
+}
+
+/** The first row the cursor may land on. Where a list opens with nothing to open
+ *  it on. */
 function firstPick(rows: readonly Row[]): number {
   const at = rows.findIndex((row) => row.pick)
   return at < 0 ? 0 : at
+}
+
+/** Where a list opens: on the row the reader is already in, if it is in the list.
+ *
+ *  A list of five spaces that always opens on the first is a list that costs four
+ *  scrolls to say "not that one, the one I am in". Opening on where you are makes
+ *  the cursor an answer to "where am I" as well as a way to choose. */
+function startAt(rows: readonly Row[], id: string): number {
+  const at = rows.findIndex((row) => row.pick && row.id === id)
+  return at < 0 ? firstPick(rows) : at
 }
 
 export class Shell {
@@ -193,6 +275,7 @@ export class Shell {
     private readonly world: World,
     private readonly words: Words,
     private readonly session: Session,
+    private readonly settings: Settings,
   ) {}
 
   get screen(): Screen {
@@ -249,13 +332,28 @@ export class Shell {
   }
 
   /** Puts a screen up by name. What a spoken command asks for. */
-  show(kind: 'sidebar' | 'modal' | 'spaces' | 'tree'): Wish {
-    this.stack = [{ kind: 'note' }, { kind, at: firstPick(this.rowsFor(kind)) }]
+  show(kind: 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings'): Wish {
+    this.stack = [{ kind: 'note' }, { kind, at: this.opensAt(kind) }]
     return 'draw'
   }
 
+  /** Where a screen's cursor starts: on what the reader is already in. */
+  private opensAt(kind: 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings'): number {
+    const rows = this.rowsFor(kind)
+    switch (kind) {
+      case 'spaces':
+        return startAt(rows, this.world.atSpace())
+      case 'sidebar':
+      case 'tree':
+        return startAt(rows, this.world.atNote())
+      case 'modal':
+      case 'settings':
+        return firstPick(rows)
+    }
+  }
+
   /** The rows a screen is made of, by its name. */
-  private rowsFor(kind: 'sidebar' | 'modal' | 'spaces' | 'tree'): Row[] {
+  private rowsFor(kind: 'sidebar' | 'modal' | 'spaces' | 'tree' | 'settings'): Row[] {
     switch (kind) {
       case 'sidebar':
         return this.world.contents()
@@ -265,7 +363,34 @@ export class Shell {
         return this.world.tree()
       case 'modal':
         return this.choices()
+      case 'settings':
+        return this.settingRows()
     }
+  }
+
+  /** The settings, as rows like any other list's: what each is called on the left
+   *  and what it says now on the right, and the reset at the foot of them where an
+   *  action belongs. Spread so the cursor and the drawing cannot disagree. */
+  private settingRows(): Row[] {
+    const rows: Row[] = this.settings.rows().map((one) => ({
+      label: one.value ? spread(one.label, one.value, BODY_INNER - width(CURSOR)) : one.label,
+      depth: 0,
+      folder: false,
+      open: false,
+      pick: true,
+      id: one.id,
+    }))
+
+    rows.push({
+      label: this.words.reset,
+      depth: 0,
+      folder: false,
+      open: false,
+      pick: true,
+      id: RESET,
+    })
+
+    return rows
   }
 
   /** Back to the note, whatever was over it. */
@@ -352,6 +477,12 @@ export class Shell {
       case 'modal':
         return this.step(screen, this.choices(), by)
 
+      case 'settings':
+        return this.step(screen, this.settingRows(), by)
+
+      case 'choice':
+        return this.step(screen, optionRows(screen.rows), by)
+
       case 'answer': {
         const most = Math.max(0, screen.rows.length - SHOWN)
         const at = Math.min(Math.max(0, screen.at + by), most)
@@ -396,7 +527,11 @@ export class Shell {
         if (!row) return 'none'
 
         this.world.enter(row.id)
-        return this.close()
+        // Straight into that space's notes, because nobody switches space to look
+        // at the note they were already reading. Emil's rule, and the two taps it
+        // saves are two taps on a temple.
+        this.stack = [{ kind: 'note' }, { kind: 'tree', at: this.opensAt('tree') }]
+        return 'draw'
       }
 
       case 'tree': {
@@ -417,6 +552,45 @@ export class Shell {
       case 'modal':
         return this.take(CHOICES[clamp(screen.at, CHOICES.length)] ?? 'space')
 
+      case 'settings': {
+        const row = this.settingRows()[screen.at]
+        if (!row) return 'none'
+
+        if (row.id === RESET) {
+          this.settings.reset()
+          this.flash(this.words.done)
+          return 'draw'
+        }
+
+        // A toggle flips where it stands and the row says so at once; a choice
+        // opens as a list like every other list here, with the cursor on the value
+        // it already has.
+        const options = this.settings.tap(row.id)
+        if (!options) return 'draw'
+
+        const label = this.settings.rows().find((one) => one.id === row.id)
+        const at = options.findIndex((one) => one.label === label?.value)
+        this.stack.push({
+          kind: 'choice',
+          id: row.id,
+          title: label?.label ?? '',
+          rows: options,
+          at: at < 0 ? 0 : at,
+        })
+        return 'draw'
+      }
+
+      case 'choice': {
+        const option = screen.rows[clamp(screen.at, screen.rows.length)]
+        if (!option) return 'none'
+
+        this.settings.pick(screen.id, option.value)
+        // Back to the settings, where the row now says what was chosen. One level,
+        // the way a double tap would have gone.
+        this.stack.pop()
+        return 'draw'
+      }
+
       case 'answer':
       case 'asking':
         return 'none'
@@ -426,11 +600,15 @@ export class Shell {
   private take(choice: Choice): Wish {
     switch (choice) {
       case 'space':
-        this.stack.push({ kind: 'spaces', at: firstPick(this.world.spaces()) })
+        this.stack.push({ kind: 'spaces', at: this.opensAt('spaces') })
         return 'draw'
 
       case 'note':
-        this.stack.push({ kind: 'tree', at: firstPick(this.world.tree()) })
+        this.stack.push({ kind: 'tree', at: this.opensAt('tree') })
+        return 'draw'
+
+      case 'settings':
+        this.stack.push({ kind: 'settings', at: this.opensAt('settings') })
         return 'draw'
 
       case 'voice': {
@@ -469,13 +647,18 @@ export class Shell {
       case 'modal':
         return { ...this.modal(screen.at), mic }
 
+      case 'settings':
+        return { ...this.list(this.words.settings, this.settingRows(), screen.at), mic }
+
+      case 'choice':
+        return { ...this.list(screen.title, optionRows(screen.rows), screen.at), mic }
+
       case 'asking':
         return {
-          head: fit(screen.question, BODY_INNER),
+          head: this.top(screen.question, ''),
           rule: ruleOf('─', BODY_INNER),
-          body: '',
+          body: this.words.thinking,
           nums: '',
-          foot: this.words.thinking,
           mic,
         }
 
@@ -484,11 +667,13 @@ export class Shell {
         const shown = screen.rows.slice(from, from + SHOWN)
         const more = screen.rows.length > SHOWN
         return {
-          head: fit(screen.question, BODY_INNER),
+          head: this.top(
+            screen.question,
+            more ? `${String(from + shown.length)}/${String(screen.rows.length)}` : '',
+          ),
           rule: ruleOf('─', BODY_INNER),
           body: shown.join('\n'),
           nums: '',
-          foot: more ? `${String(from + shown.length)}/${String(screen.rows.length)}` : '',
           mic,
         }
       }
@@ -501,33 +686,43 @@ export class Shell {
     const page = this.session.page
     const showing = this.session.showing
     if (!page || !showing) {
-      return { head: '', rule: '', body: '', nums: '', foot: this.flashed, mic: '' }
+      return { head: fit(this.flashed, HEAD_INNER), rule: '', body: '', nums: '', mic: '' }
     }
 
     // The section the reader is in, or the note's own name at the top of a note
-    // that opens without a heading. Either way the head answers "where am I".
-    const head = page.section === '' ? showing.name : page.section
+    // that opens without a heading. Either way the head answers "where am I" - and
+    // a word just heard takes the line for a moment, because that is the one thing
+    // more urgent than where you are.
+    const where = page.section === '' ? showing.name : page.section
+    const whole = this.world.whole()
     return {
-      head: fit(head, BODY_INNER),
+      head: this.top(this.flashed || where, this.place(showing)),
       rule: ruleOf(page.rule, BODY_INNER),
-      body: page.words,
-      nums: page.numbers,
-      foot: this.flashed || this.noteFoot(showing),
+      body: whole ?? page.words,
+      nums: whole === null ? page.numbers : '',
       mic: '',
     }
   }
 
-  /** The foot of the note screen: which note, and which page of how many.
-   *
-   *  Both in one band rather than two, because a band costs 83 ms of radio and a
-   *  page turn changes them both: one send rather than two, every page, for ever. */
-  private noteFoot(showing: { name: string; page: number; count: number }): string {
-    if (!this.world.pageNumber()) return fit(showing.name, BODY_INNER)
-
-    return spread(showing.name, `${String(showing.page + 1)}/${String(showing.count)}`, BODY_INNER)
+  /** Which page of how many, or nothing when the reader turned it off. */
+  private place(showing: { page: number; count: number }): string {
+    if (!this.world.pageNumber()) return ''
+    return `${String(showing.page + 1)}/${String(showing.count)}`
   }
 
-  /** A list: its name over a rule, seven rows of it, and where in it the cursor is.
+  /** The head band: what this screen is, and where in it the reader is, at the
+   *  right beside the microphone's corner.
+   *
+   *  Emil: "the page number should be shown in the top right", next to the voice
+   *  indicator. One band rather than two, because a text container has no alignment
+   *  and a band costs 83 ms of radio: `spread` pads the gap in the firmware's own
+   *  measure, which is what makes the number land on the right pixel. */
+  private top(said: string, where: string): string {
+    if (!where) return fit(said, HEAD_INNER)
+    return spread(said, where, HEAD_INNER)
+  }
+
+  /** A list: its name over a rule, eight rows of it, and where in it the cursor is.
    *
    *  The window follows the cursor rather than paging, and the cursor is a triangle
    *  in a column of its own so that every row's words start at the same pixel
@@ -542,11 +737,10 @@ export class Shell {
     })
 
     return {
-      head: fit(title, BODY_INNER),
+      head: this.top(title, rows.length ? `${String(at + 1)}/${String(rows.length)}` : ''),
       rule: ruleOf('─', BODY_INNER),
       body: (rows.length ? body : [this.words.nothingHere]).join('\n'),
       nums: '',
-      foot: rows.length ? rightward(`${String(at + 1)}/${String(rows.length)}`, BODY_INNER) : '',
       mic: '',
     }
   }
@@ -564,6 +758,7 @@ export class Shell {
       space: this.words.switchSpace,
       note: this.words.changeNote,
       voice: this.world.listening() ? this.words.voiceOff : this.words.voiceOn,
+      settings: this.words.settings,
     }
 
     return CHOICES.map((choice) => ({

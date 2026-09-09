@@ -460,6 +460,25 @@
         oninput={(event) => field.set(Number(event.currentTarget.value))}
       />
     </div>
+  {:else if field.kind === 'text'}
+    <!-- A line somebody types. The placeholder is what the app answers to with
+         nothing typed, so an empty field is the default put back and the reset is
+         a field that is already there rather than a button beside it. -->
+    <label class="setting">
+      <span class="name"
+        >{field.label}{#if where}<small>{where}</small>{/if}</span
+      >
+      <input
+        class="inline"
+        type="text"
+        value={field.get()}
+        placeholder={field.placeholder}
+        spellcheck="false"
+        autocapitalize="off"
+        autocomplete="off"
+        onchange={(event) => field.set(event.currentTarget.value)}
+      />
+    </label>
   {:else}
     <div class="setting">
       <span class="name"

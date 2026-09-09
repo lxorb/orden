@@ -1,7 +1,15 @@
 import { BODY_INNER, BODY_ROWS } from '@nib/glasses'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { Session } from './session'
-import { type Row, Shell, type Words, type World } from './shell'
+import {
+  type Option,
+  type Row,
+  type SettingRow,
+  type Settings,
+  Shell,
+  type Words,
+  type World,
+} from './shell'
 
 const WORDS: Words = {
   spaces: 'Spaces',
@@ -13,6 +21,40 @@ const WORDS: Words = {
   thinking: 'Thinking',
   nothingHere: 'Nothing here',
   noAnswer: 'No answer',
+  settings: 'Settings',
+  reset: 'Reset glasses settings',
+  done: 'Done',
+}
+
+/** Settings that answer like the app's own and write down what they were told.
+ *  Two of them, one of each kind, which is the whole of what the screen does. */
+class FakeSettings implements Settings {
+  numbers = true
+  breakAt = '2'
+  readonly resets: number[] = []
+
+  rows = (): SettingRow[] => [
+    { id: 'lineNumbers', label: 'Line numbers', value: this.numbers ? 'On' : 'Off' },
+    { id: 'break', label: 'New page at', value: this.breakAt === '2' ? 'H2 and above' : 'Never' },
+  ]
+
+  tap = (id: string): readonly Option[] | null => {
+    if (id === 'lineNumbers') {
+      this.numbers = !this.numbers
+      return null
+    }
+
+    return [
+      { value: '2', label: 'H2 and above' },
+      { value: '0', label: 'Never' },
+    ]
+  }
+
+  pick = (id: string, value: string) => {
+    if (id === 'break') this.breakAt = value
+  }
+
+  reset = () => void this.resets.push(1)
 }
 
 const paging = { breakAt: 2, gutter: 0, inner: BODY_INNER, rows: BODY_ROWS }
@@ -60,6 +102,16 @@ class Fake implements World {
   }
   listening = () => this.on
   pageNumber = () => this.numbered
+  /** Where the reader already is, which is where a list opens. Empty by default,
+   *  so the cases that are not about that behave as they always did. */
+  space_ = ''
+  note_ = ''
+  atSpace = () => this.space_
+  atNote = () => this.note_
+  /** The whole note, when the glasses are scrolling it themselves. Null here: the
+   *  paged mode is what every one of these tests is about. */
+  wholeNote: string | null = null
+  whole = () => this.wholeNote
 
   numbered = true
 }
@@ -67,12 +119,14 @@ class Fake implements World {
 let world: Fake
 let session: Session
 let shell: Shell
+let settings: FakeSettings
 
 beforeEach(() => {
   world = new Fake()
   session = new Session()
+  settings = new FakeSettings()
   session.follow({ key: 'a', name: 'A note', text: NOTE }, paging)
-  shell = new Shell(world, WORDS, session)
+  shell = new Shell(world, WORDS, session, settings)
 })
 
 /** The table in the file's own header, as tests. */
@@ -101,6 +155,46 @@ describe('what a gesture does', () => {
     // than one more thing on the stack.
     shell.handle('hold')
     expect(shell.screen.kind).toBe('modal')
+  })
+
+  /** Emil, on his own glasses: switching space should land in that space's notes.
+   *  Nobody switches space to look at the note they were already reading. */
+  test('choosing a space goes straight into that space’s notes', () => {
+    shell.show('spaces')
+    expect(shell.handle('tap')).toBe('draw')
+
+    expect(world.entered).toEqual(['Work'])
+    expect(shell.screen.kind).toBe('tree')
+    // And one double tap is back to the note rather than back to the spaces: the
+    // spaces screen was a step on the way, not somewhere to return to.
+    expect(shell.handle('double')).toBe('draw')
+    expect(shell.screen.kind).toBe('note')
+  })
+
+  test('a list of spaces opens on the space the reader is in', () => {
+    world.space_ = 'Nib'
+    shell.show('spaces')
+
+    expect(shell.screen).toEqual({ kind: 'spaces', at: 2 })
+    expect(shell.view().head.trimEnd()).toMatch(/^Spaces {2,}3\/3$/)
+  })
+
+  test('a list of notes opens on the note the reader is in', () => {
+    world.note_ = 'Reading list'
+    shell.show('tree')
+    expect(shell.screen).toEqual({ kind: 'tree', at: 1 })
+
+    shell.show('sidebar')
+    expect(shell.screen).toEqual({ kind: 'sidebar', at: 3 })
+  })
+
+  test('and on the first row it can land on when that note is not in the list', () => {
+    world.note_ = 'Somewhere else'
+    shell.show('sidebar')
+
+    // Back to the first row the cursor may land on, which is where a list opened
+    // before any of this.
+    expect(shell.screen).toEqual({ kind: 'sidebar', at: 0 })
   })
 
   test('a double tap on the note asks the system to leave the app', () => {
@@ -190,13 +284,14 @@ describe('the note picker', () => {
 
 /** The modal, which is three rows and the same cursor as every other list. */
 describe('the modal', () => {
-  test('offers switch space, change note and the microphone', () => {
+  test('offers switch space, change note, the microphone and the settings', () => {
     shell.handle('hold')
     const body = shell.view().body
 
     expect(body).toContain('Switch space')
     expect(body).toContain('Change note')
     expect(body).toContain('Voice on')
+    expect(body).toContain('Settings')
   })
 
   test('turns the microphone on and says so, then closes', () => {
@@ -207,7 +302,7 @@ describe('the modal', () => {
 
     expect(world.on).toBe(true)
     expect(shell.screen.kind).toBe('note')
-    expect(shell.view().foot).toBe('Voice on')
+    expect(shell.view().head.trimStart().startsWith('Voice on')).toBe(true)
   })
 
   test('offers to turn it off once it is on', () => {
@@ -232,23 +327,24 @@ describe('the view', () => {
   test('says the section in the head, and the note and the page in the foot', () => {
     const view = shell.view()
 
-    expect(view.head).toBe('THE TITLE')
     expect(view.rule).toMatch(/^═+$/)
-    // One band, with the count pushed against the right hand edge: a text container
-    // has no alignment, so the gap is spent on spaces.
-    expect(view.foot.trimEnd()).toMatch(/^A note {2,}1\/\d+$/)
+    // One band, with the count pushed against the right hand edge beside the
+    // microphone's corner: a text container has no alignment, so the gap is spent on
+    // spaces. Emil: "the page number should be shown in the top right".
+    expect(view.head.trimEnd()).toMatch(/^THE TITLE {2,}1\/\d+$/)
   })
 
   test('leaves the page count out when the reader asked it to', () => {
     world.numbered = false
 
-    expect(shell.view().foot).toBe('A note')
+    // Nothing at the right, and the section keeps the whole line.
+    expect(shell.view().head).toBe('THE TITLE')
   })
 
   test('falls back to the note name when a note opens without a heading', () => {
     session.follow({ key: 'b', name: 'Plain', text: 'Just words.\n' }, paging)
 
-    expect(shell.view().head).toBe('Plain')
+    expect(shell.view().head.trimEnd()).toMatch(/^Plain {2,}1\/1$/)
   })
 
   test('marks the row under the cursor, and only that one', () => {
@@ -274,8 +370,7 @@ describe('the view', () => {
 
     // Against the right hand edge, where the page count goes on the note screen: one
     // place on the panel means one thing, whichever screen is up.
-    expect(shell.view().foot.trim()).toBe('2/4')
-    expect(shell.view().foot.startsWith(' ')).toBe(true)
+    expect(shell.view().head.trimEnd()).toMatch(/^Work {2,}2\/4$/)
   })
 
   test('steps the cursor over a folder in the sidebar, so every tap opens a note', () => {
@@ -290,10 +385,10 @@ describe('the view', () => {
     shell.handle('tap')
 
     // Opens on the first note rather than on the folder above it.
-    expect(shell.view().foot.trim()).toBe('2/4')
+    expect(shell.view().head.trimEnd()).toMatch(/ 2\/4$/)
     shell.handle('down')
     // And steps straight over the second folder to the note under it.
-    expect(shell.view().foot.trim()).toBe('4/4')
+    expect(shell.view().head.trimEnd()).toMatch(/ 4\/4$/)
 
     shell.handle('tap')
     expect(world.opened).toEqual(['Older'])
@@ -315,7 +410,24 @@ describe('the view', () => {
     shell.handle('tap')
 
     expect(shell.view().body).toBe('Nothing here')
-    expect(shell.view().foot).toBe('')
+    // The space's name, and nothing at the right: there is no row to be at.
+    expect(shell.view().head).toBe('Work')
+  })
+
+  /** The scroll mode the glasses do themselves. Nothing about the rest of the
+   *  screen changes, which is the point: the app goes on paging the note underneath,
+   *  so the frame on the phone still marks a page-sized window and a flick of a
+   *  temple still moves it. */
+  test('hands the whole note over when the glasses are scrolling it', () => {
+    world.wholeNote = 'every row of the note, all of it, in one band'
+
+    const view = shell.view()
+    expect(view.body).toBe('every row of the note, all of it, in one band')
+    // And no numbers: a column of them cannot line up with a band somebody else is
+    // scrolling.
+    expect(view.nums).toBe('')
+    // The head still says where the reader is.
+    expect(view.head).toContain('THE TITLE')
   })
 
   test('lights the corner while the microphone is open', () => {
@@ -350,7 +462,7 @@ describe('an answer from the model', () => {
     shell.answered('what did I decide', answer)
     const view = shell.view()
 
-    expect(view.head).toBe('what did I decide')
+    expect(view.head.startsWith('what did I decide')).toBe(true)
     expect(view.body.split('\n')[0]).toBe('The short answer.')
   })
 
@@ -377,8 +489,10 @@ describe('an answer from the model', () => {
     shell.answered('q', answer)
     const rows = shell.answerRows
 
-    // Seven rows of however many the answer came to, against the right hand edge.
-    expect(shell.view().foot.trim()).toBe(`7/${String(rows)}`)
+    // A panel of rows out of however many the answer came to, against the right
+    // hand edge beside the microphone's corner.
+    const where = ` ${String(BODY_ROWS)}/${String(rows)}`
+    expect(shell.view().head.trimEnd().endsWith(where)).toBe(true)
     expect(rows).toBeGreaterThan(BODY_ROWS)
   })
 
@@ -403,8 +517,10 @@ describe('an answer from the model', () => {
   test('says it is thinking while the model is', () => {
     shell.asking('what did I decide')
 
-    expect(shell.view().foot).toBe('Thinking')
+    // The question in the head, and the waiting where the note's words go: the
+    // last line of the panel is the note, so nothing else may sit there.
     expect(shell.view().head).toBe('what did I decide')
+    expect(shell.view().body).toBe('Thinking')
   })
 
   test('says so when the model answered with nothing', () => {
@@ -460,11 +576,13 @@ describe('what a command asks for', () => {
     expect(showing?.lastLine).toBeGreaterThanOrEqual(7)
   })
 
-  test('flashes what it heard in the foot, and forgets it', () => {
+  test('flashes what it heard in the head, and forgets it', () => {
     shell.flash('Next')
-    expect(shell.view().foot).toBe('Next')
+    // A word just heard takes the line for a moment: it is the one thing more
+    // urgent than which section you are in.
+    expect(shell.view().head.trimEnd()).toMatch(/^Next {2,}1\/\d+$/)
 
     shell.clearFlash()
-    expect(shell.view().foot).toContain('A note')
+    expect(shell.view().head).toContain('THE TITLE')
   })
 })

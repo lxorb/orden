@@ -1,5 +1,6 @@
 import type { EditorView } from '@nib/editor'
 import { CODE_PALETTES } from '@nib/editor'
+import { glassesGroups, wordFields } from './even/settings'
 import { i18n, LANGUAGES, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { isPlugin } from './plugin'
@@ -29,6 +30,18 @@ export type Field =
       kind: 'select'
       label: string
       options: { value: string; label: string }[]
+      initial?: string
+      get(): string
+      set(value: string): void
+    }
+  /** A line somebody types. Only where nothing else will do - a spoken command's
+   *  own phrase - and never on the glasses, which have nothing to type with. */
+  | {
+      kind: 'text'
+      label: string
+      /** What it says with nobody having typed anything, which for a phrase is the
+       *  phrase the app already answers to. An empty field is that put back. */
+      placeholder: string
       initial?: string
       get(): string
       set(value: string): void
@@ -380,68 +393,21 @@ export function preferences(view?: EditorView): Pane[] {
       ],
     },
 
-    // Only in front of a pair of glasses. Spread rather than left empty, so the
-    // pane does not exist at all outside the plugin: an empty section is a
-    // question nobody asked, and the settings search reads this same list.
-    ...(isPlugin()
+    // Only for somebody who has a pair. In the plugin always; on every other
+    // device once the plugin has answered a pair of glasses at least once, which
+    // the account remembers. Spread rather than left empty, so the pane does not
+    // exist at all otherwise: an empty section is a question nobody asked, and
+    // the settings search reads this same list.
+    //
+    // Every field in it comes from even/settings.ts, which is the one list both
+    // this pane and the settings screen on the glasses are drawn from. Adding a
+    // setting is adding an entry there.
+    ...(isPlugin() || modes.glassesSeen
       ? ([
           {
             id: 'glasses',
             label: t('Glasses'),
-            groups: [
-              {
-                title: t('Reading'),
-                fields: [
-                  {
-                    // Where a page begins. The one setting that changes how the
-                    // panel reads rather than what is on it: a section that starts
-                    // at the top of a panel, with its heading staying put above
-                    // every page of it, is a document; a note cut every seven lines
-                    // wherever they fall is a scroll.
-                    kind: 'select',
-                    label: t('New page at'),
-                    options: [
-                      { value: '1', label: t('H1') },
-                      { value: '2', label: t('H2 and above') },
-                      { value: '3', label: t('H3 and above') },
-                      { value: '4', label: t('H4 and above') },
-                      { value: '5', label: t('H5 and above') },
-                      { value: '6', label: t('Every heading') },
-                      { value: '0', label: t('Never') },
-                    ],
-                    initial: '2',
-                    get: () => String(modes.glassesBreak),
-                    set: (value) => modes.setGlassesBreak(value),
-                  },
-                  {
-                    kind: 'switch',
-                    label: t('Line numbers'),
-                    initial: true,
-                    get: () => modes.glassesLineNumbers,
-                    set: (on) => modes.setGlassesLineNumbers(on),
-                  },
-                  {
-                    kind: 'switch',
-                    label: t('Page number'),
-                    initial: true,
-                    get: () => modes.glassesPageNumber,
-                    set: (on) => modes.setGlassesPageNumber(on),
-                  },
-                ],
-              },
-              {
-                title: t('Voice'),
-                fields: [
-                  {
-                    kind: 'switch',
-                    label: t('Voice commands'),
-                    initial: false,
-                    get: () => modes.glassesVoice,
-                    set: (on) => modes.setGlassesVoice(on),
-                  },
-                ],
-              },
-            ],
+            groups: [...glassesGroups(), { title: t('Spoken commands'), fields: wordFields() }],
           },
         ] satisfies Pane[])
       : []),

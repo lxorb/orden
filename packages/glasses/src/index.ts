@@ -9,7 +9,15 @@
  *  written to rather than drawn on. */
 
 export { fit, fold, rightward, rows, ruleOf, SPACE, spread, TICK, width, wrap } from './firmware'
-export { type Line, markLines } from './mark'
+export {
+  type Compaction,
+  COMPACTIONS,
+  isCompaction,
+  type Line,
+  markLines,
+  MARKS,
+  type Marks,
+} from './mark'
 export { type Page, pageAt, pageOfLine, pagesOf, type Paging } from './pages'
 export {
   type Band,
@@ -19,6 +27,7 @@ export {
   BODY_ROWS,
   BRIGHT,
   GUTTER,
+  HEAD_INNER,
   LINE,
   PANEL_HEIGHT,
   PANEL_WIDTH,
