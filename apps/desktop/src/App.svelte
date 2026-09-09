@@ -10,6 +10,7 @@
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
+  import { iconChoice } from './lib/icon-choice.svelte'
   import IconPicker from './lib/IconPicker.svelte'
   import { menu } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
@@ -284,6 +285,9 @@
         arriving,
         busy,
         fullscreen,
+        // The picker is opened from a row's menu, which a drive cannot reach; this
+        // is how a screenshot run opens it on a note, a canvas or a folder.
+        iconChoice,
         rooms,
         share,
         sync,
