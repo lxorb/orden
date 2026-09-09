@@ -368,6 +368,68 @@ describe('choosing a keyboard', () => {
     expect(shortcuts.preset).toBe('default')
   })
 
+  /** Modal editing changes what every key on the keyboard does, so nothing but a
+   *  hand may turn it on: not choosing another keyboard, not a name written down
+   *  by an earlier run, and not one the account carries. Whether it is on is the
+   *  modes store's own answer and travels on its own; see modes.svelte.ts. */
+  describe('and modal editing', () => {
+    test('stays off for every keyboard but Vim', async () => {
+      const { shortcuts } = registry
+      const modes = await currentModes()
+
+      for (const id of ['default', 'notion', 'obsidian']) {
+        shortcuts.choose(id)
+        expect(modes.vim, id).toBe(false)
+      }
+    })
+
+    test('stays off when a name written down before is read back', async () => {
+      for (const id of ['default', 'notion', 'obsidian', 'vim', 'custom']) {
+        localStorage.clear()
+        localStorage.setItem('nib:preset', id)
+
+        const fresh = await restarted()
+        const modes = await currentModes()
+
+        expect(fresh.shortcuts.preset, id).toBe(id)
+        expect(modes.vim, id).toBe(false)
+      }
+    })
+
+    test('stays off when the account names a keyboard, Vim included', async () => {
+      for (const preset of ['notion', 'vim']) {
+        const fresh = await restarted()
+        const modes = await currentModes()
+
+        fresh.shortcuts.receive({ shortcuts: {}, preset })
+
+        expect(fresh.shortcuts.preset, preset).toBe(preset)
+        expect(modes.vim, preset).toBe(false)
+      }
+    })
+
+    test('goes off again when every key is put back', async () => {
+      const { shortcuts } = registry
+      const modes = await currentModes()
+
+      shortcuts.choose('vim')
+      expect(modes.vim).toBe(true)
+
+      shortcuts.resetAll()
+      expect(modes.vim).toBe(false)
+    })
+
+    test('survives rebinding a key by hand, which makes the map custom', async () => {
+      const { shortcuts } = registry
+      const modes = await currentModes()
+
+      shortcuts.set('format.bold', 'Alt-b')
+
+      expect(shortcuts.preset).toBe('custom')
+      expect(modes.vim).toBe(false)
+    })
+  })
+
   test('is remembered across a restart', async () => {
     registry.shortcuts.choose('obsidian')
     const { shortcuts } = await restarted()

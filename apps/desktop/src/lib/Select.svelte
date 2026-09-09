@@ -8,6 +8,7 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
+  import { opensAt, type Walk, walk } from './list-keys'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
   import { dur } from './motion'
@@ -38,8 +39,12 @@
   } = $props()
 
   let open = $state(false)
-  /** The row the keyboard is on while the list is open. */
-  let cursor = $state(0)
+  /** Where the keyboard is in the list, and what it has been spelling; see
+   *  list-keys.ts. Its own state, and not the pointer's: a keystroke must not
+   *  choose a row the pointer merely passed over. */
+  let walking = $state<Walk>({ cursor: null, typed: '', typedAt: 0 })
+  /** The row the pointer is over, which is a highlight and nothing more. */
+  let hovered = $state<number | null>(null)
   /** The list opens upward when there is no room beneath the trigger. */
   let above = $state(false)
   let host = $state<HTMLElement>()
@@ -48,19 +53,18 @@
   const current = $derived(options.find((one) => one.value === value))
   const id = `select-${Math.random().toString(36).slice(2, 8)}`
 
-  /** Letters typed in a row jump to the first option that starts with them. */
-  let typed = ''
-  let typedAt = 0
+  /** Which row the highlight is on: the pointer's while it is over the list, the
+   *  keyboard's otherwise. Only one row is ever lit, and which of the two lit it
+   *  is what decides what a keystroke chooses. */
+  const lit = $derived(hovered ?? walking.cursor)
 
   /** Room the list needs beneath the trigger, before it is drawn. */
   const ROW = 32
   const MOST = 280
 
   function show() {
-    cursor = Math.max(
-      0,
-      options.findIndex((one) => one.value === value),
-    )
+    walking = opensAt(options.findIndex((one) => one.value === value))
+    hovered = null
 
     if (host && !viewport.touch) {
       // Measured against the nearest thing that scrolls, which is what would
@@ -94,45 +98,33 @@
       return
     }
 
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault()
-        cursor = (cursor + 1) % options.length
-        break
-      case 'ArrowUp':
-        event.preventDefault()
-        cursor = (cursor - 1 + options.length) % options.length
-        break
-      case 'Home':
-        event.preventDefault()
-        cursor = 0
-        break
-      case 'End':
-        event.preventDefault()
-        cursor = options.length - 1
-        break
-      case 'Enter':
-      case ' ': {
-        event.preventDefault()
-        const chosen = options[cursor]
-        if (chosen) choose(chosen.value)
-        break
-      }
-      case 'Tab':
-        close()
-        break
-      default: {
-        if (event.key.length !== 1) return
-        if (event.timeStamp - typedAt > 600) typed = ''
-        typed += event.key.toLowerCase()
-        typedAt = event.timeStamp
+    const step = walk(
+      event.key,
+      event.timeStamp,
+      options.map((one) => one.label),
+      walking,
+    )
 
-        const found = options.findIndex((one) => one.label.toLowerCase().startsWith(typed))
-        if (found >= 0) cursor = found
-      }
+    if (step.took) event.preventDefault()
+    walking = step.walk
+
+    if (step.chose !== undefined) {
+      const chosen = options[step.chose]
+      if (chosen) choose(chosen.value)
+      return
     }
 
-    list?.children[cursor]?.scrollIntoView({ block: 'nearest' })
+    if (step.shut) {
+      close()
+      return
+    }
+
+    // The keyboard has moved, so the pointer's highlight steps aside: whatever
+    // is lit from here on is the row a keystroke would choose.
+    hovered = null
+    if (walking.cursor !== null) {
+      list?.children[walking.cursor]?.scrollIntoView({ block: 'nearest' })
+    }
   }
 
   // Tapping anywhere else closes it, the way a menu closes.
@@ -161,7 +153,7 @@
     aria-expanded={open}
     aria-label={label}
     aria-controls={open ? id : undefined}
-    aria-activedescendant={open ? `${id}-${cursor}` : undefined}
+    aria-activedescendant={open && walking.cursor !== null ? `${id}-${walking.cursor}` : undefined}
     onclick={() => (open ? close() : show())}
     onkeydown={onKey}
   >
@@ -202,6 +194,7 @@
       role="listbox"
       aria-label={label}
       bind:this={list}
+      onmouseleave={() => (hovered = null)}
       transition:fly={{ y: above ? 4 : -4, duration: dur(120), easing: cubicOut }}
     >
       {#each options as option, index (option.value)}
@@ -210,9 +203,9 @@
           id="{id}-{index}"
           role="option"
           aria-selected={option.value === value}
-          class:cursor={index === cursor}
+          class:cursor={index === lit}
           class:chosen={option.value === value}
-          onmouseenter={() => (cursor = index)}
+          onmouseenter={() => (hovered = index)}
           onclick={() => choose(option.value)}
         >
           <span class="text">{option.label}</span>

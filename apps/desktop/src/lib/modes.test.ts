@@ -298,6 +298,56 @@ describe('modal editing', () => {
     expect(modes.vimModeOf(undefined)).toBeNull()
   })
 
+  /** The one setting in the app that changes what every key on the keyboard
+   *  does. A reader who did not ask for it and does not know the word is left
+   *  with an editor that swallows what they type, so nothing may turn it on but
+   *  a hand: not a default, not an absent value, not a restart, not a fresh
+   *  view, and not an account that has never said anything about it. */
+  describe('only ever turns on by hand', () => {
+    test('on a machine with nothing written down', () => {
+      expect(modes.vim).toBe(false)
+    })
+
+    test('on a machine whose entry was written before there was such a setting', async () => {
+      localStorage.setItem('nib:modes', JSON.stringify({ zoom: 1.1, focus: true }))
+
+      const store = await restarted()
+      expect(store.vim).toBe(false)
+    })
+
+    test('on a machine that wrote it down as off', async () => {
+      localStorage.setItem('nib:modes', JSON.stringify({ vim: false }))
+
+      const store = await restarted()
+      expect(store.vim).toBe(false)
+    })
+
+    test('with an entry that says null, which is not a choice either', async () => {
+      localStorage.setItem('nib:modes', JSON.stringify({ vim: null }))
+
+      const store = await restarted()
+      expect(store.vim).toBe(false)
+    })
+
+    test('through a restart after every other mode was turned on', async () => {
+      modes.toggleFocus()
+      modes.toggleTypewriter()
+      modes.toggleSource()
+      modes.setLigatures('all')
+
+      const store = await restarted()
+      expect(store.vim).toBe(false)
+    })
+
+    test('when a pane builds a fresh editor', () => {
+      modes.apply(surface())
+
+      expect(modes.vim).toBe(false)
+      expect(told.calls).toContainEqual({ mode: 'vim', on: false })
+      expect(told.calls).not.toContainEqual({ mode: 'vim', on: true })
+    })
+  })
+
   /** The words the status bar shows, which the editor package reports the
    *  modes for; every one of them is translated in all four dictionaries. */
   test('has a word for every mode it has', async () => {
@@ -416,6 +466,36 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.ligatures).toBe('off')
+  })
+
+  /** An account is read by every version of the app at once, and a build that
+   *  had no such setting says nothing about it. Nothing is not `false`, and it is
+   *  certainly not `true`: only an account that says so outright may turn modal
+   *  editing on. */
+  test('says nothing about modal editing unless the account does', async () => {
+    for (const settings of [{}, { ligatures: 'all' }, { attachments: 'note' }] as Held[]) {
+      const store = await restarted()
+      const { release, settingsCall } = heldAnswer(settings)
+      api.settings = settingsCall
+
+      const adopted = store.adopt('token')
+      release()
+      await adopted
+
+      expect(store.vim, JSON.stringify(settings)).toBe(false)
+    }
+  })
+
+  test('leaves modal editing off for an account that wrote it down as off', async () => {
+    const { release, settingsCall } = heldAnswer({ vim: false })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.vim).toBe(false)
+    expect(told.calls).not.toContainEqual({ mode: 'vim', on: true })
   })
 
   test('brings modal editing another machine turned on', async () => {
