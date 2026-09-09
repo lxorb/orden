@@ -122,6 +122,20 @@
     return held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names)])
   })
 
+  /** What each cell is called, for a reader who cannot see it. The set's own words
+   *  rather than its name: an emoji's name is the character itself, which a screen
+   *  reader announces as the picture and not as "rocket". */
+  const words = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const entry of held?.entries ?? []) map.set(entry.name, entry.words)
+
+    return map
+  })
+
+  const called = (name: string) => words.get(name) ?? name
+
   /** Which row each cell sits on, so the arrows can put the one they moved onto in
    *  view. */
   const rowOf = $derived.by(() => {
@@ -342,8 +356,8 @@
                   <button
                     type="button"
                     class="cell"
-                    title={name}
-                    aria-label={name}
+                    title={called(name)}
+                    aria-label={called(name)}
                     class:active={sameIcon(value(name), worn)}
                     class:at={cells[at] === name}
                     onclick={() => chose(value(name))}
