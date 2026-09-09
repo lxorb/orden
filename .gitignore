@@ -38,3 +38,6 @@ apps/clipper/*.zip
 # Claude Code worktrees of this repo
 .claude/worktrees/
 *.nupkg
+
+# What Python leaves behind when one drive imports another
+__pycache__/
