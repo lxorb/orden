@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  What Android may take out of this app, which is nothing. Read from Android 12
+  on; the manifest's android:allowBackup="false" is what says the same to every
+  version before it.
+
+  Two ways out, and both are closed. `cloud-backup` is the Google Drive backup;
+  `device-transfer` is the copy made when the reader sets up a new phone, which
+  keeps happening on some manufacturers' devices whatever allowBackup says.
+
+  Every domain is named rather than only `root`, because the notes are not in the
+  one that sounds like it: Nib keeps them under the app's own documents folder in
+  external storage, which is `external`. The rest are named so that a preference,
+  a database or a cached export cannot leave either.
+-->
+<data-extraction-rules>
+  <cloud-backup>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+    <exclude domain="device_root" path="." />
+    <exclude domain="device_file" path="." />
+    <exclude domain="device_database" path="." />
+    <exclude domain="device_sharedpref" path="." />
+  </cloud-backup>
+
+  <device-transfer>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+    <exclude domain="device_root" path="." />
+    <exclude domain="device_file" path="." />
+    <exclude domain="device_database" path="." />
+    <exclude domain="device_sharedpref" path="." />
+  </device-transfer>
+</data-extraction-rules>

@@ -103,10 +103,10 @@ Nothing else changes.
 
 ## What is committed and what is generated
 
-`src-tauri/gen/android` is source. Its manifest, its theme, its colours and
-`MainActivity.kt` are edited by hand, and everything gradle writes inside it is
-ignored by the project's own `.gitignore`, along with the `tauri.*` gradle files
-the CLI rewrites on every build.
+`src-tauri/gen/android` is source. Its manifest, its theme, its colours, the two
+files under `res/xml` and `MainActivity.kt` are edited by hand, and everything
+gradle writes inside it is ignored by the project's own `.gitignore`, along with
+the `tauri.*` gradle files the CLI rewrites on every build.
 
 `src-tauri/gen/apple` is not committed. The CLI only writes it on a macOS
 machine, and nothing in it is edited, so there is nothing a commit would
@@ -119,6 +119,20 @@ to the CLI. The gradle task that builds the crate is generated with whatever
 command started the CLI written into it, so the second way bakes one machine's
 node into the project and the build then works nowhere else. Compare
 `buildSrc/.../BuildTask.kt` after, and put the hand-edited files back.
+
+## What Android may copy out of the app
+
+Nothing. `android:allowBackup="false"` keeps the notes out of the Google Drive
+backup, and `res/xml/data_extraction_rules.xml` keeps them out of the transfer to
+a new phone as well, which from Android 12 some manufacturers make whatever
+`allowBackup` says. Notes are the most private thing the app holds and none of
+them is state a new install needs, so the reader carries them across themselves,
+by sync or by file.
+
+`res/xml/file_paths.xml` is the other half of the same rule: it names the folders
+Nib may hand another app a file out of, and those are Nib's own. Tauri's template
+names the root of shared storage instead, which would offer every photo and
+download on the phone under Nib's authority.
 
 ## One size for a finger
 

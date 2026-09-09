@@ -5,7 +5,22 @@
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
+    <!--
+      Notes stay on the phone. Somebody's notes are the most private thing this
+      app holds, and Android's own backup would put them in Google's cloud and on
+      whatever phone the reader migrates to next, encrypted with a key Nib does
+      not hold and readable by whoever ends up with the account. Nothing here is
+      state a new install needs, either: a note is a file the reader keeps
+      themselves.
+
+      Both switches are needed. `allowBackup` turns off the cloud backup, and up
+      to Android 11 that is the whole of it; from Android 12 some manufacturers
+      go on transferring an app's data to a new device anyway, and only the rules
+      resource speaks to that. See res/xml/data_extraction_rules.xml.
+    -->
     <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.nib"
