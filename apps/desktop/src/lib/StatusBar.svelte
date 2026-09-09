@@ -16,12 +16,20 @@
    *  reading them is what asks for them. */
   let looking = $state(false)
 
-  const counts = $derived(looking ? countText(doc) : null)
+  /** Or whether the keyboard is. The bar is a region of the window, so F6 reaches
+   *  it, and arriving on it is the same question as pointing at it: a reader who
+   *  has no pointer could not ask for the numbers at all before this. */
+  let held = $state(false)
+
+  /** Whether the numbers are on screen at all, by either road. */
+  const asked = $derived(looking || held)
+
+  const counts = $derived(asked ? countText(doc) : null)
 
   /** What is selected, counted. Only while the numbers are on screen and only
    *  while there is a selection at all: reading the words out of the view is as
    *  expensive as the selection is long, and a caret has none. */
-  const chosen = $derived(looking && views.chosen > 0 ? countText(views.selectedText()) : null)
+  const chosen = $derived(asked && views.chosen > 0 ? countText(views.selectedText()) : null)
 
   /** A count on its own, or as a part of the whole. */
   const said = (part: number | undefined, whole: number) =>
@@ -41,10 +49,20 @@
 <!-- The one place the app says what is true of the note it is showing, so the
      word for a note nobody can type into goes here rather than into a banner
      over the text. It is the only thing in the bar that shows unasked. -->
+<!-- The bar is a region of the window rather than a control, and a region a key
+     walks to has to be able to hold the keyboard: with nothing in it to stand on,
+     the bar itself is what F6 lands on, which is what the ARIA practices say to do
+     with a region whose contents are not interactive. See focus.ts. -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <footer
-  class:looking={looking || reading}
+  class:looking={looking || held || reading}
+  data-region="status"
+  tabindex="0"
+  aria-label={t('What this note is')}
   onpointerenter={() => (looking = true)}
   onpointerleave={() => (looking = false)}
+  onfocus={() => (held = true)}
+  onblur={() => (held = false)}
 >
   {#if reading}
     <span class="reading">{t('Read-only')}</span>

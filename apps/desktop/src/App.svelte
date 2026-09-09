@@ -377,14 +377,11 @@
     // Read, not used: these are what this effect is watching for. Whether the
     // caret may be taken is decided on the frame, by which time whatever was
     // over the note - the palette a note was chosen in - has gone.
-    const reasons = [
-      showing?.id,
-      showing?.kind,
-      showing?.reading,
-      workspace.renaming,
-      workspace.panel,
-      palette,
-    ]
+    // Which panel is open is not one of them. A panel opening is not a note
+    // arriving, and a key that opens one asks for the keyboard to go into it - so
+    // watching the panel here is how Ctrl+Shift+E opened the file list and then
+    // took the keyboard straight back out of it. See revealPanel in focus.ts.
+    const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.renaming, palette]
     if (!current || !reasons.length) return
 
     const frame = requestAnimationFrame(() => {
@@ -702,7 +699,6 @@
 
   .leave:focus-visible {
     opacity: 1;
-    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 

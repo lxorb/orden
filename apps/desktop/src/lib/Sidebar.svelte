@@ -18,6 +18,7 @@
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
+  import { roving } from './roving'
   import type { Panel, SortKey } from './workspace.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
@@ -318,7 +319,9 @@
        to nobody, so the name comes first and is itself the switcher: every other
        space is a row in it, with its own mark, and there is no second column of
        wordless squares saying the same thing. See SpaceSwitcher.svelte. -->
-  <div class="head">
+  <!-- The regions of the window carry one attribute each, so the order F6 walks is
+       the order the sidebar is built in and cannot drift from it; see focus.ts. -->
+  <div class="head" data-region="space">
     <!-- Where the panel is a drawer over the note it covers the bar the sidebar
          button sits in, so the drawer carries the same button at the same corner
          of the screen - one component, one glyph, one movement; see
@@ -353,7 +356,24 @@
   </div>
 
   <div class="switch">
-    <div class="nib-segmented" role="tablist" aria-label={t('Panels')} use:segmented>
+    <!-- Four tabs are one tab stop, and left and right move between them. They
+         change as they are arrived at, because what each of them shows is already
+         worked out and arrives without a wait - which is the rule the ARIA practices
+         give for choosing on arrival. See roving.ts. -->
+    <div
+      class="nib-segmented"
+      data-region="panels"
+      use:roving={{
+        across: true,
+        rows: '[role=tab]',
+        current: '[aria-selected=true]',
+        wrap: true,
+        follow: (tab) => tab.click(),
+      }}
+      role="tablist"
+      aria-label={t('Panels')}
+      use:segmented
+    >
       {#each PANELS as item (item.id)}
         <button
           class:on={workspace.panel === item.id}
@@ -405,7 +425,7 @@
        same place, at the same height and in the same box - one control that
        becomes editable rather than two that look alike. -->
   {#if workspace.panel !== 'search'}
-    <div class="hunt">
+    <div class="hunt" data-region="search">
       <button class="nib-field" onclick={() => workspace.showPanel('search')}>
         <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
         <span class="nib-row-label">{t('Search this space')}</span>
@@ -422,7 +442,13 @@
   {#key workspace.activeSpaceId}
     <div class="stack" in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}>
       {#key workspace.panel}
-        <div class="body" use:scrollbar={workspace.panel} in:arrive out:leave>
+        <div
+          class="body"
+          data-region="list"
+          use:scrollbar={workspace.panel}
+          in:arrive
+          out:leave
+        >
           {#if workspace.panel === 'tree'}
             {#if workspace.tree}
               <Bookmarks onsearch={runBookmarked} />
@@ -458,7 +484,24 @@
             {/if}
           {:else if workspace.panel === 'outline'}
             {#if workspace.headings.length}
-              <ul bind:this={outline}>
+              <!-- The same walk and the same one tab stop every list in the app
+                   has; see roving.ts. Enter goes to the heading and hands the
+                   keyboard to the note, Space goes to it and stays here, so a note
+                   can be read down heading by heading without leaving the outline. -->
+              <ul
+                bind:this={outline}
+                use:roving={{
+                  current: '.is-on',
+                  open: (row) => ongoto?.(Number(row.dataset.line ?? 0)),
+                  peek: (row) => {
+                    // Going to a heading hands the note the keyboard, so Space takes
+                    // it straight back: the point of Space is to stay here.
+                    ongoto?.(Number(row.dataset.line ?? 0))
+                    row.focus()
+                  },
+                  menu: (row, at) => row.dispatchEvent(at),
+                }}
+              >
                 {#each workspace.headings as heading, index (index)}
                   <li>
                     <button
@@ -466,6 +509,7 @@
                       class:is-on={index === current}
                       class:above={dropAt === index && dropAbove}
                       class:below={dropAt === index && !dropAbove}
+                      data-line={heading.line}
                       style:--level={heading.level - shallowest}
                       draggable="true"
                       onclick={() => ongoto?.(heading.line)}

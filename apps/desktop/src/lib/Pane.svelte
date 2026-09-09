@@ -249,7 +249,13 @@
          note's state into it rather than building another editor, which is what
          makes a switch land in one frame. See Editor.svelte. -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="editor" oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}>
+    <!-- The note is a region of the window, which is what F6 walks to and what
+         every list hands the keyboard back to; see focus.ts. -->
+    <div
+      class="editor"
+      data-region="editor"
+      oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}
+    >
       <Editor
         bind:view
         {tab}
