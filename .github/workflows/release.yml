@@ -22,6 +22,11 @@ jobs:
   # What this build is called; see scripts/build-version.sh.
   version:
     runs-on: ubuntu-latest
+    # Every job below says what its token may do, and all but one may only read.
+    # A job with no block of its own inherits whatever the repository's default
+    # is, which is a permission nobody chose for it.
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.decide.outputs.version }}
       tag: ${{ steps.decide.outputs.tag }}
@@ -38,6 +43,10 @@ jobs:
 
   build:
     needs: version
+    # It reads the repository and uploads an artifact, which travels on the
+    # runtime's own token rather than on this one.
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -130,6 +139,7 @@ jobs:
   publish:
     needs: [version, build]
     runs-on: ubuntu-latest
+    # The one job that writes: the release and its files are the point of it.
     permissions:
       contents: write
       # To dispatch publish.yml at the end of this job.
