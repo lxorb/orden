@@ -108,7 +108,7 @@
     onvalue={(opacity: number) => pens.set({ opacity })}
   />
 
-  <CanvasColours colour={shown} recent={pens.recent} none={false} oncolour={setColour} />
+  <CanvasColours colour={shown} recent={pens.recent} oncolour={setColour} />
 
   <div class="rest">
     <!-- A stroke held still becomes the line, ring or box it was aiming at. On,

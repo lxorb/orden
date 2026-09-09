@@ -242,10 +242,11 @@
             }}
           />
         {:else}
+          <!-- The bare dot is the ink the page itself is written in, which is what a
+               pen with no colour of its own writes and the way back to it. -->
           <CanvasColours
             colour={nib.colour === DEFAULT_INK ? null : nib.colour}
             recent={pens.recent}
-            none={false}
             oncolour={(colour: string | null) => pens.set({ colour: colour ?? DEFAULT_INK })}
           />
         {/if}
