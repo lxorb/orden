@@ -290,6 +290,55 @@ describe('notes', () => {
     expect((await addNote('Read me.md', 'two')).status).toBe(409)
   })
 
+  /** The space's unique index is what guarantees it; the read above is only a
+   *  courtesy. Two devices creating one path at the same moment both got past
+   *  the read, and the one that lost came back as a 500 rather than as the 409
+   *  it would have been given a moment earlier. The other device's row goes in at
+   *  the one moment that matters; see `justBefore`. */
+  test('a create that lost the path gets the same answer as one that was late', async () => {
+    env.justBefore(/insert into notes/, () => {
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values ('theirs', ?, 'Read me.md', 99, 1, 1, 0, 3, 'h')`,
+        )
+        .run(space)
+    })
+
+    const late = await addNote('Read me.md', 'mine')
+
+    expect(late.status).toBe(409)
+    expect(late.json.error).toBe('a note already lives there')
+    // And it says which note is there, so the client can keep its own copy.
+    expect(late.json.note.id).toBe('theirs')
+  })
+
+  test('a create that lost the path leaves no bytes nobody names', async () => {
+    env.justBefore(/insert into notes/, () => {
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values ('theirs', ?, 'Read me.md', 99, 1, 1, 0, 3, 'h')`,
+        )
+        .run(space)
+    })
+
+    await addNote('Read me.md', 'mine')
+
+    const rows = env.db.prepare('select id from notes').all() as { id: string }[]
+    expect(rows.map((one) => one.id)).toContain('theirs')
+
+    // And nothing in the bucket under the id the losing note would have had: the
+    // row is what claims a path, so it goes in before the bytes do.
+    const named = new Set(rows.map((one) => one.id))
+    const orphans = env
+      .keys()
+      .filter((key) => key.startsWith('spaces/'))
+      .filter((key) => !named.has(key.slice(key.lastIndexOf('/') + 1)))
+
+    expect(orphans).toEqual([])
+  })
+
   test('rejects a path that climbs out of the space', async () => {
     expect((await addNote('../secrets.md', 'x')).status).toBe(400)
     expect((await addNote('a/../../b.md', 'x')).status).toBe(400)

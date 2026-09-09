@@ -91,7 +91,9 @@ export async function addNote(
     hash: await sha256(content),
   }
 
-  await env.NOTES.put(noteKey(spaceId, note.id), content)
+  // The row first, then the bytes, for the reason `saveNote` gives: a space holds
+  // one live note per path, so this is the write that can be refused, and bytes
+  // written before it would be bytes under an id no row ever names.
   await env.DB.prepare(
     `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
      values (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
@@ -108,7 +110,15 @@ export async function addNote(
     )
     .run()
 
+  await env.NOTES.put(noteKey(spaceId, note.id), content)
   return note
+}
+
+/** The live note at a path, if there is one. */
+function noteAt(env: Env, spaceId: string, path: string): Promise<Note | null> {
+  return env.DB.prepare('select * from notes where space_id = ? and path = ? and deleted = 0')
+    .bind(spaceId, path)
+    .first<Note>()
 }
 
 /** Puts a note's new contents in the store: the bytes in R2, the row in D1, with
@@ -226,14 +236,9 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
   if (size > MAX_NOTE_BYTES) return context.json({ error: 'that note is too large' }, 413)
 
-  const existing = await context.env.DB.prepare(
-    'select * from notes where space_id = ? and path = ? and deleted = 0',
-  )
-    .bind(space.id, path)
-    .first<Note>()
-
-  if (existing)
-    return context.json({ error: 'a note already lives there', note: presentNote(existing) }, 409)
+  const taken = await noteAt(context.env, space.id, path)
+  if (taken)
+    return context.json({ error: 'a note already lives there', note: presentNote(taken) }, 409)
 
   // A limit nobody enforces is a number on a settings page. Counted against
   // whoever owns the space rather than whoever is writing: the bytes land in
@@ -242,7 +247,20 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
     return context.json({ error: 'out of space' }, 507)
   }
 
-  const note = await addNote(context.env, space.id, path, content)
+  // The check above is not the guarantee; the space's unique index is. Two
+  // devices creating one path at the same moment both got past it, and the one
+  // that lost used to come back as a 500 rather than as the same 409 it would
+  // have been given a moment earlier. Read again rather than told apart by the
+  // error's words, which are the database's to change.
+  let note: Note
+  try {
+    note = await addNote(context.env, space.id, path, content)
+  } catch (error) {
+    const won = await noteAt(context.env, space.id, path)
+    if (!won) throw error
+
+    return context.json({ error: 'a note already lives there', note: presentNote(won) }, 409)
+  }
 
   return context.json({ note: presentNote(note) }, 201)
 })

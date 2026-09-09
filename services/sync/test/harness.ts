@@ -25,7 +25,10 @@ type Loses = (sql: string) => boolean
 /** What a statement bound, so a test can hold the Worker to what D1 allows. */
 type Bound = (sql: string, count: number) => void
 
-function d1(database: DatabaseSync, loses: Loses, bound: Bound) {
+/** Something to do just before a statement runs; see `justBefore`. */
+type JustBefore = (sql: string) => void
+
+function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: JustBefore) {
   return {
     /** D1 runs a batch in one transaction, so the fake does too: a route that
      *  reaches for one is a route saying that half of it applied is not a state
@@ -45,6 +48,7 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound) {
 
     prepare(sql: string) {
       const lost = loses(sql)
+      justBefore(sql)
 
       const statement = {
         args: [] as never[],
@@ -80,6 +84,11 @@ function bucket() {
   const store = new Map<string, { value: unknown; contentType: string | undefined }>()
 
   return {
+    /** Everything in it, so a test can say that nothing is stored under a name no
+     *  row names. Not part of the R2 surface the Worker uses; see `keys` on the
+     *  environment. */
+    keys: () => [...store.keys()],
+
     put(key: string, value: unknown, options?: { httpMetadata?: { contentType?: string } }) {
       store.set(key, { value, contentType: options?.httpMetadata?.contentType })
       return Promise.resolve()
@@ -110,6 +119,18 @@ export interface TestEnv extends Env {
    *  a function saying how many writes it caught, so a test can say that the
    *  race it meant to arrange actually happened. */
   losing(sql: RegExp): () => number
+  /** Runs `work` once, just before the next statement matching `sql` does.
+   *
+   *  What a check-then-write race actually is: a row that was not there when the
+   *  route looked and is there by the time it writes. Two requests in flight
+   *  cannot arrange that here - the fake answers a query in one microtask, so the
+   *  awaits do not interleave where they would over a network - and a race that
+   *  cannot be arranged is a race no test proves. This puts the other writer's row
+   *  in at the one moment that matters. */
+  justBefore(sql: RegExp, work: () => void): void
+  /** Every name the bucket holds something under, so a test can say that nothing
+   *  is stored that no row names. */
+  keys(): string[]
   /** The widest statement anything has bound since the environment was made: how
    *  many parameters, and which statement. Node's SQLite takes tens of thousands
    *  and D1 takes a hundred, so a query that grows with what an account holds is
@@ -138,9 +159,20 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
     if (count > widest.count) widest = { count, sql }
   }
 
+  const notes = bucket()
+
+  let waiting: { sql: RegExp; work: () => void } | null = null
+  const justBefore: JustBefore = (sql) => {
+    if (!waiting?.sql.test(sql)) return
+
+    const { work } = waiting
+    waiting = null
+    work()
+  }
+
   return {
-    DB: d1(database, loses, bound) as unknown as D1Database,
-    NOTES: bucket() as unknown as R2Bucket,
+    DB: d1(database, loses, bound, justBefore) as unknown as D1Database,
+    NOTES: notes as unknown as R2Bucket,
     BLOG_ROOT: 'nibeditor.com',
     BLOG_CNAME_TARGET: 'cname.nibeditor.com',
     APP_ORIGIN: 'https://nibeditor.com',
@@ -151,6 +183,10 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
       const before = caught
       return () => caught - before
     },
+    justBefore: (sql, work) => {
+      waiting = { sql, work }
+    },
+    keys: () => notes.keys(),
     widest: () => widest,
     close: () => database.close(),
   }
