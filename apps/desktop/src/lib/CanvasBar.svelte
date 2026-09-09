@@ -33,6 +33,7 @@
     MARKS,
     PEN_ICONS,
     PEN_NAMES,
+    PLACING,
     RUBBING,
     type ToolMark,
   } from './canvas/glyphs'
@@ -91,6 +92,9 @@
 
   const nib = $derived(pens.current)
   const drawing = $derived(tools.which === 'draw')
+
+  /** Which of the things a press puts on the plane is in hand, if one of them is. */
+  const putting = $derived(PLACING.find((one) => one.id === tools.which))
 
   /** Whether the bar can be moved out from under a wrist. A question only a tablet
    *  has: a mouse has no wrist on the glass and a bar at the bottom of a phone is
@@ -269,6 +273,7 @@
           <button
             type="button"
             class:on={tools.which === mark.id}
+            class:deeper={tools.which === mark.id && panelFor(mark.id) !== null}
             title={hinted(mark)}
             aria-label={mark.title()}
             aria-pressed={tools.which === mark.id}
@@ -292,6 +297,7 @@
             type="button"
             class="pen"
             class:on={out}
+            class:deeper={out}
             title={out
               ? hinted({ title: PEN_NAMES[one.tool], key: 'canvas.tool.draw' })
               : PEN_NAMES[one.tool]()}
@@ -310,18 +316,22 @@
 
         <span class="split"></span>
 
+        <!-- What a press puts on the plane. While one of them is in hand it is that
+             one, drawn on the button, so the bar says what a press is about to do
+             and pressing it again opens the grid again. -->
         <button
           type="button"
-          class:on={open === 'put'}
-          title={t('Add')}
-          aria-label={t('Add')}
+          class:on={open === 'put' || putting !== undefined}
+          class:deeper={putting !== undefined}
+          title={putting ? hinted(putting) : t('Add')}
+          aria-label={putting ? putting.title() : t('Add')}
           aria-pressed={open === 'put'}
           onclick={(event) => {
             tick()
             toggle('put', event)
           }}
         >
-          <CanvasIcon node={MARKS.put} />
+          <CanvasIcon node={putting?.icon ?? MARKS.put} />
         </button>
 
         <button
@@ -486,6 +496,7 @@
   }
 
   button {
+    position: relative;
     flex: none;
     display: grid;
     place-items: center;
@@ -534,12 +545,21 @@
     background: var(--line-strong);
   }
 
-  /* A pen wears the ink it writes in as a line under it, so the row answers "which
-     one is the yellow highlighter" without being opened. */
-  .pen {
-    position: relative;
+  /* A tool in hand that has a panel of its own wears a corner, so that pressing it
+     again is something to be seen rather than something to be told. */
+  .deeper::before {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    border: 3px solid transparent;
+    border-right-color: currentColor;
+    border-bottom-color: currentColor;
+    border-radius: 1px;
   }
 
+  /* A pen wears the ink it writes in as a line under it, so the row answers "which
+     one is the yellow highlighter" without being opened. */
   .pen::after {
     content: '';
     position: absolute;
