@@ -416,12 +416,15 @@
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on
          it the transform comes from the drag instead, so it tracks the thumb. -->
-    <!-- Where the drawer covers the whole screen, the layer under the note is
-         behind it rather than off to one side: closed, nothing in it can be
-         reached, so nothing in it is announced or reachable by a key either. -->
+    <!-- Wherever the panels are a drawer, a shut drawer is off screen: at the
+         narrow end it is behind the note, and above that it is slid off to the
+         side. Either way nothing in it can be reached, so nothing in it is
+         announced or reachable by a key either - which is what keeps the rail's
+         hamburger from being read out on a phone held sideways, where the only
+         thing a thumb can reach is the bar's own sidebar button. -->
     <div
       class="panels"
-      inert={viewport.narrow && !workspace.panel}
+      inert={viewport.drawer && !workspace.panel}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
