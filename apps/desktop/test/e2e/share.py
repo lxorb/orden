@@ -1,7 +1,8 @@
 """Sharing a space, end to end, against the real Worker.
 
 Five browser contexts that know nothing about each other, and none of them types
-a thing to get in. The owner opens the Share sheet from the rail and invites
+a thing to get in. The owner opens the Share sheet from the space's own row in
+the switcher and invites
 somebody by address; that somebody has no Nib account at all, follows the link out
 of the real message the runtime's mail binding was handed, and is in the space -
 no code, no form, nothing on screen. They write in the same note as the owner and
@@ -395,10 +396,51 @@ def open_the_note(page: Page, label: str, note_id: str, space: str) -> None:
     )
 
 
-def open_the_share_sheet(page: Page):
-    """The Share sheet, opened the way anybody opens it: the space's own menu in
-    the rail."""
-    page.locator("nav button.space").first.click(button="right")
+def dismiss(page: Page) -> None:
+    """Escape, once per layer.
+
+    A sheet opened from the switcher leaves the switcher standing behind it,
+    which is what a person sees too: Escape closes the layer on top and hands
+    the one under it back. See overlays.ts."""
+    for _ in range(4):
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
+        if not page.locator('.sheet, aside .spaces, [role="menu"]').count():
+            return
+
+
+def space_row(page: Page, name: str = SPACE):
+    """A space's own row, in the switcher the panel's header opens.
+
+    There is no rail any more: the name at the top of the list is itself the
+    switcher, every other space is a row in it, and what a space offers is the
+    button at the end of its row. See SpaceSwitcher.svelte and docs/design.md.
+    The list is opened only if it is not already, because the name toggles it and
+    a sheet closing above it leaves it standing."""
+    # `showPanel` is a toggle, so it is asked for only where the list is not
+    # already what the sidebar is showing.
+    page.evaluate(
+        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }"
+    )
+
+    # The panel slides open and the header comes with it; a press landing
+    # mid-slide lands on the note behind it.
+    header = page.locator("aside .head button.name")
+    header.wait_for(state="visible", timeout=10_000)
+    page.wait_for_timeout(400)
+
+    if not page.locator("aside .spaces").count():
+        header.click()
+
+    rows = page.locator("aside .spaces .line")
+    rows.first.wait_for(state="visible", timeout=10_000)
+    return rows.filter(has_text=name).first
+
+
+def open_the_share_sheet(page: Page, name: str = SPACE):
+    """The Share sheet, opened the way anybody opens it: the space's own menu, on
+    its row in the switcher."""
+    space_row(page, name).locator(".more").click()
     page.get_by_role("menuitem", name="Share", exact=True).click()
 
     sheet = page.get_by_role("dialog")
@@ -446,19 +488,35 @@ def settled(page: Page, label: str) -> None:
 
 
 def rename(page: Page, name: str) -> None:
-    """A guest renaming themselves: the person at the foot of the rail, the name
-    already in the field, one word over it."""
-    page.locator("nav button.account").click()
-    sheet = page.locator(".sheet")
-    sheet.wait_for(state="visible", timeout=10_000)
-    sheet.locator("input").first.fill(name)
-    sheet.get_by_role("button", name="Save").click()
+    """A guest renaming themselves: the face at the left of the panel's foot,
+    which opens the account pane, and the one field in it.
+
+    There is no Save. The field is what the app holds, so leaving it is what
+    writes it, which is what every other field in the settings does."""
+    # `showPanel` is a toggle, so it is asked for only where the list is not
+    # already what the sidebar is showing.
+    page.evaluate(
+        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }"
+    )
+
+    who = page.locator("aside .foot button.who")
+    who.wait_for(state="visible", timeout=10_000)
+    page.wait_for_timeout(400)
+    who.click()
+
+    field = page.locator(".sheet .body input.inline").first
+    field.wait_for(state="visible", timeout=10_000)
+    field.fill(name)
+    field.press("Enter")
 
     wait_for(
         page,
         f"() => window.nibApp.account.guest?.name === {json.dumps(name)}",
         f"the guest to be called {name}",
     )
+
+    # Out of the settings, or the scrim is what the next photograph is of.
+    dismiss(page)
 
 
 def set_link(token: str, space_id: str, role: str, mode: str) -> None:
@@ -574,7 +632,7 @@ def main() -> int:
                 ).group(1)
                 say("the invitation carries a link to nibeditor.com")
 
-                owner.keyboard.press("Escape")
+                dismiss(owner)
 
                 # ── Somebody with no account at all follows it ─────────────
                 # No form, no code, no sign-up. The mail was written to that
@@ -635,10 +693,14 @@ def main() -> int:
                 else:
                     say("the caret carries the person's name rather than the device's")
 
-                # The rail marks the space as one somebody else is in.
-                owner.locator("nav .spaces").screenshot(path=str(SHOTS / "shared-in-the-rail.png"))
-                if not owner.locator("nav button.space .with").count():
-                    wrong("the rail does not mark the space as shared")
+                # The switcher marks the space as one somebody else is in.
+                space_row(owner)
+                owner.wait_for_timeout(200)
+                owner.locator("aside .spaces").screenshot(
+                    path=str(SHOTS / "shared-in-the-switcher.png")
+                )
+                if not owner.locator("aside .spaces .with").count():
+                    wrong("the switcher does not mark the space as shared")
 
                 # ── The link the space itself holds ────────────────────────
                 sheet = open_the_share_sheet(owner)
@@ -657,7 +719,7 @@ def main() -> int:
                 if not found:
                     raise SystemExit(f"that is not a join link: {url}")
                 link = found.group(1)
-                owner.keyboard.press("Escape")
+                dismiss(owner)
 
                 # What the link hands out is the owner's, from the same sheet.
                 # Set here rather than clicked so the one link can be followed
@@ -675,7 +737,10 @@ def main() -> int:
                     wrong("the link made an account rather than a guest")
 
                 named = guest.evaluate("() => window.nibApp.account.guest?.name ?? null")
-                if not named or not re.fullmatch(r"Browser \w+", named):
+                # A device and an animal. Which device word it is depends on what
+                # the browser calls itself - Chrome, Firefox, Chromium - and that
+                # is browser.ts's business rather than this run's.
+                if not named or not re.fullmatch(r"[\w .+-]+ \w+", named):
                     wrong(f"the guest is called {named!r} rather than after its device")
                 else:
                     say(f"the guest is called {named!r}, after the device it arrived on")
@@ -694,7 +759,7 @@ def main() -> int:
                 # ── One tap renames them, and the others see it ────────────
                 rename(guest, "Ada")
                 guest.wait_for_timeout(200)
-                guest.locator("nav .foot").screenshot(path=str(SHOTS / "guest-renamed.png"))
+                guest.locator("aside .foot").screenshot(path=str(SHOTS / "guest-renamed.png"))
 
                 moved(guest, 7)
                 until = time.monotonic() + PATIENCE
@@ -744,10 +809,12 @@ def main() -> int:
                     wrong("what a reader typed reached the account")
 
                 # A reader is offered nothing to change the space with either.
-                reader.locator(f'nav button.space[aria-label="{here}"]').click(button="right")
-                reader.wait_for_selector('[role="menu"]', timeout=10_000)
-                offered = reader.locator('[role="menuitem"]').all_inner_texts()
-                reader.keyboard.press("Escape")
+                space_row(reader, here).locator(".more").click()
+                reader.wait_for_selector('.menu[role="menu"]', timeout=10_000)
+                # The menu that was opened, and not the switcher's rows behind
+                # it, which are menu items of their own.
+                offered = reader.locator('.menu [role="menuitem"]').all_inner_texts()
+                dismiss(reader)
                 if any(word in " ".join(offered) for word in ("New note", "Rename", "Share")):
                     wrong(f"a reader is offered {offered!r}")
                 else:
@@ -757,7 +824,7 @@ def main() -> int:
                 sheet = open_the_share_sheet(owner)
                 sheet.get_by_role("switch", name="Ask first").click()
                 owner.wait_for_timeout(300)
-                owner.keyboard.press("Escape")
+                dismiss(owner)
                 say("the owner set the link to ask first")
 
                 waiting = fresh(browser, "waiting", at=f"{ORIGIN}/join/{link}")
@@ -786,7 +853,7 @@ def main() -> int:
                 sheet.screenshot(path=str(SHOTS / "owner-asked.png"))
                 sheet.get_by_role("button", name="Accept").click()
                 owner.wait_for_timeout(300)
-                owner.keyboard.press("Escape")
+                dismiss(owner)
                 say("the owner pressed Accept")
 
                 # The page that was waiting asks again on its own, and turns into
