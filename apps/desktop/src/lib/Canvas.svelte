@@ -671,6 +671,11 @@
 
   function onPointerDown(event: PointerEvent) {
     const pen = event.pointerType === 'pen'
+    // Before the button below: a mouse pressing its right button is a mouse asking
+    // for the menu, and it has to say so even when a pen was the last thing on the
+    // glass.
+    lastPen = pen
+
     // The right button on a mouse starts nothing; the menu is the browser's own
     // event. A pen holding its button is not a right button at all, it is the
     // eraser, and it has to reach the machine to be one.
@@ -682,7 +687,6 @@
 
     const coarse = event.pointerType === 'touch'
     const eraser = rubbingWith(event)
-    lastPen = pen
     contacts.came(event.pointerId, { pen, eraser })
 
     // A pen on this glass is remembered for good: from now on the finger moves
