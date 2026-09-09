@@ -160,7 +160,6 @@ describe('the walk', () => {
 })
 
 describe('everything the reader sees is translated', () => {
-
   test('no loose phrases in the markup', () => {
     const found = files
       .filter((p) => p.endsWith('.svelte'))

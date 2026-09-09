@@ -178,16 +178,17 @@ fn front_matter_list(body: &str, key: &str) -> Vec<String> {
 /// `[One, Two]` on the key's own line, or a single value standing for a list of
 /// one.
 fn flow_items(value: &str) -> Vec<String> {
-    match value
+    if let Some(list) = value
         .strip_prefix('[')
         .and_then(|one| one.strip_suffix(']'))
     {
-        Some(list) => list
+        return list
             .split(',')
             .filter_map(|one| unquoted(one.trim()))
-            .collect(),
-        None => unquoted(value).into_iter().collect(),
+            .collect();
     }
+
+    unquoted(value).into_iter().collect()
 }
 
 /// The `- item` lines written under a key, up to the next key of the note's own
@@ -207,7 +208,9 @@ fn dash_items(body: &str, from: usize, close: usize) -> Vec<String> {
             let Some(item) = line.strip_prefix('-') else {
                 break;
             };
-            if !item.starts_with([' ', '\t']) {
+            // A dash with no space after it is not an item, and neither is a
+            // dash on its own: `-One` is a word and `-` is a rule.
+            if !item.starts_with(char::is_whitespace) {
                 break;
             }
             if let Some(said) = unquoted(item.trim()) {

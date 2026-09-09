@@ -13,6 +13,30 @@ describe('reading a note for the index', () => {
     expect(note.blocks).toEqual(['abc123'])
     expect(note.links.map((link) => link.target)).toEqual(['Other', '../notes/Third.md'])
   })
+
+  /** The shape the Rust pass hands back, read by the browser build here. Every
+   *  case has its twin in `front_matter_list`'s tests at the bottom of
+   *  `apps/desktop/src-tauri/src/links.rs`: two languages cannot share one
+   *  reader, so what keeps them from drifting is that both are asked the same
+   *  questions. */
+  test('reads the other names the note gives itself, whichever way they are written', () => {
+    const aliases = (body: string) => scanNote('Plan.md', body).aliases
+
+    expect(aliases('---\naliases: [Roadmap, The plan]\n---\n')).toEqual(['Roadmap', 'The plan'])
+    expect(aliases('---\naliases:\n  - Roadmap\n  - The plan\n---\n')).toEqual([
+      'Roadmap',
+      'The plan',
+    ])
+    expect(aliases('---\naliases:\n- Roadmap\n---\n')).toEqual(['Roadmap'])
+    expect(aliases('---\naliases: Roadmap\n---\n')).toEqual(['Roadmap'])
+    expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
+  })
+
+  test('gives a note that names none an empty list rather than nothing at all', () => {
+    expect(scanNote('Plan.md', '# Plan\n').aliases).toEqual([])
+    expect(scanNote('Plan.md', '---\ntitle: Plan\n---\n').aliases).toEqual([])
+    expect(scanNote('Plan.md', '---\nexport:\n  aliases: [One]\n---\n').aliases).toEqual([])
+  })
 })
 
 describe('reading a canvas for the index', () => {
