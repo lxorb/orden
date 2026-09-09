@@ -404,7 +404,7 @@ def open_the_share_sheet(page: Page):
     sheet = page.get_by_role("dialog")
     sheet.wait_for(state="visible", timeout=10_000)
     # Drawn once the account has said who is already in it.
-    sheet.get_by_text("People").wait_for(timeout=10_000)
+    sheet.get_by_text("Who has access").wait_for(timeout=10_000)
     return sheet
 
 
@@ -561,7 +561,7 @@ def main() -> int:
                 )
 
                 sheet = open_the_share_sheet(owner)
-                sheet.locator("input[type=email]").fill(WRITER)
+                sheet.locator(".compose input").fill(WRITER)
                 sheet.get_by_role("button", name="Invite").click()
                 sheet.get_by_text(WRITER).wait_for(timeout=10_000)
                 sheet.get_by_text("Invited").wait_for(timeout=10_000)
@@ -642,8 +642,11 @@ def main() -> int:
 
                 # ── The link the space itself holds ────────────────────────
                 sheet = open_the_share_sheet(owner)
-                sheet.get_by_role("button", name="Make a link").click()
-                sheet.get_by_role("radio", name="Anyone").click()
+                # One switch makes the link; `Ask first` comes on with it, and is
+                # the same switch again to turn off.
+                sheet.get_by_role("switch", name="Link").click()
+                owner.wait_for_timeout(300)
+                sheet.get_by_role("switch", name="Ask first").click()
                 owner.wait_for_timeout(300)
 
                 url = sheet.locator("code").inner_text()
@@ -752,7 +755,7 @@ def main() -> int:
 
                 # ── The same link, once it asks first ──────────────────────
                 sheet = open_the_share_sheet(owner)
-                sheet.get_by_role("radio", name="Ask first").click()
+                sheet.get_by_role("switch", name="Ask first").click()
                 owner.wait_for_timeout(300)
                 owner.keyboard.press("Escape")
                 say("the owner set the link to ask first")

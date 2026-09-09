@@ -273,6 +273,6 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/walk.ts` | where a press moves a cursor down a list of rows |
 | `apps/desktop/src/lib/list-keys.ts` | spelling a name, shared by every list |
 | `apps/desktop/src/lib/tree-keys.ts` | left and right in a list that holds lists |
-| `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back |
+| `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |
