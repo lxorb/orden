@@ -12,6 +12,57 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="https://x.dev">site</a>')).toBe('[site](https://x.dev)')
   })
 
+  /** An address is an address whichever attribute carried it. Turndown escapes the
+   *  one in an `href` rather than encoding it, and a `\` the page put there
+   *  escaped the escape: the destination ended at the bracket after it and the
+   *  rest of the attribute became a link of the page's own, pointing wherever the
+   *  page said. */
+  test('an address cannot write a link of its own', () => {
+    expect(htmlToMarkdown('<a href="https://x.test/a\\)[click](https://evil.test)">text</a>')).toBe(
+      '[text](https://x.test/a%5C%29[click]%28https://evil.test%29)',
+    )
+
+    expect(htmlToMarkdown('<a href="https://x.test/a)[click](https://evil.test)">text</a>')).toBe(
+      '[text](https://x.test/a%29[click]%28https://evil.test%29)',
+    )
+  })
+
+  /** The words a link shows arrive as markdown - the emphasis inside it, or a
+   *  picture of its own - and their text has been escaped on the way, backslash
+   *  and brackets together. So they are written as they came, and a page cannot
+   *  close the brackets early from inside them. */
+  test('a backslash in a link text cannot close its brackets', () => {
+    expect(htmlToMarkdown('<a href="https://x.test/ok">a\\](https://evil.test)[b</a>')).toBe(
+      '[a\\\\\\](https://evil.test)\\[b](https://x.test/ok)',
+    )
+  })
+
+  test('the brackets an ordinary address carries stay in the link', () => {
+    expect(htmlToMarkdown('<a href="https://x.test/File_(1).html">t</a>')).toBe(
+      '[t](https://x.test/File_%281%29.html)',
+    )
+  })
+
+  test("a link's address is not encoded twice either", () => {
+    expect(htmlToMarkdown('<a href="https://x.test/a%20b.html">t</a>')).toBe(
+      '[t](https://x.test/a%20b.html)',
+    )
+  })
+
+  /** A link keeps the title the page gave it, where a picture drops it: a link's
+   *  address is the page's own, so there is no numbered placeholder for a title to
+   *  stand in front of. Escaping the quote is not enough on its own - a title
+   *  ending in `\` escaped the quote that was to close it. */
+  test('a title cannot end its own quotes', () => {
+    expect(htmlToMarkdown('<a href="https://x.test/ok" title="he said &quot;hi&quot;">t</a>')).toBe(
+      '[t](https://x.test/ok "he said \\"hi\\"")',
+    )
+
+    expect(htmlToMarkdown('<a href="https://x.test/ok" title="ends in a\\">t</a>')).toBe(
+      '[t](https://x.test/ok "ends in a\\\\")',
+    )
+  })
+
   /** The markers are the editor's own: one space after a bullet, not three. Both
    *  converters used to have their own opinion about this, and a page pasted into
    *  a note came out differently from the same page clipped into one. */

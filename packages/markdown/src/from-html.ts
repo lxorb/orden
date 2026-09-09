@@ -154,6 +154,24 @@ function destination(address: string): string {
   })
 }
 
+/** What a link says about itself, in the quotes markdown gives a title, or
+ *  nothing at all.
+ *
+ *  Escaping the quote is what turndown does and it left the backslash that
+ *  escapes the quote: a title ending in `\` closed nothing, and what followed the
+ *  link was read as more of the title. A link keeps its title where a picture has
+ *  none, because a link's address is the page's own - only a picture goes through
+ *  a caller's hook, so there is no numbered placeholder here for a title to stand
+ *  in front of. */
+function titleOf(link: Element): string {
+  const title = (link.getAttribute('title') ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/(["\\])/g, '\\$1')
+    .trim()
+
+  return title ? ` "${title}"` : ''
+}
+
 function converter(options: FromHtmlOptions): TurndownService {
   const service = new TurndownService({
     headingStyle: 'atx',
@@ -247,12 +265,32 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // The two things a picture says, and no `title`: nothing in a note shows one,
-  // and a caller's address arrives afterwards - the clipper fills its numbers in
-  // by the shape `](nib:0)`, so a title written between them would leave the
-  // placeholder in the note. So there is no third string here to break out of a
-  // title's quotes, and a page's own `title` is dropped with the rest of the
-  // attributes.
+  // An address is an address whether a picture or a link carries it, and
+  // turndown escapes the one in an `href` the way this used to escape the one in
+  // a `src`: a `\` on the page ended the destination early, and the rest of the
+  // attribute became a link of the page's own after it. So a link is written here
+  // too, through the same encoder.
+  //
+  // One rule for both of turndown's, which are an inlined link and a referenced
+  // one; the converter asks for inlined, and a rule added here answers before
+  // either of them whatever it asks for.
+  //
+  // The words keep the escaping they arrive with. A link's text is markdown by
+  // the time it reaches this - the emphasis inside it, or a picture of its own -
+  // and its text nodes have been through `escape` above, which is where a
+  // backslash and the brackets are already dealt with.
+  service.addRule('link', {
+    filter: (node) => node.nodeName === 'A' && !!node.getAttribute('href'),
+    replacement: (content, node) =>
+      `[${content}](${destination(node.getAttribute('href') ?? '')}${titleOf(node)})`,
+  })
+
+  // The two things a picture says, and no `title`, which is the one place it
+  // differs from a link: a caller's address arrives after the conversion, and the
+  // clipper fills its numbers in by the shape `](nib:0)`, so a title written
+  // between them would leave the placeholder in the note. A page's own goes with
+  // the rest of the attributes, and there is no third string here to break out
+  // of a title's quotes.
   service.addRule('picture', {
     filter: 'img',
     replacement: (_content, node) => {
