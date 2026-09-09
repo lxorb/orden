@@ -44,6 +44,9 @@ export interface Draft {
   /** Whether the tab was showing the note as it reads. Absent for one that was
    *  being written in, which is what a tab is unless it says otherwise. */
   reading?: boolean | undefined
+  /** Whether the tab was held at the front of its strip. Absent for the tabs
+   *  that were not, which is most of them. */
+  pinned?: boolean | undefined
   /** For a PDF: the page it was open at and how far it was zoomed. Absent for a
    *  tab holding a note, which keeps a caret and a scroll instead. */
   page?: number | undefined
@@ -164,7 +167,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom } = value
+  const { folds, page, zoom, pinned } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -182,6 +185,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(shut ? { folds: shut } : {}),
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
+    ...(pinned === true ? { pinned: true } : {}),
     ...(isNumber(page) && page >= 1 ? { page } : {}),
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
   }

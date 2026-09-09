@@ -327,6 +327,17 @@
     }
   }
 
+  /** The two buttons on the side of a mouse. They are the browser's back and
+   *  forward everywhere else, so they are the tab's here - and the browser's own
+   *  is taken off them, or the web build would leave the app entirely. */
+  function onMouse(event: MouseEvent) {
+    if (event.button !== 3 && event.button !== 4) return
+
+    event.preventDefault()
+    if (event.button === 3) workspace.goBack()
+    else workspace.goForward()
+  }
+
   function goto(line: number) {
     if (!view) return
 
@@ -460,6 +471,7 @@
 <svelte:window
   onkeydown={onKeydown}
   oncontextmenu={(event: MouseEvent) => event.preventDefault()}
+  onmousedown={onMouse}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
 />

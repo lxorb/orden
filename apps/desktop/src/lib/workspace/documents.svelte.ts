@@ -306,6 +306,38 @@ export class Tab {
    *  headings in one while the other is deep in a section of it. */
   folds = $state<readonly FoldLines[] | undefined>(undefined)
 
+  /** The notes this tab has shown, oldest first, and where along them it is.
+   *
+   *  A tab that moves on from one note to another - which is what the tab being
+   *  previewed in does all day - leaves a trail, and going back along it shows
+   *  the note that was there before. Paths and nothing else: where the caret and
+   *  the scroll were is kept per note already, so arriving back at a note arrives
+   *  where it was left; see positions.ts.
+   *
+   *  For the sitting only. A trail is where you have been this afternoon, and a
+   *  note in it may not be there tomorrow. */
+  trail = $state<readonly string[]>([])
+  at = $state(0)
+
+  /** Whether there is anywhere to step, either way. */
+  get canGoBack(): boolean {
+    return this.at > 0
+  }
+
+  get canGoForward(): boolean {
+    return this.at < this.trail.length - 1
+  }
+
+  /** Whether this tab is held at the front of the strip.
+   *
+   *  A note somebody keeps open all day - the one they are writing towards, the
+   *  one they take notes in - and does not want a click in the file list to take
+   *  away. Pinned it stays at the left, wears its mark rather than its name, is
+   *  never the tab a preview reuses, and refuses the gestures that close a tab
+   *  until it is let go of again. Per tab and not per note, because it is about
+   *  this strip in this pane. */
+  pinned = $state(false)
+
   /** Whether this tab is showing the note as it reads rather than as it is
    *  written. Per tab, because a note can be read in one pane while it is being
    *  written in another, and because which face is up is about this sitting with

@@ -115,6 +115,9 @@ const SAVED_SHOWN = 1400
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
 const SESSION_DELAY = 400
+/** How far back one tab remembers. Longer than anybody follows a link in one
+ *  sitting, short enough that a trail is never what a session is made of. */
+const TRAIL = 30
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 function basename(path: string): string {
@@ -535,6 +538,7 @@ class Workspace {
     tab.anchor = draft.anchor
     tab.folds = draft.folds
     tab.reading = draft.reading === true
+    tab.pinned = draft.pinned === true
     tab.page = draft.page
     tab.zoom = draft.zoom
     return tab
@@ -636,6 +640,7 @@ class Workspace {
       // one note rather than as two copies of it.
       share: tab.note.key,
       ...(tab.reading ? { reading: true } : {}),
+      ...(tab.pinned ? { pinned: true } : {}),
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
     }
@@ -1357,11 +1362,13 @@ class Workspace {
           tab.id === this.previewTabId &&
           tab.kind === 'note' &&
           !tab.dirty &&
+          !tab.pinned &&
           tab.paneId === this.panes.focusedId,
       )
 
     if (reusable) {
       reusable.note.adopt({ path, name: basename(path), text: doc })
+      this.walked(reusable, path)
       this.placeAt(reusable, path)
       // A note arriving in the preview tab is a note opening, and a note opens
       // for writing however the tab was left.
@@ -1384,6 +1391,7 @@ class Workspace {
       dirty: false,
     })
     const tab = new Tab(note, this.panes.focusedId)
+    this.walked(tab, path)
     this.placeAt(tab, path)
     this.add(tab, options.activate !== false)
 
@@ -1430,6 +1438,94 @@ class Workspace {
     return (id ? this.tabs.find((tab) => tab.id === id) : null) ?? null
   }
 
+  /** Writes a note down as where this tab now is.
+   *
+   *  What was ahead of it is dropped, the way it is in anything that goes back
+   *  and forward: arriving somewhere new from halfway along a trail makes the
+   *  rest of that trail a road not taken. Arriving where it already is changes
+   *  nothing, so opening the same note twice does not fill the trail with it. */
+  private walked(tab: Tab, path: string) {
+    if (tab.trail[tab.at] === path) return
+
+    const behind = tab.trail.slice(0, tab.at + 1)
+    tab.trail = [...behind, path].slice(-TRAIL)
+    tab.at = tab.trail.length - 1
+  }
+
+  /** Shows the note this tab was on before this one, or the one it came back
+   *  from. `to` is where along the trail to land, which the two steps and the
+   *  list behind the back arrow all say for themselves.
+   *
+   *  The note is taken on by the document the tab already holds, the way the
+   *  preview tab takes one on: every pane showing this tab keeps its place, the
+   *  editor keeps its own state per note, and the caret lands where it was left
+   *  in the note being returned to. A note that has gone from the disk is
+   *  dropped from the trail rather than reported: it is a road that is no longer
+   *  there. */
+  async walk(to: number, id: string | null = this.activeTabId) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab || to < 0 || to >= tab.trail.length || to === tab.at) return
+
+    const path = tab.trail[to]
+    if (path === undefined) return
+
+    this.flush()
+    const doc = await invoke<string>('read_note', { path }).catch(() => null)
+    if (doc === null) {
+      tab.trail = tab.trail.filter((one) => one !== path)
+      tab.at = Math.min(tab.at, Math.max(tab.trail.length - 1, 0))
+      return
+    }
+
+    tab.note.adopt({ path, name: basename(path), text: doc })
+    tab.at = to
+    this.placeAt(tab, path)
+    tab.reading = false
+
+    // Walking back does not make a tab stay: a tab that was only being looked at
+    // is still only being looked at two notes ago, and taking the preview away
+    // here would give the next click in the file list a tab of its own - and the
+    // trail with it.
+    this.activeTabId = tab.id
+    this.showNote()
+    this.remember(path)
+    this.persist()
+  }
+
+  /** One step back, and one step on. */
+  goBack(id: string | null = this.activeTabId) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (tab) void this.walk(tab.at - 1, tab.id)
+  }
+
+  goForward(id: string | null = this.activeTabId) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (tab) void this.walk(tab.at + 1, tab.id)
+  }
+
+  /** Holds a tab at the front of its strip, or lets it go again.
+   *
+   *  Pinning keeps the note as well: a tab nobody wants taken over is a tab that
+   *  is being kept, and the two would otherwise have to be said one after the
+   *  other. The tab moves to the end of the pinned run rather than being sorted
+   *  on the way out, so every place that counts along a strip - the numbered
+   *  keys, Ctrl+Tab, where a closed tab comes back - counts the same order the
+   *  reader sees. */
+  togglePin(id: string) {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return
+
+    tab.pinned = !tab.pinned
+    if (tab.pinned) this.keep(id)
+
+    // The end of the pinned run either way: pinned, it joins the back of it;
+    // let go of, it lands at the front of what is not pinned, which is the same
+    // place.
+    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== id)
+    this.tabs = this.placed(tab, tab.paneId, others.filter((one) => one.pinned).length)
+    this.persist()
+  }
+
   /** Makes a tab that was only previewing its note stay: the italic goes, and
    *  the next single click in the file list gets a tab of its own instead of
    *  taking this one over. Every way of keeping a preview ends up here -
@@ -1451,6 +1547,10 @@ class Workspace {
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
+    // A pinned tab was pinned to stay. Every gesture that closes one asks here,
+    // so this one refusal covers the cross, the key, the menu row and the
+    // palette; letting it go is what makes it closeable again.
+    if (tab.pinned) return
     if (await this.mayClose([tab])) this.close(id)
   }
 
@@ -1466,7 +1566,8 @@ class Workspace {
     const tab = this.tabs.find((one) => one.id === keepId)
     if (!tab) return
 
-    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== keepId)
+    // A pinned tab is not one of the others: it was pinned to stay.
+    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== keepId && !one.pinned)
     if (!(await this.mayClose(others))) return
 
     for (const other of others) this.close(other.id)

@@ -682,6 +682,30 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.closeActive(),
     },
     {
+      id: 'back',
+      label: t('Back'),
+      hint: shortcuts.hint('app.back'),
+      disabled: !workspace.active?.canGoBack,
+      run: () => workspace.goBack(),
+    },
+    {
+      id: 'forward',
+      label: t('Forward'),
+      hint: shortcuts.hint('app.forward'),
+      disabled: !workspace.active?.canGoForward,
+      run: () => workspace.goForward(),
+    },
+    {
+      id: 'pin',
+      label: workspace.active?.pinned === true ? t('Unpin') : t('Pin'),
+      hint: shortcuts.hint('app.pin'),
+      disabled: !workspace.active,
+      run: () => {
+        const id = workspace.activeTabId
+        if (id) workspace.togglePin(id)
+      },
+    },
+    {
       id: 'reopen',
       label: t('Reopen closed tab'),
       hint: shortcuts.hint('app.reopen'),

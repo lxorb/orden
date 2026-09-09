@@ -293,6 +293,48 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => void workspace.closeActive(),
   },
   {
+    // The key every browser goes back with, and the one the editor's own syntax
+    // motion was quietly holding on Windows and Linux until this took it; see
+    // keymap.ts in @nib/editor.
+    //
+    // A Mac cannot have either pair. Alt and an arrow there is a word at a time
+    // and has been for forty years, and Cmd and a bracket - which is what a Mac
+    // browser uses - is indenting here. So it is the brackets under the other
+    // modifier, which nothing on that platform is using, and which is a key
+    // anybody who wants the browser's own can change in Settings.
+    id: 'app.back',
+    label: () => t('Back'),
+    category: 'view',
+    scope: 'app',
+    key: 'Alt-ArrowLeft',
+    mac: 'Ctrl-[',
+    run: () => workspace.goBack(),
+  },
+  {
+    id: 'app.forward',
+    label: () => t('Forward'),
+    category: 'view',
+    scope: 'app',
+    key: 'Alt-ArrowRight',
+    mac: 'Ctrl-]',
+    run: () => workspace.goForward(),
+  },
+  {
+    // No default chord: pinning is done to a tab that is already in front of
+    // you, and every key with a hand on it is spoken for. The row in the tab's
+    // own menu and the palette are the two ways in, and this is here so a reader
+    // who wants a key can give it one.
+    id: 'app.pin',
+    label: () => (workspace.active?.pinned === true ? t('Unpin') : t('Pin')),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    run: () => {
+      const id = workspace.activeTabId
+      if (id) workspace.togglePin(id)
+    },
+  },
+  {
     // The key a browser and Obsidian both use for it, so no hand has to be told.
     id: 'app.reopen',
     label: () => t('Reopen closed tab'),

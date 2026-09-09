@@ -9,6 +9,10 @@
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
+  import { markOf } from './file-mark'
+  import { shownName } from './note-name'
+  import { nameOf } from './space-paths'
+  import FileMark from './FileMark.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import { dur } from './motion'
@@ -23,6 +27,24 @@
   const alone = $derived(workspace.panes.count < 2)
   /** Shown only where there is another pane on this note to scroll with. */
   const twinned = $derived(workspace.twins(paneId).length > 0)
+
+  /** The tab the arrows are about, and whether this strip has been anywhere at
+   *  all. The pair is drawn once a tab in this pane has moved on from one note
+   *  to another, and stays after that: two arrows appearing and disappearing as
+   *  the strip is walked along would move every tab under the pointer. */
+  const walking = $derived(workspace.showing(paneId))
+  const walked = $derived(tabs.some((one) => one.trail.length > 1))
+
+  /** Where this tab has been, newest first, as rows to go straight back to.
+   *  What is ahead of it is left out: forward is one arrow away and a list of
+   *  both directions is a list nobody can read at a glance. */
+  function trailMenu(tab: Tab): MenuEntry[] {
+    return tab.trail
+      .slice(0, tab.at)
+      .map((path, at) => ({ label: shownName(nameOf(path)), at }))
+      .reverse()
+      .map((row) => ({ label: row.label, run: () => void workspace.walk(row.at, tab.id) }))
+  }
 
   /** What a double click on the tab does, for a finger that cannot double
    *  click. Only offered while the tab is still a preview: once kept, there is
@@ -87,8 +109,16 @@
     return [
       ...readingEntry(tab),
       {
+        label: tab.pinned ? t('Unpin') : t('Pin'),
+        hint: shortcuts.hint('app.pin'),
+        run: () => workspace.togglePin(tab.id),
+      },
+      {
         label: t('Close'),
         hint: shortcuts.hint('app.close'),
+        // A pinned tab stays until it is let go of, so the row says so rather
+        // than doing nothing when it is pressed.
+        disabled: tab.pinned,
         run: () => void workspace.closeAsking(tab.id),
       },
       {
@@ -192,6 +222,38 @@
 </script>
 
 <div class="strip">
+  <!-- Where this pane has been. Two arrows, at the head of the strip the way
+       every browser puts them, and only in a pane that has been anywhere: a note
+       opened and read is not a journey. Each says whether it can go, rather than
+       going and doing nothing. The back one also holds the trail itself, which is
+       the one place the whole of it can be read. -->
+  {#if walked && walking}
+    <div class="steps">
+      <button
+        class="step"
+        title={t('Back')}
+        aria-label={t('Back')}
+        disabled={!walking.canGoBack}
+        onclick={() => workspace.goBack(walking.id)}
+        oncontextmenu={(event) =>
+          walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
+        use:longPress={(event) =>
+          walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
+      >
+        <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
+      </button>
+      <button
+        class="step"
+        title={t('Forward')}
+        aria-label={t('Forward')}
+        disabled={!walking.canGoForward}
+        onclick={() => workspace.goForward(walking.id)}
+      >
+        <svg viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
+      </button>
+    </div>
+  {/if}
+
   <!-- The whole strip takes a drop, so a tab dragged into it lands where it was
        let go of; past the last tab is the end of the strip. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -230,6 +292,7 @@
       <div
         class="tab"
         class:active={tab.id === pane?.activeTabId}
+        class:pinned={tab.pinned}
         class:preview={tab.id === workspace.previewTabId}
         class:before={mark === at}
         class:after={mark === tabs.length && at === tabs.length - 1}
@@ -261,6 +324,21 @@
             workspace.panes.landing = null
           }}
         >
+          <!-- A pinned tab is its mark and nothing else: the name is what
+               takes the room, and a tab kept open all day is one somebody knows
+               by sight. The name is still what it says to a reader who cannot
+               see it, and what the title shows. -->
+          {#if tab.pinned && markOf(tab.kind)}
+            <span class="pin" aria-label={tab.shown}>
+              <!-- With the path where there is one, so a note that chose an icon
+                   wears it here as well; see FileMark.svelte. -->
+              {#if tab.path}
+                <FileMark mark={markOf(tab.kind) ?? 'note'} path={tab.path} />
+              {:else}
+                <FileMark mark={markOf(tab.kind) ?? 'note'} />
+              {/if}
+            </span>
+          {/if}
           {#if tab.reading}
             <!-- An open book, quietly: the tab says which face of the note is up
                  without spending a word on it. -->
@@ -278,7 +356,9 @@
                the text directly inside it, so the words were being cut through
                the middle of a letter. This is also the only part of the tab that
                gives way as the strip fills. -->
-          <span class="label">{tab.shown}</span>
+          {#if !(tab.pinned && markOf(tab.kind))}
+            <span class="label">{tab.shown}</span>
+          {/if}
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are
                already the whole sentence. -->
@@ -304,14 +384,16 @@
             ></span>
           {/if}
         </button>
-        <button
-          class="shut"
-          title={t('Close')}
-          aria-label={t('Close')}
-          onclick={() => void workspace.closeAsking(tab.id)}
-        >
-          <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
-        </button>
+        {#if !tab.pinned}
+          <button
+            class="shut"
+            title={t('Close')}
+            aria-label={t('Close')}
+            onclick={() => void workspace.closeAsking(tab.id)}
+          >
+            <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
+          </button>
+        {/if}
       </div>
     {/each}
 
@@ -387,6 +469,48 @@
      around the words themselves; a line there is a line to read past. */
   .tabs.quiet {
     opacity: 0.55;
+  }
+
+  /* Where the pane has been, at the head of the strip. Quiet until there is
+     something to press, and never in the way: the pair is the width of two marks
+     and gives none of it back as the strip fills. */
+  .steps {
+    display: flex;
+    align-items: center;
+    flex: none;
+    padding-left: var(--space-1);
+  }
+
+  .step {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-row);
+    color: var(--muted);
+  }
+
+  .step:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text-strong);
+  }
+
+  .step:active:not(:disabled) {
+    background: var(--surface-press);
+  }
+
+  .step:disabled {
+    opacity: 0.35;
+  }
+
+  .step svg {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* The one plus, and it makes a note. A handheld has no tab strip, so there it
@@ -474,6 +598,24 @@
       background var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out),
       flex-shrink var(--dur-fast) var(--ease-out);
+  }
+
+  /* A tab that is only its mark is as wide as its mark. It never gives way and
+     never grows: the strip shares what is left between the tabs that have names
+     to show. */
+  .tab.pinned {
+    flex: none;
+    min-width: 0;
+  }
+
+  .tab.pinned .pick {
+    padding: 7px 8px;
+  }
+
+  .pin {
+    display: grid;
+    place-items: center;
+    flex: none;
   }
 
   /* The tab being read gives way a third as fast as the rest, so the name of

@@ -337,6 +337,18 @@ claim(searchKeymap, (binding) => binding.key === 'Mod-Shift-l', 'the library sel
 claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowUp', 'the library cursor above')
 claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowDown', 'the library cursor below')
 
+/** Alt and an arrow sideways, taken off the library's syntax-tree motion.
+ *
+ *  It is the key every browser goes back and forward with, which is what the app
+ *  does with it: a tab that has moved on from one note to another goes back along
+ *  its own trail. The library moved the caret out of one syntax node and into the
+ *  next with it, which nothing in nib's own list ever mentioned and nobody
+ *  pressed on purpose. Only the entry that binds it on Windows and Linux: the Mac
+ *  reads Alt and an arrow as a word at a time, through another entry, and keeps
+ *  it - see the mac chord on `app.back` in the app's registry. */
+claim(defaultKeymap, (binding) => binding.key === 'Alt-ArrowLeft', 'the library node left')
+claim(defaultKeymap, (binding) => binding.key === 'Alt-ArrowRight', 'the library node right')
+
 export const standardBindings: BindingSpec[] = [
   // The library's own key, on the app's own undo: a note open in two panes has
   // one history, which lives with the document rather than in either view. See
