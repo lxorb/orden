@@ -53,6 +53,8 @@ export const de: Dictionary = {
   Duplicate: 'Duplizieren',
   Delete: 'Löschen',
   Move: 'Verschieben',
+  'Move after': 'Verschieben hinter',
+  Heading: 'Überschrift',
   'Move to': 'Verschieben nach',
   'Move up': 'Nach oben',
   'Move down': 'Nach unten',

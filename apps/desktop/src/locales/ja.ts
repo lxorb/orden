@@ -53,6 +53,8 @@ export const ja: Dictionary = {
   Duplicate: '複製',
   Delete: '削除',
   Move: '移動',
+  'Move after': 'この後に移動',
+  Heading: '見出し',
   'Move to': '移動先',
   'Move up': '上へ',
   'Move down': '下へ',

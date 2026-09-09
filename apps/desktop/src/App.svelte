@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { t } from './lib/i18n.svelte'
+  import { scanHeadings } from './lib/outline'
+  import { moveSection } from './lib/sections'
   import { viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
@@ -321,6 +323,25 @@
     view.focus()
   }
 
+  /** A whole section moved, from the outline. One transaction, so it is one
+   *  thing to undo, and the words it moves are the only words that change - a
+   *  note open in another pane keeps every caret outside them where it was; see
+   *  sections.ts and shared.ts. */
+  function moveSectionTo(from: number, to: number) {
+    if (!view || view.state.readOnly) return
+
+    const text = view.state.doc.toString()
+    const made = moveSection(text, scanHeadings(text), from, to, view.state.selection.main.head)
+    if (!made) return
+
+    view.dispatch({
+      changes: made.changes,
+      selection: { anchor: made.caret },
+      scrollIntoView: true,
+      userEvent: 'move.section',
+    })
+  }
+
   // A followed link, or a bookmarked heading, lands on a line the editor cannot
   // know: the workspace works it out from the note it just loaded and leaves it
   // here.
@@ -463,7 +484,7 @@
         />
 
         {#if workspace.panel}
-          <Sidebar ongoto={goto} />
+          <Sidebar ongoto={goto} onmovesection={moveSectionTo} />
         {/if}
       </div>
     {/if}

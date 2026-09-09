@@ -55,6 +55,8 @@ export const gsw: Dictionary = {
   Duplicate: 'Verdopple',
   Delete: 'Lösche',
   Move: 'Verschiebe',
+  'Move after': 'Verschiebe hinter',
+  Heading: 'Überschrift',
   'Move to': 'Verschiebe uf',
   'Move up': 'Ufe',
   'Move down': 'Abe',

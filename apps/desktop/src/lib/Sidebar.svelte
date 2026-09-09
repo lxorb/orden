@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { carried, dragged, isTreeDrag } from './drag-paths'
+  import {
+    carried,
+    carrySection,
+    dragged,
+    draggedSection,
+    isSectionDrag,
+    isTreeDrag,
+  } from './drag-paths'
+  import { movesSection } from './sections'
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -22,7 +30,16 @@
   import Tree from './Tree.svelte'
   import { dur } from './motion'
 
-  const { ongoto }: { ongoto?: (line: number) => void } = $props()
+  const {
+    ongoto,
+    onmovesection,
+  }: {
+    ongoto?: (line: number) => void
+    /** Moves a whole section of the open note, by the two places in the outline
+     *  it came from and landed on. The app owns the editor, so the edit is made
+     *  there; see `moveSection` in sections.ts for what a section is. */
+    onmovesection?: (from: number, to: number) => void
+  } = $props()
 
   /** Lit while a drop would land in the space itself: over the empty stretch
    *  below the last row, and over a row at the top of the space, which stands for
@@ -186,13 +203,97 @@
 
   let outline = $state<HTMLElement>()
 
+  /** The row a drop would land on, which side of it the line sits, and which row
+   *  is being dragged. The same three the bookmarks keep, and for the same
+   *  reason: a drag under way will not say what it carries, only what kind of
+   *  thing it is, so the row it came from has to be remembered here. */
+  let dropAt = $state<number | null>(null)
+  let dropAbove = $state(false)
+  let dragging = $state<number | null>(null)
+
+  function startSection(event: DragEvent, at: number) {
+    carrySection(event.dataTransfer, at)
+    dragging = at
+  }
+
+  function endSection() {
+    dropAt = null
+    dragging = null
+  }
+
+  function overSection(event: DragEvent, at: number) {
+    // Only where the drop would move something: a section held over itself, or
+    // over a heading inside it, lights nothing because it would do nothing.
+    if (!isSectionDrag(event.dataTransfer)) return
+    if (dragging !== null && !movesSection(workspace.headings, dragging, at)) return
+
+    event.preventDefault()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+
+    dropAt = at
+    // The line marks the edge the section arrives at: the top of the row when it
+    // is coming down the list, the bottom when it is going up.
+    dropAbove = dragging !== null && dragging > at
+  }
+
+  function dropSection(event: DragEvent, at: number) {
+    event.preventDefault()
+
+    const from = draggedSection(event.dataTransfer)
+    endSection()
+    if (from !== null) onmovesection?.(from, at)
+  }
+
+  /** What a heading's own menu offers: bookmarking it, and on a touch screen the
+   *  move a drag would have made. */
+  function headingMenu(at: number, text: string): MenuEntry[] {
+    return [
+      ...bookmarkEntry(workspace.bookmarks.forHeading(workspace.relativeNote, text)),
+      ...moveSectionEntries(at),
+    ]
+  }
+
+  /** Moving a section where a drag is not available. A held finger opens the
+   *  menu before a drag could start and a browser fires no drag events from a
+   *  touch at all, so the menu offers the move, in the sheet every other question
+   *  uses. The same call the drop makes, so it is the same move and the same
+   *  undo. See Tree.svelte, which answers the same problem the same way. */
+  function moveSectionEntries(at: number): MenuEntry[] {
+    if (!viewport.touch) return []
+
+    const targets = workspace.headings
+      .map((heading, index) => ({ id: String(index), label: heading.text, index }))
+      .filter((one) => movesSection(workspace.headings, at, one.index))
+    if (!targets.length) return []
+
+    return [
+      {
+        label: t('Move'),
+        run: () => {
+          void (async () => {
+            const { prompt } = await import('./prompt.svelte')
+            const to = await prompt.find({
+              title: t('Move after'),
+              options: targets.map((one) => ({ id: one.id, label: one.label })),
+              placeholder: t('Heading'),
+            })
+            if (to !== null) onmovesection?.(at, Number(to))
+          })()
+        },
+      },
+    ]
+  }
+
   // The caret's heading is in view the moment the panel opens and stays there
   // as the caret moves. Nearest, so a row already showing does not pull the
   // list around under the finger.
   $effect(() => {
     const list = outline
     if (!list || current < 0) return
-    list.querySelector('.row.active')?.scrollIntoView({ block: 'nearest' })
+    // `is-on` is what the row wears; it was `.active` before the row moved into
+    // the themes package, and a selector nothing matched meant the outline
+    // quietly stopped following the caret.
+    list.querySelector('.row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
   /** Which way the panel's contents come in when the space changes: from
@@ -383,16 +484,20 @@
                 <button
                   class="nib-row is-short row heading"
                   class:is-on={index === current}
+                  class:above={dropAt === index && dropAbove}
+                  class:below={dropAt === index && !dropAbove}
                   style:--level={heading.level - shallowest}
+                  draggable="true"
                   onclick={() => ongoto?.(heading.line)}
                   oncontextmenu={(event) =>
-                    menu.show(
-                      event,
-                      bookmarkEntry(
-                        workspace.bookmarks.forHeading(workspace.relativeNote, heading.text),
-                      ),
-                      { title: heading.text },
-                    )}
+                    menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                  use:longPress={(event) =>
+                    menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                  ondragstart={(event) => startSection(event, index)}
+                  ondragover={(event) => overSection(event, index)}
+                  ondragleave={() => (dropAt = null)}
+                  ondragend={endSection}
+                  ondrop={(event) => dropSection(event, index)}
                 >
                   <span class="nib-row-label">{heading.text}</span>
                 </button>
@@ -627,9 +732,32 @@
      hang off `--level`, so a phone takes a deeper step without a second set of
      numbers in the markup. The tree is indented the same way. */
   .heading {
+    position: relative;
     padding-left: calc(var(--row-pad) + var(--level) * var(--row-indent));
     opacity: calc(1 - var(--level) * 0.09);
     transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  /* Where a section being dragged would land: along the edge it arrives at,
+     rather than a box around the row it is passing. The same line the bookmarks
+     draw for a row on its way somewhere. */
+  .heading.above::before,
+  .heading.below::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+  }
+
+  .heading.above::before {
+    top: -1px;
+  }
+
+  .heading.below::after {
+    bottom: -1px;
   }
 
   .heading.is-on {

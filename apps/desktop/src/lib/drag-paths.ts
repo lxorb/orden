@@ -11,6 +11,7 @@
 const ONE = 'text/nib-path'
 const MANY = 'text/nib-paths'
 const BOOKMARK = 'text/nib-bookmark'
+const SECTION = 'text/nib-section'
 const TAB = 'text/nib-tab'
 
 /** What the drag under way carries, kept from its start to its end.
@@ -93,7 +94,31 @@ export function isBookmarkDrag(transfer: DataTransfer | null): boolean {
 /** Which row is being dragged, or null when the drag is not a bookmark's. The
  *  index travels as text, so anything that is not a whole number is not ours. */
 export function draggedBookmark(transfer: DataTransfer | null): number | null {
-  const written = transfer?.getData(BOOKMARK) ?? ''
+  return index(transfer, BOOKMARK)
+}
+
+/** Which row of the outline is being dragged, by its place in the list. Its own
+ *  type, so a heading dragged over the file tree is not read as a note to move,
+ *  and a note dropped on the outline does not reorder a note's sections. */
+export function carrySection(transfer: DataTransfer | null, at: number) {
+  if (!transfer) return
+
+  transfer.setData(SECTION, String(at))
+  transfer.effectAllowed = 'move'
+}
+
+export function isSectionDrag(transfer: DataTransfer | null): boolean {
+  return !!transfer?.types.includes(SECTION)
+}
+
+export function draggedSection(transfer: DataTransfer | null): number | null {
+  return index(transfer, SECTION)
+}
+
+/** A row's place in its list, as the drag carries it. Text, so anything that is
+ *  not a whole number is not ours. */
+function index(transfer: DataTransfer | null, type: string): number | null {
+  const written = transfer?.getData(type) ?? ''
   const at = Number(written)
 
   return written !== '' && Number.isInteger(at) && at >= 0 ? at : null
