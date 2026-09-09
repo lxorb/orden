@@ -679,6 +679,8 @@ export const fr: Dictionary = {
   'Select every file': 'Sélectionner tous les fichiers',
   'Clear the selection': 'Annuler la sélection',
   'Delete the selected files': 'Supprimer les fichiers sélectionnés',
+  'The file could not be written, so it goes to the print dialog':
+    'Le fichier n’a pas pu être écrit, il passe donc par la boîte d’impression',
   'Next file': 'Fichier suivant',
   'Previous file': 'Fichier précédent',
   'Open the folder': 'Ouvrir le dossier',

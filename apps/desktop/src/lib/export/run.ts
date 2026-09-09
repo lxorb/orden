@@ -25,6 +25,7 @@ import { documentOf, picturesIn } from './document'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from './formats'
 import { toMarkdown } from './markdown'
 import { fileNameFor, stemOf } from './naming'
+import { writtenPdf } from './print'
 import { type Picture, readPictures, sourcesIn } from './pictures'
 import { chooseTarget, deliver, type Payload } from './save'
 import { toPlainText } from './text'
@@ -95,13 +96,9 @@ async function exportPdf(note: Note, options: RunOptions): Promise<string | null
 
   if (target) {
     const page = paperInches(pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP))
-    try {
-      await invoke('print_pdf', { html, output: target, page })
-      return target
-    } catch {
-      // The dialog can still save the file, so the person is not left with
-      // nothing to show for the wait.
-    }
+    // The dialog can still save the file, so the person is not left with nothing
+    // to show for the wait - and the line says the road changed; see print.ts.
+    if (await writtenPdf(html, target, page)) return target
   }
 
   await printInFrame(html)

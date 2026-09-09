@@ -676,6 +676,8 @@ export const gsw: Dictionary = {
   'Select every file': 'Alli Dateie uswähle',
   'Clear the selection': 'D Uswahl ufhebe',
   'Delete the selected files': 'Uswählti Dateie lösche',
+  'The file could not be written, so it goes to the print dialog':
+    'D Datei het mer nöd chönne schriibe, drum gaht s über de Druckdialog',
   'Next file': 'Nächschti Datei',
   'Previous file': 'Vorherigi Datei',
   'Open the folder': 'Ornder ufmache',

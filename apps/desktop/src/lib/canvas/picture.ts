@@ -15,6 +15,7 @@
  *  the one thing that both reads the same and rasterises at all. */
 
 import { inlineImages, printInFrame } from '../export'
+import { writtenPdf } from '../export/print'
 import { chooseTarget, download } from '../export/save'
 import { type Canvas, type CanvasNode } from './format'
 import {
@@ -432,16 +433,10 @@ export async function exportCanvasPdf(drawing: Drawing) {
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
 
   if (target) {
-    try {
-      await invoke('print_pdf', {
-        html,
-        output: target,
-        page: { width: width / 96, height: height / 96, margin: 0, landscape: false },
-      })
-      return target
-    } catch {
-      // The print dialog can still save the file, so nobody is left with nothing.
-    }
+    // The print dialog can still save the file, so nobody is left with nothing -
+    // and the line says the road changed; see export/print.ts.
+    const page = { width: width / 96, height: height / 96, margin: 0, landscape: false }
+    if (await writtenPdf(html, target, page)) return target
   }
 
   await printInFrame(html)

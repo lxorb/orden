@@ -25,6 +25,7 @@
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
   import { arriving } from './lib/arriving.svelte'
+  import { busy } from './lib/busy.svelte'
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer } from './lib/drawer.svelte'
@@ -252,6 +253,7 @@
       nibApp: {
         account,
         arriving,
+        busy,
         rooms,
         sync,
         workspace,

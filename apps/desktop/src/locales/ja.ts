@@ -675,6 +675,8 @@ export const ja: Dictionary = {
   'Select every file': 'すべてのファイルを選択',
   'Clear the selection': '選択を解除',
   'Delete the selected files': '選択したファイルを削除',
+  'The file could not be written, so it goes to the print dialog':
+    'ファイルを書き込めなかったため、印刷ダイアログを使います',
   'Next file': '次のファイル',
   'Previous file': '前のファイル',
   'Open the folder': 'フォルダーを開く',

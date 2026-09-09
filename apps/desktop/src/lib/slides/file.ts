@@ -21,6 +21,7 @@ import { CODE_PALETTES } from '@nib/editor'
 import { proseCss, slidesCss, tokensCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from '../accents'
 import { inlineImages, printInFrame } from '../export'
+import { writtenPdf } from '../export/print'
 import { titleOf } from '../export/document'
 import { chooseTarget, download } from '../export/save'
 import { mathCss } from '../math-fonts'
@@ -189,13 +190,9 @@ export async function exportDeckPdf(
   const html = await renderDeck(note, name, { ...options, interactive: false })
 
   if (target) {
-    try {
-      await invoke('print_pdf', { html, output: target, page: DECK_PAPER })
-      return target
-    } catch {
-      // The dialog can still save the file, so the person is not left with
-      // nothing.
-    }
+    // The dialog can still save the file, so the person is not left with nothing -
+    // and the line says the road changed; see export/print.ts.
+    if (await writtenPdf(html, target, DECK_PAPER)) return target
   }
 
   await printInFrame(html)
