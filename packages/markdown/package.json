@@ -9,6 +9,7 @@
     "./callouts": "./src/callouts.ts",
     "./canvas": "./src/canvas.ts",
     "./chart": "./src/chart.ts",
+    "./code": "./src/code.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
     "./edits": "./src/edits.ts",

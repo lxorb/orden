@@ -116,12 +116,19 @@ export class CalloutWidget extends NibWidget {
   }
 }
 
-/** Sits on a code fence's top line: what language it is, and a way to take it. */
+/** Sits on a code fence's top line: what the block is, what language it is, and
+ *  a way to take it. */
 export class FenceHeaderWidget extends NibWidget {
   constructor(
     private readonly language: string,
+    /** What the fence's info string says after the language, or nothing - which
+     *  is also what a fence showing its own source says here, since the words
+     *  are already on the line and printing them twice would be printing them
+     *  over each other. */
+    private readonly caption: string,
     private readonly code: string,
-    /** Where the language name lives in the document, so it can be retyped. */
+    /** Where the language name lives in the document, so it can be retyped
+     *  without disturbing the caption after it. */
     private readonly infoFrom: number,
     private readonly infoTo: number,
     /** The block's own lines, first to last, which is what a run is keyed by. */
@@ -134,6 +141,7 @@ export class FenceHeaderWidget extends NibWidget {
   override eq(other: FenceHeaderWidget) {
     return (
       other.language === this.language &&
+      other.caption === this.caption &&
       other.code === this.code &&
       other.infoFrom === this.infoFrom &&
       other.blockFrom === this.blockFrom &&
@@ -146,14 +154,29 @@ export class FenceHeaderWidget extends NibWidget {
     bar.className = 'nib-fence-header'
     bar.contentEditable = 'false'
 
-    // The widget itself takes no width: it only holds the row open. What is
-    // seen sits in a box pinned to the line's right edge, so the fence text,
-    // when the caret reveals it, and the controls share one row rather than
-    // the controls wrapping onto a row of their own - which made the block
-    // grow whenever the caret was inside it.
+    // The widget itself takes no width: it only holds the row open. What is seen
+    // sits in a box pinned across the line, so the fence text, when the caret
+    // reveals it, and this row share one row rather than the row wrapping onto
+    // one of its own - which made the block grow whenever the caret was inside
+    // it.
+    const row = document.createElement('span')
+    row.className = 'nib-fence-row'
+    bar.append(row)
+
+    // What the block is, at the start of that row, where the fence's own text
+    // sits when the caret brings it back. Read off the fence line rather than
+    // part of the note's words, so nothing selects it and a press on it is a
+    // press on the line.
+    if (this.caption) {
+      const said = document.createElement('span')
+      said.className = 'nib-fence-caption'
+      said.textContent = this.caption
+      row.append(said)
+    }
+
     const controls = document.createElement('span')
     controls.className = 'nib-fence-controls'
-    bar.append(controls)
+    row.append(controls)
 
     const label = document.createElement('button')
     label.className = 'nib-fence-language'
@@ -287,7 +310,10 @@ export class FenceHeaderWidget extends NibWidget {
     return run
   }
 
-  /** Turns the label into a field, and writes the name straight into the fence. */
+  /** Turns the label into a field, and writes the name straight into the fence.
+   *
+   *  Only the language word is replaced, so a fence that carries a caption keeps
+   *  it: what the block is has nothing to do with which language it is in. */
   private editLanguage(view: EditorView, label: HTMLElement) {
     const field = document.createElement('input')
     field.className = 'nib-fence-language-input'

@@ -1,6 +1,7 @@
 import { Marked, Renderer } from 'marked'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
+import { captionIn, languageIn } from './code'
 import { propertiesTable, readProperties } from './properties'
 import { withoutComments } from './comments'
 import { stripFrontMatter } from './front-matter'
@@ -201,7 +202,8 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
       },
 
       code(token: Tokens.Code) {
-        const language = token.lang?.trim() ?? ''
+        const info = token.lang?.trim() ?? ''
+        const language = languageIn(info)
 
         // A chart is numbers, and numbers can be drawn anywhere - here rather
         // than through `options.code` so a published page gets one too, which is
@@ -213,7 +215,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         }
 
         const custom = options.code?.(token.text, language)
-        return custom ?? defaults.code.call(this, token)
+        return captioned(custom ?? defaults.code.call(this, token), captionIn(info))
       },
     },
   })
@@ -249,6 +251,20 @@ export function documentTitle(source: string): string | null {
   return /^#\s+(.+)$/m.exec(stripFrontMatter(source))?.[1]?.trim() ?? null
 }
 
+/** A code block with what it is written over it.
+ *
+ *  Only a block that is still code. A fence the caller drew - a diagram - comes
+ *  back as a figure of its own with its own frame, and a figure inside a figure
+ *  is one frame too many; what such a block is, is what it is a picture of. */
+function captioned(html: string, caption: string): string {
+  if (!caption || html.startsWith('<figure')) return html
+
+  return `<figure class="code">
+<figcaption>${escape(caption)}</figcaption>
+${html}</figure>
+`
+}
+
 /** Every fenced block in the document, in order, with the language it names.
  *  Lets a caller prepare what a fence needs - a parser, a drawn diagram -
  *  before rendering, since rendering itself cannot wait. */
@@ -265,7 +281,7 @@ export function codeBlocks(source: string): CodeBlock[] {
   void trusting.walkTokens(trusting.lexer(stripFrontMatter(source)), (token) => {
     if (token.type !== 'code') return
     const fence = token as Tokens.Code
-    found.push({ language: fence.lang?.trim() ?? '', code: fence.text })
+    found.push({ language: languageIn(fence.lang ?? ''), code: fence.text })
   })
 
   return found

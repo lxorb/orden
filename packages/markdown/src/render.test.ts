@@ -149,6 +149,34 @@ describe('code fences', () => {
     expect(html).toContain('<pre><code class="language-js">let a = 1 &lt; 2\n</code></pre>')
   })
 
+  test('are listed under the language alone, whatever else the fence says', () => {
+    // What a caller loads a parser for, and what it matches a drawing against.
+    expect(codeBlocks('```ts src/main.ts\nlet a\n```')).toEqual([{ language: 'ts', code: 'let a' }])
+  })
+
+  test('say what they are, over the block', () => {
+    const html = renderMarkdown('```ts src/main.ts\nlet a = 1\n```')
+
+    expect(html).toContain('<figure class="code">')
+    expect(html).toContain('<figcaption>src/main.ts</figcaption>')
+    // The language is the first word, so the block is coloured as TypeScript
+    // rather than as a language nobody has.
+    expect(html).toContain('<code class="language-ts">')
+  })
+
+  test('are left alone when they say nothing but their language', () => {
+    expect(renderMarkdown('```ts\nlet a = 1\n```')).not.toContain('<figure')
+  })
+
+  test('keep a caller’s own frame rather than being framed twice', () => {
+    const html = renderMarkdown('```mermaid Architecture\ngraph TD\n```', {
+      code: (code) => `<figure class="diagram">${code}</figure>`,
+    })
+
+    expect(html).toContain('<figure class="diagram">graph TD</figure>')
+    expect(html).not.toContain('figcaption')
+  })
+
   test('renders strikethrough', () => {
     expect(renderMarkdown('~~gone~~')).toContain('<del>gone</del>')
   })

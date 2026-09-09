@@ -935,6 +935,25 @@ textarea.nib-field {
   font-size: inherit;
 }
 
+/* A code block that says what it is: the words after the language in its own
+   fence line - a file name, most of the time - written over the block the way
+   the editor writes them on its top row. See code.ts in @nib/markdown. */
+#write figure.code {
+  margin: 1.5em 0;
+}
+
+#write figure.code pre {
+  margin: 0;
+}
+
+#write figure.code figcaption {
+  padding: 0 var(--space-1) 0.4em;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
 /* ── Lists ───────────────────────────────────────────────────────── */
 
 #write ul,

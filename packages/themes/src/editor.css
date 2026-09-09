@@ -110,9 +110,9 @@
 /* ── Blockquote ──────────────────────────────────────────────────── */
 
 .cm-line.nib-quote {
-  /* The bar and the room after it, so the fold chevron clears both; see
-     --fold-inset under Folding. */
-  --fold-inset: calc(1.15em + 2px);
+  /* The bar and the room after it: how far the line's own text comes in, which
+     is what the fold chevron backs out by. See --line-inset under Folding. */
+  --line-inset: calc(1.15em + 2px);
 
   border-left: 2px solid var(--blockquote-border-color);
   padding-left: 1.15em;
@@ -230,9 +230,9 @@
    (see the writing surface above), so a selection in a block ends where the
    block does. */
 .cm-line.nib-code {
-  /* The block's own box, so the fold chevron stands beside it rather than on
-     its edge; see --fold-inset under Folding. */
-  --fold-inset: var(--space-4);
+  /* How far the block's own text comes in: the fold chevron stands outside it
+     rather than on its edge, and the caption starts level with the code. */
+  --line-inset: var(--space-4);
 
   position: relative;
   font-family: var(--font-mono);
@@ -286,18 +286,54 @@
   user-select: none;
 }
 
-.nib-fence-controls {
+/* The top row of the block, from where its code begins to its right edge: what
+   the block is on the left, the language and the buttons on the right. It lies
+   over the fence's own text, which is hidden except when the caret is in the
+   block, so it lets every press through to the line underneath and only the
+   buttons take one back. */
+.nib-fence-row {
   position: absolute;
   top: 6px;
+  left: var(--line-inset, var(--space-4));
   right: var(--space-3);
   height: 1.62em;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-3);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* The row keeps the line's own face, so its `left` is measured in the same `ch`
+   as the block's padding and the caption starts exactly where the code does. The
+   words in it set their own. */
+.nib-fence-caption,
+.nib-fence-controls {
   font-family: var(--font-ui);
   font-size: 0.82rem;
   line-height: 1;
-  color: var(--muted);
+}
+
+/* What the block is: the words after the language in the fence's own line. Read
+   off the note rather than part of it, so nothing selects it and a press on it
+   is a press on the line. One line, cut short rather than wrapped, because the
+   row is the height of one row. */
+.nib-fence-caption {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.nib-fence-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: auto;
 }
 
 .nib-fence-language {
@@ -359,11 +395,11 @@
    face that is and whether or not its ligatures are drawn. */
 .nib-line-numbers .cm-line.nib-code {
   --code-number-width: calc(var(--code-digits, 2) * 1ch);
-  /* The numbers are part of the block's box, so the fold chevron clears them
-     too: one name for the distance, read by the padding and by the chevron. */
-  --fold-inset: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
+  /* The numbers are part of what the text comes in past, so the chevron and the
+     caption clear them too: one name for the distance, read by all three. */
+  --line-inset: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
 
-  padding-left: var(--fold-inset);
+  padding-left: var(--line-inset);
 }
 
 .nib-line-numbers .cm-line.nib-code[data-code-number]::before {
@@ -1527,7 +1563,7 @@
    is: the chevrons of an H1 and of a list item line up in one column.
 
    A line that insets its own text - a code block's padding, a quote's bar, the
-   column of line numbers - says how far in `--fold-inset`, and the chevron backs
+   column of line numbers - says how far in `--line-inset`, and the chevron backs
    out by that much again. Without it the chevron of a fence or a callout landed
    on the edge of the block's own box, or inside it, while a heading's sat out in
    the margin: one gesture drawn in three places. The gap left over is the same
@@ -1536,8 +1572,8 @@
 .nib-fold-hinge {
   position: absolute;
   top: 50%;
-  right: calc(var(--space-2) + var(--fold-inset, 0px));
-  /* A button does not inherit the text's font, and `--fold-inset` is measured in
+  right: calc(var(--space-2) + var(--line-inset, 0px));
+  /* A button does not inherit the text's font, and `--line-inset` is measured in
      the line's own em and ch: without this the chevron of a quote and of a
      numbered fence backed out by a few pixels less than their text came in. */
   font: inherit;
@@ -1598,7 +1634,7 @@
     /* A narrower gap than a pointer's, so the whole of a thumb's target fits in
        the gutter beside the block rather than being clipped at the edge of the
        screen. It still stands clear of the block, which is the rule. */
-    right: calc(var(--space-1) + var(--fold-inset, 0px));
+    right: calc(var(--space-1) + var(--line-inset, 0px));
     width: var(--touch-indent);
     height: var(--touch-target);
     margin-top: calc(var(--touch-target) / -2);

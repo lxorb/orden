@@ -15,7 +15,7 @@ import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
 import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
-import { fenceCode, fenceLanguage } from '../fence'
+import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
@@ -421,7 +421,7 @@ class Decorator {
     this.numberLines(node.from, node.to, true)
 
     // The opening line reads as empty once its fence is hidden, which leaves
-    // room for the language and a copy button.
+    // room for what the block is, the language, and a copy button.
     const info = node.getChild('CodeInfo')
     const mark = node.firstChild
     const infoFrom = info ? info.from : (mark?.to ?? open.to)
@@ -430,9 +430,14 @@ class Decorator {
       Decoration.widget({
         widget: new FenceHeaderWidget(
           language,
+          // The caption steps aside while the fence shows its own text: the same
+          // words are on the line then, and both would be drawn in one place.
+          overlaps(this.state, node.from, node.to) ? '' : fenceCaption(this.state, node),
           fenceCode(this.state, node),
           infoFrom,
-          info ? info.to : infoFrom,
+          // The language's own end, not the info string's, so retyping the
+          // language leaves the caption after it alone.
+          infoFrom + language.length,
           open.from,
           doc.lineAt(node.to).to,
         ),
