@@ -225,8 +225,32 @@ A phone and a tablet hold one document, and one pane. A strip of tabs on a
 screen that narrow says less the more it holds, so opening a note, a canvas or a
 paper puts away the one that was there rather than standing it beside it, and
 the title bar is that document's name and mark instead of a strip. There is no
-plus, no dragging a tab, and no dragging a pane into being; a desktop keeps all
-three.
+dragging a tab and no dragging a pane into being; a desktop keeps both.
+
+The plus the strip would have carried moves rather than going: it sits at the
+right of the list panel's header, and it is the only one on the screen. A press
+makes a note; a held finger offers a canvas and a folder too, which is what the
+desktop strip's plus does under a right click. See `docs/design.md`.
+
+## What the drawer is headed with
+
+Three rows above the list, in the order identity, view, action - the shape
+Discord's channel list has, at the touch scale:
+
+| | |
+| --- | --- |
+| The name | The space, at `--text-head`, with a chevron. The rail is a column of wordless squares and on a phone it is behind this, so the name is what says where you are - and it is the switcher: the other spaces are rows in its menu, and making one is a row there rather than a second plus in the rail |
+| The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is |
+| The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike |
+
+Then the list, with a word in capitals over each group and the note you have
+open filled - `.nib-row.is-on`, the same fill its tab wears on a desktop.
+
+There is no bottom bar. Discord earns one because it has three unrelated
+app-level places; nib has one - your notes - and the other two candidates are
+already where they belong: search is the pill at the top of the list, and who
+you are is a row in settings, one tap from the rail's foot. The reasoning is in
+`docs/design.md`.
 
 Nothing is lost in the trade. What was open goes on the closed stack with its
 words (`workspace/closed.svelte.ts`), so back - the gesture on Android, `Reopen

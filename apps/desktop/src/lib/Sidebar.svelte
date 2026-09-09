@@ -3,6 +3,7 @@
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { longPress } from './longpress'
   import { movesInto } from './move-targets'
   import { FILES_MARK, GRAPH_MARK, LINKS_MARK, OUTLINE_MARK, SEARCH_MARK } from './panel-marks'
   import { newSpace, renameSpace } from './space-actions'
@@ -252,13 +253,16 @@
 
     <!-- The one plus. A desktop's lives at the end of the tab strip, where a
          browser puts it; a handheld has no tab strip, so it is here. Either way
-         it makes a note, and there is never a second one on the screen. -->
+         a plain press makes a note and a held finger offers the other two kinds,
+         which is what the strip's plus does; see Tabs.svelte. -->
     {#if viewport.touch}
       <button
         class="new"
         title={t('New note')}
         aria-label={t('New note')}
         onclick={() => void workspace.createNote()}
+        oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+        use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
       >
         <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
       </button>
