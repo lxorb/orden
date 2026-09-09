@@ -393,6 +393,7 @@ columns, a picture as what it was described as, a fence line by line.
 | a superscript or a subscript of digits | raised or lowered digits | anything else sits on the line |
 | an emoji, written as a name or as itself | the emoji, or its name in colons | whichever the firmware's emoji font has |
 | html | the words inside it | markup is not words |
+| a comment, `<!-- -->` or `%% %%` | nothing at all | a note to the writer is not read out to anybody here either; both spellings go before anything is measured, so the offsets a line carries count against the note with them gone |
 | front matter | not set | it is not set on a page either |
 | a link definition, an abbreviation | not set | neither is content |
 | a soft wrap inside a paragraph | a break, or a space at the top compaction | see the levels below |

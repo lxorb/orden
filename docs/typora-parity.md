@@ -186,7 +186,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 - [x] Auto-pair brackets, quotes, markdown symbols
 - [x] Smart punctuation, toggleable
-- [x] Select word `Ctrl+D`, select line `Ctrl+L`
+- [x] Select the word `Ctrl+D`, select the line `Ctrl+L`. A second `Ctrl+D` takes
+      the next one like it, which is where the extra cursors come from
 - [x] Clear formatting `Ctrl+\`
 - [x] Change list type via shortcut and context menu
 - [x] Spellcheck (native, in the editor), on out of the box, with one switch to
@@ -282,6 +283,26 @@ Features Typora does not have, which are the reason this exists.
       the note, with one exception that is not ours. Obsidian's `-` after a
       callout's type says that callout opens shut, so nib reads it, folds it on
       the way in and never rewrites it
+- [x] Several cursors. Alt and a click puts another one down, Alt and a drag adds
+      a whole range to what is already selected, Alt+Shift and a drag takes a
+      column of them, and Escape leaves one. `Ctrl+D` grows to the word and then
+      to the next one like it; adding a cursor straight above or below is
+      `Ctrl+Alt+Shift+Up` and `Ctrl+Alt+Shift+Down`, because the chord every
+      other editor uses for it splits the pane here. Selecting every one like
+      what is selected has no key free and is in the palette. Each cursor reveals
+      the syntax it is standing in, and each selection draws its own block
+- [x] A `/` at the start of a line or after a space opens the blocks a note is
+      written out of, filtered as you type. Enter inserts one and takes the slash
+      with it, Escape leaves it alone, and a slash that names nothing stays a
+      slash, so `and/or` and `24/7` are words. The rows are the ones the
+      Paragraph menu and the palette show, out of one list, in the popup that
+      `[[` and `:emoji:` already open
+- [x] `aliases` in a note's front matter, whichever of the three ways YAML writes
+      a list. `[[Roadmap]]` finds the note that declared it, the completion
+      offers an alias under the note's own name, and backlinks and unlinked
+      mentions count it. A file really called that always wins, so a note can
+      never shadow a real one. A rename rewrites the links that spelled out the
+      filename and never an alias: that is a name the writer chose, not a path
 - [x] Recently deleted: notes and spaces wait 14 days before they are gone
 - [x] Selecting several notes with Ctrl and Shift, moved or deleted together
 - [x] Running a JavaScript fence from the note (`Ctrl+Enter`, or the play button
