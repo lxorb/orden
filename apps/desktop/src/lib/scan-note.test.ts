@@ -94,4 +94,30 @@ describe('reading a canvas for the index', () => {
     expect(read.links).toEqual([])
     expect(read.path).toBe('Board.canvas')
   })
+
+  /** JSON has no front matter, so a canvas says what it wears under the one key
+   *  the spec leaves for us. Every case here has its twin in the Rust scan; see
+   *  `canvas_note` in src-tauri/src/links.rs. */
+  test('wears what its own file says, under the key that carries the ink', () => {
+    const marked = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } })
+    expect(scanCanvas('Board.canvas', marked).icon).toBe('rocket')
+  })
+
+  test('and an emoji a vault brought in from Iconize, as written', () => {
+    const marked = JSON.stringify({ nodes: [], edges: [], nib: { icon: '🚀' } })
+    expect(scanCanvas('Board.canvas', marked).icon).toBe('🚀')
+  })
+
+  test('nothing where it says nothing, or says something that is not a name', () => {
+    expect(scanCanvas('Board.canvas', canvas).icon).toBeNull()
+    expect(scanCanvas('Board.canvas', '{"nib":{"icon":"  "}}').icon).toBeNull()
+    expect(scanCanvas('Board.canvas', '{"nib":{"icon":7}}').icon).toBeNull()
+    expect(scanCanvas('Board.canvas', 'not json').icon).toBeNull()
+  })
+
+  /** A canvas has no other name for itself: an alias is something a link is
+   *  written with, and nothing writes `[[Board]]` for a canvas. */
+  test('and never an alias', () => {
+    expect(scanCanvas('Board.canvas', '{"nib":{"icon":"rocket"}}').aliases).toEqual([])
+  })
 })

@@ -210,7 +210,10 @@ export class CanvasStore implements PlaneSurface {
    *  already writing the file into the account; this is only this device's own copy
    *  of it catching up. */
   arrived(canvas: Canvas) {
-    this.canvas = canvas
+    // A room carries the plane and not the file, so what arrives says nothing
+    // about the icon - and this is written back to the file a moment later, which
+    // would take the icon out of it.
+    this.canvas = { ...canvas, icon: this.canvas.icon ?? null }
     this.keepPicked()
     this.soon()
   }
@@ -273,7 +276,10 @@ export class CanvasStore implements PlaneSurface {
       return true
     }
 
-    const together = merged(ours, arrived)
+    // The icon is the file's own metadata rather than anything on the plane, so
+    // the words that just arrived are the newest word on it: a merge that kept
+    // ours would make taking an icon away impossible while the canvas is open.
+    const together = { ...merged(ours, arrived), icon: arrived.icon ?? null }
     this.canvas = together
     this.keepPicked()
     // Whatever the merge kept goes to the other devices as the edit it is.

@@ -14,6 +14,7 @@ import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { readBookmarks } from './bookmarks'
+import { readIcons } from './icons'
 
 /** What somebody may do in a space. Ordered: an owner may do what a writer may,
  *  and a writer what a reader may. */
@@ -75,6 +76,7 @@ export async function addSpace(
     blog_title: null,
     bookmarks: '[]',
     files: '[]',
+    icons: '{}',
   }
 
   await env.DB.prepare(
@@ -252,6 +254,10 @@ export function presentSpace(
     // list on every reconcile pass, and one request for every space's
     // bookmarks would be one request per space.
     bookmarks: readBookmarks(space.bookmarks),
+    // And for the same reason: the app draws the file tree on every reconcile
+    // pass, and asking each space which of its folders wear an icon would be one
+    // request per space.
+    icons: readIcons(space.icons),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

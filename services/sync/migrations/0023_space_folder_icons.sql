@@ -1,0 +1,11 @@
+-- Which folder in a space's file tree wears which icon, as one JSON map. On the
+-- space rather than on the account, because a folder is inside one space: the map
+-- goes with the space when it is deleted, comes back with it when it is restored,
+-- and is read by every device signed in.
+--
+-- A map keyed by the folder's path relative to the space rather than an array,
+-- because a folder has nowhere of its own to keep an icon. A note's icon sits in
+-- its own front matter and travels with the file; a folder is only a name in a
+-- path, so the space holds the icon for it and the path is what says which folder
+-- it belongs to.
+alter table spaces add column icons text not null default '{}';

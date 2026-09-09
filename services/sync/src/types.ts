@@ -111,6 +111,9 @@ export interface Space {
   /** The files of the space that are not notes, as a JSON array; see
    *  spaces/files.ts. `[]` until there are any. */
   files: string
+  /** Which folder of the space's tree wears which icon, as a JSON map keyed by
+   *  the folder's path; see spaces/icons.ts. `{}` until one does. */
+  icons: string
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }

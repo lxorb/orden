@@ -207,10 +207,27 @@ export interface Canvas {
   ink: InkStroke[]
   at: Record<string, number>
   gone: Record<string, number>
+  /** What the canvas wears in the file list, as written, or null where it wears
+   *  nothing. The same value a note keeps under `icon:` in its front matter, and
+   *  read by the same icons.ts: Lucide's own name, Iconize's `LiFileText`, or an
+   *  emoji.
+   *
+   *  Here rather than in a store beside the space, because it is the canvas's own
+   *  and has to travel with the file: a canvas copied into another vault keeps
+   *  the icon somebody chose for it, and Obsidian leaves the key alone. A note
+   *  says it in the one place a markdown file has for metadata, and a canvas in
+   *  the one place a JSON Canvas file has.
+   *
+   *  The one field here that may be absent rather than empty, because it is the
+   *  only one that is about the file and not about the plane. A room carries a
+   *  plane, a copy puts a plane on the clipboard, and neither of those is a file:
+   *  they say nothing about the icon, which is different from saying there is
+   *  none. A canvas read from a file always says one way or the other. */
+  icon?: string | null
 }
 
 export function emptyCanvas(): Canvas {
-  return { nodes: [], edges: [], ink: [], at: {}, gone: {} }
+  return { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null }
 }
 
 /** A colour the spec would accept, or undefined. Anything else is dropped rather
@@ -572,7 +589,16 @@ export function readCanvas(text: string): Canvas {
     ink,
     at: readTimes(nib.at),
     gone: readTimes(nib.gone),
+    icon: iconWritten(nib.icon),
   }
+}
+
+/** What a canvas says it wears, or null where it says nothing this app could
+ *  draw from. A value that is not a string is not an icon; the words themselves
+ *  are read in icons.ts, which knows the two conventions. */
+function iconWritten(value: unknown): string | null {
+  if (!isString(value)) return null
+  return value.trim() || null
 }
 
 /** A node with its fields in the order the spec lists them, and nothing else in
@@ -681,6 +707,9 @@ export function writeCanvas(canvas: Canvas): string {
   const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
 
   const nib = {
+    // First, because it is the one key in here a person would ever open the file
+    // to read: what the row in the file list wears.
+    ...(canvas.icon ? { icon: canvas.icon } : {}),
     ...(ink.length ? { ink } : {}),
     ...(shapes.length ? { shapes: shapes.map(writtenShape) } : {}),
     ...(order.length ? { order } : {}),
@@ -700,6 +729,66 @@ export function writeCanvas(canvas: Canvas): string {
 /** What a canvas file says before anybody has drawn on it. */
 export function blankCanvas(): string {
   return writeCanvas(emptyCanvas())
+}
+
+/** One edit that sets what a canvas wears, or takes it away when `name` is null.
+ *  Null when the file already says that, so a caller writes no file.
+ *
+ *  An edit and not a new file, so giving a canvas an icon is the same three lines
+ *  as giving a note one: the characters that moved are what is written, what is
+ *  snapshotted and what one undo puts back. `frontMatterEdit` answers exactly this
+ *  question for a note; this is its twin for the format that has no front matter.
+ *
+ *  The file is read and written back, because `nib.icon` sits in JSON rather than
+ *  on a line of its own. That costs nothing for a canvas Nib wrote - writing one
+ *  is exact, so the only characters that differ are the key - and for a canvas
+ *  written by hand it comes out as the file reformatted, which is what any change
+ *  to it would have been anyway.
+ *
+ *  Nothing at all for a file that is not JSON: an empty canvas standing in for
+ *  something unreadable is what lets a truncated file be drawn on, and it must
+ *  never be what gets written back over it. */
+export function canvasIconEdit(
+  text: string,
+  name: string | null,
+): { from: number; to: number; insert: string } | null {
+  if (text.trim() && !isCanvasJson(text)) return null
+
+  const canvas = readCanvas(text)
+  if (canvas.icon === name) return null
+
+  return oneEdit(text, writeCanvas({ ...canvas, icon: name }))
+}
+
+function isCanvasJson(text: string): boolean {
+  try {
+    return isRecord(JSON.parse(text))
+  } catch {
+    return false
+  }
+}
+
+/** The single span two texts differ over: everything they share at the front and
+ *  at the back taken off. */
+function oneEdit(
+  before: string,
+  after: string,
+): { from: number; to: number; insert: string } | null {
+  if (before === after) return null
+
+  let from = 0
+  while (from < before.length && from < after.length && before[from] === after[from]) from++
+
+  let back = 0
+  while (
+    back < before.length - from &&
+    back < after.length - from &&
+    before[before.length - 1 - back] === after[after.length - 1 - back]
+  ) {
+    back++
+  }
+
+  return { from, to: before.length - back, insert: after.slice(from, after.length - back) }
 }
 
 /** How long an id is. Sixteen hex characters is what Obsidian writes, so a

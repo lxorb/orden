@@ -95,11 +95,12 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     name: path.split('/').pop() ?? path,
     headings: [],
     blocks: [],
-    // A canvas is JSON rather than a note, so it has no front matter to say what
-    // it wears. Its own file could hold one under the `nib` key that already
-    // carries the ink; nothing writes one yet.
-    icon: null,
-    // Nor any other name for itself, for the same reason.
+    // Under the `nib` key that already carries the ink, since a JSON file has no
+    // front matter: the same value a note keeps under `icon:`, read by the same
+    // icons.ts. See canvas.ts for why it lives in the file rather than beside it.
+    icon: canvas.icon ?? null,
+    // No other name for itself, though: an alias is something a link is written
+    // with, and nothing writes `[[Board]]` for a canvas.
     aliases: [],
     links: canvas.nodes
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')

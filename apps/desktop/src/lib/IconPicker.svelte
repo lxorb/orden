@@ -1,24 +1,24 @@
 <script lang="ts">
   /** The one picker in the app, for everything that can wear an icon: a space in
-   *  the rail, and a note in the file list. What is being chosen for is in
-   *  icon-choice.svelte.ts rather than in a prop, because a note's row is drawn
-   *  deep inside a tree of these components and a space's is somewhere else
-   *  entirely; this is mounted once, over the whole page.
+   *  the rail, and a note, a canvas or a folder in the file list. What is being
+   *  chosen for is in icon-choice.svelte.ts rather than in a prop, because a row is
+   *  drawn deep inside a tree of these components and a space's square is somewhere
+   *  else entirely; this is mounted once, over the whole page.
    *
-   *  Which leaves one difference between the two, and it is where the icon is
-   *  kept: a space's belongs to this device, a note's belongs to the note and is
-   *  written into its front matter. Hence the last row, which says what the thing
-   *  falls back to when it wears nothing - a letter for a space, and for a note
-   *  the mark that says what kind of file it is. */
+   *  Which leaves one difference between them, and it is where the icon is kept: a
+   *  note's and a canvas's belong to the file and are written into it, a folder's
+   *  to the space that holds it, a space's to this device. Hence the last row,
+   *  which says what the thing falls back to when it wears nothing - a letter for a
+   *  space, and for everything in the file list the mark that says what it is. */
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { chosenIcon } from './chosen-icon'
+  import { setFileIcon } from './file-icon'
   import { iconChoice } from './icon-choice.svelte'
   import { type IconNode, keyNamed, loadIcons, readIcon, search } from './icons'
-  import { links } from './link-index.svelte'
-  import { setNoteIcon } from './note-icon'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
   import { trap } from './trap'
@@ -32,13 +32,13 @@
   const shown = $derived(search(names, query))
 
   /** Which icon the thing being chosen for wears now, as a name in the library,
-   *  so the one it already has is the one shown as chosen. A note that wears an
+   *  so the one it already has is the one shown as chosen. A row that wears an
    *  emoji has no name in the library, and nothing in the grid is its. */
   const chosen = $derived.by(() => {
     if (!target) return null
     if (target.kind === 'space') return workspace.iconFor(target.id)
 
-    const written = readIcon(links.iconOf(target.path))
+    const written = readIcon(chosenIcon(target.path))
     return written?.kind === 'lucide' ? keyNamed(library, written.name) : null
   })
 
@@ -75,7 +75,8 @@
     if (!asked) return
 
     if (asked.kind === 'space') workspace.setIcon(asked.id, name)
-    else void setNoteIcon(asked.path, name)
+    else if (asked.kind === 'folder') workspace.setFolderIcon(asked.path, name)
+    else void setFileIcon(asked.path, name)
 
     iconChoice.close()
   }
@@ -133,7 +134,9 @@
     {/if}
 
     <button class="clear" onclick={() => pick(null)}>
-      {target.kind === 'note' ? t('Use the plain mark instead') : t('Use the first letter instead')}
+      {target.kind === 'space'
+        ? t('Use the first letter instead')
+        : t('Use the plain mark instead')}
     </button>
   </div>
 {/if}

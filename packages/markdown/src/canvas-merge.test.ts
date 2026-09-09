@@ -215,3 +215,37 @@ describe('merging two canvas files', () => {
     expect(both.ink.map((one) => one.id)).toEqual(['s'])
   })
 })
+
+/** The one thing on a canvas there is only one of. It is not a card and has no
+ *  time of its own, so it is merged by the rule the rest of the file already
+ *  follows: everything on either side is kept, and a tie goes to whichever sorts
+ *  first, so two devices reach the same file without talking. */
+describe('the icon two copies of a canvas wear', () => {
+  test('is kept from whichever side has one', () => {
+    expect(merged(plane({ icon: 'rocket' }), plane(), 1000).icon).toBe('rocket')
+    expect(merged(plane(), plane({ icon: 'rocket' }), 1000).icon).toBe('rocket')
+  })
+
+  test('is nothing where neither does', () => {
+    expect(merged(plane(), plane(), 1000).icon).toBeNull()
+  })
+
+  test('and where both name one, the same one on both devices', () => {
+    const ours = plane({ icon: 'rocket' })
+    const theirs = plane({ icon: 'anchor' })
+
+    expect(merged(ours, theirs, 1000).icon).toBe('anchor')
+    expect(merged(theirs, ours, 1000).icon).toBe('anchor')
+  })
+
+  /** A canvas nobody has drawn on is not a truncated file, and the icon somebody
+   *  chose for it is a reason to keep it rather than take the other side whole. */
+  test('survives a merge with a copy that has cards and no icon', () => {
+    const ours = writeCanvas(plane({ icon: 'rocket' }))
+    const theirs = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 120))
+    const both = readCanvas(mergeCanvasFiles(ours, theirs, 1000))
+
+    expect(both.icon).toBe('rocket')
+    expect(ids(both)).toEqual(['a'])
+  })
+})

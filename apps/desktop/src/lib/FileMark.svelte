@@ -15,21 +15,27 @@
    *  starts at the same place whatever the row holds.
    *
    *  A note that says `icon:` in its front matter wears that, in the same box at
-   *  the same weight. It is read here rather than passed in, from the path the
-   *  row already knows, so every list that draws a mark shows the chosen icon
-   *  without knowing that notes have icons at all: the tree, the tab strip, a
-   *  search result, a bookmark. See note-icon.ts for where the value comes from
-   *  and icons.ts for what it may say. */
+   *  the same weight - and so does a canvas that says it under `nib.icon`, and a
+   *  folder the space's own map names. It is read here rather than passed in, from
+   *  the path the row already knows, so every list that draws a mark shows the
+   *  chosen icon without knowing that anything has icons at all: the tree, the tab
+   *  strip, a search result, a bookmark, the Move sheet. See chosen-icon.ts for
+   *  where the value comes from and icons.ts for what it may say.
+   *
+   *  A folder wearing one shows it whether it is open or shut, and the row still
+   *  says which it is: the chevron is the caret in `aria-expanded` and the
+   *  indentation of what follows. Two icons for one folder would be two folders. */
+  import { chosenIcon } from './chosen-icon'
   import { MARKS, type Mark } from './file-mark'
   import { iconLibrary } from './icon-library.svelte'
   import { readIcon } from './icons'
-  import { links } from './link-index.svelte'
 
   const { mark, path }: { mark: Mark; path?: string } = $props()
 
-  /** What the file at this path chose, or null for a row that chose nothing - and
-   *  for a caller that knows a name but no path, which gets its kind's mark. */
-  const chosen = $derived(path === undefined ? null : readIcon(links.iconOf(path)))
+  /** What the file or folder at this path chose, or null for a row that chose
+   *  nothing - and for a caller that knows a name but no path, which gets its
+   *  kind's mark. */
+  const chosen = $derived(path === undefined ? null : readIcon(chosenIcon(path)))
 
   // Only worth fetching the set once something on screen actually wears one of
   // its icons; see icon-library.svelte.ts, which does it once for the app.

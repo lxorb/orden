@@ -138,6 +138,12 @@ const ROUTES: Route[] = [
       call(env, `/v1/spaces/${space}/bookmarks`, { method: 'PUT', token, body: { bookmarks: [] } }),
   },
   {
+    what: 'dressing the folders',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/icons`, { method: 'PUT', token, body: { icons: {} } }),
+  },
+  {
     what: 'keeping the files beside the notes',
     needs: 'write',
     go: (token) =>

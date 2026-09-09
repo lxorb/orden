@@ -133,6 +133,22 @@
   // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
+  // The icons the account holds for a space's folders, taken on whenever its
+  // listing changes. A folder has no file to keep an icon in, so unlike a note's
+  // it comes down with the space; here rather than in the syncing loop because it
+  // is drawn by the file list and written by a gesture in it, and this is where
+  // the account's listing is already being watched. See workspace/folder-icons.
+  $effect(() => {
+    const who = account.user?.id
+    if (!who) return
+
+    for (const space of workspace.spaces) {
+      const id = sync.remoteIdFor(space.root)
+      const remote = id === null ? undefined : account.spaces.find((one) => one.id === id)
+      if (remote) workspace.folderIcons.adopt(space.root, remote.icons, who)
+    }
+  })
+
   // The keyboard takes the bottom of the window with it, and the line being
   // written can be left behind it. The height is read so this runs again at each
   // step of the keyboard's arrival rather than once, before there is room.

@@ -14,6 +14,7 @@ import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { bookmarks } from './bookmarks'
 import { spaceFiles } from './files'
+import { folderIcons } from './icons'
 import { publish } from './publish'
 import { share } from './share'
 import {
@@ -217,10 +218,11 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
   return context.json({ ok: true })
 })
 
-// A space's published side, its bookmarks, the files beside its notes and who
-// else may reach it answer under these same paths. Mounted last, so `/order`
-// above is still read as a word and not as an id.
+// A space's published side, its bookmarks, the icons its folders wear, the files
+// beside its notes and who else may reach it answer under these same paths.
+// Mounted last, so `/order` above is still read as a word and not as an id.
 spaces.route('/', publish)
 spaces.route('/', bookmarks)
+spaces.route('/', folderIcons)
 spaces.route('/', spaceFiles)
 spaces.route('/', share)

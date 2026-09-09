@@ -21,6 +21,10 @@ export interface MoveTarget {
   id: string
   /** What it is called in the list: where it sits, said as shortly as it can be. */
   label: string
+  /** Every answer is a folder, so every row wears the folder mark - or, where
+   *  somebody gave that folder an icon, that instead. The sheet reads it off the
+   *  `id`, which is the folder's path; see FileMark.svelte. */
+  mark: 'folder'
 }
 
 export interface Space {
@@ -87,6 +91,7 @@ export function moveTargets(input: {
         .filter((folder) => movesInto([moving], folder.path))
         .map((folder) => ({
           id: folder.path,
+          mark: 'folder' as const,
           // The space's own name for its root, and the path inside it for the
           // rest: a folder three deep is only itself if the way to it is shown.
           label:
@@ -101,7 +106,7 @@ export function moveTargets(input: {
   // The other spaces, which is the only way a note moves between two of them.
   const elsewhere: MoveTarget[] = spaces
     .filter((one) => one.root !== here)
-    .map((one) => ({ id: one.root, label: one.name }))
+    .map((one) => ({ id: one.root, label: one.name, mark: 'folder' as const }))
 
   return [...folders, ...elsewhere]
 }

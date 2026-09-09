@@ -125,6 +125,10 @@ export interface RemoteSpace {
   notes: number
   /** What is kept above the space's file list, in the order it appears. */
   bookmarks: Bookmark[]
+  /** The icon each folder of the space wears, by the folder's path as the space
+   *  speaks it. A note and a canvas keep their own inside the file; a folder has
+   *  no file, so its icon comes down with the space. `{}` until one is chosen. */
+  icons: Record<string, string>
   createdAt: number
   updatedAt: number
   blog: {
@@ -444,6 +448,16 @@ export const api = {
       method: 'PUT',
       token,
       body: { bookmarks },
+    }),
+
+  /** The whole map, for the same reason the bookmarks go whole: one folder's icon
+   *  is not something the account keeps separately, and a map of a few dozen pairs
+   *  is smaller than the request that would carry one pair. */
+  saveFolderIcons: (token: string, id: string, icons: Record<string, string>) =>
+    request<{ icons: Record<string, string> }>(`/v1/spaces/${id}/icons`, {
+      method: 'PUT',
+      token,
+      body: { icons },
     }),
 
   deleteSpace: (token: string, id: string) =>

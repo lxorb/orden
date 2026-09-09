@@ -74,6 +74,7 @@
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
       ...moveEntry(entry),
+      ...iconEntries(entry.path, true),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
       DIVIDER,
       { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, true) },
@@ -398,8 +399,14 @@
         >
           <!-- A folder says whether it is open by being open, in the slot the
                file marks sit in: one mark per row, and every name in the list
-               starting at the same place. -->
-          <FileMark mark={workspace.isExpanded(entry.path) ? 'folder-open' : 'folder'} />
+               starting at the same place. A folder that chose an icon of its own
+               wears that instead, the same one open and shut - what it holds is
+               said by the rows underneath it and by `aria-expanded`, and a chosen
+               icon that changed as the folder opened would read as two folders. -->
+          <FileMark
+            mark={workspace.isExpanded(entry.path) ? 'folder-open' : 'folder'}
+            path={entry.path}
+          />
           <span class="nib-row-label">{entry.name}</span>
         </button>
 

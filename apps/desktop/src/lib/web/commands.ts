@@ -3,7 +3,7 @@
 
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
-import { scanNote, type SpaceLinks } from '../scan-note'
+import { scanCanvas, scanNote, type SpaceLinks } from '../scan-note'
 import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {
@@ -331,9 +331,16 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   const relative = (path: string) => path.slice(base === '/' ? 1 : base.length + 1)
 
   const notes = rows
-    .filter((row) => isMarkdown(row.path))
+    .filter((row) => isMarkdown(row.path) || isCanvas(row.path))
     .sort((a, b) => (a.path < b.path ? -1 : 1))
-    .map((row) => scanNote(relative(row.path), row.content))
+    // A canvas is read too, for the icon its `nib` key may carry: every row of
+    // the tree wants that, and the desktop's `scan_links` reads it on the same
+    // pass for the same reason.
+    .map((row) =>
+      isCanvas(row.path)
+        ? scanCanvas(relative(row.path), row.content)
+        : scanNote(relative(row.path), row.content),
+    )
 
   // Pictures live in their own store here, and a `.keep` is scaffolding rather
   // than a file somebody put in the space.

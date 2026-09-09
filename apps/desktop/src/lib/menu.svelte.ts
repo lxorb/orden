@@ -1,7 +1,8 @@
+import { isCanvasTarget } from '@nib/markdown/links'
+import { chosenIcon } from './chosen-icon'
+import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
-import { links } from './link-index.svelte'
-import { setNoteIcon } from './note-icon'
 import { isMarkdownPath } from './space-paths'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
@@ -89,22 +90,30 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
   ]
 }
 
-/** The icon a note wears, in the same words the rail offers a space: one entry to
+/** The icon a row wears, in the same words the rail offers a space: one entry to
  *  choose one, and a second to take away the one it has.
  *
- *  Here rather than in the file list, because the icon belongs to the note and
- *  every list that shows a note can offer it - the tree today, a search result or
- *  a bookmark whenever one of those grows a menu of its own.
+ *  Here rather than in the file list, because the icon belongs to the thing and
+ *  every list that shows one can offer it - the tree today, a search result or a
+ *  bookmark whenever one of those grows a menu of its own.
  *
- *  Only a note, because the icon lives in the note's front matter and a PDF, a
- *  picture and a canvas have none to write it into. */
-export function iconEntries(path: string | null | undefined): MenuEntry[] {
-  if (!path || !isMarkdownPath(path)) return []
+ *  A note, a canvas or a folder. Not a PDF and not a picture: those are files with
+ *  nowhere to keep an icon - a note has front matter, a canvas has its `nib` key,
+ *  and a folder is not a file at all, so its icon is kept by the space. The two
+ *  words are the same either way, which is the point of asking here.
+ *
+ *  `folder` rather than a second function, because the tree knows which its row is
+ *  and nothing else about a row differs. */
+export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
+  if (!path || (!folder && !isMarkdownPath(path) && !isCanvasTarget(path))) return []
+
+  const take = () => (folder ? workspace.setFolderIcon(path, null) : void setFileIcon(path, null))
 
   return [
-    { label: t('Choose an icon'), run: () => iconChoice.note(path) },
-    ...(links.iconOf(path) === null
-      ? []
-      : [{ label: t('Remove icon'), run: () => void setNoteIcon(path, null) }]),
+    {
+      label: t('Choose an icon'),
+      run: () => (folder ? iconChoice.folder(path) : iconChoice.file(path)),
+    },
+    ...(chosenIcon(path) === null ? [] : [{ label: t('Remove icon'), run: take }]),
   ]
 }

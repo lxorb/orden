@@ -12,11 +12,11 @@
 //! at the bottom are what keep the two readings from drifting: every case here
 //! has a twin in `packages/markdown/src/links.test.ts`.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::AppHandle;
 
-use crate::paths::{files_in, in_spaces, relative_to};
+use crate::paths::{files_in, in_spaces, is_canvas, relative_to};
 
 /// How much of a line is worth keeping as the context a result is read in. The
 /// same as a search hit shows, so the two panels read alike.
@@ -106,10 +106,117 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         });
     }
 
+    // The canvases too, for the icon each one wears. A canvas is a file rather
+    // than a note and stays among `files`, which is how `![[Board.canvas]]`
+    // resolves; it is read here as well because every row of the tree wants the
+    // icon, and a scan that skipped it would leave a canvas wearing the plain
+    // mark until somebody opened it.
+    for path in others.iter().filter(|path| is_canvas(path)) {
+        let Ok(body) = fs::read_to_string(path) else {
+            continue;
+        };
+
+        out.push(canvas_note(relative_to(&dir, path), &body));
+    }
+
+    // By path, so the order is the browser's order too: there the notes and the
+    // canvases are sorted together, and the two readings have to agree.
+    out.sort_by(|one, other| one.path.cmp(&other.path));
+
     Ok(SpaceLinks {
         notes: out,
         files: others.iter().map(|path| relative_to(&dir, path)).collect(),
     })
+}
+
+/// What a canvas file says that the index cares about.
+///
+/// A struct and not the whole of the JSON, so a plane of five thousand strokes is
+/// read past rather than built in memory: the ink sits under `nib` beside the
+/// icon, and serde walks over everything nothing here asks for.
+///
+/// The twin of `scanCanvas` in `apps/desktop/src/lib/scan-note.ts`. The format
+/// itself is `packages/markdown/src/canvas.ts`; these are the two things a file
+/// list and a Links panel need out of it.
+#[derive(Default, Deserialize)]
+struct CanvasFile {
+    #[serde(default)]
+    nodes: Vec<CanvasCard>,
+    #[serde(default)]
+    nib: CanvasNib,
+}
+
+/// The key the spec has no place for, which is where a canvas keeps its icon.
+#[derive(Default, Deserialize)]
+struct CanvasNib {
+    #[serde(default)]
+    icon: Option<String>,
+}
+
+/// One card, as far as this cares: the four kinds the spec names share these
+/// fields, and only a `file` card points at anything.
+#[derive(Deserialize)]
+struct CanvasCard {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    file: Option<String>,
+    subpath: Option<String>,
+}
+
+/// A canvas as the link index sees it: the icon its `nib` key carries, and one
+/// link for every card that names a file.
+///
+/// Nothing else. A canvas has no words of its own to index - the JSON is a
+/// drawing, not prose - so there are no headings and no blocks, and nothing
+/// points into one.
+fn canvas_note(relative: String, body: &str) -> Note {
+    let read: CanvasFile = serde_json::from_str(body).unwrap_or_default();
+
+    let links = read
+        .nodes
+        .iter()
+        .filter(|card| card.kind.as_deref() == Some("file"))
+        .filter_map(|card| {
+            let file = card.file.clone()?;
+            let subpath = card.subpath.as_deref().unwrap_or_default();
+
+            Some(Link {
+                kind: "wikilink",
+                target: file.clone(),
+                // A card's subpath is a heading or a block, written with the `#`
+                // a wikilink writes it with.
+                heading: subpath
+                    .strip_prefix('#')
+                    .filter(|_| !subpath.starts_with("#^"))
+                    .map(str::to_string),
+                block: subpath.strip_prefix("#^").map(str::to_string),
+                alias: None,
+                embed: false,
+                // A canvas has no lines, so every row reads as the card it came
+                // from.
+                line: 0,
+                text: file,
+            })
+        })
+        .collect();
+
+    Note {
+        // The extension is part of a canvas's name, the way it is for a PDF: a
+        // link to one is written `[[Board.canvas]]`.
+        name: relative.rsplit('/').next().unwrap_or(&relative).to_string(),
+        path: relative,
+        headings: Vec::new(),
+        blocks: Vec::new(),
+        links,
+        // A value that is nothing but spaces is not an icon; what the words
+        // themselves may say is read in the app's icons.ts.
+        icon: read
+            .nib
+            .icon
+            .map(|said| said.trim().to_string())
+            .filter(|said| !said.is_empty()),
+        aliases: Vec::new(),
+    }
 }
 
 /// Where the front matter's own lines sit: from just past the opening fence to
@@ -719,8 +826,8 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, decode, front_matter_list, front_matter_value, heading_of, headings_in,
-        links_in, without_code,
+        block_id_of, canvas_note, decode, front_matter_list, front_matter_value, heading_of,
+        headings_in, links_in, without_code,
     };
 
     fn targets(body: &str) -> Vec<String> {
@@ -988,5 +1095,58 @@ mod tests {
         assert!(aliases("---\naliases:\n---\n").is_empty());
         assert!(aliases("---\naliases: []\n---\n").is_empty());
         assert!(aliases("---\nexport:\n  aliases: [One]\n---\n").is_empty());
+    }
+
+    /// A canvas keeps its icon under `nib`, since a JSON file has no front matter.
+    /// Every case here has its twin in `apps/desktop/src/lib/scan-note.test.ts`.
+    #[test]
+    fn reads_the_icon_a_canvas_wears() {
+        let read = canvas_note(
+            "boards/Board.canvas".to_string(),
+            r#"{"nodes":[],"edges":[],"nib":{"version":1,"icon":"rocket"}}"#,
+        );
+
+        assert_eq!(read.icon.as_deref(), Some("rocket"));
+        assert_eq!(read.name, "Board.canvas");
+        assert_eq!(read.path, "boards/Board.canvas");
+    }
+
+    #[test]
+    fn a_canvas_that_says_nothing_wears_nothing() {
+        let plain = canvas_note("Board.canvas".to_string(), r#"{"nodes":[],"edges":[]}"#);
+        assert_eq!(plain.icon, None);
+
+        let blank = canvas_note(
+            "Board.canvas".to_string(),
+            r#"{"nodes":[],"nib":{"icon":"   "}}"#,
+        );
+        assert_eq!(blank.icon, None);
+
+        // A file that is not JSON at all is a canvas nobody has drawn on yet.
+        let broken = canvas_note("Board.canvas".to_string(), "not json");
+        assert_eq!(broken.icon, None);
+        assert!(broken.links.is_empty());
+    }
+
+    #[test]
+    fn a_card_that_names_a_file_is_a_link_out_of_the_canvas() {
+        let read = canvas_note(
+            "Board.canvas".to_string(),
+            concat!(
+                r##"{"nodes":["##,
+                r##"{"id":"a","type":"file","file":"Plan.md"},"##,
+                r##"{"id":"b","type":"file","file":"Plan.md","subpath":"#Later"},"##,
+                r##"{"id":"c","type":"file","file":"Plan.md","subpath":"#^abc123"},"##,
+                r##"{"id":"d","type":"text","text":"[[Not a link out of here]]"}"##,
+                r##"],"edges":[]}"##
+            ),
+        );
+
+        let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
+        assert_eq!(targets, vec!["Plan.md", "Plan.md", "Plan.md"]);
+        assert_eq!(read.links[0].heading, None);
+        assert_eq!(read.links[1].heading.as_deref(), Some("Later"));
+        assert_eq!(read.links[2].block.as_deref(), Some("abc123"));
+        assert!(read.headings.is_empty());
     }
 }

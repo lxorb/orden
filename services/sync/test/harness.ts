@@ -226,6 +226,7 @@ interface SpaceView {
   role: string
   shared: boolean
   bookmarks: BookmarkView[]
+  icons: Record<string, string>
   createdAt: number
   updatedAt: number
   blog: {
@@ -296,6 +297,7 @@ export interface Reply {
   space: SpaceView
   spaces: SpaceView[]
   bookmarks: BookmarkView[]
+  icons: Record<string, string>
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]

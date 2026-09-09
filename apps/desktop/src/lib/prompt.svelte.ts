@@ -1,3 +1,5 @@
+import type { Mark } from './file-mark'
+
 interface Ask {
   title: string
   /** Prefilled text, for a rename. */
@@ -19,6 +21,11 @@ interface Choice {
   label: string
   primary?: boolean
   danger?: boolean
+  /** The mark the row wears, where the answers are things a file list also
+   *  shows. Absent for a question about anything else, and then the row is words
+   *  alone. The `id` is the path, so a row that chose an icon of its own wears it
+   *  here as well; see FileMark.svelte. */
+  mark?: Mark
 }
 
 interface Choose {

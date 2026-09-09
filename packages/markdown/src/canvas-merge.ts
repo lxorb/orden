@@ -172,7 +172,25 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     ink: mergeList(ours.ink, theirs.ink, ours, theirs, gone),
     at,
     gone,
+    icon: keptIcon(ours.icon ?? null, theirs.icon ?? null),
   }
+}
+
+/** The icon the merged file wears: the one either side names, and where both name
+ *  one and they differ, the one that sorts first.
+ *
+ *  The same rule as everything else in here, read for a thing there is only one
+ *  of: nothing on either side is lost, and the tie is broken the way `later`
+ *  breaks one, so both devices reach the same file without talking. Which does
+ *  mean an icon taken away on one device comes back if the other still had it -
+ *  exactly what happens to a card deleted on one device and moved on the other,
+ *  and for the same reason. Choosing an icon on an open canvas does not go through
+ *  here at all; see `follow` in the app's canvas store. */
+function keptIcon(ours: string | null, theirs: string | null): string | null {
+  if (ours === null || ours === theirs) return theirs
+  if (theirs === null) return ours
+
+  return ours <= theirs ? ours : theirs
 }
 
 /** Two canvas files as one file. What the sync client and the worker both call,
@@ -194,5 +212,13 @@ export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now())
 }
 
 function weighs(canvas: Canvas): boolean {
-  return canvas.nodes.length > 0 || canvas.ink.length > 0 || Object.keys(canvas.gone).length > 0
+  return (
+    canvas.nodes.length > 0 ||
+    canvas.ink.length > 0 ||
+    Object.keys(canvas.gone).length > 0 ||
+    // An icon is the one thing an empty canvas can carry that a truncated file
+    // cannot: unreadable text reads as an empty canvas wearing nothing, so a plane
+    // nobody has drawn on yet still keeps the icon somebody chose for it.
+    !!canvas.icon
+  )
 }

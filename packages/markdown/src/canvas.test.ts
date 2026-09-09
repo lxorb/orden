@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   blankCanvas,
   type Canvas,
+  canvasIconEdit,
   clampOpacity,
   DEFAULT_INK,
   freshId,
@@ -98,7 +99,7 @@ describe('reading a canvas', () => {
   })
 
   test('is an empty canvas for a file that is not one', () => {
-    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {} }
+    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null }
     expect(readCanvas('')).toEqual(empty)
     expect(readCanvas('nonsense')).toEqual(empty)
     expect(readCanvas('[]')).toEqual(empty)
@@ -264,7 +265,14 @@ describe('writing a canvas', () => {
   })
 
   test('holds two empty lists before anybody has drawn on it', () => {
-    expect(readCanvas(blankCanvas())).toEqual({ nodes: [], edges: [], ink: [], at: {}, gone: {} })
+    expect(readCanvas(blankCanvas())).toEqual({
+      nodes: [],
+      edges: [],
+      ink: [],
+      at: {},
+      gone: {},
+      icon: null,
+    })
     // Nothing of Nib's in a canvas that has none of Nib's in it.
     expect(blankCanvas()).not.toContain('nib')
     expect(blankCanvas().endsWith('\n')).toBe(true)
@@ -332,6 +340,7 @@ describe('what Nib keeps beyond the spec', () => {
     ],
     at: { card: 1000, box: 1001 },
     gone: { old: 900 },
+    icon: null,
   }
 
   const written = writeCanvas(drawn)
@@ -381,6 +390,7 @@ describe('what Nib keeps beyond the spec', () => {
       ink: [],
       at: {},
       gone: {},
+      icon: null,
     }
 
     const back = readCanvas(writeCanvas(diagram))
@@ -530,6 +540,7 @@ describe('how translucent a stroke was drawn', () => {
       ],
       at: {},
       gone: {},
+      icon: null,
     }
 
     const written = writeCanvas(drawn)
@@ -620,5 +631,96 @@ describe('a canvas from somewhere else', () => {
     expect(one(DEFAULT_INK)).toBe(DEFAULT_INK)
     expect(one('"><script>alert(1)</script><path fill="')).toBe(DEFAULT_INK)
     expect(one('toString')).toBe(DEFAULT_INK)
+  })
+})
+
+/** The icon a canvas wears. A note keeps its own in front matter; JSON has none,
+ *  so a canvas keeps it under the one key the spec leaves for what is ours - which
+ *  is what makes it the canvas's own rather than this machine's note about it. */
+describe('the icon a canvas wears', () => {
+  const applied = (text: string, name: string | null) => {
+    const edit = canvasIconEdit(text, name)
+    return edit === null ? null : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
+  }
+
+  test('is read off the key that already carries the ink', () => {
+    const file = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } })
+    expect(readCanvas(file).icon).toBe('rocket')
+  })
+
+  test('and an emoji, which is what a vault out of Iconize holds', () => {
+    expect(readCanvas('{"nib":{"icon":"🚀"}}').icon).toBe('🚀')
+  })
+
+  test('is nothing where the file says nothing it could be drawn from', () => {
+    expect(readCanvas('{"nodes":[],"edges":[]}').icon).toBeNull()
+    expect(readCanvas('{"nib":{"icon":"   "}}').icon).toBeNull()
+    expect(readCanvas('{"nib":{"icon":42}}').icon).toBeNull()
+    expect(readCanvas('not json').icon).toBeNull()
+  })
+
+  test('is written first inside the key, and nowhere near the spec half', () => {
+    const written = writeCanvas({ ...readCanvas(blankCanvas()), icon: 'rocket' })
+    const parsed = JSON.parse(written) as { nib: Record<string, unknown> }
+
+    expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'nib'])
+    expect(Object.keys(parsed.nib)).toEqual(['version', 'icon'])
+  })
+
+  test('rides a write and a read back unchanged', () => {
+    const written = writeCanvas({ ...readCanvas(blankCanvas()), icon: 'file-text' })
+    expect(readCanvas(written).icon).toBe('file-text')
+    expect(writeCanvas(readCanvas(written))).toBe(written)
+  })
+
+  /** The twin of `frontMatterEdit`: what changes is written and not the whole file,
+   *  so an open canvas takes the change without being replaced under its reader. */
+  test('goes in as an edit of the few characters that moved', () => {
+    const before = blankCanvas()
+    const edit = canvasIconEdit(before, 'rocket')
+
+    expect(edit).not.toBeNull()
+    // The spec half is untouched: the cut starts past `"edges": []`.
+    expect(before.slice(0, edit?.from ?? 0)).toContain('"edges"')
+    expect(edit?.insert).toContain('"icon": "rocket"')
+    expect(readCanvas(applied(before, 'rocket') ?? '').icon).toBe('rocket')
+  })
+
+  test('replaces the one that was there', () => {
+    const marked = applied(blankCanvas(), 'rocket') ?? ''
+    expect(readCanvas(applied(marked, 'anchor') ?? '').icon).toBe('anchor')
+  })
+
+  test('and taking it away leaves the file as it was before it', () => {
+    const before = blankCanvas()
+    const marked = applied(before, 'rocket') ?? ''
+
+    expect(applied(marked, null)).toBe(before)
+  })
+
+  test('is no edit at all where the file already says that', () => {
+    const marked = applied(blankCanvas(), 'rocket') ?? ''
+
+    expect(canvasIconEdit(marked, 'rocket')).toBeNull()
+    expect(canvasIconEdit(blankCanvas(), null)).toBeNull()
+  })
+
+  /** An unreadable file reads as an empty canvas, which is what lets a truncated
+   *  one be drawn on. Writing that back would be writing over somebody's file. */
+  test('is refused on a file that is not JSON, rather than written over it', () => {
+    expect(canvasIconEdit('not json at all', 'rocket')).toBeNull()
+    expect(canvasIconEdit('[1, 2, 3]', 'rocket')).toBeNull()
+  })
+
+  test('but a file with nothing in it yet takes one', () => {
+    expect(readCanvas(applied('', 'rocket') ?? '').icon).toBe('rocket')
+  })
+
+  test('leaves the cards, the ink and the times exactly where they were', () => {
+    const drawn = readCanvas(writeCanvas({ ...readCanvas(blankCanvas()), at: { card: 7 } }))
+    const after = readCanvas(applied(writeCanvas(drawn), 'rocket') ?? '')
+
+    expect(after.at).toEqual(drawn.at)
+    expect(after.nodes).toEqual(drawn.nodes)
   })
 })

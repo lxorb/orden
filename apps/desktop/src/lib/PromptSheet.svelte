@@ -3,6 +3,7 @@
   import { overlays } from './overlays'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import FileMark from './FileMark.svelte'
   import { rank } from './fuzzy'
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
@@ -126,7 +127,11 @@
                   onmouseenter={() => (cursor = index)}
                   onclick={() => prompt.pick(option.id)}
                 >
-                  {option.label}
+                  <!-- Where the answers are things the file list also shows, they
+                       wear the same marks here: a folder somebody gave an icon is
+                       that icon in the tree and in the sheet that moves into it. -->
+                  {#if option.mark}<FileMark mark={option.mark} path={option.id} />{/if}
+                  <span class="found-label">{option.label}</span>
                 </button>
               </li>
             {/each}
@@ -225,7 +230,9 @@
 
   .found-row {
     width: 100%;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: var(--row-gap);
     padding: 6px 8px;
     border: none;
     border-radius: var(--radius-sm);
@@ -234,13 +241,17 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     cursor: default;
     transition:
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
+  }
+
+  /* The name is what runs out of room, not the mark beside it. */
+  .found-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .found-row.at {

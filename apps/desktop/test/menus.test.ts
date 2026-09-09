@@ -129,12 +129,14 @@ describe('the path a note sits at', () => {
   })
 })
 
-/** What a row in the file list offers about the note it stands for. The icon is
- *  the note's own, written in its front matter, so the entries live in
- *  menu.svelte.ts and any list that shows a note can offer them. */
+/** What a row in the file list offers about the thing it stands for. A note's icon
+ *  is written in its front matter, a canvas's under its `nib` key and a folder's in
+ *  the space's own map, so the entries live in menu.svelte.ts and any list that
+ *  shows a row can offer them. */
 describe('what a note offers', () => {
   const tree = read('lib/Tree.svelte')
   const note = body(tree, 'function noteMenu(entry: Entry)')
+  const folder = body(tree, 'function folderMenu(entry: Entry)')
   const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
 
   test('its icon, in the same words the rail uses for a space', () => {
@@ -144,12 +146,19 @@ describe('what a note offers', () => {
 
   test('and the way back to no icon, only while it wears one', () => {
     expect(entries).toContain("t('Remove icon')")
-    expect(entries).toContain('links.iconOf(path) === null')
+    expect(entries).toContain('chosenIcon(path) === null')
   })
 
-  /** The picker is the sheet the rail opens, on the note this row stands for. */
+  /** The picker is the sheet the rail opens, on the row this menu stands for. */
   test('choosing opens the one picker there is', () => {
-    expect(entries).toContain('iconChoice.note(path)')
+    expect(entries).toContain('iconChoice.file(path)')
+    expect(entries).toContain('iconChoice.folder(path)')
+  })
+
+  /** A folder is offered the same two words, in the same place in its own menu:
+   *  what differs is only where the icon is kept. */
+  test('and a folder is offered the same two, since a folder can wear one too', () => {
+    expect(folder).toContain('iconEntries(entry.path, true)')
   })
 
   /** A right click and a held finger, which is the right click a touch screen

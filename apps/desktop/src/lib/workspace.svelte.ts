@@ -29,6 +29,7 @@ import {
   writeSession,
 } from './workspace/session'
 import { Bookmarks } from './workspace/bookmarks.svelte'
+import { FolderIcons } from './workspace/folder-icons.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
 import {
@@ -45,6 +46,7 @@ import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
+import { iconValue } from './icons'
 import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -232,6 +234,10 @@ class Workspace {
   /** The notes, folders, headings and searches kept above the file list. Per
    *  space, and on the account when there is one; see workspace/bookmarks. */
   readonly bookmarks = new Bookmarks(() => this.activeSpace?.root ?? null)
+  /** The icon each folder of the space wears. Per space and on the account for
+   *  the same reasons the bookmarks are, and here rather than in the file itself
+   *  because a folder has no file; see workspace/folder-icons. */
+  readonly folderIcons = new FolderIcons(() => this.activeSpace?.root ?? null)
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
   /** Which notes are being written, and which have just been. The dot beside a
@@ -1020,8 +1026,10 @@ class Workspace {
       }
     }
 
-    // The icon is keyed by folder, so it has to follow the folder.
+    // The icon is keyed by folder, so it has to follow the folder - and the
+    // folder icons inside it are kept under the root, so they follow it too.
     this.device.moveIcon(space.root, renamed.path)
+    this.folderIcons.spaceMoved(space.root, renamed.path)
 
     space.name = renamed.name
     space.root = renamed.path
@@ -1146,6 +1154,7 @@ class Workspace {
       this.close(tab.id)
     }
 
+    this.folderIcons.forget(space.root)
     this.spaces = this.spaces.filter((entry) => entry.id !== id)
     if (this.activeSpaceId !== id) {
       this.persist()
@@ -1211,6 +1220,9 @@ class Workspace {
     // see `rename` below, including why this comes before the index is told.
     const rewrote = (await this.retarget(from, target)) > 0
     links.notesMoved(from, target)
+    // A folder's icon is kept under its path, so a folder that moved takes its
+    // icon and its subfolders' icons with it.
+    this.folderIcons.moved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
     for (const note of this.documents.filter((entry) => entry.path === from)) {
@@ -1759,6 +1771,13 @@ class Workspace {
     this.device.setIcon(root, name)
   }
 
+  /** The icon a folder of the open space wears, or none. Beside `setIcon` because
+   *  the picker reaches both through here and the two differ only in where the
+   *  value is kept; see workspace/folder-icons. */
+  setFolderIcon(path: string, name: string | null) {
+    this.folderIcons.set(path, name === null ? null : iconValue(name))
+  }
+
   setIcon(spaceId: string, name: string | null) {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     if (!space) return
@@ -2173,6 +2192,7 @@ class Workspace {
     // pointed at the old name means resolving them against the space as it was.
     const rewrote = (await this.retarget(path, target)) > 0
     links.notesMoved(path, target)
+    this.folderIcons.moved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
     const note = this.documents.find((entry) => entry.path === path)
@@ -2239,6 +2259,7 @@ class Workspace {
     }
 
     links.noteGone(path)
+    this.folderIcons.gone(path)
     await this.loadTree()
   }
 
@@ -2334,6 +2355,7 @@ class Workspace {
     // round - and, again, before the index is told the note moved.
     if (action.rewrote) await this.retarget(action.to, action.from)
     links.notesMoved(action.to, action.from)
+    this.folderIcons.moved(action.to, action.from)
   }
 
   /** Puts a merge back: both notes as they were, and the note that was folded
