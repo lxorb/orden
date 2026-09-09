@@ -526,6 +526,60 @@ class Sync {
     return { mirrors, seen: saved.seen === true || Object.keys(mirrors).length > 0 }
   }
 
+  /** Reads what this machine wrote down again, and fills in whatever it did not
+   *  have. For a storage that answers in two goes.
+   *
+   *  A packed plugin has one: its page belongs to a fresh port every launch, so
+   *  what is read before the first paint is a cookie, and everything the cookie
+   *  had no room for arrives from the phone app's own store seconds later. `load`
+   *  above runs once, early, and would otherwise have captured the half of it that
+   *  fits in four kilobytes - which for these mirrors is about thirteen notes,
+   *  since each one costs its path and a hundred and thirty odd bytes. Past that
+   *  the whole table is missing, every note reads as one the account has never
+   *  been told about, and a pass has to work every one of them out again. See
+   *  lib/even/local.ts, and `reread` in workspace/device.svelte.ts, which is the
+   *  same fact about the same storage.
+   *
+   *  Filled in, never replaced, for two reasons. What is here was written by a
+   *  pass that has already run, so it is newer than anything storage is only now
+   *  getting round to mentioning. And a pass may be running right now, writing
+   *  into these very objects: they are added to in place rather than swapped for
+   *  new ones, so nothing a pass has settled is dropped on the floor by this. The
+   *  cursor is left alone for the same reason - a note this replays is a note
+   *  found already agreeing, which costs a hash and no writing at all. */
+  reread() {
+    const held = this.load(account.user?.id ?? null)
+    let grew = !this.seen && held.seen
+    this.seen = this.seen || held.seen
+
+    for (const [root, stored] of Object.entries(held.mirrors)) {
+      const mine = this.mirrors[root]
+      if (!mine) {
+        this.mirrors[root] = stored
+        grew = true
+        continue
+      }
+
+      for (const [path, tracked] of Object.entries(stored.notes)) {
+        if (mine.notes[path]) continue
+
+        mine.notes[path] = tracked
+        grew = true
+      }
+
+      for (const [path, file] of Object.entries(stored.files)) {
+        if (mine.files[path]) continue
+
+        mine.files[path] = file
+        grew = true
+      }
+    }
+
+    // Nothing to say when storage held nothing this did not, which is every
+    // machine but the one this exists for.
+    if (grew) this.save()
+  }
+
   private save() {
     // A new object, so whoever is watching what the account holds hears that a
     // pass changed it. The mirrors themselves are written into in place; this is

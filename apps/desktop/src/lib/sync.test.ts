@@ -717,6 +717,122 @@ describe('the mirrors this machine remembers', () => {
       stopped()
     }
   })
+
+  /** A storage that answers in two goes, which is what a packed plugin has: the
+   *  cookie is read before the first paint, and what it had no room for arrives
+   *  from the phone app's own store seconds later. See `reread`. */
+  describe('are read again when the rest of the storage lands', () => {
+    /** What the second seeding puts there: the whole table, as the pass that wrote
+     *  it left it. */
+    function landed(notes: Record<string, { id: string; version: number; hash: string }>) {
+      localStorage.setItem(
+        'nib:mirrors',
+        JSON.stringify({
+          account: 'u1',
+          seen: true,
+          mirrors: {
+            '/Notes': { spaceId: 's-Notes', root: '/Notes', cursor: 40, notes, files: {} },
+          },
+        }),
+      )
+    }
+
+    test('fills in the entries the first read had no room for', async () => {
+      await started()
+      try {
+        expect(sync.tracked('/Notes/one.md')).toBeNull()
+
+        landed({ 'one.md': { id: 'n1', version: 3, hash: 'aaa' } })
+        sync.reread()
+
+        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', hash: 'aaa' })
+        expect(sync.remoteIdFor('/Notes')).toBe('s-Notes')
+      } finally {
+        stopped()
+      }
+    })
+
+    test('does not undo what a pass has already settled', async () => {
+      // A real space on both sides, so a pass has something to settle in the very
+      // mirror this then fills in.
+      fake.disk.set('/Notes/.keep', '')
+      fake.remote.spaces.push({ id: 's-Notes', name: 'Notes' })
+      fake.addRemoteNote('s-Notes', 'two.md', '# two')
+      workspace.spaces = [{ id: 'local', name: 'Notes', root: '/Notes' }]
+
+      await started()
+      try {
+        await sync.pass()
+        expect(sync.tracked('/Notes/two.md')).not.toBeNull()
+
+        // And now the phone app answers with the table as it was before that pass:
+        // older, and without the note the pass just brought down.
+        landed({ 'one.md': { id: 'n1', version: 3, hash: 'aaa' } })
+        sync.reread()
+
+        // Both. What a pass settled is newer than anything storage is only now
+        // getting round to mentioning, and what storage had is news to this.
+        expect(sync.tracked('/Notes/two.md')).not.toBeNull()
+        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', hash: 'aaa' })
+      } finally {
+        stopped()
+      }
+    })
+
+    test('adds to the mirror it holds rather than swapping it for another', async () => {
+      await started()
+      try {
+        landed({ 'one.md': { id: 'n1', version: 3, hash: 'aaa' } })
+        sync.reread()
+
+        // A second answer naming a different note: two goes at one table, or a
+        // reread called twice while a pass is running.
+        landed({ 'two.md': { id: 'n2', version: 4, hash: 'bbb' } })
+        sync.reread()
+
+        // Both, because the mirror is added to where it stands. That is what makes
+        // this safe to call during a pass: a pass writes into these very objects,
+        // and one swapped for another would leave it writing into nothing.
+        expect(sync.tracked('/Notes/one.md')).toEqual({ id: 'n1', hash: 'aaa' })
+        expect(sync.tracked('/Notes/two.md')).toEqual({ id: 'n2', hash: 'bbb' })
+      } finally {
+        stopped()
+      }
+    })
+
+    test('says nothing at all when storage held nothing new', async () => {
+      await started()
+      try {
+        landed({ 'one.md': { id: 'n1', version: 3, hash: 'aaa' } })
+        sync.reread()
+
+        const written = localStorage.getItem('nib:mirrors')
+        sync.reread()
+
+        expect(localStorage.getItem('nib:mirrors')).toBe(written)
+      } finally {
+        stopped()
+      }
+    })
+
+    test('leaves another account’s mirrors where they are', async () => {
+      await started()
+      try {
+        localStorage.setItem(
+          'nib:mirrors',
+          JSON.stringify({
+            account: 'somebody-else',
+            mirrors: { '/Theirs': { spaceId: 's-Theirs', root: '/Theirs' } },
+          }),
+        )
+        sync.reread()
+
+        expect(sync.remoteIdFor('/Theirs')).toBeNull()
+      } finally {
+        stopped()
+      }
+    })
+  })
 })
 
 describe('turning syncing off while a pass is in the air', () => {
