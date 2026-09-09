@@ -35,6 +35,19 @@ function within(node: HTMLElement): HTMLElement[] {
   )
 }
 
+/** Where the layer says the keyboard should land, when it is not simply the first
+ *  thing in it: the address field of the Share sheet is what somebody opened the
+ *  sheet to type in, and the cross in its head is not.
+ *
+ *  Never under a thumb. There is no Tab there to hold on to, and a field taking
+ *  the keyboard the moment a sheet rises puts the system's own keyboard over half
+ *  of what was opened. */
+function lands(node: HTMLElement): HTMLElement | null {
+  if (document.documentElement.hasAttribute('data-touch')) return null
+
+  return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
+}
+
 export function trap(node: HTMLElement) {
   /** What had the keyboard before this opened. Read now, because by the time this
    *  closes the answer is whatever is inside it. */
@@ -44,7 +57,7 @@ export function trap(node: HTMLElement) {
   // and then taking it again would put the caret back at the start of what
   // somebody has begun typing.
   if (!node.contains(document.activeElement)) {
-    const first = within(node)[0]
+    const first = lands(node) ?? within(node)[0]
     if (first) first.focus()
     else {
       // Nothing in it to stand on, so the layer itself takes the keyboard: it is

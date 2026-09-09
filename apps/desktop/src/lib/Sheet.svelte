@@ -453,6 +453,12 @@
     font-size: var(--touch-text);
   }
 
+  :global([data-touch]) .sheet :global(.pill) {
+    min-height: var(--touch-target);
+    padding: 0 var(--touch-gap);
+    font-size: var(--text-base);
+  }
+
   :global([data-touch]) .sheet :global(.primary) {
     min-height: var(--touch-target);
     font-size: var(--touch-text);

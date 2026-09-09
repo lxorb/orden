@@ -96,7 +96,7 @@
 
   <!-- The consequence comes before the switch, not after it. -->
   <label class="danger-check">
-    <input type="checkbox" bind:checked={publish.confirmed} disabled={published} />
+    <input data-lands type="checkbox" bind:checked={publish.confirmed} disabled={published} />
     <span>
       <strong>{t('Everything in this space becomes public.')}</strong>
       {t('Every note, including drafts, is readable by anyone with the address.')}

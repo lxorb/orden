@@ -451,7 +451,7 @@ describe('the Share sheet', () => {
   /** The same route the first invitation took, which mints a fresh link and
    *  writes a fresh mail; see services/sync/src/spaces/share.ts. */
   test('sends the invitation again to somebody who has not opened it', async () => {
-    await share.resend({ ...member('ada@example.com', 'read'), pending: true })
+    await share.resend({ email: 'ada@example.com', guest: null, role: 'read' })
 
     expect(world.asked).toEqual(['invite ada@example.com as read to space-1'])
   })

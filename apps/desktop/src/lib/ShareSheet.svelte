@@ -111,78 +111,81 @@
     <p class="wrong">{share.error}</p>
   {/if}
 
-  {#if !who}
-    <!-- The shape of the answer while it is on its way, so the sheet is
-         already the size it is about to be and the rows arrive in place rather
-         than pushing everything down as they land. -->
-    <div class="card" aria-hidden="true">
-      <span class="bone field"></span>
-      {#each [0, 1, 2] as row (row)}
-        <div class="row person">
-          <span class="bone face"></span>
-          <span class="name">
-            <span class="bone words"></span>
-            <span class="bone under"></span>
-          </span>
-          <span class="bone control"></span>
-        </div>
-      {/each}
-    </div>
-  {:else}
-    <!-- ── The people ─────────────────────────────────────────────
-         The field first, because putting somebody in is what the sheet is
-         opened for; the list of who is already here under it. -->
-    <div class="card">
-      <form
-        class="nib-field compose"
-        class:bad={share.wrongAddress}
-        onsubmit={(event) => {
-          event.preventDefault()
-          void share.invite()
-        }}
-      >
-        <input
-          bind:value={share.email}
-          oninput={() => (share.wrongAddress = false)}
-          type="text"
-          inputmode="email"
-          placeholder={t('Add people by email')}
-          aria-label={t('Add people by email')}
-          spellcheck="false"
-          autocapitalize="off"
-          autocomplete="off"
+  <!-- ── The people ───────────────────────────────────────────────
+       The field first, because putting somebody in is what the sheet is opened
+       for. It is there from the first frame, before the list it belongs to has
+       arrived: it is where the keyboard lands, it is what somebody came here to
+       type in, and a field that appears a moment later is a field somebody has
+       already started typing past. -->
+  <div class="card">
+    <form
+      class="nib-field compose"
+      class:bad={share.wrongAddress}
+      onsubmit={(event) => {
+        event.preventDefault()
+        void share.invite()
+      }}
+    >
+      <input
+        data-lands
+        bind:value={share.email}
+        oninput={() => (share.wrongAddress = false)}
+        type="text"
+        inputmode="email"
+        placeholder={t('Add people by email')}
+        aria-label={t('Add people by email')}
+        spellcheck="false"
+        autocapitalize="off"
+        autocomplete="off"
+      />
+      <div class="pick">
+        <Select
+          value={share.role}
+          options={ROLES}
+          onchange={(role: string) => (share.role = role as GivenRole)}
+          label={t('Role')}
+          plain
         />
-        <div class="pick">
-          <Select
-            value={share.role}
-            options={ROLES}
-            onchange={(role: string) => (share.role = role as GivenRole)}
-            label={t('Role')}
-            plain
-          />
-        </div>
-        {#if share.email.trim()}
-          <!-- Enter does this too; the button is for a thumb, which has no
+      </div>
+      {#if share.email.trim()}
+        <!-- Enter does this too; the button is for a thumb, which has no
                Enter, and for anybody who wants to see where the press goes. -->
-          <button
-            type="submit"
-            class="send"
-            aria-label={t('Invite')}
-            title={t('Invite')}
-            disabled={share.busy}
-            transition:scale={{ duration: dur(130), start: 0.6 }}
-          >
-            <svg viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
-          </button>
-        {/if}
-      </form>
-
-      {#if share.wrongAddress}
-        <p class="hint bad" transition:fade={{ duration: dur(130) }}>
-          {t('enter a valid email address')}
-        </p>
+        <button
+          type="submit"
+          class="send"
+          aria-label={t('Invite')}
+          title={t('Invite')}
+          disabled={share.busy}
+          transition:scale={{ duration: dur(130), start: 0.6 }}
+        >
+          <svg viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
+        </button>
       {/if}
+    </form>
 
+    {#if share.wrongAddress}
+      <p class="hint bad" transition:fade={{ duration: dur(130) }}>
+        {t('enter a valid email address')}
+      </p>
+    {/if}
+
+    {#if !who}
+      <!-- The shape of the rows while they are on their way, so the card is
+           already the size it is about to be and they arrive in place rather than
+           pushing the link under them down as they land. -->
+      <div aria-hidden="true">
+        {#each [0, 1, 2] as row (row)}
+          <div class="row person">
+            <span class="bone face"></span>
+            <span class="name">
+              <span class="bone words"></span>
+              <span class="bone under"></span>
+            </span>
+            <span class="bone control"></span>
+          </div>
+        {/each}
+      </div>
+    {:else}
       <!-- Somebody has followed a link that asks first. At the top of the card,
            because it is the one thing here that is waiting on an answer. -->
       {#if who.requests.length}
@@ -227,7 +230,7 @@
           aria-hidden="true">{initial(called(who.owner))}</span
         >
         <span class="name">
-          {called(who.owner)} <span class="you">{t('(you)')}</span>
+          <span class="named">{called(who.owner)} <small class="you">{t('(you)')}</small></span>
           <small>{who.owner.email}</small>
         </span>
         <span class="fixed">{t('Owner')}</span>
@@ -243,9 +246,7 @@
                faintly: they are in the list, and they are not here. -->
           <span
             class="nib-badge"
-            style:--badge-fill={person.pending
-              ? `color-mix(in srgb, ${colourOf(person)} 22%, transparent)`
-              : colourOf(person)}
+            style:--badge-fill={person.pending ? 'var(--surface-3)' : colourOf(person)}
             style:--badge-ink={person.pending ? colourOf(person) : '#fff'}
             aria-hidden="true">{initial(name(person))}</span
           >
@@ -265,8 +266,10 @@
           </div>
         </div>
       {/each}
-    </div>
+    {/if}
+  </div>
 
+  {#if who}
     <!-- ── The link ───────────────────────────────────────────────
          One switch about everybody at once. What it hands out and whether it
          asks first stay where they are while it is off, greyed: the card does
@@ -327,6 +330,7 @@
             toggleAsking()
           }}
         >
+          <span class="under" aria-hidden="true"></span>
           <span class="name asks">{t('Ask first')}</span>
           <span class="nib-switch" class:on={link?.mode === 'approval'} aria-hidden="true"></span>
         </div>
@@ -424,7 +428,7 @@
   /* Somebody waiting on an answer, which is the one row here that is a question.
      The accent behind it, at the strength a picked row wears. */
   .asking {
-    margin: 0 calc(-1 * var(--space-1));
+    margin: 0 calc(-1 * var(--space-1)) 2px;
     padding: var(--space-1);
     border-radius: var(--radius-row);
     background: var(--accent-soft);
@@ -437,7 +441,15 @@
     opacity: 0.55;
   }
 
-  /* Which of these people is reading the sheet. */
+  /* Which of these people is reading the sheet, beside their name rather than
+     under it. */
+  .named {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
   .you {
     color: var(--muted);
   }
@@ -496,9 +508,15 @@
   }
 
   /* A switch under the row it qualifies, which is why the words are quieter than
-     the sentence above them. */
+     the sentence above them and start where they start rather than at the card's
+     own edge. */
   .asks {
     color: var(--muted-strong);
+  }
+
+  .under {
+    flex: none;
+    width: var(--row-height-sm);
   }
 
   /* ── While the answer is on its way ──────────────────────────────
@@ -511,13 +529,6 @@
     border-radius: 4px;
     background: var(--surface-3);
     animation: bone-breathe 1400ms var(--ease-in-out) infinite;
-  }
-
-  .bone.field {
-    width: 100%;
-    height: var(--row-height);
-    border-radius: var(--radius-row);
-    margin-bottom: var(--space-2);
   }
 
   .bone.face {
@@ -563,20 +574,15 @@
      The same sheet, at the size a finger needs: the field takes the width and
      puts the role and the press on a line of their own under what is typed. */
   :global([data-touch]) .compose {
-    flex-wrap: wrap;
-    padding: var(--space-2) var(--touch-gap);
-    row-gap: var(--space-1);
+    padding: var(--space-1) var(--space-1) var(--space-1) var(--touch-gap);
   }
 
   :global([data-touch]) .compose input {
-    flex: 1 0 100%;
-    min-height: var(--touch-target);
     font-size: var(--touch-text);
   }
 
   :global([data-touch]) .compose .pick {
-    max-width: none;
-    margin-right: auto;
+    max-width: 40%;
   }
 
   :global([data-touch]) .send {
