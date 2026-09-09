@@ -135,7 +135,7 @@ SHOW = """
 (who) => {
   const app = window.nibApp
   app.share.space = app.workspace.activeSpace
-  app.share.spaceId = 'space-1'
+  app.share.spaceId = app.workspace.activeSpaceId
   app.share.error = null
   app.share.email = ''
   app.share.wrongAddress = false
@@ -166,6 +166,16 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
+
+    # The space wears an icon, so the badge in the sheet's head is drawn by the
+    # same component every other icon in the app is: a Lucide stroke in the
+    # space's own tint. See SpaceMark.svelte and Icon.svelte.
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          ws.setIcon(ws.activeSpaceId, 'notebook-pen', 'teal')
+        }"""
+    )
     page.wait_for_timeout(300)
 
     def shot(tag: str) -> None:
@@ -196,7 +206,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         """() => {
           const app = window.nibApp
           app.share.space = app.workspace.activeSpace
-          app.share.spaceId = 'space-1'
+          app.share.spaceId = app.workspace.activeSpaceId
           app.share.who = null
           app.share.open = true
         }"""
