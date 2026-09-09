@@ -37,3 +37,4 @@ apps/clipper/*.zip
 
 # Claude Code worktrees of this repo
 .claude/worktrees/
+*.nupkg
