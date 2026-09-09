@@ -55,8 +55,11 @@ class I18n {
     const translated = this.dictionary[text] ?? text
     if (!values) return translated
 
+    // Only what was handed over: every object inherits `toString` and
+    // `constructor`, and reading a placeholder off the prototype would put the
+    // source of a function on screen.
     return translated.replace(/\{(\w+)\}/g, (whole, name: string) =>
-      name in values ? String(values[name]) : whole,
+      Object.hasOwn(values, name) ? String(values[name]) : whole,
     )
   }
 }
