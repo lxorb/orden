@@ -1590,6 +1590,15 @@ class Workspace {
     note.flush()
     if (!holdsWords(note.kind)) return
 
+    // Which note this document is on as the write begins. A document outlives the
+    // file in it - the one tab that previews a note takes another note on rather
+    // than being swapped for another document - and a write is a round trip with a
+    // name prompt in it, so the words and the path can otherwise be read a click
+    // apart and belong to two different notes. Checked again at the write below,
+    // which is the last moment before the pair reaches the disk. See
+    // NoteDoc.arrivals.
+    const holding = note.arrivals
+
     let path = note.path
     if (!path) {
       // A canvas is only ever made with a name and a place of its own, so there
@@ -1614,6 +1623,15 @@ class Workspace {
       // Keep the version that is about to be replaced, before replacing it.
       if (note.path) {
         await invoke('snapshot_note', { path, content }).catch(() => undefined)
+      }
+
+      // The document moved on to another note while this write was being got
+      // ready. Refused rather than written: these words are that other note's, and
+      // this path is not theirs to go to.
+      if (note.arrivals !== holding) {
+        console.warn(`nib: a write of ${path} was refused - those words are another note’s now`)
+        this.clearSaveState(note.key)
+        return
       }
 
       await invoke('write_note', { path, content })
