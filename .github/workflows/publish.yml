@@ -212,10 +212,10 @@ jobs:
           rm -r dl
 
           sed -i -E "s|<version>.*</version>|<version>$VERSION</version>|" nib.nuspec
-          sed -i -E "s|(nib@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
+          sed -i -E "s|(nibeditor@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
           sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" nib.nuspec
           grep -E "'(x64|arm64)' *=" tools/chocolateyinstall.ps1
-          grep -E '<version>|nib@v|releases/tag' nib.nuspec
+          grep -E '<version>|nibeditor@v|releases/tag' nib.nuspec
 
       - name: Pack and push
         shell: pwsh

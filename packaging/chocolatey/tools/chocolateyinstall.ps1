@@ -11,7 +11,7 @@ $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6
 } elseif ((Get-OSArchitectureWidth) -eq 64) {
   'x64'
 } else {
-  throw 'Nib requires 64-bit Windows (x64 or ARM64).'
+  throw 'nibeditor requires 64-bit Windows (x64 or ARM64).'
 }
 
 # Chocolatey hands the package's own version down, so only the checksums below
@@ -22,6 +22,9 @@ $checksums = @{
   'arm64' = '0FB1FA05AF71E66AEB2A93F94FD3CE8DACD4DC1E605B8E45EF964FA4528F7C76'
 }
 
+# The asset name and softwareName below stay "Nib": that is the product name the
+# bundle carries and what it registers in Add/Remove Programs, whatever the app
+# is called on the website.
 $packageArgs = @{
   packageName    = $env:ChocolateyPackageName
   fileType       = 'MSI'
