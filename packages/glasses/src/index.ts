@@ -1,15 +1,24 @@
-/** Nib on the Even Realities G2.
+/** Nib on the Even Realities G2, in text.
  *
- *  A note as pages for a 576 by 288 panel of sixteen greys: the app's own
- *  grammar, the app's own faces, the code theme's colours turned into greys, and
- *  the same ligature glyphs the editor draws. Everything but `raster.ts` and
- *  `fonts.ts` is pure, so the layout can be tested without a browser.
+ *  A note as pages of words for a 576 by 288 panel that has exactly one font in
+ *  exactly one size, and a mapping from every construct in a note to something
+ *  that font can draw. Pure, with no DOM and no canvas in it, so all of it is
+ *  tested without a browser.
  *
- *  See docs/even.md for what the panel is, what it costs to send a page to it,
- *  and why a page is drawn rather than written into a text container. */
+ *  See docs/even.md for the panel, the mapping table, and why the glasses are
+ *  written to rather than drawn on. */
 
-export { type Page, pageAt, plainPage } from './layout'
-export { PANEL_HEIGHT, PANEL_WIDTH } from './panel'
-export { QUADRANTS } from './raster'
-export { BLANK, type Look, type Quadrant, type Sheet, Sheets } from './sheets'
-export { isTextPage, type TextPage, textPages } from './text'
+export { fit, fold, rightward, rows, ruleOf, SPACE, TICK, width, wrap } from './firmware'
+export { type Line, markLines } from './mark'
+export { type Page, pageAt, pageOfLine, pagesOf, type Paging } from './pages'
+export {
+  type Band,
+  type BandName,
+  bandsOf,
+  BODY_INNER,
+  BODY_ROWS,
+  BRIGHT,
+  LINE,
+  PANEL_HEIGHT,
+  PANEL_WIDTH,
+} from './panel'

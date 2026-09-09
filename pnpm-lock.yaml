@@ -266,24 +266,12 @@ importers:
 
   packages/glasses:
     dependencies:
-      '@codemirror/language':
-        specifier: ^6.12.4
-        version: 6.12.4
       '@evenrealities/pretext':
         specifier: ^0.1.4
         version: 0.1.4
-      '@lezer/highlight':
-        specifier: ^1.2.3
-        version: 1.2.3
-      '@nib/editor':
-        specifier: workspace:*
-        version: link:../editor
       '@nib/markdown':
         specifier: workspace:*
         version: link:../markdown
-      katex:
-        specifier: ^0.18.5
-        version: 0.18.5
       marked:
         specifier: ^18.0.11
         version: 18.0.11

@@ -1,0 +1,218 @@
+/** A note as pages the glasses set themselves.
+ *
+ *  Ten of the firmware's 27 pixel lines fit on the panel and the page keeps three
+ *  of them for its own furniture, so a page of a note is seven lines; see
+ *  `panel.ts`. This decides which seven.
+ *
+ *  Three rules, and the first is the one worth reading twice:
+ *
+ *  1. **A page starts at a heading.** Which heading is the reader's own choice,
+ *     H2 and above by default. It is what makes the glasses read as a document
+ *     rather than as a scroll: a section begins at the top of a panel, and its
+ *     heading then sits in the head band for every page of it, so looking up
+ *     always says where you are.
+ *  2. **A line is never split across a page.** A row that only exists because
+ *     the line before it ran out of room, the body of a fence, the rows of a
+ *     table, the first line under a heading: each moves whole.
+ *  3. **A page is cut by the firmware's own measure.** The lines are wrapped
+ *     here rather than by the container, so a page holds exactly the rows the
+ *     panel has and never one more, and paging is arithmetic rather than a
+ *     prediction about somebody else's text engine.
+ *
+ *  Every page carries `from` and `to`, where it begins and ends in the note. That
+ *  is what keeps a reader in place when the note is edited under them, what binds
+ *  the glasses to the phone's own scroll in both directions, and what the frame
+ *  drawn in the plugin is drawn around. */
+
+import { fit, fold, rightward, wrap } from './firmware'
+import { hashOf } from './hash'
+import { hangOf, type Line, markLines } from './mark'
+
+/** How the reader wants a note paged. Their settings, straight through. */
+export interface Paging {
+  /** A new page at every heading of this level or above. Two is "H2 and above",
+   *  which is the default; zero for a note that runs on without breaks. */
+  breakAt: number
+  /** How wide the column of line numbers is, in pixels, or zero for no numbers.
+   *
+   *  A width rather than a switch, because the numbers are a container of their
+   *  own and their column is the app's geometry, not the pager's; see `panel.ts`
+   *  for why they cannot live inside the body's own text. */
+  gutter: number
+  /** How wide the body container is, in pixels. */
+  inner: number
+  /** How many of the firmware's lines the body container holds. */
+  rows: number
+}
+
+/** One page of a note, ready for the bands of the panel. */
+export interface Page {
+  /** Counting from zero. */
+  index: number
+  /** Where in the note the page begins and ends, counted from the first byte of
+   *  the file with the front matter included. */
+  from: number
+  to: number
+  /** What the page is, in one short string. Two pages that hash alike are the
+   *  same page, which is how an edit that moves nothing sends nothing. */
+  hash: string
+  /** What the body container is given: at most `rows` lines, already wrapped. */
+  words: string
+  /** What the column of line numbers is given: one line for every line of
+   *  `words`, blank where a row is the continuation of the line above it. Empty
+   *  when the reader asked for no numbers. */
+  numbers: string
+  /** The heading this page sits under, set for the head band. Empty at the top of
+   *  a note that begins without one, and the panel then says the note's name. */
+  section: string
+  /** What the rule under the head is made of: heavy under a first level heading,
+   *  light under anything else. */
+  rule: string
+  /** The first and the last line of the note this page shows. */
+  firstLine: number
+  lastLine: number
+}
+
+/** The glyphs a head rule is drawn with, by the level of the heading over it. */
+const HEAVY = '═'
+const LIGHT = '─'
+
+/** A line, and the rows it takes. Wrapped once for the whole note, so the paging
+ *  below is arithmetic and a note is measured once however many pages it makes. */
+interface Wrapped {
+  line: Line
+  rows: readonly string[]
+}
+
+/** A page being filled. */
+interface Taking {
+  taken: Wrapped[]
+  rows: number
+  section: string
+  rule: string
+}
+
+function empty(section: string, rule: string): Taking {
+  return { taken: [], rows: 0, section, rule }
+}
+
+/** A note as pages, cut where the firmware will cut them. */
+export function pagesOf(source: string, paging: Paging): Page[] {
+  const marked = markLines(source, { inner: paging.inner })
+  if (!marked.length) return []
+
+  const inner = paging.inner
+  const pages: Page[] = []
+  let taking = empty('', LIGHT)
+
+  const cut = (to: number) => {
+    if (!taking.taken.length) return
+
+    const first = taking.taken[0]?.line
+    const shown: string[] = []
+    const counted: string[] = []
+    for (const { line, rows } of taking.taken) {
+      for (const [at, row] of rows.entries()) {
+        shown.push(row)
+        // Only the first row of a line carries its number: the rest are the same
+        // line of the note, and saying so twice is a lie about where you are.
+        if (paging.gutter > 0) {
+          counted.push(
+            at === 0 ? rightward(fit(String(line.at), paging.gutter), paging.gutter) : '',
+          )
+        }
+      }
+    }
+
+    const words = shown.join('\n')
+    const numbers = counted.join('\n')
+    pages.push({
+      index: pages.length,
+      from: first?.from ?? 0,
+      to,
+      hash: hashOf(`${taking.section}|${taking.rule}|${numbers}|${words}`),
+      words,
+      numbers,
+      section: taking.section,
+      rule: taking.rule,
+      firstLine: first?.at ?? 1,
+      lastLine: taking.taken.at(-1)?.line.at ?? 1,
+    })
+  }
+
+  /** The run at the end of what has been taken that has to move with `coming`.
+   *
+   *  Nothing, unless `coming` is glued to the line above it - and then the whole
+   *  run it belongs to: every trailing glued line, and the line they all hang off.
+   *  That last one is the point. A fence whose opening line is at the foot of a
+   *  page and whose body is at the head of the next is exactly the break this
+   *  rule exists to prevent, and the opening line is not itself glued to
+   *  anything. */
+  const runFor = (coming: Line): Wrapped[] => {
+    if (!coming.glued) return []
+
+    let back = 0
+    while (back < taking.taken.length && taking.taken.at(-1 - back)?.line.glued === true) back++
+    // The whole page is one run - a fence longer than the panel, say. Something
+    // has to give, and the foot of the page is the least bad place for it. Moving
+    // the run would move the whole page and make no progress at all.
+    if (back + 1 >= taking.taken.length) return []
+
+    return taking.taken.splice(-(back + 1))
+  }
+
+  for (const line of marked) {
+    // A heading at or above the reader's level opens a page of its own and goes
+    // into the head band rather than into the body.
+    if (paging.breakAt > 0 && line.level > 0 && line.level <= paging.breakAt) {
+      cut(line.from)
+      taking = empty(fold(line.text), line.level === 1 ? HEAVY : LIGHT)
+      continue
+    }
+
+    // The underline `mark.ts` drew under that heading is the head band's own
+    // rule, so it is not drawn a second time. Told apart by `under` rather than
+    // by its shape: a note may perfectly well have a rule of its own there.
+    if (taking.taken.length === 0 && taking.section !== '' && line.under) continue
+
+    const rows = wrap(line.text, inner, hangOf(line.text))
+    if (taking.rows > 0 && taking.rows + rows.length > paging.rows) {
+      const moving = runFor(line)
+      for (const one of moving) taking.rows -= one.rows.length
+
+      cut(moving[0]?.line.from ?? line.from)
+      taking = empty(taking.section, taking.rule)
+      for (const one of moving) {
+        taking.taken.push(one)
+        taking.rows += one.rows.length
+      }
+    }
+
+    taking.taken.push({ line, rows })
+    taking.rows += rows.length
+  }
+
+  cut(source.length)
+  return pages
+}
+
+/** Which page an offset in the note falls on.
+ *
+ *  What keeps a reader in place when a note is rewritten under them, and what the
+ *  phone's own scroll position is turned into. */
+export function pageAt(pages: readonly Page[], offset: number): number {
+  for (const page of pages) {
+    if (offset < page.to) return page.index
+  }
+
+  return Math.max(0, pages.length - 1)
+}
+
+/** Which page a line of the note is on, for "go to line". */
+export function pageOfLine(pages: readonly Page[], line: number): number {
+  for (const page of pages) {
+    if (line <= page.lastLine) return page.index
+  }
+
+  return Math.max(0, pages.length - 1)
+}

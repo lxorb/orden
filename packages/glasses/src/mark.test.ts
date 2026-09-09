@@ -1,0 +1,422 @@
+import { describe, expect, test } from 'vitest'
+import { draws, fold, width } from './firmware'
+import { markLines } from './mark'
+import { BODY_INNER } from './panel'
+
+const lines = (source: string, inner = BODY_INNER) =>
+  markLines(source, { inner }).map((one) => one.text)
+
+const one = (source: string) => lines(source).join('\n')
+
+/** Rule one, and it is Emil's: a mark that only styles words is dropped, and a
+ *  mark that says what something is, is kept.
+ *
+ *  "It's about understanding the markdown. And for that it's not necessary to
+ *  know whether text is bold or not. But it is necessary to know whether
+ *  something is code or not." */
+describe('marks that only style words', () => {
+  test.each([
+    ['bold', 'a **bold** word', 'a bold word'],
+    ['italic', 'an *italic* word', 'an italic word'],
+    ['both', 'a ***loud*** word', 'a loud word'],
+    ['underscores', 'an _italic_ word', 'an italic word'],
+    ['struck through', 'a ~~struck~~ word', 'a struck word'],
+    ['highlighted', 'a ==lit== word', 'a lit word'],
+    ['bold inside italic', '*a **very** loud word*', 'a very loud word'],
+  ])('%s is its words and nothing else', (_what, source, want) => {
+    expect(one(source)).toBe(want)
+  })
+
+  test('leaves no asterisk, underscore or tilde behind', () => {
+    const set = one('**bold** *italic* ~~struck~~ ==lit== ^up^ ~down~')
+
+    expect(set).not.toMatch(/[*_~=]/)
+  })
+})
+
+/** Rule one the other way round: what a reader cannot work out for themselves is
+ *  kept. On a panel with one font, code and prose look exactly alike. */
+describe('marks that say what something is', () => {
+  test('inline code keeps its ticks', () => {
+    // Folded, because the firmware has no backtick; see firmware.ts.
+    expect(one('call `readNote()` first')).toBe(fold('call `readNote()` first'))
+    expect(one('call `readNote()` first')).toContain('‘readNote()‘')
+  })
+
+  test('a fence keeps the lines it was written between', () => {
+    expect(one('```ts\nconst a = 1\n```\n')).toBe(['‘‘‘ts', 'const a = 1', '‘‘‘'].join('\n'))
+  })
+
+  test('a fence with no language still says it is one', () => {
+    expect(lines('```\nplain\n```\n')).toEqual(['‘‘‘', 'plain', '‘‘‘'])
+  })
+
+  test('a fence keeps its code exactly, indentation and all', () => {
+    const set = lines('```py\ndef go():\n    return 1\n```\n')
+
+    expect(set[2]).toBe('    return 1')
+  })
+
+  test('a tab in a fence becomes the spaces it stood for', () => {
+    // The firmware has no glyph for a tab at all, so this was a fence with no
+    // indentation in it.
+    expect(lines('```go\nfunc a() {\n\treturn 1\n}\n```\n')[2]).toBe('  return 1')
+  })
+
+  test('maths keeps its dollars, since its source is what there is to read', () => {
+    expect(one('the value $E = mc^2$ here')).toBe('the value $E = mc^2$ here')
+    expect(lines('$$\nE = mc^2\n$$\n')).toEqual(['$$', 'E = mc^2', '$$'])
+  })
+})
+
+/** Headings, in a font with one size. Capitals throughout, and the level said by
+ *  a rule under the first two and a chevron on the last three. */
+describe('a heading', () => {
+  test('is set in capitals, with a heavy rule under a first level one', () => {
+    const set = lines('# The title\n\nWords.\n')
+
+    expect(set[0]).toBe('THE TITLE')
+    expect(set[1]).toBe('═'.repeat(28))
+    expect(width(set[1] ?? '')).toBe(BODY_INNER)
+  })
+
+  test('has a light rule under a second level one', () => {
+    expect(lines('## A section\n')[1]).toBe('─'.repeat(28))
+  })
+
+  test('is capitals alone at the third level', () => {
+    expect(lines('### Deeper\n')).toEqual(['DEEPER'])
+  })
+
+  test('carries a chevron for each level past the third', () => {
+    expect(lines('#### Four\n')).toEqual(['› FOUR'])
+    expect(lines('##### Five\n')).toEqual(['›› FIVE'])
+    expect(lines('###### Six\n')).toEqual(['››› SIX'])
+  })
+
+  test('says which level it is, so a page can start at one', () => {
+    const marked = markLines('# One\n\n## Two\n\n### Three\n', { inner: BODY_INNER })
+
+    expect(marked.filter((line) => line.level > 0).map((line) => line.level)).toEqual([1, 2, 3])
+  })
+
+  test('marks its own underline as furniture rather than as a line of the note', () => {
+    const marked = markLines('## A section\n', { inner: BODY_INNER })
+
+    expect(marked.map((line) => line.under)).toEqual([false, true])
+  })
+
+  test('keeps a rule the author wrote apart from an underline', () => {
+    const marked = markLines('## A section\n\n---\n', { inner: BODY_INNER })
+
+    // Two rules that look alike: the heading's, and the author's own.
+    expect(marked.map((line) => line.under)).toEqual([false, true, false])
+  })
+
+  test('drops the marks inside it too', () => {
+    expect(lines('### A *loud* `code` word\n')).toEqual(['A LOUD ‘CODE‘ WORD'])
+  })
+})
+
+/** Lists, which is where the firmware's missing glyphs bit hardest: it has no
+ *  ballot box and no check mark at all. */
+describe('a list', () => {
+  test('marks a bullet, and a deeper one differently', () => {
+    expect(lines('- one\n- two\n')).toEqual(['• one', '• two'])
+    expect(lines('- one\n  - inside\n')).toEqual(['• one', '   · inside'])
+    expect(lines('- one\n  - two\n    - three\n')).toEqual(['• one', '   · two', '      - three'])
+  })
+
+  test('numbers an ordered list as it was numbered', () => {
+    expect(lines('1. one\n2. two\n')).toEqual(['1. one', '2. two'])
+    expect(lines('7. seven\n8. eight\n')).toEqual(['7. seven', '8. eight'])
+  })
+
+  test('draws a task as a box, filled or not', () => {
+    expect(lines('- [ ] to do\n- [x] done\n')).toEqual(['□ to do', '■ done'])
+  })
+
+  test('never draws a task with a glyph the font lacks', () => {
+    for (const letter of one('- [ ] a\n- [x] b\n')) {
+      if (letter === '\n') continue
+      expect(draws(letter.codePointAt(0) ?? 0), letter).toBe(true)
+    }
+  })
+
+  test('sets what follows an item under the words of the item', () => {
+    expect(lines('- one\n\n  more about one\n')).toEqual(['• one', '   more about one'])
+  })
+})
+
+/** Quotes and callouts. */
+describe('a quote', () => {
+  test('carries a bar down its left', () => {
+    expect(lines('> quoted\n')).toEqual(['│ quoted'])
+  })
+
+  test('carries one bar for each level', () => {
+    expect(lines('> one\n>\n> > two\n')).toEqual(['│ one', '│ │ two'])
+  })
+
+  test('says what kind of callout it is, in capitals', () => {
+    expect(lines('> [!warning]\n> Mind the gap.\n')).toEqual(['│ WARNING', '│ Mind the gap.'])
+  })
+
+  test('drops the callout marker itself', () => {
+    expect(one('> [!note]\n> Something.\n')).not.toContain('[!note]')
+  })
+})
+
+/** Everything else a note can hold. Nothing here is allowed to disappear. */
+describe('nothing in a note is dropped', () => {
+  test('a table becomes columns that line up', () => {
+    const set = lines('| Kind | Size |\n| --- | ---: |\n| Image | 288 |\n| Text | 27 |\n')
+
+    expect(set).toHaveLength(4)
+    expect(set[1]).toMatch(/^─+$/)
+    expect(set[0]).toContain('Kind')
+    expect(set[2]).toContain('Image')
+    expect(set[3]).toContain('27')
+    // The head and the rows start at the same pixel, which is what "lines up"
+    // means when the font is proportional.
+    expect(width(set[0]?.split(/ {2,}/)[0] ?? '')).toBeLessThanOrEqual(width('Image  '))
+  })
+
+  test('a right aligned column is set to the right', () => {
+    const set = lines('| a | n |\n| --- | ---: |\n| x | 1 |\n| y | 1000 |\n')
+
+    // Both numbers end at the same pixel.
+    expect(width(set[2] ?? '')).toBeCloseTo(width(set[3] ?? ''), -1)
+  })
+
+  test('a table too wide for the panel is fitted, not dropped', () => {
+    const wide = `| ${'a'.repeat(80)} | ${'b'.repeat(80)} |\n| --- | --- |\n| ${'c'.repeat(80)} | ${'d'.repeat(80)} |\n`
+    const set = lines(wide)
+
+    expect(set).toHaveLength(3)
+    for (const row of set) expect(width(row)).toBeLessThanOrEqual(BODY_INNER)
+    expect(set[2]).toContain('…')
+  })
+
+  test('a rule reaches the whole width', () => {
+    expect(width(lines('---\n')[0] ?? '')).toBe(BODY_INNER)
+  })
+
+  test('a picture is what it was described as, with a mark to say it was one', () => {
+    expect(lines('![A diagram](sketch.png)\n')).toEqual(['▤ A diagram'])
+    // Nothing to describe it: its address, so the line is not a gap.
+    expect(lines('![](sketch.png)\n')).toEqual(['▤ sketch.png'])
+  })
+
+  test('a picture in the middle of a sentence is its words', () => {
+    expect(one('before ![a mark](m.png) after')).toBe('before a mark after')
+  })
+
+  test('a link is the words it shows', () => {
+    expect(one('see [the docs](https://example.com)')).toBe('see the docs')
+  })
+
+  test('a link with nothing to show is its own address', () => {
+    expect(one('see <https://example.com>')).toBe('see https://example.com')
+  })
+
+  test('a wikilink is the note it names', () => {
+    expect(one('see [[Another note]]')).toBe('see Another note')
+    expect(one('see [[Another note|this way]]')).toBe('see this way')
+  })
+
+  test('an embed reads as the note it names', () => {
+    expect(one('![[Another note]]')).toBe('Another note')
+  })
+
+  test('a footnote is a superscript, and its note is set under the same mark', () => {
+    const set = lines('A claim.[^1]\n\n[^1]: The evidence.\n')
+
+    expect(set[0]).toBe('A claim.¹')
+    expect(set).toContain('¹')
+    expect(set.join('\n')).toContain('The evidence.')
+  })
+
+  test('a footnote named in words keeps its name', () => {
+    expect(one('A claim.[^why]')).toBe('A claim.[^why]')
+  })
+
+  test('a superscript of digits is raised, and anything else is not', () => {
+    expect(one('x^2^')).toBe('x²')
+    expect(one('x^n^')).toBe('xn')
+    expect(one('H~2~O')).toBe('H₂O')
+  })
+
+  test('a definition list keeps the colon that ties it together', () => {
+    expect(lines('Term\n: what it means\n')).toEqual(['Term', '   : what it means'])
+  })
+
+  test('an emoji written as a name is the emoji the font can draw', () => {
+    // The firmware's emoji font has this one.
+    expect(one('smile :grinning:')).toBe('smile 😀')
+    // And not this one, so it comes back as the name it was written with rather
+    // than as a hole in the line. See `fold` in firmware.ts.
+    expect(one('ship it :rocket:')).toBe('ship it :rocket:')
+  })
+
+  test('html is the words inside it, without the tags', () => {
+    expect(one('a <b>bold</b> word')).toBe('a bold word')
+    expect(one('<div>block</div>')).toBe('block')
+  })
+
+  test('a hard break is two lines, the second under the words of the first', () => {
+    // Three spaces, which is the fourteen pixels the bullet and its space took,
+    // to the nearest five pixel space.
+    expect(lines('- one  \n  two\n')).toEqual(['• one', '   two'])
+    expect(lines('one  \ntwo\n')).toEqual(['one', 'two'])
+  })
+
+  test('front matter is not set, as it is not on a page either', () => {
+    expect(one('---\ntitle: A note\n---\n\nWords.\n')).toBe('Words.')
+  })
+
+  test('leaves nothing of a note unaccounted for', () => {
+    const note = [
+      '# Everything',
+      '',
+      'Prose with **bold**, *italic*, `code`, $x^2$ and a [link](https://a.b).',
+      '',
+      '## A list',
+      '',
+      '- one',
+      '- [ ] a task',
+      '- [x] a done task',
+      '',
+      '1. first',
+      '',
+      '> quoted',
+      '',
+      '> [!tip]',
+      '> a callout',
+      '',
+      '```ts',
+      'const a = 1',
+      '```',
+      '',
+      '| a | b |',
+      '| --- | --- |',
+      '| 1 | 2 |',
+      '',
+      '$$',
+      'E = mc^2',
+      '$$',
+      '',
+      '![a picture](p.png)',
+      '',
+      'A claim.[^1]',
+      '',
+      '---',
+      '',
+      'Term',
+      ': meaning',
+      '',
+      '[^1]: because',
+      '',
+    ].join('\n')
+
+    const set = one(note)
+
+    // Every construct left a mark, and every character of it is drawable.
+    for (const want of [
+      'EVERYTHING',
+      'bold',
+      'italic',
+      '‘code‘',
+      '$x^2$',
+      'link',
+      'A LIST',
+      '• one',
+      '□ a task',
+      '■ a done task',
+      '1. first',
+      '│ quoted',
+      '│ TIP',
+      '│ a callout',
+      '‘‘‘ts',
+      'const a = 1',
+      '$$',
+      'E = mc^2',
+      '▤ a picture',
+      'A claim.¹',
+      ': meaning',
+      'because',
+    ]) {
+      expect(set, want).toContain(want)
+    }
+
+    for (const letter of set) {
+      if (letter === '\n') continue
+      expect(draws(letter.codePointAt(0) ?? 0), JSON.stringify(letter)).toBe(true)
+    }
+  })
+})
+
+/** Where a line came from, which is what the position map, the scroll binding and
+ *  "go to line" all stand on. */
+describe('where a line came from', () => {
+  test('says which line of the note each one is', () => {
+    const marked = markLines('one\n\ntwo\n\nthree\n', { inner: BODY_INNER })
+
+    expect(marked.map((line) => line.at)).toEqual([1, 3, 5])
+  })
+
+  test('counts front matter, because a reader taken there means the file', () => {
+    const marked = markLines('---\na: b\n---\n\nwords\n', { inner: BODY_INNER })
+
+    expect(marked[0]?.at).toBe(5)
+  })
+
+  test('gives every line of a fence its own place in the file', () => {
+    const marked = markLines('```\nalpha\nbeta\n```\n', { inner: BODY_INNER })
+
+    expect(marked.map((line) => line.at)).toEqual([1, 2, 3, 4])
+  })
+
+  test('only ever moves forwards through the note', () => {
+    const marked = markLines(
+      '# One\n\ntext\n\n- a\n- b\n\n> q\n\n```\nc\n```\n\n| h |\n| --- |\n| r |\n',
+      { inner: BODY_INNER },
+    )
+
+    let last = -1
+    for (const line of marked) {
+      expect(line.from).toBeGreaterThanOrEqual(last)
+      last = line.from
+    }
+  })
+
+  test('glues what must not be parted from the line above it', () => {
+    const marked = markLines('```\nalpha\n```\n', { inner: BODY_INNER })
+
+    expect(marked.map((line) => line.glued)).toEqual([false, true, true])
+  })
+
+  test('glues a table to its head', () => {
+    const marked = markLines('| a |\n| --- |\n| 1 |\n| 2 |\n', { inner: BODY_INNER })
+
+    expect(marked.map((line) => line.glued)).toEqual([false, true, true, true])
+  })
+})
+
+/** How long it takes, because speed is the reason text mode exists. */
+describe('what it costs', () => {
+  test('marks a note of twenty thousand characters inside a frame', () => {
+    const note = Array.from(
+      { length: 200 },
+      (_one, at) =>
+        `## Section ${at}\n\nSome prose about section ${at}, long enough to wrap across the panel more than once.\n\n- a point\n- another\n`,
+    ).join('\n')
+
+    const at = performance.now()
+    const marked = markLines(note, { inner: BODY_INNER })
+    const took = performance.now() - at
+
+    expect(marked.length).toBeGreaterThan(800)
+    expect(took).toBeLessThan(120)
+  })
+})

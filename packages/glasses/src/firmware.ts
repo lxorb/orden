@@ -24,11 +24,8 @@
  *  can, so the reader sees a character rather than a silence. Nothing in a note
  *  is dropped, which is the whole promise of text mode. */
 
-import { getAdvW, getTextWidth, measureTextWrap } from '@evenrealities/pretext'
+import { getAdvW, getTextWidth } from '@evenrealities/pretext'
 import { which as emojiNamed } from 'node-emoji'
-
-/** The firmware's line, in pixels. Fixed, and not ours to choose. */
-export const LINE = 27
 
 /** Whether the firmware has a glyph for this codepoint.
  *
@@ -272,14 +269,164 @@ export function width(text: string): number {
   return getTextWidth(fold(text))
 }
 
-/** How many of the firmware's lines a string takes in a container this wide.
+/** Where the firmware may break a line: after a space, after a hyphen, and
+ *  between two CJK characters. The same three the LVGL shaping uses. */
+const CJK = /[ᄀ-ᇿ⺀-〿぀-ヿ㄰-㆏㐀-䶿一-鿿ꀀ-꓏가-힯豈-﫿︰-﹏＀-ﾟ]/
+
+/** A line broken into the pieces it may be broken between.
  *
- *  An empty string takes one: it is the space between two paragraphs and the
- *  container gives it a line like any other. `measureTextWrap` answers zero for
- *  it, which would let a page hold any number of blank lines and then overflow. */
-export function rows(text: string, inner: number): number {
-  if (text === '') return 1
-  return Math.max(1, measureTextWrap(fold(text), inner).lineCount)
+ *  A piece carries the spaces that follow it, so that breaking after it throws
+ *  those spaces away rather than starting the next line with them. */
+function pieces(text: string): string[] {
+  const out: string[] = []
+  let one = ''
+
+  for (const letter of text) {
+    if (letter === ' ') {
+      one += letter
+      continue
+    }
+
+    // A space has been seen and something else follows it: the piece ends.
+    if (one.endsWith(' ')) {
+      out.push(one)
+      one = ''
+    }
+
+    if (CJK.test(letter)) {
+      if (one) out.push(one)
+      out.push(letter)
+      one = ''
+      continue
+    }
+
+    one += letter
+    // A hyphen inside a word is a place the firmware will break, and the hyphen
+    // stays on the line above it.
+    if (letter === '-') {
+      out.push(one)
+      one = ''
+    }
+  }
+
+  if (one) out.push(one)
+  return out
+}
+
+/** A word too long for a whole line, cut where it runs out of room.
+ *
+ *  The firmware does the same: with nowhere to break it breaks anyway rather
+ *  than running off the edge of the glass. */
+function chop(word: string, inner: number): string[] {
+  const out: string[] = []
+  let line = ''
+
+  for (const letter of word) {
+    if (line !== '' && getTextWidth(line + letter) > inner) {
+      out.push(line)
+      line = ''
+    }
+    line += letter
+  }
+
+  if (line) out.push(line)
+  return out
+}
+
+function broken(text: string, inner: number, hang: string): string[] {
+  const whole = fold(text)
+  if (whole === '') return ['']
+  if (getTextWidth(whole) <= inner) return [whole]
+
+  const under = Math.max(SPACE, inner - getTextWidth(hang))
+  const out: string[] = []
+  let line = ''
+
+  const room = () => (out.length === 0 ? inner : under)
+  const push = () => {
+    // Trimmed, because a piece carries the spaces after it and a row that ends
+    // in one has a ragged right edge that is five pixels off from its
+    // neighbours.
+    const row = line.trimEnd()
+    out.push(out.length === 0 ? row : hang + row)
+    line = ''
+  }
+
+  for (const piece of pieces(whole)) {
+    const together = line + piece
+    if (line !== '' && getTextWidth(together.trimEnd()) > room()) push()
+
+    if (getTextWidth(piece.trimEnd()) > room()) {
+      // Longer than a whole row on its own. Every part but the last fills a row.
+      const parts = chop(piece.trimEnd(), room())
+      for (const part of parts.slice(0, -1)) {
+        line = part
+        push()
+      }
+      line = parts.at(-1) ?? ''
+      continue
+    }
+
+    line += piece
+  }
+
+  if (line.trimEnd() !== '' || out.length === 0) push()
+
+  return out
+}
+
+/** Lines already broken, by their text, the width they were broken to and what
+ *  they hang under.
+ *
+ *  A note is re-paged on every keystroke, and a keystroke changes one line of it.
+ *  Without this, every one of the other twelve hundred lines of a long note is
+ *  broken again for nothing, which is most of the cost of a keystroke; with it, a
+ *  re-page is the lexer and a few hundred map lookups. Cleared whole rather than
+ *  aged, because the notes it holds are the ones being read right now and a note
+ *  put down is a note whose lines will not be asked for again. */
+const already = new Map<string, readonly string[]>()
+const MOST_KEPT = 8000
+
+/** A line as the rows it takes, broken where the firmware would break it.
+ *
+ *  Broken here rather than left to the container, for three reasons. A page can
+ *  then hold exactly as many rows as the panel has, with nothing hanging off the
+ *  bottom. A row is a row, so paging is arithmetic rather than a prediction about
+ *  somebody else's text engine. And the rows after the first can be indented,
+ *  which is the whole difference between a wrapped list item that still reads as
+ *  one item and one whose second half has walked back to the margin.
+ *
+ *  `hang` goes in front of every row but the first, and its width comes out of
+ *  theirs.
+ *
+ *  The rows come back read only because they are shared: two callers asking the
+ *  same question are handed the same answer. */
+export function wrap(text: string, inner: number, hang = ''): readonly string[] {
+  // Neither the width nor the hang can hold a newline, so the three of them
+  // separated by one is one key and not another.
+  const key = `${String(inner)}\n${hang}\n${text}`
+  const known = already.get(key)
+  if (known) return known
+
+  // An explicit newline is a row of its own however narrow either half is: the
+  // container breaks on it, so a string that holds one is two rows.
+  const rows = text.includes('\n')
+    ? text.split('\n').flatMap((part) => broken(part, inner, hang))
+    : broken(text, inner, hang)
+
+  if (already.size >= MOST_KEPT) already.clear()
+  already.set(key, rows)
+
+  return rows
+}
+
+/** How many of the firmware's rows a line takes in a container this wide.
+ *
+ *  The same answer `wrap` gives, because it is `wrap` that asks: a page counted
+ *  one way and set another is a page with a line hanging off the bottom of it.
+ *  An empty line takes one row, which is the space between two paragraphs. */
+export function rows(text: string, inner: number, hang = ''): number {
+  return wrap(text, inner, hang).length
 }
 
 /** A string cut to fit a width, with an ellipsis where it was cut.

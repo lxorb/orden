@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { draws, fit, fold, LINE, rightward, rows, ruleOf, SPACE, TICK, width } from './firmware'
+import { draws, fit, fold, rightward, rows, ruleOf, SPACE, TICK, width } from './firmware'
+import { LINE } from './panel'
 
 /** What the firmware font has and has not, asserted rather than assumed.
  *
