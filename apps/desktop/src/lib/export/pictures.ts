@@ -62,16 +62,46 @@ export function suffixFor(mime: string): string {
   return SUFFIXES[mime] ?? 'png'
 }
 
-/** The file name part of a path or URL, without the query a URL may carry. */
+/** A media type this may write into a file, or null.
+ *
+ *  Two of them arrive from outside: the `Content-Type` a server sends back, and
+ *  whatever a `data:` URI in the note says. Both end up in an ePub's manifest
+ *  and in a `data:` URI inside an exported page, neither of which escapes what
+ *  it interpolates, so a type with a quote or an ampersand in it would break the
+ *  book or the page open. A media type is a token and a slash, and nothing here
+ *  wants one that is not. */
+const MEDIA_TYPE = /^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*\/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$/
+
+function declaredMime(value: string | null | undefined): string | null {
+  const type = value?.split(';')[0]?.trim() ?? ''
+  return type.startsWith('image/') && MEDIA_TYPE.test(type) ? type : null
+}
+
+/** The names Windows keeps for its own devices, extension and all: `NUL.png` is
+ *  the null device and a picture written to it goes nowhere, silently. */
+const RESERVED = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i
+
+/** The file name part of a path or URL, without the query a URL may carry.
+ *
+ *  Decoded before the separators are counted, not after: `a%2F..%2Fb.png` names
+ *  one file, and reading it as `a/../b.png` would let a note choose where a
+ *  picture lands inside a package - or, on a desktop, beside the note on disk. */
 function baseName(src: string): string {
   const path = src.split(/[?#]/)[0] ?? src
-  const last = path.split(/[\\/]/).pop() ?? ''
-  try {
-    return decodeURIComponent(last)
-  } catch {
-    // Not valid encoding, so it is already the name it stands for.
-    return last
-  }
+
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(path)
+    } catch {
+      // Not valid encoding, so it is already the name it stands for.
+      return path
+    }
+  })()
+
+  // A colon would name an NTFS stream, and a name that is only dots names a
+  // folder rather than a file; neither is a picture, so neither survives.
+  const last = decoded.split(/[\\/:]/).pop() ?? ''
+  return /^\.*$/.test(last) ? '' : last
 }
 
 /** Bytes off the network. The browser build and the app both go out over
@@ -84,8 +114,7 @@ async function remoteBytes(src: string): Promise<{ mime: string; bytes: Uint8Arr
   const buffer = await response.arrayBuffer().catch(() => null)
   if (!buffer) return null
 
-  const declared = response.headers.get('content-type')?.split(';')[0]?.trim()
-  const mime = declared?.startsWith('image/') ? declared : mimeOf(src)
+  const mime = declaredMime(response.headers.get('content-type')) ?? mimeOf(src)
 
   return { mime, bytes: new Uint8Array(buffer) }
 }
@@ -105,7 +134,10 @@ export async function readPictures(
   const read = await Promise.all(
     sources.map(async (src): Promise<Omit<Picture, 'name'> | null> => {
       const inline = parseDataUri(src)
-      if (inline) return { src, ...inline }
+      // The type a note wrote is words from the note, and it is written into an
+      // ePub's manifest and into the `data:` URI of an exported page; see
+      // `declaredMime`.
+      if (inline) return { src, ...inline, mime: declaredMime(inline.mime) ?? mimeOf(src) }
 
       if (isRemote(src)) {
         const fetched = await remoteBytes(src)
@@ -125,7 +157,8 @@ export async function readPictures(
     .filter((one): one is Omit<Picture, 'name'> => one !== null)
     .map((one) => {
       const named = baseName(one.src)
-      const wanted = /\.[a-z0-9]+$/i.test(named) ? named : `picture.${suffixFor(one.mime)}`
+      const usable = /\.[a-z0-9]+$/i.test(named) && !RESERVED.test(named)
+      const wanted = usable ? named : `picture.${suffixFor(one.mime)}`
       return { ...one, name: claimName(wanted, taken) }
     })
 }

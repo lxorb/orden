@@ -143,9 +143,15 @@ function marked(span: Span, words: string): string {
 }
 
 /** The field a reader turns into something clickable. The words sit inside the
- *  result group as well, because that is all an older reader shows. */
+ *  result group as well, because that is all an older reader shows.
+ *
+ *  The address is quoted and RTF has no escape for a quote inside a field's
+ *  instruction, so one written in the note would end the address early and leave
+ *  whatever followed it reading as switches to the field. A URL spells a quote
+ *  `%22` anyway, so that is what it becomes. */
 function hyperlink(href: string, words: string): string {
-  return `{\\field{\\*\\fldinst{HYPERLINK "${escaped(href)}"}}{\\fldrslt{\\cf${LINK}\\ul ${words}}}}`
+  const address = escaped(href.replace(/"/g, '%22'))
+  return `{\\field{\\*\\fldinst{HYPERLINK "${address}"}}{\\fldrslt{\\cf${LINK}\\ul ${words}}}}`
 }
 
 /** The same spans, bold. A term and a callout's label are bold because of where

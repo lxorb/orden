@@ -24,7 +24,7 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-const { writeFile } = await import('./save')
+const { insideFolder, writeFile } = await import('./save')
 
 beforeEach(() => {
   calls.length = 0
@@ -67,5 +67,25 @@ describe('writing a file', () => {
   test('an empty file is still a file', async () => {
     await writeFile('C:/empty.txt', '')
     expect(calls).toEqual([{ command: 'write_note', args: { path: 'C:/empty.txt', content: '' } }])
+  })
+})
+
+describe('a path inside a package', () => {
+  test('is a file under the folder it is joined onto', () => {
+    expect(insideFolder('text.md')).toBe(true)
+    expect(insideFolder('assets/one.png')).toBe(true)
+    expect(insideFolder('assets/a..b.png')).toBe(true)
+  })
+
+  test('is not one that climbs out of it', () => {
+    expect(insideFolder('../escaped.png')).toBe(false)
+    expect(insideFolder('assets/../../escaped.png')).toBe(false)
+    expect(insideFolder('assets\\..\\..\\escaped.png')).toBe(false)
+  })
+
+  test('is not an absolute one either', () => {
+    expect(insideFolder('/etc/passwd')).toBe(false)
+    expect(insideFolder('C:/Windows/System32/x.dll')).toBe(false)
+    expect(insideFolder('\\\\server\\share\\x')).toBe(false)
   })
 })

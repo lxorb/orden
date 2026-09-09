@@ -521,6 +521,29 @@ describe('the pictures', () => {
     const missing = await openBook(await toEpub({ ...BASE, pictures: [] }))
     expect(missing.sections[0]).toContain('src="assets/one.png"')
   })
+
+  test('stay inside the book however they are named', async () => {
+    const escaping = await openBook(
+      await toEpub({
+        ...BASE,
+        pictures: [{ ...PICTURES[0], name: '../../escaped.png' } as Picture],
+      }),
+    )
+
+    for (const name of escaping.names) expect(name).not.toContain('..')
+  })
+
+  test('cannot break the manifest open with the type they claim', async () => {
+    const hostile = await openBook(
+      await toEpub({
+        ...BASE,
+        pictures: [{ ...PICTURES[0], mime: 'image/png" properties="nav' } as Picture],
+      }),
+    )
+
+    expect(malformed(hostile.opf)).toBe(null)
+    expect(hostile.opf).not.toContain('media-type="image/png" properties="nav"')
+  })
 })
 
 describe('every part of the book', () => {

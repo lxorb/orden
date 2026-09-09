@@ -334,6 +334,26 @@ describe('runs', () => {
     expect(RTF).toContain('{\\fldrslt{\\cf3\\ul link}}}')
   })
 
+  test('a quote in an address cannot end the field it stands in', () => {
+    const doc: Doc = {
+      title: 'Note',
+      named: false,
+      author: null,
+      lang: 'en',
+      date: null,
+      notes: [],
+      blocks: [
+        {
+          kind: 'paragraph',
+          spans: [{ text: 'link', href: 'https://nib.dev/a" \\l "x' }],
+        },
+      ],
+    }
+
+    const out = toRtf(doc, [])
+    expect(out).toContain('HYPERLINK "https://nib.dev/a%22 \\\\l %22x"')
+  })
+
   test('turns a line break inside a paragraph into one', () => {
     expect(RTF).toContain(', a\\line ')
   })

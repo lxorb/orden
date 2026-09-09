@@ -101,6 +101,18 @@ export async function writeFile(path: string, body: string | Uint8Array): Promis
   await invoke('write_bytes', { path, base64: toBase64(body) })
 }
 
+/** Whether a path out of a payload names one file under the folder it is joined
+ *  onto, rather than a way out of it.
+ *
+ *  A package's paths are partly the note's own words - a picture is called after
+ *  the `src` it was written with - so this is the last place that can tell a
+ *  picture from a way up the disk. The names are cleaned where they are made; see
+ *  `baseName` in pictures.ts. */
+export function insideFolder(path: string): boolean {
+  if (/^(?:[A-Za-z]:|[\\/])/.test(path)) return false
+  return !path.split(/[\\/]/).includes('..')
+}
+
 async function writePayload(target: string, payload: Payload): Promise<void> {
   if ('files' in payload) {
     // Where they go: inside the target when it names a folder, beside it when it
@@ -108,7 +120,9 @@ async function writePayload(target: string, payload: Payload): Promise<void> {
     // they share a folder and two writes racing to create it is a race for
     // nothing.
     const root = payload.folder ? target : folderOf(target)
-    for (const file of payload.files) await writeFile(joinPath(root, file.path), file.body)
+    for (const file of payload.files) {
+      if (insideFolder(file.path)) await writeFile(joinPath(root, file.path), file.body)
+    }
     return
   }
 

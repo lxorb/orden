@@ -690,7 +690,10 @@ function packageDocument(
       const properties = [item.nav ? 'nav' : '', item.svg ? 'svg' : ''].filter(Boolean).join(' ')
       const declared = properties ? ` properties="${properties}"` : ''
 
-      return `<item id="${item.id}" href="${item.href}" media-type="${item.type}"${declared} />`
+      // The type is a picture's own: a `data:` URI in the note names it, and so
+      // does the server a remote picture came from. Everything else here is this
+      // file's own writing.
+      return `<item id="${item.id}" href="${item.href}" media-type="${escaped(item.type, true)}"${declared} />`
     })
     .join('\n')
 

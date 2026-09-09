@@ -186,6 +186,42 @@ describe('naming the pictures inside a package', () => {
     expect(read[0]?.name).toBe('picture.jpg')
   })
 
+  test('a name that encodes a separator stays one name', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve(new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } })),
+    )
+
+    const read = await readPictures(['https://evil.example.com/a%2F..%2F..%2Fevil.png'])
+
+    expect(read[0]?.name).not.toContain('/')
+    expect(read[0]?.name).not.toContain('..')
+  })
+
+  test('a name that is nothing but separators still gets one', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve(new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } })),
+    )
+
+    const read = await readPictures(['https://evil.example.com/%2E%2E%2F'])
+    expect(read[0]?.name).toBe('picture.png')
+  })
+
+  test('a declared type that is not a plain media type is not trusted', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve(
+        new Response(PNG, { status: 200, headers: { 'content-type': 'image/png" onerror="x' } }),
+      ),
+    )
+
+    const read = await readPictures(['https://evil.example.com/a.png'])
+    expect(read[0]?.mime).toBe('image/png')
+  })
+
+  test('a data URI cannot name a type that would break the file it goes into', async () => {
+    const read = await readPictures([`data:image/png" onerror="x;base64,${toBase64(PNG)}`])
+    expect(read[0]?.mime).toBe('image/png')
+  })
+
   test('keeps the order it was asked in, minus what it could not read', async () => {
     vi.stubGlobal('fetch', () => Promise.reject(new Error('offline')))
 
