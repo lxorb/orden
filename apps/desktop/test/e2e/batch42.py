@@ -47,6 +47,9 @@ DESKTOP_AGENT = (
 DEVICES = [
     ("phone", 390, 844, PHONE_AGENT, True),
     ("tablet", 834, 1194, TABLET_AGENT, True),
+    # On its side a tablet docks the file list beside the note, so the drawer's
+    # own sidebar button is not there and the bar's is the only one.
+    ("tablet-wide", 1194, 834, TABLET_AGENT, True),
     ("desktop", 1440, 900, DESKTOP_AGENT, False),
     # The tick in the browser: the phone's screen with the desktop's user agent
     # and the wide viewport it comes with.
