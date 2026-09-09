@@ -230,9 +230,9 @@ Elevation follows the same three:
 | Level | Shadow | Border | What |
 | --- | --- | --- | --- |
 | 0 | none | none | in a panel - surfaces only |
-| 1 | `--shadow-sm` | none | raised out of a control it sits in |
-| 2 | `--shadow-md` | `--line-strong` | floating: menus, bars |
-| 3 | `--shadow-lg` | `--line-strong` | modal: palette, sheet, a lifted space |
+| 1 | `--shadow-sm` | none | raised out of a control it sits in: the chosen half of a segmented control, the tab you are on |
+| 2 | `--shadow-md` | `--line-strong` | a small bar over the text: the format bar, a PDF's two actions, the name beside the rail |
+| 3 | `--shadow-lg` | `--line-strong` | a layer over the app: a menu, the palette, a sheet, a space lifted to be moved |
 
 A shadow above zero always comes with a hairline border, and nothing at zero has
 both a border and a background.
