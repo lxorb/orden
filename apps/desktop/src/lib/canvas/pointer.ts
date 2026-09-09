@@ -62,6 +62,10 @@ export interface Down {
    *  screen arithmetic; everything else is plane arithmetic. */
   at: Point
   screen: Point
+  /** When it landed, from the event. Two fingers a moment apart are a pinch and
+   *  two fingers a second apart are a hand settling on the page, and that is the
+   *  only thing in here that needs a clock. */
+  time: number
   /** The mouse button, or 0 for a pen and a finger. */
   button: number
   /** Shift, and the "as well as" key, which is Ctrl or Cmd. */
@@ -87,9 +91,30 @@ interface Move {
   hit: Hit
 }
 
+/** A contact that turns out to be a pen after all, or a pen whose button was not
+ *  down yet when it landed.
+ *
+ *  Samsung's S Pen reports the first event of a contact as a finger on some
+ *  devices, and a barrel button held as the nib touches down is sometimes only in
+ *  the second event. Either way the surface says so as soon as it knows, and a
+ *  gesture that has not got anywhere yet is taken back and begun again as the
+ *  pen's own. Without it the first press after picking the tablet up pans the
+ *  plane instead of drawing on it. */
+interface Penned {
+  kind: 'penned'
+  id: number
+  at: Point
+  /** The first point of the stroke it should have been drawing. */
+  sample: InkPoint
+  /** Whether the pen's button is down now, which rubs out. */
+  eraser: boolean
+  hit: Hit
+}
+
 export type Input =
   | Down
   | Move
+  | Penned
   | { kind: 'up'; id: number; at: Point; screen: Point; hit: Hit }
   | { kind: 'cancel'; id: number }
   | { kind: 'space'; down: boolean }
@@ -147,15 +172,30 @@ type Gesture =
   | { kind: 'shape'; tool: Shape; from: Point; to: Point }
   | { kind: 'draw'; stroke: PendingStroke; id: number }
   | { kind: 'erase'; whole: boolean; hit: string[]; id: number }
-  | { kind: 'lasso'; points: Point[] }
+  /** A loop drawn by hand, or a box pulled out. Either way it is the ring it
+   *  caught things with, so what draws it and what reads it know one shape. */
+  | { kind: 'lasso'; from: Point; points: Point[]; box: boolean }
   | { kind: 'ink'; how: 'move' | HandleId | 'turn'; box: Box; from: Point }
+
+/** The pointer a gesture belongs to.
+ *
+ *  A palm coming off the glass must not end the stroke the pen is still drawing,
+ *  and a second finger lifting must not end a pan the first is still driving, so
+ *  the gesture knows whose it is. It also knows what kind of pointer that is,
+ *  where it last was on screen, so a second finger pinches from wherever the
+ *  first one has got to, and when it began, so a stroke a moment old can be given
+ *  up for a pinch and an older one cannot. */
+export interface Driver {
+  id: number
+  kind: PointerKind
+  screen: Point
+  since: number
+}
 
 export interface Machine {
   gesture: Gesture | null
-  /** Which pointer the gesture belongs to. A palm coming off the glass must not
-   *  end the stroke the pen is still drawing, and a second finger lifting must
-   *  not end a pan the first is still driving. */
-  driving: number | null
+  /** Whose gesture it is. */
+  driver: Driver | null
   /** Space held, which turns any drag into a pan. */
   spacing: boolean
   /** Whether a pen is on the glass. Every finger is ignored while it is, which
@@ -170,12 +210,23 @@ export interface Machine {
 }
 
 export function start(): Machine {
-  return { gesture: null, driving: null, spacing: false, penDown: false, spare: [], hovered: null }
+  return { gesture: null, driver: null, spacing: false, penDown: false, spare: [], hovered: null }
 }
 
 /** How far a pointer may travel and still count as a press rather than a drag,
  *  in plane units at one to one. */
 const SLOP = 3
+
+/** How soon after a gesture began a second finger is the plane rather than a palm,
+ *  in milliseconds.
+ *
+ *  Two fingers mean the page, in every tool: whatever the first one had started,
+ *  the second one takes over as a pan and a pinch. The only question is what
+ *  happens to ink the first finger had already laid down, and the answer every
+ *  drawing app gives is that a stroke a moment old is given up for the pinch and
+ *  an older one is not: a hand settling on the page halfway through a long line
+ *  must not take the line with it. */
+const TWO_FINGERS = 250
 
 export interface Step {
   machine: Machine
@@ -198,6 +249,11 @@ export interface Context {
   /** The eraser as the bar has it set: how wide it is on screen, and whether it
    *  takes a whole stroke rather than the part under it. */
   eraser: { whole: boolean; size: number }
+  /** Whether the lasso is a box pulled out rather than a loop drawn by hand. */
+  lassoBox: boolean
+  /** Whether a stroke held still is tidied into the line, ring or box it was
+   *  aiming at. */
+  straighten: boolean
   /** Whether a pen has ever been on this glass. */
   penSeen: boolean
   /** Whether a finger draws anyway, which is the one way round the above. */
@@ -231,6 +287,115 @@ function rubbed(
   return hit.length ? [{ do: 'rub', ids: [...hit] }] : []
 }
 
+/** The eraser taken up: the pen's own button, or the tool on the bar. Both are
+ *  the eraser, set the way the bar has the eraser set. */
+function rubbingOut(held: Machine, input: Down, context: Context): Step {
+  const rub = rubbing(context, input.shift)
+  // What was rubbed is remembered, so dragging back over a stroke that has
+  // already gone does not ask for it again.
+  const first = rub.whole && input.hit.stroke ? [input.hit.stroke] : []
+
+  return {
+    machine: { ...held, gesture: { kind: 'erase', whole: rub.whole, hit: first, id: input.id } },
+    effects: rubbed(rub, input, first),
+  }
+}
+
+/** The four corners of the box between two points, which is what a lasso pulled
+ *  out as a box catches things with. */
+function ring(from: Point, to: Point): Point[] {
+  return [from, { x: to.x, y: from.y }, to, { x: from.x, y: to.y }]
+}
+
+/** Whether a second finger takes the plane from the gesture in hand.
+ *
+ *  It does, in every tool: a card being dragged, a band, a shape or a stroke a
+ *  moment old all give way to a pan and a pinch, because two fingers on a page
+ *  mean the page. The one thing it will not do is throw away ink that has been
+ *  going for longer than a moment, so a hand settling on the glass halfway
+ *  through a long line leaves the line alone; see TWO_FINGERS. */
+function takesOver(gesture: Gesture, first: Driver, now: number): boolean {
+  if (first.kind !== 'touch' || gesture.kind === 'pinch') return false
+  if (gesture.kind !== 'draw' && gesture.kind !== 'erase') return true
+
+  return now - first.since <= TWO_FINGERS
+}
+
+/** Whether a gesture has got anywhere: something on the plane has moved, ink has
+ *  been laid down, or the plane itself has. What has got nowhere can be taken
+ *  back and begun again as something else. */
+function begun(gesture: Gesture): boolean {
+  switch (gesture.kind) {
+    case 'pan':
+      return gesture.moved
+    case 'drag':
+    case 'resize':
+      return gesture.dx !== 0 || gesture.dy !== 0
+    case 'band':
+    case 'shape':
+      return gesture.from.x !== gesture.to.x || gesture.from.y !== gesture.to.y
+    case 'draw':
+      return gesture.stroke.points.length > 1
+    case 'lasso':
+      return gesture.points.length > 1
+    case 'connect':
+      return true
+    case 'erase':
+    case 'pinch':
+    case 'ink':
+      return true
+  }
+}
+
+/** A contact the surface has just worked out is a pen, or a pen whose button was
+ *  not down yet when it landed. Whatever a finger was given is taken back, so
+ *  long as it has got nowhere, and the pen draws or rubs out from where the nib
+ *  touched down. */
+function onPenned(machine: Machine, input: Penned, context: Context): Step {
+  const driver = machine.driver
+  if (!driver || driver.id !== input.id) return { machine, effects: [] }
+
+  const pen: Driver = { ...driver, kind: 'pen' }
+  const now: Machine = { ...machine, penDown: true, driver: pen }
+
+  // Whatever it is doing, it is doing it: a stroke half drawn is not restarted
+  // because the button arrived late, and a plane that has been panned stays where
+  // the hand put it.
+  if (machine.gesture && begun(machine.gesture)) return { machine: now, effects: [] }
+
+  const tool = input.eraser ? 'erase' : context.tool
+  const down: Down = {
+    kind: 'down',
+    id: input.id,
+    pointer: 'pen',
+    at: input.at,
+    screen: pen.screen,
+    time: pen.since,
+    button: 0,
+    shift: false,
+    adds: false,
+    eraser: input.eraser,
+    sample: input.sample,
+    hit: input.hit,
+  }
+
+  if (tool === 'erase') return rubbingOut({ ...now, gesture: null }, down, context)
+
+  if (tool === 'draw') {
+    return {
+      machine: {
+        ...now,
+        gesture: { kind: 'draw', id: input.id, stroke: { ...context.pen, points: [input.sample] } },
+      },
+      effects: [{ do: 'leave' }],
+    }
+  }
+
+  // A pen with the arrow or a shape in hand behaves as a mouse does, and a mouse
+  // is what the finger was already being treated as. Nothing to take back.
+  return { machine: now, effects: [] }
+}
+
 /** The tools a pen is for. Everything else on the bar is for a finger as much as
  *  for anything: a card has to be placed and a shape dragged out somehow. */
 const INK: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
@@ -260,17 +425,30 @@ export function step(machine: Machine, input: Input, context: Context): Step {
       return { machine: { ...machine, spacing: input.down }, effects: [] }
     case 'down':
       return onDown(machine, input, context)
-    case 'move':
-      return onMove(machine, input, context)
+    case 'move': {
+      const next = onMove(machine, input, context)
+      // Where the pointer driving the gesture has got to, kept in one place: a
+      // second finger pinches from there rather than from where the first one
+      // landed.
+      const driver = next.machine.driver
+      if (!driver || driver.id !== input.id) return next
+
+      return {
+        machine: { ...next.machine, driver: { ...driver, screen: input.screen } },
+        effects: next.effects,
+      }
+    }
+    case 'penned':
+      return onPenned(machine, input, context)
     case 'up':
       return onUp(machine, input, context)
     case 'cancel':
       return {
-        machine: { ...machine, gesture: null, spare: [], penDown: false, driving: null },
+        machine: { ...machine, gesture: null, spare: [], penDown: false, driver: null },
         effects: [],
       }
     case 'held':
-      return onHeld(machine, input.at)
+      return onHeld(machine, input.at, context)
   }
 }
 
@@ -283,20 +461,23 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
   // and it is dropped here rather than left to drag the plane out from under the
   // stroke.
   const now: Machine =
-    input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driving: null } : machine
+    input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driver: null } : machine
 
   const penDown = now.penDown || input.pointer === 'pen'
   const tool = toolFor(input, context)
 
-  // A second finger turns a pan into a pinch, which is the only two-pointer
-  // gesture there is. A third is spare and changes nothing.
-  if (input.pointer === 'touch' && now.gesture) {
-    const first = now.gesture.kind === 'pan' ? now.gesture : null
-    if (first) {
+  // A second finger is the page, whatever the first one was doing. A third is
+  // spare and changes nothing, and so is a second finger on a stroke that is
+  // already under way; see TWO_FINGERS.
+  if (input.pointer === 'touch' && now.gesture && now.driver) {
+    const first = now.driver
+
+    if (takesOver(now.gesture, first, input.time)) {
       return {
         machine: {
           ...now,
           penDown,
+          driver: { id: input.id, kind: 'touch', screen: input.screen, since: input.time },
           gesture: {
             kind: 'pinch',
             ids: [first.id, input.id],
@@ -320,13 +501,25 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
 
   if (now.gesture) return { machine: { ...now, penDown }, effects: [] }
 
-  const held = { ...now, penDown, driving: input.id }
+  const held: Machine = {
+    ...now,
+    penDown,
+    driver: { id: input.id, kind: input.pointer, screen: input.screen, since: input.time },
+  }
 
-  // The right button is the menu's, wherever it lands. It starts nothing, so it
-  // drives nothing either.
-  if (input.button === 2) {
+  // The pen's own button rubs out whatever the bar says, which is what a stylus
+  // does in every app that has ever had one. Before the button below it, because
+  // Chromium reports a barrel button held as the right one on Android and as the
+  // eraser bit elsewhere, and both mean the same thing to a hand. Set the way the
+  // eraser is set, because it is the eraser.
+  if (input.eraser) return rubbingOut(held, input, context)
+
+  // The right button is the menu's, wherever it lands, and it is a mouse's: a pen
+  // holding its button is rubbing out. It starts nothing, so it drives nothing
+  // either.
+  if (input.button === 2 && input.pointer !== 'pen') {
     return {
-      machine: { ...held, driving: now.driving },
+      machine: { ...held, driver: now.driver },
       effects: [{ do: 'menu', at: input.at }],
     }
   }
@@ -343,22 +536,6 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
-  // The pen's own button rubs out whatever the bar says, which is what a stylus
-  // does in every app that has ever had one. Set the way the eraser is set,
-  // because it is the eraser.
-  if (input.eraser) {
-    const rub = rubbing(context, input.shift)
-    const first = rub.whole && input.hit.stroke ? [input.hit.stroke] : []
-
-    return {
-      machine: {
-        ...held,
-        gesture: { kind: 'erase', whole: rub.whole, hit: first, id: input.id },
-      },
-      effects: rubbed(rub, input, first),
-    }
-  }
-
   switch (tool) {
     case 'draw':
       return {
@@ -372,20 +549,8 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
         },
         effects: [{ do: 'leave' }],
       }
-    case 'erase': {
-      const rub = rubbing(context, input.shift)
-      // What was rubbed is remembered, so dragging back over a stroke that has
-      // already gone does not ask for it again.
-      const first = rub.whole && input.hit.stroke ? [input.hit.stroke] : []
-
-      return {
-        machine: {
-          ...held,
-          gesture: { kind: 'erase', whole: rub.whole, hit: first, id: input.id },
-        },
-        effects: rubbed(rub, input, first),
-      }
-    }
+    case 'erase':
+      return rubbingOut(held, input, context)
     case 'lasso':
       // A press inside what the lasso already caught moves it; anywhere else
       // draws a new one.
@@ -404,13 +569,24 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
         }
       }
 
-      return { machine: { ...held, gesture: { kind: 'lasso', points: [input.at] } }, effects: [] }
+      return {
+        machine: {
+          ...held,
+          gesture: {
+            kind: 'lasso',
+            from: input.at,
+            points: context.lassoBox ? ring(input.at, input.at) : [input.at],
+            box: context.lassoBox,
+          },
+        },
+        effects: [],
+      }
     case 'text':
     case 'file':
     case 'link':
     case 'group':
       return {
-        machine: { ...held, driving: now.driving },
+        machine: { ...held, driver: now.driver },
         effects: [{ do: 'place', tool, at: input.at }],
       }
     case 'rect':
@@ -479,7 +655,7 @@ function select(machine: Machine, input: Down, context: Context): Step {
   // A card being written in keeps the pointer: it is a text field, and a drag in
   // one selects words.
   if (context.editing !== null && hit.node === context.editing) {
-    return { machine: { ...machine, driving: null }, effects: [] }
+    return { machine: { ...machine, driver: null }, effects: [] }
   }
 
   if (!hit.node) {
@@ -528,7 +704,7 @@ function select(machine: Machine, input: Down, context: Context): Step {
       ? [...context.picked]
       : [hit.node]
 
-  if (!ids.length) return { machine: { ...machine, driving: null }, effects }
+  if (!ids.length) return { machine: { ...machine, driver: null }, effects }
 
   return {
     machine: {
@@ -655,7 +831,13 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
 
     case 'lasso':
       return {
-        machine: { ...machine, gesture: { ...one, points: [...one.points, input.at] } },
+        machine: {
+          ...machine,
+          gesture: {
+            ...one,
+            points: one.box ? ring(one.from, input.at) : [...one.points, input.at],
+          },
+        },
         effects: [],
       }
 
@@ -702,7 +884,7 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
   const one = machine.gesture
   const spare = machine.spare.filter((held) => held.id !== input.id)
 
-  if (!one) return { machine: { ...machine, spare, penDown: false, driving: null }, effects: [] }
+  if (!one) return { machine: { ...machine, spare, penDown: false, driver: null }, effects: [] }
 
   // A pinch that loses one finger goes back to panning with the other.
   if (one.kind === 'pinch' && one.ids.includes(input.id)) {
@@ -711,7 +893,12 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       machine: {
         ...machine,
         spare,
-        driving: one.ids[left],
+        driver: {
+          id: one.ids[left],
+          kind: 'touch',
+          screen: one.screens[left],
+          since: machine.driver?.since ?? 0,
+        },
         gesture: { kind: 'pan', id: one.ids[left], screen: one.screens[left], moved: true },
       },
       effects: [],
@@ -720,11 +907,11 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
 
   // Somebody else's pointer. A palm coming off the glass is not the pen putting
   // its stroke down, and a stray finger is not the end of a drag.
-  if (machine.driving !== null && machine.driving !== input.id) {
+  if (machine.driver !== null && machine.driver.id !== input.id) {
     return { machine: { ...machine, spare }, effects: [] }
   }
 
-  const rest: Machine = { ...machine, gesture: null, spare, penDown: false, driving: null }
+  const rest: Machine = { ...machine, gesture: null, spare, penDown: false, driver: null }
 
   switch (one.kind) {
     case 'pan':
@@ -791,15 +978,20 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
 
 /** The pointer has been still long enough to mean something. A finger asks for
  *  the menu; a pen that is still drawing asks for its shape to be tidied. */
-function onHeld(machine: Machine, at: Point): Step {
+function onHeld(machine: Machine, at: Point, context: Context): Step {
   const one = machine.gesture
   if (!one) return { machine, effects: [] }
 
-  if (one.kind === 'draw') return { machine, effects: [{ do: 'assist' }] }
+  // A stroke that stops still is asking to be tidied, when the pen has been told
+  // to do that. A pen that has not is a pen drawing a wobbly circle on purpose.
+  if (one.kind === 'draw') {
+    return { machine, effects: context.straighten ? [{ do: 'assist' }] : [] }
+  }
 
   // A finger held on the plane or on a card is the menu, which is the only way
-  // to reach one without a second mouse button.
-  if (one.kind === 'pan' || one.kind === 'drag') {
+  // to reach one without a second mouse button. Never a pen: a nib resting on the
+  // page is a hand thinking, not a hand asking for a list.
+  if ((one.kind === 'pan' || one.kind === 'drag') && machine.driver?.kind !== 'pen') {
     return { machine: { ...machine, gesture: null }, effects: [{ do: 'menu', at }] }
   }
 

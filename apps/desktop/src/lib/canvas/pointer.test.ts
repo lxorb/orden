@@ -28,6 +28,8 @@ function context(over: Partial<Context> = {}): Context {
     inkBox: null,
     pen: { tool: 'pen', size: 3, color: '#000', opacity: 1 },
     eraser: { whole: false, size: RUB },
+    lassoBox: false,
+    straighten: true,
     penSeen: false,
     fingerDraws: false,
     ...over,
@@ -41,6 +43,7 @@ function down(over: Partial<Down> = {}): Down {
     pointer: 'mouse',
     at: HERE,
     screen: HERE,
+    time: 0,
     button: 0,
     shift: false,
     adds: false,
@@ -401,7 +404,7 @@ describe('palm rejection', () => {
     const pen = step(palm.machine, down({ id: 2, pointer: 'pen' }), where)
 
     expect(pen.machine.gesture?.kind).toBe('draw')
-    expect(pen.machine.driving).toBe(2)
+    expect(pen.machine.driver?.id).toBe(2)
     expect(pen.machine.penDown).toBe(true)
 
     // And the palm dragging on has nothing to say about the plane.
@@ -857,5 +860,264 @@ describe('what a gesture leaves behind', () => {
     )
 
     expect(effects.at(-1)).toEqual({ do: 'menu', at: { x: 7, y: 8 } })
+  })
+})
+
+/** Two fingers on a page mean the page, whatever the first one was doing. The
+ *  only question is what happens to ink the first one had already laid down. */
+describe('a second finger', () => {
+  const nib = { x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
+
+  const second = (over: Partial<Down> = {}): Down =>
+    down({ id: 2, pointer: 'touch', screen: { x: 100, y: 0 }, time: 40, ...over })
+
+  test('takes over a card the first one was carrying', () => {
+    const { machine } = play(
+      [down({ id: 1, pointer: 'touch', hit: hit({ node: 'a' }) }), second()],
+      context({ penSeen: true }),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'pinch', ids: [1, 2], apart: 100 })
+  })
+
+  test('takes over a shape being dragged out', () => {
+    const { machine } = play(
+      [down({ id: 1, pointer: 'touch' }), second()],
+      context({ tool: 'rect' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('pinch')
+  })
+
+  /** A phone draws with the finger, so the finger that starts a stroke is also
+   *  the one that has to be able to move the page. A stroke a moment old is worth
+   *  less than the pinch, which is what every drawing app decided. */
+  test('gives up a stroke a moment old and takes the plane', () => {
+    const { machine, effects } = play(
+      [down({ id: 1, pointer: 'touch', sample: nib }), second()],
+      context({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('pinch')
+    expect(verbs(effects)).toEqual(['leave'])
+  })
+
+  /** And a line somebody is halfway through is worth more than the pinch: a hand
+   *  settling on the glass must not take the line with it. */
+  test('leaves a stroke that is already under way alone', () => {
+    const { machine } = play(
+      [
+        down({ id: 1, pointer: 'touch', sample: nib }),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 9, y: 9 },
+          screen: { x: 9, y: 9 },
+          samples: [nib],
+          hit: NOTHING,
+        },
+        second({ time: 900 }),
+      ],
+      context({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('draw')
+    expect(machine.spare).toHaveLength(1)
+  })
+
+  test('pinches from where the first finger has got to, not from where it landed', () => {
+    const { machine } = play(
+      [
+        down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
+        { kind: 'move', id: 1, at: HERE, screen: { x: 40, y: 0 }, samples: [], hit: NOTHING },
+        second({ screen: { x: 140, y: 0 } }),
+      ],
+      context(),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'pinch', apart: 100 })
+  })
+
+  test('is a palm rather than a pinch once the eraser has begun rubbing out', () => {
+    const { machine } = play(
+      [down({ id: 1, pointer: 'touch' }), second({ time: 900 })],
+      context({ tool: 'erase' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('erase')
+  })
+})
+
+/** Every stylus rubs out when its button is held. Chromium says so as the eraser
+ *  bit on a desktop and as the right button on Android, and both mean the same
+ *  thing to a hand. */
+describe('the pen with its button held', () => {
+  test('rubs out where Chromium reports the right button', () => {
+    const { machine, effects } = play(
+      [down({ pointer: 'pen', button: 2, eraser: true, hit: hit({ stroke: 's1' }) })],
+      context({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('erase')
+    expect(verbs(effects)).toEqual(['cut'])
+  })
+
+  test('takes a whole stroke where the bar says whole strokes', () => {
+    const { effects } = play(
+      [down({ pointer: 'pen', button: 2, eraser: true, hit: hit({ stroke: 's1' }) })],
+      context({ tool: 'draw', eraser: { whole: true, size: RUB } }),
+    )
+
+    expect(effects).toEqual([{ do: 'rub', ids: ['s1'] }])
+  })
+
+  test('asks for no menu, which belongs to the mouse', () => {
+    const { effects } = play([down({ pointer: 'pen', button: 2, eraser: true })], context())
+
+    expect(verbs(effects)).not.toContain('menu')
+  })
+
+  test('leaves the right button on a mouse opening the menu', () => {
+    const { effects } = play([down({ pointer: 'mouse', button: 2 })], context())
+
+    expect(verbs(effects)).toEqual(['menu'])
+  })
+})
+
+/** Samsung's S Pen reports the first event of a contact as a finger on some
+ *  devices, and a button held as the nib lands is sometimes only in the second
+ *  event. Either way, what the finger was given is taken back. */
+describe('a contact that turns out to be a pen', () => {
+  const nib = { x: 3, y: 4, pressure: 0.7, tiltX: 1, tiltY: -1, t: 0 }
+  const penned = {
+    kind: 'penned',
+    id: 1,
+    at: { x: 3, y: 4 },
+    sample: nib,
+    eraser: false,
+    hit: NOTHING,
+  } as const
+
+  test('draws from where the nib landed rather than panning', () => {
+    const { machine } = play(
+      [down({ pointer: 'touch' }), penned],
+      context({ tool: 'draw', penSeen: true }),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'draw' })
+    expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke.points).toEqual([nib])
+    expect(machine.penDown).toBe(true)
+  })
+
+  test('rubs out when the button was late', () => {
+    const { machine, effects } = play(
+      [down({ pointer: 'pen', sample: nib }), { ...penned, eraser: true }],
+      context({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('erase')
+    expect(verbs(effects)).toEqual(['leave', 'cut'])
+  })
+
+  test('leaves a stroke that is already drawing where it is', () => {
+    const { machine } = play(
+      [
+        down({ pointer: 'pen', sample: nib }),
+        { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
+        penned,
+      ],
+      context({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke.points).toHaveLength(2)
+  })
+
+  test('leaves a plane that has been panned where the hand put it', () => {
+    const { machine } = play(
+      [
+        down({ pointer: 'touch' }),
+        { kind: 'move', id: 1, at: HERE, screen: { x: 80, y: 0 }, samples: [], hit: NOTHING },
+        penned,
+      ],
+      context({ tool: 'draw', penSeen: true }),
+    )
+
+    expect(machine.gesture?.kind).toBe('pan')
+  })
+
+  test('says nothing about a pointer that is not the one driving the gesture', () => {
+    const { machine } = play(
+      [down({ pointer: 'touch' }), { ...penned, id: 7 }],
+      context({ tool: 'draw', penSeen: true }),
+    )
+
+    expect(machine.gesture?.kind).toBe('pan')
+  })
+})
+
+describe('the lasso pulled out as a box', () => {
+  const where = context({ tool: 'lasso', lassoBox: true })
+
+  test('is the four corners of the box, so what draws it and what reads it agree', () => {
+    const { machine } = play(
+      [
+        down({ at: { x: 0, y: 0 } }),
+        { kind: 'move', id: 1, at: { x: 10, y: 6 }, screen: HERE, samples: [], hit: NOTHING },
+      ],
+      where,
+    )
+
+    expect(machine.gesture?.kind === 'lasso' && machine.gesture.points).toEqual([
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 6 },
+      { x: 0, y: 6 },
+    ])
+  })
+
+  test('catches what the box went round when it is let go', () => {
+    const { effects } = play(
+      [
+        down({ at: { x: 0, y: 0 } }),
+        { kind: 'move', id: 1, at: { x: 10, y: 6 }, screen: HERE, samples: [], hit: NOTHING },
+        { kind: 'up', id: 1, at: { x: 10, y: 6 }, screen: HERE, hit: NOTHING },
+      ],
+      where,
+    )
+
+    expect(effects.at(-1)).toMatchObject({ do: 'catch' })
+  })
+})
+
+describe('straightening what was drawn', () => {
+  test('is what a held stroke asks for when the pen has been told to', () => {
+    const { effects } = play(
+      [down({ pointer: 'pen' }), { kind: 'held', at: HERE }],
+      context({ tool: 'draw', straighten: true }),
+    )
+
+    expect(verbs(effects)).toContain('assist')
+  })
+
+  test('is left alone when it has not', () => {
+    const { effects } = play(
+      [down({ pointer: 'pen' }), { kind: 'held', at: HERE }],
+      context({ tool: 'draw', straighten: false }),
+    )
+
+    expect(verbs(effects)).not.toContain('assist')
+  })
+
+  /** And a nib resting on the plane is a hand thinking, not a hand asking for a
+   *  list of things it could do. */
+  test('is not the menu, whatever a pen is holding', () => {
+    const spacing = step(start(), { kind: 'space', down: true }, context()).machine
+    const { effects } = play(
+      [down({ pointer: 'pen' }), { kind: 'held', at: HERE }],
+      context(),
+      spacing,
+    )
+
+    expect(verbs(effects)).not.toContain('menu')
   })
 })
