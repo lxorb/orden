@@ -605,7 +605,6 @@ export const fr: Dictionary = {
   Back: 'Retour',
   'Display name': 'Nom d’affichage',
   'Your name': 'Votre nom',
-  'Shown on anything you publish.': 'Affiché sur tout ce que vous publiez.',
   Email: 'E-mail',
   'On nibeditor.com': 'Sur nibeditor.com',
   'Your own domain': 'Votre propre domaine',

@@ -63,7 +63,7 @@
   /** What the hand-written panes show, so search can land on those too. */
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
-      { section: 'account', label: t('Display name'), text: [t('Shown on anything you publish.')] },
+      { section: 'account', label: t('Display name'), text: [] },
       { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
       { section: 'account', label: t('Storage'), text: [] },
       { section: 'account', label: account.user ? t('Sign out') : t('Sign in'), text: [] },
@@ -492,7 +492,6 @@
           <span class="text">{account.user.email}</span>
         </div>
       </div>
-      <p class="hint caption">{t('Shown on anything you publish.')}</p>
 
       <!-- Notes and images together, which is what the limit counts. Having
            an account is what syncing means, so there is nothing to switch:

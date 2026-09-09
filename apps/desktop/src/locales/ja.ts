@@ -601,7 +601,6 @@ export const ja: Dictionary = {
   Back: '戻る',
   'Display name': '表示名',
   'Your name': 'あなたの名前',
-  'Shown on anything you publish.': '公開するものすべてに表示されます。',
   Email: 'メール',
   'On nibeditor.com': 'nibeditor.com 上',
   'Your own domain': '独自ドメイン',

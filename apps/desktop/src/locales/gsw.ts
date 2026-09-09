@@ -602,7 +602,6 @@ export const gsw: Dictionary = {
   Back: 'Zrugg',
   'Display name': 'Aazeigname',
   'Your name': 'Din Name',
-  'Shown on anything you publish.': 'Staht uf allem, wo du veröffentlichsch.',
   Email: 'E-Mail',
   'On nibeditor.com': 'Uf nibeditor.com',
   'Your own domain': 'Eigeni Domain',
