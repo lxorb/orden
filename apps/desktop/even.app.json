@@ -13,7 +13,7 @@
       "whitelist": ["https://nibeditor.com", "https://api.openai.com"]
     },
     {
-      "name": "microphone",
+      "name": "g2-microphone",
       "desc": "Say next, close or a question, and Nib answers on the glasses."
     }
   ],
