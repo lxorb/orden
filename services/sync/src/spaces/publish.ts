@@ -157,16 +157,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
                        updated_at = ?
       where id = ?`,
   )
-    .bind(
-      address.subdomain,
-      address.domain,
-      proof,
-      provedAt,
-      chosenTitle,
-      note,
-      at,
-      space.id,
-    )
+    .bind(address.subdomain, address.domain, proof, provedAt, chosenTitle, note, at, space.id)
     .run()
 
   // The certificate for a domain given up goes at once. One for a domain just

@@ -428,8 +428,7 @@ export const ja: Dictionary = {
   'Every note, including drafts, is readable by anyone with the address.':
     '下書きを含むすべてのノートが、アドレスを知る人なら誰でも読めます。',
   Address: 'アドレス',
-  'Add these at your registrar, then verify.':
-    'レジストラでこれらを追加してから確認してください。',
+  'Add these at your registrar, then verify.': 'レジストラでこれらを追加してから確認してください。',
   Verify: '確認',
   'that record is not answering yet': 'そのレコードはまだ応答していません',
   'Stop publishing': '公開をやめる',

@@ -219,7 +219,7 @@ tokens.post('/token', async (context) => {
       return context.json(failure('invalid_grant', 'that refresh token was already used'), 401)
     }
 
-    if (!grant || grant.client_id !== client.id) {
+    if (grant?.client_id !== client.id) {
       return context.json(failure('invalid_grant', 'the refresh token is not valid'), 400)
     }
 

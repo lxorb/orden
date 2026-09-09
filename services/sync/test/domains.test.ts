@@ -367,9 +367,8 @@ describe('proving a domain is yours', () => {
     // Somebody types a domain they do not hold. Nothing serves, and the answer
     // to the person who does hold it used to be "that domain is taken" for ever.
     const squatter = await signIn(env, 'squatter@b.dev')
-    const theirs = (
-      await call(env, '/v1/spaces', { token: squatter, body: { name: 'Squatted' } })
-    ).json.space.id
+    const theirs = (await call(env, '/v1/spaces', { token: squatter, body: { name: 'Squatted' } }))
+      .json.space.id
     await publish({ domain: 'notes.example.com' }, theirs, squatter)
 
     const taken = await publish({ domain: 'notes.example.com' })

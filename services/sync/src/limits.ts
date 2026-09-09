@@ -49,7 +49,7 @@ export function machineOf(headers: { header(name: string): string | undefined })
 }
 
 /** Counts one arrival against a ceiling and says whether it was inside it. */
-export async function within(
+async function within(
   env: Env,
   scope: string,
   key: string,

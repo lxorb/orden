@@ -246,11 +246,7 @@ auth.post('/code', async (context) => {
   const email = body.text('email', EMAIL_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const sent = await sendCode(
-    context.env,
-    normaliseEmail(email ?? ''),
-    machineOf(context.req),
-  )
+  const sent = await sendCode(context.env, normaliseEmail(email ?? ''), machineOf(context.req))
 
   if ('error' in sent) return context.json({ error: sent.error }, sent.status)
   return context.json(sent)

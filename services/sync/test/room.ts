@@ -33,7 +33,10 @@ export class FakeSocket {
 
   close(code?: number, reason?: string) {
     this.closed = true
-    this.closedWith = { ...(code === undefined ? {} : { code }), ...(reason === undefined ? {} : { reason }) }
+    this.closedWith = {
+      ...(code === undefined ? {} : { code }),
+      ...(reason === undefined ? {} : { reason }),
+    }
   }
 
   serializeAttachment(value: unknown) {
