@@ -229,7 +229,10 @@
     flex: none;
     max-width: 12rem;
     align-self: center;
-    padding-right: var(--space-2);
+    /* Room enough on the right that it does not read as the first tab in the
+       strip: it belongs to the button beside it, which is what brings the panel
+       carrying this name back. */
+    padding: 0 var(--space-4) 0 var(--space-1);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

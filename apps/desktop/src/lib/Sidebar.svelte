@@ -866,8 +866,13 @@
 
   /* Docked beside the note on a tablet held sideways. It arrives rather than
      appears, and on the compositor: the column itself is not animated, because
-     animating a width relays out the editor beside it on every frame. */
+     animating a width relays out the editor beside it on every frame.
+
+     As wide as the drawer, rather than a pointer's 252px: every part of a panel
+     read with a thumb is bigger, so the column holding them has to be. At the
+     narrower width the foot's own name ran out of room before it was finished. */
   :global([data-touch]:not([data-drawer])) aside {
+    width: 20rem;
     animation: dock var(--dur-base) var(--ease-out);
   }
 

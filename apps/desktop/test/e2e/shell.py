@@ -56,6 +56,11 @@ DEVICES = [
     ("tablet", 834, 1194, TABLET_AGENT, True, "light"),
     ("tablet-wide", 1194, 834, TABLET_AGENT, True, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
+    # A phone on its side, which is the one handheld shape where the drawer
+    # slides over the note rather than becoming the whole screen: the width is
+    # past `data-narrow`, so the bar under it stays where it is. What a drawer
+    # leaves behind as it goes is only ever visible here.
+    ("phone-wide", 844, 390, PHONE_AGENT, True, "dark"),
 ]
 
 # A space with enough in it to judge a list by: a folder with notes inside, notes
@@ -214,6 +219,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("note")
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
+    else:
+        # With the panel shut there is nothing else on the screen saying which
+        # space these notes are in, so the bar says it.
+        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.wait_for_timeout(500)
+        strip("collapsed", "header")
+        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.wait_for_timeout(600)
 
     # The space's own menu, which is what the name at the top of the panel is.
     switcher = page.locator("aside .name")
@@ -285,6 +298,15 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.settings.show()")
     page.wait_for_timeout(800)
     shot("settings")
+
+    # Appearance, because it is the pane with the segmented controls in it: the
+    # raised surface has to sit under the choice in force there the same way it
+    # does over the panel tabs.
+    page.evaluate(
+        "() => { window.nibApp.settings.section = 'appearance'; window.nibApp.settings.listing = false }"
+    )
+    page.wait_for_timeout(700)
+    shot("settings-appearance")
     page.evaluate("() => window.nibApp.settings.hide?.() ?? (window.nibApp.settings.open = false)")
     page.wait_for_timeout(400)
 
