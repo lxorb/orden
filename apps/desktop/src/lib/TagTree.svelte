@@ -20,6 +20,7 @@
   import type { TagNode } from './tag-tree'
   import { workspace } from './workspace.svelte'
   import TagTree from './TagTree.svelte'
+  import Twist from './Twist.svelte'
   import { dur } from './motion'
 
   const { nodes, depth = 0 }: { nodes: TagNode[]; depth?: number } = $props()
@@ -68,9 +69,7 @@
             aria-label={node.name}
             onclick={() => workspace.toggleTag(node.path)}
           >
-            <svg class="chevron" class:open={workspace.isTagOpen(node.path)} viewBox="0 0 8 8">
-              <path d="M2 1l3 3-3 3" />
-            </svg>
+            <span class="chevron"><Twist open={workspace.isTagOpen(node.path)} /></span>
           </button>
         {/if}
 
@@ -127,19 +126,13 @@
     cursor: default;
   }
 
+  /* The box the twist fills; the shape and the turn are Twist.svelte's, which the
+     file tree draws too. */
   .chevron {
+    display: block;
     width: var(--icon-md);
     height: var(--icon-md);
     flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    transition: transform var(--dur-base) var(--ease-out);
-  }
-
-  .chevron.open {
-    transform: rotate(90deg);
   }
 
   /* One step per level of the tag path, and a lead in front of the label: the

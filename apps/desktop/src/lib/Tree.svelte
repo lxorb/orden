@@ -30,6 +30,7 @@
   import { workspace } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import Tree from './Tree.svelte'
+  import Twist from './Twist.svelte'
   import { dur } from './motion'
 
   const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
@@ -510,8 +511,8 @@
                folder holding nothing but its note, and a twist that opens on to
                nothing is a row promising something it does not have. -->
           {#if nested.length}
-            <span class="nib-row-meta twist" class:open={workspace.isExpanded(entry.path)}>
-              <svg viewBox="0 0 8 8" aria-hidden="true"><path d="M2 1l3 3-3 3" /></svg>
+            <span class="nib-row-meta twist">
+              <Twist open={workspace.isExpanded(entry.path)} />
             </span>
           {/if}
         </button>
@@ -618,19 +619,11 @@
     padding: 0 var(--space-1);
   }
 
-  .twist svg {
+  /* The box the twist fills; the shape and the turn are Twist.svelte's, which the
+     tag tree draws too. */
+  .twist :global(svg) {
     width: var(--icon-sm);
     height: var(--icon-sm);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    transition: transform var(--dur-base) var(--ease-out);
-  }
-
-  .twist.open svg {
-    transform: rotate(90deg);
   }
 
   .rename {
