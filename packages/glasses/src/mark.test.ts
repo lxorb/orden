@@ -283,6 +283,21 @@ describe('nothing in a note is dropped', () => {
     expect(one('![[Another note]]')).toBe('Another note')
   })
 
+  test('an embedded file is its name behind the mark that says it is one', () => {
+    // A panel of one font cannot play a recording or show a page of a paper, and
+    // a line that merely said `clip.mp3` would read as prose about a file name.
+    expect(lines('![[clip.mp3]]\n')).toEqual(['▤ clip.mp3'])
+    expect(lines('![[demo.mp4]]\n')).toEqual(['▤ demo.mp4'])
+    expect(lines('![[shot.png]]\n')).toEqual(['▤ shot.png'])
+    expect(lines('![[paper.pdf#page=3]]\n')).toEqual(['▤ paper.pdf#page=3'])
+    expect(lines('![[Board.canvas]]\n')).toEqual(['▤ Board.canvas'])
+  })
+
+  test('and a note embedded on its own line carries no such mark', () => {
+    // There is nothing about a note this panel cannot show, so nothing to say.
+    expect(lines('![[Another note]]\n')).toEqual(['Another note'])
+  })
+
   test('a footnote is a superscript, and its note is set under the same mark', () => {
     const set = lines('A claim.[^1]\n\n[^1]: The evidence.\n')
 

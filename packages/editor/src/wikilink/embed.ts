@@ -1,13 +1,15 @@
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { linkTarget, parseWikilink, sectionOf } from '@nib/markdown/links'
+import { DOCUMENT, PLANE } from '@nib/markdown/icons'
+import { embedKind, embedSize, linkTarget, parseWikilink, sectionOf } from '@nib/markdown/links'
+import { iconElement } from '../icon'
 import { imageResolver } from '../images'
 import { label } from '../labels'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { NibWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
-import { jumpFor, noteIndex, noteOpener, resolveLink } from './notes'
+import { jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
 
 /** What `![[…]]` draws: a note inside the note that names it, or a picture.
  *
@@ -154,14 +156,19 @@ export class EmbedWidget extends NibWidget {
 /** The widget for one embedded note. An embed of a note the space does not hold
  *  still gets a frame, saying so: the markup is there to be corrected, and an
  *  empty space says nothing. */
-export function embedWidget(state: EditorState, link: LinkSpan): EmbedWidget {
+export function embedWidget(state: EditorState, link: LinkSpan): EmbedWidget | EmbedFileWidget {
   const index = state.facet(noteIndex)
+  const kind = embedKind(link.target)
+
+  // A paper and a plane resolve against the files of the space rather than its
+  // notes, the same way a link to one does; see `isTabFile`.
+  if (kind === 'pdf' || kind === 'canvas') {
+    return new EmbedFileWidget(link, kind, resolveFile(index, link.target, link.kind))
+  }
+
   const path = link.target ? (resolveLink(index, link, link.kind)?.path ?? null) : index.path
   return new EmbedWidget(link, path)
 }
-
-/** Obsidian's size after the bar: a width in pixels, or `width x height`. */
-const SIZE = /^(\d+)(?:x(\d+))?$/
 
 export class EmbedImageWidget extends NibWidget {
   constructor(private readonly link: LinkSpan) {
@@ -178,10 +185,10 @@ export class EmbedImageWidget extends NibWidget {
     picture.draggable = false
     picture.alt = ''
 
-    const size = SIZE.exec(this.link.alias ?? '')
+    const size = embedSize(this.link.alias)
     if (size) {
-      picture.width = Number(size[1])
-      if (size[2] !== undefined) picture.height = Number(size[2])
+      picture.width = size.width
+      if (size.height !== null) picture.height = size.height
     } else if (this.link.alias) {
       // Anything that is not a size is what the picture is of, as in markdown.
       picture.alt = this.link.alias
@@ -200,5 +207,130 @@ export class EmbedImageWidget extends NibWidget {
   /** The double click is the widget's own; everything else belongs to the text. */
   override ignoreEvent(event: Event) {
     return event.type === 'dblclick'
+  }
+}
+
+/** What `![[clip.mp3]]` and `![[demo.mp4]]` draw: the player the browser already
+ *  has, pointed at the file through the same resolver a picture uses.
+ *
+ *  Plain, like the picture above it and for the same reason: a player is already
+ *  a box with its own furniture, and a frame around one would be furniture around
+ *  furniture. Nothing plays until somebody presses play, and `preload` asks only
+ *  for the length and the first frame - opening a note should not cost the
+ *  recording. That first frame is the poster where the platform gives one, which
+ *  is what `metadata` buys and why no poster is written by hand.
+ *
+ *  The element is given back on the way out: a widget that leaves the document
+ *  while it is playing would otherwise go on playing from nowhere. */
+export class EmbedMediaWidget extends NibWidget {
+  constructor(
+    private readonly link: LinkSpan,
+    private readonly kind: 'audio' | 'video',
+  ) {
+    super()
+  }
+
+  override eq(other: EmbedMediaWidget) {
+    return (
+      other.kind === this.kind &&
+      other.link.target === this.link.target &&
+      other.link.alias === this.link.alias
+    )
+  }
+
+  toDOM(view: EditorView) {
+    const player = document.createElement(this.kind)
+    player.className = `nib-embed-media nib-embed-${this.kind}`
+    player.controls = true
+    player.preload = 'metadata'
+    player.draggable = false
+
+    const size = embedSize(this.link.alias)
+    if (size && player instanceof HTMLVideoElement) {
+      player.width = size.width
+      if (size.height !== null) player.height = size.height
+    } else if (this.link.alias !== null && size === null) {
+      // Anything after the bar that is not a size says what this is. A player has
+      // no alt text of its own, so it is the name it hovers under.
+      player.title = this.link.alias
+    }
+
+    player.addEventListener('dragstart', (event) => event.preventDefault())
+    player.src = view.state.facet(imageResolver)(this.link.target)
+
+    this.onDestroy(player, () => {
+      player.pause()
+      player.removeAttribute('src')
+      player.load()
+    })
+
+    return player
+  }
+
+  /** The controls are the widget's own, all of them. */
+  override ignoreEvent() {
+    return true
+  }
+}
+
+/** What `![[paper.pdf#page=3]]` and `![[board.canvas]]` draw: a card naming the
+ *  file, which opens it.
+ *
+ *  Neither can be shown where it stands, and both already have somewhere they are
+ *  shown properly. A paper is pages, and the page wanted is written in the link
+ *  rather than in the file; a plane is a surface somebody moves around on. The app
+ *  opens each in a tab of its own, so the card is the name, the mark of what kind
+ *  of thing it is, and one click - the same card the reading view, an export and a
+ *  published page draw, which is the only way all four can agree on one design.
+ *
+ *  A card for a file the space has not got says so, exactly as an embed of a
+ *  missing note does: the markup is there to be corrected. */
+export class EmbedFileWidget extends NibWidget {
+  constructor(
+    private readonly link: LinkSpan,
+    private readonly kind: 'pdf' | 'canvas',
+    /** Where the file resolved to, or null when the space holds no such file. */
+    private readonly path: string | null,
+  ) {
+    super()
+  }
+
+  override eq(other: EmbedFileWidget) {
+    return (
+      other.kind === this.kind &&
+      other.path === this.path &&
+      other.link.target === this.link.target &&
+      other.link.heading === this.link.heading &&
+      other.link.alias === this.link.alias
+    )
+  }
+
+  toDOM(view: EditorView) {
+    const card = document.createElement('button')
+    card.className = 'nib-embed nib-embed-file'
+    card.type = 'button'
+    card.dataset.kind = this.kind
+    if (this.path === null) card.classList.add('nib-embed-missing')
+
+    card.append(iconElement(this.kind === 'pdf' ? DOCUMENT : PLANE, 'nib-embed-icon'))
+
+    const name = document.createElement('span')
+    name.className = 'nib-embed-name'
+    name.textContent = this.link.alias ?? linkTarget(this.link)
+    card.append(name)
+
+    card.addEventListener('mousedown', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const state = view.state
+      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+    })
+
+    return card
+  }
+
+  /** The click opens the file; nothing else here belongs to the document. */
+  override ignoreEvent() {
+    return true
   }
 }

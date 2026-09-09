@@ -1,8 +1,8 @@
 import { calloutIconParts } from '@nib/markdown/callouts'
-import { ICON_ATTRIBUTES } from '@nib/markdown/icons'
 import { NibWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 // Aliased: `label` is already a local variable in more than one widget here.
+import { iconElement } from '../icon'
 import { label as uiLabel } from '../labels'
 import { isRunnableLanguage, runFence } from '../run/run'
 
@@ -73,28 +73,10 @@ export class RuleWidget extends NibWidget {
   }
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg'
-
-/** A callout's icon as elements. The parts and how the `<svg>` around them is
- *  dressed both come from @nib/markdown, so this is the same drawing the
- *  renderer writes as markup rather than a second one that looks like it. */
+/** A callout's icon as elements, or nothing for a callout that carries none. */
 function calloutIcon(look: string | null): SVGElement | null {
   const parts = calloutIconParts(look)
-  if (!parts) return null
-
-  const svg = document.createElementNS(SVG_NS, 'svg')
-  for (const [name, value] of Object.entries(ICON_ATTRIBUTES)) svg.setAttribute(name, value)
-  svg.setAttribute('class', 'callout-icon')
-
-  for (const [tag, attributes] of parts) {
-    const child = document.createElementNS(SVG_NS, tag)
-    for (const [name, value] of Object.entries(attributes)) {
-      if (value !== undefined) child.setAttribute(name, String(value))
-    }
-    svg.append(child)
-  }
-
-  return svg
+  return parts ? iconElement(parts, 'callout-icon') : null
 }
 
 /** What stands where a callout's `[!type]-` marker is written.

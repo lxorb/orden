@@ -228,11 +228,99 @@ describe('an embed on a page', () => {
     expect(html.match(/<figure/g)).toHaveLength(2)
   })
 
-  test('a picture named as an embed is left to the caller, which renders it as a link', () => {
-    // Nothing on the web side knows where a picture in a space lives, so an
-    // embed of one resolves to nothing and reads as its name.
+  test('a picture named as an embed is a picture', () => {
+    // Pointed at the path the note wrote, which is what every surface already
+    // knows how to swap for something it can load; see sources.ts.
     const html = renderMarkdown('![[shot.png]]', { resolveEmbed, resolveLink })
-    expect(html).toContain('shot.png')
-    expect(html).not.toContain('<img')
+    expect(html).toContain('<img src="shot.png" alt="">')
+    expect(html).not.toContain('<figure')
+  })
+})
+
+describe('a file embedded in a note', () => {
+  test('a recording is a player, and nothing plays on its own', () => {
+    const html = renderMarkdown('![[clip.mp3]]\n')
+    expect(html).toContain('<audio class="embed-media" controls preload="metadata"')
+    expect(html).toContain('src="clip.mp3"')
+    expect(html).not.toContain('autoplay')
+  })
+
+  test('a film is a player too', () => {
+    for (const name of ['demo.mp4', 'demo.webm', 'demo.mov']) {
+      expect(renderMarkdown(`![[${name}]]\n`), name).toContain(`<video class="embed-media"`)
+    }
+  })
+
+  test('a container either can be in is read as what it usually holds', () => {
+    expect(renderMarkdown('![[a.webm]]\n')).toContain('<video')
+    expect(renderMarkdown('![[a.weba]]\n')).toContain('<audio')
+  })
+
+  test('a player is what it is inside a sentence as well', () => {
+    const html = renderMarkdown('before ![[clip.mp3]] after\n')
+    expect(html).toContain('<audio')
+    // Inside the paragraph, not in place of it.
+    expect(html).toContain('before ')
+    expect(html).toContain(' after')
+  })
+
+  test('a size after the bar is how wide to draw it', () => {
+    expect(renderMarkdown('![[shot.png|300]]\n')).toContain('width="300"')
+    expect(renderMarkdown('![[shot.png|300x200]]\n')).toContain('width="300" height="200"')
+    expect(renderMarkdown('![[demo.mp4|480]]\n')).toContain('width="480"')
+  })
+
+  test('anything else after the bar says what it is', () => {
+    expect(renderMarkdown('![[shot.png|the sketch]]\n')).toContain('alt="the sketch"')
+    expect(renderMarkdown('![[clip.mp3|the take]]\n')).toContain('title="the take"')
+  })
+
+  test('a paper is a card that opens it, with the page the link asked for', () => {
+    const html = renderMarkdown('![[paper.pdf#page=3]]\n', { resolveLink })
+    expect(html).toContain('<figure class="embed embed-file" data-kind="pdf">')
+    expect(html).toContain('href="/i/abc.pdf#page=3"')
+    expect(html).toContain('paper.pdf#page=3')
+    expect(html).toContain('<svg')
+  })
+
+  test('a plane is a card as well', () => {
+    const html = renderMarkdown('![[board.canvas]]\n')
+    expect(html).toContain('data-kind="canvas"')
+    expect(html).toContain('board.canvas')
+  })
+
+  test('a card nobody can open is still the name of the file', () => {
+    const html = renderMarkdown('![[missing.pdf]]\n')
+    expect(html).toContain('missing.pdf')
+    expect(html).not.toContain('<a')
+  })
+
+  test('a card is never left inside a paragraph', () => {
+    // A `<figure>` closes the `<p>` around it, which would leave the frame in
+    // pieces; the same rule an embedded note goes by.
+    expect(renderMarkdown('![[paper.pdf]]\n')).not.toContain('<p><figure')
+  })
+
+  test('a file is never read as a note', () => {
+    // `resolveEmbed` answers for every name here, so a target that reached it
+    // would come back as a framed note rather than as what it is.
+    const every = () => '# Something else'
+    for (const name of ['a.png', 'a.mp3', 'a.mp4', 'a.pdf', 'a.canvas']) {
+      expect(renderMarkdown(`![[${name}]]\n`, { resolveEmbed: every }), name).not.toContain(
+        'Something else',
+      )
+    }
+  })
+
+  test('a target that could not go into an attribute is not written into one', () => {
+    // The name reads as words, which is what an unresolvable embed does anyway.
+    const html = renderMarkdown('![[javascript:alert(1)//x.mp3]]\n')
+    expect(html).not.toContain('<audio')
+    expect(html).not.toContain('src=')
+  })
+
+  test('a name with a quote in it cannot end the attribute it is written in', () => {
+    const html = renderMarkdown('![[a" onerror="alert(1).mp4]]\n')
+    expect(html).not.toContain('onerror="alert(1)"')
   })
 })

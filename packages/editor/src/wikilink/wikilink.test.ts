@@ -478,4 +478,30 @@ describe('an embed', () => {
     expect(found).toMatchObject({ target: 'Plan', embed: true })
     expect(embedOfBlock(state('x ![[Plan]]', 0), 2, 11)).toBeNull()
   })
+
+  test('a recording and a film are drawn where they stand, like a picture', () => {
+    for (const name of ['clip.mp3', 'demo.mp4', 'demo.webm']) {
+      const doc = `one\n\n![[${name}]]\n\ntwo`
+      expect(blocks(doc), name).toEqual([])
+      expect(concealed(doc), name).toEqual([`![[${name}]]`])
+    }
+  })
+
+  test('a paper and a plane are cards of their own, which needs a line to itself', () => {
+    expect(blocks('one\n\n![[paper.pdf#page=3]]\n\ntwo')).toEqual(['![[paper.pdf#page=3]]'])
+    expect(blocks('one\n\n![[Board.canvas]]\n\ntwo')).toEqual(['![[Board.canvas]]'])
+    // In a sentence there is no room for a card, so it reads as a link.
+    expect(blocks('see ![[paper.pdf]] here')).toEqual([])
+  })
+
+  test('and every kind is source again while the caret is in it', () => {
+    for (const doc of [
+      'one\n\n![[clip.mp3]]\n\ntwo',
+      'one\n\n![[paper.pdf]]\n\ntwo',
+      'one\n\n![[Board.canvas]]\n\ntwo',
+    ]) {
+      expect(blocks(doc, 8), doc).toEqual([])
+      expect(concealed(doc, 8), doc).toEqual([])
+    }
+  })
 })

@@ -221,8 +221,12 @@ fn safe_name(name: &str) -> Option<String> {
     Some(safe)
 }
 
-/// What kind of picture this is, going by the extension, which is all a `data:`
-/// URI needs to be told.
+/// What kind of file this is, going by the extension, which is all a `data:` URI
+/// needs to be told.
+///
+/// Sound and film are here because a note embeds those the way it embeds a
+/// picture, and a player handed `application/octet-stream` refuses to play. The
+/// bytes still go the same way; only the label changes.
 fn mime_of(path: &Path) -> &'static str {
     match path
         .extension()
@@ -238,6 +242,21 @@ fn mime_of(path: &Path) -> &'static str {
         "avif" => "image/avif",
         "bmp" => "image/bmp",
         "svg" => "image/svg+xml",
+        "mp3" => "audio/mpeg",
+        "m4a" | "aac" => "audio/mp4",
+        "wav" => "audio/wav",
+        "flac" => "audio/flac",
+        // A container either can be in is labelled with what it usually holds;
+        // see the two lists in the markdown package's links.ts.
+        "ogg" | "oga" | "opus" => "audio/ogg",
+        "weba" => "audio/webm",
+        "mp4" | "m4v" => "video/mp4",
+        "webm" => "video/webm",
+        "mov" => "video/quicktime",
+        "mkv" => "video/x-matroska",
+        "avi" => "video/x-msvideo",
+        "ogv" => "video/ogg",
+        "pdf" => "application/pdf",
         _ => "application/octet-stream",
     }
 }
@@ -376,6 +395,16 @@ mod tests {
         assert_eq!(mime_of(Path::new("a/b.jpeg")), "image/jpeg");
         assert_eq!(mime_of(Path::new("a/b.svg")), "image/svg+xml");
         assert_eq!(mime_of(Path::new("a/b.xyz")), "application/octet-stream");
+        // Sound and film, so a player handed one knows what it is.
+        assert_eq!(mime_of(Path::new("a/clip.MP3")), "audio/mpeg");
+        assert_eq!(mime_of(Path::new("a/talk.m4a")), "audio/mp4");
+        assert_eq!(mime_of(Path::new("a/demo.mp4")), "video/mp4");
+        assert_eq!(mime_of(Path::new("a/demo.mov")), "video/quicktime");
+        // A container either can be in is labelled with what it usually holds.
+        assert_eq!(mime_of(Path::new("a/x.ogg")), "audio/ogg");
+        assert_eq!(mime_of(Path::new("a/x.ogv")), "video/ogg");
+        assert_eq!(mime_of(Path::new("a/x.webm")), "video/webm");
+        assert_eq!(mime_of(Path::new("a/x.weba")), "audio/webm");
         assert_eq!(
             mime_of(Path::new("noextension")),
             "application/octet-stream"

@@ -14,6 +14,7 @@
  *  the caller passes in `css`. Handing the layout back to a reader as MathML
  *  would hand it to something that mostly cannot do it. */
 
+import { mapSources } from '@nib/markdown/sources'
 import { claimName } from './naming'
 import { type Picture, suffixFor } from './pictures'
 import { type Entry, zipOf } from './zip'
@@ -527,13 +528,7 @@ function withRewrittenSources(html: string, images: readonly Image[]): string {
     inside.set(image.src.replace(/&/g, '&amp;'), `../${image.href}`)
   }
 
-  return html.replace(
-    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
-    (whole: string, before: string, src: string, after: string) => {
-      const swapped = inside.get(src)
-      return swapped === undefined ? whole : `${before}${swapped}${after}`
-    },
-  )
+  return mapSources(html, (src) => inside.get(src) ?? null)
 }
 
 /** The instant EPUB 3 asks for: UTC, whole seconds, no fraction. A reader

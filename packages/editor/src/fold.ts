@@ -42,7 +42,8 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import { calloutOf } from '@nib/markdown/callouts'
-import { CHEVRON, ICON_ATTRIBUTES } from '@nib/markdown/icons'
+import { CHEVRON } from '@nib/markdown/icons'
+import { iconElement } from './icon'
 import { label } from './labels'
 import { NibWidget } from './live-preview/widget'
 
@@ -292,24 +293,11 @@ export function foldsChanged(update: ViewUpdate): boolean {
   return foldedRanges(update.startState) !== foldedRanges(update.state)
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg'
-
 /** The fold mark, turned by the stylesheet when the fold is open. The same
  *  drawing a foldable callout carries beside its title in the reading view, on
  *  paper and on a published page; see @nib/markdown/icons. */
 function chevron(): SVGElement {
-  const svg = document.createElementNS(SVG_NS, 'svg')
-  for (const [name, value] of Object.entries(ICON_ATTRIBUTES)) svg.setAttribute(name, value)
-
-  for (const [tag, attributes] of CHEVRON) {
-    const child = document.createElementNS(SVG_NS, tag)
-    for (const [name, value] of Object.entries(attributes)) {
-      if (value !== undefined) child.setAttribute(name, String(value))
-    }
-    svg.append(child)
-  }
-
-  return svg
+  return iconElement(CHEVRON)
 }
 
 /** The chevron in the margin beside anything that can fold.

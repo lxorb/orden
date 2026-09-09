@@ -11,7 +11,7 @@ import {
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
-import { isImageTarget } from '@nib/markdown/links'
+import { type EmbedKind, embedKind } from '@nib/markdown/links'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { noteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
@@ -42,6 +42,11 @@ export const numberEquations = Facet.define<boolean, boolean>({
 /** The longest a `[toc]` line can be, so paragraphs are dismissed on their
  *  length before their first line is read out of the document. */
 const TOC_MAX = 16
+
+/** The kinds of embed that are drawn where they stand rather than as a block of
+ *  their own: decorate.ts draws these inline, whether or not the line holds
+ *  anything else. */
+const MEDIA: ReadonlySet<EmbedKind | null> = new Set<EmbedKind>(['image', 'audio', 'video'])
 
 /** Labels have to be known before any `\eqref` renders, so equations are
  *  counted in a first pass over the document. */
@@ -171,10 +176,10 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // paragraph rather than of the link inside it: walking into every
           // one-line paragraph of a note to find the link would cost more than
           // every other construct here put together. Anywhere but on a line of
-          // its own an embed stays a link, and a picture is drawn inline
-          // whichever it is; live-preview/decorate.ts draws both of those.
+          // its own an embed stays a link, and a picture, a recording or a film
+          // is drawn where it stands whichever it is; decorate.ts draws those.
           const embed = embedOfBlock(state, node.from, node.to)
-          if (embed && !isImageTarget(embed.target)) {
+          if (embed && !MEDIA.has(embedKind(embed.target))) {
             const span = found(node.from, node.to)
             if (revealed(node.from, node.to)) return false
 

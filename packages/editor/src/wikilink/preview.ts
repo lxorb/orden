@@ -1,5 +1,6 @@
 import type { EditorView } from '@codemirror/view'
 import { renderMarkdown } from '@nib/markdown'
+import { mapSources } from '@nib/markdown/sources'
 import { imageResolver } from '../images'
 
 /** A note shown rather than edited: the HTML behind an embed and behind the
@@ -37,9 +38,5 @@ export function renderNote(source: string, view: EditorView): string {
   const html = renderMarkdown(source, { footnotes: true, escapeHtml: true })
   const resolve = view.state.facet(imageResolver)
 
-  return html.replace(
-    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
-    (whole: string, before: string, src: string, after: string) =>
-      REMOTE.test(src) ? whole : `${before}${attribute(resolve(written(src)))}${after}`,
-  )
+  return mapSources(html, (src) => (REMOTE.test(src) ? null : attribute(resolve(written(src)))))
 }

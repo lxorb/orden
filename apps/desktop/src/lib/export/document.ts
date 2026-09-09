@@ -18,7 +18,7 @@ import {
   withoutComments,
 } from '@nib/markdown'
 import { calloutOf } from '@nib/markdown/callouts'
-import { shownText, withoutBlockIds } from '@nib/markdown/links'
+import { embedKind, embedSize, shownText, withoutBlockIds } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 
 /** A run of text, and everything that can be true of it at once. Absent means
@@ -319,6 +319,30 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       case 'blockMath':
         out.push({ kind: 'maths', tex: String(token.text ?? '') })
         break
+
+      // `![[…]]` with a line to itself. An embedded picture is a picture, which
+      // is how one written `![](…)` reaches a document too - the writers here
+      // read `span.picture` and know nothing of brackets. Everything else is a
+      // name: a document has no space around it, so a note, a recording, a film,
+      // a paper and a plane are all things it can only say the name of.
+      //
+      // Without this the paragraph fell to `default`, which finds the token has
+      // no children and pushes no block at all: a line that vanished.
+      case 'embed': {
+        const link = token.link as Wikilink | undefined
+        if (!link) break
+
+        const named = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+        out.push({
+          kind: 'paragraph',
+          spans: [
+            embedKind(link.target) === 'image'
+              ? { text: named, picture: link.target }
+              : { text: shownText(link) },
+          ],
+        })
+        break
+      }
 
       case 'blockquote': {
         const quote = token as Tokens.Blockquote

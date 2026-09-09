@@ -11,6 +11,8 @@
  *  whole set. */
 
 import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
+import FileText from 'lucide/dist/esm/icons/file-text.mjs'
+import Shapes from 'lucide/dist/esm/icons/shapes.mjs'
 
 /** An icon as data: the elements it is drawn from, in order. Lucide's own
  *  shape, restated without its name so nothing has to import the library to
@@ -36,6 +38,12 @@ export const ICON_ATTRIBUTES: Readonly<Record<string, string>> = {
  *  and turned by the stylesheet to point down at what it has let out. The
  *  editor draws the same one in the margin beside anything that folds. */
 export const CHEVRON: IconParts = ChevronRight
+
+/** What an embedded PDF and an embedded canvas are drawn as. A paper and a plane
+ *  cannot be shown where they stand - one is pages and the other is a surface -
+ *  so an embed of either is a card that says which file it is and opens it. */
+export const DOCUMENT: IconParts = FileText
+export const PLANE: IconParts = Shapes
 
 function attributes(written: Readonly<Record<string, string | number | undefined>>): string {
   return Object.entries(written)

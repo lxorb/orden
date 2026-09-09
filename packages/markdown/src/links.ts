@@ -109,6 +109,50 @@ export function isImageTarget(target: string): boolean {
   return IMAGE.test(target.trim())
 }
 
+/** The extensions sound is written in, as far as a browser plays them. `m4a` and
+ *  `aac` are the two a phone records into, `opus` and `oga` what a voice memo
+ *  turns up as, and `flac` because somebody's notes hold one. */
+const AUDIO = /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba)$/i
+
+/** And moving pictures. `webm` is a container either can be in, and it is in
+ *  both lists' spirit but only one of them: what people put in a `.webm` is a
+ *  film, and `.weba` is the spelling that says otherwise. `.ogg` goes the other
+ *  way for the same reason - it has meant sound since before `.ogv` existed. */
+const VIDEO = /\.(mp4|m4v|webm|mov|ogv|mkv|avi)$/i
+
+/** Whether a target names sound rather than a note, which `![[…]]` embeds as a
+ *  player the way `![[pic.png]]` embeds a picture. */
+export function isAudioTarget(target: string): boolean {
+  return AUDIO.test(target.trim())
+}
+
+/** Whether a target names a film. */
+export function isVideoTarget(target: string): boolean {
+  return VIDEO.test(target.trim())
+}
+
+/** What kind of thing a `![[…]]` names, which is the whole of what any surface
+ *  needs to know to show one. `null` for a note, which is the only kind whose
+ *  content has to be read before it can be shown.
+ *
+ *  One question answered once, because five places ask it: the editor drawing a
+ *  block, the editor drawing an inline embed, the renderer writing the markup,
+ *  the export deciding what it can carry, and the glasses naming it. Adding a
+ *  kind here is what makes it appear on all five. */
+export type EmbedKind = 'image' | 'audio' | 'video' | 'pdf' | 'canvas'
+
+export function embedKind(target: string): EmbedKind | null {
+  if (isImageTarget(target)) return 'image'
+  // Before sound, so a container in both lists is read as the one it usually
+  // holds; the two lists say which way each of those goes.
+  if (isVideoTarget(target)) return 'video'
+  if (isAudioTarget(target)) return 'audio'
+  if (isPdfTarget(target)) return 'pdf'
+  if (isCanvasTarget(target)) return 'canvas'
+
+  return null
+}
+
 /** Whether a target names a file the app opens in a tab of its own rather than a
  *  note: a PDF, or a canvas.
  *
@@ -122,6 +166,34 @@ export function isImageTarget(target: string): boolean {
  *  whether a target points inside the space at all rather than out at the web. */
 export function isTabFile(target: string): boolean {
   return isPdfTarget(target) || isCanvasTarget(target)
+}
+
+/** Whether a target names a file that sits beside the notes rather than a note:
+ *  a picture, sound, a film, a PDF or a canvas.
+ *
+ *  Wider than `isTabFile`, and asked for a different reason: this is what decides
+ *  that a name resolves against the files of a space instead of its notes, so
+ *  `[[clip.mp3]]` finds the recording wherever it is filed rather than reading as
+ *  a link to a note nobody wrote. `isTabFile` asks the narrower question of what
+ *  the app can open in a tab. */
+export function isFileTarget(target: string): boolean {
+  return embedKind(target) !== null
+}
+
+/** Obsidian writes how wide to draw an embed after the bar: `![[pic.png|300]]`,
+ *  or `![[pic.png|300x200]]`. Anything else after the bar is what the thing is,
+ *  the way alt text is in markdown. */
+const SIZE = /^(\d+)(?:x(\d+))?$/
+
+/** The size an embed's alias asks for, or null when the alias is words. Here so
+ *  the editor drawing a picture and the renderer writing one agree, down to
+ *  which of the two `300x200` means. */
+export function embedSize(alias: string | null): { width: number; height: number | null } | null {
+  const found = alias === null ? null : SIZE.exec(alias)
+  if (!found) return null
+
+  const height = found[2]
+  return { width: Number(found[1]), height: height === undefined ? null : Number(height) }
 }
 
 /** The page a fragment names, or null when it names none.

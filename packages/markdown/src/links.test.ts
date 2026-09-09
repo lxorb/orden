@@ -2,13 +2,18 @@ import { describe, expect, test } from 'vitest'
 import {
   blockIdOf,
   blockIds,
+  embedKind,
+  embedSize,
   findLinks,
   formatWikilink,
+  isAudioTarget,
   isNoteTarget,
   isCanvasTarget,
+  isFileTarget,
   isImageTarget,
   isPdfTarget,
   isTabFile,
+  isVideoTarget,
   linkTarget,
   pageFragment,
   parseWikilink,
@@ -172,6 +177,67 @@ describe('which targets name a picture', () => {
     expect(isImageTarget('Note')).toBe(false)
     expect(isImageTarget('png')).toBe(false)
     expect(isImageTarget('')).toBe(false)
+  })
+})
+
+describe('which targets name sound or a film', () => {
+  test('the extensions a browser plays, in either case', () => {
+    expect(isAudioTarget('take.MP3')).toBe(true)
+    expect(isAudioTarget('a/b/talk.m4a')).toBe(true)
+    expect(isAudioTarget('  memo.opus  ')).toBe(true)
+    expect(isVideoTarget('demo.mp4')).toBe(true)
+    expect(isVideoTarget('clip.MOV')).toBe(true)
+  })
+
+  test('and nothing else', () => {
+    expect(isAudioTarget('Note.md')).toBe(false)
+    expect(isAudioTarget('mp3')).toBe(false)
+    expect(isAudioTarget('song.mp3.md')).toBe(false)
+    expect(isVideoTarget('')).toBe(false)
+  })
+})
+
+describe('what kind of thing an embed names', () => {
+  test('one answer per file, and none for a note', () => {
+    expect(embedKind('shot.png')).toBe('image')
+    expect(embedKind('take.mp3')).toBe('audio')
+    expect(embedKind('demo.mp4')).toBe('video')
+    expect(embedKind('paper.pdf')).toBe('pdf')
+    expect(embedKind('Board.canvas')).toBe('canvas')
+    expect(embedKind('Another note')).toBe(null)
+    expect(embedKind('')).toBe(null)
+  })
+
+  test('a container either can be in is read as what it usually holds', () => {
+    expect(embedKind('a.webm')).toBe('video')
+    expect(embedKind('a.weba')).toBe('audio')
+    // Ogg went the other way round: `.ogg` meant sound before `.ogv` existed.
+    expect(embedKind('a.ogg')).toBe('audio')
+    expect(embedKind('a.ogv')).toBe('video')
+  })
+
+  test('every file kind resolves against the files of the space', () => {
+    for (const name of ['shot.png', 'take.mp3', 'demo.mp4', 'paper.pdf', 'Board.canvas']) {
+      expect(isFileTarget(name), name).toBe(true)
+    }
+    expect(isFileTarget('Another note')).toBe(false)
+    // Wider than the question of what opens in a tab.
+    expect(isTabFile('take.mp3')).toBe(false)
+  })
+})
+
+describe('the size an embed asks for', () => {
+  test('a width on its own, or a width and a height', () => {
+    expect(embedSize('300')).toEqual({ width: 300, height: null })
+    expect(embedSize('300x200')).toEqual({ width: 300, height: 200 })
+  })
+
+  test('and nothing at all for words', () => {
+    expect(embedSize('the sketch')).toBe(null)
+    expect(embedSize('300 wide')).toBe(null)
+    expect(embedSize('x200')).toBe(null)
+    expect(embedSize('')).toBe(null)
+    expect(embedSize(null)).toBe(null)
   })
 })
 

@@ -10,6 +10,7 @@
  *  with one dead link still exports, and the export says so by not carrying the
  *  picture, which is exactly what the note itself shows. */
 
+import { mapSources, sourcesOf } from '@nib/markdown/sources'
 import { fileBytes, parseDataUri, toBase64 } from '../bytes'
 import { claimName } from './naming'
 
@@ -173,11 +174,7 @@ export async function readPictures(
 export function swapSources(html: string, wanted: ReadonlyMap<string, string>): string {
   if (!wanted.size) return html
 
-  return html.replace(
-    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
-    (whole: string, before: string, src: string, after: string) =>
-      wanted.has(src) ? `${before}${wanted.get(src) ?? src}${after}` : whole,
-  )
+  return mapSources(html, (src) => wanted.get(src) ?? null)
 }
 
 /** The same HTML with every picture it names carried inside it as a `data:` URI,
@@ -197,11 +194,5 @@ export function inlinePictures(html: string, pictures: readonly Picture[]): stri
  *  note into itself with `![[...]]` and the pictures in that one are in the page
  *  too. The ones already carried inline are skipped: there is nothing to fetch. */
 export function sourcesIn(html: string): string[] {
-  const found = new Set<string>()
-
-  for (const [, src] of html.matchAll(/<img\b[^>]*?\bsrc="([^"]*)"/g)) {
-    if (src && !src.startsWith('data:')) found.add(src)
-  }
-
-  return [...found]
+  return sourcesOf(html, (src) => !src.startsWith('data:'))
 }

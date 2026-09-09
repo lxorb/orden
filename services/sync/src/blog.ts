@@ -21,6 +21,11 @@ function csp(nonce?: string): string {
     `style-src 'unsafe-inline' ${new URL(KATEX_CSS).origin}`,
     `font-src ${new URL(KATEX_CSS).origin}`,
     'img-src https: data:',
+    // A recording or a film a note embeds, which is served from the same place
+    // its pictures are: the blob behind the file, over https. Said out loud
+    // because media does not fall back to `img-src`, and left off `default-src`
+    // so nothing else about this page gains a way out.
+    'media-src https: data:',
     "base-uri 'none'",
     "form-action 'none'",
     "frame-ancestors 'none'",
@@ -311,6 +316,13 @@ ul.index time{color:var(--muted);font-size:.85em;flex:none}
 figure.embed{margin:1.4em 0;padding:0 1.15rem;background:color-mix(in srgb,var(--surface) 55%,transparent);border:1px solid var(--line);border-radius:9px;font-size:.94em}
 figure.embed>div>:first-child{margin-top:.9em}
 figure.embed figcaption{margin:0 -1.15rem;padding:.4rem 1.15rem .45rem;border-top:1px solid var(--line);color:var(--muted);font-size:.8em}
+.embed-media{max-width:100%;border-radius:9px;vertical-align:middle}
+audio.embed-media{width:min(100%,26rem);height:2.4rem}
+video.embed-media{display:block;margin:1.5em auto;height:auto;background:var(--surface);border:1px solid var(--line)}
+figure.embed-file{display:flex;align-items:center;gap:.55em;padding:.5em 1.15rem;font-size:.9em}
+figure.embed-file a{border:0;color:inherit}
+figure.embed-file a:hover{color:var(--accent)}
+.embed-icon{flex:none;width:1.05em;height:1.05em;color:var(--muted)}
 footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.82em}
 .by{margin:-.4em 0 2.2em;color:var(--muted);font-size:.94em}
 .back{margin:0 0 1.6em;font-size:.88em}

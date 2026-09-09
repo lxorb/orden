@@ -14,7 +14,8 @@
     "./icons": "./src/icons.ts",
     "./from-html": "./src/from-html.ts",
     "./links": "./src/links.ts",
-    "./slides": "./src/slides.ts"
+    "./slides": "./src/slides.ts",
+    "./sources": "./src/sources.ts"
   },
   "scripts": {
     "test": "vitest run",

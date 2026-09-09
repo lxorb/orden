@@ -11,6 +11,7 @@
 import { resolveFile, resolveNote } from '@nib/editor'
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
 import { isTabFile } from '@nib/markdown/links'
+import { mapSources } from '@nib/markdown/sources'
 import { links } from '../link-index.svelte'
 import { notePicture } from '../note-images'
 import type { Scheme } from '../theme.svelte'
@@ -56,11 +57,7 @@ export function pointer(note: Note): (link: Wikilink) => { href: string | null }
  *  Exported because a deck is the same note through the same renderer, one page
  *  of it at a time; see slides/render.ts. */
 export function withPictures(html: string, note: Note): string {
-  return html.replace(
-    /(<img\b[^>]*?\bsrc=")([^"]*)(")/g,
-    (_whole: string, before: string, src: string, after: string) =>
-      `${before}${notePicture(src, note.path, note.text)}${after}`,
-  )
+  return mapSources(html, (src) => notePicture(src, note.path, note.text))
 }
 
 /** How long the last render took, under a name a profiler and a test can both

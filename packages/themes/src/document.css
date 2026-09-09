@@ -107,3 +107,54 @@
   letter-spacing: 0.02em;
   color: var(--muted);
 }
+
+/* ── Embedded files ──────────────────────────────────────────────── */
+
+/* `![[clip.mp3]]` and `![[demo.mp4]]`: the player the browser already has, on the
+   surface the note is on and with nothing around it. The same plain treatment
+   `![[picture.png]]` gets, and for the same reason. */
+#write .embed-media {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+  vertical-align: middle;
+}
+
+#write audio.embed-media {
+  width: min(100%, 26rem);
+  height: 2.4rem;
+}
+
+#write video.embed-media {
+  display: block;
+  margin: 1.5em auto;
+  height: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+/* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: one row saying which file, in
+   the frame an embedded note sits in. The same card the editor draws. */
+#write .embed-file {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0.5em var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+#write .embed-file a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#write .embed-file a:hover {
+  color: var(--accent);
+}
+
+#write .embed-icon {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  color: var(--muted);
+}

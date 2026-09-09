@@ -2167,6 +2167,79 @@
   vertical-align: middle;
 }
 
+/* `![[clip.mp3]]` and `![[demo.mp4]]`: the player, and nothing around it either.
+   The browser's own controls, which are the ones the reader already knows, on the
+   surface the rest of the note is on. */
+.nib-embed-media {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+  vertical-align: middle;
+}
+
+.nib-embed-audio {
+  /* Wide enough to hold a scrubber, narrow enough to stay a line of the note. */
+  width: min(100%, 26rem);
+  height: 2.4rem;
+}
+
+.nib-embed-video {
+  display: block;
+  margin: 0.6em 0 1.2em;
+  height: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+/* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: a card that says which file
+   and opens it. The frame an embedded note gets, at the height of one row -
+   neither can be shown here, and pretending otherwise would be the lie. */
+#write .nib-embed-file {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  width: 100%;
+  padding: 0.5em var(--space-4);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+#write .nib-embed-file:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+#write .nib-embed-file:active {
+  background: var(--press);
+}
+
+/* The card is one row, so its name is a word in that row rather than a caption
+   under a body. */
+#write .nib-embed-file .nib-embed-name {
+  display: inline;
+  width: auto;
+  padding: 0;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.nib-embed-icon {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  color: var(--muted);
+}
+
+#write .nib-embed-file:hover .nib-embed-icon {
+  color: inherit;
+}
+
 /* ── The note behind a link ──────────────────────────────────────── */
 
 /* Ctrl+hover over a link between notes. A card the size of a glance: the name

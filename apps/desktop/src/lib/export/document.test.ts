@@ -216,6 +216,45 @@ describe('the rest of the constructs', () => {
   })
 })
 
+describe('an embed on a line of its own', () => {
+  const blocks = (source: string) => documentOf(source, 'Note').blocks
+
+  test('an embedded picture is a picture, the way one written `![](…)` is', () => {
+    expect(blocks('![[shot.png]]\n')).toEqual([
+      { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] },
+    ])
+    expect(picturesIn(documentOf('![[shot.png]]\n', 'Note'))).toEqual(['shot.png'])
+  })
+
+  test('and the words after the bar are what it is of', () => {
+    expect(blocks('![[shot.png|the sketch]]\n')).toEqual([
+      { kind: 'paragraph', spans: [{ text: 'the sketch', picture: 'shot.png' }] },
+    ])
+    // A size is not a description.
+    expect(blocks('![[shot.png|300]]\n')).toEqual([
+      { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] },
+    ])
+  })
+
+  test('everything else is its name, because a document has no space around it', () => {
+    for (const [source, said] of [
+      ['![[clip.mp3]]\n', 'clip.mp3'],
+      ['![[demo.mp4]]\n', 'demo.mp4'],
+      ['![[paper.pdf#page=3]]\n', 'paper.pdf#page=3'],
+      ['![[Board.canvas]]\n', 'Board.canvas'],
+      ['![[Another note]]\n', 'Another note'],
+    ] as const) {
+      expect(blocks(source), source).toEqual([{ kind: 'paragraph', spans: [{ text: said }] }])
+    }
+  })
+
+  test('and never nothing at all', () => {
+    // The token carries no children, so before it was answered for here the
+    // whole line fell through the walk and left no block behind.
+    expect(blocks('before\n\n![[clip.mp3]]\n\nafter\n')).toHaveLength(3)
+  })
+})
+
 describe('the pictures a document names', () => {
   test('are found in the order they are written, each once', () => {
     expect(picturesIn(doc)).toEqual(['assets/pic.png', 'https://nibeditor.com/remote.jpg'])

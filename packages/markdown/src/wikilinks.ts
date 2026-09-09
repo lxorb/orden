@@ -13,7 +13,17 @@
 
 import type { MarkedExtension, Tokens } from 'marked'
 import { attributeUrl, escape, fragment, safeHref } from './html'
-import { pageFragment, parseWikilink, sectionOf, shownText, slugify, type Wikilink } from './links'
+import { DOCUMENT, iconMarkup, PLANE } from './icons'
+import {
+  embedKind,
+  embedSize,
+  pageFragment,
+  parseWikilink,
+  sectionOf,
+  shownText,
+  slugify,
+  type Wikilink,
+} from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 
 /** Where a note's name goes on this page: an `href`, or null for a link the
@@ -87,9 +97,9 @@ export function wikilinks(options: {
         },
         renderer(token: Tokens.Generic) {
           const link = token.link as Wikilink
-          const framed = frame(link, options)
+          const shown = media(link) ?? card(link, options) ?? frame(link, options)
 
-          return framed ?? `<p>${anchor(link, options.resolveLink, String(token.text ?? ''))}</p>\n`
+          return shown ?? `<p>${anchor(link, options.resolveLink, String(token.text ?? ''))}</p>\n`
         },
       },
       {
@@ -107,7 +117,14 @@ export function wikilinks(options: {
           return { type: 'wikilink', raw: match[0], text: shownText(link), link }
         },
         renderer(token: Tokens.Generic) {
-          return anchor(token.link as Wikilink, options.resolveLink, String(token.text ?? ''))
+          const link = token.link as Wikilink
+          // A picture, a recording or a film is what it is wherever it is
+          // written, which is how the editor draws one too. A note and a
+          // document are not: neither fits inside a sentence, so inline they
+          // read as a link to themselves.
+          const shown = link.embed ? media(link) : null
+
+          return shown ?? anchor(link, options.resolveLink, String(token.text ?? ''))
         },
       },
     ],
@@ -135,6 +152,63 @@ function anchored(link: Wikilink): string {
 
   const page = pageFragment(link.heading)
   return page === null ? `#${fragment(slugify(link.heading))}` : `#page=${page}`
+}
+
+/** What an embedded picture, recording or film is drawn as: the element for it,
+ *  pointed at the file the way `![](…)` points at one, so every surface can
+ *  swap the address the same way it swaps a picture's; see sources.ts.
+ *
+ *  Plainly, with no frame and no caption. That is what the editor already draws
+ *  for `![[pic.png]]`, and the reason holds for the other two: a player is
+ *  already a box with its own furniture, and a name printed under it says
+ *  nothing the file name in the note did not.
+ *
+ *  Null for anything else, which is a note or a document.
+ *
+ *  `preload="metadata"` and no `autoplay`: opening a note should cost the length
+ *  of the recording, not the recording. */
+function media(link: Wikilink): string | null {
+  const kind = embedKind(link.target)
+  if (kind === null || kind === 'pdf' || kind === 'canvas') return null
+
+  const source = safeHref(link.target) ? attributeUrl(link.target) : ''
+  if (!source) return null
+
+  const size = embedSize(link.alias)
+  const sized = size
+    ? ` width="${size.width}"${size.height === null ? '' : ` height="${size.height}"`}`
+    : ''
+  // Anything after the bar that is not a size is what the thing is, as in
+  // markdown. A player has no alt text, so it names itself instead.
+  const words = size === null ? (link.alias ?? '') : ''
+
+  if (kind === 'image') return `<img src="${source}" alt="${escape(words)}"${sized}>`
+
+  const tag = kind === 'video' ? 'video' : 'audio'
+  const named = words ? ` title="${escape(words)}"` : ''
+
+  return `<${tag} class="embed-media" controls preload="metadata" src="${source}"${sized}${named}></${tag}>\n`
+}
+
+/** What an embedded PDF or canvas is drawn as: a card naming the file, which
+ *  opens it.
+ *
+ *  Neither can be shown where it stands. A paper is pages, and which page is
+ *  wanted is written in the link rather than in the file; a plane is a surface
+ *  somebody moves around on. Both are things the app opens in a tab of their
+ *  own, and a card that says which one and takes one click is the whole of what
+ *  the reader came for. Where the card cannot be clicked - an export, which has
+ *  no space behind it - it is still the file's name, said once.
+ *
+ *  Null for every other kind. */
+function card(link: Wikilink, options: { resolveLink?: LinkResolver }): string | null {
+  const kind = embedKind(link.target)
+  if (kind !== 'pdf' && kind !== 'canvas') return null
+
+  const icon = iconMarkup(kind === 'pdf' ? DOCUMENT : PLANE, 'embed-icon')
+  const name = anchor(link, options.resolveLink, shownText(link))
+
+  return `<figure class="embed embed-file" data-kind="${kind}">${icon}${name}</figure>\n`
 }
 
 /** The frame an embedded note sits in, with a marker where its content goes.

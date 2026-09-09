@@ -18,9 +18,9 @@ import { emojiFor } from '../emoji'
 import { fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
-import { blockIdOf, isImageTarget, linkTarget } from '@nib/markdown/links'
+import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
-import { embedOfBlock, EmbedImageWidget } from '../wikilink/embed'
+import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { noteIndex, resolves } from '../wikilink/notes'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
@@ -244,10 +244,16 @@ class Decorator {
     const shown = overlaps(this.state, node.from, node.to)
 
     if (link.embed && !shown) {
-      // A picture is a picture wherever it is written; a note is drawn whole by
-      // blocks.ts, and only when it has a line to itself.
-      if (isImageTarget(link.target)) {
+      // A picture, a recording and a film are what they are wherever they are
+      // written; a note and a document are drawn by blocks.ts, and only when
+      // they have a line to themselves.
+      const kind = embedKind(link.target)
+      if (kind === 'image') {
         this.inlineWidget(node, new EmbedImageWidget(link), false)
+        return false
+      }
+      if (kind === 'audio' || kind === 'video') {
+        this.inlineWidget(node, new EmbedMediaWidget(link, kind), false)
         return false
       }
       // Its own marks are part of what blocks.ts replaces.

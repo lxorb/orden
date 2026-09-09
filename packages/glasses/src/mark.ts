@@ -24,6 +24,7 @@
 
 import { lexMarkdown, stripFrontMatter, withoutComments } from '@nib/markdown'
 import { calloutOf } from '@nib/markdown/callouts'
+import { embedKind, type Wikilink } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
 
@@ -694,6 +695,21 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
       const picture = onlyPicture(kids)
       if (picture) sheet.add(`${PICTURE} ${picture}`, from, nest)
       else sheet.add(inlineWords(kids, sheet.marks, sheet.flow), from, nest)
+      break
+    }
+
+    // `![[…]]` with a line to itself. A note embedded in another reads as the
+    // name of the note, because that is all a panel of one font can say about
+    // it; a file gets the picture mark in front of its name, for the same reason
+    // a picture does - it is a thing that cannot be what it is here, and the
+    // mark is what says so rather than leaving a line that looks like prose.
+    case 'embed': {
+      const from = where.take(raw)
+      const link = 'link' in token ? (token.link as Wikilink) : null
+      const name = textOf(token)
+      const file = link !== null && embedKind(link.target) !== null
+
+      sheet.add(file ? `${PICTURE} ${name}` : name, from, nest)
       break
     }
 

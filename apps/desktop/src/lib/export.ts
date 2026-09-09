@@ -6,6 +6,8 @@ import {
   renderMarkdown,
   type Wikilink,
 } from '@nib/markdown'
+import { embedKind } from '@nib/markdown/links'
+import { sourcesOf } from '@nib/markdown/sources'
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
 import { drawDiagram } from './diagrams'
@@ -171,7 +173,13 @@ export async function prepareEmbeds(
 ): Promise<(link: Wikilink) => string | null> {
   const wanted = new Set(
     findLinks(source)
-      .filter((link) => link.embed && link.kind === 'wikilink' && link.target)
+      // A file is not read: the renderer draws a picture, a player or a card
+      // from the name alone, and reading a film as text would be a waste of a
+      // disk. See `media` and `card` in the renderer.
+      .filter(
+        (link) =>
+          link.embed && link.kind === 'wikilink' && link.target && embedKind(link.target) === null,
+      )
       .map((link) => link.target),
   )
 
@@ -232,13 +240,7 @@ export async function prepareFences(
 
 /** Every `src` in the page that points at a file rather than at the network. */
 export function localSources(html: string): string[] {
-  const found = new Set<string>()
-
-  for (const [, src] of html.matchAll(/<img\b[^>]*?\bsrc="([^"]*)"/g)) {
-    if (src && !/^(data:|https?:|\/\/)/i.test(src)) found.add(src)
-  }
-
-  return [...found]
+  return sourcesOf(html, (src) => !/^(data:|https?:|\/\/)/i.test(src))
 }
 
 /** Swaps local image paths for `data:` URIs so the exported file stands alone.
