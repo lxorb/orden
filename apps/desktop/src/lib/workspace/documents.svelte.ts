@@ -14,6 +14,15 @@
 import { SharedDoc } from '@nib/editor'
 import type { Camera } from '../camera'
 import { identifier } from '../identifier'
+import { t } from '../i18n.svelte'
+import { draftName, shownName } from '../note-name'
+
+/** The name a note nobody has named carries. It is never on screen: such a note
+ *  is called after its own first words instead, so a window of drafts is a window
+ *  of names rather than a row of Untitleds; see `shown`. It is what a written
+ *  session holds for a tab that never had a file, and what a save dialog knows to
+ *  offer a first line in place of. */
+export const UNTITLED = 'Untitled'
 
 /** What a tab holds. Almost always a note. The graph of the space is a tab
  *  without one, because a picture of the notes belongs beside them rather than in
@@ -92,10 +101,14 @@ export class NoteDoc {
     this.dirty = start.dirty
     this.words = start.text
     this.live = new SharedDoc(start.text)
+    this.retitle()
 
     this.live.onChange = () => {
       this.behind = true
       this.revision++
+      // Before the quiet return: a note a sync brought over is still a note
+      // whose name is its first line.
+      this.retitle()
       if (this.quiet) return
 
       this.dirty = true
@@ -106,6 +119,29 @@ export class NoteDoc {
   get text(): string {
     return this.words
   }
+
+  /** Whether nobody has given this note a name: no file, and the placeholder
+   *  `openBlank` hands out. Such a note is called after its own first words. */
+  private get unnamed(): boolean {
+    return this.kind === 'note' && this.path === null && this.name === UNTITLED
+  }
+
+  /** The words at the top of an unnamed note: its first heading, else its first
+   *  line. Kept in step as the note changes rather than read out of a derived,
+   *  because the live rope is not something Svelte watches. Only the top of the
+   *  note is looked at, so it costs the same whatever the note weighs, and only
+   *  a note with no name of its own pays for it at all. */
+  private firstWords = $state<string | null>(null)
+
+  /** What this document is called wherever it is listed: its tab, a row in the
+   *  file list, a menu's heading, the window title.
+   *
+   *  Its file's name without the extension Nib keeps its own documents under -
+   *  or, for a note nobody has named, the words at the top of it, so three drafts
+   *  open at once read as three notes rather than three Untitleds. */
+  readonly shown = $derived(
+    this.unnamed ? (this.firstWords ?? t('Untitled')) : shownName(this.name),
+  )
 
   /** Whether this note keeps itself, which is to say something other than
    *  somebody saving it is holding on to the words: it sits in a space, so Nib
@@ -137,6 +173,12 @@ export class NoteDoc {
     if (!holdsWords(this.kind)) return false
 
     return this.path !== null || this.words.trim().length > 0
+  }
+
+  /** Reads the note's own title off the top of the rope, for a note that has no
+   *  name but that. */
+  private retitle() {
+    if (this.unnamed) this.firstWords = draftName(this.live.text.iterLines())
   }
 
   /** Brings the words up to what the views hold. Costs one pass over the note,
@@ -272,6 +314,12 @@ export class Tab {
 
   set name(to: string) {
     this.note.name = to
+  }
+
+  /** What the strip, the tooltip and this tab's own menu call it. See
+   *  NoteDoc.shown: `name` is the file, this is the document. */
+  get shown(): string {
+    return this.note.shown
   }
 
   /** The words, as far as the last flush. See NoteDoc above. */

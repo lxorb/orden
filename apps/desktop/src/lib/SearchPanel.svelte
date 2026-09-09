@@ -9,6 +9,7 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { shownName } from './note-name'
   import { search } from './search.svelte'
   import { chosen, completing, nearest, offered } from './search/suggest'
   import type { Hit, Range } from './search/match'
@@ -28,8 +29,6 @@
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
 
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
-
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
   let field = $state<HTMLInputElement>()
   let focused = $state(false)
@@ -59,7 +58,7 @@
     return out.sort()
   })
 
-  const names = $derived([...new Set(workspace.notes.map((note) => stripped(note.name)))].sort())
+  const names = $derived([...new Set(workspace.notes.map((note) => shownName(note.name)))].sort())
 
   /** The space's tags as the tree their slashes describe. */
   const tags = $derived(tagTree(workspace.tags))
@@ -288,7 +287,7 @@
           <!-- One character for "near enough", where a word would be prose. The
                place in the list already says it: the guesses are under the
                answers. -->
-          {#if group.loose}<span class="guess" title={t('Close match')}>~</span>{/if}{stripped(
+          {#if group.loose}<span class="guess" title={t('Close match')}>~</span>{/if}{shownName(
             group.name,
           )}
         </div>

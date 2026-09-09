@@ -83,9 +83,7 @@
   })
 
   const title = $derived(
-    workspace.active
-      ? `${workspace.active.name.replace(/\.(md|markdown|mdown|mkd)$/i, '')}${workspace.active.unsaved ? ' ·' : ''}`
-      : '',
+    workspace.active ? `${workspace.active.shown}${workspace.active.unsaved ? ' ·' : ''}` : '',
   )
 
   // The header shows no title, so the note's name goes to the window itself -

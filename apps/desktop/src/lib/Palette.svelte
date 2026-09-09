@@ -5,6 +5,7 @@
   import { appCommands, type Command } from './commands'
   import { t } from './i18n.svelte'
   import { rank } from './fuzzy'
+  import { shownName } from './note-name'
   import { overlays } from './overlays'
   import { workspace, type Entry } from './workspace.svelte'
 
@@ -19,8 +20,6 @@
   const asCommands = $derived(query.startsWith('>'))
   const term = $derived(asCommands ? query.slice(1).trim() : query.trim())
 
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
-
   /** Every command there is, built while the palette is open and not once per
    *  keystroke: the list asks what the document goes out as, and answering that
    *  walks every line of it. What a row says still follows the app - the labels
@@ -30,10 +29,10 @@
 
   const results = $derived.by((): (Command | Entry)[] => {
     if (asCommands) return rank(term, commands, (command) => command.label)
-    return rank(term, workspace.files, (one) => stripped(one.name)).slice(0, 40)
+    return rank(term, workspace.files, (one) => shownName(one.name)).slice(0, 40)
   })
 
-  const label = (item: Command | Entry) => ('label' in item ? item.label : stripped(item.name))
+  const label = (item: Command | Entry) => ('label' in item ? item.label : shownName(item.name))
 
   /** Reads a value for its own sake, so the effect around it follows that
    *  value. Nothing wants the value itself. */

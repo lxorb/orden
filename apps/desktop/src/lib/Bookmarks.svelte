@@ -9,6 +9,7 @@
   import { t } from './i18n.svelte'
   import { bookmarkEntry, menu } from './menu.svelte'
   import { longPress } from './longpress'
+  import { shownName } from './note-name'
   import { carryBookmark, draggedBookmark, isBookmarkDrag } from './drag-paths'
   import { insideSpace } from './space-paths'
   import type { Bookmark } from './workspace/bookmarks.svelte'
@@ -20,8 +21,6 @@
   /** A magnifier, the same one the Search tab wears, so a bookmarked search
    *  says what it is without a word. */
   const SEARCH_ICON = 'M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3'
-
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
   interface Row {
     mark: Bookmark
@@ -69,8 +68,8 @@
       out.push({
         mark,
         at,
-        label: mark.kind === 'heading' ? mark.text : stripped(entry.name),
-        note: mark.kind === 'heading' ? stripped(entry.name) : null,
+        label: mark.kind === 'heading' ? mark.text : shownName(entry.name),
+        note: mark.kind === 'heading' ? shownName(entry.name) : null,
         path: entry.path,
         active: open,
       })

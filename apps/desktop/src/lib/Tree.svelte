@@ -24,6 +24,7 @@
   } from './menu.svelte'
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
+  import { shownName } from './note-name'
   import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
@@ -37,8 +38,6 @@
   const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
 
   let dropTarget = $state<string | null>(null)
-
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
   /** Moving a row, where a drag is not available.
    *
@@ -176,7 +175,7 @@
   /** What the name field starts with. A note waiting for a title starts with the
    *  name it has and a space, so typing one adds to it. */
   function nameToEdit(entry: Entry): string {
-    const name = entry.is_dir ? entry.name : stripped(entry.name)
+    const name = entry.is_dir ? entry.name : shownName(entry.name)
     return workspace.renaming?.appending ? `${name} ` : name
   }
 
@@ -315,9 +314,9 @@
             pick(event, entry) || workspace.openEntry(entry.path, { preview: true })}
           ondblclick={() => workspace.openEntry(entry.path)}
           oncontextmenu={(event) =>
-            menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
+            menu.show(event, menuFor(entry), { title: shownName(entry.name) })}
           use:longPress={(event) =>
-            menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
+            menu.show(event, menuFor(entry), { title: shownName(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
           ondragover={(event) => overFolder(event, entry.path, folderOf(entry.path))}
@@ -328,7 +327,7 @@
                of file it is: the row says what it opens into without spending a
                word on it. -->
           <FileMark mark={fileMark(entry.name)} />
-          <span class="label">{stripped(entry.name)}</span>
+          <span class="label">{shownName(entry.name)}</span>
         </button>
       {/if}
     </li>

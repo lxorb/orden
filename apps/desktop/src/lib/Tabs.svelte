@@ -12,8 +12,6 @@
 
   const { paneId }: { paneId: string } = $props()
 
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
-
   const pane = $derived(workspace.panes.at(paneId))
   const tabs = $derived(workspace.tabsIn(paneId))
   /** The pane that acts on the keyboard is marked here rather than by a border
@@ -106,7 +104,7 @@
   }
 
   const showMenu = (event: MouseEvent, tab: Tab) =>
-    menu.show(event, tabMenu(tab), { title: stripped(tab.name) })
+    menu.show(event, tabMenu(tab), { title: tab.shown })
 
   /** Whether the drag over the panes is one this strip takes: a tab out of any
    *  strip, or notes out of the file list. */
@@ -203,7 +201,7 @@
         <button
           class="pick"
           draggable="true"
-          title={stripped(tab.name)}
+          title={tab.shown}
           onclick={() => workspace.activate(tab.id)}
           ondblclick={() => workspace.keep(tab.id)}
           oncontextmenu={(event) => showMenu(event, tab)}
@@ -234,7 +232,7 @@
                the text directly inside it, so the words were being cut through
                the middle of a letter. This is also the only part of the tab that
                gives way as the strip fills. -->
-          <span class="label">{stripped(tab.name)}</span>
+          <span class="label">{tab.shown}</span>
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are
                already the whole sentence. -->

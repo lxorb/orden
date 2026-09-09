@@ -18,17 +18,13 @@
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
-  const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-
   /** The one pane, while there is only one. Null once something is split, and
    *  then the strips live in the panes. */
   const only = $derived(workspace.panes.count === 1 ? workspace.panes.focused : null)
 
   /** A phone shows one document, so the bar says which one. */
   const title = $derived(
-    workspace.active
-      ? workspace.active.name.replace(MARKDOWN, '') + (workspace.active.unsaved ? ' ·' : '')
-      : 'Nib',
+    workspace.active ? workspace.active.shown + (workspace.active.unsaved ? ' ·' : '') : 'Nib',
   )
 
   /** What the tab strip and the rail offer on a desktop, where a phone has

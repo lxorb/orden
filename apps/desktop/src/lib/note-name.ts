@@ -1,17 +1,92 @@
-/** The note's own first line, if it would make a sensible filename. Heading
- *  marks and list bullets are dropped, since they are markup rather than title. */
-export function nameFromContent(doc: string): string | null {
-  const first = doc.split('\n').find((line) => line.trim())
-  if (!first) return null
+/** What a note is called: on screen, and on disk once it is saved.
+ *
+ *  Both answers start in the same place. A note's title is its first heading,
+ *  and failing that its first line, so a draft's tab and the file it becomes
+ *  carry the same words. What differs is only what a filesystem will take: a tab
+ *  may say `Q1: costs/savings` and a file may not.
+ *
+ *  The strip, the file list, the palette, the menus and the window title all ask
+ *  here, so a document is called one thing wherever it is listed. */
 
-  const text = first
-    .replace(/^\s*#{1,6}\s+/, '')
-    .replace(/^\s*[-*+]\s+/, '')
-    .replace(/^\s*>\s*/, '')
+/** The extensions a name is shown without: markdown's four, and a canvas. Those
+ *  are the documents Nib writes itself, and a document is known by its title
+ *  rather than by the file it is kept in. A PDF or a picture keeps its
+ *  extension, because that is a file from somewhere else and its name is the
+ *  file's own. Which kind a row holds is drawn beside it rather than spelled out
+ *  after it; see file-mark.ts. */
+const OWN = /\.(md|markdown|mdown|mkd|canvas)$/i
+
+/** A document's name as everything that lists one shows it. */
+export function shownName(name: string): string {
+  return name.replace(OWN, '')
+}
+
+/** How many characters of a title are worth keeping. Long enough for a sentence
+ *  of a heading, short enough to be a filename and to read in a tab. */
+const MOST = 60
+
+/** How far down a note a title may sit. A heading is what a note is called and
+ *  it is at the top of one; the bound is what keeps naming a draft off the
+ *  length of the draft, since a tab asks again on every keystroke. */
+const LINES = 40
+
+/** A heading line, and what it says. Up to three spaces of indent, as markdown
+ *  has it. */
+const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/
+
+/** The markup a first line wears rather than says: a heading's hashes, a
+ *  bullet, a quote's angle. */
+const MARKUP = /^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)/
+
+/** The words a note would be titled after: its first heading, else its first
+ *  line with anything in it. Null for a note that says nothing yet.
+ *
+ *  Takes lines rather than the whole note so a caller with a rope can hand over
+ *  an iterator and pay for the top of the document instead of all of it. */
+export function titleFrom(lines: Iterable<string>): string | null {
+  let first: string | null = null
+  let read = 0
+
+  for (const line of lines) {
+    const heading = HEADING.exec(line)
+    if (heading) {
+      const words = (heading[2] ?? '').trim()
+      if (words) return words
+    }
+
+    if (first === null) {
+      const words = line.replace(MARKUP, '').trim()
+      if (words) first = words
+    }
+
+    if (++read >= LINES) break
+  }
+
+  return first
+}
+
+/** What a note with no name of its own is called on screen. Not a filename, so
+ *  only the markup that made the line a heading or a list item is dropped and
+ *  the punctuation stays. Null while the note says nothing, and the tab falls
+ *  back to Untitled. */
+export function draftName(lines: Iterable<string>): string | null {
+  const title = titleFrom(lines)
+  if (title === null) return null
+
+  const text = title.replace(/\s+/g, ' ').trim()
+  return text ? text.slice(0, MOST) : null
+}
+
+/** The note's own title, if it would make a sensible filename. */
+export function nameFromContent(doc: string): string | null {
+  const title = titleFrom(doc.split('\n'))
+  if (title === null) return null
+
+  const text = title
     // Everything a filesystem would refuse, plus the separators.
     .replace(/[<>:"/\\|?* -]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
 
-  return text ? text.slice(0, 60) : null
+  return text ? text.slice(0, MOST) : null
 }

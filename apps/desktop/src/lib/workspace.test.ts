@@ -1178,6 +1178,9 @@ describe('closing something that holds unsaved work', () => {
     expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
   })
 
+  /** The question names the draft the way its tab does: by its own first
+   *  heading, since three drafts all asked about as Untitled would be three
+   *  questions nobody could tell apart. */
   test('asks about an untitled note with words in it, and Save asks for a name', async () => {
     workspace.openBlank('Untitled', '# a draft')
     const tab = workspace.active
@@ -1187,7 +1190,7 @@ describe('closing something that holds unsaved work', () => {
 
     await workspace.closeAsking(tab.id)
 
-    expect(sheet.asked).toEqual(['Save Untitled?'])
+    expect(sheet.asked).toEqual(['Save a draft?'])
     expect(sheet.named).toEqual(['Name the note'])
     expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
       '/space/Draft.md',
@@ -1691,5 +1694,81 @@ describe('a canvas that comes back after a restart', () => {
 
     expect(held).toBeDefined()
     expect(held?.doc).toBe('')
+  })
+})
+
+describe('what a document is called on screen', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.previewTabId = null
+    sheet.name = null
+  })
+
+  test('is a note without its extension', async () => {
+    await workspace.open('/space/a.md')
+    expect(workspace.active?.shown).toBe('a')
+  })
+
+  test('is a canvas without its extension, the way a note is', async () => {
+    await workspace.openCanvas('/space/plan.canvas')
+    expect(workspace.active?.shown).toBe('plan')
+  })
+
+  test('is a paper with its extension, because that file is not ours', () => {
+    workspace.openPdf('/space/paper.pdf')
+    expect(workspace.active?.shown).toBe('paper.pdf')
+  })
+
+  test('is a draft first heading, so two drafts are two names', () => {
+    workspace.openBlank()
+    const first = workspace.active
+    workspace.openBlank()
+    const second = workspace.active
+    if (!first || !second) throw new Error('the drafts did not open')
+
+    first.note.live.replace('# Groceries\n\nmilk\n')
+    second.note.live.replace('notes from the call\n')
+
+    expect(first.shown).toBe('Groceries')
+    expect(second.shown).toBe('notes from the call')
+  })
+
+  test('follows the words as they are typed, without waiting for a flush', () => {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('the draft did not open')
+
+    tab.note.live.replace('# Half a th')
+    expect(tab.shown).toBe('Half a th')
+
+    tab.note.live.replace('# Half a thought')
+    expect(tab.shown).toBe('Half a thought')
+  })
+
+  test('is Untitled only while the draft says nothing', () => {
+    workspace.openBlank()
+    expect(workspace.active?.shown).toBe('Untitled')
+  })
+
+  /** A file opened from the computer in the browser build has a name of its own
+   *  and no path to save back to. The name it came with wins. */
+  test('is the name a draft came with, where it came with one', () => {
+    workspace.openBlank('Report', '# Something else entirely\n')
+    expect(workspace.active?.shown).toBe('Report')
+  })
+
+  test('is the file name again once the draft is saved', async () => {
+    workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('the draft did not open')
+    tab.note.live.replace('# A draft\n')
+    sheet.name = 'Kept'
+
+    await workspace.save()
+
+    expect(tab.path).toBe('/space/Kept.md')
+    expect(tab.shown).toBe('Kept')
   })
 })

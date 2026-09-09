@@ -10,6 +10,7 @@
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
+  import { shownName } from './note-name'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
@@ -187,13 +188,11 @@
    *  offer it however Windows the machine running the browser happens to be. */
   const isWindows = isDesktop && navigator.userAgent.includes('Windows')
 
-  const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
-
   const noteChoices = $derived([
     { value: '', label: t('The whole space') },
     ...workspace.notes.map((note) => ({
       value: relativeToSpace(note.path),
-      label: t('Only {name}', { name: stripped(note.name) }),
+      label: t('Only {name}', { name: shownName(note.name) }),
     })),
   ])
 

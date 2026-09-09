@@ -28,7 +28,13 @@ import {
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
-import { type DocumentStart, holdsWords, NoteDoc, Tab } from './workspace/documents.svelte'
+import {
+  type DocumentStart,
+  holdsWords,
+  NoteDoc,
+  Tab,
+  UNTITLED,
+} from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { type Landing, Panes } from './workspace/panes.svelte'
@@ -89,17 +95,10 @@ const SAVED_SHOWN = 1400
 // Short enough that a crash costs a moment's typing, long enough that the strip
 // is not serialised on every keystroke.
 const SESSION_DELAY = 400
-const UNTITLED = 'Untitled'
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 function basename(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
-}
-
-/** A file's name as the app writes it: without the extension, the way the tab
- *  strip and the file list show it. */
-function shownName(name: string): string {
-  return name.replace(MARKDOWN, '')
 }
 
 /** Which line of a note a followed link lands on: the heading it names, or the
@@ -1345,7 +1344,7 @@ class Workspace {
     const { prompt } = await import('./prompt.svelte')
 
     const answer = await prompt.choose({
-      title: t('Save {name}?', { name: note.path ? shownName(note.name) : t('Untitled') }),
+      title: t('Save {name}?', { name: note.shown }),
       options: [
         { id: 'save', label: key('Save'), primary: true },
         { id: 'discard', label: key('Don’t save'), danger: true },
@@ -1949,7 +1948,7 @@ class Workspace {
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return null
 
-    const stem = nameFromContent(text) ?? 'Untitled'
+    const stem = nameFromContent(text) ?? UNTITLED
     const taken = new Set(this.notes.map((note) => note.path))
     let name = `${stem}.md`
     let counter = 2
