@@ -429,8 +429,10 @@ export const fr: Dictionary = {
   'Every note, including drafts, is readable by anyone with the address.':
     'Chaque note, brouillons compris, est lisible par quiconque a l’adresse.',
   Address: 'Adresse',
-  'Add this at your registrar. It is checked every few seconds.':
-    'Ajoutez ceci chez votre registraire. C’est vérifié toutes les quelques secondes.',
+  'Add these at your registrar, then verify.':
+    'Ajoutez ceci chez votre registraire, puis vérifiez.',
+  Verify: 'Vérifier',
+  'that record is not answering yet': 'Cet enregistrement ne répond pas encore',
   'Stop publishing': 'Arrêter la publication',
   Type: 'Type',
   Name: 'Nom',

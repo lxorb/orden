@@ -1,8 +1,8 @@
 import { setSnippets } from '@nib/editor'
-import { api, type DnsRecord, type DomainStatus, type RemoteSpace } from './api'
+import { api, ApiError, type DnsRecord, type DomainStatus, type RemoteSpace } from './api'
 import { account } from './account.svelte'
 import { connectors } from './connectors.svelte'
-import { keepAsking } from './domain-status'
+import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
@@ -248,6 +248,31 @@ class Settings {
     } finally {
       this.busy = false
     }
+  }
+
+  /** The owner saying the record is in place. The server reads it there and
+   *  then, so a domain either starts working under the button or the line under
+   *  it says the record is not answering yet. */
+  async verifyDomain() {
+    const space = this.remote
+    if (!space || !account.accountToken) return
+
+    this.busy = true
+
+    try {
+      this.domain = await api.verifyDomain(account.accountToken, space.id)
+      await account.loadSpaces()
+    } catch (error) {
+      // The server answers with the state it is in, so a refusal is an answer
+      // rather than a failure: it is shown where the state is shown.
+      const said = error instanceof ApiError ? error.body : null
+      if (isDomainStatus(said)) this.domain = said
+      else this.error = message(error, 'that did not work')
+    } finally {
+      this.busy = false
+    }
+
+    if (keepAsking(this.domain)) void this.watchDomain()
   }
 
   /** Which asking is the latest, for the same reason as `checks`: the pane

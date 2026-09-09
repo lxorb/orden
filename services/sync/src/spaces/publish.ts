@@ -9,7 +9,7 @@
 import { Hono } from 'hono'
 import { readBody } from '../body'
 import { now } from '../crypto'
-import { claimDomain, domainStatus, releaseDomain } from '../hostnames'
+import { domainStatus, releaseDomain } from '../hostnames'
 import { cleanPath, PATH_LIMIT } from '../notes'
 import type { Env, Space, Variables } from '../types'
 import {
@@ -21,6 +21,7 @@ import {
   reserved,
   SUBDOMAIN,
 } from './addresses'
+import { newProof, proveDomain } from './proof'
 import { atLeast, presentSpace, spaceOf } from './space'
 
 /** Long enough for a title, short enough that the column cannot be used as
@@ -88,14 +89,29 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
 
   // Checked like a name is, so the answer is a clear no and not the unique
   // index failing halfway through.
+  //
+  // A domain somebody has proved is theirs, and that is the end of it. One
+  // nobody has proved is nobody's: it is a sentence another account typed, and
+  // it used to shut the real owner out for ever. So this claim takes it, and
+  // whoever can write the record keeps it. See proof.ts.
   if (address.domain && address.domain !== space.blog_domain) {
     const clash = await context.env.DB.prepare(
-      'select id from spaces where blog_domain = ? and id != ?',
+      'select id, blog_domain_verified_at from spaces where blog_domain = ? and id != ?',
     )
       .bind(address.domain, space.id)
-      .first()
+      .first<{ id: string; blog_domain_verified_at: number | null }>()
 
-    if (clash) return context.json({ error: 'that domain is taken' }, 409)
+    if (clash) {
+      if (clash.blog_domain_verified_at !== null) {
+        return context.json({ error: 'that domain is taken' }, 409)
+      }
+
+      await context.env.DB.prepare(
+        'update spaces set blog_domain = null, blog_domain_token = null, updated_at = ? where id = ?',
+      )
+        .bind(now(), clash.id)
+        .run()
+    }
   }
 
   // A note path publishes that one note at the root; null, an empty string, or
@@ -121,26 +137,43 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
   // what the `coalesce` below does with a null.
   const chosenTitle = title === undefined || title === '' ? null : title
 
+  // A domain of one's own arrives unproved, with the token the owner is to put in
+  // a record; a domain that has not changed keeps the proof it had. Nothing is
+  // served on it and no certificate is asked for until that record is read; see
+  // proof.ts.
+  const claiming = !!address.domain && address.domain !== space.blog_domain
+  const proof = claiming ? newProof() : address.domain ? space.blog_domain_token : null
+  const provedAt = claiming || !address.domain ? null : space.blog_domain_verified_at
+
   const at = now()
   await context.env.DB.prepare(
     `update spaces set blog_enabled = 1,
                        blog_subdomain = ?,
                        blog_domain = ?,
+                       blog_domain_token = ?,
+                       blog_domain_verified_at = ?,
                        blog_title = coalesce(?, blog_title),
                        blog_note = ?,
                        updated_at = ?
       where id = ?`,
   )
-    .bind(address.subdomain, address.domain, chosenTitle, note, at, space.id)
+    .bind(
+      address.subdomain,
+      address.domain,
+      proof,
+      provedAt,
+      chosenTitle,
+      note,
+      at,
+      space.id,
+    )
     .run()
 
-  // Cloudflare follows the row: the certificate for a domain given up goes,
-  // one for a domain just chosen is asked for. Neither can fail the request.
+  // The certificate for a domain given up goes at once. One for a domain just
+  // chosen waits on the record: this is exactly where a certificate used to be
+  // asked for in somebody else's name.
   if (space.blog_domain && space.blog_domain !== address.domain) {
     await releaseDomain(context.env, space.blog_domain)
-  }
-  if (address.domain && address.domain !== space.blog_domain) {
-    await claimDomain(context.env, address.domain)
   }
 
   // What was written, worked out rather than read back: the row above is the
@@ -150,6 +183,8 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     blog_enabled: 1,
     blog_subdomain: address.subdomain,
     blog_domain: address.domain,
+    blog_domain_token: proof,
+    blog_domain_verified_at: provedAt,
     blog_title: chosenTitle ?? space.blog_title,
     blog_note: note,
     updated_at: at,
@@ -169,7 +204,12 @@ publish.delete('/:id/blog', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
   await context.env.DB.prepare(
-    'update spaces set blog_enabled = 0, blog_domain = null, updated_at = ? where id = ?',
+    `update spaces set blog_enabled = 0,
+                       blog_domain = null,
+                       blog_domain_token = null,
+                       blog_domain_verified_at = null,
+                       updated_at = ?
+      where id = ?`,
   )
     .bind(now(), space.id)
     .run()
@@ -180,13 +220,57 @@ publish.delete('/:id/blog', atLeast('owner'), async (context) => {
 })
 
 /** How far along a domain of one's own is, for the pane to keep asking while
- *  the owner adds the record. The records ride along, so one call shows
- *  both what to do and whether it has been done. */
+ *  the owner adds the records. They ride along, so one call shows both what to
+ *  do and whether it has been done.
+ *
+ *  A domain nobody has proved stops here. Cloudflare is not asked about it - a
+ *  certificate for a name this account may not hold is the thing being prevented -
+ *  and the state says which record is still wanted. */
 publish.get('/:id/blog/domain', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
   if (!space.blog_domain) {
     return context.json({ domain: null, state: 'none', detail: null, dns: [] })
+  }
+
+  if (space.blog_domain_verified_at === null) {
+    return context.json({
+      domain: space.blog_domain,
+      state: 'unproved',
+      detail: null,
+      dns: dnsRecords(context.env, space),
+    })
+  }
+
+  const status = await domainStatus(context.env, space.blog_domain)
+  return context.json({
+    domain: space.blog_domain,
+    ...status,
+    dns: dnsRecords(context.env, space),
+  })
+})
+
+/** The owner saying the record is in place. Reads it now, so that adding a record
+ *  and finding out whether it took is one gesture; the schedule reads it again
+ *  later. Nothing else can turn a claim into an address. */
+publish.post('/:id/blog/domain/verify', atLeast('owner'), async (context) => {
+  const space = spaceOf(context)
+
+  if (!space.blog_domain) {
+    return context.json({ domain: null, state: 'none', detail: null, dns: [] })
+  }
+
+  const proved = await proveDomain(context.env, space)
+  if (!proved.ok) {
+    return context.json(
+      {
+        domain: space.blog_domain,
+        state: 'unproved',
+        detail: proved.error,
+        dns: dnsRecords(context.env, space),
+      },
+      409,
+    )
   }
 
   const status = await domainStatus(context.env, space.blog_domain)

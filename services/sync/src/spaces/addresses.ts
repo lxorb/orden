@@ -62,16 +62,27 @@ export function ours(env: Env, domain: string): boolean {
   return roots.some((root) => domain === root || domain.endsWith(`.${root}`))
 }
 
+/** Where the proof of a domain is looked for. A name under the domain itself,
+ *  because only whoever holds the domain can write there - which is the whole of
+ *  what the proof proves. */
+export function proofName(domain: string): string {
+  return `_nib-verify.${domain}`
+}
+
 /** What the owner has to add at their registrar to point a domain here: one
- *  CNAME to the shared target, whatever the domain. The target is fixed
- *  rather than the space's own name, because a space on a domain of its own
- *  has no name on the shared domain, and because Cloudflare validates the
- *  certificate by that CNAME.
+ *  CNAME to the shared target, and one TXT record that says the domain is
+ *  theirs. The target is fixed rather than the space's own name, because a space
+ *  on a domain of its own has no name on the shared domain, and because
+ *  Cloudflare validates the certificate by that CNAME.
  *
  *  Two labels is the root of a domain, where DNS forbids a CNAME. Most
  *  providers offer an ALIAS or ANAME record, or flatten the CNAME themselves;
  *  the note says so. A longer name can be a root too (example.co.uk), which
- *  the owner will know and the note does not need to. */
+ *  the owner will know and the note does not need to.
+ *
+ *  The TXT record stays listed after the domain is proved, because it is read
+ *  again on a schedule: a record taken away is a domain that has changed hands.
+ *  See src/spaces/proof.ts. */
 export function dnsRecords(
   env: Env,
   space: Space,
@@ -90,5 +101,14 @@ export function dnsRecords(
           }
         : {}),
     },
+    ...(space.blog_domain_token
+      ? [
+          {
+            type: 'TXT',
+            name: proofName(space.blog_domain),
+            value: space.blog_domain_token,
+          },
+        ]
+      : []),
   ]
 }

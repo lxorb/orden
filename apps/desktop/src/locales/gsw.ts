@@ -430,8 +430,10 @@ export const gsw: Dictionary = {
   'Every note, including drafts, is readable by anyone with the address.':
     'Jedi Notiz, au Entwürf, cha jede läse wo d Adrässe het.',
   Address: 'Adrässe',
-  'Add this at your registrar. It is checked every few seconds.':
-    'Trag das bi dim Registrar ii. Es wird alli paar Sekunde gprüeft.',
+  'Add these at your registrar, then verify.':
+    'Trag die bi dim Registrar ii und prüef denn.',
+  Verify: 'Prüefe',
+  'that record is not answering yet': 'De Iitrag antwortet na nöd',
   'Stop publishing': 'Veröffentlichig beände',
   Type: 'Typ',
   Name: 'Name',

@@ -53,8 +53,14 @@ export async function spaceForHost(env: Env, host: string): Promise<Space | null
   // API refuses such a row; this is for the day something else writes one.
   if (hostname === env.BLOG_ROOT) return null
 
+  // A domain of one's own answers only once a record in it has said the domain
+  // is this account's. A row is not a claim to a name in DNS: without this,
+  // typing a name first was enough to be served on it. See spaces/proof.ts.
   return (
-    (await env.DB.prepare('select * from spaces where blog_domain = ? and blog_enabled = 1')
+    (await env.DB.prepare(
+      `select * from spaces
+        where blog_domain = ? and blog_enabled = 1 and blog_domain_verified_at is not null`,
+    )
       .bind(hostname)
       .first<Space>()) ?? null
   )

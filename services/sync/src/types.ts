@@ -83,6 +83,12 @@ export interface Space {
   blog_enabled: number
   blog_subdomain: string | null
   blog_domain: string | null
+  /** What the owner puts in a TXT record to show the domain is theirs, and when
+   *  that record was last seen there. Null until a domain is claimed; the stamp
+   *  stays null until it is proved, which is also what says it may serve. See
+   *  spaces/proof.ts. */
+  blog_domain_token: string | null
+  blog_domain_verified_at: number | null
   blog_title: string | null
   /** When set, the only note published, shown at the root. */
   blog_note: string | null

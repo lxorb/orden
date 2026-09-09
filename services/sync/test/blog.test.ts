@@ -29,6 +29,20 @@ async function addNote(path: string, content: string) {
   return call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
 }
 
+/** A domain of one's own, published and proved.
+ *
+ *  The proof is stamped rather than walked through, because reading a record is
+ *  over the network and what this file is about is what a hostname serves. The
+ *  record itself, and the fact that an unproved domain serves nothing, are in
+ *  test/domains.test.ts. */
+async function publishDomain(domain: string) {
+  const answer = await publish({ domain })
+  env.db
+    .prepare('update spaces set blog_domain_verified_at = ? where id = ?')
+    .run(Date.now(), space)
+  return answer
+}
+
 describe('slugs', () => {
   test('lowercases and hyphenates', () => {
     expect(slugFor('Hello world.md')).toBe('hello-world')
@@ -113,20 +127,21 @@ describe('publishing', () => {
     expect(response.text).toContain('Body text.')
   })
 
-  test('a custom domain is served', async () => {
-    await publish({ domain: 'notes.example.com' })
+  test('a custom domain is served once it has been proved', async () => {
+    await publishDomain('notes.example.com')
 
     const response = await call(env, '/', { host: 'notes.example.com' })
     expect(response.status).toBe(200)
     expect(response.text).toContain('Field notes')
   })
 
-  test('a custom domain comes back with the record to add', async () => {
+  test('a custom domain comes back with the records to add', async () => {
     const response = await publish({ domain: 'notes.example.com' })
 
-    expect(response.json.dns).toHaveLength(1)
+    expect(response.json.dns).toHaveLength(2)
     expect(response.json.dns[0]!.type).toBe('CNAME')
     expect(response.json.dns[0]!.value).toMatch(/\.nibeditor\.com$/)
+    expect(response.json.dns[1]!.type).toBe('TXT')
   })
 
   test('an apex domain gets a CNAME too, never a placeholder address', async () => {
@@ -140,8 +155,9 @@ describe('publishing', () => {
 
     const listed = await call(env, '/v1/spaces', { token })
     const mine = listed.json.spaces.find((one) => one.id === space)!
-    expect(mine.blog.dns).toHaveLength(1)
+    expect(mine.blog.dns).toHaveLength(2)
     expect(mine.blog.dns[0]!.type).toBe('CNAME')
+    expect(mine.blog.dns[1]!.type).toBe('TXT')
   })
 
   test('a custom title replaces the space name', async () => {
@@ -615,7 +631,7 @@ describe('nothing public carries the email address', () => {
   })
 
   test('not a domain of their own', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await publishDomain('notes.example.com')
     expect(await everywhere('notes.example.com')).not.toContain(EMAIL)
   })
 

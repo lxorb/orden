@@ -431,8 +431,10 @@ export const de: Dictionary = {
   'Every note, including drafts, is readable by anyone with the address.':
     'Jede Notiz, auch Entwürfe, ist für jeden mit der Adresse lesbar.',
   Address: 'Adresse',
-  'Add this at your registrar. It is checked every few seconds.':
-    'Trage das bei deinem Registrar ein. Es wird alle paar Sekunden geprüft.',
+  'Add these at your registrar, then verify.':
+    'Trage die bei deinem Registrar ein und prüfe dann.',
+  Verify: 'Prüfen',
+  'that record is not answering yet': 'Der Eintrag antwortet noch nicht',
   'Stop publishing': 'Veröffentlichung beenden',
   Type: 'Typ',
   Name: 'Name',

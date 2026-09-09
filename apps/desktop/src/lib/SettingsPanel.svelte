@@ -710,9 +710,14 @@
                     <span class="hint">{t(record.note)}</span>
                   {/if}
                 {/each}
-                <span class="hint">
-                  {t('Add this at your registrar. It is checked every few seconds.')}
-                </span>
+                <span class="hint">{t('Add these at your registrar, then verify.')}</span>
+                <button
+                  class="action"
+                  disabled={settings.busy || !blog?.domain}
+                  onclick={() => void settings.verifyDomain()}
+                >
+                  {t('Verify')}
+                </button>
               {/if}
               {#if notice}
                 <span

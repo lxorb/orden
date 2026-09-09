@@ -205,6 +205,7 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
   await context.env.DB.prepare(
     `update spaces
         set deleted = 1, deleted_at = ?, blog_enabled = 0, blog_subdomain = null, blog_domain = null,
+            blog_domain_token = null, blog_domain_verified_at = null,
             blog_note = null, updated_at = ?
       where id = ?`,
   )

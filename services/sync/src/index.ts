@@ -14,6 +14,7 @@ import { rooms } from './rooms'
 import { settings } from './settings'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
+import { recheckDomains } from './spaces/proof'
 import { expireRequests } from './spaces/share'
 import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
@@ -198,9 +199,10 @@ app.all('*', async (context) => {
  *
  *  What has waited its 14 days in Recently deleted goes, and so does everything
  *  else here that nothing else would ever take away - a guest nobody let in, a
- *  request nobody answered, a client that registered and never came back. Each is
- *  its own statement in its own module and none of them can fail another, which
- *  is why they are four calls rather than one. */
+ *  request nobody answered, a client that registered and never came back - and
+ *  the proof on every domain of somebody's own is read again. Each is its own
+ *  statement in its own module and none of them can fail another, which is why
+ *  they are five calls rather than one. */
 function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
   const at = Date.now()
 
@@ -208,6 +210,7 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(expireGuests(env, at))
   context.waitUntil(expireRequests(env, at))
   context.waitUntil(expireClients(env, at))
+  context.waitUntil(recheckDomains(env, at))
 }
 
 export default { fetch: app.fetch, scheduled }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { DomainStatus } from './api'
-import { domainNotice, keepAsking } from './domain-status'
+import { domainNotice, isDomainStatus, keepAsking } from './domain-status'
 
 const status = (state: DomainStatus['state'], detail: string | null = null): DomainStatus => ({
   domain: state === 'none' ? null : 'notes.example.com',
@@ -41,6 +41,38 @@ describe('what the pane says about a domain', () => {
     const notice = domainNotice(status('unconfigured'))
     expect(notice?.tone).toBe('muted')
     expect(notice?.text).toBe('This server does not hand out certificates yet.')
+  })
+
+  /** The records are on the screen with a button under them, so there is nothing
+   *  to add until somebody presses it and the record is not there. */
+  test('nothing at all while a domain is waiting to be proved', () => {
+    expect(domainNotice(status('unproved'))).toBeNull()
+  })
+
+  test('and the one sentence, in red, when the record was not found', () => {
+    const notice = domainNotice(status('unproved', 'that record is not answering yet'))
+    expect(notice?.tone).toBe('bad')
+    expect(notice?.text).toBe('that record is not answering yet')
+  })
+})
+
+describe('the state a refusal to verify comes back with', () => {
+  test('is recognised, so the pane can show it', () => {
+    expect(isDomainStatus({ domain: 'a.example', state: 'unproved', detail: null, dns: [] })).toBe(
+      true,
+    )
+    expect(
+      isDomainStatus({ domain: 'a.example', state: 'unproved', detail: 'not yet', dns: [] }),
+    ).toBe(true)
+  })
+
+  test('and anything else off the network is not', () => {
+    expect(isDomainStatus(null)).toBe(false)
+    expect(isDomainStatus('unproved')).toBe(false)
+    expect(isDomainStatus({ error: 'no such space' })).toBe(false)
+    expect(isDomainStatus({ state: 'made up', detail: null, dns: [] })).toBe(false)
+    expect(isDomainStatus({ state: 'unproved', detail: 7, dns: [] })).toBe(false)
+    expect(isDomainStatus({ state: 'unproved', detail: null })).toBe(false)
   })
 })
 

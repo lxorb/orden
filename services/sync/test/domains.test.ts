@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { recheckDomains } from '../src/spaces/proof'
 import { fakeCloudflare, TOKEN, ZONE } from './cloudflare'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
@@ -38,9 +39,35 @@ async function status(id = space, as = token) {
   return call(env, `/v1/spaces/${id}/blog/domain`, { token: as })
 }
 
+function verify(id = space, as = token) {
+  return call(env, `/v1/spaces/${id}/blog/domain/verify`, { method: 'POST', token: as })
+}
+
+/** The record the space asks for, which is what the pane shows the owner. */
+async function wanted(id = space, as = token) {
+  const record = (await status(id, as)).json.dns.find((one) => one.type === 'TXT')
+  if (!record) throw new Error('no record was asked for')
+  return record
+}
+
+/** The owner adding the record at their registrar and pressing Verify, which is
+ *  the whole of proving a domain. */
+async function prove(id = space, as = token) {
+  const record = await wanted(id, as)
+  cloudflare.txt(record.name, [record.value])
+  return await verify(id, as)
+}
+
+/** A domain published and proved, which is where most of the cases below start:
+ *  nothing at all happens with Cloudflare until it has been. */
+async function published(domain = 'notes.example.com') {
+  await publish({ domain })
+  return await prove()
+}
+
 describe("a domain of one's own", () => {
   test('is asked of Cloudflare, validated over HTTP', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
 
     const hostname = cloudflare.hostnames.get('notes.example.com')
     expect(hostname).toBeDefined()
@@ -49,7 +76,7 @@ describe("a domain of one's own", () => {
   })
 
   test('is pending until the record is in place', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
 
     const response = await status()
     expect(response.status).toBe(200)
@@ -61,11 +88,12 @@ describe("a domain of one's own", () => {
         name: 'notes.example.com',
         value: 'cname.nibeditor.com',
       }),
+      expect.objectContaining({ type: 'TXT', name: '_nib-verify.notes.example.com' }),
     ])
   })
 
   test('relays what Cloudflare is waiting for, without calling it an error', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     cloudflare.complain('notes.example.com', 'custom hostname does not CNAME to this zone.')
 
     const response = await status()
@@ -74,14 +102,14 @@ describe("a domain of one's own", () => {
   })
 
   test('is active once the certificate is out', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     cloudflare.activate('notes.example.com')
 
     expect((await status()).json.state).toBe('active')
   })
 
   test('is an error once Cloudflare has given up', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     cloudflare.timeOut('notes.example.com')
 
     const response = await status()
@@ -90,7 +118,7 @@ describe("a domain of one's own", () => {
   })
 
   test('is an error when the record was taken away again', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     cloudflare.activate('notes.example.com')
     cloudflare.move('notes.example.com')
 
@@ -100,7 +128,7 @@ describe("a domain of one's own", () => {
   test('is asked for again when Cloudflare has no record of it', async () => {
     // A domain set before certificates were handed out, or while Cloudflare
     // was unreachable, catches up the first time anyone asks after it.
-    await publish({ domain: 'notes.example.com' })
+    await published()
     cloudflare.hostnames.clear()
 
     expect((await status()).json.state).toBe('pending')
@@ -108,22 +136,29 @@ describe("a domain of one's own", () => {
   })
 
   test('is not asked for twice', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     await publish({ domain: 'notes.example.com', title: 'Renamed' })
     await status()
 
     expect(cloudflare.calls.filter((one) => one.startsWith('POST'))).toHaveLength(1)
   })
 
+  test('keeps its proof when something else about the blog changes', async () => {
+    await published()
+    await publish({ domain: 'notes.example.com', title: 'Renamed' })
+
+    expect((await status()).json.state).not.toBe('unproved')
+  })
+
   test('is released when the space goes back to a shared name', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     await publish({ subdomain: 'field' })
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
   })
 
   test('is released when publishing stops', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     await call(env, `/v1/spaces/${space}/blog`, { method: 'DELETE', token })
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
@@ -131,22 +166,28 @@ describe("a domain of one's own", () => {
   })
 
   test('is released when the space is deleted', async () => {
-    await publish({ domain: 'notes.example.com' })
+    await published()
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
   })
 
-  test('is swapped when the domain changes', async () => {
-    await publish({ domain: 'notes.example.com' })
+  test('is swapped when the domain changes, and the new one starts unproved', async () => {
+    await published()
     await publish({ domain: 'blog.example.com' })
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
+    // Nothing is asked of Cloudflare for a name this account has not shown is
+    // theirs, which is the whole point of the record.
+    expect(cloudflare.hostnames.has('blog.example.com')).toBe(false)
+    expect((await status()).json.state).toBe('unproved')
+
+    await prove()
     expect(cloudflare.hostnames.has('blog.example.com')).toBe(true)
   })
 
-  test('cannot be held by two spaces', async () => {
-    await publish({ domain: 'notes.example.com' })
+  test('cannot be held by two spaces once one of them has proved it', async () => {
+    await published()
 
     const other = await signIn(env, 'other@b.dev')
     const theirs = await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
@@ -166,6 +207,7 @@ describe("a domain of one's own", () => {
     expect(response.status).toBe(200)
     expect(response.json.space.blog.domain).toBe('notes.example.com')
 
+    await prove()
     const reported = await status()
     expect(reported.json.state).toBe('error')
     expect(reported.json.detail).toBe('The hostname is already on Cloudflare in another zone.')
@@ -211,6 +253,13 @@ describe("a domain of one's own", () => {
     expect(response.json.space.blog.domain).toBe('notes.example.com')
   })
 
+  test('is not reported to anyone but the owner, and neither is proving it', async () => {
+    await publish({ domain: 'notes.example.com' })
+    const other = await signIn(env, 'other@b.dev')
+
+    expect((await verify(space, other)).status).toBe(404)
+  })
+
   test('is never served on the shared domain, whatever the row says', async () => {
     // Belt and braces: a row that somehow names the app's own host must not
     // put a blog in front of the app for everyone.
@@ -236,6 +285,157 @@ describe("a domain of one's own", () => {
 
     expect((await status(space, other)).status).toBe(404)
   })
+})
+
+describe('proving a domain is yours', () => {
+  const RECORD = '_nib-verify.notes.example.com'
+
+  test('a claim serves nothing until the record is there', async () => {
+    await publish({ domain: 'notes.example.com' })
+
+    const page = await call(env, '/', { host: 'notes.example.com' })
+    expect(page.text).not.toContain('Field notes')
+
+    await prove()
+    const served = await call(env, '/', { host: 'notes.example.com' })
+    expect(served.text).toContain('Hello')
+  })
+
+  test('and asks Cloudflare for nothing either', async () => {
+    await publish({ domain: 'notes.example.com' })
+
+    expect(cloudflare.calls).toEqual([])
+    expect((await status()).json.state).toBe('unproved')
+  })
+
+  test('the record to add names the domain and carries a token', async () => {
+    await publish({ domain: 'notes.example.com' })
+    const record = await wanted()
+
+    expect(record.name).toBe(RECORD)
+    expect(record.value).toMatch(/^nib-verify=[a-f0-9]{64}$/)
+  })
+
+  test('a token is one space’s own', async () => {
+    await publish({ domain: 'notes.example.com' })
+    const mine = (await wanted()).value
+
+    const other = await signIn(env, 'other@b.dev')
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
+      .space.id
+    await publish({ domain: 'blog.example.org' }, theirs, other)
+
+    expect((await wanted(theirs, other)).value).not.toBe(mine)
+  })
+
+  test('says so in one sentence while the record is not there', async () => {
+    await publish({ domain: 'notes.example.com' })
+
+    const refused = await verify()
+    expect(refused.status).toBe(409)
+    expect(refused.json.state).toBe('unproved')
+    expect(refused.json.detail).toBe('that record is not answering yet')
+  })
+
+  test('and the same sentence when nobody could be asked', async () => {
+    await publish({ domain: 'notes.example.com' })
+    cloudflare.txt(RECORD, [(await wanted()).value])
+    cloudflare.dnsDown()
+
+    const refused = await verify()
+    expect(refused.status).toBe(409)
+    expect(refused.json.detail).toBe('that record is not answering yet')
+  })
+
+  test('is not proved by somebody else’s token at the right name', async () => {
+    await publish({ domain: 'notes.example.com' })
+    cloudflare.txt(RECORD, ['nib-verify=' + 'f'.repeat(64), 'v=spf1 -all'])
+
+    expect((await verify()).status).toBe(409)
+    expect((await status()).json.state).toBe('unproved')
+  })
+
+  test('is proved with the token among the other records at that name', async () => {
+    await publish({ domain: 'notes.example.com' })
+    cloudflare.txt(RECORD, ['something else', (await wanted()).value])
+
+    expect((await verify()).status).toBe(200)
+    expect((await status()).json.state).not.toBe('unproved')
+  })
+
+  test('a claim nobody has proved does not stand in the real owner’s way', async () => {
+    // Somebody types a domain they do not hold. Nothing serves, and the answer
+    // to the person who does hold it used to be "that domain is taken" for ever.
+    const squatter = await signIn(env, 'squatter@b.dev')
+    const theirs = (
+      await call(env, '/v1/spaces', { token: squatter, body: { name: 'Squatted' } })
+    ).json.space.id
+    await publish({ domain: 'notes.example.com' }, theirs, squatter)
+
+    const taken = await publish({ domain: 'notes.example.com' })
+    expect(taken.status).toBe(200)
+
+    // And the claim it took is gone from the space that could not prove it.
+    const left = env.db
+      .prepare('select blog_domain, blog_domain_token from spaces where id = ?')
+      .get(theirs)
+    expect(left).toEqual({ blog_domain: null, blog_domain_token: null })
+
+    await prove()
+    const served = await call(env, '/', { host: 'notes.example.com' })
+    expect(served.text).toContain('Hello')
+  })
+
+  test('a proof stands while nothing has changed', async () => {
+    await published()
+    expect(await recheckDomains(env, Date.now())).toBe(0)
+  })
+
+  test('is read again once it has got old, and stamped afresh', async () => {
+    await published()
+    const before = proofAge()
+
+    // A week on, with the record still where the owner put it.
+    expect(await recheckDomains(env, before + WEEK + 1)).toBe(0)
+    expect(proofAge()).toBe(before + WEEK + 1)
+    expect(cloudflare.lookups.filter((one) => one === RECORD)).toHaveLength(2)
+  })
+
+  test('and the domain stops being served once the record has gone for weeks', async () => {
+    await published()
+    cloudflare.activate('notes.example.com')
+    cloudflare.forgetTxt(RECORD)
+    const before = proofAge()
+
+    // A week on the record is missing, and a domain does not stop serving over
+    // one bad answer: the proof is left where it was.
+    expect(await recheckDomains(env, before + WEEK + 1)).toBe(0)
+    expect((await call(env, '/', { host: 'notes.example.com' })).text).toContain('Hello')
+
+    // Three weeks on it has been gone long enough to mean it.
+    expect(await recheckDomains(env, before + 3 * WEEK + 1)).toBe(1)
+    expect((await call(env, '/', { host: 'notes.example.com' })).text).not.toContain('Hello')
+    expect(cloudflare.hostnames.has('notes.example.com')).toBe(false)
+  })
+
+  test('and nothing at all happens when the resolver cannot be reached', async () => {
+    await published()
+    const before = proofAge()
+    cloudflare.dnsDown()
+
+    expect(await recheckDomains(env, before + 4 * WEEK)).toBe(0)
+    expect((await call(env, '/', { host: 'notes.example.com' })).text).toContain('Hello')
+  })
+
+  const WEEK = 7 * 24 * 60 * 60 * 1000
+
+  /** When the proof was last seen, which is the stamp that lets it serve. */
+  function proofAge(): number {
+    const row = env.db
+      .prepare('select blog_domain_verified_at as at from spaces where id = ?')
+      .get(space) as { at: number }
+    return row.at
+  }
 })
 
 describe('without Cloudflare access', () => {
@@ -264,18 +464,27 @@ describe('without Cloudflare access', () => {
     expect(cloudflare.calls).toEqual([])
   })
 
-  test('the status says so', async () => {
+  test('the status says so, once the domain has been proved', async () => {
     await call(plain, `/v1/spaces/${plainSpace}/blog`, {
       method: 'PUT',
       token: plainToken,
       body: { domain: 'notes.example.com' },
     })
 
-    const response = await call(plain, `/v1/spaces/${plainSpace}/blog/domain`, {
+    const claimed = await call(plain, `/v1/spaces/${plainSpace}/blog/domain`, { token: plainToken })
+    expect(claimed.json.state).toBe('unproved')
+    expect(claimed.json.dns).toHaveLength(2)
+
+    const record = claimed.json.dns.find((one) => one.type === 'TXT')!
+    cloudflare.txt(record.name, [record.value])
+    await call(plain, `/v1/spaces/${plainSpace}/blog/domain/verify`, {
+      method: 'POST',
       token: plainToken,
     })
-    expect(response.json.state).toBe('unconfigured')
-    expect(response.json.dns).toHaveLength(1)
+
+    const proved = await call(plain, `/v1/spaces/${plainSpace}/blog/domain`, { token: plainToken })
+    expect(proved.json.state).toBe('unconfigured')
+    expect(proved.json.dns).toHaveLength(2)
   })
 })
 
@@ -289,16 +498,18 @@ describe('what to add at the registrar', () => {
         name: 'notes.example.com',
         value: 'cname.nibeditor.com',
       }),
+      expect.objectContaining({ type: 'TXT', name: '_nib-verify.notes.example.com' }),
     ])
   })
 
   test('the root of a domain gets the same target and a word about ALIAS records', async () => {
     const response = await publish({ domain: 'example.com' })
 
-    expect(response.json.dns).toHaveLength(1)
+    expect(response.json.dns).toHaveLength(2)
     expect(response.json.dns[0]!.type).toBe('CNAME')
     expect(response.json.dns[0]!.value).toBe('cname.nibeditor.com')
     expect(response.json.dns[0]!.note).toMatch(/ALIAS/)
+    expect(response.json.dns[1]!.name).toBe('_nib-verify.example.com')
   })
 
   test('never names a placeholder address', async () => {

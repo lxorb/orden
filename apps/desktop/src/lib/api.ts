@@ -229,11 +229,14 @@ export interface DnsRecord {
 }
 
 /** How far along a domain of one's own is. `none` when the space has no
- *  domain; `unconfigured` when the server records domains but does not ask
- *  for certificates. `detail` is Cloudflare's own words, when it has some. */
+ *  domain; `unproved` while the record that shows the domain is this account's
+ *  has not been read there, which is before anything else can happen;
+ *  `unconfigured` when the server records domains but does not ask for
+ *  certificates. `detail` is what went wrong, in the server's words or
+ *  Cloudflare's. */
 export interface DomainStatus {
   domain: string | null
-  state: 'none' | 'pending' | 'active' | 'error' | 'unconfigured'
+  state: 'none' | 'unproved' | 'pending' | 'active' | 'error' | 'unconfigured'
   detail: string | null
   dns: DnsRecord[]
 }
@@ -515,6 +518,14 @@ export const api = {
 
   domainStatus: (token: string, spaceId: string) =>
     request<DomainStatus>(`/v1/spaces/${spaceId}/blog/domain`, { token }),
+
+  /** Saying the record is in place. The server reads it there and then, so this
+   *  is what turns a claimed domain into one that serves. */
+  verifyDomain: (token: string, spaceId: string) =>
+    request<DomainStatus>(`/v1/spaces/${spaceId}/blog/domain/verify`, {
+      method: 'POST',
+      token,
+    }),
 
   /** The clients that signed in through the connector, and whether a pasted
    *  token exists. The secret itself is never handed back. */

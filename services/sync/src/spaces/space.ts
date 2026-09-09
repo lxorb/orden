@@ -69,6 +69,8 @@ export async function addSpace(
     blog_enabled: 0,
     blog_subdomain: null,
     blog_domain: null,
+    blog_domain_token: null,
+    blog_domain_verified_at: null,
     blog_note: null,
     blog_title: null,
     bookmarks: '[]',
