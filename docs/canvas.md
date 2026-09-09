@@ -250,11 +250,26 @@ the page instead, under the finger or the nib, while it is rubbing.
 
 ## The pattern behind it
 
-The dots never go away. Zoomed out they would close into a wash, so the pattern
-coarsens instead - every second dot, then every fifth, then every tenth - and the
-level being left behind fades out over the last of its range rather than blinking
-off, so passing a threshold is a dissolve. Before this the pattern was simply culled
-when it got dense, and a plane zoomed out far enough was a blank grey field.
+One lattice of dots, on the plane rather than on the screen: the grid a node lands
+on, and its spacing in plane units never changes. What changes is how many of them
+are drawn. Zoomed out they would close into a wash, so every second dot along each
+axis stops being drawn and what is left is the same lattice at twice the spacing.
+Every level is exactly twice the last, so the dots that stay are always ones that
+were already there. The pattern only ever thins.
+
+A level thins once its dots have closed to 12px, and comes back only once there is
+15px again. The gap between the two is the hysteresis: a zoom resting on a threshold
+cannot flap between two patterns.
+
+Crossing a threshold starts a fade of 210ms and that is all the zoom has to say about
+it. What moves is one number, a position between levels rather than an opacity, so a
+fling across four thresholds passes through the levels in turn instead of popping;
+zooming back mid-fade turns that fade round rather than queueing another. Somebody
+who has asked for as little movement as possible is given the new level at once.
+
+So the dots on screen are never closer than 12px and never further apart than 30,
+there is one repeating tile at rest and two while a level is leaving, and a plane
+zoomed out far enough reads as a grid rather than as the blank grey field it once was.
 
 ## Zoom
 
@@ -385,7 +400,8 @@ shape somebody made, and a shape that catches up with itself is the wrong shape.
 | `canvas/hand.svelte.ts` | whether this glass has seen a pen |
 | `canvas/glyphs.ts` | the Lucide icon, the words and the key for everything on the bar |
 | `canvas/cursor.ts` | what the pointer looks like over the plane |
-| `canvas/geometry.ts` | the plane's arithmetic: boxes, shapes, edges, and the background pattern |
+| `canvas/geometry.ts` | the plane's arithmetic: boxes, shapes, edges |
+| `canvas/lattice.ts` | the pattern behind the plane: which level a zoom asks for, and the fade to it |
 | `canvas/ink.ts` | outlines, erasing, lassoing, what a wobbly shape was aiming at, and how far ahead of the nib the ink may reach |
 | `canvas/ease.ts` | coming up to a number rather than jumping to it |
 | `canvas/upload.ts` | asking the device for a picture |
