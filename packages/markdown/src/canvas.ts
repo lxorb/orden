@@ -94,17 +94,28 @@ interface GroupNode extends NodeBase {
   backgroundStyle?: BackgroundStyle
 }
 
-/** What a shape is. Four, because a rectangle, a ring, a line and an arrow are
- *  what anybody draws beside a card and a fifth would be a drawing program. */
-export const SHAPES = ['rect', 'ellipse', 'line', 'arrow'] as const
+/** What a shape is: four bodies and three lines.
+ *
+ *  The bodies are the four a diagram is drawn out of - a box, a ring, a diamond
+ *  and a triangle - and the lines are a plain one, one with a head on it, and one
+ *  that turns a corner. Seven and not eight thousand: a shape catalogue is a
+ *  drawing program, and this is the set anybody sketching beside a note reaches
+ *  for. */
+export const SHAPES = ['rect', 'ellipse', 'rhombus', 'triangle', 'line', 'arrow', 'elbow'] as const
 export type Shape = (typeof SHAPES)[number]
 
+/** Whether a name is one of the seven. What a tool list checks before it hands a
+ *  name to something that draws. */
+export function isShape(value: unknown): value is Shape {
+  return SHAPES.some((one) => one === value)
+}
+
 /** A shape: a node like any other in memory, so one drag, one resize and one
- *  snap serve all five kinds, and written under `nib` rather than into `nodes`.
+ *  snap serve every kind, and written under `nib` rather than into `nodes`.
  *
- *  Its box is always the right way up. A line and an arrow run corner to corner
- *  inside it, and `up` says which pair of corners, which is how one box says all
- *  four diagonals. */
+ *  Its box is always the right way up. A line, an arrow and an elbow run corner
+ *  to corner inside it, and `up` says which pair of corners, which is how one box
+ *  says all four diagonals. */
 interface ShapeNode extends NodeBase {
   type: 'shape'
   shape: Shape
@@ -112,6 +123,10 @@ interface ShapeNode extends NodeBase {
   fill?: boolean
   /** Bottom left to top right rather than top left to bottom right. */
   up?: boolean
+  /** The words inside it, with markdown syntax, the way a text card holds them.
+   *  A shape in a diagram is a shape with a name on it far more often than it is
+   *  a shape. */
+  text?: string
 }
 
 export type CanvasNode = TextNode | FileNode | LinkNode | GroupNode | ShapeNode
@@ -424,6 +439,7 @@ function readShape(value: unknown): ShapeNode | null {
     ...colour(value.color),
     ...(value.fill === true ? { fill: true } : {}),
     ...(value.up === true ? { up: true } : {}),
+    ...(isString(value.text) && value.text ? { text: value.text } : {}),
   }
 }
 
@@ -605,6 +621,7 @@ function writtenShape(node: ShapeNode): Record<string, unknown> {
     ...(node.color === undefined ? {} : { color: node.color }),
     ...(node.fill ? { fill: true } : {}),
     ...(node.up ? { up: true } : {}),
+    ...(node.text === undefined ? {} : { text: node.text }),
   }
 }
 

@@ -6,7 +6,9 @@ import {
   DEFAULT_INK,
   freshId,
   FURTHEST,
+  isShape,
   readCanvas,
+  SHAPES,
   writeCanvas,
 } from './canvas'
 
@@ -358,6 +360,55 @@ describe('what Nib keeps beyond the spec', () => {
       'card',
       'ray',
     ])
+  })
+
+  /** Seven shapes, and a body that can hold a name. A shape in a diagram is a shape
+   *  with a name in it far more often than it is a shape, and all of it stays under
+   *  `nib`: to every other reader of the format the file is the spec exactly. */
+  test('keeps all seven shapes, and the words inside one', () => {
+    const diagram: Canvas = {
+      nodes: SHAPES.map((shape, at) => ({
+        id: shape,
+        type: 'shape' as const,
+        shape,
+        x: at * 100,
+        y: 0,
+        width: 80,
+        height: 40,
+        ...(shape === 'rhombus' ? { text: 'Ready?' } : {}),
+      })),
+      edges: [],
+      ink: [],
+      at: {},
+      gone: {},
+    }
+
+    const back = readCanvas(writeCanvas(diagram))
+    expect(back).toEqual(diagram)
+    expect(JSON.parse(writeCanvas(diagram)).nodes).toEqual([])
+  })
+
+  test('drops words that are not words, and writes none where there are none', () => {
+    const canvas = readCanvas(
+      JSON.stringify({
+        nodes: [],
+        nib: {
+          shapes: [
+            { id: 'a', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: 7 },
+            { id: 'b', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: '' },
+          ],
+        },
+      }),
+    )
+
+    expect(canvas.nodes[0]).not.toHaveProperty('text')
+    expect(canvas.nodes[1]).not.toHaveProperty('text')
+  })
+
+  test('says which names are shapes', () => {
+    for (const shape of SHAPES) expect(isShape(shape), shape).toBe(true)
+    expect(isShape('blob')).toBe(false)
+    expect(isShape(undefined)).toBe(false)
   })
 
   test('still opens a canvas whose nib block is nonsense', () => {

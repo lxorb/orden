@@ -6,7 +6,7 @@
  *  a surface like this cannot afford. Everything here is in plane coordinates,
  *  which are the ones the file is written in; the camera is next door. */
 
-import type { Canvas, CanvasEdge, CanvasNode, Side } from './format'
+import type { Canvas, CanvasEdge, CanvasNode, Shape, Side } from './format'
 
 export interface Point {
   x: number
@@ -28,6 +28,56 @@ export const GRID = 20
 /** A value on the grid. */
 export function snapped(value: number): number {
   return Math.round(value / GRID) * GRID
+}
+
+/** How close the dots may come on screen before the pattern stops being a
+ *  pattern and becomes a wash, in pixels. */
+const CLOSEST = 9
+
+/** The steps the pattern coarsens through: every dot, every second, every fifth,
+ *  and so on up. A decade of them is a zoom range no plane reaches the end of. */
+const COARSER = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000] as const
+
+/** One layer of the background pattern: how far apart its dots are on screen, and
+ *  how much of it is showing. */
+export interface GridLevel {
+  /** Plane units between dots, so a caller can also say what it is showing. */
+  every: number
+  /** Pixels between dots on screen, which is what a repeating tile is sized by. */
+  step: number
+  /** 0 to 1. The finer of two levels fades out as its dots close up, so passing a
+   *  threshold is a dissolve rather than a jump. */
+  showing: number
+}
+
+/** The pattern at this zoom, as one or two layers.
+ *
+ *  The dots never go away. As the plane is zoomed out they would close into a
+ *  wash, so the pattern coarsens instead - every second dot, then every fifth,
+ *  then every tenth - and the level being left behind fades out over the last of
+ *  its range rather than blinking off. Coarsest first, so the finer layer is drawn
+ *  over it. */
+export function gridLevels(scale: number): GridLevel[] {
+  if (!(scale > 0)) return []
+
+  // The first step whose dots are far enough apart to read as dots.
+  const at = COARSER.findIndex((every) => GRID * every * scale >= CLOSEST)
+  // Zoomed out past the coarsest step there is, which no plane reaches: the last
+  // one, as dense as it has to be, rather than nothing at all.
+  const coarse = COARSER[at < 0 ? COARSER.length - 1 : at] ?? 1
+  const finer = at > 0 ? COARSER[at - 1] : undefined
+
+  const levels: GridLevel[] = [{ every: coarse, step: GRID * coarse * scale, showing: 1 }]
+
+  if (finer !== undefined) {
+    const step = GRID * finer * scale
+    // Full where it is still comfortably open and gone by the time it closes up:
+    // the two levels cross over each other and the eye sees one pattern easing.
+    const showing = Math.min(1, Math.max(0, (step - CLOSEST / 2) / (CLOSEST / 2)))
+    if (showing > 0.01) levels.push({ every: finer, step, showing })
+  }
+
+  return levels
 }
 
 export function boxOf(node: CanvasNode): Box {
@@ -192,7 +242,7 @@ export function nodeAt(nodes: readonly CanvasNode[], point: Point, edge = 12): C
     if (node.type === 'group' && within(inset(box, edge), point)) continue
 
     if (node.type === 'shape') {
-      if (!within(box, point) && node.shape !== 'line' && node.shape !== 'arrow') continue
+      if (!within(box, point) && !isLineShape(node.shape)) continue
       // A line is a line, not the triangle of plane beside it, and a hollow
       // rectangle is its own outline: what looks empty is empty to a click too.
       if (!onShape(node, point, edge / 2)) continue
@@ -204,31 +254,127 @@ export function nodeAt(nodes: readonly CanvasNode[], point: Point, edge = 12): C
   return null
 }
 
+/** The three that are drawn from one corner of a box to the other and have no inside
+ *  to them. */
+export type LineShape = 'line' | 'arrow' | 'elbow'
+
+/** Whether a shape is a line rather than a body. */
+export function isLineShape(shape: Shape): shape is LineShape {
+  return shape === 'line' || shape === 'arrow' || shape === 'elbow'
+}
+
 /** Whether a point is on a shape rather than merely in its box: on the line of a
  *  line, on the ring of an unfilled ellipse, on the frame of an unfilled
  *  rectangle, and anywhere inside a filled one. */
 function onShape(node: CanvasNode & { type: 'shape' }, point: Point, reach: number): boolean {
   const box = boxOf(node)
 
+  if (isLineShape(node.shape)) {
+    return alongPath(shapePath(node), point) <= reach
+  }
+
   switch (node.shape) {
-    case 'line':
-    case 'arrow': {
-      const line = shapeLine(node)
-      return awayFromSegment(point, line.from, line.to) <= reach
-    }
     case 'rect':
       return node.fill ? within(box, point) : !within(inset(box, reach), point)
+    case 'rhombus':
+    case 'triangle': {
+      const corners = shapePath(node)
+      if (node.fill || node.text) return insidePolygon(corners, point)
+      // A hollow one is its own outline, closed, so the last corner counts back
+      // round to the first.
+      return alongPath([...corners, corners[0] ?? point], point) <= reach
+    }
     case 'ellipse': {
       const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
       const rx = Math.max(0.5, box.width / 2)
       const ry = Math.max(0.5, box.height / 2)
       const away = ((point.x - middle.x) / rx) ** 2 + ((point.y - middle.y) / ry) ** 2
-      if (node.fill) return away <= 1
+      if (node.fill || node.text) return away <= 1
 
       const slack = reach / Math.min(rx, ry)
       return away <= (1 + slack) ** 2 && away >= Math.max(0, 1 - slack) ** 2
     }
   }
+}
+
+/** The corners a shape is drawn through, in plane coordinates.
+ *
+ *  One answer for the drawing, the export and the hit test, so a click cannot
+ *  land somewhere other than where the shape is. A body comes back as its own
+ *  corners, closed by whoever draws it; a line comes back as the points it runs
+ *  through. Nothing here is a rectangle or a ring, which are drawn as themselves
+ *  and need no corners. */
+export function shapePath(node: CanvasNode & { type: 'shape' }): Point[] {
+  const left = node.x
+  const right = node.x + node.width
+  const top = node.y
+  const bottom = node.y + node.height
+  const middleX = left + node.width / 2
+
+  switch (node.shape) {
+    case 'rhombus':
+      return [
+        { x: middleX, y: top },
+        { x: right, y: top + node.height / 2 },
+        { x: middleX, y: bottom },
+        { x: left, y: top + node.height / 2 },
+      ]
+    case 'triangle':
+      return [
+        { x: middleX, y: top },
+        { x: right, y: bottom },
+        { x: left, y: bottom },
+      ]
+    case 'elbow': {
+      const line = shapeLine(node)
+      // Along and then down, which is the corner a hand draws when it means "this
+      // one, round the side".
+      return [line.from, { x: line.to.x, y: line.from.y }, line.to]
+    }
+    // A line and an arrow are the diagonal of their box; a rectangle and a ring are
+    // drawn as themselves and are only ever asked this for the sake of one answer.
+    case 'line':
+    case 'arrow':
+    case 'rect':
+    case 'ellipse': {
+      const line = shapeLine(node)
+      return [line.from, line.to]
+    }
+  }
+}
+
+/** How far a point is from a run of segments. */
+function alongPath(points: readonly (Point | undefined)[], point: Point): number {
+  let least = Infinity
+
+  for (let index = 1; index < points.length; index++) {
+    const from = points[index - 1]
+    const to = points[index]
+    if (!from || !to) continue
+
+    least = Math.min(least, awayFromSegment(point, from, to))
+  }
+
+  return least
+}
+
+/** Whether a point is inside a polygon, by the crossing rule. */
+export function insidePolygon(corners: readonly Point[], point: Point): boolean {
+  let inside = false
+
+  for (let one = 0, other = corners.length - 1; one < corners.length; other = one++) {
+    const here = corners[one]
+    const there = corners[other]
+    if (!here || !there) continue
+
+    const crosses =
+      here.y > point.y !== there.y > point.y &&
+      point.x < ((there.x - here.x) * (point.y - here.y)) / (there.y - here.y) + here.x
+
+    if (crosses) inside = !inside
+  }
+
+  return inside
 }
 
 /** How far a point is from a segment. The perpendicular where the foot falls on
@@ -392,8 +538,44 @@ export function resizedBox(box: Box, handle: HandleId, dx: number, dy: number, l
   return { x, y, width, height }
 }
 
-/** Where a line or an arrow runs inside its own box: corner to corner, and `up`
- *  says which pair. One box, all four diagonals. */
+/** The same resize with the shape of the box held.
+ *
+ *  Which axis leads is which one the handle really pulls: a side handle pulls one,
+ *  and a corner is led by whichever of the two moved further as a share of itself,
+ *  so a corner dragged mostly sideways widens and a corner dragged mostly down
+ *  heightens. The edges the handle is not pulling stay exactly where they were,
+ *  which is what makes a held-shape resize feel like the same gesture. */
+export function keptAspect(was: Box, now: Box, handle: HandleId, least: number): Box {
+  if (was.width < 1 || was.height < 1) return now
+
+  const ratio = was.width / was.height
+  const acrossLed =
+    handle === 'e' || handle === 'w'
+      ? true
+      : handle === 'n' || handle === 's'
+        ? false
+        : Math.abs(now.width - was.width) / was.width >=
+          Math.abs(now.height - was.height) / was.height
+
+  const width = acrossLed ? now.width : Math.max(least, Math.round(now.height * ratio))
+  const height = acrossLed ? Math.max(least, Math.round(now.width / ratio)) : now.height
+
+  const pull = HANDLES.find((one) => one.id === handle)
+  // The corner the handle is pulling away from stays put; a side handle grows
+  // about the middle of the axis it is not pulling.
+  const x = pull && pull.x < 0 ? now.x + now.width - width : now.x
+  const y = pull && pull.y < 0 ? now.y + now.height - height : now.y
+
+  return {
+    x: Math.round(pull?.x === 0 ? was.x + was.width / 2 - width / 2 : x),
+    y: Math.round(pull?.y === 0 ? was.y + was.height / 2 - height / 2 : y),
+    width,
+    height,
+  }
+}
+
+/** Where a line, an arrow or an elbow runs inside its own box: corner to corner,
+ *  and `up` says which pair. One box, all four diagonals. */
 export function shapeLine(node: CanvasNode & { type: 'shape' }): { from: Point; to: Point } {
   const left = node.x
   const right = node.x + node.width

@@ -10,11 +10,16 @@ import {
   edgePath,
   facingSide,
   GRID,
+  gridLevels,
   insideGroup,
+  insidePolygon,
+  isLineShape,
+  keptAspect,
   nodeAt,
   overlaps,
   rectBetween,
   resizedBox,
+  shapePath,
   sidePoint,
   snapped,
   within,
@@ -242,6 +247,158 @@ describe('resizing a box', () => {
     const other = resizedBox(box, 'nw', 1000, 1000, least)
     expect(other.width).toBe(least)
     expect(other.x).toBe(300 - least)
+  })
+})
+
+/** The pattern behind the plane. It never goes away: zoomed out it would close into a
+ *  wash, so it coarsens instead - every second dot, then every fifth - and the level
+ *  being left behind fades out rather than blinking off. */
+describe('the background pattern', () => {
+  test('is one level of dots at every zoom, however far out', () => {
+    for (const scale of [4, 1, 0.5, 0.2, 0.05, 0.01, 0.002, 0.0005]) {
+      const levels = gridLevels(scale)
+      expect(levels.length, String(scale)).toBeGreaterThan(0)
+      // Whatever the zoom, the dots the reader sees are far enough apart to be dots.
+      expect(levels[0]!.step, String(scale)).toBeGreaterThanOrEqual(9)
+    }
+  })
+
+  test('is every dot when there is room for every dot', () => {
+    expect(gridLevels(1)).toEqual([{ every: 1, step: GRID, showing: 1 }])
+  })
+
+  test('coarsens as the plane goes out, and never the other way', () => {
+    let coarsest = 0
+    for (const scale of [1, 0.5, 0.2, 0.05, 0.01]) {
+      const every = gridLevels(scale)[0]!.every
+      expect(every).toBeGreaterThanOrEqual(coarsest)
+      coarsest = every
+    }
+  })
+
+  /** The calm bit: at a threshold the finer level is still mostly there and fades out
+   *  over the last of its range, so the two cross over each other. */
+  test('fades the finer level out rather than blinking it off', () => {
+    const crossing = gridLevels(0.28)
+    expect(crossing).toHaveLength(2)
+    expect(crossing[1]!.showing).toBeGreaterThan(0)
+    expect(crossing[1]!.showing).toBeLessThan(1)
+    // And the coarse one under it is always fully there, so there is never a moment
+    // with no pattern at all.
+    expect(crossing[0]!.showing).toBe(1)
+  })
+
+  test('is nothing at all for a zoom that is not a zoom', () => {
+    expect(gridLevels(0)).toEqual([])
+    expect(gridLevels(-1)).toEqual([])
+  })
+})
+
+/** The corners a shape is drawn through: one answer for the drawing, the export and
+ *  the hit test, so a click cannot land somewhere other than where the shape is. */
+describe('the corners of a shape', () => {
+  const box = { x: 0, y: 0, width: 100, height: 60 }
+
+  const shape = (
+    kind: 'rhombus' | 'triangle' | 'line' | 'elbow',
+    up = false,
+  ): Extract<CanvasNode, { type: 'shape' }> => ({
+    id: 's',
+    type: 'shape',
+    shape: kind,
+    ...box,
+    ...(up ? { up: true } : {}),
+  })
+
+  test('is four points for a diamond, on the middles of its sides', () => {
+    expect(shapePath(shape('rhombus'))).toEqual([
+      { x: 50, y: 0 },
+      { x: 100, y: 30 },
+      { x: 50, y: 60 },
+      { x: 0, y: 30 },
+    ])
+  })
+
+  test('is three points for a triangle, standing on its base', () => {
+    expect(shapePath(shape('triangle'))).toEqual([
+      { x: 50, y: 0 },
+      { x: 100, y: 60 },
+      { x: 0, y: 60 },
+    ])
+  })
+
+  test('is two points for a line, corner to corner, either diagonal', () => {
+    expect(shapePath(shape('line'))).toEqual([
+      { x: 0, y: 0 },
+      { x: 100, y: 60 },
+    ])
+    expect(shapePath(shape('line', true))).toEqual([
+      { x: 0, y: 60 },
+      { x: 100, y: 0 },
+    ])
+  })
+
+  test('is three points for an elbow: along, and then down', () => {
+    expect(shapePath(shape('elbow'))).toEqual([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 60 },
+    ])
+  })
+
+  test('says which shapes are lines and which are bodies', () => {
+    expect(isLineShape('line')).toBe(true)
+    expect(isLineShape('arrow')).toBe(true)
+    expect(isLineShape('elbow')).toBe(true)
+    expect(isLineShape('rect')).toBe(false)
+    expect(isLineShape('rhombus')).toBe(false)
+  })
+})
+
+describe('inside a polygon', () => {
+  const diamond = [
+    { x: 50, y: 0 },
+    { x: 100, y: 30 },
+    { x: 50, y: 60 },
+    { x: 0, y: 30 },
+  ]
+
+  test('is the middle of it and not the corners of its box', () => {
+    expect(insidePolygon(diamond, { x: 50, y: 30 })).toBe(true)
+    expect(insidePolygon(diamond, { x: 2, y: 2 })).toBe(false)
+    expect(insidePolygon(diamond, { x: 98, y: 58 })).toBe(false)
+  })
+})
+
+/** A resize that holds the shape of the box: what Shift asks for, and what a picture
+ *  under a thumb is given without being asked. */
+describe('holding the shape of a box', () => {
+  const was = { x: 0, y: 0, width: 100, height: 50 }
+
+  test('keeps the ratio when a corner is pulled', () => {
+    const now = keptAspect(was, { x: 0, y: 0, width: 200, height: 60 }, 'se', 10)
+    expect(now.width / now.height).toBeCloseTo(2, 1)
+  })
+
+  test('keeps the corner the handle is pulling away from where it was', () => {
+    const now = keptAspect(was, { x: -100, y: -10, width: 200, height: 60 }, 'nw', 10)
+    expect(now.x + now.width).toBe(100)
+    expect(now.y + now.height).toBe(50)
+    expect(now.width / now.height).toBeCloseTo(2, 1)
+  })
+
+  test('grows about the middle when a side is pulled, since only one axis moved', () => {
+    const now = keptAspect(was, { x: 0, y: 0, width: 200, height: 50 }, 'e', 10)
+    expect(now.width).toBe(200)
+    expect(now.height).toBe(100)
+    // Centred on where the box was, so the side that was not pulled stays put.
+    expect(now.y + now.height / 2).toBe(25)
+  })
+
+  test('leaves a box with no size to keep the shape of alone', () => {
+    const flat = { x: 0, y: 0, width: 0, height: 0 }
+    const now = { x: 0, y: 0, width: 20, height: 20 }
+    expect(keptAspect(flat, now, 'se', 10)).toBe(now)
   })
 })
 

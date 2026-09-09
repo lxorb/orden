@@ -23,6 +23,7 @@ export {
   type InkTool,
   INK_TOOLS,
   isInkTool,
+  isShape,
   PRESET_COLOURS,
   readCanvas,
   type Shape,
