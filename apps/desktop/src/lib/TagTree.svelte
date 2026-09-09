@@ -19,6 +19,7 @@
   import type { TagNode } from './tag-tree'
   import { workspace } from './workspace.svelte'
   import TagTree from './TagTree.svelte'
+  import { dur } from './motion'
 
   const { nodes, depth = 0 }: { nodes: TagNode[]; depth?: number } = $props()
 
@@ -64,7 +65,7 @@
       </div>
 
       {#if node.children.length && workspace.isTagOpen(node.path)}
-        <div transition:slide={{ duration: 190, easing: cubicOut }}>
+        <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
           <TagTree nodes={node.children} depth={depth + 1} />
         </div>
       {/if}

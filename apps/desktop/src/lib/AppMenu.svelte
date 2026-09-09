@@ -7,6 +7,7 @@
   import { overlays } from './overlays'
   import { t } from './i18n.svelte'
   import { viewport } from './viewport.svelte'
+  import { dur } from './motion'
 
   const {
     view,
@@ -50,10 +51,10 @@
   /** A popover that grows out of the button on a desktop; a sheet from the
    *  bottom on a phone, where the thumb is. */
   function arrive(node: Element) {
-    if (viewport.touch) return fly(node, { y: 40, duration: 220, easing: cubicOut })
+    if (viewport.touch) return fly(node, { y: 40, duration: dur(220), easing: cubicOut })
 
     return {
-      duration: 220,
+      duration: dur(220),
       easing: cubicOut,
       css: (t: number) =>
         `opacity: ${t}; transform: translate(${(t - 1) * 6}px, ${(t - 1) * 6}px) scale(${0.96 + 0.04 * t}); transform-origin: top left`,
@@ -78,7 +79,7 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => (open = false)}></div>
+  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => (open = false)}></div>
 
   <div class="menu" class:phone={viewport.touch} transition:arrive>
     {#if viewport.touch}

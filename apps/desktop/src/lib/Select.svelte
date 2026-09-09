@@ -10,6 +10,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
+  import { dur } from './motion'
 
   interface Option {
     value: string
@@ -165,9 +166,9 @@
 
   {#if open && viewport.touch}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="scrim" transition:fade={{ duration: 130 }} onclick={close}></div>
+    <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={close}></div>
 
-    <div class="sheet" transition:fly={{ y: 32, duration: 220, easing: cubicOut }}>
+    <div class="sheet" transition:fly={{ y: 32, duration: dur(220), easing: cubicOut }}>
       {#if label}<p class="heading">{label}</p>{/if}
 
       <ul {id} role="listbox" aria-label={label}>
@@ -196,7 +197,7 @@
       role="listbox"
       aria-label={label}
       bind:this={list}
-      transition:fly={{ y: above ? 4 : -4, duration: 120, easing: cubicOut }}
+      transition:fly={{ y: above ? 4 : -4, duration: dur(120), easing: cubicOut }}
     >
       {#each options as option, index (option.value)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->

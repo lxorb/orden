@@ -12,6 +12,7 @@
   import { viewport } from './viewport.svelte'
   import type { GivenRole, Member, Sharing } from './api'
   import Select from './Select.svelte'
+  import { dur } from './motion'
 
   const ROLES = $derived([
     { value: 'write', label: t('Edit') },
@@ -50,14 +51,14 @@
 
 {#if share.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => share.close()}></div>
+  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => share.close()}></div>
 
   <div
     class="sheet"
     role="dialog"
     aria-modal="true"
     aria-label={t('Share {name}', { name: share.space?.name ?? '' })}
-    transition:scale={{ duration: 190, start: 0.97, easing: cubicOut }}
+    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
   >
     <p class="title">{t('Share {name}', { name: share.space?.name ?? '' })}</p>
 
@@ -70,7 +71,7 @@
         <h3>{t('Waiting')}</h3>
         <div class="card">
           {#each who.requests as person (keyOf(person))}
-            <div class="row" transition:fade={{ duration: 130 }}>
+            <div class="row" transition:fade={{ duration: dur(130) }}>
               <span class="name">
                 {name(person)}
                 <small>{person.email ?? t('Guest')}</small>
@@ -97,7 +98,7 @@
         </div>
 
         {#each who.members as person (keyOf(person))}
-          <div class="row" transition:fade={{ duration: 130 }}>
+          <div class="row" transition:fade={{ duration: dur(130) }}>
             <span class="name">
               {name(person)}
               <small>{subtitle(person)}</small>

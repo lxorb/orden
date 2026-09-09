@@ -14,6 +14,7 @@
   import { type Camera, framing, graphPoint, nodeAt, zoomed } from './camera'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { t } from './i18n.svelte'
+  import { stillness } from './motion'
   import { theme } from './theme.svelte'
 
   const {
@@ -94,9 +95,6 @@
     current === null ? -1 : graph.nodes.findIndex((node) => node.id === current),
   )
 
-  const stillness =
-    typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null
-
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
@@ -150,7 +148,7 @@
 
     // A reader who has asked for less movement gets the arrangement it arrives
     // at, without watching it get there.
-    if (stillness?.matches) layout.settle()
+    if (stillness()) layout.settle()
 
     touched = false
     frameGraph()

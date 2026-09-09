@@ -9,6 +9,7 @@ import {
   SETTLE_MIN,
   settleOpen,
 } from './swipe'
+import { dur } from './motion'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -195,8 +196,11 @@ class Drawer {
       // The remaining distance decides the time, so the drawer moves at
       // roughly the same pace whether it was let go near its end or its start.
       const remaining = Math.abs((this.at ?? 0) - (settled ? width : 0))
-      this.settle = Math.round(
-        SETTLE_MIN + (SETTLE_MAX - SETTLE_MIN) * (width ? remaining / width : 0),
+      // Through `dur`, because this one number is worked out here and written
+      // onto the element as a length: the stylesheet's own durations answer
+      // prefers-reduced-motion where they are declared, and this one cannot.
+      this.settle = dur(
+        Math.round(SETTLE_MIN + (SETTLE_MAX - SETTLE_MIN) * (width ? remaining / width : 0)),
       )
       this.at = null
       claimed = false

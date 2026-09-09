@@ -34,6 +34,7 @@
   import { workspace } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import Tree from './Tree.svelte'
+  import { dur } from './motion'
 
   const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
 
@@ -298,7 +299,7 @@
         </button>
 
         {#if workspace.isExpanded(entry.path)}
-          <div transition:slide={{ duration: 190, easing: cubicOut }}>
+          <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
             <Tree entries={entry.children} depth={depth + 1} />
           </div>
         {/if}

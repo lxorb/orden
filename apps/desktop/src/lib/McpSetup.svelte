@@ -14,6 +14,7 @@
   import { type Client, connectors } from './connectors.svelte'
   import { t } from './i18n.svelte'
   import { openExternal } from './tauri'
+  import { dur } from './motion'
 
   const CLAUDE_CONNECTORS = 'https://claude.ai/settings/connectors'
   const CHATGPT_PLUGINS = 'https://chatgpt.com/plugins'
@@ -98,7 +99,7 @@
       <h3>{t('Connected')}</h3>
       <div class="card">
         {#each connectors.clients as one (one.id)}
-          <div class="row" transition:slide={{ duration: 180, easing: cubicOut }}>
+          <div class="row" transition:slide={{ duration: dur(180), easing: cubicOut }}>
             <span class="name">
               {one.name}
               <small>{access(one.readOnly)} {when(one.lastUsedAt)}</small>
@@ -110,7 +111,7 @@
         {/each}
 
         {#if connectors.token?.exists}
-          <div class="row" transition:slide={{ duration: 180, easing: cubicOut }}>
+          <div class="row" transition:slide={{ duration: dur(180), easing: cubicOut }}>
             <span class="name">
               {t('Pasted token')}
               <small>{access(connectors.token.readOnly)} {when(connectors.token.lastUsedAt)}</small>
@@ -148,7 +149,7 @@
     </div>
 
     {#key connectors.client}
-      <div class="steps-wrap" in:fly={{ y: 6, duration: 180, easing: cubicOut }}>
+      <div class="steps-wrap" in:fly={{ y: 6, duration: dur(180), easing: cubicOut }}>
         {#if connectors.client === 'claude'}
           <ol class="steps">
             <li>
@@ -173,7 +174,7 @@
             {t('Using Claude Code instead?')}
           </button>
           {#if showCode}
-            <div class="disclosed" transition:slide={{ duration: 180, easing: cubicOut }}>
+            <div class="disclosed" transition:slide={{ duration: dur(180), easing: cubicOut }}>
               {@render copyable(t('Command'), CLAUDE_CODE)}
               <p class="hint">
                 {t('Run it in a terminal, then type /mcp in Claude Code to sign in.')}
@@ -232,7 +233,7 @@
               {t('Show config')}
             </button>
             {#if showConfig}
-              <div class="disclosed" transition:slide={{ duration: 180, easing: cubicOut }}>
+              <div class="disclosed" transition:slide={{ duration: dur(180), easing: cubicOut }}>
                 <p class="hint">{t('For a client that takes a JSON block instead of a URL.')}</p>
                 <pre>{config()}</pre>
                 <button
@@ -259,7 +260,7 @@
                 </button>
 
                 {#if connectors.freshToken}
-                  <div class="fresh" transition:slide={{ duration: 200, easing: cubicOut }}>
+                  <div class="fresh" transition:slide={{ duration: dur(200), easing: cubicOut }}>
                     <pre>{config(connectors.freshToken)}</pre>
                     <button
                       class="copy wide"

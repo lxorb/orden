@@ -20,6 +20,7 @@
   import type { StoreTheme } from './themes/registry'
   import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
   import { PAINT, store } from './themes/store.svelte'
+  import { dur } from './motion'
 
   const STYLE_ID = 'nib-theme-miniatures'
   const PALETTE_ID = 'nib-theme-palettes'
@@ -154,9 +155,9 @@
 
 {#if store.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => store.close()}></div>
+  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => store.close()}></div>
 
-  <div class="sheet" transition:scale={{ duration: 190, start: 0.98, easing: cubicOut }}>
+  <div class="sheet" transition:scale={{ duration: dur(190), start: 0.98, easing: cubicOut }}>
     <header>
       {#if store.chosen}
         <button
@@ -272,7 +273,7 @@
 {#snippet preview(one: StoreTheme)}
   {@const scheme = schemeOf(one, previewing)}
 
-  <div class="full" in:fly={{ y: 8, duration: 180, easing: cubicOut }}>
+  <div class="full" in:fly={{ y: 8, duration: dur(180), easing: cubicOut }}>
     <div class="shown">
       <div
         class="frame big {FRAME}"

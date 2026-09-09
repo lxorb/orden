@@ -6,6 +6,7 @@
   import { t } from './i18n.svelte'
   import { type IconNode, loadIcons, search } from './icons'
   import { workspace } from './workspace.svelte'
+  import { dur } from './motion'
 
   let open = $state(false)
   let spaceId = $state<string | null>(null)
@@ -36,7 +37,8 @@
 
     library = all
     clearTimeout(focusing)
-    focusing = setTimeout(() => field?.focus(), FOCUS)
+    // Waiting on a transition that is not happening is waiting for nothing.
+    focusing = setTimeout(() => field?.focus(), dur(FOCUS))
   }
 
   function pick(name: string | null) {
@@ -55,9 +57,9 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => (open = false)}></div>
+  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => (open = false)}></div>
 
-  <div class="sheet" transition:scale={{ duration: 190, start: 0.97, easing: cubicOut }}>
+  <div class="sheet" transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}>
     <input
       bind:this={field}
       bind:value={query}

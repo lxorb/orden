@@ -9,6 +9,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { inside } from './workspace/zones'
+  import { dur } from './motion'
 
   const { paneId }: { paneId: string } = $props()
 
@@ -190,7 +191,7 @@
         class:after={mark === tabs.length && at === tabs.length - 1}
         ondragover={(event) => over(event, placeIn(event, at))}
         ondrop={(event) => drop(event, placeIn(event, at))}
-        transition:fly={{ y: -8, duration: 180, easing: cubicOut }}
+        transition:fly={{ y: -8, duration: dur(180), easing: cubicOut }}
       >
         <!-- A double click keeps a preview, the way VS Code does it. The two
              single clicks it is made of activate the tab twice, which costs
@@ -222,7 +223,7 @@
               class="mark"
               viewBox="0 0 14 12"
               aria-label={t('Reading')}
-              transition:fade={{ duration: 140 }}
+              transition:fade={{ duration: dur(140) }}
             >
               <path d="M7 3.2v7.3M7 3.2C5.6 2 3.9 1.6 1.5 1.6v7.3c2.4 0 4.1.4 5.5 1.6" />
               <path d="M7 3.2c1.4-1.2 3.1-1.6 5.5-1.6v7.3c-2.4 0-4.1.4-5.5 1.6" />
@@ -243,7 +244,7 @@
               title={t('Also open elsewhere')}
             >
               {#each { length: Math.min(rooms.present[tab.note.key] ?? 0, 3) } as _, at (at)}
-                <span class="who" transition:fade={{ duration: 190 }}></span>
+                <span class="who" transition:fade={{ duration: dur(190) }}></span>
               {/each}
             </span>
           {/if}
@@ -254,7 +255,7 @@
               class:down={workspace.savingOf(tab) === 'saved'}
               aria-label={saveLabel(tab)}
               title={saveLabel(tab)}
-              transition:fade={{ duration: 190 }}
+              transition:fade={{ duration: dur(190) }}
             ></span>
           {/if}
         </button>

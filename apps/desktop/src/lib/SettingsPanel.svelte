@@ -34,6 +34,7 @@
   import { readableSize, usage } from './usage.svelte'
   import { pageHeight, viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
+  import { dur } from './motion'
 
   const { view }: { view?: EditorView | undefined } = $props()
 
@@ -287,14 +288,14 @@
    *  bottom on a phone. */
   function appear(node: Element) {
     return viewport.touch
-      ? fly(node, { y: 40, duration: 240, easing: cubicOut })
-      : scale(node, { duration: 200, start: 0.97, easing: cubicOut })
+      ? fly(node, { y: 40, duration: dur(240), easing: cubicOut })
+      : scale(node, { duration: dur(200), start: 0.97, easing: cubicOut })
   }
 
   /** The list and the pane slide past each other on a phone; a desktop shows
    *  both and has nothing to slide. */
   const enter = (x: number) =>
-    viewport.touch ? { x, duration: 200, easing: cubicOut } : { duration: 0 }
+    viewport.touch ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
   // Back closes this before it leaves the app: the pane first, then the sheet.
   // Escape closes it, like everything else the app puts over a note; see
@@ -308,7 +309,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="scrim"
-    transition:fade={{ duration: 140 }}
+    transition:fade={{ duration: dur(140) }}
     onclick={() => (settings.open = false)}
   ></div>
 
@@ -377,7 +378,9 @@
           {#key settings.section}
             <div
               class="pane"
-              in:fly={viewport.touch ? { duration: 0 } : { y: 8, duration: 180, easing: cubicOut }}
+              in:fly={viewport.touch
+                ? { duration: dur(0) }
+                : { y: 8, duration: dur(180), easing: cubicOut }}
             >
               {#if !viewport.touch}
                 <h2>{titleOf(settings.section)}</h2>
@@ -388,7 +391,7 @@
         {/if}
 
         {#if settings.error}
-          <p class="hint bad" transition:slide={{ duration: 160 }}>{t(settings.error)}</p>
+          <p class="hint bad" transition:slide={{ duration: dur(160) }}>{t(settings.error)}</p>
         {/if}
       </div>
     {/if}
@@ -738,7 +741,7 @@
       </fieldset>
 
       {#if published && liveAt}
-        <p class="note" transition:slide={{ duration: 180 }}>
+        <p class="note" transition:slide={{ duration: dur(180) }}>
           {t('Live at')}
           <a href="https://{liveAt}" target="_blank" rel="noreferrer">{liveAt}</a>
         </p>
@@ -913,7 +916,7 @@
         </div>
 
         {#if rebind.clash?.id === entry.id}
-          <div class="clash" transition:slide={{ duration: 160 }}>
+          <div class="clash" transition:slide={{ duration: dur(160) }}>
             <span>
               {t('{key} already runs {name}.', {
                 key: shown(rebind.clash.key) ?? '',

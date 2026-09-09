@@ -18,6 +18,7 @@
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
   import { type Entry, workspace } from './workspace.svelte'
+  import { dur } from './motion'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
 
@@ -219,7 +220,7 @@
 
       <!-- How many lines answered, in the field it was asked in. -->
       {#if search.asks && search.hits.length}
-        <span class="found" transition:fly={{ x: 6, duration: 130, easing: cubicOut }}>
+        <span class="found" transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}>
           {search.hits.length}
         </span>
       {/if}
@@ -235,7 +236,7 @@
           aria-label={kept ? t('Remove bookmark') : t('Bookmark')}
           aria-pressed={kept}
           onclick={() => workspace.bookmarks.toggle(searchMark)}
-          transition:fly={{ x: 6, duration: 130, easing: cubicOut }}
+          transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}
         >
           <svg viewBox="0 0 13 13"><path d={STAR} /></svg>
         </button>
@@ -259,7 +260,7 @@
   </div>
 
   {#if search.replacing}
-    <div class="row" transition:fly={{ y: -6, duration: 130, easing: cubicOut }}>
+    <div class="row" transition:fly={{ y: -6, duration: dur(130), easing: cubicOut }}>
       <input
         class="query"
         value={search.replacement}

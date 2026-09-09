@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { restartToUpdate } from './updater'
+  import { dur } from './motion'
 
   const { version, ondismiss }: { version: string; ondismiss: () => void } = $props()
 
@@ -18,7 +19,7 @@
 
 <!-- The download has already happened quietly. This says so and offers the one
      thing left to do, rather than interrupting to ask permission first. -->
-<div class="notice" role="status" transition:fly={{ y: 12, duration: 220, easing: cubicOut }}>
+<div class="notice" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
   <p>{t('Nib {version} is ready to install.', { version })}</p>
 
   <div class="actions">

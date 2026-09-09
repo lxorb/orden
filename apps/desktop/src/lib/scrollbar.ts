@@ -9,6 +9,8 @@
  *  The same bar everywhere, so the note, the file list and the settings all
  *  scroll the same way. The look is in themes/base.css. */
 
+import { dur } from './motion'
+
 /** The shortest a thumb may be, so a very long note still has something a
  *  pointer can grab. */
 const LEAST = 28
@@ -198,7 +200,9 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
     settle: () => {
       bar.classList.add('is-settling')
       clearTimeout(easing)
-      easing = setTimeout(() => bar.classList.remove('is-settling'), SETTLING)
+      // The class is what turns the easing on, so the timer that takes it off
+      // has to go the same way the easing does; see motion.ts.
+      easing = setTimeout(() => bar.classList.remove('is-settling'), dur(SETTLING))
       soon()
       light()
     },

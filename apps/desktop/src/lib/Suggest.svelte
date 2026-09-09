@@ -9,6 +9,7 @@
 
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { dur } from './motion'
 
   const {
     values,
@@ -36,7 +37,7 @@
   }
 </script>
 
-<ul class="suggest" transition:fly={{ y: -4, duration: 130, easing: cubicOut }}>
+<ul class="suggest" transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}>
   {#each values as value, index (value)}
     {@const parts = split(value)}
     <li>

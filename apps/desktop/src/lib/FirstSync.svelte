@@ -17,6 +17,7 @@
   import { arriving } from './arriving.svelte'
   import { t } from './i18n.svelte'
   import Sweep from './Sweep.svelte'
+  import { dur } from './motion'
 
   /** Whoever is here, in one letter. The name they chose or the front of their
    *  address, which is what everything else in the app calls them. */
@@ -35,7 +36,7 @@
 </script>
 
 {#if arriving.showing}
-  <div class="arriving" transition:fade={{ duration: 190 }} role="status" aria-live="polite">
+  <div class="arriving" transition:fade={{ duration: dur(190) }} role="status" aria-live="polite">
     <div class="mark">{initial}</div>
 
     <!-- The same line the app draws along the top of a document for an export or
@@ -48,7 +49,11 @@
     <p class="said">{said}</p>
 
     {#if arriving.stuck}
-      <button type="button" transition:fade={{ duration: 130 }} onclick={() => arriving.giveUp()}>
+      <button
+        type="button"
+        transition:fade={{ duration: dur(130) }}
+        onclick={() => arriving.giveUp()}
+      >
         {t('Continue')}
       </button>
     {/if}

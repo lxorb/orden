@@ -8,6 +8,7 @@
   import { shownName } from './note-name'
   import { overlays } from './overlays'
   import { workspace, type Entry } from './workspace.svelte'
+  import { dur } from './motion'
 
   // eslint-disable-next-line prefer-const -- `open` is bindable, and a $props() pattern cannot be split
   let { open = $bindable(false), view }: { open?: boolean; view?: EditorView | undefined } =
@@ -102,9 +103,9 @@
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <!-- Tapping away is the same answer as Escape, so it forgets the same. -->
-  <div class="scrim" transition:fade={{ duration: 130 }} onclick={dismiss}></div>
+  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={dismiss}></div>
 
-  <div class="palette" transition:scale={{ duration: 190, start: 0.97, easing: cubicOut }}>
+  <div class="palette" transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}>
     <input
       bind:this={input}
       bind:value={query}

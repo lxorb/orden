@@ -4,6 +4,7 @@
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
+  import { dur } from './motion'
 
   let element = $state<HTMLDivElement>()
   let position = $state({ x: 0, y: 0 })
@@ -104,8 +105,8 @@
   /** Rises from the bottom as a sheet; grows out of its corner as a popover,
    *  which is the same motion on a desktop and in a callout. */
   function arrive(node: Element) {
-    if (sheet) return fly(node, { y: 40, duration: 220, easing: cubicOut })
-    return scale(node, { duration: 120, start: 0.96, easing: cubicOut })
+    if (sheet) return fly(node, { y: 40, duration: dur(220), easing: cubicOut })
+    return scale(node, { duration: dur(120), start: 0.96, easing: cubicOut })
   }
 
   function choose(item: MenuItem) {
@@ -130,7 +131,7 @@
     <div
       class="scrim"
       class:dim={sheet}
-      transition:fade={{ duration: 130 }}
+      transition:fade={{ duration: dur(130) }}
       onclick={() => menu.hide()}
     ></div>
   {/if}

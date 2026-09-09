@@ -7,6 +7,7 @@
   import { account } from './account.svelte'
   import { joining } from './joining.svelte'
   import { settleLocalNotes } from './settling'
+  import { dur } from './motion'
 
   const LENGTH = 6
 
@@ -99,9 +100,9 @@
 
 {#if account.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 140 }} onclick={close}></div>
+  <div class="scrim" transition:fade={{ duration: dur(140) }} onclick={close}></div>
 
-  <div class="panel" transition:scale={{ duration: 200, start: 0.96, easing: cubicOut }}>
+  <div class="panel" transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}>
     <!-- Somebody sent a link here, so say what it was before asking for an
          address: signing in is the whole of what it takes to open it. -->
     {#if joining.invitation}
@@ -115,7 +116,7 @@
 
     {#if account.step === 'email'}
       <form
-        in:fly={{ x: -14, duration: 200, easing: cubicOut }}
+        in:fly={{ x: -14, duration: dur(200), easing: cubicOut }}
         onsubmit={(event) => {
           event.preventDefault()
           void account.requestCode()
@@ -136,7 +137,7 @@
         </button>
       </form>
     {:else}
-      <div class="code" in:fly={{ x: 14, duration: 200, easing: cubicOut }}>
+      <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Code sent to')} <strong>{account.email}</strong></p>
 
         <div class="digits">
@@ -169,7 +170,7 @@
     {/if}
 
     {#if account.error}
-      <p class="error" transition:fly={{ y: -6, duration: 160 }}>{t(account.error)}</p>
+      <p class="error" transition:fly={{ y: -6, duration: dur(160) }}>{t(account.error)}</p>
     {/if}
   </div>
 {/if}

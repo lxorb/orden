@@ -4,12 +4,13 @@
   import { t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { readableSize, usage } from './usage.svelte'
+  import { dur } from './motion'
 </script>
 
 <!-- Bottom left, out of the way of the update notice on the right and of the
      button that makes new notes. -->
 {#if usage.warning}
-  <div class="toast" role="status" transition:fly={{ y: 12, duration: 220, easing: cubicOut }}>
+  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>
       {t('{used} of {limit} used.', {
         used: readableSize(usage.used),

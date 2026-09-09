@@ -7,6 +7,7 @@
   import { i18n, t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
+  import { dur } from './motion'
 
   const DAY = 24 * 60 * 60 * 1000
 
@@ -54,7 +55,7 @@
 {#snippet rows(items: TrashItem[])}
   <div class="card">
     {#each items as item (item.id)}
-      <div class="row" transition:slide={{ duration: 180, easing: cubicOut }}>
+      <div class="row" transition:slide={{ duration: dur(180), easing: cubicOut }}>
         <div class="name">
           <span class="title">{item.name}</span>
           <small>{meta(item)}</small>

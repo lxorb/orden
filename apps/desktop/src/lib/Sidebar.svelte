@@ -17,6 +17,7 @@
   import Links from './Links.svelte'
   import SearchPanel from './SearchPanel.svelte'
   import Tree from './Tree.svelte'
+  import { dur } from './motion'
 
   const { ongoto }: { ongoto?: (line: number) => void } = $props()
 
@@ -205,7 +206,7 @@
   bind:this={aside}
   class:resizing={size.dragging}
   style:width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
-  transition:slide={{ axis: 'x', duration: viewport.touch ? 0 : 210, easing: cubicOut }}
+  transition:slide={{ axis: 'x', duration: dur(viewport.touch ? 0 : 210), easing: cubicOut }}
 >
   <!-- The strip along the right edge that changes the width. Not on a phone,
        where the drawer is as wide as the drawer is. -->
@@ -243,7 +244,7 @@
             title={t('Depth')}
             aria-label={t('Depth')}
             onclick={() => (depth = depth === 1 ? 2 : 1)}
-            transition:fly={{ x: 10, duration: 130, easing: cubicOut }}
+            transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
           >
             {depth}
           </button>
@@ -267,7 +268,7 @@
     <div
       class="body"
       use:scrollbar={workspace.panel}
-      in:fly={{ y: 16 * direction, duration: 220, easing: cubicOut }}
+      in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}
     >
       {#if workspace.panel === 'tree'}
         {#if workspace.tree}
