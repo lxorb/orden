@@ -43,8 +43,21 @@ jobs:
       - name: Tests
         run: pnpm test
 
+  # Both platforms, because the crate is not one body of code. The taskbar's
+  # recent documents list, Explorer's New menu and the PDF printer are behind a
+  # Windows cfg gate, and code a runner does not compile is code no lint reads
+  # and no test runs. Neither row waits on the other: a lint that only fires on
+  # one platform should say which.
   rust:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        # One spelling of every step below, whichever runner reads it.
+        shell: bash
     steps:
       - uses: actions/checkout@v5
 
@@ -59,13 +72,17 @@ jobs:
         with:
           components: clippy, rustfmt
 
+      # The cache key this action builds already carries the runner's own OS, so
+      # the two rows keep two caches without being told to.
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
             apps/desktop/src-tauri
 
-      # Tauri needs the system webview to compile against.
+      # Tauri needs the system webview to compile against. Windows has WebView2
+      # in the image already; only Linux has to be handed one.
       - name: System dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
