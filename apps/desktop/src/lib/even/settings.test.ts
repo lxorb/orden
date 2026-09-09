@@ -1,3 +1,4 @@
+import { DEFAULT_COMPACTION } from '@nib/glasses'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The one schema both surfaces are drawn from.
@@ -92,6 +93,18 @@ describe('every glasses setting', () => {
     for (const { id, field } of glassesSettings()) {
       expect(field.initial, id).not.toBeUndefined()
     }
+  })
+
+  /** Emil, after reading on a pair: the lines he wrote are the lines he meant. The
+   *  default is declared once, in @nib/glasses, and both the schema's initial and the
+   *  store's default read it - so a reader who has never chosen gets `collapse` and a
+   *  device that saved a value keeps it. */
+  test('starts a note at one break between blocks, not at as little as possible', () => {
+    const found = glassesSettings().find((one) => one.id === 'compaction')
+
+    expect(found?.field.initial).toBe(DEFAULT_COMPACTION)
+    expect(DEFAULT_COMPACTION).toBe('collapse')
+    expect(found?.field.get()).toBe('collapse')
   })
 
   test('is on the glasses, because all of them make sense there', () => {

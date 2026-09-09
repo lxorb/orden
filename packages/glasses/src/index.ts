@@ -12,6 +12,7 @@ export { fit, fold, rightward, rows, ruleOf, SPACE, spread, TICK, width, wrap } 
 export {
   type Compaction,
   COMPACTIONS,
+  DEFAULT_COMPACTION,
   isCompaction,
   type Line,
   markLines,

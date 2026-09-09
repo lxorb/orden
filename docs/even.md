@@ -391,7 +391,7 @@ columns, a picture as what it was described as, a fence line by line.
 | html | the words inside it | markup is not words |
 | front matter | not set | it is not set on a page either |
 | a link definition, an abbreviation | not set | neither is content |
-| a soft wrap inside a paragraph | a space | markdown says it is one |
+| a soft wrap inside a paragraph | a break, or a space at the top compaction | see the levels below |
 
 Line numbers are the note's own, counted from the first byte of the file with the
 front matter included, so "go to line forty" reaches the line an editor would call
@@ -411,22 +411,22 @@ each rather than one "show markdown" switch, because the answer is different for
 fence and for a bold word and that difference *is* the rule.
 
 **How much white space reaches the panel**, in three levels. Eight lines is not many
-and how they are spent is a real choice. Emil's three, in his words:
+and how they are spent is a real choice. Emil's three, in his words, against a note
+whose lines are `A`, one newline, `B` and against one with three blank lines between
+them:
 
-| Level | `A
-B` | `A
-
-
-
-B` |
+| Level | one newline | three blank lines |
 | --- | --- | --- |
 | `none` - every line break as written | two lines | two lines, three blank between |
 | `collapse` - one break between blocks | two lines | two lines, nothing between |
 | `aggressive` - as little as possible | **one line** | two lines, nothing between |
 
-`aggressive` is what the plugin did before there was a choice, and is still the
-default: markdown says a soft wrap inside a paragraph is a space, and reading it as a
-break made every hard-wrapped paragraph in every note come out as a ragged column.
+`collapse` is the default, and it is Emil's answer having read on a pair: the lines a
+reader wrote are the lines they meant. `aggressive` is what the plugin did before
+there was a choice - markdown says a soft wrap inside a paragraph is a space, and
+that is still true of it - and it is one setting away. The default is declared once,
+as `DEFAULT_COMPACTION` in `@nib/glasses`, and the mapping, the schema's initial and
+the store's default all read it; a device that has already saved a value keeps it.
 
 **A line number is the line of the file at every level.** That is the whole point of
 the numbers: a row that says 12 is line 12 of the note, whether ten of its lines were

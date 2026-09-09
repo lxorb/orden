@@ -107,6 +107,15 @@ export type Compaction = 'none' | 'collapse' | 'aggressive'
 
 export const COMPACTIONS: readonly Compaction[] = ['none', 'collapse', 'aggressive']
 
+/** What a reader who has never chosen gets: `collapse`, which is Emil's answer
+ *  having read on a pair.
+ *
+ *  It was `aggressive`, which is what the plugin did before there was a choice at
+ *  all. Said once, here, and read by the mapping, by the schema's own initial and by
+ *  the store's default, so the three cannot drift; a device that has already saved a
+ *  value keeps whatever it saved. */
+export const DEFAULT_COMPACTION: Compaction = 'collapse'
+
 export function isCompaction(value: unknown): value is Compaction {
   return typeof value === 'string' && (COMPACTIONS as readonly string[]).includes(value)
 }
@@ -117,8 +126,8 @@ export interface MarkOptions {
   inner: number
   /** Which markers to draw. The defaults above when nobody has said. */
   marks?: Marks
-  /** How much white space reaches the panel. `aggressive` when nobody has said,
-   *  which is what the plugin did before there was a choice. */
+  /** How much white space reaches the panel. `DEFAULT_COMPACTION` when nobody has
+   *  said, which is `collapse`. */
   compaction?: Compaction
   /** Whether the first level of a note is indented at all.
    *
@@ -530,7 +539,7 @@ class Sheet {
     options: MarkOptions,
   ) {
     this.marks = options.marks ?? MARKS
-    this.compaction = options.compaction ?? 'aggressive'
+    this.compaction = options.compaction ?? DEFAULT_COMPACTION
     this.flow = this.compaction === 'aggressive'
     this.rootIndent = options.rootIndent ?? false
   }

@@ -275,14 +275,23 @@ describe('nothing in a note is dropped', () => {
     expect(one('<div>block</div>')).toBe('block')
   })
 
-  test('a paragraph hard wrapped in the file is one line, not one per file line', () => {
-    // A single newline inside a paragraph is a space in markdown. Read as a break
-    // it was two lines on the panel for every wrapped paragraph in every note, both
-    // numbered with the line the paragraph started on, and the panel held half of
-    // what it should.
-    expect(lines('one two\nthree four\nfive six\n')).toEqual(['one two three four five six'])
-    expect(lines('- one two\n  three four\n')).toEqual(['• one two three four'])
-    expect(lines('> one two\n> three four\n')).toEqual(['│ one two three four'])
+  /** A single newline inside a paragraph is a space in markdown, and at the top
+   *  compaction that is what it becomes. Read as a break it was two lines on the
+   *  panel for every wrapped paragraph in every note, both numbered with the line the
+   *  paragraph started on, and the panel held half of what it should.
+   *
+   *  Asked of `aggressive` by name, because the default is `collapse` now: Emil, who
+   *  reads on a pair, would rather have the note's own breaks. See `Compaction`. */
+  test('a paragraph hard wrapped in the file is one line at the top compaction', () => {
+    const flowed = (source: string) =>
+      markLines(source, { inner: BODY_INNER, compaction: 'aggressive' }).map((one) => one.text)
+
+    expect(flowed('one two\nthree four\nfive six\n')).toEqual(['one two three four five six'])
+    expect(flowed('- one two\n  three four\n')).toEqual(['• one two three four'])
+    expect(flowed('> one two\n> three four\n')).toEqual(['│ one two three four'])
+
+    // And at the default the reader gets the lines they wrote.
+    expect(lines('one two\nthree four\n')).toEqual(['one two', 'three four'])
   })
 
   test('a hard break is two lines, the second under the words of the first', () => {

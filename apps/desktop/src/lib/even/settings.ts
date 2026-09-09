@@ -16,7 +16,7 @@
  *  other setting; the glasses draw a row with the value on the right, and a tap
  *  either flips it or opens the choices as a list like any other. */
 
-import { COMPACTIONS, type Marks } from '@nib/glasses'
+import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@nib/glasses'
 import { key, t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import type { Field, Group } from '../preferences'
@@ -144,7 +144,7 @@ export function glassesSettings(): Setting[] {
         t('Blank lines'),
         COMPACTIONS,
         COMPACTION_WORDS,
-        'aggressive',
+        DEFAULT_COMPACTION,
         () => modes.glassesCompaction,
         (value) => modes.setGlassesCompaction(value),
       ),

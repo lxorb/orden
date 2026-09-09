@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { type Compaction, COMPACTIONS, markLines, MARKS, type Marks } from './mark'
+import {
+  type Compaction,
+  COMPACTIONS,
+  DEFAULT_COMPACTION,
+  markLines,
+  MARKS,
+  type Marks,
+} from './mark'
 import { BODY_INNER } from './panel'
 
 /* ── How much of a note's white space reaches the panel ───────────────── */
@@ -25,6 +32,13 @@ describe('compaction', () => {
       [1, 'A'],
       [5, 'B'],
     ])
+  })
+
+  /** What a reader who has never chosen gets. Said once, so the mapping, the
+   *  schema's initial and the store's default cannot drift apart. */
+  test('is what a note is set at with nobody having chosen', () => {
+    expect(DEFAULT_COMPACTION).toBe('collapse')
+    expect(markLines(A_B, { inner: BODY_INNER }).map((one) => one.text)).toEqual(['A', 'B'])
   })
 
   test('collapse keeps A, newline, B as two lines', () => {

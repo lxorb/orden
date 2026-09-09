@@ -28,7 +28,7 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
-import { type Compaction, isCompaction, MARKS, type Marks } from '@nib/glasses'
+import { type Compaction, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from '@nib/glasses'
 import { glassesKey } from './even/key.svelte'
 import { isScroll, type Scroll } from './even/scroll'
 import { type Effort, isEffort } from './even/models'
@@ -236,8 +236,9 @@ class Modes {
    *  it is turned on from the hold modal on the glasses, or here. */
   glassesVoice = $state(false)
   /** How much of a note's own white space reaches the panel; see `Compaction` in
-   *  @nib/glasses. `aggressive` is what the plugin did before there was a choice. */
-  glassesCompaction = $state<Compaction>('aggressive')
+   *  @nib/glasses. One break between blocks, which is Emil's answer having read on a
+   *  pair; the default is said once, in that package. */
+  glassesCompaction = $state<Compaction>(DEFAULT_COMPACTION)
   /** Which of a note's markers are drawn. Rule one as it stands, until a reader
    *  overrules it per construct; see `Marks` in @nib/glasses. */
   glassesMarks = $state<Marks>({ ...MARKS })
