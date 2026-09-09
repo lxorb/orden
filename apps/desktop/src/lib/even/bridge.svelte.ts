@@ -703,7 +703,9 @@ class Bridge {
    *  `ended` is when the reader stopped talking, which is the only honest place to
    *  measure a command's latency from; see voice.ts. */
   private heard(said: string, ended: number): void {
-    const command = commandIn(said)
+    // With the phrases the reader chose, where they chose any: the grammar reads
+    // them rather than holding a second copy. See even/settings.ts.
+    const command = commandIn(said, modes.glassesWords)
     if (!command) return
 
     this.flash(said.slice(0, 40))
