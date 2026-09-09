@@ -719,7 +719,8 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, decode, front_matter_value, heading_of, headings_in, links_in, without_code,
+        block_id_of, decode, front_matter_list, front_matter_value, heading_of, headings_in,
+        links_in, without_code,
     };
 
     fn targets(body: &str) -> Vec<String> {
