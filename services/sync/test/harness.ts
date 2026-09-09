@@ -22,8 +22,27 @@ const MIGRATIONS = readdirSync(FOLDER)
  *  on the environment. Consumed by the statement it matches and by nothing else. */
 type Loses = (sql: string) => boolean
 
-function d1(database: DatabaseSync, loses: Loses) {
+/** What a statement bound, so a test can hold the Worker to what D1 allows. */
+type Bound = (sql: string, count: number) => void
+
+function d1(database: DatabaseSync, loses: Loses, bound: Bound) {
   return {
+    /** D1 runs a batch in one transaction, so the fake does too: a route that
+     *  reaches for one is a route saying that half of it applied is not a state
+     *  anything may end up in. */
+    async batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]> {
+      database.exec('begin')
+      try {
+        const answers: unknown[] = []
+        for (const statement of statements) answers.push(await statement.run())
+        database.exec('commit')
+        return answers
+      } catch (error) {
+        database.exec('rollback')
+        throw error
+      }
+    },
+
     prepare(sql: string) {
       const lost = loses(sql)
 
@@ -31,6 +50,7 @@ function d1(database: DatabaseSync, loses: Loses) {
         args: [] as never[],
         bind(...args: unknown[]) {
           statement.args = args as never[]
+          bound(sql, args.length)
           return statement
         },
         first(): Promise<unknown> {
@@ -90,6 +110,11 @@ export interface TestEnv extends Env {
    *  a function saying how many writes it caught, so a test can say that the
    *  race it meant to arrange actually happened. */
   losing(sql: RegExp): () => number
+  /** The widest statement anything has bound since the environment was made: how
+   *  many parameters, and which statement. Node's SQLite takes tens of thousands
+   *  and D1 takes a hundred, so a query that grows with what an account holds is
+   *  a query this fake would run and the real one would refuse. */
+  widest(): { count: number; sql: string }
   close(): void
 }
 
@@ -108,8 +133,13 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
     return true
   }
 
+  let widest = { count: 0, sql: '' }
+  const bound: Bound = (sql, count) => {
+    if (count > widest.count) widest = { count, sql }
+  }
+
   return {
-    DB: d1(database, loses) as unknown as D1Database,
+    DB: d1(database, loses, bound) as unknown as D1Database,
     NOTES: bucket() as unknown as R2Bucket,
     BLOG_ROOT: 'nibeditor.com',
     BLOG_CNAME_TARGET: 'cname.nibeditor.com',
@@ -121,6 +151,7 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
       const before = caught
       return () => caught - before
     },
+    widest: () => widest,
     close: () => database.close(),
   }
 }

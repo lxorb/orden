@@ -14,6 +14,7 @@
  *  PDF is sent once rather than on every pass. */
 
 import { Hono } from 'hono'
+import { askInChunks, places } from '../bound'
 import { now } from '../crypto'
 import type { Env, Variables } from '../types'
 import { atLeast, spaceOf } from './space'
@@ -91,14 +92,19 @@ export function readSpaceFiles(raw: string): SpaceFile[] {
 async function heldBy(env: Env, userId: string, hashes: readonly string[]): Promise<Set<string>> {
   if (!hashes.length) return new Set<string>()
 
-  const places = hashes.map(() => '?').join(', ')
-  const { results } = await env.DB.prepare(
-    `select hash from blobs where user_id = ? and hash in (${places})`,
-  )
-    .bind(userId, ...hashes)
-    .all<{ hash: string }>()
+  // A chunk at a time: a space may record two hundred files and D1 binds a
+  // hundred parameters; see src/bound.ts.
+  const found = await askInChunks(hashes, async (chunk) => {
+    const { results } = await env.DB.prepare(
+      `select hash from blobs where user_id = ? and hash in (${places(chunk.length)})`,
+    )
+      .bind(userId, ...chunk)
+      .all<{ hash: string }>()
 
-  return new Set(results.map((row) => row.hash))
+    return results
+  })
+
+  return new Set(found.map((row) => row.hash))
 }
 
 export const spaceFiles = new Hono<{ Bindings: Env; Variables: Variables }>()

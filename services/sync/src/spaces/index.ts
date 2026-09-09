@@ -8,6 +8,7 @@
 
 import { Hono } from 'hono'
 import { readBody } from '../body'
+import { chunks } from '../bound'
 import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables, Whoever } from '../types'
@@ -143,17 +144,20 @@ spaces.put('/order', async (context) => {
   const listed = order.filter((id) => owned.has(id))
   const rest = results.map((row) => row.id).filter((id) => !listed.includes(id))
 
+  // One batch, which D1 runs in a single transaction, so a half-applied order is
+  // not a state the rail can end up in. A statement apiece rather than one for
+  // the lot, because D1 binds a hundred parameters and a rail may hold five
+  // hundred spaces; see src/bound.ts. The positions are array indexes, never
+  // anything sent in.
   const ids = [...listed, ...rest]
-  if (ids.length) {
-    // One statement, so a half-applied order is not a state the rail can end
-    // up in. The positions are array indexes, never anything sent in.
-    const cases = ids.map((_, index) => `when ? then ${index}`).join(' ')
-    await context.env.DB.prepare(
+  const statements = chunks(ids.map((id, index) => ({ id, index }))).map((chunk) => {
+    const cases = chunk.map((one) => `when ? then ${one.index}`).join(' ')
+    return context.env.DB.prepare(
       `update spaces set position = case id ${cases} else position end where user_id = ?`,
-    )
-      .bind(...ids, user.id)
-      .run()
-  }
+    ).bind(...chunk.map((one) => one.id), user.id)
+  })
+
+  if (statements.length) await context.env.DB.batch(statements)
 
   return context.json({ ok: true })
 })

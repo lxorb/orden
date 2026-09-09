@@ -9,6 +9,7 @@
  *  space is theirs to see, this button is not theirs to press. */
 
 import type { Context, MiddlewareHandler } from 'hono'
+import { askInChunks, AT_A_TIME, places } from '../bound'
 import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
 import type { Env, Space, Variables, Whoever } from '../types'
@@ -176,16 +177,26 @@ export function spaceOf(context: Context<{ Bindings: Env; Variables: Variables }
 export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promise<Set<string>> {
   if (!spaceIds.length) return new Set<string>()
 
-  const places = spaceIds.map(() => '?').join(', ')
-  const { results } = await env.DB.prepare(
-    `select space_id from space_members where space_id in (${places})
-     union select space_id from guest_members
-      where space_id in (${places}) and joined_at is not null`,
-  )
-    .bind(...spaceIds, ...spaceIds)
-    .all<{ space_id: string }>()
+  // A chunk at a time, and this one names the list twice, so a rail past about
+  // fifty spaces was a statement D1 would not take; see src/bound.ts.
+  const found = await askInChunks(
+    spaceIds,
+    async (chunk) => {
+      const list = places(chunk.length)
+      const { results } = await env.DB.prepare(
+        `select space_id from space_members where space_id in (${list})
+       union select space_id from guest_members
+        where space_id in (${list}) and joined_at is not null`,
+      )
+        .bind(...chunk, ...chunk)
+        .all<{ space_id: string }>()
 
-  return new Set(results.map((row) => row.space_id))
+      return results
+    },
+    AT_A_TIME / 2,
+  )
+
+  return new Set(found.map((row) => row.space_id))
 }
 
 /** How many notes each of these spaces holds. One query for the whole listing,
@@ -200,16 +211,19 @@ export async function notesAmong(
 ): Promise<Map<string, number>> {
   if (!spaceIds.length) return new Map<string, number>()
 
-  const places = spaceIds.map(() => '?').join(', ')
-  const { results } = await env.DB.prepare(
-    `select space_id, count(*) as notes from notes
-      where space_id in (${places}) and deleted = 0
-      group by space_id`,
-  )
-    .bind(...spaceIds)
-    .all<{ space_id: string; notes: number }>()
+  const found = await askInChunks(spaceIds, async (chunk) => {
+    const { results } = await env.DB.prepare(
+      `select space_id, count(*) as notes from notes
+        where space_id in (${places(chunk.length)}) and deleted = 0
+        group by space_id`,
+    )
+      .bind(...chunk)
+      .all<{ space_id: string; notes: number }>()
 
-  return new Map(results.map((row) => [row.space_id, row.notes]))
+    return results
+  })
+
+  return new Map(found.map((row) => [row.space_id, row.notes]))
 }
 
 export function presentSpace(

@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { chunks, places } from './bound'
 import { now } from './crypto'
 import { nextSeq, noteKey, presentNote } from './notes'
 import { presentSpace } from './spaces/space'
@@ -131,11 +132,11 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
   await Promise.all(results.map((note) => env.NOTES.delete(noteKey(space.id, note.id))))
 
   // Exactly the rows whose bytes have gone, so nothing rejected above is left
-  // recorded as purged.
-  if (results.length) {
-    const places = results.map(() => '?').join(', ')
-    await env.DB.prepare(`delete from notes where id in (${places})`)
-      .bind(...results.map((note) => note.id))
+  // recorded as purged. A chunk at a time, because a batch is five hundred notes
+  // and D1 binds a hundred parameters; see src/bound.ts.
+  for (const chunk of chunks(results.map((note) => note.id))) {
+    await env.DB.prepare(`delete from notes where id in (${places(chunk.length)})`)
+      .bind(...chunk)
       .run()
   }
 
