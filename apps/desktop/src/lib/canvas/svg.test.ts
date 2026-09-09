@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { InkStroke } from './format'
+import { INK_TOOLS, type InkStroke } from './format'
 import { INK_STYLES } from './ink'
 import type { Palette } from './paint'
 import { inkSvg } from './svg'
@@ -69,9 +69,18 @@ describe('ink written into a picture', () => {
     expect(inkSvg([stroke({ points: [] })], PALETTE)).toBe('')
   })
 
-  test('still draws the dot a pen put down and lifted', () => {
-    const dot = stroke({ points: [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }] })
-    expect(inkSvg([dot], PALETTE)).toContain('<path ')
+  test('still draws the dot a pen put down and lifted, whichever pen it was', () => {
+    for (const tool of INK_TOOLS) {
+      const dot = stroke({
+        tool,
+        points: [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }],
+      })
+      const svg = inkSvg([dot], PALETTE)
+
+      expect(svg, tool).toContain('<path ')
+      // A path with something in it: `d=""` would be a dot nobody can see.
+      expect(svg, tool).toMatch(/ d="M[^"]+Z"/)
+    }
   })
 })
 

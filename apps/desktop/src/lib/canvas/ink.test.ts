@@ -73,6 +73,75 @@ describe('the outline of a stroke', () => {
   })
 })
 
+/** A pen put down and lifted in one place. Every one of them leaves the mark its
+ *  own nib would leave, because a tap that leaves nothing reads as a tap the
+ *  plane did not notice. */
+describe('the dot a tap leaves', () => {
+  const tap = (tool: InkStroke['tool']) => stroke([point(0, 0)], { tool, size: 6 })
+
+  test('is a ring with an inside, for every tool there is', () => {
+    for (const tool of INK_TOOLS) {
+      const ring = outlineOf(tap(tool))
+      expect(ring.length, tool).toBeGreaterThanOrEqual(3)
+      expect(inkPath(ring), tool).not.toBe('')
+    }
+  })
+
+  /** Big enough to see. The three tapered pens used to come out a hundredth of a
+   *  unit across, which is a mark nobody can find, and the blade came out with no
+   *  area at all. */
+  test('is about as wide as the nib, for every tool there is', () => {
+    for (const tool of INK_TOOLS) {
+      const ring = outlineOf(tap(tool))
+      const xs = ring.map((one) => one.x)
+      const ys = ring.map((one) => one.y)
+      const across = Math.max(...xs) - Math.min(...xs)
+      const down = Math.max(...ys) - Math.min(...ys)
+
+      expect(Math.max(across, down), tool).toBeGreaterThan(1)
+      expect(Math.max(across, down), tool).toBeLessThan(6 * 4)
+    }
+  })
+
+  test('sits where the pen was put down', () => {
+    for (const tool of INK_TOOLS) {
+      const box = strokeBox(stroke([point(40, 25)], { tool, size: 6 }))
+      expect(box.x + box.width / 2, tool).toBeCloseTo(40, 5)
+      expect(box.y + box.height / 2, tool).toBeCloseTo(25, 5)
+    }
+  })
+
+  /** A blade leaves a dash rather than a disc: broad across the nib, thin along
+   *  it, which is what a chisel tip does. */
+  test('is a dash under a flat nib', () => {
+    const ring = outlineOf(tap('calligraphy'))
+    expect(ring).toHaveLength(4)
+
+    // Measured along the nib and across it rather than along the screen: the
+    // blade is held at an angle, so a box round it says nothing about its shape.
+    const angle = ((INK_STYLES.calligraphy.nib ?? 0) * Math.PI) / 180
+    const along = ring.map((one) => one.x * Math.cos(angle) + one.y * Math.sin(angle))
+    const across = ring.map((one) => one.y * Math.cos(angle) - one.x * Math.sin(angle))
+    const broad = Math.max(...along) - Math.min(...along)
+    const deep = Math.max(...across) - Math.min(...across)
+
+    expect(deep).toBeGreaterThan(0)
+    expect(deep).toBeLessThan(broad / 2)
+  })
+
+  test('survives being tidied on the way to the file', () => {
+    for (const tool of INK_TOOLS) {
+      expect(tidied(tap(tool)).points, tool).toHaveLength(1)
+    }
+  })
+
+  test('is where a tap on it lands', () => {
+    const dot = tap('pen')
+    expect(nearStroke(dot, { x: 1, y: 1 }, 1)).toBe(true)
+    expect(nearStroke(dot, { x: 40, y: 40 }, 1)).toBe(false)
+  })
+})
+
 /** An arc, sampled as densely as asked, which is the shape that used to go hard
  *  the moment it landed: a curve has no corners, so any corner in it is one the
  *  drawing put there. */

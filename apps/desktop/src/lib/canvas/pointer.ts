@@ -772,10 +772,11 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       }
     }
 
-    case 'draw': {
-      if (one.stroke.points.length < 2) return { machine: rest, effects: [] }
+    // A tap is a dot: the pen went down and came up in one place, which is a mark
+    // somebody meant to make. What it looks like is the nib's own footprint; see
+    // outlineOf in ink.ts.
+    case 'draw':
       return { machine: rest, effects: [{ do: 'stroke', stroke: one.stroke }] }
-    }
 
     case 'erase':
       return { machine: rest, effects: [] }

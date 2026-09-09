@@ -386,8 +386,10 @@ function readStroke(value: unknown): InkStroke | null {
   if (!isInkTool(value.tool) || !isString(value.color)) return null
   if (!Array.isArray(value.points)) return null
 
+  // One point is a dot, which is what a pen tapped once on the plane leaves. None
+  // at all is a stroke with nothing in it, and that is not a stroke.
   const points = unpacked(value.points.filter(isNumber))
-  if (points.length < 2) return null
+  if (points.length === 0) return null
 
   return {
     id: value.id,

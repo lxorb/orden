@@ -73,7 +73,9 @@ export const run = {
   /** A stroke of ink, tidied on the way in: a digitiser reports far more points
    *  than a line needs, and the ones it drops are the ones that say nothing. */
   stroke(store: CanvasStore, pending: PendingStroke) {
-    if (pending.points.length < 2) return
+    // One point is a dot, which is a stroke like any other. None at all is
+    // nothing, and cannot happen: a stroke starts at the point the pen went down.
+    if (!pending.points.length) return
 
     // The alpha is written down only where it is not the one this kind of pen has
     // by itself, so a plane drawn by somebody who never touched the dial is the

@@ -372,7 +372,9 @@ describe('what Nib keeps beyond the spec', () => {
     expect(canvas.ink).toEqual([])
   })
 
-  test('drops a stroke with no points to draw between and a shape with no shape', () => {
+  /** One point is a dot, which is what a pen tapped once on the plane leaves.
+   *  It reads back as the stroke it is; a shape with no shape does not. */
+  test('keeps a stroke of one point and drops a shape with no shape', () => {
     const canvas = readCanvas(
       JSON.stringify({
         nodes: [],
@@ -383,8 +385,27 @@ describe('what Nib keeps beyond the spec', () => {
       }),
     )
 
-    expect(canvas.ink).toEqual([])
+    expect(canvas.ink.map((one) => one.points.length)).toEqual([1])
+    expect(canvas.ink[0]?.points[0]).toEqual({
+      x: 1,
+      y: 2,
+      pressure: 0.5,
+      tiltX: 0,
+      tiltY: 0,
+      t: 0,
+    })
     expect(canvas.nodes).toEqual([])
+  })
+
+  test('drops a stroke with no points at all', () => {
+    const canvas = readCanvas(
+      JSON.stringify({
+        nodes: [],
+        nib: { ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [] }] },
+      }),
+    )
+
+    expect(canvas.ink).toEqual([])
   })
 
   test('a card Obsidian added to a canvas of ours arrives on top', () => {

@@ -603,13 +603,17 @@ describe('drawing', () => {
     expect(stroke[0]?.do === 'stroke' && stroke[0].stroke.tool).toBe('pen')
   })
 
-  test('a dot with nowhere to go is not a stroke', () => {
+  /** A pen down and up in one place is a dot, which is a mark somebody meant to
+   *  make. The format, the paint and the export all draw one; see ink.ts. */
+  test('a pen down and up in one place is a stroke of one point', () => {
     const { effects } = play(
       [down({ pointer: 'pen' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
       where,
     )
 
-    expect(effects.filter((one) => one.do === 'stroke')).toEqual([])
+    const strokes = effects.filter((one) => one.do === 'stroke')
+    expect(strokes).toHaveLength(1)
+    expect(strokes[0]?.do === 'stroke' && strokes[0].stroke.points).toHaveLength(1)
   })
 
   test('a held pen asks for its shape to be tidied', () => {

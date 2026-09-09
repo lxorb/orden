@@ -139,11 +139,15 @@ export function inkOpacity(stroke: InkStroke): number {
 /** The outline of a stroke, as a ring of points in plane coordinates.
  *
  *  A flat nib is a ribbon and a round one is what perfect-freehand works out, so
- *  the two kinds of pen are two cases here and one shape everywhere after. */
+ *  the two kinds of pen are two cases here and one shape everywhere after.
+ *
+ *  A stroke of one point is a tap, and a tap leaves the nib's own footprint: a
+ *  disc under a round nib, a dash under a blade. */
 export function outlineOf(stroke: InkStroke, finished = true): Point[] {
   const style = INK_STYLES[stroke.tool]
   if (style.nib !== null) return ribbon(stroke, style)
 
+  const dot = stroke.points.length === 1
   const points = evenly(stroke.points).map((point) => [point.x, point.y, point.pressure])
   const ring = getStroke(points, {
     size: stroke.size,
@@ -152,7 +156,10 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
     streamline: style.streamline,
     simulatePressure: false,
     last: finished,
-    ...(style.taper
+    // A tap has no length to taper along, and tapering both ends of a stroke that
+    // is one point leaves nothing at all - so a dot is capped, whatever this pen
+    // does at the ends of a line.
+    ...(style.taper && !dot
       ? { start: { taper: style.taper }, end: { taper: style.taper } }
       : { start: { cap: true }, end: { cap: true } }),
   })
@@ -294,6 +301,11 @@ export function inkPath(ring: readonly Point[]): string {
   return out.join(' ')
 }
 
+/** How thick a blade is along its own edge, against how wide it is across. A
+ *  chisel tip pressed down and lifted leaves a dash rather than a disc, and this
+ *  is how deep that dash is. */
+const NIB_DEPTH = 0.16
+
 /** A flat nib's outline: every point offset by the same vector one way, then the
  *  same points offset the other way on the return leg. Because the offset never
  *  turns, the stroke is broad across the nib and vanishes along it, which is
@@ -303,6 +315,24 @@ function ribbon(stroke: InkStroke, style: InkStyle): Point[] {
   const half = stroke.size / 2
   const ax = Math.cos(angle)
   const ay = Math.sin(angle)
+
+  const only = stroke.points.length === 1 ? stroke.points[0] : undefined
+  if (only) {
+    // A tap. Going out along the nib and back along it again encloses nothing, so
+    // the one point becomes the four corners of the blade's own footprint: as wide
+    // as the nib across, and as deep as the blade is thick along it.
+    const width = half * (1 - style.thinning * (1 - only.pressure))
+    const depth = (stroke.size * NIB_DEPTH) / 2
+    const bx = -ay * depth
+    const by = ax * depth
+
+    return [
+      { x: only.x + ax * width + bx, y: only.y + ay * width + by },
+      { x: only.x - ax * width + bx, y: only.y - ay * width + by },
+      { x: only.x - ax * width - bx, y: only.y - ay * width - by },
+      { x: only.x + ax * width - bx, y: only.y + ay * width - by },
+    ]
+  }
 
   const forward: Point[] = []
   const back: Point[] = []
