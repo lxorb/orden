@@ -107,6 +107,7 @@ export const fr: Dictionary = {
   'Search this space': 'Rechercher dans cet espace',
   'path: tag: file: -word "…" /re/': 'path: tag: file: -mot "…" /re/',
   'Replace with': 'Remplacer par',
+  Icons: 'Icônes',
   Emoji: 'Émoji',
   'That set is not here': 'Ce jeu n’est pas inclus',
   Plain: 'Uni',

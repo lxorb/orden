@@ -35,6 +35,7 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { overlays } from './overlays'
+  import { segmented } from './slide'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -296,7 +297,7 @@
          them, so the tab carries who and under what licence: that belongs where a
          person is looking at the drawings rather than in a panel nobody opens. The
          emoji have no credit, being the platform's own font. -->
-    <div class="nib-segmented">
+    <div class="nib-segmented" role="radiogroup" aria-label={t('Icons')} use:segmented>
       {#each ICON_SETS as one (one.id)}
         <button
           type="button"

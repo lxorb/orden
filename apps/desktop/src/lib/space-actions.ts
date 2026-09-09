@@ -121,7 +121,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
  *  the space is brought up first, because the name a header shows is the space that
  *  is open and renaming one out of sight would be a field with nothing in front of
  *  it. See NameField.svelte and Sidebar.svelte. */
-export async function renameSpace(space: Space) {
+async function renameSpace(space: Space) {
   if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
   workspace.startRenaming(space.root)
 }

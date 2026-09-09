@@ -109,6 +109,7 @@ export const gsw: Dictionary = {
   'Search this space': 'I dere Ablag sueche',
   'path: tag: file: -word "…" /re/': 'path: tag: file: -wort "…" /re/',
   'Replace with': 'Ersetze dur',
+  Icons: 'Sinnbilder',
   Emoji: 'Emoji',
   'That set is not here': 'De Satz isch nöd debii',
   Plain: 'Eifach',

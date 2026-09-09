@@ -108,6 +108,7 @@ export const de: Dictionary = {
   'Search this space': 'In diesem Bereich suchen',
   'path: tag: file: -word "…" /re/': 'path: tag: file: -wort "…" /re/',
   'Replace with': 'Ersetzen durch',
+  Icons: 'Symbole',
   Emoji: 'Emoji',
   'That set is not here': 'Dieser Satz ist nicht dabei',
   Plain: 'Einfarbig',

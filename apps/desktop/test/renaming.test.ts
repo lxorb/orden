@@ -38,7 +38,7 @@ function componentFiles(dir: string): string[] {
 const components = componentFiles(SOURCE)
 
 const tree = read('lib/Tree.svelte')
-const sidebar = read('lib/Sidebar.svelte')
+const switcher = read('lib/SpaceSwitcher.svelte')
 const shared = readFileSync(`${THEMES}base.css`, 'utf8')
 
 /** The branch a row is drawn by while its name is being typed: from the test that
@@ -106,17 +106,17 @@ describe('the field that renames', () => {
     const asking = components.filter((name) => read(name).includes('<NameField')).sort()
     const knowing = components.filter((name) => read(name).includes('workspace.naming')).sort()
 
-    expect(asking).toEqual(['lib/Sidebar.svelte', 'lib/Tree.svelte'])
+    expect(asking).toEqual(['lib/SpaceSwitcher.svelte', 'lib/Tree.svelte'])
     // One more looks and draws nothing: the caret is kept out of the note while a
     // name is being typed, or the first letter would land in the document. See
     // caret.ts.
     expect(knowing).toEqual(['App.svelte', ...asking])
   })
 
-  test('and the header renames in place too, rather than in a sheet', () => {
-    expect(sidebar).toContain('workspace.naming?.path === here.root')
+  test('and the space renames in place too, rather than in a sheet', () => {
+    expect(switcher).toContain('workspace.naming?.path === here.root')
     // The chevron that says the name can be pressed stays beside it.
-    const header = sidebar.slice(sidebar.indexOf('workspace.naming?.path === here.root'))
+    const header = switcher.slice(switcher.indexOf('workspace.naming?.path === here.root'))
     expect(header.slice(0, header.indexOf('{:else}'))).toContain('class="chevron"')
   })
 
@@ -127,7 +127,7 @@ describe('the field that renames', () => {
 
     for (const [name, text] of [
       ['lib/Tree.svelte', tree],
-      ['lib/Sidebar.svelte', sidebar],
+      ['lib/SpaceSwitcher.svelte', switcher],
     ] as const) {
       expect(text, name).toContain('class:is-wrong={wrong}')
       expect(text, name).toContain('bind:wrong')

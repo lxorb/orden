@@ -107,6 +107,7 @@ export const ja: Dictionary = {
   'Search this space': 'このスペースを検索',
   'path: tag: file: -word "…" /re/': 'path: tag: file: -語 "…" /re/',
   'Replace with': '置き換える文字列',
+  Icons: 'アイコン',
   Emoji: '絵文字',
   'That set is not here': 'このセットはありません',
   Plain: '無地',
