@@ -113,6 +113,56 @@ function placeable(path: string): boolean {
   return path.split(/[\\/]/).every((part) => part !== '' && part !== '.' && part !== '..')
 }
 
+/** Whether a file on this disk is the same words the account's hash names.
+ *
+ *  Byte for byte, or the same text written with the other line ending. A file that
+ *  was already on this machine with Windows line endings keeps them whenever the
+ *  app writes it - see `as_written` in src-tauri/src/notes.rs, which is there so
+ *  that correcting one word does not rewrite every line of the file - so its bytes
+ *  never hash to what the account holds however exactly the two agree. Reading that
+ *  as "somebody wrote here" would put a conflict copy beside every note in such a
+ *  folder, on every pass.
+ *
+ *  The second digest is only ever worked out for a file that has a carriage return
+ *  in it, so the ordinary case costs exactly one. */
+async function holdsSameWords(local: string, hash: string): Promise<boolean> {
+  if (!hash) return false
+  if ((await sha256(local)) === hash) return true
+  if (!local.includes('\r')) return false
+
+  return (await sha256(local.replace(/\r\n/gu, '\n'))) === hash
+}
+
+/** Writes a note that came from the account, keeping whatever the file said before
+ *  it as a version first.
+ *
+ *  Saving keeps a version of the words it is about to replace; this is the other
+ *  half of that. Words arriving from the account replace a file just as thoroughly
+ *  as a save does, and they were the one overwrite that left nothing behind - so a
+ *  note another device got wrong, or a conflict settled the wrong way round, was
+ *  recoverable from every device except the one it landed on. Both platforms keep
+ *  these the way a save's are kept, so they are in the same version history and the
+ *  same sheet puts them back; see recovery.svelte.ts.
+ *
+ *  `was` is the body the pass has already read, when it has one. Anything else is
+ *  read here, because a version of what is being replaced is the whole point: the
+ *  conflict copies are written to a name that is usually free, and a second
+ *  conflict in one day would otherwise land on the first without a word.
+ *
+ *  Nothing is kept for a file that is new, that says nothing, or that already says
+ *  exactly this. Both platforms drop a version that repeats the one before it
+ *  anyway; this saves them the round trip. */
+async function writeDown(path: string, content: string, was?: string | null) {
+  const previous =
+    was === undefined ? await invoke<string>('read_note', { path }).catch(() => null) : was
+
+  if (previous !== null && previous !== content && previous.trim()) {
+    await invoke('snapshot_note', { path, content: previous }).catch(() => undefined)
+  }
+
+  await invoke('write_note', { path, content })
+}
+
 /** Where the other side's copy goes when both changed the same note. */
 function conflictPath(path: string): string {
   const stamp = new Date().toISOString().slice(0, 10)
@@ -185,17 +235,37 @@ export async function pull(
       if (tracked?.version === remote.version) continue
 
       const local = await invoke<string>('read_note', { path: target }).catch(() => null)
+
+      // The file and the account already say the same thing, so there is nothing
+      // to bring down and nothing to settle: the entry is recorded and the note is
+      // done with. This is what mends a mirror that has lost entries - the note is
+      // found agreeing rather than judged - and it is the whole of a pass over a
+      // space nothing has changed, without a body being fetched for any of it.
+      if (local !== null && (await holdsSameWords(local, remote.hash))) {
+        mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
+        wrote?.()
+        continue
+      }
+
       const { content } = await api.readNote(token, remote.id)
 
-      // The local file carries edits that never reached the server, and the
-      // server moved too. Overwriting here would throw one of them away - unless
-      // the note is in a room, where the two were settled character by character
-      // before either of them ever became a file.
+      // Whether the file here carries writing the account has never seen. With an
+      // entry to compare against, the answer is exact: a file whose words have
+      // moved since the last pass was written here.
+      //
+      // Without one there is nothing to compare, and the only safe answer is that
+      // it was. A mirror can lose entries - storage truncated on a phone, a folder
+      // paired with a space that already held notes, an account swapped on this
+      // machine - and reading "nothing recorded" as "nothing written here" is what
+      // turns that into somebody's writing overwritten without trace. A note in a
+      // room is the exception either way: the room settled the two character by
+      // character before either of them ever became a file. And the app's own
+      // welcome note is nobody's writing, so it is simply replaced.
       const diverged =
-        tracked &&
         local !== null &&
         !joined.has(remote.id) &&
-        (await sha256(local)) !== tracked.hash
+        !isUntouchedWelcome(remote.path, local) &&
+        (tracked === undefined || !(await holdsSameWords(local, tracked.hash)))
 
       if (diverged && local !== content) {
         // A canvas is put back together rather than copied: both drawings are
@@ -203,10 +273,11 @@ export async function pull(
         // will settle on, since the merge gives the same file either way round.
         const together = isCanvasTarget(remote.path) ? mergeCanvasFiles(local, content) : null
 
-        await invoke('write_note', {
-          path: together === null ? conflictPath(target) : target,
-          content: together ?? content,
-        })
+        await writeDown(
+          together === null ? conflictPath(target) : target,
+          together ?? content,
+          together === null ? undefined : local,
+        )
 
         // An empty hash guarantees the push below sends our copy, now based
         // on the version we just saw, so it lands as the newest one.
@@ -215,7 +286,7 @@ export async function pull(
         continue
       }
 
-      await invoke('write_note', { path: target, content })
+      await writeDown(target, content, local)
       mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
       wrote?.()
     }
@@ -440,13 +511,13 @@ async function keepBoth(
 
   if (isCanvasTarget(path)) {
     const together = mergeCanvasFiles(ours, sent)
-    await invoke('write_note', { path: here, content: together })
+    await writeDown(here, together, ours)
     const { note } = await api.writeNote(token, tracked.id, path, together, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     return
   }
 
-  await invoke('write_note', { path: conflictPath(here), content: sent })
+  await writeDown(conflictPath(here), sent)
 
   // Our version is now the newer one; write it over the server's.
   const { note } = await api.writeNote(token, tracked.id, path, ours, theirs.version)

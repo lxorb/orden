@@ -33,6 +33,10 @@ const fake = vi.hoisted(() => {
   const disk = new Map<string, string>()
   const remote = new Map<string, Remote>()
   const calls: string[] = []
+  /** The version history, as the platforms keep it: every note's earlier words,
+   *  oldest first, under the note they are versions of. What the sheet lists and
+   *  what Restore puts back; see recovery.svelte.ts. */
+  const history = new Map<string, string[]>()
   let seq = 0
 
   const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -52,6 +56,16 @@ const fake = vi.hoisted(() => {
     if (command === 'write_note') {
       calls.push(`write ${path}`)
       disk.set(path, text(args.content))
+      return Promise.resolve(undefined as T)
+    }
+
+    if (command === 'snapshot_note') {
+      const content = text(args.content)
+      const kept = history.get(path) ?? []
+      // Both platforms drop a version that repeats the one before it, and neither
+      // keeps one of a note that says nothing; see src-tauri/src/history.rs and
+      // web/commands.ts.
+      if (content.trim() && kept.at(-1) !== content) history.set(path, [...kept, content])
       return Promise.resolve(undefined as T)
     }
 
@@ -182,11 +196,12 @@ const fake = vi.hoisted(() => {
   function reset() {
     disk.clear()
     remote.clear()
+    history.clear()
     calls.length = 0
     seq = 0
   }
 
-  return { addRemote, api, calls, disk, editRemote, invoke, remote, reset }
+  return { addRemote, api, calls, disk, editRemote, history, invoke, remote, reset }
 })
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -393,5 +408,159 @@ describe('a file inside a space', () => {
     expect(within('/Notes', '/Other/one.md')).toBeNull()
     expect(within('/Notes', '/NotesToo/one.md')).toBeNull()
     expect(within('/Notes', '/Notes')).toBeNull()
+  })
+})
+
+/** What the version history holds for one note, oldest first. */
+function versions(path: string): string[] {
+  return fake.history.get(`${ROOT}/${path}`) ?? []
+}
+
+describe('words arriving from the account', () => {
+  test('leave the words they replace restorable', async () => {
+    const { mirror, id } = await paired('note.md', 'the writing that was here\n')
+    fake.editRemote(id, 'what another device says\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    // The file is what the account says, and what it said before is a version -
+    // the same history a save keeps, so the sheet lists it and Restore puts it
+    // back. Before this, an overwrite from the account was the one overwrite that
+    // left nothing behind on the machine it happened on.
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what another device says\n')
+    expect(versions('note.md')).toEqual(['the writing that was here\n'])
+  })
+
+  test('keep a version of a note this machine had written in', async () => {
+    const { mirror, id } = await paired('note.md', 'base\n')
+
+    // Both sides moved, so the account's copy lands beside ours - and ours is now
+    // one edit further on than the version the pass kept before it.
+    fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
+    fake.editRemote(id, 'base\nwritten there\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(conflicts()).toHaveLength(1)
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten here\n')
+  })
+
+  test('do not land on a conflict copy from earlier the same day', async () => {
+    const { mirror, id } = await paired('note.md', 'base\n')
+
+    // Two conflicts on one note in one day. The copies are named after the day,
+    // so the second is written to the name the first is under.
+    fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
+    fake.editRemote(id, 'base\nthe first thing they said\n')
+    await pull(mirror, 'token', NOBODY)
+
+    fake.editRemote(id, 'base\nthe second thing they said\n')
+    await pull(mirror, 'token', NOBODY)
+
+    const copy = conflicts()[0] ?? ''
+    expect(conflicts()).toHaveLength(1)
+    expect(fake.disk.get(copy)).toBe('base\nthe second thing they said\n')
+    // And the one it replaced is still reachable.
+    expect(fake.history.get(copy)).toEqual(['base\nthe first thing they said\n'])
+  })
+
+  test('keep a version when a canvas is merged into the file', async () => {
+    const drawn = (mark: string) =>
+      `{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${mark}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${mark}": 1000 }\n\t}\n}\n`
+
+    const { mirror, id } = await paired('Board.canvas', drawn('base'))
+    fake.disk.set(`${ROOT}/Board.canvas`, drawn('here'))
+    fake.editRemote(id, drawn('there'))
+
+    await pull(mirror, 'token', NOBODY)
+
+    // A canvas is written over rather than copied beside, so the version is the
+    // only way back to the plane as this machine had it.
+    expect(versions('Board.canvas')).toEqual([drawn('here')])
+  })
+})
+
+describe('a note the mirror has no entry for', () => {
+  /** A space the account holds, and a folder here that already has the notes in
+   *  it, with nothing written down about the two. What a phone whose storage was
+   *  truncated wakes up to, and what pairing a folder with a space of the same
+   *  name looks like on the first pass. */
+  function unrecorded(path: string, here: string, there: string) {
+    const id = fake.addRemote(path, there)
+    fake.disk.set(`${ROOT}/${path}`, here)
+    return { mirror: newMirror('s-one', ROOT), id }
+  }
+
+  test('is a conflict rather than an overwrite when the two differ', async () => {
+    const { mirror } = unrecorded('note.md', 'what I wrote here\n', 'what the account holds\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    // Nothing recorded is not the same as nothing written here. Before this, the
+    // account's copy simply landed on top and the writing was gone from the one
+    // machine that had it.
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what I wrote here\n')
+    expect(conflicts()).toHaveLength(1)
+    expect(fake.disk.get(conflicts()[0] ?? '')).toBe('what the account holds\n')
+  })
+
+  test('and its own words go up as the newer version', async () => {
+    const { mirror, id } = unrecorded('note.md', 'what I wrote here\n', 'what the account holds\n')
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.remote.get(id)?.content).toBe('what I wrote here\n')
+  })
+
+  test('is recorded and left alone when the two already agree', async () => {
+    const { mirror } = unrecorded('note.md', 'the same words\n', 'the same words\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    // A mirror that lost its entries mends itself: the note is found agreeing
+    // rather than judged, so there is no copy, and no write either.
+    expect(conflicts()).toEqual([])
+    expect(fake.calls).toEqual([])
+    expect(versions('note.md')).toEqual([])
+
+    // And it is tracked from here on, so the next pass has something to compare.
+    expect(await push(mirror, 'token', NOBODY)).toBe(false)
+  })
+
+  test('is not a conflict for a file written with Windows line endings', async () => {
+    const { mirror } = unrecorded('note.md', 'one\r\ntwo\r\n', 'one\ntwo\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    // The app keeps whatever line ending a file already had, so its bytes never
+    // hash to what the account holds however exactly the two agree. A copy beside
+    // every note in the folder is not what that means.
+    expect(conflicts()).toEqual([])
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('one\r\ntwo\r\n')
+  })
+
+  test('is simply replaced when what is here is the untouched welcome note', async () => {
+    const { WELCOME, WELCOME_NAME } = await import('../welcome')
+    const { mirror } = unrecorded(WELCOME_NAME, WELCOME, '# the account’s own read me\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    // The seed the app wrote is nobody's writing, so it is not worth a copy.
+    expect(conflicts()).toEqual([])
+    expect(fake.disk.get(`${ROOT}/${WELCOME_NAME}`)).toBe('# the account’s own read me\n')
+  })
+
+  test('is left to the room when the note is open in one', async () => {
+    const { mirror, id } = unrecorded('note.md', 'what I wrote here\n', 'what the room settled\n')
+
+    await pull(mirror, 'token', new Set([id]))
+
+    // The room settled the two character by character before either of them was
+    // ever a file, so what comes down is simply what the note now says.
+    expect(conflicts()).toEqual([])
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what the room settled\n')
+    // And the words it replaced are still a version.
+    expect(versions('note.md')).toEqual(['what I wrote here\n'])
   })
 })
