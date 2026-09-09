@@ -55,14 +55,45 @@ See for yourself: [nibeditor.com](https://nibeditor.com)
 
 ## Features
 
-- A **clean** and **modern** UI
-- **Realtime preview** (WYSIWYG)
-- **Wikilinks** with **backlinks** and a **graph** of your notes
-- An infinite **canvas** to arrange notes spatially
-- **Syncing** across different devices
-- An **MCP** to allow LLM read and write access
-- **Paste Images** from Clipboard
-- **Publish** your markdown files as an online blog with a single click
+### Writing
+
+- **WYSIWYG** markdown, rendered as you type
+- **Tables**, task lists, callouts, footnotes, math and **mermaid** diagrams
+- Split **panes**, saved layouts, **reading view** and **slides**
+- **Vim** mode, or Notion and Obsidian key maps
+- **Export** to PDF, Word, ePub, HTML, RTF and images
+
+### Linking and finding
+
+- **Wikilinks** to a note, a heading or a block, with **embeds** and hover previews
+- **Backlinks**, unlinked mentions and a **graph** of the space or one note
+- **Search** a whole space with operators, and replace across it
+- Nested **tags** and **bookmarks**
+- **PDFs** with highlights, and every version of a note kept
+
+### Canvas and pen
+
+- Infinite **canvas** with cards, connectors, groups, shapes and ink
+- Open **JSON Canvas** files, the same ones Obsidian reads
+- **Pen** support with pressure and tilt: three pens, highlighter, eraser, lasso
+- Built for a tablet and the **S Pen**
+
+### Together
+
+- **Live collaboration** on notes and canvases, like Google Docs
+- Named **carets**, and ink appearing as it is drawn
+- **Share** a space by email or link, read or write
+- **Guests** join by link, no account needed
+- **Publish** a space as a blog on your own domain
+
+### Everywhere
+
+- Native on **Windows, macOS, Linux** and **Android**, plus the **web**
+- Free **sync** across every device
+- Built-in **MCP** so your favorite LLM reads and writes your notes
+- **Themes** from a store, or your own CSS
+- Chrome **clipper**, and a plugin for **Even Realities G2** glasses
+- **Translated** into German, French, Swiss German and Japanese
 
 ## Install
 
