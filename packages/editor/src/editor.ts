@@ -200,7 +200,9 @@ export function editorState(options: StateOptions): EditorState {
     ],
   })
 
-  return folds?.length ? withFolds(state, folds) : state
+  // Always, not only when something was written down: a callout the note itself
+  // says is shut opens shut whether or not this device has read it before.
+  return withFolds(state, folds ?? [])
 }
 
 export function createEditor(options: EditorOptions): EditorView {

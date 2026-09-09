@@ -101,6 +101,24 @@ body {
     print-color-adjust: exact;
   }
 
+  /* Nothing may be hidden on paper. A callout the writer left folded is printed
+     open, and the chevron that would have opened it goes: on a sheet there is
+     nothing to press. Two ways of saying it, because a closed `<details>` hides
+     its content through `display:none` in some browsers and through the
+     `::details-content` pseudo-element in others. */
+  #write details.callout > *:not(summary) {
+    display: block;
+  }
+
+  #write details.callout::details-content {
+    content-visibility: visible;
+    block-size: auto;
+  }
+
+  #write .callout-title .callout-fold {
+    display: none;
+  }
+
   /* A second top-level heading starts a sheet of its own, the way a chapter
      does. A sibling selector rather than :not(:first-child): the first heading
      must never break, and what precedes it may be a table of contents. */

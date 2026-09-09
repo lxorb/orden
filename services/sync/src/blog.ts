@@ -280,6 +280,11 @@ blockquote{margin:1.5em 0;padding-left:1.15em;border-left:2px solid var(--line);
 .callout{margin:1.5em 0;padding:.85em 1.1em;border-left:3px solid var(--callout,var(--accent));border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--callout,var(--accent)) 8%,transparent)}
 .callout-title{display:flex;align-items:center;gap:.45em;margin:0;color:var(--callout,var(--accent));font-weight:620;font-size:.92em}
 .callout-title .callout-icon{width:1.05em;height:1.05em;flex:none}
+summary.callout-title{cursor:pointer;list-style:none;user-select:none}
+summary.callout-title::-webkit-details-marker{display:none}
+.callout-title .callout-fold{width:.9em;height:.9em;flex:none;margin-left:-.1em;opacity:.75;transition:transform .13s cubic-bezier(.22,1,.36,1)}
+details.callout[open]>.callout-title .callout-fold{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.callout-title .callout-fold{transition:none}}
 .callout-body{margin-top:.5em}
 .callout-body>:first-child{margin-top:0}
 .callout-body>:last-child{margin-bottom:0}

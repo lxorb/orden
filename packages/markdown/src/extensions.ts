@@ -3,7 +3,7 @@ import katex from 'katex'
 import 'katex/contrib/mhchem'
 import type { MarkedExtension, Token, Tokens } from 'marked'
 import { get } from 'node-emoji'
-import { calloutIcon, calloutOf } from './callouts'
+import { calloutChevron, calloutIcon, calloutOf } from './callouts'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
 
@@ -200,7 +200,16 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
  *  callouts.ts - the one place that knows. Here is only what the markup looks
  *  like: the type as written on `data-callout`, so a theme can reach any of
  *  them including one nib has never heard of, and the look nib does know as a
- *  class, so a stylesheet needs the fifteen names rather than the thirty. */
+ *  class, so a stylesheet needs the fifteen names rather than the thirty.
+ *
+ *  A fold sign in the note makes it a `<details>`, open unless the sign was the
+ *  `-` that says otherwise. Native, so a page that has been read, printed,
+ *  published or put in an EPUB folds without a line of script following it
+ *  around - and so the sign the writer put in the file means the same thing
+ *  everywhere the note is read. A callout with no sign is not foldable, which
+ *  is what the file says and what Obsidian does; in the editor every block
+ *  folds, because there the chevron in the margin is how editing works rather
+ *  than something the note asked for. */
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
@@ -218,11 +227,16 @@ export const callouts: MarkedExtension = {
 
       const look = found.look === null ? '' : ` callout-${found.look}`
       const title = escape(found.title || found.label)
+      const box = found.foldable ? 'details' : 'div'
+      const head = found.foldable ? 'summary' : 'p'
+      const open = found.foldable && !found.folded ? ' open' : ''
+      const chevron = found.foldable ? calloutChevron() : ''
 
       return (
-        `<div class="callout${look}" data-callout="${escape(found.type)}">` +
-        `<p class="callout-title">${calloutIcon(found.look)}<span>${title}</span></p>\n` +
-        `<div class="callout-body">\n${this.parser.parse(rest)}</div></div>\n`
+        `<${box} class="callout${look}" data-callout="${escape(found.type)}"${open}>` +
+        `<${head} class="callout-title">` +
+        `${chevron}${calloutIcon(found.look)}<span>${title}</span></${head}>\n` +
+        `<div class="callout-body">\n${this.parser.parse(rest)}</div></${box}>\n`
       )
     },
   },

@@ -292,6 +292,29 @@ describe('Typora extensions', () => {
     expect(html).not.toContain(']-')
   })
 
+  test('a fold sign makes the callout a details, shut on a minus', () => {
+    const html = renderMarkdown('> [!warning]- Shut\n> Behind it.\n')
+    expect(html).toContain('<details class="callout callout-warning" data-callout="warning">')
+    expect(html).toContain('<summary class="callout-title">')
+    expect(html).toContain('class="callout-fold"')
+    expect(html).toContain('Behind it.')
+    expect(html).toContain('</details>')
+  })
+
+  test('a plus opens it, and leaves it foldable', () => {
+    const html = renderMarkdown('> [!warning]+ Open\n> In front.\n')
+    expect(html).toContain('data-callout="warning" open>')
+    expect(html).toContain('<summary class="callout-title">')
+  })
+
+  test('no sign at all is a callout that does not fold', () => {
+    const html = renderMarkdown('> [!warning]\n> Nothing to open.\n')
+    expect(html).toContain('<div class="callout callout-warning" data-callout="warning">')
+    expect(html).toContain('<p class="callout-title">')
+    expect(html).not.toContain('callout-fold')
+    expect(html).not.toContain('<details')
+  })
+
   test('an ordinary quote stays a quote', () => {
     const html = renderMarkdown('> Just a quote.\n')
     expect(html).toContain('<blockquote>')

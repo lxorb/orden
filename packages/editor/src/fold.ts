@@ -41,6 +41,8 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
+import { calloutOf } from '@nib/markdown/callouts'
+import { CHEVRON, ICON_ATTRIBUTES } from '@nib/markdown/icons'
 import { label } from './labels'
 import { NibWidget } from './live-preview/widget'
 
@@ -218,14 +220,43 @@ function foldsFor(state: EditorState, lines: readonly FoldLines[]): FoldRange[] 
   return out.sort((one, other) => one.from - other.from || one.to - other.to)
 }
 
-/** A state with those folds already in it.
+/** The callouts the note itself says are shut: `> [!warning]- Mind the gap`.
+ *
+ *  The only fold that is written in the file rather than remembered per device,
+ *  because Obsidian's callout syntax carries it and a note is the same note in
+ *  both. Nib never writes the sign and never rewrites it - opening one of these
+ *  is a view of the note changing, not the note - so a `-` means "opens shut"
+ *  every time rather than "is shut for ever". */
+function markerFolds(state: EditorState): FoldRange[] {
+  const out: FoldRange[] = []
+
+  for (let number = 1; number <= state.doc.lines; number++) {
+    const line = state.doc.line(number)
+    const opened = line.text.indexOf('[!')
+    if (opened < 0 || !/^[ \t>]*$/.test(line.text.slice(0, opened))) continue
+    if (!calloutOf(line.text.slice(opened))?.folded) continue
+
+    const range = foldAtLine(state, line)
+    if (!range) continue
+
+    out.push(range)
+    number = state.doc.lineAt(range.to).number
+  }
+
+  return out
+}
+
+/** A state with those folds already in it, and with every callout the note
+ *  itself says is shut.
  *
  *  In the state rather than dispatched into the view afterwards, for the same
  *  reason the caret is: a fold applied a frame later is a frame the reader
  *  spends looking at the note unfolded. The selection rides along so the
  *  library drops any fold that would have covered the caret. */
 export function withFolds(state: EditorState, lines: readonly FoldLines[]): EditorState {
-  const ranges = foldsFor(state, lines)
+  const ranges = [...foldsFor(state, lines), ...markerFolds(state)].sort(
+    (one, other) => one.from - other.from || one.to - other.to,
+  )
   if (!ranges.length) return state
 
   return state.update({
@@ -261,15 +292,23 @@ export function foldsChanged(update: ViewUpdate): boolean {
   return foldedRanges(update.startState) !== foldedRanges(update.state)
 }
 
-/** Lucide's chevron-right, turned by the stylesheet when the fold is open. */
-function chevron(): SVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 24 24')
-  svg.setAttribute('aria-hidden', 'true')
+const SVG_NS = 'http://www.w3.org/2000/svg'
 
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  path.setAttribute('d', 'm9 18 6-6-6-6')
-  svg.append(path)
+/** The fold mark, turned by the stylesheet when the fold is open. The same
+ *  drawing a foldable callout carries beside its title in the reading view, on
+ *  paper and on a published page; see @nib/markdown/icons. */
+function chevron(): SVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg')
+  for (const [name, value] of Object.entries(ICON_ATTRIBUTES)) svg.setAttribute(name, value)
+
+  for (const [tag, attributes] of CHEVRON) {
+    const child = document.createElementNS(SVG_NS, tag)
+    for (const [name, value] of Object.entries(attributes)) {
+      if (value !== undefined) child.setAttribute(name, String(value))
+    }
+    svg.append(child)
+  }
+
   return svg
 }
 

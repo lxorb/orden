@@ -208,6 +208,49 @@ describe('folds written down and put back', () => {
   })
 })
 
+/** The one fold the file itself carries: Obsidian's `-` after a callout's type.
+ *  Nib never writes the sign and never rewrites it, so it says how the note
+ *  opens rather than how it is. */
+describe('a callout the note says is shut', () => {
+  const SHUT = [
+    '# One',
+    '',
+    '> [!warning]- Mind the gap',
+    '> Between the two.',
+    '> And below it.',
+    '',
+    'After.',
+    '',
+  ].join('\n')
+
+  test('opens folded, with nothing written down anywhere', () => {
+    expect(foldLines(withFolds(state(SHUT, 0), []))).toEqual([[3, 5]])
+  })
+
+  test('a plus opens it, and so does no sign at all', () => {
+    const open = SHUT.replace(']-', ']+')
+    expect(foldLines(withFolds(state(open, 0), []))).toEqual([])
+    expect(foldLines(withFolds(state(SHUT.replace(']-', ']'), 0), []))).toEqual([])
+  })
+
+  test('rides along with what was written down, in document order', () => {
+    expect(foldLines(withFolds(state(SHUT, 0), [[1, 6]]))).toEqual([
+      [1, 6],
+      [3, 5],
+    ])
+  })
+
+  test('never comes back over the caret', () => {
+    const inside = SHUT.indexOf('Between') + 2
+    expect(foldLines(withFolds(state(SHUT, inside), []))).toEqual([])
+  })
+
+  test('is not a sign inside the words of a line', () => {
+    const written = ['A sentence with [!note]- in it.', '', 'More.', ''].join('\n')
+    expect(foldLines(withFolds(state(written, 0), []))).toEqual([])
+  })
+})
+
 describe('two sets of folds', () => {
   test('are the same when they say the same thing', () => {
     expect(

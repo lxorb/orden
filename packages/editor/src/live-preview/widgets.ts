@@ -1,4 +1,5 @@
-import { calloutIconParts, ICON_ATTRIBUTES } from '@nib/markdown/callouts'
+import { calloutIconParts } from '@nib/markdown/callouts'
+import { ICON_ATTRIBUTES } from '@nib/markdown/icons'
 import { NibWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 // Aliased: `label` is already a local variable in more than one widget here.
@@ -83,6 +84,7 @@ function calloutIcon(look: string | null): SVGElement | null {
 
   const svg = document.createElementNS(SVG_NS, 'svg')
   for (const [name, value] of Object.entries(ICON_ATTRIBUTES)) svg.setAttribute(name, value)
+  svg.setAttribute('class', 'callout-icon')
 
   for (const [tag, attributes] of parts) {
     const child = document.createElementNS(SVG_NS, tag)

@@ -69,6 +69,13 @@ ODD_NOTE = (
     "> Just a quote, with **bold** in it.\n"
 )
 
+FOLD_NOTE = (
+    "# Folding\n\n"
+    "> [!warning]- Shut to begin with\n> Behind the sign.\n> And more behind it.\n\n"
+    "> [!info]+ Open to begin with\n> In front of the sign.\n\n"
+    "> [!note] No sign at all\n> Always in front.\n"
+)
+
 SEED = """
 async (notes) => {
   const ws = window.nibApp.workspace
@@ -181,7 +188,7 @@ def fresh(browser: Browser, scheme: str) -> Page:
 
     wait_for(page, "window.nibApp", "the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
-    say(f"the space holds {page.evaluate(SEED, [NOTE, ALIAS_NOTE, ODD_NOTE])}")
+    say(f"the space holds {page.evaluate(SEED, [NOTE, ALIAS_NOTE, ODD_NOTE, FOLD_NOTE])}")
     page.wait_for_timeout(400)
     return page
 
@@ -368,7 +375,82 @@ def drive(browser: Browser, scheme: str) -> None:
     if next((one for one in odd_read if one["type"] == "recipe"), {}).get("icon"):
         wrong("a type nothing knows was given an icon in the reading view")
 
+    fold(page, scheme)
     page.context.close()
+
+
+FOLDED = """
+() => ({
+  marks: document.querySelectorAll('.nib-folded').length,
+  shown: [...document.querySelectorAll('.cm-content .cm-line')]
+    .map((line) => line.textContent.trim())
+    .filter((text) => text.length),
+})
+"""
+
+DISCLOSED = """
+() => [...document.querySelectorAll('.callout')].map((one) => ({
+  type: one.dataset.callout,
+  tag: one.tagName.toLowerCase(),
+  open: one.tagName.toLowerCase() === 'details' ? one.open : null,
+  chevron: !!one.querySelector('.callout-fold'),
+  title: one.querySelector('.callout-title')?.textContent?.trim(),
+  behind: one.querySelector('.callout-body')?.textContent?.trim(),
+}))
+"""
+
+
+def fold(page: Page, scheme: str) -> None:
+    """The `-` and `+` a writer puts in the file, in both faces of the note."""
+    open_note(page, "Folding")
+    written = page.evaluate(FOLDED)
+    say(f"[{scheme}] written: {written['marks']} marks")
+    shot(page, f"07-fold-written-{scheme}")
+    if written["marks"] != 1:
+        wrong(f"the note's own fold sign did not fold anything: {written['marks']} marks")
+    if any("Behind the sign" in one for one in written["shown"]):
+        wrong("what the sign shut is still on the page")
+    if not any("In front of the sign" in one for one in written["shown"]):
+        wrong("a plus shut a callout it should have left open")
+
+    # And the chevron opens it, like anything else that folds.
+    page.locator(".cm-line[data-callout] .nib-fold-hinge").first.click()
+    page.wait_for_timeout(500)
+    opened = page.evaluate(FOLDED)
+    say(f"[{scheme}] after the chevron: {opened['marks']} marks")
+    shot(page, f"08-fold-opened-{scheme}")
+    if opened["marks"]:
+        wrong("the chevron did not open a callout the note said was shut")
+
+    # As it reads: a sign makes it a details, and no sign makes it a plain box.
+    page.evaluate("() => window.nibApp.workspace.toggleReading()")
+    page.wait_for_timeout(1400)
+    shot(page, f"09-fold-reading-{scheme}")
+    disclosed = page.evaluate(DISCLOSED)
+    say(f"[{scheme}] read: {json.dumps(disclosed)}")
+
+    shut = next((one for one in disclosed if one["type"] == "warning"), None)
+    ajar = next((one for one in disclosed if one["type"] == "info"), None)
+    plain = next((one for one in disclosed if one["type"] == "note"), None)
+
+    if not shut or shut["tag"] != "details" or shut["open"] is not False:
+        wrong(f"a minus did not read as a shut details: {json.dumps(shut)}")
+    if not shut or not shut["chevron"]:
+        wrong("a foldable callout has no mark saying so")
+    if shut and shut["title"] != "Shut to begin with":
+        wrong(f"the shut one lost its title: {shut['title']!r}")
+    if not ajar or ajar["tag"] != "details" or ajar["open"] is not True:
+        wrong(f"a plus did not read as an open details: {json.dumps(ajar)}")
+    if not plain or plain["tag"] != "div" or plain["chevron"]:
+        wrong(f"a callout with no sign was made foldable anyway: {json.dumps(plain)}")
+
+    # And it opens where it is read, with nothing running behind it.
+    page.locator("details.callout > summary").first.click()
+    page.wait_for_timeout(500)
+    after = page.evaluate(DISCLOSED)
+    shot(page, f"10-fold-reading-opened-{scheme}")
+    if next((one for one in after if one["type"] == "warning"), {}).get("open") is not True:
+        wrong("a press on the title did not open the callout in the reading view")
 
 
 def main() -> int:

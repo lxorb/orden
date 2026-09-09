@@ -901,6 +901,34 @@ select option {
   flex: none;
 }
 
+/* A callout the note itself says can fold - `> [!tip]-` - is a `<details>`, so
+   it folds with no script behind it wherever the note is read: here, on paper,
+   in a book, on a published page. The chevron is the one the editor draws in
+   its margin; the browser's own triangle goes, because two marks for one thing
+   is one too many. */
+#write summary.callout-title {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+#write summary.callout-title::-webkit-details-marker {
+  display: none;
+}
+
+#write .callout-title .callout-fold {
+  width: 0.9em;
+  height: 0.9em;
+  flex: none;
+  margin-left: -0.1em;
+  opacity: 0.75;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+#write details.callout[open] > .callout-title .callout-fold {
+  transform: rotate(90deg);
+}
+
 /* Nothing above the first paragraph or below the last: the box's own padding is
    the room, and a callout of one line should be one line tall. */
 #write .callout-body {

@@ -28,10 +28,8 @@
  *  wear `abstract`'s icon and `abstract`'s colour while still saying `tldr` and
  *  `summary` in `data-callout`.
  *
- *  The icons are Lucide's, one file each so nothing here drags the whole set
- *  in, and they are handed out as markup rather than as a component: the
- *  renderer writes HTML, the editor builds DOM, and an EPUB is read by an XML
- *  parser that wants every child element closed. One string serves all three. */
+ *  The icons are Lucide's; how one is drawn and how it is written out is
+ *  icons.ts beside this. */
 
 import type { IconNode } from 'lucide'
 import Bug from 'lucide/dist/esm/icons/bug.mjs'
@@ -49,6 +47,7 @@ import Quote from 'lucide/dist/esm/icons/quote.mjs'
 import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
 import X from 'lucide/dist/esm/icons/x.mjs'
 import Zap from 'lucide/dist/esm/icons/zap.mjs'
+import { CHEVRON, iconMarkup, type IconParts } from './icons'
 
 /** Every look there is, and the icon it wears. The name is also the class the
  *  stylesheets colour it by - `.callout-warning` - and the only names those
@@ -152,51 +151,25 @@ export function calloutOf(text: string): Callout | null {
   }
 }
 
-/** How an icon's own `<svg>` is dressed. One list, so the markup below and the
- *  elements the editor builds out of `calloutIconParts` are the same drawing. */
-export const ICON_ATTRIBUTES: Readonly<Record<string, string>> = {
-  class: 'callout-icon',
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  'stroke-width': '1.9',
-  'stroke-linecap': 'round',
-  'stroke-linejoin': 'round',
-  'aria-hidden': 'true',
-}
-
-/** An icon as data: the elements it is drawn from, in order.
- *
- *  Lucide's own shape, restated without its name, so anything that builds DOM
- *  rather than markup - the editor's callout widget - can draw one without
- *  importing the library. Data and not a drawing, because this package is read
- *  by the Worker that publishes a note, and a Worker has no `document`. */
-export type IconParts = readonly (readonly [
-  string,
-  Readonly<Record<string, string | number | undefined>>,
-])[]
-
+/** The icon a look wears, as the elements it is drawn from, for anything
+ *  building DOM rather than writing markup - the editor's callout widget.
+ *  Nothing at all for a type nib has never heard of. */
 export function calloutIconParts(look: string | null): IconParts | null {
   const node = look === null ? undefined : LOOKS[look]
   return node ?? null
 }
 
-/** A look's icon as markup: one `<svg>`, its children self-closed.
+/** A look's icon as markup.
  *
- *  Self-closed because an EPUB is read by an XML parser, which takes a `<path>`
- *  as an element left open and refuses the book. Empty for a type nothing
- *  knows, which is what makes an unknown callout read as a plain one with its
- *  own name on it rather than as a broken known one. */
+ *  Empty for a type nothing knows, which is what makes an unknown callout read
+ *  as a plain one with its own name on it rather than as a broken known one. */
 export function calloutIcon(look: string | null): string {
-  const node = calloutIconParts(look)
-  if (!node) return ''
+  const parts = calloutIconParts(look)
+  return parts ? iconMarkup(parts, 'callout-icon') : ''
+}
 
-  const written = (attributes: Readonly<Record<string, string | number | undefined>>) =>
-    Object.entries(attributes)
-      .filter(([, value]) => value !== undefined)
-      .map(([name, value]) => ` ${name}="${String(value)}"`)
-      .join('')
-
-  const parts = node.map(([tag, attributes]) => `<${tag}${written(attributes)} />`)
-  return `<svg${written(ICON_ATTRIBUTES)}>${parts.join('')}</svg>`
+/** The mark a foldable callout carries beside its title: the same chevron the
+ *  editor draws in the margin, turned by the stylesheet when it is open. */
+export function calloutChevron(): string {
+  return iconMarkup(CHEVRON, 'callout-fold')
 }
