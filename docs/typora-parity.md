@@ -97,6 +97,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] ` ```sequence ` (js-sequence legacy syntax, drawn by Mermaid)
 - [x] Diagram export in HTML/PDF
 - [x] Mermaid syntax highlighting inside the fence
+- [x] ` ```chart ` - bar, line, pie and donut, drawn without a library, so a
+      published page gets one too. See section 17
 
 ## 6. Code fences
 
@@ -129,6 +131,9 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] `typora-root-url` front matter
 - [x] Resize handles, written back as `style="zoom:N%"`
 - [x] Zoom / preview on click
+- [x] `![[shot.png]]` is a picture wherever it is written, and a bare file name
+      is looked for anywhere in the space. Sound and film go the same way; see
+      section 17
 - [-] Custom image uploader integration - a hook for third-party upload CLIs
       (PicGo, uPic). Sync already carries images; a second upload path would be
       a second place for them to live.
@@ -303,6 +308,35 @@ Features Typora does not have, which are the reason this exists.
       mentions count it. A file really called that always wins, so a note can
       never shadow a real one. A rename rewrites the links that spelled out the
       filename and never an alias: that is a name the writer chose, not a path
+- [x] Files a note embeds, in Obsidian's spelling, so the note travels. A
+      recording (`![[take.mp3]]`) and a film (`![[demo.mp4]]`) are the browser's
+      own player, plainly, with no frame around them and nothing playing until
+      somebody presses play. A paper (`![[paper.pdf#page=3]]`) and a plane
+      (`![[Board.canvas]]`) are a card saying which file it is, which opens it at
+      the page the link named. `![[shot.png|300]]` or `|300x200]]` is how wide to
+      draw it, and anything else after the bar says what it is. The same four in
+      the editor, in the reading view, in an export and on a published page; on
+      the glasses each is one line, its name behind the picture mark
+- [x] A page from somewhere else, written as a picture:
+      `![](https://youtube.com/watch?v=…)`. Nine places are known - YouTube,
+      Vimeo, X, Spotify, SoundCloud, Figma, CodePen, Loom and Google Maps - and
+      everything else stays the link it was. Nothing is loaded from any of them
+      until the reader asks: what the note renders as is a card the size the
+      frame will be, saying whose page it stands for, and a click swaps in a
+      sandboxed frame with only the permissions that provider needs. The card is
+      a real link, which is what makes one piece of markup right everywhere: a
+      published page runs no script of any kind, so there the same click simply
+      takes the reader to the page. YouTube is framed from `youtube-nocookie.com`,
+      and a frame tells the provider which site asked and never which note
+- [x] ` ```chart ` fences, in the shape the Obsidian Charts plugin reads
+      (`type`, `title`, `labels`, and `series` with a `title` and `data` each),
+      drawn as `bar`, `line`, `pie` or `donut`. Built as an SVG out of the
+      numbers with no charting library at all, which is what lets a published
+      page draw one; the colours are the theme's, and the scale rounds to numbers
+      somebody would have chosen. Chart.js's other hundred options are not read:
+      a bar chart always starts at zero and a chart is always the width of the
+      column. A fence holding no chart stays code, and on the glasses a titled
+      chart is its title
 - [x] Recently deleted: notes and spaces wait 14 days before they are gone
 - [x] Selecting several notes with Ctrl and Shift, moved or deleted together
 - [x] Running a JavaScript fence from the note (`Ctrl+Enter`, or the play button

@@ -389,6 +389,8 @@ columns, a picture as what it was described as, a fence line by line.
 | a link | the words it shows | the address only when there is no text |
 | a wikilink, with or without an alias | the note it names, or the alias | the same words the app shows |
 | an embed | the note it names | |
+| an embed of a file: a picture, a recording, a film, a PDF, a canvas | `▤` and the name it was written under | the panel can show none of the five, and a line reading `clip.mp3` with no mark on it reads as prose about a file name |
+| a `chart` fence | `▤` and its title, or the fence as it stands when it has none | a chart cannot be drawn in one font, and an untitled one is nothing but its numbers, which is the part that can still be read |
 | a footnote and its note | a raised number, and the same number over its words | the font has all ten raised digits |
 | a superscript or a subscript of digits | raised or lowered digits | anything else sits on the line |
 | an emoji, written as a name or as itself | the emoji, or its name in colons | whichever the firmware's emoji font has |
