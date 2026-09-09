@@ -866,8 +866,13 @@ select option {
   padding: 0 0.1em;
 }
 
-/* ── Callouts (GitHub-style alerts) ──────────────────────────────── */
+/* ── Callouts ────────────────────────────────────────────────────── */
 
+/* The type as the writer wrote it rides on `data-callout`, so a theme can dress
+   a type nib has never heard of - `[data-callout='recipe']` - without anything
+   being registered anywhere first. The look nib does know is a class, so these
+   rules need the fifteen names rather than every other word for them. See
+   packages/markdown/src/callouts.ts. */
 #write .callout {
   margin: 1.5em 0;
   padding: 0.85em 1.1em;
@@ -876,20 +881,89 @@ select option {
   background: color-mix(in srgb, var(--callout-accent, var(--accent)) 8%, transparent);
 }
 
-#write .callout[data-kind='note'] {
+/* The title is the one line that wears the accent: an icon and a word, reading
+   as a label rather than as a heading. */
+#write .callout-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  color: var(--callout-accent, var(--accent));
+  font-family: var(--font-ui);
+  font-size: 0.92em;
+  font-weight: 620;
+  gap: 0.45em;
+  letter-spacing: 0.005em;
+}
+
+#write .callout-title .callout-icon {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
+}
+
+/* Nothing above the first paragraph or below the last: the box's own padding is
+   the room, and a callout of one line should be one line tall. */
+#write .callout-body {
+  margin-top: 0.5em;
+}
+
+#write .callout-body > :first-child {
+  margin-top: 0;
+}
+
+#write .callout-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* A callout with nothing under its title is its title. */
+#write .callout-body:empty {
+  display: none;
+}
+
+#write .callout-note {
   --callout-accent: var(--callout-note);
 }
-#write .callout[data-kind='tip'] {
+#write .callout-abstract {
+  --callout-accent: var(--callout-abstract);
+}
+#write .callout-info {
+  --callout-accent: var(--callout-info);
+}
+#write .callout-todo {
+  --callout-accent: var(--callout-todo);
+}
+#write .callout-tip {
   --callout-accent: var(--callout-tip);
 }
-#write .callout[data-kind='important'] {
+#write .callout-important {
   --callout-accent: var(--callout-important);
 }
-#write .callout[data-kind='warning'] {
+#write .callout-success {
+  --callout-accent: var(--callout-success);
+}
+#write .callout-question {
+  --callout-accent: var(--callout-question);
+}
+#write .callout-warning {
   --callout-accent: var(--callout-warning);
 }
-#write .callout[data-kind='caution'] {
+#write .callout-caution {
   --callout-accent: var(--callout-caution);
+}
+#write .callout-failure {
+  --callout-accent: var(--callout-failure);
+}
+#write .callout-danger {
+  --callout-accent: var(--callout-danger);
+}
+#write .callout-bug {
+  --callout-accent: var(--callout-bug);
+}
+#write .callout-example {
+  --callout-accent: var(--callout-example);
+}
+#write .callout-quote {
+  --callout-accent: var(--callout-quote);
 }
 
 /* ── Focus mode ──────────────────────────────────────────────────── */

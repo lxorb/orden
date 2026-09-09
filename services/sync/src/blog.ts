@@ -277,6 +277,22 @@ code{font-family:ui-monospace,monospace;font-size:.88em;background:var(--surface
 pre{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:1rem;overflow-x:auto}
 pre code{background:none;border:0;padding:0}
 blockquote{margin:1.5em 0;padding-left:1.15em;border-left:2px solid var(--line);color:var(--muted)}
+.callout{margin:1.5em 0;padding:.85em 1.1em;border-left:3px solid var(--callout,var(--accent));border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--callout,var(--accent)) 8%,transparent)}
+.callout-title{display:flex;align-items:center;gap:.45em;margin:0;color:var(--callout,var(--accent));font-weight:620;font-size:.92em}
+.callout-title .callout-icon{width:1.05em;height:1.05em;flex:none}
+.callout-body{margin-top:.5em}
+.callout-body>:first-child{margin-top:0}
+.callout-body>:last-child{margin-bottom:0}
+.callout-body:empty{display:none}
+.callout-note,.callout-info,.callout-todo{--callout:#4a8df6}
+.callout-abstract{--callout:#3aada8}
+.callout-tip,.callout-success{--callout:#16a06a}
+.callout-important,.callout-example{--callout:var(--accent)}
+.callout-question{--callout:#d99b2e}
+.callout-warning{--callout:#e0a233}
+.callout-caution,.callout-failure,.callout-danger{--callout:#d92b34}
+.callout-bug{--callout:#d4569b}
+.callout-quote{--callout:var(--muted)}
 table{border-collapse:collapse;width:100%;margin:1.6em 0;font-size:.94em}
 th,td{border:1px solid var(--line);padding:.5em .75em;text-align:left}
 th{background:var(--surface)}

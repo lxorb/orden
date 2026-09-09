@@ -17,6 +17,7 @@ import {
   type Wikilink,
   withoutComments,
 } from '@nib/markdown'
+import { calloutOf } from '@nib/markdown/callouts'
 import { shownText, withoutBlockIds } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 
@@ -91,9 +92,6 @@ export interface Doc {
   /** The footnote definitions, in the order they were defined. */
   notes: Footnote[]
 }
-
-/** `> [!note]` and friends: the marker that turns a quote into a callout. */
-const CALLOUT = /^\s*\[!(\w+)\]\s*/
 
 /** The `page-break` divs Typora writes, and the `---` a note may use for one.
  *  Recognised so a writer that has pages can start one. */
@@ -225,12 +223,17 @@ function alignOf(value: string | null | undefined): Align {
   return value === 'left' || value === 'center' || value === 'right' ? value : null
 }
 
-/** A quote turned into a callout: the label it names, and its body with the
- *  marker gone.
+/** A quote turned into a callout: what it is called, and its body with the
+ *  marker line gone.
  *
- *  Taken off the spans rather than off the source, because by the time a quote
- *  is read the marker is the first few characters of an inline token and cutting
- *  the string would leave the tokens around it describing the wrong offsets. */
+ *  What a callout is comes from @nib/markdown/callouts, the one place that
+ *  knows; only the cutting is here. Taken off the spans rather than off the
+ *  source, because by the time a quote is read the marker is the first few
+ *  characters of an inline token and cutting the string would leave the tokens
+ *  around it describing the wrong offsets.
+ *
+ *  Across spans, not just the first one, since a title with a mark in it -
+ *  `[!tip] **Mind** the gap` - is more than one span before the body starts. */
 function callout(blocks: Block[]): { label: string | null; blocks: Block[] } {
   const first = blocks[0]
   if (first?.kind !== 'paragraph') return { label: null, blocks }
@@ -238,18 +241,31 @@ function callout(blocks: Block[]): { label: string | null; blocks: Block[] } {
   const opening = first.spans[0]
   if (!opening) return { label: null, blocks }
 
-  const match = CALLOUT.exec(opening.text)
-  if (!match?.[1]) return { label: null, blocks }
+  const found = calloutOf(opening.text)
+  if (!found) return { label: null, blocks }
 
-  const kind = match[1].toLowerCase()
-  // The marker's own pattern already takes the line break after it with it.
-  const text = opening.text.slice(match[0].length)
-  const spans = text ? [{ ...opening, text }, ...first.spans.slice(1)] : first.spans.slice(1)
+  const spans: Span[] = []
+  let left = found.taken
+  for (const span of first.spans) {
+    if (left <= 0) {
+      spans.push(span)
+      continue
+    }
+
+    if (span.text.length <= left) {
+      left -= span.text.length
+      continue
+    }
+
+    spans.push({ ...span, text: span.text.slice(left) })
+    left = 0
+  }
+
   // A marker on a line of its own leaves nothing behind, and an empty paragraph
   // would print as a blank line under the label.
   const rest = spans.length ? [{ ...first, spans }, ...blocks.slice(1)] : blocks.slice(1)
 
-  return { label: kind.charAt(0).toUpperCase() + kind.slice(1), blocks: rest }
+  return { label: found.title || found.label, blocks: rest }
 }
 
 function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {

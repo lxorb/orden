@@ -62,6 +62,9 @@ A wikilink to [[Another note]] and one with an alias [[Another note|the other]].
 > [!NOTE]
 > Careful with that.
 
+> [!tldr]- The short of it
+> A callout with an alias, a title and a fold sign on it.
+
 Markdown
 : A way of writing formatted text.
 : Also the format itself.

@@ -3,5 +3,8 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "test/**/*.ts"]
+  // The markdown package's own ambient declaration, because this package reads
+  // that package through its source and so has to know what it knows about its
+  // untyped imports. The same reason glasses includes the editor's.
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "test/**/*.ts", "../markdown/src/lucide.d.ts"]
 }

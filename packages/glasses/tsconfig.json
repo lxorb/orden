@@ -8,5 +8,5 @@
   // The editor's own ambient declarations, for the same reason the app includes
   // them: this package reads the editor through its source, so what the editor
   // says about its untyped dependencies has to be in scope here too.
-  "include": ["src/**/*.ts", "../editor/src/env.d.ts"]
+  "include": ["src/**/*.ts", "../editor/src/env.d.ts", "../markdown/src/lucide.d.ts"]
 }

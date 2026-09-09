@@ -17,6 +17,7 @@ import { DIAGRAM_LANGUAGES, MathWidget } from './render'
 import { emojiFor } from '../emoji'
 import { fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
+import { calloutOf } from '@nib/markdown/callouts'
 import { blockIdOf, isImageTarget, linkTarget } from '@nib/markdown/links'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget } from '../wikilink/embed'
@@ -34,7 +35,6 @@ import {
 } from './widgets'
 
 const HEADING = /^(?:ATX|Setext)Heading(\d)$/
-const CALLOUT = /^>\s*\[!(note|tip|important|warning|caution)\]/i
 
 const LINE_CLASS: Record<string, string> = {
   Table: 'nib-table',
@@ -346,23 +346,36 @@ class Decorator {
     this.markLines(node, 'nib-quote')
 
     const first = this.state.doc.lineAt(node.from)
-    const kind = CALLOUT.exec(first.text)?.[1]?.toLowerCase()
-    if (kind === undefined) return
-
-    // Every line needs the kind, not just the header, so the accent runs the
-    // full height of the callout.
-    this.markLines(node, `nib-callout nib-callout-${kind}`)
-
+    // The quote marks are the editor's own to take off; what is left is the
+    // line as `calloutOf` reads it everywhere else. See @nib/markdown/callouts.
     const opened = first.text.indexOf('[!')
+    const found = opened < 0 ? null : calloutOf(first.text.slice(opened))
+    if (!found) return
+
+    // Every line needs the look, not just the header, so the accent runs the
+    // full height of the callout. The type as written rides along as an
+    // attribute, so a theme can dress a type nib has never heard of.
+    this.markLines(node, 'nib-callout')
+    if (found.look) this.markLines(node, `nib-callout-${found.look}`)
+    this.markLines(node, '', false, { 'data-callout': found.type })
+
     const from = first.from + opened
-    const to = first.from + first.text.indexOf(']', opened) + 1
+    // The fold sign belongs to the marker: it says how the callout opens, and
+    // it is not a word of the note.
+    const to = first.from + first.text.indexOf(']', opened) + 1 + (found.foldable ? 1 : 0)
 
     // `[!NOTE]` also parses as a link label, so claim it before the walk reaches
     // the LinkMarks inside it.
     this.claimed.push({ from, to })
 
     if (lineRevealed(this.state, first.from)) this.marks.push(meta.range(from, to))
-    else this.hidden.push(Decoration.replace({ widget: new CalloutWidget(kind) }).range(from, to))
+    else {
+      // A title of the writer's own is words on the line already, so the widget
+      // only carries what is not written down: the icon, and the type's own
+      // name where no title was given.
+      const widget = new CalloutWidget(found.type, found.look, found.title ? '' : found.label)
+      this.hidden.push(Decoration.replace({ widget }).range(from, to))
+    }
   }
 
   private fence(node: SyntaxNode): boolean {
@@ -609,13 +622,19 @@ class Decorator {
     return line.number === 1 || this.state.doc.line(line.number - 1).text.trim() === ''
   }
 
-  private markLines(node: SyntaxNode, className: string, firstOnly = false) {
+  private markLines(
+    node: SyntaxNode,
+    className: string,
+    firstOnly = false,
+    attrs?: Record<string, string>,
+  ) {
     const doc = this.state.doc
     const last = firstOnly ? node.from : Math.min(node.to, doc.length)
 
     for (let pos = node.from; pos <= last;) {
       const line = doc.lineAt(pos)
-      this.addLineClass(line.from, className)
+      if (className) this.addLineClass(line.from, className)
+      if (attrs) this.addLineAttrs(line.from, attrs)
       if (line.to >= doc.length) break
       pos = line.to + 1
     }

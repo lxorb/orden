@@ -228,12 +228,29 @@
   --table-border-color: var(--line-strong);
   --blockquote-border-color: var(--line-strong);
 
-  /* Callout kinds, so a theme can restate them like any other colour. */
+  /* Callout looks, so a theme can restate them like any other colour. Fifteen,
+     which is the thirteen Obsidian has plus the two nib had first; the other
+     words for them - `tldr`, `hint`, `error` - resolve to one of these before
+     any markup is written. See packages/markdown/src/callouts.ts.
+
+     Most are pointed at a colour the palette already has, so they follow the
+     light and the dark scheme with everything else. Only the four that nothing
+     in the palette stands for name a colour of their own. */
   --callout-note: #4a8df6;
+  --callout-abstract: #3aada8;
+  --callout-info: var(--callout-note);
+  --callout-todo: var(--callout-note);
   --callout-tip: var(--success);
   --callout-important: var(--accent);
+  --callout-success: var(--success);
+  --callout-question: #d99b2e;
   --callout-warning: #e0a233;
   --callout-caution: var(--danger);
+  --callout-failure: var(--danger);
+  --callout-danger: var(--danger);
+  --callout-bug: #d4569b;
+  --callout-example: var(--accent);
+  --callout-quote: var(--muted-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {

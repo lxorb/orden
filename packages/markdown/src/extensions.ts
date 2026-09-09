@@ -1,8 +1,9 @@
 import katex from 'katex'
 // Chemical equations: `\ce{H2O}` and friends, as Typora supports.
 import 'katex/contrib/mhchem'
-import type { MarkedExtension, Tokens } from 'marked'
+import type { MarkedExtension, Token, Tokens } from 'marked'
 import { get } from 'node-emoji'
+import { calloutIcon, calloutOf } from './callouts'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
 
@@ -161,26 +162,68 @@ export const maths: MarkedExtension = {
   ],
 }
 
-const CALLOUT = /^\s*\[!(note|tip|important|warning|caution)\]\s*/i
-const CALLOUT_TEXT = /\[!(?:note|tip|important|warning|caution)\]\s*(?:<br\s*\/?>)?\s*/i
+/** The opening paragraph of a callout with its marker line taken off.
+ *
+ *  Counted in source characters against the tokens' own `raw`, because by the
+ *  time a renderer sees a blockquote the lexer has already been over its words,
+ *  and lexing what is left again here would lose every extension the instance
+ *  was built with - the maths, the emoji, the wikilinks. The marker is at the
+ *  very start, so the token it ends inside is the first one and is plain text;
+ *  anything else is dropped whole, which is the marker's own characters going. */
+function afterMarker(tokens: Token[], cut: number): Token[] {
+  const out: Token[] = []
+  let left = cut
 
-/** GitHub-style alerts: a blockquote whose first line names a kind. */
+  for (const token of tokens) {
+    if (left <= 0) {
+      out.push(token)
+      continue
+    }
+
+    const raw = token.raw
+    if (raw.length <= left) {
+      left -= raw.length
+      continue
+    }
+
+    const kept = raw.slice(left)
+    left = 0
+    if (token.type === 'text') out.push({ ...token, raw: kept, text: kept })
+  }
+
+  return out
+}
+
+/** A callout: a blockquote whose first line names a type.
+ *
+ *  Which types there are, what each is called and which icon it wears is
+ *  callouts.ts - the one place that knows. Here is only what the markup looks
+ *  like: the type as written on `data-callout`, so a theme can reach any of
+ *  them including one nib has never heard of, and the look nib does know as a
+ *  class, so a stylesheet needs the fifteen names rather than the thirty. */
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
       const first = token.tokens[0]
       const raw = first && 'text' in first ? String(first.text) : ''
-      const match = CALLOUT.exec(raw)
+      const found = calloutOf(raw)
 
-      if (!match) return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
+      if (!found) return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
 
-      const kind = (match[1] ?? '').toLowerCase()
-      const label = kind.charAt(0).toUpperCase() + kind.slice(1)
+      const opening = first as Tokens.Paragraph
+      const inside = afterMarker(opening.tokens, found.taken)
+      const rest: Token[] = inside.length
+        ? [{ ...opening, text: found.rest, tokens: inside }, ...token.tokens.slice(1)]
+        : token.tokens.slice(1)
 
-      // The marker becomes the heading, so drop it from the rendered body.
-      const body = this.parser.parse(token.tokens).replace(CALLOUT_TEXT, '')
+      const look = found.look === null ? '' : ` callout-${found.look}`
+      const title = escape(found.title || found.label)
 
-      return `<div class="callout" data-kind="${kind}"><p class="callout-label">${label}</p>\n${body}</div>\n`
+      return (
+        `<div class="callout${look}" data-callout="${escape(found.type)}">` +
+        `<p class="callout-title">${calloutIcon(found.look)}<span>${title}</span></p>\n` +
+        `<div class="callout-body">\n${this.parser.parse(rest)}</div></div>\n`
+      )
     },
   },
 }

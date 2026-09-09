@@ -170,7 +170,7 @@ describe('the page a note is read on', () => {
 
     expect(html).toContain('<dl>')
     expect(html).toContain('<abbr title="HyperText">HTML</abbr>')
-    expect(html).toContain('<div class="callout" data-kind="note">')
+    expect(html).toContain('<div class="callout callout-note" data-callout="note">')
   })
 
   test('says how long it took, under a name a profiler can read', async () => {

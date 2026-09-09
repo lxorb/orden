@@ -1605,14 +1605,28 @@
 
 /* ── Callouts ────────────────────────────────────────────────────── */
 
+/* Every line of a callout carries the look, so the accent runs its full height,
+   and the type as written as an attribute, so a theme reaches a type nib has
+   never heard of here the same way it does in the reading view. A callout with
+   no look at all keeps the quote's own grey bar, which is what an unknown type
+   should read as until somebody styles it. */
 .cm-line.nib-callout {
-  border-left-color: var(--callout-accent);
-  background: color-mix(in srgb, var(--callout-accent) 7%, transparent);
+  border-left-color: var(--callout-accent, var(--blockquote-border-color));
+  background: color-mix(in srgb, var(--callout-accent, transparent) 7%, transparent);
   padding-right: var(--space-3);
 }
 
 .cm-line.nib-callout-note {
   --callout-accent: var(--callout-note);
+}
+.cm-line.nib-callout-abstract {
+  --callout-accent: var(--callout-abstract);
+}
+.cm-line.nib-callout-info {
+  --callout-accent: var(--callout-info);
+}
+.cm-line.nib-callout-todo {
+  --callout-accent: var(--callout-todo);
 }
 .cm-line.nib-callout-tip {
   --callout-accent: var(--callout-tip);
@@ -1620,20 +1634,54 @@
 .cm-line.nib-callout-important {
   --callout-accent: var(--callout-important);
 }
+.cm-line.nib-callout-success {
+  --callout-accent: var(--callout-success);
+}
+.cm-line.nib-callout-question {
+  --callout-accent: var(--callout-question);
+}
 .cm-line.nib-callout-warning {
   --callout-accent: var(--callout-warning);
 }
 .cm-line.nib-callout-caution {
   --callout-accent: var(--callout-caution);
 }
+.cm-line.nib-callout-failure {
+  --callout-accent: var(--callout-failure);
+}
+.cm-line.nib-callout-danger {
+  --callout-accent: var(--callout-danger);
+}
+.cm-line.nib-callout-bug {
+  --callout-accent: var(--callout-bug);
+}
+.cm-line.nib-callout-example {
+  --callout-accent: var(--callout-example);
+}
+.cm-line.nib-callout-quote {
+  --callout-accent: var(--callout-quote);
+}
 
+/* What stands where the `[!type]-` marker is written: the icon, and the type's
+   own name when the writer gave it no title. A title they did write is real
+   words on the line and is styled by the line, not by this. */
 .nib-callout-label {
+  display: inline-flex;
+  align-items: center;
+  color: var(--callout-accent, var(--muted-strong));
   font-family: var(--font-ui);
-  font-weight: 620;
   font-size: 0.86em;
+  font-weight: 620;
+  gap: 0.32em;
   letter-spacing: 0.01em;
-  color: var(--callout-accent);
   text-transform: uppercase;
+  vertical-align: baseline;
+}
+
+.nib-callout-label .callout-icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
 }
 
 /* ── Images ──────────────────────────────────────────────────────── */

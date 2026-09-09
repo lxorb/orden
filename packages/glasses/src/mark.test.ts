@@ -174,6 +174,28 @@ describe('a quote', () => {
   test('drops the callout marker itself', () => {
     expect(one('> [!note]\n> Something.\n')).not.toContain('[!note]')
   })
+
+  test('knows the kinds beyond the five it started with', () => {
+    expect(lines('> [!danger]\n> Mind the gap.\n')).toEqual(['│ DANGER', '│ Mind the gap.'])
+    expect(lines('> [!tldr]\n> The short of it.\n')).toEqual(['│ TLDR', '│ The short of it.'])
+  })
+
+  test('says a title of the writer’s own rather than the kind, as written', () => {
+    // Capitals are the only emphasis one font has, and a whole sentence in
+    // capitals is shouting. A one word kind is not.
+    expect(lines('> [!tip] Mind the gap\n> Between the two.\n')).toEqual([
+      '│ Mind the gap',
+      '│ Between the two.',
+    ])
+  })
+
+  test('swallows the fold sign, which is not words', () => {
+    expect(one('> [!warning]- Shut\n> Behind it.\n')).not.toContain(']-')
+  })
+
+  test('says the name of a kind it has never heard of', () => {
+    expect(lines('> [!recipe]\n> Flour and water.\n')).toEqual(['│ RECIPE', '│ Flour and water.'])
+  })
 })
 
 /** Everything else a note can hold. Nothing here is allowed to disappear. */

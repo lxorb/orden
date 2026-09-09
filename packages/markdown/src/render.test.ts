@@ -246,9 +246,50 @@ describe('Typora extensions', () => {
 
   test('callouts become labelled blocks', () => {
     const html = renderMarkdown('> [!WARNING]\n> Careful.\n')
-    expect(html).toContain('data-kind="warning"')
+    expect(html).toContain('data-callout="warning"')
+    expect(html).toContain('class="callout callout-warning"')
+    expect(html).toContain('<span>Warning</span>')
     expect(html).toContain('Careful.')
     expect(html).not.toContain('[!WARNING]')
+  })
+
+  test('a callout wears an icon of its own', () => {
+    expect(renderMarkdown('> [!bug]\n> Broken.\n')).toContain('class="callout-icon"')
+  })
+
+  test('an alias wears the look it names and keeps the word that was written', () => {
+    const html = renderMarkdown('> [!tldr]\n> The short of it.\n')
+    expect(html).toContain('class="callout callout-abstract"')
+    expect(html).toContain('data-callout="tldr"')
+    expect(html).toContain('<span>TLDR</span>')
+  })
+
+  test('a type nothing knows is still a callout, under its own name', () => {
+    const html = renderMarkdown('> [!recipe]\n> Flour, water, salt.\n')
+    expect(html).toContain('<div class="callout" data-callout="recipe">')
+    expect(html).toContain('<span>Recipe</span>')
+    expect(html).not.toContain('callout-icon')
+    expect(html).toContain('Flour, water, salt.')
+  })
+
+  test('a title of the writer’s own stands in for the type', () => {
+    const html = renderMarkdown('> [!tip] Mind the gap\n> Between the train and the platform.\n')
+    expect(html).toContain('<span>Mind the gap</span>')
+    expect(html).toContain('Between the train and the platform.')
+    expect(html).not.toContain('Mind the gap</p>\n<p>Mind the gap')
+  })
+
+  test('the marker goes and what was written beside it stays', () => {
+    const html = renderMarkdown('> [!note] Read this\n> Some **bold** words and $x$ too.\n')
+    expect(html).not.toContain('[!note]')
+    expect(html).toContain('<strong>bold</strong>')
+    expect(html).toContain('katex')
+  })
+
+  test('the fold sign is not words', () => {
+    const html = renderMarkdown('> [!warning]- Shut\n> Behind it.\n')
+    expect(html).toContain('<span>Shut</span>')
+    expect(html).not.toContain(']-')
   })
 
   test('an ordinary quote stays a quote', () => {

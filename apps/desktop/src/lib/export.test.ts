@@ -108,7 +108,7 @@ describe('a styled export', () => {
     expect(html).toContain('<strong>strong</strong>')
     expect(html).toContain('<mark>marked</mark>')
     expect(html).toContain('<sub>2</sub>')
-    expect(html).toContain('data-kind="note"')
+    expect(html).toContain('data-callout="note"')
     expect(html).toContain('<table>')
     expect(html).toContain('class="footnotes"')
     expect(html).toContain('<li class="task-list-item is-done">')

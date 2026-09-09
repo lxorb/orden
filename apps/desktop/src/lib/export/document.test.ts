@@ -182,6 +182,14 @@ describe('a quote', () => {
   test('a plain quote has no label', () => {
     expect(quotes[0]?.label).toBeNull()
   })
+
+  test('a title of the writer’s own is the label, and the fold sign is not words', () => {
+    expect(quotes[2]?.label).toBe('The short of it')
+    const inner = quotes[2]?.blocks[0]
+    expect(inner?.kind === 'paragraph' && words(inner.spans)).toBe(
+      'A callout with an alias, a title and a fold sign on it.',
+    )
+  })
 })
 
 describe('the rest of the constructs', () => {

@@ -75,6 +75,22 @@ interface Spec {
   attributes?: Record<string, string>
 }
 
+/** The `data-callout` every line carries, in document order. */
+function lineAttrs(doc: string): string[] {
+  const full = doc + PARK
+  const out: string[] = []
+  buildDecorations(state(full, full.length)).decorations.between(
+    0,
+    full.length,
+    (from, to, value) => {
+      const spec = value.spec as Spec
+      const written = spec.attributes?.['data-callout']
+      if (from === to && !spec.widget && written) out.push(written)
+    },
+  )
+  return out
+}
+
 /** Every class given to a whole line, in document order. */
 function lineClasses(doc: string): string[] {
   const full = doc + PARK
@@ -403,6 +419,30 @@ describe('extensions', () => {
 
   test('replaces a callout tag with its label', () => {
     expect(concealed('> [!NOTE]\n> careful')).toEqual(['> ', '[!NOTE]', '> '])
+  })
+
+  test('takes the fold sign with the tag: it says how a callout opens, not a word', () => {
+    expect(concealed('> [!warning]- Shut\n> behind it')).toEqual(['> ', '[!warning]-', '> '])
+    expect(concealed('> [!warning]+ Open\n> in front')).toEqual(['> ', '[!warning]+', '> '])
+  })
+
+  test('marks a callout with the look it wears, an alias resolved', () => {
+    expect(lineClasses('> [!tldr]\n> the short of it')).toContain('nib-callout-abstract')
+  })
+
+  test('marks a type it has never heard of as a callout, with no look at all', () => {
+    const classes = lineClasses('> [!recipe]\n> flour and water')
+    expect(classes).toContain('nib-callout')
+    expect(classes.some((one) => one.startsWith('nib-callout-'))).toBe(false)
+  })
+
+  test('carries the type as written, so a theme can reach any of them', () => {
+    expect(lineAttrs('> [!recipe]\n> flour and water')).toContain('recipe')
+    expect(lineAttrs('> [!TLDR]\n> the short of it')).toContain('tldr')
+  })
+
+  test('leaves a quote that names no type a quote', () => {
+    expect(lineClasses('> just a quote')).not.toContain('nib-callout')
   })
 
   /** A note to the writer, hidden here the way it is hidden in the reading view,

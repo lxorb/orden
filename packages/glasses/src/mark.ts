@@ -23,6 +23,7 @@
  *  ``` - the font has no backtick, and three of them drew nothing at all. */
 
 import { lexMarkdown, stripFrontMatter } from '@nib/markdown'
+import { calloutOf } from '@nib/markdown/callouts'
 import type { Token, Tokens } from 'marked'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
 
@@ -287,10 +288,6 @@ function childrenOf(token: Token): Token[] {
 }
 
 const HTML_TAG = /<[^>]*>/g
-
-/** A callout is a blockquote whose first line names a kind; see `callouts` in the
- *  markdown package. */
-const CALLOUT = /^\s*\[!(note|tip|important|warning|caution)\]\s*/i
 
 /** A paragraph's own line breaks, as the space markdown says they are.
  *
@@ -782,29 +779,34 @@ function quote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const inside: Nest = { depth: nest.depth, quote: nest.quote + 1 }
 
   const first = kids[0]
-  const kind = first ? CALLOUT.exec(textOf(first))?.[1] : undefined
-  if (kind) {
-    // A callout's kind is a heading of its own on a page, and here it is the
-    // label in capitals, which is the only emphasis one font has.
-    sheet.add(kind.toUpperCase(), from, inside)
+  const found = first ? calloutOf(textOf(first)) : null
+  if (found) {
+    // A callout's kind is a heading of its own on a page. Without a title of its
+    // own that is the kind in capitals, which is the only emphasis one font has;
+    // with one it is the title, as written, because a sentence in capitals is
+    // shouting and a title is not.
+    sheet.add(found.title || found.label.toUpperCase(), from, inside)
   }
 
-  const body = kind ? kids.map((one, at) => (at === 0 ? withoutCallout(one) : one)) : kids
+  const cut = found ? found.taken : 0
+  const body = found ? kids.map((one, at) => (at === 0 ? withoutCallout(one, cut) : one)) : kids
   walk(body, where, inside, sheet)
 }
 
-/** The first token of a callout with its `[!note]` marker taken off. */
-function withoutCallout(token: Token): Token {
+/** The first token of a callout with its `[!note]- Title` marker line taken
+ *  off, counted in characters so an alias or a title of any length comes off
+ *  exactly. */
+function withoutCallout(token: Token, cut: number): Token {
   const kids = childrenOf(token)
   const first = kids[0]
   if (first?.type === 'text') {
     return {
       ...token,
-      tokens: [{ ...first, text: textOf(first).replace(CALLOUT, '') }, ...kids.slice(1)],
+      tokens: [{ ...first, text: textOf(first).slice(cut) }, ...kids.slice(1)],
     }
   }
 
-  return { ...token, text: textOf(token).replace(CALLOUT, '') }
+  return { ...token, text: textOf(token).slice(cut) }
 }
 
 function list(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {

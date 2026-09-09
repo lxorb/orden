@@ -1,3 +1,4 @@
+import { calloutIconParts, ICON_ATTRIBUTES } from '@nib/markdown/callouts'
 import { NibWidget } from './widget'
 import { EditorView } from '@codemirror/view'
 // Aliased: `label` is already a local variable in more than one widget here.
@@ -71,21 +72,62 @@ export class RuleWidget extends NibWidget {
   }
 }
 
-/** GitHub-style alert headers. The kind is the one word worth showing. */
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+/** A callout's icon as elements. The parts and how the `<svg>` around them is
+ *  dressed both come from @nib/markdown, so this is the same drawing the
+ *  renderer writes as markup rather than a second one that looks like it. */
+function calloutIcon(look: string | null): SVGElement | null {
+  const parts = calloutIconParts(look)
+  if (!parts) return null
+
+  const svg = document.createElementNS(SVG_NS, 'svg')
+  for (const [name, value] of Object.entries(ICON_ATTRIBUTES)) svg.setAttribute(name, value)
+
+  for (const [tag, attributes] of parts) {
+    const child = document.createElementNS(SVG_NS, tag)
+    for (const [name, value] of Object.entries(attributes)) {
+      if (value !== undefined) child.setAttribute(name, String(value))
+    }
+    svg.append(child)
+  }
+
+  return svg
+}
+
+/** What stands where a callout's `[!type]-` marker is written.
+ *
+ *  Only what the note does not already say: the icon, and the type's own name
+ *  when the writer gave the callout no title of their own. A title that *is*
+ *  written stays where it is - real, editable words on the line - so nothing
+ *  here has to be kept in step with what the reader types. */
 export class CalloutWidget extends NibWidget {
-  constructor(private readonly kind: string) {
+  constructor(
+    private readonly type: string,
+    private readonly look: string | null,
+    private readonly name: string,
+  ) {
     super()
   }
 
   override eq(other: CalloutWidget) {
-    return other.kind === this.kind
+    return other.type === this.type && other.look === this.look && other.name === this.name
   }
 
   toDOM() {
     const label = document.createElement('span')
     label.className = 'nib-callout-label'
-    label.dataset.kind = this.kind
-    label.textContent = this.kind.charAt(0).toUpperCase() + this.kind.slice(1)
+    label.dataset.callout = this.type
+
+    const icon = calloutIcon(this.look)
+    if (icon) label.append(icon)
+
+    if (this.name) {
+      const word = document.createElement('span')
+      word.textContent = this.name
+      label.append(word)
+    }
+
     return label
   }
 }
