@@ -58,7 +58,8 @@ jobs:
       # image it names is what builds and checks the package that then goes to
       # every Arch user, so the image that ran is the image that was read. The
       # `pacman -Syu` below is what keeps the packages inside it current, so
-      # pinning costs nothing in freshness. Moved on purpose, not by upstream.
+      # pinning costs nothing in freshness: the digest is raised here when
+      # somebody decides to, rather than by whoever last pushed the tag.
       - name: Check it still builds, before anything is pushed
         env:
           ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5

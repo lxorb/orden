@@ -348,10 +348,11 @@ pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 ///
 /// The depth cap bounds one chain of folders and not how many chains there are,
 /// and a symlink multiplies the chains. Two folders each holding a link to the
-/// other hand the same note back sixteen times under sixteen names; a folder
-/// holding two links back to one of its parents doubles the work at every level,
-/// which is two billion paths and a sidebar that never finishes loading. Walking
-/// each folder once settles both: a walk costs what the disk holds and no more.
+/// other hand the same note back once for every level the cap allows, each time
+/// under a name of its own; a folder holding two links back to one of its parents
+/// doubles the work at every level instead, which is two billion paths and a
+/// sidebar that never finishes loading. Walking each folder once settles both: a
+/// walk costs what the disk holds and no more.
 ///
 /// A folder reachable two ways is therefore read the first way it is reached, and
 /// the second way reads as empty. That is the answer this app wants: one note in
@@ -833,8 +834,9 @@ mod tests {
     }
 
     /// Two folders, each holding a symlink to the other. The depth cap alone
-    /// walks that chain thirty-two folders deep and hands each note back sixteen
-    /// times under sixteen names, which is sixteen hits in a search for one note.
+    /// walks that chain thirty-two folders deep and hands each note back once per
+    /// level, thirty-one times over, which is thirty-one hits in a search for one
+    /// note.
     #[test]
     fn a_cycle_of_symlinks_is_walked_once() {
         let dir = tempfile::tempdir().expect("a temp folder");
