@@ -27,6 +27,8 @@ import {
   GRID,
   type HandleId,
   insideGroup,
+  isLineShape,
+  keptAspect,
   resizedBox,
   snapped,
 } from './geometry'
@@ -143,11 +145,13 @@ export function resizedPick(
   handle: HandleId,
   dx: number,
   dy: number,
+  aspect = false,
 ): Canvas {
   const was = pickedBox(canvas, picked)
   if (!was || was.width < 1 || was.height < 1) return canvas
 
-  const now = resizedBox(was, handle, dx, dy, LEAST)
+  const pulled = resizedBox(was, handle, dx, dy, LEAST)
+  const now = aspect ? keptAspect(was, pulled, handle, LEAST) : pulled
   const sx = now.width / was.width
   const sy = now.height / was.height
   if (sx === 1 && sy === 1 && now.x === was.x && now.y === was.y) return canvas
@@ -238,10 +242,88 @@ export function withShape(
     shape,
     ...box,
     ...(colour === undefined ? {} : { color: colour }),
-    ...((to.y - from.y) * (to.x - from.x) < 0 ? { up: true } : {}),
+    // Only a line has a direction inside its box. A body drawn from the bottom
+    // right is the same body drawn from the top left.
+    ...(isLineShape(shape) && (to.y - from.y) * (to.x - from.x) < 0 ? { up: true } : {}),
   }
 
   return { canvas: withNode(canvas, node), id }
+}
+
+/** How much room a frame leaves round what it was made from, in plane units:
+ *  enough to read the frame as holding them rather than as touching them. */
+const FRAME_ROOM = GRID * 2
+
+/** A frame round everything picked, behind it, holding it.
+ *
+ *  Which is all a group is: a labelled box, and whatever happens to sit inside it
+ *  moves with it. Nothing is written into the cards themselves, so a canvas grouped
+ *  here opens in Obsidian as the same cards inside the same frame. */
+export function grouped(canvas: Canvas, picked: readonly string[]): { canvas: Canvas; id: string } {
+  const box = pickedBox(canvas, picked)
+  if (!box) return { canvas, id: '' }
+
+  const id = freshId()
+  const group: CanvasNode = {
+    id,
+    type: 'group',
+    x: Math.round(box.x - FRAME_ROOM),
+    y: Math.round(box.y - FRAME_ROOM),
+    width: Math.round(box.width + 2 * FRAME_ROOM),
+    height: Math.round(box.height + 2 * FRAME_ROOM),
+  }
+
+  return { canvas: withGroup(canvas, group), id }
+}
+
+/** The frames among what is picked, gone, and everything they held left where it
+ *  was. The one edit that deletes something and keeps its contents, which is why it
+ *  cannot go through `removed`. */
+export function ungrouped(
+  canvas: Canvas,
+  picked: readonly string[],
+): { canvas: Canvas; ids: string[] } {
+  const wanted = new Set(picked)
+  const going = canvas.nodes.filter((node) => node.type === 'group' && wanted.has(node.id))
+  if (!going.length) return { canvas, ids: [] }
+
+  const gone = new Set(going.map((group) => group.id))
+  // What the frames held, so it is what stays picked: ungrouping four cards and
+  // being left with nothing selected is a gesture that appears to have deleted
+  // them.
+  const held = new Set<string>()
+  for (const group of going) {
+    for (const id of dragged(canvas, [group.id])) {
+      if (!gone.has(id)) held.add(id)
+    }
+  }
+
+  return {
+    canvas: {
+      ...canvas,
+      nodes: canvas.nodes.filter((node) => !gone.has(node.id)),
+      edges: canvas.edges.filter((edge) => !gone.has(edge.fromNode) && !gone.has(edge.toNode)),
+    },
+    ids: [...held],
+  }
+}
+
+/** One end of a connector moved onto another card, with the side it meets left for
+ *  the drawing to work out from where the two ended up. An end dropped back on the
+ *  card at the other end is refused: a connector from a card to itself is a line
+ *  with nowhere to go. */
+export function reattached(canvas: Canvas, id: string, end: 'from' | 'to', node: string): Canvas {
+  const edge = canvas.edges.find((one) => one.id === id)
+  if (!edge || !nodeById(canvas, node)) return canvas
+  if ((end === 'from' ? edge.toNode : edge.fromNode) === node) return canvas
+  if ((end === 'from' ? edge.fromNode : edge.toNode) === node) return canvas
+
+  const moved: CanvasEdge = { ...edge, ...(end === 'from' ? { fromNode: node } : { toNode: node }) }
+  // The side is dropped so it is worked out from where the cards are, which is what
+  // makes a moved end meet its new card the way it looks like it should.
+  const sideless = put(moved, end === 'from' ? 'fromSide' : 'toSide', null)
+
+  return { ...canvas, edges: canvas.edges.map((one) => (one.id === id ? sideless : one)) }
 }
 
 /** A stroke of ink on the plane. Ink is a list of its own rather than a node,
@@ -272,9 +354,20 @@ export function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]):
   return changed ? { ...canvas, ink } : canvas
 }
 
+/** The words inside a card or a shape. A shape in a diagram is a shape with a name
+ *  on it far more often than it is a shape, so both answer the same edit; an empty
+ *  one on a shape is taken away rather than written, since the field is optional
+ *  and a shape wearing `""` is a shape with nothing in it. */
 export function withText(canvas: Canvas, id: string, text: string): Canvas {
   const node = nodeById(canvas, id)
-  if (node?.type !== 'text' || node.text === text) return canvas
+  if (!node) return canvas
+
+  if (node.type === 'shape') {
+    if ((node.text ?? '') === text) return canvas
+    return replacing(canvas, [put(node, 'text', text.trim() ? text : null)])
+  }
+
+  if (node.type !== 'text' || node.text === text) return canvas
 
   return replacing(canvas, [{ ...node, text }])
 }
@@ -375,6 +468,7 @@ export function connected(
   fromSide: Side,
   toNode: string,
   toSide: Side,
+  head = true,
 ): { canvas: Canvas; id: string | null } {
   if (fromNode === toNode) return { canvas, id: null }
   if (!nodeById(canvas, fromNode) || !nodeById(canvas, toNode)) return { canvas, id: null }
@@ -388,7 +482,16 @@ export function connected(
   )
   if (already) return { canvas, id: already.id }
 
-  const edge: CanvasEdge = { id: freshId(), fromNode, fromSide, toNode, toSide }
+  // The spec's own default is an arrow at the far end, so only a line with no head
+  // on it has anything to say.
+  const edge: CanvasEdge = {
+    id: freshId(),
+    fromNode,
+    fromSide,
+    toNode,
+    toSide,
+    ...(head ? {} : { toEnd: 'none' as const }),
+  }
   return { canvas: { ...canvas, edges: [...canvas.edges, edge] }, id: edge.id }
 }
 

@@ -20,11 +20,43 @@ import type { InkPoint, InkTool, Shape, Side } from './format'
 import type { Box, HandleId, Point } from './geometry'
 
 /** What the bar is set to. The arrow is the one everything else falls back to;
- *  the last four are the shapes, which the format already names. */
-export type Tool =
-  'select' | 'hand' | 'draw' | 'erase' | 'lasso' | 'text' | 'file' | 'link' | 'group' | Shape
+ *  the last seven are the shapes, which the format already names. */
+export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
+
+/** A tool that puts something on the plane, which every one of them does by being
+ *  pulled out: pressed once it lands at its own size, dragged it lands at the size
+ *  it was dragged to. One gesture for a card, a frame and a triangle alike. */
+export type PutTool = 'text' | 'file' | 'picture' | 'link' | 'group' | Shape
+
+/** The ones a press puts down, as a set, so the machine can ask in one lookup. */
+const PUT: ReadonlySet<Tool> = new Set<Tool>([
+  'text',
+  'file',
+  'picture',
+  'link',
+  'group',
+  'rect',
+  'ellipse',
+  'rhombus',
+  'triangle',
+  'line',
+  'arrow',
+  'elbow',
+])
+
+/** Whether the tool puts something on the plane. */
+export function puts(tool: Tool): tool is PutTool {
+  return PUT.has(tool)
+}
+
+/** The three that are a line from one point to another rather than a body, and so
+ *  become a connector when both ends land on a card. */
+const JOINS: ReadonlySet<Tool> = new Set<Tool>(['line', 'arrow', 'elbow'])
 
 type PointerKind = 'mouse' | 'pen' | 'touch'
+
+/** Which end of a connector: the one it leaves, or the one it arrives at. */
+type EdgeEnd = 'from' | 'to'
 
 /** What the pointer landed on, worked out by the surface before the event gets
  *  here. Everything is a name rather than an object, so a machine state can be
@@ -34,6 +66,9 @@ export interface Hit {
   handle: HandleId | null
   /** One of the four dots an edge is dragged from. */
   port: { id: string; side: Side } | null
+  /** An end of a picked connector, which is dragged onto another card to move it
+   *  there. */
+  endpoint: { id: string; end: EdgeEnd } | null
   /** The card under the point, if any. */
   node: string | null
   /** The connector under the point, if any. */
@@ -47,6 +82,7 @@ export interface Hit {
 export const NOTHING: Hit = {
   handle: null,
   port: null,
+  endpoint: null,
   node: null,
   edge: null,
   stroke: null,
@@ -71,6 +107,8 @@ export interface Down {
   /** Shift, and the "as well as" key, which is Ctrl or Cmd. */
   shift: boolean
   adds: boolean
+  /** Alt, which is what leaves a copy behind when something is dragged. */
+  alt: boolean
   /** The pen held with its button down, or turned over. Rubs out whatever the
    *  bar is set to, which is what every stylus does. */
   eraser: boolean
@@ -135,12 +173,37 @@ export type Effect =
   | { do: 'edit'; id: string }
   | { do: 'leave' }
   | { do: 'move'; ids: string[]; dx: number; dy: number }
-  | { do: 'resize'; ids: string[]; handle: HandleId; dx: number; dy: number }
+  | {
+      do: 'resize'
+      ids: string[]
+      handle: HandleId
+      dx: number
+      dy: number
+      /** Whether the shape of the box is held, which Shift asks for and a picture
+       *  under a thumb is given without being asked. */
+      aspect: boolean
+    }
+  /** A copy left where the drag began, so what the pointer carries away is what
+   *  was picked and the copy stays behind. Alt on a drag, which is what every
+   *  drawing program does with it. */
+  | { do: 'clone' }
   /** `auto` lets the store work the far side out from where the two cards
    *  ended up, which is what a hand dropping a line on a card means. */
-  | { do: 'connect'; from: string; fromSide: Side; to: string; toSide: Side | 'auto' }
-  | { do: 'shape'; tool: Shape; from: Point; to: Point }
-  | { do: 'place'; tool: Tool; at: Point }
+  | {
+      do: 'connect'
+      from: string
+      fromSide: Side
+      to: string
+      toSide: Side | 'auto'
+      head?: boolean
+    }
+  /** One end of an existing connector moved onto another card. */
+  | { do: 'reconnect'; edge: string; end: EdgeEnd; to: string }
+  /** Something put on the plane at the size it was dragged out to. */
+  | { do: 'pull'; tool: PutTool; from: Point; to: Point }
+  /** Something put on the plane at its own size, which is what a press with no
+   *  drag in it means. */
+  | { do: 'place'; tool: PutTool; at: Point }
   | { do: 'stroke'; stroke: PendingStroke }
   | { do: 'rub'; ids: string[] }
   | { do: 'cut'; at: Point; reach: number }
@@ -166,10 +229,22 @@ type Gesture =
   | { kind: 'pan'; id: number; screen: Point; moved: boolean }
   | { kind: 'pinch'; ids: [number, number]; screens: [Point, Point]; apart: number }
   | { kind: 'drag'; ids: string[]; screen: Point; dx: number; dy: number }
-  | { kind: 'resize'; ids: string[]; handle: HandleId; screen: Point; dx: number; dy: number }
+  | {
+      kind: 'resize'
+      ids: string[]
+      handle: HandleId
+      screen: Point
+      dx: number
+      dy: number
+      aspect: boolean
+    }
   | { kind: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
   | { kind: 'connect'; id: string; side: Side; to: Point }
-  | { kind: 'shape'; tool: Shape; from: Point; to: Point }
+  | { kind: 'reconnect'; edge: string; end: EdgeEnd; to: Point }
+  /** Something being pulled out of the bar onto the plane. `fromNode` is the card
+   *  the pull began on, which is what turns a line dragged between two cards into
+   *  a connector rather than a line lying across them. */
+  | { kind: 'pull'; tool: PutTool; from: Point; to: Point; fromNode: string | null }
   | { kind: 'draw'; stroke: PendingStroke; id: number }
   | { kind: 'erase'; whole: boolean; hit: string[]; id: number }
   /** A loop drawn by hand, or a box pulled out. Either way it is the ring it
@@ -251,6 +326,10 @@ export interface Context {
   eraser: { whole: boolean; size: number }
   /** Whether the lasso is a box pulled out rather than a loop drawn by hand. */
   lassoBox: boolean
+  /** Whether a resize holds the shape of the box without being asked. What a
+   *  picture under a thumb wants: a photograph stretched one way is not the
+   *  photograph, and there is no Shift on a tablet. */
+  aspect: boolean
   /** Whether a stroke held still is tidied into the line, ring or box it was
    *  aiming at. */
   straighten: boolean
@@ -301,6 +380,17 @@ function rubbingOut(held: Machine, input: Down, context: Context): Step {
   }
 }
 
+/** Which side of a card a line drawn from it left by: whichever way the hand went
+ *  furthest. What settles the near end of a connector dragged out with the arrow
+ *  tool, since the hand aimed rather than pressed a dot. */
+function facing(from: Point, to: Point): Side {
+  const across = to.x - from.x
+  const down = to.y - from.y
+
+  if (Math.abs(across) >= Math.abs(down)) return across >= 0 ? 'right' : 'left'
+  return down >= 0 ? 'bottom' : 'top'
+}
+
 /** The four corners of the box between two points, which is what a lasso pulled
  *  out as a box catches things with. */
 function ring(from: Point, to: Point): Point[] {
@@ -332,13 +422,14 @@ function begun(gesture: Gesture): boolean {
     case 'resize':
       return gesture.dx !== 0 || gesture.dy !== 0
     case 'band':
-    case 'shape':
+    case 'pull':
       return gesture.from.x !== gesture.to.x || gesture.from.y !== gesture.to.y
     case 'draw':
       return gesture.stroke.points.length > 1
     case 'lasso':
       return gesture.points.length > 1
     case 'connect':
+    case 'reconnect':
       return true
     case 'erase':
     case 'pinch':
@@ -358,10 +449,19 @@ function onPenned(machine: Machine, input: Penned, context: Context): Step {
   const pen: Driver = { ...driver, kind: 'pen' }
   const now: Machine = { ...machine, penDown: true, driver: pen }
 
-  // Whatever it is doing, it is doing it: a stroke half drawn is not restarted
-  // because the button arrived late, and a plane that has been panned stays where
-  // the hand put it.
-  if (machine.gesture && begun(machine.gesture)) return { machine: now, effects: [] }
+  const drawing = machine.gesture?.kind === 'draw'
+
+  // A button that comes down while the nib is already writing turns that contact
+  // into the eraser it now is, and the ink laid down since it touched down goes
+  // with it: a hand holding the button is rubbing out, and a stub of a stroke it
+  // never meant to leave is worse than nothing. Nothing is on the plane yet - a
+  // stroke is committed when the pen lifts - so there is nothing to undo either.
+  if (!(input.eraser && drawing) && machine.gesture && begun(machine.gesture)) {
+    // Whatever else it is doing, it is doing it: a stroke half drawn is not
+    // restarted because the pen was reported late, and a plane that has been
+    // panned stays where the hand put it.
+    return { machine: now, effects: [] }
+  }
 
   const tool = input.eraser ? 'erase' : context.tool
   const down: Down = {
@@ -374,6 +474,7 @@ function onPenned(machine: Machine, input: Penned, context: Context): Step {
     button: 0,
     shift: false,
     adds: false,
+    alt: false,
     eraser: input.eraser,
     sample: input.sample,
     hit: input.hit,
@@ -536,6 +637,20 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
     }
   }
 
+  // Everything a press puts on the plane is pulled out: a card, a frame, a picture
+  // and a triangle alike. Let go without moving and it lands at its own size;
+  // dragged, it lands at the size it was dragged to, and the plane draws it the
+  // whole way rather than only once it is let go.
+  if (puts(tool)) {
+    return {
+      machine: {
+        ...held,
+        gesture: { kind: 'pull', tool, from: input.at, to: input.at, fromNode: input.hit.node },
+      },
+      effects: [{ do: 'leave' }],
+    }
+  }
+
   switch (tool) {
     case 'draw':
       return {
@@ -581,29 +696,10 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
         },
         effects: [],
       }
-    case 'text':
-    case 'file':
-    case 'link':
-    case 'group':
-      return {
-        machine: { ...held, driver: now.driver },
-        effects: [{ do: 'place', tool, at: input.at }],
-      }
-    case 'rect':
-    case 'ellipse':
-    case 'line':
-    case 'arrow':
-      return {
-        machine: {
-          ...held,
-          gesture: { kind: 'shape', tool, from: input.at, to: input.at },
-        },
-        effects: [],
-      }
     case 'select':
-      // The hand is not here: it panned above, from anywhere, which is what a
-      // hand does. Only the arrow reaches the rest of this file, and a finger on
-      // a device with a pen reaches it whatever the bar says.
+      // The hand is not here: it panned above, from anywhere, which is what a hand
+      // does. Only the arrow reaches the rest of this file, and a finger on a device
+      // with a pen reaches it whatever the bar says.
       break
   }
 
@@ -626,6 +722,24 @@ function select(machine: Machine, input: Down, context: Context): Step {
           screen: input.screen,
           dx: 0,
           dy: 0,
+          aspect: input.shift || context.aspect,
+        },
+      },
+      effects: [],
+    }
+  }
+
+  // An end of a connector that is already picked, dragged onto another card. Before
+  // the dots below, because an end sits exactly where a dot would.
+  if (hit.endpoint) {
+    return {
+      machine: {
+        ...machine,
+        gesture: {
+          kind: 'reconnect',
+          edge: hit.endpoint.id,
+          end: hit.endpoint.end,
+          to: input.at,
         },
       },
       effects: [],
@@ -705,6 +819,11 @@ function select(machine: Machine, input: Down, context: Context): Step {
       : [hit.node]
 
   if (!ids.length) return { machine: { ...machine, driver: null }, effects }
+
+  // Alt leaves a copy where the drag began. The originals are what the pointer
+  // carries away, so the ids the gesture already holds stay the right ones and
+  // nothing has to be renamed halfway through a drag.
+  if (input.alt) effects.push({ do: 'clone' })
 
   return {
     machine: {
@@ -793,9 +912,8 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
     }
 
     case 'connect':
-      return { machine: { ...machine, gesture: { ...one, to: input.at } }, effects: [] }
-
-    case 'shape':
+    case 'reconnect':
+    case 'pull':
       return { machine: { ...machine, gesture: { ...one, to: input.at } }, effects: [] }
 
     case 'draw': {
@@ -933,7 +1051,16 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       if (Math.hypot(one.dx, one.dy) * context.scale <= SLOP) return { machine: rest, effects: [] }
       return {
         machine: rest,
-        effects: [{ do: 'resize', ids: one.ids, handle: one.handle, dx: one.dx, dy: one.dy }],
+        effects: [
+          {
+            do: 'resize',
+            ids: one.ids,
+            handle: one.handle,
+            dx: one.dx,
+            dy: one.dy,
+            aspect: one.aspect,
+          },
+        ],
       }
     }
 
@@ -950,12 +1077,46 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       }
     }
 
-    case 'shape': {
-      const span = Math.hypot(one.to.x - one.from.x, one.to.y - one.from.y)
-      if (span * context.scale <= SLOP) return { machine: rest, effects: [] }
+    case 'reconnect': {
+      const target = input.hit.node
+      if (!target) return { machine: rest, effects: [] }
+
       return {
         machine: rest,
-        effects: [{ do: 'shape', tool: one.tool, from: one.from, to: one.to }],
+        effects: [{ do: 'reconnect', edge: one.edge, end: one.end, to: target }],
+      }
+    }
+
+    case 'pull': {
+      const span = Math.hypot(one.to.x - one.from.x, one.to.y - one.from.y)
+      // Pressed rather than dragged: it lands at its own size where the press was.
+      if (span * context.scale <= SLOP) {
+        return { machine: rest, effects: [{ do: 'place', tool: one.tool, at: one.from }] }
+      }
+
+      // A line dragged from one card to another is a connector between them, which
+      // is what a hand drawing an arrow between two cards means. A line dragged
+      // anywhere else is a line.
+      const target = input.hit.node
+      if (JOINS.has(one.tool) && one.fromNode && target && target !== one.fromNode) {
+        return {
+          machine: rest,
+          effects: [
+            {
+              do: 'connect',
+              from: one.fromNode,
+              fromSide: facing(one.from, one.to),
+              to: target,
+              toSide: 'auto',
+              head: one.tool === 'arrow',
+            },
+          ],
+        }
+      }
+
+      return {
+        machine: rest,
+        effects: [{ do: 'pull', tool: one.tool, from: one.from, to: one.to }],
       }
     }
 

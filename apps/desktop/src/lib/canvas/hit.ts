@@ -65,6 +65,11 @@ export function hitAt(where: Where, point: Point): Hit {
     return { ...NOTHING, ink: 'turn' }
   }
 
+  // An end of a picked connector, before the dots below, because an end sits exactly
+  // where a dot would and moving the end is what a hand grabbing it means.
+  const endpoint = endpointAt(where, point, HANDLE / 2 / where.scale + slack)
+  if (endpoint) return { ...NOTHING, endpoint }
+
   const port = portAt(where, point, slack)
   if (port) return { ...NOTHING, port }
 
@@ -102,6 +107,31 @@ function handleAt(where: Where, point: Point, slack: number): HandleId | null {
     }
 
     if (Math.abs(point.x - at.x) <= reach && Math.abs(point.y - at.y) <= reach) return handle.id
+  }
+
+  return null
+}
+
+/** Which end of which picked connector a point is on. Only a picked one: an end
+ *  handle is drawn on a connector that is picked, and a handle nobody can see is not
+ *  a handle anybody can grab. */
+function endpointAt(where: Where, point: Point, reach: number): Hit['endpoint'] {
+  if (!where.picked.length) return null
+
+  for (const edge of where.canvas.edges) {
+    if (!where.picked.includes(edge.id)) continue
+
+    const from = where.canvas.nodes.find((one) => one.id === edge.fromNode)
+    const to = where.canvas.nodes.find((one) => one.id === edge.toNode)
+    if (!from || !to) continue
+
+    const ends = edgeEnds(edge, boxOf(from), boxOf(to))
+    if (Math.hypot(point.x - ends.from.x, point.y - ends.from.y) <= reach) {
+      return { id: edge.id, end: 'from' }
+    }
+    if (Math.hypot(point.x - ends.to.x, point.y - ends.to.y) <= reach) {
+      return { id: edge.id, end: 'to' }
+    }
   }
 
   return null

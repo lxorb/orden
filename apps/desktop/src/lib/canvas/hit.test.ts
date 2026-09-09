@@ -44,11 +44,28 @@ describe('what a point is on', () => {
     expect(hitAt(where(), { x: middle.x, y: middle.y - 200 })).toEqual({
       handle: null,
       port: null,
+      endpoint: null,
       node: null,
       edge: null,
       stroke: null,
       ink: null,
     })
+  })
+
+  /** An end of a picked connector is what moves that end onto another card, and it
+   *  sits exactly where a card's own dot would: it is found first, because it is what
+   *  is drawn on top. */
+  test('is the end of a picked connector, before the card under it', () => {
+    const ends = edgeEnds(EDGE, boxOf(NODES[0]!), boxOf(NODES[1]!))
+    const picked = where({ picked: ['e'] })
+
+    expect(hitAt(picked, ends.from)).toMatchObject({ endpoint: { id: 'e', end: 'from' } })
+    expect(hitAt(picked, ends.to)).toMatchObject({ endpoint: { id: 'e', end: 'to' } })
+  })
+
+  test('is not an end of a connector nobody picked', () => {
+    const ends = edgeEnds(EDGE, boxOf(NODES[0]!), boxOf(NODES[1]!))
+    expect(hitAt(where(), ends.from).endpoint).toBeNull()
   })
 
   /** The chrome a selection wears is drawn over everything, so it is grabbed

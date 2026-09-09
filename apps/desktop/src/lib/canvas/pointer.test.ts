@@ -29,6 +29,7 @@ function context(over: Partial<Context> = {}): Context {
     pen: { tool: 'pen', size: 3, color: '#000', opacity: 1 },
     eraser: { whole: false, size: RUB },
     lassoBox: false,
+    aspect: false,
     straighten: true,
     penSeen: false,
     fingerDraws: false,
@@ -47,6 +48,7 @@ function down(over: Partial<Down> = {}): Down {
     button: 0,
     shift: false,
     adds: false,
+    alt: false,
     eraser: false,
     sample: { x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
     hit: NOTHING,
@@ -494,10 +496,10 @@ describe('a finger on a device that has a pen', () => {
    *  the finger is what does it. Only the pen's own three tools are withheld. */
   test('still places a card and drags out a shape', () => {
     const placed = play([down({ pointer: 'touch' })], tablet({ tool: 'text' }))
-    expect(placed.effects).toEqual([{ do: 'place', tool: 'text', at: HERE }])
+    expect(placed.machine.gesture).toMatchObject({ kind: 'pull', tool: 'text' })
 
     const shape = play([down({ pointer: 'touch' })], tablet({ tool: 'rect' }))
-    expect(shape.machine.gesture).toMatchObject({ kind: 'shape', tool: 'rect' })
+    expect(shape.machine.gesture).toMatchObject({ kind: 'pull', tool: 'rect' })
   })
 
   test('still pans with the hand tool', () => {
@@ -771,17 +773,54 @@ describe('the lasso', () => {
   })
 })
 
+/** Everything a press puts on the plane is pulled out: a card, a frame, a picture
+ *  and a triangle alike. Pressed, it lands at its own size; dragged, at the size it
+ *  was dragged to - and the plane draws it the whole way rather than only once it is
+ *  let go, which is what "you can't see the arrow till you let go" was about. */
 describe('the tools that put something down', () => {
-  test('put it where the pointer was and nowhere else', () => {
-    for (const tool of ['text', 'file', 'link', 'group'] as Tool[]) {
-      const { machine, effects } = play([down({ at: { x: 30, y: 40 } })], context({ tool }))
+  const PUT: Tool[] = [
+    'text',
+    'file',
+    'picture',
+    'link',
+    'group',
+    'rect',
+    'ellipse',
+    'rhombus',
+    'triangle',
+    'line',
+    'arrow',
+    'elbow',
+  ]
 
-      expect(effects).toEqual([{ do: 'place', tool, at: { x: 30, y: 40 } }])
-      expect(machine.gesture).toBeNull()
+  test('all of them are pulled out, so all of them can be drawn while they are', () => {
+    for (const tool of PUT) {
+      const { machine } = play([down({ at: { x: 30, y: 40 } })], context({ tool }))
+
+      expect(machine.gesture, tool).toMatchObject({
+        kind: 'pull',
+        tool,
+        from: { x: 30, y: 40 },
+        to: { x: 30, y: 40 },
+      })
     }
   })
 
-  test('a shape is dragged out and made once, on the way up', () => {
+  test('one nobody dragged lands at its own size where the press was', () => {
+    for (const tool of PUT) {
+      const { effects } = play(
+        [
+          down({ at: { x: 30, y: 40 } }),
+          { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING },
+        ],
+        context({ tool }),
+      )
+
+      expect(effects.at(-1), tool).toEqual({ do: 'place', tool, at: { x: 30, y: 40 } })
+    }
+  })
+
+  test('one that was dragged lands at the size it was dragged to, once, on the way up', () => {
     const { effects } = play(
       [
         down({ at: { x: 0, y: 0 } }),
@@ -791,18 +830,175 @@ describe('the tools that put something down', () => {
       context({ tool: 'rect' }),
     )
 
-    expect(effects).toEqual([
-      { do: 'shape', tool: 'rect', from: { x: 0, y: 0 }, to: { x: 60, y: 40 } },
-    ])
+    expect(effects.at(-1)).toEqual({
+      do: 'pull',
+      tool: 'rect',
+      from: { x: 0, y: 0 },
+      to: { x: 60, y: 40 },
+    })
   })
 
-  test('a shape nobody dragged is not a shape', () => {
+  test('a card is drawn at the size it is being dragged to, while it is being dragged', () => {
+    const { machine } = play(
+      [
+        down({ at: { x: 0, y: 0 } }),
+        { kind: 'move', id: 1, at: { x: 200, y: 90 }, screen: HERE, samples: [], hit: NOTHING },
+      ],
+      context({ tool: 'text' }),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'pull', to: { x: 200, y: 90 } })
+  })
+
+  /** A line dragged from one card to another is what a hand drawing a connector
+   *  between two cards means, so that is what it makes: an edge, not a line lying
+   *  across them. An arrow carries a head and a plain line does not. */
+  test('a line dragged from one card to another becomes a connector', () => {
+    for (const [tool, head] of [
+      ['line', false],
+      ['arrow', true],
+      ['elbow', false],
+    ] as const) {
+      const { effects } = play(
+        [
+          down({ at: { x: 0, y: 0 }, hit: hit({ node: 'a' }) }),
+          {
+            kind: 'move',
+            id: 1,
+            at: { x: 300, y: 200 },
+            screen: HERE,
+            samples: [],
+            hit: hit({ node: 'b' }),
+          },
+          {
+            kind: 'up',
+            id: 1,
+            at: { x: 300, y: 200 },
+            screen: HERE,
+            hit: hit({ node: 'b' }),
+          },
+        ],
+        context({ tool }),
+      )
+
+      expect(effects.at(-1), tool).toEqual({
+        do: 'connect',
+        from: 'a',
+        fromSide: 'right',
+        to: 'b',
+        toSide: 'auto',
+        head,
+      })
+    }
+  })
+
+  test('a line dragged from a card to nowhere is a line', () => {
     const { effects } = play(
-      [down(), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
-      context({ tool: 'ellipse' }),
+      [
+        down({ at: { x: 0, y: 0 }, hit: hit({ node: 'a' }) }),
+        { kind: 'move', id: 1, at: { x: 300, y: 20 }, screen: HERE, samples: [], hit: NOTHING },
+        { kind: 'up', id: 1, at: { x: 300, y: 20 }, screen: HERE, hit: NOTHING },
+      ],
+      context({ tool: 'arrow' }),
+    )
+
+    expect(effects.at(-1)).toMatchObject({ do: 'pull', tool: 'arrow' })
+  })
+
+  test('a box dragged out on the plane is a box, not a connector', () => {
+    const { effects } = play(
+      [
+        down({ at: { x: 0, y: 0 }, hit: hit({ node: 'a' }) }),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 300, y: 200 },
+          screen: HERE,
+          samples: [],
+          hit: hit({ node: 'b' }),
+        },
+        { kind: 'up', id: 1, at: { x: 300, y: 200 }, screen: HERE, hit: hit({ node: 'b' }) },
+      ],
+      context({ tool: 'rect' }),
+    )
+
+    expect(effects.at(-1)).toMatchObject({ do: 'pull', tool: 'rect' })
+  })
+})
+
+/** An end of a picked connector, dragged onto another card. */
+describe('moving an end of a connector', () => {
+  test('takes it to whatever card it was dropped on', () => {
+    const { effects } = play(
+      [
+        down({ hit: hit({ endpoint: { id: 'e', end: 'to' } }) }),
+        { kind: 'move', id: 1, at: { x: 90, y: 90 }, screen: HERE, samples: [], hit: NOTHING },
+        { kind: 'up', id: 1, at: { x: 90, y: 90 }, screen: HERE, hit: hit({ node: 'c' }) },
+      ],
+      context({ picked: ['e'] }),
+    )
+
+    expect(effects.at(-1)).toEqual({ do: 'reconnect', edge: 'e', end: 'to', to: 'c' })
+  })
+
+  test('leaves it where it was when it was dropped on nothing', () => {
+    const { effects } = play(
+      [
+        down({ hit: hit({ endpoint: { id: 'e', end: 'from' } }) }),
+        { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING },
+      ],
+      context({ picked: ['e'] }),
     )
 
     expect(effects).toEqual([])
+  })
+})
+
+/** Alt on a drag leaves a copy behind. The originals are what the pointer carries
+ *  away, so the ids the gesture already holds stay the right ones. */
+describe('alt on a drag', () => {
+  test('leaves a copy where the drag began and carries the originals off', () => {
+    const { machine, effects } = play(
+      [down({ alt: true, hit: hit({ node: 'a' }) })],
+      context({ picked: ['a'] }),
+    )
+
+    expect(verbs(effects)).toEqual(['leave', 'clone'])
+    expect(machine.gesture).toMatchObject({ kind: 'drag', ids: ['a'] })
+  })
+
+  test('does nothing without alt', () => {
+    const { effects } = play([down({ hit: hit({ node: 'a' }) })], context({ picked: ['a'] }))
+    expect(verbs(effects)).toEqual(['leave'])
+  })
+})
+
+/** A resize that holds the shape of the box: Shift on every device, and a picture
+ *  under a thumb without being asked. */
+describe('holding the shape of what is resized', () => {
+  const box = { x: 0, y: 0, width: 100, height: 50 }
+
+  test('is what Shift asks for', () => {
+    const { machine } = play(
+      [down({ shift: true, hit: hit({ handle: 'se' }) })],
+      context({ picked: ['a'], inkBox: box }),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: true })
+  })
+
+  test('is what a picture gets on a touch screen without being asked', () => {
+    const { machine } = play(
+      [down({ hit: hit({ handle: 'se' }) })],
+      context({ picked: ['a'], aspect: true }),
+    )
+
+    expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: true })
+  })
+
+  test('is not what anything else gets', () => {
+    const { machine } = play([down({ hit: hit({ handle: 'se' }) })], context({ picked: ['a'] }))
+    expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: false })
   })
 })
 
@@ -1030,6 +1226,39 @@ describe('a contact that turns out to be a pen', () => {
     )
 
     expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke.points).toHaveLength(2)
+  })
+
+  /** A button pressed halfway through a line used to be ignored, on the grounds that
+   *  what a stroke is should be settled when the nib touches down. On the tablet that
+   *  read as the pen going dead: the line stopped and nothing was rubbed out. A hand
+   *  that presses the button while it is writing is a hand that wants to rub out, so
+   *  the contact becomes the eraser it now is and the ink it had laid down goes with
+   *  it - nothing is on the plane yet, so there is nothing to take back either. */
+  test('turns a stroke that is already drawing into a rub when the button comes down', () => {
+    const { machine, effects } = play(
+      [
+        down({ pointer: 'pen', sample: nib }),
+        { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
+        { ...penned, eraser: true },
+      ],
+      context({ tool: 'draw' }),
+    )
+
+    expect(machine.gesture?.kind).toBe('erase')
+    expect(verbs(effects)).toEqual(['leave', 'cut'])
+  })
+
+  test('takes the whole stroke it lands on when the eraser is set that way', () => {
+    const { effects } = play(
+      [
+        down({ pointer: 'pen', sample: nib }),
+        { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
+        { ...penned, eraser: true, hit: hit({ stroke: 's1' }) },
+      ],
+      context({ tool: 'draw', eraser: { whole: true, size: RUB } }),
+    )
+
+    expect(effects.at(-1)).toEqual({ do: 'rub', ids: ['s1'] })
   })
 
   test('leaves a plane that has been panned where the hand put it', () => {

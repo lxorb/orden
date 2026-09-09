@@ -70,6 +70,6 @@ function saysOf(node: Canvas['nodes'][number]): string {
     case 'group':
       return node.label ?? ''
     case 'shape':
-      return ''
+      return node.text ?? ''
   }
 }

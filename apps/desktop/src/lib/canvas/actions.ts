@@ -14,10 +14,13 @@ import {
   copied,
   coloured,
   cutInk,
+  grouped,
   movedBy,
   pasted,
   placedAt,
+  reattached,
   removed,
+  ungrouped,
   withEnds,
   withGroup,
   withLabel,
@@ -30,15 +33,17 @@ import {
   DEFAULT_HEIGHT,
   DEFAULT_WIDTH,
   freshId,
+  isShape,
   type Shape,
   type Side,
 } from './format'
-import { boxOf, facingSide, GRID, type Point } from './geometry'
+import { type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
 import { erased, INK_STYLES, nearStroke, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
-import type { Hit, PendingStroke, Tool } from './pointer'
+import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
+import { pickPictures } from './upload'
 import { shortcuts } from '../shortcuts.svelte'
 import { storeImage } from '../assets'
 import { t, key } from '../i18n.svelte'
@@ -53,21 +58,73 @@ import { workspace } from '../workspace.svelte'
 const NUDGE = 1
 
 export const run = {
-  connect(store: CanvasStore, from: string, fromSide: Side, to: string, toSide: Side | 'auto') {
+  connect(
+    store: CanvasStore,
+    from: string,
+    fromSide: Side,
+    to: string,
+    toSide: Side | 'auto',
+    head = true,
+  ) {
     const target = store.canvas.nodes.find((node) => node.id === to)
     const source = store.canvas.nodes.find((node) => node.id === from)
     if (!target || !source) return
 
     const side = toSide === 'auto' ? facingSide(boxOf(target), boxOf(source)) : toSide
-    const made = connected(store.canvas, from, fromSide, to, side)
+    const made = connected(store.canvas, from, fromSide, to, side, head)
     store.edit(made.canvas)
     if (made.id) store.pick(made.id)
+  },
+
+  /** One end of a connector dropped on another card. */
+  reattach(store: CanvasStore, edge: string, end: 'from' | 'to', to: string) {
+    store.edit(reattached(store.canvas, edge, end, to))
   },
 
   shape(store: CanvasStore, shape: Shape, from: Point, to: Point, colour: string) {
     const made = withShape(store.canvas, shape, from, to, colour === 'ink' ? undefined : colour)
     store.edit(made.canvas)
     store.pick(made.id)
+  },
+
+  /** Everything picked inside one frame, and that frame picked. */
+  group(store: CanvasStore) {
+    if (store.picked.length < 1) return
+
+    const made = grouped(store.canvas, store.picked)
+    if (!made.id) return
+
+    store.edit(made.canvas)
+    store.pick(made.id)
+  },
+
+  /** The frames among what is picked, gone, and what they held picked instead. */
+  ungroup(store: CanvasStore) {
+    const made = ungrouped(store.canvas, store.picked)
+    if (!made.ids.length && made.canvas === store.canvas) return
+
+    store.edit(made.canvas)
+    store.pickAll(made.ids)
+  },
+
+  /** A copy left exactly where what is picked stands, so the originals can be
+   *  dragged off it. `run` is the drag it belongs to, so the copy and the move it
+   *  begins are one thing to take back.  */
+  leaveCopy(store: CanvasStore, run: string) {
+    if (!store.picked.length) return
+
+    const made = copied(store.canvas, store.picked, 0, 0)
+    store.edit(made.canvas, run)
+  },
+
+  /** The words inside whatever is picked, if it is something that holds words. */
+  write(store: CanvasStore): boolean {
+    const id = store.picked[0]
+    const node = store.canvas.nodes.find((one) => one.id === id)
+    if (!node || (node.type !== 'text' && node.type !== 'shape')) return false
+
+    store.editing = node.id
+    return true
   },
 
   /** A stroke of ink, tidied on the way in: a digitiser reports far more points
@@ -183,8 +240,11 @@ export const run = {
       return
     }
 
-    if (/^[a-z][a-z\d+.-]*:\/\//i.test(text)) putLink(store, text, at)
-    else putText(store, text, at)
+    if (/^[a-z][a-z\d+.-]*:\/\//i.test(text)) {
+      putLink(store, text, placedAt(at, DEFAULT_WIDTH, GRID * 4))
+    } else {
+      putText(store, text, placedAt(at, DEFAULT_WIDTH, DEFAULT_HEIGHT))
+    }
   },
 
   /** Notes and pictures dragged out of the file list. Several of them go one
@@ -210,24 +270,18 @@ export const run = {
 
   /** A picture pasted or dropped: stored where every other pasted picture goes,
    *  and put on the plane as a card of its own. */
-  async dropImage(store: CanvasStore, file: File, at: Point, notePath: string | null) {
+  async dropImage(store: CanvasStore, file: File, where: Point | Box, notePath: string | null) {
     const stored = await storeImage(file, notePath).catch(() => null)
     if (!stored) return
 
     const root = workspace.activeSpace?.root
     const relative = root && !stored.startsWith('http') ? relativeTo(root, stored) : stored
-    const id = freshId()
-    const wide = GRID * 16
+    const size = ownSize('picture')
+    // A box says exactly where and how big; a point is a paste or a drop, which is
+    // centred on it at the size a picture starts at.
+    const box = 'width' in where ? where : placedAt(where, size.width, size.height)
 
-    store.edit(
-      withNode(store.canvas, {
-        ...placedAt(at, wide, Math.round(wide * 0.7)),
-        id,
-        type: 'file',
-        file: relative,
-      }),
-    )
-    store.pick(id)
+    putFile(store, relative, box)
   },
 
   /** What a double click means, wherever it landed. */
@@ -240,7 +294,7 @@ export const run = {
     const node = hit.node ? store.canvas.nodes.find((one) => one.id === hit.node) : null
 
     if (!node) {
-      putText(store, '', at, true)
+      putText(store, '', placedAt(at, DEFAULT_WIDTH, DEFAULT_HEIGHT), true)
       return
     }
 
@@ -260,8 +314,10 @@ export const run = {
         if (root) await workspace.openEntry(insideSpace(root, node.file))
         break
       }
+      // A shape holds words the way a card does, so opening one opens the words.
       case 'shape':
         store.pick(node.id)
+        store.editing = node.id
         break
     }
   },
@@ -335,8 +391,9 @@ export const run = {
     for (const [id, act] of ACTS) {
       if (!shortcuts.pressed(id, event)) continue
 
-      act(store, view)
-      return true
+      // A key that turned out to have nothing to act on is not a key the plane
+      // took: Enter with nothing picked belongs to whatever else wants it.
+      return act(store, view) !== false
     }
 
     return false
@@ -352,12 +409,16 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.lasso', 'lasso'],
   ['canvas.tool.text', 'text'],
   ['canvas.tool.file', 'file'],
+  ['canvas.tool.picture', 'picture'],
   ['canvas.tool.link', 'link'],
   ['canvas.tool.group', 'group'],
   ['canvas.tool.rect', 'rect'],
   ['canvas.tool.ellipse', 'ellipse'],
+  ['canvas.tool.rhombus', 'rhombus'],
+  ['canvas.tool.triangle', 'triangle'],
   ['canvas.tool.line', 'line'],
   ['canvas.tool.arrow', 'arrow'],
+  ['canvas.tool.elbow', 'elbow'],
 ]
 
 /** Which way each nudge goes. */
@@ -369,8 +430,14 @@ const NUDGES: readonly (readonly [string, number, number])[] = [
 ]
 
 /** Everything else a key does, by the id it is bound to. */
-const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => void])[] = [
+/** What each key does, and whether it turned out to have anything to do: a row that
+ *  answers `false` is a key the plane did not take, so Enter with nothing picked
+ *  belongs to whatever else wants it. Everything else answers nothing at all. */
+const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => unknown])[] = [
   ['canvas.duplicate', (store) => run.duplicate(store)],
+  ['canvas.write', (store) => run.write(store)],
+  ['canvas.group', (store) => run.group(store)],
+  ['canvas.ungroup', (store) => run.ungroup(store)],
   ['canvas.fit', (store, view) => store.fit(view.width, view.height)],
   ['canvas.frame', (store, view) => store.frame(view.width, view.height)],
   ['canvas.find', (_store, view) => view.onfind()],
@@ -413,26 +480,23 @@ function spanOf(canvas: Canvas) {
   return { x: least, y: lowest, width: most - least, height: highest - lowest }
 }
 
-function putText(store: CanvasStore, text: string, at: Point, writing = false) {
+function putText(store: CanvasStore, text: string, box: Box, writing = false) {
   const id = freshId()
-  store.edit(
-    withNode(store.canvas, {
-      ...placedAt(at, DEFAULT_WIDTH, DEFAULT_HEIGHT),
-      id,
-      type: 'text',
-      text,
-    }),
-  )
+  store.edit(withNode(store.canvas, { ...box, id, type: 'text', text }))
   store.pick(id)
   // A card made by hand is a card somebody is about to write in.
   if (writing) store.editing = id
 }
 
-function putLink(store: CanvasStore, url: string, at: Point) {
+function putLink(store: CanvasStore, url: string, box: Box) {
   const id = freshId()
-  store.edit(
-    withNode(store.canvas, { ...placedAt(at, DEFAULT_WIDTH, GRID * 4), id, type: 'link', url }),
-  )
+  store.edit(withNode(store.canvas, { ...box, id, type: 'link', url }))
+  store.pick(id)
+}
+
+function putFile(store: CanvasStore, file: string, box: Box) {
+  const id = freshId()
+  store.edit(withNode(store.canvas, { ...box, id, type: 'file', file }))
   store.pick(id)
 }
 
@@ -447,19 +511,81 @@ async function askLabel(store: CanvasStore, id: string) {
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
 }
 
-/** What a tool puts on the plane where it was pressed. A tool that puts nothing
- *  down - the arrow, the hand, the pen - has nothing to do here. */
-export async function place(store: CanvasStore, tool: Tool, at: Point) {
+/** How big each thing is when it is pressed rather than dragged out: a card wide
+ *  enough to read a line in, a frame with room for a handful of cards, a shape big
+ *  enough to grab. Dragging says otherwise, and then this is not asked. */
+function ownSize(tool: PutTool): { width: number; height: number } {
+  // Every shape starts at the same size, which is big enough to grab and small enough
+  // that a hand that meant to drag one out sees at once that it did not.
+  if (isShape(tool)) return { width: GRID * 6, height: GRID * 4 }
+
   switch (tool) {
     case 'text':
-      putText(store, '', at, true)
+      return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
+    case 'file':
+      return { width: DEFAULT_WIDTH, height: GRID * 9 }
+    case 'picture':
+      return { width: GRID * 16, height: Math.round(GRID * 16 * 0.7) }
+    case 'link':
+      return { width: DEFAULT_WIDTH, height: GRID * 4 }
+    case 'group':
+      return { width: GRID * 20, height: GRID * 12 }
+  }
+}
+
+/** What the surface has to say for something to be put down: the colour the next
+ *  one gets, and where this canvas lives, which is what a picture is stored beside. */
+export interface Putting {
+  colour: string
+  path: string | null
+}
+
+/** What a tool puts on the plane where it was pressed, at its own size. */
+export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
+  const size = ownSize(tool)
+  await putDown(store, tool, placedAt(at, size.width, size.height), putting)
+}
+
+/** What a tool puts on the plane at the size it was dragged out to. The one
+ *  difference from a press: the box came from the hand rather than from the table
+ *  above, and a line remembers which way round it was drawn. */
+export async function pull(
+  store: CanvasStore,
+  tool: PutTool,
+  from: Point,
+  to: Point,
+  putting: Putting,
+) {
+  await putDown(store, tool, rectBetween(from, to), putting, from, to)
+}
+
+/** One thing on the plane in one box, whichever kind of thing it is.
+ *
+ *  Here rather than twice over, because a press and a drag differ only in where the
+ *  box came from: a picture asks for a picture either way, a link asks for an
+ *  address either way, and a card is a card. */
+async function putDown(
+  store: CanvasStore,
+  tool: PutTool,
+  box: Box,
+  putting: Putting,
+  from?: Point,
+  to?: Point,
+) {
+  if (isShape(tool)) {
+    const corner = from ?? { x: box.x, y: box.y }
+    const other = to ?? { x: box.x + box.width, y: box.y + box.height }
+    run.shape(store, tool, corner, other, putting.colour)
+    return
+  }
+
+  switch (tool) {
+    case 'text':
+      putText(store, '', box, true)
       return
     case 'group': {
-      // Room enough to put a handful of cards in, which is what a frame is for.
       const id = freshId()
-      store.edit(
-        withGroup(store.canvas, { ...placedAt(at, GRID * 20, GRID * 12), id, type: 'group' }),
-      )
+      store.edit(withGroup(store.canvas, { ...box, id, type: 'group' }))
       store.pick(id)
       return
     }
@@ -469,7 +595,7 @@ export async function place(store: CanvasStore, tool: Tool, at: Point) {
         placeholder: t('Address'),
         confirmLabel: key('Add'),
       })
-      if (url) putLink(store, url, at)
+      if (url) putLink(store, url, box)
       return
     }
     case 'file': {
@@ -485,32 +611,18 @@ export async function place(store: CanvasStore, tool: Tool, at: Point) {
         }),
       })
 
-      if (!chosen) return
-
-      const id = freshId()
-      store.edit(
-        withNode(store.canvas, {
-          ...placedAt(at, DEFAULT_WIDTH, GRID * 9),
-          id,
-          type: 'file',
-          file: chosen,
-        }),
-      )
-      store.pick(id)
+      if (chosen) putFile(store, chosen, box)
       return
     }
-    // A tool that puts nothing down: the arrow, the hand, and the three a pen
-    // wants, which draw rather than place.
-    case 'select':
-    case 'hand':
-    case 'draw':
-    case 'erase':
-    case 'lasso':
-    case 'rect':
-    case 'ellipse':
-    case 'line':
-    case 'arrow':
+    case 'picture': {
+      // The system's own picker, which on Android is the gallery and the camera;
+      // see canvas/upload.ts.
+      const [file] = await pickPictures()
+      if (!file) return
+
+      await run.dropImage(store, file, box, putting.path)
       return
+    }
   }
 }
 
@@ -529,18 +641,26 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   const onCard =
     store.picked.length === 1 &&
     store.canvas.nodes.find((one) => one.id === store.picked[0])?.type === 'text'
+  const onFrame = store.picked.some((id) =>
+    store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
+  )
+  const putting = { colour: tools.colour, path: view.path }
 
   return [
-    { label: t('Card'), run: () => void place(store, 'text', at) },
-    { label: t('Note or picture'), run: () => void place(store, 'file', at) },
-    { label: t('Link'), run: () => void place(store, 'link', at) },
-    { label: t('Group'), run: () => void place(store, 'group', at) },
+    { label: t('Card'), run: () => void place(store, 'text', at, putting) },
+    { label: t('Note'), run: () => void place(store, 'file', at, putting) },
+    { label: t('Picture'), run: () => void place(store, 'picture', at, putting) },
+    { label: t('Link'), run: () => void place(store, 'link', at, putting) },
+    { label: t('Frame'), run: () => void place(store, 'group', at, putting) },
     DIVIDER,
     { label: t('Duplicate'), disabled: !picked, run: () => run.duplicate(store) },
     { label: t('Delete'), danger: true, disabled: !picked, run: () => run.remove(store) },
     ...(onCard
       ? [{ label: t('Turn into a note'), run: () => void run.toNote(store, view.path) }]
       : []),
+    DIVIDER,
+    { label: t('Group'), disabled: !picked, run: () => run.group(store) },
+    { label: t('Ungroup'), disabled: !onFrame, run: () => run.ungroup(store) },
     DIVIDER,
     { label: t('Bring to front'), disabled: !picked, run: () => run.order(store, 'front') },
     { label: t('Bring forward'), disabled: !picked, run: () => run.order(store, 'forward') },

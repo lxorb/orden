@@ -3,12 +3,15 @@ import {
   coloured,
   connected,
   copied,
+  grouped,
   movedBy,
   pasted,
   placedAt,
+  reattached,
   removed,
   resizedPick,
   subset,
+  ungrouped,
   withLabel,
   withNode,
   withText,
@@ -283,5 +286,149 @@ describe('a card added to the canvas', () => {
     const next = withNode(canvas, card('b'))
 
     expect(next.nodes.map((node) => node.id)).toEqual(['a', 'b'])
+  })
+})
+
+/** A shape in a diagram is a shape with a name in it far more often than it is a
+ *  shape, so it holds words the way a card does. */
+describe('the words inside a shape', () => {
+  const shape = (text?: string): CanvasNode => ({
+    id: 's',
+    type: 'shape',
+    shape: 'rhombus',
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 60,
+    ...(text === undefined ? {} : { text }),
+  })
+
+  test('are written into it', () => {
+    const next = withText(canvasOf([shape()]), 's', 'Ready?')
+    expect(next.nodes[0]).toMatchObject({ text: 'Ready?' })
+  })
+
+  /** The field is optional in the format, so an empty one is taken away rather than
+   *  written: a shape wearing `""` is a shape with nothing in it, said twice. */
+  test('are taken away rather than written empty', () => {
+    const next = withText(canvasOf([shape('Ready?')]), 's', '   ')
+    expect(next.nodes[0]).not.toHaveProperty('text')
+  })
+
+  test('are the same object again when nothing changed', () => {
+    const canvas = canvasOf([shape('Ready?')])
+    expect(withText(canvas, 's', 'Ready?')).toBe(canvas)
+  })
+})
+
+/** A group is a labelled box, and whatever sits inside it moves with it. Nothing is
+ *  written into the cards themselves, so a canvas grouped here opens in Obsidian as the
+ *  same cards inside the same frame. */
+describe('grouping', () => {
+  const canvas = canvasOf([card('a'), card('b', 300, 0)])
+
+  test('puts a frame round everything picked, behind it', () => {
+    const made = grouped(canvas, ['a', 'b'])
+    const frame = made.canvas.nodes[0]
+
+    expect(frame).toMatchObject({ id: made.id, type: 'group' })
+    // Room enough round them to read as holding them rather than touching them.
+    expect(frame!.x).toBeLessThan(0)
+    expect(frame!.x + frame!.width).toBeGreaterThan(400)
+  })
+
+  test('carries what it holds when it is dragged, which is what a group is', () => {
+    const made = grouped(canvas, ['a', 'b'])
+    const moved = movedBy(made.canvas, [made.id], 50, 0)
+
+    expect(positions(moved)).toEqual([
+      [made.id, made.canvas.nodes[0]!.x + 50, made.canvas.nodes[0]!.y],
+      ['a', 50, 0],
+      ['b', 350, 0],
+    ])
+  })
+
+  test('changes nothing at all with nothing picked', () => {
+    expect(grouped(canvas, []).canvas).toBe(canvas)
+  })
+})
+
+describe('ungrouping', () => {
+  test('takes the frame away and leaves everything it held where it was', () => {
+    const made = grouped(canvasOf([card('a'), card('b', 300, 0)]), ['a', 'b'])
+    const undone = ungrouped(made.canvas, [made.id])
+
+    expect(undone.canvas.nodes.map((node) => node.id)).toEqual(['a', 'b'])
+    expect(positions(undone.canvas)).toEqual([
+      ['a', 0, 0],
+      ['b', 300, 0],
+    ])
+  })
+
+  /** Ungrouping four cards and being left with nothing selected is a gesture that
+   *  looks as though it deleted them. */
+  test('leaves what the frame held picked', () => {
+    const made = grouped(canvasOf([card('a'), card('b', 300, 0)]), ['a', 'b'])
+    expect(ungrouped(made.canvas, [made.id]).ids.sort()).toEqual(['a', 'b'])
+  })
+
+  test('changes nothing when nothing picked is a frame', () => {
+    const canvas = canvasOf([card('a')])
+    expect(ungrouped(canvas, ['a']).canvas).toBe(canvas)
+  })
+})
+
+/** An end of a connector dragged onto another card. The side it meets is dropped, so
+ *  the drawing works it out from where the two cards ended up. */
+describe('moving an end of a connector', () => {
+  const canvas = canvasOf(
+    [card('a'), card('b', 300, 0), card('c', 0, 300)],
+    [{ id: 'e', fromNode: 'a', fromSide: 'right', toNode: 'b', toSide: 'left' }],
+  )
+
+  test('takes that end to the card it was dropped on', () => {
+    const next = reattached(canvas, 'e', 'to', 'c')
+    expect(next.edges[0]).toMatchObject({ fromNode: 'a', toNode: 'c' })
+    expect(next.edges[0]).not.toHaveProperty('toSide')
+    // And leaves the other end exactly as it was.
+    expect(next.edges[0]).toMatchObject({ fromSide: 'right' })
+  })
+
+  test('moves the near end as readily as the far one', () => {
+    expect(reattached(canvas, 'e', 'from', 'c').edges[0]).toMatchObject({
+      fromNode: 'c',
+      toNode: 'b',
+    })
+  })
+
+  test('refuses an end dropped on the card at the other end', () => {
+    expect(reattached(canvas, 'e', 'to', 'a')).toBe(canvas)
+  })
+
+  test('changes nothing for an end dropped back where it already was', () => {
+    expect(reattached(canvas, 'e', 'to', 'b')).toBe(canvas)
+  })
+
+  test('changes nothing for a connector or a card that is not there', () => {
+    expect(reattached(canvas, 'nope', 'to', 'c')).toBe(canvas)
+    expect(reattached(canvas, 'e', 'to', 'nope')).toBe(canvas)
+  })
+})
+
+/** A resize that holds the shape of the box: what Shift asks for, and what a picture
+ *  under a thumb gets without being asked. */
+describe('resizing with the shape of the box held', () => {
+  const canvas = canvasOf([card('a', 0, 0, 100, 50)])
+
+  test('keeps the ratio it started with', () => {
+    const next = resizedPick(canvas, ['a'], 'se', 100, 0, true)
+    const node = next.nodes[0]!
+
+    expect(node.width / node.height).toBeCloseTo(2, 1)
+  })
+
+  test('stretches when it is not held, which is what a card wants', () => {
+    const next = resizedPick(canvas, ['a'], 'se', 100, 0)
+    expect(next.nodes[0]).toMatchObject({ width: 200, height: 50 })
   })
 })

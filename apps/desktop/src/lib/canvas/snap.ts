@@ -120,6 +120,65 @@ export function snapMove(moving: Box, others: readonly Box[], reach = REACH): Sn
   }
 }
 
+/** Where one loose point should land: on the edge or the middle of something
+ *  already on the plane, or on the grid.
+ *
+ *  What the corner of something being pulled out of the bar lands on. A point has
+ *  no edges of its own to line up, so it is the point itself against everything
+ *  else's three stops, which is what makes a box dragged out beside a card come out
+ *  the same width as the card. */
+export function snapPoint(
+  at: { x: number; y: number },
+  others: readonly Box[],
+  reach = REACH,
+): Snap {
+  const guides: Guide[] = []
+
+  const across = nearestOf(at.x, at.y, others, reach, acrossOf, downOf)
+  const down = nearestOf(at.y, at.x, others, reach, downOf, acrossOf)
+
+  if (across) guides.push({ axis: 'x', at: across.at, from: across.from, to: across.to })
+  if (down) guides.push({ axis: 'y', at: down.at, from: down.from, to: down.to })
+
+  return {
+    dx: (across?.at ?? snapped(at.x)) - at.x,
+    dy: (down?.at ?? snapped(at.y)) - at.y,
+    guides,
+  }
+}
+
+/** The nearest stop on one axis, and how far the line saying so has to run to
+ *  reach both the point and the box it lined up with. */
+function nearestOf(
+  along: number,
+  beside: number,
+  others: readonly Box[],
+  reach: number,
+  pin: (box: Box) => Span,
+  run: (box: Box) => Span,
+): { at: number; from: number; to: number } | null {
+  let best: { at: number; from: number; to: number } | null = null
+  let nearby = reach
+
+  for (const box of others) {
+    const other = run(box)
+
+    for (const place of stops(pin(box))) {
+      const away = Math.abs(place - along)
+      if (away > nearby) continue
+
+      nearby = away
+      best = {
+        at: place,
+        from: Math.min(beside, other.from),
+        to: Math.max(beside, other.from + other.size),
+      }
+    }
+  }
+
+  return best
+}
+
 /** The same for a resize: only the edges the handle is pulling look for
  *  something to land on, since the others are not moving and lining them up
  *  again would drag the whole card sideways. */

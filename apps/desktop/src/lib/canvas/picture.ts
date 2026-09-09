@@ -26,7 +26,9 @@ import {
   edgeEnds,
   edgeMiddle,
   edgePath,
+  isLineShape,
   shapeLine,
+  shapePath,
 } from './geometry'
 import { strokeBox } from './ink'
 import { inkSvg } from './svg'
@@ -166,6 +168,23 @@ function cardBody(node: CanvasNode, canvasPath: string | null): string {
   }
 }
 
+/** The words inside a shape, in the middle of it. Through the same two routes a card
+ *  takes: the real renderer where a browser is drawing the picture, and plain lines
+ *  where it is not. */
+function shapeWords(
+  node: CanvasNode & { type: 'shape' },
+  box: Box,
+  palette: Palette,
+  canvasPath: string | null,
+  plain: boolean,
+): string {
+  if (!node.text) return ''
+
+  if (plain) return plainCard(node.text, box, palette)
+
+  return `<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"><div class="card" xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;justify-content:center;text-align:center">${asXml(cardHtml(node.text, canvasPath, true))}</div></foreignObject>`
+}
+
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '')
@@ -199,19 +218,30 @@ function drawnNode(
     const fill = node.fill ? stroke : 'none'
     const opacity = node.fill ? 0.18 : 1
 
+    const words = shapeWords(node, box, palette, canvasPath, plain)
+
     if (node.shape === 'rect') {
-      return `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="4" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2"/>`
+      return `<g><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="4" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2"/>${words}</g>`
     }
     if (node.shape === 'ellipse') {
-      return `<ellipse cx="${box.x + box.width / 2}" cy="${box.y + box.height / 2}" rx="${box.width / 2}" ry="${box.height / 2}" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2"/>`
+      return `<g><ellipse cx="${box.x + box.width / 2}" cy="${box.y + box.height / 2}" rx="${box.width / 2}" ry="${box.height / 2}" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2"/>${words}</g>`
     }
+
+    // Everything else - a diamond, a triangle, a line, an arrow, an elbow - is the
+    // corners the plane draws it through, so a picture that has left the app is the
+    // picture that was on it. See shapePath in geometry.ts.
+    const corners = shapePath(node)
+    const open = isLineShape(node.shape)
+    const d = `M ${corners.map((one) => `${one.x} ${one.y}`).join(' L ')}${open ? '' : ' Z'}`
 
     const ends = shapeLine(node)
     const head =
       node.shape === 'arrow'
         ? `<path d="M 0 0 L -11 -5.5 L -11 5.5 Z" fill="${stroke}" transform="translate(${ends.to.x} ${ends.to.y}) rotate(${(Math.atan2(ends.to.y - ends.from.y, ends.to.x - ends.from.x) * 180) / Math.PI})"/>`
         : ''
-    return `<g><line x1="${ends.from.x}" y1="${ends.from.y}" x2="${ends.to.x}" y2="${ends.to.y}" stroke="${stroke}" stroke-width="2" stroke-linecap="round"/>${head}</g>`
+
+    const body = `<path d="${d}" fill="${open ? 'none' : fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+    return `<g>${body}${head}${shapeWords(node, box, palette, canvasPath, plain)}</g>`
   }
 
   if (node.type === 'file' && isPicture(node.file)) {
