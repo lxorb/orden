@@ -654,17 +654,47 @@ describe('refreshing', () => {
     expect((await rpc(refreshed.json.access_token, 'ping')).status).toBe(200)
   })
 
-  test('forgives a client that never received the reply', async () => {
+  test('revokes the whole grant when a token that was rotated comes back', async () => {
     const { tokens, clientId } = await connect()
     const first = await refresh(clientId, tokens.json.refresh_token)
+    expect(first.status).toBe(200)
 
-    // The token before the current one still works once...
+    // Two parties have held this one and only one of them got what replaced it.
     const again = await refresh(clientId, tokens.json.refresh_token)
-    expect(again.status).toBe(200)
+    expect(again.status).toBe(401)
+    expect(again.json.error).toBe('invalid_grant')
 
-    // ...and using it retires the one it was replaced by.
-    expect((await refresh(clientId, first.json.refresh_token)).json.error).toBe('invalid_grant')
-    expect((await refresh(clientId, again.json.refresh_token)).status).toBe(200)
+    // Everything the grant held went with it: the token that was current, the
+    // access token beside it, and the row itself.
+    expect((await refresh(clientId, first.json.refresh_token)).status).toBe(400)
+    expect((await rpc(first.json.access_token, 'ping')).status).toBe(401)
+
+    const left = env.db.prepare('select count(*) as held from oauth_grants').get() as {
+      held: number
+    }
+    expect(left.held).toBe(0)
+  })
+
+  test('revokes it whichever client brings the spent token back', async () => {
+    const { tokens, clientId } = await connect()
+    await refresh(clientId, tokens.json.refresh_token)
+    const other = (await register([CHATGPT], { client_name: 'Other' })).json.client_id
+
+    expect((await refresh(other, tokens.json.refresh_token)).status).toBe(401)
+
+    const left = env.db.prepare('select count(*) as held from oauth_grants').get() as {
+      held: number
+    }
+    expect(left.held).toBe(0)
+  })
+
+  test('leaves the grant alone when the token it is shown is the current one', async () => {
+    const { tokens, clientId } = await connect()
+    const first = await refresh(clientId, tokens.json.refresh_token)
+    const second = await refresh(clientId, first.json.refresh_token)
+
+    expect(second.status).toBe(200)
+    expect((await rpc(second.json.access_token, 'ping')).status).toBe(200)
   })
 
   test('refuses another client', async () => {

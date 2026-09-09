@@ -73,9 +73,10 @@ interface Grant {
   read_only: number
 }
 
-/** Fresh tokens for a grant, new or refreshed. The refresh token before this
- *  one stays good until the new one has been used: a client that never got
- *  the reply can try again instead of being locked out. */
+/** Fresh tokens for a grant, new or refreshed. The token being replaced is kept
+ *  beside the new one, not as a second key but as the record that lets the next
+ *  presentation of it be recognised for what it is; see the refresh branch
+ *  below. */
 async function issue(env: Env, grant: Grant, replacing?: { refresh_hash: string }) {
   const access = `nib_${randomToken()}`
   const refresh = `nibr_${randomToken()}`
@@ -196,18 +197,32 @@ tokens.post('/token', async (context) => {
 
     const hash = await sha256(body.refresh_token)
     const grant = await context.env.DB.prepare(
-      `select id, client_id, read_only from oauth_grants
-        where refresh_hash = ? or previous_refresh_hash = ?`,
+      `select id, client_id, read_only, refresh_hash from oauth_grants
+        where refresh_hash = ?1 or previous_refresh_hash = ?1`,
     )
-      .bind(hash, hash)
-      .first<Grant>()
+      .bind(hash)
+      .first<Grant & { refresh_hash: string }>()
 
-    if (grant?.client_id !== client.id) {
+    // A refresh token that was already rotated away, presented again. Only one
+    // party can have received the token that replaced it, so the one presenting
+    // this is either not that party or is a client whose store was copied - and
+    // there is no way from here to tell which. RFC 9700 says what to do about
+    // that, and it is the only safe answer: the whole grant goes, both tokens
+    // with it, and the person reconnects the client once. Which is why the
+    // replaced hash is kept at all.
+    //
+    // Whatever client asks. Holding the token is the compromise, and a grant
+    // revoked because somebody held a spent token is a connection made again in
+    // one press; a grant left standing is an open door.
+    if (grant && grant.refresh_hash !== hash) {
+      await context.env.DB.prepare('delete from oauth_grants where id = ?').bind(grant.id).run()
+      return context.json(failure('invalid_grant', 'that refresh token was already used'), 401)
+    }
+
+    if (!grant || grant.client_id !== client.id) {
       return context.json(failure('invalid_grant', 'the refresh token is not valid'), 400)
     }
 
-    // The token just shown is the one kept as the fallback: whatever was
-    // issued since and never used has plainly not reached the client.
     const issued = await issue(context.env, grant, { refresh_hash: hash })
     return context.json(issued.reply, 200, { 'cache-control': 'no-store' })
   }

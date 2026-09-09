@@ -28,8 +28,9 @@ create table oauth_codes (
 
 -- One connection between a client and an account: the access token it holds
 -- now and the refresh token that replaces it. The refresh token before the
--- current one still counts, so a reply lost on the way does not lock the
--- client out. Both live hashed, like every other secret here.
+-- current one is kept as the record of what has been spent: presented again it
+-- is a token in two hands, and the whole grant is revoked (RFC 9700; see
+-- src/oauth/tokens.ts). Both live hashed, like every other secret here.
 create table oauth_grants (
   id                    text    primary key,
   user_id               text    not null references users(id) on delete cascade,
