@@ -345,6 +345,22 @@ describe('choosing a keyboard', () => {
     expect(modes.vim).toBe(false)
   })
 
+  /** Why the switch sits beside the preset in the Shortcuts pane rather than in
+   *  the editor's: modal editing is the same choice the keyboard makes, and it
+   *  can be made on its own over any of the maps without becoming a map of one's
+   *  own. */
+  test('can be turned on over another keyboard without replacing it', async () => {
+    const { shortcuts } = registry
+    const modes = await currentModes()
+
+    shortcuts.choose('notion')
+    modes.setVimKeys(true)
+
+    expect(modes.vim).toBe(true)
+    expect(shortcuts.preset).toBe('notion')
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+  })
+
   test('leaves a name this version has never heard of alone', () => {
     const { shortcuts } = registry
     shortcuts.choose('emacs')

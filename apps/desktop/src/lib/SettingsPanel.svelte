@@ -81,6 +81,9 @@
         ],
       },
       { section: 'editor', label: t('Reset to defaults'), text: [] },
+      // Modal editing sits with the keyboard rather than with the editor, so
+      // this is where searching for it lands.
+      { section: 'shortcuts', label: t('Vim keys'), text: ['vim'] },
       // Every shortcut by name, so searching the settings for "Bold" lands on
       // the key that runs it as well as on the button that does.
       ...SHORTCUTS.map((one): Place => ({
@@ -680,6 +683,16 @@
         />
       </div>
     </div>
+
+    {@render row({
+      // Modal editing, under the keyboard it belongs with rather than in the
+      // editor: choosing the Vim preset turns it on, and this is how it is on
+      // over the Obsidian or the Notion map instead.
+      kind: 'switch',
+      label: t('Vim keys'),
+      get: () => modes.vim,
+      set: (on) => modes.setVimKeys(on, view),
+    })}
   </div>
 
   <label class="search">
