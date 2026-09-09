@@ -12,6 +12,7 @@
  *  for that. */
 
 import { Readability } from '@mozilla/readability'
+import { absolute, runsCode } from './addresses'
 import { NOT_CONTENT } from './elements'
 import type { Kind } from './kinds'
 
@@ -62,29 +63,24 @@ export function widestOf(srcset: string): string | null {
   return best?.url ?? null
 }
 
-function resolved(value: string, base: string): string | null {
-  try {
-    return new URL(value, base).href
-  } catch {
-    return null
-  }
+/** Whether a link may keep the address it resolved to. Code the browser would
+ *  run rather than follow may not, and neither may a `data:` document, which is
+ *  a page of the site's own writing served inside whoever opens the note. */
+function followable(address: URL): boolean {
+  return !runsCode(address) && address.protocol !== 'data:'
 }
 
-/** Every address in the tree made absolute against the page it came from, and
- *  every deferred image given the address it was deferring. A link the browser
- *  would run rather than follow loses its href and stays as words. */
-export function absolutise(root: ParentNode, base: string): void {
-  for (const link of root.querySelectorAll('a[href]')) {
-    const href = link.getAttribute('href') ?? ''
-    const absolute = /^\s*javascript:/i.test(href) ? null : resolved(href, base)
-
-    if (absolute) link.setAttribute('href', absolute)
-    else link.removeAttribute('href')
-  }
-
+/** Every image given the address it was deferring, and every `<picture>` reduced
+ *  to the one image it meant.
+ *
+ *  Its own step, and not part of making the addresses absolute, because it has to
+ *  happen before the extractor runs as well as after: Readability throws away a
+ *  `<picture>` whose `img` carries no `src` of its own, and with it the only copy
+ *  of the article's photographs. An `img` that turns out to mean nothing is left
+ *  without a `src` for `absolutise` to remove. */
+function undefer(root: ParentNode): void {
   for (const image of root.querySelectorAll('img')) {
     const found = bestSource(image)
-    const absolute = found ? resolved(found, base) : null
 
     // Attributes the note has no use for, and which would otherwise keep a
     // relative address around beside the absolute one.
@@ -92,18 +88,42 @@ export function absolutise(root: ParentNode, base: string): void {
     image.removeAttribute('sizes')
     for (const name of LAZY) image.removeAttribute(name)
 
-    if (!absolute) {
-      image.remove()
-      continue
-    }
-
-    image.setAttribute('src', absolute)
+    if (found) image.setAttribute('src', found)
+    else image.removeAttribute('src')
 
     // The candidates a `<picture>` held have been read; what is left is a
     // wrapper the converter would turn into a stray space in front of the
     // picture.
     const picture = image.parentElement
     if (picture?.tagName.toLowerCase() === 'picture') picture.replaceWith(image)
+  }
+}
+
+/** Every address in the tree made absolute against the page it came from. A link
+ *  the browser would run rather than follow loses its href and stays as words,
+ *  and an image with nowhere to point goes. */
+export function absolutise(root: ParentNode, base: string): void {
+  for (const link of root.querySelectorAll('a[href]')) {
+    const target = absolute(link.getAttribute('href') ?? '', base)
+
+    if (target && followable(target)) link.setAttribute('href', target.href)
+    else link.removeAttribute('href')
+  }
+
+  undefer(root)
+
+  for (const image of root.querySelectorAll('img')) {
+    const src = image.getAttribute('src') ?? ''
+    const target = src ? absolute(src, base) : null
+
+    // A picture may be the page's own bytes as a `data:` URL, so only the
+    // schemes a browser runs are refused here.
+    if (!target || runsCode(target)) {
+      image.remove()
+      continue
+    }
+
+    image.setAttribute('src', target.href)
   }
 }
 
@@ -213,10 +233,29 @@ function contentOf(node: ParentNode, base: string): string {
   return (holder.innerHTML ?? '').trim()
 }
 
+/** What the page's own relative addresses resolve against.
+ *
+ *  The page itself, unless it named something else: a `<base href>` is what the
+ *  browser resolves against, so it is what a note has to resolve against too, or
+ *  every relative address in the clip points somewhere the reader never was. */
+function baseOf(document: Document, url: string): string {
+  return document.baseURI || url
+}
+
 /** The article, as Readability sees it, or null when it sees none. The document
  *  is cloned first because Readability rewrites what it is given. */
-function readable(document: Document, url: string): { title: string; html: string } | null {
+function readable(
+  document: Document,
+  url: string,
+  base: string,
+): { title: string; html: string } | null {
   const clone = document.cloneNode(true) as Document
+
+  // Before the extractor rather than only after it. It keeps an ordinary `img`
+  // and throws a `<picture>` away, which is how most of the publications worth
+  // clipping serve their photographs; and it resolves what is left against the
+  // page's address rather than against whatever the page said its base was.
+  absolutise(clone.body, base)
 
   // Readability strips every class by default, and one of them carries meaning
   // the note wants: `language-rust` on a code block is how the fence learns
@@ -228,7 +267,7 @@ function readable(document: Document, url: string): { title: string; html: strin
   const parsed = document.implementation.createHTMLDocument('')
   parsed.body.innerHTML = article.content
 
-  const html = contentOf(parsed.body, url)
+  const html = contentOf(parsed.body, base)
   if (!html) return null
 
   const named = article.title?.trim() ?? ''
@@ -236,7 +275,7 @@ function readable(document: Document, url: string): { title: string; html: strin
 }
 
 /** What is selected, as HTML, or the empty string when nothing is. */
-function selected(document: Document, url: string): string {
+function selected(document: Document, base: string): string {
   const selection = document.getSelection()
   if (!selection || selection.isCollapsed || selection.rangeCount === 0) return ''
 
@@ -245,16 +284,16 @@ function selected(document: Document, url: string): string {
     holder.body.appendChild(selection.getRangeAt(index).cloneContents())
   }
 
-  return contentOf(holder.body, url)
+  return contentOf(holder.body, base)
 }
 
 /** The whole body, for a page whose article the extractor could not find and
  *  where nothing is selected. Rough, and better than an empty note. */
-function whole(document: Document, url: string): string {
+function whole(document: Document, base: string): string {
   const holder = document.implementation.createHTMLDocument('')
   holder.body.innerHTML = document.body.innerHTML
 
-  return contentOf(holder.body, url)
+  return contentOf(holder.body, base)
 }
 
 /** The page as something to clip, by what was asked for.
@@ -274,13 +313,15 @@ export function extract(document: Document, kind: Kind, url: string, link?: stri
     return { kind, url: target, title, html: '', tags }
   }
 
+  const base = baseOf(document, url)
+
   if (kind === 'selection') {
-    return { kind, url, title: pageTitle(document, url), html: selected(document, url), tags }
+    return { kind, url, title: pageTitle(document, url), html: selected(document, base), tags }
   }
 
-  const article = readable(document, url)
+  const article = readable(document, url, base)
   if (article) return { kind, url, title: article.title, html: article.html, tags }
 
-  const fallback = selected(document, url) || whole(document, url)
+  const fallback = selected(document, base) || whole(document, base)
   return { kind, url, title: pageTitle(document, url), html: fallback, tags }
 }

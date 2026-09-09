@@ -79,6 +79,29 @@ describe('making addresses absolute', () => {
     expect(page.querySelector('a')?.hasAttribute('href')).toBe(false)
   })
 
+  // A browser reads a scheme with tabs and newlines inside it as the scheme, so
+  // whether a link runs code is a question about the address it resolves to and
+  // not about the characters the markup spelled it with.
+  test('sees through a scheme written with something in the middle of it', () => {
+    for (const href of [
+      'java\tscript:alert(1)',
+      'java\nscript:alert(1)',
+      '  JavaScript:alert(1)',
+    ]) {
+      const page = pageOf(`<a href="${href.replace(/\t/g, '&#9;').replace(/\n/g, '&#10;')}">x</a>`)
+      absolutise(page.body, PAGE)
+
+      expect(page.querySelector('a')?.hasAttribute('href'), href).toBe(false)
+    }
+  })
+
+  test('takes it off a link to a document of the page’s own making too', () => {
+    const page = pageOf('<a href="data:text/html,<b>hi</b>">x</a>')
+    absolutise(page.body, PAGE)
+
+    expect(page.querySelector('a')?.hasAttribute('href')).toBe(false)
+  })
+
   test('resolves a picture beside the page', () => {
     const page = pageOf('<img src="photo.jpg">')
     absolutise(page.body, PAGE)
@@ -247,5 +270,39 @@ describe('what to clip', () => {
 
     expect(source.title).toBe('A page')
     expect(source.html).toContain('Three words only.')
+  })
+
+  // Readability keeps an ordinary `img` and throws a `<picture>` away, so the
+  // candidates have to be on the image before it runs. Without that the article
+  // arrives with its photographs missing, which is how the publications that
+  // serve them this way would all have come out.
+  test('an article keeps the photograph a picture element held', () => {
+    const page = pageOf(
+      `<article><p>${'An ordinary sentence of an ordinary article. '.repeat(12)}</p>
+       <p><picture><source srcset="s.jpg 400w, l.jpg 1200w"><img alt="a"></picture></p>
+       <p>${'And a second paragraph of the same, so the extractor has weight. '.repeat(8)}</p>
+       </article>`,
+      `<base href="${PAGE}" />`,
+    )
+
+    const source = extract(page, 'page', PAGE)
+
+    expect(source.html).toContain('https://site.example/section/l.jpg')
+    expect(source.html).not.toContain('<picture')
+  })
+
+  // The browser resolves the page's own relative addresses against its base, so
+  // a clip that resolved them against the address instead would point every one
+  // of them somewhere the reader never was.
+  test('resolves against the base a page named rather than its own address', () => {
+    const page = pageOf(
+      `<article><p>${'An ordinary sentence of an ordinary article. '.repeat(12)}</p>
+       <p><img src="photo.jpg" alt="a"></p>
+       <p>${'And a second paragraph of the same, so the extractor has weight. '.repeat(8)}</p>
+       </article>`,
+      '<base href="https://cdn.example/assets/" />',
+    )
+
+    expect(extract(page, 'page', PAGE).html).toContain('https://cdn.example/assets/photo.jpg')
   })
 })

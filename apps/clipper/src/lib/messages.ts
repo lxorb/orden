@@ -6,6 +6,7 @@
  *  shapes below, and a message that does not fit is a message that never
  *  happened. */
 
+import { absolute, runsCode } from './addresses'
 import type { Origin } from './extract'
 import { type Kind, KINDS } from './kinds'
 import { isRecord, isString, listOf } from './stored'
@@ -44,26 +45,21 @@ function readKind(value: unknown): Kind | null {
   return KINDS.find((one) => one === value) ?? null
 }
 
-/** What a note never records as where it came from. A page is fetched over one
- *  of the ordinary schemes or the extension could never have read it, but a
- *  right clicked link is whatever the markup wrote, and these three are code
- *  rather than a place; see `SAFE_SCHEMES` in `@nib/markdown`, which drops them
- *  again on the way out. */
-const RUNS_CODE = new Set(['javascript:', 'data:', 'vbscript:'])
-
 /** An address, normalised the way a browser writes it, or null for anything
- *  else. Normalised rather than merely checked: the note states it in its front
- *  matter and, for a clipped link, as the one thing in its body, so a `>`, a
- *  space or a line break left in it would end the field it sits in. */
+ *  else.
+ *
+ *  Normalised rather than merely checked: the note states it in its front matter
+ *  and, for a clipped link, as the one thing in its body, so a `>`, a space or a
+ *  line break left in it would end the field it sits in. A right clicked link is
+ *  whatever the markup wrote, so a `data:` document is refused here as well as
+ *  code the browser would run. */
 function readUrl(value: unknown): string | null {
   if (!isString(value)) return null
 
-  try {
-    const parsed = new URL(value)
-    return RUNS_CODE.has(parsed.protocol) ? null : parsed.href
-  } catch {
-    return null
-  }
+  const address = absolute(value)
+  if (!address || runsCode(address) || address.protocol === 'data:') return null
+
+  return address.href
 }
 
 function readOrigin(value: unknown): Origin | null {
