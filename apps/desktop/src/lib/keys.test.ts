@@ -121,6 +121,14 @@ describe('showing a combination', () => {
     expect(showCombination('Mod-Alt-Ctrl-Shift-k', 'mac')).toBe('⌃⌥⇧⌘K')
   })
 
+  /** The key with the flag on it. `Meta` is what a browser calls it and nothing
+   *  a reader has ever seen printed on a keyboard. */
+  test('calls the meta key what the keyboard under it calls it', () => {
+    expect(showCombination('Meta-k', 'win')).toBe('Win+K')
+    expect(showCombination('Meta-k', 'linux')).toBe('Super+K')
+    expect(showCombination('Ctrl-k', 'mac')).toBe('⌃K')
+  })
+
   test('names the keys that have no character', () => {
     expect(showCombination('Alt-ArrowUp', 'win')).toBe('Alt+↑')
     expect(showCombination('Escape', 'win')).toBe('Esc')

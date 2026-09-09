@@ -232,7 +232,9 @@ export function showCombination(text: string, platform: Platform): string {
 
   const parts: string[] = []
   if (combination.ctrl) parts.push('Ctrl')
-  if (combination.meta) parts.push('Meta')
+  // What the key with the flag on it is called where this is read: `Meta` is a
+  // browser's word for it and is printed on no keyboard anywhere.
+  if (combination.meta) parts.push(platform === 'win' ? 'Win' : 'Super')
   if (combination.alt) parts.push('Alt')
   if (combination.shift) parts.push('Shift')
   parts.push(key)
