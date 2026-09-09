@@ -236,6 +236,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
 
+        # And somebody who has not opened their invitation, whose menu holds the
+        # invitation again as well.
+        picks.last.click(force=True)
+        page.wait_for_timeout(400)
+        shot("invitedmenu")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
+
     page.evaluate("() => window.nibApp.share.close()")
     context.close()
 
