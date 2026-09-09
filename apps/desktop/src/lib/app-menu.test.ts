@@ -217,11 +217,11 @@ describe('the palette in another language', () => {
 
   test('says nothing in English', () => {
     // The words that used to be pasted on: `Theme: Sepia`, `Code theme: One`,
-    // `Recent: Note`. Each is a key with a `{name}` in it now.
+    // `Mode: Dark`, `Recent: Note`. Each is a key with a `{name}` in it now.
     const english = inGerman(() =>
       appCommands()
         .map((one) => one.label)
-        .filter((label) => /^(Theme|Code theme|Recent):/.test(label)),
+        .filter((label) => /^(Theme|Code theme|Mode|Recent):/.test(label)),
     )
 
     expect(english).toEqual([])
@@ -248,6 +248,15 @@ describe('the palette in another language', () => {
 
     for (const row of themes) expect(row.hint, row.id).toBeUndefined()
     expect(themes.filter((one) => one.checked).length).toBe(1)
+  })
+
+  /** The scheme is its own choice, so it is its own three rows: the keyboard
+   *  reaches the same ones the Appearance pane offers. */
+  test('offers the three the scheme can be, one of them ticked', () => {
+    const modes = appCommands().filter((one) => one.id.startsWith('scheme:'))
+
+    expect(modes.map((one) => one.id)).toEqual(['scheme:system', 'scheme:dark', 'scheme:light'])
+    expect(modes.filter((one) => one.checked).length).toBe(1)
   })
 })
 

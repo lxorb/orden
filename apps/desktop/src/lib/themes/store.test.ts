@@ -125,8 +125,8 @@ beforeEach(() => {
 
   folder.files.clear()
   theme.files = []
-  theme.id = 'system'
-  theme.side = null
+  theme.id = 'default'
+  theme.scheme = 'system'
   store.themes = []
   store.query = ''
   store.order = 'newest'
@@ -243,7 +243,7 @@ describe('installing, updating and removing', () => {
   test('a pair opens on the side the app was already showing', async () => {
     serving([entry({ variants: ['light', 'dark'] })], PAIR)
     await store.load()
-    theme.select('dark')
+    theme.setScheme('dark')
 
     await store.install(entry({ variants: ['light', 'dark'] }) as never)
 
@@ -254,7 +254,7 @@ describe('installing, updating and removing', () => {
   test('a pair is switched inside itself rather than swapped for a built-in', async () => {
     serving([entry({ variants: ['light', 'dark'] })], PAIR)
     await store.load()
-    theme.select('light')
+    theme.setScheme('light')
     await store.install(entry({ variants: ['light', 'dark'] }) as never)
 
     theme.toggle()
@@ -311,9 +311,9 @@ describe('installing, updating and removing', () => {
     expect(folder.files.size).toBe(0)
     expect(store.installed('warm-paper')).toBe(false)
     expect(store.using('warm-paper')).toBe(false)
-    // Whatever it was showing is gone, so it goes back to following the system
-    // rather than to a theme that is not there.
-    expect(theme.id).toBe('system')
+    // Whatever it was showing is gone, so it goes back to the built-in rather
+    // than to a theme that is not there.
+    expect(theme.id).toBe('default')
   })
 
   test('what the theme asked for and did not get is kept to be said', async () => {
@@ -361,10 +361,10 @@ describe('installing, updating and removing', () => {
  *  the theme's rather than the store's: what the switch does depends entirely on
  *  how many schemes the theme in force states. */
 describe('the light and dark switch', () => {
-  test('is live on the built-ins, which state both schemes between them', () => {
+  test('is live on the built-in, which states both schemes', () => {
     expect(theme.switchable).toBe(true)
 
-    theme.select('dark')
+    theme.setScheme('dark')
     expect(theme.switchable).toBe(true)
 
     theme.toggle()

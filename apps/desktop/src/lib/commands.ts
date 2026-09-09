@@ -37,7 +37,7 @@ import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { invoke, isDesktop, isNative } from './tauri'
-import { theme } from './theme.svelte'
+import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { openFile } from './open-file'
@@ -693,9 +693,19 @@ export function appCommands(view?: EditorView): Command[] {
     // key's place would be a word to read where a shape says it.
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,
-      label: t('Theme: {name}', { name: item.name }),
+      label: t('Theme: {name}', { name: t(item.name) }),
       checked: item.id === theme.id,
       run: () => theme.select(item.id),
+    })),
+    // Whether the app is dark, light, or whatever the system is asking for. A
+    // row each rather than one that flips, so the keyboard reaches the same
+    // three the pane offers, and off where the theme in force cannot show it.
+    ...SCHEME_CHOICES.map((choice) => ({
+      id: `scheme:${choice}`,
+      label: t('Mode: {name}', { name: t(SCHEME_NAMES[choice]) }),
+      checked: choice === theme.shown,
+      disabled: !theme.offers(choice),
+      run: () => theme.setScheme(choice),
     })),
     ...theme.accents.map((swatch) => ({
       id: `accent:${swatch.id}`,

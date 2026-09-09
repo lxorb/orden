@@ -5,12 +5,27 @@ import { type Stamp, stampOf } from './themes/validate'
 
 export type Scheme = 'dark' | 'light'
 
+/** What a reader may ask the app to be: either scheme by name, or whatever the
+ *  system is asking for at the time. */
+export type SchemeChoice = Scheme | 'system'
+
+/** The three the control offers, in the order it draws them. Following the
+ *  system first, because it is where everybody starts. */
+export const SCHEME_CHOICES: SchemeChoice[] = ['system', 'dark', 'light']
+
+/** What each is called. Named here rather than at the control, so the pane, the
+ *  palette and anything else that offers the choice say the same word. */
+export const SCHEME_NAMES: Record<SchemeChoice, string> = {
+  system: 'System',
+  dark: 'Dark',
+  light: 'Light',
+}
+
 interface ThemeInfo {
   id: string
   name: string
-  scheme: Scheme
-  /** Which schemes the theme states. A file stating both is a pair: it follows
-   *  the app's light and dark switch instead of being one or the other. */
+  /** Which schemes the theme states. The built-in states both; a theme file
+   *  states whatever its author wrote, which may be one of them. */
   variants: Scheme[]
   path?: string
   /** Whether the theme states an accent of its own. One that does keeps it: the
@@ -30,32 +45,45 @@ interface ThemeFile {
 }
 
 const STORAGE_KEY = 'nib:theme'
-/** Which side of a theme that states both. */
+/** Which scheme was asked for. Its own key, because it is its own choice: a
+ *  theme has a dark side or a light one or both, and which of them the app is
+ *  showing is not what theme it is. */
+const SCHEME_KEY = 'nib:theme-scheme'
+/** Where the side of a theme that stated both was kept, before the scheme was a
+ *  choice of its own. Read once, by the migration, and never written. */
 const SIDE_KEY = 'nib:theme-side'
 const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
-/** Not a theme of its own: whichever built-in the system asks for, live. */
-const SYSTEM = 'system'
-
-// Two schemes, and a colour of your own on top. More built-in themes only
-// asked people to choose between things that were nearly the same. Kept by
-// scheme as well as in a list, so "the dark one" is a lookup and not a search
-// that might come back empty.
-const BY_SCHEME: Record<Scheme, ThemeInfo> = {
-  dark: { id: 'dark', name: 'Dark', scheme: 'dark', variants: ['dark'] },
-  light: { id: 'light', name: 'Light', scheme: 'light', variants: ['light'] },
-}
-
-const BUILT_IN: ThemeInfo[] = [BY_SCHEME.dark, BY_SCHEME.light]
-
 const ACCENT_KEY = 'nib:accent'
+
+/** The one built-in theme: the app's own tokens, which state both schemes.
+ *
+ *  There was a Dark and a Light in this list, and they were the same theme twice
+ *  with the scheme baked into each. Choosing a look and choosing whether the room
+ *  is dark are two questions, and a dropdown that mixed them could not offer a
+ *  theme that has both sides without offering it twice. So the built-in is one
+ *  theme with two sides, and the scheme is chosen beside it. */
+const DEFAULT_ID = 'default'
+const DEFAULT_THEME: ThemeInfo = {
+  id: DEFAULT_ID,
+  name: 'Default',
+  variants: ['dark', 'light'],
+}
 
 const LIGHT = '(prefers-color-scheme: light)'
 
 /** The line the store writes on the front of a theme it installs. Taken off
  *  before the file is read for what it sets: what it says is a name, not CSS. */
 const STAMP_LINE = /^\s*\/\*!\s*nib-theme\s*\{.*?\}\s*\*\//
+
+function isScheme(value: unknown): value is Scheme {
+  return value === 'dark' || value === 'light'
+}
+
+function isChoice(value: unknown): value is SchemeChoice {
+  return isScheme(value) || value === 'system'
+}
 
 /** Which schemes a theme file states.
  *
@@ -73,34 +101,36 @@ function variantsOf(css: string): Scheme[] {
 }
 
 class Themes {
-  id = $state<string>(SYSTEM)
+  id = $state<string>(DEFAULT_ID)
+  /** Which scheme was asked for, which is a choice and not a theme. `system`
+   *  follows the media query through the day rather than only at launch. */
+  scheme = $state<SchemeChoice>('system')
   accent = $state<string>(DEFAULT_ACCENT)
   files = $state<ThemeInfo[]>([])
-  /** What the system currently prefers. Kept up to date, so following it
-   *  means following it through the day and not only at launch. */
+  /** What the system currently prefers. */
   private preferred = $state<Scheme>('dark')
-  /** Which side of a theme that states both, once something has said. Null
-   *  follows the system, the same as the built-in choice does. A choice like
-   *  the theme itself, so it is held the same way. */
-  side = $state<Scheme | null>(null)
 
   readonly accents = ACCENTS
 
-  /** The choice at the top is to follow the system; the rest are themes. A
-   *  theme file that states both schemes is shown as whichever it is showing,
-   *  so the accent and the system bars are read off the right one. */
-  readonly all = $derived<ThemeInfo[]>([
-    { id: SYSTEM, name: 'Match the system', scheme: this.preferred, variants: [this.preferred] },
-    ...BUILT_IN,
-    ...this.files.map((file) =>
-      file.variants.length > 1 ? { ...file, scheme: this.side ?? this.preferred } : file,
-    ),
-  ])
-  readonly active = $derived.by((): ThemeInfo => {
-    if (this.id === SYSTEM) return BY_SCHEME[this.preferred]
-    return this.all.find((theme) => theme.id === this.id) ?? BY_SCHEME.dark
-  })
-  readonly current = $derived(this.active.scheme)
+  /** The built-in first, then what is installed, in the order the folder gave
+   *  them - both platforms list a folder by name, so the order is the same on
+   *  every machine and does not move as themes are used. */
+  readonly all = $derived<ThemeInfo[]>([DEFAULT_THEME, ...this.files])
+
+  readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
+
+  /** The scheme that was asked for, by name or through the system. */
+  readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
+
+  /** The scheme the app is actually in: the one asked for, or the one the theme
+   *  in force has where it does not have that one. A theme with a single scheme
+   *  is that scheme and never half of one, and a reader asking a light-only theme
+   *  for its dark is not handed ours instead. */
+  readonly current = $derived<Scheme>(
+    this.active.variants.includes(this.wanted)
+      ? this.wanted
+      : (this.active.variants[0] ?? this.wanted),
+  )
 
   /** What the store has put in the folder, by the id the registry knows it
    *  under, so the gallery can mark a card installed and offer an update. */
@@ -113,16 +143,42 @@ class Themes {
     this.preferred = light.matches ? 'light' : 'dark'
     light.addEventListener('change', (event) => {
       this.preferred = event.matches ? 'light' : 'dark'
-      if (this.id === SYSTEM) this.apply()
+      if (this.scheme === 'system') this.apply()
     })
 
-    const saved = localStorage.getItem(STORAGE_KEY)
-    this.id = saved && saved !== 'null' ? saved : SYSTEM
-    const side = localStorage.getItem(SIDE_KEY)
-    this.side = side === 'light' || side === 'dark' ? side : null
+    this.restoreChoice()
     this.accent = localStorage.getItem(ACCENT_KEY) ?? DEFAULT_ACCENT
     this.apply()
     void this.reload()
+  }
+
+  /** What was chosen, in whichever version's spelling.
+   *
+   *  `dark`, `light` and `system` were themes in the dropdown before the scheme
+   *  became a choice beside the theme. Each of them means the built-in theme and
+   *  a scheme, so that is what they are read as. The side of a theme that stated
+   *  both was already this choice under another name, so it is taken as the
+   *  scheme where the theme is a file.
+   *
+   *  Written back in the new spelling at once, so nothing further along has to
+   *  know there was an old one. */
+  private restoreChoice() {
+    const saved = localStorage.getItem(STORAGE_KEY) ?? ''
+    const chosen = localStorage.getItem(SCHEME_KEY)
+    const side = localStorage.getItem(SIDE_KEY)
+
+    this.scheme = isChoice(chosen)
+      ? chosen
+      : isChoice(saved)
+        ? saved
+        : isScheme(side)
+          ? side
+          : 'system'
+
+    this.id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
+
+    localStorage.setItem(STORAGE_KEY, this.id)
+    localStorage.setItem(SCHEME_KEY, this.scheme)
   }
 
   /** Rescans the themes folder, so dropping in a file needs no restart, and so
@@ -141,16 +197,14 @@ class Themes {
         // Read past the stamp: it holds a name out of the catalogue, and a theme
         // called `--accent:` would otherwise be read as one that brings its own.
         const css = whole.replace(STAMP_LINE, '')
-        const variants = variantsOf(css)
 
         return {
           ...file,
           // The store's own name for it, which is spelled the way its author
           // spelled it rather than worked out from the file name.
           ...(stamp ? { name: stamp.name, stamp } : {}),
-          variants,
+          variants: variantsOf(css),
           ownAccent: /--accent\s*:/.test(css),
-          scheme: variants[0] ?? 'dark',
         }
       })
     } catch {
@@ -158,7 +212,7 @@ class Themes {
     }
 
     // A theme file may have been deleted while it was selected.
-    if (!this.all.some((theme) => theme.id === this.id)) this.select(SYSTEM)
+    if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
     // Otherwise applied again now that the folder has been read: at launch the
     // theme was chosen before the files were known, so a file theme had nothing
     // to apply and its accent was nobody's yet.
@@ -186,25 +240,53 @@ class Themes {
     style.textContent = css
   }
 
+  /** Chooses the theme, and only the theme. The scheme is left exactly as it
+   *  was: a theme with one side shows that side without the choice changing, so
+   *  going back to a theme that has both comes back to what was asked for. */
   select(id: string) {
-    // Read before the choice changes: what the app is showing right now, or
-    // nothing at all for somebody who is following the system.
-    const was = this.id === SYSTEM ? null : this.current
-
     this.id = id
-    // A theme that states both schemes opens on the side the app was already
-    // on. Choosing a theme is not a request to change the light, and taking the
-    // system's preference here would turn one explicit choice into an implicit
-    // one. Somebody who was following the system goes on following it.
-    if (was && !this.side && this.active.variants.length > 1) this.setSide(was)
-
     this.apply()
     localStorage.setItem(STORAGE_KEY, id)
   }
 
-  private setSide(scheme: Scheme) {
-    this.side = scheme
-    localStorage.setItem(SIDE_KEY, scheme)
+  /** Whether the light and dark switch has anywhere to go, which is what makes
+   *  it a switch rather than a button that throws a theme away.
+   *
+   *  The app's own tokens state both schemes, so the built-in is one pair and the
+   *  switch is live on it. A theme file is whatever it said it was: one that
+   *  states both is switched inside itself, and one that states a single scheme
+   *  has no other side to show. */
+  readonly switchable = $derived(this.active.variants.length > 1)
+
+  /** Whether the theme in force can be shown that way.
+   *
+   *  A theme that states one scheme has no other side, and following the system
+   *  would ask it for the side it does not have half the time. So on such a theme
+   *  only its own scheme is offered; every control that chooses the scheme reads
+   *  this and disables what it cannot honour. */
+  offers(choice: SchemeChoice): boolean {
+    return this.switchable || choice === this.current
+  }
+
+  /** Which of the three a control points at. The choice itself, unless the theme
+   *  cannot be shown that way, in which case the scheme it does have: a control
+   *  pointing at a scheme the theme lacks would be saying something untrue. */
+  readonly shown = $derived<SchemeChoice>(this.switchable ? this.scheme : this.current)
+
+  setScheme(choice: SchemeChoice) {
+    if (!this.offers(choice)) return
+
+    this.scheme = choice
+    localStorage.setItem(SCHEME_KEY, choice)
+    this.apply()
+  }
+
+  /** The rail's one-click switch: jump to the counterpart scheme. An explicit
+   *  choice, so it stops following the system until that is chosen again. */
+  toggle() {
+    if (!this.switchable) return
+
+    this.setScheme(this.current === 'dark' ? 'light' : 'dark')
   }
 
   setAccent(id: string) {
@@ -235,38 +317,6 @@ class Themes {
     for (const [token, value] of Object.entries(tokens)) style.setProperty(token, value)
   }
 
-  /** Whether the light and dark switch has anywhere to go, which is what makes
-   *  it a switch rather than a button that throws a theme away.
-   *
-   *  The app's own tokens state both schemes, so following the system and either
-   *  built-in are all one pair and the switch is live on all three. A theme file
-   *  is whatever it said it was: one that states both is switched inside itself,
-   *  and one that states a single scheme has no other side to show. Every
-   *  control that switches the scheme reads this and is disabled where it is
-   *  false, because the alternative is a reader asking a light-only theme for
-   *  its dark and being handed ours instead. */
-  readonly switchable = $derived(!this.active.path || this.active.variants.length > 1)
-
-  /** The rail's one-click switch: jump to the counterpart scheme. An explicit
-   *  choice, so it stops following the system until that is chosen again.
-   *
-   *  A theme that states both schemes is switched inside itself rather than
-   *  swapped for a built-in: somebody using a pair asked for that theme's dark,
-   *  not for ours. */
-  toggle() {
-    if (!this.switchable) return
-
-    const wanted: Scheme = this.current === 'dark' ? 'light' : 'dark'
-
-    if (this.active.variants.length > 1) {
-      this.setSide(wanted)
-      this.apply()
-      return
-    }
-
-    this.select(BY_SCHEME[wanted].id)
-  }
-
   /** Which application is the latest. Reading a theme file is a round trip, and
    *  installing one asks for two of them a moment apart: the rescan applies what
    *  is still the old theme, and choosing the new one applies that. Whichever
@@ -278,9 +328,9 @@ class Themes {
     const theme = this.active
     const applying = ++this.applied
 
-    // Built-in tokens still provide the base, so a file theme only overrides
-    // what it cares about.
-    document.documentElement.dataset.theme = theme.path ? theme.scheme : theme.id
+    // The scheme decides the tokens, whichever theme sits on top of them: the
+    // built-in states both, and a theme file only overrides what it cares about.
+    document.documentElement.dataset.theme = this.current
     this.paintAccent()
     this.paintSystemBars()
 
