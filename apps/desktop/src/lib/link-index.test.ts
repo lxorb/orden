@@ -369,3 +369,52 @@ describe('a picture named by an embed', () => {
     expect(links.fileNamed('missing.png')).toBeNull()
   })
 })
+
+/** The icon a row wears, which rides along on the same pass. A file list asks
+ *  this once per row, so what it must never be is a read of the file. */
+describe('the icon a note says it wears', () => {
+  test('comes off the scan of the space', async () => {
+    await space({
+      'Plan.md': '---\nicon: rocket\n---\n\n# Plan',
+      'Plain.md': '# Plain',
+    })
+
+    expect(links.iconOf(at('Plan.md'))).toBe('rocket')
+    expect(links.iconOf(at('Plain.md'))).toBeNull()
+  })
+
+  test('as written, whichever convention wrote it', async () => {
+    await space({
+      'Obsidian.md': '---\nicon: LiFileText\n---\n',
+      'Emoji.md': '---\nicon: 🚀\n---\n',
+    })
+
+    expect(links.iconOf(at('Obsidian.md'))).toBe('LiFileText')
+    expect(links.iconOf(at('Emoji.md'))).toBe('🚀')
+  })
+
+  test('by the path a row knows, wherever the row is', async () => {
+    await space({ 'ideas/Plan.md': '---\nicon: rocket\n---\n' })
+
+    // The tree knows where the file is; a bookmark and a search hit know it
+    // relative to the space.
+    expect(links.iconOf(at('ideas/Plan.md'))).toBe('rocket')
+    expect(links.iconOf('ideas/Plan.md')).toBe('rocket')
+  })
+
+  test('and changes the moment the note does, without the space being read again', async () => {
+    await space({ 'Plan.md': '# Plan' })
+    expect(links.iconOf(at('Plan.md'))).toBeNull()
+
+    links.noteSaved(at('Plan.md'), '---\nicon: anchor\n---\n\n# Plan')
+    expect(links.iconOf(at('Plan.md'))).toBe('anchor')
+
+    links.noteSaved(at('Plan.md'), '# Plan')
+    expect(links.iconOf(at('Plan.md'))).toBeNull()
+  })
+
+  test('a note outside the space wears nothing', async () => {
+    await space({ 'Plan.md': '---\nicon: rocket\n---\n' })
+    expect(links.iconOf('/elsewhere/Plan.md')).toBeNull()
+  })
+})

@@ -51,6 +51,12 @@ pub struct Note {
     /// The `^abc123` names blocks in this note carry.
     blocks: Vec<String>,
     links: Vec<Link>,
+    /// What the note's front matter says it wears in the file list, as written:
+    /// `file-text`, Iconize's `LiFileText` or an emoji. None where it says
+    /// nothing, which is almost every note. Read here because the pass over the
+    /// space is already reading every note, and reading them a second time for
+    /// one line of metadata would be a second pass over the disk.
+    icon: Option<String>,
 }
 
 /// A whole space's links.
@@ -91,6 +97,7 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
             headings: headings_in(&body),
             blocks: block_ids_in(&body),
             links: links_in(&body),
+            icon: front_matter_value(&body, "icon"),
         });
     }
 
@@ -98,6 +105,78 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         notes: out,
         files: others.iter().map(|path| relative_to(&dir, path)).collect(),
     })
+}
+
+/// A top-level `key: value` from the note's front matter, quotes stripped, or
+/// None where the note has no block, no such key, or nothing after the colon.
+///
+/// The twin of `frontMatterValue` in `packages/markdown/src/front-matter.ts`,
+/// which the browser build reads a space with; the tests at the bottom hold the
+/// two to the same answers. A key indented under another one belongs to that one
+/// and is not read: `paper` under `export:` is not the note's paper.
+fn front_matter_value(body: &str, key: &str) -> Option<String> {
+    let first = body.find('\n')?;
+    if body[..first].trim() != "---" {
+        return None;
+    }
+
+    // The block has to close, or the note opens with a rule rather than metadata.
+    let mut close = None;
+    let mut at = first + 1;
+    while at <= body.len() {
+        let end = body[at..].find('\n').map_or(body.len(), |one| at + one);
+        if body[at..end].trim() == "---" {
+            close = Some(at);
+            break;
+        }
+        if end >= body.len() {
+            break;
+        }
+        at = end + 1;
+    }
+
+    let close = close?;
+    let mut at = first + 1;
+    while at < close {
+        let end = body[at..]
+            .find('\n')
+            .map_or(close, |one| at + one)
+            .min(close);
+        if let Some(said) = value_of(&body[at..end], key) {
+            return Some(said);
+        }
+        at = end + 1;
+    }
+
+    None
+}
+
+/// What one line says under `key`, or None when the line is another key, a list
+/// item, or a line indented under something else.
+fn value_of(line: &str, key: &str) -> Option<String> {
+    let (named, said) = line.split_once(':')?;
+    // A key of the note's own stands at the left margin; an indented one belongs
+    // to the key above it.
+    if named.starts_with(char::is_whitespace) || !named.trim_end().eq_ignore_ascii_case(key) {
+        return None;
+    }
+
+    let value = said.trim();
+    let bare = value
+        .strip_prefix('"')
+        .and_then(|one| one.strip_suffix('"'))
+        .or_else(|| {
+            value
+                .strip_prefix('\'')
+                .and_then(|one| one.strip_suffix('\''))
+        })
+        .unwrap_or(value);
+
+    if bare.is_empty() {
+        None
+    } else {
+        Some(bare.to_string())
+    }
 }
 
 /// Whether a line opens or closes a fenced code block.
@@ -536,7 +615,9 @@ fn hex(byte: u8) -> Option<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{block_id_of, decode, heading_of, headings_in, links_in, without_code};
+    use super::{
+        block_id_of, decode, front_matter_value, heading_of, headings_in, links_in, without_code,
+    };
 
     fn targets(body: &str) -> Vec<String> {
         links_in(body).into_iter().map(|one| one.target).collect()
@@ -691,5 +772,57 @@ mod tests {
         assert_eq!(block_id_of("a^b"), None);
         assert_eq!(block_id_of("^abc in the middle"), None);
         assert_eq!(block_id_of("x^2^ is a superscript"), None);
+    }
+
+    /// The front matter, which the scan reads the icon a row wears out of. Every
+    /// case here has its twin in `packages/markdown/src/front-matter.test.ts`.
+    fn icon(body: &str) -> Option<String> {
+        front_matter_value(body, "icon")
+    }
+
+    #[test]
+    fn reads_a_key_from_the_front_matter() {
+        assert_eq!(
+            icon("---\nicon: rocket\n---\n\n# Plan").as_deref(),
+            Some("rocket")
+        );
+        assert_eq!(
+            icon("---\ntitle: Plan\nicon: file-text\n---\n").as_deref(),
+            Some("file-text")
+        );
+        assert_eq!(icon("---\nICON: rocket\n---\n").as_deref(), Some("rocket"));
+    }
+
+    #[test]
+    fn takes_the_quotes_off_a_value() {
+        assert_eq!(
+            icon("---\nicon: \"rocket\"\n---\n").as_deref(),
+            Some("rocket")
+        );
+        assert_eq!(
+            icon("---\nicon: 'rocket'\n---\n").as_deref(),
+            Some("rocket")
+        );
+    }
+
+    #[test]
+    fn reads_an_emoji_as_what_it_says() {
+        assert_eq!(icon("---\nicon: 🚀\n---\n").as_deref(), Some("🚀"));
+    }
+
+    #[test]
+    fn reads_nothing_where_there_is_nothing_to_read() {
+        assert_eq!(icon("# Plan\n\nwords"), None);
+        assert_eq!(icon("---\ntitle: Plan\n---\n"), None);
+        assert_eq!(icon("---\nicon:\n---\n"), None);
+        // A block that never closes is a note that opens with a rule.
+        assert_eq!(icon("---\nicon: rocket\n\n# Plan"), None);
+        // And a key below the block is the note's words rather than its metadata.
+        assert_eq!(icon("---\ntitle: Plan\n---\n\nicon: rocket\n"), None);
+    }
+
+    #[test]
+    fn a_key_indented_under_another_is_not_the_notes_own() {
+        assert_eq!(icon("---\nexport:\n  icon: rocket\n---\n"), None);
     }
 }

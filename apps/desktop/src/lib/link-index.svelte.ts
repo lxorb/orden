@@ -141,6 +141,37 @@ class Links {
     return this.root
   }
 
+  /** The notes that said they wear an icon, by path.
+   *
+   *  Only those, because a space of a thousand notes has a handful: the map is
+   *  the size of what was chosen rather than of the space. Derived, so a row asks
+   *  a lookup rather than a walk, and so every row that shows a note redraws by
+   *  itself the moment the note's front matter changes - which is what makes
+   *  choosing an icon land in the tree, the tabs and the search results at once
+   *  without any of them being told. */
+  private readonly icons = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const note of this.notes) {
+      if (note.icon) map.set(note.path, note.icon)
+    }
+
+    return map
+  })
+
+  /** What the note at this path says it wears, as written, or null where it says
+   *  nothing. The value is read in icons.ts, which knows the conventions.
+   *
+   *  Takes a path as the app holds one or as the index speaks it, because the
+   *  surfaces that show a file disagree: a row in the tree knows where the file
+   *  is on the disk, and a bookmark or a search hit knows it relative to the
+   *  space. */
+  iconOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.icons.get(relative) ?? null
+  }
+
   /** Forgets everything, for a window with no space open. */
   clear() {
     this.root = null

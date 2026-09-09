@@ -6,6 +6,7 @@
  *  function, so a note re-read after a save cannot come back looking different
  *  from the same note read by the first scan. */
 
+import { frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { readCanvas } from './canvas/format'
 
@@ -32,6 +33,10 @@ export interface ScannedNote {
   headings: string[]
   blocks: string[]
   links: ScannedLink[]
+  /** What the note's front matter says it wears in the file list, as written, or
+   *  null where it says nothing. Read in this pass rather than in one of its own:
+   *  every row of the tree wants it, and the space has already been read here. */
+  icon: string | null
 }
 
 export interface SpaceLinks {
@@ -52,6 +57,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     name: (path.split('/').pop() ?? path).replace(MARKDOWN, ''),
     headings: headingsOf(content),
     blocks: blockIds(content).map((one) => one.id),
+    icon: frontMatterValue(content, 'icon'),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,
@@ -84,6 +90,10 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     name: path.split('/').pop() ?? path,
     headings: [],
     blocks: [],
+    // A canvas is JSON rather than a note, so it has no front matter to say what
+    // it wears. Its own file could hold one under the `nib` key that already
+    // carries the ink; nothing writes one yet.
+    icon: null,
     links: canvas.nodes
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
       .map((node) => ({
