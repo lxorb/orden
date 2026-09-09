@@ -9,10 +9,10 @@
 # blank.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable nib_0.6.0_amd64.snap`; see
+# account and `snapcraft upload --release=stable nibeditor_0.6.0_amd64.snap`; see
 # packaging/README.md.
-name: nib
-title: Nib
+name: nibeditor
+title: nibeditor
 base: core24
 version: '0.6.0'
 summary: Markdown editor with live preview
@@ -48,7 +48,7 @@ platforms:
   arm64:
 
 apps:
-  nib:
+  nibeditor:
     command: usr/bin/nib
     desktop: usr/share/applications/nib.desktop
     extensions: [gnome]
@@ -71,7 +71,7 @@ apps:
       WEBKIT_DISABLE_DMABUF_RENDERER: '1'
 
 parts:
-  nib:
+  nibeditor:
     plugin: dump
     source-type: deb
     source:
