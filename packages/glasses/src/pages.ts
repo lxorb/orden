@@ -24,7 +24,7 @@
  *  the glasses to the phone's own scroll in both directions, and what the frame
  *  drawn in the plugin is drawn around. */
 
-import { fit, fold, rightward, wrap } from './firmware'
+import { fit, fold, rightward, SPACE, width, wrap } from './firmware'
 import { hashOf } from './hash'
 import { hangOf, type Line, markLines } from './mark'
 
@@ -35,9 +35,9 @@ export interface Paging {
   breakAt: number
   /** How wide the column of line numbers is, in pixels, or zero for no numbers.
    *
-   *  A width rather than a switch, because the numbers are a container of their
-   *  own and their column is the app's geometry, not the pager's; see `panel.ts`
-   *  for why they cannot live inside the body's own text. */
+   *  A width rather than a switch, because the numbers are a container of their own
+   *  laid over the left of the body, and the note's rows are pushed in by this much
+   *  to clear it. See `panel.ts` for why they cannot live in the body's own text. */
   gutter: number
   /** How wide the body container is, in pixels. */
   inner: number
@@ -101,7 +101,14 @@ export function pagesOf(source: string, paging: Paging): Page[] {
   const marked = markLines(source, { inner: paging.inner })
   if (!marked.length) return []
 
-  const inner = paging.inner
+  // A constant indent rather than a padded number: constant is what has no jitter
+  // in it, and it is what lets every screen that is not a note keep the whole width
+  // of the panel. See `panel.ts`.
+  const indent = ' '.repeat(paging.gutter > 0 ? Math.ceil(paging.gutter / SPACE) : 0)
+  // One space of slack, because the font kerns: a row wrapped to exactly what is
+  // left is a row that measures a pixel over once the indent is in front of it, and
+  // a pixel over is a row the container wraps.
+  const inner = paging.inner - width(indent) - (indent === '' ? 0 : SPACE)
   const pages: Page[] = []
   let taking = empty('', LIGHT)
 
@@ -113,13 +120,14 @@ export function pagesOf(source: string, paging: Paging): Page[] {
     const counted: string[] = []
     for (const { line, rows } of taking.taken) {
       for (const [at, row] of rows.entries()) {
-        shown.push(row)
+        shown.push(indent + row)
         // Only the first row of a line carries its number: the rest are the same
         // line of the note, and saying so twice is a lie about where you are.
-        if (paging.gutter > 0) {
-          counted.push(
-            at === 0 ? rightward(fit(String(line.at), paging.gutter), paging.gutter) : '',
-          )
+        if (indent !== '') {
+          // Against the right of its own column, whatever its digits, with a space
+          // kept clear on either side so a number can never touch a word.
+          const room = paging.gutter - SPACE * 2
+          counted.push(at === 0 ? rightward(fit(String(line.at), room), room) : '')
         }
       }
     }

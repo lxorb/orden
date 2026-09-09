@@ -264,6 +264,16 @@ describe('nothing in a note is dropped', () => {
     expect(one('<div>block</div>')).toBe('block')
   })
 
+  test('a paragraph hard wrapped in the file is one line, not one per file line', () => {
+    // A single newline inside a paragraph is a space in markdown. Read as a break
+    // it was two lines on the panel for every wrapped paragraph in every note, both
+    // numbered with the line the paragraph started on, and the panel held half of
+    // what it should.
+    expect(lines('one two\nthree four\nfive six\n')).toEqual(['one two three four five six'])
+    expect(lines('- one two\n  three four\n')).toEqual(['• one two three four'])
+    expect(lines('> one two\n> three four\n')).toEqual(['│ one two three four'])
+  })
+
   test('a hard break is two lines, the second under the words of the first', () => {
     // Three spaces, which is the fourteen pixels the bullet and its space took,
     // to the nearest five pixel space.

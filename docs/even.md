@@ -1,12 +1,17 @@
 # Nib on the Even Realities G2
 
 The plugin is the web app with one thing added: a bridge that keeps the glasses
-showing whatever note is active in it. Same components, same stores, same
-browser storage, same sign-in, same sync. It is served at
-`https://nibeditor.com/even/`, and it does nothing at all in a browser that has
-no glasses behind it.
+showing whatever note is active in it, and lets the glasses say back which note
+that should be. Same components, same stores, same browser storage, same sign-in,
+same sync. It is served at `https://nibeditor.com/even/`, and it does nothing at
+all in a browser that has no glasses behind it.
 
-![The first page of a note, as the simulator draws it](even/glasses-1.png)
+**Everything on the panel is text.** No image container is made at all: a page of
+words is one call of about 83 ms where four image sends are 740, and the whole of
+what a note means has to be said in one font in one size with no alignment. How
+that is done is section 3, and it is the most interesting page here.
+
+![The first page of a note, in the firmware's own type](even/glasses-1.png)
 
 Everything below was written against **`@evenrealities/even_hub_sdk` 0.0.15**
 (published 2026-09-07), **`@evenrealities/evenhub-cli` 0.1.14** and
@@ -55,11 +60,14 @@ one). There is **no icon field**: the portal takes the icon as an upload.
 | `min_app_version` | the phone app floor; `evenhub pack` stamps it from the SDK unless `--enforce-manual-version` |
 | `min_sdk_version` | the SDK built against |
 | `entrypoint` | a path inside the build folder: for us `even.html` |
-| `permissions` | array of `{ name, desc }`, plus `whitelist` for `network` |
+| `permissions` | array of `{ name, desc }`, plus `whitelist` for `network`. The plugin asks for `network` and `microphone`. |
 | `supported_languages` | from `en de fr es it zh ja ko`. Swiss German has no code here, so it is not listed. |
 
-Our `network` whitelist is `https://nibeditor.com`: one entry per full origin,
-no wildcards, no bare hostnames. The phone app blocks any request to a host that
+Our `network` whitelist is `https://nibeditor.com` and `https://api.openai.com`:
+one entry per full origin, no wildcards, no bare hostnames. The second is where a
+spoken question goes, with the account's own key and nothing of ours in the middle;
+without it on this list the phone app blocks the request before it leaves the
+WebView. The phone app blocks any request to a host that
 is not on it before the request leaves the WebView, and CORS still applies on top
 of that. See "What still has to be decided" below.
 
@@ -69,13 +77,15 @@ of that. See "What still has to be decided" below.
   is a pixel that is off, which on these glasses is see-through rather than
   black. So a page is drawn as light on nothing.
 - At most **four image containers and eight text or list containers**, twelve in
-  all, and exactly one of them must carry `isEventCapture: 1`.
-- An **image container is at most 288 wide and 144 tall**. The panel therefore
-  takes exactly four of them, which is also the most that are allowed.
-- An image container **cannot** capture events. The documented pattern is a
-  full-screen text container behind them with `content: ' '`, which is what the
-  plugin does; `zOrderIndex` decides the stacking and does not touch input
-  routing.
+  all, and exactly one of them must carry `isEventCapture: 1`. The plugin makes
+  seven text containers and no image container at all; see section 2.
+- An **image container is at most 288 wide and 144 tall**, so a panel takes exactly
+  four of them, which is also the most that are allowed. None is made.
+- An image container **cannot** capture events, and neither can a text container
+  holding anything that overflows it: the capture layer is a full-screen text
+  container with a single space in it, behind everything, so a scroll is at both
+  ends of it at once and reaches us instead of scrolling something invisible.
+  `zOrderIndex` decides the stacking and does not touch input routing.
 - A **text container has no typography at all**: one font baked into the
   firmware, no family, no size, no weight, no slant, no alignment, a fixed 27
   pixel line, and five brightness levels (`textColor` 0 to 4). This is the single
@@ -140,8 +150,13 @@ Two traps, both guarded in `sdk.ts` and both covered by tests:
    every scroll, every lifecycle event and every audio frame becomes a tap.
 2. **A double press must be matched before a single one.**
 
-A swipe reaches the container that captures events, which for us is the text
-container, so it arrives on `textEvent`. A press is always a `sysEvent`.
+A swipe reaches the container that captures events, which for us is the capture
+layer, so it arrives on `textEvent`. A press is always a `sysEvent`.
+
+**Sound arrives on the same subscription**, as `audioEvent`, fifty times a second
+while the microphone is open. It carries no event type of its own, so anything that
+reads a default outside the check for the envelope turns every frame of sound into a
+tap; `sdk.ts` reads it first for that reason, and a test holds it there.
 
 ### The page's life
 
@@ -183,228 +198,366 @@ accepted and drawn; it proves nothing about how long that takes.
 
 ---
 
-## 2. The renderer
+## 2. Text, and only text
 
-`packages/glasses` turns a note into pages of pixels. Everything but `raster.ts`
-and `fonts.ts` is pure TypeScript with no DOM in it, which is what lets the
-layout be tested without a browser.
-
-```
-blocks.ts   the app's own markdown grammar, flattened into blocks
-code.ts     a fence, told apart into token kinds by the editor's own parsers
-grey.ts     the code theme in sixteen greys
-runs.ts     styled pieces, and the editor's own ligature glyphs among them
-layout.ts   blocks into lines, lines into pages
-hash.ts     what a page is, in one short string
-raster.ts   a page drawn to pixels, on a canvas nobody sees
-encode.ts   pixels into the bytes the glasses want
-sheets.ts   all of the above, in order, cached by page
-```
-
-### One grammar, one set of faces
-
-The blocks come from `lexMarkdown` in `@nib/markdown`: the same tokens the
-reading view and a published page are built from, with the same maths, callouts,
-definition lists, emoji and wikilinks. The faces are read from the theme's own
-tokens at draw time, so a note on the glasses is set in whatever the app is set
-in. Neither is a copy that can drift.
-
-The ligature glyphs come from `findLigatures` in the editor package, which reads
-the editor's own `LIGATURES` table, and they honour the account's scope: nowhere,
-in code only, or everywhere. A glyph is drawn over the width the characters it
-stands for would have taken, exactly as the editor paints it over them, so a
-fence's columns still line up.
-
-### The measure
-
-A 576 pixel panel with a 10 pixel margin leaves 556. Body text is set at 16 px in
-the content face, which averages a little under half its size per character:
-about 70 characters to the line, which is what a page of prose wants. A test
-asserts the number stays between 60 and 80, so a change to the size or the
-margins that walks out of that band fails rather than ships.
-
-Leading is 1.3 rather than the app's 1.72. The panel has 268 usable pixels and
-every tenth of leading costs a line.
-
-The note is set **across the whole width**, left aligned, not down a column in
-the middle. A column would throw away two thirds of the glass.
-
-### Telling code apart without colours
-
-A palette tells a keyword from a string by hue, and the panel has no hue. Drawing
-eight token kinds as eight brightnesses puts most of them within one step of each
-other, which on glass is no difference at all. So brightness carries part of the
-distinction and weight and slant carry the rest: six bands of grey, read plain,
-bold or italic.
-
-The bands do not overlap *within one emphasis*, which is the whole of why two
-roles can never look alike: two roles at the same brightness are always plain
-against italic, or plain against bold. The palette chooses only where inside its
-band a role sits, so switching the code theme still changes what the glasses
-show, and no theme can make its own comments brighter than its own keywords.
-
-Brightness is not taken from the palette's own luminance, and that is deliberate:
-a palette is made for paper or for a dark window, where a keyword may well be the
-darkest thing on the line, and the panel lights pixels rather than inking them,
-so dark means invisible.
-
-### Where a page ends
-
-A page ends between lines, never inside one. A line that only exists because the
-one before it ran out of room - the second half of a wrapped line of code, the
-words under a heading, the first row of a table under its head - is glued to it,
-and the two move to the next page together. That is the rule that keeps a page
-break out of the middle of a line of a fence, and it is tested.
-
-Every page carries `from` and `to`: where in the note it starts, counted from the
-first byte of the file, front matter included. `pageAt` runs the map the other
-way. Both are what keep a reader in place when the note is edited under them.
-
-### Formulae and pictures
-
-KaTeX renders a formula to HTML; the HTML goes into an SVG `foreignObject` with
-the app's own KaTeX stylesheet and its faces inlined as `data:` URIs (which
-`math-fonts.ts` already builds for exports), and the SVG is decoded into a
-picture the canvas draws. A formula that cannot be drawn falls back to its own
-source in the mono face, and takes the room the source takes, so the line breaks
-where it will actually break either way.
-
-Both are prepared before the note is laid out, not while it is drawn: a line
-cannot be broken until its formula's width is known.
-
-Pictures are quantised with an ordered dither. Text never is: the display notes
-warn that diffusing error over a panel this coarse comes out as moving speckle,
-and a dither over small type is mush.
-
-### Measurements
-
-Taken in Chromium against the real fonts, with the faces already loaded.
-
-| | |
-| --- | --- |
-| A 20 KB note, all pages laid out | **78 to 84 ms**, 55 pages |
-| The sample note in `docs/even/`, first render, with maths | 211 to 226 ms |
-| The same note again, no maths to prepare | 64 to 66 ms |
-| A page drawn and cut into four PNGs | about 20 ms |
-| One quadrant as PNG | 7 to 15 KB, against 20,736 bytes of gray4 |
-
-The 200 ms target for a 20 KB note is met with room to spare; the first render of
-a note with formulae in it spends most of its time in KaTeX and in decoding the
-formula pictures, and every one of those is cached afterwards.
-
-Each page's bitmap is produced once and kept under a hash of everything that
-decides a pixel: the words, the styles, the positions, the greys, and the page
-count in the corner. Scrolling back through a note costs nothing, and an edit
-that leaves a page alone leaves its bytes alone.
-
----
-
-## 3. Bitmaps or text containers: the decision
-
-**The plugin draws every page as a bitmap. It uses a text container only as the
-event layer, and as a fallback when the image channel dies.** This was the
-question the design turned on, so here is the arithmetic and the reasoning.
+**Every screen the plugin shows is text containers. No image container is made at
+all.** That is the decision the whole design turns on, and it is the opposite of
+the one this file used to record, so here is the arithmetic and the reasoning.
 
 ### What each costs
 
-A full panel is four image containers of 288 by 144:
+A full panel drawn as four image containers of 288 by 144:
 
 ```
 4 x (104 + 0.0039 x 20736) = 4 x 185 = 740 ms
 ```
 
-A page of prose put into one text container instead is one
-`textContainerUpgrade`: **83 ms**. Nine times cheaper.
+A page of words put into a text container instead is one `textContainerUpgrade`:
+**83 ms**. Nine times cheaper, and it arrives whole rather than a quarter at a
+time. Emil's words: *"Use only the text display of the glasses, not the actual
+images (cause that is simply too slow)."*
 
-The plugin does better than 740 ms in practice, because a page turn sends only
-the containers whose pixels moved. Every container starts empty and every empty
-quadrant hashes alike, so the dark part of a page costs nothing at all: a page
-with the bottom half empty is two sends, about 370 ms. The skeleton is made once
-and never rebuilt, so the flat 165 ms of `rebuildPageContainer` never appears in
-a page turn.
+### What it costs to give up the pixels
 
-### Why the bitmaps win anyway
+A text container has no typography at all: one font baked into the firmware, no
+family, no size, no weight, no slant, no alignment, a fixed 27 pixel line, five
+levels of brightness. So a heading cannot be larger, a keyword cannot be coloured,
+a bold word cannot be bolder, and a table has no grid.
 
-1. **Fidelity is the point.** A text container has no font, no size, no weight,
-   no slant, five brightness levels and a fixed 27 pixel line. Headings, bold,
-   italic, ligature glyphs, coloured code, tables, formulae, pictures: none of
-   them survive it. Half of what a note means would be gone.
-2. **One design everywhere.** A note whose plain pages are set in the firmware's
-   font and whose code pages are set in ours changes typeface as the reader turns
-   pages. That is worse than either alone.
-3. **One page model.** A hybrid needs the firmware's metrics for prose (27 pixel
-   lines, its own font, measured with `@evenrealities/pretext`) and ours for
-   everything else, which means two sets of page breaks. The page a note is left
-   on, the map from a page back into the note, and the "this page has not moved,
-   send nothing" rule all stand on there being one.
-4. **The interaction is a page turn, not a frame rate.** The ring and the touch
-   bar deliver discrete swipes and no deltas. The target is a page under a
-   second, and 370 to 740 ms is that.
+What is left is the character set, and the character set turns out to be enough.
+The firmware's font carries the box drawing, the bullets, the blocks, the
+superscripts, the arrows and the geometric shapes, and between them they can say
+what every construct in a note *is*. Section 3 is that mapping.
 
-### What the hybrid would buy, and when to take it
+### The one fact nobody publishes
 
-About half a second on a page that happens to be plain prose. If measurement on
-real hardware shows page turns materially worse than the published fit, the lever
-to pull is in `screen.ts`: classify a page in `Sheets` as plain or drawn, and
-give a plain page to the capture layer with `textContainerUpgrade` instead of to
-the four image containers. The layout would have to be re-measured at the
-firmware's 27 pixel line for those pages, and the three costs above would have to
-be accepted. It is deliberately not built.
+**A codepoint the firmware has no glyph for is drawn as nothing at all.** Zero
+pixels wide, no tofu box, no gap, no error. It does not fail, it disappears.
 
-### What the text container does do
+Measured against the metrics in `@evenrealities/pretext`, the font has **no
+backtick**, no check mark, no ballot box, no white bullet, no small triangle, no
+tab, and none of the thin spaces. So a fence's own lines reached the glasses as an
+empty line, a task list arrived with holes where its checkboxes should be, and
+every tab in every fence was nothing at all.
 
-- It is the **event layer**. One container per page may capture, an image
-  container may not, so a full-screen text container sits behind the four image
-  containers with `content: ' '`. A single space means no overflow, so a swipe is
-  at both ends of it at once and reaches us instead of scrolling something
-  invisible.
-- It is the **fallback**. There is a documented fault where, after the
-  leave-this-app question has been up, every `updateImageRawData` returns
-  `sendFailed` for the rest of the app's life with no way back. When the plugin
-  sees that, it puts the page's words into the capture layer instead. It loses
-  the faces, the code colours and the tables, and the note is still readable.
+`fold` in `packages/glasses/src/firmware.ts` is the answer, and it is why "nothing
+in a note is ever dropped" is a promise rather than a hope. Everything the font
+cannot draw becomes something it can:
+
+| What | Becomes | Why |
+| --- | --- | --- |
+| a grave accent | `‘` | a grave accent and a left quote are the same stroke |
+| a check mark | `√` | the radical sign is the same tick |
+| a ballot box, empty or ticked | `□` `■` | a box that is empty or filled |
+| a ballot X | `×` | |
+| a white bullet | `·` | |
+| the light and dark shades | `▒` | the one shade it has |
+| the double box rules | `│` `┌` `─` | the single, solid ones |
+| the small triangles | `▶` `▼` | the large ones |
+| a tab | spaces to the next stop of two | the font has no tab at all |
+| a raised n, a raised bracket, an ﬁ ligature, a micro sign | `n` `(` `fi` `μ` | a compatibility decomposition |
+| `e` and a combining acute | `é` | composed first: the font has no combining marks |
+| a zero width joiner, a variation selector | nothing | meant to be invisible |
+| an emoji the emoji font lacks | its own name in colons | which carries more than a box |
+| anything left | `□` | seen, which is the whole point |
+
+### The measure
+
+The panel is 576 pixels wide with an eight pixel margin, so a line is **560
+pixels**, which is exactly twenty eight box drawing glyphs: a rule reaches the same
+pixel the last character of a full line reaches. English prose averages 8.5 pixels
+a character, so a line is about 66 of them.
+
+Lines are **wrapped by the plugin rather than by the container**, at the firmware's
+own advances. Three reasons: a page then holds exactly the rows the panel has with
+nothing hanging off the bottom, paging is arithmetic rather than a prediction about
+somebody else's text engine, and the rows after the first can be indented so a
+wrapped list item still reads as one item. A test cross-checks every row we send
+against pretext's own `measureTextWrap`, which is a second model of the same font.
+
+### The bands
+
+Ten lines fit on the panel and the page keeps three of them:
+
+```
+  2  ┌───────────────────────────────────────────────────┬────┐
+     │ THE SECTION                                       │ ●  │  head, mic
+ 29  ├───────────────────────────────────────────────────┴────┤
+     │ ═══════════════════════════════════════════════════════ │  rule
+ 56  ├────┬───────────────────────────────────────────────────┤
+     │ 12 │ seven lines of the note, wrapped where the         │
+     │ 13 │ firmware would wrap them, with the note's own      │  nums, body
+     │ 14 │ line numbers in a column of their own              │
+245  ├────┴───────────────────────────────────────────────────┤
+256  │ what the gesture would do                        3/12  │  foot
+283  └────────────────────────────────────────────────────────┘
+```
+
+Three lines of furniture for seven of the note is a deliberate trade. The rule is
+the only structure a panel with one font in one size has, and a section heading
+that stays put while its pages turn is what makes the glasses read as a document
+rather than as a scroll.
+
+**The geometry never changes.** A container's position and size are fixed when the
+page is made and can only be changed by rebuilding it, which costs a flat 165 ms.
+So every screen the plugin shows uses these same bands - the note, the sidebar, the
+modal, the two pickers, an answer from the model - and a screen change is then only
+the bands whose words changed. A page turn is three of them; opening the sidebar is
+three; nothing is a rebuild.
+
+The line numbers are the one thing that needed thinking about, because a text
+container has no alignment of any kind. Padded into the body's own text they put
+the words of each row at a slightly different pixel - **eleven of them, measured**,
+since padding is spent in five pixel spaces and a `1` is four pixels narrower than
+a `9`. So they have a container of their own, laid **over** the left of the body,
+and the note's rows carry a constant indent to clear it. A constant indent has no
+jitter in it, and every screen that is not a note keeps the whole width.
+
+Turning them on or off is the one rebuild in the plugin, once, which is a fair
+price for a setting nobody changes twice a day.
 
 ---
 
-## 4. The bridge
+## 3. The mapping: markdown in one font
 
-`apps/desktop/src/lib/even/`, four files and a corner:
+Two rules decide all of it, and they are Emil's.
+
+**One: a mark that only styles words is dropped; a mark that says what something
+is, is kept.** In his words: *"even though I want the fence lines to be displayed I
+don't want bold, italic or similar text to be displayed with stars around it.
+Because the thing is it's about understanding the markdown. And for that it's not
+necessary to know whether text is bold or not. But it is necessary to know whether
+something is code or not."*
+
+**Two: nothing is dropped.** A formula reads as its own source, a table as aligned
+columns, a picture as what it was described as, a fence line by line.
+
+| Written | On the glasses | Why |
+| --- | --- | --- |
+| bold, italic, struck through, highlighted | the words alone | the marks are noise; the word is the point |
+| inline code | the words between two left quotes | on one font, code and prose look alike, and which it is changes what it means |
+| a fenced block | its opening line with the language, the code verbatim, its closing line | the same reason, and the language with it |
+| inline and display maths | its own source, dollars and all | a formula that cannot be drawn is still one that can be read |
+| a first level heading | CAPITALS, a heavy rule under it | |
+| a second level heading | CAPITALS, a light rule under it | |
+| a third level heading | CAPITALS | the unmarked middle |
+| the fourth to the sixth | one, two or three chevrons, and CAPITALS | every level told from every other |
+| a bullet | `•` | |
+| a list one level in | `·`, indented three spaces | three spaces is the width of a bullet, so a nested item begins under the words above it |
+| three levels in | `-` | |
+| a numbered item | its own number and a full stop | as it was numbered |
+| a task, open or done | `□` `■` | the font has no ballot box and no check mark at all |
+| a quote | `│ `, one bar a level | the bar is kept on every wrapped row |
+| a callout | its kind in capitals, on its own line | capitals are the only emphasis one font has |
+| a table | columns aligned in pixels, a rule under the head | the font is proportional, so a column is measured rather than counted |
+| a table too wide | every column gives up the same share, cells cut with an ellipsis | wrapping would put half of row four under column two |
+| a horizontal rule | a rule the width of the body | |
+| a picture | `▤` and what it was described as, or its address | the one block that cannot be what it is |
+| a link | the words it shows | the address only when there is no text |
+| a wikilink, with or without an alias | the note it names, or the alias | the same words the app shows |
+| an embed | the note it names | |
+| a footnote and its note | a raised number, and the same number over its words | the font has all ten raised digits |
+| a superscript or a subscript of digits | raised or lowered digits | anything else sits on the line |
+| an emoji, written as a name or as itself | the emoji, or its name in colons | whichever the firmware's emoji font has |
+| html | the words inside it | markup is not words |
+| front matter | not set | it is not set on a page either |
+| a link definition, an abbreviation | not set | neither is content |
+| a soft wrap inside a paragraph | a space | markdown says it is one |
+
+Line numbers are the note's own, counted from the first byte of the file with the
+front matter included, so "go to line forty" reaches the line an editor would call
+forty.
+
+![Bold, italic and marked reduced to their words; inline code keeping its ticks](even/glasses-3.png)
+
+![Tasks as boxes, a quote with its bar, and a callout saying which kind it is](even/glasses-2.png)
+
+---
+
+## 4. The screens, and the five gestures
+
+The G2 gives an app five gestures and nothing else: a tap, a double tap, a hold,
+and a scroll each way, off either temple or off the R1 ring. There is no pointer,
+no rotation and no delta. So every screen has to be reachable with those five.
+
+| Gesture | Where | What |
+| --- | --- | --- |
+| tap | the note | open the sidebar |
+| tap | a list | open the row under the cursor |
+| tap | a folder in the note picker | open or shut it, where it stands |
+| hold | anywhere | open the modal |
+| double tap | the note | the system's own leave-this-app question |
+| double tap | anything else | close it, one level |
+| scroll | the note | a page each way |
+| scroll | a list | the cursor, a row each way |
+| scroll | an answer | a line each way |
+
+A stack rather than a mode, because the modal opens over the note and the note
+picker opens over the modal, and a double tap has to close exactly one of them. The
+note is the floor and is never popped: **a double tap there calls
+`shutDownPageContainer(1)`**, which is the one gesture the platform reserves and
+which every app is checked for on its root page.
+
+- **The sidebar** is the space's name, a rule, and everything in it with every
+  folder open. Canvases are never listed, and neither are PDFs or pictures: a
+  canvas cannot be set in one font on seven lines, and a row that does nothing is
+  worse than no row. A folder is a label rather than a row the cursor can land on,
+  because every folder in that list is already open and there is nothing a tap on
+  one could do; the cursor steps over them, so **every tap the reader makes opens
+  something**.
+- **The modal** is three rows: switch space, change note, and the microphone.
+- **Switch space** is the spaces; a tap confirms.
+- **Change note** is the same tree with folders that open and shut, which is the
+  one list where a tap does two different things.
+- **The answer view** is the question over the answer, scrolled a line at a time.
+
+The cursor is a triangle in a column of its own, so every row's words start at the
+same pixel whether it is the chosen one or not, and the window follows the cursor
+rather than paging.
+
+![The sidebar: the space, and everything in it](even/sidebar.png)
+
+![The modal a hold puts up](even/modal.png)
+
+![Switch space: the spaces, and a tap to confirm](even/spaces.png)
+
+![Change note: the tree, with a folder just opened](even/notes.png)
+
+### Scrolling, bound both ways
+
+The page on the glasses and the scroll on the phone are one place in the note.
+
+- Scrolling the note on the phone moves the glasses to the page that holds the top
+  of the viewport. Most of a scroll is inside the page that is already up and means
+  nothing at all, which is what `Session.holds` is for.
+- Turning a page on the glasses scrolls the phone to the same words, through the
+  app's own `workspace.goto`.
+- A frame in the plugin marks exactly the region on the panel: a rounded outline in
+  the accent, drawn from the editor's own `coordsAtPos` so it lands on the pixel the
+  words do, easing over 170 ms when the page turns and following without easing
+  when the reader scrolls.
+
+The two ends would chase each other round the note, so a page turn opens a 500 ms
+window in which a scroll on the phone is the plugin's own doing and is ignored.
+
+![The plugin, with the frame around the page on the glasses](even/phone-frame.png)
+
+---
+
+## 5. Voice, and a question
+
+The microphone is asked for in `even.app.json` and is **off until the reader turns
+it on**, from the hold modal or from the settings. It is the only defensible
+default for a microphone.
+
+There are two ways to hear, because the platform gives two and neither is
+everywhere:
+
+1. **The WebView's own recogniser.** Android's WebView carries
+   `webkitSpeechRecognition`, which listens on the phone's microphone and hands
+   over whole utterances with its own endpointing. Nothing to pay for, nothing to
+   send anywhere, and the faster of the two, so it is preferred where it is there.
+   iOS WKWebView has never had it.
+2. **The glasses' own microphone.** `audioControl(true, glasses)` streams processed
+   PCM through `onEvenHubEvent`. Nothing on the device turns that into words, so an
+   utterance is cut out of the stream and sent to a transcription API with the
+   account's own key.
+
+The second path is where the plugin's own latency comes from: an utterance ends
+after **600 ms** of quiet. Under about four hundred and the gap between "switch
+space" and "to work" ends the phrase; over about eight hundred and every command
+waits noticeably after the reader has stopped talking.
+
+The commands, which are a table and a couple of numbers rather than a model:
+
+| Said | What |
+| --- | --- |
+| next, back | a page each way; "back" closes when something is open |
+| close | back to the note, whatever was over it |
+| spaces view, notes view | the two pickers |
+| switch space to X, switch note to X | matched by how much of the name was heard |
+| open page N, go to line N | digits or the words for them: "page four", "line forty" |
+| voice commands on, voice commands off | |
+| question, and everything after it | goes to the model |
+
+Forgiving in the two ways speech is unreliable: punctuation and capitals come off,
+numbers are read either way round, and a name is matched by how much of what was
+said landed in it rather than by being right.
+
+### The question
+
+The word "question" turns everything after it into a prompt.
+
+- The request is made **from the plugin**, with the account's own key, to
+  `api.openai.com` and nowhere else. Not through Nib's own Worker, not through
+  anything of ours.
+- **Nothing is stuffed into the context.** The model gets two tools and no notes at
+  all: `search_notes` to find something and `read_note` to read it. A question
+  about one note costs one note.
+- The prompt demands the shape: one sentence with the answer, a blank line, then
+  more detail only if it is needed. A panel is seven lines and the reader is
+  walking.
+- The answer opens a screen of its own and scrolls a line at a time. A double tap
+  or "close" goes back.
+
+The model, the reasoning effort and the key live in the account's settings, and the
+model list is asked of the API's own models endpoint rather than written down:
+names change every few months and a list here would be a list of models that used
+to exist. It is narrowed to the four families worth putting in front of somebody,
+which on 2026-09-09 the endpoint answered as `gpt-6-astra`, `gpt-5.6-sol`,
+`gpt-5.6-luna` and `gpt-5.6-terra`. The reasoning efforts are the API's own, read
+off the error it answers an invalid one with.
+
+![The question, while the model is working](even/asking.png)
+
+![The answer, one sentence first](even/answer.png)
+
+---
+
+## 6. The files
 
 | File | What it is |
 | --- | --- |
-| `sdk.ts` | the Even Hub bridge, read field by field at the boundary |
-| `screen.ts` | the five containers, and how a drawn page reaches them |
-| `session.ts` | which note the glasses show and which page of it |
-| `bridge.svelte.ts` | the tie to the app's own stores |
-| `Glasses.svelte` | two numbers and a pair of lenses, in the corner |
+| `packages/glasses/firmware.ts` | the firmware's font: what it can draw, and what everything else becomes |
+| `packages/glasses/mark.ts` | a note as the lines the firmware will set |
+| `packages/glasses/pages.ts` | those lines as pages, cut at a heading |
+| `packages/glasses/panel.ts` | the bands, in pixels, which both ends agree on |
+| `even/sdk.ts` | the Even Hub bridge, read field by field at the boundary |
+| `even/screen.ts` | the six containers, and how a view reaches them |
+| `even/session.ts` | which note, which page, and the scroll binding |
+| `even/shell.ts` | which screen, and what a gesture does to it |
+| `even/commands.ts` | what was said, as something to do |
+| `even/voice.ts` | listening, and where an utterance ends |
+| `even/ask.ts` | a question to a model, with the notes as tools |
+| `even/models.ts` | which models the account's key may choose |
+| `even/bridge.svelte.ts` | the tie to the app's own stores |
+| `even/Glasses.svelte` | the frame, and the phone's half of the binding |
 
-### The rules
+Everything in `packages/glasses` is pure, with no DOM and no canvas in it, which is
+what lets the mapping, the pager and the wrap all be tested without a browser.
+`shell.ts` and `session.ts` take their world as an interface, which is what lets the
+gesture table above be a test rather than a hope.
 
-- **The note active in the plugin is the note on the glasses.** The bridge
-  watches `workspace.active`, the note's `revision`, and the two settings that
-  change how a note looks (the ligature scope and the code theme), all in one
-  derived value.
-- **Switching notes in the plugin switches the glasses.**
-- **Closing the note in the plugin leaves it on the glasses** until another note
-  becomes active. This needs nothing done to hold: the session is only ever told
-  what *is* active, and being told nothing changes nothing.
-- **The glasses scroll on their own**, by pages, independently of the phone's own
-  scroll, and every note remembers the page it was left on for the sitting.
-- **An edit keeps the reader on the words in front of them.** The page they were
-  on, wherever it moved to, since a page is its pixels and its hash says when two
-  are the same page. Where the page itself changed, the place in the note they
-  were at. And if nothing they can see has moved, nothing is sent at all.
-- Nothing goes over the network for any of it. The note is in memory.
+### The rules the session keeps
 
-A keystroke does not reach the glasses at once: the bridge waits 700 ms for the
-typing to stop, because a page costs the best part of a second on the radio.
+- **The note active in the plugin is the note on the glasses**, and switching notes
+  in the plugin switches the glasses.
+- **Closing the note in the plugin leaves it on the glasses** until another becomes
+  active. This needs nothing done to hold: the session is only ever told what *is*
+  active, and being told nothing changes nothing.
+- **Every note remembers the page it was left on**, for the sitting.
+- **An edit keeps the reader on the words in front of them**: the page they were on,
+  wherever it moved to, since a page is its words and its hash says when two are the
+  same page. Where the page itself changed, the place in the note they were at.
+- **If nothing they can see has moved, nothing is sent at all.**
 
-`session.ts` knows nothing about Svelte, a canvas or a radio, which is what makes
-those rules testable rather than hopeful. There are 18 tests on them.
+A keystroke waits 700 ms, because a band costs about 83 ms on the radio. An edit
+arriving from somebody else through a room waits 80 ms: it is not this reader's
+typing, and a collaborator's paragraph should appear.
 
 ---
 
-## 5. Serving it at `/even/`
+## 7. Serving it at `/even/`
 
 The build writes two pages out of one bundle: `index.html` (the editor) and
 `even.html` (the plugin). Almost all of the output is shared; the plugin's own
@@ -481,7 +634,7 @@ page loaded and its script did not.
 
 ---
 
-## 6. Getting it onto the glasses
+## 8. Getting it onto the glasses
 
 Two ways. The first needs nothing from anybody and works today; the second is
 what a beta tester installs.
@@ -602,47 +755,110 @@ but nothing here sets either yet.
 
 ---
 
-## 7. What was checked, and where
+## 9. What was checked, and where
 
-In the **official simulator 0.9.5**, driven through its automation API, with the
-plugin served from a local Vite server and the **real SDK** doing the talking:
+In **Chromium through Playwright**, against `even.html` itself with a stand-in
+bridge installed before a line of the app ran, exactly as the phone app installs
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 46 checks:
 
-- `createStartUpPageContainer` accepted the five container page: one full-screen
-  text container with `isEventCapture: 1` at `zOrderIndex` 0, and four 288 by 144
-  image containers tiling the panel at 1 to 4.
-- Four `updateImageRawData` calls landed and drew. The console showed the
-  bridge initialise and five `evenAppMessage` calls, and no errors.
-- The pages below are the framebuffer, read back through
-  `GET /api/screenshot/glasses`. Headings, bold, italic, the ligature glyphs, the
-  boxed inline code, a coloured fence, a table with its grid, inline and display
-  maths, and the page count in the corner.
-- `POST /api/input {"action":"down"}` turned the page; a second turned it again;
-  a third at the end did nothing; `"up"` went back. The corner tracked.
+- the plugin booted, found the bridge and made its page: **seven text containers
+  and no image container**, exactly one of them capturing, every `zOrderIndex`
+  unique, and nothing reaching past 576 by 288;
+- the capture layer holds a single space, so a scroll reaches the app;
+- a note reached the bands: the heading in the head, the heavy rule under a first
+  level one, the note's own line numbers in their column, the note and the page in
+  the foot, and never more than seven rows in the body;
+- a scroll off a temple turned the page, and **only the bands that changed were
+  sent**: three of them, about 249 ms of radio, with the head and the rule left
+  alone because the section had not changed;
+- a tap opened the sidebar with the space at the top and the cursor on the first
+  note; a canvas was not in it; a folder was;
+- a double tap closed the sidebar, and a second one on the note called
+  `shutDownPageContainer(1)`, which is what a review checks for;
+- a hold offered switch space, change note and the microphone; switch space listed
+  the spaces; change note opened a folder where it stood and then opened a note;
+- the microphone opened, the corner lit, and six spoken commands were obeyed:
+  next, back, spaces view, close, "open page three" and "go to line forty";
+- a spoken question put the question up, asked the model **with two tools and not
+  one line of a note**, sent the key to `api.openai.com` and to nothing else, and
+  opened the answer with its one sentence first; a scroll went down it a line at a
+  time and a double tap closed it;
+- nothing on the page asked the server for anything that was not there, and there
+  were no page errors.
 
-![Page 2 in the simulator: a table, inline and display maths](even/glasses-2.png)
+The panel pictures in this file are that drive's own bands, drawn by
+`scripts/even-panel.mjs`. Nobody outside Even Realities has the firmware's font, so
+they are drawn with a stand-in face at the firmware's **own advances**: every
+character is within a pixel of where the glasses will put it, the wrapping, the
+bands, the gutter and the rules are exact, and only the letterforms are borrowed.
 
-![Page 3 in the simulator, the last one](even/glasses-3.png)
+```sh
+pnpm --filter @nib/desktop build
+python scripts/even-e2e.py
+```
 
-In **Chromium through Playwright**, against the plugin entry itself with a
-stand-in bridge installed before the page ran:
+### What it costs, measured
 
-- `even.html` booted the whole app, connected, made the page, and sent bitmaps
-  for a note typed into the editor by the keyboard.
-- A swipe turned the page and the corner said `2/2`.
-- No console errors.
+On this machine, in Node, over a note of 21,540 characters that comes to 160 pages
+and 640 rows:
 
-And the page bitmaps as they are sent, in `docs/even/page-1.png` to `page-4.png`.
-Those are the greys; the simulator captures above are what the glasses make of
-them.
+| | |
+| --- | --- |
+| The note paged when it is first opened | 32 ms mean, 60 ms worst |
+| **The same note re-paged after a keystroke** | **6.3 ms mean, 8.8 ms worst** |
+| Marking it into lines | 4.5 ms |
+| Folding 2,700 characters to what the font can draw | 0.06 ms |
+| Wrapping one line | 0.003 ms |
+| A spoken command, from the words arriving to the panel being written | 0.4 ms |
 
-**Not checked, and cannot be from here:** anything about timing. The simulator
-does not simulate BLE, pacing or memory. Every number in section 1 is from the
-published measurements, and the first thing worth doing on real hardware is to
-time a page turn and compare.
+A keystroke is inside one frame at 60 Hz, which is what item three of the brief
+asks for, and a burst of edits arriving through a room is the same work. The cache
+in `firmware.ts` is why: a keystroke changes one line of a note and the other twelve
+hundred were broken before and are not broken again.
+
+Those are the plugin's own share. **What the radio costs is on top and is not
+measurable from here**: three bands at about 83 ms each is roughly 250 ms of a page
+turn, from the published fit.
+
+**Not checked, and cannot be from here:** anything at all about the glasses. There
+is no radio, no firmware and no microphone in a browser.
+
+### What a device has to confirm
+
+In rough order of how much rests on it:
+
+1. **The seven container page is accepted**, and `createStartUpPageContainer`
+   answers success rather than `invalid` or `outOfMemory`.
+2. **The font draws what pretext says it draws.** Every glyph in the mapping was
+   chosen off the metrics in `@evenrealities/pretext` and not off a photograph:
+   the bullets, `□` and `■`, the box rules, `▶` and `▼`, the raised digits, `√`,
+   and the left quote a fence is written with. One photograph of the mapping page
+   settles all of them.
+3. **A line wraps where we wrapped it.** The rows are pre-wrapped at pretext's own
+   advances; if the firmware breaks one row into two, a page has eight lines and
+   the last is off the bottom.
+4. **The `nums` container laid over the left of `body` draws the way it looks
+   here**, and neither container clips or displaces the other.
+5. **A page turn's real cost.** Three `textContainerUpgrade` calls: is it three
+   times 83 ms, and does the panel change once or three times?
+6. **The audio format.** The stream is assumed to be sixteen bit little endian PCM
+   at 16 kHz, which is what the SDK's audio path is built for and what the
+   community reports, and it is not published. At the wrong rate an utterance is
+   transcribed as gibberish rather than as nothing, which is the worst way to be
+   wrong.
+7. **Whether the WebView has a recogniser.** Android's should; iOS should not. It
+   decides which of the two voice paths a reader is on and therefore what a command
+   costs them.
+8. **`audioControl(true, glasses)` answers true** after the startup page exists,
+   and frames arrive on `onEvenHubEvent`.
+9. **A double tap on the root page still raises the system's own question** once the
+   plugin is consuming double taps everywhere else.
+10. **The `api.openai.com` entry on the manifest's whitelist is honoured**, and a
+    question actually leaves the WebView.
 
 ---
 
-## 8. What still has to be decided
+## 10. What still has to be decided
 
 1. **CORS for a packed build.** The WebView's origin inside an `.ehpk` is not
    documented anywhere; Even's own networking page says to send
@@ -655,23 +871,50 @@ time a page turn and compare.
    are to allow a null or absent `Origin` on `/v1/*`, or to allow `*` there and
    keep relying on the bearer token, which the app already does and which is what
    the platform's own guidance assumes.
-2. **The packed Gray4 layout.** If it is ever published, `Sheets` takes
-   `format: 'gray4'` and `encode.ts` already packs it, two pixels to a byte with
-   the left pixel in the high nibble and no row padding. That is an assumption,
-   it is stated as one in the code, and it would want checking against the
-   simulator before it is trusted.
-3. **Memory.** Four image containers at the maximum size is legal on paper and
-   nobody publishes a budget; `createStartUpPageContainer` answers `outOfMemory`
-   (3) if it is too much, and the plugin reports that as a page it could not
-   make. The simulator enforces no limit, so this is the other thing to watch on
-   real hardware.
-4. **Embedded notes.** A `![[note]]` renders as the words it showed rather than
-   as the note it names. The reading view resolves those through the link index;
-   the glasses do not, yet.
+2. **The key on the account.** The Glasses settings follow the account rather than
+   the machine, because the plugin runs on a phone and is set up on a desktop and
+   nobody wants to type an API key into a WebView with a thumb. That does mean the
+   key is stored in the account's settings blob and travels through Nib's own
+   Worker on its way there. The Worker never reads it and never sends it anywhere,
+   and the question itself goes from the phone straight to OpenAI; but a sync token
+   that leaked would leak the key with it. The alternative is a key that has to be
+   typed on the phone.
+3. **`ContentOffset` on a text container.** `TextContainerUpgrade` carries
+   `contentOffset` and `contentLength` and the SDK passes both through to the host,
+   but neither is documented anywhere and no published example uses them. If they
+   are what they look like, the answer view could be one send of the whole answer
+   with the firmware scrolling it, instead of a send per line. The plugin scrolls by
+   sending the seven rows it wants, which is correct whatever the firmware does.
+4. **The OS list and menu containers.** `ListContainerProperty` renders a native
+   scrolling list with a selection border, and `MenuContainerProperty` a contextual
+   menu of up to ten items; a `listEvent` reports the selected row. Either could
+   carry the sidebar with no round trip at all. Both are unused here: the list
+   would be the firmware's design rather than ours in the middle of an app that is
+   otherwise one design, and switching which container captures events means a
+   rebuild. Worth a look on real hardware.
+5. **Embedded notes.** A `![[note]]` reads as the words it showed rather than as
+   the note it names. The reading view resolves those through the link index; the
+   glasses do not, yet.
+6. **Memory.** Nobody publishes a budget. Seven text containers is far less than
+   four image containers at the maximum size, so this is much less of a worry than
+   it was, but `createStartUpPageContainer` answering `outOfMemory` is still the
+   thing to watch.
 
 ---
 
-## 9. Trying it here
+## 11. Trying it here
+
+The whole drive, in a browser, against a bridge that answers like the device:
+
+```sh
+pnpm --filter @nib/desktop build
+python scripts/even-e2e.py
+```
+
+It writes its pictures to `target/even-e2e`, and the ones in this file came from
+there.
+
+Against the official simulator, with the real SDK doing the talking:
 
 ```sh
 pnpm --filter @nib/desktop exec vite --port 5173
@@ -687,3 +930,7 @@ curl http://127.0.0.1:1438/api/screenshot/glasses -o page.png
 curl -X POST -H 'content-type: application/json' -d '{"action":"down"}' \
   http://127.0.0.1:1438/api/input
 ```
+
+The simulator hardcodes `eventSource` to 1, does not simulate BLE, pacing or
+memory, and does not have the firmware's font. So it proves a page is built,
+accepted and drawn, and nothing at all about how it looks or how long it takes.

@@ -206,6 +206,18 @@ const HTML_TAG = /<[^>]*>/g
  *  markdown package. */
 const CALLOUT = /^\s*\[!(note|tip|important|warning|caution)\]\s*/i
 
+/** A paragraph's own line breaks, as the space markdown says they are.
+ *
+ *  A paragraph hard wrapped in the file is one paragraph, and a single newline in
+ *  the middle of it is a space. Without this it was a line break: every hard
+ *  wrapped paragraph in every note came out as two lines on the panel, both
+ *  numbered with the line the paragraph started on, and the panel held half as much
+ *  as it should. A hard break, which the author wrote two spaces for, is a `br`
+ *  token and still breaks. */
+function flowing(text: string): string {
+  return text.replace(/[ \t]*\n[ \t]*/gu, ' ')
+}
+
 /** The words of a run of inline tokens, with every mark that only styles them
  *  taken off and every mark that says what they are kept.
  *
@@ -286,13 +298,13 @@ function inlineWords(tokens: readonly Token[]): string {
       case 'emoji':
       case 'escape':
       case 'text':
-        out += kids.length ? inlineWords(kids) : textOf(token)
+        out += kids.length ? inlineWords(kids) : flowing(textOf(token))
         break
 
       default:
         // Anything the grammar knows and this does not yet: its words, which is
         // better than a hole in the note.
-        out += kids.length ? inlineWords(kids) : textOf(token)
+        out += kids.length ? inlineWords(kids) : flowing(textOf(token))
     }
   }
 

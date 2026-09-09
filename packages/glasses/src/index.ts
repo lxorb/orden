@@ -18,6 +18,7 @@ export {
   BODY_INNER,
   BODY_ROWS,
   BRIGHT,
+  GUTTER,
   LINE,
   PANEL_HEIGHT,
   PANEL_WIDTH,

@@ -17,7 +17,7 @@
  *  None of it runs in the plain web build, because nothing in the plain web build
  *  imports it. */
 
-import { BODY_ROWS, bandsOf, type Page } from '@nib/glasses'
+import { BODY_INNER, BODY_ROWS, GUTTER, type Page } from '@nib/glasses'
 import { askAbout, type Found, TRANSCRIBERS, transcribeWith } from './ask'
 import { bestOf, type Command, commandIn } from './commands'
 import { fileMark } from '../file-mark'
@@ -49,6 +49,14 @@ const ARRIVAL = 80
 
 /** How long a word heard, or a word about what went wrong, stays in the foot. */
 const FLASH = 1400
+
+/** How long after a page turn a scroll on the phone is the plugin's own doing.
+ *
+ *  The plugin scrolls the phone to the page it just turned to, and the scroll that
+ *  causes is read a fifth of a second later; see Glasses.svelte. Anything inside
+ *  this window is that scroll coming back, and acting on it is the two ends of the
+ *  binding chasing each other round the note. */
+const STEERING = 500
 
 /** How many notes a search hands the model at once. */
 const HITS = 20
@@ -147,9 +155,15 @@ class Bridge {
    *  `pump`. */
   private drawing: Promise<void> | null = null
   private wanted = false
-  /** True while the phone is being scrolled because the glasses turned a page, so
-   *  that the scroll it causes is not read as the reader scrolling. */
-  private steering = false
+  /** Until when a scroll on the phone is this plugin's own doing rather than the
+   *  reader's.
+   *
+   *  A page turn scrolls the phone, and the scroll that causes arrives a moment
+   *  later and would turn the page again. A flag cleared on the next turn of the
+   *  loop is not enough: the plugin reads the scroller after a pause, so the window
+   *  has to outlast that pause. Long enough to cover it, short enough that a reader
+   *  who turns a page and then scrolls is not ignored. */
+  private steerUntil = 0
 
   /** Brings the glasses up and starts following the active note. Answers with a
    *  teardown either way, so the entry hands it to `onDestroy` without asking
@@ -260,14 +274,14 @@ class Bridge {
 
   /** How the reader wants a note paged, as the pager takes it.
    *
-   *  The body's width follows the line numbers, because their column is part of the
-   *  page's geometry rather than part of its text; see panel.ts in @nib/glasses. */
+   *  The body is the whole width on every screen; the line numbers are a column laid
+   *  over its left, and the note's own rows carry a constant indent to clear it. See
+   *  panel.ts in @nib/glasses for why that is the shape. */
   private paging() {
-    const bands = bandsOf(modes.glassesLineNumbers)
     return {
       breakAt: modes.glassesBreak,
-      gutter: bands.nums.width,
-      inner: bands.body.width,
+      gutter: modes.glassesLineNumbers ? GUTTER : 0,
+      inner: BODY_INNER,
       rows: BODY_ROWS,
     }
   }
@@ -313,7 +327,10 @@ class Bridge {
 
         this.timer = setTimeout(() => {
           note.flush()
-          this.follow({ key: note.key, name: note.name, text: note.text })
+          // Without the extension: on a panel of seven lines `.md` is four
+          // characters of nothing, and the reader knows what their notes are.
+          const name = note.name.replace(/\.md$/iu, '')
+          this.follow({ key: note.key, name, text: note.text })
         }, wait)
       })
 
@@ -407,13 +424,8 @@ class Bridge {
     const path = workspace.active?.path
     if (!showing || !path || this.shell?.screen.kind !== 'note') return
 
-    this.steering = true
+    this.steerUntil = performance.now() + STEERING
     workspace.goto = { path, line: showing.firstLine }
-    // Cleared on the next turn of the loop, by which time the scroll it caused has
-    // been and gone.
-    setTimeout(() => {
-      this.steering = false
-    }, 0)
   }
 
   /** The glasses, taken to where the phone is.
@@ -425,7 +437,7 @@ class Bridge {
    *  Ignored while the phone is being scrolled *because* of a page turn, or the two
    *  would chase each other round the note. */
   scrolled(offset: number): void {
-    if (this.steering || !this.panel) return
+    if (performance.now() < this.steerUntil || !this.panel) return
     if (this.shell?.screen.kind !== 'note') return
     if (this.session.holds(offset)) return
 

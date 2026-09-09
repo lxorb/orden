@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@evenrealities/pretext": "^0.1.4",
     "eslint": "^10.10.0",
     "eslint-plugin-svelte": "^3.23.0",
     "globals": "^17.12.0",

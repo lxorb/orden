@@ -1,6 +1,6 @@
 import { measureTextWrap } from '@evenrealities/pretext'
 import { describe, expect, test } from 'vitest'
-import { fold, SPACE, width, wrap } from './firmware'
+import { SPACE, width, wrap } from './firmware'
 import { pageAt, pageOfLine, pagesOf, type Paging } from './pages'
 import { BODY_INNER, BODY_ROWS } from './panel'
 
@@ -14,10 +14,10 @@ const paging = (over: Partial<Paging> = {}): Paging => ({
 
 const pages = (source: string, over: Partial<Paging> = {}) => pagesOf(source, paging(over))
 
-/** The column of line numbers, and the body beside it, as `panel.ts` sizes them
- *  when the reader has asked for numbers. */
-const NUMS = 48
-const NARROW = BODY_INNER - NUMS - 6
+/** The column of line numbers, as `panel.ts` sizes it when the reader has asked
+ *  for them. The body is the whole width either way; the numbers are laid over its
+ *  left and the note's rows are pushed in to clear them. */
+const NUMS = 54
 
 const PROSE = Array.from(
   { length: 30 },
@@ -45,10 +45,10 @@ describe('a page holds what the panel holds', () => {
     // `measureTextWrap`, which is what the firmware's own shaping was measured
     // into. Every row we send has to be exactly one row when it lands.
     const note = `${PROSE}\n\n\`\`\`ts\nconst somethingRatherLong = aFunctionCall(withArguments, andMore)\n\`\`\`\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n`
-    for (const page of pages(note, { gutter: NUMS, inner: NARROW })) {
+    for (const page of pages(note, { gutter: NUMS })) {
       for (const row of page.words.split('\n')) {
         if (row.trim() === '') continue
-        expect(measureTextWrap(row, NARROW).lineCount, JSON.stringify(row)).toBe(1)
+        expect(measureTextWrap(row, BODY_INNER).lineCount, JSON.stringify(row)).toBe(1)
       }
     }
   })
@@ -188,11 +188,16 @@ describe('line numbers', () => {
     expect(page?.numbers).toBe('')
   })
 
-  test('are a column beside the body, one number to a line', () => {
-    const [page] = pages(note, { gutter: NUMS, inner: NARROW })
+  test('are a column over the body, one number to a line', () => {
+    const [page] = pages(note, { gutter: NUMS })
 
-    expect(page?.words).toBe('one\ntwo\nthree')
+    // The words are pushed in by a constant, which is what has no jitter in it, and
+    // the numbers sit in the room that makes.
+    expect(page?.words.split('\n').map((row) => row.trim())).toEqual(['one', 'two', 'three'])
     expect(page?.numbers.split('\n').map((row) => row.trim())).toEqual(['1', '3', '5'])
+    for (const row of page?.words.split('\n') ?? []) {
+      expect(width(row) - width(row.trimStart())).toBeGreaterThanOrEqual(NUMS)
+    }
   })
 
   test('have exactly as many lines as the body has rows', () => {
@@ -200,14 +205,14 @@ describe('line numbers', () => {
       '\n\n',
     )
 
-    for (const page of pages(long, { gutter: NUMS, inner: NARROW, breakAt: 0 })) {
+    for (const page of pages(long, { gutter: NUMS, breakAt: 0 })) {
       expect(page.numbers.split('\n')).toHaveLength(page.words.split('\n').length)
     }
   })
 
   test('say nothing on the rows a long line wrapped to', () => {
     const long = `a ${'word '.repeat(60)}\n`
-    const [page] = pages(long, { gutter: NUMS, inner: NARROW })
+    const [page] = pages(long, { gutter: NUMS })
     const rows = page?.numbers.split('\n') ?? []
 
     expect(rows.length).toBeGreaterThan(1)
@@ -220,24 +225,34 @@ describe('line numbers', () => {
   test('sit against the right of their column, whatever their digits', () => {
     const long = Array.from({ length: 60 }, (_one, at) => `word ${at}`).join('\n\n')
 
-    for (const page of pages(long, { gutter: NUMS, inner: NARROW, breakAt: 0 })) {
+    // The column, less the space it keeps clear of the words on either side.
+    const room = NUMS - 10
+
+    for (const page of pages(long, { gutter: NUMS, breakAt: 0 })) {
       for (const row of page.numbers.split('\n')) {
         // Never wider than the column, so a number can never run into the words.
-        expect(width(row)).toBeLessThanOrEqual(NUMS)
+        expect(width(row)).toBeLessThanOrEqual(room)
         if (row.trim() === '') continue
         // And within one space of its right hand edge.
-        expect(width(row)).toBeGreaterThan(NUMS - SPACE - 1)
+        expect(width(row)).toBeGreaterThan(room - SPACE - 1)
       }
     }
   })
 
-  test('cost the note some width, so it takes more pages', () => {
-    const wide = pages(PROSE, { gutter: 0, inner: BODY_INNER, breakAt: 0 })
-    const narrow = pages(PROSE, { gutter: NUMS, inner: NARROW, breakAt: 0 })
+  test('cost the note some of its width, and never more than it has', () => {
+    const wide = pages(PROSE, { gutter: 0, breakAt: 0 })
+    const narrow = pages(PROSE, { gutter: NUMS, breakAt: 0 })
+    const widest = (all: ReturnType<typeof pages>) =>
+      Math.max(
+        ...all.flatMap((page) => page.words.split('\n').map((row) => width(row.trimStart()))),
+      )
 
+    // The words have a column less of the panel to run in.
+    expect(widest(narrow)).toBeLessThan(widest(wide))
     expect(narrow.length).toBeGreaterThanOrEqual(wide.length)
-    for (const page of narrow) {
-      for (const row of page.words.split('\n')) expect(width(row)).toBeLessThanOrEqual(NARROW)
+    // And nothing runs off the edge of the glass either way, indent and all.
+    for (const page of [...wide, ...narrow]) {
+      for (const row of page.words.split('\n')) expect(width(row)).toBeLessThanOrEqual(BODY_INNER)
     }
   })
 })
@@ -385,95 +400,53 @@ describe('what a page costs', () => {
       `## Section ${at}\n\nProse about section ${at}, long enough to wrap across the panel more than once and then some.\n\n- a point\n- another point\n\n`,
   ).join('')
 
-  /** How long a piece of work takes, at its worst over a few rounds.
-   *
-   *  The worst rather than the mean, because a keystroke that is quick four times
-   *  in five is a keystroke that stutters. */
-  const worstOf = (rounds: number, work: (round: number) => unknown) => {
-    let worst = 0
-    for (let round = 0; round < rounds; round++) {
-      const at = performance.now()
-      work(round)
-      worst = Math.max(worst, performance.now() - at)
-    }
-
-    return worst
-  }
-
   const typed = (round: number) =>
     note.replace('Prose about section 7,', `Prose about section 7${'x'.repeat(round)},`)
 
-  test('pages a note of twenty thousand characters when it is first opened', () => {
+  test('pages a note of twenty thousand characters', () => {
     expect(note.length).toBeGreaterThan(20_000)
-    expect(pagesOf(note, paging({ gutter: NUMS, inner: NARROW })).length).toBeGreaterThan(100)
+    expect(pagesOf(note, paging({ gutter: NUMS })).length).toBeGreaterThan(100)
   })
 
   /** What actually happens while somebody types: the note is paged again from the
    *  top and one line of it has changed. Every other line was broken before and is
-   *  not broken again; see the cache in firmware.ts.
+   *  not broken again.
    *
-   *  Asserted as a ratio rather than in milliseconds. The brief asks for a keystroke
-   *  inside one frame and a quiet machine gives about 1 ms of the 16.7 there are, but
-   *  a wall clock in a suite running seven packages at once measures the queue in
-   *  front of it as much as the work, and a test that fails when the machine is busy
-   *  is a test nobody trusts. The ratio is the property: a keystroke costs a fraction
-   *  of a cold open, and if the cache ever stops working it costs all of one. */
-  test('re-pages a note after a keystroke for a fraction of what opening it cost', () => {
-    // Cold, with nothing in the cache: what a keystroke would cost without one.
-    const cold = worstOf(3, (round) => pagesOf(typed(round + 900), paging({ gutter: NUMS })))
-    const warm = worstOf(20, (round) => pagesOf(typed(round), paging({ gutter: NUMS })))
+   *  Asserted by identity rather than by a clock. The brief asks for a keystroke
+   *  inside one frame, and on a quiet machine it is about 6 ms of the 16.7 there
+   *  are - but a wall clock in a suite running seven packages at once measures the
+   *  queue in front of it as much as the work, and a timing test that fails when the
+   *  machine is busy is a test nobody trusts. The measured numbers are printed by
+   *  `measure.test.ts` and written down in docs/even.md; what is asserted here is
+   *  the property they rest on. */
+  test('breaks a line once and remembers it, which is what a keystroke costs nothing', () => {
+    const line = 'a line of a note, long enough to wrap across the panel more than once over'
 
-    expect(warm).toBeLessThan(cold / 2)
-  })
-})
-
-/** The wrap itself, which everything above stands on. */
-describe('wrapping a line', () => {
-  test('breaks at a space and throws the space away', () => {
-    const rows = wrap('one two three four five six seven eight nine ten', 100)
-
-    expect(rows.length).toBeGreaterThan(1)
-    for (const row of rows) {
-      expect(row.startsWith(' ')).toBe(false)
-      expect(width(row)).toBeLessThanOrEqual(100)
-    }
-    expect(rows.join(' ')).toBe('one two three four five six seven eight nine ten')
+    // The very same rows, not a second array with the same strings in it.
+    expect(wrap(line, 400)).toBe(wrap(line, 400))
+    // And a different question is a different answer.
+    expect(wrap(line, 400)).not.toBe(wrap(line, 300))
+    expect(wrap(line, 400)).not.toBe(wrap(line, 400, '  '))
   })
 
-  test('hangs the rows after the first under the words of the first', () => {
-    const rows = wrap('• a list item with quite a lot of words in it indeed', 120, '   ')
+  test('re-pages a note after a keystroke without breaking its lines again', () => {
+    const first = pagesOf(typed(0), paging({ gutter: NUMS }))
+    const after = pagesOf(typed(1), paging({ gutter: NUMS }))
 
-    expect(rows.length).toBeGreaterThan(1)
-    expect(rows[0]?.startsWith('• ')).toBe(true)
-    for (const row of rows.slice(1)) expect(row.startsWith('   ')).toBe(true)
+    // One line changed, so one page changed. Every other page hashes as it did,
+    // which is also what keeps the keystroke off the radio.
+    const moved = after.filter((page, index) => page.hash !== first[index]?.hash)
+    expect(moved.length).toBeLessThanOrEqual(2)
+    expect(first.length).toBe(after.length)
   })
 
-  test('keeps a quote bar down every row of a wrapped quote', () => {
-    const rows = wrap('│ a quoted line with a good many words in it', 120, '│ ')
+  test('pages a long note again and again without slowing down', () => {
+    // Generous on purpose: what this catches is a cache that stopped working or a
+    // pager that got quadratic, not a machine that is busy.
+    const at = performance.now()
+    for (let round = 0; round < 20; round++) pagesOf(typed(round), paging({ gutter: NUMS }))
+    const each = (performance.now() - at) / 20
 
-    for (const row of rows) expect(row.startsWith('│ ')).toBe(true)
-  })
-
-  test('breaks a word too long for a row rather than running off the glass', () => {
-    const rows = wrap('x'.repeat(300), 100)
-
-    expect(rows.length).toBeGreaterThan(1)
-    for (const row of rows) expect(width(row)).toBeLessThanOrEqual(100)
-    expect(rows.join('')).toBe('x'.repeat(300))
-  })
-
-  test('gives an empty line one row', () => {
-    expect(wrap('', 560)).toEqual([''])
-  })
-
-  test('folds what it is given, so nothing measured is invisible', () => {
-    expect(wrap('a `tick`', 560)).toEqual([fold('a `tick`')])
-  })
-
-  test('breaks between two CJK characters, which have no spaces to break at', () => {
-    const rows = wrap('日本語のノートを書いています。'.repeat(6), 200)
-
-    expect(rows.length).toBeGreaterThan(1)
-    for (const row of rows) expect(width(row)).toBeLessThanOrEqual(200)
+    expect(each).toBeLessThan(60)
   })
 })

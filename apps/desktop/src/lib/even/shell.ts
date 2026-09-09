@@ -205,6 +205,13 @@ export class Shell {
     return this.stack.length > 1
   }
 
+  /** How many rows an answer came to, once it was wrapped to the panel. Only a test
+   *  asks; the reader is told in the foot. */
+  get answerRows(): number {
+    const screen = this.screen
+    return screen.kind === 'answer' ? screen.rows.length : 0
+  }
+
   /** One gesture off a temple or off the ring. */
   handle(gesture: Gesture): Wish {
     switch (gesture) {
@@ -274,12 +281,19 @@ export class Shell {
   }
 
   answered(question: string, answer: string): Wish {
+    // A model hard wraps its own prose at whatever width it was trained to, and a
+    // panel is 560 pixels: read as breaks, its lines come out as a ragged column
+    // with two words on every other row. A single newline is a space, as it is in
+    // markdown; a blank line still parts two paragraphs.
+    //
     // Wrapped here rather than by the container, so that the rows the reader
     // scrolls through are the rows the firmware will draw, one for one.
-    const rows = answer
-      .split('\n')
-      .flatMap((line) => (line === '' ? [''] : [...wrap(line, BODY_INNER)]))
-    const said = answer.trim() === '' ? [this.words.noAnswer] : rows
+    const rows = answer.split(/\n\s*\n/u).flatMap((part, at) => {
+      const flowed = part.replace(/\s*\n\s*/gu, ' ').trim()
+      const wrapped = flowed === '' ? [] : [...wrap(flowed, BODY_INNER)]
+      return at === 0 ? wrapped : ['', ...wrapped]
+    })
+    const said = rows.some((row) => row !== '') ? rows : [this.words.noAnswer]
 
     this.stack = [{ kind: 'note' }, { kind: 'answer', question, rows: said, at: 0 }]
     return 'draw'

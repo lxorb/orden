@@ -461,7 +461,13 @@ export const SPACE = getAdvW(0x20) / 16
  *  on a 576 pixel panel is under one percent of it. */
 export function rightward(text: string, inner: number): string {
   const whole = fold(text)
-  const gap = Math.floor((inner - getTextWidth(whole)) / SPACE)
+  let gap = Math.floor((inner - getTextWidth(whole)) / SPACE)
+
+  // Measured back rather than trusted: the font kerns, so a run of spaces and a
+  // letter after them is not always the sum of their advances, and one pixel over
+  // is a line the container clips or wraps.
+  while (gap > 0 && getTextWidth(' '.repeat(gap) + whole) > inner) gap--
+
   return gap > 0 ? ' '.repeat(gap) + whole : whole
 }
 

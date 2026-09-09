@@ -14,7 +14,7 @@
  *  56  ├────┬───────────────────────────────────────────────────┤
  *      │ 12 │ seven lines of the note, wrapped where the         │
  *      │ 13 │ firmware would wrap them, with the note's own      │  nums, body
- *      │ 14 │ line numbers in a column of their own             │
+ *      │ 14 │ line numbers in a column of their own              │
  * 245  ├────┴───────────────────────────────────────────────────┤
  * 256  │ what the gesture would do                        3/12  │  foot
  * 283  └────────────────────────────────────────────────────────┘
@@ -25,20 +25,21 @@
  *  font in one size has, and a section heading that stays put while its pages turn
  *  is what makes the glasses read as a document rather than as a scroll.
  *
- *  **The geometry never changes while a page is up.** A container's position and
- *  size are fixed when the page is made and can only be changed by rebuilding it,
- *  which costs a flat 165 ms. So every screen the plugin shows uses these same
- *  bands - the note, the sidebar, the modal, the two pickers, an answer from the
- *  model - and each of them is then a `textContainerUpgrade` of about 83 ms with
- *  no rebuild at all. That is why a gesture answers at once.
+ *  **The geometry never changes.** A container's position and size are fixed when
+ *  the page is made and can only be changed by rebuilding it, which costs a flat
+ *  165 ms. So every screen the plugin shows uses these same bands - the note, the
+ *  sidebar, the modal, the two pickers, an answer from the model - and each of them
+ *  is then a `textContainerUpgrade` of about 83 ms with no rebuild at all. That is
+ *  why a gesture answers at once.
  *
- *  The one thing that does move the geometry is the line numbers, because a text
- *  container has no alignment of any kind: numbers padded into the body's own text
- *  put the words of each row at a slightly different pixel - eleven of them,
- *  measured, since padding is spent in five pixel spaces and a `1` is four pixels
- *  narrower than a `9`. A column of their own is the only way the body has a
- *  straight left edge. Turning them on or off rebuilds the page, once, which is a
- *  fair price for a setting nobody changes twice a day. */
+ *  The line numbers are the one thing that needed thinking about, because a text
+ *  container has no alignment of any kind. Padded into the body's own text they put
+ *  the words of each row at a slightly different pixel - eleven of them, measured,
+ *  since padding is spent in five pixel spaces and a `1` is four pixels narrower
+ *  than a `9`. So they have a container of their own, laid **over** the left of the
+ *  body rather than beside it, and the note's rows carry a constant indent to clear
+ *  it. A constant indent has no jitter in it, and every screen that is not a note
+ *  keeps the whole width of the panel. */
 
 /** The whole canvas the glasses draw, in pixels. Wide and short, which is the one
  *  fact that shapes everything: a note is set across the full width rather than
@@ -65,6 +66,10 @@ export const BODY_ROWS = 7
 const NUMS_WIDTH = 48
 const NUMS_GAP = 6
 
+/** How far a note's own rows are pushed in to clear that column. Zero when the
+ *  reader asked for no numbers, and the body then starts at the margin. */
+export const GUTTER = NUMS_WIDTH + NUMS_GAP
+
 /** One band of the panel: where it is and how big. */
 export interface Band {
   x: number
@@ -77,10 +82,11 @@ export type BandName = 'head' | 'mic' | 'rule' | 'nums' | 'body' | 'foot'
 
 /** Where the bands are, given whether the reader asked for line numbers.
  *
- *  `nums` is zero wide when they did not, and the app then leaves the container
- *  out of the page entirely rather than sending a blank one on every page turn. */
+ *  Only `nums` moves: it is zero wide when they did not ask, and the app then
+ *  leaves the container out of the page entirely rather than sending a blank one on
+ *  every page turn. Everything else is the same on every screen, which is what lets
+ *  a screen change cost two sends and no rebuild. */
 export function bandsOf(lineNumbers: boolean): Record<BandName, Band> {
-  const gutter = lineNumbers ? NUMS_WIDTH + NUMS_GAP : 0
   const rows = BODY_ROWS * LINE
 
   return {
@@ -90,21 +96,16 @@ export function bandsOf(lineNumbers: boolean): Record<BandName, Band> {
     mic: { x: PANEL_WIDTH - 34, y: 2, width: 26, height: LINE },
     // Heavy under a first level heading, light under anything else.
     rule: { x: MARGIN, y: 29, width: PANEL_WIDTH - 2 * MARGIN, height: LINE },
+    // Over the left of the body rather than beside it; the note's own rows carry a
+    // constant indent to clear it. See the header above.
     nums: { x: MARGIN, y: 56, width: lineNumbers ? NUMS_WIDTH : 0, height: rows },
-    body: {
-      x: MARGIN + gutter,
-      y: 56,
-      width: PANEL_WIDTH - 2 * MARGIN - gutter,
-      height: rows,
-    },
+    body: { x: MARGIN, y: 56, width: PANEL_WIDTH - 2 * MARGIN, height: rows },
     // What the gesture in front of the reader would do, and where they are.
     foot: { x: MARGIN, y: 256, width: PANEL_WIDTH - 2 * MARGIN, height: LINE },
   }
 }
 
-/** How wide the body is when the line numbers are off. What a screen that is not
- *  a note - the sidebar, the modal, an answer - is always laid out to, since none
- *  of them has line numbers. */
+/** How wide the body is: the whole panel less its margins, on every screen. */
 export const BODY_INNER = PANEL_WIDTH - 2 * MARGIN
 
 /** How bright each band is set, from the firmware's five levels.

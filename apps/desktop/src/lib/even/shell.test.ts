@@ -335,11 +335,16 @@ describe('the view', () => {
 
 /** The answer view, which is the one screen that scrolls a line at a time. */
 describe('an answer from the model', () => {
+  // One sentence, a blank line, and then the detail: the shape the model is asked
+  // for, and long enough that the reader has to scroll through it.
   const answer = [
     'The short answer.',
     '',
-    ...Array.from({ length: 20 }, (_one, at) => `Line ${at}.`),
-  ].join('\n')
+    ...Array.from(
+      { length: 10 },
+      (_one, at) => `Paragraph ${at} of the detail, with enough words in it to wrap the panel.`,
+    ),
+  ].join('\n\n')
 
   test('shows the question over the answer', () => {
     shell.answered('what did I decide', answer)
@@ -370,8 +375,11 @@ describe('an answer from the model', () => {
 
   test('says how far down the answer the reader is', () => {
     shell.answered('q', answer)
+    const rows = shell.answerRows
 
-    expect(shell.view().foot).toBe('7/22')
+    // Seven rows of however many the answer came to, against the right hand edge.
+    expect(shell.view().foot.trim()).toBe(`7/${String(rows)}`)
+    expect(rows).toBeGreaterThan(BODY_ROWS)
   })
 
   test('a double tap closes it, back to the note', () => {
@@ -379,6 +387,17 @@ describe('an answer from the model', () => {
 
     expect(shell.handle('double')).toBe('draw')
     expect(shell.screen.kind).toBe('note')
+  })
+
+  test('flows the model’s own line breaks, and keeps its paragraphs', () => {
+    // A model hard wraps at whatever width it was trained to; a panel is 560 pixels
+    // wide. Read as breaks, its lines are a ragged column of two words a row.
+    shell.answered('q', 'One short\nsentence first.\n\nThen a second\nparagraph.')
+    const rows = shell.view().body.split('\n')
+
+    expect(rows[0]).toBe('One short sentence first.')
+    expect(rows[1]).toBe('')
+    expect(rows[2]).toBe('Then a second paragraph.')
   })
 
   test('says it is thinking while the model is', () => {
