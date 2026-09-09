@@ -8,7 +8,17 @@ import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
-import { theme } from './theme.svelte'
+import { SCHEME_CHOICES, SCHEME_NAMES, type SchemeChoice, theme } from './theme.svelte'
+
+/** One choice among a few, drawn as a row rather than opened as a list. Only
+ *  where the choices are two or three short words worth seeing at once. */
+export interface Segment {
+  value: string
+  label: string
+  /** Set where the choice cannot be honoured right now - a scheme the theme in
+   *  force does not have. Shown as the app shows anything disabled. */
+  disabled?: boolean
+}
 
 /** One control, and how to read and write whatever sits behind it. A field
  *  that says what it starts as can be put back to that; a pane whose fields
@@ -30,6 +40,14 @@ export type Field =
       kind: 'select'
       label: string
       options: { value: string; label: string }[]
+      initial?: string
+      get(): string
+      set(value: string): void
+    }
+  | {
+      kind: 'segmented'
+      label: string
+      options: Segment[]
       initial?: string
       get(): string
       set(value: string): void
@@ -66,6 +84,12 @@ const DICTIONARIES = [
   { id: 'pt', name: 'Português' },
   { id: 'ja', name: '日本語' },
 ] as const
+
+/** A control hands its value back as a string, because that is what a control
+ *  holds. Following the system is what anything else reads as. */
+function asChoice(value: string): SchemeChoice {
+  return value === 'dark' || value === 'light' ? value : 'system'
+}
 
 /** The panes that are only about settings. The account and the LLM connector are
  *  their own thing and stay written out by hand. */
@@ -372,11 +396,32 @@ export function preferences(view?: EditorView): Pane[] {
           title: t('Theme'),
           fields: [
             {
+              // The theme, and nothing else. A theme has a dark side or a light
+              // one or both; which of them the app is showing is the row below.
               kind: 'select',
               label: t('Theme'),
               options: theme.all.map((one) => ({ value: one.id, label: t(one.name) })),
               get: () => theme.id,
               set: (value) => theme.select(value),
+            },
+            {
+              // Following the system is where everybody starts and the only one
+              // of the three that changes with the hour, so it stays a segment
+              // of its own rather than being something to arrive back at.
+              //
+              // Neither row says what it started as, so the pane offers no reset:
+              // a look chosen from a gallery is not a default anybody drifted
+              // away from, and the accent below is drawn by hand where a reset
+              // could not reach it.
+              kind: 'segmented',
+              label: t('Mode'),
+              options: SCHEME_CHOICES.map((one) => ({
+                value: one,
+                label: t(SCHEME_NAMES[one]),
+                disabled: !theme.offers(one),
+              })),
+              get: () => theme.shown,
+              set: (value) => theme.setScheme(asChoice(value)),
             },
           ],
         },

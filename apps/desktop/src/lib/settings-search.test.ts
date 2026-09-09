@@ -38,6 +38,21 @@ const panes: Pane[] = [
           },
         ],
       },
+      {
+        title: 'Appearance',
+        fields: [
+          {
+            kind: 'segmented',
+            label: 'Mode',
+            options: [
+              { value: 'system', label: 'System' },
+              { value: 'dark', label: 'Nocturne' },
+            ],
+            get: () => 'system',
+            set: () => undefined,
+          },
+        ],
+      },
     ],
   },
 ]
@@ -60,7 +75,7 @@ describe('searching the settings', () => {
   })
 
   test('finds a field by the pane it lives in', () => {
-    expect(labels('general')).toHaveLength(3)
+    expect(labels('general')).toHaveLength(4)
   })
 
   test('finds a dropdown by one of its choices', () => {
@@ -69,6 +84,10 @@ describe('searching the settings', () => {
 
   test('finds a slider by its unit', () => {
     expect(labels('ms')).toEqual(['Wait before saving'])
+  })
+
+  test('finds a segmented control by one of its choices', () => {
+    expect(labels('nocturne')).toEqual(['Mode'])
   })
 
   test('finds a place in a hand-written pane by any word on it', () => {

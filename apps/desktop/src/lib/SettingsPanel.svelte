@@ -378,26 +378,39 @@
   {/if}
 {/snippet}
 
+<!-- What every row says about itself: the setting's name, and the pane it lives
+     in when search is showing it out of context. One snippet rather than the same
+     two lines in each of five branches. -->
+{#snippet named(field: Field, where?: string)}
+  <span class="name"
+    >{field.label}{#if where}<small>{where}</small>{/if}</span
+  >
+{/snippet}
+
 <!-- One row per setting, whatever kind it is. -->
 {#snippet row(field: Field, where?: string)}
   {#if field.kind === 'switch'}
-    <!-- The whole row is the switch, so there is nothing to miss. -->
-    <button
-      class="setting"
+    <!-- The whole row is the switch, so there is nothing to miss. A switch and
+         not a button, because a row may carry the `i` that explains it and a
+         button may hold nothing else anybody can press. -->
+    <div
+      class="setting pressable"
       role="switch"
+      tabindex="0"
       aria-checked={field.get()}
       onclick={() => field.set(!field.get())}
+      onkeydown={(event) => {
+        if (event.key !== ' ' && event.key !== 'Enter') return
+        event.preventDefault()
+        field.set(!field.get())
+      }}
     >
-      <span class="name"
-        >{field.label}{#if where}<small>{where}</small>{/if}</span
-      >
+      {@render named(field, where)}
       <span class="toggle" class:on={field.get()} aria-hidden="true"></span>
-    </button>
+    </div>
   {:else if field.kind === 'slider'}
     <div class="setting sliding">
-      <span class="name"
-        >{field.label}{#if where}<small>{where}</small>{/if}</span
-      >
+      {@render named(field, where)}
       <span class="value">{field.get()}{field.unit ?? ''}</span>
       <input
         class="slider nib-slider"
@@ -411,14 +424,34 @@
         oninput={(event) => field.set(Number(event.currentTarget.value))}
       />
     </div>
+  {:else if field.kind === 'segmented'}
+    <!-- Two or three short words, all of them in view. The app's one segmented
+         control; see .nib-segmented in the themes package. A choice the setting
+         cannot honour right now is disabled rather than left out, so the row does
+         not change shape as themes are chosen. -->
+    <div class="setting">
+      {@render named(field, where)}
+      <div class="nib-segmented" role="radiogroup" aria-label={field.label}>
+        {#each field.options as one (one.value)}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={one.value === field.get()}
+            class:on={one.value === field.get()}
+            disabled={one.disabled}
+            onclick={() => field.set(one.value)}
+          >
+            {one.label}
+          </button>
+        {/each}
+      </div>
+    </div>
   {:else if field.kind === 'text'}
     <!-- A line somebody types. The placeholder is what the app answers to with
          nothing typed, so an empty field is the default put back and the reset is
          a field that is already there rather than a button beside it. -->
     <label class="setting">
-      <span class="name"
-        >{field.label}{#if where}<small>{where}</small>{/if}</span
-      >
+      {@render named(field, where)}
       <input
         class="inline"
         type="text"
@@ -432,9 +465,7 @@
     </label>
   {:else}
     <div class="setting">
-      <span class="name"
-        >{field.label}{#if where}<small>{where}</small>{/if}</span
-      >
+      {@render named(field, where)}
       <div class="pick">
         <Select
           value={field.get()}
@@ -1133,6 +1164,13 @@
     color: var(--muted);
   }
 
+  /* Wide enough for three words and no wider: the control sits at the right of
+     its row like every other value on the pane. */
+  .setting .nib-segmented {
+    flex: none;
+    width: 14rem;
+  }
+
   .setting .text {
     color: var(--muted-strong);
     overflow: hidden;
@@ -1167,14 +1205,16 @@
     width: 14rem;
   }
 
-  /* A button that is a row: it shows what it does when pointed at. */
+  /* A row that is itself a control: it shows what it does when pointed at. */
   @media (hover: hover) {
-    button.setting:hover {
+    button.setting:hover,
+    .setting.pressable:hover {
       color: var(--text-strong);
     }
   }
 
-  button.setting:focus-visible {
+  button.setting:focus-visible,
+  .setting.pressable:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
