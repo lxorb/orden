@@ -156,9 +156,4 @@
     width: 8px;
     height: 8px;
   }
-
-  .find button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
 </style>

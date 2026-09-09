@@ -71,6 +71,27 @@
      see selection/shape.ts in @nib/editor. A plain length, no calc. */
   --selection-radius: 6px;
 
+  /* The ring a keyboard leaves behind it, and the one thing that says where the
+     keyboard is. One token, so a row, a button, a tab, a pill, a chip and a
+     segment are all ringed the same way and cannot drift: thirty rules had their
+     own copy of the same two lines, which is thirty chances for one of them to be
+     a different colour or a different thickness.
+
+     Two pixels, solid, in the accent, because that is the thinnest ring WCAG
+     counts - one pixel fails - and the accent is the only colour in the app that
+     carries three to one against every surface it sits on.
+
+     It is drawn on `:focus-visible` and never on `:focus`, which is what makes it
+     a keyboard's ring rather than a click's. Discord asks its readers to press Tab
+     to turn on a "keyboard mode" that shows one; a browser has worked that out for
+     itself for years, and this is that answer.
+
+     The offset is inward by default, because most of what wears it is a row inside
+     a panel that clips it: `--focus-ring-offset: 2px` on anything with room around
+     it puts the ring outside instead. */
+  --focus-ring: 2px solid var(--accent);
+  --focus-ring-offset: -2px;
+
   /* The gutter of line numbers beside a code block: the digits, the hairline
      that separates them from the code, and the space either side of that
      hairline. How wide the column is comes from the block's own line count and

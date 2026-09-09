@@ -88,11 +88,6 @@
     opacity: 0;
   }
 
-  .toggle:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   /* A thumb's target rather than a pointer's, and the glyph drawn at the size
      every other icon on a touch screen is. */
   :global([data-touch]) .toggle {

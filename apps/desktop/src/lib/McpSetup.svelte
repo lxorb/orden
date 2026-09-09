@@ -439,7 +439,6 @@
 
   .link:focus-visible,
   .disclose:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
@@ -553,7 +552,6 @@
   }
 
   .switch:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }

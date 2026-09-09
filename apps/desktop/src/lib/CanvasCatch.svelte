@@ -87,11 +87,6 @@
     color: var(--accent);
   }
 
-  .partly:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   :global([data-touch]) .partly {
     min-height: var(--touch-target);
     font-size: var(--touch-text);

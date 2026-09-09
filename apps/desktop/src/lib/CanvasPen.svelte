@@ -222,11 +222,6 @@
     color: var(--accent);
   }
 
-  button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   /* The switches under the dials, side by side and the same size. */
   .rest {
     display: grid;

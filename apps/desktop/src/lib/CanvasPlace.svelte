@@ -96,11 +96,6 @@
     color: var(--accent);
   }
 
-  button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   :global([data-touch]) button {
     --mark: var(--touch-icon);
 

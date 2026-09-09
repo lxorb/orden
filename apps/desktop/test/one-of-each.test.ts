@@ -58,6 +58,16 @@ function rules(style: string): { selector: string; declarations: string }[] {
   }))
 }
 
+/** What a rule sets `outline` to, once each. Read as values rather than matched
+ *  in one expression, because `outline: none` and `outline: 2px solid X` differ
+ *  only in the value and a lookahead over optional whitespace will happily
+ *  backtrack its way past the difference. `outline-offset` is not an outline. */
+function outlines(declarations: string): string[] {
+  return [...declarations.matchAll(/(?:^|;)\s*outline\s*:\s*([^;]+)/g)].map((one) =>
+    (one[1] ?? '').trim(),
+  )
+}
+
 /** Which components draw a shape rather than merely place it: a rule about it
  *  that sets more than where it sits. */
 function draw(named: RegExp): string[] {
@@ -140,6 +150,61 @@ describe('the row a list is made of', () => {
     )
 
     expect(missing, `these draw a list without the row: ${missing.join(', ')}`).toEqual([])
+  })
+})
+
+/** The ring that says where the keyboard is. Thirty rules had their own copy of
+ *  the same two lines - one row, one bar, one tab, one pill, one segment, eight
+ *  buttons on the plane - which is thirty chances for one of them to be a
+ *  different thickness or a different colour, and for the app to read as several
+ *  apps again the moment somebody is navigating it by key. See docs/keyboard.md. */
+describe('the ring a keyboard leaves', () => {
+  test('is one token, and one rule that uses it', () => {
+    const tokens = readFileSync(join(THEMES, 'tokens.css'), 'utf8')
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    expect(tokens).toContain('--focus-ring:')
+    expect(tokens).toContain('--focus-ring-offset:')
+    expect(shared).toContain('outline: var(--focus-ring)')
+  })
+
+  test('and no component draws one of its own', () => {
+    // A component may still say where the ring sits - `outline-offset` on a
+    // control that has room around it - and may turn it off where its own shape
+    // says it another way. What it may not do is state the ring again.
+    const own = components
+      .filter((one) =>
+        rules(one.style).some(
+          (rule) =>
+            rule.selector.includes(':focus') &&
+            outlines(rule.declarations).some(
+              (value) => value !== 'none' && !value.startsWith('var(--focus-ring)'),
+            ),
+        ),
+      )
+      .map((one) => one.name)
+      .sort()
+
+    expect(own, `these draw their own focus ring: ${own.join(', ')}`).toEqual([])
+  })
+
+  test('and is left for a keyboard, never drawn on a plain focus', () => {
+    // `:focus` fires on a click as well, and a ring that appears when a button is
+    // pressed with the mouse is the thing every app gets wrong. `:focus-visible`
+    // is the browser's own answer to which of the two it was.
+    const early = components
+      .filter((one) =>
+        rules(one.style).some(
+          (rule) =>
+            /:focus(?![-\w])/.test(rule.selector) &&
+            !rule.selector.includes(':focus-visible') &&
+            outlines(rule.declarations).some((value) => value !== 'none'),
+        ),
+      )
+      .map((one) => one.name)
+      .sort()
+
+    expect(early, `these ring a click as well as a key: ${early.join(', ')}`).toEqual([])
   })
 })
 

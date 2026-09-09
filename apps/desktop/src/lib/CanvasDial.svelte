@@ -120,11 +120,6 @@
     opacity: 0.3;
   }
 
-  button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   :global([data-touch]) button {
     width: var(--touch-target);
     height: var(--touch-target);

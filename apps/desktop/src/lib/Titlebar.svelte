@@ -184,11 +184,6 @@
     color: #fff;
   }
 
-  button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   .controls svg {
     width: 10px;
     height: 10px;

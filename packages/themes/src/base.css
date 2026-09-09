@@ -27,6 +27,32 @@ body {
   overscroll-behavior: none;
 }
 
+/* ── Where the keyboard is ───────────────────────────────────────
+   One ring, on everything a key can land on, drawn from one token; see
+   `--focus-ring` in tokens.css for what it is and why it is that.
+
+   Written with `:where`, so it carries no weight at all: a control with a shape of
+   its own - a field that turns its border, a card that lifts - still says so
+   without having to out-specify this, and gets the ring for free if it does not.
+   Nothing in the app should ever need to restate the two lines below, and
+   one-of-each.test.ts fails if a component does.
+
+   `:focus-visible` and never `:focus`: a click leaves nothing behind, a key
+   leaves the ring. That is the whole of the rule Discord spends a mode on. */
+:where(
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex],
+  [contenteditable]
+):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 ::selection {
   background: var(--selection);
 }
@@ -66,7 +92,11 @@ select:hover {
   border-color: var(--muted);
 }
 
+/* A field says where the keyboard is by turning its own border, which is the
+   answer a box you type into has always given. So it gives that one and not the
+   ring as well: two answers to one question read as a mistake. */
 select:focus-visible {
+  outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
@@ -285,11 +315,6 @@ select option {
   color: #fff;
 }
 
-.nib-bar button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
 /* ── The row ───────────────────────────────── */
 
 /* One row, for every list of names in the app: the file tree, the bookmarks
@@ -347,11 +372,6 @@ select option {
 .nib-row:active {
   background: var(--surface-press);
   color: var(--text-strong);
-}
-
-.nib-row:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
 }
 
 /* The one you have open. A fill rather than a weight alone: on a phone this is
@@ -497,6 +517,7 @@ textarea.nib-field {
 .nib-field:focus,
 .nib-field:focus-visible,
 .nib-field:focus-within {
+  outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
@@ -594,11 +615,6 @@ textarea.nib-field {
   box-shadow: none;
 }
 
-.nib-segmented button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
 /* A choice that cannot be honoured right now - a scheme the theme in force does
    not have - stays in the row rather than being taken out of it, so the control
    does not change shape as the thing above it is chosen. The same fade every
@@ -635,8 +651,9 @@ textarea.nib-field {
   cursor: default;
 }
 
+/* Room around it rather than inside it: the ring goes outside a control the
+   thickness of a line, which would otherwise swallow it. */
 .nib-slider:focus-visible {
-  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 99px;
 }

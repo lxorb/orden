@@ -132,11 +132,6 @@
     background: color-mix(in srgb, var(--danger) 20%, transparent);
   }
 
-  .all:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   :global([data-touch]) .all {
     min-height: var(--touch-target);
     font-size: var(--touch-text);
