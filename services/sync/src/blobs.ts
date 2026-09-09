@@ -68,8 +68,13 @@ blobs.put('/:hash', async (context) => {
   // The object may already be there from someone else; writing it again is the
   // same bytes either way, and cheaper than asking first.
   await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
+  // And the row may already be this account's by the time this runs: the check
+  // above is not a lock, and a paste that went up twice at once used to answer
+  // the second one with a 500. The same bytes under the same hash are the same
+  // row, so there is nothing to write and nothing to say about it.
   await context.env.DB.prepare(
-    'insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)',
+    `insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)
+     on conflict(hash, user_id) do nothing`,
   )
     .bind(hash, user.id, body.byteLength, type, now())
     .run()

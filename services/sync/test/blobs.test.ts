@@ -54,6 +54,25 @@ describe('storing an image', () => {
     expect(usage.json.used).toBe(start + 4096)
   })
 
+  /** A paste that went up twice at once - the same picture in two notes, saved
+   *  together - found the row already there by the time it wrote and answered with
+   *  a 500, because the check above is a courtesy and the primary key is the rule.
+   *  The other upload's row goes in at the one moment that matters. */
+  test('the same picture offered twice at once is one row', async () => {
+    const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
+    env.justBefore(/insert into blobs/, () => {
+      env.db
+        .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
+        .run(HASH, owner, 4096, 'image/png', 1)
+    })
+
+    const response = await upload(HASH, 4096)
+
+    expect(response.status).not.toBe(500)
+    expect(env.db.prepare('select hash from blobs where hash = ?').all(HASH)).toHaveLength(1)
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 4096)
+  })
+
   test('refuses something that is not an image', async () => {
     const response = await upload(HASH, 32, { type: 'application/zip' })
     expect(response.status).toBe(415)
