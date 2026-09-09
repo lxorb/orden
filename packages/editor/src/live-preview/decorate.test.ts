@@ -375,6 +375,13 @@ describe('images', () => {
     expect(blocks('```flow\nst=>start: Go\n```')).toEqual(['```flow\nst=>start: Go\n```'])
   })
 
+  test('draws a chart fence, and leaves one holding no chart as code', () => {
+    const chart = '```chart\nseries:\n  - data: [1, 2]\n```'
+    expect(blocks(chart)).toEqual([chart])
+    // Nothing to draw: it stays code, which is how nib says it could not read one.
+    expect(blocks('```chart\nnot a chart\n```')).toEqual([])
+  })
+
   test('an address a provider answers for is that page, not a picture', () => {
     const written = '![](https://youtu.be/dQw4w9WgXcQ)'
     expect(concealed(written)).toEqual([written])

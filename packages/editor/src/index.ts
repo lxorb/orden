@@ -5,6 +5,7 @@ export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
 export {
   clearFormatting,
   insertCallout,
+  insertChart,
   insertCodeFence,
   insertComment,
   insertFootnote,
@@ -37,7 +38,7 @@ export {
 export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
-export { DIAGRAM_LANGUAGES, diagramSvg } from './live-preview/render'
+export { DIAGRAM_LANGUAGES, diagramSvg, RENDERED_LANGUAGES } from './live-preview/render'
 export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'
 export { nibHighlightStyle, nibTheme } from './theme'

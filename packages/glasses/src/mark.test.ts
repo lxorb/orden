@@ -283,6 +283,17 @@ describe('nothing in a note is dropped', () => {
     expect(one('![[Another note]]')).toBe('Another note')
   })
 
+  test('a titled chart is its title, because a panel of one font cannot draw one', () => {
+    expect(
+      lines('```chart\ntype: bar\ntitle: Two quarters\nseries:\n  - data: [1, 2]\n```\n'),
+    ).toEqual(['▤ Two quarters'])
+  })
+
+  test('and an untitled one stays its numbers, which are the part that can be read', () => {
+    const said = lines('```chart\nseries:\n  - data: [1, 2]\n```\n')
+    expect(said.join('\n')).toContain('data: [1, 2]')
+  })
+
   test('an embedded file is its name behind the mark that says it is one', () => {
     // A panel of one font cannot play a recording or show a page of a paper, and
     // a line that merely said `clip.mp3` would read as prose about a file name.

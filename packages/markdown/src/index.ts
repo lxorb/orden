@@ -1,5 +1,6 @@
 import { Marked, Renderer } from 'marked'
 import type { Token, Tokens } from 'marked'
+import { chartFigure } from './chart'
 import { withoutComments } from './comments'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
@@ -194,7 +195,18 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
       },
 
       code(token: Tokens.Code) {
-        const custom = options.code?.(token.text, token.lang?.trim() ?? '')
+        const language = token.lang?.trim() ?? ''
+
+        // A chart is numbers, and numbers can be drawn anywhere - here rather
+        // than through `options.code` so a published page gets one too, which is
+        // the one surface with no drawing library and no DOM to use it in. A
+        // fence that holds no chart falls through and stays code.
+        if (language.toLowerCase() === 'chart') {
+          const drawn = chartFigure(token.text)
+          if (drawn) return drawn
+        }
+
+        const custom = options.code?.(token.text, language)
         return custom ?? defaults.code.call(this, token)
       },
     },

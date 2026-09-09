@@ -11,6 +11,7 @@ import {
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
+import { readChart } from '@nib/markdown/chart'
 import { type EmbedKind, embedKind } from '@nib/markdown/links'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { noteIndex } from '../wikilink/notes'
@@ -19,10 +20,11 @@ import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps } from './reveal'
 import {
-  DIAGRAM_LANGUAGES,
+  ChartWidget,
   DiagramWidget,
   MathWidget,
   recordEquationLabel,
+  RENDERED_LANGUAGES,
   resetEquationLabels,
 } from './render'
 import { headings, TocWidget } from './toc'
@@ -155,15 +157,21 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           if (!standsAlone(state, node.from)) return true
           const span = found(node.from, node.to)
 
-          if (!DIAGRAM_LANGUAGES.has(fenceLanguage(state, node.node))) return false
+          const language = fenceLanguage(state, node.node)
+          if (!RENDERED_LANGUAGES.has(language)) return false
           if (revealed(node.from, node.to)) return false
+
+          const code = fenceCode(state, node.node)
+
+          // A chart fence with no chart in it stays code, which is how nib says
+          // it could not read one. Asked here rather than inside the widget so
+          // the fence keeps its colouring instead of becoming an empty box.
+          if (language === 'chart' && readChart(code) === null) return false
 
           ranges.push(
             Decoration.replace({
-              widget: new DiagramWidget(
-                fenceCode(state, node.node),
-                fenceLanguage(state, node.node),
-              ),
+              widget:
+                language === 'chart' ? new ChartWidget(code) : new DiagramWidget(code, language),
               block: true,
             }).range(span.from, span.to),
           )

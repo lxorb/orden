@@ -437,6 +437,7 @@ export const de: Dictionary = {
   Find: 'Suchen',
   'Heading {level}': 'Überschrift {level}',
   'Math block': 'Formelblock',
+  Chart: 'Diagramm',
   'Inline math': 'Formel im Text',
   Superscript: 'Hochgestellt',
   Subscript: 'Tiefgestellt',

@@ -291,6 +291,26 @@ describe('a published note cannot script the reader', () => {
     expect(policy).not.toContain('frame-src')
   })
 
+  test('a chart is drawn on a published page, which has no drawing library', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: {
+        path: 'counts.md',
+        content:
+          '# Counts\n\n```chart\ntitle: Two months\nlabels: [Jan, Feb]\nseries:\n  - data: [3, 5]\n```\n',
+      },
+    })
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/counts', { host: 'field.nibeditor.com' })
+
+    expect(response.text).toContain('<figure class="chart" data-kind="bar">')
+    expect(response.text).toContain('<svg class="chart-svg"')
+    expect(response.text).toContain('Two months')
+    // Drawn, not printed as its own source.
+    expect(response.text).not.toContain('series:')
+  })
+
   test('a recording a note embeds is a player the policy allows', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,

@@ -159,6 +159,84 @@
   color: var(--muted);
 }
 
+/* ── Charts ──────────────────────────────────────────────────────── */
+
+/* A ` ```chart ` fence. The same frame a diagram sits in, since both are a picture
+   the note made rather than a picture it points at. */
+#write .chart {
+  margin: 1.7em 0;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+#write .chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The grid is quiet enough to read the bars against and no quieter. */
+#write .chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+#write .chart-axis {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+#write .chart-tick,
+#write .chart-label {
+  fill: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+#write .chart-line {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#write .chart-slice {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+#write .chart-keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4em 1.1em;
+  margin-top: 0.6em;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+#write .chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+#write .chart-swatch {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 2px;
+}
+
+#write .chart figcaption {
+  margin-top: 0.5em;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
 /* ── Embedded pages ──────────────────────────────────────────────── */
 
 /* `![](https://youtube.com/watch?v=…)`. A card the size the frame will be, so

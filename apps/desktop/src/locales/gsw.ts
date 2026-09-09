@@ -437,6 +437,7 @@ export const gsw: Dictionary = {
   Find: 'Sueche',
   'Heading {level}': 'Überschrift {level}',
   'Math block': 'Formelblock',
+  Chart: 'Diagramm',
   'Inline math': 'Formle im Text',
   Superscript: 'Hochgstellt',
   Subscript: 'Tüüfgstellt',

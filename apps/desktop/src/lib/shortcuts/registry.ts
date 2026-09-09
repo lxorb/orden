@@ -121,6 +121,7 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'paragraph.table': ['paragraph', () => t('Table')],
   'paragraph.code-block': ['paragraph', () => t('Code block')],
   'paragraph.math-block': ['paragraph', () => t('Math block')],
+  'paragraph.chart': ['paragraph', () => t('Chart')],
   'paragraph.quote': ['paragraph', () => t('Quote')],
   'paragraph.ordered-list': ['paragraph', () => t('Numbered list')],
   'paragraph.bullet-list': ['paragraph', () => t('Bulleted list')],

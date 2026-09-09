@@ -13,11 +13,12 @@ import { concealable, hide, meta } from './conceal'
 import { numberEquations } from './blocks'
 import { dragging } from './dragging'
 import { lineRevealed, noReveal, overlaps, revealed } from './reveal'
-import { DIAGRAM_LANGUAGES, MathWidget } from './render'
+import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
 import { fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
+import { readChart } from '@nib/markdown/chart'
 import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
@@ -390,9 +391,14 @@ class Decorator {
   private fence(node: SyntaxNode): boolean {
     const language = fenceLanguage(this.state, node)
 
-    // Rendered diagrams are block replacements, which only a state field may
-    // provide - see blocks.ts. Skip the subtree so nothing double-decorates it.
-    if (DIAGRAM_LANGUAGES.has(language) && !overlaps(this.state, node.from, node.to)) return false
+    // A drawn fence is a block replacement, which only a state field may provide
+    // - see blocks.ts. Skip the subtree so nothing double-decorates it. Except
+    // for a chart nobody can read, which blocks.ts leaves alone: that one is
+    // still code, and code is decorated here.
+    const drawn =
+      RENDERED_LANGUAGES.has(language) &&
+      (language !== 'chart' || readChart(fenceCode(this.state, node)) !== null)
+    if (drawn && !overlaps(this.state, node.from, node.to)) return false
 
     this.markLines(node, 'nib-code')
     const doc = this.state.doc

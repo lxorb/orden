@@ -436,6 +436,7 @@ export const fr: Dictionary = {
   Find: 'Rechercher',
   'Heading {level}': 'Titre {level}',
   'Math block': 'Bloc de formule',
+  Chart: 'Graphique',
   'Inline math': 'Formule en ligne',
   Superscript: 'Exposant',
   Subscript: 'Indice',

@@ -1,4 +1,4 @@
-import { CODE_PALETTES, DIAGRAM_LANGUAGES } from '@nib/editor'
+import { CODE_PALETTES, DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from '@nib/editor'
 import {
   codeBlocks,
   findLinks,
@@ -217,7 +217,10 @@ export async function prepareFences(
     })
 
   for (const block of blocks) {
-    if (block.language && !DIAGRAM_LANGUAGES.has(block.language)) languages.add(block.language)
+    // A fence the renderer draws is not a fence anybody colours; see
+    // `RENDERED_LANGUAGES`. Loading a parser for `chart` would be loading one
+    // for a language nobody has a grammar for.
+    if (block.language && !RENDERED_LANGUAGES.has(block.language)) languages.add(block.language)
   }
 
   const [parsers] = await Promise.all([

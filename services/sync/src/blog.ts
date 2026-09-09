@@ -323,6 +323,17 @@ figure.embed-file{display:flex;align-items:center;gap:.55em;padding:.5em 1.15rem
 figure.embed-file a{border:0;color:inherit}
 figure.embed-file a:hover{color:var(--accent)}
 .embed-icon{flex:none;width:1.05em;height:1.05em;color:var(--muted)}
+figure.chart{margin:1.7em 0;padding:1.15rem;background:var(--surface);border:1px solid var(--line);border-radius:9px}
+.chart-svg{display:block;width:100%;height:auto}
+.chart-grid{stroke:var(--line);stroke-width:1}
+.chart-axis{stroke:var(--muted);stroke-width:1}
+.chart-tick,.chart-label{fill:var(--muted);font-size:13px}
+.chart-line{stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chart-slice{stroke:var(--surface);stroke-width:2}
+.chart-keys{display:flex;flex-wrap:wrap;justify-content:center;gap:.4em 1.1em;margin-top:.6em;color:var(--muted);font-size:.8em}
+.chart-key{display:inline-flex;align-items:center;gap:.4em}
+.chart-swatch{width:.7em;height:.7em;border-radius:2px}
+figure.chart figcaption{margin-top:.5em;text-align:center;color:var(--muted);font-size:.8em}
 .embed-web{display:block;margin:1.5em 0;height:var(--embed-height,auto);border:1px solid var(--line);border-radius:9px;background:var(--surface);overflow:hidden}
 .embed-web.embed-wide{aspect-ratio:16/9;height:auto}
 .embed-play{display:flex;align-items:center;justify-content:center;gap:.5em;width:100%;height:100%;min-height:4.5em;border:0;color:var(--muted);font-size:.9em}

@@ -333,6 +333,18 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   return true
 }
 export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }))
+
+/** A ` ```chart ` fence with a chart already in it.
+ *
+ *  Filled in rather than blank, because the shape is the one thing about a chart
+ *  nobody guesses: three keys, one of them a list of lists. An empty fence would
+ *  send the writer to the documentation, and a chart with numbers in it is a
+ *  chart they can edit into theirs. The caret lands on the title, which is the
+ *  first thing they will want to change. See chart.ts in @nib/markdown. */
+export const insertChart = insertBlock(() => ({
+  text: '```chart\ntype: bar\ntitle: \nlabels: [one, two, three]\nseries:\n  - data: [1, 2, 3]\n```\n',
+  caret: 26,
+}))
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
 
 /** A GitHub alert, which is the callout the renderer draws and the editor marks.

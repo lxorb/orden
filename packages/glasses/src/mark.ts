@@ -24,6 +24,7 @@
 
 import { lexMarkdown, stripFrontMatter, withoutComments } from '@nib/markdown'
 import { calloutOf } from '@nib/markdown/callouts'
+import { readChart } from '@nib/markdown/chart'
 import { embedKind, type Wikilink } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
@@ -760,6 +761,17 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const raw = rawOf(token)
   const code = textOf(token)
   const from = where.take(raw)
+
+  // A chart is a picture, and a picture is one line here saying what it is of.
+  // Only when it has a title, though: an untitled chart is nothing but its
+  // numbers, and the numbers are the one thing about it a panel of one font can
+  // still carry, so that one stays a fence.
+  const drawn = language.toLowerCase() === 'chart' ? readChart(code) : null
+  if (drawn?.title) {
+    sheet.add(`${PICTURE} ${drawn.title}`, from, nest)
+    return
+  }
+
   // Each line of code keeps its own place in the file, so a page break inside a
   // long fence still maps back to the line the reader is looking at, and "go to
   // line" reaches a line of code.

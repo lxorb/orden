@@ -1,0 +1,429 @@
+/** A ` ```chart ` fence: a few numbers, drawn.
+ *
+ *  The shape is the one the Obsidian Charts plugin reads, so a note that carries
+ *  a chart opens in either app with the same numbers in it. Its own vocabulary is
+ *  Chart.js's, which is a hundred options wide; what a note needs is what a
+ *  reader can take in at a glance, so this reads five keys and draws four kinds.
+ *
+ *  `type`, `title`, `labels`, `series` with a `title` and `data` each. Left out,
+ *  and why:
+ *
+ *  Radar, polar and scatter, because a note is prose and those are instruments -
+ *  each needs axes, scales and a legend the reader has to study before the picture
+ *  says anything, and none of them says it in a column of text.
+ *
+ *  `stacked`, `tension`, `fill`, `beginAtZero`, `width`, `height` and the rest of
+ *  Chart.js's surface. A bar chart always begins at zero, because one that does
+ *  not is a picture that lies about a ratio; a chart is always the width of the
+ *  column, because a note has one column; and a curve drawn through points is a
+ *  claim about what happened between them that the numbers do not make.
+ *
+ *  Drawn as an SVG built from strings, with no library at all. Three reasons, in
+ *  order: the Worker that publishes a note has no DOM to draw in, so anything
+ *  needing one could not be published; a chart on paper and a chart on screen have
+ *  to be the same picture; and Chart.js is two hundred kilobytes for a bar chart.
+ *
+ *  Colours come from the tokens the app and a published page both define, with a
+ *  hex fallback for the one place neither does - a picture pulled out of a
+ *  document and looked at on its own. */
+
+import { escape } from './html'
+
+export type ChartKind = 'bar' | 'line' | 'pie' | 'donut'
+
+export interface Series {
+  title: string
+  data: number[]
+}
+
+export interface Chart {
+  kind: ChartKind
+  title: string | null
+  labels: string[]
+  series: Series[]
+}
+
+/** The kinds, and the names the plugin uses for each. `doughnut` is Chart.js's
+ *  own spelling and `donut` is what people type. */
+const KINDS: Readonly<Record<string, ChartKind>> = {
+  bar: 'bar',
+  line: 'line',
+  pie: 'pie',
+  donut: 'donut',
+  doughnut: 'donut',
+}
+
+/** Well past any chart worth reading in a note, and a ceiling so a fence cannot
+ *  ask for a picture of ten thousand bars. */
+const MOST_POINTS = 200
+const MOST_SERIES = 12
+
+/** The colours a series is drawn in, in this order, so two beside each other are
+ *  never two shades of the same thing. The accent first: a chart in a note is part
+ *  of the note. */
+const INK: readonly (readonly [string, string])[] = [
+  ['--accent', '#5b4be0'],
+  ['--canvas-4', '#08b94e'],
+  ['--canvas-2', '#ec7500'],
+  ['--canvas-6', '#7852ee'],
+  ['--canvas-5', '#00b3b0'],
+  ['--canvas-1', '#e93147'],
+  ['--canvas-3', '#d9a600'],
+]
+
+function colour(at: number): string {
+  const [token, hex] = INK[at % INK.length] ?? ['--accent', '#5b4be0']
+  return `var(${token}, ${hex})`
+}
+
+/** A value with the quotes it may have been written in taken off. */
+function unquoted(value: string): string {
+  const trimmed = value.trim()
+  const first = trimmed.at(0)
+  if ((first === '"' || first === "'") && trimmed.endsWith(first) && trimmed.length > 1) {
+    return trimmed.slice(1, -1)
+  }
+  return trimmed
+}
+
+/** A `[a, b, c]` sequence, or null when the value is not one. */
+function flow(value: string): string[] | null {
+  const trimmed = value.trim()
+  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return null
+
+  const inside = trimmed.slice(1, -1).trim()
+  return inside === '' ? [] : inside.split(',').map(unquoted)
+}
+
+/** A number as YAML would read one, or null for anything that is not one -
+ *  including a gap in a series, which is drawn as a gap rather than as a zero. */
+function numberOf(written: string): number | null {
+  const value = Number(unquoted(written))
+  return Number.isFinite(value) ? value : null
+}
+
+/** One line split at its first colon, when it is a mapping at all. */
+function pair(line: string): { indent: number; key: string; value: string } | null {
+  const indent = line.length - line.trimStart().length
+  const rest = line.trim().replace(/^-\s*/, '')
+  const at = rest.indexOf(':')
+  if (at <= 0) return null
+
+  return { indent, key: rest.slice(0, at).trim().toLowerCase(), value: rest.slice(at + 1) }
+}
+
+/** The chart a fence's body describes, or null when it describes none.
+ *
+ *  Tolerant, the way every reader in this package is: a key nobody here knows is
+ *  skipped rather than refused, so a chart written for the plugin's fuller
+ *  vocabulary still draws the part of itself that is numbers. What it will not do
+ *  is invent - a fence with no numbers in it is not a chart, and stays code. */
+export function readChart(source: string): Chart | null {
+  const lines = source.split('\n')
+  let kind: ChartKind = 'bar'
+  let title: string | null = null
+  let labels: string[] = []
+  const series: Series[] = []
+  let inSeries = false
+
+  for (const line of lines) {
+    if (line.trim() === '' || line.trimStart().startsWith('#')) continue
+
+    const found = pair(line)
+    const listed = line.trimStart().startsWith('-')
+
+    // `series:` on its own opens the list under it; any key at the left margin
+    // closes it again.
+    if (found === null) {
+      if (/^\s*series\s*:\s*$/i.test(line)) inSeries = true
+      continue
+    }
+
+    if (found.indent === 0 && !listed) {
+      if (found.key === 'series') {
+        // `series: [1, 2, 3]` is one series with no name, which is what somebody
+        // writes when there is only one thing to draw.
+        const inline = flow(found.value)
+        inSeries = inline === null
+        if (inline) series.push({ title: '', data: numbers(found.value) })
+        continue
+      }
+
+      inSeries = false
+      if (found.key === 'type') kind = KINDS[unquoted(found.value).toLowerCase()] ?? kind
+      else if (found.key === 'title') title = unquoted(found.value) || null
+      else if (found.key === 'labels') labels = flow(found.value) ?? [unquoted(found.value)]
+      continue
+    }
+
+    if (!inSeries) continue
+
+    // A new dash starts a new series, whichever of its keys came first.
+    if (listed && series.length < MOST_SERIES) series.push({ title: '', data: [] })
+    const current = series.at(-1)
+    if (!current) continue
+
+    if (found.key === 'title' || found.key === 'label') current.title = unquoted(found.value)
+    else if (found.key === 'data') current.data = numbers(found.value)
+  }
+
+  const drawn = series.filter((one) => one.data.length > 0)
+  if (drawn.length === 0) return null
+
+  return { kind, title, labels, series: drawn.slice(0, MOST_SERIES) }
+}
+
+/** The numbers a `data:` value holds. A value that is not a number is a zero:
+ *  a bar chart with a hole in it says less than one with a bar of nothing. */
+function numbers(value: string): number[] {
+  const listed = flow(value)
+  if (listed === null) {
+    const one = numberOf(value)
+    return one === null ? [] : [one]
+  }
+
+  return listed.slice(0, MOST_POINTS).map((written) => numberOf(written) ?? 0)
+}
+
+/** The box every chart is drawn in. A viewBox and no width, so the figure around
+ *  it decides how wide it is and the drawing scales with the column. */
+const WIDTH = 640
+const HEIGHT = 340
+const PAD = { top: 24, right: 16, bottom: 40, left: 48 }
+
+/** How many lines across a bar or line chart, counting the baseline. */
+const GRID = 4
+
+function round(value: number): string {
+  return (Math.round(value * 100) / 100).toString()
+}
+
+/** A number as a reader writes one: no trailing zeroes, and thousands grouped
+ *  the way every locale that groups at all groups them. */
+function said(value: number): string {
+  const rounded = Math.round(value * 100) / 100
+  return rounded.toLocaleString('en-US')
+}
+
+/** The largest value any series reaches, and the smallest, so a chart with
+ *  negative numbers still has a baseline in the right place. */
+function span(chart: Chart): { low: number; high: number } {
+  const every = chart.series.flatMap((one) => one.data)
+  const high = Math.max(0, ...every)
+  const low = Math.min(0, ...every)
+  // A chart of nothing but zeroes still needs a scale to draw against.
+  return high === low ? { low, high: high + 1 } : { low, high }
+}
+
+function text(words: string, x: number, y: number, className: string, anchor = 'middle'): string {
+  return `<text class="${className}" x="${round(x)}" y="${round(y)}" text-anchor="${anchor}">${escape(words)}</text>`
+}
+
+/** The axes: the value lines across, and the labels along the bottom. */
+function frame(chart: Chart, low: number, high: number): string {
+  const out: string[] = []
+  const plot = {
+    x: PAD.left,
+    y: PAD.top,
+    w: WIDTH - PAD.left - PAD.right,
+    h: HEIGHT - PAD.top - PAD.bottom,
+  }
+
+  for (let at = 0; at < GRID; at++) {
+    const value = high - ((high - low) * at) / (GRID - 1)
+    const y = plot.y + (plot.h * at) / (GRID - 1)
+    out.push(
+      `<line class="chart-grid" x1="${plot.x}" y1="${round(y)}" x2="${plot.x + plot.w}" y2="${round(y)}"/>`,
+    )
+    out.push(text(said(value), plot.x - 8, y + 4, 'chart-tick', 'end'))
+  }
+
+  const step = plot.w / Math.max(1, longest(chart))
+  for (const [at, label] of chart.labels.slice(0, longest(chart)).entries()) {
+    out.push(text(label, plot.x + step * (at + 0.5), HEIGHT - PAD.bottom + 20, 'chart-label'))
+  }
+
+  return out.join('')
+}
+
+/** How many points the chart has, which is the longest series in it. */
+function longest(chart: Chart): number {
+  return Math.max(1, ...chart.series.map((one) => one.data.length))
+}
+
+function bars(chart: Chart, low: number, high: number): string {
+  const plot = {
+    x: PAD.left,
+    y: PAD.top,
+    w: WIDTH - PAD.left - PAD.right,
+    h: HEIGHT - PAD.top - PAD.bottom,
+  }
+  const points = longest(chart)
+  const step = plot.w / points
+  const room = step * 0.72
+  const each = room / chart.series.length
+  const zero = plot.y + plot.h * (high / (high - low))
+  const out: string[] = []
+
+  for (const [which, series] of chart.series.entries()) {
+    for (const [at, value] of series.data.entries()) {
+      const top = plot.y + plot.h * ((high - Math.max(value, 0)) / (high - low))
+      const bottom = plot.y + plot.h * ((high - Math.min(value, 0)) / (high - low))
+      const x = plot.x + step * at + (step - room) / 2 + each * which
+      const height = Math.max(1, bottom - top)
+      out.push(
+        `<rect class="chart-bar" x="${round(x)}" y="${round(top)}" width="${round(Math.max(1, each - 2))}" height="${round(height)}" fill="${colour(which)}"><title>${escape(`${series.title ? `${series.title}: ` : ''}${said(value)}`)}</title></rect>`,
+      )
+    }
+  }
+
+  out.push(
+    `<line class="chart-axis" x1="${plot.x}" y1="${round(zero)}" x2="${plot.x + plot.w}" y2="${round(zero)}"/>`,
+  )
+  return out.join('')
+}
+
+function lines(chart: Chart, low: number, high: number): string {
+  const plot = {
+    x: PAD.left,
+    y: PAD.top,
+    w: WIDTH - PAD.left - PAD.right,
+    h: HEIGHT - PAD.top - PAD.bottom,
+  }
+  const points = longest(chart)
+  const step = plot.w / points
+  const out: string[] = []
+
+  for (const [which, series] of chart.series.entries()) {
+    const drawn = series.data.map((value, at) => {
+      const x = plot.x + step * (at + 0.5)
+      const y = plot.y + plot.h * ((high - value) / (high - low))
+      return `${round(x)},${round(y)}`
+    })
+    if (drawn.length === 0) continue
+
+    out.push(
+      `<polyline class="chart-line" points="${drawn.join(' ')}" fill="none" stroke="${colour(which)}"/>`,
+    )
+    for (const [at, value] of series.data.entries()) {
+      const x = plot.x + step * (at + 0.5)
+      const y = plot.y + plot.h * ((high - value) / (high - low))
+      out.push(
+        `<circle class="chart-dot" cx="${round(x)}" cy="${round(y)}" r="3" fill="${colour(which)}"><title>${escape(`${series.title ? `${series.title}: ` : ''}${said(value)}`)}</title></circle>`,
+      )
+    }
+  }
+
+  return out.join('')
+}
+
+/** A pie, or the same with the middle taken out. One series only: a pie of two
+ *  series is two pies, and nobody reads that. */
+function pie(chart: Chart, hole: number): string {
+  const series = chart.series[0]
+  if (!series) return ''
+
+  const values = series.data.map((one) => Math.max(0, one))
+  const total = values.reduce((sum, one) => sum + one, 0)
+  if (total <= 0) return ''
+
+  const middle = { x: WIDTH / 2, y: (HEIGHT - PAD.bottom + PAD.top) / 2 }
+  const radius = Math.min(WIDTH, HEIGHT - PAD.bottom) / 2 - PAD.top
+  const out: string[] = []
+  let turned = -Math.PI / 2
+
+  for (const [at, value] of values.entries()) {
+    const sweep = (value / total) * Math.PI * 2
+    if (sweep <= 0) continue
+
+    const name = chart.labels[at] ?? ''
+    // A slice that is the whole pie has no arc: its two ends are the same point,
+    // and an arc between them is drawn as nothing at all.
+    const path =
+      sweep >= Math.PI * 2 - 1e-9
+        ? ring(middle, radius, hole)
+        : slice(middle, radius, hole, turned, turned + sweep)
+
+    out.push(
+      `<path class="chart-slice" d="${path}" fill="${colour(at)}"><title>${escape(`${name ? `${name}: ` : ''}${said(value)}`)}</title></path>`,
+    )
+    turned += sweep
+  }
+
+  return out.join('')
+}
+
+function at(middle: { x: number; y: number }, radius: number, angle: number): string {
+  return `${round(middle.x + radius * Math.cos(angle))},${round(middle.y + radius * Math.sin(angle))}`
+}
+
+function slice(
+  middle: { x: number; y: number },
+  radius: number,
+  hole: number,
+  from: number,
+  to: number,
+): string {
+  const big = to - from > Math.PI ? 1 : 0
+  const inner = radius * hole
+
+  if (hole === 0) {
+    return `M ${middle.x},${middle.y} L ${at(middle, radius, from)} A ${radius},${radius} 0 ${big} 1 ${at(middle, radius, to)} Z`
+  }
+
+  return (
+    `M ${at(middle, radius, from)} A ${radius},${radius} 0 ${big} 1 ${at(middle, radius, to)}` +
+    ` L ${at(middle, inner, to)} A ${inner},${inner} 0 ${big} 0 ${at(middle, inner, from)} Z`
+  )
+}
+
+/** A whole circle, or a whole ring, which no arc can draw. */
+function ring(middle: { x: number; y: number }, radius: number, hole: number): string {
+  const circle = (r: number, sweep: 0 | 1) =>
+    `M ${round(middle.x - r)},${round(middle.y)} A ${r},${r} 0 1 ${sweep} ${round(middle.x + r)},${round(middle.y)} A ${r},${r} 0 1 ${sweep} ${round(middle.x - r)},${round(middle.y)} Z`
+
+  return hole === 0 ? circle(radius, 1) : `${circle(radius, 1)} ${circle(radius * hole, 0)}`
+}
+
+/** Which series is which, when there is more than one to tell apart. A pie names
+ *  its slices instead, since its labels are the things rather than the series. */
+function legend(chart: Chart): string {
+  const sliced = chart.kind === 'pie' || chart.kind === 'donut'
+  const named = sliced
+    ? chart.labels.slice(0, chart.series[0]?.data.length ?? 0)
+    : chart.series.map((one) => one.title)
+
+  const shown = named.filter((one) => one !== '')
+  if (shown.length < 2) return ''
+
+  return `<div class="chart-keys">${shown
+    .map(
+      (name, at) =>
+        `<span class="chart-key"><span class="chart-swatch" style="background: ${colour(at)}"></span>${escape(name)}</span>`,
+    )
+    .join('')}</div>`
+}
+
+/** The chart as one SVG, sized by its viewBox so the column decides how wide. */
+export function chartSvg(chart: Chart): string {
+  const { low, high } = span(chart)
+  const body =
+    chart.kind === 'pie'
+      ? pie(chart, 0)
+      : chart.kind === 'donut'
+        ? pie(chart, 0.58)
+        : `${frame(chart, low, high)}${chart.kind === 'line' ? lines(chart, low, high) : bars(chart, low, high)}`
+
+  return `<svg class="chart-svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" preserveAspectRatio="xMidYMid meet">${body}</svg>`
+}
+
+/** The whole block a ` ```chart ` fence becomes, or null when the fence holds no
+ *  chart - in which case it stays code, the way a diagram that will not draw
+ *  does. */
+export function chartFigure(source: string): string | null {
+  const chart = readChart(source)
+  if (chart === null) return null
+
+  const title = chart.title === null ? '' : `<figcaption>${escape(chart.title)}</figcaption>`
+  return `<figure class="chart" data-kind="${chart.kind}">${chartSvg(chart)}${legend(chart)}${title}</figure>\n`
+}

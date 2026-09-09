@@ -1,4 +1,5 @@
 import { MOST_EMS } from '@nib/markdown'
+import { chartFigure } from '@nib/markdown/chart'
 import { NibWidget } from './widget'
 import katex from 'katex'
 // Chemical equations: `\ce{H2O}` and friends, as Typora supports.
@@ -78,6 +79,15 @@ export class MathWidget extends NibWidget {
 /** Fence languages Typora renders as pictures rather than code. */
 export const DIAGRAM_LANGUAGES = new Set(['mermaid', 'flow', 'sequence'])
 
+/** Every fence drawn rather than coloured, which is the wider question two places
+ *  ask: the block field, deciding whether to replace the fence, and the walk in
+ *  decorate.ts, which has to step aside for exactly the same ones or the two
+ *  decorate the same range twice and CodeMirror throws.
+ *
+ *  A chart is here and not in `DIAGRAM_LANGUAGES` because that set is also the
+ *  list of what the two heavy diagram renderers draw; a chart needs neither. */
+export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([...DIAGRAM_LANGUAGES, 'chart'])
+
 let diagramSeq = 0
 
 export class DiagramWidget extends NibWidget {
@@ -110,6 +120,32 @@ export class DiagramWidget extends NibWidget {
       host.classList.add('nib-diagram-error')
       host.textContent = error instanceof Error ? error.message : String(error)
     }
+  }
+}
+
+/** A ` ```chart ` fence, drawn. No library and nothing to wait for: the picture is
+ *  built from the numbers as a string, by the same code that draws one into an
+ *  exported document and onto a published page. So unlike a diagram this appears
+ *  with the keystroke that finishes it rather than a moment later.
+ *
+ *  A fence whose body is not a chart gets no widget at all - blocks.ts asks first
+ *  - and stays code, which is what says nib could not read it. */
+export class ChartWidget extends NibWidget {
+  constructor(private readonly code: string) {
+    super()
+  }
+
+  override eq(other: ChartWidget) {
+    return other.code === this.code
+  }
+
+  toDOM() {
+    const host = document.createElement('div')
+    host.className = 'nib-chart'
+    // The renderer's own markup, built out of escaped text and numbers this
+    // package never sees; see chart.ts.
+    host.innerHTML = chartFigure(this.code) ?? ''
+    return host
   }
 }
 

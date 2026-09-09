@@ -435,6 +435,7 @@ export const ja: Dictionary = {
   Find: '検索',
   'Heading {level}': '見出し {level}',
   'Math block': '数式ブロック',
+  Chart: 'グラフ',
   'Inline math': 'インライン数式',
   Superscript: '上付き',
   Subscript: '下付き',
