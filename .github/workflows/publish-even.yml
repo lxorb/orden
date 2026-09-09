@@ -29,6 +29,7 @@ jobs:
   # strings.
   gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       publish: ${{ steps.gate.outputs.publish }}
       package: ${{ steps.gate.outputs.package }}
@@ -37,33 +38,67 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # The commit before this one, to compare the manifest against.
-          fetch-depth: 2
+          # This commit only. The manifest the push started from is fetched by
+          # its own hash below, which is one object however long the history
+          # gets, and which HEAD^ is not when a push carried several commits.
+          fetch-depth: 1
 
       - id: gate
         env:
           MANIFEST: apps/desktop/even.app.json
-          # Concatenated only to ask whether both are set; neither is printed.
-          SECRETS: ${{ secrets.EVENHUB_EMAIL }}${{ secrets.EVENHUB_PASSWORD }}
+          # Each on its own, because either one missing is a publish that would
+          # get as far as the sign in and stop there. Neither is ever printed;
+          # what the script tests is whether the string is empty.
+          EMAIL: ${{ secrets.EVENHUB_EMAIL }}
+          PASSWORD: ${{ secrets.EVENHUB_PASSWORD }}
+          # Through the environment rather than interpolated into the script: a
+          # commit message is somebody's prose, and a `${{ }}` of it would be
+          # pasted in as shell.
           MESSAGE: ${{ github.event.head_commit.message }}
+          EVENT: ${{ github.event_name }}
+          # What this push started from, which is not the same as HEAD^ when the
+          # push carried more than one commit.
+          BEFORE: ${{ github.event.before }}
         run: |
-          echo "package=$(node -p "require('./$MANIFEST').package_id")" >> "$GITHUB_OUTPUT"
-          version=$(node -p "require('./$MANIFEST').version")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "changelog=$(printf '%s' "$MESSAGE" | head -1 | cut -c1-500)" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
 
-          if [ -z "$SECRETS" ]; then
-            echo '::notice::EVENHUB_EMAIL and EVENHUB_PASSWORD are not set - skipping the publish.'
+          package=$(node -p "require('./$MANIFEST').package_id ?? ''")
+          version=$(node -p "require('./$MANIFEST').version ?? ''")
+
+          # A manifest missing either of them would publish as an empty package
+          # id, which the portal answers with something unhelpful.
+          if [ -z "$package" ] || [ -z "$version" ]; then
+            echo "::error::$MANIFEST names no package_id or no version."
+            exit 1
+          fi
+
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          # One line of it, and the version when there is no commit behind this
+          # run at all, which is every run started by hand.
+          changelog=$(printf '%s' "${MESSAGE:-}" | head -1 | cut -c1-500)
+          echo "changelog=${changelog:-$version}" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$EMAIL" ] || [ -z "$PASSWORD" ]; then
+            echo '::notice::EVENHUB_EMAIL and EVENHUB_PASSWORD are not both set - skipping the publish.'
             echo 'publish=false' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
+          if [ "$EVENT" = 'workflow_dispatch' ]; then
             echo 'publish=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          git show HEAD^:"$MANIFEST" > before.json 2> /dev/null || echo '{}' > before.json
+          # A first push to the branch has no commit before it, and a force push
+          # may name one that is gone; either reads as no manifest, which is a
+          # version this run has not seen and so a publish.
+          echo '{}' > before.json
+          if git fetch --depth=1 --no-tags origin "$BEFORE" 2> /dev/null; then
+            git show "$BEFORE:$MANIFEST" > before.json 2> /dev/null || echo '{}' > before.json
+          fi
+
           if [ "$version" = "$(node -p "require('./before.json').version ?? ''")" ]; then
             echo "::notice::even.app.json is still at $version, and a repack bumps it - nothing to publish."
             echo 'publish=false' >> "$GITHUB_OUTPUT"
@@ -75,6 +110,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.publish == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 
@@ -91,10 +127,17 @@ jobs:
       - name: Build the plugin
         run: pnpm --filter @nib/desktop build:even
 
+      # Pinned to the version docs/even.md was written against. `npx` with no
+      # version fetches and runs whatever was published this morning, which is
+      # somebody else's code deciding what goes in our package.
       - name: Pack it
-        run: npx --yes @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
+        run: npx --yes @evenrealities/evenhub-cli@0.1.14 pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
 
-      - uses: lxorb/evenhub-publish@v1
+      # Pinned to a commit and not to `v1`. This is the one step that is handed
+      # the Even account's own password rather than a token scoped to anything,
+      # and a tag is a name its owner can move: pinning means the code that gets
+      # the password is the code that was read.
+      - uses: lxorb/evenhub-publish@13791357d7737735801747fffb389a71c6fd1b68 # v1
         with:
           package-id: ${{ needs.gate.outputs.package }}
           ehpk: nib.ehpk
