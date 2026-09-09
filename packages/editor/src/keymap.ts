@@ -1,4 +1,6 @@
 import {
+  addCursorAbove,
+  addCursorBelow,
   defaultKeymap,
   historyKeymap,
   indentLess,
@@ -7,8 +9,13 @@ import {
   selectLine,
 } from '@codemirror/commands'
 import { closeBracketsKeymap } from '@codemirror/autocomplete'
-import { searchKeymap } from '@codemirror/search'
-import { EditorSelection, type StateCommand } from '@codemirror/state'
+import { searchKeymap, selectNextOccurrence, selectSelectionMatches } from '@codemirror/search'
+import {
+  EditorSelection,
+  type EditorState,
+  type SelectionRange,
+  type StateCommand,
+} from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
 import {
   clearFormatting,
@@ -43,8 +50,39 @@ import { followNoteAtCaret } from './wikilink/follow'
 
 const WORD = /[\p{L}\p{N}_]/u
 
-/** Typora's Ctrl+D: grow the selection to the word under the caret. */
-export const selectWord: StateCommand = ({ state, dispatch }) => {
+/** Whether a range is exactly one word: word characters all the way through,
+ *  and nothing beside either end that a word is made of. Two words and the space
+ *  between them is not one, so a press there still means "the word under me". */
+function isWord(state: EditorState, range: SelectionRange): boolean {
+  if (range.empty) return false
+
+  const line = state.doc.lineAt(range.from)
+  if (range.to > line.to) return false
+
+  const text = line.text
+  const from = range.from - line.from
+  const to = range.to - line.from
+  if (WORD.test(text.charAt(from - 1)) || WORD.test(text.charAt(to))) return false
+
+  for (let at = from; at < to; at++) {
+    if (!WORD.test(text.charAt(at))) return false
+  }
+
+  return true
+}
+
+/** Typora's Ctrl+D grows the selection to the word under the caret. Pressed
+ *  again, on words it has already grown to, it means the next one like them,
+ *  which is what the same key does everywhere else.
+ *
+ *  One command rather than two, because it is one gesture: press until you have
+ *  the ones you want. The second press is where the extra cursors come from. */
+export const selectWord: StateCommand = (target) => {
+  const { state, dispatch } = target
+  if (state.selection.ranges.every((range) => isWord(state, range))) {
+    return selectNextOccurrence(target)
+  }
+
   const update = state.changeByRange((range) => {
     const line = state.doc.lineAt(range.head)
     const text = line.text
@@ -164,6 +202,31 @@ export const nibBindings: BindingSpec[] = [
   { id: 'edit.select-word', key: 'Mod-d', run: selectWord, preventDefault: true },
   { id: 'edit.select-line', key: 'Mod-l', run: selectLine, preventDefault: true },
 
+  // Every one like what is selected, in one press. No key out of the box: the
+  // chord every other editor uses for it, Ctrl+Shift+L, is the sidebar here.
+  {
+    id: 'edit.select-all-occurrences',
+    key: null,
+    run: selectSelectionMatches,
+    preventDefault: true,
+  },
+  // A cursor straight above or below, for a column of them without the mouse.
+  // The library puts these on Ctrl+Alt+Up and Ctrl+Alt+Down; the second of those
+  // splits the pane here, and half a pair on its own key is worse than a pair on
+  // one chord further out.
+  {
+    id: 'edit.cursor-above',
+    key: 'Mod-Alt-Shift-ArrowUp',
+    run: addCursorAbove,
+    preventDefault: true,
+  },
+  {
+    id: 'edit.cursor-below',
+    key: 'Mod-Alt-Shift-ArrowDown',
+    run: addCursorBelow,
+    preventDefault: true,
+  },
+
   { id: 'edit.copy-markdown', key: 'Mod-Shift-c', run: copyMarkdown, preventDefault: true },
   { id: 'edit.paste-plain', key: 'Mod-Shift-v', run: pastePlain, preventDefault: true },
 
@@ -260,6 +323,19 @@ const linuxRedo = claim(
  *  command for it on a key that already means something else is exactly the
  *  invisible binding the specs exist to prevent. */
 claim(defaultKeymap, (binding) => binding.key === 'Mod-/', 'the library comment toggle')
+
+/** The library's own multiple-cursor keys, taken off theirs.
+ *
+ *  All four were firing already, unnamed and unlisted: Ctrl+D ran the library's
+ *  "select the next one" underneath nib's own Ctrl+D, Ctrl+Shift+L selected
+ *  every match under the sidebar's key, and Ctrl+Alt+Up added a cursor while
+ *  Ctrl+Alt+Down was quietly shadowed by the pane split. A key that does
+ *  something nobody can find in the list is exactly what the specs exist to
+ *  prevent, so the commands are named above and the library's entries go. */
+claim(searchKeymap, (binding) => binding.key === 'Mod-d', 'the library select-next')
+claim(searchKeymap, (binding) => binding.key === 'Mod-Shift-l', 'the library select-matches')
+claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowUp', 'the library cursor above')
+claim(defaultKeymap, (binding) => binding.key === 'Mod-Alt-ArrowDown', 'the library cursor below')
 
 export const standardBindings: BindingSpec[] = [
   // The library's own key, on the app's own undo: a note open in two panes has

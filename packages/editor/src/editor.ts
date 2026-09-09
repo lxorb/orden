@@ -3,7 +3,14 @@ import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codem
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches } from '@codemirror/search'
 import { EditorState, Prec, type Text } from '@codemirror/state'
-import { EditorView, dropCursor, highlightActiveLine, keymap } from '@codemirror/view'
+import {
+  crosshairCursor,
+  dropCursor,
+  EditorView,
+  highlightActiveLine,
+  keymap,
+  rectangularSelection,
+} from '@codemirror/view'
 import { remoteCarets } from './carets'
 import { editorCompletion } from './emoji'
 import { external } from './external'
@@ -99,6 +106,22 @@ export function editorState(options: StateOptions): EditorState {
       // The selection, as one block with its corners smoothed; see
       // selection/layer.ts. Carries the view's own caret with it.
       nibSelection(),
+      // Several cursors, and a rectangle of them.
+      //
+      // Alt is the one modifier for both, which is where every other editor puts
+      // it: Alt and a click puts another cursor down, Alt and a drag adds a whole
+      // range to what is already selected, and Alt+Shift and a drag takes a
+      // column of them. The crosshair is the hint that Alt is doing something
+      // other than moving the caret.
+      //
+      // Nothing else had to change for this. The selection is drawn per range
+      // already (selection/layer.ts) and the live preview asks whether *any*
+      // range touches a construct (live-preview/reveal.ts), so every cursor
+      // reveals its own syntax and each selection gets its own smoothed block.
+      EditorState.allowMultipleSelections.of(true),
+      EditorView.clickAddsSelectionRange.of((event) => event.altKey && !event.shiftKey),
+      rectangularSelection({ eventFilter: (event) => event.altKey && event.shiftKey }),
+      crosshairCursor(),
       dropCursor(),
       indentOnInput(),
       bracketMatching(),

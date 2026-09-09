@@ -63,6 +63,10 @@ export const openParagraphBelow: Command = (view) => (view.state.readOnly ? fals
 /** Down from the last line of the note. Not a shortcut anybody chose: the arrow
  *  keys belong to the text, which is what the settings list says of them. */
 export const openTailDown: Command = (view) => {
+  // With several cursors the key belongs to all of them, not to a paragraph
+  // opened under the last line for one.
+  if (view.state.selection.ranges.length > 1) return false
+
   const range = view.state.selection.main
   if (view.state.readOnly || !range.empty) return false
   // Only from the last line: an arrow anywhere above it has a line to go to, and

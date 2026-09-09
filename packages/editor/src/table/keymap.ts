@@ -15,6 +15,10 @@ function walkInto(
   where: (view: EditorView) => Landing,
 ): Command {
   return (view) => {
+    // One caret only. A column of them crossing a table would take the arrow
+    // key away from every one of them to walk the main one into a cell.
+    if (view.state.selection.ranges.length > 1) return false
+
     const range = view.state.selection.main
     if (!range.empty) return false
 
