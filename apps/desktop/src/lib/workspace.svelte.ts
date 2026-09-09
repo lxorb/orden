@@ -2315,8 +2315,23 @@ class Workspace {
     this.flush()
     for (const note of this.documents) {
       if (!note.path || note.dirty) continue
-      const fresh = await invoke<string>('read_note', { path: note.path }).catch(() => null)
-      if (fresh !== null && fresh !== note.text) note.replace(fresh, false)
+
+      // The file this document is on, which of its notes that is, and where its
+      // words had got to, all read before the file is. This is one round trip per
+      // open document, which is a click's worth of time, and a click in the file
+      // list moves the preview tab on to another note: words read for one note
+      // must never land on another. A keystroke in that moment is the same
+      // question with a shorter answer - what is on disk is no longer this note's
+      // news, and landing it would take the keystroke with it. See
+      // NoteDoc.arrivals.
+      const path = note.path
+      const holding = note.arrivals
+      const revision = note.revision
+      const fresh = await invoke<string>('read_note', { path }).catch(() => null)
+      if (fresh === null) continue
+      if (note.path !== path || note.arrivals !== holding || note.revision !== revision) continue
+
+      if (fresh !== note.text) note.replace(fresh, false)
     }
 
     return touched

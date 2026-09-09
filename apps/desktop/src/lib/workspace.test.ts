@@ -38,7 +38,14 @@ const sent: { command: string; path: string; content: string }[] = []
 
 /** A write held open, for a test about what happens while one is in the air:
  *  writing a file is a round trip, and somebody may type during it. */
-const holding: { write: Promise<void> | null } = { write: null }
+/** A read held open too, for a test about what happens while one is in the air.
+ *  One path only: a gesture that reads every open note has to be caught in the
+ *  middle of reading one of them, and the test's own reads must not hang with it. */
+const holding: { write: Promise<void> | null; read: Promise<void> | null; readPath: string } = {
+  write: null,
+  read: null,
+  readPath: '',
+}
 
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
@@ -50,6 +57,9 @@ vi.mock('./tauri', async (importOriginal) => ({
     })
 
     if (command === 'write_note' && holding.write) await holding.write
+    if (command === 'read_note' && holding.read && holding.readPath === pathOf(args)) {
+      await holding.read
+    }
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
@@ -1789,5 +1799,59 @@ describe('what a document is called on screen', () => {
 
     expect(tab.path).toBe('/space/Kept.md')
     expect(tab.shown).toBe('Kept')
+  })
+})
+
+describe('a click in the file list landing inside a gesture that re-reads the notes', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.previewTabId = null
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    holding.read = null
+    holding.readPath = ''
+  })
+
+  /** Renaming a note rewrites every link to it and then brings every open note up
+   *  to what is now on disk - one read per open document, which is a click's worth
+   *  of time. A single click in that moment moves the preview tab on to another
+   *  note, in the same document, and the read that was in the air is a read of the
+   *  note it came from.
+   *
+   *  Those words have nowhere to go. Landing them would leave the document holding
+   *  one note's text under another note's name, clean, and the next keystroke would
+   *  write that pair to disk and carry it up to every other device. */
+  test('does not land the note it came from in the note it moved to', async () => {
+    const tab = await preview('/space/a.md')
+    expect(tab.note.text).toBe('# a')
+
+    // The re-read of the previewed note, caught in the middle.
+    let release: () => void = () => undefined
+    holding.readPath = '/space/a.md'
+    holding.read = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const renaming = workspace.rename('/space/c.md', 'renamed.md')
+    // Long enough for the rename to have reached the held read.
+    await Promise.resolve()
+    await Promise.resolve()
+
+    // The click. One tab, one document, another note.
+    const moved = await preview('/space/b.md')
+    expect(moved.id).toBe(tab.id)
+    expect(moved.note.path).toBe('/space/b.md')
+
+    release()
+    await renaming
+
+    // The note that is up, and only its own words.
+    expect(moved.note.path).toBe('/space/b.md')
+    expect(moved.note.text).toBe('# b')
+    expect(moved.note.dirty).toBe(false)
   })
 })

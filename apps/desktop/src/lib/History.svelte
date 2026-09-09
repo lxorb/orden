@@ -8,7 +8,7 @@
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { invoke } from './tauri'
-  import { workspace } from './workspace.svelte'
+  import { type Tab, workspace } from './workspace.svelte'
   import { dur } from './motion'
 
   interface Snapshot {
@@ -22,6 +22,11 @@
   let snapshots = $state<Snapshot[]>([])
   let selected = $state<Snapshot | null>(null)
   let preview = $state('')
+  /** Which tab the version on show was read for. A version belongs to one note,
+   *  and the sheet stays open while tabs can be switched under it, so restoring
+   *  puts it back into the note it came from rather than into whatever is on
+   *  screen by then. Null while nothing has been read. */
+  let previewOf = $state<Tab | null>(null)
   /** Whether the version is shown as itself or as what it would change. The
    *  changes are what somebody looking for a lost paragraph wants first. */
   let comparing = $state(true)
@@ -56,8 +61,10 @@
   })
 
   $effect(() => {
+    const tab = workspace.active
     if (!selected) {
       preview = ''
+      previewOf = null
       return
     }
 
@@ -67,13 +74,19 @@
     // versions in one store and the desktop keeps each note's in a folder.
     void invoke<string>('read_snapshot', {
       path: selected.path,
-      notePath: workspace.active?.path ?? '',
+      notePath: tab?.path ?? '',
     })
       .then((body) => {
-        if (current) preview = body
+        if (!current) return
+        preview = body
+        // The version and the note it is a version of, set together, so a
+        // restore cannot pair one note's words with another note's tab.
+        previewOf = tab ?? null
       })
       .catch(() => {
-        if (current) preview = ''
+        if (!current) return
+        preview = ''
+        previewOf = null
       })
 
     return () => {
@@ -97,11 +110,13 @@
   /** Restoring is itself an edit, so the words being replaced are kept first:
    *  putting an old version back is one more version, and undoable like any. */
   async function restore() {
-    const tab = workspace.active
+    // The tab the version on show was read for, not whichever is active now: the
+    // two are the same until somebody switches notes with the sheet open.
+    const tab = previewOf
     if (!preview || !tab?.path) return
 
     await recovery.keep(tab.path, tab.note.text)
-    workspace.replace(preview)
+    workspace.replace(preview, tab)
     open = false
   }
 

@@ -118,6 +118,15 @@ class Watch {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     if (text === null) return
 
+    // The document has moved on to another note since this look began - the one
+    // tab that previews a note takes another note on, and there are two round
+    // trips between the pair being read and here. These words are this file's, and
+    // that document is not this file any more, so they have nowhere to go.
+    if (note.path !== path) {
+      console.warn(`nib: a reload of ${path} was refused - that tab is on another note now`)
+      return
+    }
+
     // The app's own write, most likely a save a moment ago: the file and the note
     // say the same thing, so there is nothing to reload and nothing to report.
     if (text === note.text) {
