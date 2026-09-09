@@ -193,13 +193,27 @@ tested there rather than tried by hand:
   down, or from a double press with the arrow, and from nowhere else.
 - **A press held still means something once.** Under a finger it is the menu.
   Under a pen that is drawing it is the stroke asking to be straightened, and only
-  when the pen's own switch says so.
+  when the pen's own switch says so. Never a menu under a pen: a nib resting on the
+  page is a hand thinking.
+- **A pen with its button held rubs out**, whatever the bar says, set the way the
+  eraser is set. Chromium reports that button as the eraser bit on a desktop and as
+  the right mouse button on Android, so both mean it, and a pen never opens the
+  context menu: the menu is the mouse's and a finger's. What the stroke is is
+  settled when the nib touches down, the way Samsung Notes settles it, so a button
+  pressed halfway through a line does not turn the rest of the line into an eraser.
+  A button that was down all along and only reported in the second event still
+  rubs out, because that is the same contact having changed its story.
 
 Samsung's S Pen reports the first event of a contact as a finger on some
 devices. A pointer that says pen a moment later is a pen from its first sample:
 the gesture the finger started is thrown away and the stroke begins where the nib
 landed. Without that, the first press after picking the tablet up draws nothing
 and pans instead.
+
+One thing outside the app's reach: in a browser tab, Samsung's Air actions can
+take the S Pen's button for themselves while the pen hovers over the glass. If the
+button rubs out in the installed app and does nothing in the browser, that is what
+it is, and turning Air actions off for the browser is the fix.
 
 ## Where the code is
 
