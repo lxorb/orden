@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { fileMark } from './file-mark'
+import * as lucide from 'lucide'
+import { fileMark, MARKS, type Mark } from './file-mark'
 
 describe('the mark a file wears', () => {
   test('a note is a note by its extension, whichever one is written', () => {
@@ -68,5 +69,47 @@ describe('the mark a file wears', () => {
     expect(fileMark('md')).toBe('file')
     expect(fileMark('pdf')).toBe('file')
     expect(fileMark('canvas')).toBe('file')
+  })
+})
+
+/** The drawings themselves. What is worth checking is not which icon was
+ *  chosen but that the set is one set: every mark has a drawing, every drawing
+ *  is Lucide's own, and no two marks are the same picture. */
+describe('the marks a row wears', () => {
+  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pdf', 'picture', 'file', 'folder', 'folder-open']
+
+  test('every kind of row has one, folders open and shut', () => {
+    for (const name of MARK_NAMES) {
+      expect(MARKS[name], name).toBeDefined()
+      expect(MARKS[name].length, name).toBeGreaterThan(0)
+    }
+
+    expect(Object.keys(MARKS).sort()).toEqual([...MARK_NAMES].sort())
+  })
+
+  test('all of them come from the icon library rather than being drawn here', () => {
+    const library = Object.values(lucide).filter(Array.isArray)
+
+    for (const name of MARK_NAMES) {
+      expect(library, name).toContain(MARKS[name])
+    }
+  })
+
+  test('no two rows wear the same picture', () => {
+    const drawn = MARK_NAMES.map((name) => JSON.stringify(MARKS[name]))
+    expect(new Set(drawn).size).toBe(MARK_NAMES.length)
+  })
+
+  /** The marks are drawn by naming each element the library asks for, so an
+   *  icon made of something FileMark cannot name would come out as an empty
+   *  box - visible only as a missing mark in the tree. */
+  test('and each is made of shapes a stroke can be drawn on', () => {
+    const drawable = ['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon']
+
+    for (const name of MARK_NAMES) {
+      for (const [tag] of MARKS[name]) {
+        expect(drawable, `${name}: ${tag}`).toContain(tag)
+      }
+    }
   })
 })

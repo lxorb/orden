@@ -157,11 +157,12 @@ describe('the touch scale', () => {
     const tree = components.find((one) => one.name === 'lib/Tree.svelte')?.style ?? ''
     const mark = components.find((one) => one.name === 'lib/FileMark.svelte')?.style ?? ''
 
-    // The row itself, the step per level, and the twist in front of the name.
+    // The row itself, and the step per level.
     expect(tree).toContain('min-height: var(--touch-row)')
     expect(tree).toContain('--indent: var(--touch-indent)')
-    expect(tree).toContain('width: var(--touch-mark)')
-    // And the mark on a file row, in the same slot the twist sits in.
+    // And the mark in front of the name, which is one component for every row
+    // the tree has: a file's kind, and whether a folder is open.
     expect(mark).toContain('width: var(--touch-mark)')
+    expect(mark).toContain('height: var(--touch-mark)')
   })
 })

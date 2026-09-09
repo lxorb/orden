@@ -11,6 +11,16 @@
  *  little else. `FileMark.svelte` draws what it answers. */
 
 import { isCanvasTarget, isImageTarget, isPdfTarget } from '@nib/markdown/links'
+import {
+  BookText,
+  File,
+  FileText,
+  Folder,
+  FolderOpen,
+  Image,
+  type IconNode,
+  Workflow,
+} from 'lucide'
 import { isMarkdownPath } from './space-paths'
 
 /** The marks there are. `file` is the one for a name this build has no shape
@@ -35,4 +45,34 @@ export function fileMark(name: string): FileMark {
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name)) return 'note'
   return 'file'
+}
+
+/** Everything a row in the tree can wear: what a file is, and what a folder is
+ *  doing. A folder is not decided by its name, which is why it is a mark the tree
+ *  asks for rather than one `fileMark` answers. */
+export type Mark = FileMark | 'folder' | 'folder-open'
+
+/** The drawing each mark is.
+ *
+ *  Lucide, so the tree wears an icon set somebody drew rather than five shapes
+ *  this app drew for itself, and one set: every mark comes off the same 24 unit
+ *  grid at the same weight, which is what makes a list of files read as a list
+ *  rather than as a row of unrelated pictures. The same library the space icons
+ *  come from; see icons.ts.
+ *
+ *  Two of them are the page they should be and two are the obvious thing: a page
+ *  with writing on it, a plain page, a picture in its frame, a folder that opens.
+ *  The other two are choices. A canvas is two cards with a line from one to the
+ *  other, which is what a canvas in this app actually is. A PDF is a book rather
+ *  than a fourth page: what tells it from a note at 13px has to be its outline
+ *  and not something written inside it, and a PDF is the half of the pair that is
+ *  read rather than written. */
+export const MARKS: Record<Mark, IconNode> = {
+  note: FileText,
+  canvas: Workflow,
+  pdf: BookText,
+  picture: Image,
+  file: File,
+  folder: Folder,
+  'folder-open': FolderOpen,
 }

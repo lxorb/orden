@@ -349,9 +349,10 @@
           ondragleave={(event) => stillInside(event) || dropTarget.clear()}
           ondrop={(event) => drop(event, entry)}
         >
-          <svg class="chevron" class:open={workspace.isExpanded(entry.path)} viewBox="0 0 8 8">
-            <path d="M2 1l3 3-3 3" />
-          </svg>
+          <!-- A folder says whether it is open by being open, in the slot the
+               file marks sit in: one mark per row, and every name in the list
+               starting at the same place. -->
+          <FileMark mark={workspace.isExpanded(entry.path) ? 'folder-open' : 'folder'} />
           <span class="label">{entry.name}</span>
         </button>
 
@@ -381,9 +382,7 @@
           ondragleave={(event) => stillInside(event) || dropTarget.clear()}
           ondrop={(event) => drop(event, entry)}
         >
-          <!-- In the slot the chevron sits in, so a name lines up whatever kind
-               of file it is: the row says what it opens into without spending a
-               word on it. -->
+          <!-- The row says what it opens into without spending a word on it. -->
           <FileMark mark={fileMark(entry.name)} />
           <span class="label">{shownName(entry.name)}</span>
         </button>
@@ -488,21 +487,6 @@
     padding-left: calc(8px + var(--level, 0) * var(--indent));
   }
 
-  .chevron {
-    width: 8px;
-    height: 8px;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    transition: transform var(--dur-base) var(--ease-out);
-  }
-
-  .chevron.open {
-    transform: rotate(90deg);
-  }
-
   /* The open note's mark carries the accent. The name beside it is told apart by
      weight and colour, and the mark is the one place a colour of its own reads as
      the file being open rather than as the row being picked. */
@@ -530,12 +514,6 @@
     gap: var(--touch-gap);
   }
 
-  /* Drawn in the slot the file marks sit in, which is a finger's list rather
-     than a pointer's: bigger, and with less stroke for the size, so a twist
-     stays a hairline drawing rather than becoming an arrowhead. */
-  :global([data-touch]) .chevron {
-    width: var(--touch-mark);
-    height: var(--touch-mark);
-    stroke-width: 1.1;
-  }
+  /* The marks themselves are drawn at the touch scale by the component that
+     draws them; see FileMark.svelte. */
 </style>
