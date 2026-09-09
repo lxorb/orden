@@ -7,15 +7,15 @@
 
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, folded, free_spot, in_spaces, inside, move_highlights, spaces_root, write_atomically,
-    TRASH,
+    cannot, folded, free_spot, in_spaces, inside, is_reserved, move_highlights, spaces_root,
+    write_atomically, TRASH,
 };
 
 /// The record of what is in the trash, written beside the folders it describes.
@@ -311,17 +311,27 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
 /// Whether a string names one file or folder rather than a path to one. What the
 /// trash stores something under is its own name, so nothing else is one.
 ///
-/// One ordinary part and no other kind: on Windows `C:` is one part too, and it
-/// is a part that `join` puts in place of what it is joined to rather than under
-/// it.
+/// Judged by its letters rather than by this platform's path parser, and to the
+/// same rule everywhere. `Path` reads `C:` as a drive on Windows and as an
+/// ordinary name on Linux, so asking it would make the trash answer differently
+/// on the two - and the answer that matters is the stricter one, whichever
+/// machine is asking: a manifest travels between them, and a name Windows would
+/// read as a drive must not be put back on Linux either.
+///
+/// Refused, then: anything that could be a path (`/`, `\`, `:`) or end a C string
+/// (`NUL`); a trailing dot or space, which Windows drops silently, so the file
+/// written would not be the file named - and which is also what rules out `.` and
+/// `..`; a leading space, for the same reason at the other end; and a device name.
+///
+/// A leading dot is kept. A hidden note can be deleted and has to come back, and
+/// a dot in front is the only thing about it that is unusual.
 fn is_name(name: &str) -> bool {
-    !name.contains('/')
-        && !name.contains('\\')
-        && matches!(
-            Path::new(name).components().next(),
-            Some(Component::Normal(_))
-        )
-        && Path::new(name).components().count() == 1
+    !name.is_empty()
+        && !name.contains(['/', '\\', ':', '\0'])
+        && !name.ends_with('.')
+        && !name.ends_with(' ')
+        && !name.starts_with(' ')
+        && !is_reserved(name)
 }
 
 #[cfg(test)]
@@ -396,9 +406,41 @@ mod tests {
         assert!(!is_name("Work/Idea.md"));
         assert!(!is_name(r"..\Idea.md"));
         assert!(!is_name("/Idea.md"));
-        // A drive is one part too, and `join` puts it in place of the folder
-        // rather than under it.
+        // A drive is a path on Windows and an ordinary name on Linux, and the
+        // answer here is the same on both: the rule reads the letters rather than
+        // asking a parser that only one of the two platforms has.
         assert!(!is_name("C:"));
+        assert!(!is_name(r"C:\Notes\Idea.md"));
+        assert!(!is_name("Idea.md:stream"));
+        // A trailing dot or space is dropped by Windows, so the file written
+        // would not be the file named.
+        assert!(!is_name("Idea.md "));
+        assert!(!is_name("Idea.md."));
+        assert!(!is_name(" Idea.md"));
+        // A device name is a device on Windows whatever follows the dot.
+        assert!(!is_name("NUL"));
+        assert!(!is_name("nul.md"));
+        assert!(!is_name("COM1.md"));
+        // Only the exact ones, so an ordinary note that starts like one is fine.
+        assert!(is_name("Console.md"));
+        assert!(is_name("nullable.md"));
+        // A name cannot hold a zero byte on either platform.
+        assert!(!is_name("Idea\0.md"));
+    }
+
+    /// A hidden note can be deleted, so it has to come back. A dot in front is
+    /// the only thing unusual about its name, and it is not one of the shapes
+    /// that could name somewhere else.
+    #[test]
+    fn a_hidden_note_is_still_a_name() {
+        assert!(is_name(".secret.md"));
+        assert!(is_name(".gitignore"));
+
+        let base = path(&["Documents", "Nib"]);
+        assert_eq!(
+            restore_target(&base, &entry("1-0", ".secret.md", "Work/.secret.md")),
+            Ok(base.join("Work").join(".secret.md"))
+        );
     }
 
     /// A manifest is a file in the notes folder, so where it says something came

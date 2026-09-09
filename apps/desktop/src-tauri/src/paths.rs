@@ -38,6 +38,28 @@ static WRITES: AtomicU64 = AtomicU64::new(0);
 /// goes when the file goes.
 pub const HIGHLIGHTS: &str = ".highlights.json";
 
+/// Names Windows refuses whatever the extension, because each one names a device
+/// rather than a file.
+///
+/// Here rather than in one of the two modules that ask, because both do: `spaces`
+/// keeps a new space from being called one, and `trash` will not put a file back
+/// under one. A second copy would be a second answer to the same question.
+pub const RESERVED: [&str; 22] = [
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+];
+
+/// Whether a name is one of those, going by the part in front of the first dot,
+/// which is where Windows looks: `NUL.md` names the device as surely as `NUL`.
+///
+/// Asked on every platform, not only on Windows. A note the reader syncs is a
+/// note that has to land on all of their machines, and a name only some of them
+/// can hold is not a name.
+pub fn is_reserved(name: &str) -> bool {
+    let stem = name.split('.').next().unwrap_or(name);
+    RESERVED.contains(&stem.to_ascii_uppercase().as_str())
+}
+
 /// Whether a path names a note, in whichever case the extension is written.
 pub fn is_markdown(path: &Path) -> bool {
     path.extension()

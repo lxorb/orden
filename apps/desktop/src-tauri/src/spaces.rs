@@ -9,13 +9,7 @@ use std::io::ErrorKind;
 use std::path::Path;
 use tauri::AppHandle;
 
-use crate::paths::{self, a_space, cannot, inside};
-
-/// Names Windows refuses whatever the extension.
-const RESERVED: [&str; 22] = [
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-];
+use crate::paths::{self, a_space, cannot, inside, is_reserved};
 
 /// Long enough for any real name, short enough to stay well inside the path
 /// limits once the space folder and a note name are added.
@@ -171,8 +165,7 @@ fn folder_name(input: &str) -> Option<String> {
 
     // A reserved name is fine with something appended, which is less surprising
     // than refusing it.
-    let stem = capped.split('.').next().unwrap_or(&capped).to_uppercase();
-    if RESERVED.contains(&stem.as_str()) {
+    if is_reserved(&capped) {
         return Some(format!("{capped} space"));
     }
 
