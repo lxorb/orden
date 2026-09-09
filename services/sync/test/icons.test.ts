@@ -117,6 +117,24 @@ describe('what a folder may wear', () => {
     expect(isIcon('🙂'.repeat(9))).toBe(false)
   })
 
+  /** Anything but Lucide and the emoji is written with its set's own id in front of
+   *  it, so a column that took only bare names would drop every coloured icon
+   *  anybody chose. Read as a shape rather than resolved: this service ships no
+   *  icons, so a set it has never heard of is still carried. */
+  test('or a set of its own, named in front of it', () => {
+    expect(isIcon('flat-color-icons:calendar')).toBe(true)
+    expect(isIcon('some-future-set:thing')).toBe(true)
+    expect(isIcon('a:b')).toBe(true)
+  })
+
+  test('and never a prefix that is not one', () => {
+    expect(isIcon('Flat:Calendar')).toBe(false)
+    expect(isIcon('set:')).toBe(false)
+    expect(isIcon(':name')).toBe(false)
+    expect(isIcon('one:two:three')).toBe(false)
+    expect(isIcon('C:/notes/rocket')).toBe(false)
+  })
+
   test('and never nothing, nor something a client could read back as a path', () => {
     expect(isIcon('')).toBe(false)
     expect(isIcon('Work/Ideas')).toBe(false)

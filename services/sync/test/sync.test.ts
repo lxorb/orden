@@ -171,6 +171,22 @@ describe("a space's icon", () => {
     expect(response.json.space.name).toBe('Work')
   })
 
+  /** A space is dressed from the same picker a note and a folder are, so the same
+   *  three shapes arrive here: Lucide's plain name, a set's own name in front of an
+   *  icon, and an emoji. A column that took only bare letters would have dropped two
+   *  of the three without a word. */
+  test('is any of the shapes the picker writes', async () => {
+    for (const icon of ['file-text', 'flat-color-icons:calendar', '🚀']) {
+      const response = await call(env, `/v1/spaces/${space}`, {
+        method: 'PATCH',
+        token,
+        body: { icon },
+      })
+
+      expect(response.json.space.icon, icon).toBe(icon)
+    }
+  })
+
   test('refuses anything that is not an icon name', async () => {
     const response = await call(env, `/v1/spaces/${space}`, {
       method: 'PATCH',

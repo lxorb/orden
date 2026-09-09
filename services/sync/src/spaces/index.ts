@@ -14,7 +14,7 @@ import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { bookmarks } from './bookmarks'
 import { spaceFiles } from './files'
-import { folderIcons } from './icons'
+import { folderIcons, isIcon } from './icons'
 import { publish } from './publish'
 import { share } from './share'
 import {
@@ -176,16 +176,17 @@ spaces.patch('/:id', atLeast('owner'), async (context) => {
   const label = name === undefined ? space.name : cleanName(name)
   if (!label) return context.json({ error: 'give the space a name' }, 400)
 
-  // An icon is a name from the set the app ships. One that is not a name from
-  // any set leaves the icon as it was rather than being written: a newer app
-  // may know icons this version does not, but nothing that is not an icon name
-  // has any business in the column.
+  // An icon is a value out of one of the sets the app ships, read the same way a
+  // folder's is: a name, `set:name`, or an emoji written in a name's place. One
+  // that is none of those leaves the icon as it was rather than being written - a
+  // newer app may know sets this version does not, but nothing that is not an icon
+  // has any business in the column. See isIcon in spaces/icons.ts.
   const icon =
     chosen === undefined
       ? space.icon
       : chosen === null
         ? null
-        : /^[A-Za-z0-9]{1,64}$/.test(chosen)
+        : isIcon(chosen)
           ? chosen
           : space.icon
 

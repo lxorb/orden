@@ -54,17 +54,28 @@ const NOT_A_MARK = /[A-Za-z0-9\s/\\]|\p{Cc}/u
  *  icon, and `-` would otherwise read as one for having none of the above. */
 const A_PICTURE = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
 
-/** Whether this is an icon a folder can wear.
+/** A set that is not the stroked one, and a name in it: `flat-color-icons:calendar`.
+ *  One colon, a name on each side. The app writes the set's own id in front of
+ *  anything but Lucide and the emoji, so a column that took only bare names would
+ *  drop every coloured icon anybody chose. */
+const PREFIXED = /^[a-z][a-z\d-]{0,31}:[A-Za-z0-9][A-Za-z0-9-]{0,63}$/
+
+/** Whether this is an icon a space or a folder can wear.
  *
- *  Either a name, or an emoji written in a name's place - which is what a vault
- *  imported from Obsidian's Iconize plugin brings, and dropping those would be
- *  losing an icon somebody had already chosen. The emoji half is a picture, a
- *  length and the absence of everything else rather than a list of code points:
- *  nothing here has to know which characters make up an emoji, only that a short
- *  value with a picture in it and no letters, digits, spaces or path separators is
- *  neither a name nor something a client could read back as a path. */
+ *  Three shapes, and the app's own reading of them: a name, `set:name`, or an emoji
+ *  written in a name's place - which is what a vault imported from Obsidian's
+ *  Iconize plugin brings, and dropping those would be losing an icon somebody had
+ *  already chosen. The emoji half is a picture, a length and the absence of
+ *  everything else rather than a list of code points: nothing here has to know which
+ *  characters make up an emoji, only that a short value with a picture in it and no
+ *  letters, digits, spaces or path separators is neither a name nor something a
+ *  client could read back as a path.
+ *
+ *  Read rather than resolved. This service ships no icons and knows no sets: what it
+ *  holds the column to is that a value is the shape of an icon, so a newer app can
+ *  name a set this one has never heard of and the column carries it. */
 export function isIcon(value: string): boolean {
-  if (NAME.test(value)) return true
+  if (NAME.test(value) || PREFIXED.test(value)) return true
   return value.length <= LONGEST_MARK && A_PICTURE.test(value) && !NOT_A_MARK.test(value)
 }
 
