@@ -193,8 +193,9 @@ jobs:
       - uses: actions/checkout@v5
 
       # Chocolatey installs for the whole machine, so this package carries the
-      # MSI rather than the per-user NSIS setup. The install script takes its
-      # version from Chocolatey itself; the checksums are all that is rewritten.
+      # MSI rather than the per-user NSIS setup. The install script spells every
+      # url and checksum out as a literal so the community repository's validator
+      # can read them, so the version in both urls and both digests are rewritten.
       - name: Bump nib
         shell: bash
         working-directory: packaging/chocolatey
@@ -205,16 +206,20 @@ jobs:
             --pattern "Nib-$VERSION-windows-x64.msi" \
             --pattern "Nib-$VERSION-windows-arm64.msi"
 
+          sed -i -E "s|(releases/download/v)[^/']+/Nib-[^']+-windows-|\\1$VERSION/Nib-$VERSION-windows-|" tools/chocolateyinstall.ps1
+
+          # A digest is the first one below the url it belongs to, so the
+          # architecture in that url is what picks which of the two is rewritten.
           for arch in x64 arm64; do
             sum=$(sha256sum "dl/Nib-$VERSION-windows-$arch.msi" | cut -d' ' -f1 | tr 'a-f' 'A-F')
-            sed -i -E "s|('$arch' *= *')[0-9A-Fa-f]{64}'|\\1$sum'|" tools/chocolateyinstall.ps1
+            sed -i -E "/-windows-$arch\.msi'/,/'[0-9A-Fa-f]{64}'/ s|'[0-9A-Fa-f]{64}'|'$sum'|" tools/chocolateyinstall.ps1
           done
           rm -r dl
 
           sed -i -E "s|<version>.*</version>|<version>$VERSION</version>|" nib.nuspec
           sed -i -E "s|(nibeditor@v)[0-9][^/]*|\\1$VERSION|" nib.nuspec
           sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" nib.nuspec
-          grep -E "'(x64|arm64)' *=" tools/chocolateyinstall.ps1
+          grep -E "releases/download|'[0-9A-Fa-f]{64}'" tools/chocolateyinstall.ps1
           grep -E '<version>|nibeditor@v|releases/tag' nib.nuspec
 
       - name: Pack and push
