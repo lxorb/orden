@@ -1,13 +1,15 @@
 # Linux packaging
 
-Four package managers, one artifact. Every package here repackages what
-`.github/workflows/release.yml` already publishes rather than rebuilding Nib, so
-a release is a release everywhere and nothing can drift between them:
+Four package managers. Three of them repackage what
+`.github/workflows/release.yml` already publishes rather than rebuilding
+nibeditor, so a release is a release everywhere and nothing can drift between
+them. Flathub is the exception and has to be: it only takes a source-available
+app that is compiled from source inside its own sandbox.
 
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
 | `aur/nib-bin/` | AUR (`yay -S nib-bin`) | the `.deb` | x86_64, aarch64 |
-| `flathub/` | Flathub (`flatpak`) | the `.deb` | x86_64, aarch64 |
+| `flathub/` | Flathub (`flatpak`) | source, in the sandbox | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the AppImage | x86_64, aarch64 |
 
@@ -110,12 +112,89 @@ cd nib-bin && git add -A && git commit -m "nib 0.6.0" && git push
 
 ## Flathub
 
-`flathub/` holds the three files a Flathub submission is made of - the manifest,
-the AppStream metainfo and the desktop entry. `appstreamcli validate` and
-`flatpak-builder-lint manifest` - the check Flathub runs on a submission - both
-pass, and the built Flatpak resolves every library it needs against
-`org.gnome.Platform//50`, which carries `libwebkit2gtk-4.1.so.0` alongside the
-GTK4 flavour.
+`flathub/` holds a submission the way Flathub wants one: the manifest, the
+AppStream metainfo, the desktop entry, and the two generated files that let the
+whole thing build with no network.
+
+**It builds from source, because it has to.** Flathub's requirements gained a
+*Building from source* section on 2026-02-25:
+
+> All source available submissions must be built entirely from source code.
+
+nibeditor is AGPL, so it is a source-available submission, and a manifest that
+unpacked the release `.deb` would be closed on sight. The Tauri apps on Flathub
+that do exactly that were accepted before the date and are grandfathered, not
+precedent. The exception clause covers well-known vendors with no offline build
+tooling, which is not our case either way: the tooling exists.
+
+### The two generated files
+
+Nothing may be fetched while a Flathub build runs, so every crate and every npm
+tarball is a source in the manifest. Two generators from
+<https://github.com/flatpak/flatpak-builder-tools> write them:
+
+```
+python -m pip install aiohttp tomlkit yarl
+python cargo/flatpak-cargo-generator.py apps/desktop/src-tauri/Cargo.lock \
+  -o packaging/flathub/cargo-sources.json
+
+pipx install "git+https://github.com/flatpak/flatpak-builder-tools.git#subdirectory=node"
+flatpak-node-generator pnpm pnpm-lock.yaml -o packaging/flathub/node-sources.json
+```
+
+Both are large and mechanical, both belong to the same commit as the app, and
+both have to be regenerated whenever either lockfile moves. Run them on Linux:
+the node one writes the host's path separators into its output, and a build in
+the sandbox cannot use Windows ones.
+
+Only the desktop app is compiled. `tauri.conf.json` bundles no `externalBin`, so
+there is no sidecar to vendor a third lockfile for; the MCP server is part of the
+Worker under `services/sync/` and has nothing to do with the Flatpak.
+
+### What the build does
+
+The module unpacks the pnpm version the root `packageManager` field asks for,
+installs `@nib/desktop` and the packages it is built from out of the offline
+store, empties the updater's endpoints, builds the web assets with vite,
+compiles the binary against the vendored crates, and installs the binary, the
+icons, the desktop entry and the metainfo by hand.
+
+`cargo build` rather than `tauri build`: the only thing the bundler would add is
+a `.deb`, and nothing in it is used - Tauri's own desktop entry and icon layout
+are the three things every package here repairs anyway.
+
+**No self-updating.** A Flatpak is updated by Flathub, so the build leaves the
+updater plugin with an empty endpoint list. The plugin stays configured, because
+its public key is not optional and the app will not start without it, and an
+empty list is what the app already treats as nothing new - the same as having no
+network. `createUpdaterArtifacts` goes off with it.
+
+Build and install it locally exactly the way the workflow does:
+
+```
+cd packaging/flathub
+flatpak install -y flathub org.flatpak.Builder org.gnome.Platform//50 org.gnome.Sdk//50
+flatpak run org.flatpak.Builder --force-clean --sandbox --user --install \
+  --install-deps-from=flathub --repo=repo builddir ch.emilvinu.nib.yml
+flatpak run ch.emilvinu.nib
+```
+
+`--sandbox` is the part that matters: it takes the network and the host
+filesystem away from the build commands, which is the condition Flathub builds
+under.
+
+The manifest sets no `WEBKIT_DISABLE_DMABUF_RENDERER`, and does not need one:
+the window comes up on the GNOME 50 runtime with `--device=dri` and nothing
+else. If a blank window is ever reported on a proprietary driver, that variable
+set to 1 in `finish-args` is the usual fix, and the reason other Tauri Flatpaks
+carry it.
+
+### What the linters say
+
+`appstreamcli validate`, `desktop-file-validate`, `flatpak-builder-lint
+manifest` and `flatpak-builder-lint appstream` all pass, and the built Flatpak
+resolves every library it needs against `org.gnome.Platform//50`, which carries
+`libwebkit2gtk-4.1.so.0` alongside the GTK4 flavour.
 
 `flatpak-builder-lint repo` on a locally built repository reports exactly two
 errors, `appstream-external-screenshot-url` and
@@ -126,65 +205,58 @@ and the icons are both cached and remote - but the paths stay relative to the
 absolute, and the linter skips both checks inside that pipeline. The validation
 workflow asserts they are the only two errors rather than ignoring the check.
 
-**Not submitted yet, and not because of a bug.** Flathub's requirements gained a
-*Building from source* section on 2026-02-25:
+The screenshot itself is `docs/media/screenshot.png`, taken by
+`apps/desktop/test/e2e/store-shot.py` and pointed at by commit through
+`raw.githubusercontent.com`. Flathub refetches it on every build, so it has to
+be a file in this repository and not the GitHub `user-attachments` link it used
+to be - that one answers a GET with a redirect to a signed S3 URL that expires
+in five minutes and refuses HEAD outright.
 
-> All source available submissions must be built entirely from source code.
+The name in the metainfo and the desktop entry is `nibeditor`; the app ID stays
+`ch.emilvinu.nib`, which is the Tauri bundle identifier. Flathub requires the
+matching domain to be yours and to answer over HTTPS. <https://emilvinu.ch>
+does, so the ID stands as it is.
 
-Nib is AGPL, so it is a source-available submission, and a manifest that unpacks
-the release `.deb` does not qualify. The eleven Tauri apps on Flathub that do
-exactly this were all accepted before that date and are grandfathered, not
-precedent; every Tauri submission since builds from source. The exception clause
-covers "well-known vendors" where offline-build tooling does not exist, which is
-neither of Nib's situation.
+### Steps to submit it - needs your account
 
-What a submittable manifest needs on top of what is here:
+Flathub's requirements say plainly that AI tools must not open or automate
+submission pull requests, or write their commit messages, descriptions or
+review replies, and that AI-generated packaging has to be disclosed. So this is
+yours to open, and the disclosure belongs in the pull request body.
 
-- `cargo-sources.json` from `flatpak-cargo-generator.py` over
-  `apps/desktop/src-tauri/Cargo.lock`, and another for `services/mcp` if the MCP
-  sidecar is bundled.
-- `node-sources.json` from `flatpak-node-generator pnpm pnpm-lock.yaml`. pnpm
-  support landed in flatpak-builder-tools on 2026-03-12, so this is possible
-  now; it was not before.
-- `org.freedesktop.Sdk.Extension.rust-stable` and `.node22` as
-  `sdk-extensions`, an offline `pnpm install`, and `tauri build --bundles deb`
-  inside the sandbox with the updater disabled.
+1. Fork <https://github.com/flathub/flathub> with *Copy the master branch only*
+   unchecked, and clone the `new-pr` branch:
 
-Both generated files are large and mechanical, and they have to be regenerated
-whenever a lockfile moves. Until then the manifest here is still worth having:
-it is how you build and install Nib as a Flatpak locally, and it is the base the
-from-source version starts from.
+   ```
+   git clone --branch=new-pr git@github.com:<you>/flathub.git
+   git checkout -b ch.emilvinu.nib
+   ```
 
-```
-cd packaging/flathub
-flatpak install -y flathub org.flatpak.Builder org.gnome.Platform//50 org.gnome.Sdk//50
-flatpak run org.flatpak.Builder --force-clean --sandbox --user --install \
-  --repo=repo builddir ch.emilvinu.nib.yml
-flatpak run ch.emilvinu.nib
-```
+2. Copy the five files in `packaging/flathub/` to the root of that branch, push,
+   and open the pull request against `new-pr` titled `Add ch.emilvinu.nib`.
+3. Comment `bot, build` on it to make Flathub's builders build both
+   architectures.
+4. Two things worth saying in the pull request itself:
+   - the packaging was written with an AI assistant, which their requirements
+     ask you to disclose;
+   - the manifest asks for `--filesystem=xdg-documents` rather than
+     `--filesystem=home`, because the linter treats `home` as an error. Files
+     picked in a dialog arrive through the document portal regardless, but a
+     recently-opened file kept outside ~/Documents will not reopen on its own.
+     Editors are the usual case for a `home` exception, so ask for one there
+     rather than shipping the narrower permission and living with it.
+5. Once it is merged and published, verification is a token you serve yourself:
+   put the line Flathub gives you at
+   <https://emilvinu.ch/.well-known/org.flathub.VerifiedApps.txt>. That is what
+   puts the verified mark on the listing, and it also gates the automerge
+   setting below.
 
-The app ID is the Tauri bundle identifier, `ch.emilvinu.nib`, and Flathub
-requires the matching domain to be yours and to answer over HTTPS.
-<https://emilvinu.ch> does, so the ID stands as it is.
-
-Two things to raise in the submission itself:
-
-- The manifest asks for `--filesystem=xdg-documents` rather than
-  `--filesystem=home`, because the linter treats `home` as an error. Files
-  picked in a dialog arrive through the document portal regardless, but a
-  recently-opened file kept outside ~/Documents will not reopen on its own.
-  Editors are the usual case for a `home` exception, so ask for one in the pull
-  request rather than shipping the narrower permission and living with it.
-- The screenshot URL is worth moving. The GitHub `user-attachments` link does
-  work - appstreamcli fetched the 1999x1423 PNG through it - but it answers a
-  GET with a 302 to a signed S3 URL that expires in five minutes and refuses
-  HEAD with a 403. Nothing about it is guaranteed to keep working, and Flathub
-  refetches it on every build. A plain `.png` under `docs/media/` served from
-  `raw.githubusercontent.com` is the durable form.
-
-When the app is on Flathub, releases need no workflow: the
-`x-checker-data` blocks in the manifest let Flathub's own
-flatpak-external-data-checker open the update pull requests.
+When the app is on Flathub, a release opens its own pull request: the
+`x-checker-data` block on the git source lets Flathub's
+flatpak-external-data-checker move the tag. It cannot regenerate the two source
+files, though, so a release whose lockfiles moved needs them regenerated in the
+same pull request or the build fails. Do not turn on `automerge-flathubbot-prs`
+for that reason.
 
 ## Snap Store
 
@@ -266,8 +338,10 @@ for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.AppImage" | sha25
 - `aur/nib-bin/PKGBUILD`: `pkgver`, both `sha256sums_*`. Regenerate `.SRCINFO`
   with `makepkg --printsrcinfo > .SRCINFO`, or let the validation workflow print
   it - it fails if the committed one is stale.
-- `flathub/ch.emilvinu.nib.yml`: the two URLs and their `sha256`, plus a
-  `<release>` entry in `ch.emilvinu.nib.metainfo.xml`.
+- `flathub/ch.emilvinu.nib.yml`: the `tag` and the `commit` on the git source,
+  plus a `<release>` entry in `ch.emilvinu.nib.metainfo.xml`. If either lockfile
+  moved in that release, regenerate `cargo-sources.json` and `node-sources.json`
+  as well - a stale one fails the build rather than building the wrong thing.
 - `snap/snapcraft.yaml`: `version` and the two URLs.
 - `nix/flake.nix`: `version` and both hashes, as SRI - `nix hash convert --hash-algo
   sha256 --to sri <hex>`.
