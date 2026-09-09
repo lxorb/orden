@@ -31,6 +31,15 @@
      see selection/shape.ts in @nib/editor. A plain length, no calc. */
   --selection-radius: 6px;
 
+  /* The gutter of line numbers beside a code block: the digits, the hairline
+     that separates them from the code, and the space either side of that
+     hairline. How wide the column is comes from the block's own line count and
+     is written onto its lines - see live-preview/decorate.ts in @nib/editor -
+     so what is left here is what a theme might want to restate. */
+  --code-number-color: var(--muted);
+  --code-number-rule: var(--line-strong);
+  --code-number-gap: var(--space-2);
+
   /* A press gets its own step past hover: hover says a thing is there, this
      says the click landed - which is what matters where the answer takes a
      moment to arrive. Quiet surfaces deepen by one step; anything wearing the

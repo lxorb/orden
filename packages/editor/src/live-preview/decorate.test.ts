@@ -72,6 +72,7 @@ function marked(doc: string, className: string, cursor?: number): string[] {
 interface Spec {
   class?: string
   widget?: unknown
+  attributes?: Record<string, string>
 }
 
 /** Every class given to a whole line, in document order. */
@@ -164,6 +165,95 @@ describe('code', () => {
   test('leaves a neighbouring fence hidden', () => {
     const doc = '```js\na\n```\n\n```py\nb\n```\n'
     expect(concealed(doc, 8)).toEqual(['```', 'py', '```'])
+  })
+})
+
+/** The gutter beside a code block. What the stylesheet draws is a pseudo-element
+ *  per line reading these, so the numbers are never text of the document; the
+ *  rules are in editor.css in @nib/themes. */
+describe('code line numbers', () => {
+  /** Each line of code, as the number it is given and the width of the column
+   *  it is drawn in. A line with no number is one of the block's own fences. */
+  function gutter(doc: string): { number: string | null; digits: string | undefined }[] {
+    const full = doc + PARK
+    const out: { number: string | null; digits: string | undefined }[] = []
+
+    buildDecorations(state(full, full.length)).decorations.between(
+      0,
+      full.length,
+      (from, to, value) => {
+        const spec = value.spec as Spec
+        if (from !== to || spec.widget || !spec.class?.split(' ').includes('nib-code')) return
+        out.push({
+          number: spec.attributes?.['data-code-number'] ?? null,
+          digits: spec.attributes?.style,
+        })
+      },
+    )
+
+    return out
+  }
+
+  function numbers(doc: string): (string | null)[] {
+    return gutter(doc).map((line) => line.number)
+  }
+
+  test('numbers the code and not the fences around it', () => {
+    expect(numbers('```js\nlet a = 1\nlet b = 2\n```')).toEqual([null, '1', '2', null])
+  })
+
+  test('counts from one per block rather than per note', () => {
+    const doc = 'words\n\n```\na\nb\n```\n\nmore\n\n```\nc\n```'
+    expect(numbers(doc)).toEqual([null, '1', '2', null, null, '1', null])
+  })
+
+  test('numbers every line of an indented block, its first included', () => {
+    expect(numbers('text\n\n    a\n    b\n    c')).toEqual(['1', '2', '3'])
+  })
+
+  test('a blank line inside a fence is a line like any other', () => {
+    expect(numbers('```\na\n\nb\n```')).toEqual([null, '1', '2', '3', null])
+  })
+
+  test('the column is as wide as the block needs and no wider', () => {
+    // Nine lines of code want one digit; ten want two. Read off the block's own
+    // count, not the note's - a fence far down a long note still starts at one.
+    const nine = `\`\`\`\n${'a\n'.repeat(9)}\`\`\``
+    expect(gutter(nine).map((line) => line.digits)).toEqual(
+      Array.from({ length: 11 }, () => '--code-digits:1'),
+    )
+
+    const ten = `\`\`\`\n${'a\n'.repeat(10)}\`\`\``
+    expect(new Set(gutter(ten).map((line) => line.digits))).toEqual(new Set(['--code-digits:2']))
+
+    // The fences carry the width as well, so the code keeps one left edge.
+    expect(gutter('x\n\n```\na\n```').every((line) => line.digits === '--code-digits:1')).toBe(true)
+  })
+
+  test('the number rides on the line, so nothing selects or copies it', () => {
+    // Not a widget and not text: a line decoration carrying an attribute, which
+    // only a pseudo-element reads. A selection over the block takes the code.
+    const doc = '```\nlet a = 1\n```'
+    const full = doc + PARK
+    let carried = 0
+
+    buildDecorations(state(full, full.length)).decorations.between(
+      0,
+      full.length,
+      (from, to, value) => {
+        const spec = value.spec as Spec
+        if (!spec.attributes?.['data-code-number']) return
+        carried += 1
+        expect(from).toBe(to)
+        expect(spec.widget).toBeUndefined()
+      },
+    )
+
+    expect(carried).toBe(1)
+  })
+
+  test('a rendered diagram has no lines to number', () => {
+    expect(numbers('```mermaid\ngraph TD\nA-->B\n```')).toEqual([])
   })
 })
 

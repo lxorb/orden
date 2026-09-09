@@ -37,7 +37,6 @@ const HEADING = /^(?:ATX|Setext)Heading(\d)$/
 const CALLOUT = /^>\s*\[!(note|tip|important|warning|caution)\]/i
 
 const LINE_CLASS: Record<string, string> = {
-  CodeBlock: 'nib-code',
   Table: 'nib-table',
   FrontMatter: 'nib-frontmatter',
   FootnoteDef: 'nib-footnote',
@@ -49,6 +48,9 @@ class Decorator {
   private readonly marks: Range<Decoration>[] = []
   private readonly hidden: Range<Decoration>[] = []
   private readonly lineClasses = new Map<number, Set<string>>()
+  /** What a line carries besides its classes, keyed the same way. Only the code
+   *  line numbers use it; see `numberLines`. */
+  private readonly lineAttrs = new Map<number, Record<string, string>>()
   /** Spans already replaced wholesale. Nested syntax inside them must not be
    *  decorated again, or the two replacements would overlap and throw. */
   private readonly claimed: { from: number; to: number }[] = []
@@ -65,7 +67,13 @@ class Decorator {
 
     const lines: Range<Decoration>[] = []
     for (const [pos, classes] of this.lineClasses) {
-      lines.push(Decoration.line({ class: [...classes].join(' ') }).range(pos))
+      const attributes = this.lineAttrs.get(pos)
+      const className = [...classes].join(' ')
+      lines.push(
+        Decoration.line(attributes ? { class: className, attributes } : { class: className }).range(
+          pos,
+        ),
+      )
     }
 
     return {
@@ -100,6 +108,12 @@ class Decorator {
         return true
       case 'FencedCode':
         return this.fence(node)
+      case 'CodeBlock':
+        // Indented code: every line of it is code, so every line is numbered,
+        // and its own first line is where the numbering starts again.
+        this.markLines(node, 'nib-code')
+        this.numberLines(node.from, node.to, false)
+        return true
       case 'ListItem':
         this.markLines(node, 'nib-li', true)
         return true
@@ -363,6 +377,7 @@ class Decorator {
     const open = doc.lineAt(node.from)
     this.addLineClass(open.from, 'nib-code-open')
     this.addLineClass(doc.lineAt(node.to).from, 'nib-code-close')
+    this.numberLines(node.from, node.to, true)
 
     // The opening line reads as empty once its fence is hidden, which leaves
     // room for the language and a copy button.
@@ -539,6 +554,44 @@ class Decorator {
     const classes = this.lineClasses.get(pos) ?? new Set<string>()
     classes.add(className)
     this.lineClasses.set(pos, classes)
+  }
+
+  private addLineAttrs(pos: number, attrs: Record<string, string>) {
+    const carried = this.lineAttrs.get(pos)
+    if (carried) Object.assign(carried, attrs)
+    else this.lineAttrs.set(pos, { ...attrs })
+  }
+
+  /** What line-number mode needs from a code block: which number each of its
+   *  lines is, counting from one per block, and how many digits the last of
+   *  them has - which is what the gutter is as wide as.
+   *
+   *  Both are written onto the lines rather than left to a CSS counter, because
+   *  only the lines in the viewport are in the DOM: a counter would start again
+   *  at one wherever the reader happened to have scrolled to, and could not know
+   *  how wide a column the block needs before reaching the end of it. The width
+   *  goes on every line of the block, the fences included, so the code keeps one
+   *  left edge whether or not the line it is on carries a number.
+   *
+   *  `fenced` leaves the ``` lines unnumbered: they are the block's markup
+   *  rather than code, and the first of them carries the language and the copy
+   *  button. Nothing here depends on the mode - only the stylesheet draws any of
+   *  it, and only while the mode is on, so turning the numbers on and off
+   *  rebuilds no decorations at all. See editor.css in @nib/themes. */
+  private numberLines(from: number, to: number, fenced: boolean) {
+    const doc = this.state.doc
+    const opening = doc.lineAt(from).number
+    const closing = doc.lineAt(Math.min(to, doc.length)).number
+    const first = fenced ? opening + 1 : opening
+    const last = fenced ? closing - 1 : closing
+    const digits = String(Math.max(last - first + 1, 1)).length
+
+    for (let number = opening; number <= closing; number++) {
+      const line = doc.line(number)
+      this.addLineAttrs(line.from, { style: `--code-digits:${digits}` })
+      if (number < first || number > last) continue
+      this.addLineAttrs(line.from, { 'data-code-number': String(number - first + 1) })
+    }
   }
 
   /** `firstOnly` keeps a nested list item from restyling its children's lines. */

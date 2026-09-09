@@ -331,24 +331,46 @@
 
 /* ── Code line numbers ───────────────────────────────────────────── */
 
-.nib-line-numbers .cm-line.nib-code-open {
-  counter-reset: nib-code-line;
+/* A gutter of its own at the left edge of the block, the way an editor draws
+   one: the numbers right-aligned in a column exactly as wide as the block's
+   longest, a hairline beside them, and the same gap on both sides of it. Every
+   line of the block is indented past all of that, the fences included, so the
+   code reads down one straight edge.
+
+   The number is a pseudo-element reading an attribute the decorations put on the
+   line, not a CSS counter: only the lines in the viewport are in the DOM, and a
+   counter would start again at one wherever the reader had scrolled to. Which
+   line is which, and how many digits the column needs, are decided in
+   live-preview/decorate.ts in @nib/editor.
+
+   Absolutely positioned inside the line, so the number sits level with the
+   line's first row while the padding holds every row of a wrapped line clear of
+   the column, and the hairline runs the full height of the line either way -
+   which is what makes one continuous rule out of a rule per line. `ch` is the
+   width of a digit in the code face, so the column is the same size whichever
+   face that is and whether or not its ligatures are drawn. */
+.nib-line-numbers .cm-line.nib-code {
+  --code-number-width: calc(var(--code-digits, 2) * 1ch);
+
+  padding-left: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
 }
 
-.nib-line-numbers .cm-line.nib-code:not(.nib-code-open):not(.nib-code-close) {
-  position: relative;
-  counter-increment: nib-code-line;
-  padding-left: calc(var(--space-4) + 2.6em);
-}
-
-.nib-line-numbers .cm-line.nib-code:not(.nib-code-open):not(.nib-code-close)::before {
-  content: counter(nib-code-line);
+.nib-line-numbers .cm-line.nib-code[data-code-number]::before {
+  content: attr(data-code-number);
   position: absolute;
-  left: var(--space-4);
-  width: 2em;
+  top: 0;
+  bottom: 0;
+  left: var(--space-3);
+  width: var(--code-number-width);
+  padding-right: var(--code-number-gap);
+  border-right: 1px solid var(--code-number-rule);
+  color: var(--code-number-color);
   text-align: right;
-  color: var(--muted);
-  opacity: 0.65;
+  /* A count of the code rather than part of it: nothing here is text of the
+     document, so nothing selects it, copies it or takes a click meant for the
+     line beside it. */
+  user-select: none;
+  pointer-events: none;
 }
 
 /* No box of its own, and only there while the pointer is over the block -
