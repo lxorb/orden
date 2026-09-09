@@ -14,7 +14,7 @@
   import { createEditor, type EditorView, type NoteJump, type Text } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
-  import { shapeLine } from './canvas/geometry'
+  import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
   import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
@@ -78,29 +78,30 @@
     }
   })
 
-  /** The card's markdown as HTML. Read from the cache next door, so a card that
-   *  has not changed costs nothing however often the plane moves. */
-  const html = $derived(
-    node.type === 'text'
-      ? cardHtml(node.text, canvasPath, trusted)
-      : source === null
-        ? ''
-        : cardHtml(source, canvasPath, trusted),
+  /** The words this node holds, whichever kind it is: a card's own, a shape's, or the
+   *  note a file card names once it has arrived. */
+  const words = $derived(
+    node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source,
   )
 
-  /** Where a line or an arrow runs inside its own box, in the box's own
-   *  coordinates, so the svg scales with the node and the arithmetic stays in
-   *  one place. */
-  const line = $derived.by(() => {
+  /** The card's markdown as HTML. Read from the cache next door, so a card that
+   *  has not changed costs nothing however often the plane moves. */
+  const html = $derived(words ? cardHtml(words, canvasPath, trusted) : '')
+
+  /** The shape's own corners, in the box's own coordinates, so the svg scales with
+   *  the node and the arithmetic stays in one place. Through the same geometry the hit
+   *  test and the export read, so a click, a picture and the screen agree.
+   *
+   *  A body comes back closed and a line comes back open, which is the only
+   *  difference between drawing one and drawing the other. */
+  const drawing = $derived.by(() => {
     if (node.type !== 'shape') return null
 
-    const ends = shapeLine(node)
-    return {
-      x1: ends.from.x - node.x,
-      y1: ends.from.y - node.y,
-      x2: ends.to.x - node.x,
-      y2: ends.to.y - node.y,
-    }
+    const points = shapePath(node).map((one) => ({ x: one.x - node.x, y: one.y - node.y }))
+    const d = `M ${points.map((one) => `${one.x} ${one.y}`).join(' L ')}`
+    const open = isLineShape(node.shape)
+
+    return { d: open ? d : `${d} Z`, open, points }
   })
 
   /** How far back from the end of a line its arrow head starts, and how wide the
@@ -108,14 +109,33 @@
   const HEAD = 11
 
   const head = $derived.by(() => {
-    if (!line) return null
+    if (node.type !== 'shape' || node.shape !== 'arrow') return null
 
-    const dx = line.x2 - line.x1
-    const dy = line.y2 - line.y1
+    const ends = shapeLine(node)
+    const from = { x: ends.from.x - node.x, y: ends.from.y - node.y }
+    const to = { x: ends.to.x - node.x, y: ends.to.y - node.y }
+    const dx = to.x - from.x
+    const dy = to.y - from.y
     const away = Math.hypot(dx, dy) || 1
-    const angle = (Math.atan2(dy, dx) * 180) / Math.PI
 
-    return { x: line.x2, y: line.y2, angle, size: Math.min(HEAD, away / 3) }
+    return {
+      x: to.x,
+      y: to.y,
+      angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+      size: Math.min(HEAD, away / 3),
+    }
+  })
+
+  /** Whether the picture a file card names failed to load, which is a reference into
+   *  a space that no longer holds it: a moved file, a copy that arrived without its
+   *  attachments, a share that left them behind. Shown as a quiet placeholder, because
+   *  the card is still where somebody put it and the plane is still readable. */
+  let broken = $state(false)
+
+  $effect(() => {
+    // The card being pointed at a different file is a different question, so the
+    // path is read for its own sake and the answer starts again with it.
+    if (node.type === 'file' && node.file) broken = false
   })
 
   /** A link node's host, which is the closest thing to a title that can be known
@@ -137,12 +157,12 @@
    *  down the moment it is not: five hundred cards must not be five hundred
    *  editors, and the one that exists is sized to its own card. */
   function edit(host: HTMLElement) {
-    if (node.type !== 'text') return
+    if (node.type !== 'text' && node.type !== 'shape') return
 
-    typed = node.text
+    typed = words ?? ''
     editor = createEditor({
       parent: host,
-      doc: node.text,
+      doc: typed,
       onChange: (doc: Text) => {
         typed = doc.toString()
       },
@@ -207,7 +227,19 @@
     {/if}
   {:else if node.type === 'file'}
     {#if isPicture(node.file)}
-      <img class="picture" src={fileUrl(node.file, root)} alt={node.file} draggable="false" />
+      {#if broken}
+        <!-- A reference into a space that no longer holds the picture. Quiet, and
+             still the size and the place somebody put it. -->
+        <p class="missing">{t('Nothing here')}</p>
+      {:else}
+        <img
+          class="picture"
+          src={fileUrl(node.file, root)}
+          alt={node.file}
+          draggable="false"
+          onerror={() => (broken = true)}
+        />
+      {/if}
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed">{@html html}</div>
@@ -222,6 +254,7 @@
   {:else if node.type === 'shape'}
     <svg
       class="drawn"
+      class:filled={node.fill}
       viewBox="0 0 {node.width} {node.height}"
       width={node.width}
       height={node.height}
@@ -242,9 +275,9 @@
           rx={Math.max(0, node.width / 2 - 1)}
           ry={Math.max(0, node.height / 2 - 1)}
         />
-      {:else if line}
-        <line x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} class="stroke" />
-        {#if node.shape === 'arrow' && head}
+      {:else if drawing}
+        <path class={drawing.open ? 'stroke' : 'body'} d={drawing.d} />
+        {#if head}
           <path
             class="point"
             d="M 0 0 L {-head.size} {-head.size * 0.5} L {-head.size} {head.size * 0.5} Z"
@@ -253,6 +286,15 @@
         {/if}
       {/if}
     </svg>
+
+    <!-- A shape in a diagram is nearly always a shape with a name in it, so it holds
+         words the way a card does, through the same renderer. -->
+    {#if editing}
+      <div class="editor inside" use:edit onkeydowncapture={onKey}></div>
+    {:else if html}
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own words, through the same renderer the reading view uses -->
+      <div class="card page inside">{@html html}</div>
+    {/if}
   {:else if node.label}
     <span class="label">{node.label}</span>
   {/if}
@@ -331,9 +373,35 @@
     stroke-linejoin: round;
   }
 
+  /* A filled shape wears its colour as a breath of it, the way a coloured card does,
+     so words inside one are still words on paper. */
+  .drawn.filled rect,
+  .drawn.filled ellipse,
+  .drawn.filled .body {
+    fill: color-mix(in srgb, var(--card-colour, var(--muted)) 14%, transparent);
+  }
+
   .drawn .point {
     fill: var(--card-colour, var(--text-strong));
     stroke: none;
+  }
+
+  /* The words inside a shape, over the shape and in the middle of it: a diamond with
+     a name in it is a name in a diamond, not a name beside one. */
+  .inside {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  /* Being written in is the one time the words take the pointer back. */
+  .editor.inside {
+    pointer-events: auto;
+    text-align: left;
   }
 
   .label {

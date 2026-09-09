@@ -22,9 +22,11 @@
     below,
     colour,
     recent,
+    grouping,
     oncolour,
     onduplicate,
     ondelete,
+    ongroup,
     onmore,
   }: {
     /** Where on screen, in pixels inside the plane's own element: the middle of the
@@ -36,23 +38,42 @@
     /** The colour what is picked wears, or nothing where it wears none. */
     colour: string | null
     recent: readonly string[]
+    /** Whether the bar offers to make a frame round what is picked, to take one
+     *  apart, or neither - which is one thing picked that is not a frame. */
+    grouping: 'group' | 'ungroup' | null
     oncolour: (colour: string | null) => void
     onduplicate: () => void
     ondelete: () => void
+    ongroup: () => void
     onmore: (event: MouseEvent) => void
   } = $props()
 
   let colouring = $state(false)
+  let over = $state<HTMLElement>()
 
   function pick(next: string | null) {
     colouring = false
     oncolour(next)
   }
+
+  // A press anywhere but on this bar puts the colours away, which is how every other
+  // panel in the app closes. Caught on the way down rather than waited for on the way
+  // up: the plane below stops the event at itself for its own gestures, and a panel
+  // that only shuts when nothing else spoke first is a panel that does not shut.
+  $effect(() => {
+    const shut = (event: PointerEvent) => {
+      const target = event.target
+      if (target instanceof Node && over?.contains(target)) return
+
+      colouring = false
+    }
+
+    window.addEventListener('pointerdown', shut, { capture: true })
+    return () => window.removeEventListener('pointerdown', shut, { capture: true })
+  })
 </script>
 
-<!-- A press anywhere else puts the colours away, which is how every other panel in
-     the app closes. A press on this bar does not, because it stops here. -->
-<svelte:window onpointerdown={() => (colouring = false)} onblur={() => (colouring = false)} />
+<svelte:window onblur={() => (colouring = false)} />
 
 <!-- Every pointer stops here: the plane behind would read a press as a gesture and
      clear the very selection this bar is about. -->
@@ -60,6 +81,7 @@
 <div
   class="over"
   class:below
+  bind:this={over}
   style:left="{at.x}px"
   style:top="{at.y}px"
   onpointerdown={(event) => event.stopPropagation()}
@@ -100,6 +122,22 @@
     >
       <CanvasIcon node={MARKS.copy} />
     </button>
+
+    <!-- Several things made one, or one taken apart. Only when there is something to
+         do: one card picked has no group to make and no group to break. -->
+    {#if grouping}
+      <button
+        type="button"
+        title={grouping === 'group' ? t('Group') : t('Ungroup')}
+        aria-label={grouping === 'group' ? t('Group') : t('Ungroup')}
+        onclick={() => {
+          tick()
+          ongroup()
+        }}
+      >
+        <CanvasIcon node={grouping === 'group' ? MARKS.group : MARKS.ungroup} />
+      </button>
+    {/if}
 
     <button
       type="button"
@@ -225,7 +263,7 @@
     height: 16px;
     border-radius: 50%;
     background: var(--dot);
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
   }
 
   /* Nothing coloured, drawn as the ring the others fill. */

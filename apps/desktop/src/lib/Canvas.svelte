@@ -34,7 +34,7 @@
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPicked from './CanvasPicked.svelte'
   import { graphPoint, zoomed } from './camera'
-  import { canvasMenu, place, run } from './canvas/actions'
+  import { canvasMenu, place, pull, run } from './canvas/actions'
   import {
     coloured,
     movedBy,
@@ -44,23 +44,35 @@
     turnedInk,
     withText,
   } from './canvas/edits'
-  import { type Canvas as Plane, type InkPoint, readCanvas, writeCanvas } from './canvas/format'
   import {
+    type Canvas as Plane,
+    type InkPoint,
+    readCanvas,
+    type Shape,
+    writeCanvas,
+  } from './canvas/format'
+  import {
+    type Box,
     boxOf,
     caught,
     edgeEnds,
     edgeMiddle,
     GRID,
+    gridLevels,
     HANDLES,
+    isLineShape,
     overlaps,
     type Point,
     rectBetween,
+    shapePath,
   } from './canvas/geometry'
-  import { Contacts } from './canvas/contacts'
+  import { Contacts, penKind } from './canvas/contacts'
+  import { cursorFor, type Over } from './canvas/cursor'
   import { hand } from './canvas/hand.svelte'
   import { pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
-  import { assisted, tidyShape, transformed } from './canvas/ink'
+  import { assisted, leadPoint, tidyShape, transformed } from './canvas/ink'
+  import { inkColour } from './canvas/paint'
   import { readPalette } from './canvas/palette'
   import {
     type Effect,
@@ -68,11 +80,14 @@
     type Input,
     type Machine,
     NOTHING,
+    puts,
     start,
     step,
   } from './canvas/pointer'
-  import { NO_SNAP, snapMove, snapResize } from './canvas/snap'
-  import { SIDES, sidePoint } from './canvas/geometry'
+  import { NO_SNAP, snapMove, snapPoint, snapResize } from './canvas/snap'
+  import { Trace } from './canvas/trace'
+  import { isPicture } from './canvas/render'
+  import { facingSide, SIDES, sidePoint } from './canvas/geometry'
   import { CanvasStore } from './canvas/store.svelte'
   import { tools } from './canvas/tools.svelte'
   import { dragged as draggedPaths, isTreeDrag } from './drag-paths'
@@ -107,10 +122,6 @@
    *  nothing else until the view has really moved somewhere new, which is what
    *  keeps a plane of five hundred cards at sixty frames a second. */
   const QUANTUM = 400
-
-  /** Below this the dots are closer together than they are wide, and the grid
-   *  stops being a grid and becomes a wash. */
-  const DOTS_UNTIL = 7
 
   /** How long a pointer has to be still before it means something else: the menu
    *  under a finger, a tidied shape under a pen. */
@@ -157,12 +168,16 @@
    *  are both this. */
   const originX = $derived(width / 2 - camera.x * camera.scale)
   const originY = $derived(height / 2 - camera.y * camera.scale)
-  const stepX = $derived(GRID * camera.scale)
+  /** The background pattern at this zoom, coarsened so there is always one; see
+   *  gridLevels. Coarsest first, so the finer layer is drawn over it. */
+  const patterns = $derived(gridLevels(camera.scale))
 
   const gesture = $derived(machine.gesture)
   const drag = $derived(gesture?.kind === 'drag' ? gesture : null)
   const sizing = $derived(gesture?.kind === 'resize' ? gesture : null)
   const inking = $derived(gesture?.kind === 'ink' ? gesture : null)
+  const pulling = $derived(gesture?.kind === 'pull' ? gesture : null)
+  const rewiring = $derived(gesture?.kind === 'reconnect' ? gesture : null)
 
   /** Everything a snap could line the moving thing up with: what is on the plane
    *  and not going with it. */
@@ -201,8 +216,72 @@
       height: box.height + (sizing.handle.includes('s') ? sizing.dy : 0),
     }
 
+    // A resize that is holding the shape of the box has nothing to line up with:
+    // obeying a guide on one axis would break the ratio the other one is keeping.
+    if (sizing.aspect) return { dx: sizing.dx, dy: sizing.dy, guides: [] }
+
     const snap = snapResize(now, sizing.handle, bystanders(sizing.ids), GRID / 2)
     return { dx: sizing.dx + snap.dx, dy: sizing.dy + snap.dy, guides: snap.guides }
+  })
+
+  /** Whether the tool in hand is one of the three that becomes a connector when both
+   *  of its ends land on a card. */
+  const JOINS = new Set(['line', 'arrow', 'elbow'])
+
+  /** The card and the anchor a connector being dragged out is about to attach to,
+   *  while there is one. Shown, because a hand aiming a line at a card has to be told
+   *  which side it will meet before it lets go. */
+  const joining = $derived.by(() => {
+    if (!pulling?.fromNode || !JOINS.has(pulling.tool)) return null
+
+    const found = hitFor(pulling.to, false)
+    if (!found.node || found.node === pulling.fromNode) return null
+
+    const node = shown.nodes.find((one) => one.id === found.node)
+    if (!node) return null
+
+    const side = facingSide(boxOf(node), { ...pulling.from, width: 0, height: 0 })
+    return { id: node.id, side, at: sidePoint(boxOf(node), side) }
+  })
+
+  /** Where the far corner of something being pulled out has really got to, once the
+   *  grid and the neighbours have had their say, and the lines that say why.
+   *
+   *  The same snap a drag gets, so a box dragged out beside a card comes out the
+   *  width of the card and says so while it is being dragged rather than afterwards. */
+  const pullSnap = $derived.by(() => {
+    if (!pulling) return NO_SNAP
+    // A line that is going to become a connector is aiming at a card's own anchor,
+    // which is a stronger thing to land on than a grid step.
+    if (joining) return NO_SNAP
+
+    return snapPoint(pulling.to, store.canvas.nodes.map(boxOf), GRID / 2)
+  })
+
+  /** Where a pull actually reaches: the pointer, snapped, or the anchor of the card
+   *  a connector is about to attach to. */
+  const pullTo = $derived.by(() => {
+    if (!pulling) return null
+    if (joining) return joining.at
+
+    return { x: pulling.to.x + pullSnap.dx, y: pulling.to.y + pullSnap.dy }
+  })
+
+  /** Where the end of a connector being moved has got to, and the card it will land
+   *  on. Null while nothing is being moved. */
+  const rewiredTo = $derived.by(() => {
+    if (!rewiring) return null
+
+    const found = hitFor(rewiring.to, false)
+    const node = found.node ? shown.nodes.find((one) => one.id === found.node) : null
+    if (!node) return { at: rewiring.to, onto: null }
+
+    const other = shown.edges.find((one) => one.id === rewiring.edge)
+    const far = other && (rewiring.end === 'from' ? other.toNode : other.fromNode)
+    const anchor = shown.nodes.find((one) => one.id === far)
+    const side = anchor ? facingSide(boxOf(node), boxOf(anchor)) : 'top'
+
+    return { at: sidePoint(boxOf(node), side), onto: node.id }
   })
 
   /** How far the ink lasso has been dragged, scaled or turned so far. */
@@ -228,7 +307,9 @@
   const shown = $derived.by((): Plane => {
     const base = store.canvas
     if (drag) return movedBy(base, drag.ids, dragSnap.dx, dragSnap.dy)
-    if (sizing) return resizedPick(base, sizing.ids, sizing.handle, sizeSnap.dx, sizeSnap.dy)
+    if (sizing) {
+      return resizedPick(base, sizing.ids, sizing.handle, sizeSnap.dx, sizeSnap.dy, sizing.aspect)
+    }
 
     if (inking) {
       const moved = { ...carriedInk, sx: carriedInk.scale, sy: carriedInk.scale }
@@ -272,6 +353,18 @@
 
   const picked = $derived(new Set(store.picked))
 
+  /** Whether a resize holds the shape of the box without being asked: a picture under
+   *  a thumb, where there is no Shift to hold and a stretched photograph is not the
+   *  photograph. Shift says so as well, on every device; see pointer.ts. */
+  const holdsShape = $derived(
+    viewport.touch &&
+      store.picked.length > 0 &&
+      store.picked.every((id) => {
+        const node = store.canvas.nodes.find((one) => one.id === id)
+        return node?.type === 'file' && isPicture(node.file)
+      }),
+  )
+
   /** The box the handles are drawn on: everything picked, together. */
   const box = $derived(pickedBox(shown, store.picked))
 
@@ -304,11 +397,56 @@
 
   const band = $derived(gesture?.kind === 'band' ? rectBetween(gesture.from, gesture.to) : null)
   const lasso = $derived(gesture?.kind === 'lasso' ? gesture.points : null)
-  const shaping = $derived(gesture?.kind === 'shape' ? gesture : null)
 
-  /** The stroke under the pen, with whatever the browser guesses is coming next
-   *  drawn on the end of it. The guess is drawn and never kept: it is there so
-   *  the ink reaches the nib, and it is wrong by the next event. */
+  /** The box something being pulled out of the bar will land in, snapped. */
+  const pullBox = $derived(pulling && pullTo ? rectBetween(pulling.from, pullTo) : null)
+
+  /** Which of the things a press puts down are drawn as a plain box while they are
+   *  being pulled out. The rest are drawn as themselves; see pulledPath. */
+  const PLAIN = new Set(['text', 'file', 'picture', 'link', 'group', 'rect', 'ellipse'])
+
+  /** The shape being pulled out, as a path, through the same geometry the finished
+   *  one is drawn from - so what is dragged out is exactly what lands. */
+  function pulledPath(tool: string, from: Point, to: Point, box: Box): string {
+    const line = isLineShape(tool as Shape)
+    const points = shapePath({
+      id: 'pulling',
+      type: 'shape',
+      shape: tool as Shape,
+      ...box,
+      ...(line && (to.y - from.y) * (to.x - from.x) < 0 ? { up: true } : {}),
+    })
+
+    const d = `M ${points.map((one) => `${Math.round(one.x)} ${Math.round(one.y)}`).join(' L ')}`
+    return line ? d : `${d} Z`
+  }
+
+  /** The two ends of every picked connector, which is what an end is dragged by.
+   *  Nothing at all while a gesture is under way: the handles are what start one. */
+  const edgeHandles = $derived.by(() => {
+    if (gesture) return []
+
+    const out: { key: string; at: Point }[] = []
+    for (const edge of shown.edges) {
+      if (!store.isPicked(edge.id)) continue
+
+      const from = shown.nodes.find((one) => one.id === edge.fromNode)
+      const to = shown.nodes.find((one) => one.id === edge.toNode)
+      if (!from || !to) continue
+
+      const ends = edgeEnds(edge, boxOf(from), boxOf(to))
+      out.push({ key: `${edge.id}:from`, at: ends.from }, { key: `${edge.id}:to`, at: ends.to })
+    }
+
+    return out
+  })
+
+  /** The stroke under the pen, with at most one step of the browser's guess at where
+   *  the nib is going drawn on the end of it.
+   *
+   *  Held to one step and to the direction the hand is already going; see leadPoint
+   *  in ink.ts. Drawn and never kept: it is there so the ink reaches the nib, and it
+   *  is wrong by the next event. */
   let predicted = $state.raw<InkPoint[]>([])
 
   const live = $derived.by(() => {
@@ -323,7 +461,13 @@
     }
   })
 
-  const guides = $derived(dragSnap.guides.length ? dragSnap.guides : sizeSnap.guides)
+  const guides = $derived(
+    dragSnap.guides.length
+      ? dragSnap.guides
+      : sizeSnap.guides.length
+        ? sizeSnap.guides
+        : pullSnap.guides,
+  )
 
   /** Where in its own tile the grid sits, which is all a repeating pattern needs
    *  to be moved by. Always positive, unlike the remainder operator. */
@@ -496,8 +640,12 @@
   }
 
   // A surface that has gone has no pointer being held on it: the timer would come
-  // round after the tab closed and ask a plane nobody is looking at for a menu.
-  $effect(() => () => stopHolding())
+  // round after the tab closed and ask a plane nobody is looking at for a menu. The
+  // same goes for a cancelled contact still being doubted.
+  $effect(() => () => {
+    stopHolding()
+    stopDoubting()
+  })
 
   /** Swallows the click that ends the very press that opened the menu.
    *
@@ -524,9 +672,22 @@
    *  drag, and the count is what tells the store that all of them are one thing
    *  somebody did; see `edit` in store.svelte.ts. */
   let gestures = 0
+  /** The gesture a copy was left behind for, while one is being dragged off it, so
+   *  the copy and the move are one step to take back. */
+  let cloning: string | null = null
+
+  /** What the surface has to say for something to be put on the plane: the colour
+   *  the next one gets, and where this canvas lives, which is what a picture is
+   *  stored beside. */
+  function putting() {
+    return { colour: tools.colour, path: tab.path }
+  }
 
   function send(input: Input) {
     const preview = shown
+    // Where a pull had really got to when the pointer came up, snapped and anchored,
+    // read before the machine moves on: what lands is what was on screen.
+    const aiming = pullTo
     const beginning = machine.gesture === null
     const next = step(machine, input, {
       tool: tools.which,
@@ -537,6 +698,7 @@
       pen: tools.ink,
       eraser: pens.eraser,
       lassoBox: pens.box,
+      aspect: holdsShape,
       straighten: pens.straighten,
       penSeen: hand.penSeen,
       fingerDraws: hand.fingerDraws,
@@ -545,10 +707,10 @@
     if (beginning && next.machine.gesture) gestures += 1
 
     machine = next.machine
-    for (const effect of next.effects) apply(effect, preview)
+    for (const effect of next.effects) apply(effect, preview, aiming)
   }
 
-  function apply(effect: Effect, preview: Plane) {
+  function apply(effect: Effect, preview: Plane, aiming: Point | null) {
     switch (effect.do) {
       case 'pick':
         if (effect.ids.length === 1 && effect.ids[0]) store.pick(effect.ids[0], effect.adding)
@@ -574,8 +736,11 @@
         break
       case 'move':
       case 'resize':
-        // The preview is the answer: it is what was drawn, snapped and all.
-        store.edit(preview)
+        // The preview is the answer: it is what was drawn, snapped and all. A drag
+        // that left a copy behind names that copy's gesture, so the two are one
+        // thing to take back.
+        store.edit(preview, cloning ?? undefined)
+        cloning = null
         break
       case 'ink': {
         carriedInk = {
@@ -588,14 +753,26 @@
         break
       }
       case 'connect':
-        run.connect(store, effect.from, effect.fromSide, effect.to, effect.toSide)
+        run.connect(store, effect.from, effect.fromSide, effect.to, effect.toSide, effect.head)
+        tools.done()
         break
-      case 'shape':
-        run.shape(store, effect.tool, effect.from, effect.to, tools.colour)
+      case 'reconnect':
+        run.reattach(store, effect.edge, effect.end, effect.to)
+        break
+      case 'clone':
+        // The copy and the drag that follows it name the same gesture, so one press
+        // of undo puts both back; see `edit` in store.svelte.ts.
+        run.leaveCopy(store, `drag:${gestures}`)
+        cloning = `drag:${gestures}`
+        break
+      case 'pull':
+        // What was on screen while it was dragged, committed: the snap has already
+        // been applied to `to`, so what lands is what was drawn.
+        void pull(store, effect.tool, effect.from, aiming ?? effect.to, putting())
         tools.done()
         break
       case 'place':
-        void place(store, effect.tool, effect.at)
+        void place(store, effect.tool, effect.at, putting())
         tools.done()
         break
       case 'stroke':
@@ -651,30 +828,68 @@
     predicted = []
   }
 
-  /** Whether this event is a pen with its button held.
+  /** What kind of pointer this event really is, and whether it is rubbing out.
    *
-   *  Chromium turns a pen held with its button into the eraser bit, and Android
-   *  reports the barrel button as the right one instead. Both mean the same thing
-   *  to a hand, so both mean it here. */
-  function rubbingWith(event: PointerEvent): boolean {
-    if (event.pointerType !== 'pen') return false
-    return (event.buttons & 32) !== 0 || (event.buttons & 2) !== 0
+   *  Three shapes of the same fact, all of them the same S Pen button; the rules and
+   *  the reasons are in canvas/contacts.ts, where they are a test rather than a
+   *  tablet. */
+  function kindOf(event: PointerEvent) {
+    return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
   }
 
   /** What each pointer said about itself when it landed; see canvas/contacts.ts.
    *  Nothing on the page is drawn from it, so it is not state. */
   const contacts = new Contacts()
 
+  /** The last few pointer events, for a hidden element a drive and a person on a
+   *  tablet can both read; see canvas/trace.ts. */
+  const trace = new Trace()
+  let traced = $state('')
+
+  function note(what: string, event: PointerEvent) {
+    if (
+      trace.note({
+        what,
+        kind: event.pointerType,
+        button: event.button,
+        buttons: event.buttons,
+        id: event.pointerId,
+      })
+    ) {
+      traced = trace.line
+    }
+  }
+
   /** Whether the last pointer on this glass was a pen, for the two events that
    *  carry no pointer of their own: the menu and a double press. */
   let lastPen = false
 
+  /** A contact the browser took away that may not really be over.
+   *
+   *  Chrome on Android answers a stylus button with a context-menu gesture, and
+   *  taking that gesture sends a `pointercancel` while the nib is still on the glass
+   *  and still reporting. Ending the stroke there is what made the button "just not
+   *  write any more". So a cancelled pen contact is given a moment: another event
+   *  with the same id inside it means the contact never left, and only silence ends
+   *  the gesture. */
+  const GRACE = 160
+  let doubting: { id: number; timer: number } | null = null
+
+  function stopDoubting(id?: number) {
+    if (!doubting || (id !== undefined && doubting.id !== id)) return
+
+    window.clearTimeout(doubting.timer)
+    doubting = null
+  }
+
   function onPointerDown(event: PointerEvent) {
-    const pen = event.pointerType === 'pen'
+    const { kind, eraser } = kindOf(event)
+    const pen = kind === 'pen'
     // Before the button below: a mouse pressing its right button is a mouse asking
     // for the menu, and it has to say so even when a pen was the last thing on the
     // glass.
     lastPen = pen
+    note('down', event)
 
     // The right button on a mouse starts nothing; the menu is the browser's own
     // event. A pen holding its button is not a right button at all, it is the
@@ -685,8 +900,7 @@
     at = point
     began = event.timeStamp
 
-    const coarse = event.pointerType === 'touch'
-    const eraser = rubbingWith(event)
+    const coarse = kind === 'touch'
     contacts.came(event.pointerId, { pen, eraser })
 
     // A pen on this glass is remembered for good: from now on the finger moves
@@ -697,13 +911,14 @@
     send({
       kind: 'down',
       id: event.pointerId,
-      pointer: pen ? 'pen' : coarse ? 'touch' : 'mouse',
+      pointer: kind,
       at: point,
       screen: screenAt(event),
       time: event.timeStamp,
       button: event.button,
       shift: event.shiftKey,
       adds: event.ctrlKey || event.metaKey,
+      alt: event.altKey,
       eraser,
       sample: sampleOf(event, began),
       hit: hitFor(point, coarse),
@@ -718,9 +933,10 @@
    *  down yet when it landed. Answered before the move itself, so the stroke begins
    *  where the nib touched down rather than where it has got to. */
   function repairPen(event: PointerEvent, point: Point) {
+    const now = kindOf(event)
     const turned = contacts.turned(event.pointerId, {
-      pen: event.pointerType === 'pen',
-      eraser: rubbingWith(event),
+      pen: now.kind === 'pen',
+      eraser: now.eraser,
     })
     if (!turned) return
 
@@ -741,10 +957,15 @@
   }
 
   function onPointerMove(event: PointerEvent) {
+    note('move', event)
+    // A contact the browser cancelled that is still reporting never really left; see
+    // GRACE above.
+    stopDoubting(event.pointerId)
+
     const point = planeAt(event)
     at = point
     if (store.shared) pointing = point
-    const coarse = event.pointerType === 'touch'
+    const coarse = kindOf(event).kind === 'touch'
 
     // Every sample since the last event, not just the one that was delivered: a
     // fast stroke is drawn through all of them rather than through a fifth of
@@ -758,10 +979,23 @@
         : []
 
     if (machine.gesture?.kind === 'draw') {
-      predicted =
+      const guessed =
         typeof event.getPredictedEvents === 'function'
           ? event.getPredictedEvents().map((one) => sampleOf(one, began))
           : []
+      // At most one step, and only along the way the hand is already going: a fan of
+      // guesses drawn whole is the flick past the nib that a turn used to leave
+      // behind. See leadPoint in ink.ts. The last two points the pen really
+      // reported, taken without walking the stroke: a long line is thousands of
+      // points and this runs on every event.
+      const laid = machine.gesture.stroke.points
+      const nib = samples[samples.length - 1] ?? laid[laid.length - 1]
+      const before =
+        samples.length > 1
+          ? samples[samples.length - 2]
+          : laid[laid.length - (samples.length ? 1 : 2)]
+
+      predicted = leadPoint(before, nib, guessed)
     }
 
     // After the samples above and before the move below: a stroke this event
@@ -778,7 +1012,16 @@
     // Asked for only when it is going to be read. Panning a plane of five
     // thousand strokes does not need to know what is under the pointer, and
     // asking sixty times a second is what a plane that big cannot afford.
-    const wants = !machine.gesture || machine.gesture.kind === 'erase'
+    const wants =
+      !machine.gesture || machine.gesture.kind === 'erase' || machine.gesture.kind === 'pull'
+    const found = wants ? hitFor(point, coarse) : NOTHING
+
+    // What the pointer wears, which is what is under it while nothing is being
+    // dragged; see canvas/cursor.ts. Only while there is no gesture, so a drag keeps
+    // the cursor it started with.
+    if (!machine.gesture) over = overOf(found)
+    // And where the eraser's own ring goes, for the hands that have no cursor.
+    rubAt = machine.gesture?.kind === 'erase' ? point : null
 
     send({
       kind: 'move',
@@ -786,7 +1029,7 @@
       at: point,
       screen: screenAt(event),
       samples,
-      hit: wants ? hitFor(point, coarse) : NOTHING,
+      hit: found,
     })
 
     // A pen that has stopped moving is a pen asking for its shape to be tidied.
@@ -794,7 +1037,10 @@
   }
 
   function onPointerUp(event: PointerEvent) {
+    note('up', event)
     stopHolding()
+    rubAt = null
+    stopDoubting(event.pointerId)
     contacts.went(event.pointerId)
     if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
 
@@ -835,7 +1081,31 @@
   }
 
   function onPointerCancel(event: PointerEvent) {
+    note('cancel', event)
     stopHolding()
+    rubAt = null
+
+    // A pen taken away mid-stroke may not have gone anywhere: Chrome on Android
+    // cancels the contact to start its own context-menu gesture when the stylus
+    // button goes down, and the nib is still on the glass and still reporting. So the
+    // gesture is doubted rather than ended, and only silence ends it. See GRACE.
+    const pen = machine.driver?.kind === 'pen' && machine.driver.id === event.pointerId
+    if (pen && machine.gesture) {
+      stopDoubting()
+      const id = event.pointerId
+      doubting = {
+        id,
+        timer: window.setTimeout(() => {
+          doubting = null
+          contacts.went(id)
+          predicted = []
+          carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
+          send({ kind: 'cancel', id })
+        }, GRACE),
+      }
+      return
+    }
+
     contacts.went(event.pointerId)
     predicted = []
     carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
@@ -919,7 +1189,11 @@
     // A pen holding its button is rubbing out, and Android reports that button as
     // the right one: without this the menu opens under the nib halfway through the
     // rub. The menu belongs to the mouse and to a finger held still.
-    if (lastPen) return
+    //
+    // On a touch screen that has had a pen on it, nothing opens the menu this way at
+    // all: the browser fires it for the stylus button whatever the pointer said it
+    // was, and there the menu is what a finger held still opens.
+    if (lastPen || (hand.penSeen && viewport.touch)) return
 
     showMenu(planeAt(event))
   }
@@ -1125,6 +1399,74 @@
     }
   })
 
+  /** What is under the pointer, as far as the cursor cares. Kept so the pointer can
+   *  say what a press would do before it is pressed; see canvas/cursor.ts. */
+  let over = $state.raw<Over>(null)
+
+  /** Where the eraser is on the plane while it is rubbing, and nothing otherwise.
+   *  Written only during a rub, so an ordinary pan costs nothing. */
+  let rubAt = $state.raw<Point | null>(null)
+
+  function overOf(found: Hit): Over {
+    if (found.handle) return found.handle
+    if (found.ink === 'turn') return 'turn'
+    if (found.ink === 'inside') return 'thing'
+    if (found.ink) return found.ink
+    if (found.port || found.endpoint) return 'port'
+    if (found.node || found.edge || found.stroke) return 'thing'
+
+    return null
+  }
+
+  /** Which of the six shapes of cursor the tool in hand asks for. */
+  const inHand = $derived.by(() => {
+    const which = tools.which
+    if (which === 'hand' || which === 'draw' || which === 'erase' || which === 'lasso') return which
+    if (puts(which)) return 'put' as const
+
+    return 'select' as const
+  })
+
+  /** What the pointer looks like: the whole of what the bar is holding and what is
+   *  under it, said in one value the plane wears.
+   *
+   *  A touch screen has no cursor and is given none, which also spares it the two
+   *  drawn ones: the eraser shows its ring on the plane there instead. */
+  const cursor = $derived.by(() => {
+    if (viewport.touch) return undefined
+
+    return cursorFor({
+      tool: inHand,
+      busy: gesture !== null,
+      holding: machine.spacing,
+      over,
+      nib: {
+        // The nib is in plane units and the cursor is in pixels, so the dot is the
+        // width the pen will really draw at this zoom.
+        size: pens.current.size * camera.scale,
+        colour: inkColour(pens.current.colour, palette),
+      },
+      rub: { size: pens.rub, whole: pens.whole },
+    })
+  })
+
+  /** Where the eraser's ring is drawn on the plane, and how wide, for a finger and a
+   *  pen: there is no cursor under either, so the ring that says what will be rubbed
+   *  out is drawn on the page while it is rubbing. */
+  const rubbing = $derived.by(() => {
+    if (gesture?.kind !== 'erase' || gesture.whole || !rubAt) return null
+
+    return { at: rubAt, reach: pens.rub / camera.scale }
+  })
+
+  /** Whether a frame is among what is picked, which is what makes the bar's own
+   *  button say "ungroup" rather than "group". */
+  const onFrame = $derived(
+    store.picked.some((id) =>
+      store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
+    ),
+  )
+
   /** Whether the plane is empty, which is the one moment the surface says anything
    *  at all in words. */
   const bare = $derived(
@@ -1140,10 +1482,8 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="canvas"
-  class:grabbing={gesture?.kind === 'pan' || gesture?.kind === 'pinch'}
-  class:spacing={machine.spacing || tools.which === 'hand'}
-  class:drawing={tools.which === 'draw' || tools.which === 'erase'}
   class:narrowed
+  style:cursor
   bind:this={host}
   role="application"
   aria-label={t('Canvas')}
@@ -1171,17 +1511,18 @@
        round and moved by a transform. Moving a repeating background by its own
        position repaints the whole view on every frame of a pan; moving a layer
        is composited and costs nothing. -->
-  {#if stepX >= DOTS_UNTIL}
+  {#each patterns as level (level.every)}
     <div
       class="dots"
-      style:--dot-step="{stepX}px"
-      style:left="{-stepX}px"
-      style:top="{-stepX}px"
-      style:width="{width + 2 * stepX}px"
-      style:height="{height + 2 * stepX}px"
-      style:transform="translate({modulo(originX, stepX)}px, {modulo(originY, stepX)}px)"
+      style:--dot-step="{level.step}px"
+      style:opacity={level.showing}
+      style:left="{-level.step}px"
+      style:top="{-level.step}px"
+      style:width="{width + 2 * level.step}px"
+      style:height="{height + 2 * level.step}px"
+      style:transform="translate({modulo(originX, level.step)}px, {modulo(originY, level.step)}px)"
     ></div>
-  {/if}
+  {/each}
 
   <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
     <CanvasEdges
@@ -1265,15 +1606,78 @@
       ></div>
     {/if}
 
-    {#if shaping}
-      {@const preview = rectBetween(shaping.from, shaping.to)}
+    <!-- What is being pulled out of the bar, drawn the whole way. Every one of them:
+         a card, a frame, a picture, a body and a line alike, so nothing on the bar is
+         invisible until it is let go of. -->
+    {#if pulling && pullBox && pullTo}
+      {#if PLAIN.has(pulling.tool)}
+        <div
+          class="band pulling"
+          class:round={pulling.tool === 'ellipse'}
+          class:framed={pulling.tool === 'group'}
+          style:left="{pullBox.x}px"
+          style:top="{pullBox.y}px"
+          style:width="{pullBox.width}px"
+          style:height="{pullBox.height}px"
+          style:border-width="{Math.max(1, unit)}px"
+        ></div>
+      {:else}
+        <svg class="drawing" aria-hidden="true" width="1" height="1" style:overflow="visible">
+          <path
+            d={pulledPath(pulling.tool, pulling.from, pullTo, pullBox)}
+            style:stroke-width="{2 * unit}px"
+            style:stroke-dasharray="{6 * unit}
+            {5 * unit}"
+          />
+        </svg>
+      {/if}
+    {/if}
+
+    <!-- The anchor a connector being dragged out will attach to. Shown before it is
+         let go, because a hand aiming a line at a card is asking which side. -->
+    {#if joining}
       <div
-        class="band shaping"
-        class:round={shaping.tool === 'ellipse'}
-        style:left="{preview.x}px"
-        style:top="{preview.y}px"
-        style:width="{preview.width}px"
-        style:height="{preview.height}px"
+        class="port aiming"
+        style:left="{joining.at.x}px"
+        style:top="{joining.at.y}px"
+        style:width="{PORT * 1.6 * unit}px"
+        style:height="{PORT * 1.6 * unit}px"
+      ></div>
+    {/if}
+
+    <!-- An end of a picked connector being moved, and where it will land. -->
+    {#if rewiring && rewiredTo}
+      <div
+        class="port aiming"
+        class:loose={rewiredTo.onto === null}
+        style:left="{rewiredTo.at.x}px"
+        style:top="{rewiredTo.at.y}px"
+        style:width="{PORT * 1.6 * unit}px"
+        style:height="{PORT * 1.6 * unit}px"
+      ></div>
+    {/if}
+
+    <!-- The two ends of a picked connector, which are dragged onto another card. -->
+    {#each edgeHandles as end (end.key)}
+      <div
+        class="handle round"
+        style:left="{end.at.x}px"
+        style:top="{end.at.y}px"
+        style:width="{HANDLE * unit}px"
+        style:height="{HANDLE * unit}px"
+      ></div>
+    {/each}
+
+    <!-- The eraser's own ring, for the hands that have no cursor: it is drawn on the
+         page under the finger or the nib, at the width it is about to rub. -->
+    {#if rubbing}
+      <div
+        class="rubbing"
+        style:left="{rubbing.at.x}px"
+        style:top="{rubbing.at.y}px"
+        style:width="{rubbing.reach * 2}px"
+        style:height="{rubbing.reach * 2}px"
+        style:border-width="{1.5 * unit}px"
       ></div>
     {/if}
 
@@ -1337,14 +1741,22 @@
       below={overPicked.below}
       colour={pickedColour}
       recent={pens.recent}
+      grouping={onFrame ? 'ungroup' : store.picked.length > 1 ? 'group' : null}
       oncolour={colourPicked}
       onduplicate={() => run.duplicate(store)}
       ondelete={() => run.remove(store)}
+      ongroup={() => (onFrame ? run.ungroup(store) : run.group(store))}
       onmore={() => {
         if (pickedSpan) showMenu({ x: pickedSpan.x + pickedSpan.width / 2, y: pickedSpan.y })
       }}
     />
   {/if}
+
+  <!-- The last few pointer events, for a stylus nobody here can hold. Never shown
+       and never read by the app: a drive reads it, and a person on a tablet can be
+       asked what it says when a button does something no desktop can reproduce. See
+       canvas/trace.ts. -->
+  <span class="unseen" data-pointer aria-hidden="true">{traced}</span>
 
   {#if finding}
     <CanvasFind
@@ -1389,18 +1801,6 @@
     will-change: transform;
   }
 
-  .canvas.spacing {
-    cursor: grab;
-  }
-
-  .canvas.grabbing {
-    cursor: grabbing;
-  }
-
-  .canvas.drawing {
-    cursor: crosshair;
-  }
-
   /* No size of its own: everything in it is absolute at its own plane
      coordinates, and this one transform is how the whole plane moves. */
   .plane {
@@ -1435,10 +1835,44 @@
     opacity: 1;
   }
 
+  /* The anchor a line being dragged out will attach to: the same dot, filled, so it
+     reads as the one that has been chosen rather than as one more that has not. */
+  .port.aiming {
+    background: var(--accent);
+    opacity: 1;
+    z-index: 6;
+  }
+
+  /* An end of a connector that is over nothing: still there, still where the pointer
+     is, and plainly not attached to anything. */
+  .port.aiming.loose {
+    background: var(--surface);
+    border-style: dashed;
+  }
+
   .handle {
     border-radius: 2px;
     background: var(--surface);
     border: 1.5px solid var(--accent);
+  }
+
+  /* The ends of a connector, round, because they move rather than resize. */
+  .handle.round {
+    border-radius: 50%;
+  }
+
+  /* The eraser at its real width, on the page, for the hands that have no cursor to
+     put it on: a finger and a nib. */
+  .rubbing {
+    position: absolute;
+    box-sizing: border-box;
+    translate: -50% -50%;
+    border-radius: 50%;
+    border-style: solid;
+    border-color: var(--muted-strong);
+    background: color-mix(in srgb, var(--surface) 35%, transparent);
+    pointer-events: none;
+    z-index: 6;
   }
 
   /* The ring that turns what is picked, above it and clear of every corner. */
@@ -1468,13 +1902,37 @@
     z-index: 5;
   }
 
-  .band.shaping {
+  /* What is being pulled out of the bar, while it is being pulled: the box it will
+     land in, dashed, so a card, a frame and a rectangle are all visible before they
+     exist. */
+  .band.pulling {
     background: none;
     border-style: dashed;
   }
 
-  .band.shaping.round {
+  .band.pulling.round {
     border-radius: 50%;
+  }
+
+  .band.pulling.framed {
+    border-radius: var(--radius-lg);
+  }
+
+  /* A line, an arrow, an elbow, a diamond or a triangle being pulled out, drawn from
+     the same geometry the finished one is drawn from. */
+  .drawing {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .drawing path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* The line that says what a drag lined itself up with: the accent, and only
@@ -1518,5 +1976,18 @@
 
   :global([data-touch]) .hint {
     font-size: var(--touch-text);
+  }
+
+  /* Nowhere anybody can see, and out of the way of everything: a record kept for a
+     device nobody here has. Not `display: none`, which some browsers will not read
+     the text of. */
+  .unseen {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    pointer-events: none;
   }
 </style>
