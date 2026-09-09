@@ -58,8 +58,6 @@ export const ja: Dictionary = {
   'Move up': '上へ',
   'Move down': '下へ',
   Folder: 'フォルダ',
-  'Copy path': 'パスをコピー',
-  'Reveal in Explorer': 'エクスプローラーで表示',
   Bookmark: 'ブックマーク',
   'Remove bookmark': 'ブックマークを削除',
   Unsaved: '未保存',

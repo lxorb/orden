@@ -58,8 +58,6 @@ export const fr: Dictionary = {
   'Move up': 'Monter',
   'Move down': 'Descendre',
   Folder: 'Dossier',
-  'Copy path': 'Copier le chemin',
-  'Reveal in Explorer': 'Afficher dans l’explorateur',
   Bookmark: 'Marque-page',
   'Remove bookmark': 'Retirer le marque-page',
   Unsaved: 'Non enregistré',

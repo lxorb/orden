@@ -60,8 +60,6 @@ export const gsw: Dictionary = {
   'Move up': 'Ufe',
   'Move down': 'Abe',
   Folder: 'Mappe',
-  'Copy path': 'Pfad kopiere',
-  'Reveal in Explorer': 'Im Explorer zeige',
   Bookmark: 'Lesezeiche',
   'Remove bookmark': 'Lesezeiche wegnäh',
   Unsaved: 'Nöd gspicheret',

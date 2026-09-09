@@ -2603,12 +2603,6 @@ class Workspace {
     await this.loadTree()
   }
 
-  async reveal(path: string) {
-    if (!isDesktop) return
-    const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-    await revealItemInDir(path)
-  }
-
   showPanel(next: Panel) {
     this.panel = this.panel === next ? null : next
     this.persist()

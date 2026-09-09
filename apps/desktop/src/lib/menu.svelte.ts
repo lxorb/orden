@@ -3,7 +3,6 @@ import { t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import { setNoteIcon } from './note-icon'
 import { isMarkdownPath } from './space-paths'
-import { isDesktop, isNative } from './tauri'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -76,13 +75,6 @@ export function trim(items: MenuEntry[]): MenuEntry[] {
 
 export const menu = new ContextMenu()
 
-/** The note's path, which only means something where there is a filesystem. */
-export function copyPathEntry(path: string | null | undefined): MenuEntry[] {
-  if (!isNative || !path) return []
-
-  return [{ label: t('Copy path'), run: () => void navigator.clipboard.writeText(path) }]
-}
-
 /** One gesture and one word for everything that can be kept above the file
  *  list: a note, a folder, a heading, a search. Nothing to offer where there is
  *  nothing to point at - a heading with no note, an empty search box. */
@@ -115,12 +107,4 @@ export function iconEntries(path: string | null | undefined): MenuEntry[] {
       ? []
       : [{ label: t('Remove icon'), run: () => void setNoteIcon(path, null) }]),
   ]
-}
-
-/** "Reveal in Explorer", but only where there is a file manager to reveal in.
- *  Returns nothing in the browser, so the entry simply is not offered. */
-export function revealEntry(path: string | null | undefined): MenuEntry[] {
-  if (!isDesktop || !path) return []
-
-  return [{ label: t('Reveal in Explorer'), run: () => void workspace.reveal(path) }]
 }

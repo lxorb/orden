@@ -59,8 +59,6 @@ export const de: Dictionary = {
   'Move up': 'Nach oben',
   'Move down': 'Nach unten',
   Folder: 'Ordner',
-  'Copy path': 'Pfad kopieren',
-  'Reveal in Explorer': 'Im Explorer zeigen',
   Bookmark: 'Lesezeichen',
   'Remove bookmark': 'Lesezeichen entfernen',
   Unsaved: 'Nicht gespeichert',

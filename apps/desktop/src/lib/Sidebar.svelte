@@ -16,7 +16,7 @@
   import { FILES_MARK, GRAPH_MARK, LINKS_MARK, OUTLINE_MARK, SEARCH_MARK } from './panel-marks'
   import { newSpace, renameSpace } from './space-actions'
   import { headingAt, lineOf } from './outline'
-  import { bookmarkEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import type { Panel, SortKey } from './workspace.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
@@ -122,9 +122,6 @@
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
       { label: t('New folder'), run: () => void workspace.createFolder() },
-      DIVIDER,
-      // Nothing to reveal when no space is open, and `revealEntry` says so.
-      ...revealEntry(workspace.activeSpace?.root),
     ]
   }
 

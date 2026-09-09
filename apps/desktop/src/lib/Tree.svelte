@@ -16,12 +16,10 @@
   import { t } from './i18n.svelte'
   import {
     bookmarkEntry,
-    copyPathEntry,
     DIVIDER,
     iconEntries,
     menu,
     type MenuEntry,
-    revealEntry,
   } from './menu.svelte'
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
@@ -82,7 +80,6 @@
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
       ...moveEntry(entry),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
-      ...revealEntry(entry.path),
       DIVIDER,
       { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, true) },
       ...undoEntry(),
@@ -232,8 +229,6 @@
       ...(isPdfTarget(entry.name)
         ? []
         : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
-      ...copyPathEntry(entry.path),
-      ...revealEntry(entry.path),
       DIVIDER,
       { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, false) },
       ...undoEntry(),

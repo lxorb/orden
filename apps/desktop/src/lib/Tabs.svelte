@@ -4,7 +4,7 @@
   import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
+  import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { rooms } from './rooms.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
@@ -99,9 +99,6 @@
       DIVIDER,
       ...splitEntries(tab),
       ...keepEntry(tab),
-      DIVIDER,
-      ...copyPathEntry(tab.path),
-      ...revealEntry(tab.path),
     ]
   }
 

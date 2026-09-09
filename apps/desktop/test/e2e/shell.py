@@ -146,6 +146,29 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
 
+    def strip(tag: str, selector: str, pad: int = 8) -> None:
+        """One row of the app, close up: the bars are 38 to 56 pixels tall and a
+        whole phone screen is not where a glyph in one of them can be judged."""
+        try:
+            box = page.locator(selector).first.bounding_box()
+        except Exception as why:
+            say(f"[{name}] no {selector}: {why}")
+            return
+        if not box:
+            say(f"[{name}] {selector} has no box")
+            return
+
+        page.screenshot(
+            path=str(shots / f"{name}-{tag}.png"),
+            clip={
+                "x": max(0, box["x"] - pad),
+                "y": max(0, box["y"] - pad),
+                "width": min(width, box["width"] + pad * 2),
+                "height": box["height"] + pad * 2,
+            },
+        )
+        say(f"shot {name}-{tag}.png")
+
     context = browser.new_context(
         viewport={"width": width, "height": height},
         user_agent=agent,
@@ -174,6 +197,19 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
     shot("files")
+
+    # The two rows a handheld reads the app through, close up: the bar over the
+    # note with the sidebar button at the left of it, and the drawer's own head
+    # with the same button in the same corner. One glyph, one animation, and
+    # nothing else showing at the edge of either.
+    if finger:
+        strip("drawerhead", "aside .head")
+        page.evaluate("() => window.nibApp.workspace.closePanel()")
+        page.wait_for_timeout(500)
+        strip("titlebar", ".document header")
+        shot("note")
+        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+        page.wait_for_timeout(600)
 
     # The space's own menu, which is what the name at the top of the panel is.
     switcher = page.locator("aside .name")

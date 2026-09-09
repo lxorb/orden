@@ -146,8 +146,12 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Outline panel, with the note's footnotes under its headings, and a heading
       draggable to move its whole section; see section 17
 - [x] Create, rename, duplicate, delete files and folders
-- [x] Reveal in Explorer / Finder
-- [x] Copy file path
+- [ ] Reveal in Explorer / Finder - not built, on purpose: nib is a notes app
+      rather than a file manager, and the folder a note sits in is how the app
+      finds it rather than something the reader is asked to hold. What still
+      reaches the file manager is an export the reader just made, which is
+      revealed where they put it
+- [ ] Copy file path - the same, for the same reason
 - [x] Tabs, `Ctrl+Tab` switching
 - [x] Reopen last files on start
 - [x] Drag to move

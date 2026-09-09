@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
@@ -13,6 +14,23 @@ import { describe, expect, test } from 'vitest'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
+
+/** Every component in the app, for the rules that are about none of them in
+ *  particular: what no menu anywhere may offer. */
+function componentSources(): string[] {
+  const out: string[] = []
+
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name)
+      if (statSync(path).isDirectory()) walk(path)
+      else if (name.endsWith('.svelte')) out.push(readFileSync(path, 'utf8'))
+    }
+  }
+
+  walk(SOURCE)
+  return out
+}
 
 /** A function in a component's script, from its signature to the brace that
  *  closes it: every one of these sits at the top level of the script, so that
@@ -64,12 +82,33 @@ describe('what a space offers', () => {
     expect(space).not.toContain("t('New note')")
   })
 
-  test('nor the folder behind it, which the rail is not about', () => {
-    expect(rail).not.toContain('revealEntry')
-  })
-
   test('a shared space still offers the way out of it', () => {
     expect(space).toContain("t('Leave space')")
+  })
+})
+
+/** The folder behind a note is not something a menu talks about.
+ *
+ *  Nib is a notes app, not a file manager: the path a note is written at is how
+ *  the app finds it, not something the reader is asked to hold. Both rows -
+ *  "Reveal in Explorer" and "Copy path" - are gone from every menu and from the
+ *  palette, and this is what says so if one comes back. What still reaches the
+ *  file manager is an export the reader asked for and the app's own folders,
+ *  which are commands about a file somebody just made rather than a row on every
+ *  note; see export/save.ts and commands.ts. */
+describe('the path a note sits at', () => {
+  const everywhere = [
+    ...componentSources(),
+    read('lib/menu.svelte.ts'),
+    read('lib/commands.ts'),
+    read('lib/app-menu.ts'),
+  ].join('\n')
+
+  test('is not a row in any menu, on any device', () => {
+    expect(everywhere).not.toContain("t('Reveal in Explorer')")
+    expect(everywhere).not.toContain("t('Copy path')")
+    expect(everywhere).not.toContain('revealEntry')
+    expect(everywhere).not.toContain('copyPathEntry')
   })
 })
 
