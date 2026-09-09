@@ -188,7 +188,11 @@ fn said(value: Option<String>) -> Option<String> {
 fn canvas_note(relative: String, body: &str) -> Note {
     let read: CanvasFile = serde_json::from_str(body).unwrap_or_default();
 
-    let links = read
+    // The extension is part of a canvas's name, the way it is for a PDF: a link to
+    // one is written `[[Board.canvas]]`.
+    let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
+
+    let links: Vec<Link> = read
         .nodes
         .iter()
         .filter(|card| card.kind.as_deref() == Some("file"))
@@ -217,9 +221,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
         .collect();
 
     Note {
-        // The extension is part of a canvas's name, the way it is for a PDF: a
-        // link to one is written `[[Board.canvas]]`.
-        name: relative.rsplit('/').next().unwrap_or(&relative).to_string(),
+        name,
         path: relative,
         headings: Vec::new(),
         blocks: Vec::new(),
