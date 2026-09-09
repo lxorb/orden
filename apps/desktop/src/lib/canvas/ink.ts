@@ -167,6 +167,70 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
   return ring.map(([x, y]) => ({ x, y }))
 }
 
+/** How far past the last real sample the ink may be drawn while the pen is still
+ *  down, as a share of the step the hand is actually making.
+ *
+ *  A browser will guess where the pen is going next, which is worth having: the
+ *  compositor is a frame or two behind the digitiser and the guess is what puts the
+ *  ink under the nib rather than trailing it. What it is not worth is what it does
+ *  on a turn. `getPredictedEvents` hands over a fan of points twenty or thirty
+ *  milliseconds ahead, and every time the hand changes direction that fan is still
+ *  pointing the old way: the tail of the stroke flicks forward past the nib and
+ *  snaps back on the next event. That is the flash.
+ *
+ *  So the guess is kept and held to one step, in the direction the hand is already
+ *  going. Anything further is thrown away, and anything that turns a corner is
+ *  thrown away with it. */
+const LEAD = 1
+
+/** How far off the current direction a guess may point and still be believed, as
+ *  the cosine of the angle. Forty-five degrees: more turning than the curve of a
+ *  letter makes in one sample, less than a corner. */
+const STRAIGHT_ENOUGH = 0.7
+
+/** The one point of the browser's guess that is worth drawing, or none.
+ *
+ *  Never kept, never committed, and never more than one step ahead of where the nib
+ *  really is; see LEAD. Pure, so a stroke that turns sharply is a test rather than
+ *  something to try with a pen. */
+export function leadPoint(
+  before: InkPoint | undefined,
+  nib: InkPoint | undefined,
+  guessed: readonly InkPoint[],
+): InkPoint[] {
+  const guess = guessed[0]
+  if (!nib || !before || !guess) return []
+
+  // Which way the hand is going, and how far it went last time.
+  const wasX = nib.x - before.x
+  const wasY = nib.y - before.y
+  const step = Math.hypot(wasX, wasY)
+  if (step === 0) return []
+
+  const aheadX = guess.x - nib.x
+  const aheadY = guess.y - nib.y
+  const ahead = Math.hypot(aheadX, aheadY)
+  if (ahead === 0) return []
+
+  // A guess that turns a corner is the guess that flicks: it is pointing where the
+  // hand was going, not where it is going.
+  const along = (wasX * aheadX + wasY * aheadY) / (step * ahead)
+  if (along < STRAIGHT_ENOUGH) return []
+
+  // And never further than the hand itself is moving, so the ink reaches the nib
+  // and stops there.
+  const most = step * LEAD
+  const held = Math.min(1, most / ahead)
+
+  return [
+    {
+      ...guess,
+      x: nib.x + aheadX * held,
+      y: nib.y + aheadY * held,
+    },
+  ]
+}
+
 /** How far apart the points the outliner is given are, in plane units. Fine
  *  enough that handwriting keeps every turn it had. */
 const STEP = 1

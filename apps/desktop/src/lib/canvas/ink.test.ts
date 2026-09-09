@@ -9,6 +9,7 @@ import {
   inkOpacity,
   inkPath,
   insidePolygon,
+  leadPoint,
   nearStroke,
   outlineOf,
   simplified,
@@ -660,5 +661,60 @@ describe('a ring as a path', () => {
     ])
 
     expect(d).not.toContain('1.23456')
+  })
+})
+
+/** The one point of the browser's guess at where the nib is going that is worth
+ *  drawing.
+ *
+ *  Emil's report: "the current stroke that I'm writing kind of flashes a bit further
+ *  very quickly and just for a sec". That was `getPredictedEvents` drawn whole - a fan
+ *  of points twenty or thirty milliseconds ahead which, on every change of direction,
+ *  is still pointing the old way. The guess is worth keeping, because it is what puts
+ *  the ink under the nib rather than trailing it; what is not worth keeping is anything
+ *  that turns a corner or reaches further ahead than the hand itself is moving. */
+describe('the guess at where the nib is going', () => {
+  const before = point(0, 0)
+  const nib = point(10, 0)
+
+  test('is one point at most, however many the browser offered', () => {
+    expect(leadPoint(before, nib, [point(12, 0), point(20, 0), point(40, 0)])).toHaveLength(1)
+  })
+
+  test('never reaches further ahead than the hand is moving', () => {
+    // The hand went ten units; the browser guessed forty ahead.
+    const [led] = leadPoint(before, nib, [point(50, 0)])
+    expect(led!.x).toBeLessThanOrEqual(20)
+    expect(led!.x).toBeGreaterThan(10)
+  })
+
+  /** The flash itself. A hand that has just turned back on itself gets a guess that is
+   *  still pointing the old way, and drawing it is the tail flicking past the nib. */
+  test('is thrown away when it turns a corner', () => {
+    // Back on itself, straight across it, and past the forty-five degrees a letter
+    // makes in one sample.
+    expect(leadPoint(before, nib, [point(-20, 0)])).toEqual([])
+    expect(leadPoint(before, nib, [point(10, 40)])).toEqual([])
+    expect(leadPoint(before, nib, [point(12, 8)])).toEqual([])
+  })
+
+  test('is kept round the curve of a letter, which is not a corner', () => {
+    expect(leadPoint(before, nib, [point(14, 3)])).toHaveLength(1)
+  })
+
+  test('is nothing at all when there is nothing to guess from', () => {
+    expect(leadPoint(undefined, nib, [point(20, 0)])).toEqual([])
+    expect(leadPoint(before, undefined, [point(20, 0)])).toEqual([])
+    expect(leadPoint(before, nib, [])).toEqual([])
+  })
+
+  test('is nothing for a hand that has stopped, or a guess that goes nowhere', () => {
+    expect(leadPoint(nib, nib, [point(20, 0)])).toEqual([])
+    expect(leadPoint(before, nib, [point(10, 0)])).toEqual([])
+  })
+
+  test('carries everything else the sample said, so the ink is drawn as the pen is', () => {
+    const [led] = leadPoint(before, nib, [point(14, 0, 0.9, 42)])
+    expect(led).toMatchObject({ pressure: 0.9, t: 42 })
   })
 })
