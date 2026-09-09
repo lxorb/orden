@@ -2,9 +2,11 @@ import { describe, expect, test } from 'vitest'
 import type { InkPoint, InkStroke } from './format'
 import { INK_TOOLS } from './format'
 import type { Point } from './geometry'
+import type { PenTraits } from './contacts'
 import {
   assisted,
   erased,
+  forceOf,
   INK_STYLES,
   inkOpacity,
   inkPath,
@@ -12,12 +14,15 @@ import {
   leadPoint,
   nearStroke,
   outlineOf,
+  penFelt,
   simplified,
+  smoothed,
   strokeBox,
   strokesBox,
   strokesInLasso,
   tidied,
   tidyShape,
+  tiltOf,
   traceInk,
   transformed,
 } from './ink'
@@ -716,5 +721,258 @@ describe('the guess at where the nib is going', () => {
   test('carries everything else the sample said, so the ink is drawn as the pen is', () => {
     const [led] = leadPoint(before, nib, [point(14, 0, 0.9, 42)])
     expect(led).toMatchObject({ pressure: 0.9, t: 42 })
+  })
+})
+
+/** What the ink reads off a pointer event, for every pen there is.
+ *
+ *  Three platforms say the same two facts two ways each: how hard the nib is pressed,
+ *  and which way it leans. Everything past this point reads one representation, so a
+ *  stroke drawn with an Apple Pencil and a stroke drawn with an S Pen are the same six
+ *  numbers a point and nothing downstream asks which browser it is. */
+describe('how hard the pen was pressed, as the ink reads it', () => {
+  test('is what the pen said, on a platform with no curve of its own', () => {
+    expect(forceOf(0.42, 1)).toBeCloseTo(0.42, 6)
+  })
+
+  /** The one thing a platform changes about the ink: Safari reports a lower fraction of
+   *  full scale for the same weight of hand, so the middle of the Pencil's range is
+   *  lifted; see GAINS in contacts.ts. */
+  test('is lifted by a gain below one, and never past the top of the range', () => {
+    expect(forceOf(0.25, 0.8)).toBeGreaterThan(0.25)
+    expect(forceOf(1, 0.8)).toBe(1)
+  })
+
+  /** A mouse, a finger, and a stylus whose digitiser has no pressure at all. A nib that
+   *  thins with pressure and is told nought draws a hairline, and a hairline is not what
+   *  a mouse should leave on the page. */
+  test('is the middle of the range for anything that reports none', () => {
+    expect(forceOf(0, 1)).toBe(0.5)
+    expect(forceOf(-1, 1)).toBe(0.5)
+    expect(forceOf(Number.NaN, 1)).toBe(0.5)
+  })
+})
+
+describe('which way the pen is leaning, as the ink reads it', () => {
+  test('is the two tilts as written, which is what Chromium reports', () => {
+    expect(tiltOf({ pressure: 0.5, tiltX: -34, tiltY: 12 })).toEqual({ tiltX: -34, tiltY: 12 })
+  })
+
+  test('is level for a pen that reports neither pair', () => {
+    expect(tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0 })).toEqual({ tiltX: 0, tiltY: 0 })
+  })
+
+  /** Safari's pair, which for an Apple Pencil is the only one it has: radians up from
+   *  the glass, and radians round it from the screen's x axis. The conversion is the one
+   *  in the Pointer Events spec. */
+  test('is the spherical pair converted, when that is all there is', () => {
+    // Straight up: no lean either way.
+    expect(tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: Math.PI / 2 })).toEqual({
+      tiltX: 0,
+      tiltY: 0,
+    })
+
+    // Halfway over towards the right edge of the screen.
+    expect(
+      tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: Math.PI / 4, azimuthAngle: 0 }),
+    ).toEqual({ tiltX: 45, tiltY: 0 })
+
+    // And the same lean towards the bottom of it.
+    expect(
+      tiltOf({
+        pressure: 0.5,
+        tiltX: 0,
+        tiltY: 0,
+        altitudeAngle: Math.PI / 4,
+        azimuthAngle: Math.PI / 2,
+      }),
+    ).toEqual({ tiltX: 0, tiltY: 45 })
+  })
+
+  /** The spec answers a pen lying flat on the glass with five special cases. Holding the
+   *  altitude off nought instead agrees with all five to the degree, which is what these
+   *  five corners check. */
+  test('is a right angle for a pen lying flat on the glass, whichever way it points', () => {
+    const flat = (azimuthAngle: number) =>
+      tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: 0, azimuthAngle })
+
+    expect(flat(0)).toEqual({ tiltX: 90, tiltY: 0 })
+    expect(flat(Math.PI / 2)).toEqual({ tiltX: 0, tiltY: 90 })
+    expect(flat(Math.PI)).toEqual({ tiltX: -90, tiltY: 0 })
+    expect(flat((3 * Math.PI) / 2)).toEqual({ tiltX: 0, tiltY: -90 })
+    expect(flat(Math.PI / 4)).toEqual({ tiltX: 90, tiltY: 90 })
+  })
+
+  test('prefers the tilts when a browser reports both, which Chromium now does', () => {
+    expect(
+      tiltOf({
+        pressure: 0.5,
+        tiltX: -34,
+        tiltY: 12,
+        altitudeAngle: Math.PI / 4,
+        azimuthAngle: Math.PI,
+      }),
+    ).toEqual({ tiltX: -34, tiltY: 12 })
+  })
+})
+
+describe('one sample of one pen, whatever platform it came from', () => {
+  function traits(over: Partial<PenTraits> = {}): PenTraits {
+    return {
+      shape: 'windows',
+      gain: 1,
+      coalesced: true,
+      predicted: true,
+      lean: 'tilt',
+      force: 'reported',
+      ...over,
+    }
+  }
+
+  test('is an S Pen: pressure and two tilts, taken as they came', () => {
+    expect(
+      penFelt(
+        { pointerType: 'pen', button: -1, buttons: 1, pressure: 0.7, tiltX: 8, tiltY: -3 },
+        traits({ shape: 'android' }),
+      ),
+    ).toEqual({ pressure: 0.7, tiltX: 8, tiltY: -3 })
+  })
+
+  test('is an Apple Pencil: pressure through the gain, and the lean out of two angles', () => {
+    const felt = penFelt(
+      {
+        pointerType: 'pen',
+        button: -1,
+        buttons: 1,
+        pressure: 0.25,
+        tiltX: 0,
+        tiltY: 0,
+        altitudeAngle: Math.PI / 4,
+        azimuthAngle: 0,
+      },
+      traits({ shape: 'apple', gain: 0.8, lean: 'spherical' }),
+    )
+
+    expect(felt.tiltX).toBe(45)
+    expect(felt.pressure).toBeGreaterThan(0.25)
+  })
+
+  /** A USI pen on a Chromebook, reporting a fixed sliver near nought for every sample of
+   *  every stroke. Believed, it draws everything anybody ever draws as a hairline; see
+   *  `Stylus` in contacts.ts, which is what works out that it is fixed. */
+  test('is a USI pen whose pressure says nothing: drawn at the width of the nib', () => {
+    expect(
+      penFelt(
+        { pointerType: 'pen', button: -1, buttons: 1, pressure: 0.03, tiltX: 0, tiltY: 0 },
+        traits({ shape: 'chromeos', force: 'flat' }),
+      ),
+    ).toEqual({ pressure: 0.5, tiltX: 0, tiltY: 0 })
+  })
+
+  test('is a finger or a mouse: the middle of the range, level, and no gain', () => {
+    for (const pointerType of ['touch', 'mouse']) {
+      expect(
+        penFelt(
+          { pointerType, button: 0, buttons: 1, pressure: 0, tiltX: 40, tiltY: 40 },
+          traits({ shape: 'apple', gain: 0.8 }),
+        ),
+      ).toEqual({ pressure: 0.5, tiltX: 0, tiltY: 0 })
+    }
+  })
+})
+
+/** The samples with the curve through them drawn, for the browsers that report few of
+ *  them.
+ *
+ *  Safari has never had `getCoalescedEvents`, so a stroke there is whatever fitted into
+ *  a frame: the same word an S Pen reports two hundred points of comes back as thirty,
+ *  and thirty points joined by straight lines is a word with corners in it. */
+describe('a stroke reported coarsely', () => {
+  test('is left exactly as it came when the samples are close together', () => {
+    const dense = line(20)
+    expect(smoothed(dense, 4)).toBe(dense)
+  })
+
+  test('has points put in where the hand went further than the nib is wide', () => {
+    const coarse = [point(0, 0), point(40, 0), point(80, 20), point(120, 60)]
+    const out = smoothed(coarse, 4)
+
+    expect(out.length).toBeGreaterThan(coarse.length)
+    // Every sample the pen really reported is still in it: this puts points in between
+    // them and never moves one.
+    for (const one of coarse) {
+      expect(out.some((was) => was.x === one.x && was.y === one.y)).toBe(true)
+    }
+  })
+
+  test('keeps the ends where the pen put them', () => {
+    const coarse = [point(0, 0), point(40, 10), point(80, 0)]
+    const out = smoothed(coarse, 3)
+
+    expect(out[0]).toEqual(coarse[0])
+    expect(out[out.length - 1]).toEqual(coarse[coarse.length - 1])
+  })
+
+  /** The point of a curve rather than a chord: the ink bows the way the hand did, and a
+   *  straight run stays straight however many points go into it. */
+  test('bows through a turn', () => {
+    const out = smoothed([point(0, 0), point(40, 0), point(80, 40), point(80, 80)], 4)
+    const put = out.filter((one) => one.x > 40 && one.x < 80)
+
+    expect(put.length).toBeGreaterThan(0)
+    // Off the straight line between the two samples it was put between.
+    expect(put.some((one) => Math.abs(one.y - (one.x - 40)) > 0.5)).toBe(true)
+  })
+
+  test('leaves a straight run straight', () => {
+    const out = smoothed([point(0, 0), point(40, 0), point(80, 0), point(120, 0)], 4)
+    for (const one of out) expect(Math.abs(one.y)).toBeLessThan(0.001)
+  })
+
+  test('carries everything the digitiser said along the curve', () => {
+    const out = smoothed([point(0, 0, 0.2, 0), point(40, 0, 0.8, 40), point(80, 40, 0.4, 80)], 4)
+    const middle = out.filter((one) => one.x > 0 && one.x < 40)
+
+    expect(middle.length).toBeGreaterThan(0)
+    for (const one of middle) {
+      expect(one.pressure).toBeGreaterThanOrEqual(0.2)
+      expect(one.pressure).toBeLessThanOrEqual(0.8)
+      expect(one.t).toBeGreaterThanOrEqual(0)
+      expect(one.t).toBeLessThanOrEqual(40)
+    }
+  })
+
+  /** A centripetal spline cannot loop back on itself between two samples, which is the
+   *  whole reason it is the one used: a uniform one does exactly that at a sharp turn,
+   *  and a loop in the middle of a letter is worse than the corner it was hiding. */
+  test('never runs away at a corner', () => {
+    const out = smoothed([point(0, 0), point(60, 0), point(0, 6), point(60, 12)], 4)
+
+    for (let one = 1; one < out.length; one++) {
+      const from = out[one - 1]
+      const to = out[one]
+      expect(Number.isFinite(to?.x) && Number.isFinite(to?.y)).toBe(true)
+      if (from && to) expect(Math.hypot(to.x - from.x, to.y - from.y)).toBeLessThan(70)
+    }
+  })
+
+  test('says nothing about a tap or a stroke of two points', () => {
+    const tap = [point(0, 0)]
+    expect(smoothed(tap, 4)).toBe(tap)
+
+    const two = [point(0, 0), point(90, 0)]
+    expect(smoothed(two, 4)).toBe(two)
+  })
+
+  test('leaves two samples in the same place alone rather than dividing by nothing', () => {
+    const out = smoothed([point(0, 0), point(0, 0), point(60, 0), point(60, 0)], 4)
+    for (const one of out) expect(Number.isFinite(one.x) && Number.isFinite(one.y)).toBe(true)
+  })
+
+  /** The whole point of it: a stroke a browser reported a quarter of the samples of
+   *  still paints as the curve the hand drew. */
+  test('is what the outline is worked out from, so a coarse stroke paints as a curve', () => {
+    const coarse = stroke([point(0, 0), point(60, 0), point(120, 40), point(120, 100)])
+    expect(outlineOf(coarse).length).toBeGreaterThan(8)
   })
 })

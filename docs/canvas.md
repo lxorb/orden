@@ -350,14 +350,174 @@ landed. Without that, the first press after picking the tablet up draws nothing
 and pans instead.
 
 A stylus is the one thing about this app that cannot be held from where it is
-written, so the surface keeps the last few pointer events in a hidden `[data-pointer]`
-element: what the browser called each one, its button and its buttons. A drive reads
-it, and a person on the tablet can be asked what it says.
+written, so the surface keeps two things in a hidden `[data-pointer]` element: what it
+decided this device's pen is, and the last few pointer events it was handed - what the
+browser called each one, its button and its buttons. A drive reads it, and a person on
+the tablet can be asked what it says.
 
 One thing outside the app's reach: in a browser tab, Samsung's Air actions can
 take the S Pen's button for themselves while the pen hovers over the glass. If the
 button rubs out in the installed app and does nothing in the browser, that is what
 it is, and turning Air actions off for the browser is the fix.
+
+## Every pen out there
+
+The ink was built with an S Pen on a Samsung tablet, because that is the pen there
+was to hold. Every other pen was built from what its platform documents about it,
+and each of them is a value in `canvas/contacts.test.ts` rather than a device
+anybody here has: the whole point of a pure contact model is that a pen nobody can
+hold is still a test.
+
+| platform | says | pressure | how it leans | barrel | eraser end | hovers | coalesced |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Apple Pencil, iPad Safari and the PWA | `pen` | reported, through WebKit's own curve | `altitudeAngle` and `azimuthAngle`, and `tiltX`/`tiltY` on some builds | none | none | yes, M2 iPads and later | no, and no prediction either |
+| Windows pens - Surface, Lenovo, HP, a Wacom on Windows - in WebView2, Chrome and Edge | `pen` | reported | `tiltX`/`tiltY`, and `twist` on a pen that turns | `button` 2, `buttons & 2` | `button` 5, `buttons & 32` | yes | yes |
+| Desktop graphics tablets - Wacom, Huion, XP-Pen - in Chromium anywhere | `pen` | reported, at a very high rate | `tiltX`/`tiltY` | `button` 2, or the middle button if the driver was told to | `buttons & 32` | yes, and from anywhere on the tablet | yes |
+| Samsung's S Pen, Chrome on Android and the installed app | `pen`, sometimes `touch` for the first event, sometimes `mouse` while the button is held | reported | `tiltX`/`tiltY` | `buttons & 2`, in all three shapes above | - | yes | yes |
+| USI pens on Chromebooks, and the pens of the cheaper Android tablets | `pen` | often flat: exactly one half, or a fixed sliver, for ever | often none at all | usually none | none | some | yes |
+
+Five rows, one code path. What each of them needed:
+
+**The Pencil has no button, so the eraser has to be reachable without one.** It is:
+the eraser is a button on the bar like every other tool, and it always was. Nothing
+about the pen's own button is load-bearing anywhere - it is a shortcut for a hand
+that has one.
+
+**The Pencil says which way it is leaning in the other language.** Chromium reports
+two angles off the vertical along the screen's own axes; WebKit reports an altitude
+up from the glass and an azimuth round it, in radians. `tiltOf` in `canvas/ink.ts`
+turns the second into the first with the conversion out of the Pointer Events spec,
+so everything past the event reads one representation and the file format keeps one.
+A pen lying flat on the glass is the spec's five special cases; holding the altitude
+a millionth off nought instead agrees with all five to the degree, in one line.
+
+**Safari has no `getCoalescedEvents` and no `getPredictedEvents`.** Both were already
+feature-detected, and now neither is needed: a stroke there is whatever fitted into a
+frame, and the ink draws the curve through those samples rather than the straight
+lines between them. `smoothed` in `canvas/ink.ts` puts points on any step longer than
+the nib is wide, along a centripetal Catmull-Rom spline, and leaves a dense stroke
+exactly as it came - the fast path is one comparison a point. Centripetal rather than
+uniform because a uniform spline loops back on itself at a sharp turn, and a loop in
+the middle of a letter is worse than the corner it was drawn to hide. The samples
+themselves are never moved: the ink still passes through every point the pen
+reported.
+
+**One width curve, with one number per platform.** Pressure is not a measurement: a
+digitiser reports a fraction of its own full scale, and the browser puts its own
+curve on top. The gain in `GAINS` is the exponent the reported pressure goes through
+and the whole of what a platform changes about the ink - every platform whose pen has
+been held here is 1, and the Pencil's is 0.8, because Safari reports a lower fraction
+for the same weight of hand. That number is a judgement rather than a measurement,
+and the table is the one place to change it.
+
+**A pressure that never changes is not a pressure.** Some USI pens report exactly one
+half for every sample of every stroke, and some report a fixed sliver near nought -
+which, handed to a nib that thins with pressure, draws everything anybody ever draws
+as a hairline. So `Stylus` watches the first fifth of a second of writing, and a pen
+that has held one number across it stops being believed: the ink draws at the width
+the nib is set to. Any variation at all settles it the other way for good.
+
+**Tilt is recorded and never painted.** No tool reads it - the flat nib is held at a
+fixed angle - so a pen that reports no tilt draws exactly what a pen that reports it
+draws, and a tool that one day does read it degrades to the fixed angle rather than
+to nothing.
+
+**A hovering pen must not draw.** Every pen here hovers, and a hovering pen that is
+allowed to lay ink down draws a line from wherever it was last seen to wherever it
+turns up next - which on a graphics tablet, where the pen is somewhere on the tablet
+whether it is touching or not, is a line right across the drawing. Nothing pressed is
+nothing touching: `hovering` is `buttons === 0`, and a move that is hovering, or whose
+contact the surface never heard land, contributes no samples, repairs no pen and keeps
+no cancelled stroke alive. That last one was a real hole: a `pointercancel` is doubted
+for a moment in case the nib never left, and a hover inside that moment used to count
+as the nib still writing.
+
+**One nib must not arrive twice.** Windows hands pen input to anything that does not
+ask for it as mouse input, and a graphics tablet's driver will do the same on any
+desktop if it is set up to. A mouse contact while a nib is on the glass is that nib
+again, not a second hand, and it is dropped.
+
+**Windows reads a nib held still as a right click.** It waits half a second, draws its
+own ring, and then sends a context menu - and the wait is a delay before the page
+hears anything at all. `touch-action: none` on the plane is what turns that off, and
+there is no other way; the menu that arrives anyway is refused, for a pen that is
+merely hovering as much as for one that is writing, because Windows sends it for a
+barrel button held over the glass too.
+
+**Safari selects, magnifies and highlights.** Three things that happen on an iPad and
+nowhere else, and three prefixed lines on the plane that turn them off:
+`-webkit-user-select`, `-webkit-touch-callout` and `-webkit-tap-highlight-color`.
+
+**Scribble must not take the pen.** iPadOS turns a Pencil over a text field into a
+handwriting recogniser and swallows the pen. The canvas host is a `div` with
+`role="application"` and not a field of any kind, and a card's editor exists only
+while that card is being written in - so there is nothing over the plane for Scribble
+to aim at while anybody is drawing, and writing into a card with the Pencil still
+works, which is what Scribble is for. Android is the same problem with a different
+name and is turned off outright, in `MainActivity.kt`.
+
+**A palm is a palm on every platform.** iPadOS rejects most of them before the page
+sees anything, and the rest is the rule the plane already had: a touch that lands
+while a pen contact is active is ignored, and a finger on glass that has seen a pen
+moves the page rather than drawing on it.
+
+### WebView2, and what it does not need
+
+Whether the installed app needs a WebView2 setting so pen input reaches the page as
+pen input: it does not, and the setting it might have wanted is one to stay away from.
+
+WebView2 is Chromium, and Chromium routes stylus input through Windows' Direct
+Manipulation so a pen can pan and fling a page the way a finger does. `touch-action:
+none` is what tells it not to, per element, and the plane sets it. The blunt
+instrument is the `DirectManipulationStylus` feature flag, which Tauri can turn off
+through `additionalBrowserArgs` on the window - and turning it off would take pen
+panning away from every scrollable thing in the app, so a note could no longer be
+scrolled with the S Pen. That is a worse app for a problem the plane does not have.
+So `tauri.conf.json` says nothing about pens, and if a pen ever does arrive on the
+plane as a finger, the flag is where to look first:
+
+```json
+"additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,DirectManipulationStylus"
+```
+
+The three that are already there are Tauri's own default, and passing the field at
+all replaces them, so they have to be written out again.
+
+### Borrowing a device
+
+What to check, in order, on a device nobody here has. The hidden `[data-pointer]`
+element is the answer to most of it: it holds what the app decided about the pen and
+the last few events it was handed, as one line - `windows g1 tilt reported coalesced
+predicted // down/pen b0 B1 | move/pen b2 B3` - and it can be read out of the page
+without any tools at all.
+
+**An iPad with an Apple Pencil.** The profile should say `apple g0.8`, and `spherical`
+or `tilt` once the Pencil has leant. Write a word: the line should thin and swell with
+the hand, and look like the same pen it is on the tablet. Write a fast one: it should
+be a curve and not a run of straight lines. Hover the Pencil over the plane without
+touching: nothing may appear. Rest a palm on the glass while writing: nothing may
+appear, and the page may not move. Take the eraser from the bar and rub something out.
+Pan with one finger and pinch with two while a pen tool is in hand. Double-tap a card
+with the Pencil and write into it - Scribble is welcome there.
+
+**A Surface, or any Windows machine with a pen.** The profile should say `windows g1
+coalesced predicted`. Hold the barrel button and draw: it must rub out, and no menu may
+open. Turn the pen over and draw with the eraser end: the same. Hold the nib still on
+the plane for a second: Windows' own ring may appear, but no menu may open and the
+stroke must carry on. Hover with the barrel held: nothing may happen. Draw, then click
+with the mouse: one contact, one gesture.
+
+**A Wacom, a Huion or an XP-Pen on a desktop.** The profile should say `desktop g1`.
+Lift the pen, move it right across the tablet and put it down: the stroke must begin
+where the nib landed, with no line from where the pen was last seen. Right-click with
+the pen: it rubs out. Press whatever the driver has on the middle button: the plane
+pans. Draw fast: no gaps, whatever the tablet's report rate is.
+
+**A Chromebook with a USI pen, or a Lenovo or Xiaomi tablet.** The profile should say
+`chromeos` or `android`, and after a stroke or two either `reported` or `flat`. If it
+says `flat`, the ink is deliberately ignoring the pen's pressure - which is right if
+the line looks even and wrong if the pen really does have pressure, and either way it
+is one word to report.
 
 ## The line under the nib
 
@@ -393,7 +553,7 @@ shape somebody made, and a shape that catches up with itself is the wrong shape.
 | | |
 | --- | --- |
 | `canvas/pointer.ts` | every gesture, as a reducer over events, with no DOM in it |
-| `canvas/contacts.ts` | what each pointer claimed when it landed, what it changed its mind about, and what kind of pointer it really is |
+| `canvas/contacts.ts` | what each pointer claimed when it landed, what it changed its mind about, what kind of pointer it really is, and which of the pens out there this device has |
 | `canvas/trace.ts` | the last few pointer events, for a stylus nobody here can hold |
 | `canvas/tools.svelte.ts` | which tool is in hand |
 | `canvas/pens.svelte.ts` | the three pens, the eraser, the lasso, and which edge the bar is against |
@@ -402,7 +562,7 @@ shape somebody made, and a shape that catches up with itself is the wrong shape.
 | `canvas/cursor.ts` | what the pointer looks like over the plane |
 | `canvas/geometry.ts` | the plane's arithmetic: boxes, shapes, edges |
 | `canvas/lattice.ts` | the pattern behind the plane: which level a zoom asks for, and the fade to it |
-| `canvas/ink.ts` | outlines, erasing, lassoing, what a wobbly shape was aiming at, and how far ahead of the nib the ink may reach |
+| `canvas/ink.ts` | outlines, erasing, lassoing, what a wobbly shape was aiming at, how far ahead of the nib the ink may reach, and what one pen event means whichever browser sent it |
 | `canvas/ease.ts` | coming up to a number rather than jumping to it |
 | `canvas/upload.ts` | asking the device for a picture |
 | `Canvas.svelte` | the surface: hit testing, the events, and the effects carried out |
@@ -414,6 +574,16 @@ in the machine's own Chrome, with mouse, touch and pen events through the DevToo
 protocol, photographing the cursor every tool sets, the pattern at four zooms, the bar
 at each of the four edges, every put-down tool while it is being dragged out, and the
 barrel button in each shape a browser can be made to report it in.
+
+And every pen out there by `test/e2e/pen-shapes.py`, one browser context per platform
+so each carries that platform's own user agent and the app's own profile detection is
+what decides: a Pencil with no coalescing and a lean in radians, a Surface Pen's barrel
+and eraser end, a Wacom lifted and put down across the tablet, a USI pen whose pressure
+never changes, and a finger on glass that has seen a pen. Two of the shapes cannot come
+down the DevTools protocol at all - it carries the five buttons a mouse has, so the
+eraser end is unsendable, and it has no field for the spherical angles - and those two
+are dispatched as `PointerEvent`s from inside the page, through the same handlers, the
+same reducer and the same ink.
 
 ## What we deliberately do not have
 

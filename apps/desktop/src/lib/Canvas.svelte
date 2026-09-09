@@ -65,13 +65,13 @@
     rectBetween,
     shapePath,
   } from './canvas/geometry'
-  import { Contacts, penKind } from './canvas/contacts'
+  import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { cursorFor, type Over } from './canvas/cursor'
   import { hand } from './canvas/hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './canvas/lattice'
   import { pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
-  import { assisted, leadPoint, tidyShape, transformed } from './canvas/ink'
+  import { assisted, leadPoint, penFelt, tidyShape, transformed } from './canvas/ink'
   import { inkColour } from './canvas/paint'
   import { readPalette } from './canvas/palette'
   import {
@@ -692,17 +692,16 @@
 
   /** A pen sample, in plane units, with everything the digitiser said about it.
    *
-   *  A device that reports no pressure says so as exactly one half, which is what
-   *  the Pointer Events spec asks for; a stylus reports its own. Tilt comes
-   *  through as written and is zero for a finger and a mouse. */
+   *  What the pen said about itself goes through one normalisation on the way in, so
+   *  a Pencil that reports its lean as an altitude and an azimuth, an S Pen that
+   *  reports it as two tilts, and a USI pen that reports no pressure worth having all
+   *  arrive as the same six numbers; see penFelt in canvas/ink.ts. */
   function sampleOf(event: PointerEvent, began: number): InkPoint {
     const point = planeAt(event)
     return {
       x: point.x,
       y: point.y,
-      pressure: event.pressure > 0 ? event.pressure : 0.5,
-      tiltX: event.tiltX,
-      tiltY: event.tiltY,
+      ...penFelt(event, stylus.traits),
       t: Math.max(0, Math.round(event.timeStamp - began)),
     }
   }
@@ -929,12 +928,29 @@
    *  Nothing on the page is drawn from it, so it is not state. */
   const contacts = new Contacts()
 
+  /** Which of the pens out there this device has, and what the surface does
+   *  differently for it; see canvas/contacts.ts. Read from the machine once, and
+   *  settled the rest of the way by the first pen that touches the glass. */
+  const stylus = new Stylus({
+    agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
+    touch: typeof navigator === 'undefined' ? false : navigator.maxTouchPoints > 0,
+    // Feature-detected rather than assumed: Safari has neither, and a stroke that
+    // needed either of them would be a stroke that only draws properly on Chromium.
+    coalesced: typeof PointerEvent === 'function' && 'getCoalescedEvents' in PointerEvent.prototype,
+    predicted: typeof PointerEvent === 'function' && 'getPredictedEvents' in PointerEvent.prototype,
+  })
+
   /** The last few pointer events, for a hidden element a drive and a person on a
    *  tablet can both read; see canvas/trace.ts. */
   const trace = new Trace()
   let traced = $state('')
+  /** And what kind of pen the surface thinks it is holding, in the same element:
+   *  everything the app decided about a device nobody here has, on one line. */
+  let profile = $state(stylus.line)
 
   function note(what: string, event: PointerEvent) {
+    if (stylus.saw(event)) profile = stylus.line
+
     if (
       trace.note({
         what,
@@ -970,14 +986,38 @@
     doubting = null
   }
 
+  /** The plane asking to be sent the rest of this contact wherever it goes.
+   *
+   *  Guarded, because it is allowed to fail: WebKit throws for a pointer it does not
+   *  consider active, and a pen is exactly the pointer whose contact a browser can
+   *  have taken away a frame before the surface asks. Not being sent the rest of a
+   *  stroke is a stroke that ends at the edge of the pane; a stroke that ends in an
+   *  exception is a plane that stops answering at all. */
+  function capture(id: number) {
+    try {
+      host?.setPointerCapture(id)
+    } catch {
+      // Nothing to do and nothing to say: the events keep coming, they are simply
+      // not promised to this element.
+    }
+  }
+
   function onPointerDown(event: PointerEvent) {
     const { kind, eraser } = kindOf(event)
     const pen = kind === 'pen'
+    note('down', event)
+
+    // The same nib arriving twice under two names, before anything is remembered
+    // about it. Windows hands pen input to anything that does not ask for it as mouse
+    // input, and a graphics tablet's driver will do it on any desktop if it is set up
+    // to; a mouse contact while a nib is on the glass is that nib, and a second
+    // contact would be a second gesture.
+    if (contacts.echo(event)) return
+
     // Before the button below: a mouse pressing its right button is a mouse asking
     // for the menu, and it has to say so even when a pen was the last thing on the
     // glass.
     lastPen = pen
-    note('down', event)
 
     // The right button on a mouse starts nothing; the menu is the browser's own
     // event. A pen holding its button is not a right button at all, it is the
@@ -994,7 +1034,7 @@
     // A pen on this glass is remembered for good: from now on the finger moves
     // the plane about rather than drawing on it. See canvas/hand.svelte.ts.
     if (pen) hand.sawPen()
-    host?.setPointerCapture(event.pointerId)
+    capture(event.pointerId)
 
     send({
       kind: 'down',
@@ -1046,27 +1086,50 @@
 
   function onPointerMove(event: PointerEvent) {
     note('move', event)
+
+    /** Whether this is the pointer over the glass rather than on it: a hovering pen,
+     *  or a mouse being moved with nothing held.
+     *
+     *  It is the whole of what makes a pen that hovers safe. Every pen on this list
+     *  reports where it is on the way to the glass and again on the way off it - an
+     *  Apple Pencil over an M2 iPad, a Surface Pen approaching the screen, a Wacom
+     *  nib crossing the tablet - and a hovering pen that is allowed to lay down ink
+     *  draws a line from wherever it was last seen to wherever it turns up next.
+     *
+     *  A contact the surface is not holding at all is the same thing: a pointer whose
+     *  press it never heard has nothing on the plane to add to. */
+    const floating = hovering(event) || !contacts.has(event.pointerId)
+
     // A contact the browser cancelled that is still reporting never really left; see
-    // GRACE above.
-    stopDoubting(event.pointerId)
+    // GRACE above. Only while the nib is still down: a hover after the cancel is the
+    // pen off the glass, which is the one thing that must not keep the stroke alive.
+    if (!floating) stopDoubting(event.pointerId)
 
     const point = planeAt(event)
     at = point
     if (store.shared) pointing = point
-    const coarse = kindOf(event).kind === 'touch'
+    const kind = kindOf(event).kind
+    const coarse = kind === 'touch'
+    // The last thing on the glass, so the two events that carry no pointer of their
+    // own - the menu and a double press - know what it was. A pen that is only
+    // hovering counts: Windows answers a barrel button held over the glass with a
+    // context menu, and no menu belongs under a nib.
+    lastPen = kind === 'pen'
 
     // Every sample since the last event, not just the one that was delivered: a
     // fast stroke is drawn through all of them rather than through a fifth of
-    // them. Guarded, because the call is only there in a secure context.
+    // them. Guarded, because the call is only there in a secure context and Safari
+    // has never had it at all; the stroke is drawn as a curve through whatever
+    // arrives, so a browser without it draws the same line. See smoothed in ink.ts.
     const samples =
-      machine.gesture?.kind === 'draw'
+      machine.gesture?.kind === 'draw' && !floating
         ? (typeof event.getCoalescedEvents === 'function'
             ? event.getCoalescedEvents()
             : [event]
           ).map((one) => sampleOf(one, began))
         : []
 
-    if (machine.gesture?.kind === 'draw') {
+    if (machine.gesture?.kind === 'draw' && !floating) {
       const guessed =
         typeof event.getPredictedEvents === 'function'
           ? event.getPredictedEvents().map((one) => sampleOf(one, began))
@@ -1088,8 +1151,9 @@
 
     // After the samples above and before the move below: a stroke this event
     // begins takes its first point from here and not from the samples as well, and
-    // the move that follows carries on from it.
-    repairPen(event, point)
+    // the move that follows carries on from it. Never for a pen over the glass: a
+    // hover has no contact to have been mistaken about.
+    if (!floating) repairPen(event, point)
 
     // A pointer that is moving is not a pointer being held. Measured from where
     // it went still rather than from where it last was, which is this point.
@@ -1859,11 +1923,11 @@
     />
   {/if}
 
-  <!-- The last few pointer events, for a stylus nobody here can hold. Never shown
-       and never read by the app: a drive reads it, and a person on a tablet can be
-       asked what it says when a button does something no desktop can reproduce. See
-       canvas/trace.ts. -->
-  <span class="unseen" data-pointer aria-hidden="true">{traced}</span>
+  <!-- What kind of pen the surface thinks this device has, and the last few pointer
+       events. Never shown and never read by the app: a drive reads it, and a person
+       on a tablet can be asked what it says when a button does something no desktop
+       can reproduce. See canvas/contacts.ts and canvas/trace.ts. -->
+  <span class="unseen" data-pointer aria-hidden="true">{profile} // {traced}</span>
 
   {#if finding}
     <CanvasFind
@@ -1890,9 +1954,23 @@
     background: var(--bg);
     outline: none;
     /* The plane is the thing being touched, so a drag on it must not start a
-       text selection or the browser's own panning. */
+       text selection or the browser's own panning.
+
+       `touch-action` is also what stops the two gestures a platform puts on top of a
+       pen: Windows reads a nib held still as a right click and shows its own ring
+       while it waits, and iPadOS reads a finger held still as a selection. Both of
+       them arrive as a delay before the page hears anything, and there is no other
+       way to turn either off.
+
+       The three prefixed lines are Safari's alone, and each of them is a thing that
+       happens on an iPad and nowhere else: a drag with a finger selects the page, a
+       press with a finger opens the callout over whatever is under it, and a tap
+       flashes a grey box the size of the plane. */
     touch-action: none;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     cursor: default;
   }
 

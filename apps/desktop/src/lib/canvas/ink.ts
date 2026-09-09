@@ -11,6 +11,7 @@
  *  outlines into paint. */
 
 import { getStroke } from 'perfect-freehand'
+import type { Felt, PenTraits, Reported } from './contacts'
 import { freshId, type InkPoint, type InkStroke, type InkTool } from './format'
 import { awayFromSegment, type Box, type Point } from './geometry'
 
@@ -136,6 +137,88 @@ export function inkOpacity(stroke: InkStroke): number {
   return stroke.opacity ?? INK_STYLES[stroke.tool].opacity
 }
 
+/** What the spec asks a device with no pressure to report, and what the ink draws
+ *  when the pressure it is told is worth nothing: the middle of the range, so the
+ *  line comes out at the width the nib is set to. */
+const MIDDLE = 0.5
+
+/** How hard the pen was pressed, as the ink reads it: nought to one, and never
+ *  nothing.
+ *
+ *  The gain is the platform's, and the whole of what a platform changes about the
+ *  ink; see GAINS in contacts.ts. A pen that reports nought is a pen that reports no
+ *  pressure - a finger, a mouse, a stylus whose digitiser has none - and it draws at
+ *  the middle rather than at nothing, because a nib that thins with pressure and is
+ *  told nought draws a hairline and a hairline is not what a mouse should leave. */
+export function forceOf(reported: number, gain: number): number {
+  if (!(reported > 0)) return MIDDLE
+
+  return Math.min(1, reported ** gain)
+}
+
+/** How near flat a pen has to be before the arithmetic below is asked to divide by
+ *  its own tangent. The spec answers a flat pen with five special cases; holding the
+ *  altitude off nought instead agrees with all five to the degree. */
+const NEARLY_FLAT = 1e-6
+
+const DEGREES = 180 / Math.PI
+
+/** Which way the pen is leaning, as the two angles off the vertical that the file
+ *  format keeps, from whichever of the two the browser reported.
+ *
+ *  Chromium reports `tiltX` and `tiltY`: degrees off the vertical in the plane of
+ *  each of the screen's axes. Safari reports `altitudeAngle` and `azimuthAngle`
+ *  instead: radians up from the glass, and radians round it anticlockwise from the
+ *  screen's x axis. They are the same fact in two coordinate systems, and the
+ *  conversion is the one in the Pointer Events spec.
+ *
+ *  One representation from here on, so nothing downstream ever asks which browser it
+ *  is: a stroke drawn with an Apple Pencil and a stroke drawn with an S Pen are the
+ *  same six numbers a point. */
+export function tiltOf(event: Felt): { tiltX: number; tiltY: number } {
+  if (event.tiltX !== 0 || event.tiltY !== 0) return { tiltX: event.tiltX, tiltY: event.tiltY }
+
+  const up = event.altitudeAngle
+  // A pen standing straight up, or a browser that reports neither pair: level.
+  if (typeof up !== 'number' || up >= Math.PI / 2) return { tiltX: 0, tiltY: 0 }
+
+  const round = event.azimuthAngle ?? 0
+  const tan = Math.tan(Math.max(up, NEARLY_FLAT))
+  // Whole degrees, which is what a browser reports tilt in; `|| 0` because half the
+  // corners of the circle come out as a negative nought, and a lean of minus nothing
+  // is a lean of nothing.
+  const degrees = (radians: number) => Math.round(radians * DEGREES) || 0
+
+  return {
+    tiltX: degrees(Math.atan(Math.cos(round) / tan)),
+    tiltY: degrees(Math.atan(Math.sin(round) / tan)),
+  }
+}
+
+/** Level, which is what a finger and a mouse lean by. */
+const LEVEL = { tiltX: 0, tiltY: 0 }
+
+/** Everything one pointer event says about the nib, in the one representation the
+ *  rest of the app knows: how hard, and which way it leans.
+ *
+ *  The pen's own gain and its flat-pressure fallback are a stylus's alone. A finger
+ *  and a mouse go through the same floor and no curve, and lean no way at all, which
+ *  is what the format has always held for them. */
+export function penFelt(
+  event: Reported & Felt,
+  traits: PenTraits,
+): { pressure: number; tiltX: number; tiltY: number } {
+  const pen = event.pointerType === 'pen'
+  // A pen whose pressure never changes has none to report, and a constant handed to
+  // a nib that thins is every stroke at one wrong width; see `Stylus`.
+  const said = pen && traits.force === 'flat' ? 0 : event.pressure
+
+  return {
+    pressure: forceOf(said, pen ? traits.gain : 1),
+    ...(pen ? tiltOf(event) : LEVEL),
+  }
+}
+
 /** The outline of a stroke, as a ring of points in plane coordinates.
  *
  *  A flat nib is a ribbon and a round one is what perfect-freehand works out, so
@@ -145,10 +228,13 @@ export function inkOpacity(stroke: InkStroke): number {
  *  disc under a round nib, a dash under a blade. */
 export function outlineOf(stroke: InkStroke, finished = true): Point[] {
   const style = INK_STYLES[stroke.tool]
-  if (style.nib !== null) return ribbon(stroke, style)
+  // The curve through the samples rather than the straight lines between them, for
+  // the browsers that report few of them; see `smoothed`.
+  const said = smoothed(stroke.points, stroke.size)
+  if (style.nib !== null) return ribbon(said, stroke.size, style)
 
   const dot = stroke.points.length === 1
-  const points = evenly(stroke.points).map((point) => [point.x, point.y, point.pressure])
+  const points = evenly(said).map((point) => [point.x, point.y, point.pressure])
   const ring = getStroke(points, {
     size: stroke.size,
     thinning: style.thinning,
@@ -289,6 +375,138 @@ function evenly(points: readonly InkPoint[]): InkPoint[] {
   return walked
 }
 
+/** How long a step between two samples has to be, in nibs, before the curve through
+ *  it is drawn rather than the straight line. */
+const COARSE = 1.2
+
+/** And never more than this many points on one step, however long it is. A step long
+ *  enough to want more than eight is a hand that moved further than a letter between
+ *  two events, and eight is already a curve. */
+const MOST_ON_A_STEP = 8
+
+/** The samples with the curve through them drawn, where a browser reported too few
+ *  of them to be drawn as lines.
+ *
+ *  A browser hands over what it has. Chromium reports a nib two hundred times a
+ *  second and hands over every sample between two frames in `getCoalescedEvents`;
+ *  Safari has never had that call at all and reports what fits in a frame. The same
+ *  hand writing the same word is two hundred points on one and thirty on the other,
+ *  and thirty points joined by straight lines is a word with corners in it. The
+ *  answer cannot be to lean on a call half the browsers there are do not have: it is
+ *  to draw the curve the samples describe, which is the same curve either way.
+ *
+ *  So a step longer than the nib is wide has the curve through it drawn, and anything
+ *  finer is left exactly as it was reported - a dense stroke is not something to
+ *  improve, and the fast path is one comparison a point. The samples themselves are
+ *  never moved: the ink still passes through every point the pen reported, which is
+ *  what makes this an interpolation rather than a smoothing.
+ *
+ *  Judged against the nib rather than against a distance on screen, because the nib
+ *  is what the corner would show up in: a stroke drawn while the plane is zoomed out
+ *  covers more plane units a sample, and its corners are just as visible. */
+export function smoothed(points: readonly InkPoint[], size: number): readonly InkPoint[] {
+  if (points.length < 3) return points
+
+  const most = Math.max(size * COARSE, STEP)
+  let coarse = false
+  for (let one = 1; one < points.length && !coarse; one++) {
+    const from = points[one - 1]
+    const to = points[one]
+    if (from && to && Math.hypot(to.x - from.x, to.y - from.y) > most) coarse = true
+  }
+
+  if (!coarse) return points
+
+  const out: InkPoint[] = []
+
+  for (let one = 1; one < points.length; one++) {
+    const from = points[one - 1]
+    const to = points[one]
+    if (!from || !to) continue
+
+    out.push(from)
+
+    const span = Math.hypot(to.x - from.x, to.y - from.y)
+    if (span <= most) continue
+
+    // The two samples either side steer the curve. At the ends of a stroke there is
+    // no sample to steer with, so one is reflected: the curve then leaves the first
+    // point and arrives at the last one straight, which is what a pen does.
+    const before = points[one - 2] ?? mirrored(from, to)
+    const after = points[one + 1] ?? mirrored(to, from)
+    const many = Math.min(MOST_ON_A_STEP, Math.ceil(span / most) - 1)
+
+    for (let at = 1; at <= many; at++) {
+      out.push(curved(before, from, to, after, at / (many + 1)))
+    }
+  }
+
+  const last = points[points.length - 1]
+  if (last) out.push(last)
+
+  return out
+}
+
+/** A sample as far the other side of `from` as `to` is this side of it. */
+function mirrored(from: InkPoint, to: InkPoint): InkPoint {
+  return { ...from, x: 2 * from.x - to.x, y: 2 * from.y - to.y }
+}
+
+/** Never divided by, so two samples in the same place do not become a not-a-number
+ *  halfway through a letter. */
+const TINY = 1e-6
+
+/** A point on the curve through four samples, `share` of the way from the second to
+ *  the third: Catmull and Rom, with each span weighted by the square root of its own
+ *  length.
+ *
+ *  Centripetal rather than uniform, which is the whole reason this is written down
+ *  rather than taken off a shelf. A uniform spline through samples that are not
+ *  evenly spaced loops back on itself at a sharp turn, and a loop in the middle of a
+ *  letter is worse than the corner it was drawn to hide. The centripetal one cannot
+ *  do it: between two samples it has no cusp and never crosses itself, whatever the
+ *  hand did.
+ *
+ *  Everything else the digitiser said rides along in proportion, so the ink between
+ *  two samples is as hard-pressed and as far over as the line between them was. */
+function curved(
+  before: InkPoint,
+  from: InkPoint,
+  to: InkPoint,
+  after: InkPoint,
+  share: number,
+): InkPoint {
+  const span = (a: InkPoint, b: InkPoint) =>
+    Math.max(TINY, Math.sqrt(Math.hypot(b.x - a.x, b.y - a.y)))
+  const first = span(before, from)
+  const middle = span(from, to)
+  const last = span(to, after)
+
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+
+  // The tangents at the two ends, from the three spans: a Catmull-Rom spline read as
+  // a Hermite one, which is one cubic rather than a matrix.
+  const fromX = dx + middle * ((from.x - before.x) / first - (to.x - before.x) / (first + middle))
+  const fromY = dy + middle * ((from.y - before.y) / first - (to.y - before.y) / (first + middle))
+  const toX = dx + middle * ((after.x - to.x) / last - (after.x - from.x) / (middle + last))
+  const toY = dy + middle * ((after.y - to.y) / last - (after.y - from.y) / (middle + last))
+
+  const t = share
+  const t2 = t * t
+  const t3 = t2 * t
+  const here = 2 * t3 - 3 * t2 + 1
+  const there = -2 * t3 + 3 * t2
+  const leaving = t3 - 2 * t2 + t
+  const arriving = t3 - t2
+
+  return {
+    ...between(from, to, share),
+    x: here * from.x + there * to.x + leaving * fromX + arriving * toX,
+    y: here * from.y + there * to.y + leaving * fromY + arriving * toY,
+  }
+}
+
 /** A point part of the way along a segment, with everything the digitiser said
  *  about the two ends mixed in the same proportion. */
 function between(from: InkPoint, to: InkPoint, share: number): InkPoint {
@@ -374,19 +592,19 @@ const NIB_DEPTH = 0.16
  *  same points offset the other way on the return leg. Because the offset never
  *  turns, the stroke is broad across the nib and vanishes along it, which is
  *  what a chisel-tipped pen does. */
-function ribbon(stroke: InkStroke, style: InkStyle): Point[] {
+function ribbon(points: readonly InkPoint[], size: number, style: InkStyle): Point[] {
   const angle = ((style.nib ?? 0) * Math.PI) / 180
-  const half = stroke.size / 2
+  const half = size / 2
   const ax = Math.cos(angle)
   const ay = Math.sin(angle)
 
-  const only = stroke.points.length === 1 ? stroke.points[0] : undefined
+  const only = points.length === 1 ? points[0] : undefined
   if (only) {
     // A tap. Going out along the nib and back along it again encloses nothing, so
     // the one point becomes the four corners of the blade's own footprint: as wide
     // as the nib across, and as deep as the blade is thick along it.
     const width = half * (1 - style.thinning * (1 - only.pressure))
-    const depth = (stroke.size * NIB_DEPTH) / 2
+    const depth = (size * NIB_DEPTH) / 2
     const bx = -ay * depth
     const by = ax * depth
 
@@ -401,7 +619,7 @@ function ribbon(stroke: InkStroke, style: InkStyle): Point[] {
   const forward: Point[] = []
   const back: Point[] = []
 
-  for (const point of stroke.points) {
+  for (const point of points) {
     const width = half * (1 - style.thinning * (1 - point.pressure))
     forward.push({ x: point.x + ax * width, y: point.y + ay * width })
     back.unshift({ x: point.x - ax * width, y: point.y - ay * width })
