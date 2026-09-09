@@ -126,6 +126,31 @@ function opens(body: string, at: number): boolean {
   return here >= ASCII ? !isLower(body.charAt(at)) : here < SMALL_A || here > SMALL_Z
 }
 
+/** Where a letter next sits between `cursor` and `to`, or -1.
+ *
+ *  Walked here rather than handed to `indexOf`, which takes a place to start from
+ *  and none to stop at: a letter the rest of the note has not got is a walk of
+ *  the rest of the note, and this runs once per line, which is the quadratic this
+ *  file is written to avoid. A line is four hundred characters at most, so
+ *  scanning the line is cheaper than scanning everything after it. */
+function placeIn(folded: string, letter: string, cursor: number, to: number): number {
+  if (letter.length === 1) {
+    const code = letter.charCodeAt(0)
+    for (let at = cursor; at < to; at++) {
+      if (folded.charCodeAt(at) === code) return at
+    }
+
+    return -1
+  }
+
+  // A character written as a pair of code units, which `lettersOf` keeps whole.
+  for (let at = cursor; at + letter.length <= to; at++) {
+    if (folded.startsWith(letter, at)) return at
+  }
+
+  return -1
+}
+
 /** Where `term`'s letters sit in `folded`, starting at `at` and staying inside
  *  `to`: each letter at the first place it sits after the last. Null when one
  *  of them is not there.
@@ -139,8 +164,8 @@ function walk(letters: readonly string[], folded: string, at: number, to: number
   let cursor = at + 1
 
   for (let index = 1; index < letters.length; index++) {
-    const found = folded.indexOf(letters[index] ?? '', cursor)
-    if (found === -1 || found >= to) return false
+    const found = placeIn(folded, letters[index] ?? '', cursor, to)
+    if (found === -1) return false
 
     out.push(found)
     cursor = found + 1

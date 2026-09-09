@@ -22,6 +22,18 @@ export interface Piece {
 export interface Words {
   text: string
   pieces: Piece[]
+  /** The same words lowercased, kept once something has asked. See `placesIn`. */
+  folded?: string
+}
+
+/** Every place a needle appears in a haystack, both already lowercased. */
+function scan(haystack: string, needle: string): number[] {
+  const found: number[] = []
+  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + 1)) {
+    found.push(at)
+  }
+
+  return found
 }
 
 /** Every place `query` appears in `text`, as offsets into it. Case is ignored, the
@@ -29,16 +41,17 @@ export interface Words {
  *  which is a field nobody has typed in yet rather than a search for nothing. */
 export function placesOf(text: string, query: string): number[] {
   if (!query) return []
+  return scan(text.toLowerCase(), query.toLowerCase())
+}
 
-  const haystack = text.toLowerCase()
-  const needle = query.toLowerCase()
-  const found: number[] = []
-
-  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + 1)) {
-    found.push(at)
-  }
-
-  return found
+/** The same over a page that was read once, which is what the reading view has.
+ *
+ *  The fold is kept on the words rather than made per call: the page is read once
+ *  per render and the query changes once per keystroke, so lowercasing a long page
+ *  per letter typed is the one cost in a find bar that scales with the document. */
+export function placesIn(words: Words, query: string): number[] {
+  if (!query) return []
+  return scan((words.folded ??= words.text.toLowerCase()), query.toLowerCase())
 }
 
 /** Which piece an offset falls in, and how far into that piece it is. Null when

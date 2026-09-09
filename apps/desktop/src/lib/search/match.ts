@@ -193,6 +193,9 @@ interface Facts {
   tags: string[] | null
   front: Map<string, string> | null
   units: Partial<Record<Unit, Range[]>>
+  /** Where each needle sits in the note, by the needle and which text it was
+   *  looked for in; see `placesIn`. */
+  places: Map<string, number[]>
 }
 
 function foldedOf(facts: Facts): string {
@@ -220,17 +223,59 @@ function contains(hay: string, needle: string, folded: boolean): boolean {
   return folded ? hay.toLowerCase().includes(needle.toLowerCase()) : hay.includes(needle)
 }
 
-/** Every place a plain word or phrase sits inside the region, without
- *  overlapping itself, so replacing them all is a matter of splicing. */
-function literals(hay: string, needle: string, region: Range): Span[] | null {
-  if (!needle) return null
+/** Every place a needle sits in the whole note, without overlapping itself,
+ *  found once however many regions go on to ask about it.
+ *
+ *  Once is the point. `line:(word)` asks about every line, and `indexOf` takes a
+ *  place to start from but none to stop at, so looking again per line means
+ *  scanning from that line to the next place the word appears - the end of the
+ *  note, for a word the note does not hold. That is one walk of the note per
+ *  line of it, which is what turns a long note into a quadratic one. The loose
+ *  side already refuses to spend it; see fuzzy.ts.
+ *
+ *  A needle holds no newline, so a place is inside exactly one line and the
+ *  places found from the top of the note are the places every region would have
+ *  found for itself. */
+function placesIn(facts: Facts, hay: string, needle: string, folded: boolean): number[] {
+  const key = `${folded ? 'i' : ' '}${needle}`
+  const held = facts.places.get(key)
+  if (held) return held
 
+  const found: number[] = []
+  for (let at = hay.indexOf(needle); at !== -1; at = hay.indexOf(needle, at + needle.length)) {
+    found.push(at)
+  }
+
+  facts.places.set(key, found)
+  return found
+}
+
+/** The first place at or after `from`, by halving rather than by walking: a note
+ *  where a common word sits on every line has as many places as lines, and
+ *  walking them per line would be the quadratic this file just avoided. */
+function firstFrom(places: readonly number[], from: number): number {
+  let low = 0
+  let high = places.length
+
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if ((places[middle] ?? 0) < from) low = middle + 1
+    else high = middle
+  }
+
+  return low
+}
+
+/** The places that fall inside the region, as spans, so replacing them all is a
+ *  matter of splicing. */
+function literals(places: readonly number[], length: number, region: Range): Span[] | null {
   const out: Span[] = []
-  let at = hay.indexOf(needle, region.from)
+  const last = region.to - length
 
-  while (at !== -1 && at + needle.length <= region.to) {
-    out.push({ from: at, to: at + needle.length })
-    at = hay.indexOf(needle, at + needle.length)
+  for (let index = firstFrom(places, region.from); index < places.length; index++) {
+    const at = places[index]
+    if (at === undefined || at > last) break
+    out.push({ from: at, to: at + length })
   }
 
   return out.length ? out : null
@@ -255,7 +300,14 @@ export class Matcher {
 
   /** Every place the note answers the query, or null when it does not. */
   spans(note: SearchNote): Span[] | null {
-    const facts: Facts = { note, folded: null, tags: null, front: null, units: {} }
+    const facts: Facts = {
+      note,
+      folded: null,
+      tags: null,
+      front: null,
+      units: {},
+      places: new Map(),
+    }
     return this.walk(this.query, facts, { from: 0, to: note.body.length })
   }
 
@@ -343,7 +395,10 @@ export class Matcher {
 
       case 'text': {
         const needle = query.fold ? this.folded(query.text) : query.text
-        return literals(query.fold ? foldedOf(facts) : facts.note.body, needle, region)
+        if (!needle) return null
+
+        const hay = query.fold ? foldedOf(facts) : facts.note.body
+        return literals(placesIn(facts, hay, needle, query.fold), needle.length, region)
       }
 
       case 'regex':
@@ -403,7 +458,7 @@ export class Matcher {
   /** A pattern that will not compile matches nothing. It is a query still
    *  being typed, not something to report. */
   private pattern(source: string, folded: boolean): RegExp | null {
-    const key = `${folded ? 'i' : ''} ${source}`
+    const key = `${folded ? 'i' : ''}\0${source}`
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 

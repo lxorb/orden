@@ -124,3 +124,48 @@ describe('a loose search over ten thousand notes', () => {
     expect(ms).toBeLessThan(yardstick)
   })
 })
+
+/** Four notes of nearly a megabyte each: a whole book, or years of a journal in
+ *  one file. Long notes are where the difference between a walk that stops at the
+ *  end of the line it was given and one that carries on to the end of the note is
+ *  the difference between a search and a hang, because that difference grows with
+ *  the square of the note. */
+function longNotes(): SearchNote[] {
+  const lines: string[] = []
+  for (let line = 0; line < 12_000; line++) {
+    lines.push('The meeting came together on Monday, with a note about the budget for it.')
+  }
+
+  const body = lines.join('\n')
+
+  return Array.from({ length: 4 }, (_unused, index) => ({
+    path: `/space/long-${index}.md`,
+    relative: `long-${index}.md`,
+    name: `long-${index}.md`,
+    body,
+  }))
+}
+
+describe('a loose search over long notes', () => {
+  const notes = longNotes()
+
+  /** A term of letters the notes are full of, which is the walk doing its work:
+   *  every place the first letter sits is tried, and the letters after it are
+   *  found a few characters along. */
+  const yardstick = timed('ate', notes).ms
+
+  test('is a corpus of the size the figures are about', () => {
+    expect(notes[0]?.body.length).toBeGreaterThan(800_000)
+    expect(yardstick).toBeGreaterThan(0)
+  })
+
+  test('costs no more for a letter the note has not got after one it has', () => {
+    // `a` sits on every line and `q` nowhere, so the walk fails on its second
+    // letter once per line. Failing has to cost the line, not the rest of the
+    // note: the walk is given a line and must stop at the end of it.
+    const { ms, found } = timed('aqx', notes)
+
+    expect(found).toBe(0)
+    expect(ms).toBeLessThan(yardstick * 3)
+  })
+})

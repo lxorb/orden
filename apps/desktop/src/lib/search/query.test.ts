@@ -338,7 +338,7 @@ describe('malformed input', () => {
     'a OR ) b (',
     '/(/',
     '/[/',
-    ' ',
+    '\0',
     '   \n\t  ',
   ]
 

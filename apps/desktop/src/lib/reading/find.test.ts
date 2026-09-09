@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { locate, placesOf, type Piece } from './find'
+import { locate, placesIn, placesOf, type Piece, type Words } from './find'
+
+const text = 'The word, and the word again, and a wordy one.'
 
 describe('every place a word appears', () => {
-  const text = 'The word, and the word again, and a wordy one.'
-
   test('is found however it was capitalised', () => {
     expect(placesOf(text, 'word')).toEqual([4, 18, 36])
     expect(placesOf(text, 'WORD')).toEqual([4, 18, 36])
@@ -24,6 +24,28 @@ describe('every place a word appears', () => {
 
   test('is nothing when the word is not there', () => {
     expect(placesOf(text, 'sentence')).toEqual([])
+  })
+})
+
+describe('the same over a page read once', () => {
+  test('answers what asking the text itself would', () => {
+    const words: Words = { text, pieces: [] }
+    expect(placesIn(words, 'WORD')).toEqual(placesOf(text, 'word'))
+    expect(placesIn(words, '')).toEqual([])
+  })
+
+  test('folds the page once, however many letters are typed after it', () => {
+    // The one cost in a find bar that would scale with the document: a copy of
+    // the whole page per letter typed.
+    const words: Words = { text, pieces: [] }
+    expect(words.folded).toBeUndefined()
+
+    placesIn(words, 'wo')
+    const first = words.folded
+    placesIn(words, 'wor')
+
+    expect(first).toBe(text.toLowerCase())
+    expect(words.folded).toBe(first)
   })
 })
 
