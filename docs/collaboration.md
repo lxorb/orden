@@ -681,13 +681,29 @@ somebody looking at a broken picture rather than at a refusal.
 
 ## What it looks like
 
-One sheet, from the space's own menu in the rail and from the palette: the people
-with their role as a small select each and a cross to take them out, an address
-field with a role beside it and one button, the link with its role and a two-word
-segmented control for `Anyone` or `Ask first`, copy, revoke, and whoever is
-waiting with Accept and Decline. A space somebody else is in carries a small
-stack of dots on the corner of its square in the rail - the same two dots a tab
-draws for the devices in a note, because it is the same fact said about a space.
+One sheet, from the space's own menu and from the palette, and two cards in it.
+
+**People.** The address field first, because putting somebody in is what the
+sheet is opened for: one field with the role inside it at the right end, Enter or
+the arrow beside it to send, several addresses at once separated by commas,
+semicolons or spaces, and a quiet line under it for something that is not an
+address - which is said here rather than after a round trip. Then `Who has
+access`: the owner with `(you)` and a fixed `Owner`, then everybody else, each a
+rounded square with their initial in their own colour, their name, their address
+under it, and one menu at the far end holding what they may do, the invitation
+again if they have not opened it, and `Remove` in red. Whoever is waiting on a
+link that asks first sits at the top of that card, in the accent, with Accept and
+Decline.
+
+**Link.** `Link`, a dot that says whether it is live, and one switch. Under it,
+greyed until the switch is on so that turning it on fills the card in rather than
+growing it: a globe and `Anyone with the link` with what it hands out as a menu,
+`Ask first` as a switch under that sentence, the link itself beside `Copy link`,
+and `Reset link`, which revokes and mints another under one press so the sheet
+never shows the moment in between.
+
+A space somebody else is in carries a quiet dot on its row in the switcher,
+because it is the same fact a tab says about the devices in a note.
 
 A guest the link let in is a row in the same two lists, named by the name their
 device gave them, with `Guest` under it where a member has their address - and

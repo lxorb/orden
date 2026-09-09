@@ -260,9 +260,11 @@ possible, everything here is simply already where it is going.
 What this reaches: the four panel tabs and the panel under them, on a desktop
 and in the drawer alike; the settings sheet's segmented controls, and its panes,
 which come up from below where they used to appear (and, on a phone, where they
-used to do nothing at all); the sharing sheet's link mode; the publishing
-sheet's address; the LLM pane's client picker; and the space switcher, which
-drops out of the header it belongs to and goes back into it.
+used to do nothing at all); the publishing sheet's address; the LLM pane's client
+picker; and the space switcher, which drops out of the header it belongs to and
+goes back into it. The sharing sheet's link had one too, and now has a switch:
+what a link hands out is not two choices side by side, it is one thing that is on
+or off with what it hands out under it.
 
 Two things were looked at and left alone. The search results and the header menu
 already move, in this vocabulary and at these durations. And the strip of tabs
@@ -323,6 +325,49 @@ name starts at `--row-pad + --icon-md + --row-gap`. A level of a tree adds
 `--row-indent` and nothing else - no second indent for the mark, because the
 mark's box is a fixed width whether it holds a folder's twist, a file's kind or
 nothing.
+
+### Badges
+
+The rounded square in front of a name that belongs to somebody or somewhere
+rather than to a file: a space's mark in the switcher, the face in the panel's
+foot, a person in the Share sheet. `.nib-badge` in `base.css`, at
+`--row-height-sm` with a corner a third of its side and a mark of `--icon-md`
+inside it, so it is the same object at 24px under a pointer and at 48 under a
+thumb. What fills it is the caller's: `--badge-fill` and `--badge-ink` per badge,
+`is-on` for the accent, `is-quiet` for a badge that is only a place for a mark.
+
+A person's colour is derived from their address rather than picked, in
+`accents.ts`: the same person is the same colour on every device and after every
+reload, which is the opposite of how a device chooses the colour of its caret -
+two of one person's machines have to differ, two people looking at one list have
+to agree.
+
+### Switches
+
+One thing that is on or off, `.nib-switch` in `base.css`: a 38x22 track and a
+16px knob, 50x30 and 24 under a thumb, in one `[data-touch]` block rather than
+one per surface. A setting, an assistant's write access and a space's link had
+three copies of it between them. The row is the switch wherever a row can be -
+the whole row takes the press, and the switch is `aria-hidden` because the row
+already says `role="switch"`.
+
+### Sheets
+
+A sheet is a head, a body that scrolls, and cards in it. The head is the space's
+badge, what the sheet is about, and the cross; it stays while the body scrolls,
+because on a phone the sheet is most of the screen and the name of the thing is
+what says what all of this is about. A card is a filled `--surface-2` at
+`--radius-md` with rows in it - which is what Proton Drive does and what the
+settings sheet on a phone already did - so two groups on one sheet read as two
+groups without a line or a word. Nothing on either sheet is confirmed: every
+change is asked of the server as it is made, so there is no button that says
+Done, and the cross, Escape, back and the scrim all close it.
+
+Where the keyboard lands is the sheet's to say: `[data-lands]` on the control
+somebody opened it to use - the address field on the Share sheet, the warning's
+tick on the Publish sheet - rather than the cross, which is simply the first
+thing in the head. Never under a thumb, where there is no Tab to hold on to and a
+field taking the keyboard puts the system's own over half the sheet.
 
 ### Section labels
 
@@ -462,4 +507,6 @@ in one `[data-touch]` block in the tokens rather than per component.
 
 `apps/desktop/test/one-of-each.test.ts` already refuses a second copy of a shared
 control. It gains the row: `.nib-row` is drawn in `base.css` and nowhere else,
-and no list paints a hover or a press of its own.
+and no list paints a hover or a press of its own. It gains the badge and the
+switch on the same terms, and `SpaceMark.svelte`, which is the one answer to what
+goes inside a space's badge.
