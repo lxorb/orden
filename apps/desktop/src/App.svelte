@@ -266,6 +266,7 @@
         account,
         arriving,
         busy,
+        fullscreen,
         rooms,
         share,
         sync,
