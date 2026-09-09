@@ -10,6 +10,7 @@
 import { type Context, Hono } from 'hono'
 import { sendCode, verifyCode } from '../auth'
 import { normaliseEmail, now, randomToken, sha256 } from '../crypto'
+import { machineOf } from '../limits'
 import type { Env } from '../types'
 import { type Client, clientFor } from './clients'
 import { codeStep, emailStep, page, refusal } from './consent'
@@ -149,7 +150,7 @@ authorize.post('/authorize', async (context) => {
   }
 
   if (form.action === 'send') {
-    const sent = await sendCode(context.env, email)
+    const sent = await sendCode(context.env, email, machineOf(context.req))
     if ('error' in sent) {
       return page(context.env, emailStep(client, ask, { email, error: sent.error }))
     }

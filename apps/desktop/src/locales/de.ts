@@ -544,6 +544,10 @@ export const de: Dictionary = {
   'that path is not usable': 'Dieser Pfad geht nicht',
   'this note changed elsewhere': 'Die Notiz wurde anderswo geändert',
   'too many tries - ask for a new code': 'Zu viele Versuche - fordere einen neuen Code an',
+  'too many messages from here - try again later':
+    'Zu viele Nachrichten von hier - versuch es später noch einmal',
+  'too much mail today - try again tomorrow':
+    'Heute schon zu viele Nachrichten - versuch es morgen',
   'use 2–32 letters, numbers or hyphens': 'Nimm 2 bis 32 Buchstaben, Ziffern oder Bindestriche',
   'sync failed': 'Synchronisierung fehlgeschlagen',
   'could not publish': 'Veröffentlichen ging nicht',

@@ -541,6 +541,9 @@ export const gsw: Dictionary = {
   'that path is not usable': 'De Pfad gaht nöd',
   'this note changed elsewhere': 'Die Notiz isch anderswo gänderet worde',
   'too many tries - ask for a new code': 'Z vill Versüech - frag en nöie Code aa',
+  'too many messages from here - try again later':
+    'Z vill Nachrichte vo da - probier s spöter no einisch',
+  'too much mail today - try again tomorrow': 'Hüt scho z vill Poscht - probier s morn',
   'use 2–32 letters, numbers or hyphens': 'Nimm 2 bis 32 Buechstabe, Zahle oder Bindestrich',
   'sync failed': 'Abgliche het nöd klappt',
   'could not publish': 'Veröffentliche het nöd klappt',

@@ -12,6 +12,7 @@ import {
 } from './crypto'
 import { codeMessage, mailer } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
+import { machineOf, mailCeilings } from './limits'
 import { makeFirstSpace } from './spaces/first'
 import type { Env, User, Variables, Whoever } from './types'
 
@@ -136,12 +137,16 @@ export async function claimWhatWasGuested(
  *  answers the same way for an address it has never seen, so it cannot be
  *  used to discover which addresses have accounts. The OAuth consent page
  *  signs people in with the same code as the app, which is why this is not
- *  written straight into the route. */
+ *  written straight into the route.
+ *
+ *  `machine` is where the request came from, for the ceiling on how much mail
+ *  one of them may cause; see limits.ts. */
 export async function sendCode(
   env: Env,
   address: string,
-): Promise<{ ok: true; resendIn: number } | { error: string }> {
-  if (!isEmail(address)) return { error: 'enter a valid email address' }
+  machine: string | null = null,
+): Promise<{ ok: true; resendIn: number } | { error: string; status: 400 | 429 }> {
+  if (!isEmail(address)) return { error: 'enter a valid email address', status: 400 }
 
   const existing = await env.DB.prepare('select sent_at from login_codes where email = ?')
     .bind(address)
@@ -150,6 +155,12 @@ export async function sendCode(
   if (existing && now() - existing.sent_at < RESEND_GAP) {
     return { ok: true, resendIn: Math.ceil((RESEND_GAP - (now() - existing.sent_at)) / 1000) }
   }
+
+  // Asked here rather than at the top, so that the gap this address already
+  // keeps holds a resend back without spending anything against the ceilings: a
+  // message that is not going out is not mail.
+  const ceiling = await mailCeilings(env, address, machine)
+  if (ceiling) return { error: ceiling, status: 429 }
 
   const code = randomCode()
   const salt = randomToken()
@@ -235,9 +246,13 @@ auth.post('/code', async (context) => {
   const email = body.text('email', EMAIL_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
-  const sent = await sendCode(context.env, normaliseEmail(email ?? ''))
+  const sent = await sendCode(
+    context.env,
+    normaliseEmail(email ?? ''),
+    machineOf(context.req),
+  )
 
-  if ('error' in sent) return context.json({ error: sent.error }, 400)
+  if ('error' in sent) return context.json({ error: sent.error }, sent.status)
   return context.json(sent)
 })
 

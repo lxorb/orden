@@ -19,6 +19,7 @@ import { readBody } from '../body'
 import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { inviteMessage, mailer, mayMail } from '../email'
 import { forgetEmptyGuest } from '../guests'
+import { machineOf } from '../limits'
 import type { Env, Space, User, Variables } from '../types'
 import { atLeast, isGiven, spaceOf, type Given } from './space'
 
@@ -245,6 +246,13 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
     return context.json({ error: 'that is as many people as one space holds' }, 409)
   }
 
+  // Asked before anything is written, because a ceiling is the one answer here
+  // that is a refusal rather than a quiet no: the invitation itself is what lets
+  // somebody in, so a row written and then answered 429 would be an owner told
+  // nothing happened while it had.
+  const may = await mayMail(context.env, email, machineOf(context.req))
+  if (may.error) return context.json({ error: may.error }, 429)
+
   const token = randomToken()
   await context.env.DB.prepare(
     `insert into space_members (space_id, email, role, invite_hash, expires_at, created_at)
@@ -265,7 +273,7 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
   // Whether the mail went is not answered back. The gate is per address across
   // every space there is, so saying so would tell an owner whether somebody
   // else had just written to that address.
-  if (await mayMail(context.env, email)) {
+  if (may.ok) {
     const message = inviteMessage({
       space: space.name,
       from: personName(owner),

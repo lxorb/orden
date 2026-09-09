@@ -30,6 +30,7 @@ import { readBody } from '../body'
 import { cleanName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
 import { mailer, mayMail, requestMessage } from '../email'
 import { claimGuest, newGuest, presentGuest } from '../guests'
+import { machineOf, mayTellTheOwner } from '../limits'
 import type { Env, Guest, Space, User, Variables } from '../types'
 import { EMAIL_LIMIT, MOST_MEMBERS, personName } from './share'
 import { presentSpace, type Given } from './space'
@@ -196,10 +197,19 @@ function writeGuestMember(
 
 /** The owner is told that somebody is waiting, at the same rate anybody is told
  *  anything: it is the person receiving the mail who is protected, whoever
- *  caused the send. */
-async function tellTheOwner(env: Env, space: Space, who: string): Promise<void> {
+ *  caused the send. And at most once an hour about any one space, because what
+ *  the owner needs to know is that somebody is at the door rather than how many
+ *  times it was knocked on.
+ *
+ *  Nothing is said back about any of this. The person at the link is waiting on
+ *  the owner either way, and whether a message went is not their business. */
+async function tellTheOwner(context: Reply, space: Space, who: string): Promise<void> {
+  const env = context.env
   const owner = await ownerOf(env, space)
-  if (!owner || !(await mayMail(env, owner.email))) return
+  if (!owner) return
+
+  if (!(await mayTellTheOwner(env, space.id))) return
+  if (!(await mayMail(env, owner.email, machineOf(context.req))).ok) return
 
   const message = requestMessage({ space: space.name, who, link: env.APP_ORIGIN })
   await mailer(env).send(owner.email, message.subject, message)
@@ -305,7 +315,7 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
       .bind(space.id, user.email, found.role, now())
       .run()
 
-    await tellTheOwner(context.env, space, personName(user))
+    await tellTheOwner(context, space, personName(user))
     return context.json({ waiting: true })
   }
 
@@ -341,7 +351,7 @@ async function asAGuest(context: Reply, found: Leads, guest: Guest) {
   await writeGuestMember(context.env, space.id, guest.id, found.role, asks)
 
   if (asks) {
-    await tellTheOwner(context.env, space, guest.name)
+    await tellTheOwner(context, space, guest.name)
     return context.json({ guest: said, waiting: true })
   }
 
@@ -394,7 +404,7 @@ async function asNobody(context: Reply, found: Leads) {
     isEmail(gave) ? gave : null,
   )
   await writeGuestMember(context.env, space.id, guest.id, found.role, true)
-  await tellTheOwner(context.env, space, guest.name)
+  await tellTheOwner(context, space, guest.name)
 
   return context.json({ token, guest: presentGuest(guest), waiting: true })
 }
