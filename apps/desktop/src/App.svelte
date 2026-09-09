@@ -8,6 +8,7 @@
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
+  import IconPicker from './lib/IconPicker.svelte'
   import { menu } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import Palette from './lib/Palette.svelte'
@@ -537,6 +538,9 @@
 <PublishSheet />
 <PromptSheet />
 <ContextMenu />
+<!-- Over everything, because everything that wears an icon asks the same sheet
+     for one: a space in the rail, a note in the file list. -->
+<IconPicker />
 <FirstSync />
 
 <style>

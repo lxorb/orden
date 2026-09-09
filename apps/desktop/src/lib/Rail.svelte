@@ -3,7 +3,7 @@
   import { account } from './account.svelte'
   import AppMenu from './AppMenu.svelte'
   import type { EditorView } from '@nib/editor'
-  import IconPicker from './IconPicker.svelte'
+  import { iconChoice } from './icon-choice.svelte'
   import { type IconNode, initial, loadIcons, shapeFor } from './icons'
   import { longPress } from './longpress'
   import { t } from './i18n.svelte'
@@ -33,9 +33,6 @@
     onpalette,
     onhistory,
   }: { view?: EditorView | undefined; onpalette: () => void; onhistory: () => void } = $props()
-
-  /** The icon sheet, once it is on the page. */
-  let picker = $state<{ choose(id: string): Promise<void> }>()
 
   /** The settings button doubles as the sync light, so its tooltip says what
    *  the light means rather than leaving a colour to be guessed at. */
@@ -175,7 +172,7 @@
       ...(viewport.touch && workspace.spaces.length > 1
         ? [{ label: t('Move'), run: () => (lifting = space.id) }]
         : []),
-      { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
+      { label: t('Choose an icon'), run: () => iconChoice.space(space.id) },
       ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
       // Beside it, because it is the same question about the same folder: who
       // else may read this.
@@ -411,8 +408,6 @@
     </button>
   </div>
 </nav>
-
-<IconPicker bind:this={picker} />
 
 <style>
   nav {

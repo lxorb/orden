@@ -28,6 +28,8 @@ export const fr: Dictionary = {
   'Choose an icon': 'Choisir une icône',
   'Search icons - work, journal, money…': 'Chercher une icône - travail, journal, argent…',
   'Use the first letter instead': 'Utiliser plutôt la première lettre',
+  'Remove icon': 'Retirer l’icône',
+  'Use the plain mark instead': 'Utiliser plutôt le repère simple',
   'Loading…': 'Chargement…',
   'Rename the space': 'Renommer l’espace',
   'Create a space': 'Créer un espace',

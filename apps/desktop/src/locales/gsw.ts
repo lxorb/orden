@@ -30,6 +30,8 @@ export const gsw: Dictionary = {
   'Choose an icon': 'Es Symbol uswähle',
   'Search icons - work, journal, money…': 'Symbol sueche - Arbet, Tagebuech, Gäld…',
   'Use the first letter instead': 'Lieber de erscht Buechstabe bruuche',
+  'Remove icon': 'Symbol wegnäh',
+  'Use the plain mark instead': 'Lieber s eifach Zeiche bruuche',
   'Loading…': 'Wird glade…',
   'Rename the space': 'Ablag umbenänne',
   'Create a space': 'Ablag mache',

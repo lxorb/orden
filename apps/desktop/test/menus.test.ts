@@ -27,6 +27,18 @@ function body(text: string, signature: string): string {
   return text.slice(from, to)
 }
 
+/** The same, for a function in a module rather than in a component: nothing is
+ *  indented there, so the closing brace is the one at the left margin. */
+function moduleBody(text: string, signature: string): string {
+  const from = text.indexOf(signature)
+  expect(from, `no ${signature}`).toBeGreaterThanOrEqual(0)
+
+  const to = text.indexOf('\n}', from)
+  expect(to, `${signature} is never closed`).toBeGreaterThan(from)
+
+  return text.slice(from, to)
+}
+
 describe('what a space offers', () => {
   const rail = read('lib/Rail.svelte')
   const space = body(rail, 'function spaceMenu(space: Space)')
@@ -58,6 +70,38 @@ describe('what a space offers', () => {
 
   test('a shared space still offers the way out of it', () => {
     expect(space).toContain("t('Leave space')")
+  })
+})
+
+/** What a row in the file list offers about the note it stands for. The icon is
+ *  the note's own, written in its front matter, so the entries live in
+ *  menu.svelte.ts and any list that shows a note can offer them. */
+describe('what a note offers', () => {
+  const tree = read('lib/Tree.svelte')
+  const note = body(tree, 'function noteMenu(entry: Entry)')
+  const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
+
+  test('its icon, in the same words the rail uses for a space', () => {
+    expect(note).toContain('iconEntries(entry.path)')
+    expect(entries).toContain("t('Choose an icon')")
+  })
+
+  test('and the way back to no icon, only while it wears one', () => {
+    expect(entries).toContain("t('Remove icon')")
+    expect(entries).toContain('links.iconOf(path) === null')
+  })
+
+  /** The picker is the sheet the rail opens, on the note this row stands for. */
+  test('choosing opens the one picker there is', () => {
+    expect(entries).toContain('iconChoice.note(path)')
+  })
+
+  /** A right click and a held finger, which is the right click a touch screen
+   *  has: the icon is offered on a phone as well as on a desktop. */
+  test('through the menu a pointer opens and the one a finger opens', () => {
+    const row = tree.slice(tree.indexOf('class="row note"'))
+    expect(row).toContain('oncontextmenu={(event) =>')
+    expect(row).toContain('use:longPress={(event) =>')
   })
 })
 

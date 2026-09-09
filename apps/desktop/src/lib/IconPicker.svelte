@@ -1,36 +1,58 @@
 <script lang="ts">
+  /** The one picker in the app, for everything that can wear an icon: a space in
+   *  the rail, and a note in the file list. What is being chosen for is in
+   *  icon-choice.svelte.ts rather than in a prop, because a note's row is drawn
+   *  deep inside a tree of these components and a space's is somewhere else
+   *  entirely; this is mounted once, over the whole page.
+   *
+   *  Which leaves one difference between the two, and it is where the icon is
+   *  kept: a space's belongs to this device, a note's belongs to the note and is
+   *  written into its front matter. Hence the last row, which says what the thing
+   *  falls back to when it wears nothing - a letter for a space, and for a note
+   *  the mark that says what kind of file it is. */
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
-  import { type IconNode, loadIcons, search } from './icons'
+  import { iconChoice } from './icon-choice.svelte'
+  import { type IconNode, keyNamed, loadIcons, readIcon, search } from './icons'
+  import { links } from './link-index.svelte'
+  import { setNoteIcon } from './note-icon'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
 
-  let open = $state(false)
-  let spaceId = $state<string | null>(null)
   let query = $state('')
   let library = $state<Record<string, IconNode>>({})
   let field = $state<HTMLInputElement>()
 
+  const target = $derived(iconChoice.target)
   const names = $derived(Object.keys(library))
   const shown = $derived(search(names, query))
+
+  /** Which icon the thing being chosen for wears now, as a name in the library,
+   *  so the one it already has is the one shown as chosen. A note that wears an
+   *  emoji has no name in the library, and nothing in the grid is its. */
+  const chosen = $derived.by(() => {
+    if (!target) return null
+    if (target.kind === 'space') return workspace.iconFor(target.id)
+
+    const written = readIcon(links.iconOf(target.path))
+    return written?.kind === 'lucide' ? keyNamed(library, written.name) : null
+  })
 
   /** How long the field waits for the sheet's own transition before it takes the
    *  keyboard. Focusing an element that is still scaling up scrolls the sheet. */
   const FOCUS = 40
 
   /** Which opening this is, so a set of icons that arrives after the sheet has
-   *  been closed - or opened again on another space - is not the set shown. */
+   *  been closed - or opened again on something else - is not the set shown. */
   let opening = 0
   let focusing: ReturnType<typeof setTimeout> | undefined
 
-  export async function choose(id: string) {
+  async function fill() {
     const mine = ++opening
-    spaceId = id
     query = ''
-    open = true
 
     const all = await loadIcons()
     if (mine !== opening) return
@@ -41,9 +63,20 @@
     focusing = setTimeout(() => field?.focus(), dur(FOCUS))
   }
 
+  // The sheet is up the moment somebody asks for it; the set of icons is a
+  // chunk of its own and arrives after.
+  $effect(() => {
+    if (iconChoice.target) void fill()
+  })
+
   function pick(name: string | null) {
-    if (spaceId) workspace.setIcon(spaceId, name)
-    open = false
+    const asked = iconChoice.target
+    if (!asked) return
+
+    if (asked.kind === 'space') workspace.setIcon(asked.id, name)
+    else void setNoteIcon(asked.path, name)
+
+    iconChoice.close()
   }
 
   // Nothing is waiting to be focused once the sheet has gone.
@@ -51,13 +84,17 @@
 
   // Escape closes it, like everything else the app puts over a note; see
   // overlays.ts.
-  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
-  $effect(() => closeOnBack(open, () => (open = false)))
+  $effect(() => (target ? overlays.show(() => iconChoice.close()) : undefined))
+  $effect(() => closeOnBack(target !== null, () => iconChoice.close()))
 </script>
 
-{#if open}
+{#if target}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => (open = false)}></div>
+  <div
+    class="scrim"
+    transition:fade={{ duration: dur(130) }}
+    onclick={() => iconChoice.close()}
+  ></div>
 
   <div class="sheet" transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}>
     <input
@@ -77,7 +114,7 @@
           <button
             title={name}
             aria-label={name}
-            class:active={workspace.iconFor(spaceId) === name}
+            class:active={chosen === name}
             onclick={() => pick(name)}
           >
             <svg viewBox="0 0 24 24">
@@ -90,7 +127,9 @@
       </div>
     {/if}
 
-    <button class="clear" onclick={() => pick(null)}>{t('Use the first letter instead')}</button>
+    <button class="clear" onclick={() => pick(null)}>
+      {target.kind === 'note' ? t('Use the plain mark instead') : t('Use the first letter instead')}
+    </button>
   </div>
 {/if}
 

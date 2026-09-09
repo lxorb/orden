@@ -1,4 +1,8 @@
+import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
+import { links } from './link-index.svelte'
+import { setNoteIcon } from './note-icon'
+import { isMarkdownPath } from './space-paths'
 import { isDesktop, isNative } from './tauri'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
@@ -90,6 +94,26 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
       label: workspace.bookmarks.has(mark) ? t('Remove bookmark') : t('Bookmark'),
       run: () => workspace.bookmarks.toggle(mark),
     },
+  ]
+}
+
+/** The icon a note wears, in the same words the rail offers a space: one entry to
+ *  choose one, and a second to take away the one it has.
+ *
+ *  Here rather than in the file list, because the icon belongs to the note and
+ *  every list that shows a note can offer it - the tree today, a search result or
+ *  a bookmark whenever one of those grows a menu of its own.
+ *
+ *  Only a note, because the icon lives in the note's front matter and a PDF, a
+ *  picture and a canvas have none to write it into. */
+export function iconEntries(path: string | null | undefined): MenuEntry[] {
+  if (!path || !isMarkdownPath(path)) return []
+
+  return [
+    { label: t('Choose an icon'), run: () => iconChoice.note(path) },
+    ...(links.iconOf(path) === null
+      ? []
+      : [{ label: t('Remove icon'), run: () => void setNoteIcon(path, null) }]),
   ]
 }
 

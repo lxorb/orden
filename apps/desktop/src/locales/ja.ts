@@ -28,6 +28,8 @@ export const ja: Dictionary = {
   'Choose an icon': 'アイコンを選ぶ',
   'Search icons - work, journal, money…': 'アイコンを検索 - 仕事、日記、お金…',
   'Use the first letter instead': '代わりに頭文字を使う',
+  'Remove icon': 'アイコンを外す',
+  'Use the plain mark instead': '代わりに標準の記号を使う',
   'Loading…': '読み込み中…',
   'Rename the space': 'スペースの名前を変更',
   'Create a space': 'スペースを作る',

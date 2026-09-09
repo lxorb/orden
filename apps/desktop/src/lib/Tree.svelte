@@ -18,6 +18,7 @@
     bookmarkEntry,
     copyPathEntry,
     DIVIDER,
+    iconEntries,
     menu,
     type MenuEntry,
     revealEntry,
@@ -223,6 +224,8 @@
       DIVIDER,
       { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
       ...moveEntry(entry),
+      // Beside the name, because both are what the row shows.
+      ...iconEntries(entry.path),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
       // Duplicating copies a file's words, and a PDF has none: it would come out
       // as an empty file wearing the name of a paper.
