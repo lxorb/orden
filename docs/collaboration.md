@@ -419,6 +419,11 @@ address was last written to.
 by: `guests`, `guest_sessions` and `guest_members`. See **Getting in without an
 account** below, which is where the rest of that lives.
 
+Two later ones belong to sharing as well. `0018_limits.sql` is `limits`, one row per
+ceiling and per thing counted, and `mailed_days`, which is which addresses have
+heard from Nib today; `0020_room_sockets.sql` is who has a file open, which is what
+lets a revocation reach the sockets it has to close.
+
 **One query answers everything.** `reachedSpace` in `spaces/space.ts` joins the
 space to the membership and returns the role, or nothing at all; `atLeast(role)`
 is the middleware in front of every route that names a space. A space nobody may
@@ -565,7 +570,11 @@ device is back to the app it had before the link.
 
 Redemption is rate limited on the door rather than on whoever knocks, because a
 link anybody may follow is a door with no lock: at most twenty guests through one
-space's link in a minute and two hundred at once.
+space's link in a minute, two hundred in the space at once, and two hundred people
+waiting on it. Only the guests who are actually in count towards the second, or a
+link two hundred people had knocked on once would have stopped working for ever
+with nothing the owner could do about it; a row nobody answered, or that was
+answered with no, runs out after a month and the nightly job takes it away.
 
 A read-only visitor, whether a member or a guest, sees the space in the rail like
 any other, opens its notes, and finds an editor that will not take a keystroke and
@@ -588,32 +597,45 @@ are in the space now, and the sheet is where they are taken out of it.
 
 Mail is rate limited per address, at the same thirty second gap the sign-in code
 keeps and for the same reason: it is the person receiving it who is protected,
-whoever asked for the send. The membership is written whether or not the mail
-went, because a mail that could not go out is not a reason for the sharing not to
-have happened.
+whoever asked for the send. Two ceilings sit above that gap, in
+`services/sync/src/limits.ts`, and they are about the service rather than about one
+person: how many messages one machine may cause in an hour, and how many people
+Nib writes to in a day. The gap is silent - saying it would tell an owner whether
+somebody else had just written to that address - and a ceiling answers 429 and says
+which. An owner is also told at most once an hour that somebody is waiting on any
+one space, because what they need to know is that somebody is at the door rather
+than how many times it was knocked on. The membership is written whether or not the
+mail went, because a mail that could not go out is not a reason for the sharing not
+to have happened.
 
 **The door, and a reader in a room.** The query at the top of
 `services/sync/src/rooms/index.ts` now answers three things in one round trip -
 whether the session is live, whether the note is in a space the person behind it
-can reach, and what they may do there - and passes the room exactly one bit:
-`x-nib-write`. The room keeps it on the socket, beside the carets that socket
-announced, so an object that slept still knows. A message that would change the
-text is then dropped before it reaches the protocol; `isEdit` in `@nib/rooms`
-is what tells one apart, and a reader may still ask what the room holds and say
-where their caret is. The room learns nothing else about anybody.
+can reach, and what they may do there - and passes the room two: `x-nib-write`,
+which is the bit, and `x-nib-who`, which is an id and nothing else. The room keeps
+both on the socket, beside the carets that socket announced, so an object that
+slept still knows. A message that would change the text is then dropped before it
+reaches the protocol; `isEdit` in `@nib/rooms` is what tells one apart, and a
+reader may still ask what the room holds and say where their caret is. The room
+learns nothing else about anybody: the id is a string it cannot look anything up
+with, and the one thing it is for is below.
 
 The `me` half of that query is a union of the two session tables, so a guest's
 token opens a socket the same way an account's does and the room cannot tell them
 apart either. A guest whose request the owner has not answered has no `joined_at`
 and gets the same 404 a stranger does: waiting is not being in.
 
-The bit is read once, at the door, which is the one thing to know about it: a
-role taken away or narrowed while somebody has the note open reaches them when
-their socket next opens rather than at once. That is a pass of the file sync
-away, because the pass that stops listing the space closes its notes and their
-rooms with them, and it is the price of a room that costs no query per keystroke.
-Everything over the API is decided per request and changes immediately; the tests
-say so.
+The bit is read at the door, and again where it can change. A socket is not a
+request, so nothing about it is decided per keystroke; instead the routes that end
+or narrow somebody's access tell the rooms that person has open, inside the same
+request. Which rooms those are is what `room_sockets` is for: a room writes a row
+as a socket joins and takes it away as one closes, so an owner taking somebody out
+reads a handful of rows rather than waking every note of the space. The socket is
+closed, or its bit set to reading, before the answer goes back to the owner. A room
+that cannot be reached at that moment leaves a socket open on something that is no
+longer true and the next handshake corrects it; that is the whole of the gap, and
+it is a gap in a room rather than in the API, which is decided per request as it
+always was.
 
 On the client
 the editor is read-only for the same reason and by the same rule, per pane,
