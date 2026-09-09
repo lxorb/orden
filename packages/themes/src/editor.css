@@ -1677,6 +1677,26 @@
   color: var(--text-strong);
 }
 
+/* ── Where a jump landed ─────────────────────────────────────────── */
+
+/* The block a link, a bookmark or a search result put the reader on, tinted for
+   long enough to find and then let go of. The hold is a delay and the fade is
+   the movement, so somebody who asked for less movement still sees the mark and
+   simply does not see it fade. What takes it out of the state again, so a line
+   redrawn later cannot tint itself, is landing.ts in @nib/editor. */
+.cm-line.nib-landed {
+  animation: nib-landed var(--dur-slower) var(--ease-out) 520ms both;
+}
+
+@keyframes nib-landed {
+  from {
+    background: var(--accent-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+
 /* ── The mark beside a block ─────────────────────────────────────── */
 
 /* Beside every block, one column further out than the fold chevron, so a block

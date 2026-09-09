@@ -6,7 +6,7 @@
   import { viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
-  import { EditorView, setVimCommands, showLine, topLine } from '@nib/editor'
+  import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
@@ -337,7 +337,12 @@
     const target = view.state.doc.line(Math.min(line + 1, view.state.doc.lines))
     view.dispatch({
       selection: { anchor: target.from },
-      effects: EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
+      // The block it landed on says so for a moment: a caret is a pixel wide and
+      // the eye was somewhere else. See landing.ts in @nib/editor.
+      effects: [
+        EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
+        landed.of(target.from),
+      ],
     })
     view.focus()
   }

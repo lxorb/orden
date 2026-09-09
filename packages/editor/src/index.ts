@@ -48,6 +48,7 @@ export {
   deleteBlocks,
   duplicateBlocks,
 } from './block'
+export { landed } from './landing'
 export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'
 export { nibHighlightStyle, nibTheme } from './theme'

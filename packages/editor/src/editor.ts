@@ -15,6 +15,7 @@ import { remoteCarets } from './carets'
 import { editorCompletion } from './emoji'
 import { external } from './external'
 import { blockHandles } from './block/handle'
+import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
@@ -102,6 +103,7 @@ export function editorState(options: StateOptions): EditorState {
       // fields can already ask about while they build.
       folding(),
       blockHandles(),
+      landing(),
       // The other people in this note, when it is one several devices are
       // writing in; nothing at all until the app says there is somebody.
       remoteCarets(),
