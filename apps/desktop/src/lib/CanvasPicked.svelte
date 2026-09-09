@@ -121,6 +121,9 @@
       onclick={(event) => {
         tick()
         colouring = false
+        // The menu closes on the next click anywhere, and this is a click: without
+        // this it would open and shut inside the one press.
+        event.stopPropagation()
         onmore(event)
       }}
     >
