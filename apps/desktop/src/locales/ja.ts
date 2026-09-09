@@ -693,6 +693,7 @@ export const ja: Dictionary = {
   'Tick the task': 'タスクにチェック',
   Callout: '注意ブロック',
   Footnote: '脚注',
+  Footnotes: '脚注',
   'Table of contents': '目次',
   'Front matter': 'フロントマター',
   Picture: '画像',

@@ -11,6 +11,7 @@ import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
+import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import type { Change } from './search/apply'
@@ -324,6 +325,12 @@ class Workspace {
    *  as often as an outline needs to move. Lazy as every derived is, so a
    *  closed outline panel costs nothing at all. */
   readonly headings = $derived.by(() => scanHeadings(this.active?.doc ?? ''))
+
+  /** The note's footnotes, under its headings in the outline panel: both are the
+   *  shape of the note being read rather than anything about the space around it,
+   *  and both jump within it. Lazy for the same reason the headings are, and it
+   *  gives up on the first pass over a note with no `[^` in it at all. */
+  readonly footnotes = $derived.by(() => scanFootnotes(this.active?.doc ?? ''))
 
   /** Every file in the space, flattened: the notes, and the PDFs and canvases
    *  beside them, which are the three things a tab can hold. What quick open

@@ -694,6 +694,7 @@ export const gsw: Dictionary = {
   'Tick the task': 'Ufgab abhake',
   Callout: 'Hinwiisblock',
   Footnote: 'Fuessnote',
+  Footnotes: 'Fuessnote',
   'Table of contents': 'Inhaltsverzeichnis',
   'Front matter': 'Chopfdate',
   Picture: 'Bild',

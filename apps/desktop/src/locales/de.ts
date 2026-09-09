@@ -699,6 +699,7 @@ export const de: Dictionary = {
   'Tick the task': 'Aufgabe abhaken',
   Callout: 'Hinweisblock',
   Footnote: 'Fußnote',
+  Footnotes: 'Fußnoten',
   'Table of contents': 'Inhaltsverzeichnis',
   'Front matter': 'Kopfdaten',
   Picture: 'Bild',

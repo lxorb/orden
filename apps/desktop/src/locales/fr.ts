@@ -698,6 +698,7 @@ export const fr: Dictionary = {
   'Tick the task': 'Cocher la tâche',
   Callout: 'Encadré',
   Footnote: 'Note de bas de page',
+  Footnotes: 'Notes de bas de page',
   'Table of contents': 'Table des matières',
   'Front matter': 'En-tête YAML',
   Picture: 'Image',

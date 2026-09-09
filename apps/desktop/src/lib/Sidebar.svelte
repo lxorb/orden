@@ -507,6 +507,27 @@
         {:else}
           <p class="empty-text">{t('No headings in this note')}</p>
         {/if}
+
+        <!-- Under the headings, because they are the same kind of thing: the
+             shape of the note being read, and a row that jumps within it. Only
+             when the note has any; a heading over nothing is a wall. -->
+        {#if workspace.footnotes.length}
+          <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
+          <ul>
+            {#each workspace.footnotes as note (note.id)}
+              <li>
+                <button
+                  class="nib-row is-short row note"
+                  class:is-quiet={!note.used}
+                  onclick={() => ongoto?.(note.line)}
+                >
+                  <span class="nib-row-mark note-id">{note.id}</span>
+                  <span class="nib-row-label">{note.text}</span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
       {:else if workspace.panel === 'links'}
         <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
       {:else if workspace.panel === 'search'}
@@ -736,6 +757,17 @@
     padding-left: calc(var(--row-pad) + var(--level) * var(--row-indent));
     opacity: calc(1 - var(--level) * 0.09);
     transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  /* A footnote's own label, in the mark's box so every one of them starts where
+     a heading's words do. Raised and in the accent, which is how the note itself
+     draws the mark this row stands for. */
+  .note-id {
+    align-self: start;
+    margin-top: 0.3em;
+    color: var(--accent);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   /* Where a section being dragged would land: along the edge it arrives at,
