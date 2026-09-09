@@ -18,6 +18,58 @@ export interface Contact {
   eraser: boolean
 }
 
+/** The bit Chromium sets for a stylus held with its button, on a desktop. */
+const ERASER_BIT = 32
+/** The bit for the right mouse button, which is what Chrome on Android reports the
+ *  same barrel button as. */
+const RIGHT_BIT = 2
+
+/** As much of a pointer event as saying what kind of pointer it is needs. */
+export interface Reported {
+  pointerType: string
+  button: number
+  buttons: number
+}
+
+/** What the glass is like under this event: whether a pen has ever been on it, and
+ *  whether it is a screen a finger uses. */
+export interface Glass {
+  penSeen: boolean
+  touch: boolean
+}
+
+/** What kind of pointer this really is, and whether it is rubbing out.
+ *
+ *  Three shapes of the same fact, all of them seen on the same Samsung tablet:
+ *
+ *  - a pen that says pen, with the eraser bit set, which is Chromium on a desktop;
+ *  - a pen that says pen, with the right button bit set, which is Chrome on
+ *    Android, where the barrel button is reported as the right mouse button;
+ *  - a pen that says **mouse** while the button is held, which some builds do,
+ *    because a stylus with a button pressed looks like a mouse to the layer
+ *    underneath.
+ *
+ *  The third is only believed on a touch screen that has had a pen on it. A desktop
+ *  right click is a desktop right click, and turning it into an eraser because
+ *  somebody once drew with a stylus would take the menu away for good.
+ *
+ *  Pure, so all three shapes are a test rather than a tablet. */
+export function penKind(
+  event: Reported,
+  glass: Glass,
+): { kind: 'mouse' | 'pen' | 'touch'; eraser: boolean } {
+  const held = (event.buttons & ERASER_BIT) !== 0 || (event.buttons & RIGHT_BIT) !== 0
+  const asked = event.button === 2 || event.button === 5
+
+  if (event.pointerType === 'pen') return { kind: 'pen', eraser: held || asked }
+  if (event.pointerType === 'touch') return { kind: 'touch', eraser: false }
+
+  // A mouse that is really the pen, on glass that has had one on it.
+  if (glass.penSeen && glass.touch && (held || asked)) return { kind: 'pen', eraser: true }
+
+  return { kind: 'mouse', eraser: false }
+}
+
 /** What a changed claim comes to. */
 export interface Turned {
   eraser: boolean
