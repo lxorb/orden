@@ -109,6 +109,14 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Line numbers (toggle)
 - [x] Copy button
 - [x] Code block themes independent of app theme
+- [x] What the block is, written after the language: ` ```ts src/main.ts `. The
+      first word is the language and the rest is the caption, which is what every
+      other markdown reader already ignores, so a note with captions in it opens
+      unchanged anywhere else. `title="setup.js"`, which some editors write, is
+      read as the same thing. It sits on the block's own top row, on the left,
+      level with the language on the right, and steps aside while the caret is in
+      the block and the fence's own line is showing. On a page and in an export it
+      is a caption over the block
 
 ## 7. Tables
 
@@ -121,6 +129,16 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Columns sized to content, CJK-aware
 - [x] Resize columns by dragging
 - [x] Paste TSV/CSV as a table
+- [x] Sort by a column, from the button on it. Numbers sort as numbers and dates
+      as dates, so 9 comes before 10 and a column of prices reads as money; blank
+      cells go last whichever way the column runs, and rows that tie stay in the
+      order they were written. It is an edit and not a way of looking: the rows
+      really are reordered in the file, so the sort survives being read anywhere
+      else
+- [-] Merged cells - a pipe table has no way to say it, and writing an empty cell
+      after a filled one would be a file that says something the table does not
+      mean. Coloured header rows are a theme's business: `#write th` already
+      carries a tint and a rule
 
 ## 8. Images
 
@@ -227,6 +245,14 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Custom fonts (via a theme)
 - [x] Custom CSS injection separate from themes
 - [x] Code block themes
+- [x] More contrast, as a switch beside the mode rather than a theme of its own.
+      A reader who needs the page easier to see should not have to give up the
+      theme they chose, so this restates the palette over whichever theme is in
+      force, on either side of it: text at 21:1, the muted words and the hairlines
+      far enough up to be read and seen, and the accent still the colour they
+      picked, moved further from the page. The syntax in a fence follows, which is
+      the one thing a theme file cannot reach. A system that has contrast turned
+      up gets it without asking here, and the switch is theirs to turn off
 
 ## 14. Export
 
@@ -296,7 +322,28 @@ Features Typora does not have, which are the reason this exists.
       What is folded is remembered per note per device and never written into
       the note, with one exception that is not ours. Obsidian's `-` after a
       callout's type says that callout opens shut, so nib reads it, folds it on
-      the way in and never rewrites it
+      the way in and never rewrites it. Every chevron stands in one column beside
+      the writing, never on the block it folds: a fence, a callout and a heading
+      all inset their own text by different amounts, and the mark backs out by
+      exactly that much. Folding moves rather than blinks - the lines shrink and
+      fade together, the fold lands when they have gone and the mark that is left
+      fades in, and opening runs it backwards - so nothing under the block jumps.
+      Reduced motion makes all of it instant
+- [x] A mark in the margin beside every block. Take hold of it to move the block,
+      where a heading's block is its whole section, the way folding and the
+      outline already mean it; the line it would land on is drawn as it is
+      dragged, and the blank lines that make two paragraphs two paragraphs travel
+      with it, so a list stays a list. Press it instead and it opens the menu a
+      right press already opens, with three rows about the block at the top:
+      duplicate it, delete it, and copy a link to it. Above them, quietly, what
+      the block is and how many words are in it. Everything there acts on every
+      block a selection covers, because a selection is a selection of text and
+      never a mode. Only where there is a pointer: a finger has no hover and the
+      margin is a thumb wide, so a long press opens the same menu
+- [x] A link to a block: `[[Note#^a1b2c3]]`, with the name written at the end of
+      the block where Obsidian writes it and shown nowhere. A heading is linked by
+      its own words instead - `[[Note#The plan]]` - which needs no name and
+      changes nothing in the note
 - [x] Several cursors. Alt and a click puts another one down, Alt and a drag adds
       a whole range to what is already selected, Alt+Shift and a drag takes a
       column of them, and Escape leaves one. `Ctrl+D` grows to the word and then
