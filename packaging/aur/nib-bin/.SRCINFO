@@ -1,6 +1,6 @@
 pkgbase = nib-bin
 	pkgdesc = Lightweight markdown editor with realtime inline preview
-	pkgver = 0.5.0
+	pkgver = 0.6.0
 	pkgrel = 1
 	url = https://nibeditor.com
 	arch = x86_64
@@ -11,7 +11,7 @@ pkgbase = nib-bin
 	depends = hicolor-icon-theme
 	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
 	optdepends = xdg-utils: open links and attachments in the desktop default application
-	provides = nib=0.5.0
+	provides = nib=0.6.0
 	conflicts = nib
 	noextract = nib.deb
 	options = !strip
@@ -19,9 +19,9 @@ pkgbase = nib-bin
 	options = !emptydirs
 	source = nib.desktop
 	sha256sums = 8c6919dae22daa47d0da8f1089bc19a1f4304fa95363d50eff156c4751326915
-	source_x86_64 = nib.deb::https://github.com/lxorb/nibeditor/releases/download/v0.5.0/Nib-0.5.0-linux-x64.deb
-	sha256sums_x86_64 = 5ce5f532ce1e48f48b3bf73f8c892a540870c0006df220b157112f672d7646eb
-	source_aarch64 = nib.deb::https://github.com/lxorb/nibeditor/releases/download/v0.5.0/Nib-0.5.0-linux-arm64.deb
-	sha256sums_aarch64 = 3671983edfdf33a605860136f38946f8b0b982fa4f888abf9ed3fba62de81767
+	source_x86_64 = nib.deb::https://github.com/lxorb/nibeditor/releases/download/v0.6.0/Nib-0.6.0-linux-x64.deb
+	sha256sums_x86_64 = 5b9d32d748d3f86f423cdb1d2a598f519b7bd66f66d51a51cc8fd1b402f30e5c
+	source_aarch64 = nib.deb::https://github.com/lxorb/nibeditor/releases/download/v0.6.0/Nib-0.6.0-linux-arm64.deb
+	sha256sums_aarch64 = b9f5698867a009cc825f357f30c581eab020f4b66e944f07e15bb7112f54b1f2
 
 pkgname = nib-bin
