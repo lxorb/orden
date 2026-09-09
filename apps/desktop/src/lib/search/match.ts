@@ -71,6 +71,41 @@ const LINE = 200
 
 const HEADING = /^ {0,3}#{1,6}(\s|$)/
 
+/** What a walk over a note did, counted. */
+export interface Work {
+  /** Notes it was asked about. */
+  notes: number
+  /** Regions of them a `line:` `block:` or `section:` group was asked about, so
+   *  what asking per line adds is a number rather than a feeling. */
+  regions: number
+  /** Times a needle was looked for over a note. One per needle per note is the
+   *  whole point of `placesIn`: a group that asks about every line asks about
+   *  the same needle in every one of them, and looking again per region is the
+   *  quadratic this file is written to avoid. */
+  needles: number
+  /** Characters read looking for a needle, which is a note's length per look. A
+   *  `/re/` is the engine's own walk and is not counted here. */
+  characters: number
+}
+
+function nothing(): Work {
+  return { notes: 0, regions: 0, needles: 0, characters: 0 }
+}
+
+const work = nothing()
+
+/** What the walks since this was last asked did, and zero from here.
+ *
+ *  Here for match.perf.test.ts, which asserts these rather than a stopwatch, for
+ *  the reason fuzzy.ts gives beside its own: a walk held against a timing of
+ *  another walk fails when the machine was busy for one of them and not for the
+ *  other, and a count is the same number either way. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
 /** Lowercase without changing the length, so an offset in the folded text is
  *  the same offset in the note. A handful of letters lowercase into two - the
  *  Turkish dotted capital I among them - and those are left as they are rather
@@ -241,6 +276,11 @@ function placesIn(facts: Facts, hay: string, needle: string, folded: boolean): n
   const held = facts.places.get(key)
   if (held) return held
 
+  // One look over the note, and the whole of it: every one of these steps starts
+  // where the last stopped, and the last of them reads to the end.
+  work.needles += 1
+  work.characters += hay.length
+
   const found: number[] = []
   for (let at = hay.indexOf(needle); at !== -1; at = hay.indexOf(needle, at + needle.length)) {
     found.push(at)
@@ -308,6 +348,8 @@ export class Matcher {
       units: {},
       places: new Map(),
     }
+
+    work.notes += 1
     return this.walk(this.query, facts, { from: 0, to: note.body.length })
   }
 
@@ -434,6 +476,7 @@ export class Matcher {
           const within = clip(unit, region)
           if (!within) continue
 
+          work.regions += 1
           const found = this.walk(query.of, facts, within)
           if (!found) continue
 
