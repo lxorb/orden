@@ -33,8 +33,17 @@ function reachable(node: Element): boolean {
 }
 
 function boxOf(name: Region): HTMLElement | null {
-  const found = document.querySelector(`[data-region="${name}"]`)
-  return found instanceof HTMLElement && found.getClientRects().length > 0 ? found : null
+  for (const found of document.querySelectorAll<HTMLElement>(`[data-region="${name}"]`)) {
+    if (found.getClientRects().length === 0) continue
+    // A panel that crossfades has two of itself on screen for a moment. The one
+    // that counts is the one holding what is open now; the other is on its way out,
+    // and putting the keyboard in it means putting it nowhere a frame later.
+    if (found.dataset.panel !== undefined && found.dataset.panel !== workspace.panel) continue
+
+    return found
+  }
+
+  return null
 }
 
 /** The regions on screen. The sidebar may be shut, the strip belongs to a
@@ -127,19 +136,36 @@ export function revealPanel(panel: Panel): void {
   }
 
   if (workspace.panel !== panel) workspace.showPanel(panel)
+  settle('list')
+}
+
+/** Puts the keyboard in a region, and keeps at it for a few frames while what is
+ *  there is still changing.
+ *
+ *  One press changes what a panel holds, and the panel crossfades: for a moment
+ *  there are two of it on screen, and the one a first attempt lands in is the one
+ *  on its way out. So this stops only once the keyboard is somewhere that is still
+ *  in the page - which, since a region with nothing in it takes the keyboard
+ *  itself, is the very next frame in every ordinary case. */
+function settle(name: Region, left = 8): void {
   requestAnimationFrame(() => {
-    focusRegion('list')
+    const at = document.activeElement
+    if (at instanceof HTMLElement && at.isConnected && boxOf(name)?.contains(at)) return
+
+    focusRegion(name)
+    if (left > 0) settle(name, left - 1)
   })
 }
 
-/** Presses the one control a region is made of, at its own corner, so the menu
- *  it opens arrives under it rather than in the corner of the window.
+/** Presses one control of a region, at its own corner, so the menu it opens
+ *  arrives under it rather than in the corner of the window.
  *
  *  The key presses the control the pointer would press: the menu is written once,
  *  in the component that owns it, and a chord for it is not a second copy of the
  *  same list. */
-function pressRegion(name: Region): boolean {
-  const entry = entryOf(name)
+function pressRegion(name: Region, what?: string): boolean {
+  const found = what === undefined ? null : boxOf(name)?.querySelector(what)
+  const entry = found instanceof HTMLElement ? found : entryOf(name)
   if (!entry) return false
 
   entry.focus()
@@ -157,12 +183,19 @@ function pressRegion(name: Region): boolean {
 }
 
 /** The space switcher, from anywhere: the sidebar's own header opens it, so the
- *  sidebar is opened first where it was shut. */
+ *  sidebar is opened first where it was shut.
+ *
+ *  The switcher by name and not the first thing in the header, because where the
+ *  panel is a drawer the header carries the button that shuts it and pressing that
+ *  would close the very panel this is opening. The name is what it says about
+ *  itself - the one control up there that hangs a menu. */
+const SWITCHER = '[aria-haspopup="menu"]'
+
 export function openSpaces(): void {
-  if (pressRegion('space')) return
+  if (pressRegion('space', SWITCHER)) return
 
   workspace.showPanel('tree')
   requestAnimationFrame(() => {
-    pressRegion('space')
+    pressRegion('space', SWITCHER)
   })
 }

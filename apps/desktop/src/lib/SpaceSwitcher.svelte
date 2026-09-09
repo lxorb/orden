@@ -18,6 +18,8 @@
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
   import { overlays } from './overlays'
+  import { roving } from './roving'
+  import { trap } from './trap'
   import { newSpace, spaceMenu } from './space-actions'
   import { t } from './i18n.svelte'
   import { isShared } from './sharing.svelte'
@@ -68,7 +70,29 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="catch" onclick={() => (open = false)}></div>
 
-  <div class="spaces" role="menu" in:arrive={{ y: -LIST_STEP }} out:leave={{ y: -LIST_STEP }}>
+  <!-- The same walk and the same one tab stop every list in the app has, and the
+       same trap every layer has: the arrows move, a letter spells a name, Enter
+       chooses, and closing gives the keyboard back to the name it came from. The
+       three dots on a row are reached with the row's own menu key rather than with
+       Tab; see roving.ts and trap.ts. -->
+  <div
+    class="spaces"
+    role="menu"
+    use:trap
+    use:roving={{
+      current: '.is-on',
+      wrap: true,
+      quiet: '.more',
+      open: (row) => row.click(),
+      menu: (row, at) => row.dispatchEvent(at),
+      leave: () => {
+        open = false
+        return true
+      },
+    }}
+    in:arrive={{ y: -LIST_STEP }}
+    out:leave={{ y: -LIST_STEP }}
+  >
     {#each workspace.spaces as space (space.id)}
       {@const shape = glyph(space)}
       <div class="line">
@@ -343,7 +367,6 @@
   }
 
   button:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: -1px;
   }
 </style>

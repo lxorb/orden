@@ -10,11 +10,20 @@ import { isRegion, REGIONS, stepRegion } from './regions'
 /** A desktop window with the sidebar open, as the page reports it. Deliberately
  *  out of order: what arrives is the order the DOM was asked in, and the order the
  *  key walks is the one the list decides. */
-const WINDOW = ['editor', 'list', 'status', 'panels', 'tabs', 'space', 'search']
+const WINDOW = ['editor', 'list', 'status', 'panels', 'foot', 'tabs', 'space', 'search']
 
 describe('the order', () => {
   test('runs down the sidebar and then across the note', () => {
-    expect([...REGIONS]).toEqual(['space', 'panels', 'search', 'list', 'tabs', 'editor', 'status'])
+    expect([...REGIONS]).toEqual([
+      'space',
+      'panels',
+      'search',
+      'list',
+      'foot',
+      'tabs',
+      'editor',
+      'status',
+    ])
   })
 
   test('knows a region from anything else on the page', () => {
@@ -29,7 +38,8 @@ describe('one step along', () => {
   test('goes to the next region on screen, in the order the window draws them', () => {
     expect(stepRegion(WINDOW, 'space', 1)).toBe('panels')
     expect(stepRegion(WINDOW, 'panels', 1)).toBe('search')
-    expect(stepRegion(WINDOW, 'list', 1)).toBe('tabs')
+    expect(stepRegion(WINDOW, 'list', 1)).toBe('foot')
+    expect(stepRegion(WINDOW, 'foot', 1)).toBe('tabs')
     expect(stepRegion(WINDOW, 'tabs', 1)).toBe('editor')
   })
 

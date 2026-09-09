@@ -100,14 +100,15 @@ Four sentences.
 
 ### The regions
 
-Seven, in the order the window draws them, which is the order Tab already walks:
+Eight, in the order the window draws them, which is the order Tab already walks:
 
 | | |
 | --- | --- |
-| `space` | the sidebar's header, which is the space's name and its switcher |
+| `space` | the panel's header, which is the space's name and its switcher |
 | `panels` | the row of four panel tabs |
 | `search` | the search pill under them |
 | `list` | whichever panel is open |
+| `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
 | `editor` | the note |
 | `status` | the bar under it |
@@ -116,6 +117,12 @@ They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
 not on screen is not in the ring: the sidebar may be shut, a phone has no strip,
 and a canvas has no status bar.
+
+The space switcher is a menu that drops out of the panel header, so
+Ctrl+Shift+Space presses that header's own control rather than opening a second
+copy of the list somewhere else - and the list it opens walks with the arrows,
+spells with a letter and gives the keyboard back to the name it came from, like
+every other list here.
 
 ### In a list
 

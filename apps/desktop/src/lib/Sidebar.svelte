@@ -442,9 +442,13 @@
   {#key workspace.activeSpaceId}
     <div class="stack" in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}>
       {#key workspace.panel}
+        <!-- Which panel this is holding, because the body crossfades: for a moment
+             there are two of it on screen and only one of them is the one that is
+             arriving. See boxOf in focus.ts. -->
         <div
           class="body"
           data-region="list"
+          data-panel={workspace.panel}
           use:scrollbar={workspace.panel}
           in:arrive
           out:leave
@@ -727,7 +731,6 @@
   }
 
   button:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: -1px;
   }
 

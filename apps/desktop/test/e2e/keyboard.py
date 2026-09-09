@@ -7,9 +7,10 @@ as a screenshot somebody has to squint at.
 
 What it proves, in order: F6 walks the regions and comes back round; Tab stops
 once per list rather than once per row; the arrows walk a list and Enter opens a
-note; the strip of tabs is one stop with arrows inside it; the four panels answer
-their own chords; every sheet and menu traps the keyboard and hands it back to
-whatever opened it; and the focus ring is drawn in both schemes.
+note; the panel tabs and the strip of notes are each one stop with arrows inside
+them; the four panels answer their own chords; every sheet and menu traps the
+keyboard and hands it back to whatever opened it; and the focus ring is drawn in
+both schemes.
 
 Build first, with the app's own handle on the page:
 

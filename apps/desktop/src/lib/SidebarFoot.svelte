@@ -31,7 +31,9 @@
   }
 </script>
 
-<div class="foot">
+<!-- A region of the window, so F6 reaches the account, the theme and the settings
+     without a pointer; see focus.ts. -->
+<div class="foot" data-region="foot">
   <!-- The account, which is a row rather than a glyph: a name is what says whose
        notes these are. Signed in or not, it opens the same pane - signing in,
        the name the others in a shared space see, storage and signing out are all
@@ -135,7 +137,6 @@
   }
 
   button:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: -1px;
   }
 

@@ -18,9 +18,19 @@
  *
  *  `space` is the sidebar's header, which is the space's name and its switcher;
  *  `panels` is the row of panel tabs; `search` is the pill under them; `list` is
- *  whichever panel is open; `tabs` is the strip of notes; `editor` is the note;
+ *  whichever panel is open; `foot` is the row under it, which is the account, the
+ *  theme and the settings; `tabs` is the strip of notes; `editor` is the note;
  *  `status` is the bar under it. */
-export const REGIONS = ['space', 'panels', 'search', 'list', 'tabs', 'editor', 'status'] as const
+export const REGIONS = [
+  'space',
+  'panels',
+  'search',
+  'list',
+  'foot',
+  'tabs',
+  'editor',
+  'status',
+] as const
 
 export type Region = (typeof REGIONS)[number]
 
