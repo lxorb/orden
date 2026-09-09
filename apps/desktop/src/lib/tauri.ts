@@ -129,9 +129,30 @@ export function joinPath(dir: string, relative: string): string {
   return `${dir}${separator}${relative.split('/').join(separator)}`
 }
 
+/** Whether an address is one the app hands to the system.
+ *
+ *  A link in a note is words the note wrote, and a note can arrive from a shared
+ *  space, a room or somebody's export. `file:`, `smb:` and the rest would ask the
+ *  system to open something on this machine, and `javascript:` would run in the
+ *  page - so the list is the four the opener plugin's own scope grants, said here
+ *  as well because the browser build has no such scope to fall back on. See
+ *  `opener:allow-default-urls` in src-tauri/capabilities.
+ *
+ *  A path with no scheme at all is one of ours and never reaches here; every
+ *  caller has already decided the address points outside the app. */
+const OPENABLE = /^(?:https?|mailto|tel):/i
+
+export function isOpenable(url: string): boolean {
+  // A protocol-relative address is http's, and that is what a browser makes of it.
+  return url.startsWith('//') || OPENABLE.test(url)
+}
+
 /** A link to somewhere outside the app: the system browser on a desktop, the
- *  browser app on a phone, a new tab in a browser. */
+ *  browser app on a phone, a new tab in a browser. An address in no scheme the
+ *  app hands over does nothing, which is what a note asking for one deserves. */
 export async function openExternal(url: string): Promise<void> {
+  if (!isOpenable(url)) return
+
   if (!isNative) {
     window.open(url, '_blank', 'noopener')
     return
