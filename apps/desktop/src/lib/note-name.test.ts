@@ -67,6 +67,23 @@ describe('the line a note is titled after', () => {
     expect(titleFrom(lines(far))).toBe('prose')
   })
 
+  /** The same thing said as work rather than as an answer: however many lines
+   *  are offered, only so many are ever taken. Counted, not timed - a clock
+   *  measures the machine as much as the code; see docs/conventions.md. */
+  test('takes a fixed number of lines however many it is offered', () => {
+    let pulled = 0
+
+    function* endless() {
+      for (let line = 0; line < 100_000; line++) {
+        pulled += 1
+        yield 'prose'
+      }
+    }
+
+    titleFrom(endless())
+    expect(pulled).toBeLessThanOrEqual(40)
+  })
+
   test('takes lines from anything that hands them over one at a time', () => {
     function* rope() {
       yield ''

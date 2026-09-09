@@ -1751,6 +1751,25 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('Untitled')
   })
 
+  /** A draft is asked what it is called on every keystroke, so what it reads has
+   *  to be a fixed amount of it. A page pasted out of a browser arrives as one
+   *  line of a hundred thousand characters, and the first line is exactly the one
+   *  a title is read from - so the bound is on characters as well as on lines.
+   *
+   *  Said as what it does rather than as how long it takes: a heading sitting
+   *  past that many characters is not found, even though it is well within the
+   *  forty lines a title may be on. See TITLE_CHARS. */
+  test('reads a fixed amount of a draft, however long its first line is', () => {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('the draft did not open')
+
+    tab.note.live.replace(`${'word '.repeat(600)}\n# Buried\n`)
+
+    expect(tab.shown).not.toBe('Buried')
+    expect(tab.shown.startsWith('word word')).toBe(true)
+  })
+
   /** A file opened from the computer in the browser build has a name of its own
    *  and no path to save back to. The name it came with wins. */
   test('is the name a draft came with, where it came with one', () => {

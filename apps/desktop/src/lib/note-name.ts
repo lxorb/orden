@@ -30,6 +30,17 @@ const MOST = 60
  *  length of the draft, since a tab asks again on every keystroke. */
 const LINES = 40
 
+/** And how much of the note is read to find those lines.
+ *
+ *  Two bounds rather than one, because a note has two ways of being long. `LINES`
+ *  stops a note of ten thousand short lines; this stops a note that is one line
+ *  of a hundred thousand characters, which is what a page pasted out of a browser
+ *  looks like. Between them, what naming a draft costs is a fixed amount of work
+ *  whatever the draft weighs - which it has to be, because it is asked again on
+ *  every keystroke. See `retitle` in workspace/documents.svelte.ts, which is the
+ *  one caller that reads off a rope. */
+export const TITLE_CHARS = 2_000
+
 /** A heading line, and what it says. Up to three spaces of indent, as markdown
  *  has it. */
 const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/

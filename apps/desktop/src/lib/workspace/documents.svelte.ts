@@ -15,7 +15,7 @@ import { SharedDoc } from '@nib/editor'
 import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
-import { draftName, shownName } from '../note-name'
+import { draftName, shownName, TITLE_CHARS } from '../note-name'
 
 /** The name a note nobody has named carries. It is never on screen: such a note
  *  is called after its own first words instead, so a window of drafts is a window
@@ -184,9 +184,18 @@ export class NoteDoc {
   }
 
   /** Reads the note's own title off the top of the rope, for a note that has no
-   *  name but that. */
+   *  name but that.
+   *
+   *  A fixed slice of it, never the whole: this runs on every keystroke, and a
+   *  note has two ways of being long. Walking it by lines is bounded against one
+   *  of them and not the other - a page pasted out of a browser arrives as a
+   *  single line of a hundred thousand characters, and the first line is the one
+   *  line a title is always read from. Asking the rope for a length is the only
+   *  read here that cannot grow with the note. See TITLE_CHARS. */
   private retitle() {
-    if (this.unnamed) this.firstWords = draftName(this.live.text.iterLines())
+    if (!this.unnamed) return
+
+    this.firstWords = draftName(this.live.text.sliceString(0, TITLE_CHARS).split('\n'))
   }
 
   /** Brings the words up to what the views hold. Costs one pass over the note,
