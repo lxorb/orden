@@ -158,6 +158,59 @@ describe('the segmented control', () => {
   })
 })
 
+/** Changing what a surface shows is a move, and there is one way to make it.
+ *  Before this, four panel tabs switched between two frames and a settings pane
+ *  had a fly of its own with its own numbers written into the component. See
+ *  docs/design.md, "Swapping". */
+describe('how a surface swaps what it is showing', () => {
+  const slide = readFileSync(join(SOURCE, 'lib/slide.ts'), 'utf8')
+
+  test('is one module, and it moves nothing but a transform and an opacity', () => {
+    expect(slide).toContain('export function arrive')
+    expect(slide).toContain('export function leave')
+    expect(slide).toContain('export function segmented')
+
+    // What a transition hands the browser, and what the sliding surface writes.
+    const moved = [...slide.matchAll(/(?:css: \(t, u\) =>|thumb\.style\.)(\w+)/g)].map(
+      (one) => one[1],
+    )
+    for (const property of moved) {
+      expect(['opacity', 'transform', 'width', 'height', 'transition'], property).toContain(
+        property,
+      )
+    }
+    // Width and height are the surface being laid out at the size of a half,
+    // once; what changes as the choice moves is the transform.
+    expect(slide).toContain('thumb.style.transform = `translate(')
+    expect(slide).toContain('transform: translateY(')
+  })
+
+  test('and its durations come through the one place reduced motion is answered', () => {
+    expect(slide).toContain("from './motion'")
+    expect(slide).toContain('duration: dur(ms)')
+  })
+
+  /** The surface belongs to the control, so it is drawn with the control. */
+  test('the sliding surface is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    expect(shared).toContain('.nib-segmented-thumb')
+    expect(draw(/\.nib-segmented-thumb/)).toEqual([])
+  })
+
+  /** Every groove gets the same one. The canvas is out: its two controls are
+   *  part of a floating bar with its own life. */
+  test('and every segmented control in the shell asks for it', () => {
+    const without = components
+      .filter((one) => one.text.includes('class="nib-segmented"'))
+      .filter((one) => !one.text.includes('use:segmented'))
+      .map((one) => one.name)
+      .sort()
+
+    expect(without).toEqual(['lib/CanvasCatch.svelte', 'lib/CanvasRub.svelte'])
+  })
+})
+
 describe('a value beside its copy button', () => {
   test('is one component', () => {
     expect(draw(/\.copyable/)).toEqual(['lib/Copyable.svelte'])

@@ -15,6 +15,7 @@
   import { movesInto } from './move-targets'
   import { FILES_MARK, GRAPH_MARK, LINKS_MARK, OUTLINE_MARK, SEARCH_MARK } from './panel-marks'
   import { newSpace } from './space-actions'
+  import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import type { Panel, SortKey } from './workspace.svelte'
@@ -267,8 +268,8 @@
   })
 
   /** Which way the panel's contents come in when the space changes: from
-   *  below when the new space sits lower in the rail, from above when it sits
-   *  higher, so the motion agrees with the finger or the eye that chose it.
+   *  below when the new space sits lower in the switcher, from above when it
+   *  sits higher, so the motion agrees with the row that was pressed.
    *
    *  Kept by an effect rather than worked out in a derived. A derived is read on
    *  demand and may be read twice or not at all, so a "previous value" written
@@ -329,6 +330,10 @@
 
     <SpaceSwitcher />
 
+    <!-- The stretch the switcher does not take. Nothing in it, so it is what the
+         plus is pushed to the far end by. -->
+    <span class="gap"></span>
+
     <!-- The one plus. A desktop's lives at the end of the tab strip, where a
          browser puts it; a handheld has no tab strip, so it is here. Either way
          a plain press makes a note and a held finger offers the other two kinds,
@@ -348,7 +353,7 @@
   </div>
 
   <div class="switch">
-    <div class="nib-segmented" role="tablist" aria-label={t('Panels')}>
+    <div class="nib-segmented" role="tablist" aria-label={t('Panels')} use:segmented>
       {#each PANELS as item (item.id)}
         <button
           class:on={workspace.panel === item.id}
@@ -408,103 +413,108 @@
     </div>
   {/if}
 
-  <!-- Rebuilt for each space, and arriving from the side of the rail the new
-       space is on. -->
+  <!-- Rebuilt for each space, arriving from the side of the switcher the new
+       space is on; and inside that, one panel crossing with the next. The two
+       are stacked rather than in a column, so the one going and the one coming
+       occupy the same place and the list under them does not jump; only their
+       transforms and their opacities change, which is the compositor's work
+       alone. -->
   {#key workspace.activeSpaceId}
-    <div
-      class="body"
-      use:scrollbar={workspace.panel}
-      in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}
-    >
-      {#if workspace.panel === 'tree'}
-        {#if workspace.tree}
-          <Bookmarks onsearch={runBookmarked} />
+    <div class="stack" in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}>
+      {#key workspace.panel}
+        <div class="body" use:scrollbar={workspace.panel} in:arrive out:leave>
+          {#if workspace.panel === 'tree'}
+            {#if workspace.tree}
+              <Bookmarks onsearch={runBookmarked} />
 
-          <!-- A word in capitals over each group, the way every list worth
+              <!-- A word in capitals over each group, the way every list worth
                reading is cut up; see docs/design.md. -->
-          <p class="nib-section">{t('Files')}</p>
+              <p class="nib-section">{t('Files')}</p>
 
-          <Tree entries={workspace.tree.children} />
+              <Tree entries={workspace.tree.children} />
 
-          <!-- A space with nothing in it says what to do about it. Folders can
+              <!-- A space with nothing in it says what to do about it. Folders can
              still be there, which is why this counts files and not rows. -->
-          {#if !workspace.files.length}
-            <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button>
-          {/if}
+              {#if !workspace.files.length}
+                <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
+                >
+              {/if}
 
-          <!-- The space below the last row still belongs to the space, so it
+              <!-- The space below the last row still belongs to the space, so it
              takes the same menu instead of swallowing the click, and accepts a
              note dropped on it as "out of whatever folder it was in". -->
-          <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-          <div
-            class="rest"
-            class:dropping={rootDrop}
-            oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-            onclick={() => workspace.stopRenaming()}
-            ondragover={overRoot}
-            ondragleave={() => dropTarget.clear()}
-            ondrop={dropOnRoot}
-          ></div>
-        {:else}
-          <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
-        {/if}
-      {:else if workspace.panel === 'outline'}
-        {#if workspace.headings.length}
-          <ul bind:this={outline}>
-            {#each workspace.headings as heading, index (index)}
-              <li>
-                <button
-                  class="nib-row is-short row heading"
-                  class:is-on={index === current}
-                  class:above={dropAt === index && dropAbove}
-                  class:below={dropAt === index && !dropAbove}
-                  style:--level={heading.level - shallowest}
-                  draggable="true"
-                  onclick={() => ongoto?.(heading.line)}
-                  oncontextmenu={(event) =>
-                    menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
-                  use:longPress={(event) =>
-                    menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
-                  ondragstart={(event) => startSection(event, index)}
-                  ondragover={(event) => overSection(event, index)}
-                  ondragleave={() => (dropAt = null)}
-                  ondragend={endSection}
-                  ondrop={(event) => dropSection(event, index)}
-                >
-                  <span class="nib-row-label">{heading.text}</span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        {:else}
-          <p class="empty-text">{t('No headings in this note')}</p>
-        {/if}
+              <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+              <div
+                class="rest"
+                class:dropping={rootDrop}
+                oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+                onclick={() => workspace.stopRenaming()}
+                ondragover={overRoot}
+                ondragleave={() => dropTarget.clear()}
+                ondrop={dropOnRoot}
+              ></div>
+            {:else}
+              <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
+            {/if}
+          {:else if workspace.panel === 'outline'}
+            {#if workspace.headings.length}
+              <ul bind:this={outline}>
+                {#each workspace.headings as heading, index (index)}
+                  <li>
+                    <button
+                      class="nib-row is-short row heading"
+                      class:is-on={index === current}
+                      class:above={dropAt === index && dropAbove}
+                      class:below={dropAt === index && !dropAbove}
+                      style:--level={heading.level - shallowest}
+                      draggable="true"
+                      onclick={() => ongoto?.(heading.line)}
+                      oncontextmenu={(event) =>
+                        menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                      use:longPress={(event) =>
+                        menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                      ondragstart={(event) => startSection(event, index)}
+                      ondragover={(event) => overSection(event, index)}
+                      ondragleave={() => (dropAt = null)}
+                      ondragend={endSection}
+                      ondrop={(event) => dropSection(event, index)}
+                    >
+                      <span class="nib-row-label">{heading.text}</span>
+                    </button>
+                  </li>
+                {/each}
+              </ul>
+            {:else}
+              <p class="empty-text">{t('No headings in this note')}</p>
+            {/if}
 
-        <!-- Under the headings, because they are the same kind of thing: the
-             shape of the note being read, and a row that jumps within it. Only
-             when the note has any; a heading over nothing is a wall. -->
-        {#if workspace.footnotes.length}
-          <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
-          <ul>
-            {#each workspace.footnotes as note (note.id)}
-              <li>
-                <button
-                  class="nib-row is-short row note"
-                  class:is-quiet={!note.used}
-                  onclick={() => ongoto?.(note.line)}
-                >
-                  <span class="nib-row-mark note-id">{note.id}</span>
-                  <span class="nib-row-label">{note.text}</span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-      {:else if workspace.panel === 'links'}
-        <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
-      {:else if workspace.panel === 'search'}
-        <SearchPanel {ongoto} />
-      {/if}
+            <!-- Under the headings, because they are the same kind of thing: the
+                 shape of the note being read, and a row that jumps within it. Only
+                 when the note has any; a heading over nothing is a wall. -->
+            {#if workspace.footnotes.length}
+              <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
+              <ul>
+                {#each workspace.footnotes as note (note.id)}
+                  <li>
+                    <button
+                      class="nib-row is-short row note"
+                      class:is-quiet={!note.used}
+                      onclick={() => ongoto?.(note.line)}
+                    >
+                      <span class="nib-row-mark note-id">{note.id}</span>
+                      <span class="nib-row-label">{note.text}</span>
+                    </button>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          {:else if workspace.panel === 'links'}
+            <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
+          {:else if workspace.panel === 'search'}
+            <SearchPanel {ongoto} />
+          {/if}
+        </div>
+      {/key}
     </div>
   {/key}
 
@@ -571,6 +581,11 @@
     gap: var(--space-1);
     min-height: var(--header-height);
     padding: 0 var(--space-1);
+  }
+
+  .gap {
+    flex: 1;
+    min-width: 0;
   }
 
   .new {
@@ -672,10 +687,21 @@
     outline-offset: -1px;
   }
 
-  /* A column so the filler below the tree can take the leftover height. */
-  .body {
+  /* What is left of the panel once the head, the tabs and the search entry have
+     had theirs - and the ground the panels cross over. Positioned, so the one
+     going and the one coming can be in the same place for the moment they are
+     both here; a column would put them one above the other and shove the list
+     around. */
+  .stack {
+    position: relative;
     flex: 1;
     min-height: 0;
+  }
+
+  /* A column so the filler below the tree can take the leftover height. */
+  .body {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     overflow-y: auto;

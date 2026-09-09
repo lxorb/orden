@@ -520,11 +520,41 @@ textarea.nib-field {
    they mean to a screen reader is the component's own business, since a pair of
    choices is a radio group and a set of panels is a tab strip. */
 .nib-segmented {
+  position: relative;
   display: flex;
   gap: 2px;
   padding: 3px;
   border-radius: var(--radius-md);
   background: var(--surface-2);
+}
+
+/* The one raised surface that says which half is chosen. It slides from one to
+   the next rather than switching off under one and on under another, because a
+   control with four choices in it is a place you move along; see slide.ts, which
+   is what puts this in the groove and what measures where it goes.
+
+   It is laid out once, at the size of a half, and moved by a transform after
+   that: the compositor does every frame of it and the row is never laid out
+   again. `--dur-fast` is zeroed for a reader who has asked for as little
+   movement as possible, so for them the surface is simply already there. */
+.nib-segmented-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+/* Over the surface, or the words would be behind it. */
+.nib-segmented button {
+  position: relative;
+  z-index: 1;
 }
 
 .nib-segmented button {
@@ -549,10 +579,19 @@ textarea.nib-field {
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
+/* What being the chosen one is, where nothing is sliding: the surface itself.
+   The words go dark either way. */
 .nib-segmented button.on {
   background: var(--surface);
   color: var(--text-strong);
   box-shadow: var(--shadow-sm);
+}
+
+/* And where something is sliding, the surface belongs to the thing that slides,
+   so the button gives it up and keeps only the colour of its words. */
+.nib-segmented.has-thumb button.on {
+  background: none;
+  box-shadow: none;
 }
 
 .nib-segmented button:focus-visible {

@@ -6,6 +6,7 @@
   import type { EditorView } from '@nib/editor'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
+  import { arrive, segmented } from './slide'
   import Hint from './Hint.svelte'
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
@@ -332,13 +333,16 @@
             {@render results()}
           </div>
         {:else}
+          <!-- The pane that has just been chosen comes up from below and fades
+               in, which is the movement every other swap in the app makes; see
+               slide.ts. The one before it goes at once rather than crossing with
+               it: a pane is a page of controls, and keeping a second copy of all
+               of them alive to fade one out is a cost the eye is not paid for
+               here. On a phone this is now a movement too - the list and the
+               pane already slide past each other, and this is what happens once
+               the pane is the thing on screen. -->
           {#key settings.section}
-            <div
-              class="pane"
-              in:fly={viewport.touch
-                ? { duration: dur(0) }
-                : { y: 8, duration: dur(180), easing: cubicOut }}
-            >
+            <div class="pane" in:arrive>
               {#if !viewport.touch}
                 <h2>{titleOf(settings.section)}</h2>
               {/if}
@@ -436,7 +440,7 @@
          not change shape as themes are chosen. -->
     <div class="setting">
       {@render named(field, where)}
-      <div class="nib-segmented" role="radiogroup" aria-label={field.label}>
+      <div class="nib-segmented" role="radiogroup" aria-label={field.label} use:segmented>
         {#each field.options as one (one.value)}
           <button
             type="button"

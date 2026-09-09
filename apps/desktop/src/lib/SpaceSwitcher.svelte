@@ -140,9 +140,12 @@
 {/if}
 
 <style>
-  /* The space's name, and the whole of what the switcher is. */
+  /* The space's name, and the whole of what the switcher is. As wide as the word
+     and no wider: a control the width of the panel puts a grey block across the
+     header the moment it is pressed, and says the whole bar is the button when
+     the name is. It gives way rather than pushing the plus off the end. */
   .name {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -180,11 +183,13 @@
     flex: 0 1 auto;
   }
 
-  /* Says the name can be pressed, and turns over while what it opened is open. */
+  /* Says the name can be pressed, and turns over while what it opened is open.
+     `--icon-md`, the size of a mark that belongs to a name, so it grows with the
+     word under a thumb instead of staying a pointer's size beside 19px type. */
   .chevron {
     flex: none;
-    width: var(--icon-sm);
-    height: var(--icon-sm);
+    width: var(--icon-md);
+    height: var(--icon-md);
     color: var(--muted);
     transition: transform var(--dur-fast) var(--ease-out);
   }

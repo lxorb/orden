@@ -10,6 +10,7 @@
   import { domainNotice } from './domain-status'
   import { t } from './i18n.svelte'
   import { publish } from './publishing.svelte'
+  import { segmented } from './slide'
   import { shownName } from './note-name'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
@@ -119,7 +120,7 @@
          to end up asking for both. -->
     <h3>{t('Address')}</h3>
     {#if offerDomain}
-      <div class="nib-segmented" role="radiogroup" aria-label={t('Address')}>
+      <div class="nib-segmented" role="radiogroup" aria-label={t('Address')} use:segmented>
         <button
           type="button"
           role="radio"

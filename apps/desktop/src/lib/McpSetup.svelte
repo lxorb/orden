@@ -9,6 +9,7 @@
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { MCP_URL } from './api'
+  import { segmented } from './slide'
   import { account } from './account.svelte'
   import { type Client, connectors } from './connectors.svelte'
   import Copyable from './Copyable.svelte'
@@ -112,7 +113,7 @@
       )}
     </p>
 
-    <div class="nib-segmented" role="tablist">
+    <div class="nib-segmented" role="tablist" use:segmented>
       {#each CLIENTS as one (one.id)}
         <button
           role="tab"

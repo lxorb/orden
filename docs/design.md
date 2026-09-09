@@ -220,6 +220,59 @@ the panel's header, and the tab strip are all as tall as, so the two columns
 across the top of the app read as one row. On a touch screen it is
 `--touch-row`.
 
+### Swapping
+
+Changing what a surface is showing is a move, not a cut. Four tabs across the
+top of the list panel that switch between two frames read as a flicker: nothing
+says the new list came from anywhere, and nothing says the old one went. So
+every swap in the app is one mechanism, `apps/desktop/src/lib/slide.ts`, beside
+the durations in `motion.ts`:
+
+- **`arrive` and `leave`**, a pair of transitions. What is going slips 6px up as
+  it fades; what is coming comes up from 6px below. One helper with the distance
+  as its argument, so a list dropping out of a header comes *down* out of it by
+  passing a negative one.
+- **`segmented`**, an action on the groove of a segmented control. It draws one
+  raised surface, measures whichever button wears `on`, and slides the surface
+  there - one element translating, rather than a background switching off under
+  one half and on under another. It watches the class rather than being told a
+  value, so it follows a choice made from a menu, a key or the palette as
+  faithfully as one made by pressing the control, and no control passes it
+  anything.
+
+Two rules hold for both, and for anything added beside them:
+
+**Transform and opacity only.** Never a width, a height, a top or a margin. Both
+of these are laid out once and moved by the compositor after that, so a swap
+costs no layout on any frame. Where two things have to cross, they are stacked -
+the panel's body is `position: absolute` inside a positioned `.stack` - rather
+than allowed to sit one above the other and shove the page around.
+
+**Never in front of the interaction.** What was pressed is chosen on the frame it
+was pressed; the movement catches up afterwards. Nothing waits for a transition
+to end before doing what it was asked.
+
+Reduced motion needs no second answer: the transitions take their duration from
+`dur()`, and the sliding surface takes `--dur-fast`, which the tokens zero along
+with every other duration. For a reader who has asked for as little movement as
+possible, everything here is simply already where it is going.
+
+What this reaches: the four panel tabs and the panel under them, on a desktop
+and in the drawer alike; the settings sheet's segmented controls, and its panes,
+which come up from below where they used to appear (and, on a phone, where they
+used to do nothing at all); the sharing sheet's link mode; the publishing
+sheet's address; the LLM pane's client picker; and the space switcher, which
+drops out of the header it belongs to and goes back into it.
+
+Two things were looked at and left alone. The search results and the header menu
+already move, in this vocabulary and at these durations. And the strip of tabs
+over the note keeps its sliding underline but does not crossfade its content:
+the editor holds a state per tab, so switching is not the document moving but
+the document *being* another one, and `apps/desktop/test/e2e/swap-cost.py`
+measures the swap at under a frame either way - so latency is not the argument.
+The argument is that a pane you are about to type into should be solid the
+instant the caret is in it.
+
 ### Radius, and the elevation model
 
 Three corners, and a rule that says which:
@@ -300,7 +353,8 @@ order and Notion's:
    two controls that look alike.
 3. **The panel tabs**, full width, one quarter each - the segmented control the
    settings sheet already uses, so the tab you are on is raised out of its groove
-   exactly the way every other "this one" in the app is.
+   exactly the way every other "this one" in the app is, and the raised surface
+   slides between them rather than blinking; see "Swapping".
 
 The tabs sit between the name and the search entry rather than under both: the
 entry has to be in one place whether it is the pill or the field, and the field

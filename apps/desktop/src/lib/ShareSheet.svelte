@@ -7,6 +7,7 @@
   import { fade } from 'svelte/transition'
   import { t } from './i18n.svelte'
   import { share } from './sharing.svelte'
+  import { segmented } from './slide'
   import { called } from './person'
   import { viewport } from './viewport.svelte'
   import type { GivenRole, Member, Sharing } from './api'
@@ -180,7 +181,7 @@
         </div>
 
         <div class="row">
-          <div class="nib-segmented" role="radiogroup" aria-label={t('Link')}>
+          <div class="nib-segmented" role="radiogroup" aria-label={t('Link')} use:segmented>
             <button
               type="button"
               role="radio"
