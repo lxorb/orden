@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { readSpaceFiles } from '../src/spaces/files'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, mail, signIn, testEnv, type ShareView, type TestEnv } from './harness'
 
 let env: TestEnv
 let token: string
@@ -184,6 +184,105 @@ describe('what a space keeps beside its notes', () => {
     const response = await record([{ path: 'paper.pdf', hash: OTHER }])
     expect(response.json.files).toEqual([])
     expect(response.json.missing).toEqual([OTHER])
+  })
+})
+
+describe('a space two people write in', () => {
+  const THIRD = 'c'.repeat(64)
+
+  /** Somebody the owner gave the space to and who is in it, and their session. */
+  async function writerIn(email: string): Promise<string> {
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${space}/share/invite`, {
+        token,
+        body: { email, role: 'write' },
+      }),
+    )
+
+    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
+    if (!link) throw new Error(`no invitation was sent:\n${sent}`)
+
+    const session = await signIn(env, email)
+    await call(env, `/v1/join/${link}`, { method: 'POST', token: session })
+    return session
+  }
+
+  /** Somebody with no account, let in by the space's own link. */
+  async function guestIn(): Promise<string> {
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token,
+      body: { role: 'write', mode: 'open' },
+    })
+
+    const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1]
+    if (!link) throw new Error('no link was made')
+
+    return (await call(env, `/v1/join/${link}`, { method: 'POST', body: { device: 'Windows' } }))
+      .json.token
+  }
+
+  /** A PDF this session's account keeps the bytes of, recorded in the space. */
+  async function put(hash: string, as: string, path: string) {
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token: as,
+      raw: new Uint8Array(64),
+      headers: { 'content-type': 'application/pdf' },
+    })
+    const held = readSpaceFiles(column())
+    return record([...held, { path, hash }], as)
+  }
+
+  test('keeps the entries of the person who is not writing the list', async () => {
+    const writer = await writerIn('writer@b.dev')
+    await put(PAPER, token, 'owner.pdf')
+    await put(OTHER, writer, 'writer.pdf')
+
+    // The writer's own client knows about its own paper and nothing else, so
+    // that is the whole list it states.
+    const response = await record([{ path: 'writer.pdf', hash: OTHER }], writer)
+
+    expect(readSpaceFiles(column())).toEqual([
+      { path: 'writer.pdf', hash: OTHER },
+      { path: 'owner.pdf', hash: PAPER },
+    ])
+    expect(response.json.files).toHaveLength(2)
+  })
+
+  test('and keeps them when the list is empty', async () => {
+    const writer = await writerIn('writer@b.dev')
+    await put(PAPER, token, 'owner.pdf')
+    await put(OTHER, writer, 'writer.pdf')
+
+    await record([], writer)
+
+    // Their own paper is theirs to take away; the owner's is not.
+    expect(readSpaceFiles(column())).toEqual([{ path: 'owner.pdf', hash: PAPER }])
+  })
+
+  test('lets a list take over the place another entry sat in', async () => {
+    const writer = await writerIn('writer@b.dev')
+    await put(PAPER, token, 'paper.pdf')
+    await call(env, `/v1/blobs/${THIRD}`, {
+      method: 'PUT',
+      token: writer,
+      raw: new Uint8Array(32),
+      headers: { 'content-type': 'application/pdf' },
+    })
+
+    await record([{ path: 'paper.pdf', hash: THIRD }], writer)
+
+    expect(readSpaceFiles(column())).toEqual([{ path: 'paper.pdf', hash: THIRD }])
+  })
+
+  test('drops nothing at all for a guest, who keeps no bytes anywhere', async () => {
+    await put(PAPER, token, 'owner.pdf')
+    const guest = await guestIn()
+
+    await record([], guest)
+
+    expect(readSpaceFiles(column())).toEqual([{ path: 'owner.pdf', hash: PAPER }])
   })
 })
 

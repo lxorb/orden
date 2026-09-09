@@ -135,24 +135,33 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
   // writer's own PDFs are theirs to add, and the ones somebody else put here
   // are not theirs to drop by sending a list that leaves them out.
   //
-  // A guest holds no bytes anywhere, because a guest has no storage to hold
-  // them in. So the first half is empty for one, and what stays is what the
-  // space was already serving.
-  const already = new Set(readSpaceFiles(space.files).map((one) => one.hash))
+  // A guest holds no bytes anywhere, because a guest has no storage to hold them
+  // in. So the first half is empty for one, and what stays is what the space was
+  // already serving.
+  const already = readSpaceFiles(space.files)
+  const serving = new Set(already.map((one) => one.hash))
+  // Both lists, because whose an entry is comes from whether this account keeps
+  // its bytes, and that has to be asked about the ones already there as much as
+  // about the ones arriving.
+  const hashes = [...new Set([...asked, ...already].map((one) => one.hash))]
   const held =
-    who.kind === 'user'
-      ? await heldBy(
-          context.env,
-          who.user.id,
-          [...new Set(asked.map((one) => one.hash))].slice(0, MOST),
-        )
-      : new Set<string>()
+    who.kind === 'user' ? await heldBy(context.env, who.user.id, hashes) : new Set<string>()
 
-  const there = (one: SpaceFile) => held.has(one.hash) || already.has(one.hash)
+  const there = (one: SpaceFile) => held.has(one.hash) || serving.has(one.hash)
   const kept = asked.filter(there)
   const missing = [...new Set(asked.filter((one) => !there(one)).map((one) => one.hash))]
 
-  const written = JSON.stringify(kept)
+  // What the list left out and was not this writer's to leave out. A client
+  // states its own space, and what it knows of it is what its account uploaded:
+  // the PDF somebody else put here is not in the list because it was never in
+  // that client's hands, and writing the list whole would drop it. So an entry
+  // whose bytes this account does not keep stays, unless this list names its
+  // place itself.
+  const named = new Set(kept.map((one) => one.path))
+  const others = already.filter((one) => !held.has(one.hash) && !named.has(one.path))
+
+  const files = [...kept, ...others]
+  const written = JSON.stringify(files)
   if (new TextEncoder().encode(written).length > MOST_BYTES) {
     return context.json({ error: 'that is more files than a space keeps' }, 413)
   }
@@ -163,5 +172,7 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
     .bind(written, now(), space.id)
     .run()
 
-  return context.json({ files: kept, missing })
+  // The column as it now stands rather than only the part of it this list
+  // claimed, because what the space serves is the answer to what was asked.
+  return context.json({ files, missing })
 })
