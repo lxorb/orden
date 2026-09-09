@@ -41,9 +41,15 @@ SHOTS = Path(__file__).resolve().parent / "shots"
 PORT = 18877
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
-# A phone, which is what `deviceFor` reads a narrow window as; see
-# apps/desktop/src/lib/viewport.svelte.ts.
+# A phone. The size alone is not one: the device class is decided from what the
+# machine says about itself and from the pointer, and the width only tells a phone
+# from a tablet. So the context below carries a phone's user agent as well as its
+# touch screen; see `deviceFor` in apps/desktop/src/lib/viewport.svelte.ts.
 PHONE = {"width": 390, "height": 844}
+PHONE_AGENT = (
+    "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
+    " Chrome/140.0.0.0 Mobile Safari/537.36"
+)
 
 PATIENCE = 20
 
@@ -125,7 +131,13 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
 
 def fresh(browser: Browser, label: str, theme: str = "light") -> Page:
     """A phone-sized browser that has never held anything."""
-    context = browser.new_context(viewport=PHONE, has_touch=True, is_mobile=True, color_scheme=theme)
+    context = browser.new_context(
+        viewport=PHONE,
+        user_agent=PHONE_AGENT,
+        has_touch=True,
+        is_mobile=True,
+        color_scheme=theme,
+    )
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")

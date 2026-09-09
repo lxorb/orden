@@ -51,6 +51,17 @@ DIST = APP / "dist"
 PORT = 18877
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
+# What a phone and a tablet say about themselves, which is half of what decides
+# the device class; the other half is the pointer, emulated with the context.
+PHONE_AGENT = (
+    "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
+    " Chrome/140.0.0.0 Mobile Safari/537.36"
+)
+TABLET_AGENT = (
+    "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
+    " Chrome/140.0.0.0 Safari/537.36"
+)
+
 
 def say(what: str) -> None:
     print(f"  {what}", flush=True)
@@ -298,11 +309,18 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
     label = f"{device}/{theme}"
     say(f"--- {label} ---")
 
-    size = {"width": 1180, "height": 820} if device == "tablet" else {"width": 412, "height": 900}
+    tablet = device == "tablet"
+    size = {"width": 1180, "height": 820} if tablet else {"width": 412, "height": 900}
+    # The size alone is not a device: the class is decided from what the machine
+    # says about itself and from the pointer, with the width only telling a phone
+    # from a tablet. So each context carries the user agent that device sends; see
+    # `deviceFor` in apps/desktop/src/lib/viewport.svelte.ts.
     context = browser.new_context(
         viewport=size,
+        user_agent=TABLET_AGENT if tablet else PHONE_AGENT,
         color_scheme=theme,
         has_touch=True,
+        is_mobile=True,
         device_scale_factor=2,
     )
     context.add_init_script(PREPARE)

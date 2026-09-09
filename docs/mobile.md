@@ -177,9 +177,15 @@ fakes, and a coarse pointer alone is a desktop with a touch screen.
 | Chrome or Safari on a phone | `Mobile` in the user agent, `mobile: true` | yes | `phone` |
 | Chrome on an Android tablet | only `Android`; `mobile: false` | yes | `tablet` |
 | Safari on an iPad | only `Macintosh`, since iPadOS 13 | yes | `tablet` |
-| A phone browser with "Desktop site" ticked | nothing: the tick rewrites the string | yes | `desktop` |
+| A phone browser with "Desktop site" ticked | nothing: the tick rewrites the string into a desktop platform's | yes | `desktop` |
 | A desktop browser, window dragged narrow | nothing | no | `desktop` |
 | A desktop with a touch screen | nothing | either | `desktop` |
+
+Where the two halves disagree - a `mobile` hint left behind by a tick that
+rewrote the string, or a device toolbar faking one and not the other - the string
+wins: a user agent naming a desktop platform (`Windows NT`, `X11`, `CrOS`) is a
+desktop whatever the hint says. That is the half the reader's own tick rewrites,
+and the half every browser has.
 
 Two of those rows are worth saying out loud. `Macintosh` counts as a handheld
 because an iPad calls itself one and no Mac ever answers the pointer query with a

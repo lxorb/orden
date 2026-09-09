@@ -252,6 +252,16 @@ describe('which device this is', () => {
     expect(asked(412, 915)).toBe('desktop')
   })
 
+  /** The two halves of what a browser says about itself can disagree - a hint
+   *  left behind by a tick that rewrote the string, and every device toolbar that
+   *  fakes one and not the other. The string wins: it is the half the reader's own
+   *  tick rewrites, and the half every browser has. */
+  test('and it is a desktop even if the hint beside the string says otherwise', async () => {
+    const asked = await machine({ agent: AGENTS.asked, mobile: true, finger: true })
+
+    expect(asked(980, 1743)).toBe('desktop')
+  })
+
   test('a desktop window dragged narrow stays a desktop', async () => {
     const desktop = await machine()
 

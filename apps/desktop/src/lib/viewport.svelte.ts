@@ -87,9 +87,21 @@ export function deviceFor(width: number, height: number, machine: Machine): Devi
   return Math.min(width, height) <= PHONE_SIDE ? 'phone' : 'tablet'
 }
 
+/** The platform tokens only a desktop sends, and which "Desktop site" writes in
+ *  place of the handheld's own. They have the last word over the hint beside the
+ *  string: Chrome rewrites both when the tick goes on, but the string is the half
+ *  that has always been rewritten and the half every browser has, and a reader who
+ *  asked for the desktop must get it.
+ *
+ *  `Macintosh` is deliberately not among them - an iPad says it too, and telling
+ *  those apart is what the finger is for. */
+const DESKTOP = /Windows NT|X11|CrOS/
+
 /** Whether a browser is being read on a handheld at all. */
 function handheld(machine: Machine): boolean {
-  return machine.finger && (machine.handheld === true || HANDHELD.test(machine.agent))
+  if (!machine.finger || DESKTOP.test(machine.agent)) return false
+
+  return machine.handheld === true || HANDHELD.test(machine.agent)
 }
 
 /** `navigator.userAgentData`, which the DOM types have no name for. Only the one
