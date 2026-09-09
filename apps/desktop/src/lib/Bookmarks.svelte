@@ -9,14 +9,15 @@
   import { fileMark, type Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { t } from './i18n.svelte'
-  import { bookmarkEntry, menu } from './menu.svelte'
+  import { bookmarkEntry, DIVIDER, type MenuEntry, menu } from './menu.svelte'
+  import Twist from './Twist.svelte'
   import { longPress } from './longpress'
   import { roving } from './roving'
   import { SEARCH_MARK } from './panel-marks'
   import { shownName } from './note-name'
   import { carryBookmark, draggedBookmark, isBookmarkDrag } from './drag-paths'
   import { insideSpace } from './space-paths'
-  import type { Bookmark } from './workspace/bookmarks.svelte'
+  import { type Bookmark, sameBookmark } from './workspace/bookmarks.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -26,6 +27,8 @@
     mark: Bookmark
     /** Where it sits in the list, which is what a drag moves. */
     at: number
+    /** How many groups deep, which is how far the row steps in. */
+    depth: number
     label: string
     /** The note a heading is in, shown muted after it. Null on every other kind. */
     note: string | null
@@ -53,33 +56,56 @@
     return found
   })
 
+  /** One bookmark as a row, or nothing where there is nothing left to point at:
+   *  a note that has gone from the space simply has no row. */
+  function rowFor(mark: Bookmark, at: number, depth: number, root: string): Row | null {
+    const shared = { mark, at, depth }
+
+    if (mark.kind === 'group' || mark.kind === 'search') {
+      return { ...shared, label: mark.text, note: null, path: null, kind: null, active: false }
+    }
+
+    // A block bookmark carries the whole of what a link into it would say, so the
+    // note is the part in front of the `#`; see forBlock in bookmarks.svelte.ts.
+    const inside = mark.kind === 'block' ? (mark.path.split('#')[0] ?? '') : mark.path
+    const entry = byPath.get(insideSpace(root, inside))
+    if (!entry) return null
+
+    const named = mark.kind === 'heading' || mark.kind === 'block'
+    return {
+      ...shared,
+      label: named ? mark.text : shownName(entry.name),
+      note: named ? shownName(entry.name) : null,
+      path: entry.path,
+      kind: entry.is_dir ? 'folder' : fileMark(entry.name),
+      active: !entry.is_dir && workspace.active?.path === entry.path,
+    }
+  }
+
+  /** The list as it is drawn: the top of it in the order it is kept, and under
+   *  every open group the rows that say they are in it. One walk over a flat list
+   *  rather than a tree of lists, because the order of the list is the order of
+   *  the list; see bookmarks.svelte.ts. */
   const rows = $derived.by((): Row[] => {
     const root = workspace.activeSpace?.root
     if (root === undefined) return []
 
+    const list = workspace.bookmarks.list
     const out: Row[] = []
 
-    for (const [at, mark] of workspace.bookmarks.list.entries()) {
-      if (mark.kind === 'search') {
-        out.push({ mark, at, label: mark.text, note: null, path: null, kind: null, active: false })
-        continue
+    const walk = (parent: string | undefined, depth: number) => {
+      for (const [at, mark] of list.entries()) {
+        if ((mark.parent ?? undefined) !== parent) continue
+
+        const row = rowFor(mark, at, depth, root)
+        if (!row) continue
+
+        out.push(row)
+        if (mark.kind === 'group' && workspace.isGroupOpen(mark.path)) walk(mark.path, depth + 1)
       }
-
-      const entry = byPath.get(insideSpace(root, mark.path))
-      if (!entry) continue
-
-      const open = !entry.is_dir && workspace.active?.path === entry.path
-      out.push({
-        mark,
-        at,
-        label: mark.kind === 'heading' ? mark.text : shownName(entry.name),
-        note: mark.kind === 'heading' ? shownName(entry.name) : null,
-        path: entry.path,
-        kind: entry.is_dir ? 'folder' : fileMark(entry.name),
-        active: open,
-      })
     }
 
+    walk(undefined, 0)
     return out
   })
 
@@ -109,6 +135,12 @@
         break
       case 'search':
         onsearch(mark.text)
+        break
+      case 'block':
+        void workspace.openAtBlock(mark.path)
+        break
+      case 'group':
+        workspace.toggleGroup(mark.path)
         break
     }
   }
@@ -141,11 +173,68 @@
 
     const from = draggedBookmark(event.dataTransfer)
     endDrag()
-    if (from !== null) workspace.bookmarks.move(from, row.at)
+    if (from === null) return
+
+    const moving = workspace.bookmarks.list[from]
+    if (!moving) return
+
+    // Onto a group is into it; anywhere else is beside the row it landed on, in
+    // whatever that row is in - so a row dropped between two rows of a group
+    // joins the group, which is what the line drawn there said it would do.
+    if (row.mark.kind === 'group' && !sameBookmark(moving, row.mark)) {
+      workspace.bookmarks.moveInto(moving, row.mark.path)
+      workspace.openGroup(row.mark.path)
+      return
+    }
+
+    workspace.bookmarks.moveInto(moving, row.mark.parent ?? null)
+    workspace.bookmarks.move(from, row.at)
   }
 
   /** What the menu is about, for the sheet a phone heads its menus with. */
   const titleOf = (row: Row) => (row.mark.kind === 'search' ? t('Search') : row.label)
+
+  /** What a row offers: keeping or dropping the bookmark, a new group to sort
+   *  them into, and - for a group - the two things only a group can do. Removing
+   *  a group keeps what was in it; see remove in bookmarks.svelte.ts. */
+  function rowMenu(row: Row): MenuEntry[] {
+    const group = row.mark.kind === 'group'
+
+    return [
+      ...(group
+        ? [
+            { label: t('Rename'), run: () => void renameGroup(row.mark) },
+            { label: t('Remove group'), run: () => workspace.bookmarks.remove(row.mark) },
+          ]
+        : bookmarkEntry(row.mark)),
+      ...(row.mark.parent
+        ? [
+            {
+              label: t('Out of the group'),
+              run: () => workspace.bookmarks.moveInto(row.mark, null),
+            },
+          ]
+        : []),
+      DIVIDER,
+      { label: t('New group'), run: () => void newGroup() },
+    ]
+  }
+
+  async function newGroup() {
+    const { prompt } = await import('./prompt.svelte')
+    const name = await prompt.ask({ title: t('New group'), confirmLabel: t('Make') })
+    if (name) workspace.bookmarks.addGroup(name)
+  }
+
+  async function renameGroup(mark: Bookmark) {
+    const { prompt } = await import('./prompt.svelte')
+    const name = await prompt.ask({
+      title: t('Rename'),
+      value: mark.text,
+      confirmLabel: t('Rename'),
+    })
+    if (name) workspace.bookmarks.rename(mark, name)
+  }
 </script>
 
 {#if rows.length}
@@ -157,6 +246,22 @@
   <ul
     use:roving={{
       current: '.is-on',
+      rows: '.row',
+      sideways: (key, element) => {
+        const row = rows.find((one) => one.at === Number(element.dataset.at))
+        if (row?.mark.kind !== 'group') return false
+
+        const open = workspace.isGroupOpen(row.mark.path)
+        if (key === 'ArrowRight' && !open) workspace.toggleGroup(row.mark.path)
+        else if (key === 'ArrowLeft' && open) workspace.toggleGroup(row.mark.path)
+        else return false
+
+        return true
+      },
+      remove: (element) => {
+        const row = rows.find((one) => one.at === Number(element.dataset.at))
+        if (row) workspace.bookmarks.remove(row.mark)
+      },
       open: (element) => element.click(),
       peek: (element) => {
         element.click()
@@ -167,40 +272,57 @@
   >
     {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
       <li>
-        <button
-          class="nib-row row"
-          class:is-quiet={row.mark.kind === 'folder'}
-          class:is-on={row.active}
-          class:above={dropAt === row.at && dropAbove}
-          class:below={dropAt === row.at && !dropAbove}
-          draggable="true"
-          onclick={() => open(row, true)}
-          ondblclick={() => open(row, false)}
-          oncontextmenu={(event) =>
-            menu.show(event, bookmarkEntry(row.mark), { title: titleOf(row) })}
-          use:longPress={(event) =>
-            menu.show(event, bookmarkEntry(row.mark), {
-              title: titleOf(row),
-            })}
-          ondragstart={(event) => startDrag(event, row)}
-          ondragover={(event) => over(event, row)}
-          ondragleave={() => (dropAt = null)}
-          ondragend={endDrag}
-          ondrop={(event) => drop(event, row)}
-        >
-          <!-- Every row wears one, so every name in the panel starts at the
-               same place: the kind the file is in the tree below, or the
-               magnifier for a search, which points at no file at all. -->
-          {#if row.kind && row.path}
-            <FileMark mark={row.kind} path={row.path} />
-          {:else if row.kind}
-            <FileMark mark={row.kind} />
-          {:else}
-            <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+        <!-- A group's twist and its name are two buttons rather than one,
+             because they do two things: opening a group is not renaming it. The
+             shape is the tag tree's, which answers the same question one panel
+             along. -->
+        <div class="line">
+          {#if row.mark.kind === 'group'}
+            <button
+              class="twist"
+              style:--level={row.depth}
+              aria-expanded={workspace.isGroupOpen(row.mark.path)}
+              aria-label={row.label}
+              onclick={() => workspace.toggleGroup(row.mark.path)}
+            >
+              <span class="chevron"><Twist open={workspace.isGroupOpen(row.mark.path)} /></span>
+            </button>
           {/if}
-          <span class="nib-row-label">{row.label}</span>
-          {#if row.note}<span class="nib-row-meta">{row.note}</span>{/if}
-        </button>
+          <button
+            class="nib-row row"
+            class:is-quiet={row.mark.kind === 'folder'}
+            class:is-on={row.active}
+            class:above={dropAt === row.at && dropAbove}
+            class:below={dropAt === row.at && !dropAbove}
+            class:nested={row.mark.kind !== 'group'}
+            style:--level={row.depth}
+            data-at={row.at}
+            draggable="true"
+            onclick={() => open(row, true)}
+            ondblclick={() => open(row, false)}
+            oncontextmenu={(event) => menu.show(event, rowMenu(row), { title: titleOf(row) })}
+            use:longPress={(event) => menu.show(event, rowMenu(row), { title: titleOf(row) })}
+            ondragstart={(event) => startDrag(event, row)}
+            ondragover={(event) => over(event, row)}
+            ondragleave={() => (dropAt = null)}
+            ondragend={endDrag}
+            ondrop={(event) => drop(event, row)}
+          >
+            <!-- Every row wears one, so every name in the panel starts at the
+                 same place: the kind the file is in the tree below, the
+                 magnifier for a search, which points at no file at all, and
+                 nothing at all for a group, whose twist is in front of it. -->
+            {#if row.kind && row.path}
+              <FileMark mark={row.kind} path={row.path} />
+            {:else if row.kind}
+              <FileMark mark={row.kind} />
+            {:else if row.mark.kind !== 'group'}
+              <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+            {/if}
+            <span class="nib-row-label">{row.label}</span>
+            {#if row.note}<span class="nib-row-meta">{row.note}</span>{/if}
+          </button>
+        </div>
       </li>
     {/each}
   </ul>
@@ -216,8 +338,46 @@
   /* The row is `.nib-row`, drawn in the themes package. What is left here is the
      line saying where a dragged row would land: along the edge it arrives at,
      rather than a box around the row it is passing. */
+  /* The twist and the name, side by side. */
+  .line {
+    display: flex;
+    align-items: center;
+  }
+
+  .twist {
+    flex: none;
+    min-height: var(--row-height-sm);
+    display: flex;
+    align-items: center;
+    padding-left: calc(var(--space-1) + var(--level, 0) * var(--row-indent));
+    border: none;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--muted);
+    cursor: default;
+  }
+
+  .chevron {
+    display: block;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: none;
+  }
+
+  /* One step in per group, and in front of the name the width of a twist: held
+     empty for a row that has none, so every name in the list starts at the same
+     place. The tag tree does the same thing one panel along. */
   .row {
+    --lead: 2px;
+
     position: relative;
+    flex: 1;
+    min-width: 0;
+    padding-left: calc(var(--level, 0) * var(--row-indent) + var(--lead));
+  }
+
+  .row.nested {
+    --lead: calc(var(--icon-md) + var(--space-1));
   }
 
   .row.above::before,

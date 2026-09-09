@@ -21,19 +21,25 @@ const PINNED_KEY = 'nib:pinned'
  *  the same number, so a list that fits here fits there. */
 export const MOST_BOOKMARKS = 60
 
-export const BOOKMARK_KINDS = ['note', 'folder', 'heading', 'search'] as const
+export const BOOKMARK_KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group'] as const
 type BookmarkKind = (typeof BOOKMARK_KINDS)[number]
 
 export interface Bookmark {
   kind: BookmarkKind
   /** The note or folder it points at, relative to the space. Empty for a
-   *  search, which points at no file. */
+   *  search, which points at no file; a name of its own for a group, which
+   *  points at nothing and is pointed at instead. */
   path: string
-  /** The heading a heading bookmark names, or the words a search looks for.
-   *  Empty for a note or a folder. Always a string rather than an optional
-   *  field, so one shape serves the storage, the wire and the comparison
-   *  below. */
+  /** The heading a heading bookmark names, the block name a block bookmark
+   *  carries, the words a search looks for, or what a group is called. Empty for
+   *  a note or a folder. Always a string rather than an optional field, so one
+   *  shape serves the storage, the wire and the comparison below. */
   text: string
+  /** The group this sits in, by that group's own name, or absent at the top of
+   *  the list. One field rather than a list of children, because the order of
+   *  the whole list is the order it is drawn in and a tree of lists would have
+   *  two orders to keep in step. */
+  parent?: string
 }
 
 export function isBookmark(value: unknown): value is Bookmark {
@@ -41,8 +47,18 @@ export function isBookmark(value: unknown): value is Bookmark {
     isRecord(value) &&
     BOOKMARK_KINDS.some((kind) => kind === value.kind) &&
     isString(value.path) &&
-    isString(value.text)
+    isString(value.text) &&
+    (value.parent === undefined || isString(value.parent))
   )
+}
+
+/** A name no group in this space has: what a group is filed under, and what its
+ *  rows point back at. Short, because it travels with every row in the group. */
+function freeGroupId(taken: readonly Bookmark[]): string {
+  for (;;) {
+    const id = `g${Math.random().toString(36).slice(2, 8)}`
+    if (!taken.some((one) => one.kind === 'group' && one.path === id)) return id
+  }
 }
 
 /** The bookmarks in an unknown, with whatever is not one left out. A list
@@ -53,11 +69,20 @@ export function bookmarkList(value: unknown): Bookmark[] {
 
   return value
     .filter(isBookmark)
-    .map((one) => ({ kind: one.kind, path: one.path, text: one.text }))
+    .map((one) => ({
+      kind: one.kind,
+      path: one.path,
+      text: one.text,
+      ...(one.parent ? { parent: one.parent } : {}),
+    }))
     .slice(0, MOST_BOOKMARKS)
 }
 
-/** Two bookmarks are the same one when they point at the same thing. */
+/** Two bookmarks are the same one when they point at the same thing.
+ *
+ *  Which group it is in is not part of that: a note is bookmarked or it is not,
+ *  and moving it into a group is moving the bookmark it already is rather than
+ *  making a second one. */
 export function sameBookmark(one: Bookmark, other: Bookmark): boolean {
   return one.kind === other.kind && one.path === other.path && one.text === other.text
 }
@@ -191,6 +216,96 @@ export class Bookmarks {
 
   /** A note or folder in the open space, as a bookmark. Null for a row outside
    *  it, which is nothing this space can keep. */
+  /** A new group, at the end of the list, under a name of its own. */
+  addGroup(name: string): Bookmark | null {
+    const root = this.root()
+    const words = name.trim()
+    if (root === null || !words) return null
+
+    const held = this.of(root)
+    if (held.length >= MOST_BOOKMARKS) return null
+
+    const group: Bookmark = { kind: 'group', path: freeGroupId(held), text: words }
+    this.put(root, [...held, group])
+    return group
+  }
+
+  /** What a group is called. Only a group has a name of its own: everything else
+   *  is called after what it points at. */
+  rename(mark: Bookmark, name: string) {
+    const root = this.root()
+    const words = name.trim()
+    if (root === null || mark.kind !== 'group' || !words) return
+
+    this.put(
+      root,
+      this.of(root).map((one) => (sameBookmark(one, mark) ? { ...one, text: words } : one)),
+    )
+  }
+
+  /** Takes one out. A group takes nothing with it: what was in it comes up to
+   *  where the group was, which is what somebody who empties a folder of
+   *  bookmarks means - the bookmarks were the point, the group was the shelf. */
+  remove(mark: Bookmark) {
+    const root = this.root()
+    if (root === null) return
+
+    const held = this.of(root)
+    // Where the group itself sits now, rather than where the caller last saw it:
+    // what was in it comes up to that, so a group inside a group leaves its rows
+    // in the group it was in.
+    const freed = held.find((one) => sameBookmark(one, mark))?.parent
+
+    this.put(
+      root,
+      held
+        .filter((one) => !sameBookmark(one, mark))
+        .map((one) =>
+          mark.kind === 'group' && one.parent === mark.path
+            ? { ...one, ...(freed ? { parent: freed } : { parent: undefined }) }
+            : one,
+        )
+        .map(({ kind, path, text, parent }) => ({
+          kind,
+          path,
+          text,
+          ...(parent ? { parent } : {}),
+        })),
+    )
+  }
+
+  /** Puts a bookmark in a group, or back at the top of the list.
+   *
+   *  A group cannot be put inside itself or inside anything it holds, which is
+   *  the one arrangement that would be a list with no top. */
+  moveInto(mark: Bookmark, parent: string | null) {
+    const root = this.root()
+    if (root === null) return
+    if (parent !== null && mark.kind === 'group' && this.holds(mark.path, parent)) return
+
+    this.put(
+      root,
+      this.of(root).map((one) =>
+        sameBookmark(one, mark)
+          ? { kind: one.kind, path: one.path, text: one.text, ...(parent ? { parent } : {}) }
+          : one,
+      ),
+    )
+  }
+
+  /** Whether a group holds another, however far down. */
+  private holds(group: string, other: string): boolean {
+    const held = this.list
+    let at: string | undefined = other
+
+    for (let steps = 0; at !== undefined && steps <= MOST_BOOKMARKS; steps++) {
+      if (at === group) return true
+      at = held.find((one) => one.kind === 'group' && one.path === at)?.parent
+    }
+
+    return false
+  }
+
   forEntry(entry: { path: string; is_dir: boolean }): Bookmark | null {
     const root = this.root()
     if (root === null || !startsInside(root, entry.path)) return null
@@ -205,6 +320,20 @@ export class Bookmarks {
     if (!note || !words) return null
 
     return { kind: 'heading', path: note, text: words }
+  }
+
+  /** A bookmark of one block of a note.
+   *
+   *  The path is the whole of what a link into it would say - `Plan.md#^a1b2c3` -
+   *  because that is what opening it needs, and the text is the block's own first
+   *  words, because `^a1b2c3` is not something anybody can read in a list. The
+   *  editor makes both: it is what knows how to name a block; see blockTarget. */
+  forBlock(note: string | null, target: string, words: string): Bookmark | null {
+    const said = target.trim()
+    const label = words.trim()
+    if (!note || !said.startsWith('#')) return null
+
+    return { kind: 'block', path: `${note}${said}`, text: label || said }
   }
 
   forSearch(query: string): Bookmark | null {

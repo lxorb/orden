@@ -99,6 +99,11 @@ export const de: Dictionary = {
 
   // Panels and navigation
   Bookmarks: 'Lesezeichen',
+  'New group': 'Neue Gruppe',
+  'Remove group': 'Gruppe entfernen',
+  'Out of the group': 'Aus der Gruppe nehmen',
+  Make: 'Erstellen',
+  'Bookmark this block': 'Diesen Block merken',
   Panels: 'Bereiche',
   Outline: 'Gliederung',
   'Stay on this note': 'Bei dieser Notiz bleiben',

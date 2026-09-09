@@ -98,6 +98,11 @@ export const fr: Dictionary = {
 
   // Panels and navigation
   Bookmarks: 'Signets',
+  'New group': 'Nouveau groupe',
+  'Remove group': 'Supprimer le groupe',
+  'Out of the group': 'Sortir du groupe',
+  Make: 'Créer',
+  'Bookmark this block': 'Marquer ce bloc',
   Panels: 'Panneaux',
   Outline: 'Plan',
   'Stay on this note': 'Rester sur cette note',

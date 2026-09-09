@@ -25,13 +25,22 @@ const LONGEST_TEXT = 200
  *  make the space listing heavy for every device that reads it. */
 const MOST_BYTES = 8 * 1024
 
-const KINDS = ['note', 'folder', 'heading', 'search'] as const
+const KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group'] as const
 type Kind = (typeof KINDS)[number]
+
+/** The longest a group's own name may be. A name, not a path: it is what the
+ *  rows in the group point back at. */
+const LONGEST_PARENT = 100
 
 export interface Bookmark {
   kind: Kind
   path: string
   text: string
+  /** The group it sits in, by that group's name, or absent at the top of the
+   *  list. Written down like the rest of it: the app draws the list as a tree
+   *  from these, so a parent that did not travel would be a group that lost
+   *  everything in it on the next machine. */
+  parent?: string
 }
 
 /** What is wrong with the list that arrived, as one sentence the app can show,
@@ -50,6 +59,11 @@ function wrong(value: unknown): string | null {
     }
     if (typeof text !== 'string' || text.length > LONGEST_TEXT) {
       return `a bookmark's text must be text of at most ${LONGEST_TEXT} characters`
+    }
+
+    const { parent } = one as Record<string, unknown>
+    if (parent !== undefined && (typeof parent !== 'string' || parent.length > LONGEST_PARENT)) {
+      return `a bookmark's group must be text of at most ${LONGEST_PARENT} characters`
     }
     // A path climbing out of the space is not a place in it. The app already
     // sends a path the space speaks; this is so the column can never hold one
@@ -98,7 +112,12 @@ bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
 
   // Written from the fields that were checked rather than from what arrived, so
   // nothing else a client sent along ends up in the column.
-  const kept = (sent as Bookmark[]).map(({ kind, path, text }) => ({ kind, path, text }))
+  const kept = (sent as Bookmark[]).map(({ kind, path, text, parent }) => ({
+    kind,
+    path,
+    text,
+    ...(parent ? { parent } : {}),
+  }))
   const written = JSON.stringify(kept)
   if (new TextEncoder().encode(written).length > MOST_BYTES) {
     return context.json({ error: 'that is more bookmarks than a space holds' }, 413)

@@ -2131,6 +2131,52 @@ class Workspace {
     this.device.toggleTag(path)
   }
 
+  /** Whether a group of bookmarks is open, and opening or shutting one.
+   *
+   *  On this machine, like the folders in the tree: which groups somebody has
+   *  open is how they are looking at the list this afternoon, while the groups
+   *  themselves are what they chose to keep and travel with the account. See
+   *  device.svelte.ts. */
+  isGroupOpen(id: string): boolean {
+    return this.device.isGroupOpen(id)
+  }
+
+  toggleGroup(id: string) {
+    this.device.toggleGroup(id)
+  }
+
+  openGroup(id: string) {
+    if (!this.device.isGroupOpen(id)) this.device.toggleGroup(id)
+  }
+
+  /** Opens a note and lands on the block a bookmark names.
+   *
+   *  The whole of what a link would say is in the path - `Plan.md#^a1b2c3` or
+   *  `Plan.md#The plan` - so this is the same walk a followed link makes, from a
+   *  row instead of from a link. */
+  async openAtBlock(target: string) {
+    const root = this.activeSpace?.root
+    if (!root) return
+
+    const cut = target.indexOf('#')
+    const relative = cut < 0 ? target : target.slice(0, cut)
+    const said = cut < 0 ? '' : target.slice(cut + 1)
+
+    const path = insideSpace(root, relative)
+    await this.open(path)
+    if (!said) return
+
+    const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
+    const line = lineOfTarget(doc, {
+      path: relative,
+      target: relative,
+      heading: said.startsWith('^') ? null : said,
+      block: said.startsWith('^') ? said.slice(1) : null,
+      page: null,
+    })
+    if (line !== null) this.goto = { path, line }
+  }
+
   /** Opens a folder and every folder on the way down to it, so a bookmarked
    *  folder can be shown where it sits rather than only named. */
   revealFolder(path: string) {

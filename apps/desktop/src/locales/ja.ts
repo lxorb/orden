@@ -98,6 +98,11 @@ export const ja: Dictionary = {
 
   // Panels and navigation
   Bookmarks: 'ブックマーク',
+  'New group': '新しいグループ',
+  'Remove group': 'グループを削除',
+  'Out of the group': 'グループから出す',
+  Make: '作成',
+  'Bookmark this block': 'このブロックをブックマーク',
   Panels: 'パネル',
   Outline: 'アウトライン',
   'Stay on this note': 'このノートに留まる',

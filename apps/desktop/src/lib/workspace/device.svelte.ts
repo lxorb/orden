@@ -27,6 +27,10 @@ export const ICONS_KEY = 'nib:icons'
 export const ICON_TINTS_KEY = 'nib:icon-tints'
 export const EXPANDED_KEY = 'nib:expanded'
 export const TAGS_KEY = 'nib:expanded-tags'
+/** Which groups of bookmarks are open. Not exported, unlike the two above it:
+ *  nothing outside this file names it, and the one place that lists these keys
+ *  is the glasses plugin's own, which this is small enough to travel to. */
+const GROUPS_KEY = 'nib:expanded-groups'
 
 /** Enough that a note opened this morning is still there, short enough that
  *  the list is worth reading. */
@@ -43,6 +47,8 @@ export class DeviceView {
    *  one above: a tag `work/nib` and a folder called `work/nib` are two
    *  different things to open, and one would otherwise open the other. */
   expandedTags = $state<Record<string, boolean>>({})
+  /** Which groups of bookmarks are open, by the group's own name. */
+  expandedGroups = $state<Record<string, boolean>>({})
 
   /** The icon a space wears, keyed by folder rather than by id so it survives
    *  the ids being handed out again on the next launch. */
@@ -73,6 +79,7 @@ export class DeviceView {
     this.recent = stringList(stored(RECENT_KEY)) ?? []
     this.expanded = recordOf(stored(EXPANDED_KEY), isBoolean)
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
+    this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
     this.icons = recordOf(stored(ICONS_KEY), isString)
     this.iconTints = recordOf(stored(ICON_TINTS_KEY), isString)
   }
@@ -97,6 +104,21 @@ export class DeviceView {
       : { ...this.expanded, [path]: true }
 
     localStorage.setItem(EXPANDED_KEY, JSON.stringify(this.expanded))
+  }
+
+  /** Which groups of bookmarks are open, by the group's own name. Its own record
+   *  rather than a share of the folders', for the reason the tags have one: a
+   *  group and a folder can be called the same thing and mean nothing to each
+   *  other. */
+  isGroupOpen(id: string): boolean {
+    return this.expandedGroups[id] === true
+  }
+
+  toggleGroup(id: string) {
+    this.expandedGroups = this.isGroupOpen(id)
+      ? without(this.expandedGroups, id)
+      : { ...this.expandedGroups, [id]: true }
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(this.expandedGroups))
   }
 
   isTagOpen(path: string): boolean {

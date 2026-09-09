@@ -26,7 +26,8 @@ import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { noteName } from './space-paths'
+import { noteName, relativeTo } from './space-paths'
+import { workspace } from './workspace.svelte'
 import { viewport } from './viewport.svelte'
 
 /** The editor's own context menu, so the browser's never appears.
@@ -134,6 +135,50 @@ function blockEntries(
       },
     },
     { label: t('Delete'), danger: true, run: () => deleteBlocks(view, at) },
+    ...blockBookmark(view, at, path),
+  ]
+}
+
+/** The first words of a block, which is what a list of them can be read by: the
+ *  line it opens with, without the markup that opens it. A name of the block's
+ *  own is what `^a1b2c3` is not. */
+function firstWords(text: string): string {
+  const line = text.split('\n')[0] ?? ''
+  return line
+    .replace(/^\s*(?:#{1,6}|[-*+]|\d+[.)]|>|`{3,}|~{3,})\s*/, '')
+    .trim()
+    .slice(0, 60)
+}
+
+/** Keeping this block in the bookmarks above the file list.
+ *
+ *  The same naming a link to it uses - a heading by its words, anything else by a
+ *  name written into the note; see blockTarget in @nib/editor - so the row and
+ *  the link point at the same thing and neither has a way of its own. */
+function blockBookmark(view: EditorView, at: number, path: string | null | undefined): MenuEntry[] {
+  const root = workspace.activeSpace?.root
+  if (!path || root === undefined || !path.startsWith(root)) return []
+
+  const relative = relativeTo(root, path)
+  const span = blocksFor(view, at)[0]
+  if (!span) return []
+
+  const words = firstWords(view.state.doc.sliceString(span.from, span.to))
+  const held = workspace.bookmarks.list.find(
+    (one) => one.kind === 'block' && one.path.startsWith(`${relative}#`) && one.text === words,
+  )
+
+  return [
+    held
+      ? { label: t('Remove bookmark'), run: () => workspace.bookmarks.toggle(held) }
+      : {
+          label: t('Bookmark this block'),
+          run: () => {
+            const target = blockTarget(view, at)
+            const mark = target ? workspace.bookmarks.forBlock(relative, target, words) : null
+            if (mark) workspace.bookmarks.toggle(mark)
+          },
+        },
   ]
 }
 

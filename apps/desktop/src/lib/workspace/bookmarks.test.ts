@@ -373,3 +373,136 @@ describe('the migration from pins', () => {
     expect(localStorage.getItem('nib:pinned')).toBeNull()
   })
 })
+
+describe('groups', () => {
+  test('a group is a bookmark with a name of its own', () => {
+    const marks = store()
+    const group = marks.addGroup('  Work  ')
+
+    expect(group?.kind).toBe('group')
+    expect(group?.text).toBe('Work')
+    expect(marks.list).toEqual([group])
+    // Two groups called the same thing are two groups: what tells them apart is
+    // the name each is filed under, which is what the rows in them point at.
+    expect(marks.addGroup('Work')?.path).not.toBe(group?.path)
+  })
+
+  test('a group with no name is not a group', () => {
+    const marks = store()
+    expect(marks.addGroup('   ')).toBeNull()
+    expect(marks.list).toEqual([])
+  })
+
+  test('a bookmark goes into a group and comes back out', () => {
+    const marks = store()
+    const group = marks.addGroup('Work')
+    marks.toggle(note('a.md'))
+
+    marks.moveInto(note('a.md'), group?.path ?? null)
+    expect(marks.list.at(-1)?.parent).toBe(group?.path)
+
+    marks.moveInto(note('a.md'), null)
+    expect(marks.list.at(-1)?.parent).toBeUndefined()
+  })
+
+  test('a group cannot be put inside itself or inside what it holds', () => {
+    const marks = store()
+    const outer = marks.addGroup('Outer')
+    const inner = marks.addGroup('Inner')
+    if (!outer || !inner) throw new Error('no groups')
+
+    marks.moveInto(inner, outer.path)
+    marks.moveInto(outer, outer.path)
+    expect(marks.list[0]?.parent).toBeUndefined()
+
+    marks.moveInto(outer, inner.path)
+    expect(marks.list[0]?.parent).toBeUndefined()
+  })
+
+  test('renaming one changes what it is called and nothing else', () => {
+    const marks = store()
+    const group = marks.addGroup('Work')
+    if (!group) throw new Error('no group')
+
+    marks.toggle(note('a.md'))
+    marks.moveInto(note('a.md'), group.path)
+
+    marks.rename(group, 'Later')
+    expect(marks.list[0]?.text).toBe('Later')
+    // The rows in it point at the name it is filed under, which does not change.
+    expect(marks.list[1]?.parent).toBe(group.path)
+  })
+
+  test('a group taken out leaves what was in it', () => {
+    const marks = store()
+    const group = marks.addGroup('Work')
+    if (!group) throw new Error('no group')
+
+    marks.toggle(note('a.md'))
+    marks.moveInto(note('a.md'), group.path)
+
+    marks.remove(group)
+    expect(marks.list).toEqual([note('a.md')])
+  })
+
+  test('a group inside a group leaves its rows where the group was', () => {
+    const marks = store()
+    const outer = marks.addGroup('Outer')
+    const inner = marks.addGroup('Inner')
+    if (!outer || !inner) throw new Error('no groups')
+
+    marks.moveInto(inner, outer.path)
+    marks.toggle(note('a.md'))
+    marks.moveInto(note('a.md'), inner.path)
+
+    marks.remove(inner)
+    expect(marks.list.find((one) => one.kind === 'note')?.parent).toBe(outer.path)
+  })
+
+  test('which group a bookmark is in is not what makes it that bookmark', () => {
+    const marks = store()
+    const group = marks.addGroup('Work')
+    if (!group) throw new Error('no group')
+
+    marks.toggle(note('a.md'))
+    marks.moveInto(note('a.md'), group.path)
+
+    // The row in the tree still says the note is bookmarked, and pressing it
+    // again takes the one bookmark away rather than making a second.
+    expect(marks.has(note('a.md'))).toBe(true)
+    marks.toggle(note('a.md'))
+    expect(marks.list).toEqual([group])
+  })
+
+  test('the group travels with the bookmark', () => {
+    const marks = store()
+    const group = marks.addGroup('Work')
+    if (!group) throw new Error('no group')
+
+    marks.toggle(note('a.md'))
+    marks.moveInto(note('a.md'), group.path)
+
+    expect(bookmarkList(JSON.parse(JSON.stringify(marks.list)))).toEqual(marks.list)
+  })
+})
+
+describe('a bookmark of one block', () => {
+  test('keeps the whole of what a link to it would say, and words to read it by', () => {
+    const marks = store()
+    const mark = marks.forBlock('Plan.md', '#^a1b2c3', 'The first words')
+
+    expect(mark).toEqual({ kind: 'block', path: 'Plan.md#^a1b2c3', text: 'The first words' })
+    expect(marks.forBlock('Plan.md', '#The plan', 'The plan')?.path).toBe('Plan.md#The plan')
+  })
+
+  test('is nothing without a note or a target', () => {
+    const marks = store()
+    expect(marks.forBlock(null, '#^a1', 'words')).toBeNull()
+    expect(marks.forBlock('Plan.md', 'a1', 'words')).toBeNull()
+  })
+
+  test('falls back to the target where the block says nothing', () => {
+    const marks = store()
+    expect(marks.forBlock('Plan.md', '#^a1b2c3', '   ')?.text).toBe('#^a1b2c3')
+  })
+})

@@ -100,6 +100,11 @@ export const gsw: Dictionary = {
 
   // Panels and navigation
   Bookmarks: 'Lesezeiche',
+  'New group': 'Neui Gruppe',
+  'Remove group': 'Gruppe entferne',
+  'Out of the group': 'Us de Gruppe nää',
+  Make: 'Mache',
+  'Bookmark this block': 'Dää Block merke',
   Panels: 'Beriich',
   Outline: 'Gliederig',
   'Stay on this note': 'Bi dere Notiz bliibe',
