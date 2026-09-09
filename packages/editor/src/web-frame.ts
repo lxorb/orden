@@ -26,6 +26,16 @@ const SANDBOX = new Set([
   'allow-forms',
 ])
 
+/** What a frame tells the provider about where it was asked from: the origin, and
+ *  never the page.
+ *
+ *  `no-referrer` was the first answer here, and it does not work. YouTube refuses
+ *  to play to an embedder that sends none and puts "Error 153" where the video
+ *  should be, which is worse than the link the card replaced. The origin is what a
+ *  provider learns from the request in any case - which site, never which note -
+ *  and saying it out loud beats leaving it to whatever the page defaults to. */
+export const FRAME_REFERRER = 'origin'
+
 /** The permissions a card may be granted, for the same reason. */
 const ALLOW = new Set([
   'accelerometer',
@@ -77,9 +87,7 @@ function frameOf(card: HTMLElement): HTMLIFrameElement | null {
   frame.setAttribute('sandbox', frameSandbox(card.dataset.sandbox))
   const permissions = framePermissions(card.dataset.allow)
   if (permissions) frame.setAttribute('allow', permissions)
-  // The provider learns that somebody asked for this and nothing about where
-  // from, which is the same promise the card's own link makes.
-  frame.referrerPolicy = 'no-referrer'
+  frame.referrerPolicy = FRAME_REFERRER
   frame.loading = 'lazy'
   frame.title = card.dataset.provider ?? 'embed'
   frame.src = source

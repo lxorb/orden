@@ -1,6 +1,6 @@
 import { providers } from '@nib/markdown/providers'
 import { describe, expect, test } from 'vitest'
-import { framePermissions, frameSandbox, framedPage } from './web-frame'
+import { FRAME_REFERRER, framePermissions, frameSandbox, framedPage } from './web-frame'
 
 describe('what a card may actually have', () => {
   test('every provider gets the sandbox its row asked for', () => {
@@ -28,6 +28,14 @@ describe('what a card may actually have', () => {
     // away at all, which is why the caller always writes one.
     expect(frameSandbox(undefined)).toBe('')
     expect(frameSandbox('nonsense')).toBe('')
+  })
+})
+
+describe('the referrer a frame sends', () => {
+  test('is the origin, because no referrer at all is a video that will not play', () => {
+    // YouTube answers an embedder that sends none with "Error 153" where the
+    // video should be. The origin says which site and never which note.
+    expect(FRAME_REFERRER).toBe('origin')
   })
 })
 

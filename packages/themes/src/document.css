@@ -132,6 +132,12 @@
   border: 1px solid var(--line);
 }
 
+/* A film with no width asked for fills the column, the way a picture does. One
+   that was given a width - `![[demo.mp4|480]]` - keeps it. */
+#write video.embed-media:not([width]) {
+  width: 100%;
+}
+
 /* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: one row saying which file, in
    the frame an embedded note sits in. The same card the editor draws. */
 #write .embed-file {

@@ -76,8 +76,28 @@ describe('drawing it', () => {
     expect(svg).toContain('fill="var(--accent, #5b4be0)"')
     expect(svg).toContain('fill="var(--canvas-4, #08b94e)"')
     // The scale is drawn, and the labels along the bottom.
-    expect(svg.match(/<line class="chart-grid"/g)).toHaveLength(4)
+    expect(svg).toContain('class="chart-grid"')
     expect(svg).toContain('>Jan<')
+  })
+
+  test('the scale lands on numbers somebody would have chosen', () => {
+    // Three, five and two over four equal parts reads 5 / 3.33 / 1.67 / 0, and a
+    // reader who has to work out what 3.33 is doing there has stopped looking.
+    const svg = chartSvg(readChart(SALES)!)
+    for (const tick of ['>0<', '>2<', '>4<', '>6<']) expect(svg, tick).toContain(tick)
+    expect(svg).not.toContain('3.33')
+
+    // Whatever the size of the numbers.
+    const big = chartSvg(readChart('series:\n  - data: [1200, 3700]\n')!)
+    for (const tick of ['>0<', '>1,000<', '>4,000<']) expect(big, tick).toContain(tick)
+
+    const small = chartSvg(readChart('series:\n  - data: [0.2, 0.9]\n')!)
+    expect(small).toContain('>1<')
+  })
+
+  test('and reaches below zero when the numbers do', () => {
+    const svg = chartSvg(readChart('series:\n  - data: [-3, 4]\n')!)
+    for (const tick of ['>-4<', '>-2<', '>0<', '>4<']) expect(svg, tick).toContain(tick)
   })
 
   test('a line per series, with a dot per number', () => {

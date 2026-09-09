@@ -319,6 +319,7 @@ figure.embed figcaption{margin:0 -1.15rem;padding:.4rem 1.15rem .45rem;border-to
 .embed-media{max-width:100%;border-radius:9px;vertical-align:middle}
 audio.embed-media{width:min(100%,26rem);height:2.4rem}
 video.embed-media{display:block;margin:1.5em auto;height:auto;background:var(--surface);border:1px solid var(--line)}
+video.embed-media:not([width]){width:100%}
 figure.embed-file{display:flex;align-items:center;gap:.55em;padding:.5em 1.15rem;font-size:.9em}
 figure.embed-file a{border:0;color:inherit}
 figure.embed-file a:hover{color:var(--accent)}

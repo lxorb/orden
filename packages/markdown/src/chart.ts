@@ -205,14 +205,32 @@ function said(value: number): string {
   return rounded.toLocaleString('en-US')
 }
 
-/** The largest value any series reaches, and the smallest, so a chart with
- *  negative numbers still has a baseline in the right place. */
-function span(chart: Chart): { low: number; high: number } {
+/** The scale a chart is drawn against: how far it reaches each way, and how far
+ *  apart the lines across it are.
+ *
+ *  Rounded outwards to a step somebody would have chosen. Three, five and two
+ *  divided into four equal parts reads `5 / 3.33 / 1.67 / 0`, and a reader who has
+ *  to work out what 3.33 is doing there has stopped looking at the picture. So the
+ *  step is one of 1, 2, 2.5 or 5 times a power of ten, whichever first covers a
+ *  quarter of the range, and the ends are rounded out to land on it.
+ *
+ *  Always through zero: a bar chart that begins somewhere else is a picture that
+ *  lies about a ratio. */
+function span(chart: Chart): { low: number; high: number; step: number } {
   const every = chart.series.flatMap((one) => one.data)
-  const high = Math.max(0, ...every)
-  const low = Math.min(0, ...every)
+  const top = Math.max(0, ...every)
+  const bottom = Math.min(0, ...every)
   // A chart of nothing but zeroes still needs a scale to draw against.
-  return high === low ? { low, high: high + 1 } : { low, high }
+  const reach = top === bottom ? 1 : top - bottom
+
+  // A step a little under the rough one is allowed, which buys a line or two more
+  // in exchange for a round number: seven over four is 1.75, and 2 reads better
+  // than 1.75 does even though it draws one line fewer than asked for.
+  const rough = reach / (GRID - 1)
+  const power = 10 ** Math.floor(Math.log10(rough))
+  const step = [1, 2, 2.5, 5, 10].map((one) => one * power).find((one) => one >= rough / 1.5) ?? 1
+
+  return { low: Math.floor(bottom / step) * step, high: Math.ceil(top / step) * step, step }
 }
 
 function text(words: string, x: number, y: number, className: string, anchor = 'middle'): string {
@@ -220,7 +238,7 @@ function text(words: string, x: number, y: number, className: string, anchor = '
 }
 
 /** The axes: the value lines across, and the labels along the bottom. */
-function frame(chart: Chart, low: number, high: number): string {
+function frame(chart: Chart, low: number, high: number, step: number): string {
   const out: string[] = []
   const plot = {
     x: PAD.left,
@@ -229,18 +247,19 @@ function frame(chart: Chart, low: number, high: number): string {
     h: HEIGHT - PAD.top - PAD.bottom,
   }
 
-  for (let at = 0; at < GRID; at++) {
-    const value = high - ((high - low) * at) / (GRID - 1)
-    const y = plot.y + (plot.h * at) / (GRID - 1)
+  // One line per step of the scale rather than a fixed number of them, so every
+  // label is a number the step reaches exactly.
+  for (let value = low; value <= high + step / 2; value += step) {
+    const y = plot.y + plot.h * ((high - value) / (high - low))
     out.push(
       `<line class="chart-grid" x1="${plot.x}" y1="${round(y)}" x2="${plot.x + plot.w}" y2="${round(y)}"/>`,
     )
     out.push(text(said(value), plot.x - 8, y + 4, 'chart-tick', 'end'))
   }
 
-  const step = plot.w / Math.max(1, longest(chart))
+  const across = plot.w / Math.max(1, longest(chart))
   for (const [at, label] of chart.labels.slice(0, longest(chart)).entries()) {
-    out.push(text(label, plot.x + step * (at + 0.5), HEIGHT - PAD.bottom + 20, 'chart-label'))
+    out.push(text(label, plot.x + across * (at + 0.5), HEIGHT - PAD.bottom + 20, 'chart-label'))
   }
 
   return out.join('')
@@ -406,13 +425,14 @@ function legend(chart: Chart): string {
 
 /** The chart as one SVG, sized by its viewBox so the column decides how wide. */
 export function chartSvg(chart: Chart): string {
-  const { low, high } = span(chart)
+  const { low, high, step } = span(chart)
+  const drawn = chart.kind === 'line' ? lines(chart, low, high) : bars(chart, low, high)
   const body =
     chart.kind === 'pie'
       ? pie(chart, 0)
       : chart.kind === 'donut'
         ? pie(chart, 0.58)
-        : `${frame(chart, low, high)}${chart.kind === 'line' ? lines(chart, low, high) : bars(chart, low, high)}`
+        : `${frame(chart, low, high, step)}${drawn}`
 
   return `<svg class="chart-svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" preserveAspectRatio="xMidYMid meet">${body}</svg>`
 }
