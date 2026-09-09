@@ -4,7 +4,8 @@
   import AppMenu from './AppMenu.svelte'
   import type { EditorView } from '@nib/editor'
   import { iconChoice } from './icon-choice.svelte'
-  import { type IconNode, initial, loadIcons, shapeFor } from './icons'
+  import { iconLibrary } from './icon-library.svelte'
+  import { initial } from './icons'
   import { longPress } from './longpress'
   import { t } from './i18n.svelte'
   import { DIVIDER, menu, type MenuEntry, trim } from './menu.svelte'
@@ -41,9 +42,6 @@
     if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
     return t('Settings')
   }
-  /** Filled once any space has an icon, so the rail can draw them. */
-  let library = $state<Record<string, IconNode>>({})
-
   /** The space being dragged, and the gap the line is drawn in. `null` for the
    *  gap under the last space, which is where a drop past the end lands. */
   let dragging = $state<string | null>(null)
@@ -186,7 +184,7 @@
     ])
   }
 
-  const icon = (id: string) => shapeFor(library, workspace.iconFor(id))
+  const icon = (id: string) => iconLibrary.spaceShape(workspace.iconFor(id))
 
   /** Who is at this device. Signed out, the sign-in; and for a guest a link let
    *  in, the name over their caret, which is the one thing they own here. */
@@ -206,18 +204,10 @@
     if (named !== null) await account.rename(named).catch(() => undefined)
   }
 
-  // Only worth loading the set once a space actually uses one.
+  // Only worth fetching the set once a space actually uses one; the holder does
+  // it once for the app, so the file list asking for the same set is one fetch.
   $effect(() => {
-    if (!Object.keys(workspace.device.icons).length || Object.keys(library).length) return
-
-    let current = true
-    void loadIcons().then((all) => {
-      if (current) library = all
-    })
-
-    return () => {
-      current = false
-    }
+    if (Object.keys(workspace.device.icons).length) iconLibrary.load()
   })
 </script>
 

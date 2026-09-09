@@ -385,8 +385,9 @@
           ondragleave={(event) => stillInside(event) || dropTarget.clear()}
           ondrop={(event) => drop(event, entry)}
         >
-          <!-- The row says what it opens into without spending a word on it. -->
-          <FileMark mark={fileMark(entry.name)} />
+          <!-- The row says what it opens into without spending a word on it, or
+               wears the icon the note itself chose; the path is how it knows. -->
+          <FileMark mark={fileMark(entry.name)} path={entry.path} />
           <span class="label">{shownName(entry.name)}</span>
         </button>
       {/if}

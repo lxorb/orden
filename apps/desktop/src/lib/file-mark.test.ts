@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import * as lucide from 'lucide'
 import { fileMark, MARKS, type Mark } from './file-mark'
@@ -111,5 +113,32 @@ describe('the marks a row wears', () => {
         expect(drawable, `${name}: ${tag}`).toContain(tag)
       }
     }
+  })
+})
+
+/** A note that chose an icon of its own wears it in the same box, and one place
+ *  draws it: every list that shows a file draws this component, so the tree, the
+ *  tab strip, a search result and a bookmark all show the chosen icon without any
+ *  of them knowing that notes have icons. Read out of the component, in the way
+ *  menus.test.ts reads the menus and touch-scale.test.ts the sizes. */
+describe('the mark a note chose for itself', () => {
+  const source = readFileSync(fileURLToPath(new URL('./FileMark.svelte', import.meta.url)), 'utf8')
+
+  test('comes from the path the row already knows, through the space s index', () => {
+    expect(source).toContain('links.iconOf(path)')
+  })
+
+  test('and the kind s own mark is what a row falls back to', () => {
+    // Which covers all three of: a note that chose nothing, a caller that knows
+    // no path, and a name the icon set does not hold.
+    expect(source).toContain('?? MARKS[mark]')
+  })
+
+  test('an emoji is drawn at the size the drawn marks are, on both kinds of screen', () => {
+    const style = source.slice(source.indexOf('<style>'))
+    const emoji = style.slice(style.indexOf('.emoji {'))
+
+    expect(emoji).toContain('font-size: 13px')
+    expect(style).toContain('font-size: var(--touch-mark)')
   })
 })
