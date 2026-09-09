@@ -166,8 +166,21 @@ def shot(page: Page, name: str) -> None:
     say(f"shot {name}.png")
 
 
-def fresh(browser: Browser, label: str) -> Page:
-    context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme="light")
+def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
+    context = browser.new_context(
+        viewport={"width": 1280, "height": 820} if not finger else {"width": 420, "height": 880},
+        color_scheme="light",
+        has_touch=finger,
+        is_mobile=finger,
+        **(
+            {}
+            if not finger
+            else {
+                "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
+                " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
+            }
+        ),
+    )
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{label}] page error: {error}"))
     page.on(
@@ -187,7 +200,7 @@ def fresh(browser: Browser, label: str) -> Page:
           const ws = window.nibApp.workspace
           const note = ws.notes.find((one) => one.name.startsWith('The plan'))
           await ws.openEntry(note.path, {})
-          ws.showPanel('tree')
+          if (ws.panel !== 'tree') ws.showPanel('tree')
         }"""
     )
     wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
@@ -345,6 +358,52 @@ def drive_block(browser: Browser) -> None:
     page.context.close()
 
 
+def drive_finger(browser: Browser) -> None:
+    """A group under a thumb: the rows are a thumb tall and a tap opens one."""
+    page = fresh(browser, "phone", finger=True)
+
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          const note = ws.notes.find((one) => one.name === 'The plan.md')
+          ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: note.path, is_dir: false }))
+          const group = ws.bookmarks.addGroup('Work')
+          const plan = ws.bookmarks.list.find((one) => one.path.startsWith('The plan'))
+          ws.bookmarks.moveInto(plan, group.path)
+          ws.openGroup(group.path)
+          if (ws.panel !== 'tree') ws.showPanel('tree')
+        }"""
+    )
+    page.wait_for_timeout(700)
+
+    sizes = page.evaluate(
+        """() => [...document.querySelectorAll('.body .line')].map((line) => ({
+          label: line.querySelector('.nib-row-label')?.textContent ?? '',
+          tall: Math.round(line.getBoundingClientRect().height),
+          twist: Math.round(line.querySelector('.twist')?.getBoundingClientRect().height ?? 0),
+        }))"""
+    )
+    say(f"[phone] the rows: {json.dumps(sizes, ensure_ascii=False)}")
+    shot(page, "20-phone")
+
+    for row in sizes:
+        if row["tall"] < 44:
+            wrong(f"a row is not a thumb tall: {row['label']!r} at {row['tall']}px")
+
+    page.locator(".body .twist").first.tap()
+    page.wait_for_timeout(500)
+    left = page.evaluate(
+        "() => [...document.querySelectorAll('.body .line .nib-row-label')]"
+        ".map((one) => one.textContent)"
+    )
+    say(f"[phone] after the tap: {json.dumps(left, ensure_ascii=False)}")
+    shot(page, "21-phone-shut")
+    if "The plan" in left:
+        wrong("a tap on the twist did not shut the group")
+
+    page.context.close()
+
+
 def main() -> int:
     build()
     shutil.rmtree(SHOTS, ignore_errors=True)
@@ -358,6 +417,8 @@ def main() -> int:
                 drive_groups(browser)
                 say("--- a block ---")
                 drive_block(browser)
+                say("--- a finger ---")
+                drive_finger(browser)
             finally:
                 browser.close()
     finally:
