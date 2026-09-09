@@ -27,6 +27,9 @@ pub const TRASH: &str = ".trash";
 /// How deep the tree walkers go. A folder nested further than this is either a
 /// mistake or a symlink pointing at one of its own parents, and following the
 /// second one forever is how a file manager hangs.
+///
+/// This bounds one chain of folders. What bounds how many chains there are is
+/// `Seen`.
 pub const MAX_DEPTH: usize = 32;
 
 /// Makes each temp file its own, so two windows saving at the same moment cannot
@@ -340,6 +343,38 @@ pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     Err(format!("{path} is not in a folder Nib has open"))
 }
 
+/// The folders a walk has already been inside, judged by where they really are
+/// rather than by the path they were reached through.
+///
+/// The depth cap bounds one chain of folders and not how many chains there are,
+/// and a symlink multiplies the chains. Two folders each holding a link to the
+/// other hand the same note back sixteen times under sixteen names; a folder
+/// holding two links back to one of its parents doubles the work at every level,
+/// which is two billion paths and a sidebar that never finishes loading. Walking
+/// each folder once settles both: a walk costs what the disk holds and no more.
+///
+/// A folder reachable two ways is therefore read the first way it is reached, and
+/// the second way reads as empty. That is the answer this app wants: one note in
+/// two places is still one note, and listing it twice is what a search must not
+/// do.
+///
+/// The cost is one `canonicalize` per folder, beside the metadata call each walk
+/// already makes per file.
+#[derive(Default)]
+pub struct Seen(HashSet<PathBuf>);
+
+impl Seen {
+    /// True the first time a folder is offered and false every time after.
+    ///
+    /// A folder whose real path cannot be read is judged by the path it was
+    /// reached through. That may miss a cycle, and the depth cap is then what
+    /// ends the walk.
+    pub fn first_time(&mut self, dir: &Path) -> bool {
+        self.0
+            .insert(fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf()))
+    }
+}
+
 /// Every file in a space, split into the notes and everything else, each list in
 /// a stable order so two walks of an unchanged space read the same.
 ///
@@ -350,19 +385,25 @@ pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 /// part of a space.
 ///
 /// Hidden folders are skipped, which is what keeps the trash out of a search, and
-/// the depth is capped so a symlink pointing at one of its own parents cannot be
-/// followed forever.
+/// every folder is walked once, so a symlink pointing at one of its own parents
+/// cannot be followed forever: see `Seen`.
 pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
     let mut notes = Vec::new();
     let mut others = Vec::new();
-    gather(dir, 0, &mut notes, &mut others);
+    gather(dir, 0, &mut Seen::default(), &mut notes, &mut others);
     notes.sort();
     others.sort();
     (notes, others)
 }
 
-fn gather(dir: &Path, depth: usize, notes: &mut Vec<PathBuf>, others: &mut Vec<PathBuf>) {
-    if depth >= MAX_DEPTH {
+fn gather(
+    dir: &Path,
+    depth: usize,
+    seen: &mut Seen,
+    notes: &mut Vec<PathBuf>,
+    others: &mut Vec<PathBuf>,
+) {
+    if depth >= MAX_DEPTH || !seen.first_time(dir) {
         return;
     }
 
@@ -377,7 +418,7 @@ fn gather(dir: &Path, depth: usize, notes: &mut Vec<PathBuf>, others: &mut Vec<P
         }
 
         if path.is_dir() {
-            gather(&path, depth + 1, notes, others);
+            gather(&path, depth + 1, seen, notes, others);
         } else if is_markdown(&path) {
             notes.push(path);
         } else if !entry.file_name().to_string_lossy().ends_with(HIGHLIGHTS) {
@@ -469,11 +510,26 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     }
 }
 
+/// Points `link` at the folder `target`, and says whether the platform made one.
+///
+/// Here rather than in the test module below because both walkers are held to the
+/// same bound and a cycle is built the same way for either. Windows makes a
+/// directory symlink only for an account holding the privilege for it, so a test
+/// handed `false` has no cycle to measure and stops there.
+#[cfg(test)]
+pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
+    #[cfg(windows)]
+    let made = std::os::windows::fs::symlink_dir(target, link);
+    #[cfg(unix)]
+    let made = std::os::unix::fs::symlink(target, link);
+    made.is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
         a_shareable_folder, drop_highlights, files_in, folded, free_spot, highlights_of, inside,
-        is_canvas, is_markdown, is_pdf, move_highlights, space_root, write_atomically,
+        is_canvas, is_markdown, is_pdf, link_to, move_highlights, space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
 
@@ -758,6 +814,50 @@ mod tests {
 
         let (notes, others) = files_in(dir.path());
         assert!(notes.is_empty());
+        assert!(others.is_empty());
+    }
+
+    /// Two folders, each holding a symlink to the other. The depth cap alone
+    /// walks that chain thirty-two folders deep and hands each note back sixteen
+    /// times under sixteen names, which is sixteen hits in a search for one note.
+    #[test]
+    fn a_cycle_of_symlinks_is_walked_once() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::create_dir_all(here.join("Work")).expect("a folder");
+        std::fs::create_dir_all(here.join("Home")).expect("another folder");
+        std::fs::write(here.join("Work").join("One.md"), "").expect("a note");
+        std::fs::write(here.join("Home").join("Two.md"), "").expect("another note");
+
+        if !link_to(&here.join("Home"), &here.join("Work").join("to-home"))
+            || !link_to(&here.join("Work"), &here.join("Home").join("to-work"))
+        {
+            return;
+        }
+
+        let (notes, others) = files_in(here);
+        assert_eq!(names(&notes), ["One.md", "Two.md"]);
+        assert!(others.is_empty());
+    }
+
+    /// The fan-out rather than the chain: a folder holding two links back to the
+    /// folder above it doubles the work at every level the cap allows, which is
+    /// two billion paths and a walk that does not return. It returns here because
+    /// each folder is entered once.
+    #[test]
+    fn two_links_back_up_do_not_double_the_walk() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let inner = here.join("Notes");
+        std::fs::create_dir_all(&inner).expect("a folder");
+        std::fs::write(inner.join("One.md"), "").expect("a note");
+
+        if !link_to(here, &inner.join("up")) || !link_to(here, &inner.join("over")) {
+            return;
+        }
+
+        let (notes, others) = files_in(here);
+        assert_eq!(names(&notes), ["One.md"]);
         assert!(others.is_empty());
     }
 }

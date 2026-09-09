@@ -8,7 +8,7 @@ use std::path::Path;
 use tauri::AppHandle;
 
 use crate::clock;
-use crate::paths::{in_spaces, is_canvas, is_markdown, is_pdf, MAX_DEPTH};
+use crate::paths::{in_spaces, is_canvas, is_markdown, is_pdf, Seen, MAX_DEPTH};
 
 /// A note or a folder, and everything under it if it is a folder.
 #[derive(Serialize)]
@@ -47,16 +47,23 @@ pub fn read_tree(
         return Err("root is not a directory".into());
     }
 
-    Ok(walk(&path, &options.unwrap_or_default(), 0))
+    Ok(walk(
+        &path,
+        &options.unwrap_or_default(),
+        0,
+        &mut Seen::default(),
+    ))
 }
 
 /// One folder and its children. A folder nested deeper than `MAX_DEPTH` is read
-/// as empty: past that it is a symlink pointing back at one of its own parents,
-/// and following that is how a file tree never finishes loading.
-fn walk(path: &Path, options: &TreeOptions, depth: usize) -> Entry {
+/// as empty, and so is one the read has already been inside: either is a symlink
+/// pointing back at one of its own parents, and following those is how a file tree
+/// never finishes loading. The folder is still in the tree; only its children are
+/// left to the one place they live. See `Seen`.
+fn walk(path: &Path, options: &TreeOptions, depth: usize, seen: &mut Seen) -> Entry {
     let mut children = Vec::new();
 
-    if depth < MAX_DEPTH {
+    if depth < MAX_DEPTH && seen.first_time(path) {
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.flatten() {
                 let child = entry.path();
@@ -67,7 +74,7 @@ fn walk(path: &Path, options: &TreeOptions, depth: usize) -> Entry {
                 }
 
                 if child.is_dir() {
-                    children.push(walk(&child, options, depth + 1));
+                    children.push(walk(&child, options, depth + 1, seen));
                 } else if is_markdown(&child) || is_pdf(&child) || is_canvas(&child) {
                     // The notes, the PDFs beside them and the canvases: the
                     // three things a tab can hold. Everything else in a space
@@ -129,6 +136,7 @@ fn sort_children(children: &mut [Entry], options: &TreeOptions) {
 #[cfg(test)]
 mod tests {
     use super::{sort_children, walk, Entry, TreeOptions};
+    use crate::paths::{link_to, Seen};
 
     fn entry(name: &str, is_dir: bool, modified: u64) -> Entry {
         Entry {
@@ -198,7 +206,7 @@ mod tests {
         std::fs::write(here.join("shot.png"), "").expect("a picture");
         std::fs::write(here.join("Reading").join("Deep.PDF"), "").expect("a nested pdf");
 
-        let top = walk(here, &options("name", false), 0);
+        let top = walk(here, &options("name", false), 0, &mut Seen::default());
         assert_eq!(
             names(&top.children),
             ["Reading", "Board.canvas", "Idea.md", "paper.pdf"]
@@ -206,6 +214,33 @@ mod tests {
 
         let nested = &top.children[0];
         assert_eq!(names(&nested.children), ["Deep.PDF"]);
+    }
+
+    /// A folder holding two symlinks back to the folder above it. Reading each
+    /// folder once is what makes that finish at all: the two links double the work
+    /// at every level otherwise, which is two billion folders to read and a
+    /// sidebar that never appears. Both links stay in the tree, and neither
+    /// reopens the tree above them.
+    #[test]
+    fn a_folder_already_read_is_read_as_empty() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let inner = here.join("Notes");
+        std::fs::create_dir_all(&inner).expect("a folder");
+        std::fs::write(inner.join("Idea.md"), "").expect("a note");
+
+        if !link_to(here, &inner.join("up")) || !link_to(here, &inner.join("over")) {
+            return;
+        }
+
+        let top = walk(here, &options("name", false), 0, &mut Seen::default());
+        assert_eq!(names(&top.children), ["Notes"]);
+
+        let notes = &top.children[0];
+        assert_eq!(names(&notes.children), ["over", "up", "Idea.md"]);
+        for link in notes.children.iter().filter(|child| child.is_dir) {
+            assert!(link.children.is_empty(), "{} was read twice", link.name);
+        }
     }
 
     #[test]
