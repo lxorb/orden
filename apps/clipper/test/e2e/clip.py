@@ -12,8 +12,10 @@ Run it after `node scripts/build.js`:
 
     python apps/clipper/test/e2e/clip.py
 
-It needs Playwright's Chromium, and it runs headed because an extension does
-not load in the headless shell.
+It needs Playwright's Chromium, and it runs headed because an extension does not
+load in the headless shell. `CHROMIUM` names a browser to use instead of the one
+Playwright registered, for a machine that has the download but not the registry
+entry for it.
 """
 
 from __future__ import annotations
