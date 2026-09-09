@@ -22,6 +22,28 @@ export async function loadIcons(): Promise<Record<string, IconNode>> {
   return found
 }
 
+/** The shape a space wears, or null where there is none to draw.
+ *
+ *  Null covers three cases that look the same to a reader and are not the same
+ *  thing: a space that never chose an icon, one whose icon this build's library has
+ *  never heard of, and one whose library has not finished loading. The caller draws
+ *  the space's initial for all three, because a square with a letter in it is a
+ *  space and an empty square is a bug. Emil, on his phone: *"I don't see the icons of
+ *  the spaces on the Even Realities plugin right now."* */
+export function shapeFor(
+  library: Record<string, IconNode>,
+  chosen: string | null,
+): IconNode | null {
+  return chosen ? (library[chosen] ?? null) : null
+}
+
+/** What a space with no shape shows: the first letter of its name, and a dot for a
+ *  name that is nothing but spaces. */
+export function initial(name: string): string {
+  const first = name.trim().codePointAt(0)
+  return first === undefined ? '·' : String.fromCodePoint(first).toUpperCase()
+}
+
 /** `BookOpen` reads as "book open", which is what people actually search for. */
 export function words(name: string): string {
   return name

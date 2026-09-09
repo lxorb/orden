@@ -60,7 +60,7 @@ const BYTES_A_SECOND = 32_000
  *  somebody sent, and a header that says a byte rate of zero would otherwise be a
  *  division. Falls back to the rate the glasses send at, which is what the plugin
  *  builds these out of. */
-export function secondsIn(audio: ArrayBuffer): number {
+function secondsIn(audio: ArrayBuffer): number {
   const bytes = new Uint8Array(audio)
   if (bytes.length < 44) return bytes.length / BYTES_A_SECOND
 
@@ -105,7 +105,11 @@ function textIn(answer: unknown): string {
  *  Null rather than an error: an utterance nothing could make anything of is the
  *  ordinary case of a door closing, and the plugin's own answer to it is to say
  *  nothing. Which model listened is not the caller's business. */
-export async function heard(env: Env, audio: ArrayBuffer, key: string | null): Promise<string | null> {
+export async function heard(
+  env: Env,
+  audio: ArrayBuffer,
+  key: string | null,
+): Promise<string | null> {
   if (key) {
     const said = await openAiHeard(audio, key)
     if (said) return said

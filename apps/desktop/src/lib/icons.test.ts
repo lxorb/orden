@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { search, words } from './icons'
+import { type IconNode, initial, search, shapeFor, words } from './icons'
 
 const NAMES = [
   'Book',
@@ -69,5 +69,37 @@ describe('searching the library', () => {
 
   test('honours the limit', () => {
     expect(search(NAMES, '', 3).length).toBe(3)
+  })
+})
+
+/** What a space in the rail actually draws.
+ *
+ *  Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
+ *  plugin right now."* The cause was elsewhere - the storage the chosen name is read
+ *  from; see lib/even/first.ts - but the rule the rail follows is here, and the half
+ *  of it that matters is the last test: a space always shows something.
+ */
+describe('the mark a space wears', () => {
+  const CAP: IconNode = [['path', { d: 'M21 10l-9-4-9 4 9 4z' }]]
+  const library: Record<string, IconNode> = { GraduationCap: CAP }
+
+  test('is the shape it chose', () => {
+    expect(shapeFor(library, 'GraduationCap')).toBe(CAP)
+  })
+
+  test('and its initial where it chose none', () => {
+    expect(shapeFor(library, null)).toBeNull()
+    expect(initial('Uni')).toBe('U')
+    expect(initial('  notes')).toBe('N')
+    expect(initial('ubung')).toBe('U')
+  })
+
+  /** Three different things a reader cannot tell apart: no icon, an icon this build
+   *  has never heard of, and a library that has not loaded yet. All three draw a
+   *  letter, and none of them draws an empty square. */
+  test('is never nothing, whatever went wrong', () => {
+    expect(shapeFor(library, 'NoSuchIcon')).toBeNull()
+    expect(shapeFor({}, 'GraduationCap')).toBeNull()
+    expect(initial('   ')).toBe('·')
   })
 })

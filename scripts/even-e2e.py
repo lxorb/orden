@@ -45,6 +45,11 @@ OTHER_PATH = f"{SPACE}/Monday standup.md"
 DEEP_PATH = f"{SPACE}/Inbox/Reading list.md"
 CANVAS_PATH = f"{SPACE}/A canvas.canvas"
 
+# A second space, for the icons: one that chose an icon and one that did not.
+OTHER_SPACE = "/Uni"
+UNI_PATH = f"{OTHER_SPACE}/Lecture.md"
+ICON = "GraduationCap"
+
 NOTE = r"""# Even Realities glasses
 
 The panel is 576 by 288 pixels with one font in one size, so every construct in a
@@ -105,6 +110,7 @@ these	two words. Nothing is dropped, and nothing draws as nothing.
 
 OTHER = "# Monday standup\n\nSomewhere for the wikilink to point.\n"
 DEEP = "# Reading list\n\nA note one folder in.\n"
+UNI = "# Lecture\n\nA note in the second space.\n"
 CANVAS = '{"nodes":[],"edges":[]}'
 
 # The bridge, installed before a line of the app runs, exactly as the phone app
@@ -1025,6 +1031,60 @@ def main() -> int:
             page.screenshot(path=str(OUT / "phone-note.png"))
             back = page.evaluate("window.__bands()")
             screens.append({"name": "glasses-3", "lineNumbers": True, **naming(back)})
+
+            # ── The icons of the spaces ───────────────────────────────────────
+            # Emil, on his phone with even 0.5.6: "I don't see the icons of the
+            # spaces on the Even Realities plugin right now." The icon a space wears
+            # comes down with the account and is written into the plugin's own
+            # storage - which is not the page's, because a packed plugin's port never
+            # comes back - and the store that reads it was built before that storage
+            # was in place. Both halves are measured: a space that chose an icon, and
+            # one that did not and shows its letter instead.
+            page.evaluate(SEED, [[[UNI_PATH, UNI]]])
+            page.evaluate(
+                "([icon]) => localStorage.setItem('nib:icons', JSON.stringify({ '/Notes': icon }))",
+                [ICON],
+            )
+            page.wait_for_timeout(700)
+            page.reload()
+            page.wait_for_timeout(1500)
+            if page.get_by_role("button", name="Show sidebar").count():
+                page.get_by_role("button", name="Show sidebar").first.click()
+                page.wait_for_timeout(400)
+
+            marks = page.evaluate(
+                """
+                () => [...document.querySelectorAll('.space')].map((one) => {
+                  const path = one.querySelector('svg path')
+                  return {
+                    name: one.getAttribute('aria-label'),
+                    shape: one.querySelectorAll('svg path').length,
+                    // The half that cannot be seen in the DOM: an element in the
+                    // wrong namespace is there, is white, is the right size, and
+                    // draws nothing at all. See scripts/even-stage.mjs.
+                    drawn: path ? path.namespaceURI : null,
+                    said: one.textContent.trim(),
+                  }
+                })
+                """
+            )
+            wearing = next((one for one in marks if one["name"] == "Notes"), None)
+            plain = next((one for one in marks if one["name"] == "Uni"), None)
+            report.ok(
+                "a space that chose an icon draws it in the plugin",
+                bool(
+                    wearing
+                    and wearing["shape"] > 0
+                    and wearing["drawn"] == "http://www.w3.org/2000/svg"
+                ),
+                json.dumps(wearing),
+            )
+            report.ok(
+                "and one that chose none draws its letter, never an empty square",
+                bool(plain and plain["shape"] == 0 and plain["said"] == "U"),
+                json.dumps(plain),
+            )
+            page.screenshot(path=str(OUT / "phone-spaces.png"))
 
             # The note names a picture on purpose, to exercise the one block that
             # cannot be what it is on a panel of one font. Where the editor looks for

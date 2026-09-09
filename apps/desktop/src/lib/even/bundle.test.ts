@@ -83,6 +83,40 @@ describe('the bundle a package is made of', () => {
     expect(off.slice(0, 12).join('\n')).toBe('')
   })
 
+  /** The other half of the first finding, and the one that cost something.
+   *
+   *  An XML namespace looks exactly like a URL and is not one: `createElementNS` and
+   *  an `xmlns` attribute name a language by it, nothing ever fetches it, and a
+   *  browser compares it character for character. Taking the scheme off made every
+   *  `<path>` Svelte creates for a shape it was handed an unknown element in a
+   *  namespace that does not exist - drawn as nothing - and did the same to the
+   *  chevron on every select and to every equation KaTeX draws as MathML. Emil, on
+   *  his phone: *"I don't see the icons of the spaces on the Even Realities plugin
+   *  right now."*
+   *
+   *  So they stay, spelled with the escape their own file reads as a slash. Which is
+   *  a rule about spelling, and a rule about spelling wants a test. */
+  test('keeps the XML namespaces exactly, in whatever the file spells them with', () => {
+    const spellings = ['http:\\/\\/www.w3.org', 'http%3A//www.w3.org', 'http&#58;//www.w3.org']
+    const wrong: string[] = []
+    let held = 0
+
+    for (const file of files) {
+      for (const found of file.text.matchAll(/.{0,12}www\.w3\.org/g)) {
+        held++
+        if (!spellings.some((one) => found[0].endsWith(one))) {
+          wrong.push(`${file.name}: ...${found[0]}`)
+        }
+      }
+    }
+
+    expect(wrong.slice(0, 6).join('\n')).toBe('')
+    // Svelte's own runtime carries the SVG one, and so does anything that draws a
+    // shape it was handed. A build with none at all means this stopped looking where
+    // they are rather than that they are gone.
+    expect(held).toBeGreaterThan(5)
+  })
+
   test('holds the whitelist to the manifest, so the two cannot drift', () => {
     expect(allowed.length).toBeGreaterThan(0)
     for (const one of allowed) expect(one).toMatch(/^https:\/\//)
@@ -168,6 +202,37 @@ describe('the bundle a package is made of', () => {
       .map(([name]) => name)
 
     expect(here).toEqual([])
+  })
+
+  /** Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
+   *  plugin right now."* It was not this - the shapes were in the package all along,
+   *  and the cause was the storage the chosen name is read from; see
+   *  lib/even/first.ts. But it was the first thing worth ruling out, and a build that
+   *  shook the library down to the handful the interface itself draws would look
+   *  exactly the same to a reader: every space back to a letter, and a picker with
+   *  nothing in it. */
+  test('brings the icons a space can wear, shapes and names both', () => {
+    const code = files.filter((one) => one.name.endsWith('.js'))
+
+    // Lucide's own helper. Nothing else in the package has one by that name, so it
+    // says the library itself is here rather than a few shapes copied out of it.
+    expect(code.some((one) => one.text.includes('createIcons'))).toBe(true)
+
+    // The shapes, in bulk: about six thousand paths as this is written. Written to
+    // read a minified `{d:` and a quoted `"d":` alike, because which one a build
+    // writes is the minifier's business.
+    const shapes = code.reduce(
+      (sum, one) => sum + (one.text.match(/[{,]\s*"?d"?\s*:\s*['"`]M/g)?.length ?? 0),
+      0,
+    )
+    expect(shapes).toBeGreaterThan(2000)
+
+    // And reachable by the name a space stores, which is what the rail looks up.
+    // These four are the ones on Emil's own account.
+    for (const name of ['GraduationCap', 'Book', 'SquareCheck', 'Newspaper']) {
+      const held = code.some((one) => new RegExp(`\\b${name}\\b`).test(one.text))
+      expect(held, name).toBe(true)
+    }
   })
 
   test('is small enough for the platform to be comfortable with', () => {

@@ -4,7 +4,7 @@
   import AppMenu from './AppMenu.svelte'
   import type { EditorView } from '@nib/editor'
   import IconPicker from './IconPicker.svelte'
-  import { type IconNode, loadIcons } from './icons'
+  import { type IconNode, initial, loadIcons, shapeFor } from './icons'
   import { longPress } from './longpress'
   import { t } from './i18n.svelte'
   import { DIVIDER, menu, type MenuEntry, trim } from './menu.svelte'
@@ -189,15 +189,7 @@
     ])
   }
 
-  function initial(name: string): string {
-    const first = name.trim().codePointAt(0)
-    return first === undefined ? '·' : String.fromCodePoint(first).toUpperCase()
-  }
-
-  const icon = (id: string) => {
-    const name = workspace.iconFor(id)
-    return name ? (library[name] ?? null) : null
-  }
+  const icon = (id: string) => shapeFor(library, workspace.iconFor(id))
 
   /** Who is at this device. Signed out, the sign-in; and for a guest a link let
    *  in, the name over their caret, which is the one thing they own here. */

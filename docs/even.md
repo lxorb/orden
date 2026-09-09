@@ -964,6 +964,25 @@ The community had reported the symptom - "browser localStorage does not survive
 app restarts inside the `.ehpk` WebView", in `nickustinov/even-g2-notes` - but
 not the cause. The cause is the port.
 
+**And a store that reads before the storage is in place reads the empty one.** The
+plugin's own storage is put in front of the page's by `installLocal()`, and for one
+release that was the first statement of `even.ts` - which is not the first thing
+that runs in it. Every static import of a module runs to completion before the
+module's own first line does, so `import App from './App.svelte'` had already built
+the whole store graph, and with it the device view that reads the open folders, the
+recent notes and the icon each space wears. Those reads went to the page's own
+`localStorage`, which on this platform is always empty.
+
+So it is a module of its own now, `lib/even/first.ts`, imported before anything
+else there and importing nothing but the flag and the storage. Its comment says why
+it must stay first. The other half is the second seeding: a cookie holds what
+decides the first paint, the phone app's own store holds everything and answers
+seconds later, so `workspace.device.reread()` runs when it lands. Reading again
+cannot undo a choice made in the meantime, because the second seeding only fills in
+keys nothing has written this launch.
+
+![The rail in the plugin: a space wearing the icon it chose, and one wearing its letter](even/phone-spaces.png)
+
 ### What goes into the package, and why it is a build of its own
 
 `pnpm --filter @nib/desktop build:even` runs `vite.even.config.ts`, whose only
@@ -1072,6 +1091,21 @@ half a reader needs. Anything else keeps its host and path and loses its scheme,
 so a string that was there to be read still reads and nothing in the package is a
 URL. `openExternal` already refuses a string that is not a URL, so a rewritten one
 does nothing rather than something surprising.
+
+**With one exception, which cost a release: an XML namespace is not an address.**
+`document.createElementNS('http://www.w3.org/2000/svg', 'path')` and an `xmlns`
+attribute name a language by that string; nothing ever fetches it and a browser
+compares it character for character. Taking the scheme off left every `<path>`
+Svelte creates for a shape it was handed as an unknown element in a namespace that
+does not exist - present, white, the right size, in the right place, and drawn as
+nothing. It took the chevron off every select with it, because that one is an SVG in
+a `data:` URI in the stylesheet, and every equation KaTeX draws as MathML.
+
+Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
+plugin right now."* So the namespaces under `www.w3.org` are kept exactly, spelled
+with the escape their own file's syntax reads as a slash - `http:\/\/` in a script,
+`http%3A//` inside a `data:` URI in a stylesheet, `http&#58;//` in a page - which is
+the same string to whatever reads it and no URL at all to whatever scans it.
 
 `src/lib/even/bundle.test.ts` builds the plugin the way a release does, stages it,
 and reads the folder that is packed - because that folder is the only place either
@@ -1228,7 +1262,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 67 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 69 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1267,6 +1301,9 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 67 checks:
   model and the effort, **no key and no note** - reached `nibeditor.com` and nothing
   else, and opened the answer with its one sentence first; a scroll went down it a
   line at a time and a double tap closed it;
+- **a space that chose an icon drew it** - the shape, in the SVG namespace, which is
+  the half of it that cannot be seen in the DOM - and a space that chose none drew
+  its letter rather than an empty square;
 - nothing on the page asked the server for anything that was not there, and there
   were no page errors.
 

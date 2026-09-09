@@ -30,19 +30,43 @@ const RECENT_LIMIT = 15
 
 export class DeviceView {
   /** Most recent first, no duplicates. */
-  recent = $state<string[]>(stringList(stored(RECENT_KEY)) ?? [])
+  recent = $state<string[]>([])
 
   /** Which folders are open, by path. */
-  expanded = $state<Record<string, boolean>>(recordOf(stored(EXPANDED_KEY), isBoolean))
+  expanded = $state<Record<string, boolean>>({})
 
   /** Which tags are open, by tag path. Its own record rather than a share of the
    *  one above: a tag `work/nib` and a folder called `work/nib` are two
    *  different things to open, and one would otherwise open the other. */
-  expandedTags = $state<Record<string, boolean>>(recordOf(stored(TAGS_KEY), isBoolean))
+  expandedTags = $state<Record<string, boolean>>({})
 
   /** The icon a space wears, keyed by folder rather than by id so it survives
    *  the ids being handed out again on the next launch. */
-  icons = $state<Record<string, string>>(recordOf(stored(ICONS_KEY), isString))
+  icons = $state<Record<string, string>>({})
+
+  constructor() {
+    this.reread()
+  }
+
+  /** Reads all four out of storage.
+   *
+   *  Called again by the plugin, which is why it is a method at all. Emil, on his
+   *  phone: *"I don't see the icons of the spaces on the Even Realities plugin right
+   *  now."* The storage a packed plugin reads is not the page's own - a fresh port
+   *  every launch, so the page's own is always empty - and the one that replaces it
+   *  is seeded in two goes: a cookie, at once, with what decides the first paint,
+   *  and the phone app's own store, seconds later, with everything. A field
+   *  initialiser reads once and reads early, and what it read was the empty one.
+   *
+   *  Reading again rather than the store telling this: what the second seeding does
+   *  is fill in keys nothing has written this launch, so what storage says and what
+   *  this holds cannot disagree - see `fillFrom` in lib/even/local.ts. */
+  reread(): void {
+    this.recent = stringList(stored(RECENT_KEY)) ?? []
+    this.expanded = recordOf(stored(EXPANDED_KEY), isBoolean)
+    this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
+    this.icons = recordOf(stored(ICONS_KEY), isString)
+  }
 
   remember(path: string) {
     this.recent = [path, ...this.recent.filter((entry) => entry !== path)].slice(0, RECENT_LIMIT)
