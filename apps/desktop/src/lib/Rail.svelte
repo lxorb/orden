@@ -380,10 +380,14 @@
       </button>
     {/if}
 
+    <!-- Off while the theme in force has only the one scheme: there is no other
+         side of it to show, and swapping it for a built-in is not the switch
+         anybody pressed. See theme.svelte.ts. -->
     <button
       class="add"
       title={theme.current === 'dark' ? t('Light') : t('Dark')}
       aria-label={t('Switch theme')}
+      disabled={!theme.switchable}
       onclick={() => theme.toggle()}
     >
       {#if theme.current === 'dark'}
@@ -676,11 +680,15 @@
   }
 
   @media (hover: hover) {
-    .add:hover {
+    .add:hover:not(:disabled) {
       background: var(--surface-2);
       color: var(--text-strong);
       transform: rotate(90deg);
     }
+  }
+
+  .add:disabled {
+    opacity: 0.5;
   }
 
   /* A dot in the corner, not a badge: it is there to be noticed out of the
@@ -731,8 +739,8 @@
     transform: none;
   }
 
-  .add:active,
-  .foot .add:active {
+  .add:active:not(:disabled),
+  .foot .add:active:not(:disabled) {
     background: var(--press);
     color: var(--text-strong);
     transform: scale(0.9);

@@ -356,3 +356,61 @@ describe('installing, updating and removing', () => {
     expect(store.installed('night-owl')).toBe(false)
   })
 })
+
+/** The one control a theme can take away. Its own block because the answer is
+ *  the theme's rather than the store's: what the switch does depends entirely on
+ *  how many schemes the theme in force states. */
+describe('the light and dark switch', () => {
+  test('is live on the built-ins, which state both schemes between them', () => {
+    expect(theme.switchable).toBe(true)
+
+    theme.select('dark')
+    expect(theme.switchable).toBe(true)
+
+    theme.toggle()
+    expect(theme.current).toBe('light')
+  })
+
+  test('is dead on a theme file that states one scheme, and switches nothing', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+
+    expect(theme.switchable).toBe(false)
+
+    theme.toggle()
+
+    // Above all not swapped for the built-in dark: somebody who chose this theme
+    // did not ask for ours.
+    expect(store.using('warm-paper')).toBe(true)
+    expect(theme.current).toBe('light')
+  })
+
+  test('is live on a theme file that states both', async () => {
+    const pair = entry({ variants: ['light', 'dark'] })
+    serving([pair], PAIR)
+    await store.load()
+    await store.install(pair as never)
+
+    expect(theme.switchable).toBe(true)
+
+    // Whichever side it opened on, the switch shows the other one, and the theme
+    // is still the theme.
+    const was = theme.current
+    theme.toggle()
+
+    expect(theme.current).not.toBe(was)
+    expect(store.using('warm-paper')).toBe(true)
+  })
+
+  test('comes back when a theme with one scheme is removed', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+    expect(theme.switchable).toBe(false)
+
+    await store.remove('warm-paper')
+
+    expect(theme.switchable).toBe(true)
+  })
+})

@@ -235,6 +235,18 @@ class Themes {
     for (const [token, value] of Object.entries(tokens)) style.setProperty(token, value)
   }
 
+  /** Whether the light and dark switch has anywhere to go, which is what makes
+   *  it a switch rather than a button that throws a theme away.
+   *
+   *  The app's own tokens state both schemes, so following the system and either
+   *  built-in are all one pair and the switch is live on all three. A theme file
+   *  is whatever it said it was: one that states both is switched inside itself,
+   *  and one that states a single scheme has no other side to show. Every
+   *  control that switches the scheme reads this and is disabled where it is
+   *  false, because the alternative is a reader asking a light-only theme for
+   *  its dark and being handed ours instead. */
+  readonly switchable = $derived(!this.active.path || this.active.variants.length > 1)
+
   /** The rail's one-click switch: jump to the counterpart scheme. An explicit
    *  choice, so it stops following the system until that is chosen again.
    *
@@ -242,6 +254,8 @@ class Themes {
    *  swapped for a built-in: somebody using a pair asked for that theme's dark,
    *  not for ours. */
   toggle() {
+    if (!this.switchable) return
+
     const wanted: Scheme = this.current === 'dark' ? 'light' : 'dark'
 
     if (this.active.variants.length > 1) {
