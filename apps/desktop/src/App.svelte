@@ -589,7 +589,7 @@
 <PromptSheet />
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet
-     for one: a space in the rail, a note in the file list. -->
+     for one: a space in the switcher, a note in the file list. -->
 <IconPicker />
 <FirstSync />
 

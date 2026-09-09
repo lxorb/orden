@@ -68,8 +68,8 @@ class Session {
    *  a session that was there all along gets typed in again. */
   restoring = $state(false)
 
-  /** Whether there is a session at all, of either kind. What the rail, the
-   *  syncing and the rooms ask: a guest's spaces come down the same way. */
+  /** Whether there is a session at all, of either kind. What the panel's foot,
+   *  the syncing and the rooms ask: a guest's spaces come down the same way. */
   readonly signedIn = $derived(!!this.token && (!!this.user || !!this.guest))
   /** The session token when it belongs to an account rather than to a guest.
    *  What everything account-wide asks for - the settings, the storage, Recently

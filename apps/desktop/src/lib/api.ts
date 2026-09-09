@@ -110,13 +110,14 @@ export interface Joined {
 export interface RemoteSpace {
   id: string
   name: string
-  /** Where it sits in the rail, shared across machines. */
+  /** Where it sits in the list of spaces, shared across machines. */
   position: number
   icon: string | null
   /** What this account may do here. Everything the app offers in a space asks
    *  this first, so a reader is never shown a button that would be refused. */
   role: SpaceRole
-  /** Whether anybody besides the owner is in it, which is the mark in the rail. */
+  /** Whether anybody besides the owner is in it, which is the dot on its row in
+   *  the switcher. */
   shared: boolean
   /** How many notes it holds. What a machine bringing the account down for the
    *  first time counts against, since it knows this before the first note has

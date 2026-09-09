@@ -75,7 +75,7 @@
     background: var(--bg);
   }
 
-  /* The same square the rail draws a space as, at the size of something the
+  /* The same square the switcher draws a space as, at the size of something the
      whole window is waiting for. */
   .mark {
     display: grid;

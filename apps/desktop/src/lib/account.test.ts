@@ -337,7 +337,7 @@ describe('a host that keeps the token too', () => {
 
   test('says it is still looking while the stores are being asked', async () => {
     // Signed out and not known yet are different states. On a phone the stores
-    // take seconds to answer, and a rail that offers a sign-in inside those
+    // take seconds to answer, and a foot row that offers a sign-in inside those
     // seconds is how a session that was there gets typed in again.
     let answer: (token: string | null) => void = () => undefined
     account.alsoKeepIn({

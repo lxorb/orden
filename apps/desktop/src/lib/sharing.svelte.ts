@@ -43,7 +43,7 @@ export function roleOf(root: string): SpaceRole {
 }
 
 /** Whether the space has anybody in it besides its owner, which is the quiet
- *  mark the rail draws. */
+ *  dot on its row in the switcher. */
 export function isShared(root: string): boolean {
   return remoteOf(root)?.shared ?? false
 }
@@ -221,7 +221,7 @@ class Share {
 
   /** A change, and then whatever the account says the space now looks like. The
    *  space listing is asked for again as well: a role that changed here changes
-   *  what the rail and the editor offer. */
+   *  what the switcher and the editor offer. */
   private async change(
     work: (token: string, id: string) => Promise<Sharing>,
     about: string,

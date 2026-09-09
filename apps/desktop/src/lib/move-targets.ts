@@ -6,8 +6,8 @@
  *  this works out what it offers.
  *
  *  The list is exactly where a mouse could drop the thing, no more: any folder of
- *  the space it is in, and any other space in the rail - which is what dropping
- *  on a square in the rail does. Its own place is left out, because a move to
+ *  the space it is in, and any other space there is - which is what carrying a
+ *  note onto another space used to mean. Its own place is left out, because a move to
  *  where it already is is not a move, and so is anything inside a folder being
  *  moved, because a folder cannot be put into itself.
  *
@@ -72,7 +72,7 @@ export function moveTargets(input: {
   moving: string
   /** The space on screen, as the file list holds it. */
   tree: Entry | null
-  /** Every space in the rail, in the order it shows them. */
+  /** Every space there is, in the order the switcher shows them. */
   spaces: readonly Space[]
   /** Which of them is on screen. */
   here: string | null
@@ -98,7 +98,7 @@ export function moveTargets(input: {
                   .replace(/\\/g, '/'),
         }))
 
-  // The other spaces, which is what dropping on a square in the rail does.
+  // The other spaces, which is the only way a note moves between two of them.
   const elsewhere: MoveTarget[] = spaces
     .filter((one) => one.root !== here)
     .map((one) => ({ id: one.root, label: one.name }))

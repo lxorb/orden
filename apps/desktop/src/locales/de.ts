@@ -56,6 +56,7 @@ export const de: Dictionary = {
   'Move after': 'Verschieben hinter',
   Heading: 'Überschrift',
   'Move to': 'Verschieben nach',
+  'Move this note': 'Diese Notiz verschieben',
   'Move up': 'Nach oben',
   'Move down': 'Nach unten',
   Folder: 'Ordner',

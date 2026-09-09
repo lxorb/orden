@@ -57,6 +57,7 @@ export const gsw: Dictionary = {
   Move: 'Verschiebe',
   'Move after': 'Verschiebe hinter',
   'Move to': 'Verschiebe uf',
+  'Move this note': 'Die Notiz verschiebe',
   'Move up': 'Ufe',
   'Move down': 'Abe',
   Folder: 'Mappe',

@@ -1071,7 +1071,7 @@ describe('the first pass, which somebody is waiting on', () => {
     stoppedAgain()
   })
 
-  test('leaves the rail and the tree holding what came down, with no reload', async () => {
+  test('leaves the switcher and the tree holding what came down, with no reload', async () => {
     await machineWithNotes()
     accountWithNotes()
     await signIn()

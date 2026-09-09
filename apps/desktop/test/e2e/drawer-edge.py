@@ -47,6 +47,33 @@ CORNER = """
 """
 
 
+# A finger starting at the left edge and pulling right, a frame at a time.
+SWIPE = """
+async () => {
+  const target = document.elementFromPoint(6, 200)
+  const fire = (kind, x) => {
+    const touch = new Touch({ identifier: 1, target, clientX: x, clientY: 200 })
+    target.dispatchEvent(
+      new TouchEvent(kind, {
+        touches: kind === 'touchend' ? [] : [touch],
+        targetTouches: kind === 'touchend' ? [] : [touch],
+        changedTouches: [touch],
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+  }
+
+  fire('touchstart', 6)
+  for (let x = 20; x <= 320; x += 20) {
+    await new Promise((go) => requestAnimationFrame(go))
+    fire('touchmove', x)
+  }
+  fire('touchend', 320)
+}
+"""
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     pages = Pages()
@@ -85,6 +112,16 @@ def main() -> int:
 
             page.wait_for_timeout(700)
             corner("03-shut")
+
+            # And back, by the gesture rather than by a button: the drag measures
+            # the panel's own width, and with the column of spaces gone a shut
+            # drawer has no width at all to measure, so this is the path that had
+            # to keep working. Real touch events, dispatched in the page: the
+            # drawer listens for touches and a synthesised mouse is not one.
+            page.evaluate(SWIPE)
+            page.wait_for_timeout(800)
+            say(f"dragged open: panel is {page.evaluate('() => window.nibApp.workspace.panel')}")
+            corner("04-dragged-back")
 
             context.close()
             browser.close()

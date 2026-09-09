@@ -304,7 +304,7 @@ class Themes {
     this.apply()
   }
 
-  /** The rail's one-click switch: jump to the counterpart scheme. An explicit
+  /** The panel foot's one-click switch: jump to the counterpart scheme. An explicit
    *  choice, so it stops following the system until that is chosen again. */
   toggle() {
     if (!this.switchable) return

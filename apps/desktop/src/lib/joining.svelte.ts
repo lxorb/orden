@@ -197,7 +197,7 @@ class Joining {
     this.invitation = null
 
     // The space is theirs to reach now. One pass makes the folder, brings the
-    // notes down, and leaves the rail holding it.
+    // notes down, and leaves the switcher holding it.
     await account.loadSpaces().catch(() => undefined)
     await sync.pass()
 

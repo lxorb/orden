@@ -43,6 +43,7 @@ import { canPrint, printNote } from './export/print'
 import { imagePath } from './images'
 import { canInsertPicture, insertPicture } from './insert-picture'
 import { canSaveAs, saveAs } from './save-as'
+import { moveTargets } from './move-targets'
 import { prompt } from './prompt.svelte'
 import { newSpace, publishSpace, shareSpace } from './space-actions'
 import { canPublish } from './publishing.svelte'
@@ -552,11 +553,50 @@ function stepSlide(view: EditorView, direction: number) {
  *  own it, and both are the sheet the space's own menu opens. A list rather than
  *  a disabled row, because a command that cannot run is not a command; see
  *  `exportCommands`. */
+/** Putting the note that is open somewhere else: into a folder of this space,
+ *  or into another space.
+ *
+ *  A note used to be carried onto a square in the column of spaces, and with the
+ *  column gone a pointer had no way left to move one between spaces at all - the
+ *  file list drags within a space and the row's own Move is a thumb's, where
+ *  there is no drag to make. So it is a command, which is also the first way the
+ *  keyboard has ever had to do it. The same call the drop made, so it is the same
+ *  move and the same undo. */
+function moveCommand(): Command | null {
+  const note = workspace.active
+  const path = note?.path
+  if (!path) return null
+
+  const targets = moveTargets({
+    moving: path,
+    tree: workspace.tree,
+    spaces: workspace.spaces,
+    here: workspace.activeSpace?.root ?? null,
+  })
+  if (!targets.length) return null
+
+  return {
+    id: 'move-note',
+    label: t('Move this note'),
+    run: () =>
+      void prompt
+        .find({
+          title: t('Move to'),
+          options: targets.map((one) => ({ id: one.id, label: one.label })),
+          placeholder: t('Folder'),
+        })
+        .then((into) => (into ? workspace.moveMany([path], into) : undefined)),
+  }
+}
+
 function spaceCommands(): Command[] {
   const space = workspace.activeSpace
   if (!space) return []
 
+  const moving = moveCommand()
+
   return [
+    ...(moving ? [moving] : []),
     // Which space is open. The switcher at the top of the list panel is the
     // pointer's way in; this is the keyboard's, and the only one there is while
     // the panel is shut. A row each, with the one you are in ticked, which is

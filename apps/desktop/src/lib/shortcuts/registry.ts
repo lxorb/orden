@@ -412,7 +412,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     // The space drawn as a map of its links. No key out of the box - it opens
-    // from the rail and the palette - and here so a preset that has one for it
+    // from the panel's tabs and the palette - and here so a preset that has one for it
     // has somewhere to put it. Obsidian's is Ctrl+G.
     id: 'app.graph',
     label: () => t('Graph'),

@@ -129,9 +129,9 @@ class Drawer {
       candidate = true
 
       // Open, the layer is there to measure and the measurement is cheap and
-      // exact. Closed, it is only as wide as the rail, so what the last drag
-      // at this size measured stands in - and if there is none, the claim
-      // below has to lay the page out once to find it.
+      // exact. Closed, there is nothing in it at all, so what the last drag at
+      // this size measured stands in - and if there is none, the claim below
+      // has to lay the page out once to find it.
       width = workspace.panel ? this.measure(host) : this.remembered()
       this.width = width
       this.held = true
@@ -167,10 +167,10 @@ class Drawer {
           workspace.showPanel('tree')
           openedByDrag = true
 
-          // The first drag of a session has no remembered width, and dragging
-          // against the rail's would snap the drawer open in a few pixels.
-          // `flushSync` puts the sidebar in the DOM now so the real width can
-          // be read; every later drag has it already and this never runs.
+          // The first drag of a session has no remembered width, and a shut
+          // drawer has no width of its own to fall back on. `flushSync` puts
+          // the sidebar in the DOM now so the real width can be read; every
+          // later drag has it already and this never runs.
           if (!width) {
             flushSync()
             width = this.measure(host)

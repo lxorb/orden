@@ -1,5 +1,5 @@
 /** Ids handed out within one run of the app: tabs, panes, documents, and the
- *  spaces the rail keeps its order by.
+ *  spaces the switcher keeps its order by.
  *
  *  The counter is what makes them unique. Eight random characters collide
  *  rarely, and rarely is not never, and two tabs sharing an id would share

@@ -242,7 +242,7 @@ describe('a theme with one scheme', () => {
     expect(theme.id).toBe('file:warm-paper')
   })
 
-  test('is not switched by the rail, which has nowhere to switch it to', async () => {
+  test('is not switched by the panel foot, which has nowhere to switch it to', async () => {
     installed('warm-paper', 'Warm Paper', ONLY_LIGHT)
     await theme.reload()
     theme.select('file:warm-paper')
@@ -255,7 +255,7 @@ describe('a theme with one scheme', () => {
   })
 })
 
-describe('the rail switch', () => {
+describe('the switch in the panel foot', () => {
   test('flips the scheme and leaves the theme where it is', async () => {
     theme.init()
     installed('rose', 'Rose', PAIR)

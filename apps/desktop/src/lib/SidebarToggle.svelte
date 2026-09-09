@@ -2,7 +2,7 @@
   /** The one button that opens and shuts the file list.
    *
    *  It lives at the left end of the title bar, where every desktop app puts it,
-   *  and at the top of the rail on a phone and a tablet - where a drawer over the
+   *  and in the drawer's own head on a phone and a tablet - where a drawer over the
    *  note covers the bar the button usually sits in, so the drawer needs the same
    *  button to shut itself with. One component because it is one control: the same
    *  glyph, the same words, the same movement, whichever of the two it is drawn

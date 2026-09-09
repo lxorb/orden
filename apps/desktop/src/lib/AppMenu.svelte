@@ -377,10 +377,13 @@
     z-index: 44;
   }
 
+  /* Under the bars it opens from, which are at the left end of the title bar -
+     so it hangs off the button rather than off the panel beside it, and it is
+     in the same place whether the file list is open or shut. */
   .menu {
     position: fixed;
-    top: calc(var(--titlebar-height) + var(--space-2));
-    left: calc(var(--rail-width) + var(--space-2));
+    top: calc(var(--titlebar-height) + var(--space-1));
+    left: var(--space-2);
     z-index: 45;
     display: flex;
     max-height: 78vh;

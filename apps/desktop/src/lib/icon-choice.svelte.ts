@@ -1,7 +1,7 @@
 /** What somebody is choosing an icon for.
  *
  *  One picker for the whole app: the same set of icons, the same search field,
- *  the same sheet, whether what wears the icon is a space in the rail or a note
+ *  the same sheet, whether what wears the icon is a space in the switcher or a note
  *  in the file list. The two are far apart in the page - and the file list is one
  *  component per folder, so there is no one place a note's row could reach a
  *  picker of its own - so what is being chosen for is state rather than a prop,

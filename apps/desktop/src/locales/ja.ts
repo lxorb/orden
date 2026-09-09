@@ -55,6 +55,7 @@ export const ja: Dictionary = {
   Move: '移動',
   'Move after': 'この後に移動',
   'Move to': '移動先',
+  'Move this note': 'このノートを移動',
   'Move up': '上へ',
   'Move down': '下へ',
   Folder: 'フォルダ',

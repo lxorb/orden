@@ -930,9 +930,9 @@ class Workspace {
     // Ids are kept across a reload so the selected space survives one.
     const byRoot = new Map(this.spaces.map((space) => [space.root, space]))
 
-    // The folder decides which spaces exist; the rail decides the order they
+    // The folder decides which spaces exist; the account decides the order they
     // appear in. Without this, a listing that comes back alphabetical would
-    // undo every drag on the next reload.
+    // undo every move on the next reload.
     const rank = new Map(this.spaces.map((space, index) => [space.root, index]))
     const at = (root: string) => rank.get(root) ?? Number.MAX_SAFE_INTEGER
 
@@ -1078,7 +1078,7 @@ class Workspace {
     this.persist()
   }
 
-  /** The rail's way in. Picking a space with the sidebar closed showed
+  /** The switcher's way in. Picking a space with the sidebar closed showed
    *  nothing, so the sidebar comes up with the tree, as Ctrl+Shift+L opens it. */
   async showSpace(id: string) {
     this.panel ??= 'tree'
@@ -1550,8 +1550,8 @@ class Workspace {
 
   /** A note in a space is written as soon as the typing pauses, because nothing in
    *  the app is going to ask anybody to save it: it has no mark and no question on
-   *  the way out, and the light in the rail is the whole report on where its words
-   *  have got to.
+   *  the way out, and the light on the settings button is the whole report on
+   *  where its words have got to.
    *
    *  A file opened from the computer is written when the reader says so, and not
    *  a moment before. That is the only place saving is still a thing somebody
@@ -1577,7 +1577,8 @@ class Workspace {
    *
    *  A note in a space wears no dot at all. It is written every second or so, and
    *  a mark that blinks whenever somebody pauses is not a report on anything they
-   *  have to know; the light in the rail says how the space itself is doing. */
+   *  have to know; the light on the settings button says how the space itself is
+   *  doing. */
   private markSaving(note: NoteDoc) {
     if (note.keepsItself) return
 
@@ -1745,7 +1746,7 @@ class Workspace {
     this.device.forgetRecent()
   }
 
-  /** The icon a space shows in the rail, if it has been given one. Keyed by
+  /** The icon a space shows in the switcher, if it has been given one. Keyed by
    *  folder rather than id, so it survives the ids being handed out again. */
   iconFor(spaceId: string | null): string | null {
     const space = this.spaces.find((entry) => entry.id === spaceId)

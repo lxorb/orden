@@ -201,7 +201,7 @@ describe('keeping a preview tab', () => {
   })
 })
 
-describe('picking a space from the rail', () => {
+describe('picking a space from the switcher', () => {
   test('opens a closed sidebar on the tree', async () => {
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
     workspace.panel = null

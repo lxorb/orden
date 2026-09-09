@@ -19,8 +19,8 @@ export interface Item {
 /** One path each, so the list reads at a glance rather than as a column of
  *  words. */
 export const ICONS: Record<string, string> = {
-  // Sliders, not a sun with rays: the rail's theme button is already a sun,
-  // and adjusting things is what this pane is for.
+  // Sliders, not a sun with rays: the theme button at the foot of the panel is
+  // already a sun, and adjusting things is what this pane is for.
   general:
     'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
   editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',

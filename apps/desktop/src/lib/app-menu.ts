@@ -466,7 +466,7 @@ export function appMenu(context: Context): MenuGroup[] {
           checked: modes.focus,
           run: () => modes.toggleFocus(view),
         },
-        // The document and nothing else: the rail, the file list and both bars
+        // The document and nothing else: the file list and both bars
         // leave. The same command the key is bound to; see fullscreen.svelte.ts.
         {
           label: t('Fullscreen'),

@@ -1,7 +1,7 @@
 /** The document, and nothing else.
  *
  *  Full screen takes the app away and leaves what is being read or drawn: the
- *  rail with its spaces, the file list, the title bar and the status bar all go,
+ *  the file list with its spaces, the title bar and the status bar all go,
  *  and the document fills the screen behind whatever the system keeps for its
  *  clock and its gesture bar. Where there is a window to ask, the window goes
  *  full screen too, so a desktop loses its frame and a browser tab loses the

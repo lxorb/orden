@@ -6,8 +6,8 @@ import { longPress } from './longpress'
  *
  *  The rule matters more than it looks: a press that opened the menu while the
  *  finger was on its way somewhere is a menu nobody asked for, and it is the
- *  reason the rail and the file list offer a Move of their own rather than
- *  relying on a drag a touch screen cannot start. */
+ *  reason the file list and the space switcher offer a Move of their own rather
+ *  than relying on a drag a touch screen cannot start. */
 
 /** What the action listens on, with only the parts it reads. */
 interface Node {

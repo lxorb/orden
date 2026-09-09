@@ -81,11 +81,11 @@ describe('searching the library', () => {
   })
 })
 
-/** What a space in the rail actually draws.
+/** What a space in the switcher actually draws.
  *
  *  Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
  *  plugin right now."* The cause was elsewhere - the storage the chosen name is read
- *  from; see lib/even/first.ts - but the rule the rail follows is here, and the half
+ *  from; see lib/even/first.ts - but the rule the switcher follows is here, and the half
  *  of it that matters is the last test: a space always shows something.
  */
 describe('the mark a space wears', () => {

@@ -377,7 +377,7 @@ class Sync {
     this.save()
   }
 
-  /** Sends the rail order up. Local spaces the account has never heard of are
+  /** Sends the order of the spaces up. Local spaces the account has never heard of are
    *  simply left out; the server keeps them where they were. */
   async pushSpaceOrder() {
     const token = account.token
