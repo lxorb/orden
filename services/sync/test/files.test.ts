@@ -51,14 +51,54 @@ describe('a PDF as a blob', () => {
     expect(response.json.stored).toBe(true)
   })
 
-  test('and served back with its own type', async () => {
+  test('and served back with its own type, where a page publishes it', async () => {
     await upload(PAPER)
+    await record([{ path: 'reading/paper.pdf', hash: PAPER }])
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field' },
+    })
+
     const response = await call(env, `/i/${PAPER}.pdf`)
 
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('application/pdf')
     // Whatever the bytes look like, they are read as what was accepted.
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+  })
+
+  /** A picture is a capability and a document is not; see the header of
+   *  src/blobs.ts, which is where the reasoning lives. */
+  test('and not served at all while it is nobody’s published file', async () => {
+    await upload(PAPER)
+    expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
+
+    // Recorded in a space that publishes nothing is still nobody's page.
+    await record([{ path: 'reading/paper.pdf', hash: PAPER }])
+    expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
+  })
+
+  test('and stops being served when the space stops publishing', async () => {
+    await upload(PAPER)
+    await record([{ path: 'paper.pdf', hash: PAPER }])
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field' },
+    })
+    expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(200)
+
+    await call(env, `/v1/spaces/${space}/blog`, { method: 'DELETE', token })
+    expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
+  })
+
+  test('while a picture is served to whoever holds its hash, as it always was', async () => {
+    await upload(PAPER, 64, 'image/png')
+
+    const response = await call(env, `/i/${PAPER}.png`)
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toBe('image/png')
   })
 
   test('with the parameters after the type left off', async () => {

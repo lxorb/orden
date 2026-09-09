@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { now } from './crypto'
+import { readSpaceFiles } from './spaces/files'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
@@ -105,8 +106,58 @@ blobs.delete('/:hash', async (context) => {
 
 /** Serving, which carries no session: a note is read by whoever it was shared
  *  with, and a published blog has no reader to authenticate. The hash is the
- *  capability - it cannot be guessed, and it is all the note reveals. */
+ *  capability - it cannot be guessed, and it is all the note reveals.
+ *
+ *  Which is a real cost, and worth writing down rather than leaving as an
+ *  assumption. A hash is the same for the same bytes whoever holds them, and it
+ *  is derivable from the bytes: anybody who already has a copy of a document can
+ *  work out its hash and ask this route whether Nib is holding it, and be given
+ *  it. And a hash learned once - out of a note somebody was shown, off a
+ *  published page, out of a proxy log - keeps working for ever, including for
+ *  somebody who has since been taken out of the space it came from. Two ways out
+ *  of that were considered:
+ *
+ *  **A salt per account in the key.** `blobs/<sha256(salt + hash)>` would make one
+ *  account's URL unrelated to another's, which closes the "does Nib hold this
+ *  document" question: knowing the bytes is no longer knowing the address. It
+ *  costs the deduplication - the same picture in two accounts becomes two objects
+ *  in R2, and the quota counts it twice - and it costs a migration of every object
+ *  already stored. What it does not fix is the other half: the URL in the note is
+ *  the salted one, so a hash somebody has already seen still works for ever.
+ *
+ *  **An access check here, by space membership.** The right answer in principle,
+ *  and mostly impossible: an `<img>` tag cannot carry an `Authorization` header,
+ *  auth here is a bearer token and never a cookie, and the URL of a picture is
+ *  written into the note's own markdown - so the editor, an export, a published
+ *  page and the clipper all fetch these with no session at all. Checking the
+ *  requester would break every picture in the app before it stopped anybody.
+ *
+ *  So the capability stands for pictures, and what is checked is the thing that
+ *  can be: a PDF is a whole document rather than an illustration inside a note,
+ *  and the only thing that ever fetches one of those from here is a published
+ *  page. The app opens the file in the space's own folder, the web build reads it
+ *  out of its own store, and the clipper deals in pictures. So a PDF is served
+ *  where a published page could link to it and nowhere else, and a paper in a
+ *  private space is not something a hash gets anybody any more. */
 export const publicBlobs = new Hono<{ Bindings: Env }>()
+
+/** Whether any published space says it keeps this file beside its notes, which is
+ *  the one condition under which a page here writes its URL.
+ *
+ *  A scan of the published spaces, narrowed by the hash appearing anywhere in the
+ *  column and then read properly: the column is a JSON list rather than a table,
+ *  so there is nothing to index, and this runs for a PDF rather than for a
+ *  picture - which is what keeps it off the path that carries the requests. */
+async function publishedAnywhere(env: Env, hash: string): Promise<boolean> {
+  const { results } = await env.DB.prepare(
+    `select files from spaces
+      where blog_enabled = 1 and deleted = 0 and files like ?1 limit 50`,
+  )
+    .bind(`%${hash}%`)
+    .all<{ files: string }>()
+
+  return results.some((row) => readSpaceFiles(row.files).some((one) => one.hash === hash))
+}
 
 publicBlobs.get('/:name', async (context) => {
   // The name carries an extension so that saving the image keeps a sensible
@@ -117,9 +168,18 @@ publicBlobs.get('/:name', async (context) => {
   const object = await context.env.NOTES.get(key(hash))
   if (!object) return context.notFound()
 
+  const type = object.httpMetadata?.contentType ?? 'application/octet-stream'
+
+  // A document, and nothing that reads one of those from here has a session to
+  // show; see the header. Answered as missing rather than as refused, because to
+  // anybody who has not been given the file that is what it is.
+  if (type === 'application/pdf' && !(await publishedAnywhere(context.env, hash))) {
+    return context.notFound()
+  }
+
   return new Response(object.body, {
     headers: {
-      'content-type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+      'content-type': type,
       // Addressed by content, so it can never go stale.
       'cache-control': 'public, max-age=31536000, immutable',
       etag: `"${hash}"`,
