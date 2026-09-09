@@ -675,6 +675,10 @@ export const ja: Dictionary = {
   'Select every file': 'すべてのファイルを選択',
   'Clear the selection': '選択を解除',
   'Delete the selected files': '選択したファイルを削除',
+  'Next file': '次のファイル',
+  'Previous file': '前のファイル',
+  'Open the folder': 'フォルダーを開く',
+  'Close the folder': 'フォルダーを閉じる',
   'Moving through a list': '一覧の中を移動',
   'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
     '矢印キー、Enter、Esc は開いているものを操作するためのもので、ショートカットではありません。',

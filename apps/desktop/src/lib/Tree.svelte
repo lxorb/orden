@@ -28,7 +28,8 @@
   import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
-  import { folderOf } from './tauri'
+  import { dropTarget, targetFor } from './drop-target.svelte'
+  import { treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
@@ -37,8 +38,6 @@
   import { dur } from './motion'
 
   const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
-
-  let dropTarget = $state<string | null>(null)
 
   /** Moving a row, where a drag is not available.
    *
@@ -124,11 +123,43 @@
     return false
   }
 
-  /** Keys that act on the selection, from anywhere in the tree. Which keys
-   *  those are comes from the registry, like every other shortcut; they are
-   *  read here rather than on the window because they only mean anything
-   *  while the focus is in the list. */
+  /** The row a press came from, by the path written on it. Null for a press
+   *  from anywhere in the list that is not a row. */
+  function rowPath(event: KeyboardEvent): string | null {
+    const from = event.target instanceof Element ? event.target.closest('.row') : null
+    return from instanceof HTMLElement ? (from.dataset.path ?? null) : null
+  }
+
+  /** Puts the keyboard on a row and makes it the one selected, which is what
+   *  arriving at a row in a file list means. The row is found in the page rather
+   *  than held in state, because the list is one component per folder and the row
+   *  being stepped onto is usually in another of them. */
+  function stand(list: HTMLElement, path: string) {
+    workspace.select(path)
+    const row = list.querySelector(`.row[data-path="${CSS.escape(path)}"]`)
+    if (row instanceof HTMLElement) row.focus()
+  }
+
+  /** Which of the walk's keys this press is, by the id the registry holds it
+   *  under. Read off the registry rather than off the event, so a reader who
+   *  rebinds one is obeyed; see tree-keys.ts. */
+  function walkKey(event: KeyboardEvent): string | null {
+    for (const [id, key] of TREE_MOVES) {
+      if (shortcuts.pressed(id, event)) return key
+    }
+
+    return null
+  }
+
+  /** Keys that act on the selection or walk the rows, from anywhere in the tree.
+   *  Which keys those are comes from the registry, like every other shortcut;
+   *  they are read here rather than on the window because they only mean
+   *  anything while the focus is in the list. */
   function onKey(event: KeyboardEvent) {
+    // A row being renamed is a text field, and Escape, Ctrl+A and the arrows
+    // belong to the words in it.
+    if (event.target instanceof HTMLInputElement) return
+
     if (shortcuts.pressed('tree.select-all', event)) {
       event.preventDefault()
       workspace.selectAll()
@@ -144,6 +175,39 @@
     if (deleting && workspace.selection.length) {
       event.preventDefault()
       void workspace.removeMany(workspace.selection)
+      return
+    }
+
+    const list = event.currentTarget
+    const here = rowPath(event)
+    if (!(list instanceof HTMLElement) || here === null) return
+
+    if (shortcuts.pressed('tree.rename', event)) {
+      event.preventDefault()
+      workspace.startRenaming(here)
+      return
+    }
+
+    const key = walkKey(event)
+    const opening = shortcuts.pressed('tree.open', event)
+    if (key === null && !opening) return
+
+    // One walk of the rows on show, which is both what a step is worked out
+    // from and what says whether this row is a folder.
+    const rows = workspace.visibleTree()
+
+    const step = key === null ? null : treeStep(key, rows, here)
+    if (step) {
+      event.preventDefault()
+      if (step.do === 'stand') stand(list, step.path)
+      else workspace.toggleFolder(step.path)
+      return
+    }
+
+    if (opening) {
+      event.preventDefault()
+      if (rows.find((row) => row.path === here)?.folder) workspace.toggleFolder(here)
+      else void workspace.openEntry(here)
     }
   }
 
@@ -211,12 +275,13 @@
     return paths.length === 0 || movesInto(paths, folder)
   }
 
-  function overFolder(event: DragEvent, path: string, folder: string) {
+  function overRow(event: DragEvent, entry: Entry) {
+    const folder = targetFor(entry.path, entry.is_dir)
     if (!isTreeDrag(event.dataTransfer) || !takes(folder)) return
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-    dropTarget = path
+    dropTarget.over(folder)
   }
 
   /** `dragleave` also fires when the pointer moves onto a child - the label
@@ -228,23 +293,14 @@
     return inside(box, event.clientX, event.clientY)
   }
 
-  function drop(event: DragEvent, folder: string) {
+  /** Into the folder the row stands for, which for a note is the folder it sits
+   *  in; see drop-target.svelte.ts. */
+  function drop(event: DragEvent, entry: Entry) {
     event.preventDefault()
-    dropTarget = null
+    dropTarget.clear()
 
     const paths = dragged(event.dataTransfer)
-    if (paths.length) void workspace.moveMany(paths, folder)
-  }
-
-  /** A note is a target too, standing for the folder it sits in. Without this
-   *  the only way out of a folder would be another folder to drop onto, and a
-   *  space with one folder in it would be a trap. */
-  function dropBeside(event: DragEvent, path: string) {
-    event.preventDefault()
-    dropTarget = null
-
-    const paths = dragged(event.dataTransfer)
-    if (paths.length) void workspace.moveMany(paths, folderOf(path))
+    if (paths.length) void workspace.moveMany(paths, targetFor(entry.path, entry.is_dir))
   }
 </script>
 
@@ -278,7 +334,8 @@
       {:else if entry.is_dir}
         <button
           class="row folder"
-          class:dropping={dropTarget === entry.path}
+          data-path={entry.path}
+          class:dropping={dropTarget.lit(entry.path)}
           class:selected={workspace.isSelected(entry.path)}
           style:--level={depth}
           aria-expanded={workspace.isExpanded(entry.path)}
@@ -288,9 +345,9 @@
           use:longPress={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
-          ondragover={(event) => overFolder(event, entry.path, entry.path)}
-          ondragleave={(event) => stillInside(event) || (dropTarget = null)}
-          ondrop={(event) => drop(event, entry.path)}
+          ondragover={(event) => overRow(event, entry)}
+          ondragleave={(event) => stillInside(event) || dropTarget.clear()}
+          ondrop={(event) => drop(event, entry)}
         >
           <svg class="chevron" class:open={workspace.isExpanded(entry.path)} viewBox="0 0 8 8">
             <path d="M2 1l3 3-3 3" />
@@ -306,8 +363,8 @@
       {:else}
         <button
           class="row note"
+          data-path={entry.path}
           class:active={workspace.active?.path === entry.path}
-          class:dropping={dropTarget === entry.path}
           class:selected={workspace.isSelected(entry.path)}
           style:--level={depth}
           draggable="true"
@@ -320,9 +377,9 @@
             menu.show(event, menuFor(entry), { title: shownName(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
-          ondragover={(event) => overFolder(event, entry.path, folderOf(entry.path))}
-          ondragleave={(event) => stillInside(event) || (dropTarget = null)}
-          ondrop={(event) => dropBeside(event, entry.path)}
+          ondragover={(event) => overRow(event, entry)}
+          ondragleave={(event) => stillInside(event) || dropTarget.clear()}
+          ondrop={(event) => drop(event, entry)}
         >
           <!-- In the slot the chevron sits in, so a name lines up whatever kind
                of file it is: the row says what it opens into without spending a

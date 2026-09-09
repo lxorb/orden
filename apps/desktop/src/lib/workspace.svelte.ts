@@ -9,6 +9,7 @@ import { folderOf as folderIn, insideSpace, noteName, relativeTo } from './space
 import { key, t } from './i18n.svelte'
 import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
+import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
@@ -1706,18 +1707,25 @@ class Workspace {
     this.picked.clear()
   }
 
-  /** Every row the tree shows, top to bottom: a folder's children only while
-   *  it is open, which is what Shift-click and Ctrl+A mean by "between". */
-  visibleRows(): string[] {
-    const out: string[] = []
+  /** Every row the tree shows, top to bottom, and which of them are folders
+   *  standing open: a folder's children only while it is open, which is what
+   *  Shift-click, Ctrl+A and the arrow keys all mean by "the next one". */
+  visibleTree(): TreeRow[] {
+    const out: TreeRow[] = []
     const walk = (entry: Entry) => {
       for (const child of entry.children) {
-        out.push(child.path)
-        if (child.is_dir && this.isExpanded(child.path)) walk(child)
+        const open = child.is_dir && this.isExpanded(child.path)
+        out.push({ path: child.path, folder: child.is_dir, open })
+        if (open) walk(child)
       }
     }
     if (this.tree) walk(this.tree)
     return out
+  }
+
+  /** The same rows, as the paths on them. */
+  visibleRows(): string[] {
+    return this.visibleTree().map((row) => row.path)
   }
 
   /** What a drag from `path` carries: the whole selection when the row is part

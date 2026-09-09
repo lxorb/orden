@@ -16,13 +16,20 @@
   import Bookmarks from './Bookmarks.svelte'
   import Links from './Links.svelte'
   import SearchPanel from './SearchPanel.svelte'
+  import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
   import { dur } from './motion'
 
   const { ongoto }: { ongoto?: (line: number) => void } = $props()
 
-  /** Lit while a note is held over the space below the tree. */
-  let rootDrop = $state(false)
+  /** Lit while a drop would land in the space itself: over the empty stretch
+   *  below the last row, and over a row at the top of the space, which stands for
+   *  the space the way every row stands for the folder it sits in. One answer for
+   *  the whole list; see drop-target.svelte.ts. */
+  const rootDrop = $derived.by(() => {
+    const root = workspace.activeSpace?.root
+    return root !== undefined && dropTarget.lit(root)
+  })
 
   /** The space below the tree lights only where a drop would do something: a row
    *  already at the top of the space is not moving. The same rule the rows
@@ -36,12 +43,12 @@
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-    rootDrop = true
+    dropTarget.over(root)
   }
 
   function dropOnRoot(event: DragEvent) {
     event.preventDefault()
-    rootDrop = false
+    dropTarget.clear()
 
     const paths = dragged(event.dataTransfer)
     const root = workspace.activeSpace?.root
@@ -292,7 +299,7 @@
             oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
             onclick={() => workspace.stopRenaming()}
             ondragover={overRoot}
-            ondragleave={() => (rootDrop = false)}
+            ondragleave={() => dropTarget.clear()}
             ondrop={dropOnRoot}
           ></div>
         {:else}

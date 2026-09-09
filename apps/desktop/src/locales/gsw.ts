@@ -676,6 +676,10 @@ export const gsw: Dictionary = {
   'Select every file': 'Alli Dateie uswähle',
   'Clear the selection': 'D Uswahl ufhebe',
   'Delete the selected files': 'Uswählti Dateie lösche',
+  'Next file': 'Nächschti Datei',
+  'Previous file': 'Vorherigi Datei',
+  'Open the folder': 'Ornder ufmache',
+  'Close the folder': 'Ornder zuemache',
   'Moving through a list': 'I ere Lischte bewege',
   'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
     'Pfiiltaste, Enter und Esc bediened, was offe isch; das sind kei Chürzel.',

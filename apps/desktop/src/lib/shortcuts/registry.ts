@@ -557,6 +557,58 @@ const PANEL_ENTRIES: Shortcut[] = [
     contextual: true,
     alias: true,
   },
+  // Walking the list. Contextual, like the plane's own arrows, so sharing the
+  // four of them with the editor's motion is not reported as a clash: they only
+  // mean anything while the focus is in the list. The walk itself is
+  // tree-keys.ts and the rows are Tree.svelte.
+  {
+    id: 'tree.down',
+    label: () => t('Next file'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'ArrowDown',
+    contextual: true,
+  },
+  {
+    id: 'tree.up',
+    label: () => t('Previous file'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'ArrowUp',
+    contextual: true,
+  },
+  {
+    id: 'tree.into',
+    label: () => t('Open the folder'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'ArrowRight',
+    contextual: true,
+  },
+  {
+    id: 'tree.out',
+    label: () => t('Close the folder'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'ArrowLeft',
+    contextual: true,
+  },
+  {
+    id: 'tree.open',
+    label: () => t('Open'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Enter',
+    contextual: true,
+  },
+  {
+    id: 'tree.rename',
+    label: () => t('Rename'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'F2',
+    contextual: true,
+  },
 ]
 
 /** The plane's own keys. Read where the plane is - see Canvas.svelte - and only

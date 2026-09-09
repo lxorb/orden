@@ -679,6 +679,10 @@ export const fr: Dictionary = {
   'Select every file': 'Sélectionner tous les fichiers',
   'Clear the selection': 'Annuler la sélection',
   'Delete the selected files': 'Supprimer les fichiers sélectionnés',
+  'Next file': 'Fichier suivant',
+  'Previous file': 'Fichier précédent',
+  'Open the folder': 'Ouvrir le dossier',
+  'Close the folder': 'Fermer le dossier',
   'Moving through a list': 'Se déplacer dans une liste',
   'The arrow keys, Enter and Esc work whatever is open; they are not shortcuts.':
     'Les flèches, Entrée et Échap pilotent ce qui est ouvert ; ce ne sont pas des raccourcis.',
