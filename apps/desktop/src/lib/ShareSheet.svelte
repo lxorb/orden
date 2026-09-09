@@ -11,6 +11,7 @@
   import { called } from './person'
   import { viewport } from './viewport.svelte'
   import type { GivenRole, Member, Sharing } from './api'
+  import Copyable from './Copyable.svelte'
   import Select from './Select.svelte'
   import { dur } from './motion'
 
@@ -45,8 +46,9 @@
     return person.pending ? `${person.email} · ${t('Invited')}` : (person.email ?? '')
   }
 
-  /** What names a row, whichever kind of person it is. */
-  const keyOf = (person: Member | Waiting) => person.guest ?? person.email ?? ''
+  /** What names a row, whichever kind of person it is. The same key the store
+   *  says a request is about, so the row being changed is the row that shows it. */
+  const keyOf = (person: Member | Waiting) => `person:${person.guest ?? person.email ?? ''}`
 </script>
 
 {#if share.open}
@@ -66,20 +68,44 @@
       <p class="wrong">{share.error}</p>
     {/if}
 
-    {#if who}
+    {#if !who}
+      <!-- The shape of the answer while it is on its way, so the sheet is
+           already the size it is about to be and the rows arrive in place rather
+           than pushing everything down as they land. -->
+      <h3>{t('People')}</h3>
+      <div class="card" aria-hidden="true">
+        {#each [0, 1, 2] as row (row)}
+          <div class="row">
+            <span class="name">
+              <span class="bone words"></span>
+              <span class="bone under"></span>
+            </span>
+            <span class="bone control"></span>
+          </div>
+        {/each}
+      </div>
+    {:else}
       {#if who.requests.length}
         <h3>{t('Waiting')}</h3>
         <div class="card">
           {#each who.requests as person (keyOf(person))}
-            <div class="row" transition:fade={{ duration: dur(130) }}>
+            <div
+              class="row"
+              class:waiting={share.waiting(keyOf(person))}
+              transition:fade={{ duration: dur(130) }}
+            >
               <span class="name">
                 {name(person)}
                 <small>{person.email ?? t('Guest')}</small>
               </span>
-              <button class="pill" onclick={() => void share.accept(person)}>
+              <button class="pill" disabled={share.busy} onclick={() => void share.accept(person)}>
                 {t('Accept')}
               </button>
-              <button class="pill quiet" onclick={() => void share.decline(person)}>
+              <button
+                class="pill quiet"
+                disabled={share.busy}
+                onclick={() => void share.decline(person)}
+              >
                 {t('Decline')}
               </button>
             </div>
@@ -98,7 +124,11 @@
         </div>
 
         {#each who.members as person (keyOf(person))}
-          <div class="row" transition:fade={{ duration: dur(130) }}>
+          <div
+            class="row"
+            class:waiting={share.waiting(keyOf(person))}
+            transition:fade={{ duration: dur(130) }}
+          >
             <span class="name">
               {name(person)}
               <small>{subtitle(person)}</small>
@@ -110,12 +140,14 @@
                 onchange={(role: string) => void share.setRole(person, role as GivenRole)}
                 label={t('Role')}
                 plain={viewport.touch}
+                disabled={share.busy}
               />
             </div>
             <button
               class="shut"
               aria-label={t('Remove')}
               title={t('Remove')}
+              disabled={share.busy}
               onclick={() => void share.remove(person)}
             >
               <svg viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" /></svg>
@@ -154,20 +186,18 @@
       <h3>{t('Link')}</h3>
       {#if link}
         <div class="card">
-          <div class="copyable">
-            <code class="value">{link.url}</code>
-            <button class="copy" class:done={share.copied} onclick={() => void share.copy()}>
-              {share.copied ? t('Copied') : t('Copy')}
-            </button>
+          <div class="linkrow">
+            <Copyable value={link.url} />
           </div>
 
           <div class="row">
-            <div class="segmented" role="radiogroup" aria-label={t('Link')}>
+            <div class="nib-segmented" role="radiogroup" aria-label={t('Link')}>
               <button
                 type="button"
                 role="radio"
                 aria-checked={link.mode === 'open'}
                 class:on={link.mode === 'open'}
+                disabled={share.busy}
                 onclick={() => void share.setLink(link.role, 'open')}
               >
                 {t('Anyone')}
@@ -177,6 +207,7 @@
                 role="radio"
                 aria-checked={link.mode === 'approval'}
                 class:on={link.mode === 'approval'}
+                disabled={share.busy}
                 onclick={() => void share.setLink(link.role, 'approval')}
               >
                 {t('Ask first')}
@@ -188,14 +219,21 @@
                 options={ROLES}
                 onchange={(role: string) => void share.setLink(role as GivenRole, link.mode)}
                 label={t('Role')}
+                disabled={share.busy}
               />
             </div>
           </div>
 
-          <button class="action danger" onclick={() => void share.revoke()}>{t('Revoke')}</button>
+          <button class="action danger" disabled={share.busy} onclick={() => void share.revoke()}>
+            {t('Revoke')}
+          </button>
         </div>
       {:else}
-        <button class="action" onclick={() => void share.setLink('read', 'approval')}>
+        <button
+          class="action"
+          disabled={share.busy}
+          onclick={() => void share.setLink('read', 'approval')}
+        >
           {t('Make a link')}
         </button>
       {/if}
@@ -290,6 +328,56 @@
     text-overflow: ellipsis;
   }
 
+  /* A row waiting on the server it was told to change. Not disabled-looking:
+     every button in the sheet is already disabled while one is in flight, and
+     this is which of them the answer is about. */
+  .row.waiting {
+    opacity: 0.55;
+  }
+
+  /* The shape of a row, while the rows themselves are on their way. Plain
+     blocks where the words and the control will be: enough that the sheet is
+     the right size and the wait reads as a wait rather than as an empty list. */
+  .bone {
+    display: block;
+    height: 9px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    animation: bone-breathe 1400ms var(--ease-in-out) infinite;
+  }
+
+  .bone.words {
+    width: 42%;
+  }
+
+  .bone.under {
+    width: 58%;
+    height: 8px;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  .bone.control {
+    flex: none;
+    width: 84px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+  }
+
+  @keyframes bone-breathe {
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  /* Still, where movement is turned down: the blocks are the shape of the
+     answer, and they say that on their own. */
+  @media (prefers-reduced-motion: reduce) {
+    .bone {
+      animation: none;
+    }
+  }
+
   /* The owner, whose role is the space rather than a choice. */
   .fixed {
     flex: none;
@@ -366,96 +454,16 @@
     border-color: var(--accent);
   }
 
-  .copyable {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    width: 100%;
-    min-width: 0;
+  /* The one copy row the app has, given the space this card wants around it;
+     see Copyable.svelte. */
+  .linkrow {
     margin-bottom: var(--space-2);
   }
 
-  .value {
+  /* The segmented control is one shape for the whole app; see .nib-segmented in
+     the themes package. Here it only has to take the width the row leaves. */
+  .nib-segmented {
     flex: 1;
-    min-width: 0;
-    padding: 6px 10px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .copy {
-    flex: none;
-    min-width: 4.4rem;
-    padding: 6px 10px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 550;
-    cursor: default;
-    transition:
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .copy.done {
-    border-color: var(--success);
-    color: var(--success);
-  }
-
-  @media (hover: hover) {
-    .copy:hover:not(.done) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-  }
-
-  /* Two choices that cannot both be on: one control with two halves. */
-  .segmented {
-    flex: 1;
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-  }
-
-  .segmented button {
-    flex: 1;
-    padding: 7px 10px;
-    border: none;
-    border-radius: calc(var(--radius-md) - 3px);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: 550;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  .segmented button.on {
-    background: var(--surface);
-    color: var(--text-strong);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .segmented button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
   }
 
   /* An action in a card: full width, quiet until pointed at. */

@@ -15,7 +15,13 @@ interface Held {
 }
 
 /** Somebody in a space, as the sheet hands them back to the store. */
-const member = (email: string, role = 'write') => ({ email, guest: null, name: null, role })
+const member = (email: string, role = 'write') => ({
+  email,
+  guest: null,
+  name: null,
+  role,
+  pending: false,
+})
 const guest = (id: string, name: string, role = 'write') => ({ email: null, guest: id, name, role })
 
 interface World {
@@ -30,9 +36,11 @@ interface World {
   }
   /** Set to make the next call fail. */
   refuse: string | null
+  /** What the refusal comes back as. 404 is the space saying the change had
+   *  already happened. */
+  refuseStatus: number
   /** Every share call that was made, in order. */
   asked: string[]
-  copied: string
 }
 
 const world = vi.hoisted((): World => ({
@@ -44,8 +52,8 @@ const world = vi.hoisted((): World => ({
     link: null,
   },
   refuse: null,
+  refuseStatus: 403,
   asked: [],
-  copied: '',
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -53,7 +61,9 @@ vi.mock('./api', async (importOriginal) => {
 
   const answer = (what: string) => {
     world.asked.push(what)
-    if (world.refuse) return Promise.reject(new original.ApiError(403, world.refuse))
+    if (world.refuse) {
+      return Promise.reject(new original.ApiError(world.refuseStatus, world.refuse))
+    }
 
     return Promise.resolve(world.sharing)
   }
@@ -90,13 +100,6 @@ vi.mock('./workspace.svelte', () => ({
     get spaces() {
       return Object.keys(world.mirrors).map((root) => ({ id: root, name: root, root }))
     },
-  },
-}))
-
-vi.mock('./clipboard', () => ({
-  copyText: (text: string) => {
-    world.copied = text
-    return Promise.resolve()
   },
 }))
 
@@ -137,8 +140,8 @@ beforeEach(() => {
     link: null,
   }
   world.refuse = null
+  world.refuseStatus = 403
   world.asked = []
-  world.copied = ''
 
   account.token = 'session'
   account.user = { id: 'u1', email: 'owner@example.com', name: 'Emil' }
@@ -405,25 +408,50 @@ describe('the Share sheet', () => {
     expect(share.who?.members).toHaveLength(1)
   })
 
-  test('copies the link, and says so for a moment', async () => {
-    vi.useFakeTimers()
-    try {
-      world.sharing.link = { url: 'https://nibeditor.com/join/abc', role: 'read', mode: 'open' }
-      await share.setLink('read', 'open')
+  /** Every control on the sheet goes quiet while one of them is in the air, so a
+   *  second press cannot ask for the same change twice. */
+  test('takes one change at a time, and says which row it is about', async () => {
+    world.sharing.members = [member('ada@example.com')]
+    await share.show(local('Notes'))
+    expect(share.busy).toBe(false)
 
-      await share.copy()
-      expect(world.copied).toBe('https://nibeditor.com/join/abc')
-      expect(share.copied).toBe(true)
+    const removing = share.remove(member('ada@example.com'))
+    expect(share.busy).toBe(true)
+    expect(share.waiting('person:ada@example.com')).toBe(true)
+    expect(share.waiting('person:bob@example.com')).toBe(false)
 
-      vi.advanceTimersByTime(2000)
-      expect(share.copied).toBe(false)
-    } finally {
-      vi.useRealTimers()
-    }
+    // A second press, which the screen has already refused.
+    expect(await share.remove(member('ada@example.com'))).toBe(false)
+    await removing
+
+    expect(share.busy).toBe(false)
+    expect(world.asked.filter((one) => one.startsWith('remove'))).toEqual([
+      'remove ada@example.com',
+    ])
   })
 
-  test('has nothing to copy without a link', async () => {
-    await share.copy()
-    expect(world.copied).toBe('')
+  /** Somebody who is no longer in the space has already gone, which is what the
+   *  press asked for. The list is simply older than the space. */
+  test('reads the list again rather than complaining when they are already out', async () => {
+    world.sharing.members = [member('ada@example.com')]
+    await share.show(local('Notes'))
+
+    world.refuse = 'nobody by that address'
+    world.refuseStatus = 404
+    const done = share.setRole(member('ada@example.com'), 'read')
+    world.refuse = null
+    world.sharing.members = []
+
+    expect(await done).toBe(true)
+    expect(share.error).toBeNull()
+    expect(share.who?.members).toEqual([])
+  })
+
+  test('still says what went wrong when something actually did', async () => {
+    await share.show(local('Notes'))
+    world.refuse = 'only the owner can do that'
+
+    expect(await share.remove(member('ada@example.com'))).toBe(false)
+    expect(share.error).toBe('only the owner can do that')
   })
 })

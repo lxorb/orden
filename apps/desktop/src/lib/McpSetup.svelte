@@ -10,8 +10,9 @@
   import { cubicOut } from 'svelte/easing'
   import { MCP_URL } from './api'
   import { account } from './account.svelte'
-  import { copyText } from './clipboard'
   import { type Client, connectors } from './connectors.svelte'
+  import Copyable from './Copyable.svelte'
+  import CopyButton from './CopyButton.svelte'
   import { t } from './i18n.svelte'
   import { openExternal } from './tauri'
   import { dur } from './motion'
@@ -28,20 +29,6 @@
 
   let showCode = $state(false)
   let showConfig = $state(false)
-
-  /** The value most recently copied, so its button can say so for a moment. */
-  let copied = $state<string | null>(null)
-  let copyTimer: ReturnType<typeof setTimeout>
-
-  async function copy(value: string) {
-    await copyText(value)
-
-    copied = value
-    clearTimeout(copyTimer)
-    copyTimer = setTimeout(() => {
-      copied = null
-    }, 1600)
-  }
 
   /** What a client that takes a JSON block wants: the URL, and the token
    *  where there is one for a client that cannot sign in. */
@@ -74,16 +61,6 @@
 
   const connected = $derived(connectors.clients.length > 0 || !!connectors.token?.exists)
 </script>
-
-{#snippet copyable(label: string, value: string)}
-  <div class="copyable">
-    <span class="label">{label}</span>
-    <code class="value">{value}</code>
-    <button class="copy" class:done={copied === value} onclick={() => copy(value)}>
-      {copied === value ? t('Copied') : t('Copy')}
-    </button>
-  </div>
-{/snippet}
 
 {#snippet chevron(open: boolean)}
   <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"
@@ -135,7 +112,7 @@
       )}
     </p>
 
-    <div class="segmented" role="tablist">
+    <div class="nib-segmented" role="tablist">
       {#each CLIENTS as one (one.id)}
         <button
           role="tab"
@@ -161,8 +138,8 @@
             </li>
             <li>
               <p>{t('Fill in the two fields and click Add.')}</p>
-              {@render copyable(t('Name'), 'Nib')}
-              {@render copyable('URL', MCP_URL)}
+              <Copyable label={t('Name')} value="Nib" />
+              <Copyable label="URL" value={MCP_URL} />
             </li>
             <li>
               <p>{t('Click Connect and sign in with your Nib email.')}</p>
@@ -175,7 +152,7 @@
           </button>
           {#if showCode}
             <div class="disclosed" transition:slide={{ duration: dur(180), easing: cubicOut }}>
-              {@render copyable(t('Command'), CLAUDE_CODE)}
+              <Copyable label={t('Command')} value={CLAUDE_CODE} />
               <p class="hint">
                 {t('Run it in a terminal, then type /mcp in Claude Code to sign in.')}
               </p>
@@ -198,12 +175,9 @@
             </li>
             <li>
               <p>{t('Fill in the form and click Create.')}</p>
-              {@render copyable(t('Name'), 'Nib')}
-              {@render copyable(t('Server URL'), MCP_URL)}
-              <div class="copyable">
-                <span class="label">{t('Authentication')}</span>
-                <span class="value plain">OAuth</span>
-              </div>
+              <Copyable label={t('Name')} value="Nib" />
+              <Copyable label={t('Server URL')} value={MCP_URL} />
+              <Copyable label={t('Authentication')} value="OAuth" plain />
               <p class="hint">
                 {t(
                   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.',
@@ -222,7 +196,7 @@
                 'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.',
               )}
             </p>
-            {@render copyable(t('Server URL'), MCP_URL)}
+            <Copyable label={t('Server URL')} value={MCP_URL} />
 
             <button
               class="disclose"
@@ -236,13 +210,7 @@
               <div class="disclosed" transition:slide={{ duration: dur(180), easing: cubicOut }}>
                 <p class="hint">{t('For a client that takes a JSON block instead of a URL.')}</p>
                 <pre>{config()}</pre>
-                <button
-                  class="copy wide"
-                  class:done={copied === config()}
-                  onclick={() => copy(config())}
-                >
-                  {copied === config() ? t('Copied') : t('Copy')}
-                </button>
+                <CopyButton value={config()} wide />
 
                 <p class="hint spaced">
                   {t(
@@ -262,13 +230,7 @@
                 {#if connectors.freshToken}
                   <div class="fresh" transition:slide={{ duration: dur(200), easing: cubicOut }}>
                     <pre>{config(connectors.freshToken)}</pre>
-                    <button
-                      class="copy wide"
-                      class:done={copied === config(connectors.freshToken)}
-                      onclick={() => copy(config(connectors.freshToken))}
-                    >
-                      {copied === config(connectors.freshToken) ? t('Copied') : t('Copy')}
-                    </button>
+                    <CopyButton value={config(connectors.freshToken)} wide />
                   </div>
                 {:else}
                   <button
@@ -369,43 +331,8 @@
     color: var(--muted);
   }
 
-  /* ── Choosing the client ───────────────────────────────────────── */
-
-  .segmented {
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-  }
-
-  .segmented button {
-    flex: 1;
-    padding: 7px 10px;
-    border: none;
-    border-radius: calc(var(--radius-md) - 3px);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: 550;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  .segmented button.on {
-    background: var(--surface);
-    color: var(--text-strong);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .segmented button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
+  /* Choosing the client is the app's one segmented control; see .nib-segmented
+     in the themes package. */
 
   /* ── The steps ─────────────────────────────────────────────────── */
 
@@ -461,100 +388,7 @@
     line-height: 22px;
   }
 
-  /* ── A value with its copy button ──────────────────────────────── */
-
-  .copyable {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    width: 100%;
-    min-width: 0;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-  }
-
-  .copyable .label {
-    flex: none;
-    width: 5.5rem;
-    color: var(--muted);
-  }
-
-  .copyable .value {
-    flex: 1;
-    min-width: 0;
-    padding: 6px 10px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .copyable .value.plain {
-    border-color: transparent;
-    background: none;
-    padding-left: 0;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-  }
-
-  .copy {
-    flex: none;
-    min-width: 4.4rem;
-    padding: 6px 10px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 550;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .copy.wide {
-    align-self: flex-start;
-    min-width: 6rem;
-  }
-
-  .copy.done {
-    border-color: var(--success);
-    color: var(--success);
-  }
-
-  @media (hover: hover) {
-    .copy:hover:not(.done) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-  }
-
-  .copy:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  /* A width and not a device class: this is the panel it sits in running out of
-     room for a label and a field side by side, which happens on a desktop with
-     the window dragged in as readily as on a phone. */
-  @media (max-width: 480px) {
-    .copyable {
-      flex-wrap: wrap;
-    }
-
-    .copyable .label {
-      width: 100%;
-    }
-  }
+  /* A value with its copy button is one component; see Copyable.svelte. */
 
   /* ── Links and disclosures ─────────────────────────────────────── */
 

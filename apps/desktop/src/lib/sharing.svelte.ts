@@ -12,9 +12,15 @@
  *  so what is drawn is what came back rather than a guess about what the change
  *  did - which is also what keeps two machines editing the same list honest. */
 
-import { api, type GivenRole, type RemoteSpace, type Sharing, type SpaceRole } from './api'
+import {
+  api,
+  ApiError,
+  type GivenRole,
+  type RemoteSpace,
+  type Sharing,
+  type SpaceRole,
+} from './api'
 import { account } from './account.svelte'
-import { copyText } from './clipboard'
 import { message } from './i18n.svelte'
 import { rooms } from './rooms.svelte'
 import { within } from './sync/mirror'
@@ -86,9 +92,6 @@ export function trustsHtmlIn(note: NoteDoc): boolean {
   return trustsHtml(originOfDocument(note))
 }
 
-/** How long the copy button says it copied. */
-const COPIED_FOR = 1600
-
 /** Anybody in a space who is not its owner, as the sheet names them: an address
  *  they were invited at, or the guest a link handed out. Exactly one of the two. */
 interface Someone {
@@ -102,17 +105,36 @@ class Share {
   space = $state<Space | null>(null)
   spaceId = $state<string | null>(null)
 
-  /** Who may reach it, as the account last said. Null while it is being read. */
+  /** Who may reach it, as the account last said. Null while it is being read,
+   *  which is when the sheet draws the shape of the rows instead. */
   who = $state<Sharing | null>(null)
-  busy = $state(false)
+
+  /** What is being asked of the server, named by the row or the control it is
+   *  about; null while nothing is.
+   *
+   *  Named rather than counted, so every button can be told apart from the one
+   *  that was pressed: the row being changed says so, the rest go quiet, and a
+   *  second press cannot ask for the same change twice while the first is still
+   *  in the air. */
+  working = $state<string | null>(null)
+
   error = $state<string | null>(null)
 
   /** The address being typed into the invite field, and the role beside it. */
   email = $state('')
   role = $state<GivenRole>('write')
 
-  copied = $state(false)
-  private copiedTimer: ReturnType<typeof setTimeout> | undefined
+  /** Whether anything at all is in flight. What every control that is not the
+   *  one being pressed reads. */
+  get busy(): boolean {
+    return this.working !== null
+  }
+
+  /** Whether this is the row or control being changed, so it can say so while
+   *  the rest simply go quiet. */
+  waiting(about: string): boolean {
+    return this.working === about
+  }
 
   async show(space: Space) {
     const id = sync.remoteIdFor(space.root)
@@ -126,20 +148,18 @@ class Share {
     this.role = 'write'
     this.open = true
 
-    await this.run((token) => api.sharing(token, id))
+    await this.run((token) => api.sharing(token, id), 'sheet')
   }
 
   close() {
     this.open = false
-    clearTimeout(this.copiedTimer)
-    this.copied = false
   }
 
   async invite() {
     const address = this.email.trim()
     if (!address) return
 
-    if (await this.change((token, id) => api.invite(token, id, address, this.role))) {
+    if (await this.change((token, id) => api.invite(token, id, address, this.role), 'invite')) {
       this.email = ''
     }
   }
@@ -149,18 +169,22 @@ class Share {
    *  whoever followed the link. The sheet hands over the person and does not
    *  have to know which it got. */
   setRole(person: Someone, role: GivenRole) {
-    return this.change((token, id) =>
-      person.guest
-        ? api.setGuestRole(token, id, person.guest, role)
-        : api.setMemberRole(token, id, person.email ?? '', role),
+    return this.change(
+      (token, id) =>
+        person.guest
+          ? api.setGuestRole(token, id, person.guest, role)
+          : api.setMemberRole(token, id, person.email ?? '', role),
+      whoIs(person),
     )
   }
 
   remove(person: Someone) {
-    return this.change((token, id) =>
-      person.guest
-        ? api.removeGuest(token, id, person.guest)
-        : api.removeMember(token, id, person.email ?? ''),
+    return this.change(
+      (token, id) =>
+        person.guest
+          ? api.removeGuest(token, id, person.guest)
+          : api.removeMember(token, id, person.email ?? ''),
+      whoIs(person),
     )
   }
 
@@ -168,72 +192,107 @@ class Share {
    *  The link itself stays the same, so a copy already in somebody's message
    *  keeps working and starts meaning this instead. */
   setLink(role: GivenRole, mode: 'open' | 'approval') {
-    return this.change((token, id) => api.setShareLink(token, id, role, mode))
+    return this.change((token, id) => api.setShareLink(token, id, role, mode), 'link')
   }
 
   revoke() {
-    return this.change((token, id) => api.revokeShareLink(token, id))
+    return this.change((token, id) => api.revokeShareLink(token, id), 'link')
   }
 
   accept(person: Someone) {
-    return this.change((token, id) =>
-      person.guest
-        ? api.acceptGuest(token, id, person.guest)
-        : api.acceptRequest(token, id, person.email ?? ''),
+    return this.change(
+      (token, id) =>
+        person.guest
+          ? api.acceptGuest(token, id, person.guest)
+          : api.acceptRequest(token, id, person.email ?? ''),
+      whoIs(person),
     )
   }
 
   decline(person: Someone) {
-    return this.change((token, id) =>
-      person.guest
-        ? api.removeGuest(token, id, person.guest)
-        : api.declineRequest(token, id, person.email ?? ''),
+    return this.change(
+      (token, id) =>
+        person.guest
+          ? api.removeGuest(token, id, person.guest)
+          : api.declineRequest(token, id, person.email ?? ''),
+      whoIs(person),
     )
-  }
-
-  async copy() {
-    const url = this.who?.link?.url
-    if (!url) return
-
-    await copyText(url)
-    this.copied = true
-    clearTimeout(this.copiedTimer)
-    this.copiedTimer = setTimeout(() => {
-      this.copied = false
-    }, COPIED_FOR)
   }
 
   /** A change, and then whatever the account says the space now looks like. The
    *  space listing is asked for again as well: a role that changed here changes
    *  what the rail and the editor offer. */
-  private async change(work: (token: string, id: string) => Promise<Sharing>): Promise<boolean> {
+  private async change(
+    work: (token: string, id: string) => Promise<Sharing>,
+    about: string,
+  ): Promise<boolean> {
     const id = this.spaceId
     if (!id) return false
 
-    const done = await this.run((token) => work(token, id))
+    const done = await this.run((token) => work(token, id), about)
     if (done) await account.loadSpaces().catch(() => undefined)
     return done
   }
 
-  private async run(work: (token: string) => Promise<Sharing>): Promise<boolean> {
+  private async run(work: (token: string) => Promise<Sharing>, about: string): Promise<boolean> {
     // The owner's, always: everything on this sheet is theirs to change, and a
     // guest has no account for any of it to be about.
     const token = account.accountToken
     if (!token) return false
 
-    this.busy = true
+    // One at a time. Every control goes quiet while one is in flight, so this is
+    // the machine agreeing with the screen rather than a second guard.
+    if (this.working !== null) return false
+
+    this.working = about
     this.error = null
 
     try {
       this.who = await work(token)
       return true
     } catch (error) {
+      // Somebody who is no longer in the space has already gone, which is what
+      // the press was asking for. It is not a failure to report: the list is
+      // simply older than the space, so it is read again.
+      if (gone(error)) return await this.reread()
+
       this.error = message(error, 'could not reach the server')
       return false
     } finally {
-      this.busy = false
+      this.working = null
     }
   }
+
+  /** The list again, after a change that turned out to have happened already. */
+  private async reread(): Promise<boolean> {
+    const token = account.accountToken
+    const id = this.spaceId
+    if (!token || !id) return false
+
+    try {
+      this.who = await api.sharing(token, id)
+      return true
+    } catch {
+      // The change itself is not in doubt; only this list is out of date, and it
+      // is read again the next time the sheet is opened.
+      return false
+    }
+  }
+}
+
+/** What names the row a request is about, so the row that was pressed can say so
+ *  while the others go quiet. The same key the sheet draws its rows under. */
+function whoIs(person: Someone): string {
+  return `person:${person.guest ?? person.email ?? ''}`
+}
+
+/** Whether what came back means the person was already out of the space.
+ *
+ *  A second press on Remove is the ordinary way this happens - the row is still
+ *  on screen while the first is in the air - and so is another device having
+ *  taken them out a moment ago. Either way what was asked for is now true. */
+function gone(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 404
 }
 
 export const share = new Share()

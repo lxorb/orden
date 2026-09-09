@@ -290,6 +290,59 @@ select option {
   outline-offset: -2px;
 }
 
+/* ── Segmented controls ────────────────────── */
+
+/* A few choices that cannot both be on, drawn as one control with the chosen
+   half raised out of it. Three panels wanted the same thing - what a share link
+   hands out, where a space publishes to, which client an assistant is - so it is
+   one shape here rather than three copies that drift apart.
+
+   The markup is a row of buttons inside it, the chosen one wearing `on`; what
+   they mean to a screen reader is the component's own business, since a pair of
+   choices is a radio group and a set of panels is a tab strip. */
+.nib-segmented {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.nib-segmented button {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: none;
+  color: var(--muted-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.nib-segmented button.on {
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.nib-segmented button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* A thumb needs the height every other row on a touch screen has, and the words
+   at the size everything else there is read at. */
+[data-touch] .nib-segmented button {
+  min-height: var(--touch-target);
+  font-size: var(--text-base);
+}
+
 /* ── Sliders ───────────────────────────────── */
 
 /* One shape for every dial in the app: a thin track filled to the value, and a

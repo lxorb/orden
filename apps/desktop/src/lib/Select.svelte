@@ -23,6 +23,7 @@
     onchange,
     label,
     plain = false,
+    disabled = false,
   }: {
     value: string
     options: Option[]
@@ -31,6 +32,9 @@
     label?: string
     /** Borderless, with the value at the right: how a settings row shows one. */
     plain?: boolean
+    /** Set while what the control would change is out of anybody's hands: a
+     *  request about this very row is in the air. */
+    disabled?: boolean
   } = $props()
 
   let open = $state(false)
@@ -151,6 +155,7 @@
   <button
     type="button"
     class="trigger"
+    {disabled}
     role="combobox"
     aria-haspopup="listbox"
     aria-expanded={open}

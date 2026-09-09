@@ -629,7 +629,7 @@
              no way to end up asking for both. -->
         <h3>{t('Address')}</h3>
         {#if offerDomain}
-          <div class="segmented" role="radiogroup" aria-label={t('Address')}>
+          <div class="nib-segmented" role="radiogroup" aria-label={t('Address')}>
             <button
               type="button"
               role="radio"
@@ -1692,43 +1692,6 @@
     margin-top: 0;
   }
 
-  /* Two choices that cannot both be on: one control with two halves. */
-  .segmented {
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-  }
-
-  .segmented button {
-    flex: 1;
-    padding: 7px 10px;
-    border: none;
-    border-radius: calc(var(--radius-md) - 3px);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: 550;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out);
-  }
-
-  .segmented button.on {
-    background: var(--surface);
-    color: var(--text-strong);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .segmented button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
   .row {
     display: flex;
     align-items: center;
@@ -2227,11 +2190,6 @@
     width: 20px;
     height: 20px;
     margin-top: 1px;
-  }
-
-  .sheet.phone .segmented button {
-    min-height: var(--touch-target);
-    font-size: var(--text-base);
   }
 
   .sheet.phone .accents {

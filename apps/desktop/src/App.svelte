@@ -35,7 +35,7 @@
   import { rooms } from './lib/rooms.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
-  import { canWriteAt } from './lib/sharing.svelte'
+  import { canWriteAt, share } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { sync } from './lib/sync.svelte'
   import StatusBar from './lib/StatusBar.svelte'
@@ -255,6 +255,7 @@
         arriving,
         busy,
         rooms,
+        share,
         sync,
         workspace,
         search,
