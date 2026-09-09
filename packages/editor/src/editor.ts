@@ -1,4 +1,5 @@
 import { history } from '@codemirror/commands'
+import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { highlightSelectionMatches } from '@codemirror/search'
 import { EditorState, Prec, type Text } from '@codemirror/state'
@@ -12,7 +13,7 @@ import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/complete'
 import { type NoteIndex, noteIndexExtension, type NoteJump, noteOpener } from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
-import { closeFence } from './commands'
+import { closeFence, leaveQuote } from './commands'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
 import { richPaste } from './paste'
@@ -119,9 +120,32 @@ export function editorState(options: StateOptions): EditorState {
       ...(openNote ? [noteOpener.of(openNote)] : []),
       ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
       nibTheme,
-      // Above the markdown language's own Enter, which continues a list or
-      // a quote and would otherwise take the key on a fence inside one.
+      // Above the markdown keys below, which continue a list or a quote and
+      // would otherwise take the key on a fence inside one.
       Prec.highest(keymap.of([{ key: 'Enter', run: closeFence }])),
+      // The two keys `markdown()` would bind for itself, bound here because
+      // this is where a keymap of plain bindings belongs, and because Enter
+      // has to be told how a list ends. See `addKeymap` in modes.ts.
+      //
+      // A writer says a list is over by pressing Enter on the empty item, and
+      // that press ends it in Typora, in Obsidian and in GitHub's own editor.
+      // The library spends that press turning a tight list into a loose one - a
+      // blank line pushed in above the marker - and ends the list only on the
+      // press after that, leaving a stray line and a bullet to delete by hand.
+      // `nonTightLists: false` is what says otherwise. `leaveQuote` does the
+      // same for a quote, which the library ends only after a second empty
+      // quoted line; it gives the key back unless the line is quote marks and
+      // nothing else.
+      //
+      // At `Prec.high`, which is exactly where `markdown()` puts them, so
+      // nothing else changes about which key reaches what.
+      Prec.high(
+        keymap.of([
+          { key: 'Enter', run: leaveQuote },
+          { key: 'Enter', run: insertNewlineContinueMarkupCommand({ nonTightLists: false }) },
+          { key: 'Backspace', run: deleteMarkupBackward },
+        ]),
+      ),
       // Which key runs what, in one place and changeable while the editor
       // is open: see shortcuts.ts.
       shortcutExtensions(options.shortcuts),

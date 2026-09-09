@@ -1,20 +1,13 @@
-import { Compartment, EditorState, type Extension, Prec, type StateEffect } from '@codemirror/state'
+import { Compartment, EditorState, type Extension, type StateEffect } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
   EditorView,
-  keymap,
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
-import {
-  commonmarkLanguage,
-  deleteMarkupBackward,
-  insertNewlineContinueMarkupCommand,
-  markdown,
-  markdownLanguage,
-} from '@codemirror/lang-markdown'
+import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
 import { fenceLanguages } from './languages'
 import { livePreview } from './live-preview'
@@ -27,7 +20,6 @@ import { smartPunctuation } from './typography'
 import { codeThemeEffect } from './code-theme'
 import { ligatures, type LigatureScope } from './ligatures'
 import { once } from './once'
-import { leaveQuote } from './commands'
 import { wrapSelection } from './wrap'
 import { vimEffect, vimExtensions } from './vim'
 
@@ -59,40 +51,20 @@ function editorClass(name: string): Extension {
   return EditorView.editorAttributes.of({ class: name })
 }
 
-/** The two keys `markdown()` binds for itself, bound here instead so that Enter
- *  can be told how a list ends.
- *
- *  A writer says a list is over by pressing Enter on the empty item, and that
- *  press ends it in Typora, in Obsidian and in GitHub's own editor. CodeMirror's
- *  default spends that press turning a tight list into a loose one - a blank
- *  line pushed in above the marker - and only ends the list on the press after
- *  that, leaving a stray line and a bullet to be deleted by hand. `nonTightLists`
- *  is what that behaviour is called, and false is the habit this editor follows.
- *
- *  At `Prec.high`, which is exactly where `markdown()` puts them, so nothing
- *  else changes about which key reaches what. */
-const markdownKeys = Prec.high(
-  keymap.of([
-    // Ahead of the markup command, which ends a quote only after a second empty
-    // quoted line. It gives the key back unless the line is marks and nothing
-    // else, so everything else about Enter is the command below.
-    { key: 'Enter', run: leaveQuote },
-    { key: 'Enter', run: insertNewlineContinueMarkupCommand({ nonTightLists: false }) },
-    { key: 'Backspace', run: deleteMarkupBackward },
-  ]),
-)
-
 /** Strict mode drops GFM and the Typora extensions, leaving plain CommonMark -
- *  useful when a document has to render the same everywhere. */
-export const markdownFor = once((strict: boolean): Extension => [
+ *  useful when a document has to render the same everywhere.
+ *
+ *  `addKeymap: false` because the two keys `markdown()` would bind for itself
+ *  are bound in editor.ts instead, where every keymap of plain bindings lives
+ *  and where Enter can be told how a list ends. */
+const markdownFor = once((strict: boolean): Extension =>
   markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
     codeLanguages: fenceLanguages,
     extensions: strict ? [] : nibMarkdownExtensions,
     addKeymap: false,
   }),
-  markdownKeys,
-])
+)
 
 const dim = Decoration.line({ class: 'nib-dim' })
 
