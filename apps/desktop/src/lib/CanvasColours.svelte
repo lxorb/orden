@@ -20,6 +20,7 @@
     colour,
     recent = [],
     none = true,
+    bare,
     oncolour,
   }: {
     /** The colour in hand, so the dot that is on shows it. */
@@ -28,6 +29,16 @@
     recent?: readonly string[]
     /** Whether "no colour at all" is one of the answers. */
     none?: boolean
+    /** What the "no colour" dot is drawn in, and what it is called, for the times it
+     *  is not really "no colour" at all.
+     *
+     *  A card with no colour of its own wears the surface, so a hollow ring is the
+     *  truth for one. A pen with no colour of its own writes in the ink the page is
+     *  set in, which is nearly white in a dark theme and nearly black in a light one:
+     *  a hollow ring there is a hole showing the panel through it, and it read as a
+     *  white dot that went dark when the theme did. So the pen draws that dot in the
+     *  ink it actually writes. */
+    bare?: { css: string; title: string }
     oncolour: (colour: string | null) => void
   } = $props()
 
@@ -54,11 +65,13 @@
   {#if none}
     <button
       type="button"
-      class="dot bare"
+      class="dot"
+      class:bare={!bare}
       class:on={colour === null}
-      title={t('No colour')}
-      aria-label={t('No colour')}
+      title={bare?.title ?? t('No colour')}
+      aria-label={bare?.title ?? t('No colour')}
       aria-pressed={colour === null}
+      style:--dot={bare?.css}
       onclick={() => choose(null)}
     ></button>
   {/if}
@@ -110,6 +123,9 @@
     cursor: default;
   }
 
+  /* The hairline round every dot is the page's own ink at a whisper rather than
+     black at a whisper: a white dot on a white panel has to have an edge, and so
+     does a black one on a dark panel. One rule, both themes. */
   .dot::after {
     content: '';
     display: block;
@@ -117,7 +133,7 @@
     height: 26px;
     border-radius: 50%;
     background: var(--dot);
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition:
       scale var(--dur-fast) var(--ease-spring),
       box-shadow var(--dur-fast) var(--ease-out);
@@ -133,7 +149,7 @@
 
   .dot.on::after {
     box-shadow:
-      inset 0 0 0 1px rgb(0 0 0 / 0.1),
+      inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent),
       0 0 0 2px var(--surface),
       0 0 0 4px var(--accent);
   }

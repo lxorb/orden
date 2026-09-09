@@ -29,8 +29,43 @@ export interface Nib {
   colour: string
 }
 
-/** Which edge the bar is against. */
-type Dock = 'top' | 'bottom'
+/** Which edge the bar is against. All four, because a wrist rests somewhere
+ *  different on every device and in every grip: the two long edges are where a bar
+ *  belongs on a phone, and the two short ones are what a tablet in landscape wants
+ *  when the writing hand owns the bottom of the page. */
+export const DOCKS = ['top', 'bottom', 'left', 'right'] as const
+export type Dock = (typeof DOCKS)[number]
+
+/** Whether the bar stands on its end, which is what the two sides mean. */
+export function upright(dock: Dock): boolean {
+  return dock === 'left' || dock === 'right'
+}
+
+/** Which edge a bar let go of at this point springs to: the nearest one, measured
+ *  from the middle of the bar to each edge of the pane.
+ *
+ *  Nearest and not "whichever half of the screen", because a bar dragged into the
+ *  middle of a tall pane is nearer the left edge than the top one and that is where
+ *  a hand meant to put it. Pure, so where it lands is a test. */
+export function nearestDock(at: { x: number; y: number }, width: number, height: number): Dock {
+  const away: [Dock, number][] = [
+    ['left', at.x],
+    ['right', Math.max(0, width - at.x)],
+    ['top', at.y],
+    ['bottom', Math.max(0, height - at.y)],
+  ]
+
+  let best: Dock = 'bottom'
+  let least = Infinity
+  for (const [dock, gap] of away) {
+    if (gap >= least) continue
+
+    least = gap
+    best = dock
+  }
+
+  return best
+}
 
 /** How many pens the bar holds. Three, always three: something to write with,
  *  something to sketch with, something to mark with.
@@ -167,7 +202,7 @@ export function readPens(raw: string | null): Kept {
     recent: Array.isArray(held.recent)
       ? held.recent.filter((one): one is string => typeof one === 'string').slice(0, MOST_RECENT)
       : [],
-    dock: held.dock === 'top' ? 'top' : 'bottom',
+    dock: DOCKS.find((one) => one === held.dock) ?? 'bottom',
     shut: held.shut === true,
     whole: held.whole === true,
     rub: typeof held.rub === 'number' ? clampRub(held.rub) : 10,

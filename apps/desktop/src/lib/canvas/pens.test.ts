@@ -3,15 +3,18 @@ import { INK_STYLES } from './ink'
 import {
   clampRub,
   clampSize,
+  DOCKS,
   LEAST_RUB,
   LEAST_WIDTH,
   MOST_RECENT,
   MOST_RUB,
   MOST_WIDTH,
+  nearestDock,
   nibFor,
   PEN_SLOTS,
   pens,
   readPens,
+  upright,
 } from './pens.svelte'
 
 /** The row of pens is one store the whole app shares, so every test starts it
@@ -291,5 +294,46 @@ describe('the dials', () => {
     expect(clampRub(1000)).toBe(MOST_RUB)
     expect(clampRub(12.6)).toBe(13)
     expect(clampRub(Number.NaN)).toBe(10)
+  })
+})
+
+/** Where the bar sits. All four edges, because a wrist rests somewhere different on
+ *  every device and in every grip. It follows the finger while it is dragged and
+ *  springs to whichever edge it was let go nearest, which is answered here. */
+describe('which edge the bar springs to', () => {
+  const pane = { width: 1000, height: 700 }
+
+  test('is whichever one it was let go nearest', () => {
+    expect(nearestDock({ x: 500, y: 660 }, pane.width, pane.height)).toBe('bottom')
+    expect(nearestDock({ x: 500, y: 20 }, pane.width, pane.height)).toBe('top')
+    expect(nearestDock({ x: 30, y: 350 }, pane.width, pane.height)).toBe('left')
+    expect(nearestDock({ x: 970, y: 350 }, pane.width, pane.height)).toBe('right')
+  })
+
+  /** Nearest, not "whichever half of the screen": a bar dragged into the middle of a
+   *  wide pane is nearer the top or the bottom than either side, and a bar in the
+   *  middle of a tall one is nearer a side. */
+  test('is measured rather than guessed from halves', () => {
+    expect(nearestDock({ x: 480, y: 300 }, 1000, 700)).toBe('top')
+    expect(nearestDock({ x: 300, y: 480 }, 700, 1000)).toBe('left')
+  })
+
+  test('says which edges stand the bar on its end', () => {
+    expect(upright('left')).toBe(true)
+    expect(upright('right')).toBe(true)
+    expect(upright('top')).toBe(false)
+    expect(upright('bottom')).toBe(false)
+  })
+
+  test('is remembered, and any of the four reads back', () => {
+    for (const dock of DOCKS) {
+      pens.dockTo(dock)
+      expect(pens.dock).toBe(dock)
+      expect(readPens(JSON.stringify({ dock })).dock).toBe(dock)
+    }
+  })
+
+  test('falls back to the bottom for an edge nobody has heard of', () => {
+    expect(readPens(JSON.stringify({ dock: 'sideways' })).dock).toBe('bottom')
   })
 })

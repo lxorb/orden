@@ -39,7 +39,7 @@
   } from './canvas/glyphs'
   import { hand } from './canvas/hand.svelte'
   import { DEFAULT_INK, shownInk } from './canvas/palette'
-  import { pens } from './canvas/pens.svelte'
+  import { nearestDock, pens, upright } from './canvas/pens.svelte'
   import { type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
@@ -110,14 +110,50 @@
     open = null
   }
 
-  /** Where the button that was pressed is, so the panel opens over it. */
+  // A press anywhere but on this bar shuts whatever it has open.
+  //
+  // Caught on the way down, at the window, rather than waited for on the way up.
+  // Everything else in the app closes a panel with the click that follows the press,
+  // and the plane cannot use that: it reads a press as the start of a gesture, so a
+  // panel that waited for the click stayed open through a whole stroke - and a panel
+  // over the drawing is exactly what the drawing is under. Capture, so nothing
+  // between here and the window can decide otherwise.
+  $effect(() => {
+    const away = (event: PointerEvent) => {
+      if (!open) return
+
+      const target = event.target
+      if (target instanceof Node && cluster?.contains(target)) return
+
+      open = null
+    }
+
+    window.addEventListener('pointerdown', away, { capture: true })
+    return () => window.removeEventListener('pointerdown', away, { capture: true })
+  })
+
+  // And a tool taken with a key shuts it too: the panel was about the tool that is no
+  // longer in hand.
+  let was = tools.which
+  $effect(() => {
+    if (tools.which === was) return
+
+    was = tools.which
+    open = null
+  })
+
+  /** Where the button that was pressed is, so the panel opens over it. Along the bar,
+   *  whichever way the bar runs: across it when it lies along an edge, down it when it
+   *  stands on its end. */
   function anchor(event: Event) {
     const button = event.currentTarget
     const box = cluster?.getBoundingClientRect()
     if (!(button instanceof HTMLElement) || !box) return
 
     const own = button.getBoundingClientRect()
-    popAt = own.left + own.width / 2 - box.left
+    popAt = upright(pens.dock)
+      ? own.top + own.height / 2 - box.top
+      : own.left + own.width / 2 - box.left
   }
 
   function toggle(panel: Panel, event: Event) {
@@ -160,19 +196,32 @@
     tools.pickPen(index)
   }
 
-  /** The grip: dragged, it moves the bar to an edge; pressed, it folds it away.
-   *  Two answers from one control, because both are the same question about where
-   *  the bar should be. */
+  /** The grip: dragged, the bar comes with the finger and springs to whichever edge
+   *  it was let go nearest; pressed, it folds away. Two answers from one control,
+   *  because both are the same question about where the bar should be.
+   *
+   *  The bar follows the pointer rather than jumping between two places when it
+   *  crosses the middle: a thing being moved should be under the hand moving it, and
+   *  where it lands is answered when it is let go. Then it springs, which is what says
+   *  the edge caught it. */
   let grabbed = $state(false)
-  let from = 0
+  let carried = $state.raw<{ x: number; y: number } | null>(null)
+  let from = { x: 0, y: 0 }
 
   function onGripDown(event: PointerEvent) {
     const grip = event.currentTarget
     if (!(grip instanceof HTMLElement)) return
 
     grabbed = true
-    from = event.clientY
+    carried = { x: 0, y: 0 }
+    from = { x: event.clientX, y: event.clientY }
     grip.setPointerCapture(event.pointerId)
+  }
+
+  function onGripMove(event: PointerEvent) {
+    if (!grabbed) return
+
+    carried = { x: event.clientX - from.x, y: event.clientY - from.y }
   }
 
   function onGripUp(event: PointerEvent) {
@@ -181,14 +230,36 @@
     grabbed = false
     tick()
 
-    if (Math.abs(event.clientY - from) < A_TWITCH) {
+    const went = Math.hypot(event.clientX - from.x, event.clientY - from.y)
+    // Let go where it was picked up: the press meant the other thing the grip does.
+    if (went < A_TWITCH) {
+      carried = null
       pens.fold(true)
       open = null
       return
     }
 
-    pens.dockTo(event.clientY < window.innerHeight / 2 ? 'top' : 'bottom')
+    // Where the bar itself ended up rather than where the finger did, so a bar
+    // dragged by the corner of its grip still lands where it looks like it should.
+    const box = cluster?.getBoundingClientRect()
+    const middle = box
+      ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
+      : { x: event.clientX, y: event.clientY }
+
+    pens.dockTo(nearestDock(middle, window.innerWidth, window.innerHeight))
+    // And the offset let go of, which is the spring: the bar is already at its new
+    // edge, so easing the carry back to nothing is the movement that says so.
+    carried = null
+    open = null
   }
+
+  function onGripLost() {
+    grabbed = false
+    carried = null
+  }
+
+  /** Whether the bar stands on its end, which is what the two side edges mean. */
+  const standing = $derived(upright(pens.dock))
 
   /** The dot on the bar: the ink the pen in hand writes in. Always the pen, never
    *  what is picked: what is picked wears its colour on its own bar, over itself,
@@ -196,13 +267,18 @@
   const swatch = $derived(shownInk(nib.colour))
 </script>
 
-<svelte:window onpointerdown={shut} onblur={shut} />
+<svelte:window onblur={shut} />
 
 <!-- Every pointer stops here. See the note at the top of the file. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="cluster"
   class:top={pens.dock === 'top'}
+  class:left={pens.dock === 'left'}
+  class:right={pens.dock === 'right'}
+  class:standing
+  class:carrying={carried !== null}
+  style:translate={carried ? `${carried.x}px ${carried.y}px` : undefined}
   bind:this={cluster}
   onpointerdown={(event) => event.stopPropagation()}
   onpointermove={(event) => event.stopPropagation()}
@@ -243,10 +319,12 @@
           />
         {:else}
           <!-- The bare dot is the ink the page itself is written in, which is what a
-               pen with no colour of its own writes and the way back to it. -->
+               pen with no colour of its own writes and the way back to it. Drawn in
+               that ink, so it never reads as a colour it is not. -->
           <CanvasColours
             colour={nib.colour === DEFAULT_INK ? null : nib.colour}
             recent={pens.recent}
+            bare={{ css: 'var(--text-strong)', title: t('The ink of the page') }}
             oncolour={(colour: string | null) => pens.set({ colour: colour ?? DEFAULT_INK })}
           />
         {/if}
@@ -262,8 +340,9 @@
           aria-label={t('Move the bar')}
           title={t('Move the bar')}
           onpointerdown={onGripDown}
+          onpointermove={onGripMove}
           onpointerup={onGripUp}
-          onpointercancel={() => (grabbed = false)}
+          onpointercancel={onGripLost}
         >
           <CanvasIcon node={MARKS.grip} />
         </span>
@@ -448,6 +527,40 @@
     animation: fall var(--dur-stage) var(--ease-out);
   }
 
+  /* Against a side, standing on its end. The pane's own height rather than its
+     width, and the bar and its panel side by side instead of stacked. */
+  .cluster.left,
+  .cluster.right {
+    left: auto;
+    right: auto;
+    top: calc(var(--space-2) + var(--inset-top));
+    bottom: calc(var(--space-2) + var(--inset-bottom));
+    justify-content: center;
+    animation: none;
+  }
+
+  .cluster.left {
+    left: calc(var(--space-2) + var(--inset-left, 0px));
+    flex-direction: row;
+  }
+
+  .cluster.right {
+    right: calc(var(--space-2) + var(--inset-right, 0px));
+    flex-direction: row-reverse;
+  }
+
+  /* Let go, the bar is already at its edge and the offset it was carried by eases
+     back to nothing: that is the spring. While it is being carried there is no
+     easing at all, because it is under a finger. */
+  .cluster {
+    transition: translate var(--dur-slow) var(--ease-spring);
+  }
+
+  .cluster.carrying {
+    transition: none;
+    cursor: grabbing;
+  }
+
   @keyframes rise {
     from {
       opacity: 0;
@@ -477,6 +590,54 @@
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
+  }
+
+  /* Standing on its end: the same buttons in the same order, down instead of
+     across. One bar, one order, one design; only the axis turns. */
+  .cluster.standing .bar {
+    flex-direction: column;
+  }
+
+  .cluster.standing .scroller {
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .cluster.standing .split {
+    width: 20px;
+    height: 1px;
+    margin: 5px 0;
+  }
+
+  .cluster.standing .grip {
+    width: auto;
+    height: 22px;
+  }
+
+  .cluster.standing .grip :global(svg) {
+    rotate: 90deg;
+  }
+
+  /* Beside the bar rather than over it, and never off the top or the bottom of the
+     pane: a flyout belongs next to the tool that opened it whichever way the bar
+     runs. */
+  .cluster.standing .panel {
+    align-self: flex-start;
+    width: min(21rem, 60vw);
+    margin-left: 0;
+    margin-top: clamp(0px, calc(var(--pop) - 6rem), max(0px, calc(100% - 12rem)));
+  }
+
+  .cluster.standing .tab {
+    margin-left: 0;
+    margin-top: var(--space-5);
+  }
+
+  :global([data-touch]) .cluster.standing .grip {
+    width: auto;
+    height: 30px;
   }
 
   /* One row that scrolls sideways rather than a bar that hides half of itself
@@ -560,7 +721,9 @@
   }
 
   /* A pen wears the ink it writes in as a line under it, so the row answers "which
-     one is the yellow highlighter" without being opened. */
+     one is the yellow highlighter" without being opened. The hairline round it is the
+     page's own ink at a whisper, so a pen writing in white is a white line on a light
+     bar rather than nothing at all. */
   .pen::after {
     content: '';
     position: absolute;
@@ -570,6 +733,7 @@
     height: 2.5px;
     border-radius: 2px;
     background: var(--ink);
+    box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--text) 30%, transparent);
   }
 
   /* The colour in hand, drawn as the dot it is. */
@@ -580,7 +744,7 @@
     height: 16px;
     border-radius: 50%;
     background: var(--dot);
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition: scale var(--dur-fast) var(--ease-spring);
   }
 

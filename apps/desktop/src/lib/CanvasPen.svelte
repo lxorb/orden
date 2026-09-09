@@ -108,7 +108,15 @@
     onvalue={(opacity: number) => pens.set({ opacity })}
   />
 
-  <CanvasColours colour={shown} recent={pens.recent} oncolour={setColour} />
+  <!-- The bare dot is the ink the page itself is written in, drawn in that ink rather
+       than as a hole: a hole shows the panel through it, which read as a white dot in
+       a light theme and a dark one in a dark theme, for the same pen. -->
+  <CanvasColours
+    colour={shown}
+    recent={pens.recent}
+    bare={{ css: 'var(--text-strong)', title: t('The ink of the page') }}
+    oncolour={setColour}
+  />
 
   <div class="rest">
     <!-- A stroke held still becomes the line, ring or box it was aiming at. On,
