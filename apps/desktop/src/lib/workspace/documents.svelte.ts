@@ -11,7 +11,7 @@
  *  place in the note. Nothing has to be kept in step, because there is nothing
  *  to keep in step. */
 
-import { SharedDoc } from '@nib/editor'
+import { type FoldLines, SharedDoc } from '@nib/editor'
 import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
@@ -287,6 +287,10 @@ export class Tab {
   /** Which line the caret is on. The editor knows it without counting, and the
    *  outline would otherwise walk the note's newlines to work it out again. */
   line = $state<number | undefined>(undefined)
+  /** What was folded, as pairs of line numbers; see fold.ts in the editor. Per
+   *  tab like the caret, because a note open in two panes may be folded to its
+   *  headings in one while the other is deep in a section of it. */
+  folds = $state<readonly FoldLines[] | undefined>(undefined)
 
   /** Whether this tab is showing the note as it reads rather than as it is
    *  written. Per tab, because a note can be read in one pane while it is being

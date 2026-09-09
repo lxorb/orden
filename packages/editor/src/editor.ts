@@ -7,6 +7,7 @@ import { EditorView, dropCursor, highlightActiveLine, keymap } from '@codemirror
 import { remoteCarets } from './carets'
 import { editorCompletion } from './emoji'
 import { external } from './external'
+import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
 import { wikilinks } from './wikilink'
@@ -64,6 +65,10 @@ export interface StateOptions {
   openNote?: (jump: NoteJump) => void
   /** Names a block of another note, so a link can point at the block. */
   nameBlock?: (path: string, line: number) => Promise<string | null>
+  /** What was folded when this note was last read on this device, as lines; see
+   *  fold.ts. In the state rather than dispatched afterwards, so the note is
+   *  already folded on the frame it appears. */
+  folds?: readonly FoldLines[]
 }
 
 export interface EditorOptions extends StateOptions {
@@ -72,10 +77,10 @@ export interface EditorOptions extends StateOptions {
 
 export function editorState(options: StateOptions): EditorState {
   const { doc = '', onChange, onImage, resolveImage, onSelection } = options
-  const { openLink, openNote, nameBlock, shared, selection } = options
+  const { openLink, openNote, nameBlock, shared, selection, folds } = options
   const text = shared ? shared.text : doc
 
-  return EditorState.create({
+  const state = EditorState.create({
     // The document's own rope, so joining it finds the text already there and
     // has nothing to put in.
     doc: text,
@@ -85,6 +90,9 @@ export function editorState(options: StateOptions): EditorState {
     extensions: [
       history(),
       sharing(),
+      // Before the modes, so the folds are a field the live preview's own
+      // fields can already ask about while they build.
+      folding(),
       // The other people in this note, when it is one several devices are
       // writing in; nothing at all until the app says there is somebody.
       remoteCarets(),
@@ -176,12 +184,23 @@ export function editorState(options: StateOptions): EditorState {
           if (document) document.local(update.changes, update.state.selection, update.view)
           else onChange?.(update.state.doc)
         }
-        if (update.selectionSet || update.docChanged || update.focusChanged) {
+        // A fold moved nothing and changed no text, and it is still news to
+        // whoever is following the view: it is written down per note like the
+        // caret and the scroll, and it is what a toolbar reading the line under
+        // the caret is looking at. See placement.svelte.ts in the app.
+        if (
+          update.selectionSet ||
+          update.docChanged ||
+          update.focusChanged ||
+          foldsChanged(update)
+        ) {
           onSelection?.(update.view)
         }
       }),
     ],
   })
+
+  return folds?.length ? withFolds(state, folds) : state
 }
 
 export function createEditor(options: EditorOptions): EditorView {

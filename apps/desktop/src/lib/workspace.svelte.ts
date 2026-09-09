@@ -1,4 +1,4 @@
-import { flushTableEdits, type NoteJump } from '@nib/editor'
+import { flushTableEdits, type FoldLines, type NoteJump, sameFolds } from '@nib/editor'
 import { account } from './account.svelte'
 import { blankCanvas } from './canvas/format'
 import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
@@ -468,6 +468,7 @@ class Workspace {
     tab.cursor = draft.cursor
     tab.scroll = draft.scroll
     tab.anchor = draft.anchor
+    tab.folds = draft.folds
     tab.reading = draft.reading === true
     tab.page = draft.page
     tab.zoom = draft.zoom
@@ -565,6 +566,7 @@ class Workspace {
       cursor: tab.cursor ?? 0,
       scroll: tab.scroll ?? 0,
       anchor: tab.anchor,
+      ...(tab.folds?.length ? { folds: tab.folds } : {}),
       // Which document this is a view of, so two panes on one note come back as
       // one note rather than as two copies of it.
       share: tab.note.key,
@@ -598,16 +600,33 @@ class Workspace {
 
   /** Where the caret and the scroll are. Recorded as they move, because after
    *  a crash there is no chance to write them down on the way out. */
-  noteView(id: string, cursor: number, scroll: number, anchor?: number, line?: number) {
+  noteView(
+    id: string,
+    cursor: number,
+    scroll: number,
+    anchor?: number,
+    line?: number,
+    folds?: readonly FoldLines[],
+  ) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
     if (tab.line !== line) tab.line = line
-    if (tab.cursor === cursor && tab.scroll === scroll && tab.anchor === anchor) return
+    // Folding moves neither the caret nor the scroll, so it has to be part of
+    // what makes this worth writing down or it would be swallowed here.
+    if (
+      tab.cursor === cursor &&
+      tab.scroll === scroll &&
+      tab.anchor === anchor &&
+      sameFolds(tab.folds, folds)
+    ) {
+      return
+    }
 
     tab.cursor = cursor
     tab.scroll = scroll
     tab.anchor = anchor
-    if (tab.path) this.positions.remember(tab.path, cursor, scroll, anchor)
+    tab.folds = folds?.length ? folds : undefined
+    if (tab.path) this.positions.remember(tab.path, cursor, scroll, anchor, folds)
     this.scheduleSession()
   }
 
@@ -1278,6 +1297,7 @@ class Workspace {
     tab.cursor = place.cursor
     tab.scroll = place.scroll
     tab.anchor = place.anchor
+    tab.folds = place.folds
   }
 
   /** A note named the way the space speaks of it, which is how the link index and
@@ -2621,6 +2641,7 @@ class Workspace {
     beside.cursor = tab.cursor
     beside.scroll = tab.scroll
     beside.anchor = tab.anchor
+    beside.folds = tab.folds
 
     this.add(beside)
     this.persist()

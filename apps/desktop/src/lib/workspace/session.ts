@@ -13,6 +13,7 @@
  *  in each. `version` says which; an entry with none is read by looking for the
  *  fields it does have. */
 
+import type { FoldLines } from '@nib/editor'
 import { identifier } from '../identifier'
 import { isNumber, isRecord, isString, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
@@ -33,6 +34,9 @@ export interface Draft {
   cursor: number
   scroll: number
   anchor?: number | undefined
+  /** What was folded, as pairs of line numbers. Absent for a tab with nothing
+   *  folded, which is what a tab is unless it says otherwise. */
+  folds?: readonly FoldLines[] | undefined
   /** Which document this tab was a view of. Two panes showing the same note
    *  write the same key here, so a restart puts them back on one document rather
    *  than on two copies of it. Absent for a tab that had it to itself. */
@@ -73,6 +77,9 @@ export interface Position {
   cursor: number
   scroll: number
   anchor?: number | undefined
+  /** What was folded when the note was last read here. View state, never the
+   *  note: a fold is written down beside the scroll and never into the file. */
+  folds?: readonly FoldLines[] | undefined
   at: number
 }
 
@@ -128,15 +135,40 @@ function isSpace(value: unknown): value is Space {
   return isRecord(value) && isString(value.id) && isString(value.name) && isString(value.root)
 }
 
+/** Folds as they were written down: pairs of line numbers, both whole and the
+ *  second past the first. Anything else is dropped rather than guessed at - a
+ *  fold over the wrong lines hides words somebody wrote. Nothing at all for an
+ *  empty list, so an absent field and an empty one read the same. */
+function readFolds(value: unknown): readonly FoldLines[] | null {
+  if (!Array.isArray(value)) return null
+
+  const out: FoldLines[] = []
+  for (const one of value as unknown[]) {
+    if (!Array.isArray(one) || one.length !== 2) continue
+
+    const pair = one as unknown[]
+    const head = pair[0]
+    const last = pair[1]
+    if (!isNumber(head) || !isNumber(last)) continue
+    if (!Number.isInteger(head) || !Number.isInteger(last)) continue
+    if (head < 1 || last <= head) continue
+    out.push([head, last])
+  }
+
+  return out.length ? out : null
+}
+
 /** One tab, once it reads as one. A draft with no name or no text is not half a
  *  note; it is a corrupt entry. */
 export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { page, zoom } = value
+  const { folds, page, zoom } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
+
+  const shut = readFolds(folds)
 
   return {
     kind: tabKind(kind),
@@ -147,6 +179,7 @@ export function readDraft(value: unknown): Draft | null {
     cursor: isNumber(cursor) ? cursor : 0,
     scroll: isNumber(scroll) ? scroll : 0,
     ...(isNumber(anchor) ? { anchor } : {}),
+    ...(shut ? { folds: shut } : {}),
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
     ...(isNumber(page) && page >= 1 ? { page } : {}),
@@ -209,14 +242,17 @@ export function readLayout(value: unknown): Layout | null {
 export function readPosition(value: unknown): Position | null {
   if (!isRecord(value)) return null
 
-  const { cursor, scroll, anchor, at } = value
+  const { cursor, scroll, anchor, folds, at } = value
   if (!isNumber(cursor) || !isNumber(scroll)) return null
+
+  const kept = readFolds(folds)
 
   return {
     cursor,
     scroll,
     at: isNumber(at) ? at : 0,
     ...(isNumber(anchor) ? { anchor } : {}),
+    ...(kept ? { folds: kept } : {}),
   }
 }
 

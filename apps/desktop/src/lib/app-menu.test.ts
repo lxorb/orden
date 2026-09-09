@@ -166,6 +166,9 @@ describe('the menu, the palette and the shortcut settings agree', () => {
     ['paragraph.heading-up', 'One heading level up'],
     ['paragraph.heading-down', 'One heading level down'],
     ['format.comment', 'Comment'],
+    ['view.fold', 'Fold'],
+    ['view.fold-all', 'Fold everything'],
+    ['view.unfold-all', 'Unfold everything'],
     ['edit.replace', 'Replace'],
     ['app.print', 'Print'],
   ] as const

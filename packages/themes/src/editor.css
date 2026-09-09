@@ -1496,6 +1496,113 @@
   color: var(--muted);
 }
 
+/* ── Folding ─────────────────────────────────────────────────────── */
+
+/* The chevron beside anything that can fold. It hangs in the margin off a slot
+   with no width of its own, so the line begins exactly where it would have and
+   the writing column is untouched - the same trick the fence controls use.
+   `position: relative` on an inline element is enough to hang it off. */
+.nib-fold {
+  position: relative;
+  display: inline;
+}
+
+/* `right` is measured from the slot, which sits at the first character, so this
+   is a fixed distance out into the margin whatever size the line's text is: the
+   chevrons of an H1 and of a list item line up in one column. */
+.nib-fold-hinge {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  display: flex;
+  width: 15px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  margin-top: -7px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+/* Calm: nothing at all until the pointer is on the line. A folded line keeps
+   its chevron, because that is the one state a reader has to be able to undo. */
+.cm-line:hover > .nib-fold .nib-fold-hinge,
+.nib-fold-hinge:focus-visible,
+.nib-fold-hinge[data-folded='true'] {
+  opacity: 1;
+}
+
+.nib-fold-hinge:hover {
+  color: var(--text-strong);
+}
+
+.nib-fold-hinge svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* Pointing at what it holds when it holds it shut, and down at what it has let
+   out when it is open. */
+.nib-fold-hinge[data-folded='false'] svg {
+  transform: rotate(90deg);
+}
+
+/* A screen with no pointer has no hover to reveal anything with, so the chevron
+   is simply there - and it is a thumb's target, not a mouse's. */
+@media (hover: none) {
+  .nib-fold-hinge {
+    right: 0;
+    width: var(--touch-indent);
+    height: var(--touch-target);
+    margin-top: calc(var(--touch-target) / -2);
+    opacity: 1;
+  }
+
+  .nib-fold-hinge svg {
+    width: var(--touch-mark);
+    height: var(--touch-mark);
+  }
+}
+
+/* What is left where a fold took the words away. No wording: a mark that reads
+   as "there is more" and opens on a click. */
+.nib-folded {
+  display: inline-block;
+  padding: 0 0.45em;
+  border-radius: var(--radius-sm);
+  margin-left: 0.45em;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.78em;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+  vertical-align: 0.1em;
+}
+
+.nib-folded:hover {
+  background: var(--surface-3);
+  color: var(--text-strong);
+}
+
 /* ── Callouts ────────────────────────────────────────────────────── */
 
 .cm-line.nib-callout {

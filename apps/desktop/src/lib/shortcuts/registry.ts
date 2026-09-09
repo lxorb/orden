@@ -132,6 +132,12 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'paragraph.toc': ['paragraph', () => t('Table of contents')],
   'paragraph.front-matter': ['paragraph', () => t('Front matter')],
 
+  // Folding is not an edit: it changes what is on screen and never the note, so
+  // it reads with the other things View decides. See fold.ts in the editor.
+  'view.fold': ['view', () => t('Fold')],
+  'view.fold-all': ['view', () => t('Fold everything')],
+  'view.unfold-all': ['view', () => t('Unfold everything')],
+
   'edit.indent': ['edit', () => t('Indent')],
   'edit.outdent': ['edit', () => t('Outdent')],
   'edit.run-fence': ['edit', () => t('Run this code block')],

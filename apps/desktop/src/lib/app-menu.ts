@@ -1,6 +1,7 @@
 import {
   clearFormatting,
   type EditorView,
+  foldHeadings,
   insertCallout,
   insertCodeFence,
   insertComment,
@@ -22,12 +23,14 @@ import {
   shiftHeading,
   type StateCommand,
   toggleBulletList,
+  toggleFold,
   toggleOrderedList,
   toggleQuote,
   toggleTaskList,
   toggleWrap,
   type Transaction,
   undoEdit,
+  unfoldEverything,
 } from '@nib/editor'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
@@ -580,6 +583,20 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => workspace.showPanel('tree'),
         },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
+        SPLIT,
+        // Folding is a view operation, so these rows stand whether the note can
+        // be written in or not.
+        { label: t('Fold'), hint: shortcuts.hint('view.fold'), run: () => run(view, toggleFold) },
+        {
+          label: t('Fold everything'),
+          hint: shortcuts.hint('view.fold-all'),
+          run: () => run(view, foldHeadings),
+        },
+        {
+          label: t('Unfold everything'),
+          hint: shortcuts.hint('view.unfold-all'),
+          run: () => run(view, unfoldEverything),
+        },
         SPLIT,
         { label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
         {

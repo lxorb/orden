@@ -90,6 +90,10 @@ export const fr: Dictionary = {
 
   // Panels and navigation
   Outline: 'Plan',
+  Fold: 'Replier',
+  Unfold: 'Déplier',
+  'Fold everything': 'Tout replier',
+  'Unfold everything': 'Tout déplier',
   'No headings in this note': 'Aucun titre dans cette note',
   Files: 'Fichiers',
   Search: 'Rechercher',

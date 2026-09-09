@@ -141,6 +141,35 @@ describe('reading one place', () => {
     expect(readPosition({ cursor: 1 })).toBeNull()
     expect(readPosition({ cursor: Number.NaN, scroll: 2 })).toBeNull()
   })
+
+  test('keeps the folds it was written with', () => {
+    const place = readPosition({ cursor: 1, scroll: 2, folds: [[1, 9]] })
+    expect(place?.folds).toEqual([[1, 9]])
+  })
+
+  test('drops a fold that names nothing a note could have', () => {
+    // A line before the first, a pair that covers no line at all, a pair the
+    // wrong way round, a pair that is not a pair, and a fold that is not a list.
+    expect(readPosition({ cursor: 1, scroll: 2, folds: [[0, 4]] })?.folds).toBeUndefined()
+    expect(readPosition({ cursor: 1, scroll: 2, folds: [[4, 4]] })?.folds).toBeUndefined()
+    expect(readPosition({ cursor: 1, scroll: 2, folds: [[9, 3]] })?.folds).toBeUndefined()
+    expect(readPosition({ cursor: 1, scroll: 2, folds: [[1, 2, 3]] })?.folds).toBeUndefined()
+    expect(readPosition({ cursor: 1, scroll: 2, folds: [[1, '4']] })?.folds).toBeUndefined()
+    expect(readPosition({ cursor: 1, scroll: 2, folds: 'all' })?.folds).toBeUndefined()
+  })
+
+  test('keeps the good folds and drops only the bad ones', () => {
+    const place = readPosition({
+      cursor: 1,
+      scroll: 2,
+      folds: [
+        [1, 9],
+        [7, 2],
+      ],
+    })
+
+    expect(place?.folds).toEqual([[1, 9]])
+  })
 })
 
 const draft = (path: string | null, doc: string, share?: string): Draft => ({

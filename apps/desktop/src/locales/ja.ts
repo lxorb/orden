@@ -90,6 +90,10 @@ export const ja: Dictionary = {
 
   // Panels and navigation
   Outline: 'アウトライン',
+  Fold: '折りたたむ',
+  Unfold: '展開する',
+  'Fold everything': 'すべて折りたたむ',
+  'Unfold everything': 'すべて展開する',
   'No headings in this note': 'このノートに見出しはありません',
   Files: 'ファイル',
   Search: '検索',

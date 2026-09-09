@@ -1,4 +1,4 @@
-import { caretLine, type EditorView, sharedOf, topLine } from '@nib/editor'
+import { caretLine, type EditorView, foldLines, sharedOf, topLine } from '@nib/editor'
 import { untrack } from 'svelte'
 import { type Tab, workspace } from './workspace.svelte'
 
@@ -65,6 +65,7 @@ class Placement {
         view.scrollDOM.scrollTop,
         topLine(view),
         caretLine(view),
+        foldLines(view.state),
       )
     }
 

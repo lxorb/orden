@@ -16,6 +16,9 @@ const DEFAULTS = {
   timedOut: 'Timed out after {seconds} s',
   outputTruncated: 'Only the first {count} lines are kept',
   dismiss: 'Dismiss',
+  /** The chevron in the margin, and the mark a fold leaves behind. */
+  fold: 'Fold',
+  unfold: 'Unfold',
   dragToResize: 'Drag to resize',
   describeImage: 'Describe the image',
   openImage: 'Open image',

@@ -6,6 +6,7 @@
  *  somewhere: three hundred notes is more than anyone comes back to and small
  *  enough to write down on every pause in the typing. */
 
+import type { FoldLines } from '@nib/editor'
 import { without } from '../records'
 import type { Position } from './session'
 
@@ -26,13 +27,29 @@ export class Positions {
 
   /** Where a note was last looked at. Nothing at all for one nobody has
    *  opened, which reads as the top of the note. */
-  of(path: string): Partial<Pick<Position, 'cursor' | 'scroll' | 'anchor'>> {
+  of(path: string): Partial<Pick<Position, 'cursor' | 'scroll' | 'anchor' | 'folds'>> {
     const known = this.places[path]
-    return known ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor } : {}
+    return known
+      ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor, folds: known.folds }
+      : {}
   }
 
-  remember(path: string, cursor: number, scroll: number, anchor?: number) {
-    const place: Position = { cursor, scroll, anchor, at: Date.now() }
+  remember(
+    path: string,
+    cursor: number,
+    scroll: number,
+    anchor?: number,
+    folds?: readonly FoldLines[],
+  ) {
+    // Nothing folded is written as nothing at all rather than as an empty list,
+    // so a note nobody has folded costs the storage what it always cost.
+    const place: Position = {
+      cursor,
+      scroll,
+      anchor,
+      ...(folds?.length ? { folds } : {}),
+      at: Date.now(),
+    }
     const entries = Object.entries({ ...this.places, [path]: place })
 
     // Most recently looked at first, and everything past what is worth keeping

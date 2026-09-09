@@ -100,6 +100,10 @@
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.
       shortcuts: shortcuts.forEditor,
+      // What was folded here last time, in the state for the same reason the
+      // caret is: folded a frame later is a frame spent looking at the note
+      // unfolded. See fold.ts in the editor package.
+      ...(one.folds?.length ? { folds: one.folds } : {}),
     }
   }
 

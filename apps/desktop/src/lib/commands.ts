@@ -1,6 +1,7 @@
 import {
   CODE_PALETTES,
   EditorView,
+  foldHeadings,
   insertCallout,
   insertComment,
   insertFootnote,
@@ -10,8 +11,10 @@ import {
   reformatDocument,
   shiftHeading,
   type StateCommand,
+  toggleFold,
   toggleTaskList,
   type Transaction,
+  unfoldEverything,
 } from '@nib/editor'
 import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
@@ -385,6 +388,28 @@ function slideCommands(view?: EditorView): Command[] {
   ]
 }
 
+/** Fold, fold everything, unfold everything - the whole of folding, as three
+ *  rows. What each of them does and why there are three is in fold.ts. */
+function foldingCommands(view?: EditorView): Command[] {
+  const fold = (id: string, label: string, command: StateCommand): Command => ({
+    id,
+    label,
+    hint: shortcuts.hint(id),
+    disabled: !view,
+    run: () => {
+      if (!view) return
+      command({ state: view.state, dispatch: (one: Transaction) => view.dispatch(one) })
+      view.focus()
+    },
+  })
+
+  return [
+    fold('view.fold', t('Fold'), toggleFold),
+    fold('view.fold-all', t('Fold everything'), foldHeadings),
+    fold('view.unfold-all', t('Unfold everything'), unfoldEverything),
+  ]
+}
+
 /** The blocks and the marks that are new enough to be worth looking for by name:
  *  a task list, a callout, a footnote, a table of contents, front matter, a
  *  picture, a comment, and the two steps between heading levels.
@@ -600,6 +625,10 @@ export function appCommands(view?: EditorView): Command[] {
 
     ...writingCommands(view),
     ...slideCommands(view),
+    // Folding changes what is on screen and never the note, so these three are
+    // not among the writing rows above and are not greyed out on a note nobody
+    // may write in. See fold.ts in the editor package.
+    ...foldingCommands(view),
     {
       id: 'reading',
       label: workspace.active?.reading ? t('Leave reading') : t('Reading'),

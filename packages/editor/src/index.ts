@@ -26,6 +26,14 @@ export {
   toggleWrap,
 } from './commands'
 export { findNext, findPrevious, openFind, openReplace } from './find'
+export {
+  foldHeadings,
+  type FoldLines,
+  foldLines,
+  sameFolds,
+  toggleFold,
+  unfoldEverything,
+} from './fold'
 export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'

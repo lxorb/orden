@@ -24,6 +24,26 @@ describe('where a note was last looked at', () => {
     expect(new Positions().of('/never.md')).toEqual({})
   })
 
+  test('remembers what was folded there, and hands it back', () => {
+    const places = new Positions()
+    places.remember('/a.md', 12, 340, 5, [
+      [1, 8],
+      [10, 14],
+    ])
+
+    expect(places.of('/a.md').folds).toEqual([
+      [1, 8],
+      [10, 14],
+    ])
+  })
+
+  test('writes nothing at all where nothing is folded', () => {
+    const places = new Positions()
+    places.remember('/a.md', 1, 2, 0, [])
+
+    expect(places.all['/a.md']).not.toHaveProperty('folds')
+  })
+
   test('takes the newer reading of the same note', () => {
     const places = new Positions()
     places.remember('/a.md', 1, 1)

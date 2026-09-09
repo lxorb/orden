@@ -370,6 +370,21 @@ describe('where a note was last looked at', () => {
     expect(tab.cursor).toBe(2)
   })
 
+  test('a fold is written down even when nothing else moved', async () => {
+    await workspace.open('/space/a.md')
+    const tab = workspace.tabs.find((one) => one.path === '/space/a.md')!
+    workspace.noteView(tab.id, 3, 0, 1, 1)
+    // The same caret and the same scroll: only what is folded has changed, and
+    // that is the whole of what there is to record.
+    workspace.noteView(tab.id, 3, 0, 1, 1, [[1, 6]])
+
+    expect(tab.folds).toEqual([[1, 6]])
+    workspace.close(tab.id)
+
+    await workspace.open('/space/a.md')
+    expect(workspace.tabs.find((one) => one.path === '/space/a.md')?.folds).toEqual([[1, 6]])
+  })
+
   test('the places survive a restart', async () => {
     await workspace.open('/space/a.md')
     const tab = workspace.tabs.find((one) => one.path === '/space/a.md')!

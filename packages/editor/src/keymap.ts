@@ -32,6 +32,7 @@ import {
   toggleWrap,
 } from './commands'
 import { findPrevious, openReplace } from './find'
+import { foldHeadings, toggleFold, unfoldEverything } from './fold'
 import { copyMarkdown } from './copy'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
@@ -116,6 +117,17 @@ export const nibBindings: BindingSpec[] = [
 
   { id: 'edit.indent', key: 'Mod-[', run: indentMore, preventDefault: true },
   { id: 'edit.outdent', key: 'Mod-]', run: indentLess, preventDefault: true },
+
+  // The bracket pair again, one modifier further out, because folding is the
+  // same shape of idea as indenting - open this up, close this down - and the
+  // brackets are where every editor puts it. `[` folds where you are; `]` opens
+  // the whole note, which is the press somebody makes when they have lost
+  // their way. Folding everything is the deliberate one and it is a menu row
+  // and a palette row: a chord for it would be a chord spent on the press
+  // nobody makes twice.
+  { id: 'view.fold', key: 'Mod-Alt-[', run: toggleFold, preventDefault: true },
+  { id: 'view.unfold-all', key: 'Mod-Alt-]', run: unfoldEverything, preventDefault: true },
+  { id: 'view.fold-all', key: null, run: foldHeadings, preventDefault: true },
 
   // Runs the code fence the caret is in. Falls through to the default when the
   // caret is anywhere else, or the fence is not JavaScript.

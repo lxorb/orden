@@ -92,6 +92,10 @@ export const gsw: Dictionary = {
 
   // Panels and navigation
   Outline: 'Gliederig',
+  Fold: 'Zämmeklappe',
+  Unfold: 'Uufklappe',
+  'Fold everything': 'Alles zämmeklappe',
+  'Unfold everything': 'Alles uufklappe',
   'No headings in this note': 'Kei Überschrifte i dere Notiz',
   Files: 'Dateie',
   Search: 'Sueche',
