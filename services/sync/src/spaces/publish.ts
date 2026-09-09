@@ -34,6 +34,26 @@ const SUBDOMAIN_LIMIT = 64
  *  along with the domain, all of which `cleanDomain` takes off again. */
 const DOMAIN_FIELD_LIMIT = DOMAIN_LIMIT + 32
 
+/** The proof a space keeps, or starts over.
+ *
+ *  A domain it already had keeps the token and the stamp it had, so renaming the
+ *  blog does not send the owner back to their registrar. One just claimed gets a
+ *  token and no stamp: nothing is served on it and no certificate is asked for
+ *  until the record is read, which is the whole of proof.ts. And a space going
+ *  back to a shared name has neither. */
+function proofFor(
+  space: Space,
+  domain: string | null,
+): { token: string | null; provedAt: number | null } {
+  if (!domain) return { token: null, provedAt: null }
+
+  if (domain === space.blog_domain) {
+    return { token: space.blog_domain_token, provedAt: space.blog_domain_verified_at }
+  }
+
+  return { token: newProof(), provedAt: null }
+}
+
 export const publish = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 /** Turning a space into a blog publishes every note in it. */
@@ -137,13 +157,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
   // what the `coalesce` below does with a null.
   const chosenTitle = title === undefined || title === '' ? null : title
 
-  // A domain of one's own arrives unproved, with the token the owner is to put in
-  // a record; a domain that has not changed keeps the proof it had. Nothing is
-  // served on it and no certificate is asked for until that record is read; see
-  // proof.ts.
-  const claiming = !!address.domain && address.domain !== space.blog_domain
-  const proof = claiming ? newProof() : address.domain ? space.blog_domain_token : null
-  const provedAt = claiming || !address.domain ? null : space.blog_domain_verified_at
+  const proof = proofFor(space, address.domain)
 
   const at = now()
   await context.env.DB.prepare(
@@ -157,7 +171,16 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
                        updated_at = ?
       where id = ?`,
   )
-    .bind(address.subdomain, address.domain, proof, provedAt, chosenTitle, note, at, space.id)
+    .bind(
+      address.subdomain,
+      address.domain,
+      proof.token,
+      proof.provedAt,
+      chosenTitle,
+      note,
+      at,
+      space.id,
+    )
     .run()
 
   // The certificate for a domain given up goes at once. One for a domain just
@@ -174,8 +197,8 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     blog_enabled: 1,
     blog_subdomain: address.subdomain,
     blog_domain: address.domain,
-    blog_domain_token: proof,
-    blog_domain_verified_at: provedAt,
+    blog_domain_token: proof.token,
+    blog_domain_verified_at: proof.provedAt,
     blog_title: chosenTitle ?? space.blog_title,
     blog_note: note,
     updated_at: at,
