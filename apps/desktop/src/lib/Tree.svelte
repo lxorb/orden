@@ -23,10 +23,10 @@
     revealEntry,
   } from './menu.svelte'
   import { longPress } from './longpress'
-  import { moveTargets, type MoveTarget } from './move-targets'
+  import { movesInto, moveTargets, type MoveTarget } from './move-targets'
   import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
-  import { carry, dragged, isTreeDrag } from './drag-paths'
+  import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
   import { folderOf } from './tauri'
   import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
@@ -200,10 +200,19 @@
   function endDrag() {
     workspace.panes.dragging = null
     workspace.panes.landing = null
+    carriedNothing()
   }
 
-  function overFolder(event: DragEvent, path: string) {
-    if (!isTreeDrag(event.dataTransfer)) return
+  /** A row lights only where a drop would do something, the way a pane's drop
+   *  zones do: a folder held over itself, over a folder inside it, or over the
+   *  folder it already sits in used to light and then move nothing. */
+  function takes(folder: string): boolean {
+    const paths = carried()
+    return paths.length === 0 || movesInto(paths, folder)
+  }
+
+  function overFolder(event: DragEvent, path: string, folder: string) {
+    if (!isTreeDrag(event.dataTransfer) || !takes(folder)) return
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
@@ -279,7 +288,7 @@
           use:longPress={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
-          ondragover={(event) => overFolder(event, entry.path)}
+          ondragover={(event) => overFolder(event, entry.path, entry.path)}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => drop(event, entry.path)}
         >
@@ -311,7 +320,7 @@
             menu.show(event, menuFor(entry), { title: stripped(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
-          ondragover={(event) => overFolder(event, entry.path)}
+          ondragover={(event) => overFolder(event, entry.path, folderOf(entry.path))}
           ondragleave={(event) => stillInside(event) || (dropTarget = null)}
           ondrop={(event) => dropBeside(event, entry.path)}
         >

@@ -13,12 +13,33 @@ const MANY = 'text/nib-paths'
 const BOOKMARK = 'text/nib-bookmark'
 const TAB = 'text/nib-tab'
 
+/** What the drag under way carries, kept from its start to its end.
+ *
+ *  A `dragover` may not read the transfer: a browser hides the data until the
+ *  drop, so that a page cannot look through what is being dragged over it. Only
+ *  the types are readable, and a target that can see nothing but the type has to
+ *  light for everything - including a folder being dropped into itself, which
+ *  does nothing. The rows are this window's own, so it may simply remember
+ *  them. */
+let carrying: readonly string[] = []
+
 export function carry(transfer: DataTransfer | null, paths: string[]) {
   const [first] = paths
   if (!transfer || !first) return
   transfer.setData(ONE, first)
   transfer.setData(MANY, JSON.stringify(paths))
   transfer.effectAllowed = 'move'
+  carrying = paths
+}
+
+/** The rows the drag is carrying, or nothing when it started somewhere else. */
+export function carried(): readonly string[] {
+  return carrying
+}
+
+/** Said at the end of a drag, however it ended. */
+export function carriedNothing() {
+  carrying = []
 }
 
 export function isTreeDrag(transfer: DataTransfer | null): boolean {

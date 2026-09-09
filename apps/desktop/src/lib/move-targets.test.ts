@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { moveTargets, type Space } from './move-targets'
+import { movesInto, moveTargets, type Space } from './move-targets'
 import type { Entry } from './workspace.svelte'
 
 /** Where a row of the file list may be moved to, read as a list of paths. */
@@ -114,6 +114,40 @@ describe('a space of its own', () => {
     })
 
     expect(offered).toEqual([])
+  })
+})
+
+/** The same rule the other way round: a drag names the folder and asks whether
+ *  it takes what is coming, which is what decides whether the row lights. */
+describe('whether a drop would move anything', () => {
+  test('yes, into another folder of the space', () => {
+    expect(movesInto(['/Notes/loose.md'], '/Notes/Work')).toBe(true)
+    expect(movesInto(['/Notes/Work'], '/Notes/Journal')).toBe(true)
+  })
+
+  test('no, into the folder the row already sits in', () => {
+    expect(movesInto(['/Notes/Journal/monday.md'], '/Notes/Journal')).toBe(false)
+    expect(movesInto(['/Notes/loose.md'], '/Notes')).toBe(false)
+  })
+
+  test('no, for a folder onto itself or onto a folder inside it', () => {
+    expect(movesInto(['/Notes/Work'], '/Notes/Work')).toBe(false)
+    expect(movesInto(['/Notes/Work'], '/Notes/Work/Deep')).toBe(false)
+  })
+
+  test('yes, for a folder whose name merely starts the target’s', () => {
+    expect(movesInto(['/Notes/Work'], '/Notes/Workshop')).toBe(true)
+  })
+
+  test('yes when any one of a selection would move', () => {
+    const both = ['/Notes/Journal/monday.md', '/Notes/loose.md']
+    expect(movesInto(both, '/Notes/Journal')).toBe(true)
+    expect(movesInto([], '/Notes/Journal')).toBe(false)
+  })
+
+  test('and reads a backslash path the same way', () => {
+    expect(movesInto(['C:\\Nib\\Notes\\Work'], 'C:\\Nib\\Notes\\Work\\Deep')).toBe(false)
+    expect(movesInto(['C:\\Nib\\Notes\\loose.md'], 'C:\\Nib\\Notes\\Work')).toBe(true)
   })
 })
 

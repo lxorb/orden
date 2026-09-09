@@ -41,6 +41,21 @@ function under(folder: string, path: string): boolean {
   return other === one || other.startsWith(`${one}/`)
 }
 
+/** Whether moving these rows into `folder` would move anything at all.
+ *
+ *  The same rule the list below is filtered by, asked the other way round: the
+ *  menu names a row and asks which folders will take it, while a drag names a
+ *  folder and asks whether it takes what is coming. So a folder cannot be
+ *  dropped into itself or into anything inside it, and a row already in the
+ *  folder is not moving.
+ *
+ *  A drag over the file list cannot read the transfer - a browser hides what is
+ *  being dragged until the drop - so what is coming is this window's own note of
+ *  it; see `carried` in drag-paths.ts. */
+export function movesInto(paths: readonly string[], folder: string): boolean {
+  return paths.some((path) => parentOf(path) !== folder && !under(path, folder))
+}
+
 /** Every folder in the tree, the root first and then depth first, which is the
  *  order the file list itself draws them in. */
 function foldersIn(entry: Entry): Entry[] {
@@ -63,14 +78,13 @@ export function moveTargets(input: {
   here: string | null
 }): MoveTarget[] {
   const { moving, tree, spaces, here } = input
-  const from = parentOf(moving)
   const space = spaces.find((one) => one.root === here) ?? null
 
   const folders: MoveTarget[] = !tree
     ? []
     : foldersIn(tree)
         // Where it already is, itself, and anything inside it.
-        .filter((folder) => folder.path !== from && !under(moving, folder.path))
+        .filter((folder) => movesInto([moving], folder.path))
         .map((folder) => ({
           id: folder.path,
           // The space's own name for its root, and the path inside it for the
