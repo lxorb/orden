@@ -547,6 +547,8 @@ export const fr: Dictionary = {
     'Trop de messages depuis cet appareil - réessayez plus tard',
   'too much mail today - try again tomorrow':
     'Trop de courrier aujourd’hui - réessayez demain',
+  'that many people are already waiting to be let in':
+    'Autant de personnes attendent déjà d’être admises',
   'use 2–32 letters, numbers or hyphens': 'Utilisez 2 à 32 lettres, chiffres ou tirets',
   'sync failed': 'La synchronisation a échoué',
   'could not publish': 'La publication a échoué',

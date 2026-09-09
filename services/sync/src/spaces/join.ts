@@ -48,6 +48,12 @@ const DEVICE_LIMIT = 24
 const GUESTS_A_MINUTE = 20
 const MOST_GUESTS = 200
 
+/** How many people may be waiting on one space at once, of either kind. The
+ *  Share sheet lists two hundred of each list, and somebody it cannot show is
+ *  somebody the owner can neither accept nor decline - the same reason a space
+ *  holds two hundred people. */
+const MOST_WAITING = MOST_MEMBERS
+
 /** Where a token leads. One of two things, because there are two kinds of link:
  *  the space's own, which anybody may hold, and an invitation, which was written
  *  to one address. */
@@ -154,16 +160,47 @@ function spaceIsFull(context: Reply) {
   return context.json({ error: 'that is as many people as one space holds' }, 409)
 }
 
-/** Whether the space has room for another guest through its link. */
+/** Whether the space has room for another guest through its link: how many are
+ *  in it, and how many arrived in the last minute.
+ *
+ *  Only the guests who are actually in count towards the first. A row for
+ *  somebody the owner never answered, or said no to, is not a person in the
+ *  space, and counting them used to make the ceiling permanent: two hundred
+ *  people knocking on a link once was a link that had stopped working for ever,
+ *  with nothing an owner could do about it. Waiting is bounded by `roomToWait`
+ *  instead, and a row nobody answered runs out after a month; see
+ *  `expireGuests`. */
 async function roomForAGuest(env: Env, spaceId: string): Promise<boolean> {
   const held = await env.DB.prepare(
-    `select count(*) as held, sum(case when created_at > ?2 then 1 else 0 end) as lately
+    `select sum(case when joined_at is not null then 1 else 0 end) as held,
+            sum(case when created_at > ?2 then 1 else 0 end) as lately
        from guest_members where space_id = ?1`,
   )
     .bind(spaceId, now() - 60_000)
-    .first<{ held: number; lately: number | null }>()
+    .first<{ held: number | null; lately: number | null }>()
 
   return (held?.held ?? 0) < MOST_GUESTS && (held?.lately ?? 0) < GUESTS_A_MINUTE
+}
+
+/** Whether one more person may be waiting on this space. Both kinds count,
+ *  because both are one line in the sheet's Waiting list: an account that
+ *  followed a link which asks first, and a guest that did. */
+async function roomToWait(env: Env, spaceId: string): Promise<boolean> {
+  const held = await env.DB.prepare(
+    `select (select count(*) from space_requests where space_id = ?1)
+          + (select count(*) from guest_members
+              where space_id = ?1 and joined_at is null and declined_at is null) as waiting`,
+  )
+    .bind(spaceId)
+    .first<{ waiting: number }>()
+
+  return (held?.waiting ?? 0) < MOST_WAITING
+}
+
+/** What a link that asks first says when the owner has as many people waiting as
+ *  the sheet can show them. */
+function tooManyWaiting(context: Reply) {
+  return context.json({ error: 'that many people are already waiting to be let in' }, 429)
 }
 
 /** Where one guest stands in one space: in it, waiting on the owner, told no, or
@@ -308,6 +345,8 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
       return context.json({ space: presentSpace(space, context.env, already.role, true) })
     }
 
+    if (!(await roomToWait(context.env, space.id))) return tooManyWaiting(context)
+
     await context.env.DB.prepare(
       `insert into space_requests (space_id, email, role, created_at) values (?1, ?2, ?3, ?4)
        on conflict(space_id, email) do nothing`,
@@ -348,6 +387,8 @@ async function asAGuest(context: Reply, found: Leads, guest: Guest) {
   }
 
   const asks = found.kind === 'link' && found.mode === 'approval'
+  if (asks && !(await roomToWait(context.env, space.id))) return tooManyWaiting(context)
+
   await writeGuestMember(context.env, space.id, guest.id, found.role, asks)
 
   if (asks) {
@@ -396,6 +437,8 @@ async function asNobody(context: Reply, found: Leads) {
   const named = cleanName(said ?? '').slice(0, NAME_LIMIT)
   const gave = normaliseEmail(address ?? '')
   if (!named && !isEmail(gave)) return context.json({ error: 'say who you are' }, 400)
+
+  if (!(await roomToWait(context.env, space.id))) return tooManyWaiting(context)
 
   const { guest, token } = await newGuest(
     context.env,

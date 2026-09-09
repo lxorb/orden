@@ -544,6 +544,8 @@ export const gsw: Dictionary = {
   'too many messages from here - try again later':
     'Z vill Nachrichte vo da - probier s spöter no einisch',
   'too much mail today - try again tomorrow': 'Hüt scho z vill Poscht - probier s morn',
+  'that many people are already waiting to be let in':
+    'So vill warte da scho druf, dass mer si inelaat',
   'use 2–32 letters, numbers or hyphens': 'Nimm 2 bis 32 Buechstabe, Zahle oder Bindestrich',
   'sync failed': 'Abgliche het nöd klappt',
   'could not publish': 'Veröffentliche het nöd klappt',

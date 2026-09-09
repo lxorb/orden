@@ -1,13 +1,16 @@
-/** The ceilings: how much mail one machine can cause, how many people the
- *  service writes to in a day, and how often an owner hears that somebody is
- *  waiting.
+/** The ceilings, and what runs out: how much mail one machine can cause, how
+ *  many people the service writes to in a day, how often an owner hears that
+ *  somebody is waiting, how many may be waiting at all, and what the nightly
+ *  sweep takes away once nobody is waiting for it any more.
  *
  *  Every gate here is about the service rather than about one account, so each
  *  case is driven the way the outside drives it: a request with a
  *  `CF-Connecting-IP` header, or the rows a day of sending would have left. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, mail, signIn, testEnv, type ShareView, type TestEnv } from './harness'
+import { expireGuests } from '../src/guests'
+import { expireRequests } from '../src/spaces/share'
+import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
 let env: TestEnv
 
@@ -191,5 +194,174 @@ describe('telling an owner that somebody is waiting', () => {
 
     const sent = await mail(() => knock('Second'))
     expect(sent).toContain('would like to join')
+  })
+})
+
+describe('how many people may be waiting on one space', () => {
+  const MONTH = 30 * 24 * 60 * 60 * 1000
+
+  let owner: string
+  let space: string
+  let link: string
+
+  beforeEach(async () => {
+    owner = await signIn(env, 'owner@example.com')
+    space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space.id
+
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'approval' },
+    })
+
+    link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+  })
+
+  function knock(name: string) {
+    return call(env, `/v1/join/${link}`, { method: 'POST', body: { name, device: 'Windows' } })
+  }
+
+  /** People already waiting, as the rows their knocking left. Guests, because a
+   *  link that asks first is the way most of them arrive, and an hour ago by
+   *  default so that the burst the link also bounds is not what answers. */
+  function waiting(many: number, at = Date.now() - 60 * 60 * 1000) {
+    const guest = env.db.prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
+    const member = env.db.prepare(
+      `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
+       values (?, ?, 'read', null, ?)`,
+    )
+
+    for (let one = 0; one < many; one++) {
+      guest.run(`guest-${one}`, `Someone ${one}`, at)
+      member.run(space, `guest-${one}`, at)
+    }
+  }
+
+  test('stops at as many as the sheet can show the owner', async () => {
+    waiting(200)
+
+    const refused = await mail(() => knock('One more'))
+    const answer = await knock('One more again')
+    expect(answer.status).toBe(429)
+    expect(answer.json.error).toBe('that many people are already waiting to be let in')
+    expect(refused).not.toContain('would like to join')
+  })
+
+  test('and counts an account that followed the same link', async () => {
+    waiting(199)
+    const guest = await signIn(env, 'guest@example.com')
+
+    expect((await call(env, `/v1/join/${link}`, { method: 'POST', token: guest })).status).toBe(200)
+
+    const another = await signIn(env, 'another@example.com')
+    expect((await call(env, `/v1/join/${link}`, { method: 'POST', token: another })).status).toBe(
+      429,
+    )
+  })
+
+  test('lets the next person in once the waiting has run out', async () => {
+    waiting(200, Date.now() - MONTH - 1000)
+
+    expect(await expireGuests(env, Date.now())).toBe(400)
+    expect((await knock('One more')).json.waiting).toBe(true)
+  })
+
+  test('and the guests nobody answered are nobody again', async () => {
+    waiting(3, Date.now() - MONTH - 1000)
+    await expireGuests(env, Date.now())
+
+    const left = env.db.prepare('select count(*) as held from guests').get() as { held: number }
+    expect(left.held).toBe(0)
+  })
+
+  test('keeps a guest who is in the space, however long ago they arrived', async () => {
+    const long = Date.now() - 10 * MONTH
+    env.db
+      .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
+      .run('resident', 'Resident', long)
+    env.db
+      .prepare(
+        `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
+         values (?, 'resident', 'read', ?, ?)`,
+      )
+      .run(space, long, long)
+
+    expect(await expireGuests(env, Date.now())).toBe(0)
+
+    const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
+    expect(sheet.json.members).toHaveLength(1)
+  })
+
+  test('lets go of a request an account made and nobody answered', async () => {
+    const guest = await signIn(env, 'guest@example.com')
+    await call(env, `/v1/join/${link}`, { method: 'POST', token: guest })
+
+    expect(await expireRequests(env, Date.now())).toBe(0)
+
+    env.db.prepare('update space_requests set created_at = ?').run(Date.now() - MONTH - 1000)
+    expect(await expireRequests(env, Date.now())).toBe(1)
+
+    const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
+    expect(sheet.json.requests).toEqual([])
+  })
+})
+
+describe('how many guests one space holds', () => {
+  let owner: string
+  let space: string
+  let link: string
+
+  beforeEach(async () => {
+    owner = await signIn(env, 'owner@example.com')
+    space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space.id
+
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'read', mode: 'open' },
+    })
+
+    link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+  })
+
+  /** Guests of the space, at whatever standing and whenever they arrived. */
+  function guests(many: number, options: { joined: boolean; at?: number }) {
+    const at = options.at ?? Date.now()
+    const guest = env.db.prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
+    const member = env.db.prepare(
+      `insert into guest_members (space_id, guest_id, role, joined_at, declined_at, created_at)
+       values (?1, ?2, 'read', ?3, ?4, ?5)`,
+    )
+
+    for (let one = 0; one < many; one++) {
+      guest.run(`guest-${one}`, `Someone ${one}`, at)
+      member.run(space, `guest-${one}`, options.joined ? at : null, options.joined ? null : at, at)
+    }
+  }
+
+  function follow() {
+    return call<JoinView>(env, `/v1/join/${link}`, { method: 'POST', body: { device: 'Windows' } })
+  }
+
+  test('stops the link once that many are in it', async () => {
+    guests(200, { joined: true, at: Date.now() - 60 * 60 * 1000 })
+
+    const refused = await follow()
+    expect(refused.status).toBe(429)
+    expect(refused.json.error).toBe('that link is busy, try again in a minute')
+  })
+
+  test('does not count the ones who were told no, which used to shut it for good', async () => {
+    // Two hundred people knocked on this link a year ago and the owner said no to
+    // every one of them. The link is not spent; nobody is in the space.
+    guests(200, { joined: false, at: Date.now() - 60 * 60 * 1000 })
+
+    expect((await follow()).status).toBe(200)
+  })
+
+  test('still stops a burst of them in one minute', async () => {
+    guests(20, { joined: true })
+
+    expect((await follow()).status).toBe(429)
   })
 })

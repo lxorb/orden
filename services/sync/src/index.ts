@@ -5,14 +5,16 @@ import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { cleanName, NAME_LIMIT } from './crypto'
-import { guestMayReach, presentGuest, renameGuest } from './guests'
+import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
+import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
 import { settings } from './settings'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
+import { expireRequests } from './spaces/share'
 import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
@@ -192,9 +194,20 @@ app.all('*', async (context) => {
   return context.text('Not found', 404)
 })
 
-/** The daily job: what has waited its 14 days in Recently deleted goes. */
+/** The daily job: everything that has run out of time.
+ *
+ *  What has waited its 14 days in Recently deleted goes, and so does everything
+ *  else here that nothing else would ever take away - a guest nobody let in, a
+ *  request nobody answered, a client that registered and never came back. Each is
+ *  its own statement in its own module and none of them can fail another, which
+ *  is why they are four calls rather than one. */
 function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
-  context.waitUntil(purgeExpired(env, Date.now()))
+  const at = Date.now()
+
+  context.waitUntil(purgeExpired(env, at))
+  context.waitUntil(expireGuests(env, at))
+  context.waitUntil(expireRequests(env, at))
+  context.waitUntil(expireClients(env, at))
 }
 
 export default { fetch: app.fetch, scheduled }

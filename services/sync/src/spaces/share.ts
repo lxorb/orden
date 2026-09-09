@@ -33,6 +33,22 @@ export const EMAIL_LIMIT = 320
  *  still opens the space; only the link has stopped carrying it there. */
 const INVITE_TTL = 30 * 24 * 60 * 60 * 1000
 
+/** How long a request nobody answered waits. The same month an invitation's link
+ *  lasts, for the same reason: past that it is not something either side is still
+ *  thinking about, and the person can ask again in one press. */
+const WAITED_FOR = 30 * 24 * 60 * 60 * 1000
+
+/** Requests nobody answered, let go. Part of the nightly job, beside Recently
+ *  deleted; nothing else would ever take these away, and every one of them counts
+ *  against how many people may be waiting on the space. */
+export async function expireRequests(env: Env, at: number): Promise<number> {
+  const gone = await env.DB.prepare('delete from space_requests where created_at < ?')
+    .bind(at - WAITED_FOR)
+    .run()
+
+  return gone.meta.changes
+}
+
 type Mode = 'open' | 'approval'
 
 function isMode(value: unknown): value is Mode {

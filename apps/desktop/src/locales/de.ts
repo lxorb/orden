@@ -548,6 +548,8 @@ export const de: Dictionary = {
     'Zu viele Nachrichten von hier - versuch es später noch einmal',
   'too much mail today - try again tomorrow':
     'Heute schon zu viele Nachrichten - versuch es morgen',
+  'that many people are already waiting to be let in':
+    'So viele warten hier schon darauf, hereingelassen zu werden',
   'use 2–32 letters, numbers or hyphens': 'Nimm 2 bis 32 Buchstaben, Ziffern oder Bindestriche',
   'sync failed': 'Synchronisierung fehlgeschlagen',
   'could not publish': 'Veröffentlichen ging nicht',

@@ -232,3 +232,39 @@ export async function forgetEmptyGuest(env: Env, guestId: string): Promise<void>
     .bind(guestId, guestId)
     .run()
 }
+
+/** How long somebody a link never let in is kept waiting. */
+const WAITED_FOR = 30 * 24 * 60 * 60 * 1000
+
+/** Guests nobody let in, let go. Part of the nightly job, beside Recently
+ *  deleted; nothing else would ever take these away.
+ *
+ *  Two shapes of abandoned, and they are the same row. A request the owner never
+ *  answered and one they said no to both have no `joined_at`, and after a month
+ *  neither is news to anyone: the person went elsewhere, and the space is left
+ *  carrying a row that its ceiling counts. Then the guest itself, once nothing of
+ *  theirs is left to reach - which is the same thing `forgetEmptyGuest` says
+ *  after one membership ends, said here about the ones that ended some other way.
+ *  Its sessions go with it, by the schema.
+ *
+ *  A guest who is in a space is not abandoned however long ago they arrived: the
+ *  space is their way in and the owner is the one who ends it. */
+export async function expireGuests(env: Env, at: number): Promise<number> {
+  const cutoff = at - WAITED_FOR
+
+  const waiting = await env.DB.prepare(
+    'delete from guest_members where joined_at is null and created_at < ?',
+  )
+    .bind(cutoff)
+    .run()
+
+  const nobody = await env.DB.prepare(
+    `delete from guests
+      where created_at < ?
+        and not exists (select 1 from guest_members where guest_id = guests.id)`,
+  )
+    .bind(cutoff)
+    .run()
+
+  return waiting.meta.changes + nobody.meta.changes
+}
