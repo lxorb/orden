@@ -112,10 +112,13 @@ vi.mock('./i18n.svelte', () => ({
 // charge whichever test ran first for compiling it.
 import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
+import { accentFor } from './accents'
 import {
+  addressesIn,
   canShare,
   canWriteAt,
   isShared,
+  looksLikeAddress,
   originOfDocument,
   roleOf,
   share,
@@ -151,7 +154,54 @@ beforeEach(() => {
   share.who = null
   share.error = null
   share.email = ''
+  share.wrongAddress = false
   share.role = 'write'
+})
+
+describe('the addresses in the field', () => {
+  test('are separated by a comma, a semicolon or a space, in any mixture', () => {
+    expect(addressesIn('ada@example.com, bob@example.com')).toEqual([
+      'ada@example.com',
+      'bob@example.com',
+    ])
+    expect(addressesIn('ada@example.com; bob@example.com grace@example.com')).toEqual([
+      'ada@example.com',
+      'bob@example.com',
+      'grace@example.com',
+    ])
+    expect(addressesIn('   ')).toEqual([])
+  })
+
+  test('and each of them is looked at before anybody waits on the server', () => {
+    expect(looksLikeAddress('ada@example.com')).toBe(true)
+    expect(looksLikeAddress('ada@mail.example.co.uk')).toBe(true)
+    expect(looksLikeAddress('nonsense')).toBe(false)
+    expect(looksLikeAddress('ada@example')).toBe(false)
+    expect(looksLikeAddress('ada @example.com')).toBe(false)
+    expect(looksLikeAddress('@example.com')).toBe(false)
+  })
+})
+
+/** The square with somebody's initial in it. Derived rather than picked, because
+ *  two people looking at the same list have to see the same colours. */
+describe('the colour somebody wears in the list', () => {
+  test('is the same colour for the same person, every time', () => {
+    expect(accentFor('ada@example.com', 'dark')).toBe(accentFor('ada@example.com', 'dark'))
+    expect(accentFor('Ada@Example.com ', 'dark')).toBe(accentFor('ada@example.com', 'dark'))
+  })
+
+  test('and a different one for somebody else', () => {
+    expect(accentFor('ada@example.com', 'dark')).not.toBe(accentFor('bob@example.com', 'dark'))
+  })
+
+  /** Which colour is theirs, which shade of it is the reader's; see accents.ts. */
+  test('and the shade the scheme in front of the reader needs', () => {
+    expect(accentFor('ada@example.com', 'dark')).not.toBe(accentFor('ada@example.com', 'light'))
+  })
+
+  test('and something, for somebody with nothing to name them yet', () => {
+    expect(accentFor('', 'dark')).toMatch(/^#[0-9a-f]{6}$/)
+  })
 })
 
 describe('what may be done in a space', () => {
@@ -342,13 +392,68 @@ describe('the Share sheet', () => {
     expect(world.asked).toEqual([])
   })
 
-  test('keeps the address when the invitation was refused', async () => {
-    world.refuse = 'enter a valid email address'
+  /** Every address in the field, at the role beside it: a list pasted out of a
+   *  mail client is one press, not four. */
+  test('invites everybody in the field, in the order they were typed', async () => {
+    share.email = 'ada@example.com, bob@example.com grace@example.com'
+    share.role = 'read'
+    await share.invite()
+
+    expect(world.asked).toEqual([
+      'invite ada@example.com as read to space-1',
+      'invite bob@example.com as read to space-1',
+      'invite grace@example.com as read to space-1',
+    ])
+    expect(share.email).toBe('')
+  })
+
+  /** What has not gone in stays where it can be seen. Three invited and one
+   *  silently lost is the failure this is written against. */
+  test('keeps whatever has not gone in when one of them is refused', async () => {
+    share.email = 'ada@example.com, bob@example.com, grace@example.com'
+    world.refuse = 'that is as many people as one space holds'
+    await share.invite()
+
+    expect(world.asked).toEqual(['invite ada@example.com as write to space-1'])
+    expect(share.error).toBe('that is as many people as one space holds')
+    expect(share.email).toBe('ada@example.com, bob@example.com, grace@example.com')
+  })
+
+  /** An at sign is not something to wait on a round trip for. */
+  test('says so about something that is not an address, and asks nothing', async () => {
     share.email = 'nonsense'
     await share.invite()
 
-    expect(share.error).toBe('enter a valid email address')
+    expect(world.asked).toEqual([])
+    expect(share.wrongAddress).toBe(true)
+    expect(share.error).toBeNull()
     expect(share.email).toBe('nonsense')
+  })
+
+  test('and refuses the whole field when one address in it is not one', async () => {
+    share.email = 'ada@example.com, nonsense'
+    await share.invite()
+
+    expect(world.asked).toEqual([])
+    expect(share.wrongAddress).toBe(true)
+    expect(share.email).toBe('ada@example.com, nonsense')
+  })
+
+  test('keeps the address when the server refused it', async () => {
+    world.refuse = 'enter a valid email address'
+    share.email = 'ada@example.com'
+    await share.invite()
+
+    expect(share.error).toBe('enter a valid email address')
+    expect(share.email).toBe('ada@example.com')
+  })
+
+  /** The same route the first invitation took, which mints a fresh link and
+   *  writes a fresh mail; see services/sync/src/spaces/share.ts. */
+  test('sends the invitation again to somebody who has not opened it', async () => {
+    await share.resend({ ...member('ada@example.com', 'read'), pending: true })
+
+    expect(world.asked).toEqual(['invite ada@example.com as read to space-1'])
   })
 
   test('changes one person’s role and takes another out', async () => {
@@ -381,6 +486,14 @@ describe('the Share sheet', () => {
     await share.revoke()
 
     expect(world.asked).toEqual(['link read approval', 'link write open', 'revoke'])
+  })
+
+  /** A new address for the space and the old one dead, under one press: the sheet
+   *  never shows the moment in between where there is no link at all. */
+  test('resets the link by revoking it and making another like it', async () => {
+    await share.reset('write', 'open')
+
+    expect(world.asked).toEqual(['revoke', 'link write open'])
   })
 
   test('accepts and declines the people waiting', async () => {

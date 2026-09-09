@@ -38,6 +38,24 @@ export function accentColour(id: string, scheme: 'dark' | 'light'): string {
   return accentById(id)[scheme]
 }
 
+/** The colour somebody wears where people are listed: the square with their
+ *  initial in it in the Share sheet.
+ *
+ *  Derived from whatever names them rather than picked, which is the opposite of
+ *  how a device chooses the colour of its caret (see rooms/who.ts). Two of one
+ *  person's own machines have to end up different, so those are random and kept;
+ *  two people looking at the same list have to agree, so this is a function of
+ *  the name and nothing else - the same person is the same colour on every device,
+ *  after every reload, without anybody having to store a thing. */
+export function accentFor(name: string, scheme: 'dark' | 'light'): string {
+  let sum = 0
+  for (const character of name.trim().toLowerCase()) {
+    sum = (sum + (character.codePointAt(0) ?? 0)) % 4093
+  }
+
+  return accentColour(ACCENTS[sum % ACCENTS.length]?.id ?? DEFAULT_ACCENT, scheme)
+}
+
 /** `#rrggbb` to its three channels. */
 function channels(hex: string): [number, number, number] {
   const value = hex.replace('#', '')

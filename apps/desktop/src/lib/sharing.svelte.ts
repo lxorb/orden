@@ -99,6 +99,25 @@ interface Someone {
   guest: string | null
 }
 
+/** The addresses in what was typed into the field.
+ *
+ *  Commas, semicolons and spaces all separate, because a list copied out of a
+ *  mail client arrives written in any of the three, and inviting four people
+ *  should not be four separate presses. */
+export function addressesIn(typed: string): string[] {
+  return typed
+    .split(/[,;\s]+/)
+    .map((one) => one.trim())
+    .filter(Boolean)
+}
+
+/** Whether something typed could be an address at all. The server decides for
+ *  real - it is the one that knows what it will accept - but a round trip to be
+ *  told about a missing at sign is a round trip nobody should wait for. */
+export function looksLikeAddress(one: string): boolean {
+  return /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(one)
+}
+
 class Share {
   open = $state(false)
   /** The folder the sheet is about, and the space on the account behind it. */
@@ -120,9 +139,14 @@ class Share {
 
   error = $state<string | null>(null)
 
-  /** The address being typed into the invite field, and the role beside it. */
+  /** The addresses being typed into the invite field, and the role beside it. */
   email = $state('')
   role = $state<GivenRole>('write')
+
+  /** Something in the field is not an address. Said under the field rather than
+   *  at the top of the sheet: it is about what was typed, and nothing was asked
+   *  of the server. */
+  wrongAddress = $state(false)
 
   /** Whether anything at all is in flight. What every control that is not the
    *  one being pressed reads. */
@@ -145,6 +169,7 @@ class Share {
     this.who = null
     this.error = null
     this.email = ''
+    this.wrongAddress = false
     this.role = 'write'
     this.open = true
 
@@ -155,13 +180,40 @@ class Share {
     this.open = false
   }
 
+  /** Everybody in the field, at the role beside it.
+   *
+   *  Whatever has not gone in yet stays in the field, so a list of four with a
+   *  refusal in the middle leaves the refused address and the ones after it where
+   *  they can be seen and dealt with, rather than three people invited and one
+   *  silently lost. */
   async invite() {
-    const address = this.email.trim()
-    if (!address) return
+    const addresses = addressesIn(this.email)
+    if (!addresses.length) return
 
-    if (await this.change((token, id) => api.invite(token, id, address, this.role), 'invite')) {
-      this.email = ''
+    this.wrongAddress = addresses.some((one) => !looksLikeAddress(one))
+    if (this.wrongAddress) return
+
+    const left = [...addresses]
+    while (left.length) {
+      const address = left[0] ?? ''
+      if (
+        !(await this.change((token, id) => api.invite(token, id, address, this.role), 'invite'))
+      ) {
+        break
+      }
+
+      left.shift()
+      this.email = left.join(', ')
     }
+  }
+
+  /** The invitation again, to somebody who has not opened it. The same route the
+   *  first one took, which mints a fresh link and writes a fresh mail. */
+  resend(person: Someone & { role: GivenRole }) {
+    return this.change(
+      (token, id) => api.invite(token, id, person.email ?? '', person.role),
+      whoIs(person),
+    )
   }
 
   /** The four things the owner can do to somebody, each of which reaches one of
@@ -197,6 +249,17 @@ class Share {
 
   revoke() {
     return this.change((token, id) => api.revokeShareLink(token, id), 'link')
+  }
+
+  /** A new link in place of the one there is: the old address stops opening
+   *  anything and the space is reachable at a new one. Both halves under one
+   *  press, so the sheet never shows the moment in between where the space has no
+   *  link at all. */
+  reset(role: GivenRole, mode: 'open' | 'approval') {
+    return this.change(async (token, id) => {
+      await api.revokeShareLink(token, id)
+      return api.setShareLink(token, id, role, mode)
+    }, 'link')
   }
 
   accept(person: Someone) {
