@@ -469,6 +469,16 @@ export function preferences(view?: EditorView): Pane[] {
               get: () => theme.shown,
               set: (value) => theme.setScheme(asChoice(value)),
             },
+            {
+              // Beside the mode and not among the themes, because it is the same
+              // kind of question: the theme is the look, and these two are how
+              // the room is lit. It starts on for somebody whose system asks for
+              // it; see contrast in theme.svelte.ts.
+              kind: 'switch',
+              label: t('More contrast'),
+              get: () => theme.contrast,
+              set: (value) => theme.setContrast(value),
+            },
           ],
         },
       ],

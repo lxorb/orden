@@ -19,18 +19,23 @@ export interface CodePalette {
   property: string
 }
 
-/** Reads the app theme's own tokens, so this one changes with the app. */
+/** Reads the app theme's own tokens, so this one changes with the app.
+ *
+ *  The four the palette has no name for are named here instead, with the colour
+ *  they have always been as the answer when nothing states one. That is what lets
+ *  the contrast switch reach them: it states all four, and everything else here
+ *  already follows tokens it states. See contrast.css in @nib/themes. */
 const FOLLOW: CodePalette = {
   id: 'follow',
   name: 'Follow the theme',
   keyword: 'var(--accent)',
   string: 'var(--success)',
-  number: '#e0a233',
+  number: 'var(--code-number, #e0a233)',
   comment: 'var(--muted)',
-  function: '#4a8df6',
-  type: '#3fcf8e',
+  function: 'var(--code-function, #4a8df6)',
+  type: 'var(--code-type, #3fcf8e)',
   punctuation: 'var(--muted-strong)',
-  property: '#7c6bf5',
+  property: 'var(--code-property, #7c6bf5)',
 }
 
 export const CODE_PALETTES: CodePalette[] = [

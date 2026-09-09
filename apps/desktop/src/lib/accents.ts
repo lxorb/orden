@@ -60,17 +60,30 @@ function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
   )
 }
 
-/** Every token that depends on the accent, so one choice restyles the app. */
-export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<string, string> {
-  const base = accentById(id)[scheme]
+/** Every token that depends on the accent, so one choice restyles the app.
+ *
+ *  With more contrast asked for, the colour moves further from the page rather
+ *  than being replaced: it is still the colour they picked, at a strength they
+ *  can read it at. Everything drawn from it is stronger with it - a selection has
+ *  to be seen through, but it has to be seen. */
+export function accentTokens(
+  id: string,
+  scheme: 'dark' | 'light',
+  contrast = false,
+): Record<string, string> {
+  const away = scheme === 'dark' ? 'light' : 'dark'
+  const base = contrast ? shift(accentById(id)[scheme], away, 0.32) : accentById(id)[scheme]
   const [r, g, b] = channels(base)
+  const soft = scheme === 'dark' ? 0.15 : 0.1
+  const line = scheme === 'dark' ? 0.42 : 0.38
+  const chosen = scheme === 'dark' ? 0.28 : 0.18
 
   return {
     '--accent': base,
     // Hover moves away from the background, whichever way that is.
-    '--accent-hover': shift(base, scheme === 'dark' ? 'light' : 'dark'),
-    '--accent-soft': `rgb(${r} ${g} ${b} / ${scheme === 'dark' ? 0.15 : 0.1})`,
-    '--accent-line': `rgb(${r} ${g} ${b} / ${scheme === 'dark' ? 0.42 : 0.38})`,
-    '--selection': `rgb(${r} ${g} ${b} / ${scheme === 'dark' ? 0.28 : 0.18})`,
+    '--accent-hover': shift(base, away),
+    '--accent-soft': `rgb(${r} ${g} ${b} / ${contrast ? soft + 0.1 : soft})`,
+    '--accent-line': `rgb(${r} ${g} ${b} / ${contrast ? 0.75 : line})`,
+    '--selection': `rgb(${r} ${g} ${b} / ${contrast ? chosen + 0.14 : chosen})`,
   }
 }

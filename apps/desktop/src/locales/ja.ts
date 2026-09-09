@@ -271,6 +271,7 @@ export const ja: Dictionary = {
   Pink: 'ピンク',
   Slate: 'スレート',
   Appearance: '外観',
+  'More contrast': 'コントラストを強く',
   Glasses: 'グラス',
   'New page at': '改ページの基準',
   H1: 'H1',

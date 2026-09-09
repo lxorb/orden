@@ -273,6 +273,7 @@ export const gsw: Dictionary = {
   Pink: 'Rosa',
   Slate: 'Schiefer',
   Appearance: 'Uussehe',
+  'More contrast': 'Mee Kontrascht',
   Glasses: 'Brülle',
   'New page at': 'Nöii Siite bi',
   H1: 'H1',

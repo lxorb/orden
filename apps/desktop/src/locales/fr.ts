@@ -271,6 +271,7 @@ export const fr: Dictionary = {
   Pink: 'Rose',
   Slate: 'Ardoise',
   Appearance: 'Apparence',
+  'More contrast': 'Plus de contraste',
   Glasses: 'Lunettes',
   'New page at': 'Nouvelle page à',
   H1: 'H1',

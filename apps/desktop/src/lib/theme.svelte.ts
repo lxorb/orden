@@ -57,6 +57,9 @@ const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
 const ACCENT_KEY = 'nib:accent'
+/** Whether more contrast was asked for. Absent means nobody has said, which
+ *  follows what the system asks for; see `contrast`. */
+const CONTRAST_KEY = 'nib:contrast'
 
 /** The one built-in theme: the app's own tokens, which state both schemes.
  *
@@ -73,6 +76,7 @@ const DEFAULT_THEME: ThemeInfo = {
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
+const MORE = '(prefers-contrast: more)'
 
 /** The line the store writes on the front of a theme it installs. Taken off
  *  before the file is read for what it sets: what it says is a name, not CSS. */
@@ -110,6 +114,10 @@ class Themes {
   files = $state<ThemeInfo[]>([])
   /** What the system currently prefers. */
   private preferred = $state<Scheme>('dark')
+  /** Whether the reader asked for more contrast, or has never said. */
+  private asked = $state<boolean | null>(null)
+  /** Whether the system asks for it, which is what "never said" means. */
+  private demanded = $state(false)
 
   readonly accents = ACCENTS
 
@@ -122,6 +130,17 @@ class Themes {
 
   /** The scheme that was asked for, by name or through the system. */
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
+
+  /** Whether the app is drawn with more contrast than the theme's own.
+   *
+   *  A switch beside the scheme rather than a theme of its own, for the reason
+   *  the scheme is a switch: a reader who needs the page easier to see should not
+   *  have to give up the theme they chose to get it. What it changes is the
+   *  palette, over whichever theme is in force; see contrast.css in @nib/themes.
+   *
+   *  Somebody who has turned contrast up in Windows or macOS gets it without
+   *  asking here as well, and the switch is theirs to turn off again. */
+  readonly contrast = $derived(this.asked ?? this.demanded)
 
   /** The scheme the app is actually in: the one asked for, or the one the theme
    *  in force has where it does not have that one. A theme with a single scheme
@@ -147,7 +166,16 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
+    const more = window.matchMedia(MORE)
+    this.demanded = more.matches
+    more.addEventListener('change', (event) => {
+      this.demanded = event.matches
+      if (this.asked === null) this.apply()
+    })
+
     this.restoreChoice()
+    const contrast = localStorage.getItem(CONTRAST_KEY)
+    this.asked = contrast === 'on' ? true : contrast === 'off' ? false : null
     this.accent = localStorage.getItem(ACCENT_KEY) ?? DEFAULT_ACCENT
     this.apply()
     void this.reload()
@@ -312,6 +340,15 @@ class Themes {
     this.setScheme(this.current === 'dark' ? 'light' : 'dark')
   }
 
+  /** More contrast, or the theme's own. Written down either way: a reader who
+   *  turns it off is saying so, and that has to outlast the system saying
+   *  otherwise. */
+  setContrast(on: boolean) {
+    this.asked = on
+    localStorage.setItem(CONTRAST_KEY, on ? 'on' : 'off')
+    this.apply()
+  }
+
   setAccent(id: string) {
     this.accent = id
     localStorage.setItem(ACCENT_KEY, id)
@@ -332,7 +369,7 @@ class Themes {
    *  rather than left with yesterday's colour written over it. */
   private paintAccent() {
     const style = document.documentElement.style
-    const tokens = accentTokens(this.accent, this.current)
+    const tokens = accentTokens(this.accent, this.current, this.contrast)
 
     for (const token of Object.keys(tokens)) style.removeProperty(token)
     if (this.accentIsTheme) return
@@ -354,6 +391,10 @@ class Themes {
     // The scheme decides the tokens, whichever theme sits on top of them: the
     // built-in states both, and a theme file only overrides what it cares about.
     document.documentElement.dataset.theme = this.current
+    // The attribute is there or it is not: an empty one would still be there as
+    // far as `[data-contrast]` is concerned.
+    if (this.contrast) document.documentElement.dataset.contrast = 'more'
+    else delete document.documentElement.dataset.contrast
     this.paintAccent()
     this.paintSystemBars()
 
