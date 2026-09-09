@@ -29,6 +29,7 @@
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
   import { type Field, preferences, resetPane, resettable } from './preferences'
+  import { glassesKey } from './even/key.svelte'
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
   import { readableSize, usage } from './usage.svelte'
@@ -41,6 +42,10 @@
   /** Which models the account's own key may choose, asked of the API. Built here
    *  rather than in `preferences.ts` because the list arrives after the pane does. */
   const offered = new Offered()
+
+  /** Whether the key field is open over a key that is already set. There is no
+   *  editing a key nothing can read, so replacing one is typing a whole new one. */
+  let replacingKey = $state(false)
 
   const GROUPS = $derived(sectionGroups())
 
@@ -943,22 +948,44 @@
 <!-- The key, the model and how hard it thinks. Written out rather than declared
      with the rows above it because a key is a text field and the settings
      vocabulary has none: it has a switch, a slider and a select, which is three
-     more than most panes need and one fewer than this one does. -->
+     more than most panes need and one fewer than this one does.
+
+     The key is written and never read back, so the field has two faces. With no
+     key it is a field to paste one into. With a key it is a sentence saying which
+     key it is - "set, ends in ...4f2a" - and two buttons, because those are the
+     only two things anybody can do to a key they cannot see. Replace puts the
+     field back; there is no editing four characters into a key. -->
 {#snippet glassesExtras()}
   <h3>{t('Questions')}</h3>
   <div class="card">
-    <label class="setting">
-      <span class="name">{t('OpenAI key')}</span>
-      <input
-        class="inline"
-        type="password"
-        value={modes.glassesKey}
-        placeholder="sk-"
-        spellcheck="false"
-        autocomplete="off"
-        onchange={(event) => offered.take(event.currentTarget.value)}
-      />
-    </label>
+    {#if glassesKey.set && !replacingKey}
+      <div class="setting">
+        <span class="name">{t('OpenAI key')}</span>
+        <div class="row">
+          <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
+          <button class="action" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
+          <button class="action danger" onclick={() => void offered.remove()}>{t('Remove')}</button>
+        </div>
+      </div>
+    {:else}
+      <!-- svelte-ignore a11y_autofocus -->
+      <label class="setting">
+        <span class="name">{t('OpenAI key')}</span>
+        <input
+          class="inline"
+          type="password"
+          value=""
+          placeholder="sk-"
+          spellcheck="false"
+          autocomplete="off"
+          autofocus={replacingKey}
+          onchange={(event) => {
+            replacingKey = false
+            void offered.take(event.currentTarget.value)
+          }}
+        />
+      </label>
+    {/if}
 
     {#if offered.models.length}
       <div class="setting">
@@ -989,9 +1016,11 @@
   </div>
 
   <!-- Said in one line, because it is the one thing somebody typing a key here
-       wants to know. -->
+       wants to know: where it goes, and that it does not come back. -->
   <p class="hint caption">
-    {#if offered.said}{offered.said}{:else}{t('Asked from your glasses, never through Nib.')}{/if}
+    {#if offered.said}{offered.said}{:else}{t(
+        'Kept encrypted on your account, and never shown again.',
+      )}{/if}
   </p>
 {/snippet}
 

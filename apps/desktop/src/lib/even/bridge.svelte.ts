@@ -18,15 +18,14 @@
  *  imports it. */
 
 import { BODY_INNER, BODY_ROWS, GUTTER, type Page } from '@nib/glasses'
-import { askAbout, type Found, TRANSCRIBERS, transcribeWith } from './ask'
+import { account } from '../account.svelte'
+import { api } from '../api'
 import { bestOf, type Command, commandIn } from './commands'
 import { fileMark } from '../file-mark'
 import { t } from '../i18n.svelte'
+import { glassesKey } from './key.svelte'
 import { modes } from '../modes.svelte'
 import { Panel } from './screen'
-import { parseQuery } from '../search/query'
-import { fuzzyTerms } from '../search/fuzzy'
-import { searchSpace } from '../search/space'
 import { connectGlasses, type Glasses, type Input } from './sdk'
 import { type OpenNote, Session } from './session'
 import { type Row, Shell, type Wish, type Words, type World } from './shell'
@@ -64,9 +63,6 @@ const FLASH = 1400
  *  this window is that scroll coming back, and acting on it is the two ends of the
  *  binding chasing each other round the note. */
 const STEERING = 500
-
-/** How many notes a search hands the model at once. */
-const HITS = 20
 
 /** Whether a folder in a list can be shut. `null` when every one of them is open
  *  and no tap could change that, which is the sidebar. */
@@ -218,7 +214,7 @@ class Bridge {
     this.shell = new Shell(this.world(), this.words(), this.session)
     this.voice = new Voice({
       microphone: (open) => glasses.microphone(open),
-      transcribe: modes.glassesKey ? (wav) => this.transcribe(wav) : null,
+      transcribe: glassesKey.set ? (wav) => this.transcribe(wav) : null,
       heard: (heard) => this.heard(heard.said, heard.ended),
       failed: (said) => this.flash(said),
     })
@@ -521,14 +517,20 @@ class Bridge {
     this.draw()
   }
 
-  /** One utterance, as words. Only reached where the WebView has no recogniser. */
+  /** One utterance, as words. Only reached where the WebView has no recogniser of
+   *  its own, which is the phone doing this for nothing where it can. Through Nib,
+   *  for the same reason a question goes through it: the key is there. */
   private async transcribe(wav: Uint8Array<ArrayBuffer>): Promise<string | null> {
-    for (const model of TRANSCRIBERS) {
-      const said = await transcribeWith(wav, modes.glassesKey, model)
-      if (said !== null) return said
-    }
+    const token = account.accountToken
+    if (!token) return null
 
-    return null
+    try {
+      return (await api.askHeard(token, wav)).said
+    } catch {
+      // A phone with no signal, an account over its ceiling: nothing was heard,
+      // which is what the voice does something sensible with.
+      return null
+    }
   }
 
   /** Something was said. What it means, and how long it took to mean it.
@@ -628,7 +630,12 @@ class Bridge {
     }
   }
 
-  /** A question, asked of the model and answered on the glasses. */
+  /** A question, asked of the model and answered on the glasses.
+   *
+   *  The plugin sends the question, the model and the effort, and nothing else: no
+   *  key, and none of the notes. Nib runs the model call and the two note tools
+   *  against the account's own notes, because the key is written and never read
+   *  back and Nib is the only thing that can open it. See services/sync/src/ask. */
   private async ask(question: string): Promise<void> {
     const shell = this.shell
     if (!shell) return
@@ -637,56 +644,20 @@ class Bridge {
     this.answer = ''
     this.act(shell.asking(question))
 
+    const token = account.accountToken
+    if (!token) {
+      this.act(shell.answered(question, t('Sign in to ask a question.')))
+      return
+    }
+
     try {
-      const answer = await askAbout(question, {
-        key: modes.glassesKey,
-        model: modes.glassesModel,
-        effort: modes.glassesEffort,
-        notes: {
-          search: (query) => this.searchNotes(query),
-          read: (name) => this.readNote(name),
-        },
-      })
+      const { answer } = await api.ask(token, question, modes.glassesModel, modes.glassesEffort)
       this.answer = answer
       this.act(shell.answered(question, answer))
     } catch (error) {
       this.answer = ''
       this.act(shell.answered(question, why(error)))
     }
-  }
-
-  /** Every note in the account whose words match, across every space.
-   *
-   *  Every space, because a question is about what the person knows rather than
-   *  about which folder they happen to have open. The app's own search does one
-   *  space at a time, so this asks each of them. */
-  private async searchNotes(query: string): Promise<Found[]> {
-    const parsed = parseQuery(query)
-    const terms = fuzzyTerms(parsed)
-    const out: Found[] = []
-
-    for (const space of workspace.spaces) {
-      if (out.length >= HITS) break
-
-      await searchSpace(space.root, parsed, terms, HITS, ({ hits }) => {
-        for (const hit of hits) {
-          out.push({ note: hit.name.replace(/\.md$/i, ''), line: hit.line, text: hit.text })
-        }
-      })
-    }
-
-    return out.slice(0, HITS)
-  }
-
-  /** One note by name, out of any space the account has. */
-  private async readNote(name: string): Promise<string | null> {
-    const wanted = name.replace(/\.md$/i, '').toLowerCase()
-    const found = workspace.notes.find(
-      (one) => one.name.replace(/\.md$/i, '').toLowerCase() === wanted,
-    )
-    if (!found) return null
-
-    return workspace.noteText(found.path)
   }
 
   /** The page the glasses are on, for the frame the plugin draws. Null when there

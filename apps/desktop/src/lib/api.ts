@@ -190,11 +190,6 @@ export interface AccountSettings {
   glassesPageNumber?: boolean
   /** Whether the glasses' microphone listens for spoken commands. */
   glassesVoice?: boolean
-  /** The account's own OpenAI key, for a question asked out loud.
-   *
-   *  It is on the account so that it reaches the phone, and it goes from the phone
-   *  to api.openai.com and nowhere else. Nothing of ours ever reads it. */
-  glassesKey?: string
   /** Which model answers, out of the families the API itself listed. */
   glassesModel?: string
   /** How hard it is asked to think, from the API's own list of efforts. */
@@ -217,6 +212,18 @@ export interface AccountSettings {
    *  recovery.ts. */
   recoveryEvery?: number
   recoveryDays?: number
+}
+
+/** What any read can say about the account's OpenAI key.
+ *
+ *  Whether there is one, and its last four characters. Never the key: it is stored
+ *  encrypted and no route hands it back. Emil's rule, in his words - "it stays in
+ *  the account, but after you set it you can't read it anymore." Setting it is
+ *  `PUT /v1/ask/key`, and a second write replaces the first. */
+export interface KeyState {
+  set: boolean
+  /** The last four characters, or empty when no key is set. */
+  tail: string
 }
 
 export interface DnsRecord {
@@ -312,9 +319,49 @@ export const api = {
 
   usage: (token: string) => request<{ used: number; limit: number }>('/v1/usage', { token }),
 
-  settings: (token: string) => request<{ settings: AccountSettings }>('/v1/settings', { token }),
+  /** Everything the account has chosen, and whether it has an OpenAI key. The key
+   *  is beside the settings rather than in them because it is the one thing here
+   *  that can be written and never read. */
+  settings: (token: string) =>
+    request<{ settings: AccountSettings; key: KeyState }>('/v1/settings', { token }),
   saveSettings: (token: string, patch: AccountSettings) =>
     request<{ settings: AccountSettings }>('/v1/settings', { method: 'PATCH', token, body: patch }),
+
+  /* The glasses' question flow. All four run on the Worker, because the key does:
+     the plugin holds no key and reaches no origin but this one. See docs/even.md. */
+
+  /** Sets the key, or replaces the one that is there. */
+  setAskKey: (token: string, key: string) =>
+    request<KeyState>('/v1/ask/key', { method: 'PUT', token, body: { key } }),
+
+  removeAskKey: (token: string) => request<KeyState>('/v1/ask/key', { method: 'DELETE', token }),
+
+  /** Which models this account's key may choose. Empty when there is no key, when
+   *  the key is wrong, or when OpenAI could not be reached. */
+  askModels: (token: string) => request<{ models: string[] }>('/v1/ask/models', { token }),
+
+  /** A question, answered out of the account's own notes. */
+  ask: (token: string, question: string, model: string, effort: string) =>
+    request<{ answer: string }>('/v1/ask', { token, body: { question, model, effort } }),
+
+  /** One utterance, as words. Null when nothing was heard. Sent as the bytes it is,
+   *  which is why it is here rather than through `request`. */
+  askHeard: async (token: string, wav: Uint8Array<ArrayBuffer>) => {
+    const response = await fetch(`${BASE}/v1/ask/heard`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/wav' },
+      body: wav,
+    })
+
+    const body = parsed(await response.text())
+
+    if (!response.ok) {
+      const said = isRecord(body) && isString(body.error) ? body.error : null
+      throw new ApiError(response.status, said ?? 'could not be heard')
+    }
+
+    return body as { said: string | null }
+  },
 
   /** Named by its own hash, so a repeat costs one request and no storage. */
   putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {

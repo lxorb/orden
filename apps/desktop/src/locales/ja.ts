@@ -259,7 +259,14 @@ export const ja: Dictionary = {
   'OpenAI key': 'OpenAI キー',
   Model: 'モデル',
   Reasoning: '推論',
-  'Asked from your glasses, never through Nib.': 'グラスから直接送られ、Nib を経由しません。',
+  'Kept encrypted on your account, and never shown again.':
+    'アカウントに暗号化して保存され、二度と表示されません。',
+  'set, ends in …{tail}': '設定済み、末尾は …{tail}',
+  'Saving the key': 'キーを保存しています',
+  'this server cannot keep a key yet': 'このサーバーはまだキーを保管できません',
+  'that does not look like a key': 'キーの形式ではないようです',
+  'that key could not be saved': 'キーを保存できませんでした',
+  'Sign in to ask a question.': '質問するにはサインインしてください。',
   'Asking OpenAI which models this key can use':
     'このキーで使えるモデルを OpenAI に問い合わせています',
   'Could not reach OpenAI': 'OpenAI に接続できません',

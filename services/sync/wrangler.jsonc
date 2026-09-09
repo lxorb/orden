@@ -71,6 +71,15 @@
   // certificate (blog.emilvinu.ch is set up this way). The status endpoint
   // cannot see such a route and reports the domain as unconfigured or
   // pending even while it serves; that is a known blind spot, not a fault.
+  // The account's OpenAI key is stored encrypted, under a key derived from a
+  // secret that lives here and nowhere in this repository. Set it once, with
+  // anything long and random:
+  //   wrangler secret put OPENAI_KEY_SECRET
+  // Without it the Worker refuses to store a key rather than storing one in the
+  // clear, and the settings pane says the server cannot keep one yet. Changing it
+  // makes every key already stored unreadable, and every reader has to paste
+  // theirs again; there is no way to read one out and re-encrypt it, which is the
+  // point. See src/ask/key.ts and docs/even.md.
   "vars": {
     "BLOG_ROOT": "nibeditor.com",
     "BLOG_CNAME_TARGET": "cname.nibeditor.com",

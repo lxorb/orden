@@ -93,7 +93,9 @@ export const TOOLS = [
   },
 ]
 
-interface Space {
+/** One space the caller can reach. Exported because the glasses' own two tools
+ *  reach the same spaces through the same query; see ask/notes.ts. */
+export interface Space {
   id: string
   name: string
   /** What the account may do here. A space somebody shared read-only is listed,
@@ -116,7 +118,7 @@ function text(args: Record<string, unknown>, name: string): string | undefined |
 /** Every space the account can reach: its own, and the ones somebody shared
  *  with it. The membership is joined on the address, which is how it is joined
  *  everywhere else; see spaces/space.ts. */
-async function spacesFor(env: Env, userId: string): Promise<Space[]> {
+export async function spacesFor(env: Env, userId: string): Promise<Space[]> {
   const { results } = await env.DB.prepare(
     `select sp.id, sp.name, sp.user_id,
         case when sp.user_id = ?1 then 'owner' else m.role end as role
@@ -142,7 +144,7 @@ async function findSpace(env: Env, userId: string, wanted: string): Promise<Spac
   return all.find((space) => space.id === wanted || space.name.toLowerCase() === needle) ?? null
 }
 
-async function noteBody(env: Env, spaceId: string, noteId: string): Promise<string> {
+export async function noteBody(env: Env, spaceId: string, noteId: string): Promise<string> {
   const object = await env.NOTES.get(noteKey(spaceId, noteId))
   return object ? object.text() : ''
 }

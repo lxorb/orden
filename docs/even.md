@@ -78,13 +78,15 @@ plugin asks for `network` and for **both** microphones, because it listens throu
 both; see section 5. A test in `even/manifest.test.ts` now holds the manifest to
 every rule on this page, because all of them are silent until a release.
 
-Our `network` whitelist is `https://nibeditor.com` and `https://api.openai.com`:
-one entry per full origin, no wildcards, no bare hostnames. The second is where a
-spoken question goes, with the account's own key and nothing of ours in the middle;
-without it on this list the phone app blocks the request before it leaves the
-WebView. The phone app blocks any request to a host that
-is not on it before the request leaves the WebView, and CORS still applies on top
-of that. See "What still has to be decided" below.
+Our `network` whitelist is **one origin**, `https://nibeditor.com`: one entry per
+full origin, no wildcards, no bare hostnames. The phone app blocks any request to a
+host that is not on it before the request leaves the WebView, and CORS still
+applies on top of that.
+
+`https://api.openai.com` was the second entry until the key became write-only. The
+plugin has no key to send now, so it makes no request to OpenAI, so the origin comes
+off - and the permission's description, "sign in and keep your notes in step with
+your Nib account", is the whole truth again. See section 5.
 
 ### The display
 
@@ -506,9 +508,9 @@ said landed in it rather than by being right.
 
 The word "question" turns everything after it into a prompt.
 
-- The request is made **from the plugin**, with the account's own key, to
-  `api.openai.com` and nowhere else. Not through Nib's own Worker, not through
-  anything of ours.
+- The request is made **by the Worker**, with the account's own key, which nothing
+  else can read. The plugin sends the question, the model and the effort, and
+  nothing else at all.
 - **Nothing is stuffed into the context.** The model gets two tools and no notes at
   all: `search_notes` to find something and `read_note` to read it. A question
   about one note costs one note.
@@ -518,13 +520,95 @@ The word "question" turns everything after it into a prompt.
 - The answer opens a screen of its own and scrolls a line at a time. A double tap
   or "close" goes back.
 
-The model, the reasoning effort and the key live in the account's settings, and the
-model list is asked of the API's own models endpoint rather than written down:
-names change every few months and a list here would be a list of models that used
-to exist. It is narrowed to the four families worth putting in front of somebody,
-which on 2026-09-09 the endpoint answered as `gpt-6-astra`, `gpt-5.6-sol`,
-`gpt-5.6-luna` and `gpt-5.6-terra`. The reasoning efforts are the API's own, read
-off the error it answers an invalid one with.
+### The key, which is written and never read back
+
+Emil's rule, in his words: *"it stays in the account, but after you set it you can't
+read it anymore."*
+
+It used to be a setting like any other - `glassesKey`, a plaintext OpenAI key in the
+account's settings blob, handed back by every settings read, taken by the plugin and
+sent from the phone to `api.openai.com`. That put a live credential in a column, in
+a WebView, and in the answer to a request. It is now on the user's row, encrypted,
+and the only thing that ever opens it is the Worker route that spends it.
+
+**How it is stored.** AES-GCM under a key derived with HKDF from
+`OPENAI_KEY_SECRET`, a Worker secret that is in no file here. The account's id is
+the derivation's `info` **and** the cipher's additional data, so a ciphertext copied
+onto another row does not decrypt: moving the column is not a way to borrow somebody
+else's key. The nonce is fresh every write, so two accounts with the same key do not
+have the same bytes. What is stored is versioned, because a scheme is a thing that
+gets replaced.
+
+**No secret, no storing.** A Worker with no `OPENAI_KEY_SECRET` refuses the write
+and says so. The one thing worse than no key is a key somebody believes is
+encrypted and is not.
+
+**What a read answers.** Two facts: whether a key is set, and its last four
+characters. They come back with the settings, from a `openai_key_tail` column kept
+in the clear on purpose - a read decrypts nothing, works when the secret is absent,
+and four characters say which key it is to the person who made it and nothing to
+anybody else. There is no route that answers with the key, and `keyFor` is not
+exported past the `ask` folder.
+
+**Changing it** is writing a new one; there is no editing four characters into a
+key. **Taking it away** clears both columns.
+
+The routes, all behind the session guard:
+
+| Route | What it does |
+| --- | --- |
+| `PUT /v1/ask/key` | sets or replaces it; answers `{ set, tail }` |
+| `DELETE /v1/ask/key` | takes it away |
+| `GET /v1/ask/models` | which models this key may choose, kept for a day |
+| `POST /v1/ask` | a question, answered out of the account's own notes |
+| `POST /v1/ask/heard` | a WAV, as words, where the WebView has no recogniser |
+
+**A guest cannot ask**, and that is not a check in any of them: the session guard
+opens only what `guestMayReach` names, everything account-wide is left out of that
+list, and a key and a set of notes are as account-wide as it gets. A guest is
+answered 403 and never reaches the file.
+
+**The tools run on the Worker now**, against what the account actually holds in R2
+rather than against what one phone has synced down - through the same query the
+connector uses, so a space somebody shared is in scope and nobody else's note ever
+is. That is the better half of the trade: a note written on a laptop a minute ago is
+in the answer.
+
+**The ceilings** are in `limits.ts` with the mail ones: sixty questions and six
+hundred utterances an hour, per account. Not about Nib's reputation like the mail
+ones - about a bug, or a phone in a pocket, not being able to run through a month of
+somebody's OpenAI credit in an afternoon.
+
+**Setting the secret**, once, before the deploy:
+
+```
+wrangler secret put OPENAI_KEY_SECRET
+```
+
+Anything long and random. Changing it later makes every key already stored
+unreadable and every reader pastes theirs again; there is no way to read one out and
+re-encrypt it, which is the point.
+
+**Migration 0022** adds the two columns, adds the `cached` table the model list
+lives in, and **removes any plaintext `glassesKey` an older build had written** -
+dropped rather than carried over, because it cannot be encrypted from inside a
+migration and a key that is about to be unreadable is better gone than left lying in
+a column. The pane says "not set" and the reader pastes it once more.
+
+In Settings the field has two faces. With no key it is a field to paste one into;
+with a key it is the sentence *set, ends in …4f2a* and two buttons, because those
+are the only two things anybody can do to a key they cannot see. Replace puts the
+field back.
+
+The model and the reasoning effort are settings on the account; the key is not, and
+the section above says why. The model list is asked of the API's own models endpoint
+rather than written down - names change every few months and a list here would be a
+list of models that used to exist - by the Worker, with the account's key, and kept
+for a day, because the answer is the same all day and the settings pane asks for it
+every time it is opened. It is narrowed to the four families worth putting in front
+of somebody, which on 2026-09-09 the endpoint answered as `gpt-6-astra`,
+`gpt-5.6-sol`, `gpt-5.6-luna` and `gpt-5.6-terra`. The reasoning efforts are the
+API's own, read off the error it answers an invalid one with.
 
 ![The question, while the model is working](even/asking.png)
 
@@ -548,10 +632,15 @@ off the error it answers an invalid one with.
 | `even/shell.ts` | which screen, and what a gesture does to it |
 | `even/commands.ts` | what was said, as something to do |
 | `even/voice.ts` | listening, and where an utterance ends |
-| `even/ask.ts` | a question to a model, with the notes as tools |
-| `even/models.ts` | which models the account's key may choose |
+| `even/models.ts` | how hard the model is asked to think, and nothing else |
+| `even/key.svelte.ts` | the two facts about the key this machine may know |
+| `even/offered.svelte.ts` | the models on offer, and the line under the field |
 | `even/bridge.svelte.ts` | the tie to the app's own stores |
 | `even/Glasses.svelte` | the frame, and the phone's half of the binding |
+| `sync/src/ask/key.ts` | the key, sealed and opened; the only thing that opens one |
+| `sync/src/ask/asking.ts` | the question to the model, and an utterance as words |
+| `sync/src/ask/notes.ts` | the two tools, over the account's own notes |
+| `sync/src/ask/index.ts` | the five routes, behind the session |
 
 Everything in `packages/glasses` is pure, with no DOM and no canvas in it, which is
 what lets the mapping, the pager and the wrap all be tested without a browser.
@@ -919,10 +1008,10 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 46 checks:
   the spaces; change note opened a folder where it stood and then opened a note;
 - the microphone opened, the corner lit, and six spoken commands were obeyed:
   next, back, spaces view, close, "open page three" and "go to line forty";
-- a spoken question put the question up, asked the model **with two tools and not
-  one line of a note**, sent the key to `api.openai.com` and to nothing else, and
-  opened the answer with its one sentence first; a scroll went down it a line at a
-  time and a double tap closed it;
+- a spoken question put the question up, asked **Nib** for it - the question, the
+  model and the effort, **no key and no note** - reached `nibeditor.com` and nothing
+  else, and opened the answer with its one sentence first; a scroll went down it a
+  line at a time and a double tap closed it;
 - nothing on the page asked the server for anything that was not there, and there
   were no page errors.
 
@@ -993,8 +1082,8 @@ In rough order of how much rests on it:
    and frames arrive on `onEvenHubEvent`.
 9. **A double tap on the root page still raises the system's own question** once the
    plugin is consuming double taps everywhere else.
-10. **The `api.openai.com` entry on the manifest's whitelist is honoured**, and a
-    question actually leaves the WebView.
+10. **A question actually leaves the WebView**, now that `nibeditor.com` is the one
+    origin on the whitelist and the whole flow goes through it.
 
 ---
 
@@ -1011,14 +1100,12 @@ In rough order of how much rests on it:
    are to allow a null or absent `Origin` on `/v1/*`, or to allow `*` there and
    keep relying on the bearer token, which the app already does and which is what
    the platform's own guidance assumes.
-2. **The key on the account.** The Glasses settings follow the account rather than
-   the machine, because the plugin runs on a phone and is set up on a desktop and
-   nobody wants to type an API key into a WebView with a thumb. That does mean the
-   key is stored in the account's settings blob and travels through Nib's own
-   Worker on its way there. The Worker never reads it and never sends it anywhere,
-   and the question itself goes from the phone straight to OpenAI; but a sync token
-   that leaked would leak the key with it. The alternative is a key that has to be
-   typed on the phone.
+2. ~~**The key on the account.**~~ Settled on 2026-09-09, and section 5 has it: the
+   key is encrypted on the user's row under a Worker secret, no read answers with
+   it, and the question and the tools run on the Worker. A sync token that leaked
+   used to leak the key with it; now it buys questions against that account's credit
+   until it is revoked, which is a ceiling rather than a credential. What is left to
+   decide is whether sixty an hour is the right ceiling.
 3. **`ContentOffset` on a text container.** `TextContainerUpgrade` carries
    `contentOffset` and `contentLength` and the SDK passes both through to the host,
    but neither is documented anywhere and no published example uses them. If they

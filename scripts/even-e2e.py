@@ -221,54 +221,87 @@ window.__say = (text) => {
   })
 }
 
-/** The model, answering from a script. Nothing leaves the machine, and every host
- *  the plugin asked for is written down so that the key can be shown to have gone
- *  to OpenAI and to nothing else. */
+/** Nib's own API, answering from a script. Nothing leaves the machine, and every
+ *  host the plugin asked for is written down - which is now the whole of the check,
+ *  because the account's OpenAI key is written and never read back and the plugin
+ *  has none to send. The question goes to nibeditor.com, and to nothing else.
+ *
+ *  Signed in, because a question is asked of an account: `/v1/me` answers with one,
+ *  which is what puts a token in `account.accountToken`. Everything the syncing then
+ *  asks for is answered 404 here, which the app already treats as "not now" - the
+ *  glasses are what this drive is about. */
 window.__asked = []
 window.__hosts = []
 const realFetch = window.fetch.bind(window)
 
+const ANSWER = [
+  'You decided to use the firmware font only, with no bitmaps at all.',
+  '',
+  'The note says the panel is 576 by 288 pixels with one font in one size,',
+  'so the mapping says every construct with the character set instead of',
+  'with type. A page of words is one send of about 83 ms against four',
+  'image sends of about 185 ms each, which is the whole reason for it.',
+  '',
+  'It also says what the font has not got: no backtick, so a fence is',
+  'written with three left quotes; no check mark and no ballot box, so a',
+  'task is a box that is filled or not; and no tab at all, so one is spent',
+  'as the spaces it stood for. Nothing in a note is dropped, and nothing',
+  'reaches the glasses as a character that draws nothing.',
+].join('\n')
+
+const json = (body, status = 200) =>
+  Promise.resolve(new Response(JSON.stringify(body), { status }))
+
 window.fetch = (input, init) => {
   const url = String(typeof input === 'string' ? input : (input?.url ?? input))
-  if (!url.includes('api.openai.com')) return realFetch(input, init)
+  if (!url.startsWith('https://nibeditor.com')) return realFetch(input, init)
 
+  const path = new URL(url).pathname
   window.__hosts.push(new URL(url).host)
-  if (url.endsWith('/v1/models')) {
-    return Promise.resolve(
-      new Response(JSON.stringify({ data: [{ id: 'gpt-6-astra' }] }), { status: 200 }),
-    )
+
+  if (path === '/v1/me') {
+    return json({ user: { id: 'u1', email: 'reader@example.com', name: 'Reader' } })
   }
 
-  window.__asked.push(JSON.parse(String(init?.body ?? '{}')))
-  const body = {
-    output: [
-      {
-        type: 'message',
-        content: [
-          {
-            type: 'output_text',
-            text: [
-              'You decided to use the firmware font only, with no bitmaps at all.',
-              '',
-              'The note says the panel is 576 by 288 pixels with one font in one size,',
-              'so the mapping says every construct with the character set instead of',
-              'with type. A page of words is one send of about 83 ms against four',
-              'image sends of about 185 ms each, which is the whole reason for it.',
-              '',
-              'It also says what the font has not got: no backtick, so a fence is',
-              'written with three left quotes; no check mark and no ballot box, so a',
-              'task is a box that is filled or not; and no tab at all, so one is spent',
-              'as the spaces it stood for. Nothing in a note is dropped, and nothing',
-              'reaches the glasses as a character that draws nothing.',
-            ].join('\n'),
-          },
-        ],
-      },
-    ],
+  if (path === '/v1/settings') {
+    return json({
+      settings: { glassesModel: 'gpt-6-astra', glassesEffort: 'low' },
+      // What the account says about its key: that there is one, and how it ends.
+      // Never the key - there is no route that answers with it.
+      key: { set: true, tail: 'key1' },
+    })
   }
 
-  return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }))
+  if (path === '/v1/ask/models') return json({ models: ['gpt-6-astra'] })
+
+  if (path === '/v1/ask') {
+    window.__asked.push(JSON.parse(String(init?.body ?? '{}')))
+    return json({ answer: ANSWER })
+  }
+
+  if (path === '/v1/ask/heard') return json({ said: null })
+
+  // Everything else the app asks the account for. Refused rather than half
+  // answered: a shape made up here would be a second copy of the service.
+  return json({ error: 'not in this drive' }, 404)
 }
+
+/** No sockets. A room is opened for every note that is being written in, and a
+ *  socket that cannot connect writes an error to the console - which this drive
+ *  reads as a fault in the plugin. There is no service here to connect to. */
+class NoSocket {
+  constructor() {
+    this.readyState = 0
+  }
+  send() {}
+  close() {
+    this.readyState = 3
+  }
+  addEventListener() {}
+  removeEventListener() {}
+}
+
+window.WebSocket = NoSocket
 
 window.__listen = () => {
   window.__say('voice commands on')
@@ -438,11 +471,14 @@ def main() -> int:
                       glassesLineNumbers: true,
                       glassesPageNumber: true,
                       glassesVoice: true,
-                      glassesKey: 'sk-test-not-a-real-key',
                       glassesModel: 'gpt-6-astra',
                       glassesEffort: 'low',
                     }),
                   )
+                  // A session, because a question is asked of an account: the key is
+                  // on the account and the plugin has none. The stub above answers
+                  // for it; see BRIDGE.
+                  localStorage.setItem('nib:session', 'a-test-session')
                 }
                 """
             )
@@ -744,21 +780,21 @@ def main() -> int:
                 answered.get("nibBody", "").split("\n")[0],
             )
             asked = page.evaluate("window.__asked")
-            tools = [one.get("name") for one in (asked[0].get("tools") if asked else [])]
+            sent = asked[0] if asked else {}
             report.ok(
-                "asked the model with tools rather than with the notes",
-                tools == ["search_notes", "read_note"],
-                json.dumps(tools),
+                "asked Nib the question, with the model and nothing else",
+                sorted(sent.keys()) == ["effort", "model", "question"],
+                json.dumps(sorted(sent.keys())),
             )
             report.ok(
-                "sent no note at all until the model asked for one",
-                bool(asked) and len(asked[0].get("input", [])) == 2,
-                json.dumps([one.get("role") for one in (asked[0].get("input") if asked else [])]),
+                "sent no key and no note, because it has neither",
+                "sk-" not in json.dumps(sent) and "firmware font" not in json.dumps(sent),
+                json.dumps(sent),
             )
             hosts = page.evaluate("window.__hosts")
             report.ok(
-                "sent the key to OpenAI and to nothing else",
-                bool(hosts) and set(hosts) == {"api.openai.com"},
+                "reached nibeditor.com and nothing else, which is the whole whitelist",
+                bool(hosts) and set(hosts) == {"nibeditor.com"},
                 json.dumps(sorted(set(hosts))),
             )
             phone = page.locator(".voice").inner_text() if page.locator(".voice").count() else ""

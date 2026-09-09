@@ -213,15 +213,10 @@ describe('the glasses an account reads on', () => {
     }
   })
 
-  test('carry the key, the model and the effort', async () => {
-    const set = await patch({
-      glassesKey: 'sk-proj-example',
-      glassesModel: 'gpt-6-astra',
-      glassesEffort: 'high',
-    })
+  test('carry the model and the effort', async () => {
+    const set = await patch({ glassesModel: 'gpt-6-astra', glassesEffort: 'high' })
 
     expect(set.json.settings).toMatchObject({
-      glassesKey: 'sk-proj-example',
       glassesModel: 'gpt-6-astra',
       glassesEffort: 'high',
     })
@@ -233,21 +228,21 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesEffort: 'banana' })).status).toBe(400)
   })
 
-  test('refuse a key or a model long enough to be a novel', async () => {
-    expect((await patch({ glassesKey: 'x'.repeat(201) })).status).toBe(400)
+  test('refuse a model long enough to be a novel', async () => {
     expect((await patch({ glassesModel: 'x'.repeat(101) })).status).toBe(400)
-    // And the sizes a real one is.
-    expect((await patch({ glassesKey: `sk-proj-${'x'.repeat(150)}` })).status).toBe(200)
+    expect((await patch({ glassesModel: 'gpt-6-astra' })).status).toBe(200)
   })
 
-  test('never read the key here, only carry it', async () => {
-    // Nothing of ours talks to OpenAI: the phone does, with this. So the only
-    // thing the Worker promises about it is that it comes back as it went up.
-    const key = 'sk-proj-AbC123-_xyz'
-    await patch({ glassesKey: key })
+  /** The key used to be a setting here, in the clear, and every read handed it
+   *  back. It is not one any more: it is encrypted on the row and set through
+   *  `PUT /v1/ask/key`. The settings read says whether there is one and what its
+   *  last four characters are, and that is all any read ever says. See ask.test.ts. */
+  test('do not carry the key at all, and say only whether there is one', async () => {
+    expect((await patch({ glassesKey: 'sk-proj-AbC123-_xyz' })).status).toBe(400)
 
     const read = await call(env, '/v1/settings', { token })
-    expect(read.json.settings.glassesKey).toBe(key)
+    expect(read.json.settings.glassesKey).toBeUndefined()
+    expect(read.json.key).toEqual({ set: false, tail: '' })
   })
 })
 

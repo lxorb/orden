@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { ask } from './ask'
 import { auth, presentUser, requireWhoever } from './auth'
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
@@ -145,6 +146,11 @@ app.get('/v1/usage', async (context) => {
   const user = context.get('user')
   return context.json({ used: await usedBytes(context.env, user.id), limit: QUOTA })
 })
+
+// The glasses' question flow, and the account's OpenAI key: written here, read by
+// nothing. Registered ahead of `/v1` so `/v1/ask` is not read as a note id. See
+// ask/index.ts.
+app.route('/v1/ask', ask)
 
 app.route('/v1/blobs', blobs)
 app.route('/v1/spaces', spaces)

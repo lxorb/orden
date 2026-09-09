@@ -276,6 +276,16 @@ export interface Reply {
   resendIn: number
   settings: Record<string, unknown>
 
+  // The glasses' question flow. `key` is what the settings read says about the
+  // account's OpenAI key, which is the whole of what any read can say about it;
+  // `set` and `tail` are the same two fields as the key's own routes answer them.
+  key: { set: boolean; tail: string }
+  set: boolean
+  tail: string
+  models: string[]
+  answer: string
+  said: string | null
+
   // Storage.
   used: number
   limit: number

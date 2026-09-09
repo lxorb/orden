@@ -261,7 +261,14 @@ export const gsw: Dictionary = {
   'OpenAI key': 'OpenAI-Schlüssel',
   Model: 'Modäll',
   Reasoning: 'Naadänke',
-  'Asked from your glasses, never through Nib.': 'Vo de Brülle us gfragt, nie über Nib.',
+  'Kept encrypted on your account, and never shown again.':
+    'Verschlüsselet im Konto gspeicheret und nie meh zeigt.',
+  'set, ends in …{tail}': 'gsetzt, ändet uf …{tail}',
+  'Saving the key': 'De Schlüssel wird gspeicheret',
+  'this server cannot keep a key yet': 'De Server cha na kei Schlüssel ha',
+  'that does not look like a key': 'Das gseht nöd nach eme Schlüssel us',
+  'that key could not be saved': 'De Schlüssel het nöd chöne gspeicheret werde',
+  'Sign in to ask a question.': 'Zum Frage amälde.',
   'Asking OpenAI which models this key can use':
     'OpenAI wird gfragt, weli Modäll de Schlüssel darf',
   'Could not reach OpenAI': 'OpenAI nöd erreichbar',

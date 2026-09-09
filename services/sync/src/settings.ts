@@ -1,4 +1,6 @@
 import { Hono } from 'hono'
+import { EFFORTS } from './ask/asking'
+import { keyState } from './ask/key'
 import type { Env, Variables } from './types'
 
 /** The settings that follow the account from machine to machine, and what
@@ -33,15 +35,8 @@ const LIGATURE_SCOPES = ['off', 'code', 'all']
  *  The efforts are the API's own, read off the error it answers an invalid one
  *  with on 2026-09-09. */
 const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6]
-const GLASSES_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
-
-/** How long an OpenAI key may be.
- *
- *  Never read here and never sent anywhere by us: the account carries it so that a
- *  key typed on a desktop reaches the phone, and the phone sends it to OpenAI
- *  itself. Bounded because everything on this row is, and because a field with no
- *  bound is a field somebody stores a novel in. */
-const MOST_KEY = 200
+/** The API's own list, from the one module that talks to it. */
+const GLASSES_EFFORTS: readonly string[] = EFFORTS
 
 /** A model id, which is a name and not a sentence. */
 const MOST_MODEL = 100
@@ -91,7 +86,11 @@ const KNOWN: Record<string, Check> = {
   glassesLineNumbers: switched('glassesLineNumbers'),
   glassesPageNumber: switched('glassesPageNumber'),
   glassesVoice: switched('glassesVoice'),
-  glassesKey: shortEnough('glassesKey', MOST_KEY),
+  // `glassesKey` was here, and was a plaintext OpenAI key in a column that every
+  // read handed back. It is not a setting any more: it is encrypted on the user's
+  // row and written through `PUT /v1/ask/key`, which is the only way in. An older
+  // build that still patches it is answered "unknown setting glassesKey", which is
+  // the truth and is better than quietly keeping a key nothing will use.
   glassesModel: shortEnough('glassesModel', MOST_MODEL),
   glassesEffort: wordOf('glassesEffort', GLASSES_EFFORTS),
   vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
@@ -205,8 +204,17 @@ function parse(raw: string | undefined): AccountSettings {
 
 export const settings = new Hono<{ Bindings: Env; Variables: Variables }>()
 
+/** Everything the account has chosen, and the one thing about it that cannot be
+ *  read: whether an OpenAI key is set and its last four characters. `key` is beside
+ *  `settings` rather than inside it because it is not a setting - nothing can send
+ *  it here, and a field that comes back but cannot go out does not belong in the
+ *  same object as the ones that travel both ways. See ask/key.ts. */
 settings.get('/', async (context) => {
-  return context.json({ settings: await settingsOf(context.env, context.get('user').id) })
+  const user = context.get('user')
+  return context.json({
+    settings: await settingsOf(context.env, user.id),
+    key: await keyState(context.env, user.id),
+  })
 })
 
 /** Changes what is sent and leaves the rest as it was. */

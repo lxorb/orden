@@ -46,7 +46,13 @@ describe('the manifest a build is packed from', () => {
 
     // One entry per full origin: no wildcards, no bare hostnames. The phone app
     // blocks anything not on it before the request leaves the WebView.
-    expect(network?.whitelist).toEqual(['https://nibeditor.com', 'https://api.openai.com'])
+    //
+    // One origin, and `api.openai.com` is deliberately not it. The account's key is
+    // written and never read back, so the plugin has no key to send and Nib makes
+    // that request; see services/sync/src/ask. A permission's description has to
+    // stay true, and "sign in and keep your notes in step" is now the whole of what
+    // the network is for.
+    expect(network?.whitelist).toEqual(['https://nibeditor.com'])
     for (const origin of network?.whitelist ?? []) {
       expect(origin, origin).toMatch(/^https:\/\/[a-z0-9.-]+$/)
     }

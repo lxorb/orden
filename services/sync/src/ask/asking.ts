@@ -1,16 +1,12 @@
 /** A question to a model, with the account's notes as tools.
  *
- *  Said out loud after the word "question" and answered on the glasses. The whole
- *  of the design is in three decisions:
+ *  Said out loud after the word "question" on a pair of glasses, and answered on
+ *  them. Three decisions shape the whole of it:
  *
- *  1. **The request is made from the plugin.** The key is the account's own and
- *     goes from the phone to `api.openai.com` and nowhere else: not through Nib's
- *     own Worker, not through anything of ours. There is nothing in the middle to
- *     trust.
- *  2. **Nothing is stuffed into the context.** The model is given two tools and no
- *     notes at all: `search_notes` to find something and `read_note` to read it.
- *     A question about one note therefore costs one note, and a reader with four
- *     hundred of them is not paying to send four hundred.
+ *  1. **The request is made here.** It used to be made by the plugin, with the key
+ *     on the phone. The key is now written and never read back, so the one place
+ *     that can make this request is the one place that can open it.
+ *  2. **Nothing is stuffed into the context.** Two tools and no notes; see notes.ts.
  *  3. **The answer is one sentence first.** A panel is seven lines and a reader is
  *     walking: the first line has to be the answer, and the detail after a blank
  *     line is for the reader who scrolls.
@@ -22,29 +18,19 @@
  *  `function_call_output`. The text of a reply is in `output[].content[].text`
  *  where the content's type is `output_text`. */
 
-import { type Effort, OPENAI } from './models'
+import { OPENAI } from './models'
+import { type Found, readNote, searchNotes } from './notes'
+import type { Env } from '../types'
 
-/** What one note looked like to a search. */
-export interface Found {
-  note: string
-  line: number
-  text: string
-}
-
-/** The account's own notes, as the two tools see them. Handed in, so that the flow
- *  can be tested against a model that is a function and notes that are an array. */
-export interface Notes {
-  /** Every note whose words match, across every space the account has. */
-  search: (query: string) => Promise<Found[]>
-  /** One note, by the name the search gave. Null when there is no such note, which
-   *  the model is told rather than being left to guess. */
-  read: (name: string) => Promise<string | null>
-}
+/** How hard the model is asked to think. The API's own list, read off the error it
+ *  answers an invalid one with on 2026-09-09, so it is the API's and not a guess. */
+export const EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
+export type Effort = (typeof EFFORTS)[number]
 
 /** What the model needs to know before it answers.
  *
- *  Short on purpose. A long prompt on a panel of seven lines is a long prompt
- *  spent teaching the model to write for a screen it will never see. */
+ *  Short on purpose. A long prompt for a panel of seven lines is a long prompt spent
+ *  teaching the model to write for a screen it will never see. */
 const PROMPT = [
   "You answer questions about the person's own notes, out loud, on a pair of",
   'glasses with seven short lines on them.',
@@ -92,41 +78,27 @@ const TOOLS = [
 
 /** How many rounds of tool calls are allowed before the answer has to come.
  *
- *  Four. A question about the notes is a search and a read, and a model that has
- *  not answered after four is a model in a loop; the reader is standing there. */
+ *  Four. A question about the notes is a search and a read, and a model that has not
+ *  answered after four is a model in a loop; the reader is standing there. */
 const ROUNDS = 4
 
 /** How much of a note the model is given at once.
  *
  *  Twelve thousand characters, which is a long note and a small fraction of any
- *  model's window. A note longer than that is cut rather than refused, and the
- *  model is told it was cut so that it does not report the ending of something it
- *  did not see. */
+ *  model's window. A note longer than that is cut rather than refused, and the model
+ *  is told it was cut so that it does not report the ending of something it did not
+ *  see. */
 const MOST = 12_000
 
-/** How many matching lines a search answers with. */
-const HITS = 20
-
-/** What the plugin sends and what came back, kept to what is used. */
+/** What came back, kept to what is used. */
 interface Call {
   id: string
   name: string
   arguments: string
 }
 
-/** How a question is asked. */
-export interface Asking {
-  key: string
-  model: string
-  effort: Effort
-  notes: Notes
-  /** Handed in so a test can answer without a network, and so the one place a
-   *  request is made is visible from here. */
-  fetch?: typeof fetch
-}
-
-/** Every message of the conversation so far. Plain objects rather than a type from
- *  a package: this is a wire format and it is written out where it is read. */
+/** Every message of the conversation so far. Plain objects rather than a type from a
+ *  package: this is a wire format and it is written out where it is read. */
 type Item = Record<string, unknown>
 
 /** The text of a reply, and the calls it wants made. Read field by field, because
@@ -186,22 +158,26 @@ function argument(call: Call, name: string): string {
   }
 }
 
-/** What a tool answers, as the string the model is handed. */
-async function answer(call: Call, notes: Notes): Promise<string> {
+/** What a tool answers, as the string the model is handed.
+ *
+ *  Every one of them is scoped to the account the session belongs to, and no
+ *  argument the model can send names a user. A model that asks for somebody else's
+ *  note is asking for a note that is not in the list it can see. */
+async function answer(env: Env, userId: string, call: Call): Promise<string> {
   if (call.name === 'search_notes') {
     const query = argument(call, 'query')
     if (!query) return 'no query'
 
-    const found = await notes.search(query)
+    const found: Found[] = await searchNotes(env, userId, query)
     if (!found.length) return 'nothing found'
-    return JSON.stringify(found.slice(0, HITS))
+    return JSON.stringify(found)
   }
 
   if (call.name === 'read_note') {
     const name = argument(call, 'name')
     if (!name) return 'no name'
 
-    const text = await notes.read(name)
+    const text = await readNote(env, userId, name)
     if (text === null) return 'no such note'
     // Said rather than silently cut, so the model does not report the end of
     // something it was never shown.
@@ -213,21 +189,22 @@ async function answer(call: Call, notes: Notes): Promise<string> {
 
 /** The question, asked and answered.
  *
- *  Throws only what the caller has to say out loud - no key, no model, a refusal
- *  from the API - because the reader is standing there and a silent failure is a
- *  pair of glasses that ignored them. */
-export async function askAbout(question: string, asking: Asking): Promise<string> {
-  if (!asking.key) throw new Error('no key')
-  if (!asking.model) throw new Error('no model')
-
-  const send = asking.fetch ?? fetch
+ *  Throws only what the reader has to be told - a refusal from the API, a model that
+ *  is not there - because somebody is standing there and a silent failure is a pair
+ *  of glasses that ignored them. */
+export async function askAbout(
+  env: Env,
+  userId: string,
+  question: string,
+  asking: { key: string; model: string; effort: Effort },
+): Promise<string> {
   const items: Item[] = [
     { role: 'developer', content: PROMPT },
     { role: 'user', content: question },
   ]
 
   for (let round = 0; round <= ROUNDS; round++) {
-    const answered = await send(`${OPENAI}/v1/responses`, {
+    const answered = await fetch(`${OPENAI}/v1/responses`, {
       method: 'POST',
       headers: { authorization: `Bearer ${asking.key}`, 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -246,8 +223,8 @@ export async function askAbout(question: string, asking: Asking): Promise<string
     if (reply.refused) throw new Error(reply.refused)
     if (!answered.ok) throw new Error(`the model answered ${String(answered.status)}`)
 
-    // The last round is the answer whatever else it wanted: a model still asking
-    // for notes after four rounds is not going to stop.
+    // The last round is the answer whatever else it wanted: a model still asking for
+    // notes after four rounds is not going to stop.
     if (!reply.calls.length || round === ROUNDS) return reply.text.trim()
 
     for (const call of reply.calls) {
@@ -260,7 +237,7 @@ export async function askAbout(question: string, asking: Asking): Promise<string
       items.push({
         type: 'function_call_output',
         call_id: call.id,
-        output: await answer(call, asking.notes),
+        output: await answer(env, userId, call),
       })
     }
   }
@@ -272,35 +249,33 @@ export async function askAbout(question: string, asking: Asking): Promise<string
  *
  *  Verified against `GET /v1/models` on 2026-09-09. The first that the account
  *  actually has is used; `whisper-1` has been there for years and is the floor. */
-export const TRANSCRIBERS = ['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'] as const
+const TRANSCRIBERS = ['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'] as const
 
 /** One utterance, as words.
  *
- *  Only reached where the WebView has no recogniser of its own; see voice.ts. The
- *  file is a WAV built out of the frames the glasses sent, which every
- *  transcription endpoint takes. */
-export async function transcribeWith(
-  wav: Uint8Array<ArrayBuffer>,
-  key: string,
-  model: string,
-  send: typeof fetch = fetch,
-): Promise<string | null> {
-  if (!key) return null
+ *  Only reached where the WebView has no recogniser of its own; see the plugin's
+ *  voice.ts. What arrives is a WAV built out of the frames the glasses sent, which
+ *  every transcription endpoint takes. Null when none of the three answered, which
+ *  is the plugin's cue to say it did not hear. */
+export async function heard(wav: ArrayBuffer, key: string): Promise<string | null> {
+  for (const model of TRANSCRIBERS) {
+    const form = new FormData()
+    form.append('file', new Blob([wav], { type: 'audio/wav' }), 'said.wav')
+    form.append('model', model)
+    // A command is English or the reader's own language; left to the model, which
+    // does better at guessing than a setting nobody will find.
+    form.append('response_format', 'text')
 
-  const form = new FormData()
-  form.append('file', new Blob([wav], { type: 'audio/wav' }), 'said.wav')
-  form.append('model', model)
-  // A command is English or the reader's own language; left to the model, which
-  // does better at guessing than a setting nobody will find.
-  form.append('response_format', 'text')
+    const answered = await fetch(`${OPENAI}/v1/audio/transcriptions`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${key}` },
+      body: form,
+    })
+    if (!answered.ok) continue
 
-  const answered = await send(`${OPENAI}/v1/audio/transcriptions`, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${key}` },
-    body: form,
-  })
-  if (!answered.ok) return null
+    const said = (await answered.text()).trim()
+    if (said) return said
+  }
 
-  const said = await answered.text()
-  return said.trim() || null
+  return null
 }

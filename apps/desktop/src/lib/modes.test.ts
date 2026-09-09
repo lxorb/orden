@@ -160,8 +160,7 @@ describe('the glasses settings', () => {
     expect(modes.glassesVoice).toBe(false)
   })
 
-  test('start with no key and no model, because there is nothing to guess', () => {
-    expect(modes.glassesKey).toBe('')
+  test('start with no model, because there is nothing to guess', () => {
     expect(modes.glassesModel).toBe('')
     expect(modes.glassesEffort).toBe('low')
   })
@@ -199,13 +198,6 @@ describe('the glasses settings', () => {
     expect(saved().glassesLineNumbers).toBe(false)
     expect(saved().glassesPageNumber).toBe(false)
     expect(saved().glassesVoice).toBe(true)
-  })
-
-  test('trim a key pasted off a web page, which brings a newline with it', () => {
-    // A header with a newline in it is not sent at all.
-    modes.setGlassesKey('  sk-proj-example\n')
-    expect(modes.glassesKey).toBe('sk-proj-example')
-    expect(saved().glassesKey).toBe('sk-proj-example')
   })
 
   test('take a model and an effort the API knows', () => {

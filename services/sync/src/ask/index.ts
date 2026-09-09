@@ -1,0 +1,152 @@
+/** Everything the glasses' question flow needs, behind the account's session.
+ *
+ *  Five routes, and the reason they are all here rather than in the plugin is one
+ *  sentence of Emil's about the key: "it stays in the account, but after you set it
+ *  you can't read it anymore." A key nothing can read is a key the plugin cannot
+ *  send to OpenAI, so the Worker sends it - and once the Worker is making that
+ *  request it is also the place that runs the tools, lists the models and turns
+ *  sound into words.
+ *
+ *    PUT    /v1/ask/key      sets or replaces it; answers only set and the tail
+ *    DELETE /v1/ask/key      takes it away
+ *    GET    /v1/ask/models   what this key may choose, kept for a day
+ *    POST   /v1/ask          a question, answered with the account's own notes
+ *    POST   /v1/ask/heard    a WAV, as words
+ *
+ *  What the plugin sends is a question and nothing else. It holds no key, and
+ *  `api.openai.com` is off its manifest's network whitelist: the one origin it may
+ *  reach is nibeditor.com. That is the whole point of moving this.
+ *
+ *  **A guest cannot ask.** Not a special case: the session guard in index.ts opens
+ *  only what `guestMayReach` names, everything account-wide is left out of that
+ *  list, and a key and a set of notes are as account-wide as it gets. A guest gets
+ *  403 from the guard and never reaches this file, which is why every route here
+ *  reads `user` without checking. */
+
+import { Hono } from 'hono'
+import { readBody } from '../body'
+import { mayAsk, mayTranscribe } from '../limits'
+import type { Env, Variables } from '../types'
+import { askAbout, type Effort, EFFORTS, heard } from './asking'
+import { forgetKey, keyFor, mayStore, setKey } from './key'
+import { forgetModels, modelsFor } from './models'
+
+/** How long a question may be. A question said out loud in one breath; anything
+ *  longer arrived from something other than a person talking. */
+const MOST_QUESTION = 500
+
+/** A model id, which is a name and not a sentence. */
+const MOST_MODEL = 100
+
+/** How long an utterance may be, as bytes of WAV. A minute of the mono 16 kHz the
+ *  glasses send is about two megabytes; four is a generous ceiling and still small
+ *  enough that a Worker holding one in memory is nothing. */
+const MOST_WAV = 4 * 1024 * 1024
+
+/** What a key may be, as a length. The check that matters is in key.ts; this one
+ *  only keeps a novel out of the body reader. */
+const MOST_KEY = 200
+
+export const ask = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+/** Sets the key, or replaces the one that is there. There is no editing a key
+ *  nothing can read, so this is the only way to change one. */
+ask.put('/key', async (context) => {
+  const user = context.get('user')
+  const body = await readBody(context)
+  const given = body.text('key', MOST_KEY)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+  if (given === undefined) return context.json({ error: 'send a key' }, 400)
+
+  const state = await setKey(context.env, user.id, given)
+  if (typeof state === 'string') {
+    // A server with no encryption secret is a server that is not ready, rather
+    // than a request that is wrong; see key.ts.
+    return context.json({ error: state }, mayStore(context.env) ? 400 : 503)
+  }
+
+  // The list that was cached belonged to the key that is gone.
+  await forgetModels(context.env, user.id)
+  return context.json(state)
+})
+
+ask.delete('/key', async (context) => {
+  const user = context.get('user')
+  await forgetModels(context.env, user.id)
+  return context.json(await forgetKey(context.env, user.id))
+})
+
+/** Which models this account's key may choose. Empty when there is no key, when the
+ *  key is wrong, or when OpenAI could not be reached - all of which the settings
+ *  pane says in one line rather than in a dialog. */
+ask.get('/models', async (context) => {
+  const user = context.get('user')
+  const key = await keyFor(context.env, user.id)
+  if (!key) return context.json({ models: [] })
+
+  return context.json({ models: await modelsFor(context.env, user.id, key) })
+})
+
+ask.post('/', async (context) => {
+  const user = context.get('user')
+  const body = await readBody(context)
+  const question = body.text('question', MOST_QUESTION)
+  const model = body.text('model', MOST_MODEL)
+  const effort = body.text('effort', 20)
+  if (body.problem) return context.json({ error: body.problem }, 400)
+
+  if (!question?.trim()) return context.json({ error: 'ask something' }, 400)
+  if (!model) return context.json({ error: 'choose a model first' }, 400)
+  if (effort !== undefined && !(EFFORTS as readonly string[]).includes(effort)) {
+    return context.json({ error: `effort must be one of ${EFFORTS.join(', ')}` }, 400)
+  }
+
+  const key = await keyFor(context.env, user.id)
+  if (!key) return context.json({ error: 'set an OpenAI key in Nib’s settings first' }, 400)
+
+  if (!(await mayAsk(context.env, user.id))) {
+    return context.json({ error: 'that is a lot of questions - try again later' }, 429)
+  }
+
+  try {
+    const answer = await askAbout(context.env, user.id, question, {
+      key,
+      model,
+      effort: (effort ?? 'low') as Effort,
+    })
+    return context.json({ answer })
+  } catch (error) {
+    // Whatever OpenAI refused with, in its own words: the reader is standing there
+    // and "something went wrong" tells them nothing they can act on.
+    return context.json(
+      { error: error instanceof Error ? error.message : 'the model refused' },
+      502,
+    )
+  }
+})
+
+/** One utterance, as words. Only reached where the WebView has no recogniser of its
+ *  own; the phone does it for nothing where it can. */
+ask.post('/heard', async (context) => {
+  const user = context.get('user')
+
+  // Read from the header before the body is read at all: measuring afterwards is
+  // how a Worker with a hundred and twenty-eight megabytes is asked to hold more.
+  const declared = Number(context.req.header('content-length') ?? '')
+  if (Number.isFinite(declared) && declared > MOST_WAV) {
+    return context.json({ error: 'that is too much audio' }, 413)
+  }
+
+  const wav = await context.req.arrayBuffer()
+  if (!wav.byteLength) return context.json({ error: 'send some audio' }, 400)
+  if (wav.byteLength > MOST_WAV) return context.json({ error: 'that is too much audio' }, 413)
+
+  const key = await keyFor(context.env, user.id)
+  if (!key) return context.json({ error: 'set an OpenAI key in Nib’s settings first' }, 400)
+
+  if (!(await mayTranscribe(context.env, user.id))) {
+    return context.json({ error: 'that is a lot of listening - try again later' }, 429)
+  }
+
+  return context.json({ said: await heard(wav, key) })
+})

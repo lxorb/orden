@@ -109,3 +109,50 @@ describe('0017, the notes deleted before Recently deleted existed', () => {
     database.close()
   })
 })
+
+describe('0022, the plaintext OpenAI key an older build stored', () => {
+  /** The settings blob as a build before this one wrote it: the key in the clear,
+   *  beside the choices that are settings like any other. */
+  function chose(database: DatabaseSync, id: string, settings: string): void {
+    database.exec(
+      `insert into users (id, email, created_at, settings)
+       values ('${id}', '${id}@b.c', 1, '${settings}')`,
+    )
+  }
+
+  test('is dropped, and the rest of the settings stay', () => {
+    const database = upTo('0021_domain_proof.sql')
+    chose(
+      database,
+      'one',
+      '{"glassesKey":"sk-proj-secret","glassesModel":"gpt-6-astra","vim":true}',
+    )
+
+    database.exec(sql('0022_openai_key.sql'))
+
+    const row = database.prepare(`select settings, openai_key from users where id = 'one'`).get()
+    const { settings, openai_key: sealed } = row as { settings: string; openai_key: unknown }
+    expect(JSON.parse(settings)).toEqual({ glassesModel: 'gpt-6-astra', vim: true })
+    expect(settings).not.toContain('sk-proj-secret')
+    // Not carried over: it cannot be encrypted here, and the pane asks for it again.
+    expect(sealed).toBeNull()
+    database.close()
+  })
+
+  test('leaves an account that never set one exactly as it was', () => {
+    const database = upTo('0021_domain_proof.sql')
+    chose(database, 'two', '{"vim":true}')
+
+    database.exec(sql('0022_openai_key.sql'))
+
+    const row = database.prepare(`select settings from users where id = 'two'`).get()
+    expect(JSON.parse((row as { settings: string }).settings)).toEqual({ vim: true })
+    database.close()
+  })
+
+  test('indexes what the cache sweep looks for', () => {
+    const database = upTo('0022_openai_key.sql')
+    expect(indexes(database, 'cached')).toContain('cached_until')
+    database.close()
+  })
+})

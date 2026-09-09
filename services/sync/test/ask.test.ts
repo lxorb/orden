@@ -1,0 +1,576 @@
+/** The account's OpenAI key, and the question flow that is the only thing allowed
+ *  to read it.
+ *
+ *  Emil's rule is one sentence - "it stays in the account, but after you set it you
+ *  can't read it anymore" - and most of this file is about the second half of it.
+ *  What is stored is not the key, what any read answers is not the key, and the one
+ *  function that opens it is the one the model's request goes through. */
+
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { opened, sealed } from '../src/ask/key'
+import { call, signIn, testEnv, type TestEnv } from './harness'
+import type { ShareView } from './harness'
+
+const SECRET = 'a secret nobody in this repository knows'
+const KEY = 'sk-proj-abcdefghijklmnopqrstuvwxyz-4f2a'
+
+let env: TestEnv
+let token: string
+
+beforeEach(async () => {
+  env = testEnv({ OPENAI_KEY_SECRET: SECRET })
+  token = await signIn(env, 'a@b.dev')
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  env.close()
+})
+
+function put(key: string, as = token) {
+  return call(env, '/v1/ask/key', { method: 'PUT', token: as, body: { key } })
+}
+
+function state(as = token) {
+  return call(env, '/v1/settings', { token: as })
+}
+
+/** What is actually in the column, which is the only way to say that it is not the
+ *  key. Read straight from the database: no route answers with it. */
+function stored(): { openai_key: string | null; openai_key_tail: string | null } {
+  return env.db.prepare('select openai_key, openai_key_tail from users').get() as {
+    openai_key: string | null
+    openai_key_tail: string | null
+  }
+}
+
+/** The user's id, for the round trip below. */
+function userId(): string {
+  return (env.db.prepare('select id from users').get() as { id: string }).id
+}
+
+/* ── Encryption ───────────────────────────────────────────────────────── */
+
+describe('a key at rest', () => {
+  test('goes round trip', async () => {
+    const box = await sealed(SECRET, 'u1', KEY)
+    expect(box).not.toContain(KEY)
+    expect(await opened(SECRET, 'u1', box)).toBe(KEY)
+  })
+
+  test('is different bytes every time, so two identical keys do not look identical', async () => {
+    const one = await sealed(SECRET, 'u1', KEY)
+    const two = await sealed(SECRET, 'u1', KEY)
+    expect(one).not.toBe(two)
+    expect(await opened(SECRET, 'u1', two)).toBe(KEY)
+  })
+
+  test('will not open under another account, so moving the column borrows nothing', async () => {
+    const box = await sealed(SECRET, 'u1', KEY)
+    expect(await opened(SECRET, 'u2', box)).toBeNull()
+  })
+
+  test('will not open under another secret', async () => {
+    const box = await sealed(SECRET, 'u1', KEY)
+    expect(await opened('something else', 'u1', box)).toBeNull()
+  })
+
+  test('will not open when somebody has edited the bytes', async () => {
+    const box = await sealed(SECRET, 'u1', KEY)
+    const [version, nonce, body] = box.split('.')
+    expect(await opened(SECRET, 'u1', `${version}.${nonce}.${(body ?? '').slice(0, -4)}AAAA`)).toBe(
+      null,
+    )
+    expect(await opened(SECRET, 'u1', `2.${nonce}.${body}`)).toBeNull()
+    expect(await opened(SECRET, 'u1', 'nonsense')).toBeNull()
+  })
+})
+
+/* ── Setting it, and never getting it back ────────────────────────────── */
+
+describe('setting the key', () => {
+  test('answers that it is set and the last four characters, and nothing else', async () => {
+    const { status, json } = await put(KEY)
+    expect(status).toBe(200)
+    expect(json).toEqual({ set: true, tail: '4f2a' })
+  })
+
+  test('stores something that is not the key', async () => {
+    await put(KEY)
+    const row = stored()
+    expect(row.openai_key).toBeTruthy()
+    expect(row.openai_key).not.toContain(KEY)
+    expect(row.openai_key).not.toContain('sk-')
+    expect(row.openai_key_tail).toBe('4f2a')
+  })
+
+  test('and what it stored opens back to the key, for the one caller that may', async () => {
+    await put(KEY)
+    expect(await opened(SECRET, userId(), stored().openai_key ?? '')).toBe(KEY)
+  })
+
+  test('replaces on a second write, because there is no editing what cannot be read', async () => {
+    await put(KEY)
+    const again = await put('sk-proj-something-completely-else-9999')
+    expect(again.json).toEqual({ set: true, tail: '9999' })
+    expect(await opened(SECRET, userId(), stored().openai_key ?? '')).toBe(
+      'sk-proj-something-completely-else-9999',
+    )
+  })
+
+  test('trims what was pasted, because a key off a web page brings a newline', async () => {
+    await put(`  ${KEY}\n`)
+    expect(await opened(SECRET, userId(), stored().openai_key ?? '')).toBe(KEY)
+  })
+
+  test('refuses something that is not a key, and stores nothing', async () => {
+    for (const wrong of ['', 'sk-short', `${KEY} ${KEY}`]) {
+      expect((await put(wrong)).status, wrong).toBe(400)
+    }
+    expect(stored().openai_key).toBeNull()
+  })
+
+  /** The one that matters most: a server with no secret refuses rather than
+   *  falling back to plaintext. A key somebody believes is encrypted and is not is
+   *  worse than no key at all. */
+  test('refuses to store at all when the server has no secret', async () => {
+    const bare = testEnv()
+    const only = await signIn(bare, 'c@d.dev')
+    const answer = await call(bare, '/v1/ask/key', {
+      method: 'PUT',
+      token: only,
+      body: { key: KEY },
+    })
+
+    expect(answer.status).toBe(503)
+    expect(answer.json.error).toBe('this server cannot keep a key yet')
+    expect(
+      (
+        bare.db.prepare('select openai_key, openai_key_tail from users').get() as {
+          openai_key: unknown
+        }
+      ).openai_key,
+    ).toBeNull()
+    bare.close()
+  })
+})
+
+describe('reading the key', () => {
+  test('is not something any route offers', async () => {
+    await put(KEY)
+    const { json, text } = await state()
+
+    expect(json.key).toEqual({ set: true, tail: '4f2a' })
+    expect(text).not.toContain(KEY)
+    expect(text).not.toContain('sk-')
+  })
+
+  test('says so when there is none', async () => {
+    expect((await state()).json.key).toEqual({ set: false, tail: '' })
+  })
+
+  test('works even where the server could not decrypt one, because it decrypts nothing', async () => {
+    await put(KEY)
+
+    const bare = testEnv()
+    // The same row, on a server with no secret: the tail is in the clear on purpose.
+    bare.db.exec(
+      `insert into users (id, email, created_at, settings, openai_key, openai_key_tail)
+       values ('u', 'e@f.dev', 1, '{}', 'unreadable', '4f2a')`,
+    )
+    const one = await signIn(bare, 'g@h.dev')
+    expect((await call(bare, '/v1/settings', { token: one })).json.key).toEqual({
+      set: false,
+      tail: '',
+    })
+    bare.close()
+  })
+
+  test('is gone once it is taken away', async () => {
+    await put(KEY)
+    const removed = await call(env, '/v1/ask/key', { method: 'DELETE', token })
+
+    expect(removed.json).toEqual({ set: false, tail: '' })
+    expect(stored()).toEqual({ openai_key: null, openai_key_tail: null })
+    expect((await state()).json.key).toEqual({ set: false, tail: '' })
+  })
+
+  /** It used to be a setting, in the clear, and every read handed it back. */
+  test('cannot be smuggled back in through the settings', async () => {
+    const patched = await call(env, '/v1/settings', {
+      method: 'PATCH',
+      token,
+      body: { glassesKey: KEY },
+    })
+
+    expect(patched.status).toBe(400)
+    expect(patched.json.error).toBe('unknown setting glassesKey')
+    expect((await state()).json.settings).toEqual({})
+  })
+})
+
+/* ── The models the key may choose ────────────────────────────────────── */
+
+/** OpenAI's model list, as the endpoint answers it, plus a count of how often it
+ *  was asked. */
+function fakeModels(): () => number {
+  let asked = 0
+  vi.stubGlobal('fetch', (url: string) => {
+    asked++
+    expect(url).toBe('https://api.openai.com/v1/models')
+    return Promise.resolve(
+      Response.json({
+        data: [
+          { id: 'gpt-6-astra' },
+          { id: 'gpt-6-astra-2026-09-01' },
+          { id: 'gpt-5.6-sol' },
+          { id: 'gpt-5.6-sol-preview' },
+          { id: 'text-embedding-4' },
+          { id: 'whisper-1' },
+        ],
+      }),
+    )
+  })
+
+  return () => asked
+}
+
+describe('the models on offer', () => {
+  test('are the families worth offering, in family order', async () => {
+    fakeModels()
+    await put(KEY)
+
+    const { json } = await call(env, '/v1/ask/models', { token })
+    expect(json.models).toEqual(['gpt-6-astra', 'gpt-5.6-sol'])
+  })
+
+  test('are asked for once a day rather than once a pane', async () => {
+    const asked = fakeModels()
+    await put(KEY)
+
+    await call(env, '/v1/ask/models', { token })
+    await call(env, '/v1/ask/models', { token })
+    await call(env, '/v1/ask/models', { token })
+    expect(asked()).toBe(1)
+  })
+
+  test('and are asked again once the day is up', async () => {
+    const asked = fakeModels()
+    await put(KEY)
+    await call(env, '/v1/ask/models', { token })
+
+    env.db.exec('update cached set until = 1')
+    await call(env, '/v1/ask/models', { token })
+    expect(asked()).toBe(2)
+  })
+
+  test('are forgotten when the key changes, because the list was the old key’s', async () => {
+    const asked = fakeModels()
+    await put(KEY)
+    await call(env, '/v1/ask/models', { token })
+
+    await put('sk-proj-another-key-entirely-1234')
+    await call(env, '/v1/ask/models', { token })
+    expect(asked()).toBe(2)
+  })
+
+  test('are empty with no key, and OpenAI is not asked at all', async () => {
+    const asked = fakeModels()
+    const { json } = await call(env, '/v1/ask/models', { token })
+
+    expect(json.models).toEqual([])
+    expect(asked()).toBe(0)
+  })
+})
+
+/* ── Asking ───────────────────────────────────────────────────────────── */
+
+interface Sent {
+  model: string
+  input: { role?: string; type?: string; name?: string; output?: string; content?: unknown }[]
+  tools: { name: string }[]
+  reasoning: { effort: string }
+}
+
+/** OpenAI's Responses endpoint, answering with whatever each round was told to.
+ *  Every request it was sent is kept, because what the model was given - and in
+ *  particular what it was *not* given - is most of what there is to check. */
+function fakeAsking(rounds: unknown[]): Sent[] {
+  const sent: Sent[] = []
+  let round = 0
+
+  vi.stubGlobal('fetch', async (url: string, options: { body: string }) => {
+    expect(url).toBe('https://api.openai.com/v1/responses')
+    sent.push(JSON.parse(options.body) as Sent)
+    const answer = rounds[Math.min(round++, rounds.length - 1)]
+    return Promise.resolve(Response.json(answer))
+  })
+
+  return sent
+}
+
+function said(text: string) {
+  return { output: [{ type: 'message', content: [{ type: 'output_text', text }] }] }
+}
+
+function wants(name: string, args: Record<string, string>) {
+  return {
+    output: [{ type: 'function_call', call_id: 'c1', name, arguments: JSON.stringify(args) }],
+  }
+}
+
+function question(body: unknown, as = token) {
+  return call(env, '/v1/ask', { token: as, body })
+}
+
+async function noteIn(as: string, space: string, path: string, content: string): Promise<void> {
+  await call(env, `/v1/spaces/${space}/notes`, { token: as, body: { path, content } })
+}
+
+async function firstSpace(as: string): Promise<string> {
+  const { json } = await call(env, '/v1/spaces', { token: as })
+  return json.spaces[0]?.id ?? ''
+}
+
+describe('a question', () => {
+  beforeEach(async () => {
+    await put(KEY)
+  })
+
+  test('comes back as the answer, with the model the plugin named', async () => {
+    const sent = fakeAsking([said('You decided on the firmware font.')])
+    const { status, json } = await question({
+      question: 'what did i decide about the font',
+      model: 'gpt-6-astra',
+      effort: 'low',
+    })
+
+    expect(status).toBe(200)
+    expect(json.answer).toBe('You decided on the firmware font.')
+    expect(sent[0]?.model).toBe('gpt-6-astra')
+    expect(sent[0]?.reasoning.effort).toBe('low')
+  })
+
+  test('is asked with tools rather than with the notes', async () => {
+    const sent = fakeAsking([said('nothing to say')])
+    const space = await firstSpace(token)
+    await noteIn(token, space, 'fonts.md', 'The firmware font only, no bitmaps.\n')
+
+    await question({ question: 'fonts?', model: 'gpt-6-astra' })
+
+    expect(sent[0]?.tools.map((one) => one.name)).toEqual(['search_notes', 'read_note'])
+    // Two items: the prompt and the question. Not one note.
+    expect(sent[0]?.input.map((one) => one.role)).toEqual(['developer', 'user'])
+    expect(JSON.stringify(sent[0]?.input)).not.toContain('bitmaps')
+  })
+
+  test('searches the account’s own notes when the model asks', async () => {
+    const sent = fakeAsking([
+      wants('search_notes', { query: 'bitmaps' }),
+      said('The firmware font.'),
+    ])
+    const space = await firstSpace(token)
+    await noteIn(token, space, 'fonts.md', 'one\nThe firmware font only, no bitmaps.\n')
+
+    const { json } = await question({ question: 'fonts?', model: 'gpt-6-astra' })
+    expect(json.answer).toBe('The firmware font.')
+
+    const answered = sent[1]?.input.find((one) => one.type === 'function_call_output')
+    expect(answered?.output).toBe(
+      JSON.stringify([{ note: 'fonts', line: 2, text: 'The firmware font only, no bitmaps.' }]),
+    )
+  })
+
+  test('reads one whole note by the name a search gave', async () => {
+    const sent = fakeAsking([wants('read_note', { name: 'fonts' }), said('read it')])
+    const space = await firstSpace(token)
+    await noteIn(token, space, 'fonts.md', '# Fonts\n\nOne font.\n')
+
+    await question({ question: 'fonts?', model: 'gpt-6-astra' })
+    const answered = sent[1]?.input.find((one) => one.type === 'function_call_output')
+    expect(answered?.output).toBe('# Fonts\n\nOne font.\n')
+  })
+
+  /** The scope of the tools, which is the whole of what they are allowed to be. */
+  test('never reaches a note belonging to somebody else', async () => {
+    const sent = fakeAsking([
+      wants('search_notes', { query: 'secret' }),
+      wants('read_note', { name: 'theirs' }),
+      said('nothing found'),
+    ])
+
+    const other = await signIn(env, 'z@z.dev')
+    await noteIn(other, await firstSpace(other), 'theirs.md', 'a secret of their own\n')
+
+    await question({ question: 'anything?', model: 'gpt-6-astra' })
+
+    // The last request carries the whole conversation, so both answers are in it.
+    const answers = (sent.at(-1)?.input ?? [])
+      .filter((one) => one.type === 'function_call_output')
+      .map((one) => one.output)
+    expect(answers).toEqual(['nothing found', 'no such note'])
+  })
+
+  test('does reach a space somebody shared with the account', async () => {
+    const sent = fakeAsking([wants('search_notes', { query: 'shared' }), said('found it')])
+
+    const other = await signIn(env, 'y@y.dev')
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
+      .space.id
+    await noteIn(other, theirs, 'plan.md', 'a shared line\n')
+    await call(env, `/v1/spaces/${theirs}/share/invite`, {
+      token: other,
+      body: { email: 'a@b.dev', role: 'read' },
+    })
+
+    await question({ question: 'anything?', model: 'gpt-6-astra' })
+    const answered = sent[1]?.input.find((one) => one.type === 'function_call_output')
+    expect(answered?.output).toContain('a shared line')
+  })
+
+  test('says what OpenAI refused with, because somebody is standing there', async () => {
+    fakeAsking([{ error: { message: 'that model is not available to this account' } }])
+    const { status, json } = await question({ question: 'anything?', model: 'gpt-6-astra' })
+
+    expect(status).toBe(502)
+    expect(json.error).toBe('that model is not available to this account')
+  })
+
+  test('needs a key, a question and a model', async () => {
+    fakeAsking([said('never asked')])
+    expect((await question({ model: 'gpt-6-astra' })).status).toBe(400)
+    expect((await question({ question: '  ', model: 'gpt-6-astra' })).status).toBe(400)
+    expect((await question({ question: 'hi' })).status).toBe(400)
+    expect((await question({ question: 'hi', model: 'm', effort: 'quite hard' })).status).toBe(400)
+
+    await call(env, '/v1/ask/key', { method: 'DELETE', token })
+    const none = await question({ question: 'hi', model: 'gpt-6-astra' })
+    expect(none.status).toBe(400)
+    expect(none.json.error).toContain('OpenAI key')
+  })
+
+  /** The account's own credit is what this spends, and a phone in a pocket is
+   *  what a ceiling is for. */
+  test('stops after sixty in an hour', async () => {
+    fakeAsking([said('yes')])
+
+    for (let at = 0; at < 60; at++) {
+      const answer = await question({ question: 'again', model: 'gpt-6-astra' })
+      expect(answer.status, `question ${String(at + 1)}`).toBe(200)
+    }
+
+    const over = await question({ question: 'again', model: 'gpt-6-astra' })
+    expect(over.status).toBe(429)
+    expect(over.json.error).toContain('a lot of questions')
+  })
+})
+
+/* ── An utterance, as words ───────────────────────────────────────────── */
+
+describe('what the microphone heard', () => {
+  beforeEach(async () => {
+    await put(KEY)
+  })
+
+  function heard(body: BodyInit, as = token) {
+    return call(env, '/v1/ask/heard', {
+      method: 'POST',
+      token: as,
+      raw: body,
+      headers: { 'content-type': 'audio/wav' },
+    })
+  }
+
+  /** Which model a transcription asked for. `FormData.get` answers a string or a
+   *  file, and only one of those is a model name. */
+  function modelIn(form: FormData): string {
+    const value = form.get('model')
+    return typeof value === 'string' ? value : ''
+  }
+
+  test('comes back as words', async () => {
+    let model = ''
+    vi.stubGlobal('fetch', async (url: string, options: { body: FormData }) => {
+      expect(url).toBe('https://api.openai.com/v1/audio/transcriptions')
+      model = modelIn(options.body)
+      return Promise.resolve(new Response('open page three\n'))
+    })
+
+    const { status, json } = await heard(new Uint8Array([1, 2, 3, 4]))
+    expect(status).toBe(200)
+    expect(json.said).toBe('open page three')
+    expect(model).toBe('gpt-transcribe')
+  })
+
+  test('falls to the next model where the account has not got the first', async () => {
+    const tried: string[] = []
+    vi.stubGlobal('fetch', async (_url: string, options: { body: FormData }) => {
+      const model = modelIn(options.body)
+      tried.push(model)
+      return Promise.resolve(
+        model === 'whisper-1' ? new Response('next') : new Response('no', { status: 404 }),
+      )
+    })
+
+    expect((await heard(new Uint8Array([1]))).json.said).toBe('next')
+    expect(tried).toEqual(['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'])
+  })
+
+  test('answers null where none of them heard anything', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('', { status: 500 })))
+    expect((await heard(new Uint8Array([1]))).json.said).toBeNull()
+  })
+
+  test('refuses silence and refuses a recording that is too long', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('never asked')))
+
+    expect((await heard(new Uint8Array())).status).toBe(400)
+    expect(
+      (
+        await call(env, '/v1/ask/heard', {
+          method: 'POST',
+          token,
+          raw: new Uint8Array([1]),
+          headers: { 'content-type': 'audio/wav', 'content-length': String(9 * 1024 * 1024) },
+        })
+      ).status,
+    ).toBe(413)
+  })
+})
+
+/* ── A guest cannot ask ───────────────────────────────────────────────── */
+
+describe('a guest', () => {
+  /** A session a share link handed out, with no account behind it. */
+  async function guest(): Promise<string> {
+    const space = await firstSpace(token)
+    await noteIn(token, space, 'plan.md', '# Plan\n')
+
+    const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+      method: 'PUT',
+      token,
+      body: { role: 'read', mode: 'open' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+
+    const followed = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      body: { device: 'iPhone' },
+    })
+    return followed.json.token
+  }
+
+  /** Not a check in the ask routes: the session guard opens only what
+   *  `guestMayReach` names, and everything account-wide is left out of it. A key and
+   *  a set of notes are as account-wide as it gets. */
+  test('cannot ask, cannot set a key, cannot list models', async () => {
+    const as = await guest()
+    fakeAsking([said('never asked')])
+
+    expect((await question({ question: 'hi', model: 'gpt-6-astra' }, as)).status).toBe(403)
+    expect((await put(KEY, as)).status).toBe(403)
+    expect((await call(env, '/v1/ask/models', { token: as })).status).toBe(403)
+    expect((await call(env, '/v1/ask/key', { method: 'DELETE', token: as })).status).toBe(403)
+    expect((await state(as)).status).toBe(403)
+  })
+})

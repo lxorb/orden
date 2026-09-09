@@ -74,7 +74,7 @@ for (const stray of ['manifest.webmanifest', 'sw.js', 'registerSW.js']) {
 
 /** The origins the manifest allows. Anything else must not be in the package at
  *  all, whether or not it is ever asked for. */
-const ALLOWED = ['https://nibeditor.com', 'https://api.openai.com']
+const ALLOWED = ['https://nibeditor.com']
 
 /** A URL, as a package may carry one: not at all, unless the manifest allows it. */
 function plain(url) {

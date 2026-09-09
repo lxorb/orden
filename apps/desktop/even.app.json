@@ -10,7 +10,7 @@
     {
       "name": "network",
       "desc": "Sign in and keep your notes in step with your Nib account.",
-      "whitelist": ["https://nibeditor.com", "https://api.openai.com"]
+      "whitelist": ["https://nibeditor.com"]
     },
     {
       "name": "g2-microphone",

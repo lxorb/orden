@@ -259,7 +259,14 @@ export const fr: Dictionary = {
   'OpenAI key': 'Clé OpenAI',
   Model: 'Modèle',
   Reasoning: 'Réflexion',
-  'Asked from your glasses, never through Nib.': 'Demandé depuis vos lunettes, jamais via Nib.',
+  'Kept encrypted on your account, and never shown again.':
+    'Conservée chiffrée sur votre compte, et jamais réaffichée.',
+  'set, ends in …{tail}': 'définie, se termine par …{tail}',
+  'Saving the key': 'Enregistrement de la clé',
+  'this server cannot keep a key yet': 'Ce serveur ne peut pas encore garder de clé',
+  'that does not look like a key': 'Cela ne ressemble pas à une clé',
+  'that key could not be saved': 'Cette clé n’a pas pu être enregistrée',
+  'Sign in to ask a question.': 'Connectez-vous pour poser une question.',
   'Asking OpenAI which models this key can use':
     'Nib demande à OpenAI quels modèles cette clé peut utiliser',
   'Could not reach OpenAI': 'OpenAI injoignable',

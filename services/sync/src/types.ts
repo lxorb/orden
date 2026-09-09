@@ -30,6 +30,14 @@ export interface Env {
   /** Cloudflare Email Sending. Absent in tests, where codes are logged. */
   EMAIL?: EmailSender
   MAIL_FROM?: string
+
+  /** What the account's OpenAI key is encrypted under; see ask/key.ts.
+   *
+   *  Set with `wrangler secret put OPENAI_KEY_SECRET`. Without it the Worker
+   *  refuses to store a key rather than storing one in the clear, and the settings
+   *  pane says the server cannot keep one yet - which is the right way round: a key
+   *  somebody believes is encrypted and is not is worse than no key. */
+  OPENAI_KEY_SECRET?: string
 }
 
 /** The `send_email` binding's surface, which workers-types does not yet cover. */

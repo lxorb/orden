@@ -1,17 +1,22 @@
-/** Which models the account's own key may choose.
+/** Which models the account's key may choose, and the one line of prose under the
+ *  key field.
  *
  *  A store rather than a constant because the list comes from the API: model names
  *  change every few months, and a list written into the settings pane would be a
- *  list of models that used to exist. So the pane asks, once, when a key arrives
- *  and when it is opened with one already set.
+ *  list of models that used to exist. So the pane asks Nib, which asks OpenAI with
+ *  the account's own key and keeps the answer for a day; see the Worker's
+ *  ask/models.ts.
  *
- *  It also owns the one line of prose under the key field, because the three things
- *  that line can say - asking, a key the API refused, nothing to offer - are the
- *  three states of this fetch and nothing else knows them. */
+ *  It owns that one line because the four things it can say - asking, a key that was
+ *  refused, nothing to offer, nothing to say - are the four states of this fetch and
+ *  nothing else knows them. */
 
+import { account } from '../account.svelte'
+import { api } from '../api'
 import { key, t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
-import { EFFORTS, modelsFor } from './models'
+import { glassesKey } from './key.svelte'
+import { EFFORTS } from './models'
 
 /** How hard the model is asked to think, in the words a reader would use.
  *
@@ -37,31 +42,49 @@ export class Offered {
   constructor() {
     // A pane opened with a key already set: ask at once, so the model select is
     // there rather than appearing a second later.
-    if (modes.glassesKey) void this.ask(modes.glassesKey)
+    if (glassesKey.set) void this.ask()
   }
 
-  /** A key the reader typed or pasted. Kept first, then asked with. */
-  take(key: string): void {
-    modes.setGlassesKey(key)
+  /** A key the reader typed or pasted. Set first, then asked with. */
+  async take(given: string): Promise<void> {
     this.models = []
-    if (!modes.glassesKey) {
+
+    const key = given.trim()
+    if (!key) {
       this.said = ''
       return
     }
 
-    void this.ask(modes.glassesKey)
+    this.said = t('Saving the key')
+    const wrong = await glassesKey.put(key)
+    if (wrong) {
+      this.said = t(wrong)
+      return
+    }
+
+    await this.ask()
   }
 
-  private async ask(key: string): Promise<void> {
+  /** Takes the key away, and the models with it: they were that key's. */
+  async remove(): Promise<void> {
+    await glassesKey.remove()
+    this.models = []
+    this.said = ''
+  }
+
+  private async ask(): Promise<void> {
+    const token = account.accountToken
+    if (!token) return
+
     this.said = t('Asking OpenAI which models this key can use')
 
     let found: string[]
     try {
-      found = await modelsFor(key)
+      found = (await api.askModels(token)).models
     } catch (error) {
-      // A phone with no signal, a whitelist that does not have the origin on it, a
-      // key with a typo: all of them are "no models", and the reader needs the
-      // reason rather than an empty select.
+      // A phone with no signal, an account signed out, Nib being unreachable: all
+      // of them are "no models", and the reader needs the reason rather than an
+      // empty select.
       this.said = error instanceof Error ? error.message : t('Could not reach OpenAI')
       return
     }

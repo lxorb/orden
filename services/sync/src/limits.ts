@@ -116,6 +116,31 @@ export function mayTellTheOwner(env: Env, spaceId: string): Promise<boolean> {
   return within(env, 'waiting', spaceId, 1, AN_HOUR)
 }
 
+/** How many questions one account may ask the model in an hour, and how many
+ *  utterances it may have turned into words.
+ *
+ *  These cost somebody money - the account's own OpenAI credit - and the Worker is
+ *  what spends it now that the key never leaves the Worker. So the ceiling is not
+ *  about Nib's reputation like the mail ones; it is about a bug, or a phone in a
+ *  pocket, not being able to run through a month's credit in an afternoon.
+ *
+ *  Sixty questions is far more than a person walking around asks and far less than a
+ *  loop does. Utterances are the higher of the two because the microphone hears
+ *  every command, not only the questions - and only where the WebView has no
+ *  recogniser of its own, which is the phone doing the work for free. */
+const QUESTIONS_AN_HOUR = 60
+const UTTERANCES_AN_HOUR = 600
+
+/** Whether one more question may be asked, counting this one. */
+export function mayAsk(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'ask', userId, QUESTIONS_AN_HOUR, AN_HOUR)
+}
+
+/** Whether one more utterance may be turned into words, counting this one. */
+export function mayTranscribe(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'said', userId, UTTERANCES_AN_HOUR, AN_HOUR)
+}
+
 /** Whether a message may go now, and what to say when it may not.
  *
  *  Null is the answer that means yes, so that a caller writes

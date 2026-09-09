@@ -28,6 +28,7 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, stored } from './stored'
@@ -92,7 +93,6 @@ interface Saved {
   glassesLineNumbers: boolean
   glassesPageNumber: boolean
   glassesVoice: boolean
-  glassesKey: string
   glassesModel: string
   glassesEffort: string
   vim: boolean
@@ -200,12 +200,6 @@ class Modes {
    *  Off until asked for, which is the only defensible default for a microphone:
    *  it is turned on from the hold modal on the glasses, or here. */
   glassesVoice = $state(false)
-  /** The account's own OpenAI key, for the questions asked after the word
-   *  "question".
-   *
-   *  It goes from this device to api.openai.com and nowhere else: not through
-   *  Nib's own Worker, not through anything of ours. See even/ask.ts. */
-  glassesKey = $state('')
   /** Which model answers. Empty until the reader has chosen one from the list the
    *  API itself gave; see even/models.ts. */
   glassesModel = $state('')
@@ -264,7 +258,6 @@ class Modes {
       this.glassesLineNumbers = saved.glassesLineNumbers !== false
       this.glassesPageNumber = saved.glassesPageNumber !== false
       this.glassesVoice = saved.glassesVoice === true
-      this.glassesKey = text(saved.glassesKey, '')
       this.glassesModel = text(saved.glassesModel, '')
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
@@ -465,17 +458,6 @@ class Modes {
     this.share({ glassesVoice: on })
   }
 
-  /** The account's own key. Trimmed, because a key pasted off a web page brings a
-   *  newline with it and a header with a newline in it is not sent at all. */
-  setGlassesKey(given: string) {
-    const wanted = given.trim()
-    if (wanted === this.glassesKey) return
-
-    this.glassesKey = wanted
-    this.persist()
-    this.share({ glassesKey: wanted })
-  }
-
   setGlassesModel(model: string) {
     if (model === this.glassesModel) return
 
@@ -537,7 +519,13 @@ class Modes {
 
     let remote: AccountSettings
     try {
-      remote = (await api.settings(token)).settings
+      const answer = await api.settings(token)
+      remote = answer.settings
+      // Whether the account has an OpenAI key, and its last four characters. Not a
+      // setting - nothing can send it back up - but it comes back with them, so the
+      // pane and the bridge learn about it in the one request the app already
+      // makes. See even/key.svelte.ts.
+      glassesKey.took(answer.key)
     } catch {
       return null
     }
@@ -604,9 +592,6 @@ class Modes {
     }
     if (typeof remote.glassesVoice === 'boolean') {
       took(remote.glassesVoice, (on) => (this.glassesVoice = on))
-    }
-    if (typeof remote.glassesKey === 'string') {
-      took(remote.glassesKey, (given) => (this.glassesKey = given))
     }
     if (typeof remote.glassesModel === 'string') {
       took(remote.glassesModel, (model) => (this.glassesModel = model))
@@ -736,7 +721,6 @@ class Modes {
       glassesLineNumbers: this.glassesLineNumbers,
       glassesPageNumber: this.glassesPageNumber,
       glassesVoice: this.glassesVoice,
-      glassesKey: this.glassesKey,
       glassesModel: this.glassesModel,
       glassesEffort: this.glassesEffort,
       vim: this.vim,
