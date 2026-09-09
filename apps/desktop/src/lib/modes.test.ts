@@ -50,7 +50,7 @@ const api = vi.hoisted(() => {
 
   return {
     settings: async () => ({ settings: empty }),
-    saveSettings: async () => ({ settings: empty }),
+    saveSettings: async (_token: string, _patch: Held) => ({ settings: empty }),
   }
 })
 
@@ -59,6 +59,7 @@ interface Held {
   ligatures?: boolean | string
   attachments?: string
   vim?: boolean
+  glassesSeen?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -464,6 +465,83 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.attachments).toBe('space')
+  })
+
+  /** Emil, on his desktop: *"I don't see the glasses setting on desktop, even though I
+   *  already had the Even plugin open."* His account said nothing about `glassesSeen`
+   *  and plenty about the glasses settings he changed later in the same sitting, which
+   *  is the whole story: the plugin sees a pair within a moment of starting, the
+   *  session on a phone takes seconds to come back from the host app, and a patch with
+   *  nowhere to go was dropped for good. */
+  test('carries up what was decided before the session came back', async () => {
+    const patches: Held[] = []
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      return { settings: {} }
+    }
+    const { release, settingsCall } = heldAnswer({})
+    api.settings = settingsCall
+
+    // A plugin at the moment it starts: a pair of glasses has answered and there is
+    // no session to tell yet.
+    modes.sawGlasses()
+    expect(modes.glassesSeen).toBe(true)
+    expect(patches).toEqual([])
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(patches).toEqual([{ glassesSeen: true }])
+  })
+
+  test('and keeps owing it where the account could not be reached', async () => {
+    const patches: Held[] = []
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      throw new Error('offline')
+    }
+    api.settings = async () => {
+      throw new Error('offline')
+    }
+
+    modes.sawGlasses()
+    expect(await modes.adopt('token')).toBeNull()
+    expect(patches).toEqual([{ glassesSeen: true }])
+
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      return { settings: {} }
+    }
+    const { release, settingsCall } = heldAnswer({})
+    api.settings = settingsCall
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(patches).toEqual([{ glassesSeen: true }, { glassesSeen: true }])
+  })
+
+  /** The desktop half of the round trip: the flag comes down, the pane appears, and
+   *  nothing on this machine says it again. See services/sync/test/settings.test.ts
+   *  for the round trip through the Worker itself. */
+  test('takes it from the account, and then has nothing left to say', async () => {
+    const patches: Held[] = []
+    api.saveSettings = async (_token: string, patch: Held) => {
+      patches.push(patch)
+      return { settings: {} }
+    }
+    const { release, settingsCall } = heldAnswer({ glassesSeen: true })
+    api.settings = settingsCall
+
+    expect(modes.glassesSeen).toBe(false)
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.glassesSeen).toBe(true)
+    modes.sawGlasses()
+    expect(patches).toEqual([])
   })
 })
 

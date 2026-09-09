@@ -548,12 +548,29 @@ class Modes {
     this.share({ glassesWords: words })
   }
 
-  /** Said once by the plugin, the first time a pair of glasses answers. */
-  sawGlasses() {
-    if (this.glassesSeen) return
+  /** Whether the account has been told, this sitting, that a pair of glasses
+   *  answered. Not written down: what is written down is `glassesSeen`, and the
+   *  point of this is that the two are different questions. */
+  private toldOfGlasses = false
 
-    this.glassesSeen = true
-    this.persist()
+  /** Said by the plugin every time a pair of glasses answers, and passed on to the
+   *  account once a sitting.
+   *
+   *  Once a sitting rather than once a machine, which is what it was: the machine is
+   *  a plugin page whose own store a packed build loses - see account.svelte.ts,
+   *  which keeps the session somewhere else for exactly that reason - so "this
+   *  machine already knows" does not mean "the account has been told", and the
+   *  account is the only place the answer is any use to the desktop. Where the pull
+   *  has already shown that the account knows, nothing is sent at all. */
+  sawGlasses() {
+    if (this.toldOfGlasses) return
+
+    this.toldOfGlasses = true
+    if (!this.glassesSeen) {
+      this.glassesSeen = true
+      this.persist()
+    }
+
     this.share({ glassesSeen: true })
   }
 
@@ -614,7 +631,16 @@ class Modes {
     // says while the answer is in the air is newer than the answer, so the
     // answer stops being worth adopting: the account already has the newer
     // value, and taking the older one back would undo the reader's own switch.
+    //
+    // Read before anything is awaited, or a choice made in the same tick as this
+    // call would be counted as older than an answer that had not left yet.
     const asked = this.sent
+
+    // Whatever this machine decided before it knew there was an account goes up
+    // first; see `share`. It is one request and only when something is owed, so an
+    // ordinary start still asks once. It is not a choice, so it is not counted as
+    // one: what `asked` is about is the reader changing their mind.
+    await this.settle(token)
 
     let remote: AccountSettings
     try {
@@ -703,6 +729,8 @@ class Modes {
     }
     if (remote.glassesSeen === true) {
       took(true, (seen) => (this.glassesSeen = seen))
+      // The account knows, so nothing here has to tell it again.
+      this.toldOfGlasses = true
     }
     if (typeof remote.glassesModel === 'string') {
       took(remote.glassesModel, (model) => (this.glassesModel = model))
@@ -719,14 +747,58 @@ class Modes {
    *  answer that set off earlier from one that set off later. */
   private sent = 0
 
+  /** What was decided with no session to tell, waiting for one.
+   *
+   *  Emil, on his desktop: *"I don't see the glasses setting on desktop, even though
+   *  I already had the Even plugin open."* The account said nothing about
+   *  `glassesSeen` and everything about the settings he had changed later in the same
+   *  sitting, which is the whole story: the plugin sees a pair of glasses within a
+   *  moment of starting, and on a phone the session takes seconds to come back
+   *  because it comes from the host app rather than from the page. So `sawGlasses`
+   *  ran with `accountToken` still null, the patch went nowhere, and - being already
+   *  true on that machine - it was never said again.
+   *
+   *  Anything said once and only once has that shape, so it is kept here rather than
+   *  fixed in one caller: a patch with nowhere to go waits, and goes up with the next
+   *  one that has somewhere, or on the next settings pull. */
+  private owed: AccountSettings = {}
+
   /** Tells the account, when there is one. A machine that is offline keeps
-   *  its own choice; the next change made online carries it up. */
+   *  its own choice, and carries it up the moment there is somewhere to carry it. */
   private share(patch: AccountSettings) {
     this.sent++
 
     const token = account.accountToken
-    if (!token) return
-    void api.saveSettings(token, patch).catch(() => undefined)
+    if (!token) {
+      this.owed = { ...this.owed, ...patch }
+      return
+    }
+
+    const owed = this.owed
+    this.owed = {}
+    void api.saveSettings(token, { ...owed, ...patch }).catch(() => {
+      // It never arrived, so it is owed again - behind anything said since, which
+      // is newer than both.
+      this.owed = { ...owed, ...patch, ...this.owed }
+    })
+  }
+
+  /** Sends what was decided before there was an account to tell it to.
+   *
+   *  Before the pull rather than after, so that what comes back down is an account
+   *  with those decisions in it: this machine and the account then agree, instead of
+   *  the pull handing back an account that had not heard yet and `adoptGlasses`
+   *  taking that older answer. */
+  private async settle(token: string): Promise<void> {
+    const owed = this.owed
+    if (!Object.keys(owed).length) return
+
+    this.owed = {}
+    try {
+      await api.saveSettings(token, owed)
+    } catch {
+      this.owed = { ...owed, ...this.owed }
+    }
   }
 
   toggleCloseBrackets(view?: EditorView) {

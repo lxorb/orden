@@ -272,6 +272,23 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesSeen: 'yes' })).status).toBe(400)
   })
 
+  /** Emil, on his desktop: *"I don't see the glasses setting on desktop, even though I
+   *  already had the Even plugin open."* One device says it and another reads it, which
+   *  is the whole of what the setting is for - so the round trip is the test, not the
+   *  one session patching and reading its own answer back. */
+  test('and hand that to every other device on the account', async () => {
+    const phone = await signIn(env, 'a@b.dev')
+    const desktop = await signIn(env, 'a@b.dev')
+
+    const before = await call(env, '/v1/settings', { token: desktop })
+    expect(before.json.settings.glassesSeen).toBeUndefined()
+
+    expect((await patch({ glassesSeen: true }, phone)).status).toBe(200)
+
+    const after = await call(env, '/v1/settings', { token: desktop })
+    expect(after.json.settings.glassesSeen).toBe(true)
+  })
+
   test('refuse a model long enough to be a novel', async () => {
     expect((await patch({ glassesModel: 'x'.repeat(101) })).status).toBe(400)
     expect((await patch({ glassesModel: 'gpt-6-astra' })).status).toBe(200)
