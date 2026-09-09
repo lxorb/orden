@@ -100,6 +100,45 @@ const SMALL_A = 97
 const SMALL_Z = 122
 const ASCII = 128
 
+/** What a loose walk did, counted. */
+export interface Work {
+  /** Notes it was asked about. */
+  notes: number
+  /** Lines of them it looked at, which is every line with words on it up to the
+   *  one that answers the note. */
+  lines: number
+  /** Terms it scored against a line: a two-word query scoring one line is two of
+   *  these, so what a second word costs is a number rather than a feeling. */
+  terms: number
+  /** Characters it read looking for a term's letters. The one that says a walk
+   *  given a line stopped at the end of it: a walk that ran on to the end of the
+   *  note instead reads a note's length per line of it, which is the quadratic
+   *  this file is written to avoid and which shows up here as a factor of
+   *  hundreds. The newlines the lines are found by are not in it; those are one
+   *  pass over the note however the scoring goes. */
+  characters: number
+}
+
+function nothing(): Work {
+  return { notes: 0, lines: 0, terms: 0, characters: 0 }
+}
+
+const work = nothing()
+
+/** What the walks since this was last asked did, and zero from here.
+ *
+ *  Here for fuzzy.perf.test.ts, which asserts these rather than a stopwatch: two
+ *  timings held against each other say as much about the queue in front of the
+ *  code as about the code, and a fraction of a percent of drift under a loaded
+ *  machine fails a test that has found nothing wrong. A count is the same number
+ *  on a busy machine as on an idle one. The counting itself is four adds over a
+ *  pass that reads megabytes. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
 /** Whether `letter` is one with a small and a capital form, and is the small
  *  one. Reading the pair rather than a range, so it holds outside ASCII. */
 function isLower(letter: string): boolean {
@@ -124,6 +163,17 @@ function opens(body: string, at: number): boolean {
 
   const here = body.charCodeAt(at)
   return here >= ASCII ? !isLower(body.charAt(at)) : here < SMALL_A || here > SMALL_Z
+}
+
+/** Where a letter next sits at or after `from` in the whole note, or -1.
+ *
+ *  The one place a walk reads past the line it was given: a term's first letter
+ *  is looked for over the note, and the cursor every caller keeps is what holds
+ *  that to one pass over the note rather than one pass per line. */
+function seek(folded: string, letter: string, from: number): number {
+  const at = folded.indexOf(letter, from)
+  work.characters += (at === -1 ? folded.length : at + letter.length) - from
+  return at
 }
 
 /** Where a letter next sits between `cursor` and `to`, or -1.
@@ -164,7 +214,11 @@ function walk(letters: readonly string[], folded: string, at: number, to: number
   let cursor = at + 1
 
   for (let index = 1; index < letters.length; index++) {
-    const found = placeIn(folded, letters[index] ?? '', cursor, to)
+    const letter = letters[index] ?? ''
+    const found = placeIn(folded, letter, cursor, to)
+    // Counted out here rather than inside the search, which is the hottest loop
+    // in the file: what it read is where it stopped, or the rest of the line.
+    work.characters += (found === -1 ? to : found + letter.length) - cursor
     if (found === -1) return false
 
     out.push(found)
@@ -227,6 +281,7 @@ function fitAt(
   kept: number[],
   tried: number[],
 ): { score: number; next: number } | null {
+  work.terms += 1
   let score: number | null = null
   let at = first
   let next = first
@@ -245,7 +300,7 @@ function fitAt(
       for (const one of tried) kept.push(one)
     }
 
-    at = folded.indexOf(letters[0] ?? '', at + 1)
+    at = seek(folded, letters[0] ?? '', at + 1)
     next = at
   }
 
@@ -261,7 +316,7 @@ export function fit(term: string, line: string): { score: number; ranges: Range[
 
   const text = line.length > SCORED ? line.slice(0, SCORED) : line
   const folded = fold(text)
-  const first = folded.indexOf(letters[0] ?? '')
+  const first = seek(folded, letters[0] ?? '', 0)
   if (first === -1) return null
 
   const kept: number[] = []
@@ -383,6 +438,7 @@ export class Fuzzy {
     const words = this.words
     if (!words.length) return null
 
+    work.notes += 1
     const body = note.body
     // The copy the exact pass already made, when it made one; see `foldedOnce`
     // in match.ts. Folding a space of notes twice over was most of what a loose
@@ -393,7 +449,7 @@ export class Fuzzy {
     // the whole note costs one pass per term rather than one pass per line.
     const next: number[] = []
     for (const letters of words) {
-      const at = folded.indexOf(letters[0] ?? '')
+      const at = seek(folded, letters[0] ?? '', 0)
       // A letter the note does not hold at all takes the note out before a
       // single line of it has been scored.
       if (at === -1) return null
@@ -426,6 +482,7 @@ export class Fuzzy {
       const end = broke === -1 ? body.length : broke
 
       if (end > from) {
+        work.lines += 1
         const to = end - from > SCORED ? from + SCORED : end
         positions.length = 0
         let score = 0
@@ -436,7 +493,7 @@ export class Fuzzy {
           let at = next[which] ?? -1
 
           if (at < from) {
-            at = folded.indexOf(letters[0] ?? '', from)
+            at = seek(folded, letters[0] ?? '', from)
             if (at === -1) {
               gone = true
               all = false
