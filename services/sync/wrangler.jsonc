@@ -51,8 +51,10 @@
 
   // Domains people bring are served through Cloudflare for SaaS: the owner
   // CNAMEs their domain to BLOG_CNAME_TARGET, and the Worker asks the zone for
-  // a "custom hostname" so the edge has a certificate to answer with. That
-  // needs, once, in the dashboard for nibeditor.com:
+  // a "custom hostname" so the edge has a certificate to answer with. Nothing is
+  // asked for until the domain has been shown to be theirs by a TXT record at
+  // `_nib-verify.<domain>`; see src/spaces/proof.ts. That needs, once, in the
+  // dashboard for nibeditor.com:
   //   1. SSL/TLS > Custom Hostnames: enable Cloudflare for SaaS (a payment
   //      method is asked for; the first hundred hostnames are free).
   //   2. A proxied DNS record for the target, with nothing behind it:
@@ -84,7 +86,11 @@
   // A third route, "*/*", is what lets the Worker answer for custom hostnames
   // (Cloudflare for SaaS). The routes API refuses a wildcard host until SaaS is
   // enabled on the zone (error 10022), so it is added back once that is done.
-  // Recently deleted is emptied once a day; see purgeExpired in trash.ts.
+  // Once a day, everything that has run out of time: Recently deleted is emptied,
+  // guests nobody let in and requests nobody answered go, a client that
+  // registered and never came back goes, and the record proving each domain of
+  // somebody's own is read again. See `scheduled` in src/index.ts, which names
+  // the five.
   "triggers": { "crons": ["0 3 * * *"] },
   "routes": [
     { "pattern": "nibeditor.com/*", "zone_name": "nibeditor.com" },
