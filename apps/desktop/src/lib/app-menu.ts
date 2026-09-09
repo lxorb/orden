@@ -85,6 +85,21 @@ export function isSubmenu(row: MenuRow): row is MenuSubmenu {
   return row !== SPLIT && 'rows' in row
 }
 
+/** Which of a list's rows a key may stand on, as places in the list.
+ *
+ *  A rule between groups is nothing to land on and neither is a row that is
+ *  greyed out, so the arrows step over both. Here rather than in the component
+ *  because it is the shape of the list rather than anything about the screen; see
+ *  AppMenu.svelte. */
+export function walkableRows(rows: readonly MenuRow[]): number[] {
+  const out: number[] = []
+  for (const [index, row] of rows.entries()) {
+    if (row !== SPLIT && !row.disabled) out.push(index)
+  }
+
+  return out
+}
+
 export interface MenuGroup {
   id: string
   label: string

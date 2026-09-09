@@ -24,7 +24,8 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 /** Loaded once, at module scope: the menu and the command list reach half the app,
  *  and compiling that belongs to no one test. See docs/conventions.md. */
-const { appMenu, isSubmenu, ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./app-menu')
+const { appMenu, isSubmenu, ISSUES_URL, RELEASES_URL, SOURCE_URL, walkableRows } =
+  await import('./app-menu')
 const { appCommands } = await import('./commands')
 const { BY_ID } = await import('./shortcuts/registry')
 const { i18n } = await import('./i18n.svelte')
@@ -247,5 +248,50 @@ describe('the palette in another language', () => {
 
     for (const row of themes) expect(row.hint, row.id).toBeUndefined()
     expect(themes.filter((one) => one.checked).length).toBe(1)
+  })
+})
+
+describe('where a key may stand in a menu', () => {
+  const act = (label: string, disabled = false): MenuAction => ({
+    label,
+    disabled,
+    run: () => undefined,
+  })
+
+  test('is every row there is, in the order they are drawn', () => {
+    expect(walkableRows([act('one'), act('two'), act('three')])).toEqual([0, 1, 2])
+  })
+
+  test('is never a rule between groups', () => {
+    expect(walkableRows([act('one'), null, act('two')])).toEqual([0, 2])
+  })
+
+  /** A greyed row does nothing when it is clicked, so landing on it would be a
+   *  press that went nowhere and a cursor that looked stuck. */
+  test('is never a row that is greyed out', () => {
+    expect(walkableRows([act('one'), act('two', true), act('three')])).toEqual([0, 2])
+  })
+
+  test('is a row that leads to more rows, which is where it leads', () => {
+    const rows: MenuRow[] = [act('one'), { label: 'Export', rows: [act('as a PDF')] }]
+    expect(walkableRows(rows)).toEqual([0, 1])
+  })
+
+  test('has nowhere at all in an empty list', () => {
+    expect(walkableRows([])).toEqual([])
+    expect(walkableRows([null, null])).toEqual([])
+  })
+
+  test('is somewhere in the File group, which is live whatever is open', () => {
+    expect(walkableRows(group('file').rows).length).toBeGreaterThan(0)
+  })
+
+  /** A group whose every row is greyed - Paragraph, with no note in front - has
+   *  nowhere for a key to stand at all, which is why the cursor starts on
+   *  nothing rather than on the first row. */
+  test('is nowhere in a group where every row is greyed out', () => {
+    const paragraph = group('paragraph')
+    expect(paragraph.rows.length).toBeGreaterThan(0)
+    expect(walkableRows(paragraph.rows)).toEqual([])
   })
 })

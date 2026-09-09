@@ -2,11 +2,12 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
-  import { appMenu, isSubmenu, type MenuGroup, type MenuRow, SPLIT } from './app-menu'
+  import { appMenu, isSubmenu, type MenuGroup, type MenuRow, SPLIT, walkableRows } from './app-menu'
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { t } from './i18n.svelte'
   import { viewport } from './viewport.svelte'
+  import { walked } from './walk'
   import { dur } from './motion'
 
   const {
@@ -23,17 +24,29 @@
    *  their head. */
   let into = $state<string | null>(null)
 
+  /** Which row a key would act on, as a place in `walkable`. Null until a key is
+   *  pressed, so a menu opened with the mouse shows nothing lit under a hand
+   *  that is already pointing at what it wants. */
+  let at = $state<number | null>(null)
+  let surface = $state<HTMLElement>()
+
+  /** The way back out of a submenu, which is a row a key can land on like any
+   *  other but is not one of the group's own. */
+  const BACK = -1
+
   function show() {
     // Built on opening, so what is ticked and what is greyed out describes now.
     groups = appMenu({ view, onpalette, onhistory })
     current = groups[0]?.id ?? 'file'
     into = null
+    at = null
     open = true
   }
 
   function choose(id: string) {
     current = id
     into = null
+    at = null
   }
 
   const shown = $derived(groups.find((one) => one.id === current))
@@ -47,6 +60,107 @@
     const found = all.find((row) => isSubmenu(row) && row.label === into)
     return found && isSubmenu(found) ? found.rows : all
   })
+
+  /** Where a key may stand, in the order the rows are drawn. Inside a submenu
+   *  the way back out is the first of them. */
+  const walkable = $derived(into === null ? walkableRows(rows) : [BACK, ...walkableRows(rows)])
+
+  /** The row the cursor is on, as a place in `rows`. */
+  const cursor = $derived(at === null ? null : (walkable[at] ?? null))
+
+  /** The menu takes the keyboard when it opens, so the first press is the
+   *  menu's and not the note's underneath it. */
+  $effect(() => {
+    if (open) surface?.focus()
+  })
+
+  /** Into a submenu. A key that stepped in stands on its first row, the way a
+   *  hand that arrives from a keyboard expects to; a pointer that clicked in is
+   *  already aiming at what it wants and lights nothing. */
+  function enter(label: string, standing = false) {
+    into = label
+    at = standing ? Math.min(1, walkable.length - 1) : null
+  }
+
+  /** Back out to the group's own rows, standing on the row that led in: coming
+   *  out of a submenu should leave the hand where it went in. */
+  function leave() {
+    const label = into
+    into = null
+
+    const led = rows.findIndex((row) => row !== SPLIT && isSubmenu(row) && row.label === label)
+    const found = walkable.indexOf(led)
+    at = found < 0 ? null : found
+  }
+
+  /** The group beside this one, which is what left and right mean where the row
+   *  under the cursor leads nowhere. */
+  function sideways(direction: number) {
+    const index = groups.findIndex((one) => one.id === current)
+    const next = groups[(index + direction + groups.length) % groups.length]
+    if (next) choose(next.id)
+  }
+
+  /** The row under the cursor, pressed. A submenu steps in, the way back steps
+   *  out, and anything else runs and closes the menu, exactly as a click does. */
+  function activate() {
+    if (cursor === null) return
+    if (cursor === BACK) {
+      leave()
+      return
+    }
+
+    const row = rows[cursor]
+    if (row === undefined || row === SPLIT) return
+    if (isSubmenu(row)) {
+      enter(row.label, true)
+      return
+    }
+
+    open = false
+    row.run()
+  }
+
+  function onKey(event: KeyboardEvent) {
+    // A long menu wraps: that is how a hand reaches the last row of one.
+    const moved = walked(event.key, at, walkable.length, true)
+    if (moved !== null) {
+      event.preventDefault()
+      at = moved
+      return
+    }
+
+    const row = cursor === null || cursor === BACK ? null : rows[cursor]
+
+    switch (event.key) {
+      case 'Enter':
+      case ' ':
+        event.preventDefault()
+        activate()
+        return
+      case 'ArrowRight':
+        event.preventDefault()
+        if (row && isSubmenu(row)) enter(row.label, true)
+        else sideways(1)
+        return
+      case 'ArrowLeft':
+        event.preventDefault()
+        if (into !== null) leave()
+        else sideways(-1)
+        return
+      case 'Escape':
+        // A submenu is what is open while one is, so the press closes that and
+        // the next one closes the menu; see overlays.ts, which the press would
+        // otherwise reach on the window.
+        if (into === null) return
+        event.preventDefault()
+        event.stopPropagation()
+        leave()
+        return
+      default:
+        return
+    }
+  }
 
   /** A popover that grows out of the button on a desktop; a sheet from the
    *  bottom on a phone, where the thumb is. */
@@ -81,7 +195,19 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => (open = false)}></div>
 
-  <div class="menu" class:phone={viewport.touch} transition:arrive>
+  <!-- The keyboard lands on the menu itself and the cursor is a row it names,
+       rather than the focus walking from button to button: a menu is one thing
+       being read down, and Tab through nineteen rows is not reading it. -->
+  <div
+    bind:this={surface}
+    class="menu"
+    class:phone={viewport.touch}
+    transition:arrive
+    role="menu"
+    tabindex="-1"
+    aria-activedescendant={cursor === null ? undefined : `nib-menu-${cursor}`}
+    onkeydown={onKey}
+  >
     {#if viewport.touch}
       <div class="grip" aria-hidden="true"></div>
     {/if}
@@ -109,7 +235,14 @@
            step out, and nothing that has to be aimed at. -->
       {#if into !== null}
         <li>
-          <button class="row back" onclick={() => (into = null)}>
+          <button
+            id="nib-menu-{BACK}"
+            class="row back"
+            class:selected={cursor === BACK}
+            role="menuitem"
+            onmouseenter={() => (at = walkable.indexOf(BACK))}
+            onclick={leave}
+          >
             <span class="tick" aria-hidden="true">
               <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
             </span>
@@ -127,7 +260,15 @@
 
         {#if leads}
           <li>
-            <button class="row" disabled={leads.disabled} onclick={() => (into = leads.label)}>
+            <button
+              id="nib-menu-{index}"
+              class="row"
+              class:selected={cursor === index}
+              role="menuitem"
+              disabled={leads.disabled}
+              onmouseenter={() => (at = walkable.indexOf(index))}
+              onclick={() => enter(leads.label)}
+            >
               <span class="tick"></span>
               <span class="label">{leads.label}</span>
               <span class="more" aria-hidden="true">
@@ -138,8 +279,12 @@
         {:else if action}
           <li>
             <button
+              id="nib-menu-{index}"
               class="row"
+              class:selected={cursor === index}
+              role="menuitem"
               disabled={action.disabled}
+              onmouseenter={() => (at = walkable.indexOf(index))}
               onclick={() => {
                 open = false
                 action.run()
@@ -247,10 +392,19 @@
     cursor: default;
   }
 
+  /* The row a key is standing on wears exactly what a row under the pointer
+     wears: one menu, one place in it, whichever hand is doing the moving. */
   button:hover:not(:disabled),
+  .row.selected,
   .groups button.on {
     background: var(--surface-2);
     color: var(--text-strong);
+  }
+
+  /* The keyboard is on the menu rather than on a row, so the box a browser would
+     draw round the menu says nothing about where the cursor is. */
+  .menu:focus-visible {
+    outline: none;
   }
 
   .groups button:active:not(:disabled) {
