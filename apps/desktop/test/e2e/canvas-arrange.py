@@ -445,6 +445,8 @@ def check_connector(page: Page) -> None:
         say("an arrow dragged from one card to another became a connector")
         shot(page, "canvas-connector-made")
 
+    tool(page, "v")
+
 
 def check_shape_text(page: Page) -> None:
     """Item 9c: a shape holds words."""
@@ -474,6 +476,86 @@ def check_shape_text(page: Page) -> None:
         say("a shape shows the words inside it")
 
     shot(page, "canvas-shape-words")
+
+    # And Enter opens the words of whatever is picked, shape or card alike. On the
+    # triangle's own line: a hollow shape is its outline, and the plane of nothing
+    # inside it is nothing to a press too.
+    tool(page, "v")
+    empty = page.locator('.canvas .node[data-id="ee"]').first.bounding_box()
+    assert empty
+    # A quarter along the bottom line rather than the middle of it: the middle of a side
+    # is where the dot a connector is dragged from sits, and that press means that.
+    page.mouse.click(empty["x"] + empty["width"] * 0.25, empty["y"] + empty["height"] - 2)
+    page.wait_for_timeout(250)
+
+    if page.locator(".canvas .node.shape.picked").count() < 1:
+        fail("a press on a shape's own line does not pick it")
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(400)
+
+    if page.locator(".canvas .node.shape .editor").count() < 1:
+        fail("Enter does not open the words inside a shape")
+    else:
+        say("Enter opens the words inside a shape")
+        shot(page, "canvas-shape-writing")
+
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+
+
+def check_more_menu(page: Page) -> None:
+    """Item 9f: lining up and spreading out, in the menu behind the selection bar."""
+    say("--- the rest of what can be done ---")
+
+    three_cards(page)
+    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.keyboard.press("Control+a")
+    page.wait_for_timeout(300)
+
+    more = page.locator('.over button[aria-label="More"]').first
+    if more.count() < 1:
+        fail("the bar over what is picked offers no menu")
+        return
+
+    more.click()
+    page.wait_for_timeout(400)
+
+    for wanted in ("Align left", "Spread across", "Group", "Bring to front"):
+        if page.get_by_text(wanted, exact=True).count() < 1:
+            fail(f"the selection bar's menu does not offer {wanted}")
+
+    say("the selection bar's menu offers lining up, spreading out and the z order")
+    shot(page, "canvas-more-menu")
+
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+
+
+def check_broken_picture(page: Page) -> None:
+    """Item 10: a picture the space no longer holds is a calm placeholder."""
+    say("--- a picture that is not there ---")
+
+    fresh(page)
+    page.evaluate(
+        """() => {
+          const tab = window.nibApp.workspace.active
+          tab.note.replace(JSON.stringify({
+            nodes: [
+              { id: 'ff', type: 'file', x: -120, y: -80, width: 240, height: 160,
+                file: 'gone/nowhere.png' },
+            ],
+            edges: [],
+          }, null, '\\t') + '\\n')
+        }"""
+    )
+    page.wait_for_timeout(900)
+
+    if page.locator(".canvas .node .missing").count() < 1:
+        fail("a picture the space no longer holds shows no placeholder")
+    else:
+        say("a picture the space no longer holds shows a calm placeholder")
+
+    shot(page, "canvas-picture-gone")
 
 
 def fresh(page: Page) -> None:
@@ -968,10 +1050,13 @@ def drive(browser, theme: str) -> None:
     context.add_init_script(PREPARE)
     page = context.new_page()
     page.on("pageerror", lambda error: fail(f"[{theme}] page error: {error}"))
+    # Every error the page reports is a failure, except the one this drive goes looking
+    # for: a picture the space no longer holds is meant to 404, and what is being checked
+    # is the placeholder that goes in its place.
     page.on(
         "console",
         lambda one: fail(f"[{theme}] console error: {one.text}")
-        if one.type == "error"
+        if one.type == "error" and "404" not in one.text
         else None,
     )
 
@@ -990,7 +1075,9 @@ def drive(browser, theme: str) -> None:
         check_connector(page)
         check_shape_text(page)
         check_arranging(page)
+        check_more_menu(page)
         check_picture(page)
+        check_broken_picture(page)
         check_sharp_stroke(page, cdp)
         check_pen_button(page, cdp)
         if theme == "light":

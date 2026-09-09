@@ -401,7 +401,14 @@
   /* Being written in is the one time the words take the pointer back. */
   .editor.inside {
     pointer-events: auto;
+    height: auto;
     text-align: left;
+  }
+
+  /* As tall as what is in it rather than as tall as the shape, so the line being
+     typed sits where the line being read sat: in the middle. */
+  .editor.inside :global(.cm-editor) {
+    height: auto;
   }
 
   .label {
