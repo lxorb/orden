@@ -48,6 +48,8 @@
   import {
     boxOf,
     caught,
+    edgeEnds,
+    edgeMiddle,
     GRID,
     HANDLES,
     overlaps,
@@ -1081,11 +1083,28 @@
     if (colour !== null) tools.colour = colour
   }
 
+  /** What the bar over a selection is put on. Whatever is picked has a box, except
+   *  a connector, which is a line between two cards: the middle of the line it draws
+   *  stands in for one, so a connector can be coloured and copied like everything
+   *  else. */
+  const pickedSpan = $derived.by(() => {
+    if (box) return box
+
+    const edge = shown.edges.find((one) => store.isPicked(one.id))
+    const from = edge && shown.nodes.find((one) => one.id === edge.fromNode)
+    const to = edge && shown.nodes.find((one) => one.id === edge.toNode)
+    if (!edge || !from || !to) return null
+
+    const at = edgeMiddle(edgeEnds(edge, boxOf(from), boxOf(to)))
+    return { x: at.x, y: at.y, width: 0, height: 0 }
+  })
+
   /** Where the bar over what is picked goes: the middle of the top edge of it, on
    *  screen, and under it instead when the selection is against the top of the pane.
    *  Nothing at all while a gesture is under way or a card is being written in: the
    *  hand is busy, and a bar under the pointer would be in the way of it. */
   const overPicked = $derived.by(() => {
+    const box = pickedSpan
     if (!box || gesture || store.editing !== null || !store.picked.length) return null
 
     const middle = originX + (box.x + box.width / 2) * camera.scale
@@ -1318,7 +1337,7 @@
       onduplicate={() => run.duplicate(store)}
       ondelete={() => run.remove(store)}
       onmore={() => {
-        if (box) showMenu({ x: box.x + box.width / 2, y: box.y })
+        if (pickedSpan) showMenu({ x: pickedSpan.x + pickedSpan.width / 2, y: pickedSpan.y })
       }}
     />
   {/if}
