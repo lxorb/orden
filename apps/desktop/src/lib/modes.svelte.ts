@@ -15,7 +15,9 @@ import {
   setSmartPunctuation,
   remeasure,
   setSourceMode,
+  isSpellWord,
   setSpellcheck,
+  setSpellWords,
   setStrictMode,
   setTypewriterMode,
   setVim,
@@ -33,10 +35,14 @@ import { glassesKey } from './even/key.svelte'
 import { isScroll, type Scroll } from './even/scroll'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
-import { isNumber, isRecord, isString, stored } from './stored'
+import { isNumber, isRecord, isString, stored, stringList } from './stored'
 import { currentWindow } from './tauri'
 
 const STORAGE_KEY = 'nib:modes'
+
+/** Well past any reader's own list, and a ceiling so the pattern built from it
+ *  stays something a regular expression engine will take; see spelling.ts. */
+const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
 /** Writing column widths, in rem. */
@@ -88,6 +94,7 @@ interface Saved {
   lineHeight: number
   spellcheck: boolean
   spellLanguage: string
+  spellWords: string[]
   alwaysOnTop: boolean
   closeBrackets: boolean
   ligatures: LigatureScope
@@ -200,6 +207,14 @@ class Modes {
   /** The dictionary to check against; `system` leaves it to the browser, which
    *  reads the language the machine is set to. */
   spellLanguage = $state('system')
+  /** The words the reader has said are words: names, terms, a project. The
+   *  checker is turned off over each of them wherever it appears, which is what
+   *  takes the wavy line away; see spelling.ts in the editor package for why
+   *  that, and not the platform's own dictionary.
+   *
+   *  The account's rather than this machine's: a name you write about is a name
+   *  you write about on every device. */
+  spellWords = $state<string[]>([])
   /** This window over every other application's. A desktop's, and this machine's
    *  rather than the account's: which window is in front is about the desk it is
    *  on. */
@@ -303,6 +318,9 @@ class Modes {
       this.lineHeight = measure(saved.lineHeight, 1.72)
       this.spellcheck = saved.spellcheck !== false
       this.spellLanguage = text(saved.spellLanguage, 'system')
+      this.spellWords = (stringList(saved.spellWords) ?? [])
+        .filter(isSpellWord)
+        .slice(0, MOST_SPELL_WORDS)
       this.alwaysOnTop = saved.alwaysOnTop === true
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
@@ -368,6 +386,7 @@ class Modes {
       equationNumbers: this.equationNumbers,
       spellcheck: this.spellcheck,
       dictionary: this.dictionary,
+      words: this.spellWords,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
       vim: this.vim,
@@ -459,6 +478,32 @@ class Modes {
    *  the browser is to pick. */
   private get dictionary(): string | undefined {
     return this.spellLanguage === 'system' ? undefined : this.spellLanguage
+  }
+
+  /** Adds a word to the reader's own list, or takes it away when it is already
+   *  there. One call for both, because the menu row and the settings row are the
+   *  same act said twice.
+   *
+   *  Kept lowercased and sorted, so the list reads as a list rather than as the
+   *  order somebody happened to meet the words in, and a word added twice in two
+   *  cases is one word. */
+  toggleSpellWord(word: string, view?: EditorView) {
+    const wanted = word.trim().toLowerCase()
+    if (!isSpellWord(wanted)) return
+
+    const rest = this.spellWords.filter((one) => one !== wanted)
+    const words = rest.length === this.spellWords.length ? [...rest, wanted].sort() : rest
+    if (words.length > MOST_SPELL_WORDS) return
+
+    this.spellWords = words
+    this.each(view, (one) => setSpellWords(one, words))
+    this.persist()
+    this.share({ spellWords: words })
+  }
+
+  /** Whether a word is already one of the reader's own. */
+  knowsWord(word: string): boolean {
+    return this.spellWords.includes(word.trim().toLowerCase())
   }
 
   setSpellLanguage(value: string, view?: EditorView) {
@@ -679,6 +724,19 @@ class Modes {
       this.persist()
     }
 
+    // The reader's own words. Taken whole rather than merged: the list is what
+    // the account says it is, and a word taken away on another device should
+    // stay taken away rather than being put back by this one.
+    const words = remote.spellWords
+    if (Array.isArray(words) && unheard) {
+      const kept = words.filter(isSpellWord).slice(0, MOST_SPELL_WORDS)
+      if (kept.join(' ') !== this.spellWords.join(' ')) {
+        this.spellWords = kept
+        this.each(undefined, (one) => setSpellWords(one, kept))
+        this.persist()
+      }
+    }
+
     // The Glasses section. All of it comes back down, which is the whole reason it
     // is on the account rather than on the machine: the plugin runs on a phone and
     // is set up on a desktop, and typing a key into a phone through a WebView is
@@ -897,6 +955,7 @@ class Modes {
       lineHeight: this.lineHeight,
       spellcheck: this.spellcheck,
       spellLanguage: this.spellLanguage,
+      spellWords: this.spellWords,
       alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,

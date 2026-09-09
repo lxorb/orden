@@ -19,6 +19,7 @@ import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 import { codeThemeEffect } from './code-theme'
 import { ligatures, type LigatureScope } from './ligatures'
+import { knownWords, spellingWords } from './spelling'
 import { once } from './once'
 import { wrapSelection } from './wrap'
 import { vimEffect, vimExtensions } from './vim'
@@ -32,6 +33,7 @@ const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
 const spelling = new Compartment()
+const spellWords = new Compartment()
 const brackets = new Compartment()
 const glyphs = new Compartment()
 const readOnly = new Compartment()
@@ -146,6 +148,7 @@ export function modeExtensions(): Extension {
     // Off until asked for: a checker's wavy lines under prose that is not in
     // its dictionary's language are noise, and most notes start that way.
     spelling.of(spellingFor(false)),
+    spellWords.of(spellWordsFor('')),
     brackets.of(bracketsFor(true)),
     // Off until asked for: a note reads as typed unless someone chose otherwise.
     glyphs.of(ligaturesFor('off')),
@@ -269,6 +272,22 @@ const spellings = once((setting: string): Extension => {
   })
 })
 
+/** A word list as one string, which is what a compartment can be keyed on: a
+ *  fresh array equal to the one already there is still a reconfiguration that
+ *  throws work away. See once.ts. */
+const BETWEEN = '\n'
+
+function joined(words: readonly string[] | undefined): string {
+  return (words ?? []).join(BETWEEN)
+}
+
+/** The reader's own words: the checker is turned off over each of them wherever
+ *  it appears. See spelling.ts. */
+const spellWordsFor = once((words: string): Extension => [
+  knownWords.of(words ? words.split(BETWEEN) : []),
+  spellingWords(),
+])
+
 const spellingFor = (on: boolean, language?: string): Extension =>
   spellings(`${on ? 'on' : 'off'}|${language ?? ''}`)
 
@@ -289,6 +308,8 @@ export interface ModeSettings {
   /** Which dictionary to check against. Absent leaves the choice to the
    *  browser. */
   dictionary?: string | undefined
+  /** The reader's own words, which the checker is turned off over. */
+  words?: readonly string[] | undefined
   closeBrackets: boolean
   /** How much of a note the ligature glyphs are drawn over. */
   ligatures: LigatureScope
@@ -319,6 +340,7 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     punctuation.reconfigure(punctuationFor(settings.punctuation)),
     equations.reconfigure(numberEquations.of(settings.equationNumbers)),
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
+    spellWords.reconfigure(spellWordsFor(joined(settings.words))),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
     glyphs.reconfigure(ligaturesFor(settings.ligatures)),
     headingNumbers.reconfigure(headingNumbersFor(settings.numbers)),
@@ -429,6 +451,11 @@ export function remeasure(view: EditorView) {
 
 export function setSpellcheck(view: EditorView, on: boolean, language?: string) {
   view.dispatch({ effects: spelling.reconfigure(spellingFor(on, language)) })
+}
+
+/** The words the checker is turned off over; see spelling.ts. */
+export function setSpellWords(view: EditorView, words: readonly string[]) {
+  view.dispatch({ effects: spellWords.reconfigure(spellWordsFor(joined(words))) })
 }
 
 export function setCloseBrackets(view: EditorView, on: boolean) {

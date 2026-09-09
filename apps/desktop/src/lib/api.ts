@@ -211,6 +211,9 @@ export interface AccountSettings {
   glassesEffort?: string
   /** Where a pasted picture is written; one of attachments.ts's three. */
   attachments?: string
+  /** The words the reader has said are words, which the checker is turned off
+   *  over; see spelling.ts in the editor package. */
+  spellWords?: string[]
   /** Keys the reader chose, by shortcut id, as differences from the defaults.
    *  Null where they took a key away. Only the differences travel: a full
    *  dump would freeze today's defaults into every account that ever saved

@@ -93,6 +93,33 @@ function phraseMap(value: unknown): string | null {
   return null
 }
 
+/** How many words a reader's own dictionary holds, and how long one may be. A
+ *  phrase is not a word, and a dictionary of sentences is a dictionary that
+ *  turns the checker off. The app holds itself to the same two numbers. */
+const MOST_SPELL_WORDS = 500
+const LONGEST_SPELL_WORD = 64
+
+/** A word of a language rather than anything that means something to a pattern.
+ *  What the app writes into a `spellcheck="false"` mark; see spelling.ts there.
+ *  Checked here as well as there, because what a note is checked against on one
+ *  machine arrives from this column on the next one. */
+const SPELL_WORD = /^[\p{L}\p{N}][\p{L}\p{N}'’_-]*$/u
+
+function wordList(value: unknown): string | null {
+  if (!Array.isArray(value)) return 'spellWords must be a list of words'
+  if (value.length > MOST_SPELL_WORDS) {
+    return `spellWords holds at most ${MOST_SPELL_WORDS} words`
+  }
+
+  for (const word of value as unknown[]) {
+    if (typeof word !== 'string' || word.length > LONGEST_SPELL_WORD || !SPELL_WORD.test(word)) {
+      return 'every one of spellWords must be a single word'
+    }
+  }
+
+  return null
+}
+
 /** A model id, which is a name and not a sentence. */
 const MOST_MODEL = 100
 
@@ -161,6 +188,7 @@ const KNOWN: Record<string, Check> = {
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)
       ? null
       : `attachments must be one of ${ATTACHMENT_FOLDERS.join(', ')}`,
+  spellWords: wordList,
   preset: (value) =>
     typeof value === 'string' && PRESETS.includes(value)
       ? null

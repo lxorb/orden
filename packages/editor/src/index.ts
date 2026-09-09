@@ -58,6 +58,7 @@ export {
 } from './wikilink/notes'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, loadEmbed } from './web-frame'
+export { isSpellWord, LONGEST_WORD } from './spelling'
 export { setSnippets, snippets } from './snippets'
 export { englishLabel, LABEL_KEYS, type LabelKey, setLabels } from './labels'
 export {
@@ -78,6 +79,7 @@ export {
   setSmartPunctuation,
   setSourceMode,
   setSpellcheck,
+  setSpellWords,
   setStrictMode,
   setTypewriterMode,
 } from './modes'

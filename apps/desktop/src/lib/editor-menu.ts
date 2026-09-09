@@ -6,6 +6,7 @@ import {
   insertLink,
   insertPageBreak,
   insertTableToEdit,
+  isSpellWord,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -150,9 +151,47 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
   ]
 }
 
+/** The word a right click landed on, or null where it landed on none.
+ *
+ *  This is as close as a page can get to "the misspelled word": no browser will
+ *  say which words its checker thinks are wrong, on any platform. It does not
+ *  need to - the wavy line is under the word, the pointer is on the word, and
+ *  the word is what the reader means. See spelling.ts in the editor package. */
+function wordUnder(view: EditorView, event: MouseEvent): string | null {
+  const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
+  if (at === null) return null
+
+  const range = view.state.wordAt(at)
+  if (!range) return null
+
+  const word = view.state.doc.sliceString(range.from, range.to)
+  return isSpellWord(word) ? word : null
+}
+
+/** Adding the word under the pointer to the reader's own list, or taking it out
+ *  again. Only while the checker is on: with it off there is no wavy line to
+ *  take away, and a row that does nothing visible is a row that lies. */
+function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
+  if (!view || !modes.spellcheck) return []
+
+  const word = wordUnder(view, event)
+  if (word === null) return []
+
+  const known = modes.knowsWord(word)
+  return [
+    DIVIDER,
+    {
+      label: known
+        ? t('Remove {word} from the dictionary', { word })
+        : t('Add {word} to the dictionary', { word }),
+      run: () => modes.toggleSpellWord(word, view),
+    },
+  ]
+}
+
 /** Opens it at the pointer. One place, so the two things a right click on the
  *  text has to do - build the menu for this moment and place it - stay
  *  together. */
 export function showEditorMenu(event: MouseEvent, view: EditorView | undefined) {
-  menu.show(event, editorMenu(view), { near: true })
+  menu.show(event, [...editorMenu(view), ...spellingEntries(view, event)], { near: true })
 }

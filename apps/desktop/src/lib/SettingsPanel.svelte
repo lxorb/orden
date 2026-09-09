@@ -484,6 +484,45 @@
   {/if}
 {/snippet}
 
+<!-- The words the reader has said are words. Written out here rather than as
+     another kind of generated field, because there is one list like this in the
+     whole app and a new kind would be a new shape every other reader of a field
+     has to learn. Adding is mostly done where the words are met, in the menu
+     over one in the text; this is where they are read and taken back. -->
+{#snippet dictionary()}
+  <h3>{t('Your words')}</h3>
+  <div class="card">
+    <div class="setting words">
+      <span class="name"><span class="what">{t('Words')}</span></span>
+      {#if modes.spellWords.length}
+        <div class="chips">
+          {#each modes.spellWords as word (word)}
+            <button
+              class="chip"
+              title={t('Remove')}
+              onclick={() => modes.toggleSpellWord(word, view)}
+            >
+              {word}<span aria-hidden="true">×</span>
+            </button>
+          {/each}
+        </div>
+      {/if}
+      <input
+        class="inline"
+        type="text"
+        placeholder={t('Add a word')}
+        spellcheck="false"
+        autocapitalize="off"
+        autocomplete="off"
+        onchange={(event) => {
+          modes.toggleSpellWord(event.currentTarget.value, view)
+          event.currentTarget.value = ''
+        }}
+      />
+    </div>
+  </div>
+{/snippet}
+
 {#snippet pane()}
   {#if current}
     {#each current.groups as group (group.title)}
@@ -497,6 +536,10 @@
 
     {#if settings.section === 'appearance'}
       {@render appearanceExtras()}
+    {/if}
+
+    {#if settings.section === 'spelling'}
+      {@render dictionary()}
     {/if}
 
     {#if settings.section === 'glasses'}
@@ -1545,6 +1588,60 @@
     align-items: center;
     gap: var(--space-2);
     width: 100%;
+  }
+
+  /* A list of words is as long as it is, so it runs down the card rather than
+     across it and the field for another one sits under the last of them. */
+  .words {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .words .inline {
+    width: 100%;
+    text-align: left;
+    border-color: var(--line);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  /* One word, and the way to take it back. The whole chip is the button, so
+     there is no small cross to aim at. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.1em 0.55em;
+    border: none;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .chip span {
+    color: var(--muted);
+  }
+
+  @media (hover: hover) {
+    .chip:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .chip:hover span {
+      color: inherit;
+    }
   }
 
   /* An input in a row: the value at the right, no box until it is typed in. */
