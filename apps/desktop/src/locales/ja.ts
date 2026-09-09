@@ -393,7 +393,14 @@ export const ja: Dictionary = {
   'Line numbers': '行番号',
   Syntax: '構文',
   'Strict CommonMark': '厳密な CommonMark',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    '標準の markdown 記法だけを使い、表・タスクリスト・脚注は使いません。',
   'Smart punctuation': 'スマート約物',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    '入力しながら、直線の引用符やハイフンを約物に置き換えます。',
+  'Puts 1., 1.1, 1.2 in front of headings.': '見出しの前に 1.、1.1、1.2 を付けます。',
+  'Numbers display equations so you can refer to them.':
+    '別行立ての数式に番号を付け、参照できるようにします。',
   Ligatures: '合字',
   Off: 'オフ',
   'Code only': 'コードのみ',

@@ -107,6 +107,24 @@ describe('a value beside its copy button', () => {
   })
 })
 
+/** The `i` after a label, and the sentence behind it. A settings pane with two
+ *  ways of explaining a setting is a pane where half the explanations arrive
+ *  late, in the system's font, and never under a finger. */
+describe('the sentence behind a setting', () => {
+  test('is one component, so it is one bubble in one place', () => {
+    expect(draw(/\.explain\b|\.sentence\b/)).toEqual(['lib/Hint.svelte'])
+  })
+
+  test('and the panel asks for it rather than drawing its own', () => {
+    const own = components
+      .filter((one) => /<Hint\b/.test(one.text))
+      .map((one) => one.name)
+      .sort()
+
+    expect(own).toEqual(['lib/SettingsPanel.svelte'])
+  })
+})
+
 describe('saying Copied for a moment', () => {
   test('happens in one place, so it is one length of a moment', () => {
     const says = components.filter((one) => one.text.includes("t('Copied')")).map((one) => one.name)

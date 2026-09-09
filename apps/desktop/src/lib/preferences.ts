@@ -10,6 +10,16 @@ import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
 import { SCHEME_CHOICES, SCHEME_NAMES, type SchemeChoice, theme } from './theme.svelte'
 
+/** What every control has, whatever kind it is. */
+interface Common {
+  label: string
+  /** One plain sentence about what the setting does, shown behind a small `i`
+   *  beside the label. For the settings whose name only means something to
+   *  somebody who already knows the word; one that explains itself has none, and
+   *  shows no glyph at all. */
+  hint?: string
+}
+
 /** One choice among a few, drawn as a row rather than opened as a list. Only
  *  where the choices are two or three short words worth seeing at once. */
 export interface Segment {
@@ -23,47 +33,45 @@ export interface Segment {
 /** One control, and how to read and write whatever sits behind it. A field
  *  that says what it starts as can be put back to that; a pane whose fields
  *  all can offers a reset. */
-export type Field =
-  | { kind: 'switch'; label: string; initial?: boolean; get(): boolean; set(on: boolean): void }
-  | {
-      kind: 'slider'
-      label: string
-      min: number
-      max: number
-      step: number
-      unit?: string
-      initial?: number
-      get(): number
-      set(value: number): void
-    }
-  | {
-      kind: 'select'
-      label: string
-      options: { value: string; label: string }[]
-      initial?: string
-      get(): string
-      set(value: string): void
-    }
-  | {
-      kind: 'segmented'
-      label: string
-      options: Segment[]
-      initial?: string
-      get(): string
-      set(value: string): void
-    }
-  /** A line somebody types. Only where nothing else will do - a spoken command's
-   *  own phrase - and never on the glasses, which have nothing to type with. */
-  | {
-      kind: 'text'
-      label: string
-      /** What it says with nobody having typed anything, which for a phrase is the
-       *  phrase the app already answers to. An empty field is that put back. */
-      placeholder: string
-      initial?: string
-      get(): string
-      set(value: string): void
-    }
+export type Field = Common &
+  (
+    | { kind: 'switch'; initial?: boolean; get(): boolean; set(on: boolean): void }
+    | {
+        kind: 'slider'
+        min: number
+        max: number
+        step: number
+        unit?: string
+        initial?: number
+        get(): number
+        set(value: number): void
+      }
+    | {
+        kind: 'select'
+        options: { value: string; label: string }[]
+        initial?: string
+        get(): string
+        set(value: string): void
+      }
+    | {
+        kind: 'segmented'
+        options: Segment[]
+        initial?: string
+        get(): string
+        set(value: string): void
+      }
+    /** A line somebody types. Only where nothing else will do - a spoken command's
+     *  own phrase - and never on the glasses, which have nothing to type with. */
+    | {
+        kind: 'text'
+        /** What it says with nobody having typed anything, which for a phrase is the
+         *  phrase the app already answers to. An empty field is that put back. */
+        placeholder: string
+        initial?: string
+        get(): string
+        set(value: string): void
+      }
+  )
 
 export interface Group {
   title: string
@@ -341,6 +349,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Strict CommonMark'),
+              hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),
               initial: false,
               get: () => modes.strict,
               set: () => modes.toggleStrict(view),
@@ -348,6 +357,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Smart punctuation'),
+              hint: t('Turns straight quotes and dashes into typographic ones as you type.'),
               initial: true,
               get: () => modes.punctuation,
               set: () => modes.togglePunctuation(view),
@@ -360,6 +370,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Number headings'),
+              hint: t('Puts 1., 1.1, 1.2 in front of headings.'),
               initial: false,
               get: () => modes.numbers,
               set: () => modes.toggleNumbers(view),
@@ -367,6 +378,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Number equations'),
+              hint: t('Numbers display equations so you can refer to them.'),
               initial: false,
               get: () => modes.equationNumbers,
               set: () => modes.toggleEquationNumbers(view),

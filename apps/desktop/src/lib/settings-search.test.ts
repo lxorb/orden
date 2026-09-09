@@ -42,6 +42,13 @@ const panes: Pane[] = [
         title: 'Appearance',
         fields: [
           {
+            kind: 'switch',
+            label: 'Strict CommonMark',
+            hint: 'Only the standard rules, no tables or footnotes.',
+            get: () => false,
+            set: () => undefined,
+          },
+          {
             kind: 'segmented',
             label: 'Mode',
             options: [
@@ -75,7 +82,7 @@ describe('searching the settings', () => {
   })
 
   test('finds a field by the pane it lives in', () => {
-    expect(labels('general')).toHaveLength(4)
+    expect(labels('general')).toHaveLength(5)
   })
 
   test('finds a dropdown by one of its choices', () => {
@@ -88,6 +95,13 @@ describe('searching the settings', () => {
 
   test('finds a segmented control by one of its choices', () => {
     expect(labels('nocturne')).toEqual(['Mode'])
+  })
+
+  /** The sentence behind a setting's `i` is words about that setting, and
+   *  somebody looking for footnotes is looking for the switch that turns them
+   *  off, whatever the switch is called. */
+  test('finds a setting by the sentence that explains it', () => {
+    expect(labels('footnotes')).toEqual(['Strict CommonMark'])
   })
 
   test('finds a place in a hand-written pane by any word on it', () => {

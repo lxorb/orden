@@ -2,10 +2,11 @@ import { describe, expect, test, vi } from 'vitest'
 
 /** The declarations the settings panes are drawn from.
  *
- *  What is checked here is the shape of the list rather than the markup: what the
- *  two controls in Appearance offer, and what the second of them points at when
- *  the theme in force cannot show the scheme that was asked for. The panel draws
- *  one row per entry and nothing else decides either. */
+ *  What is checked here is the shape of the list rather than the markup: which
+ *  setting carries a sentence about itself, what the two controls in Appearance
+ *  offer, and what the second of them points at when the theme in force cannot
+ *  show the scheme that was asked for. The panel draws one row per entry and
+ *  nothing else decides any of it. */
 
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
@@ -44,6 +45,39 @@ const field = (paneId: string, label: string) => {
   if (!found) throw new Error(`no ${label} on ${paneId}`)
   return found
 }
+
+/** The `i` beside a label: for the settings whose name only means something to
+ *  somebody who already knows the word. */
+describe('the sentence behind a setting', () => {
+  const HINTED = ['Strict CommonMark', 'Smart punctuation', 'Number headings', 'Number equations']
+
+  test('is there for the markdown switches a word does not explain', () => {
+    for (const label of HINTED) {
+      expect(field('markdown', label).hint, label).toBeTruthy()
+    }
+  })
+
+  test('and for no other setting, because a name that explains itself needs none', () => {
+    const hinted = panes
+      .flatMap((one) => one.groups.flatMap((group) => group.fields))
+      .filter((one) => one.hint)
+      .map((one) => one.label)
+
+    expect(hinted).toEqual(HINTED)
+  })
+
+  test('is one plain sentence, which is all a tooltip has room for', () => {
+    for (const label of HINTED) {
+      const hint = field('markdown', label).hint ?? ''
+
+      expect(hint, label).toMatch(/\.$/)
+      expect(hint.length, label).toBeLessThan(110)
+      // One sentence: a full stop only at the end of it. Numbered examples
+      // spell the numbers with their own stops, which is not a second sentence.
+      expect(hint.replace(/\d\.(\d)?/g, ''), label).toMatch(/^[^.]*\.$/)
+    }
+  })
+})
 
 describe('the Appearance pane', () => {
   test('chooses the theme with a dropdown, the built-in first', () => {

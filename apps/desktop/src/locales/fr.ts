@@ -394,7 +394,14 @@ export const fr: Dictionary = {
   'Line numbers': 'Numéros de ligne',
   Syntax: 'Syntaxe',
   'Strict CommonMark': 'CommonMark strict',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Uniquement les règles standard de markdown, sans tableaux, listes de tâches ni notes de bas de page.',
   'Smart punctuation': 'Ponctuation typographique',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Transforme les guillemets droits et les tirets en signes typographiques pendant la saisie.',
+  'Puts 1., 1.1, 1.2 in front of headings.': 'Place 1., 1.1, 1.2 devant les titres.',
+  'Numbers display equations so you can refer to them.':
+    'Numérote les équations hors texte pour pouvoir y renvoyer.',
   Ligatures: 'Ligatures',
   Off: 'Désactivé',
   'Code only': 'Code uniquement',

@@ -6,6 +6,7 @@
   import type { EditorView } from '@nib/editor'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
+  import Hint from './Hint.svelte'
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
@@ -378,13 +379,17 @@
   {/if}
 {/snippet}
 
-<!-- What every row says about itself: the setting's name, and the pane it lives
-     in when search is showing it out of context. One snippet rather than the same
-     two lines in each of five branches. -->
+<!-- What every row says about itself: the setting's name, the `i` that explains
+     it where the name is not enough, and the pane it lives in when search is
+     showing it out of context. One snippet, so the glyph lands in the same slot
+     after the label on every kind of row and a row without one does not shift. -->
 {#snippet named(field: Field, where?: string)}
-  <span class="name"
-    >{field.label}{#if where}<small>{where}</small>{/if}</span
-  >
+  <span class="name">
+    <span class="what"
+      >{field.label}{#if field.hint}<Hint text={field.hint} />{/if}</span
+    >
+    {#if where}<small>{where}</small>{/if}
+  </span>
 {/snippet}
 
 <!-- One row per setting, whatever kind it is. -->
@@ -1157,6 +1162,15 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+  }
+
+  /* The name and the `i` beside it on one line, so the glyph reads as belonging
+     to the word rather than to the row. */
+  .setting .name .what {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
   }
 
   .setting .name small {

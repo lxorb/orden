@@ -395,7 +395,14 @@ export const de: Dictionary = {
   'Line numbers': 'Zeilennummern',
   Syntax: 'Syntax',
   'Strict CommonMark': 'Striktes CommonMark',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Nur die Standardregeln von Markdown, keine Tabellen, Aufgabenlisten oder Fußnoten.',
   'Smart punctuation': 'Typografische Zeichen',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Macht aus geraden Anführungszeichen und Strichen beim Schreiben typografische.',
+  'Puts 1., 1.1, 1.2 in front of headings.': 'Setzt 1., 1.1, 1.2 vor die Überschriften.',
+  'Numbers display equations so you can refer to them.':
+    'Nummeriert abgesetzte Formeln, damit man auf sie verweisen kann.',
   Ligatures: 'Ligaturen',
   Off: 'Aus',
   'Code only': 'Nur im Code',

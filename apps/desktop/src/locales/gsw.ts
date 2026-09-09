@@ -395,7 +395,14 @@ export const gsw: Dictionary = {
   'Line numbers': 'Ziilennummere',
   Syntax: 'Syntax',
   'Strict CommonMark': 'Strikts CommonMark',
+  'Only the standard markdown rules, no tables, task lists or footnotes.':
+    'Nur d Standardregle vo Markdown, kei Tabelle, Ufgabeliste oder Fuessnote.',
   'Smart punctuation': 'Typografischi Zeiche',
+  'Turns straight quotes and dashes into typographic ones as you type.':
+    'Macht us grade Aaführigszeiche und Strich bim Schriibe typografischi.',
+  'Puts 1., 1.1, 1.2 in front of headings.': 'Setzt 1., 1.1, 1.2 vor d Titel.',
+  'Numbers display equations so you can refer to them.':
+    'Nummeriert abgsetzti Formle, damit me druf cha verwiise.',
   Ligatures: 'Ligature',
   Off: 'Us',
   'Code only': 'Nur im Code',
