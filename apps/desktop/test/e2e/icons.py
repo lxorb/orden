@@ -159,10 +159,9 @@ async () => {
   )
   await ws.noteFrom('# Chapter one\\n\\nreading\\n', at('Reading'))
 
-  await ws.createCanvas(root)
-  ws.stopRenaming()
-  const canvas = ws.files.find((one) => one.name === 'Untitled.canvas')
-  if (canvas) await ws.rename(canvas.path, 'Roadmap.canvas')
+  // Named outright: with a name in hand the file is written at once, rather than a
+  // row waiting to be typed into. See `createCanvas`.
+  await ws.createCanvas(root, 'Roadmap.canvas')
 
   // A folder is not a file, so its icon comes out of the space's own map.
   ws.setFolderIcon(at('Reading'), 'flat-color-icons:folder')
@@ -196,13 +195,16 @@ CANVAS_ICON = """
 """
 
 
-def pick(page: Page, label: str, query: str, name: str) -> None:
-    """Types into the picker's one search field and clicks the cell it finds."""
-    page.locator(".sheet input.nib-field").fill(query)
-    cell = page.locator(f'.sheet button[aria-label="{name}"]').first
+def pick(page: Page, label: str, words: str) -> None:
+    """Types into the picker's one search field and clicks the cell it finds.
+
+    By the words the cell is called rather than by the name it writes: a cell says
+    what it is for a reader who cannot see it, and an emoji's name is the picture."""
+    page.locator(".sheet input.nib-field").fill(words)
+    cell = page.locator(f'.sheet button[aria-label="{words}"]').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     cell.click()
-    say(f"[{label}] picked {name}")
+    say(f"[{label}] picked {words}")
 
 
 def sets(page: Page, label: str, where: str) -> None:
@@ -277,7 +279,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         sets(page, label, where)
 
         page.locator('.nib-segmented button:has-text("Line")').click()
-        pick(page, label, "rocket", "Rocket")
+        pick(page, label, "rocket")
 
         worn = wait_for(
             page,
