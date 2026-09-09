@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -8,7 +8,22 @@ import { describe, expect, test } from 'vitest'
  *  and fails on any that does not. */
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url))
-const SKIP = new Set(['node_modules', 'dist', 'target', '.git', 'gen', 'locales'])
+
+/** Folders the walk never goes into.
+ *
+ *  Build output above all. `dist` and `dist-even` are written *while* this runs:
+ *  the even bundle's own test rebuilds its staged folder, so a walk that went in
+ *  could ask about a file that had been replaced between the listing and the
+ *  question, and fall over on a name that was true a moment ago. None of it is
+ *  source anyway. The rest is generated, vendored, or the dictionaries
+ *  themselves, which are nothing but the words this looks for. */
+const SKIP = /^(?:node_modules|target|coverage|gen|locales)$|^\.|^dist/
+
+/** Whether the walk goes into a folder of this name. Its own function so the
+ *  rule can be asked about rather than inferred from a walk. */
+function skipped(name: string): boolean {
+  return SKIP.test(name)
+}
 
 /** Attributes a screen reader or a tooltip shows. */
 const SPOKEN = ['title', 'aria-label', 'placeholder', 'alt']
@@ -37,13 +52,24 @@ const EXEMPT = [
 
 const exempt = (text: string) => EXEMPT.some((pattern) => pattern.test(text.trim()))
 
-function sources(dir: string, found: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    if (SKIP.has(name)) continue
+/** Walked once: every test below reads the same list, and walking the tree per
+ *  test would be the slowest thing in the file. */
+const files = sources(ROOT)
 
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) sources(path, found)
-    else if (/\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts')) found.push(path)
+/** Every source file under `dir`, build output and the generated left out.
+ *
+ *  The listing says what each entry is, so nothing is asked about twice: one
+ *  call per folder rather than a call per folder and a question per name, and no
+ *  window between the two for a file to go out of. */
+function sources(dir: string, found: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const name = entry.name
+    if (entry.isDirectory()) {
+      if (!skipped(name)) sources(join(dir, name), found)
+      continue
+    }
+
+    if (/\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts')) found.push(join(dir, name))
   }
 
   return found
@@ -114,8 +140,26 @@ function looseLabels(path: string, source: string): Finding[] {
   return found
 }
 
+describe('the walk', () => {
+  test('never goes into build output', () => {
+    for (const name of ['dist', 'dist-even', 'dist-anything', 'node_modules', 'target']) {
+      expect(skipped(name), name).toBe(true)
+    }
+
+    expect(files.some((path) => /[\\/]dist/.test(path))).toBe(false)
+  })
+
+  test('goes into the folders the source is actually in', () => {
+    for (const name of ['src', 'lib', 'test', 'export', 'even']) {
+      expect(skipped(name), name).toBe(false)
+    }
+
+    expect(files.some((path) => path.endsWith('.svelte'))).toBe(true)
+    expect(files.some((path) => /[\\/]src[\\/]lib[\\/]/.test(path))).toBe(true)
+  })
+})
+
 describe('everything the reader sees is translated', () => {
-  const files = sources(ROOT)
 
   test('no loose phrases in the markup', () => {
     const found = files
