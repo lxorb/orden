@@ -25,6 +25,30 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** A long list is a page somebody pastes, and every item of it has to know its
+   *  place among the others. Looked up by walking the list, that was a walk per
+   *  item: five thousand items cost 93 ms on the machine this was written on and
+   *  41 ms once each list is counted out once, and ten thousand of them 415 ms
+   *  against 206 ms.
+   *
+   *  What is asserted is the numbering and a budget loose enough to say nothing
+   *  about the machine: the suite runs several files at once, so a wall-clock
+   *  figure here measures the queue as much as the code, and only a return to a
+   *  walk per item would be slow enough to fail. */
+  test('a list of five thousand items is numbered without a pass each', () => {
+    const items = 5000
+    const html = `<ol>${Array.from({ length: items }, (_, at) => `<li>item ${at}</li>`).join('')}</ol>`
+
+    const started = performance.now()
+    const lines = htmlToMarkdown(html).split('\n')
+    const took = performance.now() - started
+
+    expect(lines).toHaveLength(items)
+    expect(lines[0]).toBe('1. item 0')
+    expect(lines.at(-1)).toBe(`${items}. item ${items - 1}`)
+    expect(took).toBeLessThan(1000)
+  })
+
   test('nested lines line up under the text above them', () => {
     expect(htmlToMarkdown('<ul><li>one<ul><li>under</li></ul></li></ul>')).toBe('- one\n  - under')
   })

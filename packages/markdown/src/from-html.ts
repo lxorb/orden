@@ -67,15 +67,37 @@ function languageOf(pre: Element): string {
   return /(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? ''
 }
 
-/** Where a node sits among its parent's elements, which is what numbers an item of
- *  an ordered list. Counted out rather than spread: a browser's `HTMLCollection`
- *  can be iterated and the small DOM turndown carries for node cannot. */
-function indexIn(parent: Element | null, node: Node): number {
-  if (!parent) return 0
+/** Where a node sits among its parent's elements, which is what numbers an item
+ *  of an ordered list.
+ *
+ *  One count per parent, not per child: the walk this used to do over the
+ *  parent's children was a walk for every item, so numbering a list cost a pass
+ *  over the list for each line of it. The first item counts its siblings out and
+ *  the rest read the answer. Counted out rather than spread: a browser's
+ *  `HTMLCollection` can be iterated and the small DOM turndown carries for node
+ *  cannot. */
+function indexer(): (parent: Element | null, node: Node) => number {
+  const counted = new WeakMap<Element, Map<Node, number>>()
 
-  const kids = parent.children
-  for (let at = 0; at < kids.length; at++) if (kids[at] === node) return at
-  return 0
+  return (parent, node) => {
+    if (!parent) return 0
+
+    let places = counted.get(parent)
+
+    if (!places) {
+      places = new Map()
+      const kids = parent.children
+
+      for (let at = 0; at < kids.length; at++) {
+        const kid = kids[at]
+        if (kid) places.set(kid, at)
+      }
+
+      counted.set(parent, places)
+    }
+
+    return places.get(node) ?? 0
+  }
 }
 
 /** Alt text that cannot break out of its own brackets.
@@ -159,6 +181,10 @@ function converter(options: FromHtmlOptions): TurndownService {
   // own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
   service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
+
+  // Kept for the one conversion, because the tree it counts lives for one
+  // conversion.
+  const indexIn = indexer()
 
   // A list item, with one space after its marker rather than turndown's three.
   // Nib writes `- item`, and a note full of `-   item` is a note that looks like
