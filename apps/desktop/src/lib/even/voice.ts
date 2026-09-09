@@ -69,15 +69,70 @@ interface Heard {
 export interface Ears {
   /** Opens or closes the glasses' own microphone. */
   microphone: (open: boolean) => Promise<boolean>
-  /** Turns one utterance of PCM into words, or null when it could not.
-   *  `null` for a reader with no key set, which is also how the second path is
-   *  told it cannot work. */
-  transcribe: ((wav: Uint8Array<ArrayBuffer>) => Promise<string | null>) | null
+  /** Whether anything could turn sound into words right now.
+   *
+   *  Asked rather than handed over, and that is the whole of one of the two bugs
+   *  behind "voice mode simply doesn't work whatever I say": it used to be a
+   *  function or null, decided once when the bridge came up. The key moved onto
+   *  the account, so at that moment the settings had not arrived yet, the answer
+   *  was always null, and the second path was dead for the whole sitting. */
+  canTranscribe: () => boolean
+  /** Turns one utterance of PCM into words, or null when it could not. */
+  transcribe: (wav: Uint8Array<ArrayBuffer>) => Promise<string | null>
   /** What was heard, whichever path heard it. */
   heard: (heard: Heard) => void
   /** Something went wrong, in as few words as carry the reason. */
   failed: (why: string) => void
+  /** Where the voice is now, for the phone to show. Called on every change, so a
+   *  screenshot of the phone says which path is running and how far it got. */
+  said?: (state: Listening) => void
 }
+
+/** What the voice is doing, in the few facts one screenshot has to answer with.
+ *
+ *  Emil cannot read a log off the glasses and neither can anybody else, so this is
+ *  the evidence path: which way the plugin is listening, whether any sound has
+ *  reached it, what it last made of that sound, and one line when something
+ *  refused. Between them they name every step that can fail. */
+export interface Listening {
+  on: boolean
+  path: Path
+  /** Frames of sound since the microphone opened. Zero on the glasses path is the
+   *  whole diagnosis: the microphone said yes and nothing is coming. */
+  frames: number
+  /** The last thing heard, or empty. */
+  heard: string
+  /** True when an utterance was sent and came back with no words at all. */
+  nothing: boolean
+  /** One short line when a path failed, in English, as a key the four
+   *  dictionaries hold. This file has no locale in it, the same way shell.ts has
+   *  none; see i18n.svelte.ts. */
+  trouble: string
+  /** Whatever the platform called it, beside that line and never translated: an
+   *  error code is a name, and `network` said in German is still `network`. */
+  detail: string
+}
+
+/** The recogniser errors that mean this WebView has no recogniser worth the name.
+ *
+ *  Chromium's `webkitSpeechRecognition` is *defined* in an Android WebView and
+ *  reaches Google's own service to do the recognising, which an embedded WebView
+ *  usually cannot: it answers `network` or `service-not-allowed` a moment after
+ *  `start()` returned perfectly happily. So the constructor being there says
+ *  nothing, and the plugin used to believe it and stop there. Any of these and the
+ *  glasses' own microphone is opened instead, at once. */
+const HOPELESS = new Set([
+  'network',
+  'service-not-allowed',
+  'not-allowed',
+  'audio-capture',
+  'language-not-supported',
+])
+
+/** How long the glasses' microphone may be open with nothing arriving before the
+ *  phone says so. Frames come fifty times a second, so two seconds of nothing is
+ *  not a pause, it is a path that is not running. */
+const NO_FRAMES = 2000
 
 /** The recogniser the WebView may or may not have. Only the parts used. */
 interface Recogniser {
@@ -251,6 +306,15 @@ export class Voice {
    *  being transcribed is dropped rather than queued: a command the reader gave
    *  two seconds ago is not one they still want. */
   private busy = false
+  /** True once a recogniser has shown it cannot recognise anything here. The
+   *  constructor being on the page says nothing; this is what it actually did. */
+  private hopeless = false
+  private frames = 0
+  private lastHeard = ''
+  private nothing = false
+  private trouble = ''
+  private detail = ''
+  private silence: ReturnType<typeof setTimeout> | undefined
 
   constructor(private readonly ears: Ears) {}
 
@@ -258,36 +322,92 @@ export class Voice {
     return this.on
   }
 
-  /** Which of the two paths this device has, before anything is opened. */
+  /** Which of the two paths this device has, as it stands.
+   *
+   *  Read afresh rather than decided once: a recogniser that has since refused is
+   *  no recogniser, and whether there is a key is a question about the account,
+   *  which arrives a moment after the plugin does. */
   get path(): Path {
-    if (recogniserOf()) return 'webview'
-    return this.ears.transcribe ? 'glasses' : 'none'
+    if (this.recogniser) return 'webview'
+    if (!this.hopeless && recogniserOf()) return 'webview'
+    return this.ears.canTranscribe() ? 'glasses' : 'none'
+  }
+
+  /** Everything a screenshot of the phone has to answer. */
+  get state(): Listening {
+    return {
+      on: this.on,
+      path: this.path,
+      frames: this.frames,
+      heard: this.lastHeard,
+      nothing: this.nothing,
+      trouble: this.trouble,
+      detail: this.detail,
+    }
+  }
+
+  private tell(): void {
+    this.ears.said?.(this.state)
+  }
+
+  /** Something went wrong, said once in the foot and kept for the phone. */
+  private wrong(why: string, detail = ''): void {
+    this.trouble = why
+    this.detail = detail
+    this.ears.failed(why)
+    this.tell()
   }
 
   async start(): Promise<boolean> {
     if (this.on) return true
 
-    const maker = recogniserOf()
-    if (maker) {
-      const ok = this.listenHere(maker)
-      this.on = ok
-      return ok
+    this.trouble = ''
+    this.detail = ''
+    this.frames = 0
+    this.nothing = false
+
+    const maker = this.hopeless ? null : recogniserOf()
+    if (maker && this.listenHere(maker)) {
+      this.on = true
+      this.tell()
+      return true
     }
 
-    if (!this.ears.transcribe) {
+    return this.listenThere()
+  }
+
+  /** The glasses' own microphone. Also where the first path lands the moment it
+   *  turns out not to work, which is what makes the fallback an order rather than
+   *  a choice made once at the start. */
+  private async listenThere(): Promise<boolean> {
+    if (!this.ears.canTranscribe()) {
       // No recogniser and no key: there is nothing to listen with, and saying so
       // is better than a microphone that is on and deaf.
-      this.ears.failed('no recognition')
+      this.on = false
+      this.wrong('no recognition')
       return false
     }
 
     const opened = await this.ears.microphone(true)
     this.on = opened
-    if (!opened) this.ears.failed('no microphone')
-    return opened
+    if (!opened) {
+      this.wrong('no microphone')
+      return false
+    }
+
+    // Frames come fifty times a second. If none has, something between the
+    // permission and the radio is not running, and the phone says which.
+    clearTimeout(this.silence)
+    this.silence = setTimeout(() => {
+      if (this.on && this.frames === 0) this.wrong('no sound from the glasses')
+    }, NO_FRAMES)
+
+    this.tell()
+    return true
   }
 
   async stop(): Promise<void> {
+    clearTimeout(this.silence)
     if (!this.on) return
 
     this.on = false
@@ -296,16 +416,24 @@ export class Voice {
     if (recogniser) {
       recogniser.onend = null
       recogniser.abort()
+      this.tell()
       return
     }
 
     await this.ears.microphone(false)
+    this.tell()
   }
 
   /** One frame of sound off the glasses, from `sdk.ts`. Ignored on the first path,
    *  where the microphone was never opened. */
   frame(pcm: Uint8Array): void {
     if (!this.on || this.recogniser) return
+
+    // Counted before anything is decided about it: what a screenshot needs to
+    // answer first is whether any sound arrived at all.
+    const first = this.frames === 0
+    this.frames++
+    if (first) this.tell()
 
     const whole = this.utterance.hear(pcm, performance.now())
     if (!whole) return
@@ -314,15 +442,22 @@ export class Voice {
   }
 
   private async transcribe(pcm: Uint8Array, ended: number): Promise<void> {
-    const transcribe = this.ears.transcribe
-    if (!transcribe || this.busy) return
+    if (this.busy) return
 
     this.busy = true
     try {
-      const said = await transcribe(wavOf(pcm))
-      if (said) this.ears.heard({ said, ended })
+      const said = await this.ears.transcribe(wavOf(pcm))
+      // Sent, and nothing came back. Said rather than swallowed: an utterance that
+      // reached the transcriber and came back empty is a different fault from one
+      // that never reached it, and only the phone can tell anybody which.
+      this.nothing = !said
+      if (said) {
+        this.lastHeard = said
+        this.ears.heard({ said, ended })
+      }
+      this.tell()
     } catch (error) {
-      this.ears.failed(error instanceof Error ? error.message : String(error))
+      this.wrong('the words did not come back', error instanceof Error ? error.message : '')
     } finally {
       this.busy = false
     }
@@ -346,7 +481,12 @@ export class Voice {
           const said = result[0]?.transcript ?? ''
           // The recogniser has already waited out the pause, so as far as this
           // path is concerned the speech ended when the words arrived.
-          if (said.trim()) this.ears.heard({ said, ended: performance.now() })
+          if (said.trim()) {
+            this.lastHeard = said
+            this.nothing = false
+            this.ears.heard({ said, ended: performance.now() })
+            this.tell()
+          }
         }
       }
 
@@ -354,7 +494,22 @@ export class Voice {
         const why = event.error ?? 'unknown'
         // Silence is not an error worth a word on the panel: the recogniser says
         // this every time the reader stops talking for a while.
-        if (why !== 'no-speech' && why !== 'aborted') this.ears.failed(`voice: ${why}`)
+        if (why === 'no-speech' || why === 'aborted') return
+
+        // Anything else is this WebView saying it cannot do this. An embedded
+        // WebView usually cannot: the recogniser reaches Google's own service and
+        // answers `network` or `service-not-allowed` a moment after `start()` was
+        // perfectly happy. So the glasses' microphone is opened instead, at once,
+        // rather than the reader being left talking to a path that has given up.
+        if (HOPELESS.has(why)) {
+          this.hopeless = true
+          this.dropRecogniser()
+          this.wrong('the phone cannot listen', why)
+          void this.listenThere()
+          return
+        }
+
+        this.wrong('the phone could not listen', why)
       }
 
       // Continuous is a promise the platform does not keep: it stops on its own
@@ -368,8 +523,27 @@ export class Voice {
       this.recogniser = recogniser
       return true
     } catch (error) {
-      this.ears.failed(error instanceof Error ? error.message : String(error))
+      // A constructor that throws is the same finding as a fatal error, and the
+      // same answer: this WebView has no recogniser, whatever is on the page.
+      this.hopeless = true
+      this.trouble = 'the phone cannot listen'
+      this.detail = error instanceof Error ? error.message : String(error)
       return false
+    }
+  }
+
+  private dropRecogniser(): void {
+    const recogniser = this.recogniser
+    this.recogniser = null
+    if (!recogniser) return
+
+    recogniser.onend = null
+    recogniser.onresult = null
+    recogniser.onerror = null
+    try {
+      recogniser.abort()
+    } catch {
+      // Aborting something that never started is not a failure worth a word.
     }
   }
 }

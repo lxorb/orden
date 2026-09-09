@@ -1,5 +1,5 @@
-import { describe, expect, test, vi } from 'vitest'
-import { type Ears, loudnessOf, Utterance, Voice, wavOf } from './voice'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import { type Ears, type Listening, loudnessOf, Utterance, Voice, wavOf } from './voice'
 
 /** Twenty milliseconds of sound at 16 kHz, sixteen bit: 320 samples, 640 bytes.
  *  The frame size the glasses' audio path sends. */
@@ -182,17 +182,26 @@ describe('the file a transcriber is sent', () => {
 
 /** Which of the two paths a device has, and what it does with the one it has. */
 describe('listening', () => {
-  function ears(over: Partial<Ears> = {}): { ears: Ears; heard: string[]; failed: string[] } {
+  function ears(over: Partial<Ears> = {}): {
+    ears: Ears
+    heard: string[]
+    failed: string[]
+    states: Listening[]
+  } {
     const heard: string[] = []
     const failed: string[] = []
+    const states: Listening[] = []
     return {
       heard,
       failed,
+      states,
       ears: {
         microphone: vi.fn(async () => true),
+        canTranscribe: () => true,
         transcribe: vi.fn(async () => 'next'),
         heard: (one) => void heard.push(one.said),
         failed: (why) => void failed.push(why),
+        said: (state) => void states.push(state),
         ...over,
       },
     }
@@ -220,7 +229,7 @@ describe('listening', () => {
   })
 
   test('says so rather than listening deaf when there is no way to recognise', async () => {
-    const { ears: one, failed } = ears({ transcribe: null })
+    const { ears: one, failed } = ears({ canTranscribe: () => false })
     const voice = new Voice(one)
 
     expect(voice.path).toBe('none')
@@ -273,7 +282,9 @@ describe('listening', () => {
 
     for (let at = 0; at < 25; at++) voice.frame(SPEECH)
     for (let at = 0; at < 40; at++) voice.frame(SILENCE)
-    await vi.waitFor(() => expect(failed).toEqual(['no signal']))
+    await vi.waitFor(() => expect(failed).toEqual(['the words did not come back']))
+    // The platform's own words beside ours, so the phone says which fault it was.
+    expect(voice.state.detail).toBe('no signal')
   })
 
   test('says nothing when the transcriber heard nothing', async () => {
@@ -286,5 +297,262 @@ describe('listening', () => {
     await vi.waitFor(() => expect(one.transcribe).toHaveBeenCalled())
 
     expect(heard).toEqual([])
+    // Sent, and nothing came back. A different fault from one that never went, and
+    // the phone says which; see the readout in Glasses.svelte.
+    await vi.waitFor(() => expect(voice.state.nothing).toBe(true))
+  })
+})
+
+/* ── When the phone's own recogniser is not a recogniser ──────────────── */
+
+/** Chromium's `webkitSpeechRecognition`, as an embedded WebView has it: the
+ *  constructor is there, `start()` is perfectly happy, and a moment later it says
+ *  it cannot reach the service that does the recognising. That is the shape of
+ *  Emil's "voice mode simply doesn't work whatever I say". */
+class FakeRecogniser {
+  static made: FakeRecogniser[] = []
+  /** What `start()` throws, if anything. */
+  static throws: string | null = null
+
+  continuous = false
+  interimResults = false
+  lang = ''
+  started = 0
+  aborted = 0
+  onresult: ((event: unknown) => void) | null = null
+  onerror: ((event: { error?: string }) => void) | null = null
+  onend: (() => void) | null = null
+
+  constructor() {
+    FakeRecogniser.made.push(this)
+  }
+
+  start() {
+    if (FakeRecogniser.throws) throw new Error(FakeRecogniser.throws)
+    this.started++
+  }
+
+  stop() {
+    // The platform has one; nothing here calls it.
+  }
+
+  abort() {
+    this.aborted++
+  }
+
+  /** One final result, the shape the platform sends it in. */
+  say(transcript: string) {
+    this.onresult?.({
+      resultIndex: 0,
+      results: { length: 1, 0: { isFinal: true, 0: { transcript } } },
+    })
+  }
+}
+
+function withRecogniser(): typeof FakeRecogniser {
+  FakeRecogniser.made = []
+  FakeRecogniser.throws = null
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecogniser)
+  return FakeRecogniser
+}
+
+describe('the fallback order', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function ears(over: Partial<Ears> = {}): { ears: Ears; failed: string[] } {
+    const failed: string[] = []
+    return {
+      failed,
+      ears: {
+        microphone: vi.fn(async () => true),
+        canTranscribe: () => true,
+        transcribe: vi.fn(async () => 'next'),
+        heard: () => undefined,
+        failed: (why) => void failed.push(why),
+        ...over,
+      },
+    }
+  }
+
+  test('prefers the phone, which is free and faster', async () => {
+    const made = withRecogniser()
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+
+    expect(voice.path).toBe('webview')
+    expect(await voice.start()).toBe(true)
+    expect(made.made).toHaveLength(1)
+    expect(one.microphone).not.toHaveBeenCalled()
+  })
+
+  /** The one that matters: the constructor being on the page says nothing at all
+   *  about whether this WebView can recognise anything. */
+  test('falls to the glasses at once when the phone says it cannot listen', async () => {
+    const made = withRecogniser()
+    const { ears: one, failed } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+
+    made.made[0]?.onerror?.({ error: 'service-not-allowed' })
+    await vi.waitFor(() => expect(one.microphone).toHaveBeenCalledWith(true))
+
+    expect(failed).toEqual(['the phone cannot listen'])
+    expect(voice.state.detail).toBe('service-not-allowed')
+    expect(voice.path).toBe('glasses')
+    expect(voice.listening).toBe(true)
+    // And it is not tried again: it has already said it cannot.
+    expect(made.made[0]?.aborted).toBe(1)
+  })
+
+  test('does the same for every error that means this WebView cannot', async () => {
+    for (const why of ['network', 'not-allowed', 'audio-capture', 'language-not-supported']) {
+      const made = withRecogniser()
+      const { ears: one } = ears()
+      const voice = new Voice(one)
+      await voice.start()
+
+      made.made[0]?.onerror?.({ error: why })
+      await vi.waitFor(() => expect(one.microphone).toHaveBeenCalledWith(true))
+      expect(voice.path, why).toBe('glasses')
+    }
+  })
+
+  test('keeps listening through the errors that only mean nobody spoke', async () => {
+    const made = withRecogniser()
+    const { ears: one, failed } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+
+    made.made[0]?.onerror?.({ error: 'no-speech' })
+    made.made[0]?.onerror?.({ error: 'aborted' })
+
+    expect(failed).toEqual([])
+    expect(one.microphone).not.toHaveBeenCalled()
+    expect(voice.path).toBe('webview')
+  })
+
+  test('falls to the glasses when the recogniser will not even start', async () => {
+    const made = withRecogniser()
+    made.throws = 'no'
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+
+    expect(await voice.start()).toBe(true)
+    expect(one.microphone).toHaveBeenCalledWith(true)
+    expect(voice.path).toBe('glasses')
+  })
+
+  test('says there is no way to listen when neither path is there', async () => {
+    const made = withRecogniser()
+    made.throws = 'no'
+    const { ears: one, failed } = ears({ canTranscribe: () => false })
+    const voice = new Voice(one)
+
+    expect(await voice.start()).toBe(false)
+    expect(failed).toEqual(['no recognition'])
+    expect(voice.state.path).toBe('none')
+  })
+
+  /** The key lives on the account and the account answers a moment after the
+   *  bridge comes up. Decided once at the start, the answer was always no. */
+  test('asks whether there is a key every time rather than once at the start', async () => {
+    let key = false
+    const { ears: one } = ears({ canTranscribe: () => key })
+    const voice = new Voice(one)
+
+    expect(voice.path).toBe('none')
+    key = true
+    expect(voice.path).toBe('glasses')
+    expect(await voice.start()).toBe(true)
+  })
+})
+
+/* ── What one screenshot of the phone has to answer ───────────────────── */
+
+describe('the readout', () => {
+  function ears(over: Partial<Ears> = {}): { ears: Ears; states: Listening[] } {
+    const states: Listening[] = []
+    return {
+      states,
+      ears: {
+        microphone: vi.fn(async () => true),
+        canTranscribe: () => true,
+        transcribe: vi.fn(async () => 'open page three'),
+        heard: () => undefined,
+        failed: () => undefined,
+        said: (state) => void states.push(state),
+        ...over,
+      },
+    }
+  }
+
+  test('starts saying nothing at all', () => {
+    const { ears: one } = ears()
+    expect(new Voice(one).state).toEqual({
+      on: false,
+      path: 'glasses',
+      frames: 0,
+      heard: '',
+      nothing: false,
+      trouble: '',
+      detail: '',
+    })
+  })
+
+  test('counts the sound that arrives, which is the first thing to know', async () => {
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+
+    expect(voice.state.frames).toBe(0)
+    for (let at = 0; at < 5; at++) voice.frame(SILENCE)
+    expect(voice.state.frames).toBe(5)
+  })
+
+  test('says so when the microphone opened and no sound ever came', async () => {
+    vi.useFakeTimers()
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+
+    await vi.advanceTimersByTimeAsync(2100)
+    expect(voice.state.trouble).toBe('no sound from the glasses')
+    vi.useRealTimers()
+  })
+
+  test('and says nothing of the sort when sound is arriving', async () => {
+    vi.useFakeTimers()
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+    voice.frame(SILENCE)
+
+    await vi.advanceTimersByTimeAsync(2100)
+    expect(voice.state.trouble).toBe('')
+    vi.useRealTimers()
+  })
+
+  test('keeps the last words it heard', async () => {
+    const { ears: one } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+
+    for (let at = 0; at < 25; at++) voice.frame(SPEECH)
+    for (let at = 0; at < 40; at++) voice.frame(SILENCE)
+    await vi.waitFor(() => expect(voice.state.heard).toBe('open page three'))
+  })
+
+  test('tells the phone on every change, so a screenshot is never stale', async () => {
+    const { ears: one, states } = ears()
+    const voice = new Voice(one)
+    await voice.start()
+    voice.frame(SILENCE)
+
+    expect(states.map((state) => [state.on, state.frames])).toEqual([
+      [true, 0],
+      [true, 1],
+    ])
   })
 })
