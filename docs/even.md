@@ -85,8 +85,8 @@ applies on top of that.
 
 `https://api.openai.com` was the second entry until the key became write-only. The
 plugin has no key to send now, so it makes no request to OpenAI, so the origin comes
-off - and the permission's description, "sign in and keep your notes in step with
-your Nib account", is the whole truth again. See section 5.
+off - and the description says what the one that is left is for: signing in, keeping
+the notes in step, and asking a question. See section 5.
 
 ### The display
 

@@ -9,7 +9,7 @@
   "permissions": [
     {
       "name": "network",
-      "desc": "Sign in and keep your notes in step with your Nib account.",
+      "desc": "Sign in, keep your notes in step, and ask questions through your Nib account.",
       "whitelist": ["https://nibeditor.com"]
     },
     {
