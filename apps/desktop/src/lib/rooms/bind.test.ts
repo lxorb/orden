@@ -1,9 +1,22 @@
 import { describe, expect, test } from 'vitest'
-import { EditorState, SharedDoc } from '@nib/editor'
+import { EditorState, SharedDoc, type Text } from '@nib/editor'
 import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { bind, replace, replacements } from './bind'
 import { meeting } from './join'
+
+/** What the binding did, counted: the characters a change set covered, the calls
+ *  the shared text took with the characters they carried, and the number of times
+ *  either side was reached for whole. */
+interface Work {
+  covered: number
+  calls: number
+  characters: number
+  /** Every way of asking for all of it: the room's words as a string, or the
+   *  note's rope. Each is the one thing a keystroke must not do, because each is
+   *  the size of the note rather than the size of the keystroke. */
+  whole: number
+}
 
 /** A device: the note as the app holds it, the room's copy of the words, and the
  *  binding between them. Which is the whole of the client apart from the socket, so
@@ -66,6 +79,67 @@ class Device {
   /** Somebody typing in a pane. */
   type(at: number, words: string) {
     this.note.edit([{ from: at, to: at, insert: words }])
+  }
+
+  /** Counts what the binding asks of either side from here on.
+   *
+   *  Work rather than time, which is what makes the answer the same on a busy
+   *  machine as on an idle one; see docs/conventions.md. */
+  watch(): Work {
+    const work: Work = { covered: 0, calls: 0, characters: 0, whole: 0 }
+
+    // Around whatever `bind` installed, so the binding still does its job and
+    // this only counts on the way past.
+    const reported = this.note.onLocal
+    this.note.onLocal = (changes) => {
+      changes.iterChanges((fromA, toA, fromB, toB) => {
+        work.covered += toA - fromA + (toB - fromB)
+      })
+      reported?.(changes)
+    }
+
+    const inserted = this.text.insert.bind(this.text)
+    this.text.insert = (at: number, words: string) => {
+      work.calls += 1
+      work.characters += words.length
+      inserted(at, words)
+    }
+
+    const removed = this.text.delete.bind(this.text)
+    this.text.delete = (at: number, count: number) => {
+      work.calls += 1
+      work.characters += count
+      removed(at, count)
+    }
+
+    // The room's words, whole.
+    const asJson = this.text.toJSON.bind(this.text)
+    this.text.toJSON = () => {
+      work.whole += 1
+      return asJson()
+    }
+
+    const asString = this.text.toString.bind(this.text)
+    this.text.toString = () => {
+      work.whole += 1
+      return asString()
+    }
+
+    // And the note's, which is what reaching for its rope amounts to: nothing
+    // does it a character at a time.
+    const held = Object.getOwnPropertyDescriptor(SharedDoc.prototype, 'text')
+    const reading = held?.get?.bind(this.note)
+    if (!reading) throw new Error('a shared document with no text to watch')
+
+    Object.defineProperty(this.note, 'text', {
+      configurable: true,
+      get: () => {
+        work.whole += 1
+        return reading() as Text
+      },
+    })
+
+    return work
   }
 
   cut(from: number, to: number) {
@@ -269,34 +343,38 @@ describe('a note bound to a room', () => {
 })
 
 describe('a keystroke in a note that is in a room', () => {
-  /** How long a hundred keystrokes in the middle of a note of this size take, as
-   *  a keystroke's own average. Everything a keystroke does here has to be the
-   *  size of the keystroke: a change set covers what changed, and the shared text
-   *  takes one insert at one position. */
-  function perKeystroke(size: number): number {
+  /** What a hundred keystrokes in the middle of a note of this size ask of the
+   *  room. Everything a keystroke does here has to be the size of the keystroke:
+   *  a change set covers what changed, and the shared text takes one insert at
+   *  one position.
+   *
+   *  Counted rather than timed. A clock measures the machine as much as the
+   *  code, and this file runs beside every other suite in the app, so a timed
+   *  answer is one that fails on the afternoons when something else is busy and
+   *  passes on its own afterwards - which says nothing either way. */
+  function perKeystroke(size: number): Work {
     const words = 'the room settles two versions of one paragraph. '.repeat(Math.ceil(size / 48))
     const device = Device.opening(words.slice(0, size))
     const at = Math.floor(size / 2)
+    const work = device.watch()
 
-    const started = performance.now()
     for (let round = 0; round < 100; round++) device.type(at + round, 'x')
-    const each = (performance.now() - started) / 100
 
     device.close()
-    return each
+    return work
   }
 
   test('costs the keystroke and not the note', () => {
-    // Warm first: what the first call would otherwise measure is the compiler.
-    perKeystroke(2_048)
-
     const small = perKeystroke(2_048)
     const large = perKeystroke(200_000)
 
-    // A hundredfold note. Anything that walked it would show up as a hundredfold
-    // keystroke; the allowance is for the cost of the rope growing, which is
-    // logarithmic, and for a machine under load.
-    expect(large).toBeLessThan(Math.max(small * 8, 0.5))
+    // One character typed a hundred times: a change set that covers the one
+    // character, one insert of one character into the shared text, and neither
+    // side ever asked for whole. So nothing here is a number about the note.
+    expect(small).toEqual({ covered: 100, calls: 100, characters: 100, whole: 0 })
+
+    // And a hundredfold note is the same work, exactly rather than nearly.
+    expect(large).toEqual(small)
   })
 })
 
