@@ -3,6 +3,7 @@
   import { t } from './lib/i18n.svelte'
   import { viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
+  import { takesCaret } from './lib/caret'
   import { EditorView, setVimCommands, showLine, topLine } from '@nib/editor'
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
@@ -173,6 +174,14 @@
     }
   })
 
+  // A drawer over the note is one more thing over the note, so Escape closes it,
+  // the way it closes every drawer anybody has used. Only where it is a drawer: a
+  // sidebar docked beside the note is over nothing and Escape in the file list
+  // still clears the selection.
+  $effect(() =>
+    viewport.drawer && workspace.panel ? overlays.show(() => workspace.closePanel()) : undefined,
+  )
+
   // On a phone each of these is a screen of its own, so back closes it rather
   // than leaving the app - newest first, the way Android expects.
   $effect(() => closeOnBack(!!workspace.panel, () => workspace.closePanel()))
@@ -321,6 +330,43 @@
     requestAnimationFrame(() => goto(asked.line))
   })
 
+  /** What is showing in the pane that has the focus, as the caret rule reads it. */
+  const showing = $derived(workspace.showing(workspace.panes.focusedId))
+
+  // The caret goes into the note that is showing, whichever of the many doors it
+  // was opened by; see caret.ts for the rule and why there is one. On the frame
+  // after, for the reason the jump below waits too: a fresh view is given its
+  // remembered place a frame after it appears, and taking the keyboard before
+  // that would scroll the note to the caret instead of to where it was left.
+  $effect(() => {
+    const current = view
+    // Read, not used: these are what this effect is watching for. Whether the
+    // caret may be taken is decided on the frame, by which time whatever was
+    // over the note - the palette a note was chosen in - has gone.
+    const reasons = [
+      showing?.id,
+      showing?.kind,
+      showing?.reading,
+      workspace.renaming,
+      workspace.panel,
+      palette,
+    ]
+    if (!current || !reasons.length) return
+
+    const frame = requestAnimationFrame(() => {
+      const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
+        overlaid: overlays.depth > 0,
+        renaming: workspace.renaming !== null,
+        presenting: present.on,
+        touch: viewport.touch,
+      })
+
+      if (may) current.focus()
+    })
+
+    return () => cancelAnimationFrame(frame)
+  })
+
   async function toggleFullscreen() {
     if (!isDesktop) return
     const window = await currentWindow()
@@ -335,11 +381,10 @@
     // Escape closes whatever is over the note, newest first: the settings, a
     // sheet, the palette, a menu, a dropdown inside one of them. Only when
     // there is one, so Escape in the file list still clears the selection and
-    // Escape in the editor still steps off a picture. See overlays.ts.
-    if (event.key === 'Escape' && overlays.escape()) {
-      event.preventDefault()
-      return
-    }
+    // Escape in the editor still steps off a picture. The press goes no further
+    // than the one it closed, which is what keeps a note's find bar open under a
+    // palette somebody has just dismissed. See overlays.ts.
+    if (event.key === 'Escape' && overlays.escape(event)) return
 
     // A deck covers the window, so anything the app would open under it is a
     // window nobody can see holding the keyboard nobody can get back. While a
@@ -373,8 +418,12 @@
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on
          it the transform comes from the drag instead, so it tracks the thumb. -->
+    <!-- Where the drawer covers the whole screen, the layer under the note is
+         behind it rather than off to one side: closed, nothing in it can be
+         reached, so nothing in it is announced or reachable by a key either. -->
     <div
       class="panels"
+      inert={viewport.narrow && !workspace.panel}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
