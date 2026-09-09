@@ -177,7 +177,7 @@ export class FolderIcons {
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
 
-    const moved = (held: Record<string, string>) => {
+    const rekeyed = (held: Record<string, string>) => {
       const next: Record<string, string> = {}
       let touched = false
 
@@ -190,8 +190,8 @@ export class FolderIcons {
       return touched ? next : null
     }
 
-    const icons = moved(this.of(root))
-    if (icons) this.put(root, icons, moved(this.colorsOf(root)) ?? this.colorsOf(root))
+    const icons = rekeyed(this.of(root))
+    if (icons) this.put(root, icons, rekeyed(this.colorsOf(root)) ?? this.colorsOf(root))
   }
 
   /** A folder that has gone, with everything under it. */
