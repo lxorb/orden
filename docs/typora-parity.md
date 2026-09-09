@@ -343,7 +343,58 @@ Features Typora does not have, which are the reason this exists.
 - [x] A link to a block: `[[Note#^a1b2c3]]`, with the name written at the end of
       the block where Obsidian writes it and shown nowhere. A heading is linked by
       its own words instead - `[[Note#The plan]]` - which needs no name and
-      changes nothing in the note
+      changes nothing in the note. Wherever one of these lands, the block it
+      landed on holds a tint for long enough to find and then lets go of it: a
+      caret is one pixel wide and the eye was somewhere else. The same mark for a
+      bookmarked heading and a search result, and it goes at the first thing you
+      do. A whole block, except a heading, whose block is its section - tinting a
+      chapter to say "this heading" would be shouting
+- [x] A bookmark of one block, from the mark in its margin. It points the way a
+      link does, so a heading is kept by its words and anything else is given the
+      same `^name` a link would give it, and the row is the block's own first
+      words, because `^a1b2c3` is not something to read in a list. Opening it
+      lands on the block with the tint above
+- [x] A tab can be pinned. It sits at the head of its strip wearing only its
+      mark - the icon the note chose, where it chose one - refuses the cross,
+      `Ctrl+W` and the menu row until it is let go of again, and is never the tab
+      a click in the file list takes over. What somebody keeps open all day, kept
+      open: the daily note, the one being written towards. Pinning keeps the note
+      as well, since a tab nobody wants taken over is a tab that is being kept,
+      and a pin survives a restart. There is no default key for it, because the
+      tab it is done to is already in front of you
+- [x] Back and forward, per tab. A tab that moves on from one note to another
+      leaves a trail, and `Alt+Left` and `Alt+Right` walk back along it and on
+      again - the keys every browser uses, and the mouse's own two side buttons
+      as well. Two arrows appear at the head of a strip that has been anywhere,
+      each saying whether it can go, and the whole trail is behind a right press
+      on the back one, newest first, to jump straight to any of it. Turning off
+      halfway drops what was ahead, the way it does in anything that goes back
+      and forward. On a Mac it is `Ctrl+[` and `Ctrl+]`: Alt and an arrow there is
+      a word at a time and has been for forty years, and Cmd and a bracket is
+      indenting here. Where a trail lands is where that note was left, through the
+      places the app already keeps per note, and a trail lasts the sitting
+- [x] Stacking tabs as columns to scroll sideways through is deliberately not
+      built. What it is for is the trail, which is the entry above and which works
+      in one pane, in a split, and on a phone - where columns of tabs cannot exist
+      at all, since a handheld holds one document. Two notes side by side is
+      already a split, up to four with linked scrolling; a third arrangement of
+      the same tabs would need a second answer to every question the first two
+      have settled
+- [x] The outline and the links panel can be held on one note while another is
+      written in the pane beside it: an outline to read down on the left, the note
+      it is about on the right. One press in the panel's own row holds it and
+      lets it go, the note it is held on is named quietly over it, and pressing a
+      row takes you to that note wherever it is open. It lasts the sitting - a
+      panel held on a note nobody remembers holding it on is worse than one that
+      simply follows - and it is not offered on a handheld, which has one document
+      and so nothing to hold a panel against
+- [x] Bookmarks in groups. A group is a name with a twist in front of it, holding
+      whatever is dragged onto it, nested as deep as it is useful, and it opens
+      and shuts on this machine while the group itself travels with the account.
+      Dropping a row between two rows of a group joins the group, which is what
+      the line drawn there says. Removing a group dissolves it: what was in it
+      comes up to where the group was, because the bookmarks were the point and
+      the group was the shelf
 - [x] Several cursors. Alt and a click puts another one down, Alt and a drag adds
       a whole range to what is already selected, Alt+Shift and a drag takes a
       column of them, and Escape leaves one. `Ctrl+D` grows to the word and then
