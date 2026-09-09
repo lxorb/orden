@@ -135,3 +135,43 @@ describe('a note the glasses are scrolling', () => {
     expect(session.words.split('\n')[0]).toBe('Line 9')
   })
 })
+
+/** What the card on the phone follows while a finger is dragging.
+ *
+ *  Emil: *"it doesn't change WHILE scrolling but you kinda need to pause for it to
+ *  react."* The card was drawn around the page the glasses had, and the glasses are
+ *  told a tenth of a second after the thumb stops - so it sat still through the drag
+ *  and jumped afterwards. `regionAt` answers the same question about any offset,
+ *  with none of the consequences. */
+describe('where the panel would be', () => {
+  test('is the region holding that offset, without going there', () => {
+    const session = rolling()
+    const first = session.showing
+
+    const later = session.regionAt(60)
+    expect(later?.from).toBeGreaterThan(first?.from ?? 0)
+    // Nothing moved: the glasses are still where they were, and nothing was written
+    // down about a page the reader only scrolled past.
+    expect(session.showing?.from).toBe(first?.from)
+    expect(session.showing?.page).toBe(first?.page)
+  })
+
+  test('stops where the window still fills the panel, like a scroll does', () => {
+    const session = rolling()
+
+    const far = session.regionAt(100_000)
+    expect(far?.page).toBe(12)
+    expect(far?.lastLine).toBe(20)
+  })
+
+  test('and is the page that is up when the offset is on it', () => {
+    const session = rolling()
+    const where = session.showing
+
+    expect(session.regionAt(where?.from ?? 0)?.from).toBe(where?.from)
+  })
+
+  test('answers nothing for a note with nothing in it', () => {
+    expect(new Session().regionAt(0)).toBeNull()
+  })
+})

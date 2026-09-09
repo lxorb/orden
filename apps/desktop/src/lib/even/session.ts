@@ -117,26 +117,35 @@ export class Session {
   /** Every page on the panel: one of them in the ordinary mode, and as many as fill
    *  it where the glasses are scrolling. */
   get onPanel(): readonly Page[] {
+    return this.panelAt(this.shown?.page ?? 0)
+  }
+
+  /** The same, for any page rather than the one that is up.
+   *
+   *  Taken apart from `onPanel` for `regionAt`: the plugin asks what the panel *would*
+   *  show while a finger is still dragging the note, and asking that must not move
+   *  the glasses, spend any radio, or write down a page the reader never stopped on. */
+  private panelAt(page: number): readonly Page[] {
     const shown = this.shown
     if (!shown) return []
     if (!shown.rolling) {
-      const only = shown.pages[shown.page]
+      const only = shown.pages[page]
       return only ? [only] : []
     }
 
     const out: Page[] = []
     let rows = 0
-    for (const page of shown.pages.slice(shown.page)) {
-      const took = rowsIn(page)
+    for (const one of shown.pages.slice(page)) {
+      const took = rowsIn(one)
       if (rows + took > shown.rolling.rows) break
 
-      out.push(page)
+      out.push(one)
       rows += took
     }
 
     // One line longer than the whole panel: something has to give, and showing it
     // cut is better than showing nothing at all.
-    const first = shown.pages[shown.page]
+    const first = shown.pages[page]
     if (!out.length && first) out.push(first)
 
     return out
@@ -164,8 +173,29 @@ export class Session {
   }
 
   get showing(): Showing | null {
+    return this.showingAt(this.shown?.page ?? 0)
+  }
+
+  /** Where the panel would be if the reader were at this offset, without going there.
+   *
+   *  What the card on the phone is drawn from while a finger is dragging. Emil: *"it
+   *  doesn't change WHILE scrolling but you kinda need to pause for it to react."* It
+   *  was drawn from the page the glasses had, which changes a tenth of a second after
+   *  the thumb stops and not before, so the card sat still through the whole drag and
+   *  jumped afterwards. This is the same arithmetic with none of the consequences:
+   *  nothing is sent, nothing is remembered, and the glasses catch up at their own
+   *  rate. */
+  regionAt(offset: number): Showing | null {
     const shown = this.shown
-    const panel = this.onPanel
+    if (!shown?.pages.length) return null
+
+    const last = (shown.rolling?.last ?? shown.pages.length - 1) + 1
+    return this.showingAt(clamp(pageAt(shown.pages, offset), last))
+  }
+
+  private showingAt(page: number): Showing | null {
+    const shown = this.shown
+    const panel = this.panelAt(page)
     const first = panel[0]
     const last = panel.at(-1)
     if (!shown || !first || !last) return null
@@ -173,7 +203,7 @@ export class Session {
     return {
       key: shown.key,
       name: shown.name,
-      page: shown.page,
+      page,
       // How many panels the note comes to, which where the glasses are scrolling is
       // how many places there are to stand rather than how many pages.
       count: Math.max(1, (shown.rolling?.last ?? shown.pages.length - 1) + 1),

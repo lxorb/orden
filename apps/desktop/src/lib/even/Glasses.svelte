@@ -22,8 +22,11 @@
    *  the glasses go to the page that holds it. */
 
   import { onMount } from 'svelte'
+  import { account } from '../account.svelte'
   import { bridge } from './bridge.svelte'
   import { Frame, MOVE } from './frame.svelte'
+  import { settings } from '../settings.svelte'
+  import { viewport } from '../viewport.svelte'
   import { views } from '../views.svelte'
   import { workspace } from '../workspace.svelte'
 
@@ -50,12 +53,31 @@
   }
 
   let box = $state<Box | null>(null)
-  /** Following a finger, or springing into place, or neither; and whether anything is
-   *  over the note. The one part of this that is a decision rather than a
-   *  measurement, and the part with a test; see frame.svelte.ts. */
+  /** Following a finger, or springing into place, or neither. The one part of this
+   *  that is a decision rather than a measurement, and the part with a test; see
+   *  frame.svelte.ts. */
   const frame = new Frame()
 
   const showing = $derived(bridge.showing)
+
+  /** Anything the app has put over the note, from the app's own stores.
+   *
+   *  Emil: *"when I open the sidebar I can still see that frame."* The sidebar was
+   *  the one thing missing from the list, and it is the one a reader opens twenty
+   *  times an hour: on a phone it is a drawer over the note rather than a column
+   *  beside it, so the card was left floating on top of the file list. On a desktop
+   *  the same panel covers nothing, which is why the drawer is asked about rather
+   *  than the panel. */
+  let overlaid = $state(false)
+  const covered = $derived(
+    overlaid || settings.open || account.open || (viewport.drawer && !!workspace.panel),
+  )
+
+  /** The region of the note a card is drawn around. */
+  interface Region {
+    from: number
+    to: number
+  }
 
   /** The editor in the pane that has the focus, if it is showing a note. */
   function editor() {
@@ -72,9 +94,8 @@
    *  enough to place the frame. Clamped to the editor, and null when the region has
    *  scrolled out of it altogether: a frame pinned to an edge with no words in it is
    *  worse than no frame. */
-  function measure(): Box | null {
+  function measure(where: Region | null): Box | null {
     const view = editor()
-    const where = showing
     if (!view || !where) return null
 
     const rect = view.scrollDOM.getBoundingClientRect()
@@ -114,20 +135,61 @@
   onMount(() => {
     let waiting: ReturnType<typeof setTimeout> | undefined
     let painting = 0
+    let looping = 0
     let watched: HTMLElement | null = null
+    /** What the card is drawn around: the region the glasses are showing, or - while
+     *  a finger is dragging - the region the note is passing over. */
+    let region: Region | null = null
+
+    const paint = () => {
+      box = measure(region ?? showing)
+    }
 
     const remeasure = () => {
+      // A drag is already painting every frame; a second timer would only fight it.
+      if (looping) return
+
       cancelAnimationFrame(painting)
       // After the browser has laid out whatever moved: an edit, a page turn, a
       // resize. One frame is enough and two would be a flicker.
       painting = requestAnimationFrame(() => {
-        box = measure()
+        painting = 0
+        paint()
       })
+    }
+
+    /** One frame of a drag.
+     *
+     *  The card is measured from where the note *is* rather than from where the
+     *  glasses have been told to be, because being told costs a tenth of a second of
+     *  waiting and a page of radio and neither belongs in front of a moving thumb.
+     *  `regionAt` is arithmetic over pages the session has already cut, so this is a
+     *  lookup and a measurement per frame and nothing else.
+     *
+     *  Not while the plugin is steering: that scroll is a page turn moving the phone,
+     *  and the card belongs where the glasses are rather than on every line the note
+     *  passes through on its way there. */
+    const follow = () => {
+      if (!frame.following) {
+        looping = 0
+        region = null
+        paint()
+        return
+      }
+
+      if (!bridge.steering) {
+        const at = atTop()
+        region = at === null ? null : bridge.regionAt(at)
+      }
+
+      paint()
+      looping = requestAnimationFrame(follow)
     }
 
     const scrolled = () => {
       frame.scrolled()
-      remeasure()
+      if (!looping) looping = requestAnimationFrame(follow)
+
       clearTimeout(waiting)
       waiting = setTimeout(() => {
         const at = atTop()
@@ -135,19 +197,18 @@
       }, SCROLLED)
     }
 
-    /** Whether anything is over the note. Read off the page rather than from a store,
-     *  because there are half a dozen things that can be over it - a sheet, the
-     *  settings, the sign-in, a picker - and they have one thing in common: they are
-     *  in the document. One query beats six imports and cannot fall behind one of
-     *  them being added. */
+    /** Anything else over the note: a sheet, a dialog, a picker. The stores answer
+     *  for the sidebar, the settings and the sign-in; this is the catch-all, because
+     *  half a dozen things can be over a note and they have one thing in common -
+     *  they are in the document. One query beats six imports and cannot fall behind
+     *  one of them being added. */
     const look = () => {
-      frame.covered =
-        document.querySelector('.sheet, .settings, dialog[open], [role="dialog"]') !== null
+      overlaid = document.querySelector('.sheet, dialog[open], [role="dialog"]') !== null
     }
 
     // The scroller is the editor's own, and a pane rebuilds its editor when it
     // changes note, so it is found again rather than held.
-    const follow = () => {
+    const attach = () => {
       const found = editor()?.scrollDOM ?? null
       if (found === watched) return
 
@@ -157,13 +218,13 @@
       remeasure()
     }
 
-    const every = setInterval(follow, 250)
+    const every = setInterval(attach, 250)
     // The same beat looks for anything over the note. A quarter of a second is far
     // faster than a reader can open a sheet and read what is in it, and it costs one
     // selector query.
     const watching = setInterval(look, 250)
     window.addEventListener('resize', remeasure)
-    follow()
+    attach()
     look()
 
     // The page turned: spring to it, once.
@@ -187,6 +248,7 @@
       clearTimeout(waiting)
       frame.stop()
       cancelAnimationFrame(painting)
+      cancelAnimationFrame(looping)
       window.removeEventListener('resize', remeasure)
       watched?.removeEventListener('scroll', scrolled)
     }
@@ -204,6 +266,9 @@
     ? ' nothing'
     : ''}{voice.trouble ? ` ${voice.trouble}` : ''}{voice.detail ? ` ${voice.detail}` : ''}"
   data-heard={voice.heard}
+  data-took={voice.took
+    ? `${String(voice.took.spoke)} spoke ${String(voice.took.hang)} hang ${String(voice.took.sent)} sent`
+    : ''}
 ></div>
 
 <!-- What the glasses are showing, marked on the note.
@@ -217,11 +282,12 @@
 
      So the mark is back to what it was and will stay there. A frame around the words
      costs the reading nothing, and nothing that dims a note is worth a mark on it. -->
-{#if box && !frame.covered}
+{#if box}
   <div
     class="frame"
     class:moving={frame.moving}
     class:cut={box.cut}
+    class:gone={covered}
     aria-hidden="true"
     style:top="{box.top}px"
     style:left="{box.left}px"
@@ -248,6 +314,7 @@
     border-radius: var(--radius-md);
     opacity: 0.5;
     pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
   }
 
   /* While the page is turning, or while a drag has just let go: a short spring into
@@ -256,7 +323,8 @@
   .moving {
     transition:
       top var(--move) var(--ease-spring),
-      height var(--move) var(--ease-spring);
+      height var(--move) var(--ease-spring),
+      opacity var(--dur-fast) var(--ease-out);
   }
 
   /* Part of the region is off the screen, so the frame is not the whole of it: the
@@ -265,5 +333,16 @@
   .cut {
     border-radius: 0;
     opacity: 0.35;
+  }
+
+  /* Something is over the note - the sidebar, the settings, a sheet - so the mark on
+     the note is not drawn. Faded rather than dropped, because a card that vanishes
+     the instant a drawer starts to open reads as a glitch, and because it has to come
+     back when the note is bare again. Emil: "when I open the sidebar I can still see
+     that frame."
+
+     Last of the three, so it wins over the cut frame's own opacity. */
+  .gone {
+    opacity: 0;
   }
 </style>

@@ -14,7 +14,11 @@
  *    spring, once, into where it belongs.
  *
  *  There is no event for a scroll that has stopped, so a moment of quiet after the
- *  last one is the whole of what "let go" can mean. */
+ *  last one is the whole of what "let go" can mean.
+ *
+ *  Whether anything is *over* the note is not here: it is read off the app's own
+ *  stores and off the page, which is a measurement rather than a decision. See
+ *  Glasses.svelte. */
 
 /** How long the spring takes. The app's own duration for something that moves
  *  because something else did; see tokens.css. */
@@ -28,10 +32,15 @@ export class Frame {
   /** True while the card should be springing rather than following. What the class
    *  on the element reads. */
   moving = $state(false)
-  /** True while anything is over the note - a sheet, the settings, the sign-in - and
-   *  the card is not drawn at all. A mark on a note has no business floating over a
-   *  panel, and no stacking order makes a fixed element behave inside one. */
-  covered = $state(false)
+  /** True while a finger is still on the glass: a scroll arrived less than `SNAP`
+   *  ago. What the card's own loop runs on - while this is true it measures every
+   *  frame, off the note's own scroll, rather than waiting to be told anything.
+   *
+   *  Emil: *"it doesn't change WHILE scrolling but you kinda need to pause for it to
+   *  react."* A scroll event is not a frame and there is no event for a scroll that
+   *  is still going, so following a finger means painting on the clock rather than on
+   *  the events. */
+  following = $state(false)
 
   private settling: ReturnType<typeof setTimeout> | undefined
   private easing: ReturnType<typeof setTimeout> | undefined
@@ -39,10 +48,12 @@ export class Frame {
   /** The note was scrolled. Following, until it goes quiet. */
   scrolled(): void {
     this.moving = false
+    this.following = true
     clearTimeout(this.settling)
     clearTimeout(this.easing)
 
     this.settling = setTimeout(() => {
+      this.following = false
       this.spring()
     }, SNAP)
   }
@@ -50,6 +61,7 @@ export class Frame {
   /** The page on the glasses turned. Springing at once: nothing is dragging. */
   turned(): void {
     clearTimeout(this.settling)
+    this.following = false
     this.spring()
   }
 
@@ -65,5 +77,6 @@ export class Frame {
     clearTimeout(this.settling)
     clearTimeout(this.easing)
     this.moving = false
+    this.following = false
   }
 }

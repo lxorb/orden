@@ -23,7 +23,43 @@ afterEach(() => {
 describe('the card', () => {
   test('is still until something moves', () => {
     expect(frame.moving).toBe(false)
-    expect(frame.covered).toBe(false)
+    expect(frame.following).toBe(false)
+  })
+
+  /** What the card's own loop runs on. Emil: *"it doesn't change WHILE scrolling but
+   *  you kinda need to pause for it to react."* A scroll event is not a frame, and
+   *  there is no event at all for a scroll that is still going, so the card measures
+   *  on the clock while this is true. */
+  test('says a finger is on the glass while the scrolls keep arriving', () => {
+    expect(frame.following).toBe(false)
+
+    frame.scrolled()
+    expect(frame.following).toBe(true)
+
+    for (let at = 0; at < 20; at++) {
+      vi.advanceTimersByTime(16)
+      frame.scrolled()
+      expect(frame.following).toBe(true)
+    }
+
+    vi.advanceTimersByTime(SNAP + 1)
+    expect(frame.following).toBe(false)
+    expect(frame.moving).toBe(true)
+  })
+
+  test('and says nothing is dragging when the page turned by itself', () => {
+    frame.scrolled()
+    frame.turned()
+
+    expect(frame.following).toBe(false)
+    expect(frame.moving).toBe(true)
+  })
+
+  test('lets go of the finger when the plugin goes away', () => {
+    frame.scrolled()
+    frame.stop()
+
+    expect(frame.following).toBe(false)
   })
 
   test('follows the words while the finger is dragging', () => {

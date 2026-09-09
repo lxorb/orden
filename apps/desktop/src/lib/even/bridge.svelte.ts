@@ -20,7 +20,7 @@
 import { BODY_INNER, BODY_ROWS, GUTTER, type Page, type Paging } from '@nib/glasses'
 import { account } from '../account.svelte'
 import { api } from '../api'
-import { bestOf, type Command, commandIn } from './commands'
+import { bestOf, type Command, commandIn, commandWords, settled } from './commands'
 import type { Field } from '../preferences'
 import { fileMark } from '../file-mark'
 import { t } from '../i18n.svelte'
@@ -174,6 +174,7 @@ class Bridge {
     nothing: false,
     trouble: '',
     detail: '',
+    took: null,
   })
 
   private glasses: Glasses | null = null
@@ -256,6 +257,12 @@ class Bridge {
       // plugin used to answer "no way to listen", which was true of the key and
       // useless to somebody wearing a microphone. See services/sync/src/ask/heard.ts.
       canTranscribe: () => !!account.accountToken,
+      // The grammar decides when half an utterance is already the whole of a
+      // command, so that "next" is obeyed while the reader is still saying it. The
+      // reader's own phrases, because a rebound one is the one they will say.
+      settled: (said) => settled(said, modes.glassesWords),
+      // The connection, up before there is anything to send through it.
+      warm: () => api.warm(),
       transcribe: (wav) => this.transcribe(wav),
       heard: (heard) => this.heard(heard.said, heard.ended),
       failed: (said) => this.flash(said),
@@ -584,6 +591,28 @@ class Bridge {
     workspace.goto = { path, line: showing.firstLine }
   }
 
+  /** Whether the phone is being scrolled by the plugin rather than by a thumb.
+   *
+   *  Read by the card on the note: while this is true the scroll is the plugin's own
+   *  doing and the card belongs where the glasses are, rather than wherever the note
+   *  is passing through on its way there. */
+  get steering(): boolean {
+    return performance.now() < this.steerUntil
+  }
+
+  /** Where the panel would be if the note were scrolled to this offset.
+   *
+   *  Arithmetic and nothing else: no send, no page written down, no radio. What the
+   *  card on the phone follows while a finger is dragging, so that it moves with the
+   *  words on every frame instead of waiting for the glasses to be told. See
+   *  session.ts. */
+  regionAt(offset: number): { from: number; to: number; page: number; count: number } | null {
+    const where = this.session.regionAt(offset)
+    if (!where) return null
+
+    return { from: where.from, to: where.to, page: where.page, count: where.count }
+  }
+
   /** The glasses, taken to where the phone is.
    *
    *  The other half. Called by the plugin's own editor as it scrolls, with the
@@ -686,7 +715,16 @@ class Bridge {
     const token = account.accountToken
     if (!token) throw new Error('sign in first')
 
-    return (await api.askHeard(token, wav)).said
+    return (await api.askHeard(token, wav, this.vocabulary())).said
+  }
+
+  /** The words the model is told to expect: the spoken commands as this reader has
+   *  them. Half a second of "next" comes back as "text" often enough to matter, and a
+   *  prompt of the phrases is what settles it. */
+  private vocabulary(): string {
+    return commandWords()
+      .map((one) => modes.glassesWords[one.id] ?? one.said)
+      .join(', ')
   }
 
   /** Something was said. What it means, and how long it took to mean it.
