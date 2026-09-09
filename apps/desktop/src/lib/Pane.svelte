@@ -254,7 +254,7 @@
     <div
       class="editor"
       data-region="editor"
-      oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view)}
+      oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view, tab.path)}
     >
       <Editor
         bind:view

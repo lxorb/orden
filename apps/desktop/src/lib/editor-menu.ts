@@ -1,5 +1,10 @@
 import {
+  type BlockKind,
+  blocksFor,
+  blockTarget,
   clearFormatting,
+  deleteBlocks,
+  duplicateBlocks,
   type EditorView,
   insertCodeFence,
   insertHorizontalRule,
@@ -14,12 +19,14 @@ import {
   toggleWrap,
   type Transaction,
 } from '@nib/editor'
-import { copySelection, cutSelection } from './clipboard'
+import { copySelection, copyText, cutSelection } from './clipboard'
+import { countText } from './counts'
 import { composerEntries } from './composer-commands'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
+import { noteName } from './space-paths'
 import { viewport } from './viewport.svelte'
 
 /** The editor's own context menu, so the browser's never appears.
@@ -45,7 +52,91 @@ async function paste(view: EditorView) {
   view.focus()
 }
 
-function editorMenu(view: EditorView | undefined): MenuEntry[] {
+/** What a block is called, in the reader's own language. The editor answers with
+ *  a word of its own and never with one anybody reads; this is where that word
+ *  becomes one. */
+function blockName(kind: BlockKind): string {
+  switch (kind) {
+    case 'heading':
+      return t('Heading')
+    case 'paragraph':
+      return t('Paragraph')
+    case 'list':
+      return t('List item')
+    case 'quote':
+      return t('Quote')
+    case 'code':
+      return t('Code block')
+    case 'table':
+      return t('Table')
+    case 'math':
+      return t('Equation')
+    case 'properties':
+      return t('Properties')
+    case 'rule':
+      return t('Horizontal rule')
+    case 'block':
+      return t('Block')
+  }
+}
+
+/** The rows about the block a press landed in: what it is, and what can be done
+ *  to it.
+ *
+ *  To it, or to every block a selection covers: a selection in nib is a selection
+ *  of text and never a mode, so the blocks it lies across are simply the blocks it
+ *  lies across. The first row is not a row to press - it says which block the rest
+ *  of them are about, and how much of the note that is, which is the only place
+ *  the app counts anything smaller than a note.
+ *
+ *  Nothing at all in a note nobody can write in: all three of these write, and a
+ *  row that cannot happen is worse than no row. */
+function blockEntries(
+  view: EditorView | undefined,
+  at: number | null,
+  path: string | undefined,
+): MenuEntry[] {
+  if (!view || at === null || view.state.readOnly) return []
+
+  const spans = blocksFor(view, at)
+  if (!spans.length) return []
+
+  const words = countText(
+    spans.map((span) => view.state.doc.sliceString(span.from, span.to)).join('\n'),
+  ).words
+  const name = path ? noteName(path) : null
+  const first = spans[0]
+
+  return [
+    DIVIDER,
+    {
+      label:
+        spans.length > 1
+          ? t('{blocks} blocks, {count} words', { blocks: spans.length, count: words })
+          : t('{kind}, {count} words', {
+              kind: blockName(first?.kind ?? 'block'),
+              count: words,
+            }),
+      disabled: true,
+      run: () => undefined,
+    },
+    { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
+    {
+      // A link to a block needs the block to have a name, and giving it one is a
+      // change to the note; see blockTarget in @nib/editor. A note with no path
+      // of its own - one that has never been saved - has nothing to link to.
+      label: t('Copy link'),
+      disabled: !name,
+      run: () => {
+        const target = name ? blockTarget(view, at) : null
+        if (name && target) void copyText(`[[${name}${target}]]`)
+      },
+    },
+    { label: t('Delete'), danger: true, run: () => deleteBlocks(view, at) },
+  ]
+}
+
+function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
   const selected = !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
@@ -77,7 +168,7 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
   // every other app there. The formatting lives in the bar above the
   // keyboard and in the app menu, and sixteen rows would cover the text
   // they are about.
-  if (viewport.touch) return clipboard
+  if (viewport.touch) return [...clipboard, ...block]
 
   // A locked note leaves the clipboard rows and the way back out. The rest of
   // this menu writes.
@@ -95,6 +186,7 @@ function editorMenu(view: EditorView | undefined): MenuEntry[] {
 
   return [
     ...clipboard,
+    ...block,
     DIVIDER,
     { label: t('Bold'), hint: shortcuts.hint('format.bold'), run: run(toggleWrap('**')) },
     { label: t('Italic'), hint: shortcuts.hint('format.italic'), run: run(toggleWrap('*')) },
@@ -174,6 +266,11 @@ function wordUnder(view: EditorView, event: MouseEvent): string | null {
 function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
   if (!view || !modes.spellcheck) return []
 
+  // A press on the mark in the margin is about the block and not about a word:
+  // the nearest word to the margin is only the first one on the line.
+  const on = event.target
+  if (on instanceof Element && on.closest('.nib-block-handle')) return []
+
   const word = wordUnder(view, event)
   if (word === null) return []
 
@@ -192,6 +289,14 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
 /** Opens it at the pointer. One place, so the two things a right click on the
  *  text has to do - build the menu for this moment and place it - stay
  *  together. */
-export function showEditorMenu(event: MouseEvent, view: EditorView | undefined) {
-  menu.show(event, [...editorMenu(view), ...spellingEntries(view, event)], { near: true })
+export function showEditorMenu(event: MouseEvent, view: EditorView | undefined, path?: string) {
+  // Never the precise position: a press on the mark in the margin lands beside
+  // the text rather than in it, and that press is about the block it stands by.
+  const at = view ? view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : null
+
+  menu.show(
+    event,
+    [...editorMenu(view, blockEntries(view, at, path)), ...spellingEntries(view, event)],
+    { near: true },
+  )
 }

@@ -25,6 +25,7 @@ import {
   blockIdOf,
   blockIds,
   type FoundLink,
+  freeBlockId,
   isCanvasTarget,
   isTabFile,
   type LinkKind,
@@ -684,16 +685,6 @@ function standsAlone(line: string, name: string): boolean {
   }
 
   return false
-}
-
-/** A name no block in the note has yet. Six characters of base 36, which is two
- *  billion names: short enough to read in the middle of a sentence, and it is
- *  only ever compared against the names in one note. */
-function freeBlockId(taken: ReadonlySet<string>): string {
-  for (;;) {
-    const id = Math.random().toString(36).slice(2, 8)
-    if (id.length === 6 && !taken.has(id)) return id
-  }
 }
 
 export const links = new Links()

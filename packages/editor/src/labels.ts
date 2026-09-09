@@ -19,6 +19,8 @@ const DEFAULTS = {
   /** The chevron in the margin, and the mark a fold leaves behind. */
   fold: 'Fold',
   unfold: 'Unfold',
+  /** The mark in the margin beside every block. */
+  blockHandle: 'Move this block',
   dragToResize: 'Drag to resize',
   describeImage: 'Describe the image',
   openImage: 'Open image',

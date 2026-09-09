@@ -1677,6 +1677,95 @@
   color: var(--text-strong);
 }
 
+/* ── The mark beside a block ─────────────────────────────────────── */
+
+/* Beside every block, one column further out than the fold chevron, so a block
+   that folds carries both and they read as what they do in the order they are
+   reached: take hold of this, and open this. It hangs off a slot with no width
+   of its own, the way the chevron does, so the writing column is untouched.
+
+   Nothing until the pointer is on the line, and nothing at all where there is no
+   pointer: a finger has no hover to bring it out with and the margin is a thumb
+   wide, so a long press opens the same menu instead. See block/handle.ts in
+   @nib/editor. */
+.nib-block-slot {
+  position: relative;
+  display: inline;
+}
+
+.nib-block-handle {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--space-5) + var(--line-inset, 0px));
+  display: flex;
+  width: 15px;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  margin-top: -10px;
+  background: none;
+  color: var(--muted);
+  /* A button does not inherit the text's font, and `--line-inset` is measured in
+     the line's own em and ch; see the fold chevron. */
+  font: inherit;
+  cursor: grab;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.cm-line:hover > .nib-block-slot .nib-block-handle,
+.nib-block-handle:focus-visible {
+  opacity: 1;
+}
+
+.nib-block-handle:hover {
+  background: var(--surface-2);
+  color: var(--text-strong);
+}
+
+.nib-block-handle:active {
+  cursor: grabbing;
+}
+
+.nib-block-handle svg {
+  width: 10px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+@media (hover: none) {
+  .nib-block-handle {
+    display: none;
+  }
+}
+
+/* A block on its way somewhere goes quiet: what matters while it moves is where
+   it is going, which is the line below. */
+.cm-line.nib-block-lifted {
+  opacity: 0.4;
+}
+
+/* Where it would land. An inset shadow rather than a border or a pseudo-element:
+   a border would move the text down by its own width as the line was drawn, and
+   both pseudo-elements of a code line are taken - one by the block's background,
+   one by its numbers. */
+.cm-line.nib-block-over {
+  box-shadow: inset 0 2px 0 0 var(--accent);
+}
+
+.cm-line.nib-block-under {
+  box-shadow: inset 0 -2px 0 0 var(--accent);
+}
+
 /* ── Callouts ────────────────────────────────────────────────────── */
 
 /* Every line of a callout carries the look, so the accent runs its full height,

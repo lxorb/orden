@@ -527,6 +527,21 @@ function blockSection(source: string, wanted: string): string | null {
   return block.join('\n').trimEnd()
 }
 
+/** A name no block in the note has yet. Six characters of base 36, which is two
+ *  billion names: short enough to read in the middle of a sentence, and it is
+ *  only ever compared against the names in one note.
+ *
+ *  Beside the grammar that reads these rather than beside either of the two
+ *  places that write one - the editor, naming a block somebody asked for a link
+ *  to, and the app, naming one in a note that is not open - so both give out the
+ *  same kind of name. */
+export function freeBlockId(taken: ReadonlySet<string>): string {
+  for (;;) {
+    const id = Math.random().toString(36).slice(2, 8)
+    if (id.length === 6 && !taken.has(id)) return id
+  }
+}
+
 /** Every block name in a note, with the line it sits on, counting from zero.
  *  Inside a fence a `^word` is code, so fences are skipped here as well. */
 export function blockIds(text: string): { id: string; line: number }[] {

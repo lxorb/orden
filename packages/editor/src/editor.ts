@@ -14,6 +14,7 @@ import {
 import { remoteCarets } from './carets'
 import { editorCompletion } from './emoji'
 import { external } from './external'
+import { blockHandles } from './block/handle'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
@@ -100,6 +101,7 @@ export function editorState(options: StateOptions): EditorState {
       // Before the modes, so the folds are a field the live preview's own
       // fields can already ask about while they build.
       folding(),
+      blockHandles(),
       // The other people in this note, when it is one several devices are
       // writing in; nothing at all until the app says there is somebody.
       remoteCarets(),
