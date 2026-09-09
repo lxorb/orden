@@ -93,8 +93,78 @@ export class SharedDoc {
    *  the shared text; handing it back would be an echo. See `arrived`. */
   onLocal: ((changes: ChangeSet) => void) | null = null
 
+  /** How many of this note's own edits are waiting for undo, and how many for
+   *  redo.
+   *
+   *  Counted here rather than read out of the history, because they are the guard
+   *  on the history rather than a report of it. A document outlives the note in it -
+   *  the one tab that previews a note takes another note on - and undo reaching one
+   *  step past that is the note the tab came from appearing under the name of the
+   *  note the tab is on. `takeOn` puts both back to nought, so an undo that would
+   *  cross a switch has nothing to stand on even if a history somewhere still holds
+   *  the step.
+   *
+   *  A burst of keystrokes counts as several where the history groups it into one,
+   *  so these can read high. That is the safe direction: the history refuses first
+   *  and this refuses nothing it should allow, while nought here means nought
+   *  whatever the history thinks. */
+  private ownUndo = 0
+  private ownRedo = 0
+
+  /** How many steps of this note's own are there to take back, and to put back.
+   *  Zero for a document that has just taken another note on, whatever was done in
+   *  the note it came from. */
+  get undoable(): number {
+    return this.ownUndo
+  }
+
+  get redoable(): number {
+    return this.ownRedo
+  }
+
   constructor(doc: string | Text = '') {
     this.state = EditorState.create({ doc, extensions: [history()] })
+  }
+
+  /** This document is taking on another note's words: the one tab that previews a
+   *  note, moving on to the next one.
+   *
+   *  Two things happen, and the second is the point. The words go into every pane
+   *  as the edit they are, so a view keeps its caret and its place rather than
+   *  being rebuilt. And the document starts a history of its own, empty.
+   *
+   *  Emil, pressing Ctrl+Z after a click: *"it just inserted contents of a past
+   *  note into the currently open one."* That was this. The switch went in as an
+   *  ordinary edit, an edit is what undo takes back, and taking it back put the
+   *  words of the note the tab came from into the document that now carries the
+   *  next note's name - dirty, and on its way to the disk and the account under
+   *  that name. Nothing downstream can tell: by then the text is the document's
+   *  own, under its own path.
+   *
+   *  So the switch is not an edit anybody made, and there is nothing behind it to
+   *  go back to. Every note's undo begins where the note did. */
+  takeOn(text: string) {
+    const held = this.state.doc.toString()
+
+    if (held !== text) {
+      const change = fold(held, text) ?? { from: 0, to: held.length, insert: text }
+      // Out of the history on the way past: the views' own histories are kept
+      // empty while they are joined, and this is the same fact said for the
+      // document's.
+      const made = this.state.update({
+        changes: change,
+        annotations: Transaction.addToHistory.of(false),
+      })
+
+      this.carry(made.changes, null)
+    }
+
+    // A history of its own rather than the old one emptied: a fresh state cannot
+    // be holding a step from the note this document has just left.
+    this.state = EditorState.create({ doc: text, extensions: [history()] })
+    this.ownUndo = 0
+    this.ownRedo = 0
+    this.onChange?.(this.state.doc)
   }
 
   /** The rope, for a view being built on it and for anyone who wants the words.
@@ -143,6 +213,7 @@ export class SharedDoc {
   local(changes: ChangeSet, selection: EditorSelection, from: DocView) {
     this.state = this.state.update({ changes, selection }).state
 
+    this.did()
     this.carry(changes, from)
     this.made(changes)
   }
@@ -157,16 +228,33 @@ export class SharedDoc {
    *  they were. It is also what makes this safe in a room - a change that named
    *  the whole note would take out every character and put it back, and whatever
    *  another device was writing would go with them. */
-  replace(text: string) {
+  /** `recorded` is whether this is a step for undo to stop at, which is whether
+   *  anybody asked for it. A version put back from the history sheet is one and has
+   *  to be undoable, the way it is in a single view. A note re-read from disk after
+   *  another program wrote it is not: nobody typed it, the note is as saved
+   *  afterwards as it was before, and a Ctrl+Z that put the file's old words back
+   *  under the same name would be the app inventing an edit. */
+  replace(text: string, recorded = true) {
     const held = this.state.doc.toString()
     if (held === text) return
 
     const change = fold(held, text) ?? { from: 0, to: held.length, insert: text }
-    const made = this.state.update({ changes: change })
+    const made = this.state.update({
+      changes: change,
+      ...(recorded ? {} : { annotations: Transaction.addToHistory.of(false) }),
+    })
 
     this.state = made.state
+    if (recorded) this.did()
     this.carry(made.changes, null)
     this.made(made.changes)
+  }
+
+  /** A step of this note's own went into the history. Whatever could have been put
+   *  back is gone, exactly as it is in the history itself. */
+  private did() {
+    this.ownUndo++
+    this.ownRedo = 0
   }
 
   /** Changes made to the document from outside, as the ranges that actually
@@ -180,6 +268,7 @@ export class SharedDoc {
     const made = this.state.update({ changes })
 
     this.state = made.state
+    this.did()
     this.carry(made.changes, null)
     this.made(made.changes)
   }
@@ -214,11 +303,25 @@ export class SharedDoc {
   }
 
   undo(asked: DocView): boolean {
-    return this.step(undo, asked)
+    // Nothing of this note's own to take back. Refused here rather than left to
+    // the history, which is the guard: a step from the note this document used to
+    // hold is not a step this note has, whatever is still lying in a field
+    // somewhere. See `undoable`.
+    if (!this.ownUndo) return false
+    if (!this.step(undo, asked)) return false
+
+    this.ownUndo--
+    this.ownRedo++
+    return true
   }
 
   redo(asked: DocView): boolean {
-    return this.step(redo, asked)
+    if (!this.ownRedo) return false
+    if (!this.step(redo, asked)) return false
+
+    this.ownRedo--
+    this.ownUndo++
+    return true
   }
 
   /** Undo or redo, on the document's own history. The pane that asked follows

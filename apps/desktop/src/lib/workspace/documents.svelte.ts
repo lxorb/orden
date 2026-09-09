@@ -217,7 +217,11 @@ export class NoteDoc {
    *  not, and text that matches the file is nothing to tell the app about. */
   replace(text: string, dirty = true) {
     this.quiet = !dirty
-    this.live.replace(text)
+    // Whether this is a step for undo to stop at is the same question as whether it
+    // leaves the note out of step with its file. A version put back is somebody
+    // asking for it and has to be undoable; a note re-read from disk is not, and a
+    // Ctrl+Z that put the old file back would be an edit the app invented.
+    this.live.replace(text, dirty)
     this.quiet = false
 
     this.words = text
@@ -248,7 +252,17 @@ export class NoteDoc {
     this.path = note.path
     this.name = note.name
     this.arrivals++
-    this.replace(note.text, false)
+
+    // Not `replace`: this document is not being edited, it is being pointed at
+    // another note, and the note it came from must not be one step behind the one
+    // it is on. `takeOn` gives it a history of its own, empty. See shared.ts.
+    this.quiet = true
+    this.live.takeOn(note.text)
+    this.quiet = false
+
+    this.words = note.text
+    this.behind = false
+    this.dirty = false
   }
 
   /** How many notes this document has held. Only the preview ever takes a second

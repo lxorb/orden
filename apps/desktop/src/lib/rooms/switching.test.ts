@@ -17,6 +17,7 @@
  *  must never fail: each note's room holds that note's words and nobody else's. */
 
 import { describe, expect, test, vi } from 'vitest'
+import { EditorState } from '@nib/editor'
 import { receive, syncUpdate, TEXT } from '@nib/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
@@ -121,6 +122,27 @@ class Server {
 function words(note: InstanceType<typeof NoteDoc>): string {
   note.flush()
   return note.text
+}
+
+/** A pane looking at a document, as far as undo is concerned.
+ *
+ *  A pane's view is a state that has joined the document, and while it is joined
+ *  its own history is kept empty on purpose: the document's is the one that
+ *  answers Ctrl+Z, and that is what these tests press. So this is a state and a
+ *  dispatch and nothing else - what `undoEdit` reaches when the key is struck. */
+function paneOn(note: InstanceType<typeof NoteDoc>) {
+  const view = {
+    state: EditorState.create({ doc: note.live.text }),
+    dispatch(spec: Parameters<EditorState['update']>[0]) {
+      view.state = view.state.update(spec).state
+    },
+    get words(): string {
+      return view.state.doc.toString()
+    },
+  }
+
+  note.live.join(view)
+  return view
 }
 
 function socketOf(): InstanceType<typeof sockets.FakeSocket> {
@@ -379,5 +401,167 @@ describe('two devices in one note', () => {
 
     first.room.leave()
     second.room.leave()
+  })
+})
+
+/** Ctrl+Z after a switch.
+ *
+ *  Emil, on the edge build: *"I pressed Ctrl+Z (to go back) but then it just
+ *  inserted contents of a past note into the currently open one."*
+ *
+ *  The preview tab moving on is one document taking another note's words, and the
+ *  words go in as an edit so that every pane keeps its caret. An edit is the thing
+ *  undo takes back - so the first Ctrl+Z after a click took the switch back, and
+ *  the note the tab came from was suddenly the text of the note the tab is on,
+ *  under that note's name, dirty, on its way to disk and to the account. */
+describe('pressing undo after the tab has moved on', () => {
+  test('cannot reach the note the document came from', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    note.live.replace('# A\nwritten in a\n')
+    note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
+
+    // Nothing of this note's has been undone, because nothing of this note's has
+    // been done: the switch is not an edit anybody made.
+    expect(note.live.undoable).toBe(0)
+    expect(note.live.undo(pane)).toBe(false)
+
+    expect(words(note)).toBe('# B\n')
+    expect(pane.words).toBe('# B\n')
+    expect(note.path).toBe('/space/b.md')
+    // And nothing to write: undoing nothing leaves the note in step with its file.
+    expect(note.dirty).toBe(false)
+  })
+
+  test('takes back only what was typed in the note that is up', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
+    note.live.replace('# B\nwritten in b\n')
+
+    expect(note.live.undo(pane)).toBe(true)
+    expect(words(note)).toBe('# B\n')
+    expect(pane.words).toBe('# B\n')
+
+    // And that is the whole of it: the note it came from is not one step further
+    // back.
+    expect(note.live.undo(pane)).toBe(false)
+    expect(words(note)).toBe('# B\n')
+  })
+
+  test('leaves redo with nothing of the old note to put back', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    note.live.replace('# A\nwritten in a\n')
+    note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
+
+    expect(note.live.redoable).toBe(0)
+    expect(note.live.redo(pane)).toBe(false)
+    expect(words(note)).toBe('# B\n')
+
+    // Undo and redo of this note's own typing still work, both ways.
+    note.live.replace('# B\nwritten in b\n')
+    expect(note.live.undo(pane)).toBe(true)
+    expect(words(note)).toBe('# B\n')
+    expect(note.live.redo(pane)).toBe(true)
+    expect(words(note)).toBe('# B\nwritten in b\n')
+  })
+
+  test('cannot reach across the switch even after typing in the new note', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    note.live.replace('# A\nwritten in a\n')
+    note.live.replace('# A\nwritten in a, twice\n')
+    note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
+    note.live.replace('# B\nwritten in b\n')
+
+    // Held down, the way somebody reaching for something they lost holds it down.
+    for (let press = 0; press < 6; press++) note.live.undo(pane)
+
+    expect(words(note)).toBe('# B\n')
+    expect(words(note)).not.toContain('# A')
+  })
+
+  test('a note re-read from disk is not a step to go back to', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    // What the watcher does when the file changed under a note nobody has edited,
+    // and what a rename's re-read of every open note does: the note becomes the
+    // file, and is as saved afterwards as it was before. Nobody typed it, so it is
+    // not a step for undo to stop at.
+    note.replace('# A, changed by another program\n', false)
+
+    expect(note.live.undoable).toBe(0)
+    expect(note.live.undo(pane)).toBe(false)
+    expect(words(note)).toBe('# A, changed by another program\n')
+    expect(note.dirty).toBe(false)
+  })
+
+  test('a version put back is a step to go back to, because somebody asked for it', () => {
+    const note = previewing('/space/a.md', '# A, as it is now\n')
+    const pane = paneOn(note)
+
+    // The history sheet's Restore. Its own comment: putting an old version back is
+    // one more version, and undoable like any.
+    note.replace('# A, as it was\n')
+    expect(note.dirty).toBe(true)
+
+    expect(note.live.undo(pane)).toBe(true)
+    expect(words(note)).toBe('# A, as it is now\n')
+  })
+
+  test('cannot reach across the switch through a rename’s re-read', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    note.live.replace('# A\nwritten in a\n')
+    note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B\n' })
+
+    // Renaming anything in the space brings every open note up to what is now on
+    // disk, and the rename rewrites the heading of a note that still wears its own
+    // name. Neither is an edit anybody made.
+    note.replace('# B\nas the file now reads\n', false)
+    note.path = '/space/renamed.md'
+    note.name = 'renamed.md'
+
+    for (let press = 0; press < 4; press++) note.live.undo(pane)
+
+    expect(words(note)).toBe('# B\nas the file now reads\n')
+    expect(words(note)).not.toContain('# A')
+    expect(note.dirty).toBe(false)
+  })
+
+  test('cannot reach across the switch through a version put back', () => {
+    const note = previewing('/space/a.md', '# A\n')
+    const pane = paneOn(note)
+
+    note.live.replace('# A\nwritten in a\n')
+    note.adopt({ path: '/space/b.md', name: 'b.md', text: '# B, as it is now\n' })
+
+    // Restore, from the history sheet. That one is somebody asking, so it is a step
+    // to go back to - one step, and no further.
+    note.replace('# B, as it was\n')
+    expect(note.live.undo(pane)).toBe(true)
+    expect(words(note)).toBe('# B, as it is now\n')
+
+    expect(note.live.undo(pane)).toBe(false)
+    expect(words(note)).not.toContain('# A')
+  })
+
+  test('a room bringing another device’s words over is nobody’s undo', () => {
+    const note = previewing('/space/b.md', '# B\n')
+    const pane = paneOn(note)
+
+    note.live.arrived([{ from: 3, to: 3, insert: ' from the phone' }])
+
+    // Undo takes back what you wrote, never what somebody else did.
+    expect(note.live.undoable).toBe(0)
+    expect(note.live.undo(pane)).toBe(false)
+    expect(words(note)).toBe('# B from the phone\n')
   })
 })
