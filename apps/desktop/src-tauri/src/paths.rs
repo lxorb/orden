@@ -513,16 +513,31 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
 /// Points `link` at the folder `target`, and says whether the platform made one.
 ///
 /// Here rather than in the test module below because both walkers are held to the
-/// same bound and a cycle is built the same way for either. Windows makes a
-/// directory symlink only for an account holding the privilege for it, so a test
-/// handed `false` has no cycle to measure and stops there.
-#[cfg(test)]
+/// same bound and a cycle is built the same way for either.
+#[cfg(all(test, unix))]
 pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
-    #[cfg(windows)]
-    let made = std::os::windows::fs::symlink_dir(target, link);
-    #[cfg(unix)]
-    let made = std::os::unix::fs::symlink(target, link);
-    made.is_ok()
+    std::os::unix::fs::symlink(target, link).is_ok()
+}
+
+/// Points `link` at the folder `target`, and says whether Windows made one.
+///
+/// A symlink there needs a privilege an ordinary account does not hold, so the
+/// fallback is a junction, which is the same thing as far as a walk is concerned:
+/// one folder under a second name, resolved by `canonicalize` and stepped into by
+/// `is_dir`. A machine that can make neither has no cycle to measure, and the
+/// tests say so by stopping.
+#[cfg(all(test, windows))]
+pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
+    if std::os::windows::fs::symlink_dir(target, link).is_ok() {
+        return true;
+    }
+
+    std::process::Command::new("cmd")
+        .args(["/C", "mklink", "/J"])
+        .arg(link)
+        .arg(target)
+        .output()
+        .is_ok_and(|made| made.status.success())
 }
 
 #[cfg(test)]
@@ -829,11 +844,14 @@ mod tests {
         std::fs::write(here.join("Work").join("One.md"), "").expect("a note");
         std::fs::write(here.join("Home").join("Two.md"), "").expect("another note");
 
-        if !link_to(&here.join("Home"), &here.join("Work").join("to-home"))
-            || !link_to(&here.join("Work"), &here.join("Home").join("to-work"))
-        {
-            return;
-        }
+        assert!(
+            link_to(&here.join("Home"), &here.join("Work").join("to-home")),
+            "a link from Work into Home"
+        );
+        assert!(
+            link_to(&here.join("Work"), &here.join("Home").join("to-work")),
+            "a link from Home into Work"
+        );
 
         let (notes, others) = files_in(here);
         assert_eq!(names(&notes), ["One.md", "Two.md"]);
@@ -852,9 +870,8 @@ mod tests {
         std::fs::create_dir_all(&inner).expect("a folder");
         std::fs::write(inner.join("One.md"), "").expect("a note");
 
-        if !link_to(here, &inner.join("up")) || !link_to(here, &inner.join("over")) {
-            return;
-        }
+        assert!(link_to(here, &inner.join("up")), "one link back up");
+        assert!(link_to(here, &inner.join("over")), "a second link back up");
 
         let (notes, others) = files_in(here);
         assert_eq!(names(&notes), ["One.md"]);

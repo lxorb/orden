@@ -229,9 +229,8 @@ mod tests {
         std::fs::create_dir_all(&inner).expect("a folder");
         std::fs::write(inner.join("Idea.md"), "").expect("a note");
 
-        if !link_to(here, &inner.join("up")) || !link_to(here, &inner.join("over")) {
-            return;
-        }
+        assert!(link_to(here, &inner.join("up")), "one link back up");
+        assert!(link_to(here, &inner.join("over")), "a second link back up");
 
         let top = walk(here, &options("name", false), 0, &mut Seen::default());
         assert_eq!(names(&top.children), ["Notes"]);
