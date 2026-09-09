@@ -53,8 +53,7 @@ export function oneLine(value: string): string {
 function scalar(source: string): string {
   const value = oneLine(source)
 
-  const ambiguous =
-    !value || /:\s|:$|\s#/.test(value) || /^[-?:,[\]{}#&*!|>'"%@`]/.test(value)
+  const ambiguous = !value || /:\s|:$|\s#/.test(value) || /^[-?:,[\]{}#&*!|>'"%@`]/.test(value)
 
   return ambiguous ? `'${value.replace(/'/g, "''")}'` : value
 }

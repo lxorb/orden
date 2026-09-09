@@ -51,7 +51,10 @@ describe('a clip arriving from the page', () => {
   })
 
   test('writes the address the way a browser does, so nothing is left in it', () => {
-    const read = readClip({ ...CLIP, origin: { ...CLIP.origin, url: 'https://site.example/a b>c' } })
+    const read = readClip({
+      ...CLIP,
+      origin: { ...CLIP.origin, url: 'https://site.example/a b>c' },
+    })
     expect(read?.origin.url).toBe('https://site.example/a%20b%3Ec')
   })
 
