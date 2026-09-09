@@ -10,6 +10,7 @@ import {
   removeRow,
   serializeTable,
   setAlign,
+  sortRows,
   setCell,
 } from './model'
 
@@ -170,5 +171,83 @@ describe('display width', () => {
     const source = serializeTable(parseTable('| 名前 | x |\n| - | - |\n| ab | y |')!)
     const [header = '', , body = ''] = source.split('\n')
     expect(displayWidth(header)).toBe(displayWidth(body))
+  })
+})
+
+describe('sorting by a column', () => {
+  const sorted = (source: string, column: number, order: 'up' | 'down' = 'up') =>
+    sortRows(parseTable(source)!, column, order).rows.map((row) => row[column])
+
+  test('words, in the reader’s own alphabet', () => {
+    expect(sorted('| a |\n| - |\n| pear |\n| apple |\n| fig |', 0)).toEqual([
+      'apple',
+      'fig',
+      'pear',
+    ])
+  })
+
+  test('numbers as numbers, not as words', () => {
+    // Sorted as words, 9 comes after 10 and 100.
+    expect(sorted('| n |\n| - |\n| 9 |\n| 10 |\n| 100 |', 0)).toEqual(['9', '10', '100'])
+    expect(sorted('| n |\n| - |\n| -3 |\n| 2 |\n| 0.5 |', 0)).toEqual(['-3', '0.5', '2'])
+  })
+
+  test('a column of prices is a column of numbers', () => {
+    expect(sorted('| p |\n| - |\n| $1,200 |\n| $99 |\n| $300 |', 0)).toEqual([
+      '$99',
+      '$300',
+      '$1,200',
+    ])
+  })
+
+  test('dates as dates', () => {
+    expect(sorted('| d |\n| - |\n| 2025-10-01 |\n| 2025-09-08 |', 0)).toEqual([
+      '2025-09-08',
+      '2025-10-01',
+    ])
+  })
+
+  test('the other way round when asked', () => {
+    expect(sorted('| a |\n| - |\n| pear |\n| apple |', 0, 'down')).toEqual(['pear', 'apple'])
+  })
+
+  test('an empty cell is last whichever way the column runs', () => {
+    // A gap is not a small value, and a column with three blanks in it should
+    // not open with the blanks.
+    const source = '| a |\n| - |\n| b |\n|  |\n| a |'
+    expect(sorted(source, 0, 'up')).toEqual(['a', 'b', ''])
+    expect(sorted(source, 0, 'down')).toEqual(['b', 'a', ''])
+  })
+
+  test('rows that tie stay in the order they were written', () => {
+    const model = parseTable('| a | b |\n| - | - |\n| x | one |\n| x | two |\n| a | three |')!
+    expect(sortRows(model, 0, 'up').rows.map((row) => row[1])).toEqual(['three', 'one', 'two'])
+  })
+
+  test('the whole row travels, not just the cell', () => {
+    const model = parseTable('| a | b |\n| - | - |\n| 2 | two |\n| 1 | one |')!
+    expect(sortRows(model, 0, 'up').rows).toEqual([
+      ['1', 'one'],
+      ['2', 'two'],
+    ])
+  })
+
+  test('the header is never sorted into the body', () => {
+    const model = parseTable('| zzz |\n| - |\n| b |\n| a |')!
+    expect(sortRows(model, 0, 'up').header).toEqual(['zzz'])
+  })
+
+  test('and a table with nothing to reorder is left exactly as it was', () => {
+    const one = parseTable('| a |\n| - |\n| only |')!
+    expect(sortRows(one, 0, 'up')).toBe(one)
+
+    // Already in order: the same object back, so the view writes no document
+    // change and the note is not touched.
+    const already = parseTable('| a |\n| - |\n| a |\n| b |')!
+    expect(sortRows(already, 0, 'up')).toBe(already)
+
+    const model = parseTable('| a |\n| - |\n| b |\n| a |')!
+    expect(sortRows(model, 5, 'up')).toBe(model)
+    expect(sortRows(model, -1, 'up')).toBe(model)
   })
 })

@@ -6,7 +6,9 @@ import {
   removeColumn,
   removeRow,
   setAlign,
+  sortRows,
   type Align,
+  type Order,
   type TableModel,
 } from './model'
 import type { CellAddress } from './navigation'
@@ -98,6 +100,33 @@ export function removedColumn(base: TableModel, column: number, focused: Focus |
         row: focused.at.row,
         column: Math.max(0, afterRemoval(focused.at.column, column, next.header.length)),
       },
+      offset: focused.offset,
+    },
+  }
+}
+
+/** A column sorted, and where that leaves the caret.
+ *
+ *  The words under the caret move with the row they are in, which is what makes a
+ *  sort feel like the rows being reordered rather than the caret being thrown
+ *  somewhere. A caret in the header stays in the header: the header did not
+ *  move. */
+export function sortedColumn(
+  base: TableModel,
+  column: number,
+  order: Order,
+  focused: Focus | undefined,
+): Edit {
+  const next = sortRows(base, column, order)
+  if (next === base || !focused || focused.at.row < 0) return { next, focus: focused }
+
+  const was = base.rows[focused.at.row]
+  const now = was === undefined ? -1 : next.rows.indexOf(was)
+
+  return {
+    next,
+    focus: {
+      at: { row: now === -1 ? focused.at.row : now, column: focused.at.column },
       offset: focused.offset,
     },
   }

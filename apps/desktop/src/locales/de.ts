@@ -201,6 +201,7 @@ export const de: Dictionary = {
   'Move row down': 'Zeile nach unten',
   'Insert row': 'Zeile einfügen',
   'Delete row': 'Zeile löschen',
+  'Sort by this column': 'Nach dieser Spalte sortieren',
   'Add a property': 'Eigenschaft hinzufügen',
   property: 'eigenschaft',
   'Code block': 'Codeblock',

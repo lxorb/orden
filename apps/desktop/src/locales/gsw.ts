@@ -203,6 +203,7 @@ export const gsw: Dictionary = {
   'Move row down': 'Zile abe',
   'Insert row': 'Zile iifüege',
   'Delete row': 'Zile lösche',
+  'Sort by this column': 'Nach dere Spalte sortiere',
   'Add a property': 'Eigeschaft hinzuefüege',
   property: 'eigeschaft',
   'Code block': 'Codeblock',

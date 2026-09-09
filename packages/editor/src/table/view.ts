@@ -21,7 +21,7 @@ import {
   selectionIn,
   textRows,
 } from './caret'
-import { type Align, type TableModel, serializeTable, setCell } from './model'
+import { type Align, type Order, type TableModel, serializeTable, setCell } from './model'
 import {
   type CellAddress,
   type Side,
@@ -45,6 +45,7 @@ import {
   movedRow,
   removedColumn,
   removedRow,
+  sortedColumn,
 } from './edits'
 import { inlineShortcut, runInCell } from './shortcuts'
 
@@ -124,6 +125,13 @@ export class TableView {
 
   /** The column whose controls are up. */
   private barColumn = -1
+
+  /** Which column this table was last sorted by, and which way, so pressing the
+   *  button again turns it round. The view's own and never the note's: the order
+   *  is written into the rows, and how it got there is not a fact about the file.
+   *  A table read again tomorrow sorts upwards first, which is where anybody
+   *  starts. */
+  private sortedAs: { column: number; order: Order } | null = null
 
   /** How to end a column drag that is still going, so the document listeners it
    *  put down come off even if the table goes first. */
@@ -629,6 +637,19 @@ export class TableView {
     this.apply(alignedColumn(this.current(), column, align, this.focusedCell() ?? undefined))
   }
 
+  /** Sorts by this column, and again the other way. One button rather than two:
+   *  a column is sorted one way or the other, and which way it is showing is the
+   *  mark on the button. Written into the note, because the rows really are in
+   *  that order now; see `sortRows`. */
+  private sortBy(column: number) {
+    const order = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
+    const edit = sortedColumn(this.current(), column, order, this.focusedCell() ?? undefined)
+    if (edit.next === this.current()) return
+
+    this.sortedAs = { column, order }
+    this.apply(edit)
+  }
+
   private moveColumnBy(column: number, step: number) {
     const edit = movedColumn(this.current(), column, step, this.focusedCell() ?? undefined)
     if (edit.next === this.current()) return
@@ -699,6 +720,9 @@ export class TableView {
       this.columnButton('moveColumnRight', 'M4 1l4 4-4 4', (column) =>
         this.moveColumnBy(column, 1),
       ),
+      // An arrow down a stack of lines, which is what sorting is: the rows put
+      // in the order this column says.
+      this.columnButton('sortColumn', 'M2 2h6M2 5h4M2 8h2', (column) => this.sortBy(column)),
       this.columnButton('insertColumn', 'M5 1v8M1 5h8', (column) => this.insertColumnAfter(column)),
       this.columnButton(
         'deleteColumn',

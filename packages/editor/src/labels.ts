@@ -46,6 +46,7 @@ const DEFAULTS = {
   moveRowDown: 'Move row down',
   insertRow: 'Insert row',
   deleteRow: 'Delete row',
+  sortColumn: 'Sort by this column',
   /** The row at the foot of a note's properties that adds another one, and the
    *  word a new key is named with until it is given a name of its own. */
   addProperty: 'Add a property',

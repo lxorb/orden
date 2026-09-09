@@ -196,6 +196,86 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
   }
 }
 
+/** Which way a column is sorted. */
+export type Order = 'up' | 'down'
+
+/** A cell read as a number, or null when it is not one. Thousands separators and
+ *  a leading currency mark are taken off first: a column of prices is a column of
+ *  numbers to everybody reading it, and sorting it as words would put 1,000
+ *  before 9. */
+function numberIn(cell: string): number | null {
+  const bare = cell
+    .trim()
+    .replace(/^[^\d+-]+/, '')
+    .replace(/,/g, '')
+  if (!/^[+-]?\d+(\.\d+)?%?$/.test(bare)) return null
+
+  return Number(bare.replace(/%$/, ''))
+}
+
+/** A date, as a date. `2025-09-08` sorts before `2025-10-01`, which sorting it as
+ *  words happens to get right, and `08/09/2025` does not. */
+function dateIn(cell: string): number | null {
+  const said = cell.trim()
+  if (!/^\d{4}-\d{2}-\d{2}([T ]|$)/.test(said)) return null
+
+  const at = Date.parse(said)
+  return Number.isNaN(at) ? null : at
+}
+
+/** Two cells of one column, compared as what they look like they are.
+ *
+ *  Numbers as numbers, dates as dates, everything else as words in the reader's
+ *  own language - so `ä` sorts where a German reader expects it rather than after
+ *  `z`. An empty cell always sorts last, whichever way the column is going: a gap
+ *  is not a small value, and a column of prices with three blanks in it should
+ *  not open with the blanks. */
+function compareCells(left: string, right: string): number {
+  const empty = (one: string) => one.trim() === ''
+  if (empty(left) || empty(right)) return empty(left) ? (empty(right) ? 0 : 1) : -1
+
+  const oneNumber = numberIn(left)
+  const otherNumber = numberIn(right)
+  if (oneNumber !== null && otherNumber !== null) return oneNumber - otherNumber
+
+  const oneDate = dateIn(left)
+  const otherDate = dateIn(right)
+  if (oneDate !== null && otherDate !== null) return oneDate - otherDate
+
+  return left.trim().localeCompare(right.trim(), undefined, { numeric: true, sensitivity: 'base' })
+}
+
+/** The table with its body rows in the order one column puts them.
+ *
+ *  A one-time edit and never a view's own state: the rows really are reordered in
+ *  the file, which is what makes the sort survive being read in Obsidian, being
+ *  exported, and being read again tomorrow. Sorting a table is something you do
+ *  to it, not a way of looking at it.
+ *
+ *  Stable, so rows that tie stay in the order they were written. The empty-cell
+ *  rule stays put in both directions; see `compareCells`. */
+export function sortRows(model: TableModel, column: number, order: Order): TableModel {
+  if (column < 0 || column >= model.header.length) return model
+  if (model.rows.length < 2) return model
+
+  const way = order === 'up' ? 1 : -1
+  const kept = model.rows.map((row, at) => ({ row, at }))
+
+  kept.sort((left, right) => {
+    const said = compareCells(left.row[column] ?? '', right.row[column] ?? '')
+    // Ties keep the order they were written in, and an empty cell is last
+    // whichever way the column runs, so the reversal is not applied to it.
+    if (said === 0) return left.at - right.at
+    const blank = (one: string) => one.trim() === ''
+    if (blank(left.row[column] ?? '') || blank(right.row[column] ?? '')) return said
+
+    return said * way
+  })
+
+  const rows = kept.map((one) => one.row)
+  return rows.every((row, at) => row === model.rows[at]) ? model : { ...model, rows }
+}
+
 export function setAlign(model: TableModel, column: number, align: Align): TableModel {
   const next = [...model.align]
   next[column] = align
