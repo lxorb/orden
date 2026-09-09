@@ -106,6 +106,32 @@ describe('every shortcut there is', () => {
     expect(unnamed.map((one) => one.id)).toEqual([])
   })
 
+  /** An app binding is read off the window and run from the entry itself, so one
+   *  with nothing to run is a row in the settings a key can be put on and a key
+   *  that then does nothing. The other scopes are run where their surface is:
+   *  the editor's by CodeMirror, the file list's and the plane's by hand. */
+  test('gives every app-level one something to run', () => {
+    const idle = registry.SHORTCUTS.filter((one) => one.scope === 'app' && !one.run)
+    expect(idle.map((one) => one.id)).toEqual([])
+  })
+
+  /** Every entry sits in one of the groups the settings list draws, or it is in
+   *  the list and in none of its sections, which is a row nobody can find. */
+  test('puts every one of them in a group the settings show', () => {
+    const groups = new Set(registry.CATEGORIES.map((one) => one.id))
+    const homeless = registry.SHORTCUTS.filter((one) => !groups.has(one.category))
+    expect(homeless.map((one) => `${one.id}: ${one.category}`)).toEqual([])
+  })
+
+  /** The fixed ones are in the list to be seen rather than changed, so each says
+   *  why in words, and none of them can be rebound into a real conflict. */
+  test('says why each fixed key cannot be changed', () => {
+    const fixed = registry.SHORTCUTS.filter((one) => one.scope === 'fixed')
+    expect(fixed.length).toBeGreaterThan(0)
+
+    for (const one of fixed) expect(one.why?.(), one.id).toBeTruthy()
+  })
+
   test('starts each on the key the editor installs it with', () => {
     for (const spec of [...nibBindings, ...standardBindings, ...tableBindings, ...imageBindings]) {
       const entry = registry.SHORTCUTS.find((one) => one.id === spec.id)!

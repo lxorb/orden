@@ -2,6 +2,8 @@
  *  ones at startup; on their own they read as English. */
 const DEFAULTS = {
   setLanguage: 'Set the language',
+  /** The empty field on a fence with no language on it yet. */
+  fenceLanguage: 'language',
   copy: 'Copy',
   copyCode: 'Copy code',
   copied: 'Copied',

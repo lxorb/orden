@@ -247,6 +247,9 @@ export interface Command {
   /** The key that runs it, when it has one. `shortcuts.hint` answers
    *  undefined for an unbound command, so undefined is a real value here. */
   hint?: string | undefined
+  /** Whether this row is the one already in force: the theme in use, the accent
+   *  it is drawn in. A tick, the same one the menu rows carry. */
+  checked?: boolean
   disabled?: boolean
   // A property rather than a method, so a caller may hand the function on -
   // the app menu passes an export row straight through as a row of its own.
@@ -537,12 +540,13 @@ export function appCommands(view?: EditorView): Command[] {
       .slice(0, 8)
       .map((path) => ({
         id: `recent:${path}`,
-        label: `Recent: ${
-          path
-            .split(/[\\/]/)
-            .pop()
-            ?.replace(/\.[^.]+$/, '') ?? path
-        }`,
+        label: t('Recent: {name}', {
+          name:
+            path
+              .split(/[\\/]/)
+              .pop()
+              ?.replace(/\.[^.]+$/, '') ?? path,
+        }),
         run: () => void workspace.openEntry(path),
       })),
 
@@ -665,22 +669,26 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => modes.resetZoom(),
     },
 
+    // A theme, an accent and a code theme carry a name rather than a word, so
+    // the row reads "Design: Sepia" in German and not "Theme: Sepia". The one in
+    // force is ticked, which is the mark the menu rows already use: a word in the
+    // key's place would be a word to read where a shape says it.
     ...theme.all.map((item) => ({
       id: `theme:${item.id}`,
-      label: `Theme: ${item.name}`,
-      hint: item.id === theme.id ? 'current' : undefined,
+      label: t('Theme: {name}', { name: item.name }),
+      checked: item.id === theme.id,
       run: () => theme.select(item.id),
     })),
     ...theme.accents.map((swatch) => ({
       id: `accent:${swatch.id}`,
       label: t('Accent: {name}', { name: t(swatch.name) }),
-      hint: swatch.id === theme.accent ? 'current' : undefined,
+      checked: swatch.id === theme.accent,
       run: () => theme.setAccent(swatch.id),
     })),
     ...CODE_PALETTES.map((palette) => ({
       id: `code-theme:${palette.id}`,
-      label: `Code theme: ${palette.name}`,
-      hint: palette.id === modes.codeTheme ? 'current' : undefined,
+      label: t('Code theme: {name}', { name: palette.name }),
+      checked: palette.id === modes.codeTheme,
       run: () => modes.setCodeTheme(palette.id, view),
     })),
     { id: 'themes-folder', label: t('Open themes folder'), run: () => void openThemesFolder() },

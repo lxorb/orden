@@ -129,6 +129,37 @@ describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) 
 
     expect(clashes).toEqual([])
   })
+
+  /** The other half of that guard, for the keys the app reads by hand.
+   *
+   *  A contextual binding in the editor gives way: CodeMirror tries the next one
+   *  when it answers false, which is how Delete belongs to a table and to a
+   *  selected picture at once. The file list's and the plane's do not - they are
+   *  read where the surface is, off its own element, and the press goes on up to
+   *  the window afterwards. So a key that is one of those and an app key as well
+   *  fires both: the plane zooms to what is picked and the strip switches note,
+   *  from one press. */
+  test.each(PLATFORMS)('leaves the plane and the file list their own keys (%s)', (platform) => {
+    const keys = keysOf()
+    const clashes: string[] = []
+
+    const surfaces = registry.SHORTCUTS.filter((one) => one.contextual && one.scope === 'panel')
+    const app = registry.SHORTCUTS.filter((one) => !one.contextual && one.scope === 'app')
+
+    for (const entry of surfaces) {
+      const key = keyUnder(keys, entry.id, platform)
+      if (!key) continue
+
+      for (const other of app) {
+        const held = keyUnder(keys, other.id, platform)
+        if (held && sameCombination(held, key, platform)) {
+          clashes.push(`${entry.id} and ${other.id} are both on ${key}`)
+        }
+      }
+    }
+
+    expect(clashes).toEqual([])
+  })
 })
 
 describe('the Obsidian keyboard', () => {

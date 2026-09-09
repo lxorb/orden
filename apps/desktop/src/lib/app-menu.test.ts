@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import type { MenuAction, MenuGroup, MenuRow } from './app-menu'
+import { de } from '../locales/de'
 
 /** The stores write to the browser's storage and ask the browser what kind of
  *  machine this is, and there is neither under node. */
@@ -26,6 +27,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { appMenu, isSubmenu, ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./app-menu')
 const { appCommands } = await import('./commands')
 const { BY_ID } = await import('./shortcuts/registry')
+const { i18n } = await import('./i18n.svelte')
 
 const menu = (): MenuGroup[] => appMenu({ onpalette: () => undefined, onhistory: () => undefined })
 
@@ -195,5 +197,55 @@ describe('the menu, the palette and the shortcut settings agree', () => {
         expect(row.hint.length, `${one.id}: ${row.label}`).toBeGreaterThan(0)
       }
     }
+  })
+})
+
+/** The palette is the way in for somebody who has not learned the menus, so
+ *  every row of it has to read in the language the app is set to. A row built by
+ *  pasting a name onto an English word reads as English in all four. */
+describe('the palette in another language', () => {
+  const inGerman = <T>(read: () => T): T => {
+    const was = i18n.choice
+    i18n.choice = 'de'
+    try {
+      return read()
+    } finally {
+      i18n.choice = was
+    }
+  }
+
+  test('says nothing in English', () => {
+    // The words that used to be pasted on: `Theme: Sepia`, `Code theme: One`,
+    // `Recent: Note`. Each is a key with a `{name}` in it now.
+    const english = inGerman(() =>
+      appCommands()
+        .map((one) => one.label)
+        .filter((label) => /^(Theme|Code theme|Recent):/.test(label)),
+    )
+
+    expect(english).toEqual([])
+  })
+
+  test('leaves no row standing in its English wording', () => {
+    // A label that is still an English key the German dictionary translates to
+    // something else never went through `t()`. A word German keeps as it is -
+    // Graph, Code - is its own translation and is not one of these.
+    const unchanged = inGerman(() =>
+      appCommands()
+        .map((one) => one.label)
+        .filter((label) => label in de && de[label] !== label),
+    )
+
+    expect(unchanged).toEqual([])
+  })
+
+  /** The one already in force is marked, not described: a word in the key's
+   *  place would be a word to read where a shape says it. */
+  test('ticks the theme in use rather than writing a word beside it', () => {
+    const themes = appCommands().filter((one) => one.id.startsWith('theme:'))
+    expect(themes.length).toBeGreaterThan(0)
+
+    for (const row of themes) expect(row.hint, row.id).toBeUndefined()
+    expect(themes.filter((one) => one.checked).length).toBe(1)
   })
 })

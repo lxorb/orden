@@ -59,6 +59,11 @@ const OBSIDIAN: KeyOverrides = {
 // in the Paragraph menu and the palette.
 for (let index = 1; index <= 9; index++) OBSIDIAN[`app.note-${index}`] = `Mod-${index}`
 for (let level = 1; level <= 6; level++) OBSIDIAN[`paragraph.heading-${level}`] = null
+// The plane's Ctrl+1 goes the same way, and for a sharper reason: it is read off
+// the plane itself and the press goes on to the window afterwards, so leaving it
+// there would zoom to what is picked and switch note from one key. Ctrl+0 fits
+// the whole plane and stays: Obsidian's digits are 1 to 9.
+OBSIDIAN['canvas.frame'] = null
 
 /** Notion's own keys.
  *
@@ -96,9 +101,11 @@ const NOTION: KeyOverrides = {
  *  those chords goes on working in every mode. See packages/editor/src/vim.ts. */
 export const PRESETS: Preset[] = [
   { id: 'default', label: () => t('Default'), keys: {}, vim: false },
-  { id: 'notion', label: () => t('Notion'), keys: NOTION, vim: false },
-  { id: 'obsidian', label: () => t('Obsidian'), keys: OBSIDIAN, vim: false },
-  { id: 'vim', label: () => t('Vim'), keys: {}, vim: true },
+  // Three names of three programs, which is what they are called in every
+  // language. Only Default is a word, so only Default is translated.
+  { id: 'notion', label: () => 'Notion', keys: NOTION, vim: false },
+  { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN, vim: false },
+  { id: 'vim', label: () => 'Vim', keys: {}, vim: true },
 ]
 
 export const presetById = (id: string): Preset | undefined => PRESETS.find((one) => one.id === id)

@@ -21,8 +21,15 @@
 
   const stripped = (name: string) => name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 
+  /** Every command there is, built while the palette is open and not once per
+   *  keystroke: the list asks what the document goes out as, and answering that
+   *  walks every line of it. What a row says still follows the app - the labels
+   *  read the stores, so this rebuilds when one of them changes - but typing
+   *  changes none of them. */
+  const commands = $derived(open ? appCommands(view) : [])
+
   const results = $derived.by((): (Command | Entry)[] => {
-    if (asCommands) return rank(term, appCommands(view), (command) => command.label)
+    if (asCommands) return rank(term, commands, (command) => command.label)
     return rank(term, workspace.files, (one) => stripped(one.name)).slice(0, 40)
   })
 
@@ -64,22 +71,30 @@
   // overlays.ts.
   $effect(() => (open ? overlays.show(dismiss) : undefined))
 
+  /** A keystroke this list has answered goes no further. The app reads its own
+   *  keys off the window, and Ctrl+N there is New note: without this, stepping
+   *  down the list with Ctrl+N opens a blank note behind the palette. */
+  function spend(event: KeyboardEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   function onKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || (event.key === 'n' && event.ctrlKey)) {
-      event.preventDefault()
+      spend(event)
       cursor = (cursor + 1) % Math.max(results.length, 1)
       return
     }
 
     if (event.key === 'ArrowUp' || (event.key === 'p' && event.ctrlKey)) {
-      event.preventDefault()
+      spend(event)
       cursor = (cursor - 1 + results.length) % Math.max(results.length, 1)
       return
     }
 
     const chosen = results[cursor]
     if (event.key === 'Enter' && chosen) {
-      event.preventDefault()
+      spend(event)
       choose(chosen)
     }
   }
@@ -87,7 +102,8 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" transition:fade={{ duration: 130 }} onclick={() => (open = false)}></div>
+  <!-- Tapping away is the same answer as Escape, so it forgets the same. -->
+  <div class="scrim" transition:fade={{ duration: 130 }} onclick={dismiss}></div>
 
   <div class="palette" transition:scale={{ duration: 190, start: 0.97, easing: cubicOut }}>
     <input
@@ -109,12 +125,23 @@
               onmouseenter={() => (cursor = index)}
               onclick={() => choose(item)}
             >
+              <!-- The same tick the menu rows carry, in a slot every command row
+                   keeps whether or not there is one in it, so the words line up.
+                   The notes have nothing to tick and so have no slot; see
+                   AppMenu.svelte. -->
+              {#if asCommands}
+                <span class="tick">{'checked' in item && item.checked ? '✓' : ''}</span>
+              {/if}
               <span class="text">{label(item)}</span>
               {#if 'hint' in item && item.hint}<kbd>{item.hint}</kbd>{/if}
             </button>
           </li>
         {/each}
       </ul>
+      <!-- Typed into and nothing answered. The same words the find sheet says,
+           since it is the same question; see PromptSheet.svelte. -->
+    {:else if term}
+      <p class="nothing">{t('Nothing found')}</p>
     {/if}
   </div>
 {/if}
@@ -195,7 +222,26 @@
     opacity: 0.45;
   }
 
+  /* The width is held whether or not there is a tick in it, so the labels line
+     up down the list. The same shape the menu rows use. */
+  .tick {
+    width: 0.9em;
+    flex: none;
+    color: var(--accent);
+  }
+
+  .nothing {
+    margin: 0;
+    padding: var(--space-4);
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  /* Takes what is left between the tick and the key, so a long name is cut
+     rather than pushing the key off the row. */
   .text {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

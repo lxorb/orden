@@ -266,7 +266,7 @@ export class FenceHeaderWidget extends NibWidget {
     const field = document.createElement('input')
     field.className = 'nib-fence-language-input'
     field.value = this.language
-    field.placeholder = 'language'
+    field.placeholder = uiLabel('fenceLanguage')
     field.spellcheck = false
 
     const commit = () => {
