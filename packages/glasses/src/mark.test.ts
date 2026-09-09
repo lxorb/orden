@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { draws, fold, width } from './firmware'
-import { markLines } from './mark'
+import { markLines, workDone } from './mark'
 import { BODY_INNER } from './panel'
 
 const lines = (source: string, inner = BODY_INNER) =>
@@ -504,20 +504,90 @@ describe('where a line came from', () => {
   })
 })
 
-/** How long it takes, because speed is the reason text mode exists. */
+/** What it costs, because speed is the reason text mode exists.
+ *
+ *  Counted rather than timed. This block held a stopwatch to a note of twenty
+ *  thousand characters and asked for under 120 ms; a runner with the rest of the
+ *  suite on it answered 123.25 and failed a test that had found nothing wrong -
+ *  the same commit had passed minutes earlier. A timing is a proxy for the work
+ *  done and a poor one: what it measures is partly the queue in front of the code.
+ *
+ *  So `workDone` in mark.ts counts the four things marking a note actually does -
+ *  the blocks walked, the lines made, the characters folded into them and the
+ *  characters read looking for where each block begins - and those are the same
+ *  numbers on a loaded machine as on an idle one. Each of them names a way this
+ *  could get slower: a block walked twice, a line folded twice, a locator that
+ *  starts again from the top.
+ *
+ *  One clock is left, on the whole pass, with a margin no real regression could
+ *  hide in: a count cannot tell code that got slower from code that did not, and
+ *  code that has changed shape misses a margin like that by a factor rather than by
+ *  a percent. */
 describe('what it costs', () => {
-  test('marks a note of twenty thousand characters inside a frame', () => {
-    const note = Array.from(
-      { length: 200 },
-      (_one, at) =>
-        `## Section ${at}\n\nSome prose about section ${at}, long enough to wrap across the panel more than once.\n\n- a point\n- another\n`,
-    ).join('\n')
+  /** Two hundred sections: a heading, a paragraph and a list of two, which is about
+   *  twenty four thousand characters and a thousand lines of panel. */
+  const note = Array.from(
+    { length: 200 },
+    (_one, at) =>
+      `## Section ${at}\n\nSome prose about section ${at}, long enough to wrap across the panel more than once.\n\n- a point\n- another\n`,
+  ).join('\n')
 
+  function marking(source: string) {
+    workDone()
+    const marked = markLines(source, { inner: BODY_INNER })
+    return { marked, work: workDone() }
+  }
+
+  test('marks a note of twenty thousand characters, and counts what that took', () => {
+    const { marked, work } = marking(note)
+
+    // Every line that came out was counted as it was made.
+    expect(marked).toHaveLength(work.lines)
+    expect(marked.length).toBeGreaterThan(800)
+
+    // Every block of the note, at every depth: the sections, their prose, the lists
+    // and the items in them. More blocks than lines, because a list is a block that
+    // holds blocks; not many more, because nothing is walked twice.
+    expect(work.blocks).toBeGreaterThan(marked.length)
+    expect(work.blocks).toBeLessThan(marked.length * 2)
+
+    // What is written to the panel is the note with its marks taken off and its
+    // indents put on, once. A multiple of the note would be a note folded twice.
+    expect(work.folded).toBeGreaterThan(note.length / 2)
+    expect(work.folded).toBeLessThan(note.length * 1.5)
+
+    // The locator searches forward from where the last block ended, so the whole
+    // note costs about one read of it - 31,779 characters for a note of 23,979,
+    // because a block that holds others is looked for once and read again by its
+    // children.
+    expect(work.searched).toBeLessThan(note.length * 2)
+  })
+
+  /** The regression this is really for. Every count above is linear in the note, and
+   *  the one that could stop being linear is the locator: a change that sent it back
+   *  to the start of the note for each block would read the note squared - about
+   *  three hundred million characters for this one rather than thirty thousand - and
+   *  would still pass every test in this file that is about what a note looks like. */
+  test('and twice the note is twice the work, not four times', () => {
+    const once = marking(note)
+    const twice = marking([note, note].join('\n'))
+
+    expect(twice.work.lines).toBe(once.work.lines * 2)
+    expect(twice.work.folded).toBe(once.work.folded * 2)
+    expect(twice.work.blocks).toBeLessThan(once.work.blocks * 2 + 10)
+    expect(twice.work.searched).toBeLessThan(once.work.searched * 2 + 100)
+  })
+
+  /** The one clock in this file. Twenty five milliseconds on the machine this was
+   *  written on and a hundred and twenty three on the loaded runner that failed the
+   *  old assertion, against a ceiling of a second: this is not a measurement of
+   *  speed, it is the line past which the shape of the code has changed. */
+  test('and does the whole of it in well under a second', () => {
     const at = performance.now()
     const marked = markLines(note, { inner: BODY_INNER })
     const took = performance.now() - at
 
     expect(marked.length).toBeGreaterThan(800)
-    expect(took).toBeLessThan(120)
+    expect(took).toBeLessThan(1_000)
   })
 })

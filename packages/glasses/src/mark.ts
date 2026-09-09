@@ -221,6 +221,44 @@ function raise(text: string, digits: string): string | null {
  *  the lexer hands its children their lines with the `>` already taken off and
  *  there is nothing left to search for; those fall back to the start of the
  *  quote, which is where a reader sent there would want to be anyway. */
+/** What marking a note did, in the four things it does per note.
+ *
+ *  Counted rather than timed, and here rather than in the test because only this
+ *  file knows what it is doing. mark.test.ts used to hold a stopwatch to a note of
+ *  twenty thousand characters and ask for under 120 ms; a runner with the rest of the
+ *  suite on it answered 123.25 and failed a test that had found nothing wrong. These
+ *  are the same numbers on a busy machine as on an idle one, and each of them names a
+ *  way this could get slower: the locator scanning the note more than once, a block
+ *  walked twice, a line folded twice, a note that suddenly marks half as much.
+ *
+ *  Four adds over a pass that reads twenty thousand characters. */
+export interface Work {
+  /** Blocks walked: one per token of the note, at every depth. */
+  blocks: number
+  /** Lines the sheet was given. */
+  lines: number
+  /** Characters folded into those lines, which is what is written to a panel. */
+  folded: number
+  /** Characters the locator read looking for where a block begins. It searches
+   *  forward from where the last block ended, so over a whole note this is the note
+   *  once - and a change that sent it back to the start would make it the note
+   *  squared, which is the regression worth catching. */
+  searched: number
+}
+
+function nothing(): Work {
+  return { blocks: 0, lines: 0, folded: 0, searched: 0 }
+}
+
+const work = nothing()
+
+/** What the marking since this was last asked did, and zero from here. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
 class Locator {
   private at = 0
 
@@ -240,7 +278,11 @@ class Locator {
 
   private find(raw: string): number | null {
     if (!raw) return null
+
     const found = this.source.indexOf(raw, this.at)
+    // What the search read: to the end of the match, or to the end of the note when
+    // there was no match. See `Work`.
+    work.searched += (found < 0 ? this.source.length : found + raw.length) - this.at
     return found < 0 ? null : found
   }
 }
@@ -596,6 +638,8 @@ class Sheet {
       // the phone still while the glasses scrolled.
       const began = at === 0 ? from : (this.where.startOf(first + at) ?? from)
 
+      work.lines += 1
+      work.folded += whole.length
       this.lines.push({
         text: whole,
         from: began,
@@ -615,6 +659,7 @@ class Sheet {
 
   /** A blank row, for the compaction that draws the note's own empty lines. */
   blank(from: number, line: number): void {
+    work.lines += 1
     this.lines.push({ text: '', from, at: line, glued: false, level: 0, under: false })
   }
 
@@ -638,7 +683,10 @@ class Sheet {
 
 /** Every block of a note, in the order it is read. */
 function walk(tokens: readonly Token[], where: Locator, nest: Nest, sheet: Sheet): void {
-  for (const token of tokens) block(token, where, nest, sheet)
+  for (const token of tokens) {
+    work.blocks += 1
+    block(token, where, nest, sheet)
+  }
 }
 
 function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
