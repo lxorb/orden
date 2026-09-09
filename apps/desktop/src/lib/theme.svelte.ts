@@ -1,5 +1,6 @@
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
+import { log } from './log'
 import { invoke } from './tauri'
 import { type Stamp, stampOf } from './themes/validate'
 
@@ -185,33 +186,55 @@ class Themes {
    *  installing one from the store shows up without one either. Read in
    *  parallel: this runs at launch, and the files are small. */
   async reload() {
+    let found: ThemeFile[]
+
     try {
-      const found = await invoke<ThemeFile[]>('list_themes')
-      const sheets = await Promise.all(
-        found.map((file) => invoke<string>('read_theme', { path: file.path }).catch(() => '')),
-      )
-
-      this.files = found.map((file, at): ThemeInfo => {
-        const whole = sheets[at] ?? ''
-        const stamp = stampOf(whole)
-        // Read past the stamp: it holds a name out of the catalogue, and a theme
-        // called `--accent:` would otherwise be read as one that brings its own.
-        const css = whole.replace(STAMP_LINE, '')
-
-        return {
-          ...file,
-          // The store's own name for it, which is spelled the way its author
-          // spelled it rather than worked out from the file name.
-          ...(stamp ? { name: stamp.name, stamp } : {}),
-          variants: variantsOf(css),
-          ownAccent: /--accent\s*:/.test(css),
-        }
-      })
-    } catch {
-      this.files = []
+      found = await invoke<ThemeFile[]>('list_themes')
+    } catch (error) {
+      // A folder that will not read says nothing about what is in it. Emptying
+      // the list here is what took every installed theme out of the dropdown
+      // after one failed read - a browser refusing storage, or a page left open
+      // across a deploy asking for a chunk that is no longer served - and then
+      // wrote the reader's choice away as though the theme had been deleted, so
+      // it did not come back on the next launch either. What was found last time
+      // stands, and the failure is written down.
+      log('warn', `themes: could not list the folder: ${String(error)}`)
+      await this.loadCustom()
+      return
     }
 
-    // A theme file may have been deleted while it was selected.
+    const sheets = await Promise.all(
+      found.map((file) => invoke<string>('read_theme', { path: file.path }).catch(() => '')),
+    )
+
+    const held = this.files
+    this.files = found.map((file, at): ThemeInfo => {
+      const whole = sheets[at] ?? ''
+
+      // A file that listed but would not read this time is left as it was: its
+      // name, its version and its schemes all came out of the file, and a read
+      // that failed is not news about any of them.
+      const before = whole ? undefined : held.find((one) => one.path === file.path)
+      if (before) return before
+
+      const stamp = stampOf(whole)
+      // Read past the stamp: it holds a name out of the catalogue, and a theme
+      // called `--accent:` would otherwise be read as one that brings its own.
+      const css = whole.replace(STAMP_LINE, '')
+
+      return {
+        ...file,
+        // The store's own name for it, which is spelled the way its author
+        // spelled it rather than worked out from the file name.
+        ...(stamp ? { name: stamp.name, stamp } : {}),
+        variants: variantsOf(css),
+        ownAccent: /--accent\s*:/.test(css),
+      }
+    })
+
+    // A theme file may have been deleted while it was selected. Only ever
+    // decided on a folder that answered: until one has, a theme the storage
+    // names is one not found yet rather than one that is gone.
     if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
     // Otherwise applied again now that the folder has been read: at launch the
     // theme was chosen before the files were known, so a file theme had nothing

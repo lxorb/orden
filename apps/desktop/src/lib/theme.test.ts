@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  A theme has a dark side or a light one or both; which of them the app is
  *  showing is a choice beside it. These are about that separation: what the
  *  dropdown offers, what the scheme is when the theme in force cannot show the one
- *  that was asked for, and what an older device's storage means.
+ *  that was asked for, what an older device's storage means, and what happens to
+ *  the list when the themes folder will not answer.
  *
  *  Run against the real store with the folder, the storage and the page stood in
  *  for: under node there is none of the three. */
@@ -66,14 +67,22 @@ function stubs() {
 
 stubs()
 
-/** The themes folder, as the commands see it: one stylesheet per id. */
-const folder = vi.hoisted(() => ({ files: new Map<string, string>() }))
+/** The themes folder, as the commands see it, and whether reading it works at
+ *  all: a browser that refuses storage and a page asking for a chunk that is no
+ *  longer served both come back here as a rejection. */
+const folder = vi.hoisted(() => ({
+  files: new Map<string, string>(),
+  listing: true,
+  reading: true,
+}))
 
 vi.mock('./tauri', () => ({
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     if (command === 'list_themes') {
+      if (!folder.listing) return Promise.reject(new Error('no such folder'))
+
       return Promise.resolve(
         [...folder.files.keys()].map((id) => ({
           id: `file:${id}`,
@@ -84,6 +93,8 @@ vi.mock('./tauri', () => ({
     }
 
     if (command === 'read_theme') {
+      if (!folder.reading) return Promise.reject(new Error('cannot read'))
+
       const id = /\/themes\/(.*)\.css$/.exec(String(args.path))?.[1] ?? ''
       return Promise.resolve(folder.files.get(id) ?? '')
     }
@@ -110,6 +121,8 @@ beforeEach(() => {
   stubs()
 
   folder.files.clear()
+  folder.listing = true
+  folder.reading = true
   theme.files = []
   theme.id = 'default'
   theme.scheme = 'system'
@@ -327,5 +340,79 @@ describe('what an older device wrote down', () => {
     theme.init()
 
     expect(theme.scheme).toBe('system')
+  })
+})
+
+/** The bug: themes installed from the store went missing from the dropdown.
+ *
+ *  Nothing had deleted them. One failed read of the folder emptied the list, and
+ *  because the theme in force was then not in it, the choice was written away as
+ *  though the file had been deleted - so it did not come back on the next launch
+ *  either. A folder that will not answer says nothing about what is in it. */
+describe('a folder that will not answer', () => {
+  test('leaves the themes already found where they are', async () => {
+    installed('rose', 'Rose', PAIR)
+    installed('warm-paper', 'Warm Paper', ONLY_LIGHT)
+    await theme.reload()
+    expect(theme.files).toHaveLength(2)
+
+    folder.listing = false
+    await theme.reload()
+
+    expect(theme.files.map((one) => one.name)).toEqual(['Rose', 'Warm Paper'])
+    expect(theme.all).toHaveLength(3)
+  })
+
+  test('does not write the chosen theme away as though it had been deleted', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+    theme.select('file:rose')
+
+    folder.listing = false
+    await theme.reload()
+
+    expect(theme.id).toBe('file:rose')
+    expect(kept.getItem('nib:theme')).toBe('file:rose')
+  })
+
+  test('and a folder that does answer still notices a theme that is gone', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+    theme.select('file:rose')
+
+    folder.files.delete('rose')
+    await theme.reload()
+
+    expect(theme.id).toBe('default')
+    expect(theme.files).toEqual([])
+  })
+
+  test('a file that lists but will not read keeps the name and version it had', async () => {
+    installed('rose', 'Rose', PAIR, '2.0.0')
+    await theme.reload()
+
+    folder.reading = false
+    await theme.reload()
+
+    expect(theme.files[0]?.name).toBe('Rose')
+    expect(theme.files[0]?.variants).toEqual(['light', 'dark'])
+    expect(theme.installed.get('rose')?.stamp?.version).toBe('2.0.0')
+  })
+})
+
+describe('an installed theme across a restart', () => {
+  test('is in the dropdown, under its own name, still chosen', async () => {
+    installed('rose', 'Rose', PAIR, '2.0.0')
+    kept.setItem('nib:theme', 'file:rose')
+    kept.setItem('nib:theme-scheme', 'light')
+
+    // What a launch does: read what was written down, then read the folder.
+    theme.init()
+    await theme.reload()
+
+    expect(theme.all.map((one) => one.name)).toEqual(['Default', 'Rose'])
+    expect(theme.id).toBe('file:rose')
+    expect(theme.current).toBe('light')
+    expect(theme.installed.has('rose')).toBe(true)
   })
 })

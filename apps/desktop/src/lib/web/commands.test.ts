@@ -72,6 +72,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { seed, webInvoke } = await import('./commands')
+const { stamped, stampOf } = await import('../themes/validate')
 const { forgetSeedStore, rememberSeedIn } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
 
@@ -450,6 +451,20 @@ describe('installed themes', () => {
 
   test('a theme that is not there reads as nothing rather than throwing', async () => {
     expect(await webInvoke('read_theme', { path: 'themes/nothing.css' })).toBe('')
+  })
+
+  /** What the dropdown needs after the tab is closed and opened again: the theme
+   *  is still there, and it still knows the name and the version the store gave
+   *  it rather than one worked out from the key it lives under. */
+  test('comes back with its stamp, which is what the dropdown reads its name from', async () => {
+    const css = stamped({ id: 'rose', name: 'Rose', author: 'Nib', version: '2.0.0' }, ':root {}')
+    await webInvoke('write_theme', { id: 'rose', css })
+
+    const listed = await webInvoke<{ id: string; path: string }[]>('list_themes')
+    expect(listed).toHaveLength(1)
+
+    const read = await webInvoke<string>('read_theme', { path: listed[0]?.path ?? '' })
+    expect(stampOf(read)).toEqual({ id: 'rose', name: 'Rose', author: 'Nib', version: '2.0.0' })
   })
 })
 
