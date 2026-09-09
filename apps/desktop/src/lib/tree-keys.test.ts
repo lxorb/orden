@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { treeStep, type TreeRow, TREE_MOVES } from './tree-keys'
+/** The registry, at module scope rather than inside the test that reads it.
+ *
+ *  It is a whole graph - the workspace, the settings, the editor's own bindings -
+ *  and compiling it takes longer than a test is given when the suite is loading
+ *  everything else at the same time. A module a test needs is loaded before the
+ *  tests run; see docs/conventions.md. */
+import { BY_ID } from './shortcuts/registry'
 
 /** A space with a folder open in it, as the list shows it:
  *
@@ -123,9 +130,7 @@ describe('the keys the list walks with', () => {
     ])
   })
 
-  test('are all in the file list group of the registry', async () => {
-    const { BY_ID } = await import('./shortcuts/registry')
-
+  test('are all in the file list group of the registry', () => {
     for (const [id, key] of TREE_MOVES) {
       const entry = BY_ID.get(id)
       expect(entry, id).toBeDefined()
