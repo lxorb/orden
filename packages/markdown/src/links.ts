@@ -168,18 +168,6 @@ export function isTabFile(target: string): boolean {
   return isPdfTarget(target) || isCanvasTarget(target)
 }
 
-/** Whether a target names a file that sits beside the notes rather than a note:
- *  a picture, sound, a film, a PDF or a canvas.
- *
- *  Wider than `isTabFile`, and asked for a different reason: this is what decides
- *  that a name resolves against the files of a space instead of its notes, so
- *  `[[clip.mp3]]` finds the recording wherever it is filed rather than reading as
- *  a link to a note nobody wrote. `isTabFile` asks the narrower question of what
- *  the app can open in a tab. */
-export function isFileTarget(target: string): boolean {
-  return embedKind(target) !== null
-}
-
 /** Obsidian writes how wide to draw an embed after the bar: `![[pic.png|300]]`,
  *  or `![[pic.png|300x200]]`. Anything else after the bar is what the thing is,
  *  the way alt text is in markdown. */

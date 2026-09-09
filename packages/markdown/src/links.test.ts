@@ -9,7 +9,6 @@ import {
   isAudioTarget,
   isNoteTarget,
   isCanvasTarget,
-  isFileTarget,
   isImageTarget,
   isPdfTarget,
   isTabFile,
@@ -216,12 +215,8 @@ describe('what kind of thing an embed names', () => {
     expect(embedKind('a.ogv')).toBe('video')
   })
 
-  test('every file kind resolves against the files of the space', () => {
-    for (const name of ['shot.png', 'take.mp3', 'demo.mp4', 'paper.pdf', 'Board.canvas']) {
-      expect(isFileTarget(name), name).toBe(true)
-    }
-    expect(isFileTarget('Another note')).toBe(false)
-    // Wider than the question of what opens in a tab.
+  test('is a wider question than what opens in a tab of its own', () => {
+    expect(embedKind('take.mp3')).toBe('audio')
     expect(isTabFile('take.mp3')).toBe(false)
   })
 })
