@@ -55,6 +55,19 @@ describe('requesting a code', () => {
     expect(again.status).toBe(200)
     expect(again.json.resendIn).toBeGreaterThan(0)
   })
+
+  /** The table is one anybody can write a row to, and a code that ran out says
+   *  nothing any more. Cleared as new ones arrive, the way sessions are: nothing
+   *  else would ever take them away. */
+  test('clears the codes that ran out as new ones are made', async () => {
+    await call(env, '/v1/auth/code', { body: { email: 'gone@b.dev' } })
+    env.db.prepare('update login_codes set expires_at = 1').run()
+
+    await call(env, '/v1/auth/code', { body: { email: 'live@b.dev' } })
+
+    const held = env.db.prepare('select email from login_codes').all() as { email: string }[]
+    expect(held.map((one) => one.email)).toEqual(['live@b.dev'])
+  })
 })
 
 describe('verifying a code', () => {

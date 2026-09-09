@@ -154,6 +154,12 @@ export async function sendCode(
   const code = randomCode()
   const salt = randomToken()
 
+  // Codes that ran out are cleared as new ones arrive, the way sessions are:
+  // nothing else would ever take them away, and a row nobody can use is only a
+  // row. One per address that ever started a sign-in and did not finish it adds
+  // up, and the table is one anybody can write to.
+  await env.DB.prepare('delete from login_codes where expires_at < ?').bind(now()).run()
+
   await env.DB.prepare(
     `insert into login_codes (email, code_hash, salt, expires_at, attempts, sent_at)
      values (?, ?, ?, ?, 0, ?)

@@ -16,6 +16,14 @@ export async function mayMail(env: Env, address: string): Promise<boolean> {
 
   if (last && now() - last.sent_at < MAIL_GAP) return false
 
+  // Rows past the gap say nothing any more, so they go as new ones arrive - the
+  // way the sessions and the sign-in codes are cleared. One row per address ever
+  // written to would otherwise be kept for ever to answer a question about the
+  // last thirty seconds.
+  await env.DB.prepare('delete from mailed where sent_at < ?')
+    .bind(now() - MAIL_GAP)
+    .run()
+
   await env.DB.prepare(
     `insert into mailed (email, sent_at) values (?, ?)
      on conflict(email) do update set sent_at = excluded.sent_at`,
