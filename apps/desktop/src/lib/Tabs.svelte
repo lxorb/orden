@@ -7,6 +7,7 @@
   import { copyPathEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import { rooms } from './rooms.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import { dur } from './motion'
@@ -228,7 +229,7 @@
              against a side of a pane to make one there. -->
         <button
           class="pick"
-          draggable="true"
+          draggable={!viewport.touch}
           title={tab.shown}
           onclick={() => workspace.activate(tab.id)}
           ondblclick={() => workspace.keep(tab.id)}
@@ -299,18 +300,24 @@
 
     <!-- A click makes a note. The menu is the other kind, asked for the way
          every other menu in the app is: a right click, a held finger, or the
-         key a keyboard has for it. -->
-    <button
-      class="new"
-      title={t('New note')}
-      aria-label={t('New note')}
-      aria-haspopup="menu"
-      onclick={() => makeNote()}
-      oncontextmenu={showNewMenu}
-      use:longPress={showNewMenu}
-    >
-      <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
-    </button>
+         key a keyboard has for it.
+         Left out on a phone and a tablet, which hold one document at a time: a
+         plus has no second tab to open, and the round button over the note is
+         what makes one there. Left out rather than hidden, so no key reaches it
+         and nothing reads it out. -->
+    {#if !viewport.touch}
+      <button
+        class="new"
+        title={t('New note')}
+        aria-label={t('New note')}
+        aria-haspopup="menu"
+        onclick={() => makeNote()}
+        oncontextmenu={showNewMenu}
+        use:longPress={showNewMenu}
+      >
+        <svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8" /></svg>
+      </button>
+    {/if}
   </div>
 
   <!-- Two links of a chain: this pane scrolls with the other one on the same

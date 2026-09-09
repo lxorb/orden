@@ -157,6 +157,27 @@ that writes a finger-sized number of its own fails.
 `apps/desktop/test/e2e/touch-scale.py` measures what that comes to on a phone, a
 tablet held both ways and a desktop, and photographs each light and dark.
 
+## One document at a time
+
+A phone and a tablet hold one document, and one pane. A strip of tabs on a
+screen that narrow says less the more it holds, so opening a note, a canvas or a
+paper puts away the one that was there rather than standing it beside it, and
+the title bar is that document's name and mark instead of a strip. There is no
+plus, no dragging a tab, and no dragging a pane into being; a desktop keeps all
+three.
+
+Nothing is lost in the trade. What was open goes on the closed stack with its
+words (`workspace/closed.svelte.ts`), so back - the gesture on Android, `Reopen
+closed tab` everywhere - walks back along the line of documents, and each step
+puts the one on screen on the stack in its turn. A note in a space was written
+down before it was closed anyway: the account has it whatever this window shows.
+
+`workspace.oneDocument` is where the rule is applied to an arrangement that
+arrives from somewhere else - a session written on a desktop, a saved layout, a
+window that has just become one of these devices - and `onlyOne` is the rule
+itself, on every way a document opens. `apps/desktop/src/lib/one-document.test.ts`
+holds both to it, and holds the desktop to keeping every tab it has always had.
+
 ## The two things a phone needs that a desktop does not
 
 **The keyboard.** The window draws under the system bars, so Android does not

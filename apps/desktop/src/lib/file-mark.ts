@@ -22,6 +22,7 @@ import {
   Workflow,
 } from 'lucide'
 import { isMarkdownPath } from './space-paths'
+import type { TabKind } from './workspace/documents.svelte'
 
 /** The marks there are. `file` is the one for a name this build has no shape
  *  for, so a list can always draw a row.
@@ -51,6 +52,17 @@ export function fileMark(name: string): FileMark {
  *  doing. A folder is not decided by its name, which is why it is a mark the tree
  *  asks for rather than one `fileMark` answers. */
 export type Mark = FileMark | 'folder' | 'folder-open'
+
+/** The mark the document open in a tab wears, where a bar says which document is
+ *  showing rather than listing several: the phone and tablet title bar.
+ *
+ *  Asked of the kind rather than of the name, because a tab knows outright what
+ *  it holds while a list has only a name to read - and because an unnamed note is
+ *  still a note. The graph wears none: it is a picture drawn from the space, not
+ *  a file in it. */
+export function markOf(kind: TabKind): Mark | null {
+  return kind === 'graph' ? null : kind
+}
 
 /** The drawing each mark is.
  *

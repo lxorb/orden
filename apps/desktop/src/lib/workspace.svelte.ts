@@ -399,9 +399,9 @@ class Workspace {
     // otherwise, and that is chosen rather than restored. See `applyLayout`.
     for (const tab of this.tabs) tab.reading = false
 
-    // A phone shows one note at a time, so an arrangement made on a desktop
-    // arrives as the pane that had the focus, with everything in it.
-    if (viewport.touch) this.collapsePanes()
+    // A phone and a tablet show one document at a time, so a session written on
+    // a desktop arrives as the one that had the focus; see `oneDocument`.
+    this.oneDocument()
     if (!this.tabs.length) this.openBlank()
   }
 
@@ -525,8 +525,8 @@ class Workspace {
     if (!this.tabs.length) this.openBlank()
     else if (!this.active) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
 
-    // A phone shows one note at a time.
-    if (viewport.touch) this.collapsePanes()
+    // A phone and a tablet show one document at a time.
+    this.oneDocument()
     this.persist()
   }
 
@@ -681,12 +681,47 @@ class Workspace {
     return path !== null && this.spaces.some((one) => within(one.root, path) !== null)
   }
 
-  /** Puts a tab in its pane and shows it. */
+  /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
+   *  was there goes as this one arrives; see `onlyOne`. */
   private add(tab: Tab, activate = true): Tab {
     this.tabs = [...this.tabs, tab]
-    if (activate) this.panes.activate(tab.paneId, tab.id)
+    if (activate) {
+      this.panes.activate(tab.paneId, tab.id)
+      this.onlyOne(tab)
+    }
 
     return tab
+  }
+
+  /** One document open at a time, which is what a phone and a tablet get: a
+   *  strip of tabs on a screen that narrow is more than it can say, and the
+   *  thing being read is the only thing there is room for. So opening a note, a
+   *  canvas or a paper puts away the one that was there rather than standing it
+   *  beside it.
+   *
+   *  Nothing is lost. What was open goes on the closed stack with its words, so
+   *  back brings it straight back, and a note in a space was written down before
+   *  it was closed - the account has it whatever this window shows.
+   *
+   *  A desktop keeps every tab and every pane it has always had. */
+  private onlyOne(kept: Tab) {
+    if (!viewport.touch) return
+
+    for (const other of this.tabs) {
+      if (other.id !== kept.id) this.close(other.id)
+    }
+  }
+
+  /** One pane, one document: what a phone and a tablet come down to, wherever an
+   *  arrangement arrives from - a session, a saved layout, or a window that has
+   *  just become one of those devices. The pane that had the focus is the one
+   *  kept, with the document that was showing in it. */
+  oneDocument() {
+    if (!viewport.touch) return
+
+    this.collapsePanes()
+    const kept = this.active ?? this.tabs[0]
+    if (kept) this.onlyOne(kept)
   }
 
   /** The graph of the whole space, as a tab of its own. One at a time: a second
@@ -1429,6 +1464,10 @@ class Workspace {
       this.tabs = this.placed(tab, paneId, closed.at)
       this.panes.activate(paneId, tab.id)
       this.panes.focus(paneId)
+      // Where there is room for one document, the one coming back takes the
+      // place of the one on screen - and that one goes on the stack in its turn,
+      // so back and forward walk the same line.
+      this.onlyOne(tab)
       this.persist()
       return
     }
@@ -2678,7 +2717,7 @@ class Workspace {
    *  in the pane being split, which would empty that pane and close it again the
    *  moment the new one opened. What decides which zones a pane offers. */
   canLand(side: Side, paneId: string, tabId: string | null): boolean {
-    if (viewport.device === 'phone' || !this.panes.splittable(alongOf(side), paneId)) return false
+    if (viewport.touch || !this.panes.splittable(alongOf(side), paneId)) return false
 
     const tab = tabId === null ? null : this.tabs.find((one) => one.id === tabId)
     return !(tab?.paneId === paneId && this.tabsIn(paneId).length < 2)

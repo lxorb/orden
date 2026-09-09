@@ -126,11 +126,10 @@
     }
   })
 
-  // A phone shows one note at a time, so an arrangement made on a desktop, or on
-  // this window before it was made narrow, comes down to one pane.
-  $effect(() => {
-    if (viewport.touch) workspace.collapsePanes()
-  })
+  // A phone and a tablet show one document at a time, so an arrangement made on a
+  // desktop - or on this window before it became one of those devices - comes
+  // down to one pane with one document in it. See `workspace.oneDocument`.
+  $effect(() => workspace.oneDocument())
 
   // The keyboard takes the bottom of the window with it, and the line being
   // written can be left behind it. The height is read so this runs again at each

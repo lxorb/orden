@@ -1,4 +1,6 @@
 <script lang="ts">
+  import FileMark from './FileMark.svelte'
+  import { markOf } from './file-mark'
   import { t } from './i18n.svelte'
   import { DIVIDER, menu } from './menu.svelte'
   import Tabs from './Tabs.svelte'
@@ -22,10 +24,13 @@
    *  then the strips live in the panes. */
   const only = $derived(workspace.panes.count === 1 ? workspace.panes.focused : null)
 
-  /** A phone shows one document, so the bar says which one. */
+  /** A phone and a tablet show one document, so the bar says which one, with the
+   *  mark its kind wears in every list that shows it and the dot that says
+   *  something in it is not written down yet. */
   const title = $derived(
     workspace.active ? workspace.active.shown + (workspace.active.unsaved ? ' ·' : '') : 'Nib',
   )
+  const mark = $derived(workspace.active ? markOf(workspace.active.kind) : null)
 
   /** What the tab strip and the rail offer on a desktop, where a phone has
    *  room for neither. */
@@ -72,8 +77,12 @@
 
   {#if viewport.touch}
     <!-- One document at a time, so its name goes here rather than a strip of
-         tabs too narrow to read. The rest is behind the overflow. -->
-    <h1 class="title">{title}</h1>
+         tabs too narrow to read: the mark for what it is, and what it is called.
+         The rest is behind the three dots. -->
+    <h1 class="title">
+      {#if mark}<FileMark {mark} />{/if}
+      <span class="name">{title}</span>
+    </h1>
 
     <button class="more" onclick={overflow} aria-label={t('More')}>
       <svg viewBox="0 0 14 14"
@@ -236,18 +245,28 @@
     stroke-linecap: square;
   }
 
-  /* The document's name, taking whatever room the two buttons leave. */
+  /* The document's name, taking whatever room the two buttons leave, with its
+     mark in front of it the way every list in the app puts one. */
   .title {
     flex: 1;
     min-width: 0;
     margin: 0;
     align-self: center;
+    display: flex;
+    align-items: center;
+    gap: var(--touch-gap);
     font-family: var(--font-ui);
     font-size: var(--text-base);
     font-weight: 600;
     color: var(--text-strong);
-    white-space: nowrap;
+  }
+
+  /* The one part of the bar that gives way: a long name is cut, the mark and the
+     buttons either side of it are not. */
+  .name {
+    min-width: 0;
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
   }
 
