@@ -17,6 +17,18 @@ function saved(): number | null {
   return isNumber(width) && width >= NARROWEST && width <= WIDEST ? width : null
 }
 
+/** Writes the width down, or does not. `stored` already answers nothing for a
+ *  browser told to keep no site data; the setter throws outright there, and a
+ *  width nobody can remember is not worth failing a drag over. */
+function keep(width: number | null) {
+  try {
+    if (width === null) localStorage.removeItem(STORAGE_KEY)
+    else localStorage.setItem(STORAGE_KEY, String(width))
+  } catch {
+    // As above: the sidebar is the width it is, just not after a restart.
+  }
+}
+
 export class SidebarWidth {
   /** Null means the default width from the theme tokens. */
   pixels = $state<number | null>(saved())
@@ -25,10 +37,21 @@ export class SidebarWidth {
    *  transitions off and follow instead of easing after. */
   dragging = $state(false)
 
+  /** How to end the drag that is on, if one is; see `release`. */
+  private ending: (() => void) | null = null
+
   /** Puts the default back. */
   reset() {
     this.pixels = null
-    localStorage.removeItem(STORAGE_KEY)
+    keep(null)
+  }
+
+  /** Ends the drag from outside it, for the one case where no `pointerup` will:
+   *  the sidebar can be closed - Escape, the back gesture, a note chosen on a
+   *  phone - while a finger is still on the edge, and then the handle goes and
+   *  the window is left wearing a resize cursor with nothing selectable. */
+  release() {
+    this.ending?.()
   }
 
   /** The edge follows the pointer; letting go keeps the width. Pointer capture
@@ -58,6 +81,9 @@ export class SidebarWidth {
     }
 
     const stop = () => {
+      if (!this.ending) return
+      this.ending = null
+
       handle.removeEventListener('pointermove', move)
       handle.removeEventListener('pointerup', stop)
       handle.removeEventListener('pointercancel', stop)
@@ -65,9 +91,10 @@ export class SidebarWidth {
       this.dragging = false
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
-      if (this.pixels !== null) localStorage.setItem(STORAGE_KEY, String(this.pixels))
+      if (this.pixels !== null) keep(this.pixels)
     }
 
+    this.ending = stop
     handle.addEventListener('pointermove', move)
     handle.addEventListener('pointerup', stop)
     handle.addEventListener('pointercancel', stop)

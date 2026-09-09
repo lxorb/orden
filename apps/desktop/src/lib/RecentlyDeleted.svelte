@@ -19,9 +19,14 @@
   const spaces = $derived(trash.items.filter((item) => item.kind === 'space'))
   const notes = $derived(trash.items.filter((item) => item.kind !== 'space'))
 
+  /** The formatter for the language on screen, made once rather than once per row
+   *  per render: building one reads the locale data, which is the dearest thing
+   *  on this pane by a long way. */
+  const relative = $derived(new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' }))
+
   /** "3 days ago", in the interface language. */
   function ago(at: number): string {
-    const format = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' })
+    const format = relative
     const elapsed = Date.now() - at
     if (elapsed < 60 * 60 * 1000)
       return format.format(-Math.max(1, Math.round(elapsed / 60000)), 'minute')

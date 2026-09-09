@@ -100,22 +100,26 @@
     <div class="drag" data-tauri-drag-region></div>
   {/if}
 
-  <!-- A page in a browser has no window of its own to minimise or close. -->
-  <div class="controls" class:hidden={!isDesktop}>
-    <button onclick={minimize} aria-label={t('Minimize')}>
-      <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>
-    </button>
-    <button onclick={toggleMaximize} aria-label={maximized ? t('Restore') : t('Maximize')}>
-      {#if maximized}
-        <svg viewBox="0 0 10 10"><path d="M2.5 0.5h7v7M0.5 2.5h7v7h-7z" /></svg>
-      {:else}
-        <svg viewBox="0 0 10 10"><path d="M0.5 0.5h9v9h-9z" /></svg>
-      {/if}
-    </button>
-    <button class="close" onclick={close} aria-label={t('Close')}>
-      <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
-    </button>
-  </div>
+  <!-- A page in a browser has no window of its own to minimise or close, so it
+       has none of these. Left out rather than hidden: three buttons a stylesheet
+       hides are still three buttons a screen reader reads out and a key reaches. -->
+  {#if isDesktop}
+    <div class="controls">
+      <button onclick={minimize} aria-label={t('Minimize')}>
+        <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>
+      </button>
+      <button onclick={toggleMaximize} aria-label={maximized ? t('Restore') : t('Maximize')}>
+        {#if maximized}
+          <svg viewBox="0 0 10 10"><path d="M2.5 0.5h7v7M0.5 2.5h7v7h-7z" /></svg>
+        {:else}
+          <svg viewBox="0 0 10 10"><path d="M0.5 0.5h9v9h-9z" /></svg>
+        {/if}
+      </button>
+      <button class="close" onclick={close} aria-label={t('Close')}>
+        <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
+      </button>
+    </div>
+  {/if}
 </header>
 
 <style>
@@ -174,10 +178,6 @@
     fill: none;
     stroke: currentColor;
     stroke-width: 1.2;
-  }
-
-  .controls.hidden {
-    display: none;
   }
 
   .controls {

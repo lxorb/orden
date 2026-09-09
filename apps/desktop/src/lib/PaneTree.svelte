@@ -21,6 +21,14 @@
 
   let host = $state<HTMLElement>()
 
+  /** How to end the drag that is on, if one is. A pane can be closed from a key
+   *  or a menu while a finger is on the divider, and then the handle goes without
+   *  ever hearing `pointerup` - which would leave the window wearing a resize
+   *  cursor, with nothing on the page selectable. */
+  let dragging: (() => void) | null = null
+
+  $effect(() => () => dragging?.())
+
   /** The divider follows the pointer, and the panes stop easing while it does:
    *  a transition on the way to where the finger already is reads as lag.
    *
@@ -47,6 +55,9 @@
     }
 
     const stop = () => {
+      if (!dragging) return
+      dragging = null
+
       handle.removeEventListener('pointermove', move)
       handle.removeEventListener('pointerup', stop)
       handle.removeEventListener('pointercancel', stop)
@@ -56,6 +67,7 @@
       workspace.panes.settle()
     }
 
+    dragging = stop
     handle.addEventListener('pointermove', move)
     handle.addEventListener('pointerup', stop)
     handle.addEventListener('pointercancel', stop)

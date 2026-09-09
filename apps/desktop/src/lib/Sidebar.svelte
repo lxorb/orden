@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { dragged, isTreeDrag } from './drag-paths'
+  import { carried, dragged, isTreeDrag } from './drag-paths'
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { movesInto } from './move-targets'
   import { newSpace } from './space-actions'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
@@ -22,8 +23,15 @@
   /** Lit while a note is held over the space below the tree. */
   let rootDrop = $state(false)
 
+  /** The space below the tree lights only where a drop would do something: a row
+   *  already at the top of the space is not moving. The same rule the rows
+   *  themselves follow; see `takes` in Tree.svelte. */
   function overRoot(event: DragEvent) {
-    if (!isTreeDrag(event.dataTransfer)) return
+    const root = workspace.activeSpace?.root
+    if (!isTreeDrag(event.dataTransfer) || !root) return
+
+    const paths = carried()
+    if (paths.length && !movesInto(paths, root)) return
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
@@ -165,18 +173,27 @@
   /** Which way the panel's contents come in when the space changes: from
    *  below when the new space sits lower in the rail, from above when it sits
    *  higher, so the motion agrees with the finger or the eye that chose it.
-   *  Remembers the last index between readings, which is what makes it a
-   *  direction and not a position. */
-  let lastIndex = -1
-  const direction = $derived.by(() => {
-    const index = workspace.spaces.findIndex((one) => one.id === workspace.activeSpaceId)
-    const towards = index >= lastIndex ? 1 : -1
-    lastIndex = index
-    return towards
+   *
+   *  Kept by an effect rather than worked out in a derived. A derived is read on
+   *  demand and may be read twice or not at all, so a "previous value" written
+   *  down inside one is not the previous value: the direction came out wrong
+   *  whenever the panel happened to read it an extra time. Before the paint, so
+   *  the transition that is about to start is the one this decided. */
+  const place = $derived(workspace.spaces.findIndex((one) => one.id === workspace.activeSpaceId))
+  let direction = $state(1)
+  let lastPlace = -1
+
+  $effect.pre(() => {
+    direction = place >= lastPlace ? 1 : -1
+    lastPlace = place
   })
 
   const size = new SidebarWidth()
   let aside = $state<HTMLElement>()
+
+  // The edge can go while a finger is still on it - Escape, the back gesture, a
+  // note chosen on a phone - and then no pointerup ever reaches it.
+  $effect(() => () => size.release())
 </script>
 
 <!-- On a desktop the sidebar slides open and shut, and the document slides

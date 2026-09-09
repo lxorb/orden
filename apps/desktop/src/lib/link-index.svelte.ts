@@ -338,7 +338,7 @@ class Links {
   private resolveFrom(source: string, link: { kind: LinkKind; target: string }): string | null {
     if (!link.target) return null
 
-    const key = `${folderOf(source)} ${link.kind} ${link.target}`
+    const key = `${folderOf(source)}\0${link.kind}\0${link.target}`
     const held = this.resolved.get(key)
     if (held !== undefined) return held
 
@@ -441,7 +441,7 @@ class Links {
     ).catch(() => [])
 
     const linked = new Set(
-      this.backlinks(path).map((reference) => `${reference.path} ${reference.line}`),
+      this.backlinks(path).map((reference) => `${reference.path}\0${reference.line}`),
     )
     const needle = name.toLowerCase()
 
@@ -455,7 +455,7 @@ class Links {
         }))
         .filter((hit) => hit.path !== relative)
         // A line that already links here is a backlink, not a mention of one.
-        .filter((hit) => !linked.has(`${hit.path} ${hit.line}`))
+        .filter((hit) => !linked.has(`${hit.path}\0${hit.line}`))
         // And the name has to stand as a word rather than inside a longer one.
         .filter((hit) => standsAlone(hit.text.toLowerCase(), needle))
     )

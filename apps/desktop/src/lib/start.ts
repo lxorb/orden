@@ -8,7 +8,7 @@
 import { account } from './account.svelte'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
-import { collectErrors } from './log'
+import { collectErrors, log } from './log'
 import { modes } from './modes.svelte'
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
@@ -36,12 +36,21 @@ export function start(): () => void {
   settings.restore()
   recovery.restore()
 
+  /** What the files handed over by a second launch are heard on, once there is
+   *  something listening. Torn down with everything else. */
+  let stopListening: (() => void) | null = null
+
   void workspace
     .restore()
-    .then(openLaunchFiles)
+    .then(async () => {
+      stopListening = await openLaunchFiles()
+    })
     // Nothing else can put this right, and the strip is already showing
-    // whatever did come back; the log is where a launch failure belongs.
-    .catch(() => undefined)
+    // whatever did come back; the log is where a launch failure belongs, so it
+    // is written there rather than dropped.
+    .catch((error: unknown) => {
+      log('error', `restore: ${error instanceof Error ? error.message : String(error)}`)
+    })
 
   // Recently deleted on this device is swept at start and once a day after;
   // the account's is swept on the server.
@@ -67,19 +76,21 @@ export function start(): () => void {
     clearInterval(sweeper)
     stopRecovery()
     stopWatching()
+    stopListening?.()
   }
 }
 
-/** Files named on the command line, and any handed over by a second launch. */
-async function openLaunchFiles() {
-  if (!isDesktop) return
+/** Files named on the command line, and any handed over by a second launch.
+ *  Answers how to stop listening for the second kind. */
+async function openLaunchFiles(): Promise<(() => void) | null> {
+  if (!isDesktop) return null
 
   for (const path of await invoke<string[]>('take_startup_files').catch(() => [])) {
     await workspace.open(path)
   }
 
   const { listen } = await import('@tauri-apps/api/event')
-  await listen<string[]>('nib://open-files', (event) => void openAll(event.payload))
+  return listen<string[]>('nib://open-files', (event) => void openAll(event.payload))
 }
 
 async function openAll(paths: string[]) {

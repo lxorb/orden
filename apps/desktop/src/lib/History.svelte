@@ -25,6 +25,9 @@
    *  changes are what somebody looking for a lost paragraph wants first. */
   let comparing = $state(true)
 
+  // Each read carries a flag its own effect clears on the way out, so a list or
+  // a version that arrives after the note has changed - or after the sheet has
+  // been shut - cannot land on top of a newer one.
   $effect(() => {
     if (!open) return
 
@@ -34,12 +37,21 @@
       return
     }
 
+    let current = true
+
     void invoke<Snapshot[]>('list_snapshots', { path })
       .then((found) => {
+        if (!current) return
         snapshots = found
         selected = found[0] ?? null
       })
-      .catch(() => (snapshots = []))
+      .catch(() => {
+        if (current) snapshots = []
+      })
+
+    return () => {
+      current = false
+    }
   })
 
   $effect(() => {
@@ -48,19 +60,32 @@
       return
     }
 
+    let current = true
+
     // The note is named as well as the version, because the browser keeps its
     // versions in one store and the desktop keeps each note's in a folder.
     void invoke<string>('read_snapshot', {
       path: selected.path,
       notePath: workspace.active?.path ?? '',
     })
-      .then((body) => (preview = body))
-      .catch(() => (preview = ''))
+      .then((body) => {
+        if (current) preview = body
+      })
+      .catch(() => {
+        if (current) preview = ''
+      })
+
+    return () => {
+      current = false
+    }
   })
 
-  /** What this version would change, against the note as it stands now. */
-  const changes = $derived(trimmed(lineDiff(preview, workspace.active?.note.text ?? '')))
-  const counted = $derived(diffCount(lineDiff(preview, workspace.active?.note.text ?? '')))
+  /** What this version would change, against the note as it stands now. One diff
+   *  read two ways: the lines and how many of them there are are the same walk
+   *  over the whole document, and walking it twice is a whole document twice. */
+  const difference = $derived(lineDiff(preview, workspace.active?.note.text ?? ''))
+  const changes = $derived(trimmed(difference))
+  const counted = $derived(diffCount(difference))
 
   const when = (stamp: number) =>
     new Date(stamp).toLocaleString(undefined, {

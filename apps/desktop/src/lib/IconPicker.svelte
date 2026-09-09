@@ -16,19 +16,36 @@
   const names = $derived(Object.keys(library))
   const shown = $derived(search(names, query))
 
+  /** How long the field waits for the sheet's own transition before it takes the
+   *  keyboard. Focusing an element that is still scaling up scrolls the sheet. */
+  const FOCUS = 40
+
+  /** Which opening this is, so a set of icons that arrives after the sheet has
+   *  been closed - or opened again on another space - is not the set shown. */
+  let opening = 0
+  let focusing: ReturnType<typeof setTimeout> | undefined
+
   export async function choose(id: string) {
+    const mine = ++opening
     spaceId = id
     query = ''
     open = true
 
-    library = await loadIcons()
-    setTimeout(() => field?.focus(), 40)
+    const all = await loadIcons()
+    if (mine !== opening) return
+
+    library = all
+    clearTimeout(focusing)
+    focusing = setTimeout(() => field?.focus(), FOCUS)
   }
 
   function pick(name: string | null) {
     if (spaceId) workspace.setIcon(spaceId, name)
     open = false
   }
+
+  // Nothing is waiting to be focused once the sheet has gone.
+  $effect(() => () => clearTimeout(focusing))
 
   // Escape closes it, like everything else the app puts over a note; see
   // overlays.ts.

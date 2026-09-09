@@ -18,7 +18,7 @@
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
-  import { paint, placesOf, rangeOf, wordsOf, type Words } from './reading/find'
+  import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
   import { type Anchor, headingOffsets, positionAt, topFor } from './reading/places'
   import { readingHtml } from './reading/render'
   import { scrollbar } from './scrollbar'
@@ -69,7 +69,11 @@
     // The page is measured only once the browser has laid it out.
     await tick()
     requestAnimationFrame(() => {
-      if (mine === latest) show(untrack(() => tab.anchor) ?? 0)
+      if (mine !== latest) return
+      show(untrack(() => tab.anchor) ?? 0)
+      // The matches were painted onto nodes this render has thrown away, so the
+      // find bar would be counting places nothing was showing.
+      if (untrack(() => finding)) reveal()
     })
   }
 
@@ -171,7 +175,13 @@
     })
   }
 
-  $effect(() => () => cancelAnimationFrame(scheduled))
+  // On the way out: the frame that would record the place, and the render that
+  // may still be waiting on a diagram drawer - nothing in flight is current
+  // once the pane has gone.
+  $effect(() => () => {
+    cancelAnimationFrame(scheduled)
+    latest++
+  })
 
   // The pane that is being read takes the keyboard, so Page Down, the arrows and
   // the find key all reach it the way they reach an editor.
@@ -300,7 +310,7 @@
     // The words come off the page rather than out of `html`, but it is `html` that
     // says the page has changed under them.
     if (!finding || !query || !html) return []
-    return placesOf(wording().text, query)
+    return placesIn(wording(), query)
   })
 
   function step(by: number) {
@@ -310,11 +320,28 @@
     reveal()
   }
 
+  /** The frame the paint is waiting for. A range per match is real DOM work and
+   *  the query changes per letter, so a burst of typing costs one paint rather
+   *  than one per keystroke - and the scroll to the current match lands on the
+   *  frame the browser was going to draw anyway. */
+  let painting = 0
+
+  function reveal() {
+    cancelAnimationFrame(painting)
+    painting = requestAnimationFrame(() => {
+      painting = 0
+      repaint()
+    })
+  }
+
   /** Paints the places found and brings the current one into view; see
    *  `paint` in reading/find.ts for why they are painted and not selected. */
-  function reveal() {
+  function repaint() {
     const words = wording()
     const ranges = found.flatMap((offset) => rangeOf(words, offset, query.length) ?? [])
+    // A page drawn again can hold fewer matches than the one the reader was
+    // stepping through, and a count past the end would show nothing at all.
+    if (current >= ranges.length) current = 0
     const here = ranges[current]
 
     paint('nib-find', ranges)
@@ -342,13 +369,16 @@
   function closeFind() {
     finding = false
     query = ''
+    cancelAnimationFrame(painting)
+    painting = 0
     paint('nib-find', [])
     paint('nib-find-here', [])
     scroller?.focus({ preventScroll: true })
   }
 
-  // A page that has gone, or been drawn again, has no matches to paint.
+  // A page that has gone has no matches to paint, and no frame to paint them on.
   $effect(() => () => {
+    cancelAnimationFrame(painting)
     paint('nib-find', [])
     paint('nib-find-here', [])
   })
