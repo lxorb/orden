@@ -132,15 +132,28 @@ jobs:
           path: out/SRCINFO
           if-no-files-found: warn
 
+  # The only package here built from source rather than from the release .deb,
+  # because Flathub requires it. The whole Cargo and npm trees are vendored, so
+  # this row compiles the app inside the sandbox with no network at all.
   flatpak:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
+
+      # A from-source build wants the runtime, the SDK, the vendored crates and
+      # a release target directory all at once. Not /opt/hostedtoolcache: it is
+      # millions of small files and deleting it costs more than it frees.
+      - name: Room on the disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/share/boost || true
+          df -h /
 
       - name: flatpak, appstream and the Flathub builder
         run: |
           sudo apt-get update
-          sudo apt-get install -y flatpak appstream desktop-file-utils dbus
+          sudo apt-get install -y flatpak appstream desktop-file-utils dbus xvfb
           # Ubuntu 24.04 blocks unprivileged user namespaces, which bubblewrap
           # needs; the Flathub builder cannot run a build without it.
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
@@ -152,8 +165,12 @@ jobs:
           appstreamcli validate --explain packaging/flathub/ch.emilvinu.nib.metainfo.xml
           desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
 
-      - name: flatpak-builder-lint on the manifest
-        run: flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest packaging/flathub/ch.emilvinu.nib.yml
+      - name: flatpak-builder-lint on the manifest and the metainfo
+        run: |
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest \
+            packaging/flathub/ch.emilvinu.nib.yml
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream \
+            packaging/flathub/ch.emilvinu.nib.metainfo.xml
 
       # A copy on the host as well as the one the builder installs for
       # itself, so the next step can look inside the runtime's own files.
@@ -163,11 +180,13 @@ jobs:
       # The builder runs in a sandbox with a flatpak installation of its
       # own, invisible to the host, so it has to install the runtime again
       # for itself - which it cannot do without a session bus to ask.
+      # `--sandbox` is what makes this the real test: no network and no host
+      # filesystem while the crates and the npm packages are compiled.
       - name: Build, the way Flathub builds it
         working-directory: packaging/flathub
         run: >-
           dbus-run-session -- flatpak run org.flatpak.Builder --force-clean --sandbox --user
-          --install-deps-from=flathub --ccache
+          --install-deps-from=flathub
           --mirror-screenshots-url=https://dl.flathub.org/media/
           --repo=repo builddir ch.emilvinu.nib.yml
 
@@ -191,6 +210,24 @@ jobs:
             exit 1
           fi
           echo 'every library resolves'
+
+      # Nib has no --version to ask, so this is a launch: what matters is that
+      # the app the sandbox built comes up and stays up.
+      - name: It starts and stays up
+        run: |
+          xvfb-run -a flatpak run ch.emilvinu.nib > nib.log 2>&1 &
+          running=$!
+          sleep 30
+          if kill -0 "$running" 2>/dev/null; then
+            echo 'still running after 30s'
+            kill "$running" || true
+          else
+            echo "::error::the app exited on its own"
+            cat nib.log
+            exit 1
+          fi
+          cat nib.log
+          ! grep -qiE "could not start|error while loading shared libraries" nib.log
 
       - name: What the build made of the screenshot
         working-directory: packaging/flathub

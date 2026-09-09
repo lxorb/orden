@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>ch.emilvinu.nib</id>
 
-  <name>Nib</name>
+  <name>nibeditor</name>
   <summary>Markdown editor with live preview</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
@@ -14,10 +14,10 @@
 
   <description>
     <p>
-      Nib is a small markdown editor that formats what you write as you write it.
-      There is no split screen and no preview pane: headings, emphasis, lists,
-      tables, code and math take their final shape in the same window you type
-      in, and the markdown underneath stays plain text you can open anywhere.
+      nibeditor is a small markdown editor that formats what you write as you
+      write it. There is no split screen and no preview pane: headings, emphasis,
+      lists, tables, code and math take their final shape in the same window you
+      type in, and the markdown underneath stays plain text you can open anywhere.
     </p>
     <p>Features:</p>
     <ul>
@@ -29,16 +29,23 @@
       <li>Export to PDF and HTML</li>
     </ul>
     <p>
-      Nib is free software under the GNU Affero General Public License. The same
-      editor also runs in a browser at nibeditor.com.
+      nibeditor is free software under the GNU Affero General Public License. The
+      same editor also runs in a browser at nibeditor.com.
     </p>
   </description>
 
   <launchable type="desktop-id">ch.emilvinu.nib.desktop</launchable>
 
+  <!-- What a catalogue paints behind the icon. Both are the app's own purple,
+       one well above it and one well below, so the nib stays legible on either. -->
+  <branding>
+    <color type="primary" scheme_preference="light">#ded9fc</color>
+    <color type="primary" scheme_preference="dark">#2e2560</color>
+  </branding>
+
   <screenshots>
     <screenshot type="default">
-      <image>https://github.com/user-attachments/assets/0d3c6eac-9d6b-4581-a405-0ac1b746d9d8</image>
+      <image>https://raw.githubusercontent.com/lxorb/nibeditor/c07562c111935094bb5391ebc5433b6bbaf66bfa/docs/media/screenshot.png</image>
       <caption>A document being edited, formatted as it is typed</caption>
     </screenshot>
   </screenshots>

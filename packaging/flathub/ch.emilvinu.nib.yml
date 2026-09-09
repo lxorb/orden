@@ -1,19 +1,29 @@
-# Nib for Flathub.
+# nibeditor for Flathub, built from source in the sandbox.
 #
-# The app is a Tauri 2 binary linked against webkit2gtk-4.1, which the GNOME
-# runtime provides, so this manifest unpacks the official .deb rather than
-# rebuilding: a from-source Flatpak build would have to vendor the whole Cargo
-# and npm dependency trees offline, and the .deb is the same artifact everyone
-# else on Linux installs. Both architectures come from the same release.
+# Flathub's requirements gained a "Building from source" section on 2026-02-25:
+# a source-available submission has to be built entirely from source, so this
+# manifest compiles the app rather than unpacking the release .deb. Nothing is
+# fetched while it builds - every crate and every npm tarball is a source below,
+# from the two generated files:
 #
-# Tauri's .desktop entry and icon layout are not reused - the entry it writes
-# has no categories, no MIME types and no comment, and its 256x256 icon is
-# filed under a scale-2 directory. The two files next to this manifest replace
-# them, named after the app ID the way Flatpak requires.
+#   flatpak-cargo-generator.py apps/desktop/src-tauri/Cargo.lock -o cargo-sources.json
+#   flatpak-node-generator pnpm pnpm-lock.yaml -o node-sources.json
+#
+# Both are pinned to the same commit as the app and have to be regenerated
+# whenever either lockfile moves. See packaging/linux.md.
+#
+# Tauri's own .desktop entry and icon layout are not reused - the entry it writes
+# has no categories, no MIME types and no comment, and its 256x256 icon is filed
+# under a scale-2 directory. The two files next to this manifest replace them,
+# named after the app ID the way Flatpak requires, and the icons are installed
+# from the source tree at the sizes they actually are.
 id: ch.emilvinu.nib
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node24
+  - org.freedesktop.Sdk.Extension.rust-stable
 command: nib
 
 finish-args:
@@ -29,53 +39,72 @@ finish-args:
   # access than that is a sandbox hole Flathub's linter rejects outright.
   - --filesystem=xdg-documents
 
-cleanup:
-  - /include
-  - /lib/pkgconfig
-  - /share/man
-
 modules:
   - name: nib
     buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/node24/bin:/usr/lib/sdk/rust-stable/bin:/run/build/nib/pnpm/bin
+      env:
+        # The vendored crates and the cargo config that replaces crates.io with
+        # them, both written by cargo-sources.json.
+        CARGO_HOME: /run/build/nib/cargo
+        CARGO_NET_OFFLINE: 'true'
+        # Where node-sources.json puts the offline caches. The pnpm store is
+        # pointed at by the .npmrc the same file appends.
+        XDG_CACHE_HOME: /run/build/nib/flatpak-node/cache
+        npm_config_cache: /run/build/nib/flatpak-node/npm-cache
     build-commands:
-      - ar x nib.deb
-      - tar -xf data.tar.gz
-      - install -Dm755 usr/bin/nib /app/bin/nib
+      - ln -s pnpm.cjs pnpm/bin/pnpm
+      # Only the desktop app and the packages it is built from: the Worker under
+      # services/ is not part of a Flatpak.
+      - pnpm install --offline --frozen-lockfile --filter "@nib/desktop..."
+      # A Flatpak is updated by Flathub and must not install anything itself, so
+      # the updater is left with nowhere to look. The plugin stays configured -
+      # its public key is not optional - and an empty endpoint list is what the
+      # app already treats as "nothing new", which is also what it does with no
+      # network at all.
+      - |
+        python3 -c "import json
+        path = 'apps/desktop/src-tauri/tauri.conf.json'
+        conf = json.load(open(path))
+        conf['plugins']['updater']['endpoints'] = []
+        conf['bundle']['createUpdaterArtifacts'] = False
+        json.dump(conf, open(path, 'w'), indent=2)"
+      # The web assets first: the binary embeds apps/desktop/dist at compile
+      # time, which is what tauri.conf.json points frontendDist at.
+      - pnpm --filter @nib/desktop build
+      - cargo build --offline --release --manifest-path apps/desktop/src-tauri/Cargo.toml
+      - install -Dm755 apps/desktop/src-tauri/target/release/nib /app/bin/nib
       - install -Dm644 ch.emilvinu.nib.desktop /app/share/applications/ch.emilvinu.nib.desktop
       - install -Dm644 ch.emilvinu.nib.metainfo.xml /app/share/metainfo/ch.emilvinu.nib.metainfo.xml
+      # Tauri names the icons after the size it thinks they are; these are the
+      # sizes they measure. 128x128@2x.png is a plain 256x256 image.
       - |
-        for size in 32 128; do
-          install -Dm644 "usr/share/icons/hicolor/${size}x${size}/apps/nib.png" \
-            "/app/share/icons/hicolor/${size}x${size}/apps/ch.emilvinu.nib.png"
-        done
-      # A plain 256x256 image that Tauri files under a scale-2 directory.
-      - install -Dm644 usr/share/icons/hicolor/256x256@2/apps/nib.png
-          /app/share/icons/hicolor/256x256/apps/ch.emilvinu.nib.png
+        icons=apps/desktop/src-tauri/icons
+        install -Dm644 "$icons/32x32.png"      /app/share/icons/hicolor/32x32/apps/ch.emilvinu.nib.png
+        install -Dm644 "$icons/64x64.png"      /app/share/icons/hicolor/64x64/apps/ch.emilvinu.nib.png
+        install -Dm644 "$icons/128x128.png"    /app/share/icons/hicolor/128x128/apps/ch.emilvinu.nib.png
+        install -Dm644 "$icons/128x128@2x.png" /app/share/icons/hicolor/256x256/apps/ch.emilvinu.nib.png
+        install -Dm644 "$icons/icon.png"       /app/share/icons/hicolor/512x512/apps/ch.emilvinu.nib.png
     sources:
-      - type: file
-        only-arches: [x86_64]
-        url: https://github.com/lxorb/nibeditor/releases/download/v0.6.0/Nib-0.6.0-linux-x64.deb
-        sha256: 5b9d32d748d3f86f423cdb1d2a598f519b7bd66f66d51a51cc8fd1b402f30e5c
-        dest-filename: nib.deb
+      - type: git
+        url: https://github.com/lxorb/nibeditor.git
+        tag: v0.6.0
+        commit: 15db7ab44d1c8a82bf15a8bd286401e77649d8cf
         x-checker-data:
           type: json
           url: https://api.github.com/repos/lxorb/nibeditor/releases/latest
-          version-query: .tag_name | sub("^v"; "")
-          url-query: >-
-            .assets[] | select(.name == "Nib-" + $version + "-linux-x64.deb")
-            | .browser_download_url
-      - type: file
-        only-arches: [aarch64]
-        url: https://github.com/lxorb/nibeditor/releases/download/v0.6.0/Nib-0.6.0-linux-arm64.deb
-        sha256: b9f5698867a009cc825f357f30c581eab020f4b66e944f07e15bb7112f54b1f2
-        dest-filename: nib.deb
-        x-checker-data:
-          type: json
-          url: https://api.github.com/repos/lxorb/nibeditor/releases/latest
-          version-query: .tag_name | sub("^v"; "")
-          url-query: >-
-            .assets[] | select(.name == "Nib-" + $version + "-linux-arm64.deb")
-            | .browser_download_url
+          tag-query: .tag_name
+          version-query: $tag | sub("^v"; "")
+          is-main-source: true
+      # The version in the repository's packageManager field, so pnpm does not
+      # go looking for another one.
+      - type: archive
+        url: https://registry.npmjs.org/pnpm/-/pnpm-10.28.1.tgz
+        sha256: 52128de921542b1faa91c4c7dec5e88c5736ccb6006b879401e90db275ee4719
+        dest: pnpm
+      - cargo-sources.json
+      - node-sources.json
       - type: file
         path: ch.emilvinu.nib.desktop
       - type: file
