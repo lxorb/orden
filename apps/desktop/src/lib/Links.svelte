@@ -103,12 +103,12 @@
   />
 {:else}
   <!-- Backlinks first: what points here is what the panel is opened for. -->
-  <p class="head">{t('Backlinks')}<span class="count">{backlinks.length}</span></p>
+  <p class="nib-section">{t('Backlinks')}<span>{backlinks.length}</span></p>
   {#if backlinks.length}
     <ul>
       {#each backlinks as reference, index (`${reference.path}:${reference.line}:${index}`)}
         <li>
-          <button class="hit" onclick={() => openAt(reference)}>
+          <button class="nib-row hit" onclick={() => openAt(reference)}>
             <span class="hit-note">{reference.name}</span>
             <span class="hit-line">{reference.text}</span>
           </button>
@@ -119,13 +119,13 @@
     <p class="empty-text">{t('Nothing links here yet')}</p>
   {/if}
 
-  <p class="head">{t('Links out')}<span class="count">{outgoing.length}</span></p>
+  <p class="nib-section">{t('Links out')}<span>{outgoing.length}</span></p>
   {#if outgoing.length}
     <ul>
       {#each outgoing as link, index (`${link.target}:${link.line}:${index}`)}
         <li>
           <button
-            class="hit"
+            class="nib-row hit"
             class:missing={!link.to}
             onclick={() => (link.to ? openTarget(link) : ongoto?.(link.line))}
           >
@@ -140,11 +140,11 @@
   {/if}
 
   {#if mentions.length}
-    <p class="head">{t('Mentions')}<span class="count">{mentions.length}</span></p>
+    <p class="nib-section">{t('Mentions')}<span>{mentions.length}</span></p>
     <ul>
       {#each mentions as reference, index (`${reference.path}:${reference.line}:${index}`)}
         <li>
-          <button class="hit" onclick={() => openAt(reference)}>
+          <button class="nib-row hit" onclick={() => openAt(reference)}>
             <span class="hit-note">{reference.name}</span>
             <span class="hit-line">{reference.text}</span>
           </button>
@@ -159,61 +159,21 @@
 {/if}
 
 <style>
-  /* One word and a number: the whole heading of a list. */
-  .head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin: var(--space-3) var(--space-2) var(--space-1);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .head:first-child {
-    margin-top: var(--space-1);
-  }
-
-  .count {
-    font-variant-numeric: tabular-nums;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
   ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
+  /* Two lines rather than one, so the row is `.nib-row` stood on its end: the
+     line the link is on, and the note it is in under it. */
   .hit {
-    width: 100%;
-    display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 6px 8px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    text-align: left;
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .hit:hover {
-    background: var(--item-hover-bg-color);
-  }
-
-  .hit:active {
-    background: var(--press);
-  }
-
-  .hit:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1px;
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
   }
 
   .hit-note {
@@ -232,39 +192,18 @@
 
   .hit-line {
     overflow: hidden;
-    font-size: var(--text-sm);
-    color: var(--muted-strong);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .empty-text {
-    margin: var(--space-1) var(--space-2) 0;
-    font-size: var(--text-sm);
+    margin: var(--space-1) var(--row-pad) 0;
+    font-size: var(--text-row);
     color: var(--muted);
-  }
-
-  :global([data-touch]) .hit {
-    min-height: var(--touch-row);
-    justify-content: center;
-    padding: var(--space-2) var(--touch-pad);
-  }
-
-  /* The line is what the row is about and the note it is in follows it, so the
-     two are the body size and the one under it. */
-  :global([data-touch]) .hit-line {
-    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .hit-note,
   :global([data-touch]) .empty-text {
     font-size: var(--text-base);
-  }
-
-  /* A word in capitals over each list, lined up with the rows below it. */
-  :global([data-touch]) .head {
-    margin-left: var(--touch-pad);
-    margin-right: var(--touch-pad);
-    font-size: var(--text-sm);
   }
 </style>

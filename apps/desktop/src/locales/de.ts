@@ -89,6 +89,8 @@ export const de: Dictionary = {
   'Extract selection': 'Auswahl herauslösen',
 
   // Panels and navigation
+  Bookmarks: 'Lesezeichen',
+  Panels: 'Bereiche',
   Outline: 'Gliederung',
   Fold: 'Einklappen',
   Unfold: 'Ausklappen',

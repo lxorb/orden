@@ -99,7 +99,7 @@ describe('what a note offers', () => {
   /** A right click and a held finger, which is the right click a touch screen
    *  has: the icon is offered on a phone as well as on a desktop. */
   test('through the menu a pointer opens and the one a finger opens', () => {
-    const row = tree.slice(tree.indexOf('class="row note"'))
+    const row = tree.slice(tree.indexOf('class="nib-row row note"'))
     expect(row).toContain('oncontextmenu={(event) =>')
     expect(row).toContain('use:longPress={(event) =>')
   })

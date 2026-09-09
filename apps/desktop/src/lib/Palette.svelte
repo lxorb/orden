@@ -120,7 +120,8 @@
         {#each results as item, index (`${label(item)}:${index}`)}
           <li>
             <button
-              class:selected={index === cursor}
+              class="nib-row"
+              class:is-on={index === cursor}
               class:dim={'disabled' in item && item.disabled}
               onmouseenter={() => (cursor = index)}
               onclick={() => choose(item)}
@@ -132,7 +133,7 @@
               {#if asCommands}
                 <span class="tick">{'checked' in item && item.checked ? '✓' : ''}</span>
               {/if}
-              <span class="text">{label(item)}</span>
+              <span class="nib-row-label">{label(item)}</span>
               {#if 'hint' in item && item.hint}<kbd>{item.hint}</kbd>{/if}
             </button>
           </li>
@@ -193,31 +194,8 @@
     overflow-y: auto;
   }
 
-  button {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: 8px 10px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: default;
-    transition:
-      background var(--dur-instant) var(--ease-out),
-      color var(--dur-instant) var(--ease-out);
-  }
-
-  button.selected {
-    background: var(--accent-soft);
-    color: var(--text-strong);
-  }
-
+  /* The rows are `.nib-row`, the same row the file list is made of - the one the
+     arrow keys walk carries the same fill an open note does. */
   button.dim {
     opacity: 0.45;
   }
@@ -230,25 +208,18 @@
     color: var(--accent);
   }
 
+  kbd {
+    flex: none;
+  }
+
   .nothing {
     margin: 0;
     padding: var(--space-4);
     color: var(--muted);
-    font-size: var(--text-sm);
-  }
-
-  /* Takes what is left between the tick and the key, so a long name is cut
-     rather than pushing the key off the row. */
-  .text {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: var(--text-row);
   }
 
   kbd {
-    flex: none;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
@@ -264,22 +235,12 @@
     padding-top: var(--inset-top);
   }
 
-  /* The rows are a list like any other: a thumb lands on one of them, so they
-     are as tall and as legible as the rows in the drawer behind. */
-  :global([data-touch]) input,
-  :global([data-touch]) button {
-    font-size: var(--touch-text);
-  }
-
+  /* The rows are a list like any other and take the row scale with every other
+     list; the field over them is the one thing here that does not. */
   :global([data-touch]) input {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
-  }
-
-  :global([data-touch]) button {
-    min-height: var(--touch-row);
-    gap: var(--touch-gap);
-    padding: 0 var(--touch-pad);
+    font-size: var(--touch-text);
   }
 
   /* Room for more of them, now that each is taller, and the last one clears the

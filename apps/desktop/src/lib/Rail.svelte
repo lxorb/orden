@@ -12,20 +12,11 @@
   import { overlays } from './overlays'
   import { prompt } from './prompt.svelte'
   import { canPublish } from './publishing.svelte'
-  import {
-    deleteSpace,
-    moveSpace,
-    newSpace,
-    publishSpace,
-    renameSpace,
-    shareSpace,
-  } from './space-actions'
+  import { deleteSpace, moveSpace, publishSpace, renameSpace, shareSpace } from './space-actions'
   import { settings } from './settings.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import { canShare, isShared, roleOf } from './sharing.svelte'
   import { sync } from './sync.svelte'
-  import { SOURCE_URL } from './app-menu'
-  import { openExternal } from './tauri'
   import { viewport } from './viewport.svelte'
   import { type Space, workspace } from './workspace.svelte'
   import { theme } from './theme.svelte'
@@ -300,17 +291,6 @@
         </button>
       {/if}
     {/each}
-
-    <!-- The rail is the list of spaces, so its plus makes one. New notes are
-         made from the plus beside the tabs. -->
-    <button
-      class="add"
-      title={t('New space')}
-      aria-label={t('New space')}
-      onclick={() => newSpace()}
-    >
-      <svg viewBox="0 0 12 12"><path d="M6 1v10M1 6h10" /></svg>
-    </button>
   </div>
 
   {#if label}
@@ -390,21 +370,6 @@
         >
       {/if}
     </button>
-
-    <!-- The code behind the app, for anyone curious: opened outside, in the
-         browser, since the app has no page of its own to show it on. -->
-    <button
-      class="add"
-      title={t('Source code')}
-      aria-label={t('Source code')}
-      onclick={() => void openExternal(SOURCE_URL)}
-    >
-      <svg class="mark" viewBox="0 0 16 16">
-        <path
-          d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-        />
-      </svg>
-    </button>
   </div>
 </nav>
 
@@ -464,12 +429,15 @@
     outline-offset: 1px;
   }
 
+  /* One square, whatever it holds: a drawing, or the letter a space with no
+     drawing is known by. Its corner is a third of its side, so a thumb's badge
+     and a pointer's are the same shape. */
   .space {
-    width: 30px;
-    height: 30px;
-    border-radius: var(--radius-md);
+    width: var(--rail-badge);
+    height: var(--rail-badge);
+    border-radius: calc(var(--rail-badge) * 0.32);
     font-family: var(--font-ui);
-    font-size: 14px;
+    font-size: calc(var(--rail-badge) * 0.46);
     font-weight: 620;
     letter-spacing: 0.01em;
     background: var(--surface-2);
@@ -497,24 +465,24 @@
     flex: none;
     display: grid;
     place-items: center;
-    width: 30px;
+    width: var(--rail-badge);
     height: 22px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     color: var(--muted);
   }
 
   .nudge:hover {
-    background: var(--surface-2);
+    background: var(--surface-hover);
     color: var(--text-strong);
   }
 
   .nudge:active {
-    background: var(--surface-3);
+    background: var(--surface-press);
   }
 
   .nudge svg {
-    width: 14px;
-    height: 14px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
@@ -607,14 +575,16 @@
     color: #fff;
   }
 
+  /* Against the column's own edge, inside the padding the squares scroll in -
+     any further out and the scroller clips it. */
   .space.active::before {
     content: '';
     position: absolute;
-    left: -8px;
+    left: -5px;
     top: 50%;
-    width: 2px;
-    height: 16px;
-    border-radius: 1px;
+    width: 3px;
+    height: 55%;
+    border-radius: 0 2px 2px 0;
     background: var(--accent);
     transform: translateY(-50%) scaleY(0);
     animation: mark var(--dur-base) var(--ease-spring) forwards;
@@ -656,9 +626,9 @@
 
   .add {
     position: relative;
-    width: 30px;
-    height: 30px;
-    border-radius: var(--radius-md);
+    width: var(--rail-badge);
+    height: var(--rail-badge);
+    border-radius: calc(var(--rail-badge) * 0.32);
     transition:
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
@@ -667,9 +637,8 @@
 
   @media (hover: hover) {
     .add:hover:not(:disabled) {
-      background: var(--surface-2);
+      background: var(--surface-hover);
       color: var(--text-strong);
-      transform: rotate(90deg);
     }
   }
 
@@ -712,29 +681,31 @@
     }
   }
 
+  /* Pushed to the bottom now that the menu holds the top, and set apart by the
+     same hairline: what the app is, then the spaces, then who is at this device.
+     Three at most - the source link is a row in the Help menu, not a filled
+     silhouette among line drawings. */
   .foot {
-    /* Pushed to the bottom now that the menu holds the top. */
+    align-self: stretch;
     margin-top: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-  }
-
-  .foot .add:hover {
-    transform: none;
+    gap: var(--space-1);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
   }
 
   .add:active:not(:disabled),
   .foot .add:active:not(:disabled) {
-    background: var(--press);
+    background: var(--surface-press);
     color: var(--text-strong);
     transform: scale(0.9);
   }
 
   .glyph {
-    width: 19px;
-    height: 19px;
+    width: var(--icon-rail);
+    height: var(--icon-rail);
     stroke-width: 1.7;
     stroke-linejoin: round;
   }
@@ -765,29 +736,17 @@
   }
 
   svg {
-    width: 15px;
-    height: 15px;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.4;
     stroke-linecap: round;
   }
 
-  /* A filled mark, not a line drawing: the GitHub logo is a silhouette. */
-  .mark {
-    fill: currentColor;
-    stroke: none;
-  }
-
-  /* Touch: 30px squares are hard to hit with a thumb. A square here is the
-     column's whole width, so it takes the row size the lists beside it use
-     rather than the bare floor. */
-  :global([data-touch]) .space,
-  :global([data-touch]) .add {
-    width: var(--touch-row);
-    height: var(--touch-row);
-  }
-
+  /* A thumb's badge is `--rail-badge` and its glyph `--icon-rail`, and both are
+     restated from the touch scale in one place; see tokens.css. What is left
+     here is what a phone's window does to the column around them. */
   :global([data-touch]) nav {
     width: auto;
     padding: var(--space-3) var(--space-2);
@@ -795,18 +754,6 @@
        menu button has to start below the clock and battery. */
     padding-top: calc(var(--space-3) + var(--inset-top));
     padding-bottom: calc(var(--space-3) + var(--inset-bottom));
-  }
-
-  :global([data-touch]) svg,
-  :global([data-touch]) .glyph {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
-  }
-
-  /* The letter a space is known by stands in for an icon, so it is drawn at the
-     size of the ones above and below it. */
-  :global([data-touch]) .space {
-    font-size: var(--touch-icon);
   }
 
   /* No hover on a touch screen, so the label would never show. */
@@ -817,12 +764,6 @@
   /* A thumb's step, and the one place these are ever shown. As wide as the
      squares it moves between, and no taller than the gap it sits in. */
   :global([data-touch]) .nudge {
-    width: var(--touch-row);
     height: 34px;
-  }
-
-  :global([data-touch]) .nudge svg {
-    width: 18px;
-    height: 18px;
   }
 </style>

@@ -107,7 +107,7 @@
 
 <style>
   header {
-    height: var(--titlebar-height);
+    height: var(--header-height);
     display: flex;
     align-items: stretch;
     flex: none;
@@ -146,7 +146,7 @@
 
   @media (hover: hover) {
     .controls button:hover {
-      background: var(--surface-2);
+      background: var(--surface-hover);
       color: var(--text-strong);
     }
 
@@ -157,7 +157,7 @@
   }
 
   .controls button:active {
-    background: var(--press);
+    background: var(--surface-press);
     color: var(--text-strong);
   }
 
@@ -189,10 +189,10 @@
     align-self: center;
     display: flex;
     align-items: center;
-    gap: var(--touch-gap);
+    gap: var(--row-gap);
     font-family: var(--font-ui);
-    font-size: var(--text-base);
-    font-weight: 600;
+    font-size: var(--text-head);
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
 
@@ -215,10 +215,7 @@
     padding-right: var(--inset-right);
   }
 
-  /* The note's name is the one thing on the bar to read, at the size everything
-     else here is read at. The two buttons either side of it are sized where they
-     are drawn: SidebarToggle.svelte and AppMenu.svelte. */
-  :global([data-touch]) .title {
-    font-size: var(--touch-text);
-  }
+  /* The note's name is titled the way the space's name is over the list beside
+     it - `--text-head` - and the two buttons either side of it are sized where
+     they are drawn: SidebarToggle.svelte and AppMenu.svelte. */
 </style>

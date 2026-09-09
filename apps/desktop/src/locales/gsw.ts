@@ -91,6 +91,8 @@ export const gsw: Dictionary = {
   'Extract selection': 'Uswahl uselöse',
 
   // Panels and navigation
+  Bookmarks: 'Lesezeiche',
+  Panels: 'Beriich',
   Outline: 'Gliederig',
   Fold: 'Zämmeklappe',
   Unfold: 'Uufklappe',

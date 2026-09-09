@@ -863,8 +863,12 @@
   padding: 0.05em 0.2em;
 }
 
+/* The grid is a hairline - `--table-border-color` - and the one rule worth
+   reading is the one under the header. The same table on paper, on a published
+   page and here; see base.css. */
 #write .nib-table th {
   background: var(--surface);
+  border-bottom-color: var(--line-strong);
   font-weight: 620;
   color: var(--text-strong);
 }

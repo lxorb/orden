@@ -13,8 +13,15 @@ import { describe, expect, test } from 'vitest'
  *  how the drawer ends up one size, the menus another and the palette a third,
  *  which is exactly what this was written to end.
  *
- *  So: the scale exists, no touch rule names a finger-sized number of its own,
- *  and the surfaces a thumb spends its time in read it. */
+ *  A component no longer reads the touch scale directly, though. It reads the
+ *  row scale - `--row-height`, `--text-row`, `--icon-md` and the rest - and the
+ *  tokens restate that from the touch scale in one `[data-touch]` block, so a
+ *  rule is written once and comes out 28px under a pointer and 56 under a
+ *  thumb. See docs/design.md.
+ *
+ *  So: both scales exist, the second is stated in terms of the first, no touch
+ *  rule names a finger-sized number of its own, and the surfaces a thumb spends
+ *  its time in read one of the two. */
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const TOKENS = fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url))
@@ -26,10 +33,27 @@ const SCALE = {
   '--touch-row': '56px',
   '--touch-text': '17px',
   '--touch-icon': '24px',
-  '--touch-mark': '15px',
+  '--touch-mark': '20px',
   '--touch-gap': '12px',
   '--touch-pad': '14px',
   '--touch-indent': '18px',
+}
+
+/** What a component actually reads, and what a finger turns each of them into.
+ *  The row scale is the one vocabulary the shell is written in; this block in
+ *  the tokens is the only place a screen with a thumb on it is mentioned. */
+const ROW_SCALE = {
+  '--row-height': 'var(--touch-row)',
+  '--row-height-sm': 'var(--touch-target)',
+  '--row-pad': 'var(--touch-pad)',
+  '--row-gap': 'var(--touch-gap)',
+  '--row-indent': 'var(--touch-indent)',
+  '--header-height': 'var(--touch-row)',
+  '--icon-md': 'var(--touch-mark)',
+  '--icon-lg': 'var(--touch-icon)',
+  '--icon-rail': 'var(--touch-icon)',
+  '--text-row': 'var(--touch-text)',
+  '--rail-badge': 'var(--touch-target)',
 }
 
 /** The surfaces a thumb spends its time in: the drawer, the lists in it, and
@@ -79,13 +103,18 @@ function styleOf(text: string): string {
 
 interface Component {
   name: string
+  text: string
   style: string
 }
 
-const components: Component[] = componentFiles(SOURCE).map((path) => ({
-  name: path.slice(SOURCE.length).replace(/\\/g, '/'),
-  style: styleOf(readFileSync(path, 'utf8')),
-}))
+const components: Component[] = componentFiles(SOURCE).map((path) => {
+  const text = readFileSync(path, 'utf8')
+  return {
+    name: path.slice(SOURCE.length).replace(/\\/g, '/'),
+    text,
+    style: styleOf(text),
+  }
+})
 
 /** Innermost rules only, which is what the pair of braces with nothing but
  *  declarations between them finds. An `@media` around them is left where it
@@ -143,10 +172,27 @@ describe('the touch scale', () => {
     ).toEqual([])
   })
 
-  test('the surfaces a thumb lands on read the scale', () => {
+  test('the row scale is restated from the touch scale, in one block', () => {
+    const tokens = readFileSync(TOKENS, 'utf8')
+    const block = /\[data-touch\]\s*\{([^}]*)\}/.exec(tokens)?.[1] ?? ''
+
+    expect(block, 'the tokens have no [data-touch] block').not.toBe('')
+
+    // Every name a component reads for a size, and what a finger makes of it.
+    for (const [name, from] of Object.entries(ROW_SCALE)) {
+      expect(block, `${name} is not restated for a finger`).toContain(`${name}: ${from};`)
+    }
+  })
+
+  test('the surfaces a thumb lands on read one of the two scales', () => {
+    const scale =
+      /var\(--(touch-(row|target|text|icon|mark|pad|gap|indent)|row-(height|height-sm|pad|gap|indent)|text-row|text-head|icon-(md|lg|rail)|rail-badge)\)/
+
     const missing = SURFACES.filter((name) => {
       const one = components.find((component) => component.name === name)
-      return !one || !/var\(--touch-(row|text|icon|mark)\)/.test(one.style)
+      // Or it draws no size at all because every row in it is the shared one,
+      // which is the same answer said better; see one-of-each.test.ts.
+      return !one || !(scale.test(one.style) || one.text.includes('nib-row'))
     })
 
     expect(missing, `these draw a touch surface without the scale: ${missing.join(', ')}`).toEqual(
@@ -158,12 +204,13 @@ describe('the touch scale', () => {
     const tree = components.find((one) => one.name === 'lib/Tree.svelte')?.style ?? ''
     const mark = components.find((one) => one.name === 'lib/FileMark.svelte')?.style ?? ''
 
-    // The row itself, and the step per level.
-    expect(tree).toContain('min-height: var(--touch-row)')
-    expect(tree).toContain('--indent: var(--touch-indent)')
+    // The step per level, which is the whole of what the tree still sizes: the
+    // row itself is `.nib-row` in the themes package.
+    expect(tree).toContain('var(--row-indent)')
     // And the mark in front of the name, which is one component for every row
-    // the tree has: a file's kind, and whether a folder is open.
-    expect(mark).toContain('width: var(--touch-mark)')
-    expect(mark).toContain('height: var(--touch-mark)')
+    // the tree has: a file's kind, and whether a folder is open. One size,
+    // which the tokens raise to `--touch-mark` under a thumb.
+    expect(mark).toContain('width: var(--icon-md)')
+    expect(mark).toContain('height: var(--icon-md)')
   })
 })

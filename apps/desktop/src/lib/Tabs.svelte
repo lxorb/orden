@@ -372,31 +372,33 @@
     opacity: 0.55;
   }
 
+  /* The one plus, and it makes a note. A handheld has no tab strip, so there it
+     is at the end of the list panel's header instead; see docs/design.md. */
   .new {
     flex: none;
     align-self: center;
-    width: 24px;
-    height: 24px;
+    width: var(--row-height);
+    height: var(--row-height);
     display: grid;
     place-items: center;
     margin-left: 2px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     color: var(--muted);
   }
 
   .new:hover {
-    background: var(--surface-2);
+    background: var(--surface-hover);
     color: var(--text-strong);
   }
 
   .new:active {
-    background: var(--press);
+    background: var(--surface-press);
     color: var(--text-strong);
   }
 
   .new svg {
-    width: 12px;
-    height: 12px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.4;
@@ -406,32 +408,32 @@
   .link {
     flex: none;
     align-self: center;
-    width: 24px;
-    height: 24px;
+    width: var(--row-height);
+    height: var(--row-height);
     display: grid;
     place-items: center;
     margin: 0 var(--space-1);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     color: var(--muted);
   }
 
   .link:hover {
-    background: var(--surface-2);
+    background: var(--surface-hover);
     color: var(--text-strong);
   }
 
   .link:active {
-    background: var(--press);
+    background: var(--surface-press);
   }
 
   .link.on {
     color: var(--accent);
-    background: var(--accent-soft);
+    background: var(--surface-selected);
   }
 
   .link svg {
-    width: 13px;
-    height: 13px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.3;
@@ -449,7 +451,7 @@
        `--tab-min`: below that the strip scrolls instead. */
     flex: 0 3 auto;
     min-width: var(--tab-min);
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    border-radius: var(--radius-row) var(--radius-row) 0 0;
     user-select: none;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -465,13 +467,13 @@
   }
 
   .tab:hover {
-    background: var(--surface-2);
+    background: var(--surface-hover);
   }
 
   /* The tab answers the click itself, before the note it holds has been laid
      out - which on a large note is the difference between prompt and slow. */
   .tab:active {
-    background: var(--press);
+    background: var(--surface-press);
   }
 
   /* Where a tab being dragged would land: a line down the edge it arrives at,
@@ -486,7 +488,13 @@
     box-shadow: inset -2px 0 0 0 var(--accent);
   }
 
-  /* The active tab is marked by a line that slides in, not by a label. */
+  /* The note being read is filled, the same fill its row in the file list
+     wears, so "the one you have open" looks the same wherever the app says it.
+     The line that slides in underneath says which pane the keys go to. */
+  .tab.active {
+    background: var(--surface-selected);
+  }
+
   .tab.active::after {
     content: '';
     position: absolute;
@@ -513,7 +521,7 @@
     background: none;
     color: var(--muted);
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: var(--text-row);
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
@@ -551,8 +559,8 @@
   /* Before the name rather than after it, where the saving dot is: the two say
      different kinds of thing and should not be read as one pair. */
   .mark {
-    width: 11px;
-    height: 11px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     flex: none;
     fill: none;
     stroke: currentColor;

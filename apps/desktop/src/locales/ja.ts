@@ -89,6 +89,8 @@ export const ja: Dictionary = {
   'Extract selection': '選択範囲を抽出',
 
   // Panels and navigation
+  Bookmarks: 'ブックマーク',
+  Panels: 'パネル',
   Outline: 'アウトライン',
   Fold: '折りたたむ',
   Unfold: '展開する',

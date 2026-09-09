@@ -138,7 +138,9 @@ describe('the mark a note chose for itself', () => {
     const style = source.slice(source.indexOf('<style>'))
     const emoji = style.slice(style.indexOf('.emoji {'))
 
-    expect(emoji).toContain('font-size: 13px')
-    expect(style).toContain('font-size: var(--touch-mark)')
+    // One box for both, and one size in it: `--icon-md` is 16px under a pointer
+    // and `--touch-mark` under a thumb, which the tokens restate.
+    expect(emoji).toContain('font-size: var(--icon-md)')
+    expect(style).toContain('width: var(--icon-md)')
   })
 })

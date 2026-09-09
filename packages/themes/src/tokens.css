@@ -9,11 +9,25 @@
 
   --text-xs: 11px;
   --text-sm: 12.5px;
+  /* The name in a row: a file in the tree, a line in a menu, a tab, a command
+     in the palette. Its own size because a list of names is what the chrome
+     mostly is, and 12.5 was the size of a caption being asked to be the body.
+     See docs/design.md. */
+  --text-row: 13.5px;
   --text-base: 15px;
+  /* What a bar across the top of a column is titled with: the space's name over
+     the list, the note's name over the page. One step above the rows under it,
+     on either kind of screen. */
+  --text-head: var(--text-base);
   /* The editor's own zoom, so chrome stays put while the text scales. */
   --zoom: 1;
   --text-content: calc(16.5px * var(--zoom));
   --leading-content: 1.72;
+
+  /* Two emphasis levels in the chrome and no more: a row at rest, and a row
+     that is a header or the thing you are on. */
+  --weight-row: 450;
+  --weight-strong: 600;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -23,9 +37,35 @@
   --space-6: 32px;
   --space-7: 48px;
 
+  /* Three corners, and a rule that says which: `--radius-row` for anything
+     inside a panel, `--radius-md` for anything floating over the app, and
+     `--radius-lg` for a surface that replaces part of the screen. The elevation
+     model runs on the same three; see docs/design.md. */
   --radius-sm: 5px;
   --radius-md: 9px;
   --radius-lg: 14px;
+  /* The corner a row is drawn with. Its own token because it grows with the
+     row: a 56px row a thumb lands on wants more of a corner than a 28px one. */
+  --radius-row: 6px;
+
+  /* Icons, one size per context, so how big a glyph is says what kind of thing
+     it is. A mark inside a row that is not the row's own; the mark in front of a
+     name, which is the one a file list is read by; a glyph that is a button; and
+     the drawing inside a space's badge. */
+  --icon-sm: 13px;
+  --icon-md: 16px;
+  --icon-lg: 18px;
+  --icon-rail: 18px;
+
+  /* A row, everywhere there is a list of names. The tall one is for a row that
+     is tapped, the short one for a row that is read - an outline, a line of a
+     search result. The rest is what a row is made of: its own side padding, the
+     gap between a mark and the words, and one level of a tree. */
+  --row-height: 28px;
+  --row-height-sm: 24px;
+  --row-pad: var(--space-2);
+  --row-gap: var(--space-2);
+  --row-indent: 14px;
   /* The corner a selected block is drawn with. Its own token because it is read
      back as a number and traced into the outline rather than declared on a box;
      see selection/shape.ts in @nib/editor. A plain length, no calc. */
@@ -52,8 +92,16 @@
   --scrollbar-thumb: 6px;
 
   --rail-width: 46px;
-  --sidebar-width: 244px;
+  /* A space's badge, and every button in the rail's foot: one square, so the
+     column reads as one column. Its corner is a third of its side, so it is the
+     same shape at either size. */
+  --rail-badge: 30px;
+  --sidebar-width: 252px;
   --titlebar-height: 38px;
+  /* The bar across the top of a column: the title bar over the note, and the
+     list panel's own header beside it. One number, so the two columns read as
+     one row rather than as two bars at two heights. */
+  --header-height: var(--titlebar-height);
   --measure: 42rem;
 
   /* A tab is drawn as wide as its name, up to this much of it, and never
@@ -84,7 +132,10 @@
      a mark beside a row's words is drawn in, which a folder's twist, a file's
      mark and a tick all share so every name starts at the same place. */
   --touch-icon: 24px;
-  --touch-mark: 15px;
+  /* The mark in front of a name. Within three pixels of the words beside it,
+     which is the proportion a file list is read at: a 15px mark in a 56px row
+     of 17px words was a pointer's mark in a thumb's row. */
+  --touch-mark: 20px;
   /* Between a mark and the words, and the row's own side padding. */
   --touch-gap: 12px;
   --touch-pad: 14px;
@@ -120,6 +171,31 @@
   --dur-stage: 170ms;
   --dur-slow: 340ms;
   --dur-slower: 520ms;
+}
+
+/* The whole of what a finger changes, in one place.
+   The row scale, the type in it and the marks beside it are restated from the
+   touch scale here rather than in a `[data-touch]` rule per component, which is
+   how one drawer ended up one size, the menus another and the palette a third.
+   A component reads `--row-height` and gets 28 on a desktop and 56 under a
+   thumb, and never has to know which kind of screen it is on. */
+[data-touch] {
+  --row-height: var(--touch-row);
+  --row-height-sm: var(--touch-target);
+  --row-pad: var(--touch-pad);
+  --row-gap: var(--touch-gap);
+  --row-indent: var(--touch-indent);
+  --radius-row: 10px;
+  --header-height: var(--touch-row);
+  --icon-md: var(--touch-mark);
+  --icon-lg: var(--touch-icon);
+  --icon-rail: var(--touch-icon);
+  --text-row: var(--touch-text);
+  --text-head: 19px;
+  /* A thumb's badge. The floor rather than the row: a square that is only ever
+     pressed needs `--touch-target`, and a column of 56px squares is a column
+     nothing else fits beside. */
+  --rail-badge: var(--touch-target);
 }
 
 :root,
@@ -217,7 +293,10 @@
   --control-text-color: var(--muted-strong);
   --item-hover-bg-color: var(--surface-2);
   --item-hover-text-color: var(--text-strong);
-  --active-file-bg-color: var(--accent-soft);
+  /* The filled row. Stronger than `--accent-soft`, because this is the one
+     thing on the panel that has to be findable without reading: which note is
+     open. A theme that restates this token keeps its own answer. */
+  --active-file-bg-color: color-mix(in srgb, var(--accent) 16%, transparent);
   --active-file-text-color: var(--text-strong);
   --active-file-border-color: var(--accent);
   --window-border: var(--line);
@@ -225,8 +304,20 @@
   --search-select-bg-color: var(--accent);
   --search-select-text-color: #ffffff;
   --code-block-bg-color: var(--surface);
-  --table-border-color: var(--line-strong);
+  /* A hairline. A table is read for what is in it; the grid is there to keep
+     the columns apart, not to be the darkest thing on the page. */
+  --table-border-color: var(--line);
   --blockquote-border-color: var(--line-strong);
+
+  /* What a row wears, one token per state, each defined from a token a theme
+     already restates - so a theme that moves its hover colour moves every list
+     in the app with it. Hover says the pointer is here; press says the click
+     landed; selected is the note you have open; picked is what Ctrl and Shift
+     chose. */
+  --surface-hover: var(--item-hover-bg-color);
+  --surface-press: var(--press);
+  --surface-selected: var(--active-file-bg-color);
+  --surface-picked: var(--surface-3);
 
   /* Callout looks, so a theme can restate them like any other colour. Fifteen,
      which is the thirteen Obsidian has plus the two nib had first; the other

@@ -52,14 +52,14 @@
      the corner it sits in. */
   @media (hover: hover) {
     .toggle:hover {
-      background: var(--surface-2);
+      background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
 
   /* Answered under the finger, not when the sidebar has finished moving. */
   .toggle:active {
-    background: var(--press);
+    background: var(--surface-press);
     color: var(--text-strong);
   }
 
@@ -68,8 +68,8 @@
   }
 
   .toggle svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.2;
@@ -98,10 +98,5 @@
   :global([data-touch]) .toggle {
     width: var(--touch-row);
     height: var(--touch-row);
-  }
-
-  :global([data-touch]) .toggle svg {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
   }
 </style>

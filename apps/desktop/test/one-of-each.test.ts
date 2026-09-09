@@ -82,6 +82,67 @@ test('the scan finds the components', () => {
   expect(components.length).toBeGreaterThan(30)
 })
 
+/** The row every list in the app is made of. Six components had a copy of it -
+ *  the tree, the bookmarks, the outline, the tags, a search hit, a backlink -
+ *  with three hover colours and four heights between them, and then each of the
+ *  six said it again under `[data-touch]`. See docs/design.md. */
+describe('the row a list is made of', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-row')
+    // The class itself, not the parts named after it: a component may say how
+    // wide its own label is in the row it sits in.
+    expect(draw(/\.nib-row(?![\w-])/)).toEqual([])
+  })
+
+  test('and no list paints a hover or a press of its own', () => {
+    const own = components
+      .filter((one) =>
+        rules(one.style).some(
+          // The state has to be the row's own: `.row .primary:hover` is a
+          // button inside a row and draws itself, which is its business.
+          (rule) =>
+            /\.(row|hit|item|entry)\b[^\s>+~,]*:(hover|active)/.test(rule.selector) &&
+            /(^|;|\s)background(-color)?\s*:/.test(rule.declarations),
+        ),
+      )
+      .map((one) => one.name)
+      .sort()
+
+    // The settings sheet is a sheet of cards rather than a list of names: its
+    // rows are settings, and what they light is the card they sit in.
+    expect(own).toEqual(['lib/SettingsPanel.svelte'])
+  })
+
+  test('and the row every list wears is the one in the themes package', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    for (const state of ['.nib-row.is-on', '.nib-row.is-picked', '.nib-row:active']) {
+      expect(shared, `${state} is not stated`).toContain(state)
+    }
+  })
+
+  test('and the lists wear the class rather than a row of their own', () => {
+    const lists = [
+      'lib/AppMenu.svelte',
+      'lib/Bookmarks.svelte',
+      'lib/ContextMenu.svelte',
+      'lib/Links.svelte',
+      'lib/Palette.svelte',
+      'lib/SearchPanel.svelte',
+      'lib/Sidebar.svelte',
+      'lib/TagTree.svelte',
+      'lib/Tree.svelte',
+    ]
+
+    const missing = lists.filter(
+      (name) => !components.find((one) => one.name === name)?.text.includes('nib-row'),
+    )
+
+    expect(missing, `these draw a list without the row: ${missing.join(', ')}`).toEqual([])
+  })
+})
+
 describe('the segmented control', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')

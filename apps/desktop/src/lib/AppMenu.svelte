@@ -239,7 +239,8 @@
       {#each groups as group (group.id)}
         <li>
           <button
-            class:on={group.id === current}
+            class="nib-row"
+            class:is-on={group.id === current}
             onmouseenter={() => choose(group.id)}
             onclick={() => choose(group.id)}
           >
@@ -257,7 +258,7 @@
         <li>
           <button
             id="nib-menu-{BACK}"
-            class="row back"
+            class="nib-row row back"
             class:selected={cursor === BACK}
             role="menuitem"
             onmouseenter={() => (at = walkable.indexOf(BACK))}
@@ -266,7 +267,7 @@
             <span class="tick" aria-hidden="true">
               <svg viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
             </span>
-            <span class="label">{into}</span>
+            <span class="nib-row-label">{into}</span>
           </button>
         </li>
         <li class="split"></li>
@@ -282,7 +283,7 @@
           <li>
             <button
               id="nib-menu-{index}"
-              class="row"
+              class="nib-row row"
               class:selected={cursor === index}
               role="menuitem"
               disabled={leads.disabled}
@@ -290,7 +291,7 @@
               onclick={() => enter(leads.label)}
             >
               <span class="tick"></span>
-              <span class="label">{leads.label}</span>
+              <span class="nib-row-label">{leads.label}</span>
               <span class="more" aria-hidden="true">
                 <svg viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
               </span>
@@ -300,7 +301,7 @@
           <li>
             <button
               id="nib-menu-{index}"
-              class="row"
+              class="nib-row row"
               class:selected={cursor === index}
               role="menuitem"
               disabled={action.disabled}
@@ -313,8 +314,8 @@
               <!-- Present only when it means something; the width is held by
                    CSS so the labels still line up. -->
               <span class="tick">{action.checked ? '✓' : ''}</span>
-              <span class="label">{action.label}</span>
-              {#if action.hint}<span class="hint">{action.hint}</span>{/if}
+              <span class="nib-row-label">{action.label}</span>
+              {#if action.hint}<span class="nib-row-meta hint">{action.hint}</span>{/if}
             </button>
           </li>
         {:else}
@@ -407,28 +408,16 @@
     min-width: 15rem;
   }
 
+  /* The rows are `.nib-row`, the same row every list in the app is made of.
+     What is left here is what a menu row has that a list row does not. */
   button {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 7px 10px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
     color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: default;
   }
 
   /* The row a key is standing on wears exactly what a row under the pointer
      wears: one menu, one place in it, whichever hand is doing the moving. */
-  button:hover:not(:disabled),
-  .row.selected,
-  .groups button.on {
-    background: var(--surface-2);
+  .row.selected {
+    background: var(--surface-hover);
     color: var(--text-strong);
   }
 
@@ -436,11 +425,6 @@
      draw round the menu says nothing about where the cursor is. */
   .menu:focus-visible {
     outline: none;
-  }
-
-  .groups button:active:not(:disabled) {
-    background: var(--press);
-    color: var(--text-strong);
   }
 
   button:disabled {
@@ -465,8 +449,8 @@
 
   .more svg,
   .back .tick svg {
-    width: 11px;
-    height: 11px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
@@ -474,18 +458,11 @@
     stroke-linejoin: round;
   }
 
-  .back .label {
+  .back .nib-row-label {
     color: var(--muted-strong);
   }
 
-  .label {
-    flex: 1;
-  }
-
   .hint {
-    flex: none;
-    color: var(--muted);
-    font-size: var(--text-xs);
     font-family: var(--font-mono);
   }
 
@@ -564,8 +541,8 @@
     font-weight: 500;
   }
 
-  :global([data-touch]) .phone .groups button.on {
-    background: var(--accent-soft);
+  :global([data-touch]) .phone .groups button.is-on {
+    background: var(--surface-selected);
     color: var(--accent);
   }
 
@@ -575,24 +552,6 @@
     min-height: 0;
     padding: 6px var(--space-2) var(--space-2);
     overflow-y: auto;
-  }
-
-  :global([data-touch]) .phone .row {
-    min-height: var(--touch-row);
-    gap: var(--touch-gap);
-    padding: 0 var(--touch-pad);
-    border-radius: var(--radius-md);
-    font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .phone .row:active:not(:disabled) {
-    background: var(--surface-2);
-  }
-
-  /* Hover has no meaning under a finger; the lit row would just stick. */
-  :global([data-touch]) .phone .row:hover:not(:disabled) {
-    background: none;
-    color: var(--text);
   }
 
   /* The tick at the trailing edge, where a phone puts what is on, and no

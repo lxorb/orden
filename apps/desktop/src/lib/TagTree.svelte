@@ -52,15 +52,15 @@
         {/if}
 
         <button
-          class="row"
+          class="nib-row row"
           class:nested={!node.children.length}
           style:--level={depth}
           onclick={() => search.ask(`tag:${node.path}`)}
           oncontextmenu={(event) => menu.show(event, menuFor(node), { title: node.name })}
           use:longPress={(event) => menu.show(event, menuFor(node), { title: node.name })}
         >
-          <span class="label">{node.name}</span>
-          <span class="count">{node.total}</span>
+          <span class="nib-row-label">{node.name}</span>
+          <span class="nib-row-meta">{node.total}</span>
         </button>
       </div>
 
@@ -82,7 +82,9 @@
 
   /* The disclosure and the row are two buttons rather than one, because they do
      two things: opening a node is not searching for it. Side by side they read as
-     the one row the file tree draws. */
+     the one row the file tree draws - which is `.nib-row`, in the themes
+     package; what is left here is the twist in front of it and the step per
+     level of the tag path. */
   .line {
     display: flex;
     align-items: center;
@@ -90,11 +92,12 @@
 
   .twist {
     flex: none;
+    min-height: var(--row-height);
     display: flex;
     align-items: center;
-    padding: 4px 0 4px 6px;
+    padding: 0 0 0 var(--space-1);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: none;
     color: var(--muted);
     cursor: default;
@@ -106,8 +109,8 @@
   }
 
   .chevron {
-    width: 8px;
-    height: 8px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     flex: none;
     fill: none;
     stroke: currentColor;
@@ -120,98 +123,17 @@
     transform: rotate(90deg);
   }
 
+  /* One step per level of the tag path, and a lead in front of the label: the
+     width of the twist for a tag that has one, and the same width held empty for
+     a tag that does not, so every name starts at the same place. */
   .row {
+    --lead: 2px;
     flex: 1;
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .row:hover {
-    background: var(--item-hover-bg-color);
-    color: var(--item-hover-text-color);
-  }
-
-  .row:active {
-    background: var(--press);
-    color: var(--text-strong);
-  }
-
-  .row:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
-  .label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* How many notes the row's own search would find. Pushed to the far end, where
-     the file tree puts nothing, so the names still read as a column. */
-  .count {
-    margin-left: auto;
-    padding-left: var(--space-1);
-    color: var(--muted);
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* One step per level of the tag path, and a lead in front of the label: the
-     width of the twist for a tag that has one, and the same width held empty
-     for a tag that does not, so every name starts at the same place. Both come
-     off properties, so a phone can take a deeper step; see Tree.svelte. */
-  .row {
-    --indent: 12px;
-    --lead: 2px;
-    padding-left: calc(var(--level, 0) * var(--indent) + var(--lead));
+    padding-left: calc(var(--level, 0) * var(--row-indent) + var(--lead));
   }
 
   .row.nested {
-    --lead: 20px;
-  }
-
-  :global([data-touch]) .row,
-  :global([data-touch]) .twist {
-    min-height: var(--touch-row);
-  }
-
-  :global([data-touch]) .row {
-    --indent: var(--touch-indent);
-    --lead: var(--space-1);
-    gap: var(--touch-gap);
-    font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .row.nested {
-    --lead: calc(var(--touch-mark) + var(--space-3));
-  }
-
-  :global([data-touch]) .twist {
-    padding-left: var(--space-2);
-  }
-
-  :global([data-touch]) .chevron {
-    width: var(--touch-mark);
-    height: var(--touch-mark);
-    stroke-width: 1.1;
-  }
-
-  :global([data-touch]) .count {
-    font-size: var(--text-base);
+    --lead: calc(var(--icon-md) + var(--space-1));
   }
 </style>

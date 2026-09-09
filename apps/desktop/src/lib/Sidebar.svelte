@@ -4,7 +4,8 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { movesInto } from './move-targets'
-  import { newSpace } from './space-actions'
+  import { FILES_MARK, GRAPH_MARK, LINKS_MARK, OUTLINE_MARK, SEARCH_MARK } from './panel-marks'
+  import { newSpace, renameSpace } from './space-actions'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry, revealEntry } from './menu.svelte'
   import type { Panel, SortKey } from './workspace.svelte'
@@ -56,26 +57,11 @@
   }
 
   const PANELS: { id: Panel; label: string; path: string }[] = [
-    // A folder with its corners taken off and its tab eased into the body, so it
-    // sits with the arcs of the three tabs beside it rather than as the one hard
-    // shape in the row. Same bounds as the square one it replaces.
-    {
-      id: 'tree',
-      label: t('Files'),
-      path: 'M2.2 3.5h2.3c.5 0 .7.4 1 .9s.5.6 1 .6h4.3a1.2 1.2 0 0 1 1.2 1.2v4.1a1.2 1.2 0 0 1-1.2 1.2H2.2A1.2 1.2 0 0 1 1 10.3V4.7a1.2 1.2 0 0 1 1.2-1.2z',
-    },
-    { id: 'outline', label: t('Outline'), path: 'M2 2.5h9M4 6.5h7M6 10.5h5' },
-    { id: 'search', label: t('Search'), path: 'M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3' },
-    // Two links of a chain, which is what a link between notes is.
-    {
-      id: 'links',
-      label: t('Links'),
-      path: 'M5.6 7.4 7.4 5.6M6.9 4.3l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7l-1.2 1.2M8.4 9.9l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7l1.2-1.2',
-    },
+    { id: 'tree', label: t('Files'), path: FILES_MARK },
+    { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
+    { id: 'search', label: t('Search'), path: SEARCH_MARK },
+    { id: 'links', label: t('Links'), path: LINKS_MARK },
   ]
-
-  const GRAPH_ICON =
-    'M1.4 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M8 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M4.7 9.9a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M5 3.4h3M5.7 8.3 4 5M7.3 8.3 9 5'
 
   /** Whether the Links panel is showing the picture, and how far out it reaches.
    *  Held here because the switch for it is in the row of panel tabs above. */
@@ -121,6 +107,31 @@
       DIVIDER,
       // Nothing to reveal when no space is open, and `revealEntry` says so.
       ...revealEntry(workspace.activeSpace?.root),
+    ]
+  }
+
+  /** The header's own menu: which space this is, and what a space is.
+   *
+   *  A rail of wordless squares says which space is open only to somebody who
+   *  already knows the squares, and on a phone the rail is behind the drawer's
+   *  own list. So the name is a control: the other spaces are rows in it, this
+   *  one is a row that is already where you are, and making a space is here
+   *  rather than a second plus in the rail. */
+  function switcherMenu(): MenuEntry[] {
+    const here = workspace.activeSpace
+    const others: MenuEntry[] = workspace.spaces.map((space) => ({
+      label: space.name,
+      disabled: space.id === here?.id,
+      run: () => workspace.showSpace(space.id),
+    }))
+
+    return [
+      ...others,
+      DIVIDER,
+      { label: t('New space'), run: () => void newSpace() },
+      ...(here ? [{ label: t('Rename'), run: () => void renameSpace(here) }] : []),
+      DIVIDER,
+      ...spaceMenu(),
     ]
   }
 
@@ -225,20 +236,52 @@
     ondblclick={() => size.reset()}
   ></div>
 
-  <div class="switch">
-    {#each PANELS as item (item.id)}
+  <!-- Which space this is. A panel with no subject is a list of names belonging
+       to nobody, so the name comes first and is itself the switcher: the rail
+       does the same job on a desktop, and on a phone the rail is behind this. -->
+  <div class="head">
+    <button
+      class="name"
+      title={workspace.activeSpace?.name ?? t('Spaces')}
+      aria-haspopup="menu"
+      onclick={(event) => menu.show(event, switcherMenu(), titleOfSpace())}
+    >
+      <span class="nib-row-label">{workspace.activeSpace?.name ?? t('Spaces')}</span>
+      <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
+    </button>
+
+    <!-- The one plus. A desktop's lives at the end of the tab strip, where a
+         browser puts it; a handheld has no tab strip, so it is here. Either way
+         it makes a note, and there is never a second one on the screen. -->
+    {#if viewport.touch}
       <button
-        class:active={workspace.panel === item.id}
-        title={item.label}
-        aria-label={item.label}
-        aria-current={workspace.panel === item.id}
-        onclick={() => workspace.showPanel(item.id)}
-        oncontextmenu={(event) =>
-          item.id === 'tree' && menu.show(event, sortMenu(), { title: item.label })}
+        class="new"
+        title={t('New note')}
+        aria-label={t('New note')}
+        onclick={() => void workspace.createNote()}
       >
-        <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
+        <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
       </button>
-    {/each}
+    {/if}
+  </div>
+
+  <div class="switch">
+    <div class="nib-segmented" role="tablist" aria-label={t('Panels')}>
+      {#each PANELS as item (item.id)}
+        <button
+          class:on={workspace.panel === item.id}
+          role="tab"
+          title={item.label}
+          aria-label={item.label}
+          aria-selected={workspace.panel === item.id}
+          onclick={() => workspace.showPanel(item.id)}
+          oncontextmenu={(event) =>
+            item.id === 'tree' && menu.show(event, sortMenu(), { title: item.label })}
+        >
+          <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
+        </button>
+      {/each}
+    </div>
 
     <!-- The one choice a panel has goes at the other end of the row its tabs are
          in: the Links panel says the same thing as a list or as a picture. -->
@@ -257,17 +300,31 @@
           </button>
         {/if}
         <button
+          class="tool"
           class:active={graphing}
           title={t('Graph')}
           aria-label={t('Graph')}
           aria-pressed={graphing}
           onclick={() => (graphing = !graphing)}
         >
-          <svg viewBox="0 0 13 13"><path d={GRAPH_ICON} /></svg>
+          <svg viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
         </button>
       </div>
     {/if}
   </div>
+
+  <!-- The one thing you can do from anywhere in the app. Outside the Search
+       panel it is the door to it; inside, the panel's own field stands in the
+       same place, at the same height and in the same box - one control that
+       becomes editable rather than two that look alike. -->
+  {#if workspace.panel !== 'search'}
+    <div class="hunt">
+      <button class="nib-field" onclick={() => workspace.showPanel('search')}>
+        <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+        <span class="nib-row-label">{t('Search this space')}</span>
+      </button>
+    </div>
+  {/if}
 
   <!-- Rebuilt for each space, and arriving from the side of the rail the new
        space is on. -->
@@ -280,6 +337,10 @@
       {#if workspace.panel === 'tree'}
         {#if workspace.tree}
           <Bookmarks onsearch={runBookmarked} />
+
+          <!-- A word in capitals over each group, the way every list worth
+               reading is cut up; see docs/design.md. -->
+          <p class="nib-section">{t('Files')}</p>
 
           <Tree entries={workspace.tree.children} />
 
@@ -311,8 +372,8 @@
             {#each workspace.headings as heading, index (index)}
               <li>
                 <button
-                  class="row heading"
-                  class:active={index === current}
+                  class="nib-row is-short row heading"
+                  class:is-on={index === current}
                   style:--level={heading.level - shallowest}
                   onclick={() => ongoto?.(heading.line)}
                   oncontextmenu={(event) =>
@@ -324,7 +385,7 @@
                       { title: heading.text },
                     )}
                 >
-                  <span class="label">{heading.text}</span>
+                  <span class="nib-row-label">{heading.text}</span>
                 </button>
               </li>
             {/each}
@@ -381,34 +442,67 @@
     background: var(--accent);
   }
 
-  .switch {
+  /* The three rows of chrome above the list, in the order identity, action,
+     view. Each is `--space-1` in from the panel's edge and everything inside
+     them is `--row-pad` in from that, so the words in the header, the words in
+     the search pill and the marks in the rows below all start on one line down
+     the panel; see docs/design.md. */
+  .head {
+    flex: none;
     display: flex;
-    gap: 2px;
-    padding: var(--space-2) var(--space-2) var(--space-1);
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--header-height);
+    padding: 0 var(--space-1);
   }
 
-  /* At the far end of the row, so the tabs keep their place whether or not the
-     panel showing has anything to offer. */
-  .tools {
+  /* The space's name, and the whole of what the switcher is. */
+  .name {
+    flex: 1;
+    min-width: 0;
     display: flex;
-    gap: 2px;
-    margin-left: auto;
-  }
-
-  /* A digit, where the others have a mark. */
-  .depth {
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--row-height);
+    padding: 0 calc(var(--row-pad) - var(--space-1));
+    border: none;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--text-strong);
     font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
+    font-size: var(--text-head);
+    font-weight: var(--weight-strong);
+    text-align: left;
+    cursor: default;
+    transition: background var(--dur-fast) var(--ease-out);
   }
 
-  .switch button {
-    width: 26px;
-    height: 24px;
+  @media (hover: hover) {
+    .name:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .name:active {
+    background: var(--surface-press);
+  }
+
+  /* Says the name can be pressed. */
+  .chevron {
+    flex: none;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    color: var(--muted);
+  }
+
+  .new {
+    flex: none;
+    width: var(--row-height);
+    height: var(--row-height);
     display: grid;
     place-items: center;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: none;
     color: var(--muted);
     cursor: default;
@@ -417,31 +511,87 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  .switch button:hover {
-    background: var(--surface-2);
-    color: var(--text);
+  @media (hover: hover) {
+    .new:hover {
+      background: var(--surface-hover);
+      color: var(--text-strong);
+    }
   }
 
-  .switch button:active {
-    background: var(--press);
+  .new:active {
+    background: var(--surface-press);
     color: var(--text-strong);
   }
 
-  .switch button.active {
-    background: var(--surface-3);
+  .hunt {
+    flex: none;
+    padding: 0 var(--space-1) var(--space-2);
+  }
+
+  /* The pill's words are the placeholder they stand in for; the magnifier is
+     what says what it is. */
+  .hunt .nib-row-label {
+    color: var(--muted);
+  }
+
+  .switch {
+    display: flex;
+    gap: var(--space-1);
+    padding: 0 var(--space-1) var(--space-2);
+  }
+
+  /* The tabs are the segmented control the settings sheet already uses: one
+     shape, so "this one" looks the same wherever the app says it. */
+  .switch .nib-segmented {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* At the far end of the row, so the tabs keep their place whether or not the
+     panel showing has anything to offer. */
+  .tools {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .tools button {
+    width: var(--row-height);
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--radius-row);
+    background: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .tools button:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+  }
+
+  .tools button:active {
+    background: var(--surface-press);
+    color: var(--text-strong);
+  }
+
+  .tools button.active {
+    background: var(--surface-selected);
     color: var(--accent);
   }
 
-  .switch button:focus-visible {
+  button:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -1px;
-  }
-
-  /* Larger than the rest of the sidebar's glyphs: these are the tabs, and a
-     13px mark in a 26px button read as padding around not much. */
-  .switch button svg {
-    width: 16px;
-    height: 16px;
   }
 
   /* A column so the filler below the tree can take the leftover height. */
@@ -454,7 +604,7 @@
     /* A list that runs out of rows stops there, rather than handing the
        scroll on to whatever is behind the drawer. */
     overscroll-behavior: contain;
-    padding: var(--space-1) var(--space-2) var(--space-4);
+    padding: 0 var(--space-1) var(--space-4);
   }
 
   ul {
@@ -463,80 +613,26 @@
     padding: 0;
   }
 
-  .row {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: 4px 8px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
-  }
-
-  /* The words are what get cut short, not the row: a flex row leaves the
-     ellipsis to its child, which is also what lets the row centre a single
-     line in whatever height a thumb needs. */
-  .label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Each level steps in and fades a little, and that is the whole hierarchy.
-     Both hang off `--level` rather than being written inline, so a phone can
-     take a bigger step without a second set of numbers in the markup. */
+  /* The row is `.nib-row`, drawn once in the themes package. Each level of the
+     outline steps in and fades a little, and that is the whole hierarchy; both
+     hang off `--level`, so a phone takes a deeper step without a second set of
+     numbers in the markup. The tree is indented the same way. */
   .heading {
-    --indent: 11px;
-    padding-left: calc(8px + var(--level) * var(--indent));
+    padding-left: calc(var(--row-pad) + var(--level) * var(--row-indent));
     opacity: calc(1 - var(--level) * 0.09);
+    transition: transform var(--dur-fast) var(--ease-out);
   }
 
-  .heading.active {
+  .heading.is-on {
     opacity: 1;
-  }
-
-  .row:hover {
-    background: var(--item-hover-bg-color);
-    color: var(--item-hover-text-color);
-  }
-
-  .row:active {
-    background: var(--press);
-    color: var(--text-strong);
   }
 
   /* Only where there is a pointer to hover with: on a touch screen the nudge
      would stick to whatever was tapped last. */
   @media (hover: hover) {
-    .row.heading:hover {
+    .heading:hover {
       transform: translateX(2px);
     }
-  }
-
-  .row.active {
-    color: var(--active-file-text-color);
-    font-weight: 550;
-  }
-
-  /* The heading the caret is under is a place, not a pick, so it may be
-     shown the way a pick is. A bookmarked note that is open is not. */
-  .row.heading.active {
-    background: var(--active-file-bg-color);
-  }
-
-  .row:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
   }
 
   /* Fills whatever is left, so the whole panel responds. */
@@ -546,27 +642,29 @@
   }
 
   .empty-text {
-    margin: var(--space-3) 0 0;
-    font-size: var(--text-sm);
+    margin: var(--space-3) var(--row-pad) 0;
+    font-size: var(--text-row);
     color: var(--muted);
   }
 
   /* Says the drop will land, without pretending to be a row. */
   .rest.dropping {
     box-shadow: inset 0 0 0 1px var(--accent);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: var(--accent-soft);
   }
 
   .empty {
     width: 100%;
+    min-height: var(--row-height);
+    margin-top: var(--space-2);
     padding: var(--space-3);
     border: 1px dashed var(--line-strong);
     border-radius: var(--radius-md);
     background: none;
     color: var(--muted);
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: var(--text-row);
     cursor: default;
     transition:
       border-color var(--dur-base) var(--ease-out),
@@ -584,14 +682,21 @@
     color: var(--accent);
   }
 
+  /* One weight for every drawing in the panel; how big each is comes from what
+     it is: a tab and a button wear `--icon-lg`, a mark beside words wears
+     `--icon-md`, and the chevron after a name is the smallest of the three. */
   svg {
-    width: 13px;
-    height: 13px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.35;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  .switch svg,
+  .new svg {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
   }
 
   /* A drawer is as wide as it needs to be to read a list of names in, and it
@@ -635,27 +740,12 @@
     }
   }
 
-  /* Clear of the status bar, the way the titlebar is on the other side. */
-  :global([data-touch]) .switch {
-    padding-top: calc(var(--space-2) + var(--inset-top));
-  }
-
-  /* A tab is as tall as a row and as wide as a thumb: five of them have to fit
-     across a drawer, so the width is the floor and the height is the scale. */
-  :global([data-touch]) .switch button {
-    width: var(--touch-target);
-    height: var(--touch-row);
-  }
-
-  :global([data-touch]) .switch button svg {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
-  }
-
-  /* The one tab wearing a number rather than a drawing reads at the size the
-     drawings are. */
-  :global([data-touch]) .depth {
-    font-size: var(--touch-text);
+  /* Clear of the status bar, the way the titlebar is on the other side. That is
+     the whole of what a finger changes here: the header, the pill, the tabs and
+     every row read the row scale, and the row scale is restated from the touch
+     scale once, in tokens.css. */
+  :global([data-touch]) .head {
+    padding-top: var(--inset-top);
   }
 
   /* The last row clears the gesture bar. */
@@ -663,36 +753,8 @@
     padding-bottom: var(--touch-bottom);
   }
 
-  /* The same size as the tree rows beneath them: everything here is something a
-     thumb has to land on. The same type as those rows, too, and none of the
-     desktop's vertical padding: the row is already tall, and 12.5px words in
-     it were mostly the row. */
-  :global([data-touch]) .row {
-    min-height: var(--touch-row);
-    gap: var(--touch-gap);
-    padding: 0 var(--touch-pad);
-    font-size: var(--touch-text);
-  }
-
-  /* An outline is read more than it is tapped: a shorter row than the tree's,
-     still a whole line for a thumb, and a deeper step per level so the
-     hierarchy survives the larger type. */
-  :global([data-touch]) .heading {
-    --indent: var(--touch-indent);
-    min-height: var(--touch-target);
-    padding-left: calc(var(--touch-pad) + var(--level) * var(--indent));
-  }
-
   :global([data-touch]) .empty-text,
   :global([data-touch]) .empty {
     font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .empty-text {
-    margin: var(--space-3) var(--space-2) 0;
-  }
-
-  :global([data-touch]) .empty {
-    min-height: var(--touch-row);
   }
 </style>

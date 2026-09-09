@@ -61,17 +61,20 @@
 
 <style>
   /* Quieter than the name beside it: the mark is there to be glanced at, not
-     read. */
+     read. As big as the words, though - `--icon-md` is 16px against a 13.5px
+     name and 20px against a 17px one, which is the proportion a file list is
+     read at. A phone and a desktop take the same rule; the token is what
+     differs, and it differs once, in the themes package. */
   .mark {
-    width: 13px;
-    height: 13px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     flex: none;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.85;
+    stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.75;
+    opacity: 0.8;
   }
 
   /* The same box, filled by a glyph instead of a stroke. Full strength, because
@@ -80,21 +83,8 @@
   .emoji {
     display: grid;
     place-items: center;
-    font-size: 13px;
+    font-size: var(--icon-md);
     line-height: 1;
     opacity: 1;
-  }
-
-  /* A finger's list draws the same icon larger, at the size every other mark in
-     the app is drawn on a touch screen, and with the stroke brought back down by
-     as much as the box went up. */
-  :global([data-touch]) .mark {
-    width: var(--touch-mark);
-    height: var(--touch-mark);
-    stroke-width: 1.6;
-  }
-
-  :global([data-touch]) .emoji {
-    font-size: var(--touch-mark);
   }
 </style>

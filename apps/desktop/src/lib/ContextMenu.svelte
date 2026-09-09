@@ -162,12 +162,13 @@
           <hr />
         {:else}
           <button
+            class="nib-row"
             role="menuitem"
             class:danger={item.danger}
             disabled={item.disabled}
             onclick={() => choose(item)}
           >
-            <span>{item.label}</span>
+            <span class="nib-row-label">{item.label}</span>
             <!-- A shortcut means nothing to a thumb. -->
             {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
           </button>
@@ -195,35 +196,13 @@
     --inset-left: var(--inset-left);
   }
 
+  /* The rows are `.nib-row`, the same row every list in the app is made of; a
+     line of a menu is read at the same size and lit the same way as a file in
+     the tree it was asked for from. What is left here is what a menu row has
+     that a list row does not. */
   button {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding: 6px 9px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
     color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
     white-space: nowrap;
-    cursor: default;
-    transition:
-      background var(--dur-instant) var(--ease-out),
-      color var(--dur-instant) var(--ease-out);
-  }
-
-  button:hover:not(:disabled) {
-    background: var(--accent-soft);
-    color: var(--text-strong);
-  }
-
-  button:active:not(:disabled) {
-    background: color-mix(in srgb, var(--accent) 26%, transparent);
-    color: var(--text-strong);
   }
 
   button.danger:hover:not(:disabled) {
@@ -236,6 +215,8 @@
   }
 
   kbd {
+    flex: none;
+    margin-left: var(--space-3);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
@@ -266,26 +247,8 @@
     z-index: 61;
   }
 
-  /* A whole line for a thumb, and the danger in its colour all the time,
-     since there is no hover to bring it out. */
-  .touch button {
-    min-height: var(--touch-row);
-    padding: 0 var(--touch-pad);
-    gap: var(--touch-gap);
-    border-radius: var(--radius-md);
-    font-size: var(--touch-text);
-  }
-
-  .touch button:hover:not(:disabled) {
-    background: none;
-    color: var(--text);
-  }
-
-  .touch button:active:not(:disabled) {
-    background: var(--surface-2);
-    color: var(--text-strong);
-  }
-
+  /* The row scale gives a thumb the whole line; what a sheet adds is the danger
+     in its colour all the time, since there is no hover to bring it out. */
   .touch button.danger:not(:disabled) {
     color: var(--danger);
   }

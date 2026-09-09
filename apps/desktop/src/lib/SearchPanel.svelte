@@ -10,6 +10,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { shownName } from './note-name'
+  import { SEARCH_MARK } from './panel-marks'
   import { search } from './search.svelte'
   import { chosen, completing, nearest, offered } from './search/suggest'
   import type { Hit, Range } from './search/match'
@@ -199,10 +200,14 @@
 <div class="find">
   <div class="row">
     <div class="box">
+      <!-- The same magnifier the pill it replaces wears, in the same place: one
+           control that has become editable. -->
+      <svg class="nib-field-mark mag" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+
       <!-- svelte-ignore a11y_autofocus -->
       <input
         bind:this={field}
-        class="query"
+        class="nib-field query"
         class:wide={search.asks}
         value={search.text}
         oninput={typing}
@@ -262,7 +267,7 @@
   {#if search.replacing}
     <div class="row" transition:fly={{ y: -6, duration: dur(130), easing: cubicOut }}>
       <input
-        class="query"
+        class="nib-field query"
         value={search.replacement}
         oninput={(event) => (search.replacement = event.currentTarget.value)}
         onkeydown={(event) => {
@@ -284,7 +289,7 @@
   <ul>
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
-        <div class="note">
+        <div class="nib-section note">
           <!-- One character for "near enough", where a word would be prose. The
                place in the list already says it: the guesses are under the
                answers. -->
@@ -308,7 +313,7 @@
               </button>
             {/if}
 
-            <button class="hit" onclick={() => void openHit(hit)}>
+            <button class="nib-row is-short hit" onclick={() => void openHit(hit)}>
               {#each pieces(hit.text, hit.ranges) as piece, at (at)}
                 {#if piece.mark}<mark>{piece.text}</mark>{:else}{piece.text}{/if}
               {/each}
@@ -328,6 +333,10 @@
 {/if}
 
 <style>
+  /* Where the pill stood, at the same inset, so the panel does not shuffle as
+     the field takes its place. */
+  /* Where the pill it replaces stood, so nothing shuffles as the field takes
+     its place. */
   .find {
     display: flex;
     flex-direction: column;
@@ -348,19 +357,13 @@
     min-width: 0;
   }
 
+  /* The box is `.nib-field`, drawn in the themes package, which is also what
+     the pill at the top of the panel wears: the same control, now editable.
+     What is left here is the room the mark in front and the marks behind it
+     take out of it. */
   .query {
-    width: 100%;
-    padding: 6px 9px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    outline: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      padding-right var(--dur-fast) var(--ease-out);
+    padding-left: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
+    transition: padding-right var(--dur-fast) var(--ease-out);
   }
 
   /* Room for the count and the star, taken only once there is a search to
@@ -369,8 +372,14 @@
     padding-right: 56px;
   }
 
-  .query:focus {
-    border-color: var(--accent);
+  /* Over the field's own left padding, so the words start where the pill's
+     words did. */
+  .mag {
+    position: absolute;
+    left: var(--row-pad);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .found {
@@ -391,12 +400,12 @@
     top: 50%;
     right: 5px;
     transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
+    width: calc(var(--row-height) - 6px);
+    height: calc(var(--row-height) - 6px);
     display: grid;
     place-items: center;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: none;
     color: var(--muted);
     cursor: default;
@@ -407,7 +416,7 @@
   }
 
   .star:hover {
-    background: var(--surface-2);
+    background: var(--surface-hover);
     color: var(--text);
   }
 
@@ -432,11 +441,11 @@
   /* Beside the field, because it is about the field rather than in it. */
   .swap {
     flex: none;
-    width: 28px;
+    width: var(--row-height);
     display: grid;
     place-items: center;
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: none;
     color: var(--muted);
     cursor: default;
@@ -447,12 +456,12 @@
   }
 
   .swap:hover {
-    background: var(--surface-2);
+    background: var(--surface-hover);
     color: var(--text);
   }
 
   .swap:active {
-    background: var(--press);
+    background: var(--surface-press);
   }
 
   .swap.active {
@@ -471,13 +480,14 @@
     display: flex;
     align-items: baseline;
     gap: 5px;
+    min-height: var(--row-height);
     padding: 0 10px;
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: var(--accent);
     color: #fff;
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: var(--text-row);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
@@ -517,11 +527,11 @@
     margin-top: var(--space-2);
   }
 
+  /* A note's name over its lines is the section label the rest of the app uses,
+     in the accent because it is also the thing the rows open. */
   .note {
-    padding: 0 8px 2px;
+    display: block;
     color: var(--accent);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -541,35 +551,16 @@
     gap: var(--space-1);
   }
 
+  /* The row is `.nib-row`; a line of a note is read rather than tapped, so it
+     is the short one, and what it holds is one line that never wraps. */
   .hit {
     flex: 1;
     min-width: 0;
-    padding: 5px 8px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-size: var(--text-sm);
-    text-align: left;
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .hit:hover {
-    background: var(--item-hover-bg-color);
-  }
-
-  .hit:active {
-    background: var(--press);
-    color: var(--text-strong);
-  }
-
-  .hit:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
+    line-height: var(--row-height-sm);
   }
 
   /* The words that answered, marked in the line they were found on. */
@@ -583,8 +574,8 @@
   /* A square that fills when it is on, which is the whole of what it says. */
   .tick {
     flex: none;
-    width: 17px;
-    height: 17px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     display: grid;
     place-items: center;
     margin-left: 4px;
@@ -621,19 +612,19 @@
   }
 
   .tick svg {
-    width: 11px;
-    height: 11px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
   }
 
   .empty-text {
-    margin: var(--space-3) 0 0;
-    font-size: var(--text-sm);
+    margin: var(--space-3) var(--row-pad) 0;
+    font-size: var(--text-row);
     color: var(--muted);
   }
 
   svg {
-    width: 13px;
-    height: 13px;
+    width: var(--icon-md);
+    height: var(--icon-md);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.35;
@@ -641,16 +632,12 @@
     stroke-linejoin: round;
   }
 
-  /* The field a search is typed into, at the size the answers are read at.
-     Anything from 16px up is also past where iOS zooms into a focused field. */
-  :global([data-touch]) .query {
-    min-height: var(--touch-row);
-    padding: 0 var(--touch-pad);
-    font-size: var(--touch-text);
-  }
-
+  /* Everything above reads the row scale, and the row scale is restated from
+     the touch scale in one place; see tokens.css. What is left is the room the
+     count and the star need once a thumb has made them bigger, and the field's
+     own size, which has to clear where iOS zooms into a focused one. */
   :global([data-touch]) .query.wide {
-    padding-right: 60px;
+    padding-right: 68px;
   }
 
   :global([data-touch]) .swap,
@@ -662,33 +649,7 @@
     width: var(--touch-target);
   }
 
-  /* Same size as the tree rows: everything in the drawer is something a thumb
-     has to land on, and a line of a note is there to be read. */
-  :global([data-touch]) .hit {
-    min-height: var(--touch-row);
-    display: flex;
-    align-items: center;
-    padding: 0 var(--touch-pad);
-    font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .note {
-    padding: var(--space-2) var(--touch-pad) 2px;
-    font-size: var(--text-base);
-  }
-
-  :global([data-touch]) .tick {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
-  }
-
-  :global([data-touch]) .tick svg {
-    width: var(--touch-mark);
-    height: var(--touch-mark);
-  }
-
   :global([data-touch]) .empty-text {
-    margin: var(--space-3) var(--space-2) 0;
     font-size: var(--touch-text);
   }
 </style>

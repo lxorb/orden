@@ -336,10 +336,10 @@
         />
       {:else if entry.is_dir}
         <button
-          class="row folder"
+          class="nib-row row folder is-quiet"
           data-path={entry.path}
-          class:dropping={dropTarget.lit(entry.path)}
-          class:selected={workspace.isSelected(entry.path)}
+          class:is-taking={dropTarget.lit(entry.path)}
+          class:is-picked={workspace.isSelected(entry.path)}
           style:--level={depth}
           aria-expanded={workspace.isExpanded(entry.path)}
           draggable="true"
@@ -356,7 +356,7 @@
                file marks sit in: one mark per row, and every name in the list
                starting at the same place. -->
           <FileMark mark={workspace.isExpanded(entry.path) ? 'folder-open' : 'folder'} />
-          <span class="label">{entry.name}</span>
+          <span class="nib-row-label">{entry.name}</span>
         </button>
 
         {#if workspace.isExpanded(entry.path)}
@@ -366,10 +366,10 @@
         {/if}
       {:else}
         <button
-          class="row note"
+          class="nib-row row note"
           data-path={entry.path}
-          class:active={workspace.active?.path === entry.path}
-          class:selected={workspace.isSelected(entry.path)}
+          class:is-on={workspace.active?.path === entry.path}
+          class:is-picked={workspace.isSelected(entry.path)}
           style:--level={depth}
           draggable="true"
           onclick={(event) =>
@@ -388,7 +388,7 @@
           <!-- The row says what it opens into without spending a word on it, or
                wears the icon the note itself chose; the path is how it knows. -->
           <FileMark mark={fileMark(entry.name)} path={entry.path} />
-          <span class="label">{shownName(entry.name)}</span>
+          <span class="nib-row-label">{shownName(entry.name)}</span>
         </button>
       {/if}
     </li>
@@ -402,122 +402,34 @@
     padding: 0;
   }
 
-  .row {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .row:hover {
-    background: var(--item-hover-bg-color);
-    color: var(--item-hover-text-color);
-  }
-
-  /* Opening a note, folding a folder and renaming all wait on a file, so the
-     row itself says the click landed. */
-  .row:active {
-    background: var(--press);
-    color: var(--text-strong);
-  }
-
-  .row:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
-  /* The open note is told apart by weight and colour alone. A background
-     would read as a selection, which it is not: switching tabs picks nothing
-     in the list, the way a click in the list does. */
-  .note.active {
-    color: var(--active-file-text-color);
-    font-weight: 550;
-  }
-
-  .folder {
-    color: var(--muted);
-  }
-
-  /* Picked with Ctrl or Shift. The open note keeps its own look on top. */
-  .row.selected {
-    background: var(--accent-soft);
-    color: var(--text-strong);
-  }
-
-  .row.dropping {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-    color: var(--text-strong);
-  }
-
-  .label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  /* The row is drawn in the themes package - see `.nib-row` in base.css. What is
+     left here is where it sits: one step in per level of the tree, on a property
+     rather than a number in the markup, so a phone takes a deeper step without
+     this component knowing which kind of screen it is on. The outline's rows and
+     the tag tree's are indented the same way. */
+  .row,
+  .rename {
+    padding-left: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
   }
 
   .rename {
     width: 100%;
-    padding: 4px 8px;
+    min-height: var(--row-height);
+    padding-right: var(--row-pad);
     border: 1px solid var(--accent);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-row);
     background: var(--bg);
     color: var(--text-strong);
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: var(--text-row);
     outline: none;
   }
 
-  /* Each level steps in, and the step is a property rather than a number
-     written into the markup, so a phone can take a deeper one without the
-     component knowing which kind of screen it is on. The outline's rows are
-     indented the same way; see Sidebar.svelte. */
-  .row,
-  .rename {
-    --indent: 12px;
-    padding-left: calc(8px + var(--level, 0) * var(--indent));
-  }
-
   /* The open note's mark carries the accent. The name beside it is told apart by
-     weight and colour, and the mark is the one place a colour of its own reads as
-     the file being open rather than as the row being picked. */
-  .note.active :global(.mark) {
+     the fill under it and by its weight; the mark is the one place a colour of
+     its own reads as the file being open rather than as the row being picked. */
+  .note.is-on :global(.mark) {
     stroke: var(--accent);
     opacity: 1;
   }
-
-  /* A 25px row is a desktop row. A thumb needs the whole line, and the tree is
-     the main thing anyone taps in the drawer: the row, the words in it, the
-     mark in front of them and the step per level all come off the touch scale
-     so the list is the same size as every other list in the app. */
-  :global([data-touch]) .row,
-  :global([data-touch]) .rename {
-    --indent: var(--touch-indent);
-    min-height: var(--touch-row);
-    padding-top: 0;
-    padding-bottom: 0;
-    padding-left: calc(var(--touch-pad) + var(--level, 0) * var(--indent));
-    padding-right: var(--touch-pad);
-    font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .row {
-    gap: var(--touch-gap);
-  }
-
-  /* The marks themselves are drawn at the touch scale by the component that
-     draws them; see FileMark.svelte. */
 </style>

@@ -89,6 +89,8 @@ export const fr: Dictionary = {
   'Extract selection': 'Extraire la sélection',
 
   // Panels and navigation
+  Bookmarks: 'Signets',
+  Panels: 'Panneaux',
   Outline: 'Plan',
   Fold: 'Replier',
   Unfold: 'Déplier',
