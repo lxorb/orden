@@ -98,6 +98,8 @@ export const de: Dictionary = {
   Bookmarks: 'Lesezeichen',
   Panels: 'Bereiche',
   Outline: 'Gliederung',
+  'Stay on this note': 'Bei dieser Notiz bleiben',
+  'Follow the open note': 'Der offenen Notiz folgen',
   Fold: 'Einklappen',
   Unfold: 'Ausklappen',
   'Fold everything': 'Alles einklappen',

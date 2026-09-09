@@ -79,6 +79,11 @@
     if (paths.length && root) void workspace.moveMany(paths, root)
   }
 
+  /** A tack, seen from the side: the head, the shaft, the plate and the needle.
+   *  Here rather than in panel-marks.ts because one surface draws it; see the
+   *  note at the top of that file. */
+  const HOLD_MARK = 'M4.6 2h4M6.6 2v3.2M4 5.2h5.2M6.6 5.2v5.6'
+
   const PANELS: { id: Panel; label: string; path: string }[] = [
     { id: 'tree', label: t('Files'), path: FILES_MARK },
     { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
@@ -149,6 +154,29 @@
     if (workspace.panel === 'search') void workspace.loadTags()
   })
 
+  /** Whether the panels are held on a tab rather than following the pane. */
+  const held = $derived(!!workspace.heldTabId && workspace.panelTab?.id === workspace.heldTabId)
+  /** Which panels can be held: the two that are about one note. The files are
+   *  the space's and a search is the space's, so neither has a note to be held
+   *  on.
+   *
+   *  Not on a handheld, which holds one document at a time: there is nothing to
+   *  hold a panel against, and opening another note closes the tab the panel
+   *  would have been held on. */
+  const holdable = $derived(
+    !viewport.touch && (workspace.panel === 'outline' || workspace.panel === 'links'),
+  )
+
+  /** Takes the reader to a line of the note the panel is about.
+   *
+   *  A panel held on a note open in another pane takes them to that pane first: a
+   *  row is pressed to go somewhere, and going somewhere means being there. */
+  function jump(line: number) {
+    const tab = workspace.panelTab
+    if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
+    ongoto?.(line)
+  }
+
   /** The outline steps in and fades from the shallowest heading the note
    *  has, so a note that starts at "##" is not drawn as one missing its
    *  title. */
@@ -163,7 +191,7 @@
   const current = $derived.by(() => {
     if (workspace.panel !== 'outline') return -1
 
-    const tab = workspace.active
+    const tab = workspace.panelTab
     const headings = workspace.headings
     if (!tab || !headings.length) return -1
 
@@ -220,7 +248,7 @@
    *  move a drag would have made. */
   function headingMenu(at: number, text: string): MenuEntry[] {
     return [
-      ...bookmarkEntry(workspace.bookmarks.forHeading(workspace.relativeNote, text)),
+      ...bookmarkEntry(workspace.bookmarks.forHeading(workspace.panelNote, text)),
       ...moveSectionEntries(at),
     ]
   }
@@ -390,8 +418,28 @@
       {/each}
     </div>
 
-    <!-- The one choice a panel has goes at the other end of the row its tabs are
-         in: the Links panel says the same thing as a list or as a picture. -->
+    <!-- What a panel has to offer goes at the other end of the row its tabs are
+         in: whether a panel about one note stays on it, and whether the Links
+         panel says what it has to say as a list or as a picture. -->
+    {#if holdable}
+      <div class="tools">
+        <!-- A panel about one note usually means the note being worked in. Held,
+             it means the note it was held on, so an outline can be read on the
+             left while another note is written on the right. It lasts for the
+             sitting: a panel held on a note nobody remembers holding it on is
+             worse than one that simply follows. -->
+        <button
+          class="tool"
+          class:active={held}
+          title={held ? t('Follow the open note') : t('Stay on this note')}
+          aria-label={held ? t('Follow the open note') : t('Stay on this note')}
+          aria-pressed={held}
+          onclick={() => workspace.holdPanel(held ? null : (workspace.panelTab?.id ?? null))}
+        >
+          <svg viewBox="0 0 13 13"><path d={HOLD_MARK} /></svg>
+        </button>
+      </div>
+    {/if}
     {#if workspace.panel === 'links'}
       <div class="tools">
         {#if graphing}
@@ -453,6 +501,13 @@
           in:arrive
           out:leave
         >
+          <!-- Which note the panel is held on. Only while it is held, and only
+               where holding means anything: the panel is already full of that
+               note, so this is the one line that says whose. -->
+          {#if held && holdable}
+            <p class="holding">{workspace.panelTab?.shown ?? ''}</p>
+          {/if}
+
           {#if workspace.panel === 'tree'}
             {#if workspace.tree}
               <Bookmarks onsearch={runBookmarked} />
@@ -496,11 +551,11 @@
                 bind:this={outline}
                 use:roving={{
                   current: '.is-on',
-                  open: (row) => ongoto?.(Number(row.dataset.line ?? 0)),
+                  open: (row) => jump(Number(row.dataset.line ?? 0)),
                   peek: (row) => {
                     // Going to a heading hands the note the keyboard, so Space takes
                     // it straight back: the point of Space is to stay here.
-                    ongoto?.(Number(row.dataset.line ?? 0))
+                    jump(Number(row.dataset.line ?? 0))
                     row.focus()
                   },
                   menu: (row, at) => row.dispatchEvent(at),
@@ -516,7 +571,7 @@
                       data-line={heading.line}
                       style:--level={heading.level - shallowest}
                       draggable="true"
-                      onclick={() => ongoto?.(heading.line)}
+                      onclick={() => jump(heading.line)}
                       oncontextmenu={(event) =>
                         menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
                       use:longPress={(event) =>
@@ -547,7 +602,7 @@
                     <button
                       class="nib-row is-short row note"
                       class:is-quiet={!note.used}
-                      onclick={() => ongoto?.(note.line)}
+                      onclick={() => jump(note.line)}
                     >
                       <span class="nib-row-mark note-id">{note.id}</span>
                       <span class="nib-row-label">{note.text}</span>
@@ -690,6 +745,19 @@
 
   /* At the far end of the row, so the tabs keep their place whether or not the
      panel showing has anything to offer. */
+  /* The note a held panel is about, over the panel that is about it. Quiet: the
+     panel says the same thing in more detail, and this is only here to say whose
+     note that is. */
+  .holding {
+    margin: 0;
+    padding: 0 var(--row-pad) var(--space-1);
+    color: var(--muted);
+    font-size: var(--text-xs);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .tools {
     display: flex;
     align-items: stretch;

@@ -352,6 +352,10 @@
    *  note open in another pane keeps every caret outside them where it was; see
    *  sections.ts and shared.ts. */
   function moveSectionTo(from: number, to: number) {
+    // The pane holding the note the outline is about, which is the one being
+    // worked in unless a panel is held on another; see panelTab in
+    // workspace.svelte.ts. Dragging a section moves the note the rows came from.
+    const view = views.of(workspace.panelTab?.paneId ?? workspace.panes.focusedId)
     if (!view || view.state.readOnly) return
 
     const text = view.state.doc.toString()

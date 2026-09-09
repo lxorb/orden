@@ -99,6 +99,8 @@ export const gsw: Dictionary = {
   Bookmarks: 'Lesezeiche',
   Panels: 'Beriich',
   Outline: 'Gliederig',
+  'Stay on this note': 'Bi dere Notiz bliibe',
+  'Follow the open note': 'De offene Notiz folge',
   Fold: 'Zämmeklappe',
   Unfold: 'Uufklappe',
   'Fold everything': 'Alles zämmeklappe',

@@ -97,6 +97,8 @@ export const fr: Dictionary = {
   Bookmarks: 'Signets',
   Panels: 'Panneaux',
   Outline: 'Plan',
+  'Stay on this note': 'Rester sur cette note',
+  'Follow the open note': 'Suivre la note ouverte',
   Fold: 'Replier',
   Unfold: 'Déplier',
   'Fold everything': 'Tout replier',

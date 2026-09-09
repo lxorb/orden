@@ -50,7 +50,9 @@
    *  reading: the view lays a graph out again whenever it is handed another. */
   const NOTHING: NoteGraph = { nodes: [], edges: [] }
 
-  const path = $derived(workspace.active?.path ?? null)
+  // The note the panel is about, which is the one it was held on when it is
+  // held and the one being worked in otherwise; see panelTab in workspace.svelte.ts.
+  const path = $derived(workspace.panelTab?.path ?? null)
   const root = $derived(workspace.activeSpace?.root ?? null)
 
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
@@ -59,7 +61,7 @@
   /** The open note and everything within `depth` links of it. Lazy like the lists
    *  above, so the space is only walked while the picture is the thing showing. */
   const around = $derived.by(() => {
-    const centre = workspace.relativeNote
+    const centre = workspace.panelNote
     return centre === null ? NOTHING : neighbourhood(links.graph, centre, depth)
   })
 
@@ -110,7 +112,7 @@
 {:else if graph}
   <Graph
     graph={around}
-    current={workspace.relativeNote}
+    current={workspace.panelNote}
     onopen={(target: string, keep: boolean) => workspace.openRelative(target, keep)}
     onescape={() => onlist?.()}
   />

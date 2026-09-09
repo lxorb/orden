@@ -97,6 +97,8 @@ export const ja: Dictionary = {
   Bookmarks: 'ブックマーク',
   Panels: 'パネル',
   Outline: 'アウトライン',
+  'Stay on this note': 'このノートに留まる',
+  'Follow the open note': '開いているノートに従う',
   Fold: '折りたたむ',
   Unfold: '展開する',
   'Fold everything': 'すべて折りたたむ',

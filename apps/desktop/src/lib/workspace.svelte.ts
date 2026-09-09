@@ -349,17 +349,46 @@ class Workspace {
     return path.startsWith(root) ? relativeTo(root, path) : null
   })
 
+  /** The tab a side panel is held on, or null while the panels follow whichever
+   *  pane has the keyboard.
+   *
+   *  A tab and not a note: the outline of the tab you are reading in, so that a
+   *  tab which moves on to another note takes its outline with it. It lives for
+   *  the sitting and is not written down - a panel held on a note you cannot
+   *  remember holding it on is worse than one that simply follows. */
+  heldTabId = $state<string | null>(null)
+
+  /** The tab the outline and the links are about: the one they were held on,
+   *  while it is still open, and otherwise the one being worked in. */
+  readonly panelTab = $derived(this.tabs.find((tab) => tab.id === this.heldTabId) ?? this.active)
+
+  /** That tab's note, named the way a link names it. What the links panel and a
+   *  bookmarked heading are about; the graph of the whole space keeps following
+   *  the pane, since it is a picture of everything rather than of one note. */
+  readonly panelNote = $derived.by((): string | null => {
+    const root = this.activeSpace?.root
+    const path = this.panelTab?.path ?? null
+    if (root === undefined || path === null) return null
+
+    return path.startsWith(root) ? relativeTo(root, path) : null
+  })
+
+  /** Holds the panels on a tab, or lets them follow again. */
+  holdPanel(tabId: string | null) {
+    this.heldTabId = tabId
+  }
+
   /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
    *  not the editor: that one only catches up when the typing pauses, which is
    *  as often as an outline needs to move. Lazy as every derived is, so a
    *  closed outline panel costs nothing at all. */
-  readonly headings = $derived.by(() => scanHeadings(this.active?.doc ?? ''))
+  readonly headings = $derived.by(() => scanHeadings(this.panelTab?.doc ?? ''))
 
   /** The note's footnotes, under its headings in the outline panel: both are the
    *  shape of the note being read rather than anything about the space around it,
    *  and both jump within it. Lazy for the same reason the headings are, and it
    *  gives up on the first pass over a note with no `[^` in it at all. */
-  readonly footnotes = $derived.by(() => scanFootnotes(this.active?.doc ?? ''))
+  readonly footnotes = $derived.by(() => scanFootnotes(this.panelTab?.doc ?? ''))
 
   /** Every file in the space, flattened: the notes, and the PDFs and canvases
    *  beside them, which are the three things a tab can hold. What quick open
