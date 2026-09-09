@@ -3,6 +3,7 @@
   import { countText } from './counts'
   import { t } from './i18n.svelte'
   import { VIM_WORDS } from './modes.svelte'
+  import { views } from './views.svelte'
 
   const {
     doc = '',
@@ -16,6 +17,17 @@
   let looking = $state(false)
 
   const counts = $derived(looking ? countText(doc) : null)
+
+  /** What is selected, counted. Only while the numbers are on screen and only
+   *  while there is a selection at all: reading the words out of the view is as
+   *  expensive as the selection is long, and a caret has none. */
+  const chosen = $derived(looking && views.chosen > 0 ? countText(views.selectedText()) : null)
+
+  /** A count on its own, or as a part of the whole. */
+  const said = (part: number | undefined, whole: number) =>
+    part === undefined
+      ? whole.toLocaleString()
+      : `${part.toLocaleString()}/${whole.toLocaleString()}`
 </script>
 
 <!-- Which mode the keyboard is in, on the left, and only while modal editing is
@@ -38,8 +50,12 @@
     <span class="reading">{t('Read-only')}</span>
   {/if}
   {#if counts}
-    <span>{counts.words.toLocaleString()}w</span>
-    <span>{counts.characters.toLocaleString()}c</span>
+    <!-- With something selected the words and the characters read as "this many
+         of that many". No word for it and nothing to turn on: the second number
+         is the note, which is what the bar said a moment ago, so the pair says
+         what changed and what it is a part of. -->
+    <span>{said(chosen?.words, counts.words)}w</span>
+    <span>{said(chosen?.characters, counts.characters)}c</span>
     <span>{counts.lines.toLocaleString()}l</span>
     <span>{counts.minutes}m</span>
   {/if}
