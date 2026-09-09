@@ -398,15 +398,86 @@ export function documentOf(source: string, name: string): Doc {
     withoutBlockIds(source.startsWith('---') ? stripFront(source) : source),
   )
 
+  const blocks = flowed(blocksOf(lexMarkdown(body), notes))
+
   return {
     title: titleOf(source, name),
     named: frontMatterValue(source, 'title') !== null || documentTitle(source) !== null,
     author: frontMatterValue(source, 'author'),
     lang: frontMatterValue(source, 'lang') ?? 'en',
     date: frontMatterValue(source, 'date'),
-    blocks: blocksOf(lexMarkdown(body), notes),
-    notes,
+    blocks,
+    notes: notes.map((note) => ({ ...note, spans: flowedSpans(note.spans) })),
   }
+}
+
+/** A paragraph's own line breaks, as the space markdown says they are.
+ *
+ *  A paragraph hard wrapped in the file is one paragraph, and a single newline
+ *  in the middle of it is a space. That is what a browser does with it, so it is
+ *  what the reading view, every published page and the HTML export already say,
+ *  and `flowing` in @nib/glasses says the same out loud. These blocks are what
+ *  Word, RTF and plain text are written from, and they kept the newline: a note
+ *  wrapped at eighty columns arrived broken at eighty columns.
+ *
+ *  Last of all, once the blocks are built, because a callout's marker line ends
+ *  at a newline and `callout` above reads it off the spans. */
+function flowing(text: string): string {
+  return text.replace(/[ \t]*\n[ \t]*/gu, ' ')
+}
+
+/** A hard break is a span of its own that is exactly a newline, and the writer
+ *  asked for it with two spaces or a backslash. A wrapped line is a newline
+ *  among words. Only the second becomes a space. */
+function flowedSpans(spans: Span[]): Span[] {
+  return spans.map((span) => (span.text === '\n' ? span : { ...span, text: flowing(span.text) }))
+}
+
+function flowed(blocks: Block[]): Block[] {
+  return blocks.map((block): Block => {
+    switch (block.kind) {
+      case 'heading':
+      case 'paragraph':
+        return { ...block, spans: flowedSpans(block.spans) }
+
+      case 'quote':
+        return { ...block, blocks: flowed(block.blocks) }
+
+      case 'list':
+        return {
+          ...block,
+          items: block.items.map((item) => ({
+            ...item,
+            spans: flowedSpans(item.spans),
+            blocks: flowed(item.blocks),
+          })),
+        }
+
+      case 'table':
+        return {
+          ...block,
+          head: block.head.map(flowedSpans),
+          rows: block.rows.map((row) => row.map(flowedSpans)),
+        }
+
+      case 'terms':
+        return {
+          ...block,
+          entries: block.entries.map((entry) => ({
+            term: flowedSpans(entry.term),
+            details: entry.details.map(flowedSpans),
+          })),
+        }
+
+      // Code and maths are written as they stand, and a rule and a page break
+      // hold no words at all.
+      case 'code':
+      case 'maths':
+      case 'rule':
+      case 'break':
+        return block
+    }
+  })
 }
 
 /** Front matter off, keeping the rest character for character. Not imported

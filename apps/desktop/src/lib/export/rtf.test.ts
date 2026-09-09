@@ -354,8 +354,13 @@ describe('runs', () => {
     expect(out).toContain('HYPERLINK "https://nib.dev/a%22 \\\\l %22x"')
   })
 
-  test('turns a line break inside a paragraph into one', () => {
-    expect(RTF).toContain(', a\\line ')
+  /** A paragraph hard wrapped in the file is one paragraph, and the newline in
+   *  the middle of it is a space, exactly as a browser reads it. Only the break
+   *  the writer asked for with two spaces is a break. See `flowed` in
+   *  document.ts. */
+  test('flows a wrapped line, and keeps a break that was asked for', () => {
+    expect(RTF).not.toContain(', a\\line ')
+    expect(toRtf(documentOf('one  \ntwo\n', 'Break.md'), [])).toContain('one\\line two')
   })
 })
 
