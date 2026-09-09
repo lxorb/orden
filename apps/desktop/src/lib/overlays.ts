@@ -14,6 +14,12 @@ interface Open {
   close: () => void
 }
 
+/** As much of an Escape as this needs: enough to say the press is spent. */
+interface Press {
+  preventDefault: () => void
+  stopImmediatePropagation: () => void
+}
+
 class Overlays {
   private readonly stack: Open[] = []
 
@@ -40,11 +46,19 @@ class Overlays {
    *  Taken off the stack here rather than left for the closing to take it off,
    *  because closing is a change to some component's state and that reaches this
    *  list a moment later: two presses in the same moment would otherwise both
-   *  close the same overlay and leave the one underneath it standing. */
-  escape(): boolean {
+   *  close the same overlay and leave the one underneath it standing.
+   *
+   *  Handed the press, it spends it. Other surfaces read Escape off the same
+   *  window - the find bar over a note being read, and the one over a PDF, both
+   *  of which know only that their own pane has the focus - and one press that
+   *  closes the palette and the bar underneath it is one press closing two
+   *  things. */
+  escape(press?: Press): boolean {
     const top = this.stack.pop()
     if (!top) return false
 
+    press?.preventDefault()
+    press?.stopImmediatePropagation()
     top.close()
     return true
   }
