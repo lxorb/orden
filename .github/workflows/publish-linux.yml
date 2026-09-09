@@ -54,7 +54,14 @@ jobs:
             PKGBUILD
           cat PKGBUILD
 
+      # Pinned by digest, not by `base-devel`. The tag is rebuilt daily and the
+      # image it names is what builds and checks the package that then goes to
+      # every Arch user, so the image that ran is the image that was read. The
+      # `pacman -Syu` below is what keeps the packages inside it current, so
+      # pinning costs nothing in freshness. Moved on purpose, not by upstream.
       - name: Check it still builds, before anything is pushed
+        env:
+          ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
         run: |
           cat > /tmp/aur.sh <<'SH'
           set -euo pipefail
@@ -70,12 +77,16 @@ jobs:
           sudo -u builduser makepkg -f --noconfirm --syncdeps --noprogressbar
           namcap ./*.pkg.tar.zst
           SH
-          docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh archlinux:base-devel bash /aur.sh
+          docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh "$ARCH_IMAGE" bash /aur.sh
 
       # Generates .SRCINFO itself and pushes to ssh://aur@aur.archlinux.org.
+      #
+      # Pinned to a commit and not to a tag. This is the step handed the AUR
+      # account's own SSH key, and a tag is a name its owner can move: pinning
+      # means the code that gets the key is the code that was read.
       - name: Push to the AUR
         if: env.HAS_KEY == 'true'
-        uses: KSXGitHub/github-actions-deploy-aur@v4.2.0
+        uses: KSXGitHub/github-actions-deploy-aur@084b0d9b15415bf9cdb65d44dad1efe37a354050 # v4.2.0
         with:
           pkgname: nib-bin
           pkgbuild: packaging/aur/nib-bin/PKGBUILD
@@ -122,12 +133,14 @@ jobs:
             snapcraft.yaml
           grep -nE "^version:|releases/download" snapcraft.yaml
 
-      - uses: snapcore/action-build@v1
+      # Pinned for the same reason: `v1` is a moving name, and the second of the
+      # two is handed the Snap Store's credentials.
+      - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1
         id: build
         with:
           path: packaging/snap
 
-      - uses: snapcore/action-publish@v1
+      - uses: snapcore/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1
         if: env.HAS_CREDENTIALS == 'true'
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
