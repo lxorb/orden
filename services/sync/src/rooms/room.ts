@@ -67,11 +67,27 @@ export interface Held {
 
 /** What a socket has announced, kept on the socket so that a room which was
  *  asleep still knows whose carets to take away when it closes - and whether it
- *  was let in to write, which the door decided and this object only enforces. */
+ *  was let in to write, which the door decided and this object only enforces,
+ *  and whose socket it is, which is the one thing about the person the room keeps.
+ *
+ *  `who` is an id and nothing else: the room cannot look anybody up and does not
+ *  know what it names. What it is for is being told "this one is not in the space
+ *  any more" and finding the sockets that answer to it; see `revoke`. */
 interface Attached {
   clients: number[]
   mayWrite: boolean
+  who: string
 }
+
+/** What the door decided about the person on the other end of a socket. */
+export interface Joining {
+  writes: boolean
+  who: string
+}
+
+/** How long a row saying somebody has a file open is believed. Well past any
+ *  sitting a room stays awake for, and a bound on rows a close never came for. */
+const OPEN_FOR = 24 * 60 * 60 * 1000
 
 /** What a room kept about itself, read back. A room written down before there
  *  were two kinds says nothing about which it is, and a note is what it was. */
@@ -99,6 +115,12 @@ function announcedBy(socket: WebSocket): number[] {
  *  not write, and refusing is the safe answer to that. */
 function mayWrite(socket: WebSocket): boolean {
   return attachedTo(socket)?.mayWrite === true
+}
+
+/** Whose socket this is, or nothing for one joined before the room was told. */
+function whoOf(socket: WebSocket): string {
+  const held = attachedTo(socket)?.who
+  return typeof held === 'string' ? held : ''
 }
 
 export class NoteRoom implements DurableObject {
@@ -135,9 +157,13 @@ export class NoteRoom implements DurableObject {
     })
   }
 
-  /** A device joining. The Worker has already said who it is and that the note is
-   *  theirs; what is left is the socket. */
+  /** Two things arrive here, and the headers say which. A device joining, which
+   *  the Worker has already decided about; or a route saying that somebody's
+   *  access to this file has ended or narrowed since it did. */
   async fetch(request: Request): Promise<Response> {
+    const revoked = request.headers.get('x-nib-revoked')
+    if (revoked) return await this.revoke(revoked, request.headers.get('x-nib-role') === 'read')
+
     const noteId = request.headers.get('x-nib-note')
     const spaceId = request.headers.get('x-nib-space')
     if (!noteId || !spaceId) return new Response('no note', { status: 400 })
@@ -147,7 +173,10 @@ export class NoteRoom implements DurableObject {
     await this.enter(
       pair[1],
       { noteId, spaceId, kind },
-      writesOf(request.headers.get('x-nib-write')),
+      {
+        writes: writesOf(request.headers.get('x-nib-write')),
+        who: request.headers.get('x-nib-who') ?? '',
+      },
     )
 
     return new Response(null, { status: 101, webSocket: pair[0] })
@@ -156,16 +185,107 @@ export class NoteRoom implements DurableObject {
   /** The room's half of a socket, joined and greeted. Apart from `fetch` because
    *  it is the whole of what joining means, and because a test drives it without
    *  a runtime to make the pair or to carry a 101 answer. */
-  async enter(server: WebSocket, held: Held, writes = true): Promise<void> {
+  async enter(
+    server: WebSocket,
+    held: Held,
+    joining: Joining = { writes: true, who: '' },
+  ): Promise<void> {
     await this.open(held)
 
     this.ctx.acceptWebSocket(server)
-    server.serializeAttachment({ clients: [], mayWrite: writes } satisfies Attached)
+    server.serializeAttachment({
+      clients: [],
+      mayWrite: joining.writes,
+      who: joining.who,
+    } satisfies Attached)
+
+    // Written down where a revocation can find it. Not a lock and not a session:
+    // the row says only that this person has this file open, so that the route
+    // that ends their access knows which rooms to tell.
+    await this.remember(held, joining.who)
 
     // The greeting, both halves at once: what this room holds, and who is in it.
     server.send(syncStep1(this.state.doc))
     const present = awarenessState(this.awareness)
     if (present) server.send(present)
+  }
+
+  /** This person has this file open. */
+  private async remember(held: Held, who: string): Promise<void> {
+    if (!who) return
+
+    // Rows a close never came for - an object the runtime dropped, a socket the
+    // network took - are cleared by age as new ones arrive, the way the sessions
+    // and the sign-in codes are.
+    await this.env.DB.prepare('delete from room_sockets where opened_at < ?')
+      .bind(Date.now() - OPEN_FOR)
+      .run()
+
+    await this.env.DB.prepare(
+      `insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, ?)
+       on conflict(note_id, who) do update set opened_at = excluded.opened_at`,
+    )
+      .bind(held.noteId, held.spaceId, who, Date.now())
+      .run()
+  }
+
+  /** And this person no longer has, unless another of their devices still does:
+   *  the row is per person, and the room is the only thing that knows which of
+   *  its sockets are whose. */
+  private async forgetSocket(socket: WebSocket): Promise<void> {
+    const who = whoOf(socket)
+    const held = this.held
+    if (!who || !held) return
+
+    const others = this.ctx.getWebSockets().some((one) => one !== socket && whoOf(one) === who)
+    if (others) return
+
+    await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?')
+      .bind(held.noteId, who)
+      .run()
+  }
+
+  /** Somebody's access to this file ended, or narrowed to reading, while they had
+   *  it open. The route that changed it says so and this happens inside that same
+   *  request: what a socket cannot be asked to notice about itself.
+   *
+   *  A room with nobody in it is the common case by far - the route asks because a
+   *  row said somebody was here - and it answers without waking the document. */
+  private async revoke(who: string, toRead: boolean): Promise<Response> {
+    const sockets = this.ctx.getWebSockets()
+    if (!sockets.length) return new Response(null, { status: 204 })
+
+    await this.woken()
+
+    for (const socket of sockets) {
+      if (whoOf(socket) !== who) continue
+
+      if (toRead) {
+        // Still in the room and still seeing every keystroke, which is what a
+        // reader is; what they may no longer do is add one.
+        socket.serializeAttachment({
+          clients: announcedBy(socket),
+          mayWrite: false,
+          who,
+        } satisfies Attached)
+        continue
+      }
+
+      // Their caret goes with them, and the socket is closed rather than left to
+      // find out. 1008 is what a policy that has changed under a connection is.
+      forget(this.awareness, announcedBy(socket), socket)
+      socket.close(1008, 'no longer in this space')
+    }
+
+    // A close this side asked for brings no close handler with it, so the row goes
+    // from here.
+    if (!toRead && this.held) {
+      await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?')
+        .bind(this.held.noteId, who)
+        .run()
+    }
+
+    return new Response(null, { status: 204 })
   }
 
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string) {
@@ -187,17 +307,22 @@ export class NoteRoom implements DurableObject {
   async webSocketClose(socket: WebSocket) {
     forget(this.awareness, announcedBy(socket), socket)
 
+    // Which file this room is has to be known before the row can be taken away,
+    // and an object that slept in the meantime does not know yet.
+    await this.woken()
+    await this.forgetSocket(socket)
+
     // The last device out settles what is left, rather than the words waiting
     // for whoever opens the note next. The socket that is closing is still in
     // the list while this runs.
-    if (this.ctx.getWebSockets().length <= 1) {
-      await this.woken()
-      await this.settle()
-    }
+    if (this.ctx.getWebSockets().length <= 1) await this.settle()
   }
 
-  webSocketError(socket: WebSocket) {
+  async webSocketError(socket: WebSocket) {
     forget(this.awareness, announcedBy(socket), socket)
+
+    await this.woken()
+    await this.forgetSocket(socket)
   }
 
   /** The settle. An alarm rather than a timer, so a room the runtime put to sleep
@@ -304,7 +429,11 @@ export class NoteRoom implements DurableObject {
       .filter((one) => !gone.has(one))
       .slice(-MOST_ANNOUNCED)
 
-    origin.serializeAttachment({ clients, mayWrite: mayWrite(origin) } satisfies Attached)
+    origin.serializeAttachment({
+      clients,
+      mayWrite: mayWrite(origin),
+      who: whoOf(origin),
+    } satisfies Attached)
   }
 
   /** The file as it now stands, written into the note store the way any other save

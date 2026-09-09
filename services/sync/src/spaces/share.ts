@@ -20,6 +20,7 @@ import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { inviteMessage, mailer, mayMail } from '../email'
 import { forgetEmptyGuest } from '../guests'
 import { machineOf } from '../limits'
+import { roomsRevoked } from '../rooms'
 import type { Env, Space, User, Variables } from '../types'
 import { atLeast, isGiven, spaceOf, type Given } from './space'
 
@@ -110,6 +111,17 @@ export function personName(user: { name: string | null; email: string }): string
   if (chosen) return chosen
 
   return user.email.split('@')[0] ?? user.email
+}
+
+/** The account at an address, which is what a room knows a person as. Null for a
+ *  membership written to an address nobody has proved yet: that person has no
+ *  session anywhere, so there is nothing of theirs to close. */
+async function accountAt(env: Env, email: string): Promise<string | null> {
+  const row = await env.DB.prepare('select id from users where email = ?')
+    .bind(email)
+    .first<{ id: string }>()
+
+  return row?.id ?? null
 }
 
 async function membersOf(env: Env, spaceId: string): Promise<MemberRow[]> {
@@ -325,6 +337,12 @@ share.patch('/:id/share/members/:email', atLeast('owner'), async (context) => {
     .bind(role, space.id, email)
     .run()
 
+  // A writer who is now a reader may have a file of this space open, and a socket
+  // is not a request: nothing else would ask again.
+  if (held.role === 'write' && role === 'read') {
+    await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read')
+  }
+
   return context.json(await sharing(context.env, space, context.get('user')))
 })
 
@@ -335,6 +353,8 @@ share.delete('/:id/share/members/:email', atLeast('owner'), async (context) => {
   await context.env.DB.prepare('delete from space_members where space_id = ? and email = ?')
     .bind(space.id, email)
     .run()
+
+  await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'none')
 
   return context.json(await sharing(context.env, space, context.get('user')))
 })
@@ -356,6 +376,7 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
       .bind(space.id, who.guest.id)
       .run()
     await forgetEmptyGuest(context.env, who.guest.id)
+    await roomsRevoked(context.env, space.id, who.guest.id, 'none')
 
     return context.json({ ok: true })
   }
@@ -363,6 +384,10 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
   await context.env.DB.prepare('delete from space_members where space_id = ? and email = ?')
     .bind(space.id, who.user.email)
     .run()
+
+  // Their own other devices, which may still have a file of it open: leaving on
+  // one is leaving.
+  await roomsRevoked(context.env, space.id, who.user.id, 'none')
 
   return context.json({ ok: true })
 })
@@ -514,6 +539,10 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
     .bind(role, space.id, guest)
     .run()
 
+  if (held.role === 'write' && role === 'read') {
+    await roomsRevoked(context.env, space.id, guest, 'read')
+  }
+
   return context.json(await sharing(context.env, space, context.get('user')))
 })
 
@@ -545,6 +574,7 @@ share.delete('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
       .bind(space.id, guest)
       .run()
     await forgetEmptyGuest(context.env, guest)
+    await roomsRevoked(context.env, space.id, guest, 'none')
   }
 
   return context.json(await sharing(context.env, space, context.get('user')))

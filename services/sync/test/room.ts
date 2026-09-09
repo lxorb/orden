@@ -21,6 +21,8 @@ import type { Env } from '../src/types'
 export class FakeSocket {
   readonly sent: Uint8Array[] = []
   closed = false
+  /** Why the room closed it, when it was the room that did. */
+  closedWith: { code?: number; reason?: string } | null = null
   /** What the room attached to this socket, which the real runtime keeps for it
    *  across a sleep. */
   private attachment: unknown = null
@@ -29,8 +31,9 @@ export class FakeSocket {
     if (typeof data !== 'string') this.sent.push(data)
   }
 
-  close() {
+  close(code?: number, reason?: string) {
     this.closed = true
+    this.closedWith = { ...(code === undefined ? {} : { code }), ...(reason === undefined ? {} : { reason }) }
   }
 
   serializeAttachment(value: unknown) {
@@ -134,19 +137,50 @@ export function room(env: Env): { room: NoteRoom; state: FakeState } {
 
 /** A device joining, with everything the room greeted it with waiting on it.
  *  `writes` is what the door decided; see rooms/index.ts. `kind` is what the door
- *  read off the file's name: a note's words, or the objects on a plane. */
+ *  read off the file's name: a note's words, or the objects on a plane. `who` is
+ *  the account or the guest the socket carries, which the room writes down so a
+ *  revocation can find it. */
 export async function join(
   made: NoteRoom,
-  note: { id: string; spaceId: string; kind?: RoomKind },
+  note: { id: string; spaceId: string; kind?: RoomKind; who?: string },
   writes = true,
 ): Promise<FakeSocket> {
   const socket = new FakeSocket()
   await made.enter(
     socket as unknown as WebSocket,
     { noteId: note.id, spaceId: note.spaceId, kind: note.kind ?? 'words' },
-    writes,
+    { writes, who: note.who ?? '' },
   )
   return socket
+}
+
+/** The rooms of a whole Worker, so a route can reach the object somebody's
+ *  sockets are actually in. One room per note id, made the first time it is asked
+ *  for, which is how the runtime names them; see rooms/index.ts.
+ *
+ *  Unlike `doorway`, this one leads somewhere: a request the route makes runs the
+ *  real `fetch` on the real class, which is what lets a revocation be watched
+ *  reaching a socket. */
+export function running(env: Env): {
+  ROOMS: DurableObjectNamespace
+  of(noteId: string): { room: NoteRoom; state: FakeState }
+} {
+  const made = new Map<string, { room: NoteRoom; state: FakeState }>()
+
+  const of = (noteId: string) => {
+    const held = made.get(noteId) ?? room(env)
+    made.set(noteId, held)
+    return held
+  }
+
+  const namespace = {
+    idFromName: (name: string) => name,
+    get: (id: unknown) => ({
+      fetch: (request: Request) => of(String(id)).room.fetch(request),
+    }),
+  }
+
+  return { ROOMS: namespace as unknown as DurableObjectNamespace, of }
 }
 
 /** A namespace that leads nowhere, so the door can be watched deciding without a

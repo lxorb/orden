@@ -8,7 +8,7 @@ import * as Y from 'yjs'
 import { writesOf } from '../src/rooms/kind'
 import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
-import { doorway, FakeSocket, type FakeState, join, room, say } from './room'
+import { doorway, FakeSocket, type FakeState, join, room, running, say } from './room'
 
 /** What the note holds before anybody writes in it. */
 const OPENING = '# Together\n'
@@ -900,5 +900,157 @@ describe('a canvas in a room', () => {
     await made.alarm()
     const read = await call(env, `/v1/notes/${noteId}`, { token })
     expect(readCanvas(read.json.content).gone.card).toBe(7000)
+  })
+})
+
+describe('somebody who stops being in the space while the file is open', () => {
+  const WRITER = 'writer@example.com'
+
+  let env: TestEnv
+  let live: ReturnType<typeof running>
+  let owner: string
+  let writer: string
+  let writerId: string
+  let spaceId: string
+  let noteId: string
+
+  beforeEach(async () => {
+    env = testEnv()
+    // The rooms have to be able to reach the same database the routes use, so the
+    // namespace is put in afterwards; nothing has asked for it yet.
+    live = running(env)
+    env.ROOMS = live.ROOMS
+
+    owner = await signIn(env, 'owner@example.com')
+    spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space
+      .id
+    noteId = (
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token: owner,
+        body: { path: 'together.md', content: OPENING },
+      })
+    ).json.note.id
+
+    await call(env, `/v1/spaces/${spaceId}/share/invite`, {
+      token: owner,
+      body: { email: WRITER, role: 'write' },
+    })
+    writer = await signIn(env, WRITER)
+    writerId = (await call(env, '/v1/me', { token: writer })).json.user.id
+  })
+
+  afterEach(() => env.close())
+
+  /** The room this note's sockets are in, and a socket in it, joined the way the
+   *  door joins one: with whose it is. */
+  async function open(who: string, writes = true): Promise<FakeSocket> {
+    const { room: made } = live.of(noteId)
+    return await join(made, { id: noteId, spaceId, who }, writes)
+  }
+
+  test('is written down as having it open, and not once they have closed it', async () => {
+    const socket = await open(writerId)
+
+    const held = env.db
+      .prepare('select space_id, who from room_sockets where note_id = ?')
+      .all(noteId)
+    expect(held).toEqual([{ space_id: spaceId, who: writerId }])
+
+    const { room: made } = live.of(noteId)
+    await made.webSocketClose(socket as unknown as WebSocket)
+
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('has the socket closed when the owner takes them out', async () => {
+    const socket = await open(writerId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect(socket.closed).toBe(true)
+    expect(socket.closedWith?.code).toBe(1008)
+    // And the row goes with it: a close this side asked for brings no handler.
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('and the owner’s own socket in the same room is left alone', async () => {
+    const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
+    const theirs = await open(ownerId)
+    const socket = await open(writerId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect(socket.closed).toBe(true)
+    expect(theirs.closed).toBe(false)
+  })
+
+  test('keeps the socket but stops writing when the role drops to reading', async () => {
+    const socket = await open(writerId)
+    const { room: made, state } = live.of(noteId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'read' },
+    })
+
+    expect(socket.closed).toBe(false)
+
+    // The same socket, the same room, and a line it types now changes nothing.
+    const device = new Device(socket)
+    await say(made, state, socket, syncStep1(device.doc))
+    await settle(made, state, [device])
+    await say(made, state, socket, device.type(OPENING.length, 'a line'))
+
+    await made.alarm()
+    const read = await call(env, `/v1/notes/${noteId}`, { token: owner })
+    expect(read.json.content).toBe(OPENING)
+  })
+
+  test('is a guest the same way, by the id the link handed out', async () => {
+    const { json } = await call<ShareView>(env, `/v1/spaces/${spaceId}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'write', mode: 'open' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+
+    const arrived = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      body: { device: 'Windows' },
+    })
+    const guestId = arrived.json.guest.id
+    const socket = await open(guestId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/guests/${guestId}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect(socket.closed).toBe(true)
+  })
+
+  test('is a person letting themselves out, on their other devices', async () => {
+    const socket = await open(writerId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/me`, { method: 'DELETE', token: writer })
+
+    expect(socket.closed).toBe(true)
+  })
+
+  test('and a room nobody is in is told without being woken', async () => {
+    // Nothing has ever opened this note, so there is no row and no object to ask.
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
   })
 })

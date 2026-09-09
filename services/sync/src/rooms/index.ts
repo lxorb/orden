@@ -102,6 +102,10 @@ rooms.get('/:noteId', async (context) => {
         // A reader is in the room and sees every keystroke; what the room does
         // with this is refuse the messages that would change the text.
         'x-nib-write': allowed.role === 'read' ? 'no' : 'yes',
+        // And who they are, as an id and nothing else. The room cannot look it
+        // up and never learns what it names; what it is for is being told that
+        // this one is not in the space any more. See `roomsRevoked`.
+        'x-nib-who': allowed.who,
       },
     }),
   )
@@ -118,3 +122,54 @@ rooms.get('/:noteId', async (context) => {
     webSocket: answer.webSocket,
   })
 })
+
+/** How many of somebody's open files one revocation reaches. Well past the tabs
+ *  anybody keeps, and a bound on how many objects one request wakes. */
+const MOST_OPEN = 50
+
+/** Somebody's access to a space has ended, or narrowed to reading, and they may
+ *  have its files open right now. The rooms are told inside the same request.
+ *
+ *  The checks a socket was let in on are made at the handshake and never again,
+ *  because a socket is not a request; so this is the other half of them. Which
+ *  rooms to tell comes from `room_sockets`, which the rooms themselves keep - the
+ *  runtime cannot be asked which objects are awake, and telling every note of the
+ *  space would wake thousands for the sake of the two somebody has open.
+ *
+ *  `role` is what they have left: `read` downgrades the sockets, `none` closes
+ *  them. `who` may be null, because a membership can name an address nobody has
+ *  proved yet and there is nothing of theirs to close. */
+export async function roomsRevoked(
+  env: Env,
+  spaceId: string,
+  who: string | null,
+  role: 'none' | 'read',
+): Promise<void> {
+  const namespace = env.ROOMS
+  if (!namespace || !who) return
+
+  const { results } = await env.DB.prepare(
+    'select note_id from room_sockets where space_id = ? and who = ? limit ?',
+  )
+    .bind(spaceId, who, MOST_OPEN)
+    .all<{ note_id: string }>()
+
+  await Promise.all(
+    results.map(async ({ note_id: noteId }) => {
+      const room = namespace.get(namespace.idFromName(noteId))
+
+      try {
+        await room.fetch(
+          new Request(`https://rooms.invalid/${noteId}`, {
+            headers: { 'x-nib-revoked': who, 'x-nib-role': role },
+          }),
+        )
+      } catch {
+        // A room that cannot be reached right now leaves a socket open on
+        // something that is no longer true, which the next handshake corrects.
+        // The membership is already gone either way, and an owner taking
+        // somebody out must not fail because an object is unwell.
+      }
+    }),
+  )
+}
