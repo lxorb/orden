@@ -32,7 +32,7 @@ import { prompt } from './prompt.svelte'
 import { newSpace, publishSpace, shareSpace } from './space-actions'
 import { canPublish } from './publishing.svelte'
 import { canShare } from './sharing.svelte'
-import { stageUpdate } from './updater'
+import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -717,7 +717,10 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'update',
       label: t('Check for updates'),
       disabled: !isDesktop,
-      run: () => void stageUpdate(),
+      // Through the store rather than straight to the updater, so somebody who
+      // asked is told: a look that downloads a version and says nothing is a
+      // command that appears to do nothing at all.
+      run: () => void updates.check(),
     },
     {
       id: 'sidebar',

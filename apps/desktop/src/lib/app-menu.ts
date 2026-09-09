@@ -45,7 +45,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
 import { newSpace } from './space-actions'
 import { invoke, isDesktop, openExternal } from './tauri'
-import { stageUpdate } from './updater'
+import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { openFile } from './open-file'
@@ -595,7 +595,9 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => (account.user ? void account.signOut() : (account.open = true)),
         },
         SPLIT,
-        ...(isDesktop ? [{ label: t('Check for updates'), run: () => void stageUpdate() }] : []),
+        // Through the store, so what it finds is offered rather than downloaded
+        // in silence; see updates.svelte.ts.
+        ...(isDesktop ? [{ label: t('Check for updates'), run: () => void updates.check() }] : []),
         { label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
         { label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
         { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },

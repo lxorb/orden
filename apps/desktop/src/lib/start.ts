@@ -66,7 +66,10 @@ export function start(): () => void {
   const stopWatching = watch.start()
 
   void guardClose()
-  void updates.check()
+
+  // A new version, now and every few hours after: an app somebody leaves open
+  // for a month would otherwise only ever hear about one at launch.
+  const stopLooking = updates.start()
 
   // The session first, because a link followed by somebody who is already
   // signed in walks straight through rather than asking for an address again.
@@ -76,6 +79,7 @@ export function start(): () => void {
     clearInterval(sweeper)
     stopRecovery()
     stopWatching()
+    stopLooking()
     stopListening?.()
   }
 }
