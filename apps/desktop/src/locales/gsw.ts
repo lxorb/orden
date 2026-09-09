@@ -107,6 +107,7 @@ export const gsw: Dictionary = {
   'Move up to {tag}': 'Uf {tag} verschiebe',
   'Remove from every note': 'Us allne Notize uusenäh',
   'That tag could not be renamed.': 'Das Schlagwort hät sich nöd umbenänne laa.',
+  'That icon could not be written.': 'Das Symbol hät sich nöd spichere laa.',
   'That tag could not be deleted.': 'Das Schlagwort hät sich nöd lösche laa.',
   'Show sidebar': 'Sitteleiste zeige',
   'Hide sidebar': 'Sitteleiste uusblände',

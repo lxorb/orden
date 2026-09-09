@@ -42,6 +42,7 @@
     if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
     return t('Settings')
   }
+
   /** The space being dragged, and the gap the line is drawn in. `null` for the
    *  gap under the last space, which is where a drop past the end lands. */
   let dragging = $state<string | null>(null)

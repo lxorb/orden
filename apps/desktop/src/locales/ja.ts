@@ -105,6 +105,7 @@ export const ja: Dictionary = {
   'Move up to {tag}': '{tag} に上げる',
   'Remove from every note': 'すべてのノートから外す',
   'That tag could not be renamed.': 'このタグの名前は変更できませんでした。',
+  'That icon could not be written.': 'このアイコンは保存できませんでした。',
   'That tag could not be deleted.': 'このタグは削除できませんでした。',
   'Show sidebar': 'サイドバーを表示',
   'Hide sidebar': 'サイドバーを隠す',

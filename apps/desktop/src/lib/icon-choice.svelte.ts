@@ -10,7 +10,7 @@
 
 /** A space keeps its icon on this device, under its id; a note keeps its own in
  *  its front matter, under its path. See note-icon.ts and workspace.setIcon. */
-export type IconTarget = { kind: 'space'; id: string } | { kind: 'note'; path: string }
+type IconTarget = { kind: 'space'; id: string } | { kind: 'note'; path: string }
 
 class IconChoice {
   /** What an icon is being chosen for, or null while the sheet is shut. */

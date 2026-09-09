@@ -105,6 +105,7 @@ export const fr: Dictionary = {
   'Move up to {tag}': 'Remonter vers {tag}',
   'Remove from every note': 'Retirer de toutes les notes',
   'That tag could not be renamed.': 'Ce mot-clé n’a pas pu être renommé.',
+  'That icon could not be written.': 'Cette icône n’a pas pu être enregistrée.',
   'That tag could not be deleted.': 'Ce mot-clé n’a pas pu être supprimé.',
   'Show sidebar': 'Afficher la barre latérale',
   'Hide sidebar': 'Masquer la barre latérale',

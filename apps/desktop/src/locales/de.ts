@@ -105,6 +105,7 @@ export const de: Dictionary = {
   'Move up to {tag}': 'Nach {tag} verschieben',
   'Remove from every note': 'Aus allen Notizen entfernen',
   'That tag could not be renamed.': 'Dieses Schlagwort liess sich nicht umbenennen.',
+  'That icon could not be written.': 'Dieses Symbol liess sich nicht speichern.',
   'That tag could not be deleted.': 'Dieses Schlagwort liess sich nicht löschen.',
   'Show sidebar': 'Seitenleiste zeigen',
   'Hide sidebar': 'Seitenleiste ausblenden',
