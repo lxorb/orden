@@ -1,13 +1,20 @@
 import { describe, expect, test } from 'vitest'
 import {
+  EMOJI_SET,
   iconValue,
   type IconNode,
   initial,
+  isIconTint,
   keyNamed,
+  LUCIDE,
+  rankIcons,
   readIcon,
+  readTint,
+  sameIcon,
   search,
   shapeFor,
   words,
+  writtenIcon,
 } from './icons'
 
 const NAMES = [
@@ -189,5 +196,164 @@ describe('the icon a note names', () => {
     for (const key of Object.keys(shapes)) {
       expect(keyNamed(shapes, iconValue(key)), key).toBe(key)
     }
+  })
+})
+
+/** A library standing in for Lucide's, for the blocks below: the names they name, and
+ *  nothing else, so a test says what it depends on. */
+const LIBRARY: Record<string, IconNode> = {
+  FileText: [['path', { d: 'M4 2h9l5 5v15H4z' }]],
+  Rocket: [['path', { d: 'M4 20l6-6' }]],
+  Link: [['path', { d: 'M9 15l6-6' }]],
+  List: [['path', { d: 'M8 6h13' }]],
+}
+
+/** One string says which of three sets an icon came from and which icon it is. What
+ *  is written has to read back as the icon it was chosen for, or an icon disappears
+ *  on the next open - and it has to stay something Obsidian's Iconize can show, which
+ *  is why a Lucide name has no prefix in front of it. */
+describe('what each kind of icon is written as', () => {
+  test('an emoji is the character, and nothing is added to it', () => {
+    expect(writtenIcon(EMOJI_SET, '🚀')).toBe('🚀')
+    expect(readIcon(writtenIcon(EMOJI_SET, '🚀'))).toEqual({ kind: 'emoji', text: '🚀' })
+  })
+
+  test('a line icon is Lucide s own plain name, with no set in front of it', () => {
+    expect(writtenIcon(LUCIDE, 'FileText')).toBe('file-text')
+    expect(readIcon('file-text')).toEqual({ kind: 'lucide', name: 'file-text' })
+  })
+
+  test('and anything else names its own set first', () => {
+    expect(writtenIcon('flat-color-icons', 'calendar')).toBe('flat-color-icons:calendar')
+    expect(readIcon('flat-color-icons:calendar')).toEqual({
+      kind: 'set',
+      set: 'flat-color-icons',
+      name: 'calendar',
+    })
+  })
+
+  /** A set this build has never heard of is a value a newer nib wrote. It reads as
+   *  what it says rather than as a Lucide name, so the row falls back to its kind's
+   *  mark instead of drawing the wrong picture. */
+  test('a set nothing here knows is still read as a set', () => {
+    expect(readIcon('some-future-set:thing')).toEqual({
+      kind: 'set',
+      set: 'some-future-set',
+      name: 'thing',
+    })
+  })
+
+  test('`lucide:` written by hand means what a bare name means', () => {
+    expect(readIcon('lucide:rocket')).toEqual({ kind: 'lucide', name: 'rocket' })
+  })
+
+  /** A colon in a name that is not a set's - a Windows path somebody pasted, a word
+   *  with a colon in it - is not a prefix: a set's id is lowercase letters. */
+  test('a value that only looks prefixed is a name', () => {
+    expect(readIcon('C:/notes/rocket')).toEqual({ kind: 'lucide', name: 'C:/notes/rocket' })
+    expect(readIcon('Note: a rocket')).toEqual({ kind: 'lucide', name: 'Note: a rocket' })
+  })
+
+  test('every value reads back as the icon it was written for', () => {
+    for (const [set, name] of [
+      [LUCIDE, 'FileText'],
+      [EMOJI_SET, '🚀'],
+      ['flat-color-icons', 'calendar'],
+    ] as const) {
+      const said = writtenIcon(set, name)
+      const read = readIcon(said)
+
+      expect(read, said).not.toBeNull()
+      if (read?.kind === 'emoji') expect(read.text).toBe(name)
+      else if (read?.kind === 'set') expect(read.name).toBe(name)
+      else expect(keyNamed(LIBRARY, read?.name ?? '')).toBe(name)
+    }
+  })
+})
+
+/** Obsidian's Iconize puts a two-letter pack prefix in front of every name it writes.
+ *  Nib ships one stroked set, so a name out of any pack is looked up in Lucide without
+ *  its prefix, which is the right answer far more often than nothing at all. */
+describe('a name a vault brought in from Iconize', () => {
+  test('finds the same icon whichever pack it came from', () => {
+    for (const name of ['LiRocket', 'FaRocket', 'RiRocket', 'BxRocket']) {
+      expect(keyNamed(LIBRARY, name), name).toBe('Rocket')
+    }
+  })
+
+  test('and a name that is a word beginning with a pack s letters is still itself', () => {
+    expect(keyNamed(LIBRARY, 'Link')).toBe('Link')
+    expect(keyNamed(LIBRARY, 'List')).toBe('List')
+  })
+})
+
+/** Two spellings of one icon are one icon, which is what lets the picker show the one
+ *  already worn as chosen however it was written. */
+describe('telling two written values apart', () => {
+  test('the same icon spelled three ways is the same icon', () => {
+    expect(sameIcon('FileText', 'file-text')).toBe(true)
+    expect(sameIcon('LiFileText', 'file-text')).toBe(false)
+    expect(sameIcon('file_text', 'file-text')).toBe(true)
+  })
+
+  test('and two different ones are not', () => {
+    expect(sameIcon('rocket', 'anchor')).toBe(false)
+    expect(sameIcon('rocket', null)).toBe(false)
+    expect(sameIcon(null, null)).toBe(true)
+  })
+
+  test('a set s own name is compared as it stands', () => {
+    expect(sameIcon('flat-color-icons:calendar', 'flat-color-icons:calendar')).toBe(true)
+    expect(sameIcon('flat-color-icons:calendar', 'calendar')).toBe(false)
+  })
+
+  test('and so is an emoji', () => {
+    expect(sameIcon('🚀', '🚀')).toBe(true)
+    expect(sameIcon('🚀', '⚓')).toBe(false)
+  })
+})
+
+/** The colour a stroked icon may be drawn in: one of the accents the app already
+ *  offers, by its own id, so a file that names one still means something in next
+ *  year's palette. */
+describe('the colour an icon is drawn in', () => {
+  test('is one of the accents, however it was capitalised', () => {
+    expect(readTint('violet')).toBe('violet')
+    expect(readTint(' Teal ')).toBe('teal')
+    expect(isIconTint('red')).toBe(true)
+  })
+
+  test('and nothing else is one', () => {
+    expect(readTint('chartreuse')).toBeNull()
+    expect(readTint('#ff0000')).toBeNull()
+    expect(readTint('')).toBeNull()
+    expect(readTint(null)).toBeNull()
+    expect(isIconTint('chartreuse')).toBe(false)
+  })
+})
+
+/** One search field over three sets that name things three different ways. */
+describe('searching a set whose names are already words', () => {
+  const emoji = [
+    { name: '🚀', words: 'rocket rocket' },
+    { name: '💰', words: 'money bag money bag' },
+    { name: '📅', words: 'calendar calendar' },
+  ]
+
+  test('finds one by the words it is called', () => {
+    expect(rankIcons(emoji, 'money')).toEqual(['💰'])
+    expect(rankIcons(emoji, 'rocket')).toEqual(['🚀'])
+  })
+
+  test('finds one by a word inside its name', () => {
+    expect(rankIcons(emoji, 'bag')).toEqual(['💰'])
+  })
+
+  test('and an empty query is the set s own order', () => {
+    expect(rankIcons(emoji, '')).toEqual(['🚀', '💰', '📅'])
+  })
+
+  test('nothing matching is nothing', () => {
+    expect(rankIcons(emoji, 'aardvark')).toEqual([])
   })
 })

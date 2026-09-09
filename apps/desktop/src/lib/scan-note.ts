@@ -9,6 +9,7 @@
 import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { readCanvas } from './canvas/format'
+import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 
 /** One link out of a note. Named for the shape below rather than for a caller:
  *  everything outside reads a whole note, never one of its links. */
@@ -37,6 +38,10 @@ export interface ScannedNote {
    *  null where it says nothing. Read in this pass rather than in one of its own:
    *  every row of the tree wants it, and the space has already been read here. */
   icon: string | null
+  /** The colour a stroked icon is drawn in, as written, or null. A second key
+   *  rather than part of the first so that another app reading the note still finds
+   *  the icon; see chosen-icon.ts. */
+  iconColor: string | null
   /** The other names the note gave itself, as its front matter lists them.
    *  Read on this pass for the same reason the icon is: the space is already
    *  being read. */
@@ -61,7 +66,8 @@ export function scanNote(path: string, content: string): ScannedNote {
     name: (path.split('/').pop() ?? path).replace(MARKDOWN, ''),
     headings: headingsOf(content),
     blocks: blockIds(content).map((one) => one.id),
-    icon: frontMatterValue(content, 'icon'),
+    icon: frontMatterValue(content, ICON_KEY),
+    iconColor: frontMatterValue(content, ICON_COLOUR_KEY),
     aliases: frontMatterList(content, 'aliases'),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
@@ -99,6 +105,7 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     // front matter: the same value a note keeps under `icon:`, read by the same
     // icons.ts. See canvas.ts for why it lives in the file rather than beside it.
     icon: canvas.icon ?? null,
+    iconColor: canvas.iconColor ?? null,
     // No other name for itself, though: an alias is something a link is written
     // with, and nothing writes `[[Board]]` for a canvas.
     aliases: [],

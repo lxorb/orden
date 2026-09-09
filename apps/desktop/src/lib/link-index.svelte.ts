@@ -168,6 +168,21 @@ class Links {
     return map
   })
 
+  /** And the colour each of those is drawn in, where one was chosen. A second map
+   *  rather than a second field on the first, because it is the rarer of the two:
+   *  most notes that wear an icon wear it in the plain foreground, and the map is
+   *  the size of what was chosen. */
+  private readonly tints = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const note of this.notes) {
+      if (note.icon && note.iconColor) map.set(note.path, note.iconColor)
+    }
+
+    return map
+  })
+
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
    *
@@ -178,6 +193,12 @@ class Links {
   iconOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
     return this.icons.get(relative) ?? null
+  }
+
+  /** The colour that icon is drawn in, or null for the plain foreground. */
+  tintOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.tints.get(relative) ?? null
   }
 
   /** Forgets everything, for a window with no space open. */

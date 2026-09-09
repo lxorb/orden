@@ -21,6 +21,10 @@ import { without, withOrWithout } from '../records'
 
 export const RECENT_KEY = 'nib:recent'
 export const ICONS_KEY = 'nib:icons'
+/** The colour each of those icons is drawn in. Its own key rather than a second
+ *  field in the one above, because that map is a map of strings that older builds
+ *  read and write back, and a value that is not a string is a value they drop. */
+const ICON_TINTS_KEY = 'nib:icon-tints'
 export const EXPANDED_KEY = 'nib:expanded'
 export const TAGS_KEY = 'nib:expanded-tags'
 
@@ -44,6 +48,10 @@ export class DeviceView {
    *  the ids being handed out again on the next launch. */
   icons = $state<Record<string, string>>({})
 
+  /** And the colour it is drawn in, where somebody chose one: the same keys, and
+   *  empty for every space that wears its icon in the plain foreground. */
+  iconTints = $state<Record<string, string>>({})
+
   constructor() {
     this.reread()
   }
@@ -66,6 +74,7 @@ export class DeviceView {
     this.expanded = recordOf(stored(EXPANDED_KEY), isBoolean)
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
     this.icons = recordOf(stored(ICONS_KEY), isString)
+    this.iconTints = recordOf(stored(ICON_TINTS_KEY), isString)
   }
 
   remember(path: string) {
@@ -113,8 +122,14 @@ export class DeviceView {
     return this.icons[root] ?? null
   }
 
-  setIcon(root: string, name: string | null) {
+  /** The colour that icon is drawn in, or null for the plain foreground. */
+  tintOf(root: string): string | null {
+    return this.iconTints[root] ?? null
+  }
+
+  setIcon(root: string, name: string | null, tint: string | null = null) {
     this.writeIcons(withOrWithout(this.icons, root, name))
+    this.writeTints(withOrWithout(this.iconTints, root, name === null ? null : tint))
   }
 
   /** Carries a chosen icon over to a renamed folder. Without this a rename
@@ -124,10 +139,18 @@ export class DeviceView {
     if (!icon || from === to) return
 
     this.writeIcons({ ...without(this.icons, from), [to]: icon })
+
+    const tint = this.iconTints[from]
+    if (tint) this.writeTints({ ...without(this.iconTints, from), [to]: tint })
   }
 
   private writeIcons(next: Record<string, string>) {
     this.icons = next
     localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+  }
+
+  private writeTints(next: Record<string, string>) {
+    this.iconTints = next
+    localStorage.setItem(ICON_TINTS_KEY, JSON.stringify(next))
   }
 }

@@ -153,6 +153,7 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     gone[id] = buried
   }
 
+  const kept = keptIcon(ours.icon ?? null, theirs.icon ?? null)
   const nodes = mergeList(ours.nodes, theirs.nodes, ours, theirs, gone)
   const held = new Set(nodes.map((node) => node.id))
 
@@ -172,7 +173,8 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     ink: mergeList(ours.ink, theirs.ink, ours, theirs, gone),
     at,
     gone,
-    icon: keptIcon(ours.icon ?? null, theirs.icon ?? null),
+    icon: kept,
+    iconColor: keptTint(ours, theirs, kept),
   }
 }
 
@@ -186,6 +188,19 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
  *  exactly what happens to a card deleted on one device and moved on the other,
  *  and for the same reason. Choosing an icon on an open canvas does not go through
  *  here at all; see `follow` in the app's canvas store. */
+/** The colour the merged file's icon is drawn in.
+ *
+ *  A colour belongs to the icon it colours, so only a side whose icon survived has
+ *  anything to say: the other side chose its colour for a different picture. Where
+ *  both named the same icon the same rule decides again, which is what keeps the two
+ *  devices agreeing. */
+function keptTint(ours: Canvas, theirs: Canvas, kept: string | null): string | null {
+  const mine = (ours.icon ?? null) === kept ? (ours.iconColor ?? null) : null
+  const yours = (theirs.icon ?? null) === kept ? (theirs.iconColor ?? null) : null
+
+  return keptIcon(mine, yours)
+}
+
 function keptIcon(ours: string | null, theirs: string | null): string | null {
   if (ours === null || ours === theirs) return theirs
   if (theirs === null) return ours

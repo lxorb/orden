@@ -57,6 +57,11 @@ pub struct Note {
     /// space is already reading every note, and reading them a second time for
     /// one line of metadata would be a second pass over the disk.
     icon: Option<String>,
+    /// The colour that icon is drawn in, as written: an accent's own id, or None.
+    /// A second key rather than part of the first, so another app reading the note
+    /// still finds the icon; see icons.ts in the app.
+    #[serde(rename = "iconColor")]
+    icon_color: Option<String>,
     /// The other names the note gave itself, as its front matter lists them. On
     /// the same pass and for the same reason as the icon: the space is already
     /// being read, and a link may use any of them.
@@ -102,6 +107,7 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
             blocks: block_ids_in(&body),
             links: links_in(&body),
             icon: front_matter_value(&body, "icon"),
+            icon_color: front_matter_value(&body, "icon-color"),
             aliases: front_matter_list(&body, "aliases"),
         });
     }
@@ -151,6 +157,8 @@ struct CanvasFile {
 struct CanvasNib {
     #[serde(default)]
     icon: Option<String>,
+    #[serde(default, rename = "iconColor")]
+    icon_color: Option<String>,
 }
 
 /// One card, as far as this cares: the four kinds the spec names share these
@@ -161,6 +169,14 @@ struct CanvasCard {
     kind: Option<String>,
     file: Option<String>,
     subpath: Option<String>,
+}
+
+/// A value with the spaces trimmed off, or None where nothing is left of it. What
+/// the words themselves may say is read in the app's icons.ts.
+fn said(value: Option<String>) -> Option<String> {
+    value
+        .map(|one| one.trim().to_string())
+        .filter(|one| !one.is_empty())
 }
 
 /// A canvas as the link index sees it: the icon its `nib` key carries, and one
@@ -210,11 +226,8 @@ fn canvas_note(relative: String, body: &str) -> Note {
         links,
         // A value that is nothing but spaces is not an icon; what the words
         // themselves may say is read in the app's icons.ts.
-        icon: read
-            .nib
-            .icon
-            .map(|said| said.trim().to_string())
-            .filter(|said| !said.is_empty()),
+        icon: said(read.nib.icon),
+        icon_color: said(read.nib.icon_color),
         aliases: Vec::new(),
     }
 }

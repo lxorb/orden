@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   frontMatter,
   frontMatterEdit,
+  frontMatterEdits,
   frontMatterList,
   frontMatterValue,
   stripFrontMatter,
@@ -153,5 +154,72 @@ describe('taking a key away', () => {
       '---\r\ntitle: Plan\r\n---\r\nwords',
     )
     expect(applied('---\r\nicon: rocket\r\n---\r\n\r\n# Plan\r\n', 'icon')).toBe('# Plan\r\n')
+  })
+})
+
+/** Several keys in one write. What it is for: an icon and the colour it is drawn in
+ *  are two keys so that another app reading the note still finds the icon, and one
+ *  write so that choosing an icon is one thing to undo. */
+describe('setting several keys at once', () => {
+  const applied = (source: string, keys: readonly (readonly [string, string | null])[]) => {
+    const edit = frontMatterEdits(source, keys)
+    return edit === null ? source : source.slice(0, edit.from) + edit.insert + source.slice(edit.to)
+  }
+
+  test('opens a block and writes both lines', () => {
+    expect(
+      applied('# Plan\n', [
+        ['icon', 'rocket'],
+        ['icon-color', 'violet'],
+      ]),
+    ).toBe('---\nicon: rocket\nicon-color: violet\n---\n# Plan\n')
+  })
+
+  test('joins a block that was there, leaving its own keys alone', () => {
+    expect(
+      applied('---\ntitle: Plan\n---\n\nwords\n', [
+        ['icon', 'rocket'],
+        ['icon-color', 'violet'],
+      ]),
+    ).toBe('---\ntitle: Plan\nicon: rocket\nicon-color: violet\n---\n\nwords\n')
+  })
+
+  test('replaces one and adds the other', () => {
+    expect(
+      applied('---\nicon: rocket\n---\nwords\n', [
+        ['icon', 'anchor'],
+        ['icon-color', 'teal'],
+      ]),
+    ).toBe('---\nicon: anchor\nicon-color: teal\n---\nwords\n')
+  })
+
+  test('takes both away, and the block with them where it held nothing else', () => {
+    expect(
+      applied('---\nicon: rocket\nicon-color: violet\n---\n\n# Plan\n', [
+        ['icon', null],
+        ['icon-color', null],
+      ]),
+    ).toBe('# Plan\n')
+  })
+
+  test('is one edit however many keys moved', () => {
+    const edit = frontMatterEdits('---\ntitle: Plan\n---\nwords\n', [
+      ['icon', 'rocket'],
+      ['icon-color', 'violet'],
+    ])
+
+    // The words below the block are outside it, which is what keeps a caret in them.
+    expect(edit).not.toBeNull()
+    expect(edit?.to).toBeLessThan('---\ntitle: Plan\n---\n'.length)
+  })
+
+  test('and no edit at all where the note already says all of it', () => {
+    expect(
+      frontMatterEdits('---\nicon: rocket\nicon-color: violet\n---\n', [
+        ['icon', 'rocket'],
+        ['icon-color', 'violet'],
+      ]),
+    ).toBeNull()
+    expect(frontMatterEdits('# Plan\n', [['icon', null]])).toBeNull()
   })
 })

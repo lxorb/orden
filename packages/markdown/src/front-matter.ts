@@ -17,6 +17,8 @@
  *  `paper` under `export:` is not the note's paper, and nothing here pretends
  *  otherwise. */
 
+import { oneEdit, type TextEdit } from './edits'
+
 /** Where a note's front matter sits.
  *
  *  All four offsets, because the four questions differ: what the block says is
@@ -192,6 +194,33 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
 /** A value with the quotes YAML would take off taken off. */
 function unquoted(value: string): string {
   return QUOTED.exec(value)?.[2] ?? value
+}
+
+/** One edit that sets several top-level keys at once, in the order given, or null
+ *  where the note already says all of it.
+ *
+ *  One edit and not several, because the note is written once: two edits into the
+ *  same block would have to be given in the coordinates of the text before either of
+ *  them, and the second key's line moves when the first one is inserted. So the keys
+ *  are set in turn and what comes back is the one span that changed - which for a
+ *  note is the block at the top of it, leaving every caret in the words below where
+ *  its reader left it.
+ *
+ *  What two keys at once is for: an icon and the colour it is drawn in. They are two
+ *  keys rather than one value so that another app reading the note still finds the
+ *  icon, and one write rather than two so that choosing an icon is one thing to undo. */
+export function frontMatterEdits(
+  source: string,
+  keys: readonly (readonly [string, string | null])[],
+): TextEdit | null {
+  let after = source
+
+  for (const [key, value] of keys) {
+    const edit = frontMatterEdit(after, key, value)
+    if (edit) after = after.slice(0, edit.from) + edit.insert + after.slice(edit.to)
+  }
+
+  return oneEdit(source, after)
 }
 
 /** One edit that sets a top-level key to `value`, or takes the key away when it

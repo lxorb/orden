@@ -11,6 +11,7 @@
     "./chart": "./src/chart.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
+    "./edits": "./src/edits.ts",
     "./front-matter": "./src/front-matter.ts",
     "./icons": "./src/icons.ts",
     "./from-html": "./src/from-html.ts",

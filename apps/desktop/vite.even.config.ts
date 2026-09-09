@@ -55,6 +55,14 @@ const LEFT_OUT = new Set([
   // because the worker is asked for by URL.
   'pdfjs-dist',
   'pdfjs-dist/build/pdf.worker.min.mjs?url',
+  // The icon sets that are data rather than drawing: the emoji index and the
+  // coloured set. Half a megabyte of JSON between them, for a picker whose one job
+  // on a phone is to put a mark on a folder, and the glasses draw a row as words
+  // with no mark in it at all. The stroked set is still here, because it is what the
+  // interface itself is drawn in. See icon-sets.ts, which says what each set is for,
+  // and icon-library.svelte.ts, which says so calmly when one is not here.
+  'unicode-emoji-json/data-by-group.json',
+  '@iconify-json/flat-color-icons/icons.json',
 ])
 
 /** What a module that is not here answers with.

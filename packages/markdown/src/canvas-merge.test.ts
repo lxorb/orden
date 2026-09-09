@@ -238,6 +238,24 @@ describe('the icon two copies of a canvas wear', () => {
     expect(merged(theirs, ours, 1000).icon).toBe('anchor')
   })
 
+  test('and its colour comes with it, from the side whose icon was kept', () => {
+    const ours = plane({ icon: 'anchor', iconColor: 'teal' })
+    const theirs = plane({ icon: 'rocket', iconColor: 'violet' })
+
+    // `anchor` sorts first, so both devices keep it - and teal with it, because
+    // violet was chosen for a picture that is no longer there.
+    expect(merged(ours, theirs, 1000)).toMatchObject({ icon: 'anchor', iconColor: 'teal' })
+    expect(merged(theirs, ours, 1000)).toMatchObject({ icon: 'anchor', iconColor: 'teal' })
+  })
+
+  test('a colour on one side of the same icon is kept', () => {
+    const ours = plane({ icon: 'rocket', iconColor: 'violet' })
+    const theirs = plane({ icon: 'rocket' })
+
+    expect(merged(ours, theirs, 1000).iconColor).toBe('violet')
+    expect(merged(theirs, ours, 1000).iconColor).toBe('violet')
+  })
+
   /** A canvas nobody has drawn on is not a truncated file, and the icon somebody
    *  chose for it is a reason to keep it rather than take the other side whole. */
   test('survives a merge with a copy that has cards and no icon', () => {

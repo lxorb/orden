@@ -130,18 +130,20 @@ describe('the mark a file or folder chose for itself', () => {
   })
 
   test('and the kind s own mark is what a row falls back to', () => {
-    // Which covers all three of: a note that chose nothing, a caller that knows
-    // no path, and a name the icon set does not hold.
-    expect(source).toContain('?? MARKS[mark]')
+    // Which covers all four of: a row that chose nothing, a caller that knows no
+    // path, a name no set holds, and the moment before a set has arrived.
+    expect(source).toContain('fallback={MARKS[mark]}')
   })
 
-  test('an emoji is drawn at the size the drawn marks are, on both kinds of screen', () => {
+  /** One box, whichever of the three kinds is in it, and one size in it: `--icon-md`
+   *  is 16px under a pointer and `--touch-mark` under a thumb, which the tokens
+   *  restate. The font size is there as well as the box because an emoji is type and
+   *  a glyph has no width of its own to be stretched; see Icon.svelte. */
+  test('every kind of icon is drawn in one box, at one size', () => {
     const style = source.slice(source.indexOf('<style>'))
-    const emoji = style.slice(style.indexOf('.emoji {'))
 
-    // One box for both, and one size in it: `--icon-md` is 16px under a pointer
-    // and `--touch-mark` under a thumb, which the tokens restate.
-    expect(emoji).toContain('font-size: var(--icon-md)')
     expect(style).toContain('width: var(--icon-md)')
+    expect(style).toContain('height: var(--icon-md)')
+    expect(style).toContain('font-size: var(--icon-md)')
   })
 })

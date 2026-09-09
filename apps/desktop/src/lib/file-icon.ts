@@ -20,33 +20,46 @@
  *  See tag-edits.ts, which is the same shape of change. */
 
 import { canvasIconEdit } from '@nib/markdown/canvas'
-import { frontMatterEdit } from '@nib/markdown/front-matter'
+import { frontMatterEdits } from '@nib/markdown/front-matter'
 import { isCanvasTarget } from '@nib/markdown/links'
-import { iconValue } from './icons'
+import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
 import { reverse } from './search/replace'
 import { settings } from './settings.svelte'
 import { workspace } from './workspace.svelte'
 
-/** Writes the icon a note or a canvas wears, or takes it away when `name` is
- *  null.
+/** Writes the icon a note or a canvas wears, or takes it away when `value` is null.
  *
- *  `name` is the library's own name for the icon, which is what the picker offers;
- *  the file is written with Lucide's plain spelling of it. Nothing is written
- *  where the file already says that, so choosing the icon it already wears costs
- *  no file, no snapshot and no undo step.
+ *  `value` is the written form the picker composed - an emoji, a Lucide name, or
+ *  `set:name`; see `writtenIcon` in icons.ts. `tint` is the colour a stroked icon is
+ *  drawn in, and goes in beside it under a key of its own so that another app reading
+ *  the file still finds the icon. Both in one write, so choosing an icon is one thing
+ *  to undo.
+ *
+ *  Nothing is written where the file already says that, so choosing the icon it
+ *  already wears costs no file, no snapshot and no undo step.
  *
  *  A file that cannot be written says so, the way renaming a tag does: this is
  *  somebody's file, and an icon that silently did not arrive would look like the
  *  picker being broken. */
-export async function setFileIcon(path: string, name: string | null): Promise<void> {
+export async function setFileIcon(
+  path: string,
+  value: string | null,
+  tint: string | null = null,
+): Promise<void> {
   const before = await workspace.noteText(path)
   if (before === null) return
 
-  const value = name === null ? null : iconValue(name)
+  // A colour with no icon to colour is not a colour, and a tint this build has never
+  // heard of is not one either: both come out as no key at all.
+  const colour = value === null ? null : readTint(tint)
+
   const edit = isCanvasTarget(path)
-    ? canvasIconEdit(before, value)
-    : frontMatterEdit(before, 'icon', value)
+    ? canvasIconEdit(before, value, colour)
+    : frontMatterEdits(before, [
+        [ICON_KEY, value],
+        [ICON_COLOUR_KEY, colour],
+      ])
   if (!edit) return
 
   const after = before.slice(0, edit.from) + edit.insert + before.slice(edit.to)

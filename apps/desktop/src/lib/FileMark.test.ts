@@ -13,9 +13,11 @@ import { render } from 'svelte/server'
  *  know and this component's not to, so the reader is stood in for here. */
 
 const chosen: Record<string, string | null> = {}
+const tints: Record<string, string | null> = {}
 
 vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
+  chosenTint: (path: string) => tints[path] ?? null,
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
@@ -24,9 +26,9 @@ const { MARKS } = await import('./file-mark')
 type Mark = keyof typeof MARKS
 const FileMark = (await import('./FileMark.svelte')).default
 
-/** The set, in place before anything is drawn. In the app it arrives a moment
- *  after the first paint and the rows redraw themselves; there is no moment to
- *  wait for here, and what the fallback looks like is the test below it. */
+/** The stroked set, in place before anything is drawn. In the app it arrives a moment
+ *  after the first paint and the rows redraw themselves; there is no moment to wait
+ *  for here, and what the fallback looks like is the test below it. */
 iconLibrary.set = await loadIcons()
 
 /** The `d` of every stroke an icon is made of, which is what tells two drawings
@@ -98,6 +100,34 @@ describe('a row that chose an icon of its own', () => {
       expect(body).toContain('🚀')
       expect(body).not.toContain('<svg')
     }
+  })
+})
+
+describe('an icon with a colour on it', () => {
+  test('is drawn in that colour rather than in the foreground', () => {
+    chosen.Work = 'rocket'
+    tints.Work = 'violet'
+    const body = drawn('folder', 'Work')
+
+    // The accent's own shade for this scheme; see accents.ts.
+    expect(body).toMatch(/style="[^"]*color:/)
+    tints.Work = null
+  })
+
+  test('and a colour nothing here knows is no colour at all', () => {
+    chosen.Work = 'rocket'
+    tints.Work = 'chartreuse'
+    expect(drawn('folder', 'Work')).not.toMatch(/style="[^"]*color:/)
+    tints.Work = null
+  })
+
+  /** A picture is already a picture in its own colours, and painting over one would
+   *  be painting over somebody's drawing. */
+  test('an emoji takes none', () => {
+    chosen.Work = '🚀'
+    tints.Work = 'violet'
+    expect(drawn('folder', 'Work')).not.toMatch(/style="[^"]*color:/)
+    tints.Work = null
   })
 })
 

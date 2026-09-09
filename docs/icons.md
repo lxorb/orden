@@ -1,0 +1,94 @@
+# Icons
+
+Anything in the file list can wear an icon: a note, a canvas, a folder, and the
+space itself in the rail. One picker chooses it, one component draws it, and one
+string says what it is.
+
+## Where each one is kept
+
+A chosen icon belongs to the thing that wears it, so it is kept in the only place
+that thing has.
+
+| Wearer | Where | Why there |
+| --- | --- | --- |
+| a note | `icon:` in its own front matter | The one place a markdown file has for metadata. It travels with the file into another vault, and Obsidian's Iconize plugin reads the same key. |
+| a canvas | `nib.icon` in the `.canvas` JSON | A canvas has no front matter. `nib` is the one top-level key the JSON Canvas spec leaves for what is ours, and the ink already lives there; under it the file is the spec exactly. |
+| a folder | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |
+| a space | this device's own store, keyed by folder | It was a device's choice before it was the account's, and it still is on a machine that is not signed in. |
+
+Three ways of giving a folder an icon were weighed. A dotfile inside the folder
+would sync for free and survive a move without being told, but it puts a file in
+every folder somebody marked and every other tool that walks the vault sees it. A
+`folder.md` index note is Obsidian's folder-note convention, and until notes could
+hold notes there were no such notes to hang it on. The map is what is left, and it
+costs one obligation: a rename, a move or a delete has to rewrite the key, which is
+`moved` and `gone` in `workspace/folder-icons.svelte.ts`.
+
+A folder's map rides the space rather than the account's settings blob, for the
+reason its bookmarks do: it points inside one space, so it goes with the space when
+it is deleted and comes back when it is restored. `PUT /v1/spaces/:id/icons` writes
+it and `GET /v1/spaces` carries it, so a machine reads it in the listing it already
+fetches rather than one request per space.
+
+## What a value says
+
+One string, three things it can be:
+
+- an emoji, written as the character: `🚀`
+- a name on its own, which is Lucide's: `file-text`
+- `set:name` for any other set: `flat-color-icons:calendar`
+
+Lucide has no prefix because a bare name has always meant Lucide and files already
+say it that way. A set this build has never heard of reads as a set rather than as a
+name, so the row falls back to its kind's mark instead of drawing the wrong picture.
+
+Read more widely than written. Obsidian's Iconize puts a two-letter pack prefix in
+front of every name it writes - `LiFileText`, `FaRocket` - and nib looks any of them
+up in Lucide without the prefix, which is the right answer far more often than
+nothing at all. Letters and digits alone decide, so `FileText`, `file-text` and
+`file_text` are one icon.
+
+The colour a stroked icon is drawn in is a second value, never folded into the
+first: a note keeps it under `icon-color:`, a canvas under `nib.iconColor`. Two keys
+so that an app reading the note still finds the icon and simply ignores the colour.
+The value is one of the app's own accents by its id, so it has a shade for black and
+one for white and still means something in next year's palette. An emoji and a
+coloured drawing take no colour: they are already pictures in their own colours.
+
+## The sets
+
+| Set | What it is for | Size | Licence |
+| --- | --- | --- | --- |
+| Emoji | The whole Unicode set, drawn by the platform's own colour font. The breadth is the point, and the drawings cost nothing to ship. | 422 KB of index (`unicode-emoji-json`, MIT) | the font is the platform's; the index is MIT |
+| Lucide | The stroked set the interface itself is drawn in, so a chosen icon sits beside the app's own marks without looking borrowed. The one set a colour applies to. | already in the app | ISC |
+| Flat Color Icons | Everyday objects drawn flat and in colour: a calendar, a graph, a suitcase. Where Lucide is a line and an emoji is a face, this is the drawing you would put on a filing cabinet. | 166 KB, 329 icons | MIT, by Icons8 |
+
+Two coloured sets with real breadth were weighed and refused on size: Twemoji
+(10.5 MB, CC-BY-4.0) and Fluent Emoji Flat (9.2 MB, MIT) both redraw in colour the
+emoji the platform font already draws in colour, and Iconify's brand set (7.6 MB,
+CC0-1.0) is seven megabytes of other people's trademarks.
+
+Every set is fetched the first time somebody opens its tab, once however often it is
+asked for, and out of the app's own build - never from a CDN, which would have a
+private notes app phone a stranger to draw a folder. The two that are data rather
+than drawing are left out of the Even Realities plugin build: half a megabyte of
+JSON for a picker whose one job on a phone is to put a mark on a folder, while the
+glasses draw a row as words with no mark in it. A set that is not in a build says so
+once rather than loading for ever.
+
+## What draws them
+
+`Icon.svelte` draws all three kinds and nothing else does, because there are three
+honest ways to put a picture on screen and they are not one thing: a character the
+font draws, a stroke this app dresses itself, and somebody else's finished drawing
+that has to be left exactly as it was. The box is the caller's - `--icon-md` for a
+mark in a row, `--icon-rail` for a square in the rail - and so is the colour, since
+`stroke` inherits and a list that says the row it is on wears the accent says it once
+on the box.
+
+`FileMark.svelte` is that plus a fallback: the mark the kind wears, for a row that
+chose nothing, a caller that knows a name but no path, a name no set holds, and the
+moment before a set has arrived. It reads the icon off the path rather than being
+handed one, which is why a folder and a canvas got icons for nothing the day the
+stores learned to keep them: the tree, the tab strip, a search hit, a bookmark and
+the Move sheet all draw this component.

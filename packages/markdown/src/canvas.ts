@@ -25,6 +25,8 @@
  *  order the spec lists them and leaves out every one that is absent, so a
  *  canvas that has not changed is written back byte for byte. */
 
+import { oneEdit, type TextEdit } from './edits'
+
 /** A colour, as the spec spells it: one of six presets named `"1"` to `"6"`, or
  *  a hex string. The presets are what Obsidian writes, so a canvas coloured in
  *  either app keeps its colours in the other. */
@@ -224,10 +226,16 @@ export interface Canvas {
    *  they say nothing about the icon, which is different from saying there is
    *  none. A canvas read from a file always says one way or the other. */
   icon?: string | null
+  /** The colour a stroked icon is drawn in, as an accent's own id, or null for the
+   *  plain foreground. Beside the icon rather than folded into it for the reason a
+   *  note keeps `icon-color:` on its own line: the icon has to stay a value another
+   *  app can read. Meaningless for an emoji or a coloured drawing, which have their
+   *  own colours; see icons.ts in the app. */
+  iconColor?: string | null
 }
 
 export function emptyCanvas(): Canvas {
-  return { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null }
+  return { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
 }
 
 /** A colour the spec would accept, or undefined. Anything else is dropped rather
@@ -590,6 +598,7 @@ export function readCanvas(text: string): Canvas {
     at: readTimes(nib.at),
     gone: readTimes(nib.gone),
     icon: iconWritten(nib.icon),
+    iconColor: iconWritten(nib.iconColor),
   }
 }
 
@@ -710,6 +719,7 @@ export function writeCanvas(canvas: Canvas): string {
     // First, because it is the one key in here a person would ever open the file
     // to read: what the row in the file list wears.
     ...(canvas.icon ? { icon: canvas.icon } : {}),
+    ...(canvas.icon && canvas.iconColor ? { iconColor: canvas.iconColor } : {}),
     ...(ink.length ? { ink } : {}),
     ...(shapes.length ? { shapes: shapes.map(writtenShape) } : {}),
     ...(order.length ? { order } : {}),
@@ -751,13 +761,15 @@ export function blankCanvas(): string {
 export function canvasIconEdit(
   text: string,
   name: string | null,
-): { from: number; to: number; insert: string } | null {
+  tint: string | null = null,
+): TextEdit | null {
   if (text.trim() && !isCanvasJson(text)) return null
 
   const canvas = readCanvas(text)
-  if (canvas.icon === name) return null
+  const wanted = tint === null || name === null ? null : tint
+  if (canvas.icon === name && (canvas.iconColor ?? null) === wanted) return null
 
-  return oneEdit(text, writeCanvas({ ...canvas, icon: name }))
+  return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
 }
 
 function isCanvasJson(text: string): boolean {
@@ -766,29 +778,6 @@ function isCanvasJson(text: string): boolean {
   } catch {
     return false
   }
-}
-
-/** The single span two texts differ over: everything they share at the front and
- *  at the back taken off. */
-function oneEdit(
-  before: string,
-  after: string,
-): { from: number; to: number; insert: string } | null {
-  if (before === after) return null
-
-  let from = 0
-  while (from < before.length && from < after.length && before[from] === after[from]) from++
-
-  let back = 0
-  while (
-    back < before.length - from &&
-    back < after.length - from &&
-    before[before.length - 1 - back] === after[after.length - 1 - back]
-  ) {
-    back++
-  }
-
-  return { from, to: before.length - back, insert: after.slice(from, after.length - back) }
 }
 
 /** How long an id is. Sixteen hex characters is what Obsidian writes, so a

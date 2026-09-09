@@ -75,6 +75,11 @@ export function folderIconMap(value: unknown): Record<string, string> {
 /** One space's map, and which account it has already been reconciled with. */
 interface Kept {
   icons: Record<string, string>
+  /** The colour each stroked icon is drawn in, where one was chosen. A second map
+   *  because it is the rarer of the two, and because the account holds the icons and
+   *  not yet the colours: a folder's colour is this device's until there is a column
+   *  for it, the way a space's icon was until there was one. */
+  colors: Record<string, string>
   /** The account this map has been folded into, or null while there was none. A
    *  different account signing in on this machine merges again; the same one
    *  signing in twice does not, or an icon it took away on another machine would
@@ -91,6 +96,7 @@ function read(): Record<string, Kept> {
     if (!isRecord(one)) continue
     out[root] = {
       icons: folderIconMap(one.icons),
+      colors: folderIconMap(one.colors),
       account: isString(one.account) ? one.account : null,
     }
   }
@@ -115,6 +121,10 @@ export class FolderIcons {
     return this.spaces[root]?.icons ?? {}
   }
 
+  private colorsOf(root: string): Record<string, string> {
+    return this.spaces[root]?.colors ?? {}
+  }
+
   /** What the folder at this path wears, as written, or null where it wears
    *  nothing.
    *
@@ -129,8 +139,17 @@ export class FolderIcons {
     return this.of(root)[relativeTo(root, path)] ?? null
   }
 
-  /** Writes the icon a folder wears, or takes it away when `name` is null. */
-  set(path: string, name: string | null) {
+  /** The colour that folder's icon is drawn in, or null for the plain foreground. */
+  tintOf(path: string): string | null {
+    const root = this.root()
+    if (root === null) return null
+
+    return this.colorsOf(root)[relativeTo(root, path)] ?? null
+  }
+
+  /** Writes the icon a folder wears and the colour it is drawn in, or takes both
+   *  away when `name` is null. */
+  set(path: string, name: string | null, tint: string | null = null) {
     const root = this.root()
     if (root === null) return
 
@@ -138,10 +157,11 @@ export class FolderIcons {
     if (!insideSpace(at)) return
 
     const held = this.of(root)
-    if ((held[at] ?? null) === name) return
+    const colour = name === null ? null : tint
+    if ((held[at] ?? null) === name && (this.colorsOf(root)[at] ?? null) === colour) return
     if (name !== null && Object.keys(held).length >= MOST_FOLDER_ICONS && !(at in held)) return
 
-    this.put(root, withOrWithout(held, at, name))
+    this.put(root, withOrWithout(held, at, name), withOrWithout(this.colorsOf(root), at, colour))
   }
 
   /** A folder that has been renamed or moved, with everything under it.
@@ -156,18 +176,22 @@ export class FolderIcons {
 
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
-    const held = this.of(root)
 
-    const next: Record<string, string> = {}
-    let touched = false
+    const moved = (held: Record<string, string>) => {
+      const next: Record<string, string> = {}
+      let touched = false
 
-    for (const [path, name] of Object.entries(held)) {
-      const under = path === was || path.startsWith(`${was}/`)
-      next[under ? now + path.slice(was.length) : path] = name
-      touched ||= under
+      for (const [path, name] of Object.entries(held)) {
+        const under = path === was || path.startsWith(`${was}/`)
+        next[under ? now + path.slice(was.length) : path] = name
+        touched ||= under
+      }
+
+      return touched ? next : null
     }
 
-    if (touched) this.put(root, next)
+    const icons = moved(this.of(root))
+    if (icons) this.put(root, icons, moved(this.colorsOf(root)) ?? this.colorsOf(root))
   }
 
   /** A folder that has gone, with everything under it. */
@@ -177,11 +201,15 @@ export class FolderIcons {
 
     const at = relativeTo(root, path)
     const held = this.of(root)
-    const next = Object.fromEntries(
-      Object.entries(held).filter(([one]) => one !== at && !one.startsWith(`${at}/`)),
-    )
+    const kept = (map: Record<string, string>) =>
+      Object.fromEntries(
+        Object.entries(map).filter(([one]) => one !== at && !one.startsWith(`${at}/`)),
+      )
 
-    if (Object.keys(next).length !== Object.keys(held).length) this.put(root, next)
+    const next = kept(held)
+    if (Object.keys(next).length !== Object.keys(held).length) {
+      this.put(root, next, kept(this.colorsOf(root)))
+    }
   }
 
   /** A space folder that has been renamed, which re-keys the whole map at once:
@@ -221,16 +249,22 @@ export class FolderIcons {
 
     if (held && !first && same(held.icons, icons)) return
 
-    this.spaces = { ...this.spaces, [root]: { icons, account: accountId } }
+    this.spaces = {
+      ...this.spaces,
+      // The colours stay: the account does not hold them, so it has nothing to say
+      // about them, and a folder whose icon came down from the account simply has
+      // none until somebody here chooses one.
+      [root]: { icons, colors: held?.colors ?? {}, account: accountId },
+    }
     this.write()
 
     if (first && !same(icons, account)) void this.push(root)
   }
 
-  private put(root: string, icons: Record<string, string>) {
+  private put(root: string, icons: Record<string, string>, colors: Record<string, string>) {
     this.spaces = {
       ...this.spaces,
-      [root]: { icons, account: this.spaces[root]?.account ?? null },
+      [root]: { icons, colors, account: this.spaces[root]?.account ?? null },
     }
     this.write()
     void this.push(root)

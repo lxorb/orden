@@ -98,14 +98,14 @@ function fresh() {
 describe('the icon a note is given', () => {
   test('opens a front matter block on a note that had none', async () => {
     fresh()
-    await setFileIcon('/space/plain.md', 'Rocket')
+    await setFileIcon('/space/plain.md', 'rocket')
 
     expect(written('/space/plain.md')).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
   })
 
-  test('joins the keys a note already had, in Lucide s own spelling', async () => {
+  test('joins the keys a note already had', async () => {
     fresh()
-    await setFileIcon('/space/titled.md', 'FileText')
+    await setFileIcon('/space/titled.md', 'file-text')
 
     expect(written('/space/titled.md')).toBe(
       '---\ntitle: Titled\nicon: file-text\n---\n\n# Titled\n',
@@ -114,14 +114,14 @@ describe('the icon a note is given', () => {
 
   test('replaces the one that was there', async () => {
     fresh()
-    await setFileIcon('/space/marked.md', 'Anchor')
+    await setFileIcon('/space/marked.md', 'anchor')
 
     expect(written('/space/marked.md')).toBe('---\nicon: anchor\n---\n\n# Marked\n')
   })
 
   test('keeps the words that were there before it', async () => {
     fresh()
-    await setFileIcon('/space/marked.md', 'Compass')
+    await setFileIcon('/space/marked.md', 'compass')
 
     const touched = sent.filter((one) => one.path === '/space/marked.md')
     expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
@@ -130,17 +130,17 @@ describe('the icon a note is given', () => {
 
   test('and is one thing to undo', async () => {
     fresh()
-    await setFileIcon('/space/marked.md', 'Feather')
+    await setFileIcon('/space/marked.md', 'feather')
 
     expect(workspace.undone.stack).toHaveLength(1)
   })
 
   test('choosing the icon a note already wears writes nothing at all', async () => {
     fresh()
-    await setFileIcon('/space/marked.md', 'Feather')
+    await setFileIcon('/space/marked.md', 'feather')
     sent.length = 0
 
-    await setFileIcon('/space/marked.md', 'Feather')
+    await setFileIcon('/space/marked.md', 'feather')
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 })
@@ -148,7 +148,7 @@ describe('the icon a note is given', () => {
 describe('taking a note s icon away', () => {
   test('takes the key with it', async () => {
     fresh()
-    await setFileIcon('/space/titled.md', 'Rocket')
+    await setFileIcon('/space/titled.md', 'rocket')
     await setFileIcon('/space/titled.md', null)
 
     expect(written('/space/titled.md')).toBe('---\ntitle: Titled\n---\n\n# Titled\n')
@@ -177,7 +177,7 @@ describe('a note that is open while its icon changes', () => {
   test('takes the change in its own document, and stays saved', async () => {
     fresh()
     await workspace.open('/space/plain.md')
-    await setFileIcon('/space/plain.md', 'Rocket')
+    await setFileIcon('/space/plain.md', 'rocket')
 
     const tab = workspace.tabs.find((one) => one.path === '/space/plain.md')
     expect(tab?.doc).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
@@ -187,7 +187,7 @@ describe('a note that is open while its icon changes', () => {
   test('and undoing puts the note back the way its reader had it', async () => {
     fresh()
     await workspace.open('/space/titled.md')
-    await setFileIcon('/space/titled.md', 'Rocket')
+    await setFileIcon('/space/titled.md', 'rocket')
     await workspace.undoFileAction()
 
     expect(workspace.tabs.find((one) => one.path === '/space/titled.md')?.doc).toBe(
@@ -202,16 +202,16 @@ describe('a note that is open while its icon changes', () => {
 describe('the icon a canvas is given', () => {
   const board = (path: string) => readCanvas(written(path) ?? '')
 
-  test('goes under the key that carries the ink, in Lucide s own spelling', async () => {
+  test('goes under the key that carries the ink', async () => {
     fresh()
-    await setFileIcon('/space/Board.canvas', 'FileText')
+    await setFileIcon('/space/Board.canvas', 'file-text')
 
     expect(board('/space/Board.canvas').icon).toBe('file-text')
   })
 
   test('and the cards, the edges and the spec half are left as they were', async () => {
     fresh()
-    await setFileIcon('/space/Board.canvas', 'Rocket')
+    await setFileIcon('/space/Board.canvas', 'rocket')
 
     const parsed = JSON.parse(written('/space/Board.canvas') ?? '') as Record<string, unknown>
     expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'nib'])
@@ -220,14 +220,14 @@ describe('the icon a canvas is given', () => {
 
   test('replaces the one that was there', async () => {
     fresh()
-    await setFileIcon('/space/Marked.canvas', 'Anchor')
+    await setFileIcon('/space/Marked.canvas', 'anchor')
 
     expect(board('/space/Marked.canvas').icon).toBe('anchor')
   })
 
   test('keeps the version that was there before it, and is one thing to undo', async () => {
     fresh()
-    await setFileIcon('/space/Marked.canvas', 'Compass')
+    await setFileIcon('/space/Marked.canvas', 'compass')
 
     const touched = sent.filter((one) => one.path === '/space/Marked.canvas')
     expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
@@ -244,7 +244,7 @@ describe('the icon a canvas is given', () => {
 
   test('choosing the one it already wears writes nothing at all', async () => {
     fresh()
-    await setFileIcon('/space/Marked.canvas', 'Rocket')
+    await setFileIcon('/space/Marked.canvas', 'rocket')
 
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
@@ -254,10 +254,66 @@ describe('the icon a canvas is given', () => {
   test('reaches a canvas that is open, without leaving it unsaved', async () => {
     fresh()
     await workspace.open('/space/Board.canvas')
-    await setFileIcon('/space/Board.canvas', 'Rocket')
+    await setFileIcon('/space/Board.canvas', 'rocket')
 
     const tab = workspace.tabs.find((one) => one.path === '/space/Board.canvas')
     expect(readCanvas(tab?.doc ?? '').icon).toBe('rocket')
     expect(tab?.dirty).toBe(false)
+  })
+})
+
+/** An emoji and a coloured drawing are written as themselves; a line icon may carry a
+ *  colour, on a key of its own so that another app reading the file still finds the
+ *  icon. One write either way, since one gesture chose both. */
+describe('what each kind of icon is written as', () => {
+  test('an emoji, as the character it is', async () => {
+    fresh()
+    await setFileIcon('/space/plain.md', '🚀')
+
+    expect(written('/space/plain.md')).toBe('---\nicon: 🚀\n---\n# Plain\n\nwords\n')
+  })
+
+  test('a drawing out of another set, under that set s own name', async () => {
+    fresh()
+    await setFileIcon('/space/plain.md', 'flat-color-icons:calendar')
+
+    expect(written('/space/plain.md')).toContain('icon: flat-color-icons:calendar')
+  })
+
+  test('and a line icon with a colour, as two keys in one write', async () => {
+    fresh()
+    await setFileIcon('/space/plain.md', 'rocket', 'violet')
+
+    expect(written('/space/plain.md')).toBe(
+      '---\nicon: rocket\nicon-color: violet\n---\n# Plain\n\nwords\n',
+    )
+    expect(sent.filter((one) => one.command === 'write_note')).toHaveLength(1)
+    expect(workspace.undone.stack).toHaveLength(1)
+  })
+
+  test('a colour this build has never heard of is not written at all', async () => {
+    fresh()
+    await setFileIcon('/space/plain.md', 'rocket', 'chartreuse')
+
+    expect(written('/space/plain.md')).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
+  })
+
+  test('and taking the icon away takes the colour with it', async () => {
+    fresh()
+    await setFileIcon('/space/plain.md', 'rocket', 'violet')
+    await setFileIcon('/space/plain.md', null)
+
+    expect(written('/space/plain.md')).toBe('# Plain\n\nwords\n')
+  })
+
+  test('a canvas keeps the colour beside the icon, under the same key', async () => {
+    fresh()
+    await setFileIcon('/space/Board.canvas', 'rocket', 'violet')
+
+    const written = readCanvas(
+      sent.filter((one) => one.command === 'write_note').pop()?.content ?? '',
+    )
+    expect(written.icon).toBe('rocket')
+    expect(written.iconColor).toBe('violet')
   })
 })

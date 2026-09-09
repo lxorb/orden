@@ -46,7 +46,7 @@ import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
-import { iconValue } from './icons'
+import { readTint } from './icons'
 import { folderNote, noteToNest, unnesting } from './folder-notes'
 import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
@@ -1794,24 +1794,32 @@ class Workspace {
     return space ? this.device.iconOf(space.root) : null
   }
 
-  /** An icon that came from the account rather than from this machine. */
+  /** The colour that icon is drawn in, or null for the plain foreground. */
+  tintFor(spaceId: string | null): string | null {
+    const space = this.spaces.find((entry) => entry.id === spaceId)
+    return space ? this.device.tintOf(space.root) : null
+  }
+
+  /** An icon that came from the account rather than from this machine. The colour
+   *  stays as it was: the account holds the icon and not yet the colour, so it has
+   *  nothing to say about one. */
   applyIcon(root: string, name: string | null) {
     if (this.device.iconOf(root) === name) return
-    this.device.setIcon(root, name)
+    this.device.setIcon(root, name, this.device.tintOf(root))
   }
 
-  /** The icon a folder of the open space wears, or none. Beside `setIcon` because
-   *  the picker reaches both through here and the two differ only in where the
-   *  value is kept; see workspace/folder-icons. */
-  setFolderIcon(path: string, name: string | null) {
-    this.folderIcons.set(path, name === null ? null : iconValue(name))
+  /** The icon a folder of the open space wears and the colour it is drawn in, or
+   *  none. Beside `setIcon` because the picker reaches both through here and the two
+   *  differ only in where the value is kept; see workspace/folder-icons. */
+  setFolderIcon(path: string, value: string | null, tint: string | null = null) {
+    this.folderIcons.set(path, value, value === null ? null : readTint(tint))
   }
 
-  setIcon(spaceId: string, name: string | null) {
+  setIcon(spaceId: string, name: string | null, tint: string | null = null) {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     if (!space) return
 
-    this.device.setIcon(space.root, name)
+    this.device.setIcon(space.root, name, name === null ? null : readTint(tint))
 
     // Imported here rather than at the top: syncing reads the workspace, and
     // the two would import each other.

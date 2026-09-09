@@ -99,7 +99,7 @@ describe('reading a canvas', () => {
   })
 
   test('is an empty canvas for a file that is not one', () => {
-    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null }
+    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
     expect(readCanvas('')).toEqual(empty)
     expect(readCanvas('nonsense')).toEqual(empty)
     expect(readCanvas('[]')).toEqual(empty)
@@ -272,6 +272,7 @@ describe('writing a canvas', () => {
       at: {},
       gone: {},
       icon: null,
+      iconColor: null,
     })
     // Nothing of Nib's in a canvas that has none of Nib's in it.
     expect(blankCanvas()).not.toContain('nib')
@@ -341,6 +342,7 @@ describe('what Nib keeps beyond the spec', () => {
     at: { card: 1000, box: 1001 },
     gone: { old: 900 },
     icon: null,
+    iconColor: null,
   }
 
   const written = writeCanvas(drawn)
@@ -391,6 +393,7 @@ describe('what Nib keeps beyond the spec', () => {
       at: {},
       gone: {},
       icon: null,
+      iconColor: null,
     }
 
     const back = readCanvas(writeCanvas(diagram))
@@ -541,6 +544,7 @@ describe('how translucent a stroke was drawn', () => {
       at: {},
       gone: {},
       icon: null,
+      iconColor: null,
     }
 
     const written = writeCanvas(drawn)
@@ -638,8 +642,8 @@ describe('a canvas from somewhere else', () => {
  *  so a canvas keeps it under the one key the spec leaves for what is ours - which
  *  is what makes it the canvas's own rather than this machine's note about it. */
 describe('the icon a canvas wears', () => {
-  const applied = (text: string, name: string | null) => {
-    const edit = canvasIconEdit(text, name)
+  const applied = (text: string, name: string | null, tint: string | null = null) => {
+    const edit = canvasIconEdit(text, name, tint)
     return edit === null ? null : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
   }
 
@@ -714,6 +718,34 @@ describe('the icon a canvas wears', () => {
 
   test('but a file with nothing in it yet takes one', () => {
     expect(readCanvas(applied('', 'rocket') ?? '').icon).toBe('rocket')
+  })
+
+  test('takes a colour beside it, under a key of its own', () => {
+    const marked = applied(blankCanvas(), 'rocket', 'violet') ?? ''
+    const read = readCanvas(marked)
+
+    expect(read.icon).toBe('rocket')
+    expect(read.iconColor).toBe('violet')
+    expect(Object.keys((JSON.parse(marked) as { nib: object }).nib)).toEqual([
+      'version',
+      'icon',
+      'iconColor',
+    ])
+  })
+
+  test('and a colour with no icon to colour is no colour at all', () => {
+    const marked = applied(blankCanvas(), 'rocket', 'violet') ?? ''
+    const bare = applied(marked, null, 'violet') ?? ''
+
+    expect(readCanvas(bare).icon).toBeNull()
+    expect(readCanvas(bare).iconColor).toBeNull()
+    expect(bare).toBe(blankCanvas())
+  })
+
+  test('changing only the colour is still an edit', () => {
+    const marked = applied(blankCanvas(), 'rocket', 'violet') ?? ''
+    expect(readCanvas(applied(marked, 'rocket', 'teal') ?? '').iconColor).toBe('teal')
+    expect(readCanvas(applied(marked, 'rocket', null) ?? '').iconColor).toBeNull()
   })
 
   test('leaves the cards, the ink and the times exactly where they were', () => {
