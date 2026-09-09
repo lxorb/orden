@@ -9,6 +9,7 @@
 import { Hono } from 'hono'
 import { textAtMost } from '../body'
 import { newId, now, randomToken, sha256 } from '../crypto'
+import { machineOf, mayRegister } from '../limits'
 import type { Env } from '../types'
 import { failure, GRANTS } from './protocol'
 import { fallbackName, privateHost, redirectAllowed } from './redirects'
@@ -25,6 +26,17 @@ export interface Client {
  *  ten thousand callbacks would otherwise write a row of any size it liked. */
 const MOST_REDIRECTS = 20
 const LONGEST_URI = 2048
+
+/** How many clients this server keeps registered at once. Far above the number
+ *  of LLM clients there are, and a number: without one, an endpoint anybody may
+ *  post to is a table anybody may fill. Reached only if the sweep below cannot
+ *  keep up, which is why the answer to it is "not right now" rather than "no". */
+const MOST_CLIENTS = 5_000
+
+/** How long a client nothing is connected through and nothing has used is kept.
+ *  Long enough that somebody coming back to a client they set up last month
+ *  finds it as they left it. */
+const UNUSED_FOR = 30 * 24 * 60 * 60 * 1000
 /** A description document is small. Anything larger is not one. */
 const LONGEST_DOCUMENT = 64_000
 
@@ -169,10 +181,33 @@ registration.post('/register', async (context) => {
   const createdAt = existing?.created_at ?? now()
 
   if (!existing) {
+    // Both ceilings sit here rather than at the top, because they are about rows
+    // being written: a client asking again for the row it already has is not one
+    // more client, and holding it to a number would break the clients that
+    // register on every connection.
+    const held = await context.env.DB.prepare('select count(*) as many from oauth_clients').first<{
+      many: number
+    }>()
+
+    if ((held?.many ?? 0) >= MOST_CLIENTS) {
+      return context.json(
+        failure('temporarily_unavailable', 'this server is not taking new clients right now'),
+        503,
+      )
+    }
+
+    if (!(await mayRegister(context.env, machineOf(context.req)))) {
+      return context.json(
+        failure('temporarily_unavailable', 'too many registrations from here, try again later'),
+        429,
+      )
+    }
+
     await context.env.DB.prepare(
-      'insert into oauth_clients (id, name, redirect_uris, secret_hash, created_at) values (?, ?, ?, ?, ?)',
+      `insert into oauth_clients (id, name, redirect_uris, secret_hash, created_at, used_at)
+       values (?, ?, ?, ?, ?, ?)`,
     )
-      .bind(id, name, uris, secret ? await sha256(secret) : null, createdAt)
+      .bind(id, name, uris, secret ? await sha256(secret) : null, createdAt, createdAt)
       .run()
   }
 
@@ -194,3 +229,32 @@ registration.post('/register', async (context) => {
     201,
   )
 })
+
+/** A client was used to start a sign-in, which is what keeps it out of the sweep
+ *  below. A client that describes itself at a URL has no row and no stamp; the
+ *  statement matches nothing and that is the right answer for one. */
+export function clientWasUsed(env: Env, id: string): Promise<unknown> {
+  return env.DB.prepare('update oauth_clients set used_at = ? where id = ?').bind(now(), id).run()
+}
+
+/** Registered clients nothing is connected through and nothing has used for a
+ *  month, let go. Part of the nightly job, beside Recently deleted.
+ *
+ *  Three things keep a client: a grant, which is somebody's live connection; a
+ *  code, which is a connection halfway through being made; and having been used
+ *  lately, which covers a client somebody keeps in a config file and signs in
+ *  with now and then. What is left is a registration that led nowhere, and the
+ *  client it belonged to can register again in one request if it ever comes
+ *  back. */
+export async function expireClients(env: Env, at: number): Promise<number> {
+  const gone = await env.DB.prepare(
+    `delete from oauth_clients
+      where coalesce(used_at, created_at) < ?
+        and not exists (select 1 from oauth_grants where client_id = oauth_clients.id)
+        and not exists (select 1 from oauth_codes where client_id = oauth_clients.id)`,
+  )
+    .bind(at - UNUSED_FOR)
+    .run()
+
+  return gone.meta.changes
+}

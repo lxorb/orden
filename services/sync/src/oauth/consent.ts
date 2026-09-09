@@ -50,7 +50,7 @@ button.quiet:hover{background:none;color:var(--fg)}
 .error{color:var(--danger);font-size:.9em;margin:-.75rem 0 1rem}
 `
 
-export function page(env: Env, body: string, status: 200 | 400 = 200): Response {
+export function page(env: Env, body: string, status: 200 | 400 | 409 = 200): Response {
   const html = `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">

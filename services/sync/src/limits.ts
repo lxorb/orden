@@ -97,6 +97,18 @@ async function withinTheDay(env: Env, address: string): Promise<boolean> {
   return true
 }
 
+/** How many clients one machine may register in an hour. Registering is open to
+ *  anybody, so this is the only thing standing between one script and a table of
+ *  clients; a client that registers afresh on every conversation gets its own row
+ *  back rather than a new one, so it never reaches this. */
+const REGISTRATIONS_AN_HOUR = 20
+
+/** Whether one more client may be registered from this machine. */
+export function mayRegister(env: Env, machine: string | null): Promise<boolean> {
+  if (!machine) return Promise.resolve(true)
+  return within(env, 'register', machine, REGISTRATIONS_AN_HOUR, AN_HOUR)
+}
+
 /** How often the owner of one space hears that somebody is waiting on them. A
  *  link anybody may follow is a door a roomful of people can knock on in a
  *  minute, and what the owner needs to know is that somebody is there. */

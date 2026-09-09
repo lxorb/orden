@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { expireClients } from '../src/oauth/clients'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -865,5 +866,190 @@ describe('what the settings show', () => {
     })
 
     expect((await rpc(tokens.json.access_token, 'ping')).status).toBe(200)
+  })
+})
+
+describe('how many clients this server registers', () => {
+  /** Registering from a machine, which is what Cloudflare names on every request
+   *  that reaches a Worker. */
+  function registerFrom(machine: string, name: string) {
+    return call(env, '/oauth/register', {
+      body: {
+        client_name: name,
+        redirect_uris: [CHATGPT],
+        token_endpoint_auth_method: 'none',
+      },
+      headers: { 'cf-connecting-ip': machine },
+    })
+  }
+
+  test('stops at a number of new ones from one machine in an hour', async () => {
+    for (let at = 0; at < 20; at++) {
+      expect((await registerFrom('203.0.113.7', `One ${at}`)).status).toBe(201)
+    }
+
+    const refused = await registerFrom('203.0.113.7', 'One more')
+    expect(refused.status).toBe(429)
+    expect(refused.json.error).toBe('temporarily_unavailable')
+  })
+
+  test('and lets a client that already has a row ask for it again', async () => {
+    for (let at = 0; at < 20; at++) await registerFrom('203.0.113.7', `One ${at}`)
+
+    // The same name and the same callbacks are the same client, so nothing is
+    // written and there is nothing for the ceiling to be about.
+    expect((await registerFrom('203.0.113.7', 'One 0')).status).toBe(201)
+  })
+
+  test('holds one machine to it and leaves the next alone', async () => {
+    for (let at = 0; at < 20; at++) await registerFrom('203.0.113.7', `One ${at}`)
+
+    expect((await registerFrom('198.51.100.4', 'Elsewhere')).status).toBe(201)
+  })
+
+  test('stops altogether once the table holds as many as it keeps', async () => {
+    const insert = env.db.prepare(
+      `insert into oauth_clients (id, name, redirect_uris, created_at, used_at)
+       values (?, ?, '["https://example.com/cb"]', 1, 1)`,
+    )
+    for (let at = 0; at < 5000; at++) insert.run(`c-${at}`, `Client ${at}`)
+
+    const refused = await registerFrom('203.0.113.7', 'One more')
+    expect(refused.status).toBe(503)
+    expect(refused.json.error).toBe('temporarily_unavailable')
+  })
+})
+
+describe('how many apps one account connects', () => {
+  const ACCOUNT = 'a@b.dev'
+
+  beforeEach(() => {
+    // The account itself, written rather than signed in to: a sign-in sends a
+    // code, and the consent page below asks for one of its own inside the gap one
+    // address keeps between two messages.
+    env.db
+      .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
+      .run('one', ACCOUNT, Date.now())
+  })
+
+  /** Connections the account already holds. The rows are what the ceilings count,
+   *  so they are written rather than walked through twenty times. */
+  function connected(clients: string[]) {
+    const insert = env.db.prepare(
+      `insert into oauth_grants
+         (id, user_id, client_id, client_name, read_only, access_hash, access_expires_at,
+          refresh_hash, created_at)
+       values (?1, 'one', ?2, 'Something', 1, ?1, ?3, ?1, ?3)`,
+    )
+
+    clients.forEach((client, at) => insert.run(`g-${at}`, client, Date.now()))
+  }
+
+  /** Consent, as far as the answer to pressing Allow. */
+  async function consent(clientId: string) {
+    const { challenge } = await pkce()
+    const ask = {
+      client_id: clientId,
+      redirect_uri: CHATGPT,
+      state: 'xyz',
+      code_challenge: challenge,
+      resource: `${ORIGIN}/mcp`,
+    }
+
+    const code = await codeSentTo(() => submit({ ...ask, action: 'send', email: ACCOUNT }))
+    return submit({ ...ask, action: 'allow', email: ACCOUNT, code })
+  }
+
+  test('stops at a number of them', async () => {
+    connected(Array.from({ length: 20 }, (_, at) => `other-${at}`))
+    const clientId = (await register()).json.client_id
+
+    const refused = await consent(clientId)
+    expect(refused.status).toBe(409)
+    expect(refused.text).toContain('as many apps as one account connects')
+  })
+
+  test('and still connects an app that is already there', async () => {
+    const clientId = (await register()).json.client_id
+    connected([clientId, ...Array.from({ length: 19 }, (_, at) => `other-${at}`)])
+
+    // Full of apps, and this one is not a new app: what is refused is one more
+    // app, not one more connection to an app somebody already uses.
+    expect((await consent(clientId)).status).toBe(302)
+  })
+
+  test('stops at as many connections as the settings can list, one app or many', async () => {
+    const clientId = (await register()).json.client_id
+    connected(Array.from({ length: 200 }, () => clientId))
+
+    expect((await consent(clientId)).status).toBe(409)
+  })
+
+  test('lets a first app in', async () => {
+    expect((await consent((await register()).json.client_id)).status).toBe(302)
+  })
+})
+
+describe('a client that registered and never came back', () => {
+  const MONTH = 30 * 24 * 60 * 60 * 1000
+
+  /** A client that has sat there since before the sweep's cutoff. */
+  function longAgo() {
+    env.db.prepare('update oauth_clients set used_at = ?').run(Date.now() - MONTH - 1000)
+  }
+
+  test('is let go once a month has passed', async () => {
+    const clientId = (await register()).json.client_id
+    longAgo()
+
+    expect(await expireClients(env, Date.now())).toBe(1)
+
+    // And it is nobody's client to ask for consent as any more.
+    const asked = await call(
+      env,
+      authorizeUrl({ client_id: clientId, code_challenge: 'c'.repeat(43) }),
+    )
+    expect(asked.text).toContain('not known here')
+  })
+
+  test('stays while it was used lately', async () => {
+    await register()
+    expect(await expireClients(env, Date.now())).toBe(0)
+  })
+
+  test('stays while somebody is connected through it', async () => {
+    await connect()
+    longAgo()
+
+    expect(await expireClients(env, Date.now())).toBe(0)
+  })
+
+  test('stays while a connection is halfway through being made', async () => {
+    const clientId = (await register()).json.client_id
+    longAgo()
+
+    env.db
+      .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
+      .run('one', 'a@b.dev', Date.now())
+    env.db
+      .prepare(
+        `insert into oauth_codes (code_hash, client_id, user_id, redirect_uri, challenge, expires_at)
+         values ('h', ?, 'one', 'https://example.com/cb', 'x', ?)`,
+      )
+      .run(clientId, Date.now() + 60_000)
+
+    expect(await expireClients(env, Date.now())).toBe(0)
+  })
+
+  test('is stamped again by a consent, so signing in keeps it', async () => {
+    const clientId = (await register()).json.client_id
+    longAgo()
+
+    // The whole dance, which ends in a grant as well; the point is the stamp, so
+    // the grant goes and the client should still be here.
+    await connect({ clientId })
+    env.db.prepare('delete from oauth_grants').run()
+
+    expect(await expireClients(env, Date.now())).toBe(0)
   })
 })

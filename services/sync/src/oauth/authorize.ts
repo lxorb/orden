@@ -12,7 +12,7 @@ import { sendCode, verifyCode } from '../auth'
 import { normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { machineOf } from '../limits'
 import type { Env } from '../types'
-import { type Client, clientFor } from './clients'
+import { type Client, clientFor, clientWasUsed } from './clients'
 import { codeStep, emailStep, page, refusal } from './consent'
 import {
   type Ask,
@@ -31,7 +31,41 @@ import { sameRedirect } from './redirects'
 
 const CODE_TTL = 10 * 60 * 1000
 
+/** How many clients one account keeps connected, and how many connections in
+ *  all. Two numbers because a connection and a client are not the same thing: a
+ *  client that is reconnected keeps its place under the first and takes a second
+ *  row under the second, and neither may run away.
+ *
+ *  Twenty is well past the number of LLM clients a person has, and what it bounds
+ *  is a new one rather than one already there, so nobody is shut out of a client
+ *  they already use. Two hundred is what the settings pane lists, and a
+ *  connection it cannot list is one nobody can disconnect - the same reason a
+ *  space holds two hundred people. */
+const MOST_CLIENTS_AN_ACCOUNT = 20
+const MOST_CONNECTIONS = 200
+
 export const authorize = new Hono<{ Bindings: Env }>()
+
+/** Whether this account has room for a connection to this client. Asked on the
+ *  consent page rather than where the grant is written, so that the person
+ *  standing in front of it is the one who is told. */
+async function roomToConnect(env: Env, userId: string, clientId: string): Promise<boolean> {
+  const held = await env.DB.prepare(
+    `select count(*) as connections,
+            count(distinct client_id) as clients,
+            sum(case when client_id = ?2 then 1 else 0 end) as ours
+       from oauth_grants where user_id = ?1`,
+  )
+    .bind(userId, clientId)
+    .first<{ connections: number; clients: number; ours: number | null }>()
+
+  if ((held?.connections ?? 0) >= MOST_CONNECTIONS) return false
+  if ((held?.clients ?? 0) < MOST_CLIENTS_AN_ACCOUNT) return true
+
+  // Full of clients, but this one is already among them: what is refused is one
+  // more client, not one more connection to a client that is already there.
+  return !!held?.ours
+}
 
 /** Sends the browser back to the client with whatever happened. The issuer
  *  rides along (RFC 9207) so the client can tell this server's answer from an
@@ -168,6 +202,14 @@ authorize.post('/authorize', async (context) => {
       return page(context.env, codeStep(client, ask, { email, error: verified.error }))
     }
 
+    if (!(await roomToConnect(context.env, verified.user.id, client.id))) {
+      return page(
+        context.env,
+        refusal('That is as many apps as one account connects. Disconnect one in Nib first.'),
+        409,
+      )
+    }
+
     const readOnly = !(wantsWrite(ask) && form.write === '1')
     const code = randomToken()
 
@@ -189,6 +231,10 @@ authorize.post('/authorize', async (context) => {
         now() + CODE_TTL,
       )
       .run()
+
+    // The client is in use, whatever becomes of the code: a registration that got
+    // this far is not one of the dead ones the nightly sweep collects.
+    await clientWasUsed(context.env, client.id)
 
     return backToClient(context.env, ask, { code })
   }
