@@ -10,7 +10,6 @@ import {
   edgePath,
   facingSide,
   GRID,
-  gridLevels,
   insideGroup,
   insidePolygon,
   isLineShape,
@@ -247,53 +246,6 @@ describe('resizing a box', () => {
     const other = resizedBox(box, 'nw', 1000, 1000, least)
     expect(other.width).toBe(least)
     expect(other.x).toBe(300 - least)
-  })
-})
-
-/** The pattern behind the plane. It never goes away: zoomed out it would close into a
- *  wash, so it coarsens instead - every second dot, then every fifth - and the level
- *  being left behind fades out rather than blinking off. */
-describe('the background pattern', () => {
-  /** Well past the zoom the camera itself allows - a quarter to a twenty-fifth; see
-   *  camera.ts - because a canvas can arrive from a file, a share or a room carrying a
-   *  camera nobody in this app chose. */
-  test('is one level of dots at every zoom, however far out', () => {
-    for (const scale of [4, 1, 0.5, 0.2, 0.05, 0.04, 0.01, 0.002, 0.0005]) {
-      const levels = gridLevels(scale)
-      expect(levels.length, String(scale)).toBeGreaterThan(0)
-      // Whatever the zoom, the dots the reader sees are far enough apart to be dots.
-      expect(levels[0]!.step, String(scale)).toBeGreaterThanOrEqual(12)
-    }
-  })
-
-  test('is every dot when there is room for every dot', () => {
-    expect(gridLevels(1)).toEqual([{ every: 1, step: GRID, showing: 1 }])
-  })
-
-  test('coarsens as the plane goes out, and never the other way', () => {
-    let coarsest = 0
-    for (const scale of [1, 0.5, 0.2, 0.05, 0.01]) {
-      const every = gridLevels(scale)[0]!.every
-      expect(every).toBeGreaterThanOrEqual(coarsest)
-      coarsest = every
-    }
-  })
-
-  /** The calm bit: at a threshold the finer level is still mostly there and fades out
-   *  over the last of its range, so the two cross over each other. */
-  test('fades the finer level out rather than blinking it off', () => {
-    const crossing = gridLevels(0.28)
-    expect(crossing).toHaveLength(2)
-    expect(crossing[1]!.showing).toBeGreaterThan(0)
-    expect(crossing[1]!.showing).toBeLessThan(1)
-    // And the coarse one under it is always fully there, so there is never a moment
-    // with no pattern at all.
-    expect(crossing[0]!.showing).toBe(1)
-  })
-
-  test('is nothing at all for a zoom that is not a zoom', () => {
-    expect(gridLevels(0)).toEqual([])
-    expect(gridLevels(-1)).toEqual([])
   })
 })
 

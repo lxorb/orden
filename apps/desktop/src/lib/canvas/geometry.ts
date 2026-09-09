@@ -30,65 +30,9 @@ export function snapped(value: number): number {
   return Math.round(value / GRID) * GRID
 }
 
-/** How close the dots may come on screen before the pattern stops being a
- *  pattern and becomes a wash, in pixels. */
-const CLOSEST = 12
-
-/** Where the level being left behind starts to go, as a share of CLOSEST. It is
- *  gone by the time its dots have closed to that, so there is a stretch of zoom with
- *  two patterns easing across each other rather than one blinking into the next. */
-const FADES_FROM = 0.7
-
-/** The steps the pattern coarsens through: every dot, every second, every fifth, and
- *  so on up.
- *
- *  Far past the zoom anybody can reach - the camera stops at a twenty-fifth; see
- *  camera.ts - because a canvas can arrive from a file, a share or a room with a camera
- *  in it that nobody in this app chose. */
-const COARSER = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000] as const
-
-/** One layer of the background pattern: how far apart its dots are on screen, and
- *  how much of it is showing. */
-export interface GridLevel {
-  /** Plane units between dots, so a caller can also say what it is showing. */
-  every: number
-  /** Pixels between dots on screen, which is what a repeating tile is sized by. */
-  step: number
-  /** 0 to 1. The finer of two levels fades out as its dots close up, so passing a
-   *  threshold is a dissolve rather than a jump. */
-  showing: number
-}
-
-/** The pattern at this zoom, as one or two layers.
- *
- *  The dots never go away. As the plane is zoomed out they would close into a
- *  wash, so the pattern coarsens instead - every second dot, then every fifth,
- *  then every tenth - and the level being left behind fades out over the last of
- *  its range rather than blinking off. Coarsest first, so the finer layer is drawn
- *  over it. */
-export function gridLevels(scale: number): GridLevel[] {
-  if (!(scale > 0)) return []
-
-  // The first step whose dots are far enough apart to read as dots.
-  const at = COARSER.findIndex((every) => GRID * every * scale >= CLOSEST)
-  // Zoomed out past the coarsest step there is, which no plane reaches: the last
-  // one, as dense as it has to be, rather than nothing at all.
-  const coarse = COARSER[at < 0 ? COARSER.length - 1 : at] ?? 1
-  const finer = at > 0 ? COARSER[at - 1] : undefined
-
-  const levels: GridLevel[] = [{ every: coarse, step: GRID * coarse * scale, showing: 1 }]
-
-  if (finer !== undefined) {
-    const step = GRID * finer * scale
-    const goes = CLOSEST * FADES_FROM
-    // Full where it is still comfortably open and gone by the time it has closed up:
-    // the two levels cross over each other and the eye sees one pattern easing.
-    const showing = Math.min(1, Math.max(0, (step - goes) / (CLOSEST - goes)))
-    if (showing > 0.01) levels.push({ every: finer, step, showing })
-  }
-
-  return levels
-}
+/** The pattern behind the plane - which of the grid's points are drawn at a zoom,
+ *  and the fade between one answer and the next - is next door in lattice.ts. It is
+ *  about time as much as about arithmetic, and this file is only about arithmetic. */
 
 export function boxOf(node: CanvasNode): Box {
   return { x: node.x, y: node.y, width: node.width, height: node.height }

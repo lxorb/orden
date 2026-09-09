@@ -58,7 +58,6 @@
     edgeEnds,
     edgeMiddle,
     GRID,
-    gridLevels,
     HANDLES,
     isLineShape,
     overlaps,
@@ -69,6 +68,7 @@
   import { Contacts, penKind } from './canvas/contacts'
   import { cursorFor, type Over } from './canvas/cursor'
   import { hand } from './canvas/hand.svelte'
+  import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './canvas/lattice'
   import { pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
   import { assisted, leadPoint, tidyShape, transformed } from './canvas/ink'
@@ -164,13 +164,68 @@
    *  out the same size on screen at every zoom. */
   const unit = $derived(1 / camera.scale)
 
-  /** Where plane 0,0 sits on screen. The plane's transform and the grid's offset
+  /** Where plane 0,0 sits on screen. The plane's transform and the pattern's offset
    *  are both this. */
   const originX = $derived(width / 2 - camera.x * camera.scale)
   const originY = $derived(height / 2 - camera.y * camera.scale)
-  /** The background pattern at this zoom, coarsened so there is always one; see
-   *  gridLevels. Coarsest first, so the finer layer is drawn over it. */
-  const patterns = $derived(gridLevels(camera.scale))
+
+  /** How long the points take to leave, and to come back. Fixed, and the whole of
+   *  what the fade depends on: crossing a threshold starts it, and where the zoom is
+   *  has nothing further to say. */
+  const THINNING = 210
+
+  /** Where the background pattern stands, between levels; see canvas/lattice.ts.
+   *
+   *  Not reactive, because it is stepped on a frame and read by the frame after: what
+   *  the render follows is the one number it has reached. */
+  let crossing = untrack(() => settled(latticeLevel(camera.scale)))
+  let stands = $state(crossing.at)
+  let thinning = 0
+  let thinnedAt = 0
+
+  /** The one or two tiles that draws, coarsest first. */
+  const patterns = $derived(latticeLayers(stands, camera.scale))
+
+  // A zoom that crosses a threshold starts a fade, or turns the one already running
+  // round. A zoom that crosses nothing - which is nearly every zoom - leaves the
+  // pattern alone, and leaves a fade already in flight to finish on its own time.
+  $effect(() => {
+    const want = latticeLevel(camera.scale, crossing.to)
+    if (want === crossing.to) return
+
+    crossing = aimed(crossing, want)
+
+    // Asked for as little movement as possible: the pattern is simply the level the
+    // zoom asks for, and there is no frame to ask for at all.
+    if (!dur(THINNING)) {
+      crossing = settled(want)
+      stands = crossing.at
+      return
+    }
+
+    const frame = (now: number) => {
+      // A guess for the first frame, since no time has passed since the threshold
+      // was crossed. Never capped: a frame the surface spent painting is a frame the
+      // fade spent fading, or a stall would leave it hanging half done.
+      const dt = thinnedAt ? now - thinnedAt : 16
+      thinnedAt = now
+
+      crossing = stepped(crossing, dt, dur(THINNING))
+      stands = crossing.at
+      thinning = fading(crossing) ? requestAnimationFrame(frame) : 0
+    }
+
+    // The loop is left running across a retarget: the fade is going somewhere, and
+    // starting it again from this frame would stutter what is already moving.
+    if (thinning) return
+
+    thinnedAt = 0
+    thinning = requestAnimationFrame(frame)
+  })
+
+  // The frame loop outlives a re-run of the effect above, so it is stopped here
+  // instead: once, when the surface goes.
+  $effect(() => () => cancelAnimationFrame(thinning))
 
   const gesture = $derived(machine.gesture)
   const drag = $derived(gesture?.kind === 'drag' ? gesture : null)
@@ -1540,10 +1595,15 @@
   }}
   ondrop={onDrop}
 >
-  <!-- The grid, on a layer of its own that is one tile bigger than the view all
+  <!-- The pattern, on a layer of its own that is one tile bigger than the view all
        round and moved by a transform. Moving a repeating background by its own
        position repaints the whole view on every frame of a pan; moving a layer
-       is composited and costs nothing. -->
+       is composited and costs nothing.
+
+       Half a tile off, because a tile carries its point in the middle: that puts
+       every level's points on plane 0,0 and its multiples, which is what makes a
+       coarser level a subset of a finer one rather than a second pattern between
+       its points. -->
   {#each patterns as level (level.every)}
     <div
       class="dots"
@@ -1553,7 +1613,10 @@
       style:top="{-level.step}px"
       style:width="{width + 2 * level.step}px"
       style:height="{height + 2 * level.step}px"
-      style:transform="translate({modulo(originX, level.step)}px, {modulo(originY, level.step)}px)"
+      style:transform="translate({modulo(originX - level.step / 2, level.step)}px, {modulo(
+        originY - level.step / 2,
+        level.step,
+      )}px)"
     ></div>
   {/each}
 
@@ -1833,10 +1896,11 @@
     cursor: default;
   }
 
-  /* The grid, drawn on the view rather than on the plane: a repeating background
+  /* The pattern, drawn on the view rather than on the plane: a repeating background
      costs one paint however far the plane reaches, and this layer is moved by a
      transform rather than by its own background position, so panning it is a
-     composite and never a repaint. */
+     composite and never a repaint. One of these is up at any moment, and two for a
+     fifth of a second while a level is leaving or coming back. */
   .dots {
     position: absolute;
     pointer-events: none;
