@@ -117,10 +117,11 @@ export const run = {
     store.edit(next, run)
   },
 
-  /** What a loop caught. Only strokes a loop went right round, so half a word is
-   *  never dragged away from the other half. */
-  lasso(store: CanvasStore, points: readonly Point[]) {
-    store.pickAll(strokesInLasso(store.canvas.ink, points))
+  /** What a loop or a box caught. Only strokes it went right round, so half a word
+   *  is never dragged away from the other half, unless the lasso's own panel says
+   *  a stroke it touched at all counts. */
+  lasso(store: CanvasStore, points: readonly Point[], partly = false) {
+    store.pickAll(strokesInLasso(store.canvas.ink, points, partly))
   },
 
   remove(store: CanvasStore) {

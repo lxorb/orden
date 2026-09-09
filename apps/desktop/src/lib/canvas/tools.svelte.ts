@@ -12,7 +12,7 @@
  *  different one: ink is drawn in whatever you are writing with, and a card is
  *  coloured after the fact. */
 
-import { type InkTool, INK_TOOLS } from './format'
+import { type InkTool } from './format'
 import { nibFor, pens } from './pens.svelte'
 import { DEFAULT_INK } from './palette'
 import { type Tool } from './pointer'
@@ -24,22 +24,15 @@ class Tools {
   /** The colour the next card, shape or connector is given. */
   colour = $state<string>(DEFAULT_INK)
 
-  /** Whether the tool goes back to the arrow after one use, which is what a
-   *  hand that puts down one card expects and a hand drawing ten does not. */
-  sticky = $state(false)
-
   /** The pen as the pointer machine wants it. */
   get ink(): { tool: InkTool; size: number; color: string; opacity: number } {
     const nib = pens.current
     return { tool: nib.tool, size: nib.size, color: nib.colour, opacity: nib.opacity }
   }
 
-  /** A tool chosen. Choosing a pen twice pins it, which is how one press means
-   *  "draw" and a second means "and keep drawing". */
+  /** A tool chosen. Pressing the one already in hand is the bar's business rather
+   *  than this store's: it opens that tool's own panel, and the tool stays put. */
   choose(tool: Tool) {
-    if (this.which === tool && drawn(tool)) this.sticky = !this.sticky
-    else this.sticky = drawn(tool)
-
     this.which = tool
   }
 
@@ -58,15 +51,16 @@ class Tools {
     this.drawing()
   }
 
-  /** Back to the arrow, unless the tool was pinned. Called when a tool has done
-   *  the one thing it was picked for. */
+  /** Back to the arrow, unless the tool is one somebody uses over and over.
+   *  Called when a tool has done the one thing it was picked for: a card put down
+   *  is a card you now want to move and write in, and a hand that has just drawn a
+   *  line is a hand about to draw another. */
   done() {
-    if (!this.sticky) this.which = 'select'
+    if (!drawn(this.which)) this.which = 'select'
   }
 
   private drawing() {
     this.which = 'draw'
-    this.sticky = true
   }
 }
 
@@ -76,9 +70,3 @@ function drawn(tool: Tool): boolean {
 }
 
 export const tools = new Tools()
-
-/** The pens the bar offers, in the order it shows them, and the widths the
- *  compact bar offers. Four widths is as many choices as anybody wants while
- *  writing; the pen's own popover has the slider for the rest. */
-export const PENS = INK_TOOLS
-export const INK_SIZES = [1.5, 3, 6, 12] as const

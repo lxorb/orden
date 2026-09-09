@@ -3,17 +3,17 @@
    *
    *  Two ways of rubbing out, and they are different tools rather than degrees of
    *  one. A whole stroke goes at a touch, which is what you want over handwriting:
-   *  one letter, gone, without nibbling at the one beside it. A hole rubbed
-   *  through what is under the nib is what you want over a drawing, where half a
-   *  line is worth keeping. So both, said as a shape and a word, with the circle
-   *  in the middle showing exactly how wide the nib is about to be.
+   *  one letter, gone, without nibbling at the one beside it. A hole rubbed through
+   *  what is under the nib is what you want over a drawing, where half a line is
+   *  worth keeping. So both, as two named things, with the circle in the middle
+   *  showing exactly how wide the nib is about to be.
    *
    *  What it deliberately does not offer is a switch that spares one kind of ink,
    *  the way Samsung's "erase highlighter only" does: leave it on by accident and
    *  the eraser stops working on your handwriting with nothing on screen to say
    *  why. An eraser rubs out what it is over. */
 
-  import { MARKS } from './canvas/glyphs'
+  import CanvasDial from './CanvasDial.svelte'
   import { LEAST_RUB, MOST_RUB, pens } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
   import { t } from './i18n.svelte'
@@ -21,8 +21,8 @@
   const { onerase }: { onerase: () => void } = $props()
 
   const WAYS = [
-    { whole: true, path: MARKS.whole, word: t('Stroke'), title: t('A whole stroke at a touch') },
-    { whole: false, path: MARKS.area, word: t('Area'), title: t('Only what is under the nib') },
+    { whole: true, word: () => t('Stroke'), title: () => t('A whole stroke at a touch') },
+    { whole: false, word: () => t('Area'), title: () => t('Only what is under the nib') },
   ] as const
 
   function way(whole: boolean) {
@@ -32,18 +32,17 @@
 </script>
 
 <div class="rub">
-  <div class="ways">
+  <div class="nib-segmented">
     {#each WAYS as one (one.whole)}
       <button
         type="button"
         class:on={pens.whole === one.whole}
-        title={one.title}
-        aria-label={one.title}
+        title={one.title()}
+        aria-label={one.title()}
         aria-pressed={pens.whole === one.whole}
         onclick={() => way(one.whole)}
       >
-        <svg class="glyph" viewBox="0 0 14 14"><path d={one.path} /></svg>
-        <span>{one.word}</span>
+        {one.word()}
       </button>
     {/each}
   </div>
@@ -52,17 +51,15 @@
        there is nothing to read off a number and imagine. -->
   <div class="wide" class:off={pens.whole}>
     <span class="ring" style:width="{pens.rub * 2}px" style:height="{pens.rub * 2}px"></span>
-    <input
-      class="nib-slider"
-      type="range"
-      min={LEAST_RUB}
-      max={MOST_RUB}
-      step="1"
+
+    <CanvasDial
       value={pens.rub}
-      disabled={pens.whole}
-      aria-label={t('Width')}
-      style:--fill="{((pens.rub - LEAST_RUB) / (MOST_RUB - LEAST_RUB)) * 100}%"
-      oninput={(event) => pens.rubbing({ rub: Number(event.currentTarget.value) })}
+      least={LEAST_RUB}
+      most={MOST_RUB}
+      step={2}
+      label={t('Width')}
+      reading={String(pens.rub)}
+      onvalue={(rub: number) => pens.rubbing({ rub })}
     />
   </div>
 
@@ -76,7 +73,7 @@
       onerase()
     }}
   >
-    <span>{t('Everything')}</span>
+    {t('Everything')}
   </button>
 </div>
 
@@ -87,68 +84,23 @@
     gap: var(--space-2);
   }
 
-  /* The two ways, side by side and the same size, because neither is the lesser
-     one. */
-  .ways {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-1);
-  }
-
-  button {
-    display: grid;
-    place-items: center;
-    gap: 2px;
-    min-height: var(--touch-target);
-    padding: var(--space-1) var(--space-2);
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    cursor: default;
-    transition:
-      background var(--dur-instant) var(--ease-out),
-      color var(--dur-instant) var(--ease-out);
-  }
-
-  button:active {
-    background: var(--surface-3);
-  }
-
-  button.on {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-
-  button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-
-  .glyph {
-    width: 20px;
-    height: 20px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
   /* The nib at its real width, on the paper, beside the dial that sets it. */
   .wide {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: 0 var(--space-2);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
   /* A whole stroke goes whatever the nib is, so the dial has nothing to say. */
   .wide.off {
     opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .wide :global(.dial) {
+    flex: 1;
+    min-width: 0;
   }
 
   .ring {
@@ -164,17 +116,29 @@
       height var(--dur-fast) var(--ease-out);
   }
 
-  .wide input {
-    flex: 1;
-    min-width: 0;
-  }
-
+  /* Every stroke gone is the one destructive thing in here. */
   .all {
-    color: var(--danger);
+    min-height: 34px;
+    border: none;
+    border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--danger) 10%, transparent);
+    color: var(--danger);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    cursor: default;
   }
 
   .all:active {
     background: color-mix(in srgb, var(--danger) 20%, transparent);
+  }
+
+  .all:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  :global([data-touch]) .all {
+    min-height: var(--touch-target);
+    font-size: var(--touch-text);
   }
 </style>

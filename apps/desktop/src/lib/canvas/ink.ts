@@ -597,12 +597,22 @@ export function insidePolygon(polygon: readonly Point[], point: Point): boolean 
 }
 
 /** Every stroke a lasso caught: one whose points are all inside it, so half a
- *  word is never dragged away from the other half. */
-export function strokesInLasso(strokes: readonly InkStroke[], lasso: readonly Point[]): string[] {
+ *  word is never dragged away from the other half. `partly` is the other answer,
+ *  for a box pulled over three lines of handwriting where the long strokes always
+ *  poke out of it: a stroke it touched at all is caught. */
+export function strokesInLasso(
+  strokes: readonly InkStroke[],
+  lasso: readonly Point[],
+  partly = false,
+): string[] {
   if (lasso.length < 3) return []
 
   return strokes
-    .filter((stroke) => stroke.points.every((point) => insidePolygon(lasso, point)))
+    .filter((stroke) =>
+      partly
+        ? stroke.points.some((point) => insidePolygon(lasso, point))
+        : stroke.points.every((point) => insidePolygon(lasso, point)),
+    )
     .map((stroke) => stroke.id)
 }
 

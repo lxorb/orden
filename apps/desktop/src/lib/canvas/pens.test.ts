@@ -5,11 +5,11 @@ import {
   clampSize,
   LEAST_RUB,
   LEAST_WIDTH,
-  MOST_PENS,
   MOST_RECENT,
   MOST_RUB,
   MOST_WIDTH,
   nibFor,
+  PEN_SLOTS,
   pens,
   readPens,
 } from './pens.svelte'
@@ -111,80 +111,52 @@ describe('setting the pen in hand', () => {
   })
 })
 
-describe('keeping another pen', () => {
-  test('adds it at the end and puts it in your hand', () => {
-    expect(pens.add('marker')).toBe(true)
-    expect(pens.list).toHaveLength(4)
-    expect(pens.at).toBe(3)
-    expect(pens.current.tool).toBe('marker')
+/** Three slots, always three. Nothing to add, nothing to put away, nothing to
+ *  drag into order: each of them is a pen, and setting one is the only thing
+ *  anybody does to the row. */
+describe('the three slots', () => {
+  test('are what a device starts with and what it keeps', () => {
+    expect(pens.list).toHaveLength(PEN_SLOTS)
   })
 
-  test('gives it the colour the pen before it was writing in', () => {
-    pens.set({ colour: '#00ff00' })
-    pens.add('brush')
-
-    expect(pens.current.colour).toBe('#00ff00')
+  test('are three however many pens the store held before', () => {
+    const many = Array.from({ length: PEN_SLOTS + 5 }, () => ({ tool: 'marker' }))
+    expect(readPens(JSON.stringify({ pens: many })).pens).toHaveLength(PEN_SLOTS)
   })
 
-  test('refuses once the row is full', () => {
-    while (pens.list.length < MOST_PENS) expect(pens.add('pen')).toBe(true)
+  test('are filled out of the box where the store held fewer', () => {
+    const one = readPens(JSON.stringify({ pens: [{ tool: 'brush' }] }))
 
-    expect(pens.add('pen')).toBe(false)
-    expect(pens.list).toHaveLength(MOST_PENS)
+    expect(one.pens.map((pen) => pen.tool)).toEqual(['brush', 'pencil', 'highlighter'])
+  })
+
+  test('each hold a pen of their own, set the way it was set', () => {
+    pens.pick(2)
+    pens.set({ size: 22 })
+    pens.pick(0)
+
+    expect(pens.current.size).toBe(INK_STYLES.pen.size)
+    pens.pick(2)
+    expect(pens.current.size).toBe(22)
   })
 })
 
-describe('putting a pen away', () => {
-  test('takes it out of the row', () => {
-    pens.remove(1)
-    expect(pens.list.map((one) => one.tool)).toEqual(['pen', 'highlighter'])
-  })
+describe('the lasso and what it catches', () => {
+  test('is a loop until somebody asks for a box', () => {
+    expect(pens.box).toBe(false)
 
-  test('keeps the same pen in hand when one before it goes', () => {
-    pens.pick(2)
-    pens.remove(0)
-
-    expect(pens.at).toBe(1)
-    expect(pens.current.tool).toBe('highlighter')
-  })
-
-  test('never takes the last one', () => {
-    pens.remove(2)
-    pens.remove(1)
-    pens.remove(0)
-
-    expect(pens.list).toHaveLength(1)
-  })
-
-  test('leaves a pen in hand when the one in hand goes', () => {
-    pens.pick(2)
-    pens.remove(2)
-
-    expect(pens.at).toBe(1)
-    expect(pens.current.tool).toBe('pencil')
+    pens.catching({ box: true, partly: true })
+    expect(pens.box).toBe(true)
+    expect(pens.partly).toBe(true)
   })
 })
 
-describe('dragging a pen along the row', () => {
-  test('puts it where it was dropped', () => {
-    pens.move(0, 2)
-    expect(pens.list.map((one) => one.tool)).toEqual(['pencil', 'highlighter', 'pen'])
-  })
+describe('straightening', () => {
+  test('is on to begin with and can be turned off', () => {
+    expect(pens.straighten).toBe(true)
 
-  test('keeps the pen that was out in hand wherever it lands', () => {
-    pens.pick(2)
-    pens.move(2, 0)
-
-    expect(pens.at).toBe(0)
-    expect(pens.current.tool).toBe('highlighter')
-  })
-
-  test('leaves the row alone when the drag went nowhere', () => {
-    const was = pens.list
-    pens.move(1, 1)
-    pens.move(1, 9)
-
-    expect(pens.list).toBe(was)
+    pens.straightening(false)
+    expect(pens.straighten).toBe(false)
   })
 })
 
@@ -230,33 +202,44 @@ describe('what the store holds', () => {
   })
 
   test('comes back as it went in', () => {
+    const row = [
+      { tool: 'marker', size: 5, opacity: 0.4, colour: '#abcdef' },
+      { tool: 'pen', size: 2, opacity: 1, colour: 'ink' },
+      { tool: 'brush', size: 8, opacity: 1, colour: '1' },
+    ]
     const written = JSON.stringify({
-      pens: [{ tool: 'marker', size: 5, opacity: 0.4, colour: '#abcdef' }],
-      at: 0,
+      pens: row,
+      at: 1,
       recent: ['#abcdef'],
       dock: 'top',
       shut: true,
       whole: true,
       rub: 24,
+      straighten: false,
+      box: true,
+      partly: true,
     })
 
     expect(readPens(written)).toEqual({
-      pens: [{ tool: 'marker', size: 5, opacity: 0.4, colour: '#abcdef' }],
-      at: 0,
+      pens: row,
+      at: 1,
       recent: ['#abcdef'],
       dock: 'top',
       shut: true,
       whole: true,
       rub: 24,
+      straighten: false,
+      box: true,
+      partly: true,
     })
   })
 
-  test('drops a pen it cannot read and keeps the rest', () => {
+  test('drops a pen it cannot read and fills the slot back in', () => {
     const written = JSON.stringify({
       pens: [{ tool: 'pen' }, { tool: 'nonsense' }, 7, null, { tool: 'brush' }],
     })
 
-    expect(readPens(written).pens.map((one) => one.tool)).toEqual(['pen', 'brush'])
+    expect(readPens(written).pens.map((one) => one.tool)).toEqual(['pen', 'brush', 'highlighter'])
   })
 
   test('fills in what a half-written pen did not say', () => {
@@ -271,14 +254,14 @@ describe('what the store holds', () => {
     expect(readPens(JSON.stringify({ pens: [{ tool: 'nope' }] })).pens).toHaveLength(3)
   })
 
-  test('keeps no more pens than the bar shows', () => {
-    const many = Array.from({ length: MOST_PENS + 5 }, () => ({ tool: 'pen' }))
-    expect(readPens(JSON.stringify({ pens: many })).pens).toHaveLength(MOST_PENS)
+  test('brings an index that is past the end back into the row', () => {
+    expect(readPens(JSON.stringify({ pens: [{ tool: 'pen' }], at: 6 })).at).toBe(2)
+    expect(readPens(JSON.stringify({ at: -3 })).at).toBe(0)
   })
 
-  test('brings an index that is past the end back into the row', () => {
-    expect(readPens(JSON.stringify({ pens: [{ tool: 'pen' }], at: 6 })).at).toBe(0)
-    expect(readPens(JSON.stringify({ at: -3 })).at).toBe(0)
+  test('straightens what is drawn until somebody says otherwise', () => {
+    expect(readPens(null).straighten).toBe(true)
+    expect(readPens(JSON.stringify({ straighten: false })).straighten).toBe(false)
   })
 
   test('keeps only strings among the colours it remembered', () => {

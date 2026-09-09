@@ -206,6 +206,7 @@ and pans instead.
 | | |
 | --- | --- |
 | `canvas/pointer.ts` | every gesture, as a reducer over events, with no DOM in it |
+| `canvas/contacts.ts` | what each pointer claimed when it landed, and what it changed its mind about |
 | `canvas/tools.svelte.ts` | which tool is in hand |
 | `canvas/pens.svelte.ts` | the three pens, the eraser, the lasso, and where the bar sits |
 | `canvas/hand.svelte.ts` | whether this glass has seen a pen |

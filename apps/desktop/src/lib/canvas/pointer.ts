@@ -185,7 +185,7 @@ type Gesture =
  *  where it last was on screen, so a second finger pinches from wherever the
  *  first one has got to, and when it began, so a stroke a moment old can be given
  *  up for a pinch and an older one cannot. */
-export interface Driver {
+interface Driver {
   id: number
   kind: PointerKind
   screen: Point
@@ -353,7 +353,7 @@ function begun(gesture: Gesture): boolean {
  *  touched down. */
 function onPenned(machine: Machine, input: Penned, context: Context): Step {
   const driver = machine.driver
-  if (!driver || driver.id !== input.id) return { machine, effects: [] }
+  if (driver?.id !== input.id) return { machine, effects: [] }
 
   const pen: Driver = { ...driver, kind: 'pen' }
   const now: Machine = { ...machine, penDown: true, driver: pen }
@@ -431,7 +431,7 @@ export function step(machine: Machine, input: Input, context: Context): Step {
       // second finger pinches from there rather than from where the first one
       // landed.
       const driver = next.machine.driver
-      if (!driver || driver.id !== input.id) return next
+      if (driver?.id !== input.id) return next
 
       return {
         machine: { ...next.machine, driver: { ...driver, screen: input.screen } },

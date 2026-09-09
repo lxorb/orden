@@ -24,6 +24,7 @@
    *  only while a plane is the surface in front, so they are read straight. */
 
   import { untrack } from 'svelte'
+  import { fade } from 'svelte/transition'
   import type { NoteJump } from '@nib/editor'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
@@ -31,7 +32,7 @@
   import CanvasHands from './CanvasHands.svelte'
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
-  import CanvasPens from './CanvasPens.svelte'
+  import CanvasPicked from './CanvasPicked.svelte'
   import { graphPoint, zoomed } from './camera'
   import { canvasMenu, place, run } from './canvas/actions'
   import {
@@ -53,11 +54,12 @@
     type Point,
     rectBetween,
   } from './canvas/geometry'
+  import { Contacts } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
   import { pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
   import { assisted, tidyShape, transformed } from './canvas/ink'
-  import { DEFAULT_INK, readPalette } from './canvas/palette'
+  import { readPalette } from './canvas/palette'
   import {
     type Effect,
     type Hit,
@@ -74,6 +76,7 @@
   import { dragged as draggedPaths, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
+  import { dur } from './motion'
   import { rooms } from './rooms.svelte'
   import { canWriteAt, trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
@@ -114,6 +117,10 @@
   /** A card that is not being dragged, so the each block below hands over the
    *  same object every frame rather than a fresh zero. */
   const STILL: Point = { x: 0, y: 0 }
+
+  /** How much room the bar over a selection needs, in pixels: enough that it never
+   *  hangs off an edge of the pane. */
+  const ROOM = 72
 
   let host = $state<HTMLElement>()
   let width = $state(0)
@@ -527,6 +534,8 @@
       inkBox: box,
       pen: tools.ink,
       eraser: pens.eraser,
+      lassoBox: pens.box,
+      straighten: pens.straighten,
       penSeen: hand.penSeen,
       fingerDraws: hand.fingerDraws,
     })
@@ -598,7 +607,7 @@
         run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'catch':
-        run.lasso(store, effect.lasso)
+        run.lasso(store, effect.lasso, pens.partly)
         break
       case 'pan':
         store.camera = {
@@ -640,38 +649,89 @@
     predicted = []
   }
 
+  /** Whether this event is a pen with its button held.
+   *
+   *  Chromium turns a pen held with its button into the eraser bit, and Android
+   *  reports the barrel button as the right one instead. Both mean the same thing
+   *  to a hand, so both mean it here. */
+  function rubbingWith(event: PointerEvent): boolean {
+    if (event.pointerType !== 'pen') return false
+    return (event.buttons & 32) !== 0 || (event.buttons & 2) !== 0
+  }
+
+  /** What each pointer said about itself when it landed; see canvas/contacts.ts.
+   *  Nothing on the page is drawn from it, so it is not state. */
+  const contacts = new Contacts()
+
+  /** Whether the last pointer on this glass was a pen, for the two events that
+   *  carry no pointer of their own: the menu and a double press. */
+  let lastPen = false
+
   function onPointerDown(event: PointerEvent) {
-    if (event.button === 2) return
+    const pen = event.pointerType === 'pen'
+    // The right button on a mouse starts nothing; the menu is the browser's own
+    // event. A pen holding its button is not a right button at all, it is the
+    // eraser, and it has to reach the machine to be one.
+    if (event.button === 2 && !pen) return
 
     const point = planeAt(event)
     at = point
     began = event.timeStamp
 
     const coarse = event.pointerType === 'touch'
+    const eraser = rubbingWith(event)
+    lastPen = pen
+    contacts.came(event.pointerId, { pen, eraser })
+
     // A pen on this glass is remembered for good: from now on the finger moves
     // the plane about rather than drawing on it. See canvas/hand.svelte.ts.
-    if (event.pointerType === 'pen') hand.sawPen()
+    if (pen) hand.sawPen()
     host?.setPointerCapture(event.pointerId)
 
     send({
       kind: 'down',
       id: event.pointerId,
-      pointer: event.pointerType === 'pen' ? 'pen' : coarse ? 'touch' : 'mouse',
+      pointer: pen ? 'pen' : coarse ? 'touch' : 'mouse',
       at: point,
       screen: screenAt(event),
+      time: event.timeStamp,
       button: event.button,
       shift: event.shiftKey,
       adds: event.ctrlKey || event.metaKey,
-      // Chromium turns a pen held with its button into the eraser bit, and some
-      // devices report the barrel button as the right one instead. Both mean the
-      // same thing to a hand, so both mean it here.
-      eraser:
-        event.pointerType === 'pen' && ((event.buttons & 32) !== 0 || (event.buttons & 2) !== 0),
+      eraser,
       sample: sampleOf(event, began),
       hit: hitFor(point, coarse),
     })
 
-    if (coarse) waitForHold(point)
+    // Only a finger asks for the menu by staying still, and only while the pen is
+    // off the glass: a hand resting beside a nib is not asking for anything.
+    if (coarse && !machine.penDown) waitForHold(point)
+  }
+
+  /** A contact that has just turned out to be a pen, or a pen whose button was not
+   *  down yet when it landed. Answered before the move itself, so the stroke begins
+   *  where the nib touched down rather than where it has got to. */
+  function repairPen(event: PointerEvent, point: Point) {
+    const turned = contacts.turned(event.pointerId, {
+      pen: event.pointerType === 'pen',
+      eraser: rubbingWith(event),
+    })
+    if (!turned) return
+
+    lastPen = true
+    if (turned.first) hand.sawPen()
+    // A nib that has landed is not a finger waiting for a menu.
+    stopHolding()
+    began = event.timeStamp
+
+    send({
+      kind: 'penned',
+      id: event.pointerId,
+      at: point,
+      sample: sampleOf(event, began),
+      eraser: turned.eraser,
+      hit: hitFor(point, false),
+    })
   }
 
   function onPointerMove(event: PointerEvent) {
@@ -679,6 +739,8 @@
     at = point
     if (store.shared) pointing = point
     const coarse = event.pointerType === 'touch'
+
+    repairPen(event, point)
 
     // Every sample since the last event, not just the one that was delivered: a
     // fast stroke is drawn through all of them rather than through a fifth of
@@ -724,6 +786,7 @@
 
   function onPointerUp(event: PointerEvent) {
     stopHolding()
+    contacts.went(event.pointerId)
     if (host?.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId)
 
     const point = planeAt(event)
@@ -764,6 +827,7 @@
 
   function onPointerCancel(event: PointerEvent) {
     stopHolding()
+    contacts.went(event.pointerId)
     predicted = []
     carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
     send({ kind: 'cancel', id: event.pointerId })
@@ -798,8 +862,14 @@
   }
 
   /** A double click on the plane makes a card and opens it; on a card it opens
-   *  the card, and on a frame or a connector it asks for the words it wears. */
+   *  the card, and on a frame or a connector it asks for the words it wears.
+   *
+   *  Only with the arrow in hand. A tap with a pen in hand is a dot and two of them
+   *  are two dots, and Chromium sends a dblclick for a pen tapped twice in one
+   *  place: that is how a press with the pen used to put a card on the plane. */
   function onDoubleClick(event: MouseEvent) {
+    if (tools.which !== 'select') return
+
     const point = planeAt(event)
     void run.open(store, hitFor(point, false), point)
   }
@@ -837,6 +907,11 @@
 
   function onContextMenu(event: MouseEvent) {
     event.preventDefault()
+    // A pen holding its button is rubbing out, and Android reports that button as
+    // the right one: without this the menu opens under the nib halfway through the
+    // rub. The menu belongs to the mouse and to a finger held still.
+    if (lastPen) return
+
     showMenu(planeAt(event))
   }
 
@@ -984,31 +1059,56 @@
     }
   }
 
-  /** The dots mean "this colour", and what they colour is whatever the moment is
-   *  about: what is picked, or the pen in hand. */
-  function onColour(colour: string | null) {
-    if (tools.which === 'draw') {
-      pens.set({ colour: colour ?? DEFAULT_INK })
-      return
-    }
+  /** The colour what is picked wears, which is the first one's: a selection of
+   *  nine cards in three colours has no one colour, and the bar shows the colour of
+   *  the thing the hand grabbed. */
+  const pickedColour = $derived.by(() => {
+    const first = store.picked[0]
+    if (!first) return null
 
-    if (store.picked.length) store.edit(coloured(store.canvas, store.picked, colour))
-    else tools.colour = colour ?? DEFAULT_INK
+    const node = store.canvas.nodes.find((one) => one.id === first)
+    return node?.color ?? store.canvas.edges.find((one) => one.id === first)?.color ?? null
+  })
+
+  function colourPicked(colour: string | null) {
+    store.edit(coloured(store.canvas, store.picked, colour))
+    // The colour a card was given is the colour the next one gets. The one thing
+    // on the plane that carries over, because drawing five red boxes should not be
+    // five trips to the same dot.
+    if (colour !== null) tools.colour = colour
   }
 
-  const barColour = $derived.by(() => {
-    if (tools.which === 'draw') {
-      return pens.current.colour === DEFAULT_INK ? null : pens.current.colour
-    }
+  /** Where the bar over what is picked goes: the middle of the top edge of it, on
+   *  screen, and under it instead when the selection is against the top of the pane.
+   *  Nothing at all while a gesture is under way or a card is being written in: the
+   *  hand is busy, and a bar under the pointer would be in the way of it. */
+  const overPicked = $derived.by(() => {
+    if (!box || gesture || store.editing !== null || !store.picked.length) return null
 
-    const first = store.picked[0]
-    if (first) {
-      const node = store.canvas.nodes.find((one) => one.id === first)
-      return node?.color ?? store.canvas.edges.find((one) => one.id === first)?.color ?? null
-    }
+    const middle = originX + (box.x + box.width / 2) * camera.scale
+    const above = originY + box.y * camera.scale
+    const under = originY + (box.y + box.height) * camera.scale
+    const below = above < ROOM
 
-    return tools.colour === DEFAULT_INK ? null : tools.colour
+    return {
+      at: {
+        x: Math.min(Math.max(middle, ROOM), Math.max(ROOM, width - ROOM)),
+        y: below ? under : above,
+      },
+      below,
+    }
   })
+
+  /** Whether the plane is empty, which is the one moment the surface says anything
+   *  at all in words. */
+  const bare = $derived(
+    !store.canvas.nodes.length && !store.canvas.edges.length && !store.canvas.ink.length,
+  )
+
+  /** One notch of the zoom buttons, about the middle of the view. */
+  function zoomBy(by: number) {
+    store.camera = zoomed(camera, width, height, width / 2, height / 2, by)
+  }
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -1183,27 +1283,40 @@
 
   <CanvasInk ink={shown.ink} {live} {camera} {width} {height} {picked} {palette} />
 
-  <!-- Two bars, because a thumb and a mouse are not the same hand. A pointer gets
-       the compact row of glyphs; a finger gets the pen bar, whose pens are drawn
-       as pens and whose settings open where it stands. -->
-  {#if viewport.touch}
-    <CanvasPens
-      oncolour={onColour}
-      colour={barColour}
-      colouring={store.picked.length > 0}
-      canundo={store.canUndo}
-      canredo={store.canRedo}
-      onundo={() => store.undo()}
-      onredo={() => store.redo()}
-      onerase={() => run.eraseAll(store)}
-    />
-  {:else}
-    <CanvasBar
-      oncolour={onColour}
-      onsize={(size: number) => pens.set({ size })}
-      colour={barColour}
-      size={pens.current.size}
-      colouring={store.picked.length > 0}
+  <!-- What an empty plane says, and the only thing it ever says. It goes the moment
+       anything is on the plane, and it is one line rather than a lesson. -->
+  {#if bare}
+    <p class="hint" transition:fade={{ duration: dur(190) }}>
+      {viewport.touch ? t('Double-tap to write') : t('Double-click to write')}
+    </p>
+  {/if}
+
+  <!-- One bar, on every device: the same buttons in the same order, drawn at the
+       touch scale where a thumb has to land on them. -->
+  <CanvasBar
+    canundo={store.canUndo}
+    canredo={store.canRedo}
+    zoom={camera.scale}
+    onundo={() => store.undo()}
+    onredo={() => store.redo()}
+    onerase={() => run.eraseAll(store)}
+    onzoom={zoomBy}
+    onfit={() => store.fit(width, height)}
+  />
+
+  <!-- And a small one over what is picked, where the hand already is. -->
+  {#if overPicked}
+    <CanvasPicked
+      at={overPicked.at}
+      below={overPicked.below}
+      colour={pickedColour}
+      recent={pens.recent}
+      oncolour={colourPicked}
+      onduplicate={() => run.duplicate(store)}
+      ondelete={() => run.remove(store)}
+      onmore={() => {
+        if (box) showMenu({ x: box.x + box.width / 2, y: box.y })
+      }}
     />
   {/if}
 
@@ -1359,5 +1472,25 @@
   .lasso path {
     fill: var(--accent-soft);
     stroke: var(--accent);
+  }
+
+  /* The one line an empty plane says. In the middle of the pane and quiet enough
+     that it reads as a note to the reader rather than as something on the page. */
+  .hint {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: 0;
+    translate: -50% -50%;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  :global([data-touch]) .hint {
+    font-size: var(--touch-text);
   }
 </style>

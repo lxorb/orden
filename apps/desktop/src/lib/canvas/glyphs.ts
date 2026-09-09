@@ -1,111 +1,156 @@
-/** The shapes the canvas bars are drawn from.
+/** Everything on the canvas bar, as data: the icon, the words and the key.
  *
- *  Two bars offer the same tools - the compact row a mouse gets and the pen bar a
- *  finger gets - and a glyph drawn twice is a glyph that drifts. So the paths, the
- *  ids and the words a screen reader says live here, once, and each bar decides
- *  only how big to draw them and in what order.
+ *  One icon set for the whole app. These are Lucide's, the same ones the spaces
+ *  and the file list are drawn with, so the plane does not arrive wearing a
+ *  second set of hand-drawn shapes that drift a little further from the rest of
+ *  the interface every time one of them is redrawn. Each is an icon node, which
+ *  is a list of tags and attributes; `CanvasIcon.svelte` draws one.
  *
- *  Every path is drawn in a 14 by 14 box, stroked rather than filled, so one set
- *  of `<svg>` attributes suits all of them. */
+ *  The words are thunks rather than strings, so a language chosen after this
+ *  module loaded is the one they answer in. Each carries the id of the shortcut
+ *  that does the same thing, which is where the key in the tooltip comes from:
+ *  the bar teaches the keyboard, and neither of them holds a key of its own. */
+
+import ArrowUpRight from 'lucide/dist/esm/icons/arrow-up-right.mjs'
+import Brush from 'lucide/dist/esm/icons/brush.mjs'
+import Circle from 'lucide/dist/esm/icons/circle.mjs'
+import Copy from 'lucide/dist/esm/icons/copy.mjs'
+import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
+import Eraser from 'lucide/dist/esm/icons/eraser.mjs'
+import Feather from 'lucide/dist/esm/icons/feather.mjs'
+import FileImage from 'lucide/dist/esm/icons/file-image.mjs'
+import Frame from 'lucide/dist/esm/icons/frame.mjs'
+import GripVertical from 'lucide/dist/esm/icons/grip-vertical.mjs'
+import Hand from 'lucide/dist/esm/icons/hand.mjs'
+import Highlighter from 'lucide/dist/esm/icons/highlighter.mjs'
+import Lasso from 'lucide/dist/esm/icons/lasso.mjs'
+import Link2 from 'lucide/dist/esm/icons/link-2.mjs'
+import Minus from 'lucide/dist/esm/icons/minus.mjs'
+import MousePointer2 from 'lucide/dist/esm/icons/mouse-pointer-2.mjs'
+import Paintbrush from 'lucide/dist/esm/icons/paintbrush.mjs'
+import PenLine from 'lucide/dist/esm/icons/pen-line.mjs'
+import PenTool from 'lucide/dist/esm/icons/pen-tool.mjs'
+import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
+import Plus from 'lucide/dist/esm/icons/plus.mjs'
+import Pointer from 'lucide/dist/esm/icons/pointer.mjs'
+import Redo2 from 'lucide/dist/esm/icons/redo-2.mjs'
+import Ruler from 'lucide/dist/esm/icons/ruler.mjs'
+import Shapes from 'lucide/dist/esm/icons/shapes.mjs'
+import Slash from 'lucide/dist/esm/icons/slash.mjs'
+import Square from 'lucide/dist/esm/icons/square.mjs'
+import StickyNote from 'lucide/dist/esm/icons/sticky-note.mjs'
+import Trash2 from 'lucide/dist/esm/icons/trash-2.mjs'
+import Undo2 from 'lucide/dist/esm/icons/undo-2.mjs'
+import type { IconNode } from 'lucide'
 
 import { type InkTool } from './format'
 import { type Tool } from './pointer'
 import { t } from '../i18n.svelte'
+import { shortcuts } from '../shortcuts.svelte'
+import { viewport } from '../viewport.svelte'
 
-export interface Glyph {
-  id: Tool
-  title: string
-  path: string
+/** One button on the bar. */
+export interface Mark {
+  icon: IconNode
+  /** Read out, and shown on a hover. */
+  title: () => string
+  /** The shortcut that does the same thing, or nothing where no key does. */
+  key: string | null
 }
 
-/** What a press on the plane means. The arrow, the hand, and the three a pen
- *  wants. */
-export const HOLDING: Glyph[] = [
+/** A button that puts a tool in your hand. */
+export interface ToolMark extends Mark {
+  id: Tool
+}
+
+/** What a hover says: the name, and the key that does the same thing.
+ *
+ *  This is how the bar teaches the keyboard. Somebody reads "Rectangle R" once,
+ *  and after that the button is there for the times their hand is on the glass
+ *  rather than on the keys. A key means nothing to a thumb, so a touch screen is
+ *  shown the name alone. */
+export function hinted(mark: Pick<Mark, 'title' | 'key'>): string {
+  const hint = mark.key !== null && !viewport.touch ? shortcuts.hint(mark.key) : undefined
+  return hint ? `${mark.title()}  ${hint}` : mark.title()
+}
+
+/** Getting about the plane: the arrow, and the hand that moves it. */
+export const ABOUT: ToolMark[] = [
   {
     id: 'select',
-    title: t('Select'),
-    path: 'M3.4 2.2 11 6.4l-3.3.9L9 11l-1.5.6-1.3-3.7-2.4 2.2z',
+    icon: MousePointer2,
+    title: () => t('Select'),
+    key: 'canvas.tool.select',
   },
-  {
-    id: 'hand',
-    title: t('Pan'),
-    path: 'M4 7.5V4.4a.9.9 0 0 1 1.8 0V7m0 0V3.4a.9.9 0 0 1 1.8 0V7m0 0V4.2a.9.9 0 0 1 1.8 0v4.4A3.4 3.4 0 0 1 6 12a3 3 0 0 1-2-2.8z',
-  },
-  {
-    id: 'draw',
-    title: t('Draw'),
-    path: 'M2.6 11.4 3.5 8.6 9 3.1l1.9 1.9-5.5 5.5zM8.3 3.8l1.9 1.9',
-  },
-  {
-    id: 'erase',
-    title: t('Erase'),
-    path: 'M4 11.4h7.4M2.8 8.6l4.3-4.3a1.3 1.3 0 0 1 1.9 0l1.7 1.7a1.3 1.3 0 0 1 0 1.9l-3.4 3.5H5.2z',
-  },
-  {
-    id: 'lasso',
-    title: t('Lasso'),
-    path: 'M7 2.6c2.7 0 4.9 1.6 4.9 3.5S9.7 9.6 7 9.6 2.1 8 2.1 6.1 4.3 2.6 7 2.6M5.6 9.5c0 1.3.4 2 1.3 2',
-  },
+  { id: 'hand', icon: Hand, title: () => t('Pan'), key: 'canvas.tool.hand' },
 ]
 
-/** What a press puts on the plane. */
-export const PLACING: Glyph[] = [
-  { id: 'text', title: t('Card'), path: 'M2 3h10v8H2zM4.5 6h5M4.5 8h3' },
-  { id: 'file', title: t('Note or picture'), path: 'M3.5 2h4l3 3v7h-7zM7.5 2v3h3' },
-  {
-    id: 'link',
-    title: t('Link'),
-    path: 'M5.6 8.4 8.4 5.6M6.6 4 8 2.6a2.8 2.8 0 0 1 4 4L10.6 8M7.4 10 6 11.4a2.8 2.8 0 0 1-4-4L3.4 6',
-  },
-  { id: 'group', title: t('Group'), path: 'M2 4h10v8H2zM2 4V2h4v2' },
-  { id: 'rect', title: t('Rectangle'), path: 'M2.5 3.5h9v7h-9z' },
-  { id: 'ellipse', title: t('Ellipse'), path: 'M11.5 7a4.5 3.6 0 1 1-9 0 4.5 3.6 0 1 1 9 0' },
-  { id: 'line', title: t('Line'), path: 'M2.6 11.4 11.4 2.6' },
-  { id: 'arrow', title: t('Arrow'), path: 'M2.6 11.4 11.4 2.6M11.4 2.6H7.8M11.4 2.6v3.6' },
+/** The two tools the pens are used with. */
+export const RUBBING: ToolMark[] = [
+  { id: 'erase', icon: Eraser, title: () => t('Erase'), key: 'canvas.tool.erase' },
+  { id: 'lasso', icon: Lasso, title: () => t('Lasso'), key: 'canvas.tool.lasso' },
 ]
 
-/** What each pen is called, in words, since a glyph of a nib and a glyph of a
- *  broad nib are two pictures of the same thing. Read out, or shown on a hover,
- *  beside a drawing of the pen itself. */
-export const PEN_NAMES: Record<InkTool, string> = {
-  pen: t('Pen'),
-  fountain: t('Fountain pen'),
-  pencil: t('Pencil'),
-  marker: t('Marker'),
-  highlighter: t('Highlighter'),
-  brush: t('Brush'),
-  calligraphy: t('Calligraphy'),
+/** What a press puts on the plane, in the order the grid shows them: the four
+ *  things a note taker puts down, then the four shapes. */
+export const PLACING: ToolMark[] = [
+  { id: 'text', icon: StickyNote, title: () => t('Card'), key: 'canvas.tool.text' },
+  {
+    id: 'file',
+    icon: FileImage,
+    title: () => t('Note or picture'),
+    key: 'canvas.tool.file',
+  },
+  { id: 'link', icon: Link2, title: () => t('Link'), key: 'canvas.tool.link' },
+  { id: 'group', icon: Frame, title: () => t('Group'), key: 'canvas.tool.group' },
+  { id: 'rect', icon: Square, title: () => t('Rectangle'), key: 'canvas.tool.rect' },
+  { id: 'ellipse', icon: Circle, title: () => t('Ellipse'), key: 'canvas.tool.ellipse' },
+  { id: 'line', icon: Slash, title: () => t('Line'), key: 'canvas.tool.line' },
+  { id: 'arrow', icon: ArrowUpRight, title: () => t('Arrow'), key: 'canvas.tool.arrow' },
+]
+
+/** A nib each. Seven pens are seven objects rather than seven scribbles, so each
+ *  one is the icon of the instrument it is. */
+export const PEN_ICONS: Record<InkTool, IconNode> = {
+  pen: PenLine,
+  fountain: PenTool,
+  pencil: Pencil,
+  marker: Paintbrush,
+  highlighter: Highlighter,
+  brush: Brush,
+  calligraphy: Feather,
 }
 
-/** A glyph each for the seven pens, for the compact bar a mouse gets: a nib, a
- *  broad nib, a grainy one, a felt tip, a wide flat one, a brush and a chisel.
- *  The pen bar draws the pens themselves instead; see `nibs.ts`. */
-export const NIBS: Record<InkTool, string> = {
-  pen: 'M2.6 11.4 3.5 8.6 9 3.1l1.9 1.9-5.5 5.5z',
-  fountain: 'M3 11.4 4.6 7 9.4 2.2l2.4 2.4L7 9.4zM4.6 7l2.4 2.4',
-  pencil: 'M2.6 11.4 3.5 8.6 9 3.1l1.9 1.9-5.5 5.5zM4.6 8.2l1.2 1.2M6.2 6.6l1.2 1.2M7.8 5l1.2 1.2',
-  marker: 'M3.4 11.4h7.2M4.4 8.8 8.2 5l2.2 2.2-3.8 3.8H4.4z',
-  highlighter: 'M2.6 11.4h8.8M3.8 8.6 8.6 3.8l2.4 2.4-4.8 4.8H3.8z',
-  brush: 'M3.6 10.6c1.8.8 3.4 0 3.8-1.8M5.2 8.4 10 3.6l1.2 1.2-4.8 4.8z',
-  calligraphy: 'M2.6 10.6 9.8 3M4.2 11.8 11.4 4.2',
+/** What each pen is called. Beside its icon in the pen's own panel, because a
+ *  drawing of a nib and a drawing of a broad nib are two pictures of one thing
+ *  and the word is what tells them apart. */
+export const PEN_NAMES: Record<InkTool, () => string> = {
+  pen: () => t('Pen'),
+  fountain: () => t('Fountain pen'),
+  pencil: () => t('Pencil'),
+  marker: () => t('Marker'),
+  highlighter: () => t('Highlighter'),
+  brush: () => t('Brush'),
+  calligraphy: () => t('Calligraphy'),
 }
 
-/** A fingertip, for the switch that says whether a finger draws on a device that
- *  has a pen. Only ever offered where the question exists. */
-export const FINGER =
-  'M4.6 11.4V8.2a2.4 2.4 0 0 1 4.8 0v3.2M7 8V4.2a1.2 1.2 0 0 1 2.4 0V8M4.6 8.6 3.4 7'
-
-/** The rest of what the pen bar draws: the two arrows, the eraser's two ways of
- *  working, and the marks that add a pen, take one away and open the rest. */
+/** Everything on the bar that is not a tool: the two arrows, the zoom, the
+ *  handful of marks the panels and the selection use. */
 export const MARKS = {
-  undo: 'M4.6 4.2 2.2 6.6l2.4 2.4M2.2 6.6h5.6a3.6 3.6 0 0 1 0 7.2',
-  redo: 'M9.4 4.2 11.8 6.6 9.4 9M11.8 6.6H6.2a3.6 3.6 0 0 0 0 7.2',
-  /** A stroke gone whole: a written line, struck right through. */
-  whole: 'M2 10.2c2-3.4 3.9-5.1 4.9-5.1 1 0 3 1.7 5.1 5.1M3.6 11.8 10.4 3.2',
-  /** A hole rubbed in what is under it: the same line with a piece missing, and
-   *  the eraser's round nib sitting in the gap it took. */
-  area: 'M1.8 10.6 4.5 6.5M12.2 10.6 9.5 6.5M9.7 8.9a2.7 2.7 0 1 1-5.4 0 2.7 2.7 0 1 1 5.4 0',
-  plus: 'M7 3.4v7.2M3.4 7h7.2',
-  less: 'M3.4 7h7.2',
-  more: 'M3 7h.1M7 7h.1M11 7h.1',
+  undo: Undo2,
+  redo: Redo2,
+  zoomOut: Minus,
+  zoomIn: Plus,
+  /** What a press puts on the plane, as one button with a grid behind it. */
+  put: Shapes,
+  /** The rest of what can be done, which is the menu everything else opens. */
+  rest: Ellipsis,
+  copy: Copy,
+  bin: Trash2,
+  /** The bar itself: dragged to an edge, pressed to fold away. */
+  grip: GripVertical,
+  /** A stroke tidied into the line, ring or box it was aiming at. */
+  straight: Ruler,
+  /** Whether a finger draws on a device that also has a pen. */
+  finger: Pointer,
 } as const

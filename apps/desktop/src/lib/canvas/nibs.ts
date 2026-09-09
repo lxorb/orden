@@ -1,86 +1,14 @@
-/** How a pen is pictured: the drawing of it in the bar, and the line it writes.
+/** The line a pen would write, for the panel that sets one.
  *
- *  A row of seven identical glyphs with different scribbles inside them is a
- *  puzzle. A row of pens is not: a fountain pen, a pencil sharpened to a point, a
- *  fat chisel-tipped marker and a wide flat highlighter are told apart in
- *  silhouette, from across a table, by anybody who has ever held one. So each pen
- *  is drawn as itself, standing on its nib, and the nib is filled with the ink
- *  that pen writes in at the alpha it writes at: the drawing of the pen is also
- *  the swatch for its colour and the read-out of its dials.
- *
- *  Three paths each, so one `<svg>` shape draws all seven and the theme decides
- *  what a barrel looks like: the barrel, a detail on it - a collar, a ferrule, the
- *  facets of a hexagonal pencil - and the nib.
- *
- *  The line a pen writes is the app's own ink, not an impression of it: a stroke
- *  is built here and handed to the same outliner the plane uses, so what the
- *  popover shows is what the nib will do. */
+ *  Not an impression of it: a stroke is built here and handed to the same
+ *  outliner the plane uses, so what the panel shows is what the nib will do. A
+ *  fountain pen swells in the middle, a brush tapers to nothing and a chisel nib
+ *  goes thin on the turn, while the slider is still moving. */
 
-import { type InkPoint, type InkStroke, type InkTool } from './format'
+import { type InkPoint, type InkStroke } from './format'
 import { inkPath, outlineOf } from './ink'
 import type { Nib } from './pens.svelte'
 
-/** The box every pen is drawn in. Tall and narrow, tip at the bottom. */
-export const PEN_BOX = { width: 22, height: 44 } as const
-
-export interface PenArt {
-  /** The body of the pen, in a neutral. */
-  barrel: string
-  /** A collar, a ferrule or the facets of a pencil, a shade darker. */
-  detail: string
-  /** The nib, filled with what the pen writes in. Wound with `evenodd`, so a
-   *  fountain pen's slit is a gap rather than another path. */
-  nib: string
-}
-
-export const PEN_ART: Record<InkTool, PenArt> = {
-  /** The slimmest barrel of them, and a cone to a fine ball. */
-  pen: {
-    barrel: 'M9.2 2.4h3.6a1.6 1.6 0 0 1 1.6 1.6V24H7.6V4A1.6 1.6 0 0 1 9.2 2.4z',
-    detail: 'M7.6 24h6.8v2.6H7.6z',
-    nib: 'M7.6 26.6h6.8l-2.1 9.6-.7 5h-1.2l-.7-5z',
-  },
-  /** A pointed nib with a slit up the middle of it. */
-  fountain: {
-    barrel: 'M8.8 2.4h4.4a1.6 1.6 0 0 1 1.6 1.6V22H7.2V4a1.6 1.6 0 0 1 1.6-1.6z',
-    detail: 'M7.2 22h7.6v2.4H7.2z',
-    nib: 'M7.2 24.4h7.6v6.8L11 41 7.2 31.2zM10.5 27.4h1v9.4h-1z',
-  },
-  /** Hexagonal, and sharpened back to a broad wooden cone. */
-  pencil: {
-    barrel: 'M6.8 2.4h8.4V24H6.8z',
-    detail: 'M9 2.4h1.2V24H9zM12.4 2.4h1V24h-1z',
-    nib: 'M6.8 24h8.4l-2.6 10.6L11 42 9.4 34.6z',
-  },
-  /** Chunkier, ending in a broad chisel. */
-  marker: {
-    barrel: 'M7.4 2.4h7.2a1.6 1.6 0 0 1 1.6 1.6V20H5.8V4a1.6 1.6 0 0 1 1.6-1.6z',
-    detail: 'M5.8 20h10.4v2.6H5.8z',
-    nib: 'M6.4 22.6h9.2v10.4l-2.4 6.2H8.8l-2.4-6.2z',
-  },
-  /** The widest of them, flat right across. */
-  highlighter: {
-    barrel: 'M6.2 2.4h9.6a1.6 1.6 0 0 1 1.6 1.6V18H4.6V4a1.6 1.6 0 0 1 1.6-1.6z',
-    detail: 'M4.6 18h12.8v2.8H4.6z',
-    nib: 'M5 20.8h12v11.2l-1.8 7.4H6.8L5 32z',
-  },
-  /** A soft bundle in a ferrule, coming to a point. */
-  brush: {
-    barrel: 'M9.4 2.4h3.2a1.6 1.6 0 0 1 1.6 1.6V18H7.8V4a1.6 1.6 0 0 1 1.6-1.6z',
-    detail: 'M6.6 18h8.8v3.4H6.6z',
-    nib: 'M6.6 21.4c0 4.4.7 8.4 2.1 11.9L11 41.4l2.3-8.1c1.4-3.5 2.1-7.5 2.1-11.9z',
-  },
-  /** A flat nib cut at an angle, which is what makes the line thick one way and
-   *  thin the other. */
-  calligraphy: {
-    barrel: 'M7.8 2.4h6.4a1.6 1.6 0 0 1 1.6 1.6V21H6.2V4a1.6 1.6 0 0 1 1.6-1.6z',
-    detail: 'M6.2 21h9.6v2.4H6.2z',
-    nib: 'M6.2 23.4h9.6v6.8L7.6 41 6.2 35.6z',
-  },
-}
-
-/** How many points the sample line is drawn through. Enough that the curve is a
- *  curve and few enough that building it on every drag of a slider is free. */
 const SAMPLES = 44
 
 /** How hard the hand presses along the sample line: light going in, leaning on

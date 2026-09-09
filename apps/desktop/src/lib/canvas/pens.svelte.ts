@@ -1,4 +1,4 @@
-/** What the pen bar remembers: the pens a hand keeps, the eraser, and where the
+/** What the bar remembers: the three pens, the eraser, the lasso, and where the
  *  bar itself sits.
  *
  *  A pen on a tablet is a thing you own rather than a setting you pick. Somebody
@@ -32,8 +32,15 @@ export interface Nib {
 /** Which edge the bar is against. */
 type Dock = 'top' | 'bottom'
 
-/** As many pens as fit on a tablet's bar without it becoming a filing cabinet. */
-export const MOST_PENS = 8
+/** How many pens the bar holds. Three, always three: something to write with,
+ *  something to sketch with, something to mark with.
+ *
+ *  A row that grows is a row that overflows, and then it needs adding, putting
+ *  away, dragging into order and a gesture to scroll it, none of which is what
+ *  anybody opened a canvas to do. Three slots that are always there and always
+ *  full is the whole of it: each one is a pen you set the way you like it, and
+ *  there is nothing to manage. */
+export const PEN_SLOTS = 3
 
 /** How many colours the row remembers. Six, so the recent ones are the same
  *  count as the presets above them and the two rows read as a pair. */
@@ -66,11 +73,17 @@ export function nibFor(tool: InkTool, colour = DEFAULT_INK): Nib {
   return { tool, size: style.size, opacity: style.opacity, colour }
 }
 
-/** The pens a plane starts with: something to write with, something to sketch
- *  with, something to mark with. Three rather than seven, because a row of seven
- *  is a catalogue and the first thing anybody does is make it their own. */
+/** The three, as they come. */
 function fresh(): Nib[] {
   return [nibFor('pen'), nibFor('pencil'), nibFor('highlighter')]
+}
+
+/** The row, however many pens the store held: the first three of them, filled
+ *  out of the box where a device has fewer. A tablet that kept eight from before
+ *  keeps the three it reaches for. */
+function three(held: Nib[]): Nib[] {
+  const row = fresh()
+  return row.map((one, index) => held[index] ?? one)
 }
 
 interface Kept {
@@ -81,12 +94,29 @@ interface Kept {
   shut: boolean
   whole: boolean
   rub: number
+  /** Whether a stroke held still is tidied into what it was aiming at. */
+  straighten: boolean
+  /** Whether the lasso is a box pulled out rather than a loop drawn by hand, and
+   *  whether a stroke it only half caught counts as caught. */
+  box: boolean
+  partly: boolean
 }
 
 const KEY = 'nib:pens'
 
 function blank(): Kept {
-  return { pens: fresh(), at: 0, recent: [], dock: 'bottom', shut: false, whole: false, rub: 10 }
+  return {
+    pens: fresh(),
+    at: 0,
+    recent: [],
+    dock: 'bottom',
+    shut: false,
+    whole: false,
+    rub: 10,
+    straighten: true,
+    box: false,
+    partly: false,
+  }
 }
 
 /** Anything with fields, which is as much as `JSON.parse` promises. */
@@ -128,8 +158,7 @@ export function readPens(raw: string | null): Kept {
   if (!isRecord(parsed)) return blank()
 
   const held = parsed
-  const pens = Array.isArray(held.pens) ? held.pens.flatMap(oneNib).slice(0, MOST_PENS) : []
-  if (!pens.length) pens.push(...fresh())
+  const pens = three(Array.isArray(held.pens) ? held.pens.flatMap(oneNib) : [])
 
   return {
     pens,
@@ -142,6 +171,9 @@ export function readPens(raw: string | null): Kept {
     shut: held.shut === true,
     whole: held.whole === true,
     rub: typeof held.rub === 'number' ? clampRub(held.rub) : 10,
+    straighten: held.straighten !== false,
+    box: held.box === true,
+    partly: held.partly === true,
   }
 }
 
@@ -156,7 +188,7 @@ function stored(): Kept {
 }
 
 class Pens {
-  /** The row, in the order it is shown. Never empty. */
+  /** The three, in the order the bar shows them. Always three; see PEN_SLOTS. */
   list = $state<Nib[]>([])
   /** Which of them is out. */
   at = $state(0)
@@ -170,6 +202,13 @@ class Pens {
   whole = $state(false)
   /** How wide the eraser is, in pixels on screen. */
   rub = $state(10)
+  /** Whether a stroke held still is tidied into the line, ring or box it was
+   *  aiming at. */
+  straighten = $state(true)
+  /** Whether the lasso is a box pulled out rather than a loop drawn by hand. */
+  box = $state(false)
+  /** Whether a stroke the lasso only half caught counts as caught. */
+  partly = $state(false)
 
   constructor() {
     this.restore(stored())
@@ -215,43 +254,6 @@ class Pens {
     this.keep()
   }
 
-  /** Another pen in the row, of this kind and as it comes, out at once. Does
-   *  nothing once the row is full: a row that runs past the screen is not a set
-   *  of favourites. */
-  add(tool: InkTool): boolean {
-    if (this.list.length >= MOST_PENS) return false
-
-    this.list = [...this.list, nibFor(tool, this.current.colour)]
-    this.at = this.list.length - 1
-    this.keep()
-    return true
-  }
-
-  /** One pen out of the row. The last one never goes: a bar with no pen on it is
-   *  a bar nobody can draw with. */
-  remove(index: number) {
-    if (this.list.length < 2 || index < 0 || index >= this.list.length) return
-
-    this.list = this.list.filter((_pen, one) => one !== index)
-    this.at = Math.min(this.at > index ? this.at - 1 : this.at, this.list.length - 1)
-    this.keep()
-  }
-
-  /** A pen dragged along the row to another place, the one that was out staying
-   *  out wherever it lands. */
-  move(from: number, to: number) {
-    const one = this.list[from]
-    if (!one || to < 0 || to >= this.list.length || from === to) return
-
-    const held = this.current
-    const rest = this.list.filter((_pen, index) => index !== from)
-    this.list = [...rest.slice(0, to), one, ...rest.slice(to)]
-
-    const now = this.list.indexOf(held)
-    this.at = now < 0 ? to : now
-    this.keep()
-  }
-
   /** A colour used, kept for the row of recent ones. The presets are always on
    *  screen, so remembering those would only be the same six twice. */
   remember(colour: string) {
@@ -283,6 +285,21 @@ class Pens {
     this.keep()
   }
 
+  /** The lasso set: a loop or a box, and whether a half caught stroke counts. */
+  catching(changed: { box?: boolean; partly?: boolean }) {
+    if (changed.box !== undefined) this.box = changed.box
+    if (changed.partly !== undefined) this.partly = changed.partly
+    this.keep()
+  }
+
+  /** Whether what is drawn is straightened, flicked. */
+  straightening(on: boolean) {
+    if (this.straighten === on) return
+
+    this.straighten = on
+    this.keep()
+  }
+
   /** Everything back as it was, which is what the store said when the module
    *  loaded and what a test hands in instead. */
   restore(held: Kept) {
@@ -293,6 +310,9 @@ class Pens {
     this.shut = held.shut
     this.whole = held.whole
     this.rub = held.rub
+    this.straighten = held.straighten
+    this.box = held.box
+    this.partly = held.partly
   }
 
   private keep() {
@@ -304,6 +324,9 @@ class Pens {
       shut: this.shut,
       whole: this.whole,
       rub: this.rub,
+      straighten: this.straighten,
+      box: this.box,
+      partly: this.partly,
     }
 
     try {

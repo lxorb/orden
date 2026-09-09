@@ -1,35 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { INK_TOOLS } from './format'
 import { INK_STYLES, outlineOf } from './ink'
-import { PEN_ART, PEN_BOX, samplePath, sampleStroke } from './nibs'
+import { samplePath, sampleStroke } from './nibs'
 import { LEAST_WIDTH, MOST_WIDTH, nibFor } from './pens.svelte'
-
-describe('the drawing of a pen', () => {
-  test('there is one for every pen there is', () => {
-    expect(Object.keys(PEN_ART).sort()).toEqual([...INK_TOOLS].sort())
-  })
-
-  test('each is a barrel, a detail and a nib, and none of them is empty', () => {
-    for (const tool of INK_TOOLS) {
-      const art = PEN_ART[tool]
-      expect(art.barrel.startsWith('M'), tool).toBe(true)
-      expect(art.detail.startsWith('M'), tool).toBe(true)
-      expect(art.nib.startsWith('M'), tool).toBe(true)
-    }
-  })
-
-  test('every one of them is drawn inside the box the bar gives it', () => {
-    for (const tool of INK_TOOLS) {
-      const art = PEN_ART[tool]
-
-      for (const where of ['barrel', 'detail', 'nib'] as const) {
-        for (const [seen] of art[where].matchAll(/-?\d+(?:\.\d+)?/g)) {
-          expect(Math.abs(Number(seen)), `${tool} ${where}`).toBeLessThanOrEqual(PEN_BOX.height)
-        }
-      }
-    }
-  })
-})
 
 describe('the line a pen would write', () => {
   test('is written with the pen it is shown for', () => {

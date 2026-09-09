@@ -1,212 +1,626 @@
 <script lang="ts">
-  /** The canvas's own bar for a pointer: what your hand is holding, and what
-   *  colour it is.
+  /** The canvas bar: what your hand is holding, in one row, on every device.
    *
-   *  One row of glyphs. A shape, not a word, says what each one does, and the one
-   *  that is pressed in is the one in your hand. The pen's own row appears above
-   *  it only while a pen is in your hand, so a plane nobody is drawing on shows
-   *  eleven buttons rather than twenty-two.
+   *  There was a row of small glyphs for a mouse and a second, taller bar for a
+   *  finger. Two bars is two designs and two places to fix anything, and what
+   *  really differed between them was never the pointer but the size, which the
+   *  touch scale already answers. So this is the one bar: the same buttons in the
+   *  same order everywhere, drawn bigger where a thumb has to land on them.
    *
-   *  The dots mean "this colour" and apply to whatever the moment is about: what
-   *  is picked, or the pen, or the next shape. One row of colours rather than
-   *  three, because there is only ever one answer to "which colour".
+   *  Left to right it is arranging, then drawing, then what a press puts on the
+   *  plane, then the colour in hand, then the two arrows, then the zoom. Pressing
+   *  the tool you are already holding opens that tool's own panel and nothing else,
+   *  which is the one gesture nobody has to be told, and the panel opens over the
+   *  button that opened it rather than in the middle of the pane.
    *
-   *  A finger gets `CanvasPens.svelte` instead: a mouse can hit a fourteen-pixel
-   *  glyph and read a row of twenty-two, and a thumb can do neither.
+   *  Three pens, always three. A pen is a thing you own rather than a setting you
+   *  pick, so each slot is a whole pen: which nib, how wide, how much of the colour
+   *  lands, which colour. Nothing to add and nothing to put away.
    *
    *  It stops every pointer at itself. The plane behind it treats a press as a
    *  gesture, and a bar that let one through would clear the selection its own
-   *  buttons are for; that is the whole of the bug this replaced. */
+   *  buttons are for. */
 
-  import { INK_SIZES, PENS, tools } from './canvas/tools.svelte'
-  import { FINGER, HOLDING, NIBS, PEN_NAMES, PLACING } from './canvas/glyphs'
+  import CanvasCatch from './CanvasCatch.svelte'
+  import CanvasColours from './CanvasColours.svelte'
+  import CanvasIcon from './CanvasIcon.svelte'
+  import CanvasPen from './CanvasPen.svelte'
+  import CanvasPlace from './CanvasPlace.svelte'
+  import CanvasRub from './CanvasRub.svelte'
+  import {
+    ABOUT,
+    hinted,
+    MARKS,
+    PEN_ICONS,
+    PEN_NAMES,
+    RUBBING,
+    type ToolMark,
+  } from './canvas/glyphs'
   import { hand } from './canvas/hand.svelte'
-  import { DOTS } from './canvas/palette'
+  import { DEFAULT_INK, shownInk } from './canvas/palette'
   import { pens } from './canvas/pens.svelte'
+  import { type Tool } from './canvas/pointer'
+  import { tick } from './canvas/tick'
+  import { tools } from './canvas/tools.svelte'
+  import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
+  import { overlays } from './overlays'
+  import { viewport } from './viewport.svelte'
 
   const {
-    oncolour,
-    onsize,
-    colour,
-    size,
-    colouring,
+    canundo,
+    canredo,
+    zoom,
+    onundo,
+    onredo,
+    onerase,
+    onzoom,
+    onfit,
   }: {
-    oncolour: (colour: string | null) => void
-    onsize: (size: number) => void
-    /** The colour in hand, so the dot that is on shows it. */
-    colour: string | null
-    size: number
-    /** Whether anything is picked, which is what the dots would colour. */
-    colouring: boolean
+    canundo: boolean
+    canredo: boolean
+    /** How far in the plane is, so the number on the bar is the one in the corner
+     *  of every drawing program. */
+    zoom: number
+    onundo: () => void
+    onredo: () => void
+    /** Every stroke on the plane, gone, which is what the eraser's panel asks for. */
+    onerase: () => void
+    /** In or out about the middle of the view, by this much. */
+    onzoom: (by: number) => void
+    onfit: () => void
   } = $props()
+
+  /** Which panel is open over the bar, if any. One at a time: two panels over a
+   *  drawing is a dialog box, and this is a bar. */
+  type Panel = 'pen' | 'rub' | 'catch' | 'put' | 'colour'
+  let open = $state<Panel | null>(null)
+
+  /** Where the panel points, in pixels from the left of the cluster: the middle of
+   *  the button that opened it. */
+  let popAt = $state(0)
+  let cluster = $state<HTMLElement>()
+
+  /** How far a press may drift and still be a press on the grip rather than a drag
+   *  of the bar, in pixels. */
+  const A_TWITCH = 12
+
+  /** One notch of the zoom buttons. The same step a wheel notch comes to, so the
+   *  button and the wheel agree. */
+  const NOTCH = 1.2
+
+  const nib = $derived(pens.current)
+  const drawing = $derived(tools.which === 'draw')
+
+  /** Whether the bar can be moved out from under a wrist. A question only a tablet
+   *  has: a mouse has no wrist on the glass and a bar at the bottom of a phone is
+   *  where a thumb already is. */
+  const movable = $derived(viewport.touch || hand.penSeen)
+
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts. And Android's back, which is the same gesture on a phone.
+  $effect(() => (open ? overlays.show(() => (open = null)) : undefined))
+  $effect(() => closeOnBack(open !== null, () => (open = null)))
+
+  function shut() {
+    open = null
+  }
+
+  /** Where the button that was pressed is, so the panel opens over it. */
+  function anchor(event: Event) {
+    const button = event.currentTarget
+    const box = cluster?.getBoundingClientRect()
+    if (!(button instanceof HTMLElement) || !box) return
+
+    const own = button.getBoundingClientRect()
+    popAt = own.left + own.width / 2 - box.left
+  }
+
+  function toggle(panel: Panel, event: Event) {
+    anchor(event)
+    open = open === panel ? null : panel
+  }
+
+  /** Which tools have a panel of their own, which is also which of them answer a
+   *  second press with one. */
+  function panelFor(tool: Tool): Panel | null {
+    if (tool === 'erase') return 'rub'
+    if (tool === 'lasso') return 'catch'
+    return null
+  }
+
+  /** A press on a tool: it comes out, and pressing the one that is already out
+   *  opens its panel. */
+  function pressTool(mark: ToolMark, event: Event) {
+    tick()
+    const panel = panelFor(mark.id)
+
+    if (tools.which === mark.id && panel) {
+      toggle(panel, event)
+      return
+    }
+
+    open = null
+    tools.choose(mark.id)
+  }
+
+  function pressPen(index: number, event: Event) {
+    tick()
+
+    if (drawing && pens.at === index) {
+      toggle('pen', event)
+      return
+    }
+
+    open = null
+    tools.pickPen(index)
+  }
+
+  /** The grip: dragged, it moves the bar to an edge; pressed, it folds it away.
+   *  Two answers from one control, because both are the same question about where
+   *  the bar should be. */
+  let grabbed = $state(false)
+  let from = 0
+
+  function onGripDown(event: PointerEvent) {
+    const grip = event.currentTarget
+    if (!(grip instanceof HTMLElement)) return
+
+    grabbed = true
+    from = event.clientY
+    grip.setPointerCapture(event.pointerId)
+  }
+
+  function onGripUp(event: PointerEvent) {
+    if (!grabbed) return
+
+    grabbed = false
+    tick()
+
+    if (Math.abs(event.clientY - from) < A_TWITCH) {
+      pens.fold(true)
+      open = null
+      return
+    }
+
+    pens.dockTo(event.clientY < window.innerHeight / 2 ? 'top' : 'bottom')
+  }
+
+  /** The dot on the bar: the ink the pen in hand writes in. Always the pen, never
+   *  what is picked: what is picked wears its colour on its own bar, over itself,
+   *  and one question per surface is the whole of why that bar exists. */
+  const swatch = $derived(shownInk(nib.colour))
 </script>
+
+<svelte:window onpointerdown={shut} onblur={shut} />
 
 <!-- Every pointer stops here. See the note at the top of the file. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="cluster"
+  class:top={pens.dock === 'top'}
+  bind:this={cluster}
   onpointerdown={(event) => event.stopPropagation()}
   onpointermove={(event) => event.stopPropagation()}
   onpointerup={(event) => event.stopPropagation()}
   ondblclick={(event) => event.stopPropagation()}
   oncontextmenu={(event) => event.stopPropagation()}
 >
-  {#if tools.which === 'draw'}
-    <div class="nib-bar bar pens">
+  {#if pens.shut}
+    <!-- Folded away: the pen you were holding, and nothing else. A landscape
+         tablet gets its whole page back and the way in is still in your hand. -->
+    <button
+      type="button"
+      class="tab"
+      title={t('The pens')}
+      aria-label={t('The pens')}
+      onclick={() => {
+        tick()
+        pens.fold(false)
+      }}
+    >
+      <CanvasIcon node={PEN_ICONS[nib.tool]} />
+    </button>
+  {:else}
+    {#if open}
+      <div class="panel" style:--pop="{popAt}px">
+        {#if open === 'pen'}
+          <CanvasPen {nib} />
+        {:else if open === 'rub'}
+          <CanvasRub {onerase} />
+        {:else if open === 'catch'}
+          <CanvasCatch />
+        {:else if open === 'put'}
+          <CanvasPlace
+            onchoose={(tool: Tool) => {
+              tools.choose(tool)
+              shut()
+            }}
+          />
+        {:else}
+          <CanvasColours
+            colour={nib.colour === DEFAULT_INK ? null : nib.colour}
+            recent={pens.recent}
+            none={false}
+            oncolour={(colour: string | null) => pens.set({ colour: colour ?? DEFAULT_INK })}
+          />
+        {/if}
+      </div>
+    {/if}
+
+    <div class="bar">
+      {#if movable}
+        <span
+          class="grip"
+          class:grabbed
+          role="separator"
+          aria-label={t('Move the bar')}
+          title={t('Move the bar')}
+          onpointerdown={onGripDown}
+          onpointerup={onGripUp}
+          onpointercancel={() => (grabbed = false)}
+        >
+          <CanvasIcon node={MARKS.grip} />
+        </span>
+      {/if}
+
       <div class="scroller">
-        {#each PENS as pen (pen)}
+        {#snippet holding(mark: ToolMark)}
           <button
             type="button"
-            class:on={pens.current.tool === pen}
-            title={PEN_NAMES[pen]}
-            aria-label={PEN_NAMES[pen]}
-            aria-pressed={pens.current.tool === pen}
-            onclick={() => tools.choosePen(pen)}
+            class:on={tools.which === mark.id}
+            title={hinted(mark)}
+            aria-label={mark.title()}
+            aria-pressed={tools.which === mark.id}
+            onclick={(event) => pressTool(mark, event)}
           >
-            <svg viewBox="0 0 14 14" style:stroke-width={pen === 'highlighter' ? 1 : 1.2}>
-              <path d={NIBS[pen]} />
-            </svg>
+            <CanvasIcon node={mark.icon} />
           </button>
+        {/snippet}
+
+        {#each ABOUT as one (one.id)}
+          {@render holding(one)}
         {/each}
 
         <span class="split"></span>
 
-        {#each INK_SIZES as one (one)}
+        <!-- The three pens. Each is the instrument it is, with the ink it writes
+             in under it, and the one in hand is the tinted one. -->
+        {#each pens.list as one, index (index)}
+          {@const out = drawing && pens.at === index}
           <button
             type="button"
-            class="nib"
-            class:on={size === one}
-            title={t('Width {number}', { number: one })}
-            aria-label={t('Width {number}', { number: one })}
-            aria-pressed={size === one}
-            onclick={() => onsize(one)}
+            class="pen"
+            class:on={out}
+            title={out
+              ? hinted({ title: PEN_NAMES[one.tool], key: 'canvas.tool.draw' })
+              : PEN_NAMES[one.tool]()}
+            aria-label={PEN_NAMES[one.tool]()}
+            aria-pressed={out}
+            style:--ink={shownInk(one.colour)}
+            onclick={(event) => pressPen(index, event)}
           >
-            <span style:width="{2 + one}px" style:height="{2 + one}px"></span>
+            <CanvasIcon node={PEN_ICONS[one.tool]} />
           </button>
         {/each}
 
-        <!-- Only where there is a pen to be the other instrument. On a phone the
-             finger is the only one there is, so there is nothing to ask. -->
-        {#if hand.penSeen}
-          <span class="split"></span>
+        {#each RUBBING as one (one.id)}
+          {@render holding(one)}
+        {/each}
 
-          <button
-            type="button"
-            class:on={hand.fingerDraws}
-            title={t('Finger draws')}
-            aria-label={t('Finger draws')}
-            aria-pressed={hand.fingerDraws}
-            onclick={() => hand.toggleFinger()}
-          >
-            <svg viewBox="0 0 14 14"><path d={FINGER} /></svg>
-          </button>
-        {/if}
+        <span class="split"></span>
+
+        <button
+          type="button"
+          class:on={open === 'put'}
+          title={t('Add')}
+          aria-label={t('Add')}
+          aria-pressed={open === 'put'}
+          onclick={(event) => {
+            tick()
+            toggle('put', event)
+          }}
+        >
+          <CanvasIcon node={MARKS.put} />
+        </button>
+
+        <button
+          type="button"
+          class="swatch"
+          class:on={open === 'colour'}
+          title={t('Colour')}
+          aria-label={t('Colour')}
+          aria-pressed={open === 'colour'}
+          style:--dot={swatch}
+          onclick={(event) => {
+            tick()
+            toggle('colour', event)
+          }}
+        ></button>
+
+        <span class="split"></span>
+
+        <button
+          type="button"
+          title={t('Undo')}
+          aria-label={t('Undo')}
+          disabled={!canundo}
+          onclick={() => {
+            tick()
+            onundo()
+          }}
+        >
+          <CanvasIcon node={MARKS.undo} />
+        </button>
+
+        <button
+          type="button"
+          title={t('Redo')}
+          aria-label={t('Redo')}
+          disabled={!canredo}
+          onclick={() => {
+            tick()
+            onredo()
+          }}
+        >
+          <CanvasIcon node={MARKS.redo} />
+        </button>
+
+        <span class="split"></span>
+
+        <button
+          type="button"
+          title={t('Zoom out')}
+          aria-label={t('Zoom out')}
+          onclick={() => {
+            tick()
+            onzoom(1 / NOTCH)
+          }}
+        >
+          <CanvasIcon node={MARKS.zoomOut} />
+        </button>
+
+        <!-- The number is the button that puts the whole plane in the pane, which
+             is the only other thing anybody asks of a zoom. -->
+        <button
+          type="button"
+          class="how-far"
+          title={t('Show the whole canvas')}
+          aria-label={t('Show the whole canvas')}
+          onclick={() => {
+            tick()
+            onfit()
+          }}
+        >
+          {Math.round(zoom * 100)}%
+        </button>
+
+        <button
+          type="button"
+          title={t('Zoom in')}
+          aria-label={t('Zoom in')}
+          onclick={() => {
+            tick()
+            onzoom(NOTCH)
+          }}
+        >
+          <CanvasIcon node={MARKS.zoomIn} />
+        </button>
       </div>
     </div>
   {/if}
-
-  <div class="nib-bar bar">
-    <div class="scroller">
-      {#each HOLDING as one (one.id)}
-        <button
-          type="button"
-          class:on={tools.which === one.id}
-          class:pinned={tools.which === one.id && tools.sticky}
-          title={one.title}
-          aria-label={one.title}
-          aria-pressed={tools.which === one.id}
-          onclick={() => tools.choose(one.id)}
-        >
-          <svg viewBox="0 0 14 14"><path d={one.path} /></svg>
-        </button>
-      {/each}
-
-      <span class="split"></span>
-
-      {#each PLACING as one (one.id)}
-        <button
-          type="button"
-          class:on={tools.which === one.id}
-          title={one.title}
-          aria-label={one.title}
-          aria-pressed={tools.which === one.id}
-          onclick={() => tools.choose(one.id)}
-        >
-          <svg viewBox="0 0 14 14"><path d={one.path} /></svg>
-        </button>
-      {/each}
-
-      <span class="split"></span>
-
-      {#each DOTS as dot (dot.colour)}
-        <button
-          type="button"
-          class="dot"
-          class:on={colour === dot.colour}
-          title={t('Colour {number}', { number: dot.colour })}
-          aria-label={t('Colour {number}', { number: dot.colour })}
-          aria-pressed={colour === dot.colour}
-          style:--dot={dot.css}
-          onclick={() => oncolour(dot.colour)}
-        ></button>
-      {/each}
-
-      <button
-        type="button"
-        class="dot none"
-        class:on={colour === null}
-        title={t('No colour')}
-        aria-label={t('No colour')}
-        aria-pressed={colour === null}
-        disabled={!colouring && tools.which !== 'draw'}
-        onclick={() => oncolour(null)}
-      ></button>
-
-      <!-- A colour of your own. The input is the dot, so there is nothing extra
-           to learn and nothing extra to draw. -->
-      <label class="dot custom" title={t('Another colour')}>
-        <input
-          type="color"
-          value={colour?.startsWith('#') ? colour : '#7c5cff'}
-          aria-label={t('Another colour')}
-          oninput={(event) => oncolour(event.currentTarget.value)}
-        />
-      </label>
-    </div>
-  </div>
 </div>
 
 <style>
-  /* Over the plane, at the bottom of the pane and clear of its corners. */
+  /* Against one edge of the pane and across it, clear of whatever the system puts
+     in the corners. */
   .cluster {
     position: absolute;
-    left: 50%;
-    bottom: calc(var(--space-4) + var(--inset-bottom));
-    translate: -50% 0;
+    left: var(--space-2);
+    right: var(--space-2);
+    bottom: calc(var(--space-2) + var(--inset-bottom));
     z-index: 6;
     display: flex;
     flex-direction: column;
+    /* The bar is as wide as what is on it and no wider, centred in the pane, so a
+       tablet in landscape gets a bar and not a shelf. A phone runs out of room and
+       the same rule makes it the full width, scrolling. */
     align-items: center;
     gap: var(--space-2);
-    max-width: calc(100% - 2 * var(--space-3));
-    animation: rise var(--dur-base) var(--ease-out);
+    animation: rise var(--dur-stage) var(--ease-out);
+  }
+
+  .cluster.top {
+    bottom: auto;
+    top: calc(var(--space-2) + var(--inset-top));
+    flex-direction: column-reverse;
+    animation: fall var(--dur-stage) var(--ease-out);
   }
 
   @keyframes rise {
     from {
       opacity: 0;
-      translate: -50% 8px;
+      translate: 0 10px;
     }
   }
 
-  .bar {
-    align-items: center;
-    max-width: 100%;
+  @keyframes fall {
+    from {
+      opacity: 0;
+      translate: 0 -10px;
+    }
   }
 
-  /* The pen's own row arrives from under the bar it belongs to. */
-  .pens {
+  /* A phone keeps the app's own round button in the bottom right corner clear. */
+  :global([data-device='phone']) .cluster:not(.top) {
+    right: calc(var(--space-2) + 60px);
+  }
+
+  .bar {
+    max-width: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    background: var(--surface-3);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* One row that scrolls sideways rather than a bar that hides half of itself
+     behind a menu, which is what a phone needs and a tablet in portrait wants. */
+  .scroller {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  button {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    cursor: default;
+    transition:
+      background var(--dur-instant) var(--ease-out),
+      color var(--dur-instant) var(--ease-out);
+  }
+
+  button:active:not(:disabled) {
+    background: var(--press);
+  }
+
+  /* The tool in hand is tinted rather than raised: one look says which one it is,
+     at a glance, from across a table. */
+  button.on {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  button:disabled {
+    opacity: 0.3;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .split {
+    flex: none;
+    width: 1px;
+    align-self: center;
+    height: 20px;
+    margin: 0 5px;
+    background: var(--line-strong);
+  }
+
+  /* A pen wears the ink it writes in as a line under it, so the row answers "which
+     one is the yellow highlighter" without being opened. */
+  .pen {
+    position: relative;
+  }
+
+  .pen::after {
+    content: '';
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: 4px;
+    height: 2.5px;
+    border-radius: 2px;
+    background: var(--ink);
+  }
+
+  /* The colour in hand, drawn as the dot it is. */
+  .swatch::after {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--dot);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+    transition: scale var(--dur-fast) var(--ease-spring);
+  }
+
+  .swatch:active::after {
+    scale: 1.08;
+  }
+
+  .how-far {
+    padding: 0 var(--space-2);
+  }
+
+  /* Two lines, the way a thing that moves is drawn everywhere. */
+  .grip {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    align-self: stretch;
+    border-radius: var(--radius-md);
+    color: var(--muted);
+    touch-action: none;
+    transition: background-color var(--dur-instant) var(--ease-out);
+  }
+
+  .grip.grabbed {
+    background-color: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* Folded: one pen against the edge, in from the corner so a thumb resting there
+     does not open it. */
+  .tab {
+    align-self: flex-start;
+    min-width: 58px;
+    margin-left: var(--space-5);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--surface-3);
+    border: 1px solid var(--line-strong);
+    border-bottom: none;
+    box-shadow: var(--shadow-md);
+  }
+
+  .cluster.top .tab {
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    border-bottom: 1px solid var(--line-strong);
+    border-top: none;
+  }
+
+  /* The panel over the button that opened it, and never off the side of the pane:
+     a flyout beside its own tool says what it belongs to, and the middle of the
+     screen says nothing. */
+  .panel {
+    box-sizing: border-box;
+    align-self: flex-start;
+    width: min(21rem, 100%);
+    margin-left: clamp(0px, calc(var(--pop) - 10.5rem), calc(100% - 21rem));
+    padding: var(--space-2);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     animation: lift var(--dur-fast) var(--ease-out);
   }
 
@@ -217,150 +631,38 @@
     }
   }
 
-  /* A narrow window cannot show twenty glyphs at once, so the row scrolls rather
-     than hiding half of them behind a menu. */
-  .scroller {
-    display: flex;
-    align-items: center;
-    gap: 1px;
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
+  .cluster.top .panel {
+    animation-name: sink;
   }
 
-  .scroller::-webkit-scrollbar {
-    display: none;
+  @keyframes sink {
+    from {
+      opacity: 0;
+      translate: 0 -6px;
+    }
   }
 
-  svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  /* One scale for a finger, from the tokens, and the same bar. */
+  :global([data-touch]) button {
+    --mark: var(--touch-icon);
+
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    font-size: var(--touch-text);
   }
 
-  button.on {
-    background: var(--accent-soft);
-    color: var(--accent);
+  :global([data-touch]) .swatch::after {
+    width: var(--touch-icon);
+    height: var(--touch-icon);
   }
 
-  /* A tool that stays in your hand until you put it down wears a bar under it. */
-  button.pinned {
-    box-shadow: inset 0 -2px 0 -0.5px var(--accent);
+  :global([data-touch]) .grip {
+    --mark: var(--touch-icon);
+
+    width: 30px;
   }
 
-  .split {
-    width: 1px;
-    height: 16px;
-    margin: 0 4px;
-    flex: none;
-    background: var(--line-strong);
-  }
-
-  /* A colour is a colour: the dot is the whole button, and hovering lifts it
-     rather than painting the accent over it. */
-  .dot {
-    min-width: 0;
-    width: 16px;
-    height: 16px;
-    margin: 0 1px;
-    padding: 0;
-    flex: none;
-    border-radius: 50%;
-    background: var(--dot);
-    transition:
-      scale var(--dur-fast) var(--ease-spring),
-      box-shadow var(--dur-fast) var(--ease-out),
-      opacity var(--dur-fast) var(--ease-out);
-  }
-
-  .dot:hover:not(:disabled) {
-    background: var(--dot);
-    scale: 1.18;
-  }
-
-  .dot:active:not(:disabled) {
-    background: var(--dot);
-    scale: 1.05;
-  }
-
-  .dot.on {
-    background: var(--dot);
-    box-shadow:
-      0 0 0 2px var(--surface),
-      0 0 0 3.5px var(--accent);
-  }
-
-  .dot:disabled {
-    opacity: 0.3;
-  }
-
-  /* No colour at all, drawn as the ring the others fill. */
-  .dot.none {
-    background: none;
-    box-shadow: inset 0 0 0 1.5px var(--muted);
-  }
-
-  .dot.none:hover:not(:disabled),
-  .dot.none:active:not(:disabled) {
-    background: none;
-  }
-
-  .dot.none.on {
-    background: none;
-    box-shadow:
-      inset 0 0 0 1.5px var(--muted),
-      0 0 0 2px var(--surface),
-      0 0 0 3.5px var(--accent);
-  }
-
-  /* Every colour there is, behind a dot that shows the wheel. The six the theme
-     names, round: a wheel of colours nothing else in the app uses would be a
-     second palette. */
-  .dot.custom {
-    display: block;
-    overflow: hidden;
-    background: conic-gradient(
-      from 0deg,
-      var(--canvas-1),
-      var(--canvas-2),
-      var(--canvas-3),
-      var(--canvas-4),
-      var(--canvas-5),
-      var(--canvas-6),
-      var(--canvas-1)
-    );
-    cursor: pointer;
-  }
-
-  .dot.custom input {
-    width: 200%;
-    height: 200%;
-    margin: -50%;
-    padding: 0;
-    border: none;
-    background: none;
-    opacity: 0;
-    cursor: pointer;
-  }
-
-  /* The dot the pen is currently writing in. */
-  .nib {
-    min-width: 0;
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    flex: none;
-    display: grid;
-    place-items: center;
-  }
-
-  .nib span {
-    display: block;
-    border-radius: 50%;
-    background: currentColor;
+  :global([data-touch]) .tab {
+    min-height: var(--touch-target);
   }
 </style>
