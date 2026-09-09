@@ -740,8 +740,6 @@
     if (store.shared) pointing = point
     const coarse = event.pointerType === 'touch'
 
-    repairPen(event, point)
-
     // Every sample since the last event, not just the one that was delivered: a
     // fast stroke is drawn through all of them rather than through a fifth of
     // them. Guarded, because the call is only there in a secure context.
@@ -759,6 +757,11 @@
           ? event.getPredictedEvents().map((one) => sampleOf(one, began))
           : []
     }
+
+    // After the samples above and before the move below: a stroke this event
+    // begins takes its first point from here and not from the samples as well, and
+    // the move that follows carries on from it.
+    repairPen(event, point)
 
     // A pointer that is moving is not a pointer being held. Measured from where
     // it went still rather than from where it last was, which is this point.

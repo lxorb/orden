@@ -37,6 +37,7 @@ const SCALE = {
 const SURFACES = [
   'lib/AppMenu.svelte',
   'lib/Bookmarks.svelte',
+  'lib/CanvasBar.svelte',
   'lib/ContextMenu.svelte',
   'lib/Links.svelte',
   'lib/Palette.svelte',
