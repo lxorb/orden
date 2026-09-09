@@ -184,6 +184,8 @@ describe('a quote', () => {
   })
 
   test('a title of the writer’s own is the label, and the fold sign is not words', () => {
+    // A title is plain words. A mark inside one is not read as markdown, and
+    // whichever way it is written none of it leaks into the body below.
     expect(quotes[2]?.label).toBe('The short of it')
     const inner = quotes[2]?.blocks[0]
     expect(inner?.kind === 'paragraph' && words(inner.spans)).toBe(

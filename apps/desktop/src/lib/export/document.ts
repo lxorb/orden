@@ -238,10 +238,14 @@ function callout(blocks: Block[]): { label: string | null; blocks: Block[] } {
   const first = blocks[0]
   if (first?.kind !== 'paragraph') return { label: null, blocks }
 
-  const opening = first.spans[0]
-  if (!opening) return { label: null, blocks }
+  if (!first.spans.length) return { label: null, blocks }
 
-  const found = calloutOf(opening.text)
+  // Read off all the spans joined rather than off the first one. A span carries
+  // what is shown, so a title with a mark in it - `[!tip] **Mind** the gap` -
+  // is several spans, and reading only the first would find half a title and
+  // cut half a marker line off the body.
+  const shown = first.spans.map((span) => span.text).join('')
+  const found = calloutOf(shown)
   if (!found) return { label: null, blocks }
 
   const spans: Span[] = []

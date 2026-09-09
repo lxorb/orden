@@ -795,7 +795,13 @@ function quote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
 /** The first token of a callout with its `[!note]- Title` marker line taken
  *  off, counted in characters so an alias or a title of any length comes off
- *  exactly. */
+ *  exactly.
+ *
+ *  Off the first token, which is where a marker line lives. A title with a mark
+ *  inside it - `[!tip] **Mind** the gap` - is lexed into more than one token, so
+ *  the emphasised word is left in the body and reads twice on the panel. A title
+ *  is plain words here; nothing is lost either way, which is the rule that
+ *  matters. */
 function withoutCallout(token: Token, cut: number): Token {
   const kids = childrenOf(token)
   const first = kids[0]
