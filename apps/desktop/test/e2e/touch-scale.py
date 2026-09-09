@@ -161,10 +161,9 @@ async () => {
   const paper = await ws.noteFrom('# paper\\n', at('Reading'))
   await ws.rename(paper, 'Deep Learning.pdf')
   await ws.noteFrom('# Archived\\n\\nolder words\\n', at('Reading/Archive'))
-  await ws.createCanvas(root)
-  ws.stopRenaming()
-  const canvas = ws.files.find((one) => one.name === 'Untitled.canvas')
-  if (canvas) await ws.rename(canvas.path, 'Roadmap.canvas')
+  // Named outright: with a name in hand the file is written at once, rather than a
+  // row waiting to be typed into. See `createCanvas`.
+  await ws.createCanvas(root, 'Roadmap.canvas')
 
   ws.bookmarks.toggle({ kind: 'note', path: 'Deep work.md', text: '' })
   ws.bookmarks.toggle({ kind: 'search', path: '', text: 'the' })

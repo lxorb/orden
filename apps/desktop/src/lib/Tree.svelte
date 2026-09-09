@@ -1,31 +1,22 @@
-<script module lang="ts">
-  /** Folders keep their name; notes keep their extension. */
-  function fullName(entry: { is_dir: boolean; name: string }, typed: string): string {
-    if (entry.is_dir) return typed
-    const extension = /\.[^.]+$/.exec(entry.name)?.[0] ?? '.md'
-    return typed.endsWith(extension) ? typed : typed + extension
-  }
-</script>
-
 <script lang="ts">
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { isPdfTarget } from '@nib/markdown/links'
-  import { fileMark } from './file-mark'
+  import { fileMark, type Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { folderFor, folderNote, nestedIn, renameSteps } from './folder-notes'
   import { key, t } from './i18n.svelte'
   import { bookmarkEntry, DIVIDER, iconEntries, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
+  import NameField from './NameField.svelte'
+  import { extensionOf } from './naming'
   import { shownName } from './note-name'
   import { roving } from './roving'
-  import { caretAtEnd, selectAll } from './select-all'
   import { shortcuts } from './shortcuts.svelte'
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import { treeStep, TREE_MOVES } from './tree-keys'
-  import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { inside } from './workspace/zones'
@@ -35,16 +26,20 @@
 
   const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
 
-  /** Moving a row, where a drag is not available.
+  /** Whether the name being typed cannot be written, which the row wears as a
+   *  hairline in red; the field is what knows why. One flag for the list, because
+   *  one row at a time is being named. */
+  let wrong = $state(false)
+
+  /** Moving a row, said rather than dragged.
    *
    *  A held finger opens this menu before a drag could start, and the browser
-   *  fires no drag events from a touch anyway, so on a phone or a tablet the only
-   *  outcome of pressing a row was the menu. So the menu offers the move: the
-   *  places it could have been dropped, in the sheet every other question uses.
-   *  Nothing is offered on a desktop, where the pointer already does it. */
+   *  fires no drag events from a touch anyway, so on a phone or a tablet the menu
+   *  is the only way a row moves at all. It is offered under a pointer too: a drag
+   *  across a long list, into a folder that is shut, is a gesture that can be
+   *  missed, and the places a row can land read faster as a list than as a target
+   *  to aim at. Which places those are is move-targets.ts. */
   function moveEntry(entry: Entry): MenuEntry[] {
-    if (!viewport.touch) return []
-
     const targets = moveTargets({
       moving: entry.path,
       tree: workspace.tree,
@@ -60,7 +55,7 @@
     const { prompt } = await import('./prompt.svelte')
     const into = await prompt.find({
       title: t('Move to'),
-      options: targets.map((one) => ({ id: one.id, label: one.label })),
+      options: [...targets],
       placeholder: t('Folder'),
     })
 
@@ -321,30 +316,45 @@
     ]
   }
 
-  /** What the name field starts with. A note waiting for a title starts with the
-   *  name it has and a space, so typing one adds to it. */
+  /** What the name field starts with. Nothing at all for a row that is being
+   *  made: the name is what will make it. A note waiting for a title starts with
+   *  the name it has and a space, so typing one adds to it. */
   function nameToEdit(entry: Entry): string {
+    if (workspace.naming?.making) return ''
+
     const name = entry.is_dir ? entry.name : shownName(entry.name)
-    return workspace.renaming?.appending ? `${name} ` : name
+    return workspace.naming?.appending ? `${name} ` : name
   }
 
-  /** Which way the field takes the caret; see select-all.ts. */
-  function rename(node: HTMLInputElement, appending: boolean) {
-    return appending ? caretAtEnd(node) : selectAll(node)
+  /** The mark in front of the name, whichever of the three kinds of row this is,
+   *  so the row being renamed wears the one it wore a moment ago. */
+  function markOf(entry: Entry, own: Entry | null): Mark {
+    if (own) return fileMark(own.name)
+    if (!entry.is_dir) return fileMark(entry.name)
+
+    return workspace.isExpanded(entry.path) ? 'folder-open' : 'folder'
   }
 
-  function commit(entry: Entry, own: Entry | null, typed: string) {
-    workspace.stopRenaming()
+  /** Whose icon it is: a folder drawn as a note wears the note's, which is also
+   *  why nothing about these rows is kept in the folder icon map. */
+  function markPath(entry: Entry, own: Entry | null): string {
+    return own?.path ?? entry.path
+  }
 
-    if (own) void renameNested(own, typed)
-    else void workspace.rename(entry.path, fullName(entry, typed))
+  /** What the name that was typed does. Three endings, because a row is three
+   *  things: one that does not exist yet and is made, one that is a folder and the
+   *  note inside it, and an ordinary file. */
+  function commit(entry: Entry, own: Entry | null, name: string) {
+    if (workspace.naming?.making) void workspace.makeNamed(name)
+    else if (own) void renameNested(own, name)
+    else void workspace.rename(entry.path, name)
   }
 
   /** Renaming a row that is a folder and a note renames both, in the order
    *  folder-notes.ts gives them. Each step is the ordinary rename, so the links
    *  are rewritten and the file undo has each half of it. */
-  async function renameNested(note: Entry, typed: string) {
-    for (const step of renameSteps(note.path, typed)) {
+  async function renameNested(note: Entry, name: string) {
+    for (const step of renameSteps(note.path, name)) {
       await workspace.rename(step.path, step.name)
     }
   }
@@ -452,38 +462,45 @@
     <!-- The note a folder holds of its own name, which is the row the folder is
          drawn as; null for every other row. See folder-notes.ts. -->
     {@const own = folderNote(entry)}
+    <!-- What the row discloses: everything the folder holds, except the note it is
+         itself drawn as, which is this row. -->
+    {@const nested = own ? nestedIn(entry) : entry.children}
     <li>
-      {#if workspace.renaming?.path === entry.path}
-        <!-- The name arrives selected, the way every file manager does it:
-             renaming usually replaces the name rather than adding to it. The
-             value already leaves the extension off, so this selects the name
-             and nothing else.
-             A note made with a name of its own is the exception: a unique
-             note's timestamp is waiting for a title after it, so the caret
-             goes to the end and the space is already there. -->
-        <input
-          class="rename"
+      {#if workspace.naming?.path === entry.path}
+        <!-- The row while its name is being typed. Its mark, its indentation, its
+             height, its font, the fill that says it is the note you have open, the
+             twist at the far end and the rows it discloses all stay exactly as they
+             were: renaming a file changes its name and nothing else about it. Only
+             the name becomes a field, in the slot the name was already in; see
+             NameField.svelte.
+             A div rather than the button a row usually is, for two reasons that
+             point the same way: a button cannot hold a field, and a row whose name
+             is being typed is not a row to press. -->
+        <div
+          class="nib-row row"
+          class:note={!entry.is_dir || own !== null}
+          class:is-quiet={entry.is_dir && !own}
+          class:is-on={workspace.active?.path === (own?.path ?? entry.path)}
+          class:is-picked={workspace.isSelected(entry.path)}
+          class:is-wrong={wrong}
           style:--level={depth}
-          value={nameToEdit(entry)}
-          spellcheck="false"
-          use:rename={workspace.renaming.appending}
-          onblur={(event) => commit(entry, own, event.currentTarget.value)}
-          onkeydown={(event) => {
-            if (event.key === 'Enter') event.currentTarget.blur()
-            if (event.key === 'Escape') {
-              workspace.stopRenaming()
-            }
-          }}
-        />
+        >
+          <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
+          <NameField
+            value={nameToEdit(entry)}
+            extension={extensionOf(entry.name, entry.is_dir)}
+            taken={workspace.namesBeside(entry.path)}
+            appending={workspace.naming.appending}
+            bind:wrong
+            oncommit={(name: string) => commit(entry, own, name)}
+            oncancel={() => workspace.cancelNaming()}
+          />
+          {#if own && nested.length}{@render twist(entry.path)}{/if}
+        </div>
       {:else if own}
         <!-- A folder holding a note of its own name is drawn as that note and not
              as a folder: the note's mark, the note's name, and a twist at the far
-             end for what is nested under it. The mark is the note's own, and so is
-             the icon somebody chose for it, because the row hands FileMark the
-             note's path - which is also why nothing about these rows is kept in
-             the folder icon map.
-             The note is not listed again among the children: it is this row. -->
-        {@const nested = nestedIn(entry)}
+             end for what is nested under it. -->
         <button
           class="nib-row row note folder-note"
           data-path={entry.path}
@@ -505,23 +522,13 @@
           ondragleave={(event) => stillInside(event) || dropTarget.clear()}
           ondrop={(event) => drop(event, entry)}
         >
-          <FileMark mark={fileMark(own.name)} path={own.path} />
+          <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
           <span class="nib-row-label">{shownName(own.name)}</span>
           <!-- Only while there is something to disclose. A vault may arrive with a
                folder holding nothing but its note, and a twist that opens on to
                nothing is a row promising something it does not have. -->
-          {#if nested.length}
-            <span class="nib-row-meta twist">
-              <Twist open={workspace.isExpanded(entry.path)} />
-            </span>
-          {/if}
+          {#if nested.length}{@render twist(entry.path)}{/if}
         </button>
-
-        {#if workspace.isExpanded(entry.path)}
-          <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
-            <Tree entries={nested} depth={depth + 1} />
-          </div>
-        {/if}
       {:else if entry.is_dir}
         <button
           class="nib-row row folder is-quiet"
@@ -546,18 +553,9 @@
                wears that instead, the same one open and shut - what it holds is
                said by the rows underneath it and by `aria-expanded`, and a chosen
                icon that changed as the folder opened would read as two folders. -->
-          <FileMark
-            mark={workspace.isExpanded(entry.path) ? 'folder-open' : 'folder'}
-            path={entry.path}
-          />
+          <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
           <span class="nib-row-label">{entry.name}</span>
         </button>
-
-        {#if workspace.isExpanded(entry.path)}
-          <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
-            <Tree entries={entry.children} depth={depth + 1} />
-          </div>
-        {/if}
       {:else}
         <button
           class="nib-row row note"
@@ -582,13 +580,30 @@
         >
           <!-- The row says what it opens into without spending a word on it, or
                wears the icon the note itself chose; the path is how it knows. -->
-          <FileMark mark={fileMark(entry.name)} path={entry.path} />
+          <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
           <span class="nib-row-label">{shownName(entry.name)}</span>
         </button>
+      {/if}
+
+      <!-- Outside the row rather than inside each kind of row, so a folder keeps
+           its rows open while its own name is being typed: what a folder discloses
+           has nothing to do with what its row is drawn as. -->
+      {#if entry.is_dir && workspace.isExpanded(entry.path)}
+        <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
+          <Tree entries={nested} depth={depth + 1} />
+        </div>
       {/if}
     </li>
   {/each}
 </ul>
+
+<!-- What a folder note holds, said at the far end of its row. One twist, whether
+     the row is being read or being renamed. -->
+{#snippet twist(path: string)}
+  <span class="nib-row-meta twist">
+    <Twist open={workspace.isExpanded(path)} />
+  </span>
+{/snippet}
 
 <style>
   ul {
@@ -602,8 +617,7 @@
      rather than a number in the markup, so a phone takes a deeper step without
      this component knowing which kind of screen it is on. The outline's rows and
      the tag tree's are indented the same way. */
-  .row,
-  .rename {
+  .row {
     padding-left: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
   }
 
@@ -624,19 +638,6 @@
   .twist :global(svg) {
     width: var(--icon-sm);
     height: var(--icon-sm);
-  }
-
-  .rename {
-    width: 100%;
-    min-height: var(--row-height);
-    padding-right: var(--row-pad);
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-row);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-row);
-    outline: none;
   }
 
   /* The open note's mark carries the accent. The name beside it is told apart by

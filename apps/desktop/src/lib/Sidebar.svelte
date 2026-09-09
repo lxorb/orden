@@ -478,7 +478,7 @@
                 class="rest"
                 class:dropping={rootDrop}
                 oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-                onclick={() => workspace.stopRenaming()}
+                onclick={() => workspace.cancelNaming()}
                 ondragover={overRoot}
                 ondragleave={() => dropTarget.clear()}
                 ondrop={dropOnRoot}

@@ -13,14 +13,15 @@
    *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
    *  pointer gets. */
   import { arrive, leave, LIST_STEP } from './slide'
-  import { iconLibrary } from './icon-library.svelte'
-  import { initial } from './icons'
+  import Icon from './Icon.svelte'
+  import { initial, readIcon } from './icons'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
+  import NameField from './NameField.svelte'
   import { overlays } from './overlays'
   import { roving } from './roving'
   import { trap } from './trap'
-  import { newSpace, spaceMenu } from './space-actions'
+  import { commitSpaceName, newSpace, spaceMenu } from './space-actions'
   import { t } from './i18n.svelte'
   import { isShared } from './sharing.svelte'
   import { type Space, workspace } from './workspace.svelte'
@@ -30,7 +31,21 @@
   const here = $derived(workspace.activeSpace)
   const name = $derived(here?.name ?? t('Spaces'))
 
-  const glyph = (space: Space) => iconLibrary.spaceShape(workspace.iconFor(space.id))
+  /** The names the switcher already holds, so the field can say a name is taken;
+   *  a space keeping its own name is not taking it from itself. */
+  const otherSpaces = $derived(
+    workspace.spaces.filter((space) => space.id !== here?.id).map((space) => space.name),
+  )
+
+  /** Whether the name being typed cannot be written, which the header wears as a
+   *  hairline in red exactly as a row does; the field is what knows why. */
+  let wrong = $state(false)
+
+  /** What a space wears, read the way every row in the file list reads it: any of
+   *  the three sets, and any spelling a value can be written in. A space kept the
+   *  library's own key before there was one format for all of them, and `readIcon`
+   *  still answers for those. */
+  const glyph = (space: Space) => readIcon(workspace.iconFor(space.id))
 
   function choose(space: Space) {
     open = false
@@ -45,23 +60,38 @@
   // what is under it; see overlays.ts.
   $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
 
-  // Only worth fetching the set once a space actually wears an icon.
-  $effect(() => {
-    if (Object.keys(workspace.device.icons).length) iconLibrary.load()
-  })
+  // Which set a badge wants is the badge's own business now, and asking for it is
+  // Icon.svelte's; the holder fetches each once for the app. See
+  // icon-library.svelte.ts.
 </script>
 
-<button
-  class="name"
-  class:open
-  title={name}
-  aria-haspopup="menu"
-  aria-expanded={open}
-  onclick={() => (open = !open)}
->
-  <span class="nib-row-label">{name}</span>
-  <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
-</button>
+{#if here && workspace.naming?.path === here.root}
+  <!-- Renaming a space happens where its name is written, in the same field a row
+       in the list uses: the header keeps its height, its weight and its chevron,
+       and only the name becomes editable. See NameField.svelte. -->
+  <div class="name" class:is-wrong={wrong}>
+    <NameField
+      value={here.name}
+      taken={otherSpaces}
+      bind:wrong
+      oncommit={(typed: string) => void commitSpaceName(here, typed)}
+      oncancel={() => workspace.cancelNaming()}
+    />
+    <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
+  </div>
+{:else}
+  <button
+    class="name"
+    class:open
+    title={name}
+    aria-haspopup="menu"
+    aria-expanded={open}
+    onclick={() => (open = !open)}
+  >
+    <span class="nib-row-label">{name}</span>
+    <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
+  </button>
+{/if}
 
 {#if open}
   <!-- Takes the press that closes it, and the scroll that would otherwise reach
@@ -106,11 +136,7 @@
         >
           <span class="badge" class:here={space.id === workspace.activeSpaceId} aria-hidden="true">
             {#if shape}
-              <svg viewBox="0 0 24 24">
-                {#each shape as [tag, attrs] (JSON.stringify(attrs))}
-                  <svelte:element this={tag} {...attrs} />
-                {/each}
-              </svg>
+              <span class="glyph"><Icon icon={shape} tint={workspace.tintFor(space.id)} /></span>
             {:else}
               {initial(space.name)}
             {/if}
@@ -283,14 +309,15 @@
     color: #fff;
   }
 
-  .badge svg {
+  /* The box Icon.svelte fills, and the size an emoji in it is set at: an emoji is
+     type, and a glyph has no width of its own to be stretched. */
+  .glyph {
+    display: block;
     width: var(--icon-md);
     height: var(--icon-md);
-    fill: none;
+    font-size: var(--icon-md);
     stroke: currentColor;
     stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   .badge.plus {

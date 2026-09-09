@@ -7,9 +7,9 @@
    *  there to be asked for: a pointer over the glyph shows it, a thumb taps it,
    *  and the keyboard reaches it like anything else.
    *
-   *  Not a `title`. The browser's own tooltip arrives after a second of holding
-   *  still, in the system's font, at the pointer rather than at the glyph, and a
-   *  finger never sees it at all - which is three ways of not being the app.
+   *  Not a `title`, and not a bubble of its own: the card the sentence appears in
+   *  is `.nib-bubble` in the themes package, which the name being renamed on a row
+   *  shows its reason in too. What is here is where this one sits.
    *
    *  The glyph's own name is the sentence, so a screen reader reads it on focus
    *  and the bubble is decoration by the time it appears. */
@@ -66,7 +66,7 @@
 
   {#if open}
     <span
-      class="sentence"
+      class="nib-bubble sentence"
       aria-hidden="true"
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}>{text}</span
     >
@@ -116,29 +116,14 @@
     stroke-linejoin: round;
   }
 
-  /* The sentence, under the glyph. Left-aligned to the glyph rather than
-     centred on it: a label sits at the left of its row, so there is room that
-     way and none the other. */
+  /* Where this one sits: under the glyph, and left-aligned to it rather than
+     centred on it, because a label sits at the left of its row, so there is room
+     that way and none the other. The card itself is `.nib-bubble`. */
   .sentence {
     position: absolute;
     top: calc(100% + 6px);
     left: -8px;
     z-index: 6;
-    width: max-content;
-    max-width: 16rem;
-    padding: 7px 10px;
-    background: var(--surface-3);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 400;
-    line-height: 1.45;
-    white-space: normal;
-    text-align: left;
-    pointer-events: none;
   }
 
   /* A thumb needs a target, and the sentence needs the width the screen has.
@@ -152,10 +137,5 @@
   :global([data-touch]) svg {
     width: var(--touch-mark);
     height: var(--touch-mark);
-  }
-
-  :global([data-touch]) .sentence {
-    max-width: min(20rem, 70vw);
-    font-size: var(--text-sm);
   }
 </style>

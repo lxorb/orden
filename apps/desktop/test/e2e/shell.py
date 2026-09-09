@@ -71,9 +71,9 @@ async () => {
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
 
-  await ws.createFolder()
-  ws.stopRenaming()
-  await ws.rename(join(root, 'New folder'), 'Field notes')
+  // Named outright, so the folder is made rather than a row put in the list for
+  // somebody to type into. See `createFolder`.
+  await ws.createFolder(root, 'Field notes')
   const folder = join(root, 'Field notes')
 
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind above the field.\\n\\n## What went in this week\\n\\n- Pressure on the pen\\n- Slides out of a note\\n\\n### Wind\\n\\nThe wind was steady all week.', undefined)

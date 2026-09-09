@@ -83,6 +83,20 @@ export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'links'
 
+/** The three things the file list makes, each of which arrives as a row waiting
+ *  for a name; see `startNaming`. */
+type NewKind = 'note' | 'canvas' | 'folder'
+
+/** What a row of each kind is called while it has no name: never shown, since
+ *  the field it arrives in is empty, but the row is in the tree and the tree is
+ *  keyed and sorted by paths. It is also the name the thing is made under where
+ *  there is no list to type in at all. */
+const PLACEHOLDER: Record<NewKind, string> = {
+  note: 'Untitled.md',
+  canvas: 'Untitled.canvas',
+  folder: 'New folder',
+}
+
 export interface Tag {
   tag: string
   count: number
@@ -218,11 +232,19 @@ class Workspace {
   panel = $state<Panel | null>(null)
   /** The one tab holding a note that is only being looked at. */
   previewTabId = $state<string | null>(null)
-  /** The tree row being named in place, and whether the name it starts with is
-   *  something to add to rather than to replace: a note that was just made with
-   *  a name of its own - a unique note's timestamp - is waiting for a title
-   *  after it, not instead of it. */
-  renaming = $state<{ path: string; appending: boolean } | null>(null)
+  /** The row a name is being typed on, in place: a row that exists and is being
+   *  renamed, or a fresh one that nothing on disk answers to yet, waiting for the
+   *  name that will make it. `making` says which, and what to make.
+   *
+   *  Held by the path the row is drawn under, which is what the list keys its rows
+   *  by, so a listing arriving from sync mid-word leaves the field alone; see
+   *  `keepNaming`. `appending` says the name it starts with is something to add to
+   *  rather than to replace: a note that was just made with a name of its own - a
+   *  unique note's timestamp - is waiting for a title after it, not instead of it.
+   *
+   *  The space's name in the header takes the same field, held under the space's
+   *  root, because it is the same gesture on the same kind of name. */
+  naming = $state<{ path: string; appending: boolean; making: NewKind | null } | null>(null)
   treeOptions = $state<TreeOptions>(readTreeOptions())
   /** The last handful of file operations; see workspace/undo. */
   readonly undone = new FileActions()
@@ -1013,6 +1035,10 @@ class Workspace {
     const space = this.spaces.find((entry) => entry.id === id)
     if (!space || !name.trim()) return
 
+    // The field in the header is done with, whatever the folder answers: it is
+    // held under the root, and the root is what is about to change.
+    this.naming = null
+
     const renamed = await invoke<{ name: string; path: string }>('rename_space', {
       from: space.root,
       name: name.trim(),
@@ -1185,6 +1211,7 @@ class Workspace {
 
     // Rows that went away take themselves out of the selection.
     this.picked.keepOnly((path) => !!this.entryAt(path))
+    this.keepNaming()
   }
 
   setSort(sort: SortKey) {
@@ -2079,18 +2106,22 @@ class Workspace {
     sync.nudge()
   }
 
-  /** Creates `Untitled.md` in a folder, stepping the name until it is free. */
-  async createNote(folder?: string) {
+  /** Makes a note in a folder.
+   *
+   *  With no name it is the file list's own gesture: a row goes into the tree
+   *  waiting to be named, and nothing is written until it has a name, which is
+   *  what Finder, Explorer and VS Code all do. Where there is no list to type in -
+   *  the sidebar shut, another panel open, the plus at the end of the tab strip -
+   *  the note is made under a stepped `Untitled` straight away, because a gesture
+   *  that made nothing at all would read as one that failed. */
+  async createNote(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return
-
-    const taken = new Set(this.notes.map((note) => note.path))
-    let name = 'Untitled.md'
-    let counter = 2
-    while (taken.has(joinPath(dir, name))) name = `Untitled ${counter++}.md`
+    if (named === undefined && this.startNaming('note', dir)) return
 
     // Opens with its own name as the title, so there is something to write
     // under rather than an empty page.
+    const name = this.freeName(dir, named ?? PLACEHOLDER.note)
     const path = joinPath(dir, name)
     const content = `# ${name.replace(MARKDOWN, '')}\n\n`
 
@@ -2111,7 +2142,6 @@ class Workspace {
     this.showNote()
     this.remember(path)
     this.dropScaffolding(tab)
-    this.startRenaming(path)
 
     await invoke('write_note', { path, content })
     links.noteSaved(path, content)
@@ -2131,12 +2161,7 @@ class Workspace {
     if (!dir) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
-    const taken = new Set(this.notes.map((note) => note.path))
-    let name = `${stem}.md`
-    let counter = 2
-    while (taken.has(joinPath(dir, name))) name = `${stem} ${counter++}.md`
-
-    const path = joinPath(dir, name)
+    const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
     this.showEntry(this.freshEntry(path, false))
 
     await invoke('write_note', { path, content: text })
@@ -2147,20 +2172,16 @@ class Workspace {
     return path
   }
 
-  /** Creates `Untitled.canvas` in a folder and opens it, stepping the name until
-   *  it is free the way a new note's is. The file is written straight away, so
-   *  the plane on screen and the file on disk say the same thing from the first
-   *  frame; the row is waiting for a name. */
-  async createCanvas(folder?: string) {
+  /** Makes a canvas in a folder and opens it. The row asks for the name first
+   *  where there is a list to ask in, exactly as a note's does; once it has one
+   *  the file is written straight away, so the plane on screen and the file on
+   *  disk say the same thing from the first frame. */
+  async createCanvas(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return
+    if (named === undefined && this.startNaming('canvas', dir)) return
 
-    const taken = new Set(this.files.map((one) => one.path))
-    let name = 'Untitled.canvas'
-    let counter = 2
-    while (taken.has(joinPath(dir, name))) name = `Untitled ${counter++}.canvas`
-
-    const path = joinPath(dir, name)
+    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.canvas))
     const content = blankCanvas()
 
     this.showEntry(this.freshEntry(path, false))
@@ -2177,29 +2198,41 @@ class Workspace {
     this.showNote()
     this.remember(path)
     this.dropScaffolding(tab)
-    this.startRenaming(path)
 
     await invoke('write_note', { path, content })
     await this.loadTree()
     this.persist()
   }
 
-  async createFolder(parent?: string) {
+  /** Makes a folder, named on its row first where there is a list to name it in. */
+  async createFolder(parent?: string, named?: string) {
     const dir = parent ?? this.activeSpace?.root
     if (!dir) return
+    if (named === undefined && this.startNaming('folder', dir)) return
 
-    // Stepped like a note's, so a second folder does not collide with the first.
-    const taken = this.everyPath()
-    let name = 'New folder'
-    let counter = 2
-    while (taken.has(joinPath(dir, name))) name = `New folder ${counter++}`
-
-    const path = joinPath(dir, name)
+    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.folder))
     this.showEntry(this.freshEntry(path, true))
-    this.startRenaming(path)
+    if (dir !== this.activeSpace?.root) this.device.expand(dir)
 
     await invoke('create_folder', { path })
     await this.loadTree()
+  }
+
+  /** A name nothing in the folder answers to: the one asked for, or the one asked
+   *  for with a number after it. Every new file steps its name the same way, and a
+   *  name typed into a row goes through it as well - the field can only know what
+   *  the listing it was drawn from held, and a note that arrived from sync a moment
+   *  ago would otherwise be written over. */
+  private freeName(dir: string, wanted: string): string {
+    const taken = this.everyPath()
+    const extension = /\.[^.]+$/.exec(wanted)?.[0] ?? ''
+    const stem = wanted.slice(0, wanted.length - extension.length)
+
+    let name = wanted
+    let counter = 2
+    while (taken.has(joinPath(dir, name))) name = `${stem} ${counter++}${extension}`
+
+    return name
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
@@ -2218,14 +2251,93 @@ class Workspace {
     return out
   }
 
-  /** Opens the name field on a row, so naming a note is part of making it.
-   *  Pointless while the tree is not the panel on show. */
+  /** Opens the name field on a row that already exists, which is what renaming is.
+   *
+   *  Pointless where the field would not be on screen, and each of the two places
+   *  it appears has its own answer to that: a row needs the file list, and the
+   *  space's name is in the header over every panel, so it needs only that the
+   *  sidebar is open at all. */
   startRenaming(path: string, appending = false) {
-    if (this.panel === 'tree') this.renaming = { path, appending }
+    const inHeader = this.spaces.some((space) => space.root === path)
+    if (!(inHeader ? this.panel !== null : this.panel === 'tree')) return
+
+    this.cancelNaming()
+    this.naming = { path, appending, making: null }
   }
 
-  stopRenaming() {
-    this.renaming = null
+  /** A row for something that does not exist yet, waiting for the name that will
+   *  make it. Answers whether the list took it: with no file list on screen there
+   *  is nowhere to type, and the caller makes the thing itself.
+   *
+   *  The row is the optimistic insert every other file operation does - a row is
+   *  in the tree before the disk has answered, and the listing that follows is what
+   *  settles it - put in one step earlier: in its sorted place, in the folder it
+   *  belongs to, with that folder open, before there is anything on disk at all. */
+  private startNaming(kind: NewKind, dir: string): boolean {
+    if (this.panel !== 'tree' || !this.tree) return false
+
+    // A second gesture before the first had a name leaves no row behind it: a row
+    // nobody named is a row for something that was never made.
+    this.cancelNaming()
+
+    const path = joinPath(dir, this.freeName(dir, PLACEHOLDER[kind]))
+    this.showEntry(this.freshEntry(path, kind === 'folder'))
+    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    this.naming = { path, appending: false, making: kind }
+
+    return true
+  }
+
+  /** The row that was waiting for a name, made. The placeholder row goes first and
+   *  the create puts the real one back, so a write that fails leaves nothing
+   *  behind. */
+  async makeNamed(name: string) {
+    const naming = this.naming
+    if (!naming?.making) return
+
+    this.naming = null
+    this.hideEntry(naming.path)
+
+    const dir = folderOf(naming.path)
+    if (naming.making === 'folder') await this.createFolder(dir, name)
+    else if (naming.making === 'canvas') await this.createCanvas(dir, name)
+    else await this.createNote(dir, name)
+  }
+
+  /** The field is done and there is nothing to write: Escape, a name that cannot
+   *  be written, or a name nobody changed. A row that was being made goes with it,
+   *  since nothing was ever created. */
+  cancelNaming() {
+    const naming = this.naming
+    this.naming = null
+    if (naming?.making) this.hideEntry(naming.path)
+  }
+
+  /** Keeps the row a name is being typed on across a fresh listing.
+   *
+   *  A row that is being made is on no disk, so the listing that just arrived does
+   *  not hold it and it is put back; without that, a sync pass landing mid-word
+   *  would take the field out from under the caret. A row being renamed that the
+   *  listing no longer holds is a file that has gone - deleted on another machine -
+   *  and the field goes with it rather than committing a name onto nothing. */
+  private keepNaming() {
+    const naming = this.naming
+    if (!naming) return
+
+    if (naming.making) {
+      this.showEntry(this.freshEntry(naming.path, naming.making === 'folder'))
+    } else if (!entryAt(this.tree, naming.path)) {
+      this.naming = null
+    }
+  }
+
+  /** What else is in the folder a row sits in, so the field can say a name is
+   *  taken before the rename fails on it. The row's own name is left out: keeping
+   *  it would make every name its own duplicate and every rename open onto a red
+   *  row. */
+  namesBeside(path: string): string[] {
+    const folder = entryAt(this.tree, folderOf(path))
+    return (folder?.children ?? []).filter((one) => one.path !== path).map((one) => one.name)
   }
 
   async rename(path: string, name: string) {
@@ -2238,7 +2350,7 @@ class Workspace {
     // The new name is on the row before the rename has happened; the listing
     // that follows is what settles it.
     this.showMove(path, target)
-    this.renaming = null
+    this.naming = null
 
     await invoke('rename_note', { from: path, to: target })
     this.positions.move(path, target)

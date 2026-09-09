@@ -286,6 +286,26 @@ describe('a value beside its copy button', () => {
   })
 })
 
+/** The card a sentence appears in: behind the `i` after a setting's name, and
+ *  under a name that cannot be written. Two surfaces, one shape, and the only
+ *  part either of them states for itself is where it sits. */
+describe('the bubble a sentence appears in', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-bubble')
+    expect(draw(/\.nib-bubble/)).toEqual([])
+  })
+
+  test('and the two that show one wear the class rather than a card of their own', () => {
+    const own = components
+      .filter((one) => one.text.includes('nib-bubble'))
+      .map((one) => one.name)
+      .sort()
+
+    expect(own).toEqual(['lib/Hint.svelte', 'lib/NameField.svelte'])
+  })
+})
+
 /** The `i` after a label, and the sentence behind it. A settings pane with two
  *  ways of explaining a setting is a pane where half the explanations arrive
  *  late, in the system's font, and never under a finger. */

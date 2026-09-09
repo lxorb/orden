@@ -189,7 +189,13 @@ describe('what a note that holds notes offers', () => {
     expect(nested).not.toContain('iconEntries(entry.path, true)')
 
     const row = tree.slice(tree.indexOf('class="nib-row row note folder-note"'))
-    expect(row).toContain('<FileMark mark={fileMark(own.name)} path={own.path} />')
+    expect(row).toContain('<FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />')
+
+    // Which is the note's path, for this row and for the same row while its name
+    // is being typed: one answer to what a row wears, wherever it is asked.
+    expect(body(tree, 'function markPath(entry: Entry, own: Entry | null)')).toContain(
+      'own?.path ?? entry.path',
+    )
   })
 
   test('the folder as well: a new note inside it, and where the lot goes', () => {

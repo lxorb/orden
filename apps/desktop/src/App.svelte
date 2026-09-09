@@ -401,13 +401,13 @@
     // arriving, and a key that opens one asks for the keyboard to go into it - so
     // watching the panel here is how Ctrl+Shift+E opened the file list and then
     // took the keyboard straight back out of it. See revealPanel in focus.ts.
-    const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.renaming, palette]
+    const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.naming, palette]
     if (!current || !reasons.length) return
 
     const frame = requestAnimationFrame(() => {
       const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
         overlaid: overlays.depth > 0,
-        renaming: workspace.renaming !== null,
+        renaming: workspace.naming !== null,
         presenting: present.on,
         touch: viewport.touch,
       })

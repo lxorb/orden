@@ -116,15 +116,19 @@ export function spaceMenu(space: Space): MenuEntry[] {
   ])
 }
 
-async function renameSpace(space: Space) {
-  const name = await prompt.ask({
-    title: t('Rename the space'),
-    value: space.name,
-    confirmLabel: key('Rename'),
-  })
+/** Renaming a space happens where its name is written: the header over the file
+ *  list, in the field a row in that list renames in. Asked for from the switcher,
+ *  the space is brought up first, because the name a header shows is the space that
+ *  is open and renaming one out of sight would be a field with nothing in front of
+ *  it. See NameField.svelte and Sidebar.svelte. */
+export async function renameSpace(space: Space) {
+  if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
+  workspace.startRenaming(space.root)
+}
 
-  if (!name) return
-
+/** And what the name that was typed does. Here rather than on the workspace, which
+ *  knows nothing about syncing. */
+export async function commitSpaceName(space: Space, name: string) {
   const from = space.root
   await workspace.renameSpace(space.id, name)
 
