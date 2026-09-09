@@ -60,8 +60,23 @@ one). There is **no icon field**: the portal takes the icon as an upload.
 | `min_app_version` | the phone app floor; `evenhub pack` stamps it from the SDK unless `--enforce-manual-version` |
 | `min_sdk_version` | the SDK built against |
 | `entrypoint` | a path inside the build folder: for us `even.html` |
-| `permissions` | array of `{ name, desc }`, plus `whitelist` for `network`. The plugin asks for `network` and `microphone`. |
+| `permissions` | array of `{ name, desc }`, plus `whitelist` for `network`. **The names are a fixed list and it is published nowhere**; see below. |
 | `supported_languages` | from `en de fr es it zh ja ko`. Swiss German has no code here, so it is not listed. |
+
+**The permission names are a closed vocabulary.** The CLI takes `g2-microphone`,
+`phone-microphone`, `album`, `location`, `network` and `camera`, and nothing else;
+anything else fails the pack with
+
+```
+permissions.1.name: each permission must be an object with name
+(g2-microphone, phone-microphone, album, location, network, camera)
+```
+
+That list is read off that error and is not published anywhere, which is how a
+manifest asking for `microphone` reached the end of a release before failing. The
+plugin asks for `network` and for **both** microphones, because it listens through
+both; see section 5. A test in `even/manifest.test.ts` now holds the manifest to
+every rule on this page, because all of them are silent until a release.
 
 Our `network` whitelist is `https://nibeditor.com` and `https://api.openai.com`:
 one entry per full origin, no wildcards, no bare hostnames. The second is where a
@@ -446,22 +461,25 @@ window in which a scroll on the phone is the plugin's own doing and is ignored.
 
 ## 5. Voice, and a question
 
-The microphone is asked for in `even.app.json` and is **off until the reader turns
-it on**, from the hold modal or from the settings. It is the only defensible
-default for a microphone.
+The microphones are asked for in `even.app.json` - `g2-microphone` and
+`phone-microphone`, which are the CLI's own names for them - and both are **off
+until the reader turns them on**, from the hold modal or from the settings. It is
+the only defensible default for a microphone.
 
-There are two ways to hear, because the platform gives two and neither is
-everywhere:
+Both are asked for because the plugin listens through both, one per path, and there
+are two paths because the platform gives two and neither is everywhere:
 
-1. **The WebView's own recogniser.** Android's WebView carries
-   `webkitSpeechRecognition`, which listens on the phone's microphone and hands
-   over whole utterances with its own endpointing. Nothing to pay for, nothing to
-   send anywhere, and the faster of the two, so it is preferred where it is there.
-   iOS WKWebView has never had it.
-2. **The glasses' own microphone.** `audioControl(true, glasses)` streams processed
-   PCM through `onEvenHubEvent`. Nothing on the device turns that into words, so an
-   utterance is cut out of the stream and sent to a transcription API with the
-   account's own key.
+1. **The WebView's own recogniser**, on the phone's microphone. Android's WebView
+   carries `webkitSpeechRecognition`, which hands over whole utterances with its
+   own endpointing. Nothing to pay for, nothing to send anywhere, and the faster of
+   the two, so it is preferred where it is there. iOS WKWebView has never had it.
+   Whether the host gates it behind `phone-microphone` is not documented, so the
+   permission is asked for: a path that silently cannot hear is the worst of the
+   ways this could go wrong.
+2. **The glasses' own microphone**, under `g2-microphone`.
+   `audioControl(true, glasses)` streams processed PCM through `onEvenHubEvent`.
+   Nothing on the device turns that into words, so an utterance is cut out of the
+   stream and sent to a transcription API with the account's own key.
 
 The second path is where the plugin's own latency comes from: an utterance ends
 after **600 ms** of quiet. Under about four hundred and the gap between "switch

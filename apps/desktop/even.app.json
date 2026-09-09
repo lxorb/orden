@@ -15,6 +15,10 @@
     {
       "name": "g2-microphone",
       "desc": "Say next, close or a question, and Nib answers on the glasses."
+    },
+    {
+      "name": "phone-microphone",
+      "desc": "Hear the same commands through the phone, where it listens better."
     }
   ],
   "supported_languages": ["en", "de", "fr", "ja"]

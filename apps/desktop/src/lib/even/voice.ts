@@ -2,15 +2,16 @@
  *
  *  Two ways, because the platform gives two and neither is available everywhere:
  *
- *  1. **The WebView's own recogniser.** Android's WebView carries
- *     `webkitSpeechRecognition`, which listens on the *phone's* microphone and
- *     hands over whole utterances with its own endpointing. Nothing to pay for,
- *     nothing to send anywhere, and the fastest of the two, so it is preferred
- *     when it is there. iOS WKWebView has never had it.
- *  2. **The glasses' own microphone.** `audioControl(true, glasses)` streams
- *     processed PCM through `onEvenHubEvent`. Nothing on the device will turn
- *     that into words, so an utterance is cut out of the stream here and sent to
- *     a transcription API with the account's own key.
+ *  1. **The WebView's own recogniser**, on the *phone's* microphone. Android's
+ *     WebView carries `webkitSpeechRecognition`, which hands over whole utterances
+ *     with its own endpointing. Nothing to pay for, nothing to send anywhere, and
+ *     the faster of the two, so it is preferred when it is there. iOS WKWebView has
+ *     never had it. The manifest asks for `phone-microphone` for this path.
+ *  2. **The glasses' own microphone**, under `g2-microphone`.
+ *     `audioControl(true, glasses)` streams processed PCM through
+ *     `onEvenHubEvent`. Nothing on the device will turn that into words, so an
+ *     utterance is cut out of the stream here and sent to a transcription API with
+ *     the account's own key.
  *
  *  The second path is the one that decides the shape of this file. A stream of
  *  sound has to be cut into utterances *before* anything can be transcribed, and
