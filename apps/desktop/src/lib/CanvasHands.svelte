@@ -19,9 +19,11 @@
    *  gone the moment that device lifts its pen. The finished stroke comes the
    *  ordinary way, once, as one whole object in the room's document. */
 
+  import { approach, arrived } from './canvas/ease'
   import { INK_STYLES, inkOpacity, inkPath, outlineOf } from './canvas/ink'
   import type { Palette } from './canvas/paint'
   import type { Hand } from './canvas/shared'
+  import { stillness } from './motion'
 
   const {
     hands,
@@ -65,14 +67,80 @@
   function inked(colour: string): string {
     return palette[colour] ?? colour
   }
+
+  /** How long a hand takes to close most of the gap to where it now is, in
+   *  milliseconds. Short enough that a pointer is where somebody is pointing, long
+   *  enough that twenty packets a second read as one movement rather than twenty. */
+  const CATCHING_UP = 70
+
+  /** Where each hand is drawn, which is not quite where its last packet said.
+   *
+   *  Presence arrives in packets - twenty a second on a good line, fewer on a bad
+   *  one - and drawing each one where it lands makes somebody else's pointer hop
+   *  across the page. So the drawn point eases towards the reported one, critically
+   *  damped and frame-rate independent; see canvas/ease.ts. A reader who has asked for
+   *  as little movement as possible is given the packets as they come. */
+  let eased = $state.raw<Record<number, { x: number; y: number }>>({})
+  let frame = 0
+  let last = 0
+
+  $effect(() => {
+    // Read for its own sake, so a hand arriving or leaving restarts the loop.
+    for (const one of hands) follows(one.at)
+
+    if (stillness() || !hands.length) {
+      eased = Object.fromEntries(hands.map((one) => [one.id, one.at]))
+      return
+    }
+
+    const tick = (now: number) => {
+      const dt = last ? Math.min(64, now - last) : 16
+      last = now
+
+      const next: Record<number, { x: number; y: number }> = {}
+      let moving = false
+
+      for (const one of hands) {
+        const was = eased[one.id]
+        if (!was || arrived(was, one.at, unit)) {
+          next[one.id] = one.at
+          continue
+        }
+
+        next[one.id] = {
+          x: approach(was.x, one.at.x, dt, CATCHING_UP),
+          y: approach(was.y, one.at.y, dt, CATCHING_UP),
+        }
+        moving = true
+      }
+
+      eased = next
+      if (moving) frame = requestAnimationFrame(tick)
+      else frame = 0
+    }
+
+    last = 0
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(tick)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      frame = 0
+    }
+  })
+
+  /** Each hand as it is drawn: where it has eased to, and everything else as it came. */
+  const drawn = $derived(hands.map((one) => ({ one, at: eased[one.id] ?? one.at })))
 </script>
 
 {#if hands.length}
   <svg class="hands" aria-hidden="true" width="1" height="1" style:overflow="visible">
-    {#each hands as hand (hand.id)}
+    {#each drawn as { one: hand, at } (hand.id)}
       {#if hand.stroke}
         <!-- Open ended, because the pen has not lifted: the same outline the ink
-             layers fill, drawn the one way `ink.ts` describes it. -->
+             layers fill, drawn the one way `ink.ts` describes it. The stroke is drawn
+             where it was reported and never eased: ink is a shape somebody made, and
+             a shape that catches up with itself is the wrong shape. -->
         <path
           d={inkPath(outlineOf(hand.stroke, false))}
           fill={inked(hand.stroke.color)}
@@ -81,12 +149,12 @@
         />
       {/if}
 
-      <circle cx={hand.at.x} cy={hand.at.y} r={DOT * unit} fill={hand.colour} />
+      <circle cx={at.x} cy={at.y} r={DOT * unit} fill={hand.colour} />
 
       {#if named}
         <text
-          x={hand.at.x + GAP * unit}
-          y={hand.at.y - GAP * unit}
+          x={at.x + GAP * unit}
+          y={at.y - GAP * unit}
           fill={hand.colour}
           font-size="{LABEL * unit}px">{hand.name}</text
         >
