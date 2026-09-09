@@ -84,6 +84,10 @@ export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean):
   const html = withPictures(
     renderMarkdown(note.text, {
       footnotes: true,
+      // The note's own metadata, as the rows the editor draws. Reading a note is
+      // being in the app looking at it, so it says the same thing either way; a
+      // document that has left does not, and no exporter asks for these.
+      properties: true,
       toc: true,
       escapeHtml: !trusted,
       code: fence,

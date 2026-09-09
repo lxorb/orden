@@ -165,6 +165,75 @@
   color: var(--muted);
 }
 
+/* ── Properties ──────────────────────────────────────────────────── */
+
+/* A note's front matter as the rows it says. Quiet: it is what the note is
+   about, read on the way past, and the words under it are the note. The rows
+   wear `.nib-row`, drawn once in base.css, so a property reads as a row of the
+   app rather than as a table of its own. */
+#write .properties {
+  margin: 0 0 1.6em;
+  padding-bottom: 0.6em;
+  border-bottom: 1px solid var(--line);
+}
+
+#write .property {
+  gap: var(--space-4);
+  align-items: baseline;
+  font-family: var(--font-ui);
+}
+
+/* The key gives way, not the value: a long name matters less than the thing it
+   names, and a column of keys that all end in the same place reads as a table
+   without a rule down it. */
+#write .property-key {
+  flex: none;
+  width: 9rem;
+  color: var(--muted);
+}
+
+#write .property-value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em;
+  color: var(--text-strong);
+}
+
+/* One item of a list. Tags and aliases are the two every note has, and they are
+   the same shape as anything else written between brackets. */
+#write .property-chip {
+  padding: 0.05em 0.5em;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.92em;
+}
+
+#write .property-said[data-kind='number'],
+#write .property-said[data-kind='date'] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A checkbox that says which way it is and cannot be pressed: pressing it would
+   be editing, and editing is what putting the caret in the line is for. */
+#write .property-check {
+  width: 0.95em;
+  height: 0.95em;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 3px;
+}
+
+#write .property-check.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+#write .property-empty::before {
+  content: '';
+}
+
 /* ── Charts ──────────────────────────────────────────────────────── */
 
 /* A ` ```chart ` fence. The same frame a diagram sits in, since both are a picture

@@ -1,6 +1,7 @@
 import { Marked, Renderer } from 'marked'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
+import { propertiesTable, readProperties } from './properties'
 import { withoutComments } from './comments'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
@@ -29,6 +30,11 @@ import {
 export interface RenderOptions {
   /** Gather footnote definitions into a list at the end. */
   footnotes?: boolean
+  /** Show the note's front matter as rows above it, the way the editor draws
+   *  one. For the reading view, which is the same note being read inside the
+   *  app; a document that has left is a document, and its metadata is what the
+   *  page furniture was built from rather than a table at the top of it. */
+  properties?: boolean
   /** Render raw HTML as visible text instead of markup. Used when publishing:
    *  a note is authored content, and a public page must not run its scripts. */
   escapeHtml?: boolean
@@ -323,13 +329,23 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = html.replace(embeds.marker(at), renderMarkdown(section, inside(options)))
   })
 
-  if (!options.footnotes) return html
+  if (options.footnotes) {
+    // Footnote definitions render as <li>; gather any trailing run into a list.
+    html = html.replace(
+      /(?:<li id="fn-[\s\S]*?<\/li>\n?)+/g,
+      (block) => `<section class="footnotes"><ol>${block}</ol></section>`,
+    )
+  }
 
-  // Footnote definitions render as <li>; gather any trailing run into a list.
-  return html.replace(
-    /(?:<li id="fn-[\s\S]*?<\/li>\n?)+/g,
-    (block) => `<section class="footnotes"><ol>${block}</ol></section>`,
-  )
+  if (!options.properties) return html
+
+  // Above the note rather than inside it: the block was taken out before the
+  // parse, and what it says is about the note rather than part of it. A block
+  // whose shape cannot be read draws nothing here, the same answer the editor
+  // gives - except that the editor can fall back to the source and a page has
+  // nowhere to fall back to.
+  const rows = readProperties(source)
+  return rows === null || rows.length === 0 ? html : propertiesTable(rows) + html
 }
 
 /** Nested lists of links, one level deeper for each step down in heading

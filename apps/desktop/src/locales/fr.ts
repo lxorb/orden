@@ -192,6 +192,8 @@ export const fr: Dictionary = {
   'Move row down': 'Déplacer la ligne vers le bas',
   'Insert row': 'Insérer une ligne',
   'Delete row': 'Supprimer la ligne',
+  'Add a property': 'Ajouter une propriété',
+  property: 'propriete',
   'Code block': 'Bloc de code',
   'Horizontal rule': 'Ligne horizontale',
   'Page break': 'Saut de page',

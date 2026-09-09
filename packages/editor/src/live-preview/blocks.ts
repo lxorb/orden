@@ -13,6 +13,8 @@ import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
 import { readChart } from '@nib/markdown/chart'
 import { type EmbedKind, embedKind } from '@nib/markdown/links'
+import { readProperties } from '@nib/markdown/properties'
+import { PropertiesWidget } from './properties'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { noteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
@@ -144,6 +146,26 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
               widget: new MathWidget(tex, true, equationNumbers.get(node.from)),
               block: true,
             }).range(span.from, span.to),
+          )
+          return false
+        }
+
+        // The note's own metadata, as the rows it says. A block like any other:
+        // the caret in it shows the YAML, which is the only editor it needs.
+        // A block holding a shape @nib/markdown cannot read stays source, whole;
+        // see properties.ts there and beside this file.
+        case 'FrontMatter': {
+          const span = found(node.from, node.to)
+          if (revealed(node.from, node.to)) return false
+
+          const source = doc.sliceString(node.from, node.to)
+          if (readProperties(source) === null) return false
+
+          ranges.push(
+            Decoration.replace({ widget: new PropertiesWidget(source), block: true }).range(
+              span.from,
+              span.to,
+            ),
           )
           return false
         }

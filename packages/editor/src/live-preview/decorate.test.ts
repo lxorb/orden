@@ -433,8 +433,20 @@ describe('extensions', () => {
     expect(concealed('text[^1] more')).toEqual(['[^', ']'])
   })
 
-  test('hides front matter fences', () => {
-    expect(concealed('---\ntitle: Hi\n---\n\nbody')).toEqual(['---', '---'])
+  test('draws front matter as its rows, and shows the source with the caret in it', () => {
+    const note = '---\ntitle: Hi\n---\n\nbody'
+    // The whole block is one replacement now, so there are no fences left to
+    // conceal one at a time; see live-preview/properties.ts.
+    expect(blocks(note)).toEqual(['---\ntitle: Hi\n---'])
+    expect(blocks(note, 6)).toEqual([])
+  })
+
+  test('and hides the fences of a block it cannot draw as rows', () => {
+    // A shape @nib/markdown will not guess at stays source, and source is
+    // decorated here the way it always was.
+    const note = '---\njust some words\n---\n\nbody'
+    expect(blocks(note)).toEqual([])
+    expect(concealed(note)).toEqual(['---', '---'])
   })
 
   test('replaces a callout tag with its label', () => {

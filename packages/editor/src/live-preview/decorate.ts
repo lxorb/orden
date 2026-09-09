@@ -20,6 +20,7 @@ import { hrefOf, linkTitle } from '../links'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
 import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
+import { readProperties } from '@nib/markdown/properties'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
@@ -97,6 +98,18 @@ class Decorator {
     if (heading) {
       this.markLines(node, `nib-h${heading[1]}`)
       return true
+    }
+
+    // Front matter drawn as rows is a block replacement, which only a state
+    // field may provide - see blocks.ts. Step aside so nothing decorates the
+    // lines underneath it; a block whose shape cannot be read is still source,
+    // and source is styled here.
+    if (
+      name === 'FrontMatter' &&
+      !overlaps(this.state, node.from, node.to) &&
+      readProperties(this.state.doc.sliceString(node.from, node.to)) !== null
+    ) {
+      return false
     }
 
     const lineClass = LINE_CLASS[name]

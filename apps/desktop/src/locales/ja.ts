@@ -192,6 +192,8 @@ export const ja: Dictionary = {
   'Move row down': '行を下へ',
   'Insert row': '行を挿入',
   'Delete row': '行を削除',
+  'Add a property': 'プロパティを追加',
+  property: 'プロパティ',
   'Code block': 'コードブロック',
   'Horizontal rule': '区切り線',
   'Page break': '改ページ',

@@ -2240,6 +2240,43 @@
   color: inherit;
 }
 
+/* A note's front matter drawn as its rows. The rows themselves are in
+   document.css, which the app loads too, so the editor and the reading view are
+   one drawing; this is what the writing surface adds on top of it. */
+.nib-properties {
+  white-space: normal;
+  animation: settle-in var(--dur-base) var(--ease-out);
+}
+
+#write .nib-properties .properties {
+  margin-bottom: 0.8em;
+}
+
+/* The row that adds another property: at the foot of the list, where the next
+   row would go, so it reads as the empty line at the end rather than as a
+   control bolted to a corner. Quiet until the block is pointed at. */
+#write .nib-property-add {
+  color: var(--muted);
+  font-family: var(--font-ui);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .nib-properties:hover .nib-property-add {
+    opacity: 1;
+  }
+}
+
+/* A finger has no hover, so there it is simply there. */
+[data-touch] #write .nib-property-add {
+  opacity: 1;
+}
+
+#write .nib-property-add:focus-visible {
+  opacity: 1;
+}
+
 /* A drawn ` ```chart ` fence. The picture and its frame are in document.css, which
    the app loads too; this is only what the writing surface adds. */
 .nib-chart {

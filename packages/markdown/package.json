@@ -15,6 +15,7 @@
     "./icons": "./src/icons.ts",
     "./from-html": "./src/from-html.ts",
     "./links": "./src/links.ts",
+    "./properties": "./src/properties.ts",
     "./providers": "./src/providers.ts",
     "./slides": "./src/slides.ts",
     "./sources": "./src/sources.ts",

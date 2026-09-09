@@ -194,6 +194,8 @@ export const gsw: Dictionary = {
   'Move row down': 'Zile abe',
   'Insert row': 'Zile iifüege',
   'Delete row': 'Zile lösche',
+  'Add a property': 'Eigeschaft hinzuefüege',
+  property: 'eigeschaft',
   'Code block': 'Codeblock',
   'Horizontal rule': 'Trennlinie',
   'Page break': 'Sitteumbruch',
