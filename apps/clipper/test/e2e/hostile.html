@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Innocent article</title>
+    <!-- What the page calls itself, with the front matter's own terminator in
+         it. The note has to come out with one block and one heading. -->
+    <meta
+      property="og:title"
+      content="Fine&#10;---&#10;&#10;<img src=x onerror=alert(1)>&#10;&#10;# Injected"
+    />
+    <meta name="keywords" content="one, two, one, three" />
+    <meta property="article:tag" content="tagged" />
+  </head>
+  <body>
+    <nav>Navigation nobody wants in a note.</nav>
+    <article>
+      <h1>Innocent article</h1>
+      <p>
+        This is the first paragraph of an article long enough that Readability will decide it is the
+        content of the page, which is what the clipper wants it to decide. It needs a few hundred
+        characters of ordinary prose before the scoring settles on this element rather than on the
+        navigation beside it, so here are some more of them, written out at length.
+      </p>
+      <p>
+        A second paragraph, also of ordinary length, so that the article has more than one block of
+        text in it and the extractor has something to weigh. Nothing in here is remarkable and that
+        is the point of it: the remarkable things are below.
+      </p>
+
+      <p><a href="javascript:alert('href')">A link the browser would run</a></p>
+      <p><a href="/relative/page">A relative link</a></p>
+      <p><a href="  javascript:alert('spaced')">A link with a padded scheme</a></p>
+      <p><a href="java&#9;script:alert('tabbed')">A link with a broken up scheme</a></p>
+      <p><a href="data:text/html,<b>hi</b>">A data link</a></p>
+
+      <p><img src="/pic/File_(1).png" alt="Brackets in the address" /></p>
+      <p>
+        <img
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA="
+          alt="A tracking pixel"
+        />
+      </p>
+      <p>
+        <img
+          data-src="/pic/deferred.png"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA="
+          alt="Deferred"
+        />
+      </p>
+      <p>
+        <picture>
+          <source srcset="/pic/small.png 200w, /pic/large.png 1200w" />
+          <img alt="From a picture" />
+        </picture>
+      </p>
+      <p><img src="/pic/one.png" alt="Twice" /> <img src="/pic/one.png" alt="Twice again" /></p>
+      <p><img src="//other.example/protocol-relative.png" alt="Protocol relative" /></p>
+
+      <svg width="10" height="10">
+        <script>
+          alert('svg')
+        </script>
+      </svg>
+      <p aria-hidden="true">Decoration the page itself says is decoration.</p>
+      <p>
+        Zero width: a&#8203;b, right to left: &#1502;&#1500;&#1500;, emoji:
+        &#128512;&#127482;&#127480;
+      </p>
+      <pre class="language-rust"><code>fn main() { println!("`` ```  ``"); }</code></pre>
+      <table>
+        <tr>
+          <th>a</th>
+          <th>b</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>2</td>
+        </tr>
+      </table>
+      <ul>
+        <li>one</li>
+        <li>
+          two
+          <ul>
+            <li>nested</li>
+          </ul>
+        </li>
+      </ul>
+      <p>Trailing prose so the article does not end on a table.</p>
+    </article>
+    <script>
+      // What a hostile page would try: talk to the extension directly, and read
+      // whatever the injected reader left lying around.
+      window.nibProbe = {
+        runtime: typeof (window.chrome || {}).runtime,
+        flag: 'nibClipperReading' in window ? 'visible' : 'hidden',
+        bundle: 'nibClipper' in window ? 'visible' : 'hidden',
+      }
+    </script>
+  </body>
+</html>
