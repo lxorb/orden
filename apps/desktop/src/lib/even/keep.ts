@@ -193,6 +193,23 @@ async function clearAll(key: string): Promise<void> {
   await Promise.all(KEEPS.map((keep) => keep.clear(key).catch(() => undefined)))
 }
 
+/** Whether this device has been given the welcome note, in the stores that last.
+ *
+ *  The same problem as the token and the same answer: this page's own storage
+ *  belongs to a port that will never come back, so "nothing here" reads as "never
+ *  seen before" on every launch. Kept as a word rather than a token because there
+ *  is only one thing it can say. See ../seeded.ts and ../welcome.ts. */
+const SEEDED = 'nib:seeded'
+
+export const seedFlag = {
+  async read() {
+    return (await readAll(SEEDED)).some((one) => one.value === 'yes')
+  },
+  async write() {
+    await writeAll(SEEDED, 'yes')
+  },
+}
+
 /** The token, in every store that will have it. */
 export const everywhere: Vault = {
   async read() {

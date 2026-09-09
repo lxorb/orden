@@ -16,9 +16,10 @@ import App from './App.svelte'
 import { account } from './lib/account.svelte'
 import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
-import { everywhere } from './lib/even/keep'
+import { everywhere, seedFlag } from './lib/even/keep'
 import { fillLocal, installLocal } from './lib/even/local'
 import { markPlugin } from './lib/plugin'
+import { rememberSeedIn } from './lib/seeded'
 
 // Before anything asks: the settings have a section that only makes sense in
 // front of a pair of glasses, and this is what tells them apart. See lib/plugin.
@@ -40,6 +41,12 @@ document.getElementById('boot')?.remove()
 // Before the app, because mounting it is what restores the session, and a packed
 // plugin's page has no store it can count on. See lib/even/keep.ts.
 account.alsoKeepIn(everywhere)
+
+// The same reasoning for the same reason: whether this device has been given the
+// welcome note is an answer that has to outlive a launch, and this page's own
+// stores do not. The plugin never seeds at all, so this is the belt rather than
+// the braces; see welcome.ts for what happened without either.
+rememberSeedIn(seedFlag)
 
 const app = mount(App, { target })
 // After the app, so the workspace has restored its tabs before the glasses are

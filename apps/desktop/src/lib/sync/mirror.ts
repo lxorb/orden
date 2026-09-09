@@ -23,6 +23,7 @@ import { api, ApiError, type SpaceFile } from '../api'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { invoke } from '../tauri'
+import { isUntouchedWelcome } from '../welcome'
 import type { Entry } from '../workspace.svelte'
 
 /** What the last sync left on disk, so local edits can be told apart from
@@ -254,9 +255,14 @@ export async function push(mirror: Mirror, token: string, joined: Joined): Promi
     const tracked = mirror.notes[path]
 
     if (!tracked) {
-      const { note } = await api.createNote(token, mirror.spaceId, path, content)
-      mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
-      moved = true
+      // The app's own welcome note, exactly as the app wrote it, is not writing
+      // and does not belong in anybody's account. It used to go up on every launch
+      // of the plugin, whose storage is empty every launch, and come back each time
+      // Emil deleted it. A character typed into it makes it his and it travels like
+      // any other note. See welcome.ts.
+      if (isUntouchedWelcome(path, content)) continue
+
+      if (await create(mirror, token, path, content)) moved = true
       continue
     }
 
@@ -371,6 +377,50 @@ function same(was: Record<string, TrackedFile>, now: Record<string, TrackedFile>
  *  everything both devices drew; anything else keeps the other side's copy
  *  beside ours, since two people typing in one paragraph cannot be settled by a
  *  machine. */
+/** A note this machine has and the mirror has never heard of, offered to the
+ *  account.
+ *
+ *  The account may already hold that path - this machine forgot its mirror, two
+ *  devices made the same note, a folder was moved back - and the space allows one
+ *  live note per path, so it answers 409 with the note that is there. That is a
+ *  pairing, not a failure: the two are recorded as one note, and whichever text
+ *  differs is settled the way any other conflict is. Before this, the 409 threw
+ *  and took the whole pass with it, and the pass came round again to throw again.
+ *
+ *  Answers whether anything moved. */
+async function create(
+  mirror: Mirror,
+  token: string,
+  path: string,
+  content: string,
+): Promise<boolean> {
+  try {
+    const { note } = await api.createNote(token, mirror.spaceId, path, content)
+    mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+    return true
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 409) throw error
+
+    const body = isRecord(error.body) ? error.body : {}
+    const theirs = isRecord(body.note) ? body.note : null
+    if (!isString(theirs?.id) || !isNumber(theirs.version) || !isString(theirs.hash)) throw error
+
+    const tracked: Tracked = { id: theirs.id, version: theirs.version, hash: theirs.hash }
+    mirror.notes[path] = tracked
+
+    // The same words on both sides: paired, and there is nothing to send. Told by
+    // the account's own hash rather than by hashing again, which is what the rest
+    // of this file compares against too.
+    const hash = await sha256(content)
+    if (hash === tracked.hash) return false
+
+    // Two notes at one path with different words is the conflict this file has
+    // always had an answer for: neither is dropped.
+    await keepBoth(mirror, path, tracked, body, token)
+    return true
+  }
+}
+
 async function keepBoth(
   mirror: Mirror,
   path: string,

@@ -9,6 +9,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  door in sync.test.ts against the whole store. Here `pull` and `push` are called
  *  directly, because which notes are in rooms is something they are handed. */
 
+const { ApiError } = await import('../api')
+
 const fake = vi.hoisted(() => {
   interface Entry {
     name: string
@@ -133,6 +135,18 @@ const fake = vi.hoisted(() => {
     },
     createNote: async (_token: string, _spaceId: string, path: string, content: string) => {
       calls.push(`createNote ${path}`)
+
+      // A space holds one live note per path, so the service answers 409 with the
+      // note that is already there rather than making a second one; see
+      // services/sync/src/notes.ts. That is a pairing, not a failure.
+      const taken = [...remote.values()].find((one) => one.path === path && !one.deleted)
+      if (taken) {
+        throw new ApiError(409, 'a note already lives there', {
+          note: await present(taken),
+          content: taken.content,
+        })
+      }
+
       const note: Remote = {
         id: `n-${path}`,
         path,

@@ -19,6 +19,8 @@ import {
   within,
 } from './paths'
 import { assets, files, KEEP, meta, snapshots } from './store'
+import { markSeeded, wasSeeded } from '../seeded'
+import { WELCOME, WELCOME_PATH } from '../welcome'
 
 interface Entry {
   name: string
@@ -668,31 +670,22 @@ async function hasContent(): Promise<boolean> {
   return (await files.all()).length > 0
 }
 
-/** The one note a first visit is given. Named so that the app can tell it from
- *  something somebody wrote, and step off it once there is something to read. */
-export const WELCOME_PATH = '/Notes/Read me.md'
-
+/** The welcome note, once per device.
+ *
+ *  Two gates, and the first is the one that was missing. Emptiness says what is
+ *  here now; it does not say whether this device has been introduced, and reading
+ *  it as though it did is how a reader who deleted every note gets the welcome
+ *  note back - and, signed in, gets it in their account. So the answer is written
+ *  down, and written down whichever way this went: a device that already had notes
+ *  has been introduced too. See seeded.ts and welcome.ts. */
 export async function seed() {
-  if (await hasContent()) return
+  if (await wasSeeded()) return
+
+  if (await hasContent()) {
+    await markSeeded()
+    return
+  }
 
   await writeNote(WELCOME_PATH, WELCOME)
+  await markSeeded()
 }
-
-const WELCOME = `# Welcome to Nib
-
-This is the browser version. Your notes live in this browser until you sign in
-and turn on syncing, and then they follow you everywhere.
-
-- Everything is markdown, and nothing else
-- **Bold**, *italic*, ==highlight==, \`code\`
-- $E = mc^2$ renders as you type
-
-\`\`\`js
-const hello = 'world'
-\`\`\`
-
-| What | Where |
-| ---- | ----- |
-| Notes | this browser |
-| Synced notes | your account |
-`

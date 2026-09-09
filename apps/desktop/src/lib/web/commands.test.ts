@@ -52,7 +52,28 @@ vi.mock('./store', () => ({
   },
 }))
 
-const { webInvoke } = await import('./commands')
+/** The page's own store, which is where "has this device been seeded" lives
+ *  everywhere but inside a packed plugin. */
+function memoryStorage(): Storage {
+  const held = new Map<string, string>()
+
+  return {
+    get length() {
+      return held.size
+    },
+    key: (at) => [...held.keys()][at] ?? null,
+    getItem: (key) => held.get(key) ?? null,
+    setItem: (key, value) => void held.set(key, value),
+    removeItem: (key) => void held.delete(key),
+    clear: () => held.clear(),
+  }
+}
+
+vi.stubGlobal('localStorage', memoryStorage())
+
+const { seed, webInvoke } = await import('./commands')
+const { forgetSeedStore, rememberSeedIn } = await import('../seeded')
+const { WELCOME, WELCOME_PATH } = await import('../welcome')
 
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })
 const read = (path: string) => webInvoke<string>('read_note', { path })
@@ -63,6 +84,8 @@ beforeEach(() => {
   disk.assets.clear()
   disk.meta.clear()
   disk.snapshots.length = 0
+  localStorage.clear()
+  forgetSeedStore()
 })
 
 describe('notes', () => {
@@ -439,5 +462,66 @@ describe('what the browser cannot do', () => {
 
   test('says so outright for a command nobody has stood in for', async () => {
     await expect(webInvoke('open_the_pod_bay_doors')).rejects.toThrow()
+  })
+})
+
+/** The welcome note, once per device.
+ *
+ *  Emptiness is what is here now; it is not whether this device has been introduced,
+ *  and reading it as though it were is how a reader who deleted every note gets the
+ *  welcome note back - and, signed in, gets it in their account. See welcome.ts for
+ *  what that did to Emil's. */
+describe('the welcome note', () => {
+  test('is written on a first visit', async () => {
+    await seed()
+    expect(await read(WELCOME_PATH)).toBe(WELCOME)
+  })
+
+  test('is not written twice, even with nothing left on the disk', async () => {
+    await seed()
+    disk.files.clear()
+
+    await seed()
+    expect(paths()).toEqual([])
+  })
+
+  test('is not written to a device that already had notes', async () => {
+    await write('/Notes/Mine.md', 'my own')
+
+    await seed()
+    expect(paths()).toEqual(['/Notes/Mine.md'])
+  })
+
+  test('and that device is not seeded later either, once it is empty', async () => {
+    await write('/Notes/Mine.md', 'my own')
+    await seed()
+    disk.files.clear()
+
+    await seed()
+    expect(paths()).toEqual([])
+  })
+
+  /** A packed plugin's page storage belongs to a port that never comes back, so the
+   *  answer has to live somewhere that outlives a launch; the plugin hands one over.
+   *  See seeded.ts. */
+  test('asks the store that survives a launch, where there is one', async () => {
+    let kept = false
+    rememberSeedIn({
+      read: () => Promise.resolve(kept),
+      write: () => {
+        kept = true
+        return Promise.resolve()
+      },
+    })
+
+    await seed()
+    expect(kept).toBe(true)
+
+    // A new launch: the page's own storage is somebody else's and the disk is empty.
+    localStorage.clear()
+    disk.files.clear()
+
+    await seed()
+    expect(paths()).toEqual([])
   })
 })

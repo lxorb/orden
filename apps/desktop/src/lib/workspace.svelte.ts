@@ -16,6 +16,7 @@ import { without } from './records'
 import type { Change } from './search/apply'
 import { within } from './sync/mirror'
 import { isRecord, stored } from './stored'
+import { WELCOME_PATH } from './welcome'
 import {
   type Draft,
   frameDraft,
@@ -347,7 +348,14 @@ class Workspace {
 
   async restore() {
     // The browser build starts empty, so give a first visit something to read.
-    if (!isNative) {
+    //
+    // Never in the plugin. Its page is served from a local port picked afresh
+    // every launch, so its storage is empty every launch and every launch reads
+    // as a first visit: the seed was written again, and syncing offered it to the
+    // account again, putting it back each time Emil deleted it. A signed-in plugin
+    // brings the account's notes and a signed-out one shows the sign-in; neither
+    // wants a welcome note. See welcome.ts.
+    if (!isNative && !isPlugin()) {
       const { seed } = await import('./web/commands')
       await seed()
     }
@@ -797,8 +805,6 @@ class Workspace {
    *  who has written in it, or opened something beside it, has said what they
    *  want on screen. */
   async leaveTheWelcomeNote(): Promise<void> {
-    const { WELCOME_PATH } = await import('./web/commands')
-
     const only = this.tabs.length === 1 ? this.tabs[0] : null
     if (only?.path !== WELCOME_PATH || only.dirty) return
 
