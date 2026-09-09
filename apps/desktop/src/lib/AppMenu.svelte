@@ -5,6 +5,7 @@
   import { appMenu, isSubmenu, type MenuGroup, type MenuRow, SPLIT, walkableRows } from './app-menu'
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
+  import { trap } from './trap'
   import { t } from './i18n.svelte'
   import { viewport } from './viewport.svelte'
   import { walked } from './walk'
@@ -223,6 +224,7 @@
     class="menu"
     class:phone={viewport.touch}
     transition:arrive
+    use:trap
     role="menu"
     tabindex="-1"
     aria-activedescendant={cursor === null ? undefined : `nib-menu-${cursor}`}

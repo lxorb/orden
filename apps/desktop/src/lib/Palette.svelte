@@ -7,6 +7,7 @@
   import { rank } from './fuzzy'
   import { shownName } from './note-name'
   import { overlays } from './overlays'
+  import { trap } from './trap'
   import { workspace, type Entry } from './workspace.svelte'
   import { dur } from './motion'
 
@@ -48,6 +49,15 @@
 
   $effect(() => {
     if (open) input?.focus()
+  })
+
+  let list = $state<HTMLElement>()
+
+  // The row the arrows are on stays in view, or walking past the tenth result
+  // moves a cursor nobody can see. Nearest, so a row already showing does not pull
+  // the list around under the eye.
+  $effect(() => {
+    list?.querySelector('.nib-row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
   function choose(item: Command | Entry) {
@@ -92,6 +102,14 @@
       return
     }
 
+    // The two ends of a long list, without holding an arrow down. Only with a
+    // modifier: Home and End on their own belong to the words in the box.
+    if ((event.key === 'Home' || event.key === 'End') && (event.ctrlKey || event.metaKey)) {
+      spend(event)
+      cursor = event.key === 'Home' ? 0 : Math.max(results.length - 1, 0)
+      return
+    }
+
     const chosen = results[cursor]
     if (event.key === 'Enter' && chosen) {
       spend(event)
@@ -105,22 +123,44 @@
   <!-- Tapping away is the same answer as Escape, so it forgets the same. -->
   <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={dismiss}></div>
 
-  <div class="palette" transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}>
+  <div
+    class="palette"
+    use:trap
+    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+  >
+    <!-- A box with a list under it is one control and not two: the keyboard never
+         leaves the box, and the arrows move which row the box is pointing at. That
+         is what a combobox is, and why the rows are out of the tab sequence - forty
+         notes would otherwise be forty presses of Tab between here and the note
+         behind. See docs/keyboard.md. -->
     <input
       bind:this={input}
       bind:value={query}
       onkeydown={onKeydown}
       placeholder={t('Go to note, or > for commands')}
       spellcheck="false"
+      role="combobox"
+      aria-expanded={results.length > 0}
+      aria-controls="nib-palette-list"
+      aria-activedescendant={results.length ? `nib-palette-${cursor}` : undefined}
       aria-label={t('Search notes and commands')}
     />
 
     {#if results.length}
-      <ul>
+      <ul
+        bind:this={list}
+        id="nib-palette-list"
+        role="listbox"
+        aria-label={t('Search notes and commands')}
+      >
         {#each results as item, index (`${label(item)}:${index}`)}
-          <li>
+          <li role="none">
             <button
               class="nib-row"
+              id="nib-palette-{index}"
+              role="option"
+              tabindex="-1"
+              aria-selected={index === cursor}
               class:is-on={index === cursor}
               class:dim={'disabled' in item && item.disabled}
               onmouseenter={() => (cursor = index)}

@@ -21,6 +21,7 @@
   import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from './themes/sample'
   import { PAINT, store } from './themes/store.svelte'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   const STYLE_ID = 'nib-theme-miniatures'
   const PALETTE_ID = 'nib-theme-palettes'
@@ -157,7 +158,11 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: dur(130) }} onclick={() => store.close()}></div>
 
-  <div class="sheet" transition:scale={{ duration: dur(190), start: 0.98, easing: cubicOut }}>
+  <div
+    class="sheet"
+    use:trap
+    transition:scale={{ duration: dur(190), start: 0.98, easing: cubicOut }}
+  >
     <header>
       {#if store.chosen}
         <button
@@ -517,7 +522,6 @@
   }
 
   .card:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 

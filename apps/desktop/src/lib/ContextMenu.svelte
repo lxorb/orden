@@ -3,7 +3,9 @@
   import { cubicOut } from 'svelte/easing'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
+  import { trap } from './trap'
   import { viewport } from './viewport.svelte'
+  import { walked } from './walk'
   import { dur } from './motion'
 
   let element = $state<HTMLDivElement>()
@@ -113,6 +115,39 @@
     menu.hide()
     item.run()
   }
+
+  /** The rows a key can land on: the dividers are not rows and a greyed one is
+   *  not a choice. Read off the page rather than counted in state, because what a
+   *  press has to move is a real element - the row it lands on has to take the
+   *  keyboard, so the ring is on it and a screen reader says it. */
+  const rows = () => [...(element?.querySelectorAll<HTMLElement>('.nib-row:not(:disabled)') ?? [])]
+
+  /** Walking the menu. The same walk every list in the app takes, wrapping, which
+   *  is how a hand reaches the last row of a long one; see walk.ts.
+   *
+   *  Escape is not here. It closes the menu, and what closes the layer on top is
+   *  overlays.ts, one place, for every layer there is. */
+  function onKey(event: KeyboardEvent) {
+    const list = rows()
+    if (!list.length) return
+
+    const at = list.findIndex((row) => row === document.activeElement)
+    const moved = walked(event.key, at < 0 ? null : at, list.length, true)
+    const landed = moved === null ? undefined : list[moved]
+
+    if (landed) {
+      event.preventDefault()
+      landed.focus()
+      return
+    }
+
+    // Taken either way, so a space meant for a row never scrolls what is behind
+    // the menu.
+    if (event.key === ' ' && at >= 0) {
+      event.preventDefault()
+      list[at]?.click()
+    }
+  }
 </script>
 
 <svelte:window
@@ -146,6 +181,8 @@
     style:top={sheet ? undefined : `${position.y}px`}
     style:--keyboard={sheet ? `${viewport.keyboard}px` : undefined}
     transition:arrive
+    use:trap
+    onkeydown={onKey}
     role="menu"
     tabindex="-1"
   >

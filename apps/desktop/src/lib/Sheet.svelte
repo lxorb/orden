@@ -15,6 +15,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   const {
     open,
@@ -40,6 +41,7 @@
 
   <div
     class="sheet"
+    use:trap
     role="dialog"
     aria-modal="true"
     aria-label={title}

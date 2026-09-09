@@ -9,6 +9,7 @@
   import { selectAll } from './select-all'
   import Select from './Select.svelte'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   // Back answers the question with nothing, the same as tapping away.
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
@@ -67,7 +68,11 @@
     onclick={() => prompt.dismiss()}
   ></div>
 
-  <div class="sheet" transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}>
+  <div
+    class="sheet"
+    use:trap
+    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+  >
     <form
       onsubmit={(event) => {
         event.preventDefault()

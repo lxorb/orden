@@ -35,6 +35,7 @@
   import { pageHeight, viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   const { view }: { view?: EditorView | undefined } = $props()
 
@@ -271,7 +272,13 @@
     onclick={() => (settings.open = false)}
   ></div>
 
-  <div class="sheet" class:phone={viewport.touch} style:height={pageHeight()} transition:appear>
+  <div
+    class="sheet"
+    class:phone={viewport.touch}
+    style:height={pageHeight()}
+    use:trap
+    transition:appear
+  >
     {#if viewport.touch}
       <header class="bar">
         {#if !settings.listing}
@@ -1276,7 +1283,6 @@
 
   button.setting:focus-visible,
   .setting.pressable:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
@@ -1378,7 +1384,6 @@
   }
 
   button.key:focus-visible {
-    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
@@ -1959,7 +1964,6 @@
   }
 
   .sheet.phone button.setting:focus-visible {
-    outline-offset: -2px;
     border-radius: 0;
   }
 

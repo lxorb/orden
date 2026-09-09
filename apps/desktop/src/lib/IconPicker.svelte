@@ -21,6 +21,7 @@
   import { setNoteIcon } from './note-icon'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   let query = $state('')
   let library = $state<Record<string, IconNode>>({})
@@ -96,7 +97,11 @@
     onclick={() => iconChoice.close()}
   ></div>
 
-  <div class="sheet" transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}>
+  <div
+    class="sheet"
+    use:trap
+    transition:scale={{ duration: dur(190), start: 0.97, easing: cubicOut }}
+  >
     <input
       bind:this={field}
       bind:value={query}

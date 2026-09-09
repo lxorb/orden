@@ -8,6 +8,7 @@
   import { joining } from './joining.svelte'
   import { settleLocalNotes } from './settling'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   const LENGTH = 6
 
@@ -102,7 +103,11 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: dur(140) }} onclick={close}></div>
 
-  <div class="panel" transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}>
+  <div
+    class="panel"
+    use:trap
+    transition:scale={{ duration: dur(200), start: 0.96, easing: cubicOut }}
+  >
     <!-- Somebody sent a link here, so say what it was before asking for an
          address: signing in is the whole of what it takes to open it. -->
     {#if joining.invitation}

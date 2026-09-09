@@ -10,6 +10,7 @@
   import { invoke } from './tauri'
   import { type Tab, workspace } from './workspace.svelte'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   interface Snapshot {
     taken_at: number
@@ -128,7 +129,11 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: dur(140) }} onclick={() => (open = false)}></div>
 
-  <div class="sheet" transition:scale={{ duration: dur(200), start: 0.97, easing: cubicOut }}>
+  <div
+    class="sheet"
+    use:trap
+    transition:scale={{ duration: dur(200), start: 0.97, easing: cubicOut }}
+  >
     {#if !workspace.active?.path}
       <p class="empty">{t('Save this note first; there is nothing to compare against yet.')}</p>
     {:else if !snapshots.length}

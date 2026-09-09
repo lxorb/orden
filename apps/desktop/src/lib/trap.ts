@@ -1,0 +1,104 @@
+/** A layer over the note holds the keyboard while it is open, and hands it back
+ *  to whatever opened it.
+ *
+ *  Two halves of one rule, and both of them are what a dialog is for. While a
+ *  sheet, a menu or the settings are open, Tab goes round the inside of it rather
+ *  than off into the note behind - which is still on the page, still full of
+ *  buttons, and still answering keys nobody can see landing. And when it closes,
+ *  the keyboard goes back to the control that opened it, so asking a question and
+ *  getting an answer leaves a hand exactly where it was.
+ *
+ *  The one thing this does not do is close anything: Escape is overlays.ts, which
+ *  closes the layer on top, and every layer in the app is already on that stack. */
+
+/** Everything Tab would stop on inside the layer. `[tabindex="-1"]` is excluded
+ *  from all of it and not only from the last clause: the rows of a list are
+ *  buttons that have been taken out of the tab sequence on purpose, and counting
+ *  them here is how Tab walked off the end of the palette into the note behind
+ *  it. */
+const FOCUSABLE = [
+  'button',
+  '[href]',
+  'input',
+  'select',
+  'textarea',
+  'summary',
+  '[tabindex]',
+  '[contenteditable="true"]',
+]
+  .map((one) => `${one}:not(:disabled):not([tabindex="-1"])`)
+  .join(', ')
+
+function within(node: HTMLElement): HTMLElement[] {
+  return [...node.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+    (one) => one.getClientRects().length > 0 && one.getAttribute('aria-hidden') !== 'true',
+  )
+}
+
+export function trap(node: HTMLElement) {
+  /** What had the keyboard before this opened. Read now, because by the time this
+   *  closes the answer is whatever is inside it. */
+  const from = document.activeElement
+
+  // Already holding it - a field the layer focused itself, the palette's box -
+  // and then taking it again would put the caret back at the start of what
+  // somebody has begun typing.
+  if (!node.contains(document.activeElement)) {
+    const first = within(node)[0]
+    if (first) first.focus()
+    else {
+      // Nothing in it to stand on, so the layer itself takes the keyboard: it is
+      // still the thing Escape closes, and a press has to land somewhere inside.
+      if (!node.hasAttribute('tabindex')) node.tabIndex = -1
+      node.focus()
+    }
+  }
+
+  function onKey(event: KeyboardEvent) {
+    if (event.key !== 'Tab') return
+
+    const stops = within(node)
+    if (!stops.length) {
+      event.preventDefault()
+      return
+    }
+
+    const first = stops[0]
+    const last = stops.at(-1)
+    if (!first || !last) return
+
+    const at = document.activeElement
+    // The ends meet, which is the whole of a trap: from the last one Tab comes
+    // round to the first, and Shift+Tab from the first goes to the last.
+    if (!node.contains(at)) {
+      event.preventDefault()
+      ;(event.shiftKey ? last : first).focus()
+      return
+    }
+
+    if (event.shiftKey && at === first) {
+      event.preventDefault()
+      last.focus()
+      return
+    }
+
+    if (!event.shiftKey && at === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
+  node.addEventListener('keydown', onKey)
+
+  return {
+    destroy() {
+      node.removeEventListener('keydown', onKey)
+
+      // Back where it came from, unless what it came from has gone with it: a
+      // row deleted by the very sheet that asked about deleting it.
+      if (from instanceof HTMLElement && from.isConnected && from.getClientRects().length > 0) {
+        from.focus()
+      }
+    },
+  }
+}

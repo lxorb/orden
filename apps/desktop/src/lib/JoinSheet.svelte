@@ -14,6 +14,7 @@
   import { joining } from './joining.svelte'
   import { t } from './i18n.svelte'
   import { dur } from './motion'
+  import { trap } from './trap'
 
   const invitation = $derived(joining.invitation)
   const who = $derived(invitation?.from ?? t('Somebody'))
@@ -30,6 +31,7 @@
 
   <div
     class="panel"
+    use:trap
     role="dialog"
     aria-modal="true"
     aria-label={shared ?? t('Shared with you')}
