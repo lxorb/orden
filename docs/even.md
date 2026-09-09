@@ -579,16 +579,19 @@ typing, and a collaborator's paragraph should appear.
 
 ## 7. Serving it at `/even/`
 
-The build writes two pages out of one bundle: `index.html` (the editor) and
-`even.html` (the plugin). Almost all of the output is shared; the plugin's own
-code and the Even Hub SDK are chunks nothing in `index.html` reaches, so the
-plain web build carries none of it. That is checked: `dist/index.html` mentions
-neither.
+The editor's build writes `even.html` beside `index.html` out of one bundle.
+Almost all of the output is shared; the plugin's own code and the Even Hub SDK are
+chunks nothing in `index.html` reaches, so the plain web build carries none of it.
+That is checked: `dist/index.html` mentions neither.
 
 The Worker in `services/sync` serves `apps/desktop/dist` through its assets
 binding. Its not-found handling is `single-page-application`, which would answer
 `/even/` with the editor's own page, so two routes are named ahead of the
 catch-all and ask for `/even.html` by name.
+
+That page is for trying the glasses in a phone's browser without packing
+anything. **It is not what goes on a phone.** The package is a build of its own,
+below, and the difference between the two is the point of the next section.
 
 ### Where a packed plugin actually runs, and what it may keep
 
@@ -632,12 +635,129 @@ The community had reported the symptom - "browser localStorage does not survive
 app restarts inside the `.ehpk` WebView", in `nickustinov/even-g2-notes` - but
 not the cause. The cause is the port.
 
-### What goes into the package, and why it is not `dist`
+### What goes into the package, and why it is a build of its own
 
-`pnpm --filter @nib/desktop build:even` builds, then stages
-`apps/desktop/dist-even` through `scripts/even-stage.mjs`. In that folder
-**`index.html` and `even.html` are the same page, and that page is the plugin**;
-the editor's own `index.html` is not in it at all.
+`pnpm --filter @nib/desktop build:even` runs `vite.even.config.ts`, whose only
+page is `even.html`, then stages `apps/desktop/dist-even` through
+`scripts/even-stage.mjs`. In that folder **`index.html` and `even.html` are the
+same page, and that page is the plugin**; the editor's own `index.html` is not in
+it at all.
+
+A second build rather than a third entry in the first, and the store's own review
+is what asked for it. It refused a bundle twice:
+
+```
+1. Bundle contains URLs not covered by `network.whitelist`. (37 unlisted URL(s))
+2. `new Function()` is used in the bundle. Heads up: `new Function()` evaluates
+   dynamic code (same risk class as `eval()`). Could you refactor away from it?
+```
+
+Both findings are the same thing underneath, and neither is about anything the
+plugin does. The plugin was the editor's bundle with a bridge in it, so it carried
+every library the editor has - including several a pair of glasses can never use -
+and each of those brought its own documentation links and its own way of turning a
+string into code. Rewriting those strings would have answered the letter of the
+review and left the code in. Emil's decision on the second finding settles it:
+*"JavaScript execution is not needed by the Even Realities plugin, so for the
+plugin it can be disabled."* So the libraries are not shipped, rather than
+patched - and one bundle cannot leave something out of one of its entries, which
+is the whole reason there are two builds.
+
+A scan of the old package tells the whole story. Of its 270 chunks, 171 were
+reachable from `even.html`, and those 171 carried **128 distinct URL strings**: 53
+`https://` links and 75 `http://` XML namespace URIs. The review named 37 of them,
+so the finding was real and larger than reported. Where they came from:
+
+| Chunk | URLs | What it is |
+| --- | --- | --- |
+| `docx`, `epub`, `jszip` | 71 | every OOXML, EPUB and Dublin Core namespace there is, plus jszip's own help link |
+| mermaid and its parser stack (`chevrotain`, `langium`, `cytoscape`, `graphlib`, the diagram chunks) | 30 | grammar-error documentation, one per diagnostic |
+| Svelte's runtime | 17 | `https://svelte.dev/e/<code>`, one per runtime error |
+| `flowchart.js` | 3 | raphael's home page, an SVG feature string |
+| `pdf` | 4 | pdf.js's own examples and test URLs |
+| the app's own chunks | 3 | `github.com/lxorb/nibeditor`, and two connector addresses the MCP panel prints |
+
+And the second finding, by the line that produced it:
+
+| Where | What |
+| --- | --- |
+| `packages/editor/src/run/protocol.ts` | `new Function(CODE)` to see whether the code parses, then `(0, eval)(CODE)` to run it - inside the sandboxed frame's own source |
+| `packages/editor/src/run/format.ts` | not a call: the string `[Function (anonymous)]`, which a scan cannot tell from one |
+| lodash, inside mermaid's stack | `Function('return this')`, four times over in four copies |
+| `docx`'s dependencies | `Function('binder', ...)`, `Function('return function*() {}')` |
+| `jszip` and `docx` | `Function('' + e)` behind a `setImmediate` shim |
+| `@codemirror/legacy-modes/mode/pug` | `Function('', 'var x ' + ...)`, to check whether an attribute is valid JavaScript |
+
+So what is left out, and what went with each:
+
+| Left out | Why | What went with it |
+| --- | --- | --- |
+| running a fence | no code execution in the plugin | `new Function(CODE)`, `(0, eval)(CODE)`, the sandboxed frame, the play button |
+| mermaid, flowchart.js | a diagram cannot be drawn on a panel of one font | 33 URLs, and lodash's `Function('return this')` four times over |
+| the exporters (docx, epub, jszip) | a WebView cannot save a file | 71 URLs, two more `Function(...)`, the string-fed timer shim |
+| the PDF viewer | the glasses cannot show a PDF, and the plugin never opens one | 4 URLs and 1.7 MB, a fifth of what was left |
+| the pug highlighting mode | one language's colours, against `Function('', ...)` | 1 URL's worth of nothing, and the last `Function(` |
+
+Svelte's 17 links stay: its runtime is the app. They are rewritten at staging
+time, below.
+
+Everything else is the same app: the same components, the same stores, the same
+sync, the same rooms, the same editor. Two mechanisms do it, and which one applies
+depends on whose code it is:
+
+- **Libraries** are cut at resolution. `vite.even.config.ts` answers `mermaid`,
+  `flowchart.js`, `pdfjs-dist` and the pug mode with a stub, and the run extension
+  with one that draws no button and whose commands return false, so a key falls
+  through to whatever is under it. The runner is matched on its *resolved* path,
+  because two files import it under two different relative names.
+- **Our own code** is cut by `__EVEN_PLUGIN__`, a build-time constant that is
+  `true` only here. `exportCommands()` returns nothing, `openEntry` declines a
+  PDF, and `drawDiagram` throws - which `prepareFences` already catches, so a
+  diagram fence stays a code fence. Each of those branches is the last door into a
+  library, and the bundler removes the branch and everything behind it.
+
+Which mechanism a thing needs is not obvious, and guessing wrong is silent. Two
+that cost a day each:
+
+- Guarding `exportCommands` alone still shipped mermaid, because the settings
+  panel and the reading view are two more doors into the export module. A library
+  is only gone once the *function that draws with it* is - here `drawDiagram`.
+- Declining to open a PDF in `openEntry` did not drop `pdfjs-dist`, because the
+  viewer is a component of a pane rather than a module behind that call:
+  `Pane.svelte` imports it, so a branch nothing takes still built 1.7 MB. A
+  component has to be cut at the library.
+
+A code fence in the plugin is therefore a fence - highlighted, copyable, with no
+play button anywhere near it. On the glasses it was never anything else; see the
+mapping in section 4.
+
+The reduction, measured: **11.8 MB in 270 chunks became 6.0 MB in 162**, and the
+packed `.ehpk` went from 4.4 MB to 2.7 MB. Half of what a phone downloads was
+libraries it had no way to use.
+
+The few URLs left after that are a library's own error links, and they are
+rewritten where the folder is staged, which is the only place they can be touched
+without changing the code the editor runs. Svelte names its errors by a link, so
+`https://svelte.dev/e/props_invalid_value` becomes `props_invalid_value` - the
+half a reader needs. Anything else keeps its host and path and loses its scheme,
+so a string that was there to be read still reads and nothing in the package is a
+URL. `openExternal` already refuses a string that is not a URL, so a rewritten one
+does nothing rather than something surprising.
+
+`src/lib/even/bundle.test.ts` builds the plugin the way a release does, stages it,
+and reads the folder that is packed - because that folder is the only place either
+of the review's questions has an answer. It holds it to both findings and to the
+consequences: no URL outside the manifest's own whitelist (read from
+`even.app.json`, so the two cannot drift), no `new Function`, `Function(`, `eval(`
+or timer given a string, no play button and none of the sandbox's protocol in any
+`.js`, none of the named libraries, and under 14 MB. It is the slowest test in the
+repository and it is the only one that could have caught either finding before an
+upload did.
+
+One thing it deliberately does not check: the panel's CSS. The rules come from the
+theme's stylesheet rather than from the module, and a rule for an element nothing
+makes styles nothing. The button is what a reader can press, and the button is not
+there.
 
 That is not tidiness. Which page the phone app opens from a package is published
 nowhere: the manifest names `even.html` as the `entrypoint`, but an app that

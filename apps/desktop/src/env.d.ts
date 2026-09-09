@@ -5,6 +5,19 @@
  *  the code on it is the code somebody just shipped. */
 declare const __EVEN_BUILD__: string
 
+/** True in the build that becomes the Even Realities plugin, and false in the
+ *  desktop and web builds.
+ *
+ *  A constant rather than a runtime check, because what it is for is leaving code
+ *  *out*: the branches it guards are removed by the bundler, and with them every
+ *  library they reach. The plugin ships no code execution at all - Emil's decision
+ *  and the store reviewer's finding - and no diagram renderer, no document
+ *  exporter and no PDF viewer, none of which a pair of glasses can use and each of
+ *  which brought URLs and `new Function` into a bundle that is reviewed for both.
+ *
+ *  See vite.even.config.ts, and the two tests that hold the staged bundle to it. */
+declare const __EVEN_PLUGIN__: boolean
+
 /** The build-time settings this app reads. Vite types every `VITE_` name as
  *  `any` by default, and an `any` spreading out of `import.meta.env` is how a
  *  missing variable becomes a URL of `undefined` at runtime. Named here, so the

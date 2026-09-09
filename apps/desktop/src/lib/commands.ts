@@ -66,6 +66,13 @@ async function openSnippets() {
  *  the document is a note, so the list never offers something that cannot work;
  *  everything above them works on every build with nothing installed. */
 export function exportCommands(): Command[] {
+  // Not in the plugin, which cannot save a file: a WebView on a phone has nowhere
+  // to put one. Answered before anything else so the bundler takes the whole of
+  // what is below with it - the renderers, the document libraries, and the URLs
+  // and `new Function` calls the store's review found in them. See
+  // vite.even.config.ts.
+  if (__EVEN_PLUGIN__) return []
+
   const note = () => workspace.active
   // Flushed first: the editor's last few keystrokes are still a rope until
   // something asks for them as text, and an export is asking.

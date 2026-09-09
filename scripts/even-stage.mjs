@@ -1,27 +1,47 @@
 /* The folder that goes into an .ehpk.
 
-   The build writes two pages out of one bundle, `index.html` for the editor and
-   `even.html` for the plugin. Packing that folder as it stands leaves the
-   question of which page the phone app opens, and the answer is not published
-   anywhere: the manifest names `even.html` as the entrypoint, but an app that
-   ignores the manifest and opens `index.html` would get the plain editor, which
-   signs in, syncs, and knows nothing about any glasses. That is exactly what a
-   plugin doing nothing on a device looks like.
+   Two jobs, and both are about what a package is allowed to contain.
 
-   So the question is removed rather than answered. This stages a copy in which
-   *both* names are the plugin, and the editor's own page is not in it at all.
-   Whichever one the phone app opens, it opens the plugin.
+   **Both names are the plugin.** Which page the phone app opens from a package is
+   published nowhere: the manifest names `even.html` as the entrypoint, but an app
+   that ignored the manifest and opened `index.html` would get whatever is under
+   that name. So this writes the plugin under both, and the question is removed
+   rather than answered.
 
-   The assets are shared and are copied as they are.
+   **No URL the manifest does not allow.** The store's own review refuses a bundle
+   that carries one:
 
-     node scripts/even-stage.mjs [from] [to]   (default apps/desktop/dist and
-                                                apps/desktop/dist-even) */
+     Bundle contains URLs not covered by `network.whitelist`.
 
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+   Almost all of them came from libraries a pair of glasses cannot use, and those
+   are not in the plugin's build at all now; see apps/desktop/vite.even.config.ts.
+   What is left is a handful of error links, and they are rewritten here, where the
+   folder is only ever read by the packer:
+
+     - Svelte's `https://svelte.dev/e/<code>` becomes `<code>`, which is what
+       identifies the error anyway. The message still says which one it was.
+     - anything else keeps its host and path and loses its scheme, so a string that
+       was there to be read still reads and nothing in the package is a URL.
+
+   `apps/desktop/src/lib/even/bundle.test.ts` holds the staged folder to both of
+   the review's findings, so neither can come back.
+
+     node scripts/even-stage.mjs [from] [to]   (default apps/desktop/dist-even,
+                                                staged in place) */
+
+import {
+  cpSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { join } from 'node:path'
 
-const from = process.argv[2] ?? join('apps', 'desktop', 'dist')
-const to = process.argv[3] ?? join('apps', 'desktop', 'dist-even')
+const from = process.argv[2] ?? join('apps', 'desktop', 'dist-even')
+const to = process.argv[3] ?? from
 
 const plugin = join(from, 'even.html')
 let page
@@ -32,11 +52,14 @@ try {
   process.exit(1)
 }
 
-// A whole new folder every time, so nothing from an older build survives into a
-// package by accident.
-rmSync(to, { recursive: true, force: true })
-mkdirSync(to, { recursive: true })
-cpSync(from, to, { recursive: true })
+// Staged somewhere else: a whole new folder every time, so nothing from an older
+// build survives into a package by accident. Staged in place, which is what the
+// plugin's own build asks for, there is nothing to copy.
+if (to !== from) {
+  rmSync(to, { recursive: true, force: true })
+  mkdirSync(to, { recursive: true })
+  cpSync(from, to, { recursive: true })
+}
 
 // Both names, one page. The editor's index.html is overwritten rather than
 // deleted, so there is no name in the package that answers with anything else.
@@ -49,4 +72,47 @@ for (const stray of ['manifest.webmanifest', 'sw.js', 'registerSW.js']) {
   rmSync(join(to, stray), { force: true })
 }
 
-console.log(`${to}: index.html and even.html are both the plugin`)
+/** The origins the manifest allows. Anything else must not be in the package at
+ *  all, whether or not it is ever asked for. */
+const ALLOWED = ['https://nibeditor.com', 'https://api.openai.com']
+
+/** A URL, as a package may carry one: not at all, unless the manifest allows it. */
+function plain(url) {
+  if (ALLOWED.some((one) => url.startsWith(one))) return url
+
+  // Svelte's runtime names its errors by a link. The code is what identifies the
+  // error, and it is the half a reader needs.
+  const svelte = /^https:\/\/svelte\.dev\/e\/([\w-]+)$/.exec(url)
+  if (svelte) return svelte[1]
+
+  return url.replace(/^https?:\/\//, '')
+}
+
+function walk(dir) {
+  const out = []
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name)
+    if (statSync(path).isDirectory()) out.push(...walk(path))
+    else out.push(path)
+  }
+
+  return out
+}
+
+const URLS = /https?:\/\/[^\s"'`)\\<>]*/g
+let rewritten = 0
+
+for (const file of walk(to)) {
+  if (!/\.(js|css|html|json|webmanifest)$/.test(file)) continue
+
+  const text = readFileSync(file, 'utf8')
+  const made = text.replace(URLS, (url) => {
+    const now = plain(url)
+    if (now !== url) rewritten++
+    return now
+  })
+
+  if (made !== text) writeFileSync(file, made)
+}
+
+console.log(`${to}: index.html and even.html are both the plugin, ${rewritten} URLs made plain`)

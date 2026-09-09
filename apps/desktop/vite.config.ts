@@ -24,7 +24,11 @@ function stamp(): string {
 
 export default defineConfig({
   plugins: [svelte()],
-  define: { __EVEN_BUILD__: JSON.stringify(stamp()) },
+  // This build is the editor: on the desktop, on the web, in the presenter's
+  // window, and on the `/even/` page the web serves. The package that goes on a
+  // phone is built by `vite.even.config.ts`, which sets the second of these true
+  // and leaves out what a pair of glasses cannot use.
+  define: { __EVEN_BUILD__: JSON.stringify(stamp()), __EVEN_PLUGIN__: 'false' },
   clearScreen: false,
   server: {
     port: 1420,
@@ -37,11 +41,17 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    // Three pages out of one bundle: the editor, the Even Realities plugin, and
-    // the window a presenter reads their notes in. The plugin is the same app
-    // plus the bridge in `src/lib/even`, so almost all of the output is shared;
-    // see docs/even.md. The presenter's window is a page of its own and carries
-    // none of the app; see docs/slides.md.
+    // Three pages out of one bundle: the editor, the window a presenter reads
+    // their notes in, and the plugin's page as the web serves it at `/even/`. The
+    // presenter's window carries none of the app; see docs/slides.md.
+    //
+    // `even.html` is here so that opening `/even/` in a phone's browser reaches a
+    // page with the bridge in it, which is how the glasses are tried without
+    // packing anything. It is *not* what goes on a phone: the package is built by
+    // `vite.even.config.ts`, which leaves out what a pair of glasses cannot use,
+    // and the browser drive runs that build rather than this page. One bundle
+    // cannot leave something out of one of its entries, which is why there are two
+    // builds at all. See docs/even.md.
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),

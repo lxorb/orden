@@ -28,6 +28,17 @@ let sequence = 0
  *  and the editor only knows the screen. Both renderers are heavy, so neither
  *  loads until a note has a diagram. */
 export async function drawDiagram(code: string, language: string, scheme: Scheme): Promise<string> {
+  // Not in the plugin. A diagram cannot be read on a panel of one font in one
+  // size, and the two renderers that draw them are most of what the store's review
+  // objected to: between them mermaid and flowchart.js brought twenty one URLs and
+  // four copies of lodash's `Function('return this')`. Refused here rather than
+  // left out further down, so the bundler takes both of them and everything they
+  // reach; see vite.even.config.ts.
+  //
+  // What the reader sees is what `prepareFences` already does with a diagram that
+  // will not draw: the fence stays as code, which beats an empty space.
+  if (__EVEN_PLUGIN__) throw new Error('no diagrams in the Even Realities plugin')
+
   if (language === 'flow') return drawFlowchart(code, scheme)
   return drawMermaid(language === 'sequence' ? sequenceToMermaid(code) : code, scheme)
 }

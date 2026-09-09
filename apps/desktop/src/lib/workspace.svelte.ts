@@ -815,6 +815,11 @@ class Workspace {
 
   async openEntry(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
     if (isPdfTarget(path)) {
+      // Not in front of a pair of glasses, for the reason a canvas is not: the
+      // panel cannot show a page of one, and the viewer that would draw it is not
+      // in the plugin's build at all. See vite.even.config.ts.
+      if (__EVEN_PLUGIN__) return
+
       this.openPdf(path)
       return
     }

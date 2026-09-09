@@ -13,9 +13,9 @@ no firmware here, so every timing is the plugin's own share and the panel pictur
 are drawn with the firmware's metrics and a stand-in face; see
 `scripts/even-panel.mjs` and the device checklist in docs/even.md.
 
-Run it with the repository's own Chromium, after a build:
+Run it with the repository's own Chromium, after the plugin's own build:
 
-    pnpm --filter @nib/desktop build
+    pnpm --filter @nib/desktop build:even
     python scripts/even-e2e.py
 """
 
@@ -32,7 +32,7 @@ import threading
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DIST = ROOT / "apps" / "desktop" / "dist"
+DIST = ROOT / "apps" / "desktop" / "dist-even"
 OUT = ROOT / "target" / "even-e2e"
 DOCS = ROOT / "docs" / "even"
 
@@ -383,7 +383,7 @@ class Report:
 
 def main() -> int:
     if not (DIST / "even.html").exists():
-        raise SystemExit("no dist/even.html: pnpm --filter @nib/desktop build first")
+        raise SystemExit("no dist-even/even.html: pnpm --filter @nib/desktop build:even first")
 
     OUT.mkdir(parents=True, exist_ok=True)
     report = Report()
