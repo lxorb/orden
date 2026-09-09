@@ -23,7 +23,9 @@ import { account } from './lib/account.svelte'
 import Glasses from './lib/even/Glasses.svelte'
 import { bridge } from './lib/even/bridge.svelte'
 import { everywhere, seedFlag } from './lib/even/keep'
+import { recovery } from './lib/recovery.svelte'
 import { rememberSeedIn } from './lib/seeded'
+import { sync } from './lib/sync.svelte'
 import { workspace } from './lib/workspace.svelte'
 
 const target = document.getElementById('app')
@@ -44,10 +46,19 @@ account.alsoKeepIn(everywhere)
 rememberSeedIn(seedFlag)
 
 // A cookie holds what decides the first paint and the phone app's own store holds
-// everything, and the second of those answers seconds after the app was built. So
-// what was read from storage while it was built is read again once it has landed:
-// the icons a space wears are the sort of thing that lives in the second half.
-void filling.then(() => workspace.device.reread())
+// everything else, and the second of those answers seconds after the app was built.
+// So everything read from storage while it was built is read again once it has
+// landed. Each of these is a store whose key rides the host store alone; see the
+// list in lib/even/local.ts.
+//
+// The syncing is the one that cost something. `nib:mirrors` is what it knows about
+// every note it has seen, it is far too big for a cookie, and being dropped there
+// read as "this account has never seen these notes".
+void filling.then(() => {
+  workspace.device.reread()
+  sync.reread()
+  recovery.restore()
+})
 
 const app = mount(App, { target })
 // After the app, so the workspace has restored its tabs before the glasses are

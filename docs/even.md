@@ -1068,6 +1068,40 @@ practice but answers nothing until it does. `localStorage` and IndexedDB stay in
 the list as free fallbacks for the browser and the desktop app, where they are
 the ones that work. See `src/lib/even/keep.ts`.
 
+**Which of the two a key rides in is a decision, and for one release it was an
+accident of size.** Everything device-local goes through one map written to both
+stores, and what the cookie could not hold was chosen by filling it smallest first.
+`nib:mirrors` - what the syncing knows about every note it has seen - is 133 bytes
+plus the path per note: **4,408 bytes for Emil's twenty notes, 7,706 once the
+cookie's own URI encoding is counted, against a 3,500 byte budget**. From about
+fourteen notes on it did not fit, and being the largest value it was the first thing
+dropped - before the theme, the accent and everything else. Dropped, read back as
+nothing, and written back as nothing: the syncing then believed it had never seen
+those notes.
+
+So `HOST_ONLY` in `local.ts` names the keys the cookie is not for -
+`nib:mirrors`, `nib:recovery`, `nib:recent`, `nib:expanded`, `nib:expanded-tags`,
+`nib:icons` - all of them bookkeeping, none of them painted from, every one with a
+reader that can be asked to read again. They ride the host store alone, and they are
+**not seeded from the cookie either**: a cookie an older build wrote holds a
+truncated one, `fillFrom` only fills in what nothing has written, so half a table
+would stand and the full one would never land. The cookie keeps what the first paint
+is made of - the theme, the accent, the appearance, the language, the session, the
+panes - and the smallest-first trim is a backstop rather than the rule.
+
+The other half is reading again when the host store lands, in `even.ts`:
+
+```ts
+void filling.then(() => {
+  workspace.device.reread()
+  sync.reread()
+  recovery.restore()
+})
+```
+
+`sync.reread()` fills in and never replaces, so a pass already running keeps what it
+has settled; see sync.svelte.ts.
+
 The community had reported the symptom - "browser localStorage does not survive
 app restarts inside the `.ehpk` WebView", in `nickustinov/even-g2-notes` - but
 not the cause. The cause is the port.
@@ -1370,7 +1404,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 78 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 79 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1413,7 +1447,13 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 78 checks:
   the half of it that cannot be seen in the DOM - and a space that chose none drew
   its letter rather than an empty square;
 - **the card followed a drag on every frame of it** - 29 of 31 - was not drawn at all
-  while the sidebar was over the note, and came back when it was closed;
+  while the sidebar was over the note, and came back when it was closed. The last part
+  of the drive runs as the phone it is about: a coarse pointer, no hover and Emil's own
+  user agent, because the sidebar is only a drawer *over* the note where the pointer is
+  a finger, and at the same width in a headless browser it is a column beside it;
+- **a space icon survived a launch through the phone app's own store**, which is the
+  path everything that does not fit the cookie now takes: the drive's stand-in host
+  keeps what it is given, so the icons are gone from the cookie and back from the host;
 - **a recogniser that refused handed over to the glasses' microphone**, the connection
   was opened before there was anything to send through it, and a spoken command was
   obeyed **112 ms** after the last sound of it, because the words were sent while the

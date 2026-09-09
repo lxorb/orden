@@ -52,12 +52,53 @@ function parsed(written: string | null): Record<string, string> {
   }
 }
 
+/** The keys the cookie is not for.
+ *
+ *  Everything device-local goes through one map, and the map is written to two
+ *  places: the cookie, which is small and is there at once, and the phone app's own
+ *  store, which is unbounded and answers seconds later. Sorting by size was supposed
+ *  to decide what rode the cookie, and it decided it the wrong way round.
+ *
+ *  On Emil's account `nib:mirrors` - what the syncing knows about each note - is 133
+ *  bytes plus the path per note: 4,408 bytes for his twenty notes, 7,706 once the
+ *  cookie's own URI encoding is counted, against a 3,500 byte cookie. From about
+ *  fourteen notes on it does not fit, and because the smallest keys are kept first it
+ *  is the first thing dropped. Dropped, re-read as nothing, and written back as
+ *  nothing: the syncing then believed it had never seen those notes.
+ *
+ *  So which store a key belongs in is a decision rather than an accident of size.
+ *  These are bookkeeping - nothing is painted from them, and every one of them has a
+ *  reader that can be asked to read again when the phone app answers - so they ride
+ *  the host store alone. Everything else is what the first paint is made of (the
+ *  theme, the accent, the appearance, the language, the session, the panes) and stays
+ *  on the cookie, where it is there before anything is drawn.
+ *
+ *  Written out rather than imported from the modules that own them, and that is
+ *  deliberate: this file is loaded before any store exists - see lib/even/first.ts -
+ *  and an import of `sync.svelte.ts` here would build the store graph before the
+ *  storage it reads is in place, which is the bug that hid the space icons. The names
+ *  are held to their modules by a test instead; see local.test.ts. */
+const HOST_ONLY = new Set([
+  'nib:mirrors',
+  'nib:recovery',
+  'nib:recent',
+  'nib:expanded',
+  'nib:expanded-tags',
+  'nib:icons',
+])
+
+/** What the cookie may carry, which is everything that is not bookkeeping. */
+export function forTheCookie(all: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(all).filter(([key]) => !HOST_ONLY.has(key)))
+}
+
 /** As much of the settings as a cookie will hold, smallest first.
  *
  *  Smallest first because the ones that decide what the first paint looks like -
  *  the theme, the accent, the appearance - are a few bytes each, and the ones
  *  that would fill a cookie on their own are the ones nobody notices arriving a
- *  moment late. */
+ *  moment late. A backstop now rather than the rule: what could fill a cookie on its
+ *  own is not offered to it at all. */
 function underTheLimit(all: Record<string, string>): Record<string, string> {
   const bySize = Object.entries(all).sort(([, a], [, b]) => a.length - b.length)
 
@@ -129,7 +170,7 @@ class Local implements Storage {
 
   private flush(): void {
     const all = Object.fromEntries(this.held)
-    writeCookie(KEY, JSON.stringify(underTheLimit(all)))
+    writeCookie(KEY, JSON.stringify(underTheLimit(forTheCookie(all))))
     // Everything, to the one store with room for it. Nothing waits on it.
     void hostKeep.write(KEY, JSON.stringify(all)).catch(() => undefined)
   }
@@ -140,7 +181,13 @@ class Local implements Storage {
  *  answers, which is seconds later. */
 export function installLocal(): Local {
   // The cookie, synchronously: whatever decides the first paint is already here.
-  const local = new Local(parsed(cookieOf(KEY)))
+  //
+  // And nothing else: a cookie written by an older build carries bookkeeping that
+  // was truncated on the way in, and a short value is worse than none at all. It
+  // would be held here, `fillFrom` would leave it alone - it only fills in what
+  // nothing has written - and the phone app's own full copy would never land. So
+  // what moved to the host store is not seeded from the cookie at all.
+  const local = new Local(forTheCookie(parsed(cookieOf(KEY))))
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
     value: local,

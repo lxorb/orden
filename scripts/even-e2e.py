@@ -165,8 +165,16 @@ window.EvenAppBridge = {
     return ok(true)
   },
 
-  getLocalStorage: () => ok(''),
-  setLocalStorage: () => ok(true),
+  /** The phone app's own store, which is the one that survives a launch and the one
+   *  that is not limited to a cookie's four kilobytes. Kept in `sessionStorage`,
+   *  which the app itself never touches and which outlives a reload here the way the
+   *  phone app outlives a launch there. An absent key answers the empty string,
+   *  exactly as the host does. */
+  getLocalStorage: (key) => ok(sessionStorage.getItem(`host:${key}`) ?? ''),
+  setLocalStorage: (key, value) => {
+    sessionStorage.setItem(`host:${key}`, value)
+    return ok(true)
+  },
 
   onEvenHubEvent(handler) {
     window.__even.send = handler
@@ -1196,26 +1204,67 @@ def main() -> int:
 
             # Emil: "when I open the sidebar I can still see that frame." A mark on a
             # note has no business floating over the file list.
-            if page.get_by_role("button", name="Show sidebar").count():
-                page.get_by_role("button", name="Show sidebar").first.click()
+            #
+            # Only true where the sidebar is a *drawer* over the note, which is what it
+            # is on a phone and is not what it is in a headless browser at the same
+            # width: the layout asks whether the pointer is a finger, not only how wide
+            # the window is. So the rest of this drive runs as the phone it is about -
+            # a coarse pointer, no hover, and Emil's own user agent - which is worth
+            # having anyway.
+            phone = page.context.new_cdp_session(page)
+            # A finger rather than a mouse, which is what decides the layout.
+            phone.send("Emulation.setTouchEmulationEnabled", {"enabled": True, "maxTouchPoints": 5})
+            phone.send(
+                "Emulation.setEmulatedMedia",
+                {
+                    "features": [
+                        {"name": "pointer", "value": "coarse"},
+                        {"name": "hover", "value": "none"},
+                    ]
+                },
+            )
+            phone.send(
+                "Emulation.setUserAgentOverride",
+                {
+                    "userAgent": "Mozilla/5.0 (Linux; Android 16; SM-S948B) AppleWebKit/537.36"
+                    " (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+                },
+            )
+            # The layout measures itself on a resize, so it is nudged rather than told.
+            page.set_viewport_size({"width": 419, "height": 900})
+            page.wait_for_timeout(200)
+            page.set_viewport_size({"width": 420, "height": 900})
+            page.wait_for_timeout(400)
+            report.ok(
+                "the sidebar is a drawer over the note here, the way it is on a phone",
+                page.evaluate("document.documentElement.hasAttribute('data-drawer')"),
+            )
+
+            press(page, "Show sidebar")
             page.wait_for_timeout(500)
             report.ok(
-                "and is not drawn at all while the sidebar is over the note",
+                "and the card is not drawn at all while it is over the note",
                 page.evaluate(
                     "() => { const one = document.querySelector('.frame');"
                     " return !one || Number(getComputedStyle(one).opacity) === 0 }"
                 ),
+                page.evaluate(
+                    "() => { const one = document.querySelector('.frame');"
+                    " return one ? getComputedStyle(one).opacity : 'no card' }"
+                ),
             )
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(500)
-            if page.locator(".scrim").count():
-                page.locator(".scrim").first.click()
-                page.wait_for_timeout(500)
+
+            press(page, "Hide sidebar")
+            page.wait_for_timeout(600)
             report.ok(
                 "and comes back when the note is bare again",
                 page.evaluate(
                     "() => { const one = document.querySelector('.frame');"
                     " return !!one && Number(getComputedStyle(one).opacity) > 0 }"
+                ),
+                page.evaluate(
+                    "() => { const one = document.querySelector('.frame');"
+                    " return one ? getComputedStyle(one).opacity : 'no card' }"
                 ),
             )
 
@@ -1235,9 +1284,8 @@ def main() -> int:
             page.wait_for_timeout(700)
             page.reload()
             page.wait_for_timeout(1500)
-            if page.get_by_role("button", name="Show sidebar").count():
-                page.get_by_role("button", name="Show sidebar").first.click()
-                page.wait_for_timeout(400)
+            press(page, "Show sidebar")
+            page.wait_for_timeout(400)
 
             marks = page.evaluate(
                 """
@@ -1329,10 +1377,30 @@ def main() -> int:
     return 1 if report.bad else 0
 
 
+def press(page, name: str) -> bool:
+    """Presses the first button by that name a finger could actually reach.
+
+    Not simply the first in the document: the rail lives inside the drawer, so on a
+    phone layout there are two buttons called `Show sidebar` and the one in the closed
+    drawer is `inert` - which is right, and is not what a reader would press."""
+    for one in page.get_by_role("button", name=name).all():
+        # Visible is not the same as reachable: what is inside the closed drawer is
+        # `inert`, which is drawn and takes no press at all.
+        if not one.is_visible() or one.evaluate("el => !!el.closest('[inert]')"):
+            continue
+
+        try:
+            one.click(timeout=4000)
+            return True
+        except Exception:  # noqa: BLE001
+            continue
+
+    return False
+
+
 def open_note(page, name: str) -> None:
     """A note opened the way a reader opens one: the sidebar, and a row in it."""
-    if page.get_by_role("button", name="Show sidebar").count():
-        page.get_by_role("button", name="Show sidebar").first.click()
+    if press(page, "Show sidebar"):
         page.wait_for_timeout(300)
 
     page.get_by_text(name, exact=True).first.click()

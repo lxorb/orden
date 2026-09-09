@@ -800,6 +800,41 @@ describe('the mirrors this machine remembers', () => {
       }
     })
 
+    /** The launch this is all for, end to end on the storage's own terms.
+     *
+     *  `nib:mirrors` does not ride the cookie any more - 133 bytes plus the path per
+     *  note, 7,706 of them for Emil's twenty once the cookie's encoding is counted,
+     *  against a 3,500 byte cookie - so a plugin starts with none of it and the phone
+     *  app's own store answers seconds later. Nothing may be lost by that: what comes
+     *  back has to be the whole table, not the fourteen notes that used to fit. See
+     *  lib/even/local.ts, and the second seeding in even.ts. */
+    test('a launch that starts with nothing ends with every note back', async () => {
+      const many = Object.fromEntries(
+        Array.from({ length: 20 }, (_one, at) => [
+          `note ${String(at)}.md`,
+          { id: `n${String(at)}`, version: at + 1, hash: 'f'.repeat(64) },
+        ]),
+      )
+
+      localStorage.removeItem('nib:mirrors')
+      await started()
+      try {
+        expect(sync.tracked('/Notes/note 0.md')).toBeNull()
+
+        landed(many)
+        sync.reread()
+
+        for (let at = 0; at < 20; at++) {
+          expect(sync.tracked(`/Notes/note ${String(at)}.md`), `note ${String(at)}`).toEqual({
+            id: `n${String(at)}`,
+            hash: 'f'.repeat(64),
+          })
+        }
+      } finally {
+        stopped()
+      }
+    })
+
     test('says nothing at all when storage held nothing new', async () => {
       await started()
       try {

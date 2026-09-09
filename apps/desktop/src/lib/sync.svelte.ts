@@ -15,7 +15,7 @@ import { t } from './i18n.svelte'
 import { type Mirror, newMirror, pull, push, readMirror, within } from './sync/mirror'
 import { workspace } from './workspace.svelte'
 
-const STORAGE_KEY = 'nib:mirrors'
+export const STORAGE_KEY = 'nib:mirrors'
 
 export type Status = 'off' | 'idle' | 'syncing' | 'error'
 

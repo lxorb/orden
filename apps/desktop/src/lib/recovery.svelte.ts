@@ -24,7 +24,7 @@ import { isRecord, stored } from './stored'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
-const STORAGE_KEY = 'nib:recovery'
+export const STORAGE_KEY = 'nib:recovery'
 const MINUTE = 60 * 1000
 const DAY = 24 * 60 * MINUTE
 

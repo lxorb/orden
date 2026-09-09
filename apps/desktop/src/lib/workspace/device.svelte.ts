@@ -19,10 +19,10 @@
 import { isBoolean, isString, recordOf, stored, stringList } from '../stored'
 import { without, withOrWithout } from '../records'
 
-const RECENT_KEY = 'nib:recent'
-const ICONS_KEY = 'nib:icons'
-const EXPANDED_KEY = 'nib:expanded'
-const TAGS_KEY = 'nib:expanded-tags'
+export const RECENT_KEY = 'nib:recent'
+export const ICONS_KEY = 'nib:icons'
+export const EXPANDED_KEY = 'nib:expanded'
+export const TAGS_KEY = 'nib:expanded-tags'
 
 /** Enough that a note opened this morning is still there, short enough that
  *  the list is worth reading. */
