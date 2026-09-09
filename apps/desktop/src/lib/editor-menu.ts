@@ -94,7 +94,7 @@ function blockName(kind: BlockKind): string {
 function blockEntries(
   view: EditorView | undefined,
   at: number | null,
-  path: string | undefined,
+  path: string | null | undefined,
 ): MenuEntry[] {
   if (!view || at === null || view.state.readOnly) return []
 
@@ -123,8 +123,9 @@ function blockEntries(
     { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
     {
       // A link to a block needs the block to have a name, and giving it one is a
-      // change to the note; see blockTarget in @nib/editor. A note with no path
-      // of its own - one that has never been saved - has nothing to link to.
+      // change to the note; see blockTarget in @nib/editor. A note nobody has
+      // saved yet has no path and so nothing to point at: the row is there and
+      // says it cannot happen, which is shorter than explaining why.
       label: t('Copy link'),
       disabled: !name,
       run: () => {
@@ -289,7 +290,13 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
 /** Opens it at the pointer. One place, so the two things a right click on the
  *  text has to do - build the menu for this moment and place it - stay
  *  together. */
-export function showEditorMenu(event: MouseEvent, view: EditorView | undefined, path?: string) {
+export function showEditorMenu(
+  event: MouseEvent,
+  view: EditorView | undefined,
+  // Null and not only absent: a note that has never been saved has no path, and
+  // that is a note like any other until it is written down.
+  path?: string | null,
+) {
   // Never the precise position: a press on the mark in the margin lands beside
   // the text rather than in it, and that press is about the block it stands by.
   const at = view ? view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : null
