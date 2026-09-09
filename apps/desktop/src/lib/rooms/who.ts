@@ -14,11 +14,12 @@ import { platform } from '@tauri-apps/plugin-os'
 import { account } from '../account.svelte'
 import { ACCENTS } from '../accents'
 import { isNative } from '../tauri'
+import { browserName } from './browser'
 
 const KEY = 'nib:device-colour'
 
 /** Which platform this is, as a person would name it. Proper nouns, so none of
- *  them is translated; the browser is the one that is a word. */
+ *  them is translated, and neither is the browser's own name. */
 const NAMES: Record<string, string> = {
   windows: 'Windows',
   macos: 'Mac',
@@ -27,8 +28,11 @@ const NAMES: Record<string, string> = {
   ios: 'iPhone',
 }
 
+/** What to call this device. `browser` is the word to fall back on, which is
+ *  what a browser nothing recognises is left with; a browser that says which one
+ *  it is says so instead, since half a shared space is in one. */
 export function deviceName(browser: string): string {
-  if (!isNative) return browser
+  if (!isNative) return browserName(navigator) ?? browser
 
   return NAMES[platform()] ?? browser
 }
