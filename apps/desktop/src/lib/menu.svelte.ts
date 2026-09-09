@@ -90,7 +90,7 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
   ]
 }
 
-/** The icon a row wears, in the same words the rail offers a space: one entry to
+/** The icon a row wears, in the same two words wherever one is chosen: one entry to
  *  choose one, and a second to take away the one it has.
  *
  *  Here rather than in the file list, because the icon belongs to the thing and

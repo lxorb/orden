@@ -1,7 +1,7 @@
 # Icons
 
 Anything in the file list can wear an icon: a note, a canvas, a folder, and the
-space itself in the rail. One picker chooses it, one component draws it, and one
+space that holds them. One picker chooses it, one component draws it, and one
 string says what it is.
 
 ## Where each one is kept
@@ -82,7 +82,7 @@ once rather than loading for ever.
 honest ways to put a picture on screen and they are not one thing: a character the
 font draws, a stroke this app dresses itself, and somebody else's finished drawing
 that has to be left exactly as it was. The box is the caller's - `--icon-md` for a
-mark in a row, `--icon-rail` for a square in the rail - and so is the colour, since
+mark in a row, `--icon-rail` for a space's own badge - and so is the colour, since
 `stroke` inherits and a list that says the row it is on wears the accent says it once
 on the box.
 

@@ -387,8 +387,8 @@ export function rankIcons(entries: readonly IconEntry[], query: string, limit = 
     .map((match) => match.name)
 }
 
-/** The same, for a list of the library's own keys. What the rail's own suggestions
- *  and the tests speak, since a Lucide key is the only name that is also a word. */
+/** The same, for a list of the library's own keys. What the icon suggestions and the
+ *  tests speak, since a Lucide key is the only name that is also a word. */
 export function search(names: string[], query: string, limit = 120): string[] {
   return rankIcons(
     names.map((name) => ({ name, words: words(name) })),

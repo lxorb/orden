@@ -1,9 +1,9 @@
 <script lang="ts">
-  /** The one picker in the app, for everything that can wear an icon: a space in the
-   *  rail, and a note, a canvas or a folder in the file list. What is being chosen for
-   *  is in icon-choice.svelte.ts rather than in a prop, because a row is drawn deep
-   *  inside a tree of these components and a space's square is somewhere else
-   *  entirely; this is mounted once, over the whole page.
+  /** The one picker in the app, for everything that can wear an icon: a note, a
+   *  canvas or a folder in the file list, and the space itself. What is being chosen
+   *  for is in icon-choice.svelte.ts rather than in a prop, because a row is drawn deep
+   *  inside a tree of these components and a space is named somewhere else entirely;
+   *  this is mounted once, over the whole page.
    *
    *  Three sets, thousands of icons, one search field. Which set is a chooser rather
    *  than three sheets, because the question is always the same question - what should

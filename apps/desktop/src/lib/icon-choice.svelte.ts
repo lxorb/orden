@@ -1,11 +1,12 @@
 /** What somebody is choosing an icon for.
  *
  *  One picker for the whole app: the same set of icons, the same search field,
- *  the same sheet, whether what wears the icon is a space in the switcher or a
- *  note, a canvas or a folder in the file list. They are far apart in the page -
- *  and the file list is one component per folder, so there is no one place a row
- *  could reach a picker of its own - so what is being chosen for is state rather
- *  than a prop, the way the context menu is. Whoever opens it names the target, and
+ *  the same sheet, whether what wears the icon is a note, a canvas or a folder in
+ *  the file list, or the space in the switcher that holds them. They are far apart
+ *  in the page - and the file list is one component per folder, so there is no one
+ *  place a row could reach a picker of its own - so what is being chosen for is
+ *  state rather than a prop, the way the context menu is. Whoever opens it names the
+ *  target, and
  *  IconPicker.svelte is mounted once, over everything. */
 
 /** Where the icon will be kept, which is the only thing the three differ in.

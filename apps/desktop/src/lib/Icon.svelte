@@ -5,12 +5,12 @@
    *  place that knows all three: an emoji is a character the platform's own colour
    *  font draws, a Lucide icon is a stroke this app dresses itself, and a drawing
    *  out of a coloured set is somebody else's finished picture that has to be left
-   *  exactly as it was. Everything that shows an icon - the file list, the rail, the
-   *  picker's own grid - draws this, so all three come out at the same optical size
-   *  and none of those places has to know that sets exist.
+   *  exactly as it was. Everything that shows an icon - the file list, the space's own
+   *  badge, the picker's grid - draws this, so all three come out at the same optical
+   *  size and none of those places has to know that sets exist.
    *
    *  The box is the caller's. This fills whatever it is given, so a mark in a row is
-   *  `--icon-md` and a square in the rail is `--icon-rail` without either size being
+   *  `--icon-md` and a space's badge is `--icon-rail` without either size being
    *  repeated here. The one thing a caller owes: `font-size` on that box as well as
    *  its width and height, because an emoji is type and a glyph has no width of its
    *  own to be stretched.
@@ -114,7 +114,7 @@
     display: grid;
     place-items: center;
     /* Against the box rather than the text, so one number covers a 16px mark and a
-       28px square in the rail. 0.88 is where a face sits level with the cap height
+       28px badge for a space. 0.88 is where a face sits level with the cap height
        of the name beside it. */
     font-size: 0.88em;
     line-height: 1;

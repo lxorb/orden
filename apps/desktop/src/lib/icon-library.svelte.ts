@@ -11,8 +11,8 @@
  *  One holder rather than one per surface, because a file list has one mark
  *  component per row: a load kept inside the component that draws a mark would be a
  *  load per row of the tree. And because a set is asked for from three places at
- *  once - the tree, the rail and the picker - `load` has to be safe to call on every
- *  redraw, which is what `asked` is for.
+ *  once - the tree, the space's own badge and the picker - `load` has to be safe to
+ *  call on every redraw, which is what `asked` is for.
  *
  *  A written value never says which set to fetch for anything but itself, so nothing
  *  here guesses: a row asks for the set its own value names, and a set nobody's
