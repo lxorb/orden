@@ -110,6 +110,10 @@
 /* ── Blockquote ──────────────────────────────────────────────────── */
 
 .cm-line.nib-quote {
+  /* The bar and the room after it, so the fold chevron clears both; see
+     --fold-inset under Folding. */
+  --fold-inset: calc(1.15em + 2px);
+
   border-left: 2px solid var(--blockquote-border-color);
   padding-left: 1.15em;
   color: var(--muted-strong);
@@ -226,6 +230,10 @@
    (see the writing surface above), so a selection in a block ends where the
    block does. */
 .cm-line.nib-code {
+  /* The block's own box, so the fold chevron stands beside it rather than on
+     its edge; see --fold-inset under Folding. */
+  --fold-inset: var(--space-4);
+
   position: relative;
   font-family: var(--font-mono);
   font-size: 0.86em;
@@ -351,8 +359,11 @@
    face that is and whether or not its ligatures are drawn. */
 .nib-line-numbers .cm-line.nib-code {
   --code-number-width: calc(var(--code-digits, 2) * 1ch);
+  /* The numbers are part of the block's box, so the fold chevron clears them
+     too: one name for the distance, read by the padding and by the chevron. */
+  --fold-inset: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
 
-  padding-left: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
+  padding-left: var(--fold-inset);
 }
 
 .nib-line-numbers .cm-line.nib-code[data-code-number]::before {
@@ -1511,13 +1522,25 @@
   display: inline;
 }
 
-/* `right` is measured from the slot, which sits at the first character, so this
-   is a fixed distance out into the margin whatever size the line's text is: the
-   chevrons of an H1 and of a list item line up in one column. */
+/* `right` is measured from the slot, which sits at the line's first character,
+   so this is a fixed distance out into the margin whatever size the line's text
+   is: the chevrons of an H1 and of a list item line up in one column.
+
+   A line that insets its own text - a code block's padding, a quote's bar, the
+   column of line numbers - says how far in `--fold-inset`, and the chevron backs
+   out by that much again. Without it the chevron of a fence or a callout landed
+   on the edge of the block's own box, or inside it, while a heading's sat out in
+   the margin: one gesture drawn in three places. The gap left over is the same
+   for all of them, so the chevron always stands beside its block and never on
+   it. */
 .nib-fold-hinge {
   position: absolute;
   top: 50%;
-  right: 7px;
+  right: calc(var(--space-2) + var(--fold-inset, 0px));
+  /* A button does not inherit the text's font, and `--fold-inset` is measured in
+     the line's own em and ch: without this the chevron of a quote and of a
+     numbered fence backed out by a few pixels less than their text came in. */
+  font: inherit;
   display: flex;
   width: 15px;
   height: 15px;
@@ -1569,7 +1592,10 @@
    is simply there - and it is a thumb's target, not a mouse's. */
 @media (hover: none) {
   .nib-fold-hinge {
-    right: 0;
+    /* A narrower gap than a pointer's, so the whole of a thumb's target fits in
+       the gutter beside the block rather than being clipped at the edge of the
+       screen. It still stands clear of the block, which is the rule. */
+    right: calc(var(--space-1) + var(--fold-inset, 0px));
     width: var(--touch-indent);
     height: var(--touch-target);
     margin-top: calc(var(--touch-target) / -2);
