@@ -6,25 +6,29 @@
  *  this works out what it offers.
  *
  *  The list is exactly where a mouse could drop the thing, no more: any folder of
- *  the space it is in, and any other space there is - which is what carrying a
- *  note onto another space used to mean. Its own place is left out, because a move to
- *  where it already is is not a move, and so is anything inside a folder being
- *  moved, because a folder cannot be put into itself.
+ *  the space it is in, any note in it, since a note dropped on a note nests, and
+ *  any other space there is - which is what carrying a note onto another space used
+ *  to mean. Its own place is left out, because a move to where it already is is not
+ *  a move, and so is anything inside a folder being moved, because a folder cannot
+ *  be put into itself.
  *
  *  Pure, so the rule can be read as a list of paths rather than driven through a
  *  sheet; see move-targets.test.ts. */
 
+import { folderFor, folderNote } from './folder-notes'
+import { isMarkdownPath } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
 export interface MoveTarget {
-  /** The folder to move into. */
+  /** The folder to move into. For a note that is the folder it is about to
+   *  become; the move itself makes it, so nothing here has to know that. */
   id: string
   /** What it is called in the list: where it sits, said as shortly as it can be. */
   label: string
-  /** Every answer is a folder, so every row wears the folder mark - or, where
-   *  somebody gave that folder an icon, that instead. The sheet reads it off the
-   *  `id`, which is the folder's path; see FileMark.svelte. */
-  mark: 'folder'
+  /** What the row wears: the folder mark, or a note's for a note - and, where
+   *  whatever is at that path chose an icon, that instead. The sheet reads it off
+   *  the `id`; see FileMark.svelte. */
+  mark: 'folder' | 'note'
 }
 
 export interface Space {
@@ -60,12 +64,46 @@ export function movesInto(paths: readonly string[], folder: string): boolean {
   return paths.some((path) => parentOf(path) !== folder && !under(path, folder))
 }
 
-/** Every folder in the tree, the root first and then depth first, which is the
- *  order the file list itself draws them in. */
-function foldersIn(entry: Entry): Entry[] {
-  const out = [entry]
+/** One place a row can land: the folder it moves into, and what that folder is
+ *  called and drawn as. */
+interface Place {
+  path: string
+  name: string
+  mark: 'folder' | 'note'
+  /** The note this place is made out of, for a note that has no folder yet, so a
+   *  note is not offered its own folder to move into. Null for a real folder. */
+  note: string | null
+}
+
+/** Every place in the tree, the root first and then depth first, which is the
+ *  order the file list itself draws them in.
+ *
+ *  A folder that holds its own note is offered as that note, because that is the
+ *  row the reader sees; the note inside it is not offered again, since moving into
+ *  it would mean `A/A/` and there is no such thing. */
+function placesIn(entry: Entry): Place[] {
+  const own = folderNote(entry)
+  const out: Place[] = [
+    { path: entry.path, name: entry.name, mark: own ? 'note' : 'folder', note: null },
+  ]
+
+  // A folder wins over the note that shares its name: it already exists, so a
+  // drop into it is an ordinary move rather than a nesting, and offering both
+  // would be one folder twice.
+  const folders = new Set(entry.children.filter((child) => child.is_dir).map((one) => one.path))
+
   for (const child of entry.children) {
-    if (child.is_dir) out.push(...foldersIn(child))
+    if (child.path === own?.path) continue
+
+    if (child.is_dir) out.push(...placesIn(child))
+    else if (isMarkdownPath(child.name) && !folders.has(folderFor(child.path))) {
+      out.push({
+        path: folderFor(child.path),
+        name: child.name,
+        mark: 'note',
+        note: child.path,
+      })
+    }
   }
 
   return out
@@ -84,20 +122,21 @@ export function moveTargets(input: {
   const { moving, tree, spaces, here } = input
   const space = spaces.find((one) => one.root === here) ?? null
 
-  const folders: MoveTarget[] = !tree
+  const inside: MoveTarget[] = !tree
     ? []
-    : foldersIn(tree)
-        // Where it already is, itself, and anything inside it.
-        .filter((folder) => movesInto([moving], folder.path))
-        .map((folder) => ({
-          id: folder.path,
-          mark: 'folder' as const,
+    : placesIn(tree)
+        // Where it already is, itself, and anything inside it - and, for a note,
+        // the folder it would itself become, since a note cannot hold itself.
+        .filter((place) => place.note !== moving && movesInto([moving], place.path))
+        .map((place) => ({
+          id: place.path,
+          mark: place.mark,
           // The space's own name for its root, and the path inside it for the
           // rest: a folder three deep is only itself if the way to it is shown.
           label:
-            folder.path === tree.path
-              ? (space?.name ?? folder.name)
-              : folder.path
+            place.path === tree.path
+              ? (space?.name ?? place.name)
+              : place.path
                   .slice(tree.path.length)
                   .replace(/^[\\/]+/, '')
                   .replace(/\\/g, '/'),
@@ -108,5 +147,5 @@ export function moveTargets(input: {
     .filter((one) => one.root !== here)
     .map((one) => ({ id: one.root, label: one.name, mark: 'folder' as const }))
 
-  return [...folders, ...elsewhere]
+  return [...inside, ...elsewhere]
 }

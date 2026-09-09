@@ -39,6 +39,7 @@ export const gsw: Dictionary = {
   'Delete {name}?': '{name} lösche?',
   'Every note in this space is deleted from your computer.':
     'Jedi Notiz i dere Ablag wird vo dim Computer glöscht.',
+  'The notes inside it go too.': 'D Notize dinn gönd mit.',
   Journal: 'Tagebuech',
   Create: 'Mache',
   Cancel: 'Abbräche',

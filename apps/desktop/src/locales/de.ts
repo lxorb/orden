@@ -37,6 +37,7 @@ export const de: Dictionary = {
   'Delete {name}?': '{name} löschen?',
   'Every note in this space is deleted from your computer.':
     'Jede Notiz in diesem Bereich wird von deinem Computer gelöscht.',
+  'The notes inside it go too.': 'Die Notizen darin gehen mit.',
   Journal: 'Tagebuch',
   Create: 'Erstellen',
   Cancel: 'Abbrechen',

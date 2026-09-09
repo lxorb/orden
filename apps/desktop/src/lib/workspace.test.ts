@@ -334,6 +334,99 @@ describe('selecting several rows', () => {
   })
 })
 
+/** A note that holds notes. What the rule is lives in folder-notes.ts; this is
+ *  the store doing it: the folder is made by moving the note into it, the rows
+ *  dropped on it follow, and the last row dragged back out takes the folder away
+ *  again.
+ *
+ *  No space is open, so the listing that follows every move is a no-op and what
+ *  is left is the tree the store keeps in front of the disk; see tree-edits.ts. */
+describe('nesting a note in a note', () => {
+  const note = (path: string): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  const folder = (path: string, children: Entry[]): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: true,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  /** Every path the tree shows, folders and notes alike, so a test can say what
+   *  the sidebar would draw. */
+  const shown = (entry: Entry | null): string[] =>
+    !entry
+      ? []
+      : entry.children.flatMap((child) => [child.path, ...shown(child.is_dir ? child : null)])
+
+  beforeEach(() => {
+    workspace.activeSpaceId = null
+    workspace.tree = folder('/space', [note('/space/a.md'), note('/space/d.md')])
+    workspace.device.expanded = {}
+    workspace.clearSelection()
+  })
+
+  test('the note the drop landed on goes into the folder first', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+
+    expect(shown(workspace.tree)).toEqual(['/space/a', '/space/a/a.md', '/space/a/d.md'])
+  })
+
+  test('and the folder is open, so the row does not swallow what was dropped', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    expect(workspace.isExpanded('/space/a')).toBe(true)
+  })
+
+  test('the note is not a row of its own: it is the row', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    workspace.device.expanded = { '/space/a': true }
+
+    expect(workspace.visibleRows()).toEqual(['/space/a', '/space/a/d.md'])
+  })
+
+  test('and Enter on that row opens the note rather than folding it', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    const row = workspace.visibleTree().find((one) => one.path === '/space/a')
+
+    expect(row?.folder).toBe(true)
+    expect(row?.opens).toBe('/space/a/a.md')
+  })
+
+  test('dragging the last row back out leaves a note and no folder', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    await workspace.moveMany(['/space/a/d.md'], '/space')
+
+    expect(shown(workspace.tree)).toEqual(['/space/a.md', '/space/d.md'])
+  })
+
+  test('and asks for the folder to go only once nothing is left in it', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    sent.length = 0
+    await workspace.moveMany(['/space/a/d.md'], '/space')
+
+    expect(
+      sent.filter((one) => one.command === 'remove_empty_folder').map((one) => one.path),
+    ).toEqual(['/space/a'])
+  })
+
+  test('a note dropped on a folder that is a folder is the plain move it always was', async () => {
+    workspace.tree = folder('/space', [
+      folder('/space/f', [note('/space/f/b.md')]),
+      note('/space/d.md'),
+    ])
+    await workspace.moveMany(['/space/d.md'], '/space/f')
+
+    expect(shown(workspace.tree)).toEqual(['/space/f', '/space/f/b.md', '/space/f/d.md'])
+  })
+})
+
 describe('where a note was last looked at', () => {
   beforeEach(() => {
     workspace.tabs = []

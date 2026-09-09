@@ -174,6 +174,20 @@ async function removeFolder(path: string) {
   for (const row of (await assets.all()).filter(under)) await assets.remove(row.path)
 }
 
+/** The desktop's `remove_empty_folder`: gone only if nothing whatever is left
+ *  inside it. Here a folder is only the paths under it plus the marker that keeps
+ *  an empty one on the tree, so "empty" means the marker and nothing else - and a
+ *  picture or a PDF still under it leaves the folder standing, which is the
+ *  refusal the desktop's `fs::remove_dir` makes for the same reason. */
+async function removeEmptyFolder(path: string) {
+  const base = normalise(path)
+  const inside = (row: { path: string }) => row.path.startsWith(`${base}/`)
+  const rows = [...(await files.all()), ...(await assets.all())].filter(inside)
+
+  if (rows.some((row) => basename(row.path) !== KEEP)) return
+  for (const row of rows) await files.remove(row.path)
+}
+
 /** The files beside the notes, moved with them. A PDF is a row in the asset store
  *  rather than in the note store, so a rename that only walked the notes would
  *  leave the paper behind under a folder that no longer exists. */
@@ -504,6 +518,10 @@ export async function webInvoke<T>(
 
     case 'delete_folder':
       await removeFolder(path)
+      return undefined as T
+
+    case 'remove_empty_folder':
+      await removeEmptyFolder(path)
       return undefined as T
 
     case 'read_tree':

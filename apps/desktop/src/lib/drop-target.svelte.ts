@@ -1,21 +1,32 @@
 /** Which folder a drag over the file list would drop into.
  *
  *  One answer for the whole list rather than one per component. The list draws a
- *  component per folder, so a note held over a row deep inside one has to light a
- *  row that another of them drew - and the row that should light is never the
- *  note. A note stands for the folder it sits in: dropping onto one means "in
- *  here, beside it", which is what makes a folder holding a single note something
- *  a drag can get back out of. So the answer is always a folder, and it is kept
- *  here under the folder's own path, which is what the row compares against.
+ *  component per folder, so a drop that lights a row another of them drew - a PDF
+ *  held over its neighbour lights the folder both sit in - has to be answered
+ *  somewhere both can read. So the answer is a folder, and it is kept here under
+ *  the folder's own path, which is what the row compares against.
+ *
+ *  A note is the folder it is about to become: dropping onto `A.md` nests what
+ *  was dropped, so the folder is `A/` and the row that lights is the note's own.
+ *  Anything else that is a file and not a note - a PDF, a canvas - still stands
+ *  for the folder it sits in, since none of those can hold a note.
  *
  *  A row at the top of a space stands for the space itself, and what lights for
  *  that is the space below the last row; see Sidebar.svelte. */
 
+import { folderFor } from './folder-notes'
+import { isMarkdownPath } from './space-paths'
 import { folderOf } from './tauri'
 
-/** The folder a row stands for: a folder is itself, a note is its own folder. */
+/** The folder a row stands for: a folder is itself, a note is the folder it would
+ *  become, and any other file is the folder it sits in.
+ *
+ *  The whole row, not a third of it: the tree has no order anybody arranged, so
+ *  there is no "above this row" for a drop to mean and nothing for a band across
+ *  the top or the bottom of a row to say. */
 export function targetFor(path: string, isFolder: boolean): string {
-  return isFolder ? path : folderOf(path)
+  if (isFolder) return path
+  return isMarkdownPath(path) ? folderFor(path) : folderOf(path)
 }
 
 class DropTarget {

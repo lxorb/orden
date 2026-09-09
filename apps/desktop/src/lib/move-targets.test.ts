@@ -46,11 +46,15 @@ const labels = (moving: string) =>
   moveTargets({ moving, tree, spaces, here: '/Notes' }).map((one) => one.label)
 
 describe('moving a note', () => {
-  test('offers every folder of the space and every other space', () => {
+  /** Every note as well as every folder, because a note dropped on a note nests
+   *  under it: the id is the folder that note is about to become. */
+  test('offers every folder and every note of the space, and every other space', () => {
     expect(where('/Notes/loose.md')).toEqual([
       '/Notes/Work',
       '/Notes/Work/Deep',
+      '/Notes/Work/Deep/deep',
       '/Notes/Journal',
+      '/Notes/Journal/monday',
       '/Uni',
       '/Archive',
     ])
@@ -61,13 +65,40 @@ describe('moving a note', () => {
     expect(where('/Notes/Journal/monday.md')).toContain('/Notes')
   })
 
+  /** Which would be nesting it in itself, and a note cannot hold itself. Every
+   *  other note in the space is still offered. */
+  test('and itself, which is the folder it would itself become', () => {
+    expect(where('/Notes/Journal/monday.md')).not.toContain('/Notes/Journal/monday')
+    expect(where('/Notes/Journal/monday.md')).toContain('/Notes/loose')
+  })
+
   test('names the space for its own root, and the way in for the rest', () => {
     expect(labels('/Notes/Journal/monday.md')).toEqual([
       'Notes',
       'Work',
       'Work/Deep',
+      'Work/Deep/deep',
+      'loose',
       'Uni',
       'Archive',
+    ])
+  })
+
+  /** The sheet draws the row from the mark, so a note reads as a note in the list
+   *  of places and a folder as a folder; see FileMark.svelte. */
+  test('and says which of them is a note', () => {
+    const marks = moveTargets({ moving: '/Notes/loose.md', tree, spaces, here: '/Notes' }).map(
+      (one) => `${one.label}: ${one.mark}`,
+    )
+
+    expect(marks).toEqual([
+      'Work: folder',
+      'Work/Deep: folder',
+      'Work/Deep/deep: note',
+      'Journal: folder',
+      'Journal/monday: note',
+      'Uni: folder',
+      'Archive: folder',
     ])
   })
 })
@@ -80,12 +111,79 @@ describe('moving a folder', () => {
     expect(offered).not.toContain('/Notes/Work/Deep')
   })
 
+  /** Nor under a note that is inside it, which is the same rule read through the
+   *  folder that note would become. */
+  test('nor under a note it holds', () => {
+    expect(where('/Notes/Work')).not.toContain('/Notes/Work/Deep/deep')
+  })
+
   test('nor into where it already sits, which is the space itself here', () => {
-    expect(where('/Notes/Work')).toEqual(['/Notes/Journal', '/Uni', '/Archive'])
+    expect(where('/Notes/Work')).toEqual([
+      '/Notes/Journal',
+      '/Notes/Journal/monday',
+      '/Notes/loose',
+      '/Uni',
+      '/Archive',
+    ])
   })
 
   test('a nested one may come up to the space it is in', () => {
     expect(where('/Notes/Work/Deep')).toContain('/Notes')
+  })
+})
+
+/** A folder that already holds a note of its own name is the row the reader sees
+ *  as that note, so it is offered as one - once, under the folder's own path, and
+ *  the note inside it is not offered again. */
+describe('a note that is already nested', () => {
+  const nested = folder('/Notes', [
+    folder('/Notes/A', [note('/Notes/A/A.md'), note('/Notes/A/B.md')]),
+    note('/Notes/loose.md'),
+  ])
+
+  const offered = moveTargets({
+    moving: '/Notes/loose.md',
+    tree: nested,
+    spaces: [{ name: 'Notes', root: '/Notes' }],
+    here: '/Notes',
+  })
+
+  test('is one place, wearing the note mark, with what it holds under it', () => {
+    expect(offered).toEqual([
+      { id: '/Notes/A', label: 'A', mark: 'note' },
+      { id: '/Notes/A/B', label: 'A/B', mark: 'note' },
+    ])
+  })
+
+  test('and its own note is not a second place, since there is no A/A/', () => {
+    expect(offered.map((one) => one.id)).not.toContain('/Notes/A/A')
+  })
+})
+
+/** The other way of writing the convention, which a vault may arrive with: the
+ *  folder exists and the note sits beside it. The folder wins, because it is
+ *  already there and a drop into it is an ordinary move. */
+describe('a folder with the note beside it rather than inside', () => {
+  const beside = folder('/Notes', [
+    folder('/Notes/A', [note('/Notes/A/x.md')]),
+    note('/Notes/A.md'),
+    note('/Notes/loose.md'),
+  ])
+
+  const where2 = (moving: string) =>
+    moveTargets({
+      moving,
+      tree: beside,
+      spaces: [{ name: 'Notes', root: '/Notes' }],
+      here: '/Notes',
+    }).map((one) => one.id)
+
+  test('is offered once and not twice', () => {
+    expect(where2('/Notes/loose.md')).toEqual(['/Notes/A', '/Notes/A/x'])
+  })
+
+  test('and the note beside it may still be moved into it', () => {
+    expect(where2('/Notes/A.md')).toContain('/Notes/A')
   })
 })
 
@@ -165,8 +263,8 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
       here: 'C:\\Nib\\Notes',
     })
 
-    expect(offered.map((one) => one.id)).toEqual(['C:\\Nib\\Notes'])
-    expect(offered.map((one) => one.label)).toEqual(['Notes'])
+    expect(offered.map((one) => one.id)).toEqual(['C:\\Nib\\Notes', 'C:\\Nib\\Notes\\loose'])
+    expect(offered.map((one) => one.label)).toEqual(['Notes', 'loose'])
   })
 
   test('and will not put a folder into itself', () => {
@@ -177,6 +275,6 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
       here: 'C:\\Nib\\Notes',
     })
 
-    expect(offered).toEqual([])
+    expect(offered).toEqual([{ id: 'C:\\Nib\\Notes\\loose', label: 'loose', mark: 'note' }])
   })
 })

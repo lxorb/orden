@@ -170,6 +170,51 @@ describe('what a note offers', () => {
   })
 })
 
+/** A folder that holds a note of its own name is drawn as that note, so its row
+ *  offers both: what the note offers about itself, and the folder's entries that
+ *  still mean something once the row is a note. See folder-notes.ts. */
+describe('what a note that holds notes offers', () => {
+  const tree = read('lib/Tree.svelte')
+  const nested = body(tree, 'function folderNoteMenu(entry: Entry, note: Entry)')
+
+  test('the note itself: opening it, its name, and its icon', () => {
+    for (const entry of ["t('Open')", "t('Rename')", 'iconEntries(note.path)']) {
+      expect(nested, entry).toContain(entry)
+    }
+  })
+
+  /** The note's own front matter, through the same call a plain note's row makes:
+   *  a row drawn as a note has nothing in the folder icon map. */
+  test('and the icon is the note own, not the folder kind', () => {
+    expect(nested).not.toContain('iconEntries(entry.path, true)')
+
+    const row = tree.slice(tree.indexOf('class="nib-row row note folder-note"'))
+    expect(row).toContain('<FileMark mark={fileMark(own.name)} path={own.path} />')
+  })
+
+  test('the folder as well: a new note inside it, and where the lot goes', () => {
+    expect(nested).toContain("t('New note')")
+    expect(nested).toContain('moveEntry(entry)')
+  })
+
+  test('and deleting asks first, because everything nested under it goes too', () => {
+    const removing = body(tree, 'async function removeNested(entry: Entry, note: Entry)')
+
+    expect(removing).toContain('prompt.confirm')
+    expect(removing).toContain("t('The notes inside it go too.')")
+    expect(removing).toContain('workspace.remove(entry.path, true)')
+  })
+
+  /** A right click and a held finger, so the menu is there on a phone as well -
+   *  which is also the only way to move the row where there is no drag. */
+  test('through the menu a pointer opens and the one a finger opens', () => {
+    const row = tree.slice(tree.indexOf('class="nib-row row note folder-note"'))
+
+    expect(row).toContain('oncontextmenu={(event) =>')
+    expect(row).toContain('use:longPress={(event) =>')
+  })
+})
+
 describe('what the plus in the tab strip offers', () => {
   const tabs = read('lib/Tabs.svelte')
   const entries = body(tabs, 'function newMenu()')

@@ -1,7 +1,8 @@
-//! A note is a file. This module owns the six things the window can ask of
+//! A note is a file. This module owns the seven things the window can ask of
 //! one: read it, write it back as text, write it back as bytes, rename or move
-//! it, delete it, and make the folder it is going to live in. Whether a path is
-//! allowed at all is decided by `paths`, not here.
+//! it, delete it, make the folder it is going to live in, and take that folder
+//! away again once it is empty. Whether a path is allowed at all is decided by
+//! `paths`, not here.
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
@@ -180,6 +181,21 @@ pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
 pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
+}
+
+/// Removes a folder only if there is nothing whatever left inside it.
+///
+/// `remove_dir` rather than `remove_dir_all`, and that is the whole point. The
+/// caller decided the folder was empty by reading the file tree, and the tree
+/// leaves out the dotted files and everything a tab cannot hold - so a folder
+/// that looks empty in the sidebar may still hold the picture a note was written
+/// around, or a PDF's highlights. This refuses instead of taking those with it,
+/// and the caller ignores the refusal: a folder left standing is a folder, while
+/// a picture taken away is gone. See `unnest` in workspace.svelte.ts.
+#[tauri::command]
+pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
+    let target = in_spaces(&app, &path)?;
+    fs::remove_dir(&target).map_err(|error| cannot("delete", &target, &error))
 }
 
 /// When a file was last written, and how long it is: enough to tell that

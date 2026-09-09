@@ -10,18 +10,28 @@ describe('what a row stands for when something is dropped on it', () => {
     expect(targetFor('/s/Work', true)).toBe('/s/Work')
   })
 
-  /** Dropping onto a note means "in here, beside it". Without that a folder
-   *  holding a single note would be a folder nothing could be dragged out of. */
-  test('a note stands for the folder it sits in', () => {
-    expect(targetFor('/s/Work/plan.md', false)).toBe('/s/Work')
+  /** Dropping onto a note nests what was dropped under it, the way a page nests
+   *  under a page: the note becomes the folder and what came takes its place
+   *  beside it. See folder-notes.ts. */
+  test('a note stands for the folder it is about to become', () => {
+    expect(targetFor('/s/Work/plan.md', false)).toBe('/s/Work/plan')
   })
 
-  test('a note at the top of a space stands for the space', () => {
-    expect(targetFor('/s/Read me.md', false)).toBe('/s')
+  test('and so does one at the top of a space', () => {
+    expect(targetFor('/s/Read me.md', false)).toBe('/s/Read me')
+  })
+
+  /** Neither can hold a note, so neither becomes a folder, and dropping on one
+   *  still means "in here, beside it" - which is what makes a folder holding a
+   *  single PDF something a drag can get back out of. */
+  test('a PDF or a canvas stands for the folder it sits in', () => {
+    expect(targetFor('/s/Work/paper.pdf', false)).toBe('/s/Work')
+    expect(targetFor('/s/Work/Board.canvas', false)).toBe('/s/Work')
   })
 
   test('reads a path written with backslashes', () => {
-    expect(targetFor('C:\\s\\Work\\plan.md', false)).toBe('C:\\s\\Work')
+    expect(targetFor('C:\\s\\Work\\plan.md', false)).toBe('C:\\s\\Work\\plan')
+    expect(targetFor('C:\\s\\Work\\paper.pdf', false)).toBe('C:\\s\\Work')
   })
 })
 
@@ -40,11 +50,24 @@ describe('the folder a drop would land in', () => {
   })
 
   /** The same answer wherever it is asked: the list is a component per folder,
-   *  and the row that lights for a note is one another component drew. */
-  test('is the note row own folder, so the note itself never lights', () => {
-    dropTarget.over(targetFor('/s/Work/plan.md', false))
+   *  and the row that lights for a PDF is one another component drew. */
+  test('is the PDF row own folder, so the folder lights and the row does not', () => {
+    dropTarget.over(targetFor('/s/Work/paper.pdf', false))
 
     expect(dropTarget.lit('/s/Work')).toBe(true)
+    expect(dropTarget.lit('/s/Work/paper.pdf')).toBe(false)
+  })
+
+  /** A note's row lights for itself, because the folder it stands for is the one
+   *  the drop is about to make out of it: the note's own path without the
+   *  extension, which is what the row compares against; see `nesting` in
+   *  Tree.svelte. Neither the folder it sits in nor the note's own file name is
+   *  the answer. */
+  test('is the folder a note is about to become, which is that note own row', () => {
+    dropTarget.over(targetFor('/s/Work/plan.md', false))
+
+    expect(dropTarget.lit('/s/Work/plan')).toBe(true)
+    expect(dropTarget.lit('/s/Work')).toBe(false)
     expect(dropTarget.lit('/s/Work/plan.md')).toBe(false)
   })
 

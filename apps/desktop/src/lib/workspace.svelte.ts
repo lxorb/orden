@@ -47,6 +47,7 @@ import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { iconValue } from './icons'
+import { folderNote, noteToNest, unnesting } from './folder-notes'
 import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -1231,7 +1232,35 @@ class Workspace {
     }
 
     await this.loadTree()
+    await this.unnest(folderOf(from))
     this.persist()
+  }
+
+  /** A folder that has stopped holding anything but its own note, which is a
+   *  folder that has stopped being one: the note comes back up to where the folder
+   *  was and the folder goes, so dragging the last row out of a nested note leaves
+   *  a note and nothing else behind. See `unnesting` in folder-notes.ts.
+   *
+   *  Never the space's own root: `entryAt` answers nothing for it, so a space that
+   *  happens to hold a note of its own name stays a space. */
+  private async unnest(folder: string) {
+    const entry = this.entryAt(folder)
+    const back = entry && unnesting(entry)
+    if (!back) return
+
+    await this.move(back.note, back.into)
+
+    // The row goes as the note comes up rather than a round trip later: an empty
+    // folder standing under the note it used to hold reads as half a move.
+    this.hideEntry(back.folder)
+
+    // Only if there is nothing at all left in it. The tree leaves out the dotted
+    // files and the pictures beside a note, so a folder that looks empty here may
+    // still hold the picture the note was written around; see
+    // `remove_empty_folder` in src-tauri/src/notes.rs, which refuses rather than
+    // taking one with it.
+    await invoke('remove_empty_folder', { path: back.folder }).catch(() => undefined)
+    await this.loadTree()
   }
 
   /** `preview` opens the way a single click in the file list does: one tab,
@@ -1828,9 +1857,17 @@ class Workspace {
   visibleTree(): TreeRow[] {
     const out: TreeRow[] = []
     const walk = (entry: Entry) => {
+      // A folder note is the row its folder is drawn as, not a row of its own, so
+      // the keys and the selection walk past it the way the eye does; see
+      // folder-notes.ts.
+      const own = folderNote(entry)
+
       for (const child of entry.children) {
+        if (child.path === own?.path) continue
+
         const open = child.is_dir && this.isExpanded(child.path)
-        out.push({ path: child.path, folder: child.is_dir, open })
+        const opens = child.is_dir ? folderNote(child)?.path : child.path
+        out.push({ path: child.path, folder: child.is_dir, open, ...(opens ? { opens } : {}) })
         if (open) walk(child)
       }
     }
@@ -1850,6 +1887,20 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string) {
+    // A drop on a note lands in the folder that note is about to become, so the
+    // note goes in first and what was dropped on it follows: `A.md` becomes
+    // `A/A.md`, and the folder is open afterwards because otherwise the row a
+    // note was just dragged into swallowed it without a word. See folder-notes.ts.
+    const nesting = noteToNest(this.tree, intoFolder)
+    if (nesting && !paths.includes(nesting)) {
+      // The folder is on the tree before the note is in it. Otherwise the row
+      // blinks out - the note has left and the folder it went into does not exist
+      // yet - and comes back a round trip later; see tree-edits.ts.
+      this.showEntry(this.freshEntry(intoFolder, true))
+      await this.move(nesting, intoFolder)
+      this.device.expand(intoFolder)
+    }
+
     for (const path of outermost(paths)) await this.move(path, intoFolder)
     this.clearSelection()
   }
@@ -2261,6 +2312,8 @@ class Workspace {
     links.noteGone(path)
     this.folderIcons.gone(path)
     await this.loadTree()
+    // The row deleted may have been the last thing keeping a nested note nested.
+    await this.unnest(folderOf(path))
   }
 
   /** Puts the last file operation back; see workspace/undo. */

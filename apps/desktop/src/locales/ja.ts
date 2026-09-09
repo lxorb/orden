@@ -37,6 +37,7 @@ export const ja: Dictionary = {
   'Delete {name}?': '{name} を削除しますか？',
   'Every note in this space is deleted from your computer.':
     'このスペースのすべてのノートがこのコンピューターから削除されます。',
+  'The notes inside it go too.': '中のノートも一緒に削除されます。',
   Journal: '日記',
   Create: '作成',
   Cancel: 'キャンセル',

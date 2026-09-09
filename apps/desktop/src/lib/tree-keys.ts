@@ -18,6 +18,12 @@ export interface TreeRow {
   folder: boolean
   /** Whether a folder is showing what it holds. */
   open: boolean
+  /** The file the row opens, where it opens one. A note opens itself, and a
+   *  folder holding its own note opens that note - which is why this is not the
+   *  same question as the path: a folder-note row both holds rows and opens
+   *  something, and Enter on it should do what a click on it does. Absent for a
+   *  plain folder, which opens nothing; see folder-notes.ts. */
+  opens?: string
 }
 
 /** What a press comes to: a row to stand on, or a folder to open or shut. */

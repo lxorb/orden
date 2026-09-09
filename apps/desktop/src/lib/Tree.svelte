@@ -13,7 +13,8 @@
   import { isPdfTarget } from '@nib/markdown/links'
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { t } from './i18n.svelte'
+  import { folderFor, folderNote, nestedIn, renameSteps } from './folder-notes'
+  import { key, t } from './i18n.svelte'
   import { bookmarkEntry, DIVIDER, iconEntries, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
@@ -97,8 +98,54 @@
     ]
   }
 
-  function menuFor(entry: Entry): MenuEntry[] {
-    return selectionMenu(entry) ?? (entry.is_dir ? folderMenu(entry) : noteMenu(entry))
+  /** A row that is a folder and the note inside it, so its menu is both: what the
+   *  note offers about itself, and the folder's entries that still mean something
+   *  once the row is drawn as a note. A new note goes inside it; renaming and
+   *  moving take the folder and the note together; and deleting asks, because a
+   *  row that looks like a note takes everything nested under it with it.
+   *
+   *  No Duplicate: a copy of a folder note would be a note called `A 2.md` inside
+   *  `A/`, which is neither a nested note nor a note beside one. */
+  function folderNoteMenu(entry: Entry, note: Entry): MenuEntry[] {
+    return [
+      { label: t('Open'), run: () => void workspace.openEntry(note.path) },
+      DIVIDER,
+      { label: t('New note'), run: () => void workspace.createNote(entry.path) },
+      DIVIDER,
+      { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
+      ...moveEntry(entry),
+      // The same call a plain note's row makes, on the note's own path: the icon
+      // is written in the note's front matter, and the folder icon map has
+      // nothing to do with a row that is drawn as a note.
+      ...iconEntries(note.path),
+      ...bookmarkEntry(workspace.bookmarks.forEntry(note)),
+      DIVIDER,
+      { label: t('Delete'), danger: true, run: () => void removeNested(entry, note) },
+      ...undoEntry(),
+    ]
+  }
+
+  /** Deleting the row deletes the folder, so it asks first: everything nested
+   *  under the note goes with it, and a row drawn as a note does not look like
+   *  something that holds anything. */
+  async function removeNested(entry: Entry, note: Entry) {
+    const { prompt } = await import('./prompt.svelte')
+    const sure = await prompt.confirm({
+      title: t('Delete {name}?', { name: shownName(note.name) }),
+      detail: t('The notes inside it go too.'),
+      confirmLabel: key('Delete'),
+      danger: true,
+    })
+
+    if (sure) await workspace.remove(entry.path, true)
+  }
+
+  function menuFor(entry: Entry, own: Entry | null): MenuEntry[] {
+    const several = selectionMenu(entry)
+    if (several) return several
+    if (own) return folderNoteMenu(entry, own)
+
+    return entry.is_dir ? folderMenu(entry) : noteMenu(entry)
   }
 
   /** Ctrl and Shift build a selection and do nothing else; a plain click makes
@@ -211,9 +258,13 @@
     const here = row.dataset.path
     if (here === undefined) return
 
-    if (workspace.visibleTree().find((one) => one.path === here)?.folder) {
-      workspace.toggleFolder(here)
-    } else void workspace.openEntry(here)
+    // A folder holding its own note both holds rows and opens something, and Enter
+    // does what a click does: opens it. The arrows are what fold it. A plain folder
+    // has nothing to open and folds instead. See folder-notes.ts.
+    const found = workspace.visibleTree().find((one) => one.path === here)
+    if (found?.opens) void workspace.openEntry(found.opens)
+    else if (found?.folder) workspace.toggleFolder(here)
+    else void workspace.openEntry(here)
   }
 
   /** Space on a row: the same, except the keyboard stays in the list, so a folder
@@ -223,12 +274,13 @@
     const here = row.dataset.path
     if (here === undefined) return
 
-    if (workspace.visibleTree().find((one) => one.path === here)?.folder) {
+    const found = workspace.visibleTree().find((one) => one.path === here)
+    if (found?.folder && !found.opens) {
       workspace.toggleFolder(here)
       return
     }
 
-    void workspace.openEntry(here, { preview: true })
+    void workspace.openEntry(found?.opens ?? here, { preview: true })
     row.focus()
   }
 
@@ -280,9 +332,20 @@
     return appending ? caretAtEnd(node) : selectAll(node)
   }
 
-  function commit(path: string, value: string) {
+  function commit(entry: Entry, own: Entry | null, typed: string) {
     workspace.stopRenaming()
-    void workspace.rename(path, value)
+
+    if (own) void renameNested(own, typed)
+    else void workspace.rename(entry.path, fullName(entry, typed))
+  }
+
+  /** Renaming a row that is a folder and a note renames both, in the order
+   *  folder-notes.ts gives them. Each step is the ordinary rename, so the links
+   *  are rewritten and the file undo has each half of it. */
+  async function renameNested(note: Entry, typed: string) {
+    for (const step of renameSteps(note.path, typed)) {
+      await workspace.rename(step.path, step.name)
+    }
   }
 
   function startDrag(event: DragEvent, path: string) {
@@ -300,19 +363,32 @@
 
   /** A row lights only where a drop would do something, the way a pane's drop
    *  zones do: a folder held over itself, over a folder inside it, or over the
-   *  folder it already sits in used to light and then move nothing. */
-  function takes(folder: string): boolean {
+   *  folder it already sits in used to light and then move nothing.
+   *
+   *  A note held over itself is the same nothing, and the row itself is what says
+   *  so: the folder a drop would make out of a note does not exist yet, so no rule
+   *  about paths can tell it from the note it would be made of. */
+  function takes(entry: Entry): boolean {
     const paths = carried()
-    return paths.length === 0 || movesInto(paths, folder)
+    if (paths.includes(entry.path)) return false
+
+    return paths.length === 0 || movesInto(paths, targetFor(entry.path, entry.is_dir))
+  }
+
+  /** Whether a drop would land in this note, which means in the folder it is about
+   *  to become. A PDF or a canvas becomes no folder, so `folderFor` answers its own
+   *  path back and its row never lights; the folder it sits in lights instead, as
+   *  it always has. */
+  function nesting(entry: Entry): boolean {
+    return dropTarget.lit(folderFor(entry.path))
   }
 
   function overRow(event: DragEvent, entry: Entry) {
-    const folder = targetFor(entry.path, entry.is_dir)
-    if (!isTreeDrag(event.dataTransfer) || !takes(folder)) return
+    if (!isTreeDrag(event.dataTransfer) || !takes(entry)) return
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-    dropTarget.over(folder)
+    dropTarget.over(targetFor(entry.path, entry.is_dir))
   }
 
   /** `dragleave` also fires when the pointer moves onto a child - the label
@@ -324,14 +400,30 @@
     return inside(box, event.clientX, event.clientY)
   }
 
-  /** Into the folder the row stands for, which for a note is the folder it sits
-   *  in; see drop-target.svelte.ts. */
+  /** Into the folder the row stands for, which for a note is the folder that note
+   *  is about to become; see drop-target.svelte.ts. Making it is the move's own
+   *  business, so this is the same call every other drop makes. */
   function drop(event: DragEvent, entry: Entry) {
     event.preventDefault()
     dropTarget.clear()
 
     const paths = dragged(event.dataTransfer)
     if (paths.length) void workspace.moveMany(paths, targetFor(entry.path, entry.is_dir))
+  }
+
+  /** Clicking the row opens the note; clicking the twist at the end of it opens
+   *  the folder. One button rather than two, because the row is also a drag
+   *  handle, a drop target and where the keyboard stands, and none of those can be
+   *  half a row - and a button cannot hold a button. The arrows are the twist for
+   *  a keyboard; see tree-keys.ts. */
+  function openNested(event: MouseEvent, entry: Entry, note: Entry) {
+    const twist = event.target instanceof Element ? event.target.closest('.twist') : null
+    if (twist) {
+      workspace.toggleFolder(entry.path)
+      return
+    }
+
+    if (!pick(event, entry)) void workspace.openEntry(note.path, { preview: true })
   }
 </script>
 
@@ -356,6 +448,9 @@
   }}
 >
   {#each entries as entry (entry.path)}
+    <!-- The note a folder holds of its own name, which is the row the folder is
+         drawn as; null for every other row. See folder-notes.ts. -->
+    {@const own = folderNote(entry)}
     <li>
       {#if workspace.renaming?.path === entry.path}
         <!-- The name arrives selected, the way every file manager does it:
@@ -371,7 +466,7 @@
           value={nameToEdit(entry)}
           spellcheck="false"
           use:rename={workspace.renaming.appending}
-          onblur={(event) => commit(entry.path, fullName(entry, event.currentTarget.value))}
+          onblur={(event) => commit(entry, own, event.currentTarget.value)}
           onkeydown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur()
             if (event.key === 'Escape') {
@@ -379,6 +474,53 @@
             }
           }}
         />
+      {:else if own}
+        <!-- A folder holding a note of its own name is drawn as that note and not
+             as a folder: the note's mark, the note's name, and a twist at the far
+             end for what is nested under it. The mark is the note's own, and so is
+             the icon somebody chose for it, because the row hands FileMark the
+             note's path - which is also why nothing about these rows is kept in
+             the folder icon map.
+             The note is not listed again among the children: it is this row. -->
+        {@const nested = nestedIn(entry)}
+        <button
+          class="nib-row row note folder-note"
+          data-path={entry.path}
+          class:is-taking={dropTarget.lit(entry.path)}
+          class:is-on={workspace.active?.path === own.path}
+          class:is-picked={workspace.isSelected(entry.path)}
+          style:--level={depth}
+          aria-expanded={workspace.isExpanded(entry.path)}
+          draggable="true"
+          onclick={(event) => openNested(event, entry, own)}
+          ondblclick={() => workspace.openEntry(own.path)}
+          oncontextmenu={(event) =>
+            menu.show(event, menuFor(entry, own), { title: shownName(own.name) })}
+          use:longPress={(event) =>
+            menu.show(event, menuFor(entry, own), { title: shownName(own.name) })}
+          ondragstart={(event) => startDrag(event, entry.path)}
+          ondragend={endDrag}
+          ondragover={(event) => overRow(event, entry)}
+          ondragleave={(event) => stillInside(event) || dropTarget.clear()}
+          ondrop={(event) => drop(event, entry)}
+        >
+          <FileMark mark={fileMark(own.name)} path={own.path} />
+          <span class="nib-row-label">{shownName(own.name)}</span>
+          <!-- Only while there is something to disclose. A vault may arrive with a
+               folder holding nothing but its note, and a twist that opens on to
+               nothing is a row promising something it does not have. -->
+          {#if nested.length}
+            <span class="nib-row-meta twist" class:open={workspace.isExpanded(entry.path)}>
+              <svg viewBox="0 0 8 8" aria-hidden="true"><path d="M2 1l3 3-3 3" /></svg>
+            </span>
+          {/if}
+        </button>
+
+        {#if workspace.isExpanded(entry.path)}
+          <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
+            <Tree entries={nested} depth={depth + 1} />
+          </div>
+        {/if}
       {:else if entry.is_dir}
         <button
           class="nib-row row folder is-quiet"
@@ -389,8 +531,8 @@
           aria-expanded={workspace.isExpanded(entry.path)}
           draggable="true"
           onclick={(event) => pick(event, entry) || workspace.toggleFolder(entry.path)}
-          oncontextmenu={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
-          use:longPress={(event) => menu.show(event, menuFor(entry), { title: entry.name })}
+          oncontextmenu={(event) => menu.show(event, menuFor(entry, own), { title: entry.name })}
+          use:longPress={(event) => menu.show(event, menuFor(entry, own), { title: entry.name })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
           ondragover={(event) => overRow(event, entry)}
@@ -419,6 +561,7 @@
         <button
           class="nib-row row note"
           data-path={entry.path}
+          class:is-taking={nesting(entry)}
           class:is-on={workspace.active?.path === entry.path}
           class:is-picked={workspace.isSelected(entry.path)}
           style:--level={depth}
@@ -427,9 +570,9 @@
             pick(event, entry) || workspace.openEntry(entry.path, { preview: true })}
           ondblclick={() => workspace.openEntry(entry.path)}
           oncontextmenu={(event) =>
-            menu.show(event, menuFor(entry), { title: shownName(entry.name) })}
+            menu.show(event, menuFor(entry, own), { title: shownName(entry.name) })}
           use:longPress={(event) =>
-            menu.show(event, menuFor(entry), { title: shownName(entry.name) })}
+            menu.show(event, menuFor(entry, own), { title: shownName(entry.name) })}
           ondragstart={(event) => startDrag(event, entry.path)}
           ondragend={endDrag}
           ondragover={(event) => overRow(event, entry)}
@@ -461,6 +604,33 @@
   .row,
   .rename {
     padding-left: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
+  }
+
+  /* What a folder note holds, said at the far end of the row rather than in front
+     of the name. The mark in front is the note's own, so the row cannot say "open"
+     with it the way a plain folder does - and a twist in front of the mark would
+     push one name in the list out of the column every other name is read in.
+     The row's own trailing slot, which is where a list already puts what a row
+     counts; see `.nib-row-meta` in the themes package. */
+  .twist {
+    display: grid;
+    place-items: center;
+    padding: 0 var(--space-1);
+  }
+
+  .twist svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .twist.open svg {
+    transform: rotate(90deg);
   }
 
   .rename {
