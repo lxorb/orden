@@ -145,7 +145,9 @@ window.EvenAppBridge = {
   },
 
   textContainerUpgrade(one) {
-    if (window.__heardAt && !window.__wroteAt) window.__wroteAt = performance.now()
+    if ((window.__heardAt || window.__spokeAt) && !window.__wroteAt) {
+      window.__wroteAt = performance.now()
+    }
     window.__even.calls.push({ method: 'words', name: one.containerName })
     const held = window.__even.containers[one.containerName]
     if (held) held.content = one.content
@@ -192,6 +194,7 @@ window.__gesture = (kind) => {
  *  `onresult` shape, and one function to make it hear something. */
 window.__heardAt = 0
 window.__wroteAt = 0
+window.__spokeAt = 0
 
 class Recogniser {
   constructor() {
@@ -218,6 +221,46 @@ class Recogniser {
 }
 
 window.SpeechRecognition = Recogniser
+
+/** The recogniser refusing the way it refuses on a real phone: `start()` was happy
+ *  and a moment later the service is not there. What Emil's phone does, and what
+ *  sends the plugin to the glasses' own microphone. */
+window.__refuse = () => {
+  window.__recogniser?.onerror?.({ error: 'service-not-allowed' })
+}
+
+/** Speaking into the glasses' own microphone, which is the path a phone with no
+ *  usable recogniser is on - Emil's, and every iPhone.
+ *
+ *  Frames of PCM the way the host sends them: twenty milliseconds each, sixteen bit
+ *  little endian at 16 kHz, loud enough to be speech or quiet enough to be a room.
+ *  Real time, because what is being measured is a wait a person feels. */
+window.__speak = async (ms, loud = true) => {
+  const samples = 320
+  const frame = new Uint8Array(samples * 2)
+  const view = new DataView(frame.buffer)
+  for (let at = 0; at < samples; at++) {
+    view.setInt16(at * 2, Math.round((loud ? 0.2 : 0.001) * 0x7fff * (at % 2 ? 1 : -1)), true)
+  }
+
+  // Counted in frames rather than by the clock: what the plugin measures is how
+  // much sound arrived, and a timer that fires late does not make a word shorter.
+  for (let at = 0; at < Math.round(ms / 20); at++) {
+    if (loud) window.__spokeAt = performance.now()
+    window.__even.send?.({ audioEvent: { audioPcm: frame, source: 'glasses' } })
+    await new Promise((done) => setTimeout(done, 20))
+  }
+}
+
+/** What the transcriber answers, and how long it takes about it. A round trip to a
+ *  model is a couple of hundred milliseconds on a good day; the drive uses one
+ *  number so that what it measures is the plugin's own share and the waiting it
+ *  chooses to do. */
+window.__heardSays = 'next'
+window.__heardTakes = 250
+window.__heardAsked = []
+/** How often the plugin has opened the connection before it had anything to send. */
+window.__warmed = 0
 
 window.__say = (text) => {
   window.__heardAt = performance.now()
@@ -286,7 +329,17 @@ window.fetch = (input, init) => {
     return json({ answer: ANSWER })
   }
 
-  if (path === '/v1/ask/heard') return json({ said: null })
+  if (path === '/health') {
+    window.__warmed++
+    return json({ ok: true })
+  }
+
+  if (path.startsWith('/v1/ask/heard')) {
+    window.__heardAsked.push({ at: performance.now(), url: path })
+    return new Promise((done) =>
+      setTimeout(() => done(json({ said: window.__heardSays })), window.__heardTakes),
+    )
+  }
 
   // Everything else the app asks the account for. Refused rather than half
   // answered: a shape made up here would be a second copy of the service.
@@ -1031,6 +1084,140 @@ def main() -> int:
             page.screenshot(path=str(OUT / "phone-note.png"))
             back = page.evaluate("window.__bands()")
             screens.append({"name": "glasses-3", "lineNumbers": True, **naming(back)})
+
+            # ── The glasses' own microphone, and what a command costs on it ──
+            # Emil, on even 0.5.7: "right now it's extremely delayed ... it takes so
+            # long for a voice command that there's no reason to use it." This is the
+            # path he is on: the WebView's recogniser answers `service-not-allowed` a
+            # moment after starting, the plugin falls to the glasses' microphone, and
+            # every word has to go to a model and come back.
+            page.evaluate("window.__warmed = 0")
+            page.evaluate("window.__refuse()")
+            page.wait_for_timeout(400)
+            report.ok(
+                "a recogniser that refuses hands over to the glasses' microphone",
+                page.evaluate("window.__even.mic") is True,
+                page.get_attribute("[data-voice]", "data-voice") or "",
+            )
+
+            report.ok(
+                "and opens the connection before there is anything to send through it",
+                int(page.evaluate("window.__warmed")) >= 1,
+                f"{page.evaluate('window.__warmed')} warm-ups",
+            )
+
+            # Half a second of "next", spoken into the glasses, and then quiet. What
+            # is measured is what a person feels: from the last sound they made to the
+            # panel in front of their eye changing.
+            spoken = []
+            for _round in range(5):
+                # Alternating, so the page always has somewhere to go: "next" at the
+                # end of a note writes nothing, and nothing written is nothing to
+                # measure.
+                page.evaluate(
+                    "(word) => { window.__heardSays = word; window.__heardAt = 0;"
+                    " window.__wroteAt = 0; window.__spokeAt = 0; window.__heardAsked = [] }",
+                    "next" if _round % 2 == 0 else "back",
+                )
+                page.evaluate("window.__speak(500, true)")
+                page.evaluate("window.__speak(900, false)")
+                page.wait_for_timeout(1600)
+                took = page.evaluate("window.__wroteAt - window.__spokeAt")
+                if took and float(took) > 0:
+                    spoken.append(float(took))
+
+            spoken.sort()
+            middle = spoken[len(spoken) // 2] if spoken else 0.0
+            model = page.evaluate("window.__heardTakes")
+            looks = page.evaluate("window.__heardAsked.length")
+            report.ok(
+                "a spoken command is acted on well under a second after the last word",
+                len(spoken) == 5 and middle < 1000,
+                f"{middle:.0f} ms in the middle of {len(spoken)} of 5 "
+                f"{[round(one) for one in spoken]}, with a {model} ms model",
+            )
+            report.say(
+                f"a command costs {middle:.0f} ms from the last word to the panel, "
+                f"of which the model is {model} ms"
+            )
+            report.ok(
+                "because the words are sent before the reader has stopped talking",
+                looks >= 1,
+                f"{looks} transcriptions for the last phrase",
+            )
+            took = page.get_attribute("[data-voice]", "data-took") or ""
+            report.ok(
+                "and the phone says where that time went, at no cost on screen",
+                "spoke" in took and "hang" in took,
+                took,
+            )
+
+            # Emil: "it doesn't change WHILE scrolling but you kinda need to pause for
+            # it to react." The card is measured every frame off the note's own
+            # scroll, so a drag moves it forty times rather than twice. Driven by
+            # moving the scroller a little on each frame, which is what a finger on a
+            # phone produces.
+            followed = page.evaluate(
+                """
+                () => new Promise((done) => {
+                  const scroller = document.querySelector('.cm-scroller')
+                  const card = () => {
+                    const one = document.querySelector('.frame')
+                    if (!one) return 'gone'
+                    const box = one.getBoundingClientRect()
+                    return `${Math.round(box.top)}:${Math.round(box.bottom)}`
+                  }
+
+                  scroller.scrollTop = 0
+                  const seen = []
+                  let step = 0
+                  const drag = () => {
+                    scroller.scrollTop = step * 9
+                    seen.push(card())
+                    if (++step > 30) {
+                      let moved = 0
+                      for (let at = 1; at < seen.length; at++) {
+                        if (seen[at] !== seen[at - 1]) moved++
+                      }
+                      return done({ frames: seen.length, moved })
+                    }
+                    requestAnimationFrame(drag)
+                  }
+                  requestAnimationFrame(drag)
+                })
+                """
+            )
+            report.ok(
+                "the card follows the note on every frame of a scroll",
+                followed["moved"] >= followed["frames"] * 0.8,
+                f"moved in {followed['moved']} of {followed['frames']} frames",
+            )
+            page.wait_for_timeout(700)
+
+            # Emil: "when I open the sidebar I can still see that frame." A mark on a
+            # note has no business floating over the file list.
+            if page.get_by_role("button", name="Show sidebar").count():
+                page.get_by_role("button", name="Show sidebar").first.click()
+            page.wait_for_timeout(500)
+            report.ok(
+                "and is not drawn at all while the sidebar is over the note",
+                page.evaluate(
+                    "() => { const one = document.querySelector('.frame');"
+                    " return !one || Number(getComputedStyle(one).opacity) === 0 }"
+                ),
+            )
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(500)
+            if page.locator(".scrim").count():
+                page.locator(".scrim").first.click()
+                page.wait_for_timeout(500)
+            report.ok(
+                "and comes back when the note is bare again",
+                page.evaluate(
+                    "() => { const one = document.querySelector('.frame');"
+                    " return !!one && Number(getComputedStyle(one).opacity) > 0 }"
+                ),
+            )
 
             # ── The icons of the spaces ───────────────────────────────────────
             # Emil, on his phone with even 0.5.6: "I don't see the icons of the

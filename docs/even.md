@@ -609,6 +609,33 @@ Two things came out of making it work, and both are better everywhere:
 
 ![The plugin, with the frame around the page on the glasses](even/phone-frame.png)
 
+**The card follows the thumb, and it is not there while something is over the note.**
+Emil, on 0.5.7: *"it doesn't change WHILE scrolling but you kinda need to pause for it
+to react"*, and *"when I open the sidebar I can still see that frame."* Two faults with
+one cause each.
+
+The card was drawn around the region the *glasses* had, and the glasses are told where
+the phone is 120 ms after the last scroll event, with a page of radio behind that. So
+through a drag the card had nothing new to be drawn around: it rode up with the words,
+pinned itself to the top edge as its region left the screen, and jumped when the reader
+stopped. It is drawn from **the note's own scroll** now - `regionAt`, in session.ts,
+answers where the panel *would* be for any offset, with nothing sent and no page
+written down - and it is measured on a `requestAnimationFrame` loop that runs while a
+finger is down rather than on the scroll events, so a drag moves it every frame. The
+glasses are still told at their own rate, and the spring is still only on release.
+
+Measured in the drive, dragging the scroller nine pixels a frame: the card changed in
+**29 of 31 frames**, against a longest stillness of 284 ms before.
+
+The second one is a list rather than a bug: the card is hidden - faded, over
+`--dur-fast`, and back when the note is bare - whenever the sidebar is a drawer over
+the note (`viewport.drawer` and `workspace.panel`), the settings are open, the sign-in
+is open, or anything in the document is a `.sheet`, an open `dialog` or a
+`[role="dialog"]`. The drawer was the one thing missing from that list and the one a
+reader opens twenty times an hour.
+
+![The rail in the plugin, with the sidebar open and no card over it](even/phone-spaces.png)
+
 ---
 
 ## 5. Voice, and a question
@@ -647,10 +674,91 @@ are two paths because the platform gives two and neither is everywhere:
    has a free daily allowance and costs neurons past it - so a reader with no OpenAI
    account at all can still talk to their glasses.
 
-The second path is where the plugin's own latency comes from: an utterance ends
-after **600 ms** of quiet. Under about four hundred and the gap between "switch
-space" and "to work" ends the phrase; over about eight hundred and every command
-waits noticeably after the reader has stopped talking.
+The second path is where the plugin's own latency comes from, and getting it down is
+what section 5.1 is about.
+
+### Nothing on this platform will transcribe for a plugin
+
+Settled on 2026-09-09, because the answer decides everything below it. **There is no
+native speech to text for a plugin, at any version.**
+
+- `@evenrealities/even_hub_sdk` **0.0.15 is the newest there is** (published
+  2026-09-07; the whole history is 0.0.3 to 0.0.15). 0.0.14 to 0.0.15 changed one doc
+  comment: the export surface is byte for byte identical. Audio's last real change was
+  0.0.14, which added `direction` and `speakerRole` - *metadata about the PCM*, not
+  words.
+- The SDK talks to the phone app through exactly one Flutter handler,
+  `evenAppMessage`, and the method on it is one of sixteen: `getUserInfo`,
+  `getGlassesInfo`, `setLocalStorage`, `getLocalStorage`, `getAppLocation`,
+  `startAppLocationUpdates`, `stopAppLocationUpdates`, `pickImageFromAlbum`,
+  `captureImageFromCamera`, `createStartUpPageContainer`, `rebuildPageContainer`,
+  `updateImageRawData`, `textContainerUpgrade`, `audioControl`, `imuControl`,
+  `shutDownPageContainer`. The simulator's own binary carries the same list. The
+  bundle is obfuscated, so this came from running its own string decoder rather than
+  from grep: of 1130 strings, **none** is transcri/asr/speech/stt/recogni/whisper/
+  evenai/intent/wakeword. `textEvent` is a touch on a *display* container, not text
+  from a microphone.
+- Even Realities' own ASR template ships an empty stub: *"The STT client itself is a
+  blank stub ... You pick your own provider (Deepgram, AssemblyAI, Whisper, Soniox,
+  self-hosted, etc.)"*, and `asr/src/asr/stt.ts` throws `STT provider not
+  implemented`. If a native path existed, their own template would use it.
+- The manifest's permissions are exactly six - `g2-microphone`, `phone-microphone`,
+  `album`, `location`, `network`, `camera` - so there is nothing to ask for either.
+- The phone app *does* transcribe, for Even AI's own conversation, and the only way a
+  developer reaches that is Even App → Settings → Even AI → Agent Configuration: one
+  global endpoint per user, outside the package's sandbox, replacing Even AI's brain
+  rather than serving a plugin. Not a plugin API.
+- Everyone else does what we do: `nickustinov/stt-even-g2` pipes the PCM to Soniox
+  over a WebSocket, `sam-siavoshian/claude-code-g2` to its own `/transcribe`.
+  `dmyster145/EvenChess` is the interesting exception - vosk-browser, a Kaldi WASM
+  model inside the WebView, grammar-constrained to its own vocabulary.
+
+The docs do settle the format, which had been an assumption: *"PCM 16 kHz, signed
+16-bit little-endian, mono"* on both sources, 100 ms an `audioEvent`. That is what
+`voice.ts` builds its WAV from, so the one thing a device had to confirm is confirmed.
+
+### 5.1 Why a command was so slow, and what it costs now
+
+Emil, on even 0.5.7: *"right now it's extremely delayed ... it takes so long for a
+voice command that there's no reason to use it."* Four things were wrong, and three
+of them were the plugin being careful.
+
+1. **It waited for a silence it did not need.** An utterance ended after 600 ms of
+   quiet, so *every* command was 600 ms late before anything was even sent. That is
+   now **420 ms** - as low as the pause inside "switch space | to work" allows - and,
+   for most commands, is not waited for at all; see below.
+2. **The words went nowhere until the reader stopped.** They go while the reader is
+   still talking now: after **400 ms of speech** the plugin sends what it has, and if
+   what comes back is already a whole command that no longer phrase could begin with -
+   `settled`, in commands.ts - it is obeyed there and then and the rest of the
+   utterance is dropped. "next", "back", "close", "spaces view" are all settled;
+   "switch space" never is, because "switch space to work" begins with it. At most two
+   such looks per phrase.
+3. **The account's own key was a second journey.** With a key, the Worker went out to
+   OpenAI and back inside the request the reader was waiting on. Workers AI runs where
+   the Worker runs, so Whisper turbo listens first now, key or no key, and the key is
+   the fallback when it heard nothing. The plugin also sends the phrases it is hoping
+   for as the model's prompt, which is the difference between "next" and "text" on
+   half a second of speech.
+4. **The connection was cold.** A phone that has been idle pays for DNS, TCP and TLS
+   inside the first command. The plugin now asks `/health` for nothing as the
+   microphone opens, and the socket is up by the time there is anything to send.
+
+Measured in the browser drive, with the same 250 ms stand-in for the model, five
+commands each, from **the last sound the reader makes** to **the panel changing**:
+
+| | before | after |
+| --- | --- | --- |
+| a spoken command | **1186 ms** (1185, 1186, 1188, 1208) | **112 ms** (94, 95, 112, 113, 116) |
+| what the plugin waited for | 600 ms of silence, then the model | nothing: the model was already running |
+
+The plugin's own arithmetic is unchanged at about a millisecond; what moved is what it
+waits for. On a device the model and the network are real, so the number will be
+larger - but the model now runs *while the reader is still speaking*, which is the
+part that cannot be tuned away.
+
+Where the time went is written into the hidden diagnostics as `data-took`
+(`400 spoke 0 hang 264 sent`), so a phone can be asked without a log.
 
 ### Why it did not work, and how the phone now says so
 
@@ -1262,7 +1370,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 69 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 78 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1304,6 +1412,12 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 69 checks:
 - **a space that chose an icon drew it** - the shape, in the SVG namespace, which is
   the half of it that cannot be seen in the DOM - and a space that chose none drew
   its letter rather than an empty square;
+- **the card followed a drag on every frame of it** - 29 of 31 - was not drawn at all
+  while the sidebar was over the note, and came back when it was closed;
+- **a recogniser that refused handed over to the glasses' microphone**, the connection
+  was opened before there was anything to send through it, and a spoken command was
+  obeyed **112 ms** after the last sound of it, because the words were sent while the
+  reader was still saying them;
 - nothing on the page asked the server for anything that was not there, and there
   were no page errors.
 

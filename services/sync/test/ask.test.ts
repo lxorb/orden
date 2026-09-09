@@ -516,9 +516,12 @@ describe('what the microphone heard', () => {
     expect(tried).toEqual(['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'])
   })
 
-  /** The key only says which model is asked first. An account with one whose key has
-   *  expired still has a Worker with a model on it. */
-  test('falls to Workers AI where the key bought nothing', async () => {
+  /** Workers AI runs where this Worker runs; the account's own key is a second
+   *  journey across the internet inside the one request somebody is standing there
+   *  waiting on. Emil, on the glasses: *"it takes so long for a voice command that
+   *  there's no reason to use it."* So the near model listens first, key or no key,
+   *  and the key is what answers when it heard nothing at all. */
+  test('listens on Workers AI first, and does not leave the building for it', async () => {
     const asked: string[] = []
     env.AI = {
       run(model: string) {
@@ -526,10 +529,69 @@ describe('what the microphone heard', () => {
         return Promise.resolve({ text: 'heard it anyway' })
       },
     }
-    vi.stubGlobal('fetch', () => Promise.resolve(new Response('no', { status: 401 })))
+    vi.stubGlobal('fetch', () => {
+      throw new Error('the key is the fallback, not the first stop')
+    })
 
     expect((await heard(new Uint8Array([1]))).json.said).toBe('heard it anyway')
     expect(asked).toEqual(['@cf/openai/whisper-large-v3-turbo'])
+  })
+
+  test('and spends the key only where the near models heard nothing', async () => {
+    const asked: string[] = []
+    env.AI = {
+      run(model: string) {
+        asked.push(model)
+        return Promise.resolve({ text: '' })
+      },
+    }
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('through the key')))
+
+    expect((await heard(new Uint8Array([1]))).json.said).toBe('through the key')
+    expect(asked).toEqual(['@cf/openai/whisper-large-v3-turbo', '@cf/openai/whisper'])
+  })
+
+  /** Half a second of "next" comes back as "text" often enough to matter. Whisper
+   *  takes a prompt and leans towards it, so the plugin sends the phrases it is
+   *  hoping to hear - the reader's own, whatever they rebound them to. */
+  test('leans on the words the plugin said it was hoping for', async () => {
+    let prompted: unknown = null
+    env.AI = {
+      run(_model: string, input: unknown) {
+        prompted = (input as { initial_prompt?: unknown }).initial_prompt
+        return Promise.resolve({ text: 'next' })
+      },
+    }
+
+    const { json } = await call(env, '/v1/ask/heard?like=next%2C%20back%2C%20close', {
+      method: 'POST',
+      token,
+      raw: new Uint8Array([1]),
+      headers: { 'content-type': 'audio/wav' },
+    })
+
+    expect(json.said).toBe('next')
+    expect(prompted).toBe('next, back, close')
+  })
+
+  test('and takes a list of commands rather than a paragraph of somebody else', async () => {
+    let prompted = ''
+    env.AI = {
+      run(_model: string, input: unknown) {
+        const said = (input as { initial_prompt?: unknown }).initial_prompt
+        prompted = typeof said === 'string' ? said : ''
+        return Promise.resolve({ text: 'next' })
+      },
+    }
+
+    await call(env, `/v1/ask/heard?like=${'x'.repeat(900)}`, {
+      method: 'POST',
+      token,
+      raw: new Uint8Array([1]),
+      headers: { 'content-type': 'audio/wav' },
+    })
+
+    expect(prompted.length).toBe(300)
   })
 
   test('answers null where none of them heard anything', async () => {

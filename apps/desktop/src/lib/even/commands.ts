@@ -174,6 +174,14 @@ interface Phrase {
   of: (rest: string) => Command | null
   /** What the settings pane calls it, for the phrases a reader may change. */
   label?: string
+  /** True where the phrase is only half of what the reader is saying: a name, a
+   *  number or a question follows it.
+   *
+   *  Said here rather than worked out from `of`, because "switch space to" with
+   *  nothing after it *is* a command - it opens the picker - and the difference
+   *  that matters to `settled` is not whether it means something yet but whether
+   *  the reader has finished talking. */
+  takes?: true
 }
 
 const PHRASES: readonly Phrase[] = [
@@ -193,12 +201,14 @@ const PHRASES: readonly Phrase[] = [
   { id: 'voice-off-short', words: ['voice', 'off'], of: () => ({ kind: 'voice', on: false }) },
   {
     id: 'switch-space-to',
+    takes: true,
     words: ['switch', 'space', 'to'],
     of: (rest) => named('switchSpace', rest),
     label: key('Go to a space by name'),
   },
   {
     id: 'switch-note-to',
+    takes: true,
     words: ['switch', 'note', 'to'],
     of: (rest) => named('switchNote', rest),
     label: key('Go to a note by name'),
@@ -219,19 +229,27 @@ const PHRASES: readonly Phrase[] = [
   { id: 'notes-view', words: ['notes', 'view'], of: () => ({ kind: 'notes' }) },
   {
     id: 'page',
+    takes: true,
     words: ['open', 'page'],
     of: (rest) => counted('page', rest),
     label: key('Go to a page'),
   },
   {
     id: 'line',
+    takes: true,
     words: ['go', 'to', 'line'],
     of: (rest) => counted('line', rest),
     label: key('Go to a line'),
   },
-  { id: 'page-alias', words: ['go', 'to', 'page'], of: (rest) => counted('page', rest) },
+  {
+    id: 'page-alias',
+    takes: true,
+    words: ['go', 'to', 'page'],
+    of: (rest) => counted('page', rest),
+  },
   {
     id: 'question',
+    takes: true,
     words: ['question'],
     of: (rest) => (rest ? { kind: 'question', asked: rest } : null),
     label: key('Ask a question'),
@@ -276,6 +294,53 @@ function counted(kind: 'page' | 'line', rest: string): Command | null {
   return number !== null && number > 0 ? { kind, number } : null
 }
 
+/** The phrases as this reader has them, longest first.
+ *
+ *  Longest first because a phrase that is a prefix of another has to be tried second
+ *  or the longer one is never reached. Built for every match, because a reader who
+ *  rebinds one changes how long it is. */
+function phrasesFor(words: Readonly<Record<string, string>>) {
+  return PHRASES.map((one) => ({
+    of: one.of,
+    takes: one.takes === true,
+    words: bare(words[one.id] ?? one.words.join(' '))
+      .split(' ')
+      .filter(Boolean),
+  }))
+    .filter((one) => one.words.length > 0)
+    .sort((a, b) => b.words.length - a.words.length)
+}
+
+/** Whether what has been heard so far is already the whole of a command.
+ *
+ *  What lets the plugin act on a word before the reader has stopped talking. Emil:
+ *  *"it takes so long for a voice command that there's no reason to use it."* Most of
+ *  that wait is the plugin holding the microphone open through the silence at the end
+ *  of "next", in case a longer phrase was coming - and after "next" nothing longer
+ *  can be coming, because no phrase begins with it.
+ *
+ *  True only when all three are true: the words are exactly a phrase, that phrase
+ *  wants nothing after it, and no other phrase begins with those same words. So
+ *  "next", "close" and "spaces view" are settled the moment they are heard, and
+ *  "switch space" never is - "switch space to work" begins with it. */
+export function settled(said: string, words: Readonly<Record<string, string>> = {}): boolean {
+  const heard = bare(said).split(' ').filter(Boolean)
+  if (!heard.length) return false
+
+  const phrases = phrasesFor(words)
+  const said_ = (one: { words: string[] }) =>
+    one.words.length === heard.length && one.words.every((word, at) => heard[at] === word)
+
+  const exact = phrases.find(said_)
+  if (!exact || exact.takes) return false
+
+  // Anything longer that begins the same way is a phrase the reader may still be in
+  // the middle of.
+  return !phrases.some(
+    (one) => one.words.length > heard.length && heard.every((word, at) => one.words[at] === word),
+  )
+}
+
 /** What was said, as a command, or null when it was not one of them.
  *
  *  A phrase has to start what was heard, because a recogniser hands over whole
@@ -288,18 +353,7 @@ export function commandIn(
   const heard = bare(said).split(' ').filter(Boolean)
   if (!heard.length) return null
 
-  // Longest first, whatever a reader rebound them to: a phrase that is a prefix of
-  // another has to be tried second or the longer one is never reached.
-  const phrases = PHRASES.map((one) => ({
-    of: one.of,
-    words: bare(words[one.id] ?? one.words.join(' '))
-      .split(' ')
-      .filter(Boolean),
-  }))
-    .filter((one) => one.words.length > 0)
-    .sort((a, b) => b.words.length - a.words.length)
-
-  for (const phrase of phrases) {
+  for (const phrase of phrasesFor(words)) {
     if (phrase.words.length > heard.length) continue
     if (!phrase.words.every((word, at) => heard[at] === word)) continue
 

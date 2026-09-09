@@ -104,21 +104,34 @@ function textIn(answer: unknown): string {
  *
  *  Null rather than an error: an utterance nothing could make anything of is the
  *  ordinary case of a door closing, and the plugin's own answer to it is to say
- *  nothing. Which model listened is not the caller's business. */
+ *  nothing. Which model listened is not the caller's business.
+ *
+ *  **Workers AI first, whatever the account holds.** It used to be the account's own
+ *  key first, and that is a second journey across the internet - this Worker out to
+ *  OpenAI and back - inside the one request somebody is standing there waiting on.
+ *  Whisper on Workers AI runs where this code runs: no second hop, and no queue in
+ *  front of somebody else's account. Emil, on the glasses: *"it takes so long for a
+ *  voice command that there's no reason to use it."*
+ *
+ *  The key is still worth having: it is the fallback when Workers AI heard nothing at
+ *  all, and it is what the question flow spends.
+ *
+ *  `like` is the handful of words the caller is hoping to hear. Whisper takes a
+ *  prompt and leans towards it, which on half a second of speech is the difference
+ *  between "next" and "text". */
 export async function heard(
   env: Env,
   audio: ArrayBuffer,
   key: string | null,
+  like = '',
 ): Promise<string | null> {
-  if (key) {
-    const said = await openAiHeard(audio, key)
-    if (said) return said
-  }
+  const said = await whisperHeard(env, audio, like)
+  if (said) return said
 
-  return whisperHeard(env, audio)
+  return key ? openAiHeard(audio, key, like) : null
 }
 
-async function openAiHeard(audio: ArrayBuffer, key: string): Promise<string | null> {
+async function openAiHeard(audio: ArrayBuffer, key: string, like = ''): Promise<string | null> {
   for (const model of TRANSCRIBERS) {
     const form = new FormData()
     form.append('file', new Blob([audio], { type: 'audio/wav' }), 'said.wav')
@@ -126,6 +139,7 @@ async function openAiHeard(audio: ArrayBuffer, key: string): Promise<string | nu
     // A command is English or the reader's own language; left to the model, which
     // does better at guessing than a setting nobody will find.
     form.append('response_format', 'text')
+    if (like) form.append('prompt', like)
 
     const answered = await fetch(`${OPENAI}/v1/audio/transcriptions`, {
       method: 'POST',
@@ -141,15 +155,16 @@ async function openAiHeard(audio: ArrayBuffer, key: string): Promise<string | nu
   return null
 }
 
-async function whisperHeard(env: Env, audio: ArrayBuffer): Promise<string | null> {
+async function whisperHeard(env: Env, audio: ArrayBuffer, like = ''): Promise<string | null> {
   const ai = env.AI
   if (!ai) return null
 
   for (const model of WHISPERS) {
-    // The turbo model takes the file as base64; the older one takes its bytes.
+    // The turbo model takes the file as base64, and a prompt to lean on; the older
+    // one takes its bytes and nothing else.
     const input =
       model === '@cf/openai/whisper-large-v3-turbo'
-        ? { audio: base64(audio) }
+        ? { audio: base64(audio), ...(like ? { initial_prompt: like } : {}) }
         : { audio: [...new Uint8Array(audio)] }
 
     try {

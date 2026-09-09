@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { type Ears, type Listening, loudnessOf, Utterance, Voice, wavOf } from './voice'
+import { type Ears, type Listening, loudnessOf, QUIET, Utterance, Voice, wavOf } from './voice'
 
 /** Twenty milliseconds of sound at 16 kHz, sixteen bit: 320 samples, 640 bytes.
  *  The frame size the glasses' audio path sends. */
@@ -39,7 +39,7 @@ describe('cutting an utterance out of the stream', () => {
     }
   })
 
-  test('answers with the utterance after six hundred milliseconds of quiet', () => {
+  test('answers with the utterance once the quiet is long enough to be the end', () => {
     const utterance = new Utterance()
     let now = 0
     const feed = (pcm: Uint8Array) => {
@@ -50,12 +50,15 @@ describe('cutting an utterance out of the stream', () => {
     // Half a second of speech.
     for (let at = 0; at < 25; at++) expect(feed(SPEECH)).toBeNull()
     // Then quiet. Nothing until the pause is long enough to be the end.
-    for (let at = 0; at < 29; at++) expect(feed(SILENCE)).toBeNull()
+    const hang = QUIET / 20
+    for (let at = 0; at < hang - 1; at++) expect(feed(SILENCE)).toBeNull()
 
     const whole = feed(SILENCE)
     expect(whole).not.toBeNull()
     // The speech and the silence after it, which is what was heard.
-    expect(whole?.pcm.length).toBe(FRAME * 55)
+    expect(whole?.pcm.length).toBe(FRAME * (25 + hang))
+    // And how much of that was somebody talking, which is what the diagnostics say.
+    expect(whole?.spoken).toBe(500)
   })
 
   test('says the speech ended where the silence began, not where it was noticed', () => {
@@ -72,10 +75,9 @@ describe('cutting an utterance out of the stream', () => {
     while (!whole) whole = feed(SILENCE)
 
     // This is what a latency has to be measured from: the moment the reader stopped
-    // talking, and not the moment six hundred milliseconds later when the pause
-    // became long enough to act on.
+    // talking, and not the moment the pause became long enough to act on.
     expect(whole.ended).toBeCloseTo(stopped, -1)
-    expect(now - whole.ended).toBeGreaterThanOrEqual(600)
+    expect(now - whole.ended).toBeGreaterThanOrEqual(QUIET)
   })
 
   test('throws away a noise too short to be a word', () => {
@@ -141,7 +143,7 @@ describe('cutting an utterance out of the stream', () => {
     while (!whole) whole = feed(SILENCE)
 
     // The phrase and its trailing pause, and none of the two seconds before it.
-    expect(whole.pcm.length).toBe(FRAME * 55)
+    expect(whole.pcm.length).toBe(FRAME * (25 + QUIET / 20))
   })
 })
 
@@ -525,6 +527,7 @@ describe('the readout', () => {
       nothing: false,
       trouble: '',
       detail: '',
+      took: null,
     })
   })
 

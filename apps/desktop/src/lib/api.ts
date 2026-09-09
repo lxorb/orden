@@ -359,10 +359,28 @@ export const api = {
   ask: (token: string, question: string, model: string, effort: string) =>
     request<{ answer: string }>('/v1/ask', { token, body: { question, model, effort } }),
 
+  /** Opens the connection before there is anything to send through it.
+   *
+   *  A command spoken into a pair of glasses is one small request, and on a phone
+   *  that has been idle it pays for a DNS lookup, a TCP handshake and a TLS
+   *  handshake first - a couple of hundred milliseconds inside the one thing a
+   *  reader is waiting on. `/health` is the cheapest thing this service answers: no
+   *  session, no database, no work. Nothing waits on it and nothing is done with the
+   *  answer; the point is the open socket it leaves behind. */
+  warm: () => {
+    void fetch(`${BASE}/health`, { method: 'GET', keepalive: true }).catch(() => undefined)
+  },
+
   /** One utterance, as words. Null when nothing was heard. Sent as the bytes it is,
-   *  which is why it is here rather than through `request`. */
-  askHeard: async (token: string, wav: Uint8Array<ArrayBuffer>) => {
-    const response = await fetch(`${BASE}/v1/ask/heard`, {
+   *  which is why it is here rather than through `request`.
+   *
+   *  `like` is the handful of words the plugin is hoping to hear - the spoken
+   *  commands, as this reader has them. Whisper takes a prompt and biases what it
+   *  writes towards it, which is the difference between "next" and "text" on a
+   *  half-second of speech. */
+  askHeard: async (token: string, wav: Uint8Array<ArrayBuffer>, like = '') => {
+    const where = like ? `?like=${encodeURIComponent(like.slice(0, 300))}` : ''
+    const response = await fetch(`${BASE}/v1/ask/heard${where}`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/wav' },
       body: wav,

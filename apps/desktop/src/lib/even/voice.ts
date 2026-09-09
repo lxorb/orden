@@ -34,12 +34,41 @@ const BYTES_PER_SAMPLE = 2
 
 /** How long a stretch of quiet ends an utterance.
  *
- *  Six hundred milliseconds. Under about four hundred and the gap between "switch
- *  space" and "to work" ends the phrase; over about eight hundred and every
- *  command a reader gives waits noticeably after they have stopped talking. This
- *  is the whole of the latency the plugin itself adds on the second path, and it
- *  is deliberate rather than incidental. */
-const QUIET = 600
+ *  Four hundred and twenty milliseconds. It was six hundred, which is safe and is
+ *  most of a wait: the reader stops talking and the plugin sits there, by design,
+ *  in case a longer phrase was coming. Under about four hundred the gap between
+ *  "switch space" and "to work" ends the phrase, so this is as low as the pause
+ *  inside a phrase allows.
+ *
+ *  It is not the whole of the latency any more, because most commands no longer
+ *  wait for it at all: a phrase that is already the whole of a command is acted on
+ *  where it is heard. See `PEEK_AFTER`. */
+export const QUIET = 420
+
+/** How much speech is worth a look before the reader has stopped.
+ *
+ *  Emil, on the glasses: *"it takes so long for a voice command that there's no
+ *  reason to use it."* A command is one or two words - "next" is 300 ms of sound -
+ *  and everything after those words was the plugin waiting for a silence and then
+ *  sending. So the first four hundred milliseconds of speech are sent while the
+ *  reader is still saying them, and if what comes back is already a whole command,
+ *  with nothing longer that could begin the same way, it is obeyed at once and the
+ *  rest of the utterance is dropped.
+ *
+ *  Four hundred rather than less: under about three hundred a single syllable comes
+ *  back as the wrong word often enough to matter, and a command obeyed wrongly is
+ *  worse than one obeyed late. */
+const PEEK_AFTER = 400
+
+/** How often a look may be taken while one utterance is being spoken.
+ *
+ *  Twice: once as the first word lands, once about half a second later for the
+ *  two-word phrases. A third would be a third transcription against the account's
+ *  ceiling for a phrase that is plainly a sentence by then. */
+const PEEKS = 2
+
+/** How long after a look the next one may be taken. */
+const PEEK_AGAIN = 450
 
 /** How loud a frame has to be to count as speech, as a fraction of full scale.
  *
@@ -65,10 +94,34 @@ interface Heard {
   ended: number
 }
 
+/** Where a command's time went, in milliseconds.
+ *
+ *  Emil: *"right now it's extremely delayed ... it takes so long for a voice command
+ *  that there's no reason to use it."* Nobody can read a log off a pair of glasses,
+ *  so the pieces are kept here and written into the hidden element the browser drive
+ *  reads; see Glasses.svelte. `hang` is zero for a phrase that was acted on before
+ *  the reader stopped talking, which is the whole point of the exercise. */
+export interface Took {
+  /** How long the reader spoke for. */
+  spoke: number
+  /** How long the plugin then waited for the silence to be long enough. */
+  hang: number
+  /** The round trip: the bytes up, the model, the words back. */
+  sent: number
+}
+
 /** What the voice needs from the world outside it. */
 export interface Ears {
   /** Opens or closes the glasses' own microphone. */
   microphone: (open: boolean) => Promise<boolean>
+  /** Whether a phrase is already the whole of a command, so that it can be obeyed
+   *  without waiting for the reader to stop talking. The grammar answers this; see
+   *  commands.ts. Absent means never look early. */
+  settled?: (said: string) => boolean
+  /** Called as the microphone opens, to have the connection to the Worker up before
+   *  there is anything to send through it. A cold TLS handshake on a phone is a
+   *  couple of hundred milliseconds, and they would be spent inside the command. */
+  warm?: () => void
   /** Whether an utterance has anywhere to go: an account, in practice. Which model
    *  listens is not this plugin's business; see services/sync/src/ask/heard.ts.
    *
@@ -111,6 +164,8 @@ export interface Listening {
   /** Whatever the platform called it, beside that line and never translated: an
    *  error code is a name, and `network` said in German is still `network`. */
   detail: string
+  /** Where the last command's time went, or null before there was one. */
+  took: Took | null
 }
 
 /** The recogniser errors that mean this WebView has no recogniser worth the name.
@@ -232,12 +287,42 @@ export class Utterance {
   private held = 0
   private quiet = 0
   private speaking = false
+  /** How many looks have been taken at this one, and when the last was. */
+  private peeks = 0
+  private looked = 0
+
+  /** How much of what is held is speech rather than the silence at the end. */
+  get spoken(): number {
+    return millisOf(this.held) - this.quiet
+  }
+
+  /** The speech so far, for a look before the reader has stopped talking.
+   *
+   *  Null until there is enough of it to be worth a transcription, and null again
+   *  until `PEEK_AGAIN` has passed, so that one phrase costs at most `PEEKS` of them.
+   *  Copied rather than handed over: the utterance goes on gathering, and the whole
+   *  of it is still sent if the look came back with nothing worth acting on. */
+  peek(now: number): Uint8Array | null {
+    if (!this.speaking || this.peeks >= PEEKS) return null
+    if (this.spoken < PEEK_AFTER) return null
+    if (this.peeks > 0 && now - this.looked < PEEK_AGAIN) return null
+
+    this.peeks++
+    this.looked = now
+    return this.take()
+  }
+
+  /** What was said has been acted on, so the rest of it is not an utterance any
+   *  more. */
+  forget(): void {
+    this.reset()
+  }
 
   /** One frame in. Answers the utterance when this frame ended it, else null.
    *
    *  `now` is handed in rather than read, so that a test can hand it a clock and a
    *  device can hand it the real one. */
-  hear(pcm: Uint8Array, now: number): { pcm: Uint8Array; ended: number } | null {
+  hear(pcm: Uint8Array, now: number): { pcm: Uint8Array; ended: number; spoken: number } | null {
     const loud = loudnessOf(pcm) >= LOUD
 
     if (loud) {
@@ -257,8 +342,8 @@ export class Utterance {
     this.frames.push(pcm)
     this.held += pcm.length
 
-    const spoken = millisOf(this.held)
-    const done = this.quiet >= QUIET || spoken >= LONGEST
+    const gathered = millisOf(this.held)
+    const done = this.quiet >= QUIET || gathered >= LONGEST
     if (!done) return null
 
     const whole = this.take()
@@ -271,8 +356,9 @@ export class Utterance {
     // The end of the speech, which is where the silence began rather than where it
     // was noticed. That is what a latency has to be measured from.
     const ended = now - this.quiet
+    const spoken = this.spoken
     this.reset()
-    return { pcm: whole, ended }
+    return { pcm: whole, ended, spoken }
   }
 
   private take(): Uint8Array {
@@ -291,6 +377,8 @@ export class Utterance {
     this.held = 0
     this.quiet = 0
     this.speaking = false
+    this.peeks = 0
+    this.looked = 0
   }
 }
 
@@ -306,6 +394,16 @@ export class Voice {
    *  being transcribed is dropped rather than queued: a command the reader gave
    *  two seconds ago is not one they still want. */
   private busy = false
+  /** True while a look at half an utterance is in the air. */
+  private looking = false
+  /** Which utterance is being answered. A look and the whole of the phrase it was
+   *  taken from can both be in flight; whichever lands first raises this, and the
+   *  other is then about a phrase nobody is waiting for any more. */
+  private said = 0
+  /** How the last phrase was made up, in milliseconds, for the diagnostics. */
+  private spoke = 0
+  private hung = 0
+  private took: Took | null = null
   /** True once a recogniser has shown it cannot recognise anything here. The
    *  constructor being on the page says nothing; this is what it actually did. */
   private hopeless = false
@@ -346,6 +444,7 @@ export class Voice {
       nothing: this.nothing,
       trouble: this.trouble,
       detail: this.detail,
+      took: this.took,
     }
   }
 
@@ -383,6 +482,10 @@ export class Voice {
    *  turns out not to work, which is what makes the fallback an order rather than
    *  a choice made once at the start. */
   private async listenThere(): Promise<boolean> {
+    // Before the microphone rather than after: whatever the host takes to open it is
+    // time the connection can be coming up in.
+    this.ears.warm?.()
+
     const opened = await this.ears.microphone(true)
     this.on = opened
     if (!opened) {
@@ -434,10 +537,56 @@ export class Voice {
     this.frames++
     if (first) this.tell()
 
-    const whole = this.utterance.hear(pcm, performance.now())
-    if (!whole) return
+    const now = performance.now()
+    const whole = this.utterance.hear(pcm, now)
+    if (whole) {
+      this.spoke = whole.spoken
+      this.hung = QUIET
+      void this.transcribe(whole.pcm, whole.ended)
+      return
+    }
 
-    void this.transcribe(whole.pcm, whole.ended)
+    // Still talking. A look at what has been said so far, which is how a one word
+    // command is obeyed before the silence at the end of it has even been measured.
+    const early = this.utterance.peek(now)
+    if (early) void this.early(early, now, this.utterance.spoken)
+  }
+
+  /** A look at half an utterance.
+   *
+   *  Only ever acted on when the words are already a whole command that nothing
+   *  longer could extend - `settled`, in commands.ts - because the reader may be in
+   *  the middle of "switch space to work" and a plugin that jumped to the picker on
+   *  "switch space" would be worse than one that waited.
+   *
+   *  Never says anything went wrong: a look that came back empty, or did not come
+   *  back at all, is not a failure a reader needs to hear about. The utterance is
+   *  still being gathered, and the whole of it is still sent. */
+  private async early(pcm: Uint8Array, now: number, spoken: number): Promise<void> {
+    if (this.busy || this.looking || !this.ears.settled || !this.ears.canTranscribe()) return
+
+    const mine = this.said
+    this.looking = true
+    try {
+      const at = performance.now()
+      const said = await this.ears.transcribe(wavOf(pcm))
+      // The reader stopped talking while this was in the air, and the whole
+      // utterance has already gone: whatever this says is about a phrase that is no
+      // longer the one being answered.
+      if (!said || mine !== this.said || !this.ears.settled(said)) return
+
+      this.took = { spoke: Math.round(spoken), hang: 0, sent: Math.round(performance.now() - at) }
+      this.said++
+      this.utterance.forget()
+      this.lastHeard = said
+      this.nothing = false
+      this.ears.heard({ said, ended: now })
+      this.tell()
+    } catch {
+      // Nothing said out loud: the utterance itself is still coming.
+    } finally {
+      this.looking = false
+    }
   }
 
   private async transcribe(pcm: Uint8Array, ended: number): Promise<void> {
@@ -450,9 +599,19 @@ export class Voice {
       return
     }
 
+    const mine = ++this.said
     this.busy = true
     try {
+      const at = performance.now()
       const said = await this.ears.transcribe(wavOf(pcm))
+      // A look that landed first has already answered this phrase.
+      if (mine !== this.said) return
+
+      this.took = {
+        spoke: Math.round(this.spoke),
+        hang: Math.round(this.hung),
+        sent: Math.round(performance.now() - at),
+      }
       // Sent, and nothing came back. Said rather than swallowed: an utterance that
       // reached the transcriber and came back empty is a different fault from one
       // that never reached it, and only the phone can tell anybody which.

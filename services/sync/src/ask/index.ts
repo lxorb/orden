@@ -48,6 +48,11 @@ const MOST_WAV = 4 * 1024 * 1024
  *  only keeps a novel out of the body reader. */
 const MOST_KEY = 200
 
+/** How much of a vocabulary a transcription may be prompted with. A dozen short
+ *  phrases; anything longer is not a list of commands and would only be somewhere to
+ *  put a paragraph of somebody else's words into a model. */
+const MOST_LIKE = 300
+
 export const ask = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 /** Sets the key, or replaces the one that is there. There is no editing a key
@@ -153,6 +158,11 @@ ask.post('/heard', async (context) => {
     return context.json({ error: 'that is a lot of listening - try again later' }, 429)
   }
 
+  // The words the caller is hoping to hear, if it said. The plugin sends its own
+  // spoken commands, which is what turns half a second of "next" into "next" rather
+  // than "text"; see apps/desktop/src/lib/api.ts.
+  const like = (context.req.query('like') ?? '').slice(0, MOST_LIKE)
+
   const key = await keyFor(context.env, user.id)
-  return context.json({ said: await heard(context.env, wav, key) })
+  return context.json({ said: await heard(context.env, wav, key, like) })
 })
