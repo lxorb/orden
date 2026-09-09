@@ -1,383 +1,263 @@
-import { beforeEach, describe, expect, test } from 'vitest'
-import type { Page } from '@nib/glasses'
-import { type OpenNote, Session, type Showing } from './session'
+import { BODY_INNER, BODY_ROWS } from '@nib/glasses'
+import { describe, expect, test } from 'vitest'
+import { type OpenNote, Session } from './session'
 
-/** A note as pages, without a canvas anywhere near it.
- *
- *  One page per line, each hashed by its own words, so a test can say which page
- *  the glasses are on by reading the words back and can change one page of a
- *  note without changing the rest. */
-function pagesOf(text: string): Page[] {
-  // A note with nothing in it has no pages, which is what the real layout says
-  // too: there is nothing to set.
-  const lines = text ? text.split('\n') : []
-  let at = 0
+const paging = { breakAt: 2, gutter: 0, inner: BODY_INNER, rows: BODY_ROWS }
 
-  return lines.map((line, index) => {
-    const from = at
-    at += line.length + 1
+const LONG = Array.from(
+  { length: 40 },
+  (_one, at) => `Paragraph ${at} with enough words in it to run past one line of the panel.`,
+).join('\n\n')
 
-    return {
-      index,
-      from,
-      to: at,
-      lines: [],
-      tops: [],
-      hash: `h:${line}`,
-    }
-  })
-}
-
-/** Where each page landed, in the order it was sent. */
-class Fake {
-  readonly sent: { hash: string; showing: Showing }[] = []
-
-  show(page: Page, showing: Showing): Promise<void> {
-    this.sent.push({ hash: page.hash, showing })
-    return Promise.resolve()
-  }
-
-  get hashes(): string[] {
-    return this.sent.map((one) => one.hash)
-  }
-
-  get last(): Showing | undefined {
-    return this.sent.at(-1)?.showing
-  }
-}
-
-const note = (key: string, name: string, text: string): OpenNote => ({ key, name, text })
-
-const FIRST = note('a', 'Groceries', 'one\ntwo\nthree\nfour')
-const SECOND = note('b', 'Ideas', 'alpha\nbeta')
-
-let screen: Fake
-let session: Session
-
-beforeEach(() => {
-  screen = new Fake()
-  session = new Session((text) => Promise.resolve(pagesOf(text)), screen)
+const note = (over: Partial<OpenNote> = {}): OpenNote => ({
+  key: 'a',
+  name: 'A note',
+  text: LONG,
+  ...over,
 })
 
+function opened(over: Partial<OpenNote> = {}): Session {
+  const session = new Session()
+  session.follow(note(over), paging)
+  return session
+}
+
+/** The rules in the file's own header, one test each. */
 describe('which note the glasses show', () => {
-  test('follows the note the plugin makes active', async () => {
-    await session.follow(FIRST)
+  test('shows the note the plugin has active', () => {
+    const session = opened()
 
-    expect(screen.hashes).toEqual(['h:one'])
-    expect(session.showing).toEqual({ key: 'a', name: 'Groceries', page: 0, count: 4 })
-  })
-
-  test('switches when the plugin switches', async () => {
-    await session.follow(FIRST)
-    await session.follow(SECOND)
-
-    expect(screen.hashes).toEqual(['h:one', 'h:alpha'])
-    expect(session.showing?.key).toBe('b')
-    expect(session.showing?.count).toBe(2)
-  })
-
-  test('leaves the note up when the plugin closes it', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-
-    // No note active any more: the plugin's tab is gone and the glasses keep
-    // what they had, on the page they had.
-    await session.follow(null)
-    await session.follow(null)
-
-    expect(screen.hashes).toEqual(['h:one', 'h:two'])
-    expect(session.showing).toEqual({ key: 'a', name: 'Groceries', page: 1, count: 4 })
-  })
-
-  test('shows nothing at all until a note is active', async () => {
-    await session.follow(null)
-
-    expect(screen.sent).toEqual([])
-    expect(session.showing).toBeNull()
-  })
-
-  test('keeps the last note when the next one has nothing in it', async () => {
-    await session.follow(FIRST)
-    await session.follow(note('c', 'Empty', ''))
-
-    expect(screen.hashes).toEqual(['h:one'])
     expect(session.showing?.key).toBe('a')
-  })
-})
-
-describe('turning a page on the glasses', () => {
-  test('goes on and back', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    await session.turn(1)
-    await session.turn(-1)
-
-    expect(screen.hashes).toEqual(['h:one', 'h:two', 'h:three', 'h:two'])
+    expect(session.showing?.name).toBe('A note')
+    expect(session.page).not.toBeNull()
   })
 
-  test('stops at both ends without sending anything', async () => {
-    await session.follow(FIRST)
-    await session.turn(-1)
-    expect(screen.hashes).toEqual(['h:one'])
+  test('switching notes in the plugin switches the glasses', () => {
+    const session = opened()
+    session.follow(note({ key: 'b', name: 'Another', text: 'Other words.\n' }), paging)
 
-    for (let at = 0; at < 6; at++) await session.turn(1)
-    expect(screen.hashes).toEqual(['h:one', 'h:two', 'h:three', 'h:four'])
+    expect(session.showing?.key).toBe('b')
+    expect(session.page?.words).toContain('Other words.')
   })
 
-  test('says which page of how many, for the corner of the page', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
+  test('closing the note in the plugin leaves it on the glasses', () => {
+    const session = opened()
+    const before = session.showing
 
-    expect(screen.last).toEqual({ key: 'a', name: 'Groceries', page: 1, count: 4 })
+    session.follow(null, paging)
+
+    expect(session.showing).toEqual(before)
   })
 
-  test('does nothing before a note is on the glasses', async () => {
-    await session.turn(1)
-    expect(screen.sent).toEqual([])
-  })
-})
+  test('a note with nothing in it leaves the last one up', () => {
+    const session = opened()
+    const before = session.showing
 
-describe('the page each note is left on', () => {
-  test('comes back when the note does', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    await session.turn(1)
+    session.follow(note({ key: 'empty', text: '   \n' }), paging)
 
-    await session.follow(SECOND)
-    await session.turn(1)
-
-    await session.follow(FIRST)
-    expect(screen.hashes.at(-1)).toBe('h:three')
-    expect(session.showing?.page).toBe(2)
-
-    await session.follow(SECOND)
-    expect(screen.hashes.at(-1)).toBe('h:beta')
-    expect(session.showing?.page).toBe(1)
+    expect(session.showing).toEqual(before)
   })
 
-  test('is clamped when the note grew shorter while it was away', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    await session.turn(1)
-    await session.turn(1)
+  test('remembers the page each note was left on', () => {
+    const session = opened()
+    session.turn(3)
     expect(session.showing?.page).toBe(3)
 
-    await session.follow(SECOND)
-    // Back to a note that has lost most of itself somewhere else.
-    await session.follow(note('a', 'Groceries', 'one'))
+    session.follow(note({ key: 'b', text: 'Other.\n' }), paging)
+    expect(session.showing?.page).toBe(0)
 
-    expect(session.showing).toEqual({ key: 'a', name: 'Groceries', page: 0, count: 1 })
+    // Back to the first, and back to page four of it.
+    session.follow(note(), paging)
+    expect(session.showing?.page).toBe(3)
   })
 })
 
-describe('an edit under the reader', () => {
-  test('sends nothing when the page they are on has not moved', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    const before = screen.hashes.length
+describe('turning a page', () => {
+  test('goes one page each way', () => {
+    const session = opened()
 
-    // A later page rewritten. The page in front of them is the same pixels, so
-    // the radio stays quiet.
-    await session.follow(note('a', 'Groceries', 'one\ntwo\nTHREE\nfour'))
-
-    expect(screen.hashes).toHaveLength(before)
+    session.turn(1)
     expect(session.showing?.page).toBe(1)
+    session.turn(-1)
+    expect(session.showing?.page).toBe(0)
   })
 
-  test('sends the page they are on when it does move', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    await session.follow(note('a', 'Groceries', 'one\ntwo again\nthree\nfour'))
+  test('stops at each end', () => {
+    const session = opened()
+    const count = session.showing?.count ?? 0
 
-    expect(screen.hashes.at(-1)).toBe('h:two again')
-    expect(session.showing?.page).toBe(1)
+    session.turn(-5)
+    expect(session.showing?.page).toBe(0)
+    session.turn(count + 10)
+    expect(session.showing?.page).toBe(count - 1)
   })
 
-  test('keeps the reader on the words they were reading, not on the page number', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    await session.turn(1)
-    expect(session.showing?.page).toBe(2)
+  test('goes straight to a page, for a spoken command', () => {
+    const session = opened()
 
-    // Two pages inserted above them. The words they were on have moved down,
-    // and so does the page the glasses show.
-    await session.follow(note('a', 'Groceries', 'zero\nhalf\none\ntwo\nthree\nfour'))
-
-    expect(screen.hashes.at(-1)).toBe('h:three')
+    session.goTo(4)
     expect(session.showing?.page).toBe(4)
   })
+})
 
-  test('does not switch notes when the words happen to match', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    // Another note whose second page reads the same. It is a different note, so
-    // it opens where it was left, which is the top.
-    await session.follow(note('b', 'Ideas', 'x\ntwo'))
+/** Item three: the phone's scroll and the page on the glasses are one thing. */
+describe('the scroll binding', () => {
+  test('goes to the page an offset in the note falls on', () => {
+    const session = opened()
+    const third = session.pages[3]
 
-    expect(screen.hashes.at(-1)).toBe('h:x')
-    expect(session.showing?.key).toBe('b')
+    expect(third).toBeDefined()
+    session.goToOffset(third?.from ?? 0)
+    expect(session.showing?.page).toBe(3)
+  })
+
+  test('says which region of the note is on the glass, for the frame', () => {
+    const session = opened()
+    session.goTo(2)
+    const showing = session.showing
+
+    expect(showing?.from).toBe(session.pages[2]?.from)
+    expect(showing?.to).toBe(session.pages[2]?.to)
+    expect(showing?.to).toBeGreaterThan(showing?.from ?? 0)
+  })
+
+  test('knows when an offset is already on the page in front of the reader', () => {
+    const session = opened()
+    const page = session.page
+
+    expect(page).not.toBeNull()
+    expect(session.holds(page?.from ?? 0)).toBe(true)
+    expect(session.holds((page?.to ?? 0) - 1)).toBe(true)
+    // Which is what stops the binding chasing its own tail: most of a scroll is
+    // inside the page that is already up.
+    expect(session.holds(page?.to ?? 0)).toBe(false)
+  })
+
+  test('covers the whole note between its pages, with no gap to fall into', () => {
+    const session = opened()
+    let at = 0
+    for (const page of session.pages) {
+      expect(page.from).toBeLessThanOrEqual(at + 1)
+      at = page.to
+    }
+
+    expect(at).toBe(LONG.length)
+  })
+
+  test('every offset in the note lands on a page that exists', () => {
+    const session = opened()
+    for (let offset = 0; offset < LONG.length; offset += 97) {
+      session.goToOffset(offset)
+      expect(session.page).not.toBeNull()
+    }
+  })
+
+  test('says which lines of the note the glass shows', () => {
+    const session = opened()
+    const showing = session.showing
+
+    expect(showing?.firstLine).toBe(1)
+    expect(showing?.lastLine).toBeGreaterThanOrEqual(1)
   })
 })
 
-describe('a render that lost its race', () => {
-  test('does not put an older note back on the glasses', async () => {
-    // The first render is held up; the second answers at once. Only the second
-    // may reach the glasses, or a switch would flick back to where it was.
-    let release = () => undefined
-    const held = new Promise<void>((resolve) => {
-      release = () => {
-        resolve()
-        return undefined
-      }
+/** An edit keeps the reader on the words in front of them. */
+describe('an edit under the reader', () => {
+  test('keeps them on the same page when the page did not change', () => {
+    const session = opened()
+    session.goTo(5)
+    const before = session.page?.hash
+
+    // An edit far below the page they are on.
+    session.follow(note({ text: `${LONG}\n\nOne more paragraph at the end.` }), paging)
+
+    expect(session.showing?.page).toBe(5)
+    expect(session.page?.hash).toBe(before)
+  })
+
+  test('sends nothing at all when nothing they can see moved', () => {
+    const session = opened()
+    session.goTo(5)
+    session.drew()
+    expect(session.moved).toBe(false)
+
+    session.follow(note({ text: `${LONG}\n\nOne more paragraph at the end.` }), paging)
+
+    expect(session.moved).toBe(false)
+  })
+
+  test('sends when the page they are on did change', () => {
+    const session = opened()
+    session.drew()
+
+    session.follow(note({ text: `An inserted first line.\n\n${LONG}` }), paging)
+
+    expect(session.moved).toBe(true)
+  })
+
+  test('follows the words when a paragraph is put in above them', () => {
+    const session = opened()
+    session.goTo(4)
+    const words = session.page?.words
+
+    session.follow(
+      note({ text: `An inserted first paragraph, of some length.\n\n${LONG}` }),
+      paging,
+    )
+
+    // The same words, one page further down, or as near as a rewritten page
+    // allows.
+    expect(session.page?.words).toBe(words)
+  })
+
+  test('keeps the place in the note when the page itself was rewritten', () => {
+    const session = opened()
+    session.goTo(6)
+    const from = session.page?.from ?? 0
+
+    const edited = `${LONG.slice(0, from)}Words nobody had written before.\n\n${LONG.slice(from)}`
+    session.follow(note({ text: edited }), paging)
+
+    const now = session.page
+    expect(now).not.toBeNull()
+    // Within a page of where they were, which is the best a rewrite allows.
+    expect(Math.abs((now?.index ?? 0) - 6)).toBeLessThanOrEqual(1)
+  })
+
+  test('holds no page at all before a note has arrived', () => {
+    const session = new Session()
+
+    expect(session.page).toBeNull()
+    expect(session.showing).toBeNull()
+    expect(session.pages).toEqual([])
+    // And nothing it is asked to do throws.
+    session.turn(1)
+    session.goTo(3)
+    session.goToOffset(50)
+    expect(session.holds(0)).toBe(false)
+  })
+})
+
+/** The paging settings reach the pages, which is what item two asks. */
+describe('the paging the reader chose', () => {
+  test('breaks at the heading level they chose', () => {
+    const source = '# One\n\nwords\n\n## Two\n\nwords\n\n### Three\n\nwords\n'
+    const at2 = new Session()
+    at2.follow(note({ text: source }), { ...paging, breakAt: 2 })
+    const at3 = new Session()
+    at3.follow(note({ text: source }), { ...paging, breakAt: 3 })
+
+    expect(at3.pages.length).toBeGreaterThan(at2.pages.length)
+  })
+
+  test('carries the line numbers into the pages', () => {
+    const session = new Session()
+    session.follow(note({ text: 'one\n\ntwo\n' }), {
+      ...paging,
+      gutter: 48,
+      inner: BODY_INNER - 54,
     })
 
-    let first = true
-    const slow = new Session(async (text) => {
-      if (first) {
-        first = false
-        await held
-      }
-      return pagesOf(text)
-    }, screen)
-
-    const one = slow.follow(FIRST)
-    const two = slow.follow(SECOND)
-    await two
-    release()
-    await one
-
-    expect(screen.hashes).toEqual(['h:alpha'])
-    expect(slow.showing?.key).toBe('b')
-  })
-})
-
-describe('coming back to the front', () => {
-  test('draws the page that is already there again', async () => {
-    await session.follow(FIRST)
-    await session.turn(1)
-    await session.repaint()
-
-    expect(screen.hashes).toEqual(['h:one', 'h:two', 'h:two'])
-  })
-
-  test('has nothing to draw before a note is on the glasses', async () => {
-    await session.repaint()
-    expect(screen.sent).toEqual([])
-  })
-})
-
-/** A burst of scrolls, the way a ring sends them: several before the first page
- *  has finished going over the radio.
- *
- *  A page costs the best part of a second on a real link. Every flick used to
- *  start its own four-tile send, so five flicks queued five of them and the
- *  reader waited three seconds while pages they had already scrolled past went
- *  by one at a time. They asked to be on page six, not to watch two to six. */
-describe('scrolling faster than the radio', () => {
-  /** Lets every promise that is ready settle, without letting time pass. */
-  async function flush(): Promise<void> {
-    for (let at = 0; at < 8; at++) await Promise.resolve()
-  }
-
-  /** A screen that does not answer until it is told to, which is what a slow
-   *  link is. */
-  class Slow {
-    readonly sent: string[] = []
-    private readonly waiting: (() => void)[] = []
-
-    show(page: Page): Promise<void> {
-      this.sent.push(page.hash)
-      return new Promise<void>((resolve) => this.waiting.push(resolve))
-    }
-
-    /** Lets the send in flight finish. */
-    async land(): Promise<void> {
-      await flush()
-      this.waiting.shift()?.()
-      await flush()
-    }
-
-    get inFlight(): number {
-      return this.waiting.length
-    }
-  }
-
-  const LONG: OpenNote = {
-    key: 'long',
-    name: 'Long',
-    text: 'one\ntwo\nthree\nfour\nfive\nsix\nseven',
-  }
-
-  async function reading(): Promise<{ slow: Slow; paced: Session }> {
-    const slow = new Slow()
-    const paced = new Session((text) => Promise.resolve(pagesOf(text)), slow)
-
-    const following = paced.follow(LONG)
-    await slow.land()
-    await following
-
-    return { slow, paced }
-  }
-
-  test('costs two sends for a burst of five, not five', async () => {
-    const { slow, paced } = await reading()
-    expect(slow.sent).toEqual(['h:one'])
-
-    // Five flicks of the ring, none of them waited for. The first is already on
-    // the radio and cannot be called back; the other four are one send between
-    // them, for where the reader ended up.
-    const turns = [1, 1, 1, 1, 1].map((by) => paced.turn(by))
-    await flush()
-    expect(slow.sent).toEqual(['h:one', 'h:two'])
-
-    await slow.land()
-    expect(slow.sent).toEqual(['h:one', 'h:two', 'h:six'])
-
-    await slow.land()
-    await Promise.all(turns)
-
-    // Pages three, four and five were scrolled past and never drawn: five page
-    // costs became two.
-    expect(slow.sent).toEqual(['h:one', 'h:two', 'h:six'])
-    expect(paced.showing?.page).toBe(5)
-  })
-
-  test('never runs two sends at once, whatever arrives meanwhile', async () => {
-    const { slow, paced } = await reading()
-
-    const first = paced.turn(1)
-    await flush()
-    expect(slow.inFlight).toBe(1)
-
-    // More scrolls while the radio is busy. The channel wedges if two image
-    // sends overlap, so there must still be exactly one.
-    const more = [paced.turn(1), paced.turn(1)]
-    await flush()
-    expect(slow.inFlight).toBe(1)
-
-    await slow.land()
-    // The catch-up send, for where the reader ended up rather than where they
-    // passed through.
-    expect(slow.sent).toEqual(['h:one', 'h:two', 'h:four'])
-
-    await slow.land()
-    await Promise.all([first, ...more])
-    expect(paced.showing?.page).toBe(3)
-  })
-
-  test('scrolling back over the pages it skipped lands on the right one', async () => {
-    const { slow, paced } = await reading()
-
-    const forward = [paced.turn(1), paced.turn(1), paced.turn(1)]
-    await flush()
-    const back = [paced.turn(-1), paced.turn(-1)]
-
-    await slow.land()
-    await slow.land()
-    await Promise.all([...forward, ...back])
-
-    // Three on and two back is one on.
-    expect(paced.showing?.page).toBe(1)
-    expect(slow.sent.at(-1)).toBe('h:two')
+    expect(session.page?.numbers).not.toBe('')
   })
 })

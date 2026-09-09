@@ -1,0 +1,416 @@
+import { BODY_INNER, BODY_ROWS } from '@nib/glasses'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { Session } from './session'
+import { type Row, Shell, type Words, type World } from './shell'
+
+const WORDS: Words = {
+  spaces: 'Spaces',
+  notes: 'Notes',
+  switchSpace: 'Switch space',
+  changeNote: 'Change note',
+  voiceOn: 'Voice on',
+  voiceOff: 'Voice off',
+  thinking: 'Thinking',
+  nothingHere: 'Nothing here',
+  noAnswer: 'No answer',
+}
+
+const paging = { breakAt: 2, gutter: 0, inner: BODY_INNER, rows: BODY_ROWS }
+
+const NOTE = [
+  '# The title',
+  '',
+  'Words under the title, enough of them to run past one line of the panel.',
+  '',
+  '## A section',
+  '',
+  'More words in the section.',
+  '',
+].join('\n')
+
+function row(label: string, over: Partial<Row> = {}): Row {
+  return { label, depth: 0, folder: false, open: false, id: label, ...over }
+}
+
+/** A world that answers like the app's own, and writes down what it was asked. */
+class Fake implements World {
+  spaceName = 'Work'
+  contentRows: Row[] = [
+    row('Inbox', { folder: true, open: true }),
+    row('Monday standup', { depth: 1 }),
+    row('Meeting notes', { depth: 1 }),
+    row('Reading list'),
+  ]
+  spaceRows: Row[] = [row('Work'), row('Home'), row('Nib')]
+  treeRows: Row[] = [row('Inbox', { folder: true, open: false }), row('Reading list')]
+  on = false
+  readonly opened: string[] = []
+  readonly folded: string[] = []
+  readonly entered: string[] = []
+
+  space = () => this.spaceName
+  contents = () => this.contentRows
+  spaces = () => this.spaceRows
+  tree = () => this.treeRows
+  open = (id: string) => void this.opened.push(id)
+  fold = (id: string) => void this.folded.push(id)
+  enter = (id: string) => void this.entered.push(id)
+  listen = (on: boolean) => {
+    this.on = on
+  }
+  listening = () => this.on
+}
+
+let world: Fake
+let session: Session
+let shell: Shell
+
+beforeEach(() => {
+  world = new Fake()
+  session = new Session()
+  session.follow({ key: 'a', name: 'A note', text: NOTE }, paging)
+  shell = new Shell(world, WORDS, session)
+})
+
+/** The table in the file's own header, as tests. */
+describe('what a gesture does', () => {
+  test('a tap on the note opens the sidebar', () => {
+    expect(shell.handle('tap')).toBe('draw')
+    expect(shell.screen.kind).toBe('sidebar')
+  })
+
+  test('a tap on the sidebar opens the row under the cursor and closes it', () => {
+    shell.handle('tap')
+    shell.handle('down')
+    shell.handle('tap')
+
+    expect(world.opened).toEqual(['Monday standup'])
+    expect(shell.screen.kind).toBe('note')
+  })
+
+  test('a hold opens the modal, from anywhere', () => {
+    expect(shell.handle('hold')).toBe('draw')
+    expect(shell.screen.kind).toBe('modal')
+
+    shell.handle('tap')
+    expect(shell.screen.kind).toBe('spaces')
+    // Held again from inside another screen, and it is the modal again rather
+    // than one more thing on the stack.
+    shell.handle('hold')
+    expect(shell.screen.kind).toBe('modal')
+  })
+
+  test('a double tap on the note asks the system to leave the app', () => {
+    // The one gesture the platform reserves, and every app is checked for it.
+    expect(shell.handle('double')).toBe('leave')
+    expect(shell.screen.kind).toBe('note')
+  })
+
+  test('a double tap closes whatever is open instead of leaving', () => {
+    shell.handle('hold')
+    shell.handle('tap')
+    expect(shell.screen.kind).toBe('spaces')
+
+    // One level at a time: the picker, then the modal, then the note.
+    expect(shell.handle('double')).toBe('draw')
+    expect(shell.screen.kind).toBe('modal')
+    expect(shell.handle('double')).toBe('draw')
+    expect(shell.screen.kind).toBe('note')
+    // And only then the system's own question.
+    expect(shell.handle('double')).toBe('leave')
+  })
+
+  test('a scroll on the note turns a page', () => {
+    const before = session.showing?.page ?? 0
+
+    shell.handle('down')
+    expect(session.showing?.page).toBe(before + 1)
+    shell.handle('up')
+    expect(session.showing?.page).toBe(before)
+  })
+
+  test('a scroll on a list moves the cursor a row', () => {
+    shell.handle('tap')
+
+    shell.handle('down')
+    shell.handle('down')
+    expect(shell.screen).toMatchObject({ kind: 'sidebar', at: 2 })
+    shell.handle('up')
+    expect(shell.screen).toMatchObject({ kind: 'sidebar', at: 1 })
+  })
+
+  test('a cursor stops at each end rather than wrapping round', () => {
+    shell.handle('tap')
+
+    shell.handle('up')
+    expect(shell.screen).toMatchObject({ at: 0 })
+    for (let n = 0; n < 20; n++) shell.handle('down')
+    expect(shell.screen).toMatchObject({ at: world.contentRows.length - 1 })
+    // And says so, rather than redrawing a panel that has not changed.
+    expect(shell.handle('down')).toBe('none')
+  })
+})
+
+/** The tree, which is the one list where a tap does two different things. */
+describe('the note picker', () => {
+  beforeEach(() => {
+    shell.handle('hold')
+    shell.handle('down')
+    shell.handle('tap')
+  })
+
+  test('opens on the tree', () => {
+    expect(shell.screen.kind).toBe('tree')
+  })
+
+  test('a tap on a folder opens it and keeps the reader where they are', () => {
+    shell.handle('tap')
+
+    expect(world.folded).toEqual(['Inbox'])
+    expect(shell.screen.kind).toBe('tree')
+  })
+
+  test('a tap on a note opens it and puts the tree away', () => {
+    shell.handle('down')
+    shell.handle('tap')
+
+    expect(world.opened).toEqual(['Reading list'])
+    expect(shell.screen.kind).toBe('note')
+  })
+
+  test('draws a folder open or shut', () => {
+    expect(shell.view().body).toContain('▶ Inbox')
+    world.treeRows = [row('Inbox', { folder: true, open: true }), row('Reading list')]
+    expect(shell.view().body).toContain('▼ Inbox')
+  })
+})
+
+/** The modal, which is three rows and the same cursor as every other list. */
+describe('the modal', () => {
+  test('offers switch space, change note and the microphone', () => {
+    shell.handle('hold')
+    const body = shell.view().body
+
+    expect(body).toContain('Switch space')
+    expect(body).toContain('Change note')
+    expect(body).toContain('Voice on')
+  })
+
+  test('turns the microphone on and says so, then closes', () => {
+    shell.handle('hold')
+    shell.handle('down')
+    shell.handle('down')
+    shell.handle('tap')
+
+    expect(world.on).toBe(true)
+    expect(shell.screen.kind).toBe('note')
+    expect(shell.view().foot).toBe('Voice on')
+  })
+
+  test('offers to turn it off once it is on', () => {
+    world.on = true
+    shell.handle('hold')
+
+    expect(shell.view().body).toContain('Voice off')
+  })
+})
+
+/** Every screen is the same five bands, which is the whole reason a gesture costs
+ *  two sends and not a rebuild. */
+describe('the view', () => {
+  test('never puts more rows in the body than the panel holds', () => {
+    for (const open of [() => undefined, () => shell.handle('tap'), () => shell.handle('hold')]) {
+      open()
+      expect(shell.view().body.split('\n').length).toBeLessThanOrEqual(BODY_ROWS)
+      shell.close()
+    }
+  })
+
+  test('says the section in the head and the note in the foot', () => {
+    const view = shell.view()
+
+    expect(view.head).toBe('THE TITLE')
+    expect(view.foot).toBe('A note')
+    expect(view.rule).toMatch(/^═+$/)
+  })
+
+  test('falls back to the note name when a note opens without a heading', () => {
+    session.follow({ key: 'b', name: 'Plain', text: 'Just words.\n' }, paging)
+
+    expect(shell.view().head).toBe('Plain')
+  })
+
+  test('marks the row under the cursor, and only that one', () => {
+    shell.handle('tap')
+    const rows = shell.view().body.split('\n')
+
+    expect(rows[0]?.startsWith('▶ ')).toBe(true)
+    for (const row_ of rows.slice(1)) expect(row_.startsWith('▶ ')).toBe(false)
+  })
+
+  test('keeps every row of a list starting at the same pixel', () => {
+    shell.handle('tap')
+    const rows = shell.view().body.split('\n')
+
+    // The cursor has a column of its own: a row that is not chosen is indented by
+    // the room the triangle took, so the words do not jump sideways as it moves.
+    for (const row_ of rows) expect(row_.slice(0, 2)).toMatch(/^(▶ | {2})$/)
+  })
+
+  test('says where in a list the cursor is', () => {
+    shell.handle('tap')
+    shell.handle('down')
+
+    expect(shell.view().foot).toBe('2/4')
+  })
+
+  test('scrolls the window only when the cursor would leave it', () => {
+    world.contentRows = Array.from({ length: 30 }, (_one, at) => row(`note ${at}`))
+    shell.handle('tap')
+
+    expect(shell.view().body.split('\n')[0]).toContain('note 0')
+    for (let n = 0; n < 20; n++) shell.handle('down')
+    const rows = shell.view().body.split('\n')
+    expect(rows).toHaveLength(BODY_ROWS)
+    expect(rows.some((one) => one.includes('▶ note 20'))).toBe(true)
+  })
+
+  test('says so when a space has nothing in it', () => {
+    world.contentRows = []
+    shell.handle('tap')
+
+    expect(shell.view().body).toBe('Nothing here')
+    expect(shell.view().foot).toBe('')
+  })
+
+  test('lights the corner while the microphone is open', () => {
+    expect(shell.view().mic).toBe(' ')
+    world.on = true
+    expect(shell.view().mic).toBe('●')
+  })
+
+  test('cuts a name too long for the panel rather than wrapping it', () => {
+    world.contentRows = [row('a note with a name far longer than the panel is wide '.repeat(3))]
+    shell.handle('tap')
+
+    expect(shell.view().body.split('\n')).toHaveLength(1)
+    expect(shell.view().body).toContain('…')
+  })
+})
+
+/** The answer view, which is the one screen that scrolls a line at a time. */
+describe('an answer from the model', () => {
+  const answer = [
+    'The short answer.',
+    '',
+    ...Array.from({ length: 20 }, (_one, at) => `Line ${at}.`),
+  ].join('\n')
+
+  test('shows the question over the answer', () => {
+    shell.answered('what did I decide', answer)
+    const view = shell.view()
+
+    expect(view.head).toBe('what did I decide')
+    expect(view.body.split('\n')[0]).toBe('The short answer.')
+  })
+
+  test('scrolls a line at a time rather than a page', () => {
+    shell.answered('q', answer)
+    const first = shell.view().body.split('\n')[0]
+
+    shell.handle('down')
+    const second = shell.view().body.split('\n')[0]
+    expect(second).not.toBe(first)
+    // One line, not seven: the second row of the first view is the first of this.
+    expect(second).toBe('')
+  })
+
+  test('stops at the end of the answer', () => {
+    shell.answered('q', answer)
+    for (let n = 0; n < 100; n++) shell.handle('down')
+
+    expect(shell.handle('down')).toBe('none')
+    expect(shell.view().body.split('\n')).toHaveLength(BODY_ROWS)
+  })
+
+  test('says how far down the answer the reader is', () => {
+    shell.answered('q', answer)
+
+    expect(shell.view().foot).toBe('7/22')
+  })
+
+  test('a double tap closes it, back to the note', () => {
+    shell.answered('q', answer)
+
+    expect(shell.handle('double')).toBe('draw')
+    expect(shell.screen.kind).toBe('note')
+  })
+
+  test('says it is thinking while the model is', () => {
+    shell.asking('what did I decide')
+
+    expect(shell.view().foot).toBe('Thinking')
+    expect(shell.view().head).toBe('what did I decide')
+  })
+
+  test('says so when the model answered with nothing', () => {
+    shell.answered('q', '')
+
+    expect(shell.view().body).toBe('No answer')
+  })
+
+  test('wraps an answer too wide for the panel', () => {
+    shell.answered('q', 'a '.repeat(300))
+
+    for (const row_ of shell.view().body.split('\n')) {
+      expect(row_.length).toBeLessThan(120)
+    }
+  })
+})
+
+/** What a spoken command asks of the shell. */
+describe('what a command asks for', () => {
+  test('puts a screen up by name', () => {
+    shell.show('spaces')
+    expect(shell.screen.kind).toBe('spaces')
+    shell.show('tree')
+    expect(shell.screen.kind).toBe('tree')
+  })
+
+  test('closes everything at once, however deep', () => {
+    shell.handle('hold')
+    shell.handle('tap')
+
+    shell.close()
+    expect(shell.screen.kind).toBe('note')
+    expect(shell.open).toBe(false)
+  })
+
+  test('says whether anything is open, which is what "back" asks', () => {
+    expect(shell.open).toBe(false)
+    shell.handle('tap')
+    expect(shell.open).toBe(true)
+  })
+
+  test('goes to a page', () => {
+    shell.goToPage(2)
+    expect(session.showing?.page).toBe(1)
+  })
+
+  test('goes to a line of the note', () => {
+    shell.goToLine(7)
+    const showing = session.showing
+
+    expect(showing).not.toBeNull()
+    expect(showing?.firstLine).toBeLessThanOrEqual(7)
+    expect(showing?.lastLine).toBeGreaterThanOrEqual(7)
+  })
+
+  test('flashes what it heard in the foot, and forgets it', () => {
+    shell.flash('Next')
+    expect(shell.view().foot).toBe('Next')
+
+    shell.clearFlash()
+    expect(shell.view().foot).toBe('A note')
+  })
+})

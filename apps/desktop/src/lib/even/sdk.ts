@@ -36,12 +36,12 @@ type Source = 'ring' | 'left' | 'right' | 'unknown'
 type Life = 'foreground' | 'background' | 'gone'
 
 export type Input =
-  { kind: 'gesture'; gesture: Gesture; from: Source } | { kind: 'life'; life: Life }
-
-/** What became of an image. `again` is worth retrying; `dead` is the documented
- *  wedge where the image channel stops taking anything until the app restarts,
- *  and is the cue to fall back to words. */
-export type Sent = 'ok' | 'again' | 'dead'
+  | { kind: 'gesture'; gesture: Gesture; from: Source }
+  | { kind: 'life'; life: Life }
+  /** One frame of sound off the glasses' microphone, as the host processed it.
+   *  Sixteen bit little endian PCM at 16 kHz, which is what the audio path on
+   *  these glasses is; see voice.ts, which is the only thing that reads it. */
+  | { kind: 'audio'; pcm: Uint8Array }
 
 /** A container, by both of its names. The host matches on the pair and fails
  *  silently when they disagree. */
@@ -62,9 +62,14 @@ export interface Glasses {
   /** Creates the page. Exactly once for the life of the app: a second call is
    *  refused, and refused slowly. */
   start(page: unknown): Promise<Made>
-  image(container: Container, bytes: Uint8Array): Promise<Sent>
+  /** Makes the page again with other geometry. A flat 165 ms, so the plugin does
+   *  it once, when the reader turns the line numbers on or off. */
+  rebuild(page: unknown): Promise<boolean>
   words(container: Container, content: string): Promise<boolean>
   listen(handler: (input: Input) => void): () => void
+  /** Opens or closes the glasses' own microphone. The startup page has to exist
+   *  first, per the SDK's own troubleshooting note, or it answers false. */
+  microphone(open: boolean): Promise<boolean>
   /** Asks the glasses to put up their own leave-this-app question. */
   leave(): Promise<void>
 }
@@ -89,8 +94,9 @@ export interface Store {
  *  crossing a boundary is checked. */
 interface Bridge {
   createStartUpPageContainer(page: unknown): Promise<unknown>
-  updateImageRawData(data: unknown): Promise<unknown>
+  rebuildPageContainer(page: unknown): Promise<unknown>
   textContainerUpgrade(container: unknown): Promise<unknown>
+  audioControl(open: boolean, source?: string): Promise<unknown>
   shutDownPageContainer(exitMode?: number): Promise<unknown>
   onEvenHubEvent(handler: (event: unknown) => void): () => void
 }
@@ -105,8 +111,9 @@ interface Keeper {
 
 const METHODS = [
   'createStartUpPageContainer',
-  'updateImageRawData',
+  'rebuildPageContainer',
   'textContainerUpgrade',
+  'audioControl',
   'shutDownPageContainer',
   'onEvenHubEvent',
 ] as const
@@ -304,16 +311,29 @@ function madeOf(answer: unknown): Made {
 
 /** The host's answer to an image send. It may be the enum's string or its int;
  *  anything else is treated as a failure worth retrying rather than as success. */
-function sentOf(answer: unknown): Sent {
-  const word =
-    typeof answer === 'string' ? answer : typeof answer === 'number' ? String(answer) : ''
-  if (word === 'success' || word === '0') return 'ok'
-  // The one failure no retry helps with: after the leave-this-app question has
-  // been up, the image channel can stop taking anything at all for the life of
-  // the app. See docs/even.md.
-  if (word === 'sendFailed' || word === '3') return 'dead'
+/** One frame of sound, whichever of the three shapes the host sent it as.
+ *
+ *  The SDK's own model says `Uint8Array`, but what crosses a JSON channel is a
+ *  `number[]` or a base64 string, and different host versions send different ones.
+ *  Read at the boundary, once, like everything else here. */
+function pcmOf(found: unknown): Uint8Array | null {
+  if (found instanceof Uint8Array) return found
+  if (Array.isArray(found)) return Uint8Array.from(found.map((one) => Number(one) & 0xff))
 
-  return 'again'
+  if (typeof found === 'string' && found !== '') {
+    try {
+      const raw = atob(found)
+      const out = new Uint8Array(raw.length)
+      for (let at = 0; at < raw.length; at++) out[at] = raw.charCodeAt(at)
+      return out
+    } catch {
+      // Not base64 after all. A frame nobody can read is a frame nobody hears,
+      // and the next one arrives in twenty milliseconds.
+      return null
+    }
+  }
+
+  return null
 }
 
 function sourceOf(from: unknown): Source {
@@ -363,6 +383,14 @@ const SAME_LIFE = 600
  *  whatever is capturing. Some firmware also puts the swipes on the system
  *  event, which is where the ring's own come from, so both are read. */
 function inputOf(event: Record<string, unknown>): Input | null {
+  // Sound first, because it is the one that arrives fifty times a second and
+  // carries no event type of its own to be mistaken for a tap.
+  const audio = event.audioEvent
+  if (typeof audio === 'object' && audio !== null) {
+    const pcm = pcmOf((audio as { audioPcm?: unknown }).audioPcm)
+    return pcm ? { kind: 'audio', pcm } : null
+  }
+
   const text = typeOf(event.textEvent)
   if (text === SCROLL_TOP) return { kind: 'gesture', gesture: 'up', from: 'unknown' }
   if (text === SCROLL_BOTTOM) return { kind: 'gesture', gesture: 'down', from: 'unknown' }
@@ -404,27 +432,31 @@ function glassesOf(bridge: Bridge): Glasses {
       return madeOf(await bridge.createStartUpPageContainer(page))
     },
 
-    async image(container, bytes) {
-      // A plain object rather than the SDK's class: the host mapper reads it
-      // through the same static `toJson`, and this way the plugin can be driven
-      // against a stand-in that has no classes to build.
-      return sentOf(
-        await bridge.updateImageRawData({
-          containerID: container.id,
-          containerName: container.name,
-          // `number[]` is what the host takes best, per the SDK's own note.
-          imageData: Array.from(bytes),
-        }),
-      )
+    async rebuild(page) {
+      // Documented as answering a boolean. A host that hands back the int takes
+      // zero for success, the way the rest of this bridge does.
+      const answer = await bridge.rebuildPageContainer(page)
+      return answer === true || answer === 0 || answer === 'success'
     },
 
     async words(container, content) {
+      // A plain object rather than the SDK's class: the host mapper reads it
+      // through the same static `toJson`, and this way the plugin can be driven
+      // against a stand-in that has no classes to build.
       const answer = await bridge.textContainerUpgrade({
         containerID: container.id,
         containerName: container.name,
         content,
       })
       return answer === true
+    },
+
+    async microphone(open) {
+      // The glasses' own microphone rather than the phone's: the reader is looking
+      // through the glasses and speaking into them, and the phone may be in a
+      // pocket. The string rather than the SDK's enum, which is what it is.
+      const answer = await bridge.audioControl(open, 'glasses')
+      return answer === true || answer === 0 || answer === 'success'
     },
 
     listen(handler) {

@@ -1,61 +1,84 @@
-/** The page the glasses hold, and how a drawn page reaches it.
+/** The page the glasses hold, and how a view reaches it.
  *
- *  Five containers, made once and never rebuilt. Four image containers tile the
- *  whole panel, because an image container may be at most 288 by 144 and the
- *  panel is 576 by 288; a full-screen text container sits behind them and is the
- *  one that captures input, which is the layering the platform's own docs
- *  prescribe for an app that draws. Never rebuilt because a rebuild costs a flat
- *  165 ms and a page turn should not pay it.
+ *  Six text containers and nothing else. No image container is made at all: text
+ *  mode is the only mode, and a page of words is one `textContainerUpgrade` of
+ *  about 83 ms against four image sends of about 185 ms each. See docs/even.md.
  *
- *  A page turn sends only the containers whose pixels moved. A container starts
- *  empty and every empty quadrant hashes alike, so the two thirds of a page of
- *  prose that are dark cost nothing at all. See docs/even.md for the arithmetic.
+ *  The page is made **once** and never rebuilt while it is up, because a rebuild
+ *  costs a flat 165 ms. Every screen the plugin shows - the note, the sidebar, the
+ *  modal, the two pickers, an answer from the model - is the same six bands with
+ *  different words in them, so switching screens costs only the bands that
+ *  actually changed. A page turn is two of them; opening the sidebar is three.
  *
- *  When the image channel dies - a documented fault after the leave-this-app
- *  question has been up, after which every image send fails for the life of the
- *  app - the note is put into the text container as words instead. It loses the
- *  faces, the code colours and the tables, and it is still the note. */
+ *  The one thing that does rebuild is the column of line numbers, because a
+ *  container's geometry is fixed when the page is made and the numbers need a
+ *  column of their own to keep the body's left edge straight. Turning them on or
+ *  off is a rebuild, once, which is a fair price for a setting nobody changes
+ *  twice a day.
+ *
+ *  Nothing is sent that is already on the glass. Every band remembers what it was
+ *  last given, which is what makes a keystroke cost nothing when the page it
+ *  changed is not the page in front of the reader. */
 
-import {
-  BLANK,
-  isTextPage,
-  PANEL_HEIGHT,
-  PANEL_WIDTH,
-  type Page,
-  QUADRANTS,
-  type Sheet,
-} from '@nib/glasses'
+import { type Band, type BandName, bandsOf, BRIGHT, PANEL_HEIGHT, PANEL_WIDTH } from '@nib/glasses'
 import type { Container, Glasses, Made } from './sdk'
-import type { Screen, Showing } from './session'
+import type { View } from './shell'
 
-/** All the panel asks of the renderer: a page's containers, as bytes. `Sheets`
- *  in `@nib/glasses` is one, and so is a stand-in with no canvas behind it. */
-export interface Drawer {
-  sheet(page: Page, mark?: string): Promise<Sheet | null>
-}
-
-/** The layer that collects every gesture. One container per page may capture,
- *  and an image container may not, so this is it. Its content is a single space:
- *  nothing to read, and no overflow, so a swipe is at both ends of it at once
- *  and reaches us instead of scrolling something invisible. */
+/** The layer that collects every gesture.
+ *
+ *  One container per page may capture and it has to be one of ours, so this sits
+ *  behind everything with a single space in it. A single space means no overflow,
+ *  so a scroll is at both ends of it at once and reaches us instead of scrolling
+ *  something invisible; a band with real words in it would swallow the gesture. */
 const CAPTURE: Container = { id: 1, name: 'nib' }
 const EMPTY = ' '
 
-/** The four containers the page is drawn into, in reading order. They are sent
- *  in this order too, because the glasses reveal each as it lands. */
-const TILES: readonly Container[] = QUADRANTS.map((_one, at) => ({
-  id: 11 + at,
-  name: `nib${at + 1}`,
-}))
+/** The bands, by the id and name the host matches them on. The host matches the
+ *  pair and fails silently when they disagree, so they are said once. */
+const IDS: Record<BandName, Container> = {
+  head: { id: 2, name: 'nibHead' },
+  rule: { id: 3, name: 'nibRule' },
+  nums: { id: 4, name: 'nibNums' },
+  body: { id: 5, name: 'nibBody' },
+  foot: { id: 6, name: 'nibFoot' },
+  mic: { id: 7, name: 'nibMic' },
+}
 
-/** What `createStartUpPageContainer` is given.
- *
- *  A plain object: the host reads it through the SDK's own static mapper, which
- *  takes one. `zOrderIndex` is all or nothing for a page, so all five carry one,
- *  with the capture layer underneath. */
-function skeleton(): unknown {
+/** The order the bands are sent in, which is the order they are read in: a reader
+ *  glancing up while a page lands sees the top of it first. */
+const ORDER: readonly BandName[] = ['head', 'rule', 'nums', 'body', 'foot', 'mic']
+
+/** What `textContainerUpgrade` will take at once. A page of the firmware's own type
+ *  is nowhere near it; an answer from a model could be. */
+const MOST = 2000
+
+function container(name: BandName, band: Band, zOrder: number): unknown {
   return {
-    containerTotalNum: 1 + TILES.length,
+    containerID: IDS[name].id,
+    containerName: IDS[name].name,
+    xPosition: band.x,
+    yPosition: band.y,
+    width: band.width,
+    height: band.height,
+    isEventCapture: 0,
+    zOrderIndex: zOrder,
+    content: EMPTY,
+    textColor: BRIGHT[name],
+  }
+}
+
+/** What the page is made of.
+ *
+ *  `zOrderIndex` is all or nothing for a page, so every container carries one with
+ *  the capture layer underneath. The numbers are left out entirely when the reader
+ *  has not asked for them, rather than made zero wide: a container that is never
+ *  drawn is one fewer thing for the firmware to hold. */
+function skeleton(lineNumbers: boolean): unknown {
+  const bands = bandsOf(lineNumbers)
+  const shown = ORDER.filter((name) => name !== 'nums' || lineNumbers)
+
+  return {
+    containerTotalNum: 1 + shown.length,
     textObject: [
       {
         containerID: CAPTURE.id,
@@ -68,114 +91,86 @@ function skeleton(): unknown {
         zOrderIndex: 0,
         content: EMPTY,
       },
+      ...shown.map((name, at) => container(name, bands[name], at + 1)),
     ],
-    imageObject: QUADRANTS.map((quadrant, at) => ({
-      containerID: TILES[at]?.id,
-      containerName: TILES[at]?.name,
-      xPosition: quadrant.x,
-      yPosition: quadrant.y,
-      width: quadrant.width,
-      height: quadrant.height,
-      zOrderIndex: at + 1,
-    })),
   }
 }
 
-/** A page as words, for the text container to fall back to. */
-function wordsOf(page: Page): string {
-  return page.lines
-    .map((line) => line.placed.map((one) => one.run.over ?? one.run.text).join(''))
-    .join('\n')
-    .trim()
-}
-
-/** What `textContainerUpgrade` will take at once. */
-const WORD_LIMIT = 2000
-
-export class Panel implements Screen {
-  /** What each container is showing, by its hash. Every container starts empty,
-   *  and an empty quadrant hashes to the same thing, so nothing dark is ever
-   *  sent to a container that is already dark. */
-  private readonly held = TILES.map(() => BLANK)
-  /** True once the image channel has failed in the way no retry helps. */
-  private drawnOut = false
+export class Panel {
+  /** What each band is showing. A band starts as a single space, so a view whose
+   *  band is empty sends nothing at all on the first draw either. */
+  private held = new Map<BandName, string>()
   private started = false
   private made: Made = 'unknown'
+  /** Which geometry the page was made with, so that a change is noticed. */
+  private numbered: boolean
 
   constructor(
     private readonly glasses: Glasses,
-    private readonly sheets: Drawer,
-  ) {}
+    lineNumbers: boolean,
+  ) {
+    this.numbered = lineNumbers
+  }
 
-  /** Makes the page. Called once; a second call is refused by the host, and
-   *  refused after blocking for a couple of seconds, so what is latched here is
-   *  that it was called rather than that it worked.
+  /** Makes the page. Called once a launch: a second `createStartUpPageContainer` is
+   *  refused, and refused after blocking for a couple of seconds, so what is
+   *  latched is that it was called rather than that it worked.
    *
-   *  Answers in the host's own word, because the four answers are not one thing:
-   *  a page too big for the panel and a page the radio never heard are both a
-   *  dark panel, and only one of them is worth changing anything about. */
+   *  Answers in the host's own word, because its four answers are not one thing: a
+   *  page too big for the panel and a page the radio never heard are both a dark
+   *  panel, and only one of them is worth changing anything about. */
   async open(): Promise<Made> {
     if (this.started) return this.made
 
     this.started = true
-    this.made = await this.glasses.start(skeleton())
+    this.made = await this.glasses.start(skeleton(this.numbered))
     return this.made
   }
 
-  async show(page: Page, showing: Showing): Promise<void> {
-    // Text mode. One call of about 83 ms against four image sends of 185 ms
-    // each, and the firmware sets it itself, so the panel changes at once rather
-    // than a quarter at a time. See @nib/glasses text.ts.
-    if (isTextPage(page)) return this.write(page, showing)
+  /** The reader turned the line numbers on or off, so the body has to move.
+   *
+   *  The one rebuild in the plugin. Everything on the glass is forgotten with it,
+   *  so the next `show` sends every band again. */
+  async renumber(lineNumbers: boolean): Promise<boolean> {
+    if (lineNumbers === this.numbered) return true
 
-    if (this.drawnOut) return this.write(page)
+    this.numbered = lineNumbers
+    const rebuilt = await this.glasses.rebuild(skeleton(lineNumbers))
+    if (rebuilt) this.held = new Map()
 
-    const sheet = await this.sheets.sheet(page, `${showing.page + 1}/${showing.count}`)
-    if (!sheet) return this.write(page)
-
-    // One at a time. Concurrent sends are not allowed, and the glasses reveal
-    // each container as it lands, so in reading order the page fills the way a
-    // page is read.
-    for (const quadrant of sheet.quadrants) {
-      if (this.held[quadrant.at] === quadrant.hash) continue
-
-      const container = TILES[quadrant.at]
-      if (!container) continue
-
-      const sent = await this.glasses.image(container, quadrant.bytes)
-      if (sent === 'ok') {
-        this.held[quadrant.at] = quadrant.hash
-        continue
-      }
-
-      if (sent === 'dead') {
-        this.drawnOut = true
-        return this.write(page)
-      }
-
-      // Worth one more try, and then left: the next page turn will bring it
-      // round again, and a half-drawn page is better than a stalled one.
-      const again = await this.glasses.image(container, quadrant.bytes)
-      if (again === 'ok') this.held[quadrant.at] = quadrant.hash
-      else if (again === 'dead') {
-        this.drawnOut = true
-        return this.write(page)
-      }
-    }
+    return rebuilt
   }
 
-  /** The page as words in the capture layer.
+  /** Puts a view on the glass, sending only the bands whose words have changed.
    *
-   *  Three things arrive here: text mode, which is a choice; the fallback after
-   *  the image channel has died; and a page with no canvas to draw it on. A page
-   *  the text pager made carries its own words, cut where the firmware will cut
-   *  them; anything else is flattened out of what was drawn. */
-  private async write(page: Page, showing?: Showing): Promise<void> {
-    const words = isTextPage(page) ? page.words : wordsOf(page)
-    // The page count, on its own line at the foot, since a text container has no
-    // corner to put it in.
-    const mark = showing && showing.count > 1 ? `\n${showing.page + 1}/${showing.count}` : ''
+   *  Answers how many bands went, which is the only honest measure of what a
+   *  gesture cost: each is about 83 ms of radio.
+   *
+   *  One at a time and in reading order. Concurrent sends are the documented way to
+   *  wedge the host's channel, and a page that lands top first is a page a reader
+   *  can start reading before it has finished arriving. */
+  async show(view: View): Promise<number> {
+    let sent = 0
 
-    await this.glasses.words(CAPTURE, words.slice(0, WORD_LIMIT - mark.length) + mark || EMPTY)
+    for (const name of ORDER) {
+      if (name === 'nums' && !this.numbered) continue
+
+      const words = (view[name] || EMPTY).slice(0, MOST)
+      if (this.held.get(name) === words) continue
+
+      const ok = await this.glasses.words(IDS[name], words)
+      // A band the host would not take is a band that has not changed, so the next
+      // draw tries it again rather than believing a lie about the glass.
+      if (ok) this.held.set(name, words)
+      sent++
+    }
+
+    return sent
+  }
+
+  /** Everything on the glass, forgotten. What a page that has come back to the
+   *  front needs: the host cleared the panel under us while its own layer was up. */
+  forget(): void {
+    this.held = new Map()
   }
 }

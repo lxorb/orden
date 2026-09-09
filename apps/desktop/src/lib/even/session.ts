@@ -4,19 +4,21 @@
  *
  *    - the note the plugin has active is the note on the glasses;
  *    - switching notes in the plugin switches the glasses;
- *    - closing the note in the plugin leaves it on the glasses until another
- *      note becomes active, because a reader who shuts their phone has not
- *      stopped reading;
- *    - the glasses scroll on their own, by pages, and every note remembers the
- *      page it was left on;
- *    - an edit keeps the reader where they were, and sends nothing when the page
- *      they are on has not changed a pixel.
+ *    - closing the note in the plugin leaves it on the glasses until another note
+ *      becomes active, because a reader who shuts their phone has not stopped
+ *      reading;
+ *    - the page on the glasses and the scroll on the phone are bound both ways,
+ *      and every note remembers the page it was left on;
+ *    - an edit keeps the reader on the words in front of them, and a page that has
+ *      not changed is not sent again.
  *
- *  Nothing here knows about Svelte, a canvas or a radio: pages come from a
- *  function and go to a screen, both handed in. That is what makes the rules
- *  above testable rather than hopeful. */
+ *  All of it is synchronous state and no radio: paging a note is arithmetic now
+ *  that the firmware sets its own type, so nothing here has to be a promise. What
+ *  it answers is whether anything a reader can see has moved, and the caller
+ *  decides what that costs. That is what makes the rules above testable rather
+ *  than hopeful; there is a fake bridge for the rest. */
 
-import { type Page, pageAt } from '@nib/glasses'
+import { type Page, pageAt, pagesOf, type Paging } from '@nib/glasses'
 
 /** A note the plugin has open. Keyed by the document rather than by the tab,
  *  because two panes showing one note are one note; see documents.svelte.ts. */
@@ -26,22 +28,21 @@ export interface OpenNote {
   text: string
 }
 
-/** What the reader is looking at, for the plugin to show beside the tab. */
+/** What the reader is looking at, for the plugin to draw a frame around. */
 export interface Showing {
   key: string
   name: string
   /** Counting from zero. */
   page: number
   count: number
+  /** The region of the note this page is, which is what the frame in the plugin is
+   *  drawn around and what the phone is scrolled to. */
+  from: number
+  to: number
+  /** The lines of the note it shows. */
+  firstLine: number
+  lastLine: number
 }
-
-/** Where a drawn page goes. */
-export interface Screen {
-  /** `showing` is what the page's own corner says: which page of how many. */
-  show(page: Page, showing: Showing): Promise<void>
-}
-
-export type Pager = (text: string) => Promise<Page[]>
 
 interface Shown {
   key: string
@@ -54,63 +55,80 @@ function clamp(page: number, count: number): number {
   return Math.min(Math.max(0, page), Math.max(0, count - 1))
 }
 
-function showingOf(shown: Shown): Showing {
-  return { key: shown.key, name: shown.name, page: shown.page, count: shown.pages.length }
-}
-
 export class Session {
   private shown: Shown | null = null
-  /** The page each note was left on, by document. Kept for the sitting, not
+  /** The page each note was left on, by document. Kept for the sitting and not
    *  written down: which page of a note somebody is on belongs to the afternoon. */
   private readonly places = new Map<string, number>()
-  /** Bumped by every call. A render that finishes after a newer one started has
-   *  nothing to say, and sending its page would put the reader back a note. */
-  private latest = 0
-  /** The page the reader has asked for, which is where the glass is heading
-   *  rather than where it is. A burst of scrolls moves this and nothing else. */
-  private asked = 0
-  /** The one send in flight, if there is one. */
-  private drawing: Promise<void> | null = null
+  /** The hash of the page last put on the glass, so a page that has not changed a
+   *  character is not sent again. */
+  private sent = ''
 
-  constructor(
-    private readonly pages: Pager,
-    private readonly screen: Screen,
-  ) {}
+  get pages(): readonly Page[] {
+    return this.shown?.pages ?? []
+  }
+
+  get page(): Page | null {
+    const shown = this.shown
+    return shown?.pages[shown.page] ?? null
+  }
 
   get showing(): Showing | null {
-    return this.shown ? showingOf(this.shown) : null
+    const shown = this.shown
+    const page = shown?.pages[shown.page]
+    if (!shown || !page) return null
+
+    return {
+      key: shown.key,
+      name: shown.name,
+      page: shown.page,
+      count: shown.pages.length,
+      from: page.from,
+      to: page.to,
+      firstLine: page.firstLine,
+      lastLine: page.lastLine,
+    }
+  }
+
+  /** True when the page in front of the reader is not the one already on the glass.
+   *
+   *  Asked before anything is sent. This is the whole of what keeps a keystroke off
+   *  the radio: the same words and the same page of the same count hash alike, so
+   *  an edit further down the note costs nothing at all. */
+  get moved(): boolean {
+    return (this.page?.hash ?? '') !== this.sent
+  }
+
+  /** Remembers what is now on the glass. Called by whoever sent it. */
+  drew(): void {
+    this.sent = this.page?.hash ?? ''
   }
 
   /** The note the plugin has active, or null when it has none.
    *
-   *  Null leaves the glasses as they are. That is the rule about closing a note,
-   *  and it needs no state of its own: this is only ever told what is active. */
-  async follow(open: OpenNote | null): Promise<void> {
+   *  Null leaves the glasses as they are: that is the rule about closing a note,
+   *  and it needs no state of its own, because this is only ever told what *is*
+   *  active. */
+  follow(open: OpenNote | null, paging: Paging): void {
     if (!open) return
 
     const before = this.shown
-    const mine = ++this.latest
-    const pages = await this.pages(open.text)
-    if (mine !== this.latest) return
-
+    const pages = pagesOf(open.text, paging)
     if (!pages.length) {
       // A note with nothing in it. Nothing to show, and nothing to lose either:
       // the glasses keep the last page until there is something to replace it.
       return
     }
 
-    // The same document, edited, or another one. A note leaving the glasses
-    // writes down the page it was left on.
+    // A note leaving the glasses writes down the page it was left on.
     const was = before?.key === open.key ? before : null
     if (before && !was) this.places.set(before.key, before.page)
 
-    // The same note, edited: keep the reader on the words in front of them.
-    // The page they were on, wherever it moved to, since a page is its pixels
-    // and its hash says when two are the same page - an edit further down the
-    // note, or a paragraph inserted above it, then moves nothing they can see.
-    // Where the page itself changed, the place in the note they were at, which
-    // is the best a rewritten page allows. And for another note, the page that
-    // note was left on.
+    // The same note, edited: keep the reader on the words in front of them. The
+    // page they were on, wherever it moved to, since a page is its words and its
+    // hash says when two are the same page. Where the page itself changed, the
+    // place in the note they were at, which is the best a rewritten page allows.
+    // And for another note, the page that note was left on.
     const showed = was?.pages[was.page]
     const still = showed ? pages.find((one) => one.hash === showed.hash) : undefined
     const page = still
@@ -119,93 +137,48 @@ export class Session {
         ? pageAt(pages, showed.from)
         : clamp(this.places.get(open.key) ?? 0, pages.length)
 
-    const wanted = pages[clamp(page, pages.length)]
-    if (!wanted) return
-
-    const shown: Shown = { key: open.key, name: open.name, pages, page: wanted.index }
-    this.shown = shown
-    // A new note is a new place to be heading.
-    this.asked = wanted.index
-    this.places.set(open.key, wanted.index)
-
-    // Nothing the reader can see has moved, so nothing is sent. This is what
-    // keeps a keystroke off the radio: the same picture, and a corner that says
-    // the same page of the same count.
-    const unmoved =
-      was !== null &&
-      showed?.hash === wanted.hash &&
-      was.page === wanted.index &&
-      was.pages.length === pages.length
-    if (unmoved) return
-
-    await this.screen.show(wanted, showingOf(shown))
+    const at = clamp(page, pages.length)
+    this.shown = { key: open.key, name: open.name, pages, page: at }
+    this.places.set(open.key, at)
   }
 
-  /** A swipe on a temple or on the ring: one page on or back.
-   *
-   *  Independent of the phone's own scroll on purpose. The reader is looking at
-   *  the glasses, and what their thumb is doing to the phone is a different
-   *  conversation. */
-  async turn(by: number): Promise<void> {
+  /** A scroll on a temple or on the ring: one page on or back. */
+  turn(by: number): void {
     const shown = this.shown
     if (!shown) return
 
-    this.asked = clamp(this.asked + by, shown.pages.length)
-    return this.pump()
+    this.goTo(shown.page + by)
   }
 
-  /** Draws until the glass shows the page the reader asked for.
-   *
-   *  One send at a time, and always the newest answer. A page costs the best
-   *  part of a second over the radio, so five flicks of the ring used to start
-   *  five four-tile sends that queued behind each other: the reader waited three
-   *  seconds and watched four pages they had already scrolled past go by. They
-   *  asked to be on page six, not to see pages two to six.
-   *
-   *  Concurrent sends are also the documented way to wedge the host's image
-   *  channel until the app is restarted, which is the other reason there is only
-   *  ever one. */
-  private async pump(): Promise<void> {
-    // Already drawing: the loop below re-reads the target every time round, so
-    // it will pick this up without a second send being started.
-    if (this.drawing) return this.drawing
-
-    this.drawing = this.drain()
-    try {
-      await this.drawing
-    } finally {
-      this.drawing = null
-    }
-  }
-
-  private async drain(): Promise<void> {
+  /** Straight to a page, for a spoken "open page four" and for the phone's own
+   *  scroll. */
+  goTo(page: number): void {
     const shown = this.shown
     if (!shown) return
 
-    while (shown.page !== this.asked) {
-      const page = this.asked
-      const wanted = shown.pages[page]
-      if (!wanted) return
-
-      shown.page = page
-      this.places.set(shown.key, page)
-
-      // Claims the turn, so a render that started before it cannot land after
-      // it and put the reader back a page.
-      this.latest++
-      await this.screen.show(wanted, showingOf(shown))
-    }
+    const at = clamp(page, shown.pages.length)
+    shown.page = at
+    this.places.set(shown.key, at)
   }
 
-  /** Shows the page it is already on again. What a page that has come back to
-   *  the front needs: the host cleared the glasses under us. */
-  async repaint(): Promise<void> {
+  /** The page an offset in the note falls on.
+   *
+   *  Half of the scroll binding: the plugin says where the top of its own viewport
+   *  is in the note, and the glasses go to the page that holds it. */
+  goToOffset(offset: number): void {
     const shown = this.shown
-    if (!shown) return
+    if (!shown?.pages.length) return
 
-    const wanted = shown.pages[shown.page]
-    if (!wanted) return
+    this.goTo(pageAt(shown.pages, offset))
+  }
 
-    await this.screen.show(wanted, showingOf(shown))
+  /** Whether an offset is already on the page the reader is looking at.
+   *
+   *  What stops the binding chasing its own tail: the phone's scroll moves in
+   *  pixels and the glasses in pages, so most of a scroll is inside the page that
+   *  is already up and means nothing at all. */
+  holds(offset: number): boolean {
+    const page = this.page
+    return page !== null && offset >= page.from && offset < page.to
   }
 }
