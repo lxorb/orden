@@ -1,5 +1,6 @@
 import { key, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
+import { publish } from './publishing.svelte'
 import { roleOf, share } from './sharing.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
@@ -54,6 +55,12 @@ export async function renameSpace(space: Space) {
 /** Who else may reach a space, and at what. The one sheet; see ShareSheet.svelte. */
 export async function shareSpace(space: Space) {
   await share.show(space)
+}
+
+/** Putting a space on the web, which is the other half of who may read it and
+ *  is asked in the sheet beside it; see PublishSheet.svelte. */
+export function publishSpace(space: Space) {
+  publish.show(space)
 }
 
 /** Deleting a space, or letting go of one somebody shared, which is the same

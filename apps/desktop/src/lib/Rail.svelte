@@ -10,7 +10,15 @@
   import { DIVIDER, menu, type MenuEntry, trim } from './menu.svelte'
   import { overlays } from './overlays'
   import { prompt } from './prompt.svelte'
-  import { deleteSpace, moveSpace, newSpace, renameSpace, shareSpace } from './space-actions'
+  import { canPublish } from './publishing.svelte'
+  import {
+    deleteSpace,
+    moveSpace,
+    newSpace,
+    publishSpace,
+    renameSpace,
+    shareSpace,
+  } from './space-actions'
   import { settings } from './settings.svelte'
   import { canShare, isShared, roleOf } from './sharing.svelte'
   import { sync } from './sync.svelte'
@@ -169,6 +177,9 @@
         : []),
       { label: t('Choose an icon'), run: () => void picker?.choose(space.id) },
       ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
+      // Beside it, because it is the same question about the same folder: who
+      // else may read this.
+      ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
       DIVIDER,
       {
         label: theirs ? t('Leave space') : t('Delete space'),

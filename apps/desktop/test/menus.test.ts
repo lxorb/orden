@@ -32,9 +32,20 @@ describe('what a space offers', () => {
   const space = body(rail, 'function spaceMenu(space: Space)')
 
   test('the space itself: its name, its mark, who may reach it', () => {
-    for (const entry of ["t('Rename')", "t('Choose an icon')", "t('Share')"]) {
+    for (const entry of ["t('Rename')", "t('Choose an icon')", "t('Share')", "t('Publish')"]) {
       expect(space, entry).toContain(entry)
     }
+  })
+
+  /** Both are the same question about the same folder, so they are neighbours
+   *  rather than one at each end of the menu. */
+  test('publishing stands next to sharing', () => {
+    const share = space.indexOf("t('Share')")
+    const publish = space.indexOf("t('Publish')")
+
+    expect(publish).toBeGreaterThan(share)
+    // Between the two words is nothing but the start of publishing's own entry.
+    expect(space.slice(share, publish).match(/label:/g) ?? []).toHaveLength(1)
   })
 
   test('and not what to put in it, which is the file list', () => {

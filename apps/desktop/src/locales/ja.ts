@@ -464,10 +464,10 @@ export const ja: Dictionary = {
   'Live at': '公開先',
 
   // Publishing
+  'Publish {name}': '{name} を公開',
   'What to publish': '公開する範囲',
   'The whole space': 'スペース全体',
   'Only {name}': '{name} のみ',
-  'Sign in first, from Account.': 'まずアカウントでサインインしてください。',
   'Publish this space as a blog': 'このスペースをブログとして公開',
   'Everything in this space becomes public.': 'このスペースのすべてが公開されます。',
   'Every note, including drafts, is readable by anyone with the address.':

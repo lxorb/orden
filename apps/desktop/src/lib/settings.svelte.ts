@@ -1,15 +1,10 @@
 import { setSnippets } from '@nib/editor'
-import { api, ApiError, type DnsRecord, type DomainStatus, type RemoteSpace } from './api'
-import { account } from './account.svelte'
 import { connectors } from './connectors.svelte'
-import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
 import { isRecord, isString, stored } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
-import { sync } from './sync.svelte'
-import { workspace } from './workspace.svelte'
 
 const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
@@ -27,7 +22,6 @@ export type Section =
   | 'appearance'
   | 'glasses'
   | 'account'
-  | 'publish'
   | 'llm'
   | 'trash'
   | 'export'
@@ -58,28 +52,8 @@ class Settings {
    *  command uses it; every other note is named by whoever writes it. */
   noteIdFormat = $state(DEFAULT_ID_FORMAT)
 
-  busy = $state(false)
+  /** What went wrong, wherever a pane or an action wants to say so. */
   error = $state<string | null>(null)
-  dns = $state<DnsRecord[]>([])
-  /** How far along a domain of one's own is, kept fresh while the pane
-   *  shows it. Null until asked, or when the space has no domain. */
-  domain = $state<DomainStatus | null>(null)
-  availability = $state<{
-    checking: boolean
-    available: boolean | null
-    /** Why not, when the server says. Undefined when it says nothing. */
-    reason?: string | undefined
-  }>({ checking: false, available: null })
-
-  /** The remote space the open one mirrors to. Publishing needs it, and it only
-   *  exists once syncing is on, since that is what creates the remote side. */
-  readonly remote = $derived.by((): RemoteSpace | null => {
-    const root = workspace.activeSpace?.root
-    if (!root) return null
-
-    const id = sync.remoteIdFor(root)
-    return account.spaces.find((space) => space.id === id) ?? null
-  })
 
   restore() {
     connectors.restore()
@@ -175,142 +149,6 @@ class Settings {
     this.open = true
     this.error = null
     connectors.freshToken = null
-  }
-
-  /** Which check is the latest. Typing outruns the network, and an older
-   *  answer landing after a newer one would describe a name no longer in the
-   *  box. */
-  private checks = 0
-
-  async checkSubdomain(value: string) {
-    const check = ++this.checks
-
-    if (!account.accountToken || value.length < 2) {
-      this.availability = { checking: false, available: null }
-      return
-    }
-
-    this.availability = { checking: true, available: null }
-    try {
-      const result = await api.subdomainAvailable(account.accountToken, value, this.remote?.id)
-      if (check !== this.checks) return
-      this.availability = {
-        checking: false,
-        available: result.available,
-        ...(result.reason === undefined ? {} : { reason: result.reason }),
-      }
-    } catch {
-      if (check !== this.checks) return
-      this.availability = { checking: false, available: null }
-    }
-  }
-
-  async publish(settings: {
-    subdomain?: string
-    domain?: string
-    title?: string
-    note?: string | null
-  }) {
-    const space = this.remote
-    if (!space || !account.accountToken) return
-
-    this.busy = true
-    this.error = null
-
-    try {
-      const result = await api.publish(account.accountToken, space.id, settings)
-      this.dns = result.dns
-      await account.loadSpaces()
-    } catch (error) {
-      this.error = message(error, 'could not publish')
-    } finally {
-      this.busy = false
-    }
-  }
-
-  async unpublish() {
-    const space = this.remote
-    if (!space || !account.accountToken) return
-
-    this.busy = true
-    this.error = null
-
-    try {
-      await api.unpublish(account.accountToken, space.id)
-      this.dns = []
-      this.domain = null
-      await account.loadSpaces()
-    } catch (error) {
-      // Said out loud, the way publishing says it. Taking a space back off the
-      // web is the half of the pair somebody is anxious about, and a button that
-      // answers nothing at all reads as done.
-      this.error = message(error, 'could not reach the server')
-    } finally {
-      this.busy = false
-    }
-  }
-
-  /** The owner saying the record is in place. The server reads it there and
-   *  then, so a domain either starts working under the button or the line under
-   *  it says the record is not answering yet. */
-  async verifyDomain() {
-    const space = this.remote
-    if (!space || !account.accountToken) return
-
-    this.busy = true
-
-    try {
-      this.domain = await api.verifyDomain(account.accountToken, space.id)
-      await account.loadSpaces()
-    } catch (error) {
-      // The server answers with the state it is in, so a refusal is an answer
-      // rather than a failure: it is shown where the state is shown.
-      const said = error instanceof ApiError ? error.body : null
-      if (isDomainStatus(said)) this.domain = said
-      else this.error = message(error, 'that did not work')
-    } finally {
-      this.busy = false
-    }
-
-    if (keepAsking(this.domain)) void this.watchDomain()
-  }
-
-  /** Which asking is the latest, for the same reason as `checks`: the pane
-   *  can move to another space while an answer is in flight. */
-  private askings = 0
-  private domainTimer: ReturnType<typeof setTimeout> | undefined
-
-  /** Asks how far along the domain is, now and again every ten seconds for
-   *  as long as the answer can still change. Cloudflare checks the record on
-   *  its own schedule, so this is what turns "add this record" into "it
-   *  works" without anyone reloading anything. */
-  async watchDomain() {
-    this.stopWatchingDomain()
-    const asking = ++this.askings
-
-    const space = this.remote
-    if (!space || !account.accountToken || !space.blog.domain) {
-      this.domain = null
-      return
-    }
-
-    try {
-      const status = await api.domainStatus(account.accountToken, space.id)
-      if (asking !== this.askings) return
-      this.domain = status
-    } catch {
-      // Left as it was: a request that failed says nothing about the domain.
-      if (asking !== this.askings) return
-    }
-
-    if (keepAsking(this.domain)) {
-      this.domainTimer = setTimeout(() => void this.watchDomain(), 10_000)
-    }
-  }
-
-  stopWatchingDomain() {
-    clearTimeout(this.domainTimer)
-    this.domainTimer = undefined
   }
 }
 

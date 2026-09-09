@@ -466,10 +466,10 @@ export const gsw: Dictionary = {
   'Live at': 'Erreichbar under',
 
   // Publishing
+  'Publish {name}': '{name} veröffentliche',
   'What to publish': 'Was veröffentlicht wird',
   'The whole space': 'Di ganz Ablag',
   'Only {name}': 'Nur {name}',
-  'Sign in first, from Account.': 'Mäld di zerscht aa, under Konto.',
   'Publish this space as a blog': 'Die Ablag als Blog veröffentliche',
   'Everything in this space becomes public.': 'Alles i dere Ablag wird öffentlich.',
   'Every note, including drafts, is readable by anyone with the address.':

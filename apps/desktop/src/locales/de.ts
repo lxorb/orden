@@ -467,10 +467,10 @@ export const de: Dictionary = {
   'Live at': 'Erreichbar unter',
 
   // Publishing
+  'Publish {name}': '{name} veröffentlichen',
   'What to publish': 'Was veröffentlicht wird',
   'The whole space': 'Der ganze Bereich',
   'Only {name}': 'Nur {name}',
-  'Sign in first, from Account.': 'Melde dich zuerst an, unter Konto.',
   'Publish this space as a blog': 'Diesen Bereich als Blog veröffentlichen',
   'Everything in this space becomes public.': 'Alles in diesem Bereich wird öffentlich.',
   'Every note, including drafts, is readable by anyone with the address.':

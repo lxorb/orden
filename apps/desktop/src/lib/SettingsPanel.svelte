@@ -6,11 +6,9 @@
   import type { EditorView } from '@nib/editor'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
-  import { domainNotice } from './domain-status'
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
-  import { shownName } from './note-name'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
@@ -19,7 +17,6 @@
   import { PRESETS } from './shortcuts/presets'
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
-  import { Publishing, relativeToSpace } from './settings/publishing.svelte'
   import { Rebind } from './settings/rebind.svelte'
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
@@ -116,19 +113,11 @@
     }
 
     if (account.user) {
-      all.push(
-        {
-          section: 'publish',
-          label: t('Publish'),
-          text: [t('What to publish'), t('Address'), 'blog'],
-        },
-        { section: 'publish', label: t('Your own domain'), text: ['domain', 'dns'] },
-        {
-          section: 'llm',
-          label: t('LLM access'),
-          text: ['MCP', 'Claude', 'ChatGPT', 'token', t('Connect'), t('Create a token')],
-        },
-      )
+      all.push({
+        section: 'llm',
+        label: t('LLM access'),
+        text: ['MCP', 'Claude', 'ChatGPT', 'token', t('Connect'), t('Create a token')],
+      })
     }
 
     // The pane's own name counts as a word on everything in it.
@@ -157,50 +146,9 @@
     settings.listing = false
   }
 
-  const publishing = new Publishing()
-
-  const blog = $derived(settings.remote?.blog)
-  /** A domain of one's own needs Cloudflare for SaaS on the shared zone, which
-   *  is not enabled; a domain entered today would wait forever. So the choice
-   *  is only shown where a space already has a domain (set by hand, served by
-   *  a route of its own), and everyone else sees the shared name alone. */
-  const offerDomain = $derived(!!blog?.domain)
-  const published = $derived(!!blog?.enabled)
-  /** Wherever the blog answers, for the link under the button. */
-  const liveAt = $derived(
-    blog?.domain ?? (blog?.subdomain ? `${blog.subdomain}.nibeditor.com` : ''),
-  )
-  /** The records for a domain: fresh from publishing, or as the listing
-   *  remembers them. */
-  const records = $derived(settings.dns.length ? settings.dns : (blog?.dns ?? []))
-  /** What is happening with the domain, once the server has been asked. */
-  const notice = $derived(settings.domain ? domainNotice(settings.domain) : null)
-
-  $effect(() => {
-    if (!settings.open) return
-    publishing.fill(blog)
-    publishing.confirmed = published
-  })
-
-  // Asked after while the pane shows a domain, and left alone as soon as it
-  // does not: the timer would otherwise keep going behind a closed panel.
-  $effect(() => {
-    if (!settings.open || settings.section !== 'publish' || !blog?.domain) return
-    void settings.watchDomain()
-    return () => settings.stopWatchingDomain()
-  })
-
   /** The entry goes in Windows Explorer's own registry, so a browser cannot
    *  offer it however Windows the machine running the browser happens to be. */
   const isWindows = isDesktop && navigator.userAgent.includes('Windows')
-
-  const noteChoices = $derived([
-    { value: '', label: t('The whole space') },
-    ...workspace.notes.map((note) => ({
-      value: relativeToSpace(note.path),
-      label: t('Only {name}', { name: shownName(note.name) }),
-    })),
-  ])
 
   async function rename(name: string) {
     settings.error = null
@@ -617,164 +565,6 @@
       >
         {t('Sign in')}
       </button>
-    {/if}
-  {:else if settings.section === 'publish'}
-    {#if !settings.remote}
-      <p class="note">{t('Sign in first, from Account.')}</p>
-    {:else}
-      <!-- The consequence comes before the switch, not after it. -->
-      <label class="danger-check">
-        <input type="checkbox" bind:checked={publishing.confirmed} disabled={published} />
-        <span>
-          <strong>{t('Everything in this space becomes public.')}</strong>
-          {t('Every note, including drafts, is readable by anyone with the address.')}
-        </span>
-      </label>
-
-      <fieldset disabled={!publishing.confirmed}>
-        <div class="card">
-          <div class="setting">
-            <span class="name">{t('What to publish')}</span>
-            <div class="pick wide">
-              <Select
-                value={publishing.note}
-                options={noteChoices}
-                onchange={(value: string) => {
-                  publishing.note = value
-                }}
-                label={t('What to publish')}
-                plain={viewport.touch}
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- One address or the other. The choice is the control, so there is
-             no way to end up asking for both. -->
-        <h3>{t('Address')}</h3>
-        {#if offerDomain}
-          <div class="nib-segmented" role="radiogroup" aria-label={t('Address')}>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={publishing.address === 'subdomain'}
-              class:on={publishing.address === 'subdomain'}
-              onclick={() => (publishing.address = 'subdomain')}
-            >
-              {t('On nibeditor.com')}
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={publishing.address === 'domain'}
-              class:on={publishing.address === 'domain'}
-              onclick={() => (publishing.address = 'domain')}
-            >
-              {t('Your own domain')}
-            </button>
-          </div>
-        {/if}
-
-        {#if !offerDomain || publishing.address === 'subdomain'}
-          <div class="card">
-            <div class="stack">
-              <div class="row">
-                <input
-                  value={publishing.subdomain}
-                  oninput={(event) => publishing.typeSubdomain(event.currentTarget.value)}
-                  placeholder="your-name"
-                  spellcheck="false"
-                  autocapitalize="off"
-                />
-                <span class="suffix">.nibeditor.com</span>
-              </div>
-              {#if settings.availability.checking}
-                <span class="hint">{t('checking…')}</span>
-              {:else if settings.availability.available === true}
-                <span class="hint ok">{t('available')}</span>
-              {:else if settings.availability.available === false}
-                <span class="hint bad">{t(settings.availability.reason ?? '')}</span>
-              {/if}
-              {#if published && blog?.domain}
-                <span class="hint">{t('Switching gives up {name}.', { name: blog.domain })}</span>
-              {/if}
-            </div>
-          </div>
-        {:else}
-          <div class="card">
-            <div class="stack">
-              <input
-                bind:value={publishing.domain}
-                placeholder="notes.example.com"
-                spellcheck="false"
-                autocapitalize="off"
-              />
-              {#if published && blog?.subdomain}
-                <span class="hint">
-                  {t('Switching gives up {name}.', { name: `${blog.subdomain}.nibeditor.com` })}
-                </span>
-              {/if}
-              {#if records.length}
-                <div class="scrolls">
-                  <table class="dns">
-                    <thead>
-                      <tr><th>{t('Type')}</th><th>{t('Name')}</th><th>{t('Value')}</th></tr>
-                    </thead>
-                    <tbody>
-                      {#each records as record (record.name + record.type)}
-                        <tr>
-                          <td>{record.type}</td>
-                          <td>{record.name}</td>
-                          <td>{record.value}</td>
-                        </tr>
-                      {/each}
-                    </tbody>
-                  </table>
-                </div>
-                {#each records as record (record.name + record.type)}
-                  {#if record.note}
-                    <span class="hint">{t(record.note)}</span>
-                  {/if}
-                {/each}
-                <span class="hint">{t('Add these at your registrar, then verify.')}</span>
-                <button
-                  class="action"
-                  disabled={settings.busy || !blog?.domain}
-                  onclick={() => void settings.verifyDomain()}
-                >
-                  {t('Verify')}
-                </button>
-              {/if}
-              {#if notice}
-                <span
-                  class="hint"
-                  class:ok={notice.tone === 'ok'}
-                  class:bad={notice.tone === 'bad'}
-                >
-                  {t(notice.text)}
-                  {#if notice.detail}{t(notice.detail)}{/if}
-                </span>
-              {/if}
-            </div>
-          </div>
-        {/if}
-
-        <button class="primary" disabled={!publishing.ready} onclick={() => publishing.publish()}>
-          {published ? t('Update') : t('Publish')}
-        </button>
-      </fieldset>
-
-      {#if published && liveAt}
-        <p class="note" transition:slide={{ duration: dur(180) }}>
-          {t('Live at')}
-          <a href="https://{liveAt}" target="_blank" rel="noreferrer">{liveAt}</a>
-        </p>
-        <div class="card">
-          <button class="action danger" onclick={() => settings.unpublish()}>
-            {t('Stop publishing')}
-          </button>
-        </div>
-      {/if}
     {/if}
   {:else if settings.section === 'shortcuts'}
     {@render keyboard()}
@@ -1365,11 +1155,6 @@
     width: 14rem;
   }
 
-  .pick.wide {
-    width: 18rem;
-    max-width: 100%;
-  }
-
   /* A button that is a row: it shows what it does when pointed at. */
   @media (hover: hover) {
     button.setting:hover {
@@ -1642,10 +1427,6 @@
     line-height: 1.6;
   }
 
-  .note a {
-    color: var(--accent);
-  }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
@@ -1656,10 +1437,6 @@
   /* Under the card it explains, closer to it than the next group. */
   .hint.caption {
     margin-top: calc(-1 * var(--space-2));
-  }
-
-  .hint.ok {
-    color: var(--success);
   }
 
   .hint.bad {
@@ -1697,75 +1474,11 @@
     opacity: 0.5;
   }
 
-  /* The warning reads as a warning, and gates the controls behind it. */
-  .danger-check {
-    display: flex;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--line));
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--danger) 7%, transparent);
-    font-size: var(--text-sm);
-    line-height: 1.55;
-    color: var(--muted-strong);
-  }
-
-  .danger-check strong {
-    display: block;
-    color: var(--text-strong);
-  }
-
-  .danger-check input {
-    flex: none;
-    margin-top: 3px;
-    accent-color: var(--accent);
-  }
-
-  fieldset {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    border: none;
-    transition: opacity var(--dur-base) var(--ease-out);
-  }
-
-  fieldset:disabled {
-    opacity: 0.4;
-  }
-
-  fieldset h3 {
-    margin-top: 0;
-  }
-
   .row {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     width: 100%;
-  }
-
-  .row input,
-  .stack > input {
-    flex: 1;
-    width: 100%;
-    min-width: 0;
-    padding: 9px 11px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    outline: none;
-    transition: border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .row input:focus,
-  .stack > input:focus {
-    border-color: var(--accent);
   }
 
   /* An input in a row: the value at the right, no box until it is typed in. */
@@ -1799,39 +1512,6 @@
   .inline:focus {
     border-color: var(--accent);
     background: var(--bg);
-  }
-
-  .suffix {
-    flex: none;
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    color: var(--muted);
-  }
-
-  .scrolls {
-    width: 100%;
-    overflow-x: auto;
-  }
-
-  .dns {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-  }
-
-  .dns th,
-  .dns td {
-    border: 1px solid var(--line);
-    padding: 5px 7px;
-    text-align: left;
-    white-space: nowrap;
-  }
-
-  .dns th {
-    background: var(--surface-2);
-    color: var(--muted);
-    font-weight: 500;
   }
 
   .accents {
@@ -2132,8 +1812,7 @@
     width: 100%;
   }
 
-  .sheet.phone .pick,
-  .sheet.phone .pick.wide {
+  .sheet.phone .pick {
     width: auto;
     max-width: 60%;
   }
@@ -2196,17 +1875,6 @@
     font-size: var(--touch-text);
   }
 
-  .sheet.phone .row input,
-  .sheet.phone .stack > input {
-    min-height: var(--touch-target);
-    padding: 0 var(--touch-gap);
-    font-size: var(--touch-text);
-  }
-
-  .sheet.phone .suffix {
-    font-size: var(--text-base);
-  }
-
   .sheet.phone .hint,
   .sheet.phone .note {
     font-size: var(--text-base);
@@ -2226,18 +1894,6 @@
     padding: 12px 16px;
     font-size: var(--touch-text);
     text-align: center;
-  }
-
-  .sheet.phone .danger-check {
-    padding: var(--touch-pad);
-    border-radius: var(--radius-lg);
-    font-size: var(--text-base);
-  }
-
-  .sheet.phone .danger-check input {
-    width: 20px;
-    height: 20px;
-    margin-top: 1px;
   }
 
   .sheet.phone .accents {

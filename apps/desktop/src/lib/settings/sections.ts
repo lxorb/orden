@@ -36,8 +36,6 @@ export const ICONS: Record<string, string> = {
   glasses:
     'M4.3 9.4a2.7 2.7 0 1 0 0-.1M11.7 9.4a2.7 2.7 0 1 0 0-.1M7 9.4h2M1.6 8L2.6 5.3h2.7M14.4 8l-1-2.7h-2.7',
   account: 'M8 8.4a2.9 2.9 0 1 0 0-5.8 2.9 2.9 0 0 0 0 5.8zM2.6 14a5.4 5.4 0 0 1 10.8 0',
-  publish:
-    'M8 1.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 8 1.8zM1.8 8h12.4M8 1.8c1.6 1.8 2.4 3.9 2.4 6.2S9.6 12.4 8 14.2C6.4 12.4 5.6 10.3 5.6 8S6.4 3.6 8 1.8z',
   llm: 'M5 2.5h6a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5.5 14v-2.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
   trash:
     'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
@@ -46,12 +44,14 @@ export const ICONS: Record<string, string> = {
 
 /** The panes, in their groups.
  *
- *  Publishing and the LLM connector are both things an account owns, and both
- *  are off until deliberately turned on. Until there is an account they have
- *  nothing to show but an instruction to sign in, so they stay out of the list
- *  rather than sitting there offering nothing. Glasses is the same argument from
- *  the other side: somebody who has never had a pair in front of the plugin has
- *  no glasses to set anything about. */
+ *  The LLM connector is a thing an account owns, and it is off until deliberately
+ *  turned on. Until there is an account it has nothing to show but an instruction
+ *  to sign in, so it stays out of the list rather than sitting there offering
+ *  nothing. Glasses is the same argument from the other side: somebody who has
+ *  never had a pair in front of the plugin has no glasses to set anything about.
+ *
+ *  Publishing a space is not here at all: it is a sheet opened from the space's
+ *  own menu, beside sharing it; see PublishSheet.svelte. */
 export function sectionGroups(): Item[][] {
   return [
     [
@@ -71,12 +71,7 @@ export function sectionGroups(): Item[][] {
     ],
     [
       { id: 'account', label: t('Account') },
-      ...(account.user
-        ? [
-            { id: 'publish' as Section, label: t('Publish') },
-            { id: 'llm' as Section, label: t('LLM access') },
-          ]
-        : []),
+      ...(account.user ? [{ id: 'llm' as Section, label: t('LLM access') }] : []),
     ],
     [
       { id: 'trash', label: t('Recently deleted') },

@@ -297,8 +297,15 @@ function gone(error: unknown): boolean {
 
 export const share = new Share()
 
-/** Whether a space can be shared from here: it is on the account, and it is
- *  this account's to share. */
-export function canShare(space: Space): boolean {
+/** Whether this account owns the space on the server. Sharing and publishing
+ *  both ask it and neither can do anything without it: there is nothing to share
+ *  and nothing to put on the web until the folder has a copy on the account, and
+ *  a space somebody shared is not the reader's to hand on. */
+export function ownsRemotely(space: Space): boolean {
   return !!account.user && !!sync.remoteIdFor(space.root) && roleOf(space.root) === 'owner'
+}
+
+/** Whether a space can be shared from here. */
+export function canShare(space: Space): boolean {
+  return ownsRemotely(space)
 }

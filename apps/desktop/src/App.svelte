@@ -17,6 +17,7 @@
   import Sidebar from './lib/Sidebar.svelte'
   import SettingsPanel from './lib/SettingsPanel.svelte'
   import ShareSheet from './lib/ShareSheet.svelte'
+  import PublishSheet from './lib/PublishSheet.svelte'
   import JoinSheet from './lib/JoinSheet.svelte'
   import SignIn from './lib/SignIn.svelte'
   import Slides from './lib/Slides.svelte'
@@ -533,6 +534,7 @@
 <FormatBar bind:this={formatBar} {view} />
 <History bind:open={settings.historyOpen} />
 <ShareSheet />
+<PublishSheet />
 <PromptSheet />
 <ContextMenu />
 <FirstSync />

@@ -465,10 +465,10 @@ export const fr: Dictionary = {
   'Live at': 'En ligne sur',
 
   // Publishing
+  'Publish {name}': 'Publier {name}',
   'What to publish': 'Ce qui est publié',
   'The whole space': 'L’espace entier',
   'Only {name}': 'Seulement {name}',
-  'Sign in first, from Account.': 'Connectez-vous d’abord, depuis Compte.',
   'Publish this space as a blog': 'Publier cet espace comme blog',
   'Everything in this space becomes public.': 'Tout dans cet espace devient public.',
   'Every note, including drafts, is readable by anyone with the address.':

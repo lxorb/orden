@@ -29,7 +29,8 @@ import { imagePath } from './images'
 import { canInsertPicture, insertPicture } from './insert-picture'
 import { canSaveAs, saveAs } from './save-as'
 import { prompt } from './prompt.svelte'
-import { newSpace, shareSpace } from './space-actions'
+import { newSpace, publishSpace, shareSpace } from './space-actions'
+import { canPublish } from './publishing.svelte'
 import { canShare } from './sharing.svelte'
 import { stageUpdate } from './updater'
 import { modes } from './modes.svelte'
@@ -444,14 +445,29 @@ function stepSlide(view: EditorView, direction: number) {
 }
 
 /** Everything the palette can do. Labels read as the action, not the setting. */
-/** Sharing the space that is open, when there is one and it is this account's
- *  to share. A list rather than a disabled row, because a command that cannot
- *  run is not a command; see `exportCommands`. */
-function shareCommand(): Command[] {
+/** What can be done to the space that is open: handing it to somebody, and
+ *  putting it on the web. Both need a space on the account and this account to
+ *  own it, and both are the sheet the space's own menu opens. A list rather than
+ *  a disabled row, because a command that cannot run is not a command; see
+ *  `exportCommands`. */
+function spaceCommands(): Command[] {
   const space = workspace.activeSpace
-  if (!space || !canShare(space)) return []
+  if (!space) return []
 
-  return [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
+  return [
+    ...(canShare(space)
+      ? [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
+      : []),
+    ...(canPublish(space)
+      ? [
+          {
+            id: 'publish',
+            label: t('Publish this space as a blog'),
+            run: () => publishSpace(space),
+          },
+        ]
+      : []),
+  ]
 }
 
 export function appCommands(view?: EditorView): Command[] {
@@ -558,12 +574,7 @@ export function appCommands(view?: EditorView): Command[] {
       })),
 
     ...exportCommands(),
-    ...shareCommand(),
-    {
-      id: 'publish',
-      label: t('Publish this space as a blog'),
-      run: () => settings.show('publish'),
-    },
+    ...spaceCommands(),
     { id: 'llm', label: t('Connect an LLM to your notes'), run: () => settings.show('llm') },
 
     account.user
