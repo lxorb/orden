@@ -1,22 +1,66 @@
-import { isDesktop } from './tauri'
+import { isNumber, isRecord, isString } from './stored'
+import { invoke, isDesktop } from './tauri'
 
-/** A downloaded update, waiting to be put in place on the way out. */
-let staged: { install(): Promise<void> } | null = null
+/** The two streams of releases a machine can follow: the tagged releases, or the
+ *  build of every push to main. Which endpoint each one looks at is decided in the
+ *  crate - see src-tauri/src/updates.rs - because the plugin's `check()` here
+ *  takes no endpoints and would always read the same list. */
+const CHANNELS = ['stable', 'unstable'] as const
+export type Channel = (typeof CHANNELS)[number]
+
+/** A channel out of whatever was stored or came off a control. Anything else is
+ *  the stable one: following the releases is where every install starts, and the
+ *  safe answer to a value nobody wrote. */
+export function asChannel(value: unknown): Channel {
+  return CHANNELS.find((one) => one === value) ?? 'stable'
+}
+
+/** A downloaded update, waiting to be put in place on the way out. Closing one
+ *  gives back the installer's bytes, which the crate is holding. */
+let staged: { install(): Promise<void>; close(): Promise<void> } | null = null
 
 export const ready = () => staged !== null
 
-/** Fetches a new version in the background if there is one.
+/** What `check_update` answers with: the fields the updater plugin builds its own
+ *  `Update` from, `rid` being the update itself, kept in the crate. */
+interface Found {
+  rid: number
+  currentVersion: string
+  version: string
+  rawJson: Record<string, unknown>
+}
+
+/** The command's answer, checked rather than cast. A version that came back
+ *  half-written is no version at all, and reads here as nothing found. */
+function found(value: unknown): Found | null {
+  if (!isRecord(value)) return null
+
+  const { rid, currentVersion, version, rawJson } = value
+  if (!isNumber(rid) || !isString(currentVersion) || !isString(version)) return null
+  if (!isRecord(rawJson)) return null
+
+  return { rid, currentVersion, version, rawJson }
+}
+
+/** Fetches a new version in the background if the channel has one.
  *
  *  Only downloads: installing here would restart the app under whoever is
  *  typing. The installer runs on quit instead, so the new version is simply
- *  what starts next time. */
-export async function stageUpdate(): Promise<string | null> {
+ *  what starts next time.
+ *
+ *  Only ever a higher version, whichever channel is being followed: the updater
+ *  compares semver, so a machine that has just left the rolling stream is not
+ *  handed the older release as an update. It stays on the build it has until a
+ *  release passes it. */
+export async function stageUpdate(channel: Channel): Promise<string | null> {
   if (!isDesktop || staged) return null
 
   try {
-    const { check } = await import('@tauri-apps/plugin-updater')
-    const update = await check()
-    if (!update) return null
+    const one = found(await invoke<unknown>('check_update', { channel }))
+    if (!one) return null
+
+    const { Update } = await import('@tauri-apps/plugin-updater')
+    const update = new Update(one)
 
     await update.download()
     staged = update
@@ -25,6 +69,24 @@ export async function stageUpdate(): Promise<string | null> {
     // No network, no release yet, or a signature that did not verify. Any of
     // those simply means carrying on with the version already installed.
     return null
+  }
+}
+
+/** Throws away what was downloaded instead of installing it.
+ *
+ *  What a machine does with a build it fetched from the channel it has just left:
+ *  a build of main is not what somebody who has asked for the releases wants
+ *  started next time. Closing it hands back the installer's bytes as well, which
+ *  are megabytes rather than a handle. */
+export async function discard() {
+  const going = staged
+  staged = null
+
+  try {
+    await going?.close()
+  } catch {
+    // Nothing to say: it is not being installed either way, and whatever the
+    // crate is still holding goes with the process.
   }
 }
 

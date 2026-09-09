@@ -908,4 +908,11 @@ export const gsw: Dictionary = {
   'Waiting for {who}': 'Wartet uf {who}',
   '{who} did not let you in': '{who} hät di nöd iiglaa',
   'What the others in this space see.': 'Was die andere i dem Bereich gsehnd.',
+  // Which stream of releases this machine follows; see updates.svelte.ts
+  Updates: 'Updates',
+  'Release channel': 'Update-Kanal',
+  Stable: 'Stabil',
+  Unstable: 'Instabil',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Stabil folgt de offizielle Releases, Instabil jedem Push uf main und cha kaputt gaa.',
 }

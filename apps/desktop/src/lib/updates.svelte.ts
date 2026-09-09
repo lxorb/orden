@@ -1,5 +1,5 @@
 import { isDesktop } from './tauri'
-import { stageUpdate } from './updater'
+import { asChannel, type Channel, discard, stageUpdate } from './updater'
 
 /** How often the app looks for a new version while it is running.
  *
@@ -16,12 +16,38 @@ const EVERY = 6 * 60 * 60 * 1000
  *  would fire late and only once. This wakes, reads the clock, and catches up. */
 const TICK = 10 * 60 * 1000
 
+/** Which channel this machine follows, written here rather than sent up to the
+ *  account: one machine can run the build of main while another stays on the
+ *  releases, which is the whole point of the choice. */
+const CHANNEL_KEY = 'nib:channel'
+
+/** What was chosen here last, or the stable channel for a machine that has never
+ *  chosen. Reading storage can throw outright - a browser told to keep no site
+ *  data refuses the getter - and a machine that cannot remember still follows the
+ *  releases, which is the default anyway. */
+function savedChannel(): Channel {
+  try {
+    return asChannel(localStorage.getItem(CHANNEL_KEY))
+  } catch {
+    return 'stable'
+  }
+}
+
+function keepChannel(channel: Channel) {
+  try {
+    localStorage.setItem(CHANNEL_KEY, channel)
+  } catch {
+    // As above: the choice holds for this run, just not after a restart.
+  }
+}
+
 /** How long since the last keystroke before the notice may appear. A box that
  *  arrives between two words is a box in the way; the update is in no hurry, so
  *  it waits for the end of the sentence. */
 const QUIET = 5000
 
-/** The notice that offers a downloaded update.
+/** When the app looks for a new version, which stream it looks on, and the notice
+ *  that offers what a look found.
  *
  *  Nothing here installs anything: `updater.ts` downloads in the background and
  *  puts the new version in place as the app closes, so the update arrives on
@@ -32,6 +58,10 @@ class Updates {
    *  when there is nothing new, which is most of the time. */
   ready = $state<string | null>(null)
 
+  /** Which stream of releases this machine follows; see updater.ts. Stable, until
+   *  somebody asks for the other one on this machine. */
+  channel = $state<Channel>(savedChannel())
+
   /** When the last look happened, so that however many things ask - the timer,
    *  the window being come back to, the menu - nothing looks twice inside one
    *  interval. Zero before the first one. */
@@ -39,6 +69,11 @@ class Updates {
   /** Whether a look is in flight. A download takes long enough for the window to
    *  be left and come back to while one is running. */
   private looking = false
+  /** Which channel the looks belong to, counted up whenever it changes. A look
+   *  takes as long as a download, so one can be in flight when the channel is
+   *  changed, and what it comes back with is a build from the stream that was
+   *  left. */
+  private stream = 0
   /** When the last key went down, for the notice that waits for a pause. */
   private typedAt = 0
   private waiting: ReturnType<typeof setTimeout> | undefined
@@ -91,10 +126,18 @@ class Updates {
   async check() {
     if (this.looking) return
 
+    const stream = this.stream
     this.looking = true
     this.lookedAt = Date.now()
     try {
-      const found = await stageUpdate()
+      const found = await stageUpdate(this.channel)
+      // The channel changed while this was running, so what it fetched is a build
+      // of the stream nobody is following any more.
+      if (this.stream !== stream) {
+        await discard()
+        return
+      }
+
       // Only ever set, never cleared: a second look answers nothing for the
       // version it downloaded on the first, and clearing the notice then would
       // take away the offer while the update sat there waiting.
@@ -102,6 +145,29 @@ class Updates {
     } finally {
       this.looking = false
     }
+  }
+
+  /** Follows the other stream from now on, and looks again straight away so that
+   *  the choice answers instead of waiting hours for the next look.
+   *
+   *  Whatever was downloaded from the stream being left is thrown away rather than
+   *  installed: a build of main is not what somebody who has just asked for the
+   *  releases wants started next time. Nothing is installed the other way round
+   *  either - the updater only ever offers a higher version, so a machine on a
+   *  build of main that asks for the releases stays on it until a release passes
+   *  it, while one on a release is offered the next push. */
+  setChannel(channel: Channel) {
+    if (channel === this.channel) return
+
+    this.channel = channel
+    keepChannel(channel)
+    this.stream++
+    this.dismiss()
+    // Zero, so the look the timer makes is due even if this one cannot be made
+    // now: a look that is already in flight belongs to the channel that was left,
+    // and `check` turns this one away while it runs.
+    this.lookedAt = 0
+    void discard().then(() => this.check())
   }
 
   /** Says so, once whoever is at the keyboard has stopped for a moment. */

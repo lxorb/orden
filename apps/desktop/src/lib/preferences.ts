@@ -8,7 +8,10 @@ import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
+import { isDesktop } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, type SchemeChoice, theme } from './theme.svelte'
+import { asChannel } from './updater'
+import { updates } from './updates.svelte'
 
 /** What every control has, whatever kind it is. */
 interface Common {
@@ -162,6 +165,37 @@ export function preferences(view?: EditorView): Pane[] {
             },
           ],
         },
+
+        // Only the desktop app installs anything: a page is the new version the
+        // moment it is reloaded, and a phone app is the store's business. So the
+        // row is not there at all rather than there and answering nothing.
+        //
+        // The choice stays on this machine, since it is about this machine: one
+        // laptop can run the build of main while the desktop stays on the
+        // releases. See updates.svelte.ts.
+        ...(isDesktop
+          ? ([
+              {
+                title: t('Updates'),
+                fields: [
+                  {
+                    kind: 'segmented',
+                    label: t('Release channel'),
+                    hint: t(
+                      'Stable follows the official releases, Unstable every push to main and can break.',
+                    ),
+                    options: [
+                      { value: 'stable', label: t('Stable') },
+                      { value: 'unstable', label: t('Unstable') },
+                    ],
+                    initial: 'stable',
+                    get: () => updates.channel,
+                    set: (value) => updates.setChannel(asChannel(value)),
+                  },
+                ],
+              },
+            ] satisfies Group[])
+          : []),
       ],
     },
 

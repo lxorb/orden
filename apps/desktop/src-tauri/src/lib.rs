@@ -39,6 +39,8 @@ mod tags;
 mod themes;
 mod trash;
 mod tree;
+#[cfg(desktop)]
+mod updates;
 
 use paths::Opened;
 #[cfg(desktop)]
@@ -166,6 +168,7 @@ pub fn run() {
         recent::remember_recent,
         shell_menu::new_menu_registered,
         shell_menu::set_new_menu,
+        updates::check_update,
     ]);
 
     #[cfg(mobile)]

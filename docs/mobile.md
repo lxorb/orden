@@ -61,6 +61,9 @@ reinstall, which Android allows, and only a lower one is refused.
 
 Nothing on the phone updates itself: the desktop app has an updater, the phone
 app does not, because a store is what does that and there is no store account.
+The desktop's Release channel row is not there either, for the same reason: the
+row is only drawn where something installs what a look finds, so a phone and a
+browser have no Updates group at all. See `updates.svelte.ts`.
 
 ## What device signing needs later
 

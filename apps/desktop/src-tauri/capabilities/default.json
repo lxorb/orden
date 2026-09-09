@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissions for a Nib window on a desktop. Only what the window actually calls: core:default for the window's own read-only queries and the event channel, the window commands the title bar, the close handler, Always on top and presenting use, the two dialogs (open and save), the opener for links and Reveal in folder, restart for an update installed by hand, and the three updater steps. The three presenting ones are for the window a presenter reads their notes in: it is created from JavaScript rather than from Rust, and where the screens are decides which of them it opens on. That window itself needs no permissions - it draws what the deck sends it over a broadcast channel and calls nothing. Notes are read and written by this app's own commands, so the fs plugin is not here and not built in. The phone builds have none of these plugins compiled in; see mobile.json.\n\nTwo labels, because New window opens a second one: `main` is the window the app starts with, and `nib-2`, `nib-3` and so on are what launch::new_window hands out. A window whose label matches no capability is granted nothing at all, so it would come up unable to listen for an event, drag its own title bar or close itself. The presenter's window is `nib-presenter`, which the digits do not match, and it is meant to have nothing.",
+  "description": "Permissions for a Nib window on a desktop. Only what the window actually calls: core:default for the window's own read-only queries and the event channel, the window commands the title bar, the close handler, Always on top and presenting use, the two dialogs (open and save), the opener for links and Reveal in folder, restart for an update installed by hand, and the two updater steps the plugin performs. The look for a new version is not one of them: which stream an install follows decides which endpoint it looks at, and only the builder in Rust takes endpoints, so the look is this app’s own `check_update` command and needs no permission. See src-tauri/src/updates.rs. The three presenting ones are for the window a presenter reads their notes in: it is created from JavaScript rather than from Rust, and where the screens are decides which of them it opens on. That window itself needs no permissions - it draws what the deck sends it over a broadcast channel and calls nothing. Notes are read and written by this app's own commands, so the fs plugin is not here and not built in. The phone builds have none of these plugins compiled in; see mobile.json.\n\nTwo labels, because New window opens a second one: `main` is the window the app starts with, and `nib-2`, `nib-3` and so on are what launch::new_window hands out. A window whose label matches no capability is granted nothing at all, so it would come up unable to listen for an event, drag its own title bar or close itself. The presenter's window is `nib-presenter`, which the digits do not match, and it is meant to have nothing.",
   "platforms": ["linux", "macOS", "windows"],
   "windows": ["main", "nib-[0-9]*"],
   "permissions": [
@@ -24,7 +24,6 @@
     "dialog:allow-save",
     "opener:default",
     "process:allow-restart",
-    "updater:allow-check",
     "updater:allow-download",
     "updater:allow-install"
   ]

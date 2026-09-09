@@ -153,6 +153,39 @@ describe('writing an export', () => {
   })
 })
 
+/** Looking for a new version is the one updater step that is not the plugin's
+ *  command, because which stream an install follows decides which endpoint it
+ *  looks at and only the builder in Rust takes endpoints. So the window calls a
+ *  command of ours for the look and the plugin's own commands for the two steps
+ *  after it; see src-tauri/src/updates.rs. */
+describe('looking for a new version', () => {
+  test('goes through the app’s own command, which needs no permission of its own', () => {
+    expect(read('../src-tauri/src/lib.rs')).toContain('updates::check_update')
+    expect(read('../src/lib/updater.ts')).toContain("invoke<unknown>('check_update'")
+    expect(capabilities.permissions).not.toContain('updater:allow-check')
+  })
+
+  test('downloads and installs through the plugin, which is granted both', () => {
+    expect(read('../src/lib/updater.ts')).toContain("import('@tauri-apps/plugin-updater')")
+    expect(capabilities.permissions).toContain('updater:allow-download')
+    expect(capabilities.permissions).toContain('updater:allow-install')
+  })
+
+  test('reads one endpoint per channel, the releases being the configured one', () => {
+    const config = JSON.parse(read('../src-tauri/tauri.conf.json')) as {
+      plugins: { updater: { endpoints: string[] } }
+    }
+    const { endpoints } = config.plugins.updater
+
+    // Two endpoints in the list would mean the first that answers wins whatever
+    // the channel says, since that is how the updater reads a list.
+    expect(endpoints).toHaveLength(1)
+    expect(endpoints[0]).not.toContain('/edge/')
+    // And the other channel's is the crate's, where the choice is made.
+    expect(read('../src-tauri/src/updates.rs')).toContain('/edge/')
+  })
+})
+
 /** A capability is granted to the window labels it names, and a window whose
  *  label matches none of them is granted nothing: no event channel, no dragging,
  *  no close. New window opens a second one, so the labels `launch::new_window`

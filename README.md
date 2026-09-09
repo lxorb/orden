@@ -108,6 +108,8 @@ Download an installer from the [latest release](https://github.com/lxorb/nibedit
 | Fedora, openSUSE | `sudo dnf install ./Nib-<version>-linux-x64.rpm` |
 | Any Linux | `chmod +x Nib-<version>-linux-x64.AppImage && ./Nib-<version>-linux-x64.AppImage` |
 
+The desktop app keeps itself up to date: it looks every few hours, downloads what it finds and installs it as you quit, so the new version is what starts next time. Which stream it follows is one setting, in Settings, General, Updates, and it belongs to that machine rather than to your account: **Stable** takes the official releases and is where every install starts, **Unstable** takes the build of every push to main and can break. Switching to Stable keeps the build you are on until a release passes it; switching to Unstable takes the next push. The web app is the new version the moment you reload it, and the Android app has no updater.
+
 ## Motivation
 
 I’ve spent the last few years switching between different editors with markdown support, but kept being disappointed: Notion is way too bloated, Obsidian is proprietary and MarkText feels unfinished. Nothing against MarkText, I really liked it and have been using it for a few months, but there’s just stuff missing: you can’t sync and also even though the UI looks nice, it feels a bit clunky and unfinished at places. People will tell you to use a shared mount to have sync but then still, I won’t be able to sync it to my mobile device. And I find it really important to be able to sync your notes between your phone and computer, e.g. when taking some notes you can’t always just pull up your laptop :)

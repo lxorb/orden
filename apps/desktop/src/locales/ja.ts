@@ -907,4 +907,11 @@ export const ja: Dictionary = {
   'Waiting for {who}': '{who} の承認待ち',
   '{who} did not let you in': '{who} は参加を断りました',
   'What the others in this space see.': 'この共有スペースの他の人に見える名前です。',
+  // Which stream of releases this machine follows; see updates.svelte.ts
+  Updates: 'アップデート',
+  'Release channel': 'リリースチャンネル',
+  Stable: '安定版',
+  Unstable: '不安定版',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    '安定版は公式リリースを、不安定版は main への毎回のプッシュを追うので壊れることがあります。',
 }

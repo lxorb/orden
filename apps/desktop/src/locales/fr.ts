@@ -911,4 +911,11 @@ export const fr: Dictionary = {
   'Waiting for {who}': 'En attente de {who}',
   '{who} did not let you in': '{who} ne vous a pas laissé entrer',
   'What the others in this space see.': 'Ce que voient les autres dans cet espace.',
+  // Which stream of releases this machine follows; see updates.svelte.ts
+  Updates: 'Mises à jour',
+  'Release channel': 'Canal de mise à jour',
+  Stable: 'Stable',
+  Unstable: 'Instable',
+  'Stable follows the official releases, Unstable every push to main and can break.':
+    'Stable suit les versions officielles, Instable chaque push sur main et peut casser.',
 }

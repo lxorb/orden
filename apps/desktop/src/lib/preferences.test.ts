@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from 'vitest'
+import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
+import type { Pane } from './preferences'
 
 /** The declarations the settings panes are drawn from.
  *
@@ -46,6 +47,16 @@ const field = (paneId: string, label: string) => {
   return found
 }
 
+/** One plain sentence, which is all a tooltip has room for. Its own function so
+ *  that the row only the desktop shows is held to the same rule. */
+function readsAsOneSentence(hint: string, label: string) {
+  expect(hint, label).toMatch(/\.$/)
+  expect(hint.length, label).toBeLessThan(110)
+  // One sentence: a full stop only at the end of it. Numbered examples spell the
+  // numbers with their own stops, which is not a second sentence.
+  expect(hint.replace(/\d\.(\d)?/g, ''), label).toMatch(/^[^.]*\.$/)
+}
+
 /** The `i` beside a label: for the settings whose name only means something to
  *  somebody who already knows the word. */
 describe('the sentence behind a setting', () => {
@@ -68,13 +79,7 @@ describe('the sentence behind a setting', () => {
 
   test('is one plain sentence, which is all a tooltip has room for', () => {
     for (const label of HINTED) {
-      const hint = field('markdown', label).hint ?? ''
-
-      expect(hint, label).toMatch(/\.$/)
-      expect(hint.length, label).toBeLessThan(110)
-      // One sentence: a full stop only at the end of it. Numbered examples
-      // spell the numbers with their own stops, which is not a second sentence.
-      expect(hint.replace(/\d\.(\d)?/g, ''), label).toMatch(/^[^.]*\.$/)
+      readsAsOneSentence(field('markdown', label).hint ?? '', label)
     }
   })
 })
@@ -126,5 +131,69 @@ describe('the Appearance pane', () => {
 
   test('offers no reset, since neither row is a default anybody drifted from', () => {
     expect(resettable(pane('appearance'))).toBe(false)
+  })
+})
+
+/** Which stream of releases the machine follows. Only the desktop app installs
+ *  anything, so this is the one row that is not on every build; see
+ *  updates.svelte.ts. The list above is a browser's, which is why the pane list is
+ *  built a second time here with the build saying it is the desktop app. */
+describe('the release channel', () => {
+  let desktop: Pane[] = []
+
+  const row = () => {
+    const found = desktop
+      .flatMap((one) => one.groups.flatMap((group) => group.fields))
+      .find((one) => one.label === 'Release channel')
+    if (found?.kind !== 'segmented') throw new Error('the channel is a segmented control')
+
+    return found
+  }
+
+  beforeAll(async () => {
+    vi.resetModules()
+    vi.doMock('./tauri', async (original) => ({
+      ...(await original<typeof import('./tauri')>()),
+      isDesktop: true,
+    }))
+
+    desktop = (await import('./preferences')).preferences()
+  })
+
+  afterAll(() => {
+    vi.doUnmock('./tauri')
+    vi.resetModules()
+  })
+
+  test('is offered on nothing that cannot install a version it finds', () => {
+    const labels = panes.flatMap((one) => one.groups.flatMap((group) => group.fields))
+    expect(labels.map((one) => one.label)).not.toContain('Release channel')
+  })
+
+  test('is the two streams as a segmented control, the releases first', () => {
+    expect(row().options).toEqual([
+      { value: 'stable', label: 'Stable' },
+      { value: 'unstable', label: 'Unstable' },
+    ])
+  })
+
+  test('starts on the releases, which is also what a reset puts back', () => {
+    expect(row().get()).toBe('stable')
+    expect(row().initial).toBe('stable')
+  })
+
+  test('says what the two words mean, since neither explains itself', () => {
+    const hint = row().hint ?? ''
+
+    readsAsOneSentence(hint, 'Release channel')
+    // The sentence is the whole warning: it names what unstable follows.
+    expect(hint).toContain('main')
+  })
+
+  test('is a group of its own under General, where the app itself is set up', () => {
+    const general = desktop.find((one) => one.id === 'general')
+    const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
+
+    expect(group?.title).toBe('Updates')
   })
 })

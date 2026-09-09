@@ -20,14 +20,56 @@ const QUIET = 5000
 /** Long enough that every tick inside one interval has fired. */
 const TICKS = 20 * 60 * 1000
 
-const world = vi.hoisted(() => ({ version: null as string | null, looks: 0 }))
+const world = vi.hoisted(() => ({
+  version: null as string | null,
+  looks: 0,
+  /** The channel each look was made on, in the order they were made. */
+  channels: [] as string[],
+  /** How many downloaded builds were thrown away rather than installed. */
+  discards: 0,
+  /** Set for the one test about a look that is still in flight: the look then
+   *  waits for `land` instead of answering at once. */
+  slow: false,
+  land: null as (() => void) | null,
+}))
 
 vi.mock('./updater', () => ({
-  stageUpdate: () => {
+  asChannel: (value: unknown) => (value === 'unstable' ? 'unstable' : 'stable'),
+  stageUpdate: (channel: string) => {
     world.looks++
-    return Promise.resolve(world.version)
+    world.channels.push(channel)
+    if (!world.slow) return Promise.resolve(world.version)
+
+    return new Promise<string | null>((resolve) => {
+      world.land = () => resolve(world.version)
+    })
+  },
+  discard: () => {
+    world.discards++
+    return Promise.resolve()
   },
 }))
+
+/** Storage, in memory. The channel is remembered on the machine rather than on
+ *  the account, so the store reads and writes it; see updates.svelte.ts. */
+function memoryStorage(): Storage {
+  const held = new Map<string, string>()
+
+  return {
+    get length() {
+      return held.size
+    },
+    key: (index) => [...held.keys()][index] ?? null,
+    getItem: (key) => held.get(key) ?? null,
+    setItem: (key, value) => void held.set(key, value),
+    removeItem: (key) => void held.delete(key),
+    clear: () => held.clear(),
+  }
+}
+
+/** One store for the file, so a re-imported module reads what the last one wrote,
+ *  which is what a restart is. Emptied between tests. */
+const storage = memoryStorage()
 
 /** The window, with whatever the store listened for kept where a test can fire
  *  it. Under node there is none. */
@@ -63,7 +105,13 @@ beforeEach(async () => {
   vi.useFakeTimers()
   world.looks = 0
   world.version = null
+  world.channels = []
+  world.discards = 0
+  world.slow = false
+  world.land = null
+  storage.clear()
   stubWindow()
+  vi.stubGlobal('localStorage', storage)
 
   // A fresh store for every test: it is a singleton, and it remembers when it
   // last looked. The desktop is said here rather than at the top of the file so
@@ -226,6 +274,18 @@ describe('what a look finds', () => {
     stop()
   })
 
+  test('is offered again after the channel changed and the new stream has one', async () => {
+    const stop = updates.start()
+    await settle()
+
+    world.version = '0.6.1-84'
+    updates.setChannel('unstable')
+    await settle()
+
+    expect(updates.ready).toBe('0.6.1-84')
+    stop()
+  })
+
   test('dismissed, it stays dismissed', async () => {
     world.version = '1.4.0'
     const stop = updates.start()
@@ -238,6 +298,114 @@ describe('what a look finds', () => {
     await vi.advanceTimersByTimeAsync(2 * EVERY)
 
     expect(updates.ready).toBe(null)
+    stop()
+  })
+})
+
+/** Which stream the looks are made on. The releases until somebody on this machine
+ *  says otherwise, and every look after that is on what was said. */
+describe('the channel', () => {
+  test('is the releases for a machine that has never chosen', async () => {
+    const stop = updates.start()
+    await settle()
+
+    expect(updates.channel).toBe('stable')
+    expect(world.channels).toEqual(['stable'])
+    stop()
+  })
+
+  test('is looked on straight away when it changes', async () => {
+    const stop = updates.start()
+    await settle()
+
+    updates.setChannel('unstable')
+    await settle()
+
+    expect(world.channels).toEqual(['stable', 'unstable'])
+    stop()
+  })
+
+  test('costs nothing when it is set to what it already is', async () => {
+    const stop = updates.start()
+    await settle()
+
+    updates.setChannel('stable')
+    await settle()
+
+    expect(world.looks).toBe(1)
+    expect(world.discards).toBe(0)
+    stop()
+  })
+
+  test('is remembered on the machine, so the next start follows the same one', async () => {
+    const stop = updates.start()
+    await settle()
+    updates.setChannel('unstable')
+    await settle()
+    stop()
+
+    expect(storage.getItem('nib:channel')).toBe('unstable')
+
+    // A restart: the store is built again and reads what this machine wrote.
+    vi.resetModules()
+    vi.doMock('./tauri', () => ({ isDesktop: true }))
+    const next = (await import('./updates.svelte')).updates
+
+    expect(next.channel).toBe('unstable')
+  })
+
+  test('throws away the build downloaded from the stream that was left', async () => {
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    expect(updates.ready).toBe('1.4.0')
+
+    // Nothing newer on the other stream, which is the point: the build that was
+    // downloaded goes, and the notice offering it goes with it.
+    world.version = null
+    updates.setChannel('unstable')
+    await settle()
+
+    expect(world.discards).toBe(1)
+    expect(updates.ready).toBe(null)
+    stop()
+  })
+
+  test('drops what a look already in flight brings back from the old stream', async () => {
+    world.slow = true
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    expect(world.looks).toBe(1)
+
+    // The channel changes while the download is still running.
+    updates.setChannel('unstable')
+    await settle()
+    // Nothing new to look at yet: the look in flight holds the next one off.
+    expect(world.looks).toBe(1)
+
+    world.land?.()
+    await settle()
+
+    // Once for the change itself, once for what the look landed with.
+    expect(world.discards).toBe(2)
+    expect(updates.ready).toBe(null)
+    stop()
+  })
+
+  test('is looked on by the timer once the look in flight has landed', async () => {
+    world.slow = true
+    const stop = updates.start()
+    await settle()
+
+    updates.setChannel('unstable')
+    world.land?.()
+    await settle()
+
+    world.slow = false
+    await vi.advanceTimersByTimeAsync(TICKS)
+
+    expect(world.channels.at(-1)).toBe('unstable')
     stop()
   })
 })
