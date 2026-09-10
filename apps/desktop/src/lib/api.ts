@@ -3,6 +3,7 @@
 
 import { isRecord, isString, parsed } from './stored'
 import type { Bookmark } from './workspace/bookmarks.svelte'
+import type { GraphSettings } from './workspace/graph-settings.svelte'
 
 export const BASE: string = import.meta.env.VITE_NIB_API ?? 'https://nibeditor.com'
 
@@ -129,6 +130,11 @@ export interface RemoteSpace {
    *  speaks it. A note and a canvas keep their own inside the file; a folder has
    *  no file, so its icon comes down with the space. `{}` until one is chosen. */
   icons: Record<string, string>
+  /** How the space's graph is drawn: what the picture is filtered to, which
+   *  queries are coloured, how far apart it sits. Read rather than trusted, since
+   *  a build of the service older than this app answers with nothing at all; see
+   *  workspace/graph-settings.svelte.ts. */
+  graph: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -458,6 +464,16 @@ export const api = {
       method: 'PUT',
       token,
       body: { icons },
+    }),
+
+  /** How the space's graph is drawn, whole, for the reason the folder icons go
+   *  whole: it is one small object, and a switch turned in the card is smaller than
+   *  the request that carries it. */
+  saveGraphSettings: (token: string, id: string, graph: GraphSettings) =>
+    request<{ graph: unknown }>(`/v1/spaces/${id}/graph`, {
+      method: 'PUT',
+      token,
+      body: { graph },
     }),
 
   deleteSpace: (token: string, id: string) =>

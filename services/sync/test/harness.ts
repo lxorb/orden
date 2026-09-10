@@ -227,6 +227,7 @@ interface SpaceView {
   shared: boolean
   bookmarks: BookmarkView[]
   icons: Record<string, string>
+  graph: Record<string, unknown>
   createdAt: number
   updatedAt: number
   blog: {
@@ -298,6 +299,7 @@ export interface Reply {
   spaces: SpaceView[]
   bookmarks: BookmarkView[]
   icons: Record<string, string>
+  graph: Record<string, unknown>
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]

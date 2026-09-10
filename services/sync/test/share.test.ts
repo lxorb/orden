@@ -144,6 +144,12 @@ const ROUTES: Route[] = [
       call(env, `/v1/spaces/${space}/icons`, { method: 'PUT', token, body: { icons: {} } }),
   },
   {
+    what: 'drawing the graph',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph: {} } }),
+  },
+  {
     what: 'keeping the files beside the notes',
     needs: 'write',
     go: (token) =>

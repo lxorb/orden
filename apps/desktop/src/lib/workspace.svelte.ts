@@ -30,6 +30,7 @@ import {
 } from './workspace/session'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
+import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
 import {
@@ -264,6 +265,10 @@ class Workspace {
    *  the same reasons the bookmarks are, and here rather than in the file itself
    *  because a folder has no file; see workspace/folder-icons. */
   readonly folderIcons = new FolderIcons(() => this.activeSpace?.root ?? null)
+  /** How the picture of this space is drawn. Beside the folder icons because it is
+   *  the same kind of thing: one space's own settings, kept on the account so
+   *  every machine draws it the same way. */
+  readonly graphSettings = new SpaceGraphSettings(() => this.activeSpace?.root ?? null)
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
   /** Which notes are being written, and which have just been. The dot beside a
@@ -1091,6 +1096,7 @@ class Workspace {
     // folder icons inside it are kept under the root, so they follow it too.
     this.device.moveIcon(space.root, renamed.path)
     this.folderIcons.spaceMoved(space.root, renamed.path)
+    this.graphSettings.spaceMoved(space.root, renamed.path)
 
     space.name = renamed.name
     space.root = renamed.path
@@ -1216,6 +1222,7 @@ class Workspace {
     }
 
     this.folderIcons.forget(space.root)
+    this.graphSettings.forget(space.root)
     this.spaces = this.spaces.filter((entry) => entry.id !== id)
     if (this.activeSpaceId !== id) {
       this.persist()

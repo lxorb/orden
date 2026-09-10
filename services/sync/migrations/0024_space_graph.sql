@@ -1,0 +1,14 @@
+-- How the space's graph is drawn: what the picture is filtered to, which queries
+-- are coloured, how far apart the arrangement sits, and whether links wear
+-- arrowheads. One JSON object on the space, the way its folder icons are.
+--
+-- On the space and not on the account, because every one of these is a fact about
+-- one space's notes: a filter that reads `tag:work` means nothing in a space with
+-- no such tag, and a colour that stands for a folder stands for nothing in a space
+-- that has no such folder. So it travels with the space to every device signed in,
+-- goes with it when it is deleted and comes back with it when it is restored.
+--
+-- Where the view is looking is not in here. A pan and a zoom are gestures rather
+-- than settings, and two machines sharing one camera would spend their time
+-- pulling it apart.
+alter table spaces add column graph text not null default '{}';

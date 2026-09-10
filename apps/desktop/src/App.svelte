@@ -134,11 +134,13 @@
   // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
-  // The icons the account holds for a space's folders, taken on whenever its
-  // listing changes. A folder has no file to keep an icon in, so unlike a note's
-  // it comes down with the space; here rather than in the syncing loop because it
-  // is drawn by the file list and written by a gesture in it, and this is where
-  // the account's listing is already being watched. See workspace/folder-icons.
+  // The icons the account holds for a space's folders, and how it says the space's
+  // graph is drawn, taken on whenever its listing changes. Neither has a file to
+  // live in - a folder has no file, and a filter is not something a note says - so
+  // unlike a note's icon they come down with the space; here rather than in the
+  // syncing loop because both are written by a gesture in the app and this is where
+  // the account's listing is already being watched. See workspace/folder-icons and
+  // workspace/graph-settings.
   $effect(() => {
     const who = account.user?.id
     if (!who) return
@@ -146,7 +148,10 @@
     for (const space of workspace.spaces) {
       const id = sync.remoteIdFor(space.root)
       const remote = id === null ? undefined : account.spaces.find((one) => one.id === id)
-      if (remote) workspace.folderIcons.adopt(space.root, remote.icons, who)
+      if (!remote) continue
+
+      workspace.folderIcons.adopt(space.root, remote.icons, who)
+      workspace.graphSettings.adopt(space.root, remote.graph, who)
     }
   })
 

@@ -114,6 +114,9 @@ export interface Space {
   /** Which folder of the space's tree wears which icon, as a JSON map keyed by
    *  the folder's path; see spaces/icons.ts. `{}` until one does. */
   icons: string
+  /** How the space's graph is drawn, as one JSON object; see spaces/graph.ts.
+   *  `{}` until something about it is changed. */
+  graph: string
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }
