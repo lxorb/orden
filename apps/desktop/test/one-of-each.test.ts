@@ -272,6 +272,7 @@ describe('the switch', () => {
       .sort()
 
     expect(wearing).toEqual([
+      'lib/GraphControls.svelte',
       'lib/McpSetup.svelte',
       'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',

@@ -28,6 +28,11 @@ export const MOST_GROUPS = 6
  *  number, so what fits here fits there. */
 const LONGEST_QUERY = 200
 
+/** How long after the last keystroke the account is told, in milliseconds. Long
+ *  enough that a phrase typed at speed is one request, short enough that closing
+ *  the window straight after does not lose it. */
+const SETTLING = 700
+
 /** How far apart the arrangement may be pushed, as a multiple of what it does on
  *  its own. */
 export const LEAST_SPREAD = 0.25
@@ -38,7 +43,7 @@ export const MOST_SPREAD = 4
 export const DEEPEST = 3
 
 /** One query and the colour the notes it keeps are drawn in. */
-export interface ColourGroup {
+interface ColourGroup {
   query: string
   /** One of the six the theme names, 1 to 6; see `--canvas-1` in tokens.css. */
   colour: number
@@ -82,6 +87,10 @@ function held(value: unknown, least: number, most: number, fallback: number): nu
   return Math.min(most, Math.max(least, value))
 }
 
+/** A group with no query yet is kept, not dropped: it is the row that has just
+ *  been added and is about to be typed into, and a card that removed it under the
+ *  cursor would be a card nothing could be written in. It colours nothing until it
+ *  says something. */
 function groupsOf(value: unknown): ColourGroup[] {
   if (!Array.isArray(value)) return []
 
@@ -90,8 +99,10 @@ function groupsOf(value: unknown): ColourGroup[] {
     if (out.length >= MOST_GROUPS) break
     if (!isRecord(one) || !isString(one.query)) continue
 
-    const query = one.query.trim().slice(0, LONGEST_QUERY)
-    if (query) out.push({ query, colour: held(one.colour, 1, MOST_GROUPS, 1) })
+    out.push({
+      query: one.query.slice(0, LONGEST_QUERY),
+      colour: Math.round(held(one.colour, 1, MOST_GROUPS, 1)),
+    })
   }
 
   return out
@@ -150,6 +161,9 @@ function read(): Record<string, Kept> {
 
 export class SpaceGraphSettings {
   private spaces = $state<Record<string, Kept>>(read())
+  /** A push waiting for the typing to stop, per space. Bookkeeping rather than
+   *  state: nothing on screen is drawn from it. */
+  private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
 
   /** Which space the picture on screen is of. A function rather than a value
    *  because the workspace decides that, and it changes as spaces are picked. */
@@ -252,7 +266,26 @@ export class SpaceGraphSettings {
       [root]: { settings, account: this.spaces[root]?.account ?? null },
     }
     this.write()
-    void this.push(root)
+    this.soon(root)
+  }
+
+  /** The account hears about it once the typing stops.
+   *
+   *  Unlike a folder icon, which is one gesture, a filter is written a letter at a
+   *  time: a push per keystroke would be a request per keystroke, and every one of
+   *  them would be out of date before it landed. This machine is right immediately -
+   *  the picture and the storage are written on the spot - and the account catches
+   *  up. */
+  private soon(root: string) {
+    const held = this.pushing[root]
+    if (held !== undefined) clearTimeout(held)
+
+    const waiting = setTimeout(() => {
+      this.pushing = without(this.pushing, root)
+      void this.push(root)
+    }, SETTLING)
+
+    this.pushing = { ...this.pushing, [root]: waiting }
   }
 
   /** The space's settings as they now stand, sent up so every other machine draws

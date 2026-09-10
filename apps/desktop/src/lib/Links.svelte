@@ -41,7 +41,8 @@
     /** Whether the panel is showing the picture rather than the lists. Held by
      *  the sidebar, whose tab row the switch between them sits in. */
     graph?: boolean
-    /** How many links out from the open note the picture reaches. */
+    /** How many links out from the open note the picture reaches, 1 to 3. Held by
+     *  the sidebar too, since the stepper for it stands beside the switch. */
     depth?: number
     onlist?: (() => void) | undefined
   } = $props()

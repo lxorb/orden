@@ -6,8 +6,14 @@
  *
  *  Everything of one colour is collected into one path and filled once, which is
  *  what keeps the whole picture to a handful of drawing calls however many notes
- *  are in it: six for the nodes, two for the lines. Colours come in from the
- *  stylesheet, so the graph is whatever the theme says it is. */
+ *  are in it: six for the nodes, one more per colour group in use, two for the lines
+ *  and one for every arrowhead together. Colours come in from the stylesheet, so the
+ *  graph is whatever the theme says it is.
+ *
+ *  What is hidden is hidden here rather than taken out of the graph. A filter, the
+ *  orphan switch and the time being scrubbed to all arrive as one byte per node, so
+ *  changing any of them costs this one pass and never a new arrangement: the notes
+ *  that are still shown do not move. See `shown`. */
 
 import type { Camera } from './camera'
 import { SMALLEST_DOT } from './camera'
@@ -25,9 +31,13 @@ export function radiusOf(degree: number): number {
 /** How faint everything that is not being pointed at goes. */
 const DIMMED = 0.16
 
-/** How close the view has to be before the names appear. Below this a label
- *  would be smaller than the gaps between the notes. */
+/** How close the view has to be before the names appear, and where they are fully
+ *  there. Below the first a label would be smaller than the gaps between the notes;
+ *  between the two they fade up, so a name arrives as the view comes in rather than
+ *  four hundred of them appearing at once on one notch of the wheel. A threshold
+ *  that follows the zoom, so there is nothing to set. */
 const LABELS_FROM = 0.55
+const LABELS_FULL = 0.85
 
 /** How many names are worth drawing at once. Past this the view is showing more
  *  notes than anyone reads at a glance, and the text is what costs. */
@@ -36,6 +46,15 @@ const MOST_LABELS = 400
 const LABEL_SIZE = 11
 const EDGE_WIDTH = 1
 const LIT_EDGE_WIDTH = 1.6
+
+/** How close the view has to be before arrowheads are worth drawing. Further out
+ *  than this they are a smudge at the end of a line, and ten thousand smudges are
+ *  what a picture of a space does not need. */
+const ARROWS_FROM = 0.4
+/** An arrowhead, in pixels: how far back from the node it starts and how wide it
+ *  opens. Small, because it is a hint about one link rather than a symbol. */
+const HEAD_LONG = 7
+const HEAD_WIDE = 3
 
 /** The colours the graph is drawn in, all of them from the tokens. No ground
  *  among them: the canvas is left transparent and the surface it sits on shows
@@ -48,6 +67,10 @@ export interface GraphColours {
   current: string
   label: string
   font: string
+  /** The six the theme names, resolved: a 2d context cannot look `var(--canvas-1)`
+   *  up, so they are read off the stylesheet with the rest. A note in a colour group
+   *  is drawn in one of these. */
+  groups: string[]
 }
 
 export interface GraphView {
@@ -66,11 +89,26 @@ export interface GraphView {
   /** One byte per node: 2 for the hovered node, 1 for one joined to it, 0 for
    *  the rest, which go faint. Read only while something is hovered. */
   lit: Uint8Array
+  /** One byte per node: 1 for a note the reader is being shown, 0 for one the
+   *  filter, the orphan switch or the time being scrubbed to has taken out. An edge
+   *  with either end hidden is not drawn.
+   *
+   *  Hiding rather than removing, and here rather than in the graph, is the whole
+   *  of why a filter costs one frame: the arrangement is over every note that
+   *  passed, so turning a switch or dragging the scrub bar changes what is painted
+   *  and never where anything is. Nothing is laid out again. */
+  shown: Uint8Array
+  /** One byte per node: which colour group it is in, counting from zero, or -1 for
+   *  none. */
+  tint: Int8Array
+  /** Whether a link is drawn with a head saying which note reached for which. */
+  arrows: boolean
 }
 
 /** One pass over the graph, into as few drawing calls as it takes. */
 export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   const { graph, x, y, radii, camera, width, height, colours, current, hovered, lit } = view
+  const { shown, tint, arrows } = view
   const highlighting = hovered >= 0
 
   const scale = camera.scale
@@ -85,8 +123,12 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
 
   const edges = new Path2D()
   const litEdges = new Path2D()
+  const heads = arrows && scale >= ARROWS_FROM ? new Path2D() : null
 
   for (const edge of graph.edges) {
+    // A link is only as visible as the two notes it joins.
+    if (!shown[edge.a] || !shown[edge.b]) continue
+
     const ax = screenX(edge.a)
     const ay = screenY(edge.a)
     const bx = screenX(edge.b)
@@ -98,12 +140,24 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
     const path = highlighting && (lit[edge.a] === 2 || lit[edge.b] === 2) ? litEdges : edges
     path.moveTo(ax, ay)
     path.lineTo(bx, by)
+
+    if (!heads) continue
+    // At the end the link points at, just clear of the note it lands on - and at
+    // both ends for a pair that link each way.
+    head(heads, ax, ay, bx, by, Math.max(SMALLEST_DOT, (radii[edge.b] ?? 0) * scale))
+    if (edge.both) {
+      head(heads, bx, by, ax, ay, Math.max(SMALLEST_DOT, (radii[edge.a] ?? 0) * scale))
+    }
   }
 
   context.lineWidth = EDGE_WIDTH
   context.strokeStyle = colours.edge
   context.globalAlpha = highlighting ? DIMMED : 1
   context.stroke(edges)
+  if (heads) {
+    context.fillStyle = colours.edge
+    context.fill(heads)
+  }
 
   if (highlighting) {
     context.lineWidth = LIT_EDGE_WIDTH
@@ -123,8 +177,15 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
    *  past so the labels do not walk the whole graph again. */
   const naming: number[] = []
   const labelling = scale >= LABELS_FROM
+  /** One path per colour group, and one for the groups' nodes brought forward.
+   *  Made only where a group has something in it, so a space with no groups pays
+   *  nothing for them. */
+  const grouped: (Path2D | undefined)[] = []
+  const litGrouped: (Path2D | undefined)[] = []
 
   for (let one = 0; one < graph.nodes.length; one++) {
+    if (!shown[one]) continue
+
     const px = screenX(one)
     const py = screenY(one)
     if (px < -margin || px > width + margin || py < -margin || py > height + margin) continue
@@ -133,19 +194,27 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
     // With nothing hovered there is nothing to bring forward: the whole picture
     // is drawn plainly, at full strength.
     const brought = highlighting && lit[one] !== 0
+    const group = tint[one] ?? -1
 
     const path =
       one === current
         ? brought
           ? litHere
           : here
-        : graph.nodes[one]?.path === null
+        : // A note in a colour group wears its group's colour rather than the plain
+          // one, and a note the space does not hold is still a ring: a group says
+          // which notes these are, not whether they exist.
+          group >= 0 && graph.nodes[one]?.path !== null
           ? brought
-            ? litHollow
-            : hollow
-          : brought
-            ? litPlain
-            : plain
+            ? (litGrouped[group] ??= new Path2D())
+            : (grouped[group] ??= new Path2D())
+          : graph.nodes[one]?.path === null
+            ? brought
+              ? litHollow
+              : hollow
+            : brought
+              ? litPlain
+              : plain
 
     path.moveTo(px + radius, py)
     path.arc(px, py, radius, 0, Math.PI * 2)
@@ -157,17 +226,19 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   fill(context, plain, colours.node)
   fill(context, here, colours.current)
   outline(context, hollow, colours.hollow)
+  fillGroups(context, grouped, colours.groups)
 
   if (highlighting) {
     context.globalAlpha = 1
     fill(context, litPlain, colours.node)
     fill(context, litHere, colours.current)
     outline(context, litHollow, colours.hollow)
+    fillGroups(context, litGrouped, colours.groups)
   }
 
   // The note being read wears a ring as well as the accent, so it is the one
   // node that can be picked out without hovering anything.
-  if (current >= 0) {
+  if (current >= 0 && shown[current]) {
     const px = screenX(current)
     const py = screenY(current)
     const radius = Math.max(SMALLEST_DOT, (radii[current] ?? 0) * scale)
@@ -190,8 +261,11 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   context.textBaseline = 'top'
   context.fillStyle = colours.label
 
+  // How far up the fade the view has come, so the names arrive rather than appear.
+  const arriving = Math.min(1, (scale - LABELS_FROM) / (LABELS_FULL - LABELS_FROM))
+
   for (const one of naming) {
-    context.globalAlpha = highlighting && lit[one] === 0 ? DIMMED : 1
+    context.globalAlpha = (highlighting && lit[one] === 0 ? DIMMED : 1) * arriving
     const radius = Math.max(SMALLEST_DOT, (radii[one] ?? 0) * scale)
     context.fillText(graph.nodes[one]?.name ?? '', screenX(one), screenY(one) + radius + 3)
   }
@@ -202,6 +276,43 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
 function fill(context: CanvasRenderingContext2D, path: Path2D, colour: string) {
   context.fillStyle = colour
   context.fill(path)
+}
+
+/** Each colour group's notes, one fill per colour. */
+function fillGroups(
+  context: CanvasRenderingContext2D,
+  paths: readonly (Path2D | undefined)[],
+  colours: readonly string[],
+) {
+  for (let group = 0; group < paths.length; group++) {
+    const path = paths[group]
+    const colour = colours[group]
+    if (path && colour) fill(context, path, colour)
+  }
+}
+
+/** An arrowhead at the `b` end of a line, pulled back by the radius of the note it
+ *  lands on so it sits against the circle rather than under it. Two lines rather
+ *  than a filled triangle would be a third stroke of its own; this goes in the one
+ *  path every head shares. */
+function head(path: Path2D, ax: number, ay: number, bx: number, by: number, radius: number): void {
+  const dx = bx - ax
+  const dy = by - ay
+  const length = Math.hypot(dx, dy)
+  // Two notes on top of each other have no direction between them to point in.
+  if (length < radius + HEAD_LONG) return
+
+  const alongX = dx / length
+  const alongY = dy / length
+  const tipX = bx - alongX * radius
+  const tipY = by - alongY * radius
+  const backX = tipX - alongX * HEAD_LONG
+  const backY = tipY - alongY * HEAD_LONG
+
+  path.moveTo(tipX, tipY)
+  path.lineTo(backX - alongY * HEAD_WIDE, backY + alongX * HEAD_WIDE)
+  path.lineTo(backX + alongY * HEAD_WIDE, backY - alongX * HEAD_WIDE)
+  path.closePath()
 }
 
 /** A note the space does not hold is a ring rather than a dot, the same "there is

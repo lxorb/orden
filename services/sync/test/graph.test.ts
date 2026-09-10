@@ -99,6 +99,12 @@ describe('what a space may say about its graph', () => {
     expect((await put({ filter: 'a'.repeat(200) })).status).toBe(200)
   })
 
+  test('and the row a card has just added, with nothing typed in it yet, is kept', async () => {
+    const set = await put({ groups: [{ query: '', colour: 4 }] })
+
+    expect(set.json.graph).toEqual({ groups: [{ query: '', colour: 4 }] })
+  })
+
   test('and more colour groups than the theme has colours is refused', async () => {
     const many = Array.from({ length: 7 }, (_one, index) => ({
       query: `tag:t${index}`,
@@ -108,12 +114,19 @@ describe('what a space may say about its graph', () => {
     expect((await put({ groups: many })).status).toBe(400)
   })
 
-  test('and a group with no query, or a colour the theme has not, is put right', async () => {
+  test('and a group with no colour, or one the theme has not, is put right', async () => {
     const set = await put({
-      groups: [{ query: '  ' }, { query: 'tag:work', colour: 99 }, { colour: 3 }],
+      groups: [{ query: 'tag:work', colour: 99 }, { query: 'path:x' }, { colour: 3 }],
     })
 
-    expect(set.json.graph).toEqual({ groups: [{ query: 'tag:work', colour: 6 }] })
+    // An entry with no query key is not a group at all. One whose query is empty
+    // is the row the card has just added, and that one is kept.
+    expect(set.json.graph).toEqual({
+      groups: [
+        { query: 'tag:work', colour: 6 },
+        { query: 'path:x', colour: 1 },
+      ],
+    })
   })
 })
 

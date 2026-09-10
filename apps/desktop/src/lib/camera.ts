@@ -76,7 +76,12 @@ export function framingBox(
   }
 }
 
-/** A camera that frames every point with `padding` pixels to spare. */
+/** A camera that frames every point with `padding` pixels to spare.
+ *
+ *  `shown` leaves out the points that are not being drawn - a graph narrowed by a
+ *  filter frames what it is showing rather than the space it came out of - and an
+ *  empty answer falls back to framing the lot, since a view with nothing in it has
+ *  nothing to be about. */
 export function framing(
   x: Float64Array,
   y: Float64Array,
@@ -84,6 +89,7 @@ export function framing(
   width: number,
   height: number,
   padding: number,
+  shown?: Uint8Array,
 ): Camera {
   if (count === 0 || width === 0 || height === 0) return { x: 0, y: 0, scale: 1 }
 
@@ -91,8 +97,12 @@ export function framing(
   let most = -Infinity
   let lowest = Infinity
   let highest = -Infinity
+  let found = 0
 
   for (let one = 0; one < count; one++) {
+    if (shown && !shown[one]) continue
+
+    found++
     const px = x[one] ?? 0
     const py = y[one] ?? 0
     if (px < least) least = px
@@ -100,6 +110,9 @@ export function framing(
     if (py < lowest) lowest = py
     if (py > highest) highest = py
   }
+
+  if (found === 0)
+    return shown ? framing(x, y, count, width, height, padding) : { x: 0, y: 0, scale: 1 }
 
   return framingBox(
     { x: least, y: lowest, width: most - least, height: highest - lowest },

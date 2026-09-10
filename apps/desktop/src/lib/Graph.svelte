@@ -6,26 +6,45 @@
    *  Everything that moves is driven from one frame loop rather than from the
    *  reactive graph: the arrangement settles over about half a second, and after
    *  that a frame is asked for only when something happens - a pointer moving, a
-   *  scroll, a theme changing. A graph nobody is touching costs nothing. */
+   *  scroll, a theme changing, the notes arriving in order while the time is being
+   *  played. A graph nobody is touching costs nothing.
+   *
+   *  What the reader asks for divides in two, and the division is the whole of why
+   *  a filter is cheap. Spread and gather change where the notes go, so they build
+   *  the arrangement again. Everything else - the filter, the orphans, the colours,
+   *  the arrows, the sizes, the time being scrubbed to - changes only what is
+   *  painted, and costs one frame however many notes there are. */
 
   import { onDestroy } from 'svelte'
+  import GraphControls from './GraphControls.svelte'
   import type { NoteGraph } from './graph'
+  import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
   import { type Camera, framing, graphPoint, nodeAt, zoomed } from './camera'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { t } from './i18n.svelte'
   import { stillness } from './motion'
+  import { parseQuery } from './search/query'
+  import { relativeTo } from './space-paths'
   import { theme } from './theme.svelte'
+  import { workspace } from './workspace.svelte'
+  import { MOST_GROUPS } from './workspace/graph-settings.svelte'
 
   const {
     graph,
     current = null,
+    whole = false,
     onopen,
     onescape,
   }: {
     graph: NoteGraph
     /** The id of the note being read, so it can be marked. */
     current?: string | null
+    /** Whether this is the picture of the whole space rather than the notes around
+     *  one of them. The card in the corner, the filter it holds and the time being
+     *  played are about a space; a neighbourhood is already the answer to a
+     *  question, and narrowing it further would be asking the same thing twice. */
+    whole?: boolean
     /** A node was clicked: opened as a preview, or kept on a double click, the
      *  way a row in the file list opens. */
     onopen?: ((path: string, keep: boolean) => void) | undefined
@@ -47,12 +66,20 @@
   /** Room left around the graph when it is framed. */
   const PADDING = 24
 
+  /** How long the whole space takes to arrive, in milliseconds, when the time is
+   *  played. Long enough to watch a shape form, short enough to watch twice. */
+  const A_LAPSE = 6000
+
   let host = $state<HTMLElement>()
   let canvas = $state<HTMLCanvasElement>()
 
   let layout: Layout | null = null
   let radii = new Float64Array(0)
   let lit = new Uint8Array(0)
+  /** One byte per node: whether it is being shown. See `shown` in graph-paint.ts,
+   *  which is where hiding a note stops and re-arranging one would begin. */
+  let hiding = new Uint8Array(0)
+  let tint = new Int8Array(0)
   let camera: Camera = { x: 0, y: 0, scale: 1 }
   let colours: GraphColours | null = null
   let width = 0
@@ -77,13 +104,79 @@
   let lastY = 0
   let travelled = 0
 
+  /** Which card the corner is showing, if any. A gesture rather than a setting: a
+   *  card left open is not something another machine should inherit. */
+  let carding = $state(false)
+  /** The moment the picture is showing, in milliseconds, or null for all of it.
+   *  Notes made after it are not drawn. */
+  let at = $state<number | null>(null)
+  let playing = $state(false)
+  /** When the playing started, and where the scrub bar was then. */
+  let started = 0
+  let startedAt = 0
+
+  const settings = $derived(workspace.graphSettings.here)
+
+  /** What the filter keeps, compiled once per query rather than per note. Only the
+   *  whole space's picture has one. */
+  const filter = $derived<Keeps | null>(
+    whole && settings.filter.trim() ? graphFilter(parseQuery(settings.filter)) : null,
+  )
+
+  /** Each colour group as the colour it paints, counting from zero, and what it
+   *  keeps. A note is in the first group that keeps it, so two overlapping queries
+   *  read top down like the rows they are written in. */
+  const groups = $derived(
+    settings.groups
+      .filter((group) => group.query.trim())
+      .map((group) => ({
+        colour: Math.min(MOST_GROUPS, Math.max(1, Math.round(group.colour))) - 1,
+        keeps: graphFilter(parseQuery(group.query)),
+      })),
+  )
+
+  /** When each note in the space was made, by the path the graph names it with.
+   *  From the file list, which has read it already: the link index reads what notes
+   *  say and a creation time is what the disk says. */
+  const madeAt = $derived.by((): Map<string, number> => {
+    const root = whole ? (workspace.activeSpace?.root ?? null) : null
+    if (root === null) return new Map()
+
+    return new Map(
+      workspace.files
+        .filter((file) => file.created > 0)
+        .map((file) => [relativeTo(root, file.path), file.created]),
+    )
+  })
+
+  /** The first and last note of the space, or null where nothing has a time to
+   *  play - a browser store with no dates, or a picture of one note's
+   *  neighbourhood. */
+  const span = $derived.by((): { from: number; to: number } | null => {
+    let from = Infinity
+    let to = -Infinity
+
+    for (const node of graph.nodes) {
+      const made = node.path === null ? 0 : (madeAt.get(node.path) ?? 0)
+      if (!made) continue
+      if (made < from) from = made
+      if (made > to) to = made
+    }
+
+    return from <= to && from !== to ? { from, to } : null
+  })
+
   /** The shape of the graph, as one string. The panel is handed a fresh graph
    *  object whenever anything in the space is saved, and laying the arrangement
    *  out again then would make the picture jump every time the typing pauses.
    *  This is what says whether it is really another graph.
    *
    *  Newline-separated, since that is the one character a note's path cannot
-   *  hold, so two different sets of notes cannot read as the same graph. */
+   *  hold, so two different sets of notes cannot read as the same graph.
+   *
+   *  The filter is deliberately not in it. A note the filter takes out is hidden
+   *  rather than removed, so the notes that stay do not move; that is what lets a
+   *  switch in the card cost one frame in a space of five thousand notes. */
   const shape = $derived(
     [
       graph.nodes.map((node) => node.id).join('\n'),
@@ -99,10 +192,28 @@
   const follows = (_value: unknown) => undefined
 
   // A different graph is a different arrangement, framed afresh. The same graph
-  // handed over again is not, so the view stays where the reader left it.
+  // handed over again is not, so the view stays where the reader left it. And the
+  // two forces are here rather than below because they are the only things the
+  // reader can ask for that change where a note goes.
   $effect(() => {
     follows(shape)
+    follows(settings.spread)
+    follows(settings.gather)
     rebuild()
+  })
+
+  // What is shown, what colour it is, and how big. None of these move anything, so
+  // none of them lay the arrangement out again: they fill in the two masks the
+  // drawing reads and ask for one frame.
+  $effect(() => {
+    follows(filter)
+    follows(groups)
+    follows(settings.orphans)
+    follows(settings.sized)
+    follows(madeAt)
+    follows(at)
+    remask()
+    schedule()
   })
 
   // The note being read, and the theme, change what is drawn but not where
@@ -141,10 +252,10 @@
   })
 
   function rebuild() {
-    layout = new Layout(graph)
-    radii = new Float64Array(graph.nodes.map((node) => radiusOf(node.degree)))
+    layout = new Layout(graph, { spread: settings.spread, gather: settings.gather })
     lit = new Uint8Array(graph.nodes.length)
     hovered = -1
+    remask()
 
     // A reader who has asked for less movement gets the arrangement it arrives
     // at, without watching it get there.
@@ -155,10 +266,45 @@
     schedule()
   }
 
+  /** Which notes are drawn, in what colour, and how big - the three things that
+   *  change without anything moving. One pass over the nodes for all three. */
+  function remask() {
+    const count = graph.nodes.length
+    if (hiding.length !== count) hiding = new Uint8Array(count)
+    if (tint.length !== count) tint = new Int8Array(count)
+    if (radii.length !== count) radii = new Float64Array(count)
+
+    const cut = at
+    const orphans = !whole || settings.orphans
+
+    for (let one = 0; one < count; one++) {
+      const node = graph.nodes[one]
+      if (!node) continue
+
+      const made = node.path === null ? 0 : (madeAt.get(node.path) ?? 0)
+
+      // A note the space does not hold has no date of its own; it appears with the
+      // first note that asks for it, which is what its edges already say.
+      const yet = cut === null || made === 0 || made <= cut
+      const kept = !filter || filter(node)
+      hiding[one] = yet && kept && (orphans || node.degree > 0) ? 1 : 0
+
+      radii[one] = radiusOf(settings.sized ? node.degree : 0)
+
+      let colour = -1
+      for (const group of groups) {
+        if (!group.keeps(node)) continue
+        colour = group.colour
+        break
+      }
+      tint[one] = colour
+    }
+  }
+
   /** Puts the whole graph in view. */
   function frameGraph() {
     if (!layout) return
-    camera = framing(layout.x, layout.y, graph.nodes.length, width, height, PADDING)
+    camera = framing(layout.x, layout.y, graph.nodes.length, width, height, PADDING, hiding)
   }
 
   function resize() {
@@ -196,15 +342,65 @@
 
     // As many ticks as the frame has room for. Another frame is asked for only
     // while there is still settling to do, so an arrangement that has arrived
-    // costs one draw and nothing after it.
+    // costs one draw and nothing after it - or while the time is being played,
+    // which is the one thing that moves without anything settling.
     const until = performance.now() + A_FRAME
     while (!arrangement.settled && performance.now() < until) arrangement.tick()
-    if (!arrangement.settled) schedule()
+    if (playing) step()
+    if (!arrangement.settled || playing) schedule()
 
     // The arrangement spreads out as it settles, so the view follows it until it
     // has arrived - or until the reader takes the view over.
     if (!touched) frameGraph()
     draw()
+  }
+
+  /** Where the playing has got to. The wall clock rather than a count of frames,
+   *  so a space arrives over the same six seconds on every machine. */
+  function step() {
+    const one = span
+    if (!one) {
+      playing = false
+      return
+    }
+
+    const gone = (performance.now() - started) / A_LAPSE
+    const next = startedAt + (one.to - one.from) * gone
+
+    if (next >= one.to) {
+      at = null
+      playing = false
+      return
+    }
+
+    at = next
+  }
+
+  /** Plays the space from where the scrub bar stands, or from the beginning once it
+   *  has run out.
+   *
+   *  It moves even for a reader who has asked for as little movement as possible,
+   *  because they asked for this one by pressing it - and the scrub bar beside it is
+   *  the same thing held still. */
+  function play() {
+    const one = span
+    if (!one) return
+
+    if (playing) {
+      playing = false
+      return
+    }
+
+    startedAt = at ?? one.from
+    started = performance.now()
+    playing = true
+    schedule()
+  }
+
+  function scrub(moment: number) {
+    playing = false
+    at = moment >= (span?.to ?? 0) ? null : moment
+    schedule()
   }
 
   /** The colours the graph is drawn in, read from the stylesheet so a theme
@@ -221,6 +417,11 @@
       current: token('--accent'),
       label: token('--muted-strong'),
       font: token('--font-ui') || 'sans-serif',
+      // The six the theme names, resolved here for the same reason the rest are: a
+      // 2d context cannot look a custom property up.
+      groups: Array.from({ length: MOST_GROUPS }, (_one, index) => {
+        return token(`--canvas-${index + 1}`) || '#888888'
+      }),
     }
   }
 
@@ -247,6 +448,9 @@
       current: currentAt,
       hovered,
       lit,
+      shown: hiding,
+      tint,
+      arrows: settings.arrows,
     })
   }
 
@@ -263,12 +467,12 @@
     }
   }
 
-  function at(event: PointerEvent | MouseEvent): number {
+  function nodeUnder(event: PointerEvent | MouseEvent): number {
     const surface = canvas
     if (!surface || !layout) return -1
 
     const box = surface.getBoundingClientRect()
-    return nodeAt(
+    const found = nodeAt(
       layout.x,
       layout.y,
       radii,
@@ -278,6 +482,9 @@
       event.clientX - box.left,
       event.clientY - box.top,
     )
+
+    // A note that is not being drawn is not under the pointer either.
+    return found >= 0 && hiding[found] ? found : -1
   }
 
   function onPointerDown(event: PointerEvent) {
@@ -288,7 +495,7 @@
     lastY = event.clientY
     travelled = 0
 
-    const node = at(event)
+    const node = nodeUnder(event)
     if (node >= 0) holding = node
     else panning = true
   }
@@ -334,7 +541,7 @@
       return
     }
 
-    const node = at(event)
+    const node = nodeUnder(event)
     if (node === hovered) return
 
     hovered = node
@@ -390,7 +597,8 @@
     // Only one graph is on screen at a time - the panel shows its lists while a
     // graph tab is open, having no note to be about - so this is the only thing
     // Escape can mean, except where there is text being typed: the palette and
-    // every sheet close on Escape from their own field.
+    // every sheet close on Escape from their own field. The card in the corner is
+    // an overlay and gets the press first; see overlays.ts.
     const focused = document.activeElement
     if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return
     if (focused instanceof HTMLElement && focused.isContentEditable) return
@@ -420,6 +628,18 @@
     }}
     ondblclick={onDoubleClick}
   ></canvas>
+
+  {#if whole}
+    <GraphControls
+      open={carding}
+      {span}
+      at={at ?? span?.to ?? 0}
+      {playing}
+      onopen={(next: boolean) => (carding = next)}
+      onplay={play}
+      onscrub={scrub}
+    />
+  {/if}
 </div>
 
 <style>

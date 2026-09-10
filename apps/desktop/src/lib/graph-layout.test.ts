@@ -10,6 +10,7 @@ function graph(count: number, edges: [number, number][]): NoteGraph {
     name: `n${one}`,
     path: `n${one}.md`,
     degree: 0,
+    tags: [],
   }))
 
   for (const [a, b] of edges) {
@@ -19,7 +20,7 @@ function graph(count: number, edges: [number, number][]): NoteGraph {
     if (other) other.degree++
   }
 
-  return { nodes, edges: edges.map(([a, b]) => ({ a, b })) }
+  return { nodes, edges: edges.map(([a, b]) => ({ a, b, both: false })) }
 }
 
 /** A star: one hub with `spokes` notes linked to it. */
@@ -173,6 +174,53 @@ describe('a note moved by hand', () => {
 
     expect(layout.x[1] ?? 0).toBeGreaterThan(was)
     expect(away(layout, 0, 1)).toBeLessThan(60)
+  })
+})
+
+/** The two forces the card in the corner offers. Both are asked about the same
+ *  way: settle the same graph twice and compare, since the arrangement a force
+ *  arrives at is the only thing a reader sees of it. */
+describe('the forces a reader can ask about', () => {
+  /** A hub with six spokes, and two notes off on their own. */
+  const shape = () => {
+    const held = star(6)
+    return graph(
+      9,
+      held.edges.map((edge): [number, number] => [edge.a, edge.b]),
+    )
+  }
+
+  const settled = (options: { spread?: number; gather?: boolean }) => {
+    const layout = new Layout(shape(), options)
+    layout.settle()
+    return layout
+  }
+
+  /** A link holds its two ends about `DISTANCE` apart whatever the spread, and it
+   *  is meant to: that length is what a link means. So what a wider spread opens is
+   *  the gaps between notes nothing joins - and since the view frames whatever it
+   *  is given, that ratio is the whole of what a reader sees change. Measured at
+   *  1.8 against 4.0 between the ends of the dial. */
+  test('a wider spread opens the gaps a link is not holding', () => {
+    const apart = (layout: Layout) => away(layout, 7, 8) / away(layout, 0, 1)
+
+    expect(apart(settled({ spread: 4 }))).toBeGreaterThan(apart(settled({ spread: 0.25 })) * 2)
+  })
+
+  test('and the same spread twice is the same arrangement', () => {
+    expect(positions(settled({ spread: 2 }))).toEqual(positions(settled({ spread: 2 })))
+  })
+
+  test('gathering keeps the notes nothing links to near the rest', () => {
+    const gathered = settled({ gather: true })
+    const loose = settled({ gather: false })
+
+    const outFrom = (layout: Layout) => Math.hypot(layout.x[7] ?? 0, layout.y[7] ?? 0)
+    expect(outFrom(loose)).toBeGreaterThan(outFrom(gathered))
+  })
+
+  test('and both are still arrangements that arrive', () => {
+    expect(settled({ spread: 4, gather: false }).settled).toBe(true)
   })
 })
 

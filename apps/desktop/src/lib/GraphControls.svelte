@@ -1,0 +1,435 @@
+<script lang="ts">
+  /** What the picture of a space can be asked, in one card in its corner.
+   *
+   *  Folded away to a single button until it is wanted, because most of the time the
+   *  answer to "how should this be drawn" is "the way it already is": the settings
+   *  belong to the space and came down with it, so a reader who set them last month
+   *  wants the picture and not the controls. The same card the canvas panels are - the
+   *  surface, the hairline, the corner and the lift - because it is the same kind of
+   *  thing over the same kind of plane.
+   *
+   *  Only what changes what the picture tells you. Which notes are in it, what the
+   *  colours mean, how far apart they sit, whether a link says which way it points,
+   *  how big a note is drawn, and when. Nothing about the camera: that is the
+   *  pointer's business, and a dial for it would be a second way to do what a
+   *  scroll already does.
+   *
+   *  It writes straight to the space's own settings, so every surface that draws a
+   *  graph reads one answer; see workspace/graph-settings.svelte.ts. */
+
+  import CanvasDial from './CanvasDial.svelte'
+  import { closeOnBack } from './backstack.svelte'
+  import { t } from './i18n.svelte'
+  import { overlays } from './overlays'
+  import { workspace } from './workspace.svelte'
+  import { LEAST_SPREAD, MOST_GROUPS, MOST_SPREAD } from './workspace/graph-settings.svelte'
+
+  const {
+    open,
+    span,
+    at,
+    playing,
+    onopen,
+    onplay,
+    onscrub,
+  }: {
+    open: boolean
+    /** The first and last note of the space, or null where none of them has a date
+     *  to play - which is what a browser store with no times looks like. */
+    span: { from: number; to: number } | null
+    /** Where the scrub bar stands, in milliseconds. */
+    at: number
+    playing: boolean
+    onopen: (open: boolean) => void
+    onplay: () => void
+    onscrub: (at: number) => void
+  } = $props()
+
+  /** Four sliders, which is what a card of controls is. On the same 13 unit grid
+   *  every mark in the shell is drawn on; see panel-marks.ts. */
+  const CARD_MARK = 'M2 3.5h9M2 9.5h9M4.6 1.9v3.2M8.4 7.9v3.2'
+  const ADD_MARK = 'M6.5 3v7M3 6.5h7'
+  const DROP_MARK = 'M3.8 3.8l5.4 5.4M9.2 3.8l-5.4 5.4'
+  const PLAY_MARK = 'M4 2.6 10.4 6.5 4 10.4z'
+  const PAUSE_MARK = 'M4.4 3v7M8.6 3v7'
+
+  const settings = $derived(workspace.graphSettings.here)
+  const spread = $derived(settings.spread)
+
+  // Escape closes it, like everything else the app puts over a note; see
+  // overlays.ts, which is also what keeps this press from reaching the graph's own
+  // Escape and closing the tab underneath. And Android's back, the same gesture on
+  // a phone.
+  $effect(() => (open ? overlays.show(() => onopen(false)) : undefined))
+  $effect(() => closeOnBack(open, () => onopen(false)))
+
+  function addGroup() {
+    const held = settings.groups
+    // The next colour along, so six groups are six colours without anybody
+    // choosing: what a reader wants first is to tell them apart.
+    const colour = (held.length % MOST_GROUPS) + 1
+    workspace.graphSettings.set({ groups: [...held, { query: '', colour }] })
+  }
+
+  function setGroup(index: number, change: { query?: string; colour?: number }) {
+    workspace.graphSettings.set({
+      groups: settings.groups.map((group, one) =>
+        one === index ? { ...group, ...change } : group,
+      ),
+    })
+  }
+
+  function dropGroup(index: number) {
+    workspace.graphSettings.set({ groups: settings.groups.filter((_one, at) => at !== index) })
+  }
+
+  /** The next of the six. A tap rather than a picker: there are six colours in the
+   *  theme and a group is one of them, so a row of dots or a wheel would be a
+   *  second palette over a card that has room for neither. */
+  function nextColour(index: number, colour: number) {
+    setGroup(index, { colour: (colour % MOST_GROUPS) + 1 })
+  }
+</script>
+
+<div class="corner">
+  {#if open}
+    <div class="card">
+      <!-- What the picture is narrowed to. The search's own language, so a habit
+           carries over; the placeholder is what says which three things a picture
+           can be asked about. See graph-filter.ts. -->
+      <input
+        class="nib-field"
+        type="text"
+        value={settings.filter}
+        placeholder={t('Name, path or tag')}
+        aria-label={t('Filter')}
+        spellcheck="false"
+        oninput={(event) => workspace.graphSettings.set({ filter: event.currentTarget.value })}
+      />
+
+      <button
+        class="nib-row"
+        role="switch"
+        aria-checked={settings.orphans}
+        onclick={() => workspace.graphSettings.set({ orphans: !settings.orphans })}
+      >
+        <span class="nib-row-label">{t('Orphans')}</span>
+        <span class="nib-switch" class:on={settings.orphans} aria-hidden="true"></span>
+      </button>
+
+      <div class="rule"></div>
+
+      {#each settings.groups as group, index (index)}
+        <div class="group">
+          <button
+            class="swatch"
+            style:--swatch="var(--canvas-{group.colour})"
+            title={t('Colour {number}', { number: String(group.colour) })}
+            aria-label={t('Colour {number}', { number: String(group.colour) })}
+            onclick={() => nextColour(index, group.colour)}
+          ></button>
+
+          <input
+            class="nib-field"
+            type="text"
+            value={group.query}
+            placeholder={t('Name, path or tag')}
+            aria-label={t('Colour a group')}
+            spellcheck="false"
+            oninput={(event) => setGroup(index, { query: event.currentTarget.value })}
+          />
+
+          <button
+            class="drop"
+            title={t('Remove')}
+            aria-label={t('Remove')}
+            onclick={() => dropGroup(index)}
+          >
+            <svg viewBox="0 0 13 13"><path d={DROP_MARK} /></svg>
+          </button>
+        </div>
+      {/each}
+
+      {#if settings.groups.length < MOST_GROUPS}
+        <button class="nib-row" onclick={addGroup}>
+          <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
+          <span class="nib-row-label">{t('Colour a group')}</span>
+        </button>
+      {/if}
+
+      <div class="rule"></div>
+
+      <!-- The one force worth a dial. Two of the four the layout has are about how
+           it settles rather than about the picture it settles into, and the third
+           is what a link means; this is the ratio a reader can actually feel. See
+           graph-layout.ts. -->
+      <CanvasDial
+        value={spread}
+        least={LEAST_SPREAD}
+        most={MOST_SPREAD}
+        step={0.25}
+        label={t('Spread')}
+        reading="{Math.round(spread * 100)}%"
+        onvalue={(next: number) => workspace.graphSettings.set({ spread: next })}
+      />
+
+      <button
+        class="nib-row"
+        role="switch"
+        aria-checked={settings.gather}
+        onclick={() => workspace.graphSettings.set({ gather: !settings.gather })}
+      >
+        <span class="nib-row-label">{t('Gather')}</span>
+        <span class="nib-switch" class:on={settings.gather} aria-hidden="true"></span>
+      </button>
+
+      <button
+        class="nib-row"
+        role="switch"
+        aria-checked={settings.arrows}
+        onclick={() => workspace.graphSettings.set({ arrows: !settings.arrows })}
+      >
+        <span class="nib-row-label">{t('Arrows')}</span>
+        <span class="nib-switch" class:on={settings.arrows} aria-hidden="true"></span>
+      </button>
+
+      <button
+        class="nib-row"
+        role="switch"
+        aria-checked={settings.sized}
+        onclick={() => workspace.graphSettings.set({ sized: !settings.sized })}
+      >
+        <span class="nib-row-label">{t('Size by links')}</span>
+        <span class="nib-switch" class:on={settings.sized} aria-hidden="true"></span>
+      </button>
+
+      {#if span}
+        <div class="rule"></div>
+
+        <!-- The space as it was written: the notes arrive in the order they were
+             made. One button and one bar, because there is one thing to say and
+             one place to say it from. -->
+        <div class="time">
+          <button
+            class="press"
+            title={playing ? t('Pause') : t('Play')}
+            aria-label={playing ? t('Pause') : t('Play')}
+            onclick={onplay}
+          >
+            <svg viewBox="0 0 13 13" class:filled={!playing}>
+              <path d={playing ? PAUSE_MARK : PLAY_MARK} />
+            </svg>
+          </button>
+
+          <input
+            class="nib-slider"
+            type="range"
+            min={span.from}
+            max={span.to}
+            step={Math.max(1, Math.round((span.to - span.from) / 400))}
+            value={at}
+            aria-label={t('Over time')}
+            style:--fill="{((at - span.from) / (span.to - span.from)) * 100}%"
+            oninput={(event) => onscrub(Number(event.currentTarget.value))}
+          />
+        </div>
+      {/if}
+
+      <div class="rule"></div>
+
+      <button class="nib-row" onclick={() => workspace.graphSettings.reset()}>
+        <span class="nib-row-label">{t('Reset')}</span>
+      </button>
+    </div>
+  {/if}
+
+  <button
+    class="tab"
+    class:on={open}
+    title={t('Graph controls')}
+    aria-label={t('Graph controls')}
+    aria-pressed={open}
+    onclick={() => onopen(!open)}
+  >
+    <svg viewBox="0 0 13 13"><path d={CARD_MARK} /></svg>
+  </button>
+</div>
+
+<style>
+  /* In the corner and against the two edges of it, clear of whatever the system
+     puts there. The bottom left, because the app's own round button is bottom
+     right on a phone and the tab strip is along the top. */
+  .corner {
+    position: absolute;
+    left: var(--space-2);
+    bottom: calc(var(--space-2) + var(--inset-bottom));
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    /* The card is as wide as it is, and the corner is only as wide as the card:
+       everything either side of it is the picture, and the picture takes the
+       pointer. */
+    max-width: calc(100% - 2 * var(--space-2));
+  }
+
+  /* The canvas panels' card: the surface, the hairline, the large corner and the
+     lift. One shape over a plane, whichever plane it is. */
+  .card {
+    box-sizing: border-box;
+    width: min(21rem, 100%);
+    /* Never taller than the pane it is in, so a phone scrolls the card rather
+       than losing the end of it. */
+    max-height: calc(100vh - 8rem);
+    max-height: calc(100dvh - 8rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: var(--space-2);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    animation: lift var(--dur-fast) var(--ease-out);
+  }
+
+  @keyframes lift {
+    from {
+      opacity: 0;
+      translate: 0 6px;
+    }
+  }
+
+  /* Between the four things the card holds: which notes, which colours, how it is
+     drawn, and when. */
+  .rule {
+    flex: none;
+    height: 1px;
+    margin: var(--space-2) var(--row-pad);
+    background: var(--line);
+  }
+
+  /* One colour group: the colour, the query, and the way to be rid of it. */
+  .group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .group input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* The colour, as the colour. Not the picker's dot: that is a 40px target with a
+     hairline and a halo, built for a row of twelve of them, and this is one tap
+     among six in a row that also holds a field. */
+  .swatch {
+    flex: none;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--swatch);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
+    cursor: default;
+    transition: scale var(--dur-fast) var(--ease-spring);
+  }
+
+  .swatch:active {
+    scale: 1.08;
+  }
+
+  /* The tab the card folds away to, and the two small buttons inside it. */
+  .tab,
+  .drop,
+  .press {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--muted-strong);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .tab {
+    background: var(--surface-3);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-md);
+  }
+
+  @media (hover: hover) {
+    .drop:hover,
+    .press:hover {
+      color: var(--text-strong);
+      background: var(--surface-hover);
+    }
+
+    /* The tab has a surface of its own, so what a hover moves is its edge. */
+    .tab:hover {
+      color: var(--text-strong);
+      border-color: var(--muted);
+    }
+  }
+
+  .drop:active,
+  .press:active {
+    background: var(--press);
+  }
+
+  .tab.on {
+    color: var(--accent);
+  }
+
+  svg {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* A triangle is a shape rather than a stroke. */
+  svg.filled {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  /* The play button and the bar it moves along. */
+  .time {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .time input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global([data-touch]) .tab,
+  :global([data-touch]) .drop,
+  :global([data-touch]) .press {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  :global([data-touch]) svg {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+  }
+</style>

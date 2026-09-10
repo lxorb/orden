@@ -3,7 +3,9 @@
  *
  *  Three forces, the usual ones. Linked notes are held a fixed distance apart,
  *  every note pushes every other away, and a weak pull towards the middle keeps
- *  the notes nothing links to from drifting off for ever. A cooling factor
+ *  the notes nothing links to from drifting off for ever. Two of the three are the
+ *  reader's: how hard the notes push, and whether the middle pulls at all. The
+ *  third is what a link means and is not up for discussion. A cooling factor
  *  shrinks all three by the same amount each tick, so the picture arrives at an
  *  arrangement and holds it: once the factor is spent, `tick` does nothing at
  *  all, which is what keeps a graph nobody is touching off the processor.
@@ -26,7 +28,8 @@ import type { NoteGraph } from './graph'
 
 /** How far apart two linked notes want to sit, in graph units. */
 const DISTANCE = 36
-/** How hard notes push each other apart. Negative, being a repulsion. */
+/** How hard notes push each other apart, before the reader's own spread is
+ *  applied. Negative, being a repulsion. */
 const REPULSION = -150
 /** The pull towards the middle, as a fraction of the distance from it. */
 const GRAVITY = 0.055
@@ -76,6 +79,19 @@ export interface LayoutOptions {
   /** Which starting arrangement to lay out from. The same seed lays the same
    *  graph out the same way, every run and on every machine. */
   seed?: number
+  /** How hard the notes push each other away, as a multiple of what they do on
+   *  their own. One is the arrangement the layout arrives at unasked; below it the
+   *  picture balls up, above it the clusters come apart and the links stretch.
+   *
+   *  The repulsion alone rather than the link distance with it: scaling both would
+   *  blow the whole arrangement up by the same amount, and a view that frames what
+   *  it is given would draw the identical picture. What a reader wants from a dial
+   *  called spread is for the clumps to separate, and that is this ratio. */
+  spread?: number
+  /** Whether the pull towards the middle is on. Off, the notes nothing links to
+   *  drift out as far as the cooling lets them rather than sitting in a ring, which
+   *  is what a reader looking at the connected middle of a space wants. */
+  gather?: boolean
 }
 
 export class Layout {
@@ -99,10 +115,17 @@ export class Layout {
 
   private readonly count: number
   private warmth = 1
+  /** The two forces a reader can ask about, settled at construction: the layout is
+   *  built afresh when either changes, since an arrangement half laid out under one
+   *  spread and half under another is neither. */
+  private readonly repulsion: number
+  private readonly gravity: number
 
   constructor(graph: NoteGraph, options: LayoutOptions = {}) {
     const count = graph.nodes.length
     this.count = count
+    this.repulsion = REPULSION * (options.spread ?? 1)
+    this.gravity = options.gather === false ? 0 : GRAVITY
 
     this.x = new Float64Array(count)
     this.y = new Float64Array(count)
@@ -215,9 +238,11 @@ export class Layout {
   private gather(warmth: number) {
     const { x, y, vx, vy, count } = this
 
+    if (this.gravity === 0) return
+
     for (let one = 0; one < count; one++) {
-      vx[one] = (vx[one] ?? 0) - (x[one] ?? 0) * GRAVITY * warmth
-      vy[one] = (vy[one] ?? 0) - (y[one] ?? 0) * GRAVITY * warmth
+      vx[one] = (vx[one] ?? 0) - (x[one] ?? 0) * this.gravity * warmth
+      vy[one] = (vy[one] ?? 0) - (y[one] ?? 0) * this.gravity * warmth
     }
   }
 
@@ -339,7 +364,7 @@ export class Layout {
             let apart = ox * ox + oy * oy
             if (apart < NEAREST_SQUARED) apart = NEAREST_SQUARED
 
-            const force = (REPULSION * warmth) / apart
+            const force = (this.repulsion * warmth) / apart
             fx += ox * force
             fy += oy * force
           }
@@ -347,7 +372,7 @@ export class Layout {
         }
 
         if (far < NEAREST_SQUARED) far = NEAREST_SQUARED
-        const force = (REPULSION * weight * warmth) / far
+        const force = (this.repulsion * weight * warmth) / far
         fx += dx * force
         fy += dy * force
       }

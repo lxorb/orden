@@ -220,6 +220,7 @@
          place in the pane rather than a surface of its own. -->
     <Graph
       graph={links.graph}
+      whole
       current={workspace.relativeNote}
       onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
       onescape={() => void workspace.closeAsking(tab.id)}

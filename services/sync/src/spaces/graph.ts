@@ -85,6 +85,9 @@ function switched(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined
 }
 
+/** A group with no query yet is kept rather than dropped: it is the row the app
+ *  has just added and is about to be typed into, and it colours nothing until it
+ *  says something. The app keeps it for the same reason. */
 function groupsOf(value: unknown): ColourGroup[] | undefined {
   if (!Array.isArray(value)) return undefined
 
@@ -96,8 +99,10 @@ function groupsOf(value: unknown): ColourGroup[] | undefined {
     const sent = one as Record<string, unknown>
     if (typeof sent.query !== 'string') continue
 
-    const query = sent.query.trim().slice(0, LONGEST_QUERY)
-    if (query) out.push({ query, colour: Math.round(held(sent.colour, 1, MOST_GROUPS) ?? 1) })
+    out.push({
+      query: sent.query.slice(0, LONGEST_QUERY),
+      colour: Math.round(held(sent.colour, 1, MOST_GROUPS) ?? 1),
+    })
   }
 
   return out

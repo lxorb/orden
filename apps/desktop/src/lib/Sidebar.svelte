@@ -22,6 +22,7 @@
   import type { Panel, SortKey } from './workspace.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
+  import { DEEPEST } from './workspace/graph-settings.svelte'
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
@@ -91,10 +92,14 @@
     { id: 'links', label: t('Links'), path: LINKS_MARK },
   ]
 
-  /** Whether the Links panel is showing the picture, and how far out it reaches.
-   *  Held here because the switch for it is in the row of panel tabs above. */
+  /** Whether the Links panel is showing the picture. Held here because the switch
+   *  for it is in the row of panel tabs above.
+   *
+   *  How far out it reaches is the space's, not this window's: it is a fact about
+   *  how the space is read, and the picture in the tab and the one in the panel are
+   *  two views of the same setting. See workspace/graph-settings.svelte.ts. */
   let graphing = $state(false)
-  let depth = $state(1)
+  const depth = $derived(workspace.graphSettings.here.depth)
 
   /** Right-clicking the Files tab is where a file list keeps its sorting. */
   function sortMenu(): MenuEntry[] {
@@ -443,12 +448,14 @@
     {#if workspace.panel === 'links'}
       <div class="tools">
         {#if graphing}
-          <!-- One link out, or two. Nothing else is worth a control. -->
+          <!-- One link out, two, or three. Not four: at four most spaces answer
+               with the space, and the picture of the whole space is a tab away. -->
           <button
             class="depth"
             title={t('Depth')}
             aria-label={t('Depth')}
-            onclick={() => (depth = depth === 1 ? 2 : 1)}
+            onclick={() =>
+              workspace.graphSettings.set({ depth: depth === DEEPEST ? 1 : depth + 1 })}
             transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
           >
             {depth}

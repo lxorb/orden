@@ -39,7 +39,7 @@ export interface GraphNode {
  *  ends are not interchangeable, and an arrowhead is the only thing in the picture
  *  that says which note reached for which. `both` is a pair that link each way,
  *  drawn with a head at each end. */
-export interface GraphEdge {
+interface GraphEdge {
   a: number
   b: number
   both: boolean
