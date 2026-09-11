@@ -491,8 +491,13 @@ mod tests {
 
     #[test]
     fn the_cap_lets_the_largest_notes_go_first() {
-        let mut warm = Warm::default();
-        warm.cap = 100;
+        // The cap given at the start rather than assigned after, which is what
+        // `Default` is for: a field written over a fresh default is the same value
+        // twice and clippy says so.
+        let mut warm = Warm {
+            cap: 100,
+            ..Warm::default()
+        };
 
         warm.keep(Path::new("Plan.md"), stamp(20), &words(5));
         warm.keep(Path::new("Ink.md"), stamp(20), &words(5));
