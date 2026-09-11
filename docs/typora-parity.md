@@ -492,3 +492,49 @@ Features Typora does not have, which are the reason this exists.
       opaque origin and a `default-src 'none'` policy, so it reaches neither the
       app nor the network, and a run is stopped after ten seconds. Nothing of it
       is written to the note, saved or exported.
+- [x] The space as a picture: every note a dot, every link between two of them a
+      line, as a tab of its own from the palette, and the neighbourhood of the
+      open note in the Links panel. One surface for both, since the only
+      difference is which graph it is handed. A click opens a note, a second click
+      keeps it, a note dragged somewhere stays there, and the view frames the
+      whole thing until you pan it yourself and then never moves again
+- [x] A card in the corner of that picture, folded away to one button until it is
+      wanted, holding only what changes what the picture tells you. A field that
+      narrows it, in the space search's own language: bare words, `"a phrase"`,
+      `-` to exclude, `OR`, brackets, `path:`, `file:` and `tag:`, so a habit from
+      the search carries over. What a picture can answer is narrower than what a
+      search can and the placeholder says so: a note is its name, its path and its
+      tags there, because reading five thousand notes off the disk to answer one
+      keystroke is not a filter. `[key:value]` and `line:(a b)` want the note's
+      own lines, so they narrow nothing rather than quietly emptying the view.
+      Then: a switch for the notes nothing links to, which in a young space are
+      most of them and all of the clutter; up to six colour groups, each a query
+      and one of the six colours the theme names, tapped to change; one Spread
+      dial; a Gather switch; Arrows; Size by links; the space played through in
+      the order it was written, with a scrub bar; and Reset. All of it kept per
+      space on the account, so the picture is the way you left it on every machine
+      you sign in on, which is why there is nothing to bookmark
+- [x] Arrowheads that say which note reached for which, and two heads on a pair
+      that link each way. The graph still answers "these two are connected",
+      because that is what a picture of a space is looked at for, but it remembers
+      which end wrote the link and the heads are how it says so. Off by default: a
+      space where most links are read both ways is a space full of arrowheads
+      saying nothing
+- [x] Names that fade in as the view comes in, rather than four hundred of them
+      appearing at once on one notch of the wheel. A threshold that follows the
+      zoom, so there is nothing to set
+- [x] One link out from the open note, two, or three, as a stepper beside the
+      picture switch in the Links panel, remembered with the rest of the space's
+      graph. Not four: at four most spaces answer with the space, and the space is
+      a tab away
+- [x] Hiding a note is not re-arranging the space. The filter, the orphan switch
+      and the moment the scrub bar is at all arrive as one byte per note, so the
+      notes that stay do not move and turning a switch costs one frame rather than
+      the five seconds a fresh arrangement of five thousand notes takes. Only the
+      two forces lay it out again, because only they change where a note goes
+- [x] Sixty frames a second panning a space of five thousand notes and ten
+      thousand links, which came down to one line: a link is drawn one pixel of
+      the screen wide rather than one of the page's. Above one device pixel the
+      graphics stack tessellates every stroke into geometry, and ten thousand of
+      those measured 1200 ms a frame against 17. The notes' own dots, their names
+      and the arrowheads are all free by comparison
