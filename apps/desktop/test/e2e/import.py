@@ -305,6 +305,46 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     )
     say(f"[{name}] the asset store holds: {held}")
 
+    # ── A bare table, which is the one choice the sheet offers ─────────────
+    books = fixtures / "Books.csv"
+    books.write_text(
+        "Name,Status,Pages,Created\n"
+        'Dune,Read,412,"January 2, 2026"\n'
+        'Ubik,Reading,224,"March 4, 2026"\n',
+        encoding="utf-8",
+    )
+
+    page.evaluate("() => window.nibApp.importing.show()")
+    page.wait_for_selector("button.drop")
+    with page.expect_file_chooser() as chooser:
+        page.click("button.drop")
+    chooser.value.set_files(str(books))
+    page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=20000)
+    page.wait_for_timeout(300)
+    shot("table-preview")
+
+    say(f"[{name}] as a table: {page.evaluate('() => window.nibApp.importing.counts')}")
+    # By index rather than by position in the markup: the groove draws a thumb of
+    # its own as a child, so the second button is not the second child.
+    # Inside the sheet: the shell has grooves of its own, and the class is shared.
+    choices = page.locator('[role="dialog"] .nib-segmented button')
+    say(f"[{name}] the groove has {choices.count()} choices")
+    choices.nth(1).click()
+    page.wait_for_function(
+        "() => window.nibApp.importing.rows === 'notes' && window.nibApp.importing.stage === 'ready'"
+    )
+    page.wait_for_timeout(300)
+    shot("table-rows")
+    say(f"[{name}] one note per row: {page.evaluate('() => window.nibApp.importing.counts')}")
+
+    page.click("button.primary")
+    page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=30000)
+    page.evaluate("() => window.nibApp.importing.close()")
+    page.wait_for_timeout(300)
+
+    row = page.evaluate(TEXT_OF, "Dune.md")
+    say(f"[{name}] a row reads: {[line for line in (row or '').splitlines() if line][:6]}")
+
     # ── One undo ───────────────────────────────────────────────────────────
     before = len(page.evaluate(NAMES))
     label = page.evaluate("() => window.nibApp.workspace.undoLabel")
