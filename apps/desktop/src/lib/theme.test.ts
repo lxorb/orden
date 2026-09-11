@@ -28,8 +28,19 @@ function memoryStorage(): Storage {
 
 let kept = memoryStorage()
 
-/** What the system is asking for, and whoever asked to be told when it changes. */
-const media = { light: false, listeners: [] as ((event: { matches: boolean }) => void)[] }
+/** What the system is asking for, and whoever asked to be told when it changes.
+ *  Two questions and not one: a room that is light and a reader who needs more
+ *  contrast have nothing to do with each other, and the stub answered both with
+ *  `light` until the second one had a consequence. */
+const media = {
+  light: false,
+  contrast: false,
+  listeners: [] as ((event: { matches: boolean }) => void)[],
+}
+
+/** What the page says it is wearing. Held here rather than reached for through
+ *  the stubbed document, so a test can read it the way it reads the storage. */
+let dataset: Record<string, string> = {}
 
 /** The system changes its mind, which is what following it has to notice. */
 function systemPrefers(light: boolean) {
@@ -40,13 +51,17 @@ function systemPrefers(light: boolean) {
 function stubs() {
   kept = memoryStorage()
   media.light = false
+  media.contrast = false
   media.listeners = []
+  dataset = {}
 
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
-    matchMedia: () => ({
+    // Answered by which question was asked. A blind stub made every test that
+    // arranged a light room into a test of the contrast query as well.
+    matchMedia: (query: string) => ({
       get matches() {
-        return media.light
+        return query.includes('contrast') ? media.contrast : media.light
       },
       addEventListener: (_name: string, listener: (event: { matches: boolean }) => void) =>
         void media.listeners.push(listener),
@@ -55,7 +70,7 @@ function stubs() {
   vi.stubGlobal('getComputedStyle', () => ({ getPropertyValue: () => '' }))
   vi.stubGlobal('document', {
     documentElement: {
-      dataset: {} as Record<string, string>,
+      dataset,
       style: { setProperty: () => undefined, removeProperty: () => undefined },
     },
     querySelector: () => null,
@@ -126,6 +141,7 @@ beforeEach(() => {
   theme.files = []
   theme.id = 'default'
   theme.scheme = 'system'
+  theme.offerContrast = false
 })
 
 describe('what the dropdown offers', () => {
@@ -414,5 +430,80 @@ describe('an installed theme across a restart', () => {
     expect(theme.id).toBe('file:rose')
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
+  })
+})
+
+/** Contrast was a switch beside the mode, with a palette of its own painted over
+ *  whichever theme was in force. It is a theme now, which leaves the launch one
+ *  thing to do about it: a reader whose system asks for more contrast is shown the
+ *  theme that answers the ask, once. Nothing here installs or selects anything -
+ *  a theme is a file that has to be fetched, and a launch cannot promise that. */
+describe('the offer of the contrast theme', () => {
+  test('is made to a fresh install whose system asks for more contrast', () => {
+    media.contrast = true
+    theme.init()
+
+    expect(theme.offerContrast).toBe(true)
+  })
+
+  test('and to nobody whose system is not asking', () => {
+    theme.init()
+
+    expect(theme.offerContrast).toBe(false)
+    // Nothing written down, on purpose: a system that starts asking next month
+    // still gets the one offer.
+    expect(kept.getItem('nib:contrast-offered')).toBe(null)
+  })
+
+  test('once, and never again however it was answered', () => {
+    media.contrast = true
+    theme.init()
+    expect(theme.offerContrast).toBe(true)
+    expect(kept.getItem('nib:contrast-offered')).toBe('yes')
+
+    // A second launch, on a machine still asking for it.
+    theme.offerContrast = false
+    theme.init()
+
+    expect(theme.offerContrast).toBe(false)
+  })
+
+  test('to a reader who had the switch on, so their contrast goes nowhere in silence', () => {
+    kept.setItem('nib:contrast', 'on')
+    theme.init()
+
+    expect(theme.offerContrast).toBe(true)
+    // Read once, and the key the switch wrote goes with the switch.
+    expect(kept.getItem('nib:contrast')).toBe(null)
+  })
+
+  test('and never to one who turned the switch off, which was them answering it', () => {
+    kept.setItem('nib:contrast', 'off')
+    media.contrast = true
+    theme.init()
+
+    expect(theme.offerContrast).toBe(false)
+    expect(kept.getItem('nib:contrast')).toBe(null)
+    expect(kept.getItem('nib:contrast-offered')).toBe('yes')
+  })
+
+  test('without choosing anything, so a reader who walks past it keeps their theme', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+    theme.select('file:rose')
+    media.contrast = true
+
+    theme.init()
+
+    expect(theme.offerContrast).toBe(true)
+    expect(theme.id).toBe('file:rose')
+  })
+
+  test('and nothing paints contrast onto the page, which a theme does for itself', () => {
+    media.contrast = true
+    theme.init()
+
+    expect(dataset.theme).toBe('dark')
+    expect('contrast' in dataset).toBe(false)
   })
 })

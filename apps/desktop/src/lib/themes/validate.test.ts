@@ -36,6 +36,22 @@ describe('what a theme may set', () => {
     expect(reviewed.css).toContain('#write pre code')
   })
 
+  /** The four colours inside a code fence. They are why contrast could not be a
+   *  theme before: nothing named them, so nothing but a switch over the whole app
+   *  could change them. A theme states them like any other colour now. */
+  test('keeps the syntax colours a fence is drawn in', () => {
+    const reviewed = review(
+      tokens(`--syntax-number: #ffc861;
+--syntax-function: #79b8ff;
+--syntax-type: #5ef2b0;
+--syntax-property: #d0a6ff;`),
+    )
+
+    expect(reviewed.refused).toEqual([])
+    expect(reviewed.css).toContain('--syntax-number: #ffc861;')
+    expect(reviewed.css).toContain('--syntax-property: #d0a6ff;')
+  })
+
   test('takes a selector list apart rather than dropping the rule', () => {
     const reviewed = review('#write h1, .nib-bar { color: #111; }')
 

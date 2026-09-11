@@ -132,6 +132,14 @@ describe('the Appearance pane', () => {
   test('offers no reset, since neither row is a default anybody drifted from', () => {
     expect(resettable(pane('appearance'))).toBe(false)
   })
+
+  /** There was a third row: a More contrast switch, which painted a palette of
+   *  its own over whichever theme was in force. Contrast is a theme now, so the
+   *  pane asks the two questions it has always had and the store answers the
+   *  third. */
+  test('and asks two questions, contrast being a theme rather than a switch', () => {
+    expect(fieldsOf('appearance').map((one) => one.label)).toEqual(['Theme', 'Mode'])
+  })
 })
 
 /** Which stream of releases the machine follows. Only the desktop app installs

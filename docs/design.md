@@ -331,6 +331,30 @@ The open note is the filled one. In an app that shows one document at a time on
 half its devices, which note you are in is the single most important fact the
 list carries, and the three references all spend a filled row on it.
 
+### Contrast is a theme
+
+Who answers how much contrast the page has? The theme does, and only the theme.
+There is one palette per look, and asking for more contrast is asking for a
+different look, so it is the `contrast` theme in the store and not a switch beside
+the mode. A switch was the old answer, and it had to restate the whole palette
+over whichever theme was in force: two answers to every colour question, with a
+theme author having no say in the second one.
+
+Which means a theme has to be able to reach everything a reader might need to
+see, including the four colours inside a code fence that no other token names.
+`tokens.css` declares them per scheme like any other colour:
+`--syntax-number`, `--syntax-function`, `--syntax-type` and `--syntax-property`.
+Not `--code-*`: every name with that prefix is the furniture around a block
+rather than the code in it, and `--code-number` sitting beside the gutter's own
+`--code-number-color` is a trap for whoever writes the next theme. The four are
+read while Highlighting follows the theme, which is what it does unless somebody
+changes it: a reader who pinned GitHub or Dracula pinned that palette's colours
+with it.
+
+A system that asks for more contrast is shown that theme once, on a fresh install,
+on the card it would be installed from. Nothing installs itself, and nothing asks
+twice.
+
 ### Alignment
 
 One left edge per panel, at `--row-pad` from its side. The header's words, the
@@ -376,9 +400,17 @@ they are the same kind of statement.
 
 Anything about other people is a mark, never a dot. `SharedMark.svelte` draws it
 once - Lucide's `users`, at `--icon-sm` in `--muted`, in the row's trailing slot -
-and it is what says a space is shared, in the switcher's rows and on the header
-over the list. A dot in the accent used to say that, which meant the one shape
-the app had for a fact about a file was saying two unrelated things at once.
+and it says it in three places: a shared space's row in the switcher, the header
+over the file list, and a note in that list somebody else is in. A dot in the
+accent used to say the first of those, which meant the one shape the app had for
+a fact about a file was saying two unrelated things at once.
+
+The note's half is asked of the rooms rather than of the account, and that is the
+whole of why it is not noise: a note in a shared space that nobody else has open
+is not a note being worked in with somebody, and one mark repeated down every row
+of a shared space says nothing about any row in it. `othersIn` in
+`sharing.svelte.ts`, beside `isShared`, because they are the same question asked
+of a note and of a space.
 
 ### Switches
 

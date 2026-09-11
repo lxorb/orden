@@ -233,6 +233,23 @@
   --success: #3fcf8e;
   --selection: rgb(124 107 245 / 0.28);
 
+  /* The four colours a code fence needs that the rest of the palette has no
+     name for. Everything else in a fence already reads a token above - a keyword
+     is the accent, a string is the success colour, a comment is muted - so these
+     four were the one thing on the page a theme file could not reach, and they
+     are tokens here for exactly that reason.
+
+     Named `--syntax-*` and not `--code-*` on purpose: every `--code-` name in
+     this file is the furniture around a block rather than the code in it, and
+     `--code-number` beside `--code-number-color` would have been two unrelated
+     colours one hyphen apart. See FOLLOW in code-theme.ts in @nib/editor, which
+     reads them, and note that it is read only while Highlighting follows the
+     theme: choosing GitHub or Dracula pins that palette's own colours. */
+  --syntax-number: #e0a233;
+  --syntax-function: #4a8df6;
+  --syntax-type: #3fcf8e;
+  --syntax-property: #7c6bf5;
+
   /* The canvas. The six colours JSON Canvas names by number, in the spec's
      order, and the dots of the plane. Obsidian's own palette, so a canvas
      coloured in either app reads the same in the other; a theme can restate
@@ -274,6 +291,15 @@
   --danger: #d92b34;
   --success: #16a06a;
   --selection: rgb(91 75 224 / 0.18);
+
+  /* The same four, because these are the colours our own fences have always been
+     drawn in on both sides. Restated here rather than left to the block above, so
+     a theme reading this file finds them where it finds every other colour it
+     might want to answer differently on one side than on the other. */
+  --syntax-number: #e0a233;
+  --syntax-function: #4a8df6;
+  --syntax-type: #3fcf8e;
+  --syntax-property: #7c6bf5;
 
   --canvas-1: #e93147;
   --canvas-2: #ec7500;

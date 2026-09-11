@@ -51,6 +51,7 @@
   import { usage } from './lib/usage.svelte'
   import { currentWindow, isDesktop } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
+  import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
   import { shortcuts } from './lib/shortcuts.svelte'
@@ -302,6 +303,10 @@
         modes,
         shortcuts,
         theme,
+        // The gallery, which a drive cannot reach by pointing: it sits over the
+        // settings sheet, and the launch opens it by itself for a reader whose
+        // system asks for more contrast. See start.ts.
+        themeStore,
         viewport,
         links,
         views,

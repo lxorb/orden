@@ -16,7 +16,8 @@ import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, invoke, isDesktop } from './tauri'
-import { theme } from './theme.svelte'
+import { CONTRAST_THEME, theme } from './theme.svelte'
+import { store as themeStore } from './themes/store.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
 import { updates } from './updates.svelte'
@@ -37,6 +38,21 @@ export function start(): () => void {
   shortcuts.restore()
   settings.restore()
   recovery.restore()
+
+  // A system that asks for more contrast is shown the theme that answers it, on
+  // the card it would be installed from. Contrast is a theme, and a theme is a
+  // file that has to be fetched and written, so the most a launch can honestly do
+  // is put it in front of the reader; whether they take it is theirs. Asked once
+  // and never again - see offerTheContrastTheme in theme.svelte.ts.
+  //
+  // Through Appearance, because that is where the store lives: it sits over the
+  // settings sheet and closes with it, so opening one means opening both. Which
+  // is also where somebody would have gone looking.
+  if (theme.offerContrast) {
+    settings.show('appearance')
+    themeStore.show()
+    themeStore.opened = CONTRAST_THEME
+  }
 
   // The blocks the editor's `/` menu offers, which are the app's rows rather
   // than a list the editor keeps: handed over as a function so the words follow

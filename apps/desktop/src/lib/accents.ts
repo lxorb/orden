@@ -80,17 +80,15 @@ function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
 
 /** Every token that depends on the accent, so one choice restyles the app.
  *
- *  With more contrast asked for, the colour moves further from the page rather
- *  than being replaced: it is still the colour they picked, at a strength they
- *  can read it at. Everything drawn from it is stronger with it - a selection has
- *  to be seen through, but it has to be seen. */
-export function accentTokens(
-  id: string,
-  scheme: 'dark' | 'light',
-  contrast = false,
-): Record<string, string> {
+ *  These took a third answer once, for a contrast switch that pushed the colour
+ *  further from the page. Contrast is a theme now, and a theme that states an
+ *  accent keeps it - nothing here is painted over such a theme at all, see
+ *  `paintAccent` in theme.svelte.ts - so the push had nowhere left to land: the
+ *  contrast theme's own accent is the one that wins, which is what a theme chosen
+ *  from a picture of it is supposed to do. */
+export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<string, string> {
   const away = scheme === 'dark' ? 'light' : 'dark'
-  const base = contrast ? shift(accentById(id)[scheme], away, 0.32) : accentById(id)[scheme]
+  const base = accentById(id)[scheme]
   const [r, g, b] = channels(base)
   const soft = scheme === 'dark' ? 0.15 : 0.1
   const line = scheme === 'dark' ? 0.42 : 0.38
@@ -100,8 +98,8 @@ export function accentTokens(
     '--accent': base,
     // Hover moves away from the background, whichever way that is.
     '--accent-hover': shift(base, away),
-    '--accent-soft': `rgb(${r} ${g} ${b} / ${contrast ? soft + 0.1 : soft})`,
-    '--accent-line': `rgb(${r} ${g} ${b} / ${contrast ? 0.75 : line})`,
-    '--selection': `rgb(${r} ${g} ${b} / ${contrast ? chosen + 0.14 : chosen})`,
+    '--accent-soft': `rgb(${r} ${g} ${b} / ${soft})`,
+    '--accent-line': `rgb(${r} ${g} ${b} / ${line})`,
+    '--selection': `rgb(${r} ${g} ${b} / ${chosen})`,
   }
 }

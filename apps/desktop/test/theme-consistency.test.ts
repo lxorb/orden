@@ -9,6 +9,7 @@ import { describe, expect, test } from 'vitest'
  *  rather than remembered. */
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
 function componentFiles(dir: string): string[] {
   const out: string[] = []
@@ -71,5 +72,60 @@ describe('the look of things the browser also has an opinion about', () => {
       offenders,
       `these would diverge from the themed dropdown: ${offenders.join(', ')}`,
     ).toEqual([])
+  })
+})
+
+/** Every file the app and the theme package are written from, whatever its kind:
+ *  the scan below is looking for a line nobody should write again, and a rule in a
+ *  stylesheet and a line of TypeScript are equally able to write it. */
+function sourceFiles(dir: string): string[] {
+  const out: string[] = []
+
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name)
+    if (statSync(path).isDirectory()) out.push(...sourceFiles(path))
+    // A test may name what the app may not write, and one below does.
+    else if (/\.(ts|svelte|css)$/.test(name) && !name.endsWith('.test.ts')) out.push(path)
+  }
+
+  return out
+}
+
+/** Contrast is a theme. Two things follow, and both are a line away from being
+ *  undone by somebody who does not know the history: the four colours inside a
+ *  code fence are tokens a theme states per scheme, and nothing outside a theme
+ *  paints contrast over the page any more. */
+describe('what a theme reaches, now that contrast is one', () => {
+  const SYNTAX = ['--syntax-number', '--syntax-function', '--syntax-type', '--syntax-property']
+  const tokens = readFileSync(join(THEMES, 'tokens.css'), 'utf8')
+
+  /** One scheme's block. Split rather than parsed: the four belong beside the
+   *  other colours of a scheme, not once at the top for both. */
+  function blockFor(scheme: 'dark' | 'light'): string {
+    const dark = tokens.slice(tokens.indexOf("[data-theme='dark']"))
+    const [own = '', rest = ''] = dark.split("[data-theme='light']")
+    return scheme === 'dark' ? own : rest
+  }
+
+  test('states the four syntax colours in both schemes, so a theme can restate them', () => {
+    for (const scheme of ['dark', 'light'] as const) {
+      const block = blockFor(scheme)
+      for (const token of SYNTAX) expect(block, `${token} on ${scheme}`).toContain(`${token}:`)
+    }
+  })
+
+  test('and spells them apart from the gutter, which is a different colour entirely', () => {
+    // `--code-number` was the syntax colour and `--code-number-color` the digits
+    // in the margin: one hyphen apart, and nothing to do with each other.
+    expect(tokens).toContain('--code-number-color:')
+    expect(tokens).not.toMatch(/--code-(number|function|type|property):/)
+  })
+
+  test('and nothing paints contrast over a theme from outside it', () => {
+    const offenders = [...sourceFiles(SOURCE), ...sourceFiles(THEMES)]
+      .filter((path) => /data-contrast|dataset\.contrast/.test(readFileSync(path, 'utf8')))
+      .map((path) => path.replace(/\\/g, '/').split('/').slice(-2).join('/'))
+
+    expect(offenders, `these still write the attribute: ${offenders.join(', ')}`).toEqual([])
   })
 })

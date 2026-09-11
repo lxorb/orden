@@ -28,6 +28,25 @@ describe('reading the catalogue', () => {
     expect(theme?.palettes.light).toEqual({ '--bg': '#faf6ee' })
   })
 
+  /** A miniature is painted from the catalogue alone, so the colours a card shows
+   *  have to include the ones a fence is drawn in. The contrast theme states all
+   *  four, and a card that dropped them would be a picture of a different theme. */
+  test('carries the syntax colours a theme states, so a card shows the fence it will get', () => {
+    const [theme] = readIndex({
+      themes: [
+        entry({
+          palettes: {
+            light: { '--bg': '#ffffff', '--syntax-number': '#8a4b00' },
+            dark: { '--bg': '#000000', '--syntax-number': '#ffc861' },
+          },
+        }),
+      ],
+    })
+
+    expect(theme?.palettes.light['--syntax-number']).toBe('#8a4b00')
+    expect(theme?.palettes.dark['--syntax-number']).toBe('#ffc861')
+  })
+
   test('drops an entry with nothing to show', () => {
     for (const patch of [
       { id: 'Warm Paper' },

@@ -12,6 +12,8 @@ and dark, and stops everything again. Screenshots go beside it under `shots/`.
 Run it from the repository root:
 
     python apps/desktop/test/e2e/rules.py
+
+Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
 """
 
 from __future__ import annotations
@@ -58,6 +60,10 @@ def chromium() -> str:
 
 
 def build() -> None:
+    if os.environ.get("NIB_SKIP_BUILD") == "1":
+        say("reusing the build that is there")
+        return
+
     say("building the web app")
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(

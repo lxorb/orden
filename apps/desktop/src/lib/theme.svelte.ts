@@ -57,9 +57,15 @@ const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
 const ACCENT_KEY = 'nib:accent'
-/** Whether more contrast was asked for. Absent means nobody has said, which
- *  follows what the system asks for; see `contrast`. */
+/** That the contrast theme has been offered, so it is offered once and never
+ *  again. Absent means the offer has not been made yet; see `offerContrast`. */
+const OFFERED_KEY = 'nib:contrast-offered'
+/** Where the contrast switch wrote whether it was on, before contrast was a
+ *  theme. Read once, by the offer, and never written. */
 const CONTRAST_KEY = 'nib:contrast'
+/** The id the registry knows the contrast theme under, which is what the offer
+ *  opens the store on. */
+export const CONTRAST_THEME = 'contrast'
 
 /** The one built-in theme: the app's own tokens, which state both schemes.
  *
@@ -76,6 +82,9 @@ const DEFAULT_THEME: ThemeInfo = {
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
+/** Asked once, at the launch that offers the contrast theme, and never listened
+ *  to: a theme is chosen, and a system changing its mind does not get to choose
+ *  one. See `offerTheContrastTheme`. */
 const MORE = '(prefers-contrast: more)'
 
 /** The line the store writes on the front of a theme it installs. Taken off
@@ -114,10 +123,9 @@ class Themes {
   files = $state<ThemeInfo[]>([])
   /** What the system currently prefers. */
   private preferred = $state<Scheme>('dark')
-  /** Whether the reader asked for more contrast, or has never said. */
-  private asked = $state<boolean | null>(null)
-  /** Whether the system asks for it, which is what "never said" means. */
-  private demanded = $state(false)
+  /** Whether the contrast theme is to be offered, which the launch reads once
+   *  and acts on by opening the store on it; see `offerTheContrastTheme`. */
+  offerContrast = $state(false)
 
   readonly accents = ACCENTS
 
@@ -130,17 +138,6 @@ class Themes {
 
   /** The scheme that was asked for, by name or through the system. */
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
-
-  /** Whether the app is drawn with more contrast than the theme's own.
-   *
-   *  A switch beside the scheme rather than a theme of its own, for the reason
-   *  the scheme is a switch: a reader who needs the page easier to see should not
-   *  have to give up the theme they chose to get it. What it changes is the
-   *  palette, over whichever theme is in force; see contrast.css in @nib/themes.
-   *
-   *  Somebody who has turned contrast up in Windows or macOS gets it without
-   *  asking here as well, and the switch is theirs to turn off again. */
-  readonly contrast = $derived(this.asked ?? this.demanded)
 
   /** The scheme the app is actually in: the one asked for, or the one the theme
    *  in force has where it does not have that one. A theme with a single scheme
@@ -166,16 +163,8 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
-    const more = window.matchMedia(MORE)
-    this.demanded = more.matches
-    more.addEventListener('change', (event) => {
-      this.demanded = event.matches
-      if (this.asked === null) this.apply()
-    })
-
     this.restoreChoice()
-    const contrast = localStorage.getItem(CONTRAST_KEY)
-    this.asked = contrast === 'on' ? true : contrast === 'off' ? false : null
+    this.offerTheContrastTheme()
     this.accent = localStorage.getItem(ACCENT_KEY) ?? DEFAULT_ACCENT
     this.apply()
     void this.reload()
@@ -208,6 +197,46 @@ class Themes {
 
     localStorage.setItem(STORAGE_KEY, this.id)
     localStorage.setItem(SCHEME_KEY, this.scheme)
+  }
+
+  /** Whether to offer the contrast theme, which happens once or not at all.
+   *
+   *  Contrast is a theme, and a theme is a file in the folder. So the answer to a
+   *  system asking for more contrast cannot be to turn it on: it has to be
+   *  fetched and written, and a first launch can promise neither - it happens
+   *  offline, and the browser build has a folder only in name. What it can do is
+   *  open the store on the theme that answers the ask and let the reader install
+   *  it in one press, which is also the only version of this that tells them
+   *  afterwards where the thing they now have came from.
+   *
+   *  One rule covers both the reader who has never launched this and the reader
+   *  who had the switch: offer it to anybody the switch would have been on for at
+   *  this launch. It said so itself, or their system says so and they never
+   *  contradicted it. A reader who turned the switch off said no to contrast, and
+   *  that answer stands.
+   *
+   *  The marker is written the moment the offer is made, so it is made once
+   *  however it is answered - and nothing here selects a theme, so a reader who
+   *  walks past the store keeps exactly the look they had. */
+  private offerTheContrastTheme() {
+    if (localStorage.getItem(OFFERED_KEY)) return
+
+    const had = localStorage.getItem(CONTRAST_KEY)
+    // Read once. The switch is gone, and the key with it.
+    if (had !== null) localStorage.removeItem(CONTRAST_KEY)
+
+    // Somebody who turned the switch off has answered the question already.
+    if (had === 'off') {
+      localStorage.setItem(OFFERED_KEY, 'yes')
+      return
+    }
+
+    // Nobody is asking. Left unmarked on purpose: a system that starts asking
+    // next month gets the offer then, which is still only ever once.
+    if (had !== 'on' && !window.matchMedia(MORE).matches) return
+
+    localStorage.setItem(OFFERED_KEY, 'yes')
+    this.offerContrast = true
   }
 
   /** Rescans the themes folder, so dropping in a file needs no restart, and so
@@ -340,15 +369,6 @@ class Themes {
     this.setScheme(this.current === 'dark' ? 'light' : 'dark')
   }
 
-  /** More contrast, or the theme's own. Written down either way: a reader who
-   *  turns it off is saying so, and that has to outlast the system saying
-   *  otherwise. */
-  setContrast(on: boolean) {
-    this.asked = on
-    localStorage.setItem(CONTRAST_KEY, on ? 'on' : 'off')
-    this.apply()
-  }
-
   setAccent(id: string) {
     this.accent = id
     localStorage.setItem(ACCENT_KEY, id)
@@ -369,7 +389,7 @@ class Themes {
    *  rather than left with yesterday's colour written over it. */
   private paintAccent() {
     const style = document.documentElement.style
-    const tokens = accentTokens(this.accent, this.current, this.contrast)
+    const tokens = accentTokens(this.accent, this.current)
 
     for (const token of Object.keys(tokens)) style.removeProperty(token)
     if (this.accentIsTheme) return
@@ -391,10 +411,6 @@ class Themes {
     // The scheme decides the tokens, whichever theme sits on top of them: the
     // built-in states both, and a theme file only overrides what it cares about.
     document.documentElement.dataset.theme = this.current
-    // The attribute is there or it is not: an empty one would still be there as
-    // far as `[data-contrast]` is concerned.
-    if (this.contrast) document.documentElement.dataset.contrast = 'more'
-    else delete document.documentElement.dataset.contrast
     this.paintAccent()
     this.paintSystemBars()
 
