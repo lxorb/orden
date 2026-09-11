@@ -1042,4 +1042,5 @@ export const fr: Dictionary = {
   'Markdown files': 'Fichiers Markdown',
   'A document': 'Un document',
   'Undo the import': 'Annuler l’import',
+  'Choose an export': 'Choisir un export',
 }

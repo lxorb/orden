@@ -11,6 +11,7 @@
   import FormatBar from './lib/FormatBar.svelte'
   import History from './lib/History.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
+  import { importing } from './lib/importing.svelte'
   import IconPicker from './lib/IconPicker.svelte'
   import ImportSheet from './lib/ImportSheet.svelte'
   import { menu } from './lib/menu.svelte'
@@ -308,6 +309,9 @@
         // The picker is opened from a row's menu, which a drive cannot reach; this
         // is how a screenshot run opens it on a note, a canvas or a folder.
         iconChoice,
+        // The import sheet, which opens from a row in File: a drive walks the file
+        // chooser rather than the menu, so it needs the sheet on screen first.
+        importing,
         rooms,
         share,
         // The files other people shared on their own, so a drive can watch one

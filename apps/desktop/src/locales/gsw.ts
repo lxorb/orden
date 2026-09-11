@@ -1039,4 +1039,5 @@ export const gsw: Dictionary = {
   'Markdown files': 'Markdown-Dateie',
   'A document': 'Es Dokumänt',
   'Undo the import': 'Import zrugnäh',
+  'Choose an export': 'Export uuswähle',
 }

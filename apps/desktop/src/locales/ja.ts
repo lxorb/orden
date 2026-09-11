@@ -1037,4 +1037,5 @@ export const ja: Dictionary = {
   'Markdown files': 'Markdown ファイル',
   'A document': '文書',
   'Undo the import': 'インポートを元に戻す',
+  'Choose an export': '書き出したファイルを選ぶ',
 }

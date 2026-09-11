@@ -1045,4 +1045,5 @@ export const de: Dictionary = {
   'Markdown files': 'Markdown-Dateien',
   'A document': 'Ein Dokument',
   'Undo the import': 'Import zurücknehmen',
+  'Choose an export': 'Export auswählen',
 }

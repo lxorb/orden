@@ -21,6 +21,7 @@
   import { dur } from './motion'
   import { settings } from './settings.svelte'
   import { segmented } from './slide'
+  import { viewport } from './viewport.svelte'
   import Sheet from './Sheet.svelte'
 
   /** What the sheet calls each of them. An app's name is its name in every
@@ -100,8 +101,14 @@
         <path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" />
         <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
       </svg>
+      <!-- A finger cannot drop anything, so on a touch screen it says what the
+           press does instead. The control is the same control. -->
       <span class="name">
-        {importing.stage === 'reading' ? t('Reading') : t('Drop an export here')}
+        {importing.stage === 'reading'
+          ? t('Reading')
+          : viewport.touch
+            ? t('Choose an export')
+            : t('Drop an export here')}
       </span>
       <span class="hint">{t('A zip, a folder, or a file another app wrote')}</span>
     </button>
