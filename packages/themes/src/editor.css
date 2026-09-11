@@ -783,14 +783,17 @@
 /* ── Where a deck breaks ─────────────────────────────────────────── */
 
 /* A note whose rules break it into slides says so while it is being written: the
-   rule that ends a slide is drawn in the accent instead of the line colour, with
-   a tick out in the margin. Nothing is written anywhere - the mark is the shape
-   of the rule - and an underscore rule stays an ordinary rule, because that is
-   the one that does not break a slide. See packages/markdown/src/slides.ts. */
-.nib-deck .nib-slide-break {
-  position: relative;
-}
-
+   rule that ends a slide is drawn in the accent instead of the line colour.
+   Nothing is written anywhere and nothing is added - the mark is the shape of
+   the rule, in a different colour - and an underscore rule stays an ordinary
+   rule, because that is the one that does not break a slide.
+   There used to be a dot out in the margin as well, and it was the wrong idea
+   twice over. A rule is a line; a bead hanging off the left end of it reads as a
+   list bullet, or as the block grip, or as something gone wrong. And it appeared
+   far more widely than the name suggests: two paragraphs with a rule between
+   them is a deck as far as the detector is concerned, so an ordinary note that
+   used a rule as a divider grew an accent dot nobody asked for.
+   See packages/markdown/src/slides.ts. */
 .nib-deck .nib-slide-break .nib-rule {
   background: linear-gradient(
     to right,
@@ -799,18 +802,6 @@
     var(--accent-line) 94%,
     transparent
   );
-}
-
-.nib-deck .nib-slide-break::before {
-  content: '';
-  position: absolute;
-  left: -0.85em;
-  top: calc(50% - 2px);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.65;
 }
 
 /* ── Tables ──────────────────────────────────────────────────────── */
