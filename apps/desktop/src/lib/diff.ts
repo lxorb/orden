@@ -27,6 +27,41 @@ function lines(text: string): string[] {
   return text.length ? text.split('\n') : []
 }
 
+/** What a diff did, counted.
+ *
+ *  Counted rather than timed, and here rather than in the test because only this
+ *  file knows what it is doing. diff.test.ts held a stopwatch to two versions of a
+ *  four thousand line note and asked for under 100 ms; a runner with the rest of
+ *  the suite on it fails that while the diff is exactly as fast as it was, because
+ *  what a wall clock measures is partly the queue in front of the code. These two
+ *  are the same numbers on a busy machine as on an idle one, and between them they
+ *  say the thing that keeps a diff off the main thread: the table is only ever
+ *  filled in for the handful of lines two versions of a note disagree about.
+ *
+ *  Two adds, one of them inside the table's own loop. */
+export interface Work {
+  /** Lines matched off at the head and the tail before the table, which is most
+   *  of a note. */
+  matched: number
+  /** Cells of the table filled in, one per pair of lines left over. The one worth
+   *  catching: it is the square of what is left, so a change that stopped matching
+   *  the head and the tail off first turns one cell into sixteen million. */
+  cells: number
+}
+
+function nothing(): Work {
+  return { matched: 0, cells: 0 }
+}
+
+const work = nothing()
+
+/** What the diffs since this was last asked did, and zero from here. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
 /** The longest common subsequence of two lists of lines, as the pairs of
  *  positions that match, oldest first.
  *
@@ -41,6 +76,7 @@ function common(before: string[], after: string[]): [number, number][] {
 
   for (let row = rows - 1; row >= 0; row--) {
     for (let column = columns - 1; column >= 0; column--) {
+      work.cells += 1
       const at = row * width + column
       lengths[at] =
         before[row] === after[column]
@@ -91,6 +127,7 @@ export function lineDiff(before: string, after: string): Row[] {
     tail++
   }
 
+  work.matched += head + tail
   const oldMiddle = old.slice(head, old.length - tail)
   const nowMiddle = now.slice(head, now.length - tail)
 

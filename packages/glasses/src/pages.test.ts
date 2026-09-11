@@ -1,7 +1,7 @@
 import { measureTextWrap } from '@evenrealities/pretext'
 import { describe, expect, test } from 'vitest'
-import { SPACE, width, wrap } from './firmware'
-import { pageAt, pageOfLine, pagesOf, type Paging } from './pages'
+import { SPACE, width, workDone as firmwareWork, wrap } from './firmware'
+import { pageAt, pageOfLine, pagesOf, type Paging, workDone as pagingWork } from './pages'
 import { BODY_INNER, BODY_ROWS } from './panel'
 
 const paging = (over: Partial<Paging> = {}): Paging => ({
@@ -443,13 +443,56 @@ describe('what a page costs', () => {
     expect(first.length).toBe(after.length)
   })
 
+  /** Counted rather than timed. This asked for a paging in under 60 ms and a runner
+   *  with the whole suite on it answers well over that while the code is exactly as
+   *  fast as it was: a wall clock measures the queue in front of the work as much as
+   *  the work, and what this is watching for - a cache that stopped working, a pager
+   *  that went quadratic - shows up in the counts as a factor of hundreds rather
+   *  than as a percent of a millisecond.
+   *
+   *  `Work` in firmware.ts and in pages.ts say what a paging did: the lines walked,
+   *  the pages cut, the lines broken, the lines read out of the cache instead and
+   *  the glyphs measured. Every one of them is the same number on a busy machine as
+   *  on an idle one. */
   test('pages a long note again and again without slowing down', () => {
-    // Generous on purpose: what this catches is a cache that stopped working or a
-    // pager that got quadratic, not a machine that is busy.
-    const at = performance.now()
-    for (let round = 0; round < 20; round++) pagesOf(typed(round), paging({ gutter: NUMS }))
-    const each = (performance.now() - at) / 20
+    const over = paging({ gutter: NUMS })
 
-    expect(each).toBeLessThan(60)
+    /** A keystroke of this test's own rather than the file's `typed`, for two
+     *  reasons. Every round is a line the cache has not seen, where the tests above
+     *  have already broken `typed(0)` and `typed(1)` and a line already broken would
+     *  be answered rather than broken. And every round is the same length, so what
+     *  differs between two rounds is which line changed and nothing else at all. */
+    const keyed = (round: number) =>
+      note.replace(
+        'Prose about section 7,',
+        `Prose about section ${String(round).padStart(3, '0')},`,
+      )
+
+    /** One paging, and what the firmware and the pager were asked to do for it. */
+    const round = (at: number) => {
+      // Whatever an earlier round left counted, dropped.
+      firmwareWork()
+      pagingWork()
+      const pages = pagesOf(keyed(at), over)
+      return { pages: pages.length, set: firmwareWork(), paged: pagingWork() }
+    }
+
+    const first = round(0)
+    let last = first
+    for (let at = 1; at < 20; at++) last = round(at)
+
+    // A keystroke changes one line of the note, so one line is broken and the
+    // other four hundred and seventy nine are handed back from the cache. A cache
+    // that stopped working is four hundred and eighty breaks instead, which is the
+    // difference between a keystroke inside a frame and one the reader can see.
+    expect(first.set.broken).toBe(1)
+    expect(first.set.cached).toBeGreaterThan(400)
+
+    // And the twentieth paging is the first one over again, to the glyph: paging a
+    // note twenty times costs twenty times what paging it once costs, which is
+    // what a pager gone quadratic would not.
+    expect(last.set).toEqual(first.set)
+    expect(last.paged).toEqual(first.paged)
+    expect(last.pages).toBe(first.pages)
   })
 })

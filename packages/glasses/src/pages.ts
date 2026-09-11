@@ -103,6 +103,35 @@ function empty(section: string, rule: string): Taking {
   return { taken: [], rows: 0, section, rule }
 }
 
+/** What paging a note did, counted.
+ *
+ *  Counted rather than timed, for the reason `Work` in firmware.ts gives beside its
+ *  own counts: pages.test.ts asked for a re-page in under 60 ms and measure.test.ts
+ *  timed two hundred and seventy five of them, and a wall clock in a suite running
+ *  seven packages at once measures the queue in front of the work as much as the
+ *  work. These two are the same numbers on a busy machine as on an idle one, and
+ *  with the firmware's own counts beside them they say the whole of what a keystroke
+ *  costs: the same lines walked, the same pages cut, and one of them broken again. */
+export interface Work {
+  /** Pages cut. */
+  pages: number
+  /** Lines of the note walked into them. */
+  lines: number
+}
+
+function nothing(): Work {
+  return { pages: 0, lines: 0 }
+}
+
+const work = nothing()
+
+/** What the paging since this was last asked did, and zero from here. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
 /** A note as pages, cut where the firmware will cut them. */
 export function pagesOf(source: string, paging: Paging): Page[] {
   const marked = markLines(source, {
@@ -146,6 +175,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
 
     const words = shown.join('\n')
     const numbers = counted.join('\n')
+    work.pages += 1
     pages.push({
       index: pages.length,
       from: first?.from ?? 0,
@@ -182,6 +212,7 @@ export function pagesOf(source: string, paging: Paging): Page[] {
   }
 
   for (const line of marked) {
+    work.lines += 1
     // A heading at or above the reader's level opens a page of its own and goes
     // into the head band rather than into the body.
     if (paging.breakAt > 0 && line.level > 0 && line.level <= paging.breakAt) {

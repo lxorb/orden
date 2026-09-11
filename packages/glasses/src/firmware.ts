@@ -210,12 +210,69 @@ function insteadOf(one: string, code: number): string {
   return COMBINING.test(one) ? '' : TOFU
 }
 
+/** What setting text the firmware's way did, counted.
+ *
+ *  Counted rather than timed, and here rather than in the tests because only this
+ *  file knows what it is doing. firmware.test.ts asked for a fold of 2,700
+ *  characters in under 4 ms and pages.test.ts for a re-page in under 60, and a
+ *  runner with seven packages on it fails both while the code is exactly as fast as
+ *  it was: what a wall clock measures is partly the queue in front of the work.
+ *  These four are the same numbers on a busy machine as on an idle one, and each
+ *  names a way this could get slower: a substitution worked out again for a
+ *  character that has been seen, a glyph measured that need not be, a line broken
+ *  that was broken before.
+ *
+ *  `cached` against `broken` is the one the whole of text mode stands on. A note is
+ *  re-paged on every keystroke and a keystroke changes one line of it, so a
+ *  re-page is one break and twelve hundred lookups. A cache that stopped working
+ *  is twelve hundred breaks, which is the difference between a keystroke inside a
+ *  frame and one the reader can see.
+ *
+ *  Four adds over a pass that reads a note. */
+export interface Work {
+  /** Characters handed to `fold`. Zero for a line answered out of the cache
+   *  below, because a line that is not broken again is not folded again either. */
+  folded: number
+  /** Substitutions worked out from scratch, which is a miss in the per-codepoint
+   *  table: the distinct characters the font lacks, not every time one of them
+   *  turns up. */
+  instead: number
+  /** Strings measured against the font's metrics, an advance a glyph. The dear
+   *  part of breaking a line, since every candidate row is measured. */
+  measured: number
+  /** Lines broken, which is the work a re-page is meant to avoid. */
+  broken: number
+  /** Lines answered out of the cache instead. */
+  cached: number
+}
+
+function nothing(): Work {
+  return { folded: 0, instead: 0, measured: 0, broken: 0, cached: 0 }
+}
+
+const work = nothing()
+
+/** What the setting since this was last asked did, and zero from here. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
+/** `getTextWidth` with a count around it. Every measurement in this file goes
+ *  through here, so `work.measured` is the whole of what the metrics were asked. */
+function measure(text: string): number {
+  work.measured += 1
+  return getTextWidth(text)
+}
+
 /** A string the firmware can actually draw, character for character.
  *
  *  Newlines are left alone: the container breaks on them, and they are the only
  *  control character that means anything to it. Everything else that would draw
  *  nothing becomes something that draws. */
 export function fold(text: string): string {
+  work.folded += text.length
   let out = ''
   let column = 0
 
@@ -247,6 +304,7 @@ export function fold(text: string): string {
 
     let known = folded.get(code)
     if (known === undefined) {
+      work.instead += 1
       // Formatting before drawing, because the font does have a glyph for some
       // of them: a soft hyphen in the middle of a word would come out as a
       // hyphen in the middle of a word.
@@ -266,7 +324,7 @@ export function fold(text: string): string {
  *  Folded first: a character the font lacks measures zero, so a line measured
  *  unfolded fits and then does not. */
 export function width(text: string): number {
-  return getTextWidth(fold(text))
+  return measure(fold(text))
 }
 
 /** Where the firmware may break a line: after a space, after a hyphen, and
@@ -322,7 +380,7 @@ function chop(word: string, inner: number): string[] {
   let line = ''
 
   for (const letter of word) {
-    if (line !== '' && getTextWidth(line + letter) > inner) {
+    if (line !== '' && measure(line + letter) > inner) {
       out.push(line)
       line = ''
     }
@@ -336,9 +394,9 @@ function chop(word: string, inner: number): string[] {
 function broken(text: string, inner: number, hang: string): string[] {
   const whole = fold(text)
   if (whole === '') return ['']
-  if (getTextWidth(whole) <= inner) return [whole]
+  if (measure(whole) <= inner) return [whole]
 
-  const under = Math.max(SPACE, inner - getTextWidth(hang))
+  const under = Math.max(SPACE, inner - measure(hang))
   const out: string[] = []
   let line = ''
 
@@ -354,9 +412,9 @@ function broken(text: string, inner: number, hang: string): string[] {
 
   for (const piece of pieces(whole)) {
     const together = line + piece
-    if (line !== '' && getTextWidth(together.trimEnd()) > room()) push()
+    if (line !== '' && measure(together.trimEnd()) > room()) push()
 
-    if (getTextWidth(piece.trimEnd()) > room()) {
+    if (measure(piece.trimEnd()) > room()) {
       // Longer than a whole row on its own. Every part but the last fills a row.
       const parts = chop(piece.trimEnd(), room())
       for (const part of parts.slice(0, -1)) {
@@ -406,8 +464,12 @@ export function wrap(text: string, inner: number, hang = ''): readonly string[] 
   // separated by one is one key and not another.
   const key = `${String(inner)}\n${hang}\n${text}`
   const known = already.get(key)
-  if (known) return known
+  if (known) {
+    work.cached += 1
+    return known
+  }
 
+  work.broken += 1
   // An explicit newline is a row of its own however narrow either half is: the
   // container breaks on it, so a string that holds one is two rows.
   const rows = text.includes('\n')
@@ -436,14 +498,14 @@ export function rows(text: string, inner: number, hang = ''): number {
  *  reads as one mark rather than as a pause. */
 export function fit(text: string, most: number): string {
   const whole = fold(text)
-  if (getTextWidth(whole) <= most) return whole
+  if (measure(whole) <= most) return whole
 
-  const room = most - getTextWidth('…')
+  const room = most - measure('…')
   if (room <= 0) return ''
 
   let taken = ''
   for (const one of whole) {
-    if (getTextWidth(taken + one) > room) break
+    if (measure(taken + one) > room) break
     taken += one
   }
 
@@ -461,12 +523,12 @@ export const SPACE = getAdvW(0x20) / 16
  *  on a 576 pixel panel is under one percent of it. */
 export function rightward(text: string, inner: number): string {
   const whole = fold(text)
-  let gap = Math.floor((inner - getTextWidth(whole)) / SPACE)
+  let gap = Math.floor((inner - measure(whole)) / SPACE)
 
   // Measured back rather than trusted: the font kerns, so a run of spaces and a
   // letter after them is not always the sum of their advances, and one pixel over
   // is a line the container clips or wraps.
-  while (gap > 0 && getTextWidth(' '.repeat(gap) + whole) > inner) gap--
+  while (gap > 0 && measure(' '.repeat(gap) + whole) > inner) gap--
 
   return gap > 0 ? ' '.repeat(gap) + whole : whole
 }
@@ -484,9 +546,9 @@ export function rightward(text: string, inner: number): string {
  *  is short and exact and the name is neither. */
 export function spread(left: string, right: string, inner: number): string {
   const end = fold(right)
-  const room = inner - getTextWidth(end) - SPACE * 2
+  const room = inner - measure(end) - SPACE * 2
   const start = fit(left, Math.max(0, room))
-  const gap = Math.floor((inner - getTextWidth(start) - getTextWidth(end)) / SPACE)
+  const gap = Math.floor((inner - measure(start) - measure(end)) / SPACE)
 
   return start + ' '.repeat(Math.max(1, gap)) + end
 }

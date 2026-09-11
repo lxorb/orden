@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { draws, fit, fold, rightward, rows, ruleOf, SPACE, TICK, width } from './firmware'
+import { draws, fit, fold, rightward, rows, ruleOf, SPACE, TICK, width, workDone } from './firmware'
 import { LINE } from './panel'
 
 /** What the firmware font has and has not, asserted rather than assumed.
@@ -145,14 +145,51 @@ describe('folding a note to what the font can draw', () => {
     }
   })
 
+  /** Counted rather than timed. This asked for a fold of 2,700 characters in under
+   *  4 ms, which says as much about what else the runner had on it as about the fold;
+   *  `workDone` in firmware.ts says what the fold actually did, and says the same
+   *  number on a busy machine as on an idle one.
+   *
+   *  What it says is the thing the per-codepoint table exists for: a character the
+   *  font has no glyph for is worked out once, however many times it turns up. The
+   *  substitution is the dear part - a compatibility decomposition, then the same
+   *  with the combining marks off, then the emoji's own name - and a table that
+   *  stopped working would do it eighteen thousand times here rather than three. */
   test('folds a page of prose in well under a frame', () => {
-    const page = 'The quick brown fox jumps over the lazy dog. '.repeat(60)
+    // A page of prose with characters the font has none of scattered through it, so
+    // what is counted below is a substitution per character rather than one per
+    // time that character appears.
+    const page = 'The quick brown fox ╬ jumps over the ┋ lazy dog ◃. '.repeat(60)
+
+    // The first fold works out what the font lacks, and it may have been worked out
+    // already by a test above: the table is the module's own.
+    workDone()
+    fold(page)
+    const first = workDone()
+
+    // Three thousand characters, a hundred times. A page turn folds one page.
     const at = performance.now()
     for (let round = 0; round < 100; round++) fold(page)
     const each = (performance.now() - at) / 100
+    const rest = workDone()
 
-    // 2,700 characters, a hundred times. A page turn folds one page.
-    expect(each).toBeLessThan(4)
+    // Every character of every round walked once, and not one of them measured:
+    // folding asks the font's metrics nothing.
+    expect(first.folded).toBe(page.length)
+    expect(rest.folded).toBe(page.length * 100)
+    expect(first.measured).toBe(0)
+    expect(rest.measured).toBe(0)
+
+    // And nothing worked out a second time: the hundred rounds after the first read
+    // every substitution out of the table.
+    expect(first.instead).toBeLessThanOrEqual(3)
+    expect(rest.instead).toBe(0)
+
+    // The one clock in this file, kept as a shape check rather than as a
+    // measurement: a fold of this page is 0.2 ms on the machine this was written
+    // on, and code that has changed shape misses a ceiling fifty times that by a
+    // factor rather than by a percent.
+    expect(each).toBeLessThan(10)
   })
 })
 

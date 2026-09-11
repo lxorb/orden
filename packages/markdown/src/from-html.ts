@@ -67,6 +67,42 @@ function languageOf(pre: Element): string {
   return /(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? ''
 }
 
+/** What numbering the lists of a conversion did, counted.
+ *
+ *  Here for from-html.test.ts, which asserts these rather than a stopwatch. A
+ *  five thousand item list used to be held to a wall-clock budget of a second and
+ *  answered 1,400 ms on a runner with the rest of the suite on it, failing a test
+ *  that had found nothing wrong; the same commit passed on its own minutes
+ *  earlier. A timing is a proxy for the work done and a poor one, because what it
+ *  measures is partly the queue in front of the code. These three are the same
+ *  numbers on a busy machine as on an idle one, and between them they say the
+ *  thing the test is about: one count per list rather than one per item.
+ *
+ *  Three adds over a conversion that walks a whole page. */
+export interface Work {
+  /** Lists counted out: one per parent, however many items hang off it. */
+  lists: number
+  /** Items that asked where they sit among their siblings. */
+  items: number
+  /** Siblings stepped over while counting those lists out. The one worth
+   *  catching: a list is walked once, so this is the length of the list, and a
+   *  return to a walk for every item makes it the length squared. */
+  walked: number
+}
+
+function nothing(): Work {
+  return { lists: 0, items: 0, walked: 0 }
+}
+
+const work = nothing()
+
+/** What the conversions since this was last asked did, and zero from here. */
+export function workDone(): Work {
+  const done = { ...work }
+  Object.assign(work, nothing())
+  return done
+}
+
 /** Where a node sits among its parent's elements, which is what numbers an item
  *  of an ordered list.
  *
@@ -82,13 +118,16 @@ function indexer(): (parent: Element | null, node: Node) => number {
   return (parent, node) => {
     if (!parent) return 0
 
+    work.items += 1
     let places = counted.get(parent)
 
     if (!places) {
+      work.lists += 1
       places = new Map()
       const kids = parent.children
 
       for (let at = 0; at < kids.length; at++) {
+        work.walked += 1
         const kid = kids[at]
         if (kid) places.set(kid, at)
       }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { htmlToMarkdown, NEVER } from './from-html'
+import { htmlToMarkdown, NEVER, workDone } from './from-html'
 
 describe('a page as markdown', () => {
   test('headings and emphasis become markdown', () => {
@@ -82,22 +82,37 @@ describe('a page as markdown', () => {
    *  41 ms once each list is counted out once, and ten thousand of them 415 ms
    *  against 206 ms.
    *
-   *  What is asserted is the numbering and a budget loose enough to say nothing
-   *  about the machine: the suite runs several files at once, so a wall-clock
-   *  figure here measures the queue as much as the code, and only a return to a
-   *  walk per item would be slow enough to fail. */
+   *  Counted rather than timed. This held a stopwatch to the conversion and asked
+   *  for under a second; a runner with the rest of the suite on it answered
+   *  1,400 ms and failed a test that had found nothing wrong, and the same commit
+   *  had passed on its own minutes earlier. A wall-clock figure here measures the
+   *  queue in front of the code as much as the code, while `workDone` in
+   *  from-html.ts says what the numbering actually did - and says it the same way
+   *  on a loaded machine as on an idle one.
+   *
+   *  What it says is the whole point of the test: one list counted out once, every
+   *  item asking it where it sits, and the list walked its own length between them
+   *  rather than its length for each line of it. */
   test('a list of five thousand items is numbered without a pass each', () => {
     const items = 5000
     const html = `<ol>${Array.from({ length: items }, (_, at) => `<li>item ${at}</li>`).join('')}</ol>`
 
-    const started = performance.now()
+    // Whatever an earlier conversion left counted, dropped, so what comes back is
+    // this one's own.
+    workDone()
     const lines = htmlToMarkdown(html).split('\n')
-    const took = performance.now() - started
+    const work = workDone()
 
     expect(lines).toHaveLength(items)
     expect(lines[0]).toBe('1. item 0')
     expect(lines.at(-1)).toBe(`${items}. item ${items - 1}`)
-    expect(took).toBeLessThan(1000)
+
+    // One list, counted out once, and every item of it asking where it sits.
+    expect(work.lists).toBe(1)
+    expect(work.items).toBe(items)
+    // And the list walked exactly once over: a return to a walk per item would
+    // make this twenty five million rather than five thousand.
+    expect(work.walked).toBe(items)
   })
 
   test('nested lines line up under the text above them', () => {

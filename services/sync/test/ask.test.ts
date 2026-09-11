@@ -49,6 +49,17 @@ function userId(): string {
   return (env.db.prepare('select id from users').get() as { id: string }).id
 }
 
+/** How many questions the account has been counted for this hour, which is what the
+ *  ceiling is actually made of. Read straight from the database, so a test can say
+ *  what sixty questions did without asking sixty of them. */
+function asked(): number {
+  const row = env.db
+    .prepare('select count from limits where scope = ? and key = ?')
+    .get('ask', userId()) as { count: number } | undefined
+
+  return row?.count ?? 0
+}
+
 /* ── Encryption ───────────────────────────────────────────────────────── */
 
 describe('a key at rest', () => {
@@ -450,15 +461,33 @@ describe('a question', () => {
   })
 
   /** The account's own credit is what this spends, and a phone in a pocket is
-   *  what a ceiling is for. */
+   *  what a ceiling is for.
+   *
+   *  Counted rather than ground through. This asked sixty questions and then a sixty
+   *  first, and sixty one round trips through the Worker and the database is most of
+   *  a test timeout on a runner with the rest of the suite on it: the test timed out
+   *  while the ceiling was doing exactly what it does now. The ceiling is a row in
+   *  `limits`, so the row says what sixty questions did without sixty being asked -
+   *  which is how the utterance ceiling below is tested too. Three questions are
+   *  enough to say the whole of it: the count goes up with each one, the sixtieth is
+   *  answered, and the sixty first is not. */
   test('stops after sixty in an hour', async () => {
     fakeAsking([said('yes')])
 
-    for (let at = 0; at < 60; at++) {
-      const answer = await question({ question: 'again', model: 'gpt-6-astra' })
-      expect(answer.status, `question ${String(at + 1)}`).toBe(200)
-    }
+    // Every question counts, and what it counts against is the account's own row.
+    expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
+    expect(asked()).toBe(1)
 
+    // Fifty nine asked this hour, without fifty nine round trips.
+    env.db
+      .prepare('update limits set count = ? where scope = ? and key = ?')
+      .run(59, 'ask', userId())
+
+    // The sixtieth is answered.
+    expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
+    expect(asked()).toBe(60)
+
+    // And the sixty first is not.
     const over = await question({ question: 'again', model: 'gpt-6-astra' })
     expect(over.status).toBe(429)
     expect(over.json.error).toContain('a lot of questions')

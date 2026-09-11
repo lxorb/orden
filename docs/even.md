@@ -1494,6 +1494,15 @@ asks for, and a burst of edits arriving through a room is the same work. The cac
 in `firmware.ts` is why: a keystroke changes one line of a note and the other twelve
 hundred were broken before and are not broken again.
 
+Those milliseconds are a reading taken once, on an idle machine. What the tests hold
+the code to is the work underneath them, because a timing on a runner with the rest
+of the suite on it measures the queue in front of the work as much as the work.
+`measure.test.ts` prints that work and `pages.test.ts` asserts it, and the two
+numbers the table above rests on are these: **a cold paging of the note breaks 162 of
+its lines and measures 9,011 glyphs; the same note after a keystroke breaks one line,
+reads 479 out of the cache, and measures 3,444.** Every one of those is the same
+number on a busy machine as on an idle one.
+
 Those are the plugin's own share. **What the radio costs is on top and is not
 measurable from here**: three bands at about 83 ms each is roughly 250 ms of a page
 turn, from the published fit.

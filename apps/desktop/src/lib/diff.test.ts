@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { diffCount, lineDiff, type Row, trimmed } from './diff'
+import { diffCount, lineDiff, type Row, trimmed, workDone } from './diff'
 
 /** The diff as a patch reads, so a test says what a person would see. */
 function shown(before: string, after: string): string[] {
@@ -57,17 +57,38 @@ describe('a line diff', () => {
   })
 
   /** The one thing a diff of two versions of a note must not do is take a
-   *  noticeable moment over it. */
+   *  noticeable moment over it.
+   *
+   *  Counted rather than timed. This asked for under 100 ms and a runner with the
+   *  rest of the suite on it fails that while the diff is exactly as fast as it was:
+   *  a wall clock measures the queue in front of the code as much as the code.
+   *  `workDone` in diff.ts says what the diff did instead, and says the same number
+   *  on a busy machine as on an idle one.
+   *
+   *  What it says is the reason this is quick at all. Two versions of a note are
+   *  mostly the same note, so the lines they share at the top and the bottom are
+   *  matched off before the table is touched and the table only ever covers what is
+   *  left. The table is one cell per pair, so that is the difference between one
+   *  cell and sixteen million. */
   test('two long versions of the same note are quick', () => {
     const before = Array.from({ length: 4000 }, (_, at) => `line ${at}`).join('\n')
     const after = before.replace('line 2000', 'line two thousand')
 
-    const started = performance.now()
+    // Whatever an earlier diff left counted, dropped, so what comes back is this
+    // diff's own.
+    workDone()
     const rows = lineDiff(before, after)
-    const took = performance.now() - started
+    const work = workDone()
 
     expect(diffCount(rows)).toEqual({ added: 1, removed: 1 })
-    expect(took).toBeLessThan(100)
+
+    // All four thousand lines but the one that changed, matched off first: two
+    // thousand at the head and one thousand nine hundred and ninety nine at the
+    // tail.
+    expect(work.matched).toBe(3999)
+    // Which leaves one line either side, and a table of one cell. A diff that
+    // stopped matching them off would fill in sixteen million.
+    expect(work.cells).toBe(1)
   })
 
   test('two texts with nothing in common read as one replacement', () => {
