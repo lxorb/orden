@@ -45,7 +45,12 @@ class Arriving {
    *  before that, which is why the state says a word rather than a count until
    *  the first listing is in. */
   total = $state<number | null>(null)
-  /** Whether the full-surface state is up. */
+  /** Whether there is a pass somebody is waiting on.
+   *
+   *  What is drawn for it is not this store's to decide: the count goes in the
+   *  panel's foot while there is anything to look at, and the whole surface only
+   *  while there is not. See `nothingToShow` in workspace.svelte.ts, which is the
+   *  one that knows, and SidebarFoot.svelte. */
   showing = $state(false)
   /** Whether the way out is being offered, because nothing has arrived for a
    *  while and this may not be a wait that ends. */
@@ -101,10 +106,18 @@ class Arriving {
     for (const path of paths) this.onTheWay.add(path)
   }
 
-  /** One note written, by the path it landed at. Counted, and no longer coming. */
-  landed(path: string) {
-    this.onTheWay.delete(path)
-    this.arrived()
+  /** Rows the file list has caught up with: whatever is on the disk now is no
+   *  longer on its way, and its row is the listing's rather than this store's.
+   *
+   *  Told rather than worked out, because a note landing and a note appearing in
+   *  the listing are two moments: the pass writes the file and the folder is read
+   *  again once the pass is through. Forgetting the row at the first of those took
+   *  it off the tree for as long as that took, which is a row that blinks out
+   *  halfway through arriving. See `loadTree` in workspace.svelte.ts. */
+  prune(has: (path: string) => boolean) {
+    for (const path of [...this.onTheWay]) {
+      if (has(path)) this.onTheWay.delete(path)
+    }
   }
 
   /** What the pass now knows it is bringing down. Nothing coming means nothing

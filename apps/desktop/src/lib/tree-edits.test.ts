@@ -6,7 +6,9 @@ const BY_NAME: TreeOptions = { showHidden: false, sort: 'name', descending: fals
 
 function file(path: string): Entry {
   return {
-    name: path.slice(path.lastIndexOf('/') + 1),
+    // Either separator, because a listing off a Windows disk speaks backslashes
+    // and the browser build's speaks slashes.
+    name: path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1),
     path,
     is_dir: false,
     modified: 0,
@@ -195,6 +197,23 @@ describe('rows for notes the account has named and not sent yet', () => {
 
   test('nothing coming leaves the listing alone', () => {
     expect(withComing(root(), [], BY_NAME)).toEqual(root())
+  })
+
+  test('land under a Windows folder too, named the way a row is named', () => {
+    const disk = folder('C:\\Notes\\N', [file('C:\\Notes\\N\\a.md')])
+    const listed = withComing(disk, ['C:\\Notes\\N\\Work\\plan.md'], BY_NAME)
+
+    expect(shape(listed)).toEqual([
+      'C:\\Notes\\N\\Work',
+      'C:\\Notes\\N\\Work\\plan.md',
+      'C:\\Notes\\N\\a.md',
+    ])
+    expect(entryAt(listed, 'C:\\Notes\\N\\Work\\plan.md')?.name).toBe('plan.md')
+    expect(entryAt(listed, 'C:\\Notes\\N\\Work')?.name).toBe('Work')
+  })
+
+  test('a folder whose name only starts the same way is not the space', () => {
+    expect(shape(withComing(root(), ['/Nine/a.md'], BY_NAME))).toEqual(shape(root()))
   })
 
   test('the same listing lands the same way whatever order it arrives in', () => {

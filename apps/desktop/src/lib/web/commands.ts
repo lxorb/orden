@@ -20,6 +20,7 @@ import {
 } from './paths'
 import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
+import { breathe } from '../startup.svelte'
 import { WELCOME, WELCOME_PATH } from '../welcome'
 
 interface Entry {
@@ -38,6 +39,11 @@ interface TreeOptions {
 }
 
 const now = () => Date.now()
+
+/** How many notes a chunk of the link scan reads and reads through before letting
+ *  go of the thread. Short enough to stay inside a frame on a phone, long enough
+ *  that the yields are not most of the work. */
+const SCANNED_AT_ONCE = 128
 
 /** Whether a file is one the tree shows: a note, a PDF beside one, or a canvas.
  *  The same three kinds the desktop's `read_tree` lists, and for the same
@@ -341,42 +347,49 @@ async function spaceTags(root: string) {
  *  each note is read by `scanNote`, which is also what the index uses for a note
  *  that has just been saved.
  *
- *  Row by row over a cursor rather than the whole store at once. Two reasons, and
- *  the second is the one that shows: the space is never held twice over, and the
- *  reading is spread across a callback per note instead of one long task, so the
- *  scan of a few thousand notes no longer swallows the keystrokes of whoever is
- *  typing in the note that is open while it runs. IndexedDB walks a cursor at the
- *  pace the main thread can take it, which is exactly the pace wanted here.
+ *  A handful of notes at a time, with the thread let go of between them. The whole
+ *  store at once was one task of two thirds of a second on a space of three
+ *  thousand notes, which is two thirds of a second of somebody's keystrokes
+ *  appearing all at once when it ended - and it happens on the launch, while they
+ *  are reading the note it opened. In chunks it is the same work in a couple of
+ *  dozen short tasks with room for a keystroke between them, and nothing is held
+ *  twice: the names come first, cheaply, and only a chunk's bodies are in hand.
  *
- *  Off the launch's critical path either way; see `build` in link-index.svelte.ts
- *  and startup.svelte.ts. */
+ *  Off the launch's critical path as well; see `build` in link-index.svelte.ts and
+ *  startup.svelte.ts. */
 async function scanLinks(root: string): Promise<SpaceLinks> {
   const base = normalise(root)
   const relative = (path: string) => path.slice(base === '/' ? 1 : base.length + 1)
 
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
+  const paths = (await files.paths()).filter((path) => within(base, path))
 
-  await files.each((row) => {
-    if (!within(base, row.path)) return
+  for (let at = 0; at < paths.length; at += SCANNED_AT_ONCE) {
+    const chunk = paths.slice(at, at + SCANNED_AT_ONCE)
+    // Every path in the space sorts together, so the stretch between the first and
+    // the last of a chunk is that chunk and nothing else.
+    for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
+      // A canvas is read too, for the icon its `nib` key may carry: every row of
+      // the tree wants that, and the desktop's `scan_links` reads it on the same
+      // pass for the same reason.
+      if (isCanvas(row.path)) {
+        notes.push(scanCanvas(relative(row.path), row.content))
+        continue
+      }
 
-    // A canvas is read too, for the icon its `nib` key may carry: every row of
-    // the tree wants that, and the desktop's `scan_links` reads it on the same
-    // pass for the same reason.
-    if (isCanvas(row.path)) {
-      notes.push(scanCanvas(relative(row.path), row.content))
-      return
+      if (isMarkdown(row.path)) {
+        notes.push(scanNote(relative(row.path), row.content))
+        continue
+      }
+
+      // A `.keep` is scaffolding rather than a file somebody put in the space, and
+      // a PDF's highlights are part of the PDF.
+      if (basename(row.path) !== KEEP && !row.path.endsWith(SIDECAR)) beside.push(row.path)
     }
 
-    if (isMarkdown(row.path)) {
-      notes.push(scanNote(relative(row.path), row.content))
-      return
-    }
-
-    // A `.keep` is scaffolding rather than a file somebody put in the space, and a
-    // PDF's highlights are part of the PDF.
-    if (basename(row.path) !== KEEP && !row.path.endsWith(SIDECAR)) beside.push(row.path)
-  })
+    await breathe()
+  }
 
   // Pictures live in their own store here, and only their names are wanted.
   const pictures = (await assets.paths()).filter((path) => within(base, path))

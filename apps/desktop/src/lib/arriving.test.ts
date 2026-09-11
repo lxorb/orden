@@ -134,14 +134,20 @@ describe('the names, before the writing', () => {
     expect([...arriving.coming]).toEqual(['/space/one.md', '/space/Work/two.md'])
   })
 
-  test('a note that lands takes its row and is counted', () => {
+  test('a row stays until the listing has caught up with it', () => {
     arriving.begin()
     arriving.expect(2)
     arriving.listing(['/space/one.md', '/space/two.md'])
-    arriving.landed('/space/one.md')
+    arriving.arrived()
 
-    expect([...arriving.coming]).toEqual(['/space/two.md'])
+    // The body landed and was counted, and the row is still the row: the folder is
+    // read again when the pass is through, and a row that went the moment its note
+    // landed would blink out until then.
+    expect([...arriving.coming]).toEqual(['/space/one.md', '/space/two.md'])
     expect(arriving.done).toBe(1)
+
+    arriving.prune((path) => path === '/space/one.md')
+    expect([...arriving.coming]).toEqual(['/space/two.md'])
   })
 
   test('a note named twice is one row', () => {
@@ -192,7 +198,7 @@ describe('what the pass says about itself', () => {
     arriving.begin()
     arriving.expect(340)
     arriving.listing(['/space/one.md'])
-    arriving.landed('/space/one.md')
+    arriving.arrived()
 
     expect(arriving.said).toBe('1 of 340')
   })

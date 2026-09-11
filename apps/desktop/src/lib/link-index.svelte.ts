@@ -93,8 +93,17 @@ function namesOf(note: { path: string; aliases: readonly string[] }): ReadonlySe
 }
 
 class Links {
-  private notes = $state<ScannedNote[]>([])
-  private files = $state<string[]>([])
+  /** Every note of the open space as the last scan read it.
+   *
+   *  Raw state, not deep: every write below replaces the whole array, and nothing
+   *  anywhere reaches into a scanned note to change it. Deep, the proxy would be
+   *  paid for per note, per heading, per link and per alias the first time anything
+   *  walked the index - which the file list does, once, to find out which rows wear
+   *  an icon - so a space of a few thousand notes spent part of its launch making
+   *  objects reactive that never change. The same trade the syncing loop makes with
+   *  its mirrors, for the same reason; see sync.svelte.ts. */
+  private notes = $state.raw<ScannedNote[]>([])
+  private files = $state.raw<string[]>([])
   /** Which space the index is of, so a listing for another one is dropped. */
   private root: string | null = null
   /** Bumped whenever the index changed. The editor is handed a new object only

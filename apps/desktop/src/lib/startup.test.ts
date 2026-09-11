@@ -115,7 +115,7 @@ describe('once what is on screen is painted', () => {
 })
 
 describe('long after the launch', () => {
-  test('a turn that has passed is answered at once', async () => {
+  test('a turn that has passed waits for the next frame and no longer', async () => {
     await startup.shown()
     await settle()
     ticks.length = 0
@@ -123,10 +123,11 @@ describe('long after the launch', () => {
     let taken = false
     await startup.turn('icons').then(() => (taken = true))
 
-    // No frame, no idle callback: a picker opened an hour in is not waiting on a
-    // launch that finished.
+    // The frame, and no idle callback: there is no queue left to be behind, but
+    // there is still whatever is on screen to be after - a second space opening is
+    // a listing that goes up before its own scan starts.
     expect(taken).toBe(true)
-    expect(ticks).toEqual([])
+    expect(ticks).toEqual(['frame', 'frame'])
   })
 
   test('a second paint does not run the queue again', async () => {

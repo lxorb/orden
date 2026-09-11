@@ -11,6 +11,9 @@ export default tseslint.config(
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
+      // The other half of a before-and-after measurement, built beside the first;
+      // see apps/desktop/test/e2e/first-paint.py.
+      '**/dist-before/**',
       '**/dist-even/**',
       '**/target/**',
       // What running the Worker locally leaves behind: a bundle it made, and the

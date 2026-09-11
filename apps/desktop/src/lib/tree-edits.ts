@@ -15,12 +15,30 @@
 
 import type { Entry, SortKey, TreeOptions } from './workspace.svelte'
 
+/** Where the last part of a path starts. Either separator: a row's path is the
+ *  disk's own, and on Windows that is backslashes, while the browser build's is
+ *  slashes. Asking about only one of them gave a Windows row the whole path as its
+ *  name. */
+function cut(path: string): number {
+  return Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
+}
+
 function basename(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1)
+  return path.slice(cut(path) + 1)
 }
 
 function folderOf(path: string): string {
-  return path.slice(0, Math.max(0, path.lastIndexOf('/')))
+  return path.slice(0, Math.max(0, cut(path)))
+}
+
+/** Whether `path` names something inside the folder at `base`, at any depth. */
+function under(base: string, path: string): boolean {
+  if (!path.startsWith(base)) return false
+
+  const next = path[base.length]
+  // A space that is the whole of its store has the separator in `base` already;
+  // see `spaces_root` in the browser build.
+  return base.endsWith('/') ? path.length > base.length : next === '/' || next === '\\'
 }
 
 /** The order the listing itself uses: folders first, then the chosen key. */
@@ -111,7 +129,7 @@ export function withComing(tree: Entry, paths: readonly string[], options: TreeO
   let out = tree
 
   for (const path of [...paths].sort()) {
-    if (!path.startsWith(`${tree.path === '/' ? '' : tree.path}/`)) continue
+    if (!under(tree.path, path)) continue
     if (entryAt(out, path)) continue
 
     out = withFolders(out, folderOf(path), options)

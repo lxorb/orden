@@ -192,6 +192,17 @@ export const files = {
    *  know whether a name is taken asks for. */
   paths: () => run<string[]>('files', 'readonly', (s) => s.getAllKeys()),
   each: (visit: (row: FileRow) => void) => walk('files', visit),
+  /** Every row from `from` up to and including `to`, in path order.
+   *
+   *  A stretch of the store rather than a list of paths, because that is what the
+   *  store is good at: one walk of the tree between two keys, the way `all` walks
+   *  it from end to end. Asking for a few hundred paths one at a time was three
+   *  times the work of asking for all of them at once, which is not a saving of
+   *  any kind. What this is for is a pass over a whole space that takes it a
+   *  stretch at a time and lets go of the thread between them; see `scanLinks` in
+   *  commands.ts. */
+  between: (from: string, to: string) =>
+    run<FileRow[]>('files', 'readonly', (s) => s.getAll(IDBKeyRange.bound(from, to))),
   put: (row: FileRow) =>
     batch(WITH_STATS, (change) => {
       change.objectStore('files').put(row)

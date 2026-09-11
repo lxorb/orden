@@ -20,6 +20,9 @@
  *  as long as the space is large, and a phone that had to finish scanning before
  *  it would open a socket would be a phone that never opened one.
  *
+ *  `breathe` is the other half of the same idea, for inside one of those stages: a
+ *  pass long enough to be worth breaking up hands the thread back with it.
+ *
  *  Nothing here is about a particular store, which is why it is not in any of
  *  them: the order is the app's, and an order spread across five files is not an
  *  order anybody can read. */
@@ -62,6 +65,33 @@ function idle(): Promise<void> {
   })
 }
 
+/** What a browser that can be asked to hand the thread back offers. Chrome has
+ *  it; the fallback below is for everything else. */
+interface Yields {
+  yield?: () => Promise<void>
+}
+
+/** Lets go of the thread, for a pass that has more to do than a frame's worth.
+ *
+ *  A long pass that yields nowhere is one task however many things it is made of,
+ *  and a keystroke during it is a keystroke that appears when it ends. Awaited
+ *  between chunks of work, this turns that one task into as many short ones with
+ *  room for a keystroke between them.
+ *
+ *  Not an idle callback, which is what this was first written as: idle time is
+ *  exactly what a launch does not have, and waiting for it turned a scan of three
+ *  thousand notes from one second into two and a half. `scheduler.yield` is the
+ *  one that answers this properly - it lets input through and comes back at the
+ *  front of the queue rather than the back - and a timer is the same bargain more
+ *  roughly where there is no scheduler. See `scanLinks` in web/commands.ts, which
+ *  is the pass that reads every note there is. */
+export function breathe(): Promise<void> {
+  const scheduler = (globalThis as { scheduler?: Yields }).scheduler
+  if (scheduler?.yield) return scheduler.yield()
+
+  return new Promise((go) => setTimeout(go, 0))
+}
+
 class Startup {
   /** How many stages have had their turn. Reactive, so markup and effects can
    *  ask without polling; see `reached`. */
@@ -82,10 +112,18 @@ class Startup {
     if (!this.moving) void this.run()
   }
 
-  /** This stage's turn. Resolves at once for a stage whose turn has passed, so a
-   *  picker opened an hour later is not waiting on a launch. */
+  /** This stage's turn.
+   *
+   *  A stage whose turn has passed waits for the next frame rather than for the
+   *  queue: the launch is over, so there is nothing to be after, but there is still
+   *  something on screen to be after. Opening a second space is the case - the
+   *  listing lands, the rows go up, and the scan of every body in it starts on the
+   *  frame after that rather than in the same breath. */
   async turn(stage: Stage): Promise<void> {
-    if (this.reached(stage)) return
+    if (this.reached(stage)) {
+      await frame()
+      return
+    }
 
     await new Promise<void>((go) => {
       const queue = this.waiting.get(stage) ?? []

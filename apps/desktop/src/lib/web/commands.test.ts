@@ -26,6 +26,13 @@ vi.mock('./store', () => ({
       for (const path of [...disk.files.keys()].sort()) visit(disk.files.get(path)!)
       return Promise.resolve()
     },
+    between: (from: string, to: string) =>
+      Promise.resolve(
+        [...disk.files.keys()]
+          .sort()
+          .filter((path) => path >= from && path <= to)
+          .map((path) => disk.files.get(path)!),
+      ),
     put: (row: FileRow) => Promise.resolve(void disk.files.set(row.path, row)),
     remove: (path: string) => Promise.resolve(void disk.files.delete(path)),
     // The real one is a single transaction; here it is a single statement,
@@ -563,5 +570,59 @@ describe('the welcome note', () => {
 
     await seed()
     expect(paths()).toEqual([])
+  })
+})
+
+describe('reading a whole space for the link index', () => {
+  /** More notes than one chunk of the scan holds, so the pass is read in several
+   *  and the answer still has to be the whole space in one order. */
+  const MANY = 150
+
+  test('answers every note in the space, in path order, however many chunks it took', async () => {
+    for (let at = 0; at < MANY; at++) {
+      await write(`/Notes/note-${String(at).padStart(3, '0')}.md`, `# ${at}\n\nsee [[note-000]]\n`)
+    }
+
+    const found = await webInvoke<{
+      notes: { path: string; links: unknown[] }[]
+      files: string[]
+    }>('scan_links', { root: '/Notes' })
+
+    expect(found.notes).toHaveLength(MANY)
+    expect(found.notes[0]?.path).toBe('note-000.md')
+    expect(found.notes.at(-1)?.path).toBe(`note-${String(MANY - 1).padStart(3, '0')}.md`)
+    // The links were read, which is the whole point of having read the bodies.
+    expect(found.notes[5]?.links).toHaveLength(1)
+  })
+
+  test('leaves out the scaffolding and keeps the files beside the notes', async () => {
+    await write('/Notes/Idea.md', '# idea')
+    await write('/Notes/Deep/.keep', '')
+    await write('/Notes/paper.pdf.highlights.json', '{}')
+    await webInvoke('save_asset', {
+      notePath: '/Notes/Idea.md',
+      folder: 'pictures',
+      name: 'shot.png',
+      bytes: [1, 2, 3],
+    })
+
+    const found = await webInvoke<{ notes: { path: string }[]; files: string[] }>('scan_links', {
+      root: '/Notes',
+    })
+
+    expect(found.notes.map((one) => one.path)).toEqual(['Idea.md'])
+    // The picture, and neither the marker that keeps a folder nor the highlights
+    // that are part of a paper.
+    expect(found.files).toEqual(['pictures/shot.png'])
+  })
+
+  test('a space nothing is in answers nothing', async () => {
+    await write('/Other/Idea.md', '# elsewhere')
+
+    const found = await webInvoke<{ notes: unknown[]; files: string[] }>('scan_links', {
+      root: '/Notes',
+    })
+
+    expect(found).toEqual({ notes: [], files: [] })
   })
 })

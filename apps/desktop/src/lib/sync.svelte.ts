@@ -448,7 +448,7 @@ class Sync {
     return {
       listed: (paths) => arriving.listing(paths),
       wrote: (path) => {
-        arriving.landed(path)
+        arriving.arrived()
         void workspace.arrived(path)
       },
       wanted: open,

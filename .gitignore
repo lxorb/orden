@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# What a before-and-after measurement builds the other half into; see
+# apps/desktop/test/e2e/first-paint.py.
+dist-before/
 dist-even/
 target/
 # What Tauri generates for the mobile targets. The Android project is source:

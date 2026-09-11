@@ -1287,11 +1287,6 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
-    // The link index is of a space, so it is built when the space's tree is.
-    // Not awaited: the tree is what is on screen, and a scan of a few thousand
-    // notes must not hold it up.
-    if (links.rootOf() !== root) void links.build(root)
-
     try {
       this.tree = await invoke<Entry>('read_tree', { root, options: this.treeOptions })
     } catch {
@@ -1301,6 +1296,18 @@ class Workspace {
     // Rows that went away take themselves out of the selection.
     this.picked.keepOnly((path) => !!this.entryAt(path))
     this.keepNaming()
+
+    // And a note the account named that has since landed is the listing's row now
+    // rather than a place held for it; see arriving.svelte.ts.
+    arriving.prune((path) => !!this.entryAt(path))
+
+    // The link index is of a space, so it is built when the space's tree is - after
+    // it, and not awaited. The tree is what is on screen; a scan that reads every
+    // note in the space must neither hold it up nor start in the same breath, which
+    // on a space of a few thousand notes is the same thing. Opening a second space
+    // is the case that is not the launch: see `turn` in startup.svelte.ts, which is
+    // what makes the frame with the rows in it go out first either way.
+    if (links.rootOf() !== root) void links.build(root)
   }
 
   setSort(sort: SortKey) {
