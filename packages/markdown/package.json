@@ -22,6 +22,7 @@
     "./providers": "./src/providers.ts",
     "./slides": "./src/slides.ts",
     "./sources": "./src/sources.ts",
+    "./tasks": "./src/tasks.ts",
     "./web-embed": "./src/web-embed.ts"
   },
   "scripts": {

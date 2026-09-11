@@ -21,8 +21,34 @@
  *  a space is walked once with the whole query in hand. See query.rs, which
  *  reads exactly these shapes. */
 
-/** How near two terms have to be for a `line:` `block:` or `section:` group. */
-export type Unit = 'line' | 'block' | 'section'
+/** What a group of terms is held inside.
+ *
+ *  The first three are nearness: how near two terms have to be for a `line:`,
+ *  `block:` or `section:` group. The last three are a kind of line rather than a
+ *  distance: a task item, and the two states one can be in. They are units for the
+ *  same reason the others are - a note matches when one unit of it matches all the
+ *  terms - so they cost one entry here rather than a shape of their own. */
+export type Unit = 'line' | 'block' | 'section' | 'task' | 'task-todo' | 'task-done'
+
+const LINE_KINDS: readonly Unit[] = ['task', 'task-todo', 'task-done']
+
+/** Whether a unit is a kind of line rather than a distance.
+ *
+ *  Two things turn on it. Such a unit means something with no terms in it at all -
+ *  `task-todo:` alone asks for a note with an open task, where `line:` alone would
+ *  ask for a note with a line - and it is about one line of a note rather than
+ *  about the note, which is what the picture of a space cannot answer. */
+export function aKindOfLine(unit: Unit): boolean {
+  return LINE_KINDS.includes(unit)
+}
+
+/** How a front matter value is held against what was asked.
+ *
+ *  `has` is the one that was always here: the value says this, somewhere in it.
+ *  The rest are what a number or a date wants - `[pages:<200]`, `[due:>2026-09-01]`,
+ *  `[pages:100..200]` - plus `is` for a value that is exactly this and `null` for a
+ *  key the note does not have. */
+type Compare = 'has' | 'is' | 'null' | 'lt' | 'lte' | 'gt' | 'gte' | 'range'
 
 export type Query =
   | { kind: 'all'; of: Query[] }
@@ -36,8 +62,10 @@ export type Query =
   /** Without the hash. A tag matches its own children too, so `tag:work`
    *  finds `#work/2026`. */
   | { kind: 'tag'; tag: string }
-  /** Front matter: the key alone, or the key and something its value says. */
-  | { kind: 'property'; name: string; value: string | null }
+  /** Front matter: the key alone, or the key and what its value has to be. `value`
+   *  is null for the key on its own and for `null`, which asks for its absence;
+   *  `upto` is the far end of a range and nothing otherwise. */
+  | { kind: 'property'; name: string; value: string | null; compare: Compare; upto?: string }
   | { kind: 'scope'; unit: Unit; of: Query }
 
 /** Matches everything and asks nothing, which is what an empty field means. */
@@ -50,10 +78,19 @@ export function isEmpty(query: Query): boolean {
 /** The fields that take a value, and the tree each builds. */
 const VALUED = ['path', 'file', 'tag'] as const
 
-const UNITS: Record<string, Unit> = { line: 'line', block: 'block', section: 'section' }
+const UNITS: Record<string, Unit> = {
+  line: 'line',
+  block: 'block',
+  section: 'section',
+  task: 'task',
+  'task-todo': 'task-todo',
+  'task-done': 'task-done',
+}
 
-/** `name:` at the cursor, when the name is only letters. */
-const FIELD = /^([A-Za-z]+):/
+/** `name:` at the cursor, when the name is letters and the hyphens between them.
+ *  A name that is not one of the operators hands the cursor back untouched, so
+ *  `task-todo:` is a field and `first-draft:` is a word. */
+const FIELD = /^([A-Za-z][A-Za-z-]*):/
 
 class Parser {
   private at = 0
@@ -173,7 +210,12 @@ class Parser {
       // `line:(a b)` is the shape that earns the operator; `line:word` is
       // allowed and means the same as the word alone.
       const inner = this.source.charAt(this.at) === '(' ? this.group() : this.term()
-      return inner ? { kind: 'scope', unit, of: inner } : null
+      if (inner) return { kind: 'scope', unit, of: inner }
+
+      // A task with nothing said about it is still a question - which notes have
+      // one - and it is the question most often asked. A line with nothing said
+      // about it is not, so only these answer it.
+      return aKindOfLine(unit) ? { kind: 'scope', unit, of: NOTHING } : null
     }
 
     const value = this.source.charAt(this.at) === '"' ? this.phrase() : this.bare()
@@ -183,8 +225,11 @@ class Parser {
     return { kind: valued === 'path' ? 'path' : 'file', text: value, fold: this.folding }
   }
 
-  /** `[key]` or `[key:value]`. Null with nothing consumed when the bracket
-   *  never closes, which is what a name being typed looks like. */
+  /** `[key]`, `[key:value]`, or a value held against something: `[key:<5]`,
+   *  `[key:>=2026-09-01]`, `[key:100..200]`, `[key:=done]`, `[key:null]`.
+   *
+   *  Null with nothing consumed when the bracket never closes, which is what a
+   *  name being typed looks like. */
   private property(): Query | null {
     const end = this.source.indexOf(']', this.at)
     if (end === -1) return null
@@ -195,8 +240,8 @@ class Parser {
     if (!name) return null
 
     this.at = end + 1
-    const value = colon === -1 ? '' : inner.slice(colon + 1).trim()
-    return { kind: 'property', name, value: value || null }
+    const said = colon === -1 ? '' : inner.slice(colon + 1).trim()
+    return { kind: 'property', name, ...held(said) }
   }
 
   /** `/source/flags`. Null with nothing consumed when the pattern does not
@@ -311,6 +356,46 @@ class Parser {
     this.at += 2
     return true
   }
+}
+
+/** The comparisons a value can be written with, longest first so `<=` is read
+ *  before `<`. */
+const COMPARISONS: readonly [string, Compare][] = [
+  ['<=', 'lte'],
+  ['>=', 'gte'],
+  ['<', 'lt'],
+  ['>', 'gt'],
+  ['=', 'is'],
+]
+
+/** What a front matter value in the query is asking, as the fields the tree
+ *  carries.
+ *
+ *  A comparison with nothing after it is half typed, and the useful half of it is
+ *  the key: `[due:>` asks for a note that has a `due` at all rather than for
+ *  nothing at all. */
+function held(said: string): { value: string | null; compare: Compare; upto?: string } {
+  // Bare `null` asks for a key the note has not got. A note whose value really
+  // says the word is asked for with `=null`.
+  if (said.toLowerCase() === 'null') return { value: null, compare: 'null' }
+
+  for (const [mark, compare] of COMPARISONS) {
+    if (!said.startsWith(mark)) continue
+
+    const rest = said.slice(mark.length).trim()
+    return rest ? { value: rest, compare } : { value: null, compare: 'has' }
+  }
+
+  // `100..200`, both ends included. A range needs both of them: `..5` is a value
+  // that happens to start with dots.
+  const dots = said.indexOf('..')
+  if (dots > 0) {
+    const from = said.slice(0, dots).trim()
+    const to = said.slice(dots + 2).trim()
+    if (from && to) return { value: from, compare: 'range', upto: to }
+  }
+
+  return { value: said || null, compare: 'has' }
 }
 
 /** One branch stays itself; several become the joint. */

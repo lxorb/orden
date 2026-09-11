@@ -285,7 +285,12 @@ describe('nearness', () => {
 
 describe('front matter', () => {
   test('asks whether the key is there', () => {
-    expect(parseQuery('[status]')).toEqual({ kind: 'property', name: 'status', value: null })
+    expect(parseQuery('[status]')).toEqual({
+      kind: 'property',
+      name: 'status',
+      value: null,
+      compare: 'has',
+    })
   })
 
   test('asks what the value says', () => {
@@ -293,6 +298,7 @@ describe('front matter', () => {
       kind: 'property',
       name: 'status',
       value: 'done',
+      compare: 'has',
     })
   })
 
@@ -301,15 +307,145 @@ describe('front matter', () => {
       kind: 'property',
       name: 'status',
       value: 'done',
+      compare: 'has',
     })
   })
 
   test('folds the key, because front matter keys are not shouted', () => {
-    expect(parseQuery('[Status]')).toEqual({ kind: 'property', name: 'status', value: null })
+    expect(parseQuery('[Status]')).toEqual({
+      kind: 'property',
+      name: 'status',
+      value: null,
+      compare: 'has',
+    })
   })
 
   test('is an ordinary word when the bracket never closes', () => {
     expect(parseQuery('[status')).toEqual(word('[status'))
+  })
+
+  test('holds a value against a number or a date', () => {
+    const asked = (source: string) => parseQuery(source)
+
+    expect(asked('[duration:<5]')).toEqual({
+      kind: 'property',
+      name: 'duration',
+      value: '5',
+      compare: 'lt',
+    })
+    expect(asked('[duration:<=5]')).toEqual({
+      kind: 'property',
+      name: 'duration',
+      value: '5',
+      compare: 'lte',
+    })
+    expect(asked('[due:>2026-09-01]')).toEqual({
+      kind: 'property',
+      name: 'due',
+      value: '2026-09-01',
+      compare: 'gt',
+    })
+    expect(asked('[due:>= 2026-09-01]')).toEqual({
+      kind: 'property',
+      name: 'due',
+      value: '2026-09-01',
+      compare: 'gte',
+    })
+  })
+
+  test('takes a value that is exactly this, which the bare form does not', () => {
+    expect(parseQuery('[status:=done]')).toEqual({
+      kind: 'property',
+      name: 'status',
+      value: 'done',
+      compare: 'is',
+    })
+  })
+
+  test('takes a range, both ends included', () => {
+    expect(parseQuery('[pages:100..200]')).toEqual({
+      kind: 'property',
+      name: 'pages',
+      value: '100',
+      compare: 'range',
+      upto: '200',
+    })
+  })
+
+  test('and a range with one end is a value that starts or ends in dots', () => {
+    expect(parseQuery('[pages:..200]')).toEqual({
+      kind: 'property',
+      name: 'pages',
+      value: '..200',
+      compare: 'has',
+    })
+  })
+
+  test('asks for a key the note has not got', () => {
+    expect(parseQuery('[due:null]')).toEqual({
+      kind: 'property',
+      name: 'due',
+      value: null,
+      compare: 'null',
+    })
+  })
+
+  test('and the word itself is asked for the way any other value is', () => {
+    expect(parseQuery('[status:=null]')).toEqual({
+      kind: 'property',
+      name: 'status',
+      value: 'null',
+      compare: 'is',
+    })
+  })
+
+  test('is the key alone while the comparison is still being typed', () => {
+    expect(parseQuery('[due:>]')).toEqual({
+      kind: 'property',
+      name: 'due',
+      value: null,
+      compare: 'has',
+    })
+  })
+})
+
+/** A task is a kind of line rather than a distance, so it is a unit: a note
+ *  matches when one task in it matches every term. */
+describe('tasks', () => {
+  test('hold terms to one task item', () => {
+    expect(parseQuery('task:(a b)')).toEqual({
+      kind: 'scope',
+      unit: 'task',
+      of: { kind: 'all', of: [word('a'), word('b')] },
+    })
+  })
+
+  test('come in the two states one can be in', () => {
+    expect(parseQuery('task-todo:plan')).toEqual({
+      kind: 'scope',
+      unit: 'task-todo',
+      of: word('plan'),
+    })
+    expect(parseQuery('task-done:plan')).toEqual({
+      kind: 'scope',
+      unit: 'task-done',
+      of: word('plan'),
+    })
+  })
+
+  /** Which is the question most often asked of a space, and the one thing a unit
+   *  with nothing in it can mean: there is no such question about a line. */
+  test('and with nothing said about them ask which notes have one', () => {
+    expect(parseQuery('task-todo:')).toEqual({
+      kind: 'scope',
+      unit: 'task-todo',
+      of: { kind: 'all', of: [] },
+    })
+    expect(isEmpty(parseQuery('line:'))).toBe(true)
+  })
+
+  test('and a hyphenated word that is not one of them stays a word', () => {
+    expect(parseQuery('first-draft:plan')).toEqual(word('first-draft:plan'))
   })
 })
 
@@ -333,6 +469,14 @@ describe('malformed input', () => {
     'tag:#',
     'line:',
     'line:(',
+    'task:',
+    'task-todo:(',
+    'task-',
+    '[a:<]',
+    '[a:..]',
+    '[a:..b]',
+    '[a:>=]',
+    '[a:1..]',
     'case:case:case:',
     'OR OR OR',
     'a OR ) b (',

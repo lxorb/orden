@@ -8,7 +8,12 @@
 
 use serde::Deserialize;
 
-/// How near two terms have to be for a `line:`, `block:` or `section:` group.
+/// What a group of terms is held inside.
+///
+/// The first three are nearness: how near two terms have to be for a `line:`,
+/// `block:` or `section:` group. The last three are a kind of line rather than a
+/// distance, and they are units for the same reason - a note answers when one unit
+/// of it answers every term.
 #[derive(Deserialize, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum Unit {
@@ -18,6 +23,41 @@ pub enum Unit {
     Block,
     /// Both under one heading.
     Section,
+    /// Both in one task item, whatever state its box is in.
+    Task,
+    /// Both in one task item whose box is empty.
+    #[serde(rename = "task-todo")]
+    TaskTodo,
+    /// Both in one task item whose box is not.
+    #[serde(rename = "task-done")]
+    TaskDone,
+}
+
+/// How a front matter value is held against what was asked.
+///
+/// `Has` is the one that was always here: the value says this, somewhere in it.
+/// The rest are what a number or a date wants, plus `Is` for a value that is
+/// exactly this and `Null` for a key the note has not got.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum Compare {
+    /// The value says this somewhere in it.
+    #[default]
+    Has,
+    /// The value is exactly this.
+    Is,
+    /// The note has no such key.
+    Null,
+    /// Less than.
+    Lt,
+    /// Less than or the same.
+    Lte,
+    /// More than.
+    Gt,
+    /// More than or the same.
+    Gte,
+    /// Between this and `upto`, both ends in.
+    Range,
 }
 
 /// One node of a parsed query. `fold` is case folded, which is the default
@@ -77,12 +117,20 @@ pub enum Query {
         /// The tag without its hash.
         tag: String,
     },
-    /// Front matter: the key alone, or the key and something its value says.
+    /// Front matter: the key alone, or the key and what its value has to be.
     Property {
         /// The key, lowercased.
         name: String,
-        /// What the value has to hold, or nothing to ask only for the key.
+        /// What the value has to be, or nothing to ask only for the key - and for
+        /// `null`, which asks for its absence.
         value: Option<String>,
+        /// How the value is held against what was asked. Defaulted, so a build of
+        /// the app older than this one still asks the question it meant to.
+        #[serde(default)]
+        compare: Compare,
+        /// The far end of a range, and nothing otherwise.
+        #[serde(default)]
+        upto: Option<String>,
     },
     /// The branch, looked for inside one line, paragraph or section.
     Scope {

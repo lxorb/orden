@@ -91,4 +91,13 @@ describe('an operator the picture cannot answer', () => {
     expect(kept('line:(plan work)')).toEqual(['Plan'])
     expect(kept('line:(plan diary)')).toEqual([])
   })
+
+  /** A task is a line of a note rather than a distance between words, so the
+   *  terms in it are not about the note either: keeping every note whose name says
+   *  plan would answer a different question from the one asked. */
+  test('and a task narrows nothing, terms and all', () => {
+    expect(kept('task-todo:plan')).toEqual(['Plan', 'Diary', 'Shopping list'])
+    expect(kept('task:')).toEqual(['Plan', 'Diary', 'Shopping list'])
+    expect(kept('task:(plan later) tag:later')).toEqual(['Plan'])
+  })
 })

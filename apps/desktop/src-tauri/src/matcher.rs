@@ -20,13 +20,15 @@
 //! search/match.ts is the twin of this, down to the cases its tests use.
 
 use std::cell::OnceCell;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use serde::Serialize;
 
-use crate::query::{Query, Unit};
+use crate::query::{Compare, Query, Unit};
 use crate::regex::Pattern;
 use crate::tags::tags_in;
+use crate::tasks::task_at;
 
 /// How much of a matching line is worth showing. The app cuts here too.
 const LINE: usize = 200;
@@ -131,10 +133,15 @@ enum Term {
     Property {
         name: String,
         value: Option<String>,
+        compare: Compare,
+        upto: Option<String>,
     },
     Scope {
         unit: Unit,
         of: Box<Term>,
+        /// Whether the group holds no terms at all, which `task-todo:` on its own
+        /// does: the answer is then the unit itself.
+        bare: bool,
     },
 }
 
@@ -144,7 +151,7 @@ enum Term {
 struct Needs {
     tags: bool,
     front: bool,
-    units: [bool; 3],
+    units: [bool; UNITS],
 }
 
 /// One note, answered as far as the query asks.
@@ -156,7 +163,7 @@ struct Facts<'a> {
     starts: OnceCell<Vec<usize>>,
     tags: Vec<String>,
     front: HashMap<String, String>,
-    units: [Vec<Region>; 3],
+    units: [Vec<Region>; UNITS],
 }
 
 impl Facts<'_> {
@@ -165,12 +172,28 @@ impl Facts<'_> {
     }
 }
 
-/// Which of the three unit lists a group looks in.
+/// Which of the unit lists a group looks in.
 fn slot(unit: Unit) -> usize {
     match unit {
         Unit::Line => 0,
         Unit::Block => 1,
         Unit::Section => 2,
+        Unit::Task => 3,
+        Unit::TaskTodo => 4,
+        Unit::TaskDone => 5,
+    }
+}
+
+/// How many unit lists there are, which is what `slot` indexes into.
+const UNITS: usize = 6;
+
+/// Which state a task unit asks for, and None for a unit that is not one.
+fn task_state(unit: Unit) -> Option<Option<bool>> {
+    match unit {
+        Unit::Task => Some(None),
+        Unit::TaskTodo => Some(Some(false)),
+        Unit::TaskDone => Some(Some(true)),
+        Unit::Line | Unit::Block | Unit::Section => None,
     }
 }
 
@@ -248,9 +271,34 @@ fn is_heading(line: &str) -> bool {
     rest.chars().nth(hashes).is_none_or(char::is_whitespace)
 }
 
-/// The regions a `line:`, `block:` or `section:` group looks inside.
+/// The regions a group of terms looks inside: a line, a paragraph, a heading's
+/// section, or a task item.
 fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
     let end_of = |index: usize| starts.get(index + 1).map_or(body.len(), |next| next - 1);
+
+    if let Some(state) = task_state(unit) {
+        let mut found = Vec::new();
+
+        for (index, &start) in starts.iter().enumerate() {
+            let end = end_of(index);
+            let text = body.get(start..end).unwrap_or_default();
+            let Some(task) = task_at(text) else {
+                continue;
+            };
+            if state.is_some_and(|done| done != task.done) {
+                continue;
+            }
+
+            // The task's own words, not its marker, so `task-done:x` does not
+            // answer itself out of the box every done task carries.
+            found.push(Region {
+                from: start + task.marker,
+                to: end,
+            });
+        }
+
+        return found;
+    }
 
     if matches!(unit, Unit::Line) {
         return starts
@@ -521,6 +569,9 @@ impl Matcher {
             unit_of(Unit::Line),
             unit_of(Unit::Block),
             unit_of(Unit::Section),
+            unit_of(Unit::Task),
+            unit_of(Unit::TaskTodo),
+            unit_of(Unit::TaskDone),
         ];
 
         Facts {
@@ -593,15 +644,29 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             .any(|tag| tag == wanted || under(tag, wanted))
             .then(Vec::new),
 
-        Term::Property { name, value } => {
-            let held = facts.front.get(name)?;
+        Term::Property {
+            name,
+            value,
+            compare,
+            upto,
+        } => {
+            let held = facts.front.get(name);
+
+            // The one question a key the note has not got answers yes to.
+            if matches!(compare, Compare::Null) {
+                return held.is_none_or(|one| one.trim().is_empty()).then(Vec::new);
+            }
+
+            let held = held?;
             match value {
                 None => Some(Vec::new()),
-                Some(wanted) => holds(held, wanted, true).then(Vec::new),
+                Some(wanted) => {
+                    held_against(held, wanted, *compare, upto.as_deref()).then(Vec::new)
+                }
             }
         }
 
-        Term::Scope { unit, of } => {
+        Term::Scope { unit, of, bare } => {
             let mut out = Vec::new();
             let mut answered = false;
 
@@ -611,7 +676,16 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
                 };
                 if let Some(mut found) = walk(of, note, facts, within) {
                     answered = true;
-                    out.append(&mut found);
+                    // A unit asked for with nothing in it is answered by the unit,
+                    // so the row is the task rather than the note's first line.
+                    if *bare {
+                        out.push(Span {
+                            from: within.from,
+                            to: within.from,
+                        });
+                    } else {
+                        out.append(&mut found);
+                    }
                 }
             }
 
@@ -623,6 +697,113 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 /// Whether a tag sits under another: `work/2026` is under `work`.
 fn under(tag: &str, parent: &str) -> bool {
     tag.starts_with(parent) && tag.as_bytes().get(parent.len()) == Some(&b'/')
+}
+
+/// Whether a front matter value looks like a number, as far as holding two of
+/// them against each other needs. The twin of `A_NUMBER` in match.ts, which is
+/// properties.ts's shape - so a value the properties table draws as a number is a
+/// number here too.
+fn a_number(said: &str) -> bool {
+    let bytes = said.as_bytes();
+    let mut at = usize::from(bytes.first() == Some(&b'-'));
+    let digits = at;
+
+    while matches!(bytes.get(at), Some(b'0'..=b'9')) {
+        at += 1;
+    }
+    if at == digits {
+        return false;
+    }
+
+    if bytes.get(at) == Some(&b'.') {
+        at += 1;
+        let after = at;
+        while matches!(bytes.get(at), Some(b'0'..=b'9')) {
+            at += 1;
+        }
+        if at == after {
+            return false;
+        }
+    }
+
+    at == bytes.len()
+}
+
+/// Whether it looks like a date, and a date with a time after it. Not a full ISO
+/// parse, for the reason properties.ts gives: what this has to tell apart is a
+/// date from a word. The twin of `A_DATE` in match.ts.
+fn a_date(said: &str) -> bool {
+    let bytes = said.as_bytes();
+    let digits = |at: usize, many: usize| {
+        (0..many).all(|step| matches!(bytes.get(at + step), Some(b'0'..=b'9')))
+    };
+
+    if !(digits(0, 4) && bytes.get(4) == Some(&b'-') && digits(5, 2) && bytes.get(7) == Some(&b'-'))
+    {
+        return false;
+    }
+    if !digits(8, 2) {
+        return false;
+    }
+    if bytes.len() == 10 {
+        return true;
+    }
+
+    if !matches!(bytes.get(10), Some(b'T' | b' ')) {
+        return false;
+    }
+    if !(digits(11, 2) && bytes.get(13) == Some(&b':') && digits(14, 2)) {
+        return false;
+    }
+    if bytes.len() == 16 {
+        return true;
+    }
+
+    bytes.get(16) == Some(&b':') && digits(17, 2) && bytes.len() == 19
+}
+
+/// Which of two values comes first.
+///
+/// Numbers as numbers. Dates as the words they are written in, which for a date
+/// written this way round is the same answer and a shorter road to it. Everything
+/// else as words, folded, which is what makes a date held against a number fall
+/// back to something rather than comparing a clock against five. The twin of
+/// `order` in match.ts.
+fn order(value: &str, asked: &str) -> Ordering {
+    let one = value.trim();
+    let other = asked.trim();
+
+    if a_number(one) && a_number(other) {
+        let here: f64 = one.parse().unwrap_or(f64::NAN);
+        let there: f64 = other.parse().unwrap_or(f64::NAN);
+        return here.partial_cmp(&there).unwrap_or(Ordering::Equal);
+    }
+
+    if a_date(one) && a_date(other) {
+        return one.replacen(' ', "T", 1).cmp(&other.replacen(' ', "T", 1));
+    }
+
+    one.to_lowercase().cmp(&other.to_lowercase())
+}
+
+/// Whether the note's value answers what the query asked of it. The twin of
+/// `heldAgainst` in match.ts.
+fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) -> bool {
+    match compare {
+        Compare::Has => holds(value, asked, true),
+        Compare::Is => value.trim().to_lowercase() == asked.trim().to_lowercase(),
+        Compare::Lt => order(value, asked) == Ordering::Less,
+        Compare::Lte => order(value, asked) != Ordering::Greater,
+        Compare::Gt => order(value, asked) == Ordering::Greater,
+        Compare::Gte => order(value, asked) != Ordering::Less,
+        Compare::Range => {
+            order(value, asked) != Ordering::Less
+                && order(value, upto.unwrap_or(asked)) != Ordering::Greater
+        }
+        // Answered before this is reached: a key that is not there has no value to
+        // hold against anything.
+        Compare::Null => false,
+    }
 }
 
 /// Whether a short string holds another, folding case when asked.
@@ -705,19 +886,28 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
             Term::Tag(tag.to_lowercase())
         }
 
-        Query::Property { name, value } => {
+        Query::Property {
+            name,
+            value,
+            compare,
+            upto,
+        } => {
             needs.front = true;
             Term::Property {
                 name: name.to_lowercase(),
                 value: value.map(|one| one.to_lowercase()),
+                compare,
+                upto: upto.map(|one| one.to_lowercase()),
             }
         }
 
         Query::Scope { unit, of } => {
             needs.units[slot(unit)] = true;
+            let bare = matches!(&*of, Query::All { of } if of.is_empty());
             Term::Scope {
                 unit,
                 of: Box::new(compile(*of, needs)),
+                bare,
             }
         }
     }
@@ -931,6 +1121,111 @@ mod tests {
         // in a note that has none.
         assert!(!answers(&key("later"), NOTE));
         assert!(!answers(&key("status"), "status: done\n"));
+    }
+
+    /// The twin of "front matter held against a value" in match.test.ts.
+    #[test]
+    fn front_matter_is_held_against_a_number_a_date_or_a_range() {
+        const NUMBERS: &str =
+            "---\nduration: 4\ndue: 2026-09-01\npages: 150\nstatus: done\nempty:\n---\n\nWords.\n";
+
+        let held = |name: &str, said: &str, compare: &str| {
+            format!(
+                r#"{{"kind":"property","name":"{name}","value":"{said}","compare":"{compare}"}}"#
+            )
+        };
+        let ranged = |name: &str, from: &str, to: &str| {
+            format!(
+                r#"{{"kind":"property","name":"{name}","value":"{from}","compare":"range","upto":"{to}"}}"#
+            )
+        };
+        let missing = |name: &str| {
+            format!(r#"{{"kind":"property","name":"{name}","value":null,"compare":"null"}}"#)
+        };
+
+        assert!(answers(&held("duration", "5", "lt"), NUMBERS));
+        assert!(!answers(&held("duration", "4", "lt"), NUMBERS));
+        assert!(answers(&held("duration", "4", "lte"), NUMBERS));
+        assert!(answers(&held("duration", "3", "gt"), NUMBERS));
+        assert!(!answers(&held("duration", "5", "gte"), NUMBERS));
+
+        assert!(answers(&held("due", "2026-08-31", "gt"), NUMBERS));
+        assert!(answers(&held("due", "2026-10-01", "lt"), NUMBERS));
+        assert!(!answers(&held("due", "2026-09-02", "gt"), NUMBERS));
+
+        assert!(answers(&ranged("pages", "100", "200"), NUMBERS));
+        assert!(answers(&ranged("pages", "150", "150"), NUMBERS));
+        assert!(!answers(&ranged("pages", "151", "200"), NUMBERS));
+
+        assert!(answers(&held("status", "don", "has"), NUMBERS));
+        assert!(!answers(&held("status", "don", "is"), NUMBERS));
+        assert!(answers(&held("status", "done", "is"), NUMBERS));
+
+        assert!(answers(&missing("missing"), NUMBERS));
+        assert!(!answers(&missing("status"), NUMBERS));
+        // A key with nothing after its colon is a key that says nothing.
+        assert!(answers(&missing("empty"), NUMBERS));
+
+        // A date held against a number is two different questions, so it is the
+        // words that answer: `2026-09-01` comes before `5`.
+        assert!(answers(&held("status", "a", "gt"), NUMBERS));
+        assert!(!answers(&held("status", "z", "gt"), NUMBERS));
+        assert!(!answers(&held("due", "5", "gt"), NUMBERS));
+        assert!(answers(&held("due", "5", "lt"), NUMBERS));
+    }
+
+    /// The twin of "tasks" in match.test.ts.
+    #[test]
+    fn a_task_is_a_unit_and_the_row_is_the_task() {
+        const TASKS: &str = "# This week\n\n- [ ] write the plan\n- [x] read the paper\n- [ ] send the ledger\n    - [X] a nested one that is done\n- not a task at all\n";
+
+        assert_eq!(
+            lines(&scope("task", &text("plan")), TASKS),
+            vec!["- [ ] write the plan".to_string()]
+        );
+
+        assert_eq!(
+            lines(&scope("task-todo", &text("the")), TASKS),
+            vec![
+                "- [ ] write the plan".to_string(),
+                "- [ ] send the ledger".to_string(),
+            ]
+        );
+        assert_eq!(
+            lines(&scope("task-done", &text("the")), TASKS),
+            vec!["- [x] read the paper".to_string()]
+        );
+
+        // With nothing said about them at all, which is what `task-todo:` alone
+        // sends: the unit is the answer.
+        let bare = all(&[]);
+        assert_eq!(
+            lines(&scope("task-todo", &bare), TASKS),
+            vec![
+                "- [ ] write the plan".to_string(),
+                "- [ ] send the ledger".to_string(),
+            ]
+        );
+        assert_eq!(lines(&scope("task", &bare), TASKS).len(), 4);
+
+        assert_eq!(
+            lines(&scope("task-done", &text("nested")), TASKS),
+            vec!["- [X] a nested one that is done".to_string()]
+        );
+
+        // A line with no box is not a task, the box itself is not words to
+        // search, and two terms have to be in the one task.
+        assert!(!answers(&scope("task", &exact("not a task")), TASKS));
+        assert!(!answers(&scope("task-done", &text("x")), TASKS));
+        assert_eq!(
+            lines(&scope("task", &all(&[text("write"), text("plan")])), TASKS),
+            vec!["- [ ] write the plan".to_string()]
+        );
+        assert!(!answers(
+            &scope("task", &all(&[text("write"), text("ledger")])),
+            TASKS
+        ));
+        assert!(!answers(&scope("task-todo", &bare), NOTE));
     }
 
     #[test]

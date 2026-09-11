@@ -20,7 +20,7 @@
  *  inside that loop is built five thousand times. */
 
 import type { GraphNode } from './graph'
-import type { Query } from './search/query'
+import { aKindOfLine, type Query } from './search/query'
 
 /** Whether one note stays in the picture. */
 export type Keeps = (node: GraphNode) => boolean
@@ -84,8 +84,12 @@ export function graphFilter(query: Query): Keeps {
 
     // Nearness inside a note means nothing to a picture of the space, but the
     // words it groups still do: `line:(plan later)` asks for both of them.
+    //
+    // A task is not a distance, though. `task-todo:plan` asks about one line of a
+    // note, and keeping every note whose name says plan would be answering a
+    // different question, so it narrows nothing the way front matter does.
     case 'scope':
-      return graphFilter(query.of)
+      return aKindOfLine(query.unit) ? EVERYTHING : graphFilter(query.of)
 
     // A node carries no front matter. Narrowing nothing leaves the picture as it
     // was, which is the honest answer to a question it cannot hear.

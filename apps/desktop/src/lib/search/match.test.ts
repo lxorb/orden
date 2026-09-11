@@ -283,6 +283,113 @@ describe('a row', () => {
   })
 })
 
+/** A task item is a unit, so a note answers when one task of it answers every
+ *  term; the row is the task, not the note's first line. */
+describe('tasks', () => {
+  const TASKS = `# This week
+
+- [ ] write the plan
+- [x] read the paper
+- [ ] send the ledger
+    - [X] a nested one that is done
+- not a task at all
+`
+
+  const asked = (source: string) => lines(source, { body: TASKS })
+
+  test('are found by their words', () => {
+    expect(asked('task:plan')).toEqual(['- [ ] write the plan'])
+  })
+
+  test('and by the state their box is in', () => {
+    expect(asked('task-todo:the')).toEqual(['- [ ] write the plan', '- [ ] send the ledger'])
+    expect(asked('task-done:the')).toEqual(['- [x] read the paper'])
+  })
+
+  test('and with nothing said about them at all', () => {
+    expect(asked('task-todo:')).toEqual(['- [ ] write the plan', '- [ ] send the ledger'])
+    expect(asked('task:').length).toBe(4)
+  })
+
+  test('where a nested one is still a task', () => {
+    expect(asked('task-done:nested')).toEqual(['- [X] a nested one that is done'])
+  })
+
+  test('and a line with no box is not one', () => {
+    expect(answers('task:"not a task"', { body: TASKS })).toBe(false)
+  })
+
+  test('and the box itself is not words to search', () => {
+    expect(answers('task-done:x', { body: TASKS })).toBe(false)
+  })
+
+  test('and two terms have to be in the one task', () => {
+    expect(asked('task:(write plan)')).toEqual(['- [ ] write the plan'])
+    expect(answers('task:(write ledger)', { body: TASKS })).toBe(false)
+  })
+
+  test('and a space with no tasks answers nothing', () => {
+    expect(answers('task-todo:')).toBe(false)
+  })
+})
+
+describe('front matter held against a value', () => {
+  const NUMBERS = `---
+duration: 4
+due: 2026-09-01
+pages: 150
+status: done
+empty:
+---
+
+Words.
+`
+
+  const asked = (source: string) => answers(source, { body: NUMBERS })
+
+  test('compares numbers as numbers', () => {
+    expect(asked('[duration:<5]')).toBe(true)
+    expect(asked('[duration:<4]')).toBe(false)
+    expect(asked('[duration:<=4]')).toBe(true)
+    expect(asked('[duration:>3]')).toBe(true)
+    expect(asked('[duration:>=5]')).toBe(false)
+  })
+
+  test('and dates as dates, which words would get wrong', () => {
+    expect(asked('[due:>2026-08-31]')).toBe(true)
+    expect(asked('[due:<2026-10-01]')).toBe(true)
+    expect(asked('[due:>2026-09-02]')).toBe(false)
+  })
+
+  test('and takes a range with both ends in it', () => {
+    expect(asked('[pages:100..200]')).toBe(true)
+    expect(asked('[pages:150..150]')).toBe(true)
+    expect(asked('[pages:151..200]')).toBe(false)
+  })
+
+  test('and a value that is exactly this, where the bare form takes a part of it', () => {
+    expect(asked('[status:don]')).toBe(true)
+    expect(asked('[status:=don]')).toBe(false)
+    expect(asked('[status:=done]')).toBe(true)
+  })
+
+  test('and asks for a key the note has not got', () => {
+    expect(asked('[missing:null]')).toBe(true)
+    expect(asked('[status:null]')).toBe(false)
+    // A key with nothing after its colon is a key that says nothing.
+    expect(asked('[empty:null]')).toBe(true)
+  })
+
+  test('and falls back to the words where the two are not the same kind of thing', () => {
+    expect(asked('[status:>a]')).toBe(true)
+    expect(asked('[status:>z]')).toBe(false)
+    // A date held against a number is two different questions, so it is the words
+    // that answer: `2026-09-01` comes before `5`.
+    expect(asked('[due:>5]')).toBe(false)
+    expect(asked('[due:<5]')).toBe(true)
+  })
+})
+
 describe('line offsets', () => {
   test('start at the top of every line', () => {
     expect(lineStarts('a\nbb\n\nc')).toEqual([0, 2, 5, 6])

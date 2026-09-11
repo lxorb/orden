@@ -36,6 +36,7 @@ mod search;
 mod shell_menu;
 mod spaces;
 mod tags;
+mod tasks;
 mod themes;
 mod trash;
 mod tree;

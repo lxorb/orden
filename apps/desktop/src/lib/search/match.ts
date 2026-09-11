@@ -14,7 +14,8 @@
  *  query.rs is the twin of this on the Rust side, and match.test.ts holds the
  *  two to the same answers. */
 
-import type { Query, Unit } from './query'
+import { taskAt } from '@nib/markdown/tasks'
+import { isEmpty, type Query, type Unit } from './query'
 import { tagsIn } from './tags'
 
 export interface SearchNote {
@@ -154,7 +155,15 @@ export function lineAt(starts: readonly number[], offset: number): number {
   return low
 }
 
-/** The regions a `line:` `block:` or `section:` group looks inside. */
+/** Which units are a kind of line rather than a distance. */
+const A_TASK: Partial<Record<Unit, 'any' | 'todo' | 'done'>> = {
+  task: 'any',
+  'task-todo': 'todo',
+  'task-done': 'done',
+}
+
+/** The regions a group of terms looks inside: a line, a paragraph, a heading's
+ *  section, or a task item. */
 function unitsIn(body: string, unit: Unit): Range[] {
   const starts = lineStarts(body)
   const ends = starts.map((_start, index) => {
@@ -164,6 +173,25 @@ function unitsIn(body: string, unit: Unit): Range[] {
 
   if (unit === 'line') {
     return starts.map((from, index) => ({ from, to: ends[index] ?? body.length }))
+  }
+
+  const state = A_TASK[unit]
+  if (state) {
+    const found: Range[] = []
+
+    for (const [index, start] of starts.entries()) {
+      const end = ends[index] ?? body.length
+      const task = taskAt(body.slice(start, end))
+      if (!task) continue
+      if (state === 'todo' && task.done) continue
+      if (state === 'done' && !task.done) continue
+
+      // The task's own words, not its marker, so `task-done:x` does not answer
+      // itself out of the box every done task carries.
+      found.push({ from: start + task.marker, to: end })
+    }
+
+    return found
   }
 
   const out: Range[] = []
@@ -249,6 +277,67 @@ function frontOf(facts: Facts): Map<string, string> {
 
 function unitsOf(facts: Facts, unit: Unit): Range[] {
   return (facts.units[unit] ??= unitsIn(facts.note.body, unit))
+}
+
+/** What a front matter value looks like it is, as far as holding two of them
+ *  against each other needs.
+ *
+ *  The two shapes are properties.ts's, which is what draws the same values as a
+ *  table, so a value the table calls a number is a number here too. Not a full
+ *  ISO parse, for the reason it gives: what this has to tell apart is a date from
+ *  a word. matcher.rs holds the same two. */
+const A_NUMBER = /^-?\d+(?:\.\d+)?$/
+const A_DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
+
+/** Which of two values comes first, as -1, 0 or 1.
+ *
+ *  Numbers as numbers. Dates as the words they are written in, which for a date
+ *  written this way round is the same answer and a shorter road to it: no clock,
+ *  no zone, and no chance of the Rust side arriving somewhere else. Everything
+ *  else as words, folded, which is what makes a date held against a number fall
+ *  back to something rather than comparing an epoch against five. */
+function order(value: string, asked: string): number {
+  const one = value.trim()
+  const other = asked.trim()
+
+  if (A_NUMBER.test(one) && A_NUMBER.test(other)) {
+    const here = Number(one)
+    const there = Number(other)
+    return here < there ? -1 : here > there ? 1 : 0
+  }
+
+  const dates = A_DATE.test(one) && A_DATE.test(other)
+  const left = dates ? one.replace(' ', 'T') : one.toLowerCase()
+  const right = dates ? other.replace(' ', 'T') : other.toLowerCase()
+  return left < right ? -1 : left > right ? 1 : 0
+}
+
+/** Whether the note's value answers what the query asked of it. */
+function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>): boolean {
+  const asked = query.value
+  // `[key]` on its own: the note has it, and that was the whole question.
+  if (asked === null) return true
+
+  switch (query.compare) {
+    case 'has':
+      return contains(value, asked, true)
+    case 'is':
+      return value.trim().toLowerCase() === asked.trim().toLowerCase()
+    case 'lt':
+      return order(value, asked) < 0
+    case 'lte':
+      return order(value, asked) <= 0
+    case 'gt':
+      return order(value, asked) > 0
+    case 'gte':
+      return order(value, asked) >= 0
+    case 'range':
+      return order(value, asked) >= 0 && order(value, query.upto ?? asked) <= 0
+    // Answered before this is reached, since a key that is not there has no value
+    // to hold against anything.
+    case 'null':
+      return false
+  }
 }
 
 /** Whether a short string holds another. Plain lowercasing rather than the
@@ -463,14 +552,21 @@ export class Matcher {
 
       case 'property': {
         const value = frontOf(facts).get(query.name)
+
+        // The one question a key the note has not got answers yes to.
+        if (query.compare === 'null') return value?.trim() ? null : []
         if (value === undefined) return null
 
-        return query.value === null || contains(value, query.value, true) ? [] : null
+        return heldAgainst(value, query) ? [] : null
       }
 
       case 'scope': {
         const out: Span[] = []
         let answered = false
+        // `task-todo:` on its own asks which notes have one, so the unit is the
+        // answer: a span of no width at the task's own words, which puts the row on
+        // the task rather than on the note's first line and highlights nothing.
+        const bare = isEmpty(query.of)
 
         for (const unit of unitsOf(facts, query.unit)) {
           const within = clip(unit, region)
@@ -481,7 +577,8 @@ export class Matcher {
           if (!found) continue
 
           answered = true
-          out.push(...found)
+          if (bare) out.push({ from: within.from, to: within.from })
+          else out.push(...found)
         }
 
         return answered ? out : null

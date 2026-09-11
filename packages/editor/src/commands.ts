@@ -1,4 +1,5 @@
 import { type ChangeSpec, EditorSelection, type StateCommand } from '@codemirror/state'
+import { taskAt } from '@nib/markdown/tasks'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
  *  so the same shortcut turns emphasis on and off. */
@@ -127,8 +128,6 @@ function toggleLinePrefix(prefix: string, pattern: RegExp): StateCommand {
 export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
 export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/)
 
-/** A line that is already a task, and its box. */
-const TASK = /^\s*[-*+]\s+\[([ xX])\]\s+/
 /** Whatever marker a line already carries, task or plain list. */
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
@@ -138,20 +137,20 @@ const INDENT = /^\s*/
  *  marker for a box; a line that is neither gets both. */
 export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
-  const allTasks = lines.every((line) => TASK.test(line.text))
+  const allTasks = lines.every((line) => taskAt(line.text) !== null)
 
   const changes: ChangeSpec[] = lines.map((line) => {
-    const indent = (INDENT.exec(line.text)?.[0] ?? '').length
-    const task = TASK.exec(line.text)
+    const task = taskAt(line.text)
+    const indent = task?.indent ?? (INDENT.exec(line.text)?.[0] ?? '').length
 
     if (allTasks && task) {
-      return { from: line.from + indent, to: line.from + task[0].length, insert: '' }
+      return { from: line.from + indent, to: line.from + task.marker, insert: '' }
     }
 
-    const marker = task ?? MARKER.exec(line.text)
+    const marker = task ? task.marker : MARKER.exec(line.text)?.[0].length
     return {
       from: line.from + indent,
-      to: line.from + (marker ? marker[0].length : indent),
+      to: line.from + (marker ?? indent),
       insert: '- [ ] ',
     }
   })
@@ -167,13 +166,13 @@ export const toggleTask: StateCommand = ({ state, dispatch }) => {
   const changes: ChangeSpec[] = []
 
   for (const line of selectedLines(state)) {
-    const box = TASK.exec(line.text)
-    const mark = box?.[1]
-    if (!box || mark === undefined) continue
+    const task = taskAt(line.text)
+    if (!task) continue
 
-    // What is inside the brackets: the only `[` in the run is the box's own.
-    const at = line.from + box[0].indexOf('[') + 1
-    changes.push({ from: at, to: at + 1, insert: mark === ' ' ? 'x' : ' ' })
+    // One character, inside the brackets: see tasks.ts in @nib/markdown, which is
+    // what says where they are.
+    const at = line.from + task.box + 1
+    changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
   }
 
   if (!changes.length) return false
