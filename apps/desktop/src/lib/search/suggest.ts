@@ -1,17 +1,25 @@
-/** Finishing an operator's value from what the space actually holds.
+/** Finishing an operator, and its value from what the space actually holds.
  *
- *  `path:` offers the folders, `file:` the notes, `tag:` the tags. Only the
- *  value: the operator itself is short enough to type, and a list of three
- *  words is a lesson, not a help. */
+ *  `path:` offers the folders, `file:` the notes, `tag:` the tags. The operator's
+ *  own name is offered too, which it was not when there were three of them: with
+ *  `task-todo:` and `section:` among them the spelling is no longer something to
+ *  guess at, and the one place a reminder belongs is where the typing is. Nothing
+ *  is preselected for a name, though - a reader typing the word "task" gets the
+ *  row offered and Enter still means Enter. See `OPERATORS` in query.ts, which is
+ *  the list, and SearchPanel.svelte, which is what does not preselect it. */
 
 import { fit } from './fuzzy'
+import { OPERATORS } from './query'
 
 type Field = 'path' | 'file' | 'tag'
+
+/** What is being finished: an operator's value, or the operator's own name. */
+type Finishing = Field | 'name'
 
 /** The value being typed: which operator it belongs to and where it sits, so
  *  the chosen one goes back exactly where the typed one was. */
 export interface Completing {
-  field: Field
+  field: Finishing
   typed: string
   from: number
   to: number
@@ -24,6 +32,11 @@ const QUOTED = /(?:^|[\s(-])(path|file|tag):"([^"\n]*)$/i
 const BARE = /(?:^|[\s(-])(path|file|tag):([^\s")]*)$/i
 
 const FIELDS: readonly Field[] = ['path', 'file', 'tag']
+
+/** A name being typed at the start of a term: after nothing, a space, a bracket
+ *  or the `-` that excludes. Only offered when it could still become an operator,
+ *  so an ordinary word opens nothing. */
+const NAME = /(?:^|[\s(-])([A-Za-z][A-Za-z-]*)$/
 
 /** What the caret is in the middle of finishing, or null when it is not in an
  *  operator's value. */
@@ -38,6 +51,19 @@ export function completing(source: string, caret: number): Completing | null {
   if (!field) return null
 
   return { field, typed, from: caret - typed.length, to: caret, quoted: quoted !== null }
+}
+
+/** The operator name the caret is in the middle of, or null when what is there
+ *  could not become one. */
+export function naming(source: string, caret: number): Completing | null {
+  const found = NAME.exec(source.slice(0, caret))
+  const typed = found?.[1]
+  if (typed === undefined) return null
+
+  const folded = typed.toLowerCase()
+  if (!OPERATORS.some((one) => one.startsWith(folded))) return null
+
+  return { field: 'name', typed, from: caret - typed.length, to: caret, quoted: false }
 }
 
 /** How many values a popup is worth. Past this it is a file list, not a hint. */

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { chosen, completing, offered } from './suggest'
+import { OPERATORS, parseQuery, type Query } from './query'
+import { chosen, completing, naming, offered } from './suggest'
 
 /** The caret sits where the pipe is, which is how these read. */
 function at(source: string) {
@@ -113,5 +114,75 @@ describe('choosing one', () => {
       text: 'path:Work/ beta',
       caret: 10,
     })
+  })
+})
+
+/** The operators themselves, offered while what is typed could still become one.
+ *  Not when it could not: an ordinary word opens nothing. */
+describe('finishing an operator name', () => {
+  const asked = (source: string) => naming(source, source.length)
+
+  test('offers the ones the letters could still become', () => {
+    const at = asked('ta')
+    expect(at?.field).toBe('name')
+    expect(offered(at?.typed ?? '', OPERATORS)).toEqual([
+      'tag:',
+      'task:',
+      'task-todo:',
+      'task-done:',
+    ])
+  })
+
+  test('and the hyphenated ones, which are the reason for offering any', () => {
+    expect(offered(asked('task-')?.typed ?? '', OPERATORS)).toEqual(['task-todo:', 'task-done:'])
+  })
+
+  test('and nothing at all for a word that could not be one', () => {
+    expect(asked('plan')).toBeNull()
+    expect(asked('kestrel')).toBeNull()
+    expect(asked('')).toBeNull()
+  })
+
+  test('at the start of a term, after a space, a bracket or a minus', () => {
+    expect(asked('plan ta')?.typed).toBe('ta')
+    expect(asked('(ta')?.typed).toBe('ta')
+    expect(asked('-ta')?.typed).toBe('ta')
+    // Not in the middle of a word: `beta` is a word being typed, not `ta`.
+    expect(asked('beta')).toBeNull()
+  })
+
+  test('and never inside a value somebody is already finishing', () => {
+    // `path:ta` is a value, which `completing` answers for; the name popup would
+    // be a second list over the same letters.
+    expect(completing('path:ta', 7)?.field).toBe('path')
+  })
+
+  /** Which is what keeps this list and the parser together: an operator the
+   *  parser has never heard of is read as a word, and offering one would be
+   *  offering to type a search for `task-todo:plan` itself. */
+  test('and each one it offers is one the parser reads as an operator', () => {
+    const words = (query: Query): string[] => {
+      switch (query.kind) {
+        case 'all':
+        case 'any':
+          return query.of.flatMap(words)
+        case 'not':
+        case 'scope':
+          return words(query.of)
+        case 'text':
+          return [query.text]
+        case 'regex':
+        case 'path':
+        case 'file':
+        case 'tag':
+        case 'property':
+          return []
+      }
+    }
+
+    for (const operator of OPERATORS) {
+      const said = words(parseQuery(`${operator}word`)).join(' ')
+      expect(said, operator).not.toContain(operator)
+    }
   })
 })

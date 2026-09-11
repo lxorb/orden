@@ -2,6 +2,7 @@ import { flushTableEdits, type FoldLines, type NoteJump, sameFolds } from '@nib/
 import { account } from './account.svelte'
 import { blankCanvas } from './canvas/format'
 import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
+import { taskAt } from '@nib/markdown/tasks'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
@@ -15,6 +16,7 @@ import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import type { Change } from './search/apply'
+import { lineStarts } from './search/match'
 import { within } from './sync/mirror'
 import { isRecord, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
@@ -2254,6 +2256,45 @@ class Workspace {
     if (open) return open.text
 
     return invoke<string>('read_note', { path }).catch(() => null)
+  }
+
+  /** Ticks or clears the box on one line of a note, without opening it.
+   *
+   *  What a task in a row of search results is for: a list of everything still to
+   *  do is only a tool if it can be done from. Written through the same path a
+   *  replacement takes - a snapshot, the words that changed rather than the whole
+   *  note so no caret in a pane moves, and one thing to undo - because it is the
+   *  same kind of write, of one character.
+   *
+   *  Answers whether there was a box: the line is read again here rather than
+   *  trusted from the row, so a note edited since the list was drawn is ticked
+   *  where it says a task is now, or not at all. */
+  async toggleTaskAt(path: string, line: number): Promise<boolean> {
+    const before = await this.noteText(path)
+    if (before === null) return false
+
+    const starts = lineStarts(before)
+    const from = starts[line]
+    if (from === undefined) return false
+
+    const next = starts[line + 1]
+    const task = taskAt(before.slice(from, next === undefined ? before.length : next - 1))
+    if (!task) return false
+
+    const at = from + task.box + 1
+    const insert = task.done ? ' ' : 'x'
+
+    await this.replaceInNotes([
+      {
+        path,
+        before,
+        after: before.slice(0, at) + insert + before.slice(at + 1),
+        edits: [{ from: at, to: at + 1, insert }],
+        back: [{ from: at, to: at + 1, insert: before.slice(at, at + 1) }],
+      },
+    ])
+
+    return true
   }
 
   /** Writes a replacement across the space. Every note keeps a snapshot of

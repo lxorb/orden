@@ -13,7 +13,9 @@
   import { SEARCH_MARK } from './panel-marks'
   import { roving } from './roving'
   import { search } from './search.svelte'
-  import { chosen, completing, nearest, offered } from './search/suggest'
+  import { OPERATORS } from './search/query'
+  import { chosen, completing, naming, nearest, offered } from './search/suggest'
+  import { taskAt } from '@nib/markdown/tasks'
   import type { Hit, Range } from './search/match'
   import { relativeTo } from './space-paths'
   import Suggest from './Suggest.svelte'
@@ -74,10 +76,14 @@
   /** What the caret is finishing, and what the space has to finish it with.
    *  Only while the field has the focus: a popup over a panel nobody is
    *  typing in is in the way. */
-  const asking = $derived(focused && !shut ? completing(search.text, caret) : null)
+  const asking = $derived(
+    focused && !shut ? (completing(search.text, caret) ?? naming(search.text, caret)) : null,
+  )
 
   const suggestions = $derived.by(() => {
     if (!asking) return []
+    // The operators themselves, while what is typed could still become one.
+    if (asking.field === 'name') return offered(asking.typed, OPERATORS)
     // A tag path is deep and long, so it is the one value worth finding by a
     // handful of its letters: `wnc` offers `work/nib/canvas`. The same scorer the
     // hit list ranks with; see search/fuzzy.ts.
@@ -97,9 +103,14 @@
 
   // A fresh list starts at the top: the row the arrow pointed at is no longer
   // the one under it.
+  //
+  // Except a list of operator names, which starts at none of them. That list is
+  // offered rather than asked for - the reader typed a word that could still
+  // become an operator - so Enter has to keep meaning Enter until an arrow or a
+  // click says otherwise.
   $effect(() => {
     follows(suggestions)
-    active = 0
+    active = asking?.field === 'name' ? -1 : 0
   })
 
   /** The search in the box, as something to keep. */
@@ -190,6 +201,39 @@
       event.preventDefault()
       search.closeReplace()
     }
+  }
+
+  /** The task a row's line is, or null for a line that is not one. The words are
+   *  what comes after the marker, and the emphasis moves along with them. */
+  function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[] } | null {
+    const task = taskAt(hit.text)
+    if (!task) return null
+
+    return {
+      done: task.done,
+      text: hit.text.slice(task.marker),
+      ranges: hit.ranges
+        .map((range) => ({ from: range.from - task.marker, to: range.to - task.marker }))
+        .filter((range) => range.to > 0)
+        .map((range) => ({ from: Math.max(range.from, 0), to: range.to })),
+    }
+  }
+
+  /** The row's words, cut into what matched and what did not. */
+  function shown(hit: Hit, task: { text: string; ranges: Range[] } | null) {
+    return task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
+  }
+
+  /** The box in a row, pressed. The row underneath it opens the note, so the
+   *  press stops here; and the box is drawn from the note rather than from
+   *  itself, so it is left alone until the write has happened. */
+  function ticked(event: Event, hit: Hit) {
+    event.preventDefault()
+    event.stopPropagation()
+    void workspace.toggleTaskAt(hit.path, hit.line).then((done) => {
+      // The note changed, so the search says what it says now.
+      if (done) search.ask(search.text)
+    })
   }
 
   async function openHit(hit: Hit) {
@@ -312,6 +356,7 @@
         </div>
 
         {#each group.hits as hit (hit.line)}
+          {@const task = taskOf(hit)}
           <div class="line">
             {#if search.replacing}
               <button
@@ -327,7 +372,20 @@
             {/if}
 
             <button class="nib-row is-short hit" onclick={() => void openHit(hit)}>
-              {#each pieces(hit.text, hit.ranges) as piece, at (at)}
+              <!-- A line that is a task shows its box, and the box works: a list
+                   of everything still to do is only a tool if it can be done
+                   from. The words after the marker, because the marker is what
+                   the box now says. -->
+              {#if task}
+                <input
+                  type="checkbox"
+                  class="nib-checkbox"
+                  checked={task.done}
+                  aria-label={task.text}
+                  onclick={(event) => ticked(event, hit)}
+                />
+              {/if}
+              {#each shown(hit, task) as piece, at (at)}
                 {#if piece.mark}<mark>{piece.text}</mark>{:else}{piece.text}{/if}
               {/each}
             </button>

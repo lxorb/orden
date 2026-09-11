@@ -92,6 +92,26 @@ const UNITS: Record<string, Unit> = {
  *  `task-todo:` is a field and `first-draft:` is a word. */
 const FIELD = /^([A-Za-z][A-Za-z-]*):/
 
+/** Every operator that is written as a name and a colon, with the colon, in the
+ *  order they are worth reaching for.
+ *
+ *  Here rather than written out again wherever they are offered, because a list
+ *  of operators that has drifted from the parser is a list that offers one the
+ *  field will read as a word; query.test.ts holds the two together. See
+ *  suggest.ts, which is what finishes them. */
+export const OPERATORS: readonly string[] = [
+  'tag:',
+  'path:',
+  'file:',
+  'task:',
+  'task-todo:',
+  'task-done:',
+  'line:',
+  'block:',
+  'section:',
+  'case:',
+]
+
 class Parser {
   private at = 0
   /** Turned off by `case:`, and stays off for every term after it. */
