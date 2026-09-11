@@ -42,10 +42,30 @@ export function roleOf(root: string): SpaceRole {
   return remoteOf(root)?.role ?? 'owner'
 }
 
-/** Whether the space has anybody in it besides its owner, which is the quiet
- *  dot on its row in the switcher. */
+/** Whether the space has anybody in it besides its owner, which is the mark on
+ *  its row in the switcher and on the header over the file list. */
 export function isShared(root: string): boolean {
   return remoteOf(root)?.shared ?? false
+}
+
+/** Whether somebody else is in this note right now, which is the same mark on
+ *  the note's row in the file list.
+ *
+ *  Asked of the rooms rather than of the account, because this is a fact about
+ *  the minute rather than about who was invited: a note in a shared space that
+ *  nobody else has open is not a note being worked in with somebody. Which is
+ *  also why the mark is not on every row of a shared space - one mark repeated
+ *  down a whole list says nothing about any row in it.
+ *
+ *  Only a note that is open, since a room is only joined for an open file. That
+ *  is the honest limit rather than a shortcut: nothing on this machine knows who
+ *  is in a file it has not opened. */
+export function othersIn(path: string): boolean {
+  for (const tab of workspace.tabs) {
+    if (tab.path === path && (rooms.present[tab.note.key] ?? 0) > 0) return true
+  }
+
+  return false
 }
 
 /** Whether this space can be written in. Everything that offers to change a

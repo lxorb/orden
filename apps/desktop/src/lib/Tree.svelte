@@ -13,6 +13,8 @@
   import { extensionOf } from './naming'
   import { shownName } from './note-name'
   import { roving } from './roving'
+  import SharedMark from './SharedMark.svelte'
+  import { othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
   import { dropTarget, targetFor } from './drop-target.svelte'
@@ -524,6 +526,10 @@
         >
           <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
           <span class="nib-row-label">{shownName(own.name)}</span>
+          <!-- Somebody else is in this note. The same mark the switcher puts on a
+               shared space, in the slot a row keeps for what it has to add about
+               a name; see SharedMark.svelte. -->
+          {#if othersIn(own.path)}<SharedMark label={t('Also open elsewhere')} />{/if}
           <!-- Only while there is something to disclose. A vault may arrive with a
                folder holding nothing but its note, and a twist that opens on to
                nothing is a row promising something it does not have. -->
@@ -582,6 +588,7 @@
                wears the icon the note itself chose; the path is how it knows. -->
           <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
           <span class="nib-row-label">{shownName(entry.name)}</span>
+          {#if othersIn(entry.path)}<SharedMark label={t('Also open elsewhere')} />{/if}
         </button>
       {/if}
 

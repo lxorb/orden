@@ -126,6 +126,15 @@ describe('the mark that says shared', () => {
     expect(dots).toEqual(['lib/JoinSheet.svelte', 'lib/SidebarFoot.svelte', 'lib/Tabs.svelte'])
   })
 
+  test('and the file list says it on the note itself', () => {
+    const tree = named('lib/Tree.svelte')
+    expect(tree.text).toContain("import SharedMark from './SharedMark.svelte'")
+    // Both kinds of row that are a note: a plain one, and a folder drawn as the
+    // note inside it. A folder is not a file and has no room to be in.
+    expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
+    expect(tree.text).toContain('othersIn(')
+  })
+
   test('and the switcher says it with the mark instead', () => {
     const switcher = named('lib/SpaceSwitcher.svelte')
     expect(switcher.text).toContain("import SharedMark from './SharedMark.svelte'")

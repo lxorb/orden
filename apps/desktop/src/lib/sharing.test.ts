@@ -41,6 +41,9 @@ interface World {
   refuseStatus: number
   /** Every share call that was made, in order. */
   asked: string[]
+  /** The open tabs, as much of each as `othersIn` reads: a path and the key its
+   *  document's room is counted under. */
+  tabs: { path: string | null; note: { key: string } }[]
 }
 
 const world = vi.hoisted((): World => ({
@@ -54,6 +57,7 @@ const world = vi.hoisted((): World => ({
   refuse: null,
   refuseStatus: 403,
   asked: [],
+  tabs: [],
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -100,6 +104,9 @@ vi.mock('./workspace.svelte', () => ({
     get spaces() {
       return Object.keys(world.mirrors).map((root) => ({ id: root, name: root, root }))
     },
+    get tabs() {
+      return world.tabs
+    },
   },
 }))
 
@@ -120,6 +127,7 @@ import {
   isShared,
   looksLikeAddress,
   originOfDocument,
+  othersIn,
   roleOf,
   share,
   trustsHtmlIn,
@@ -145,6 +153,8 @@ beforeEach(() => {
   world.refuse = null
   world.refuseStatus = 403
   world.asked = []
+  world.tabs = []
+  rooms.present = {}
 
   account.token = 'session'
   account.user = { id: 'u1', email: 'owner@example.com', name: 'Emil' }
@@ -243,6 +253,52 @@ describe('what may be done in a space', () => {
     account.spaces = [remote('space-1', 'read', true)]
 
     expect(canWriteAt('/elsewhere/loose.md')).toBe(true)
+  })
+})
+
+/** The mark on a note's row in the file list, which is the same mark a shared
+ *  space wears in the switcher.
+ *
+ *  Asked of the rooms rather than of the account on purpose: a note in a shared
+ *  space that nobody else has open is not a note being worked in with somebody,
+ *  and one mark repeated down every row of a shared space says nothing about any
+ *  row in it. */
+describe('whether somebody else is in a note', () => {
+  const open = (path: string, key: string) => ({ path, note: { key } })
+
+  test('is nobody until a room says there is', () => {
+    world.tabs = [open('Notes/plan.md', 'k1')]
+    expect(othersIn('Notes/plan.md')).toBe(false)
+  })
+
+  test('is somebody once a room counts one', () => {
+    world.tabs = [open('Notes/plan.md', 'k1')]
+    rooms.present = { k1: 1 }
+
+    expect(othersIn('Notes/plan.md')).toBe(true)
+  })
+
+  test('and only about the note the room is for', () => {
+    world.tabs = [open('Notes/plan.md', 'k1'), open('Notes/other.md', 'k2')]
+    rooms.present = { k1: 2 }
+
+    expect(othersIn('Notes/plan.md')).toBe(true)
+    expect(othersIn('Notes/other.md')).toBe(false)
+  })
+
+  test('is nobody for a note nothing has opened, which is most of them', () => {
+    // A room is joined for an open file, so nothing on this machine knows who is
+    // in a note it has never opened. That is the honest answer rather than a
+    // guess from which space the note sits in.
+    rooms.present = { k1: 3 }
+    expect(othersIn('Notes/never-opened.md')).toBe(false)
+  })
+
+  test('and a note open in two panes is still one answer', () => {
+    world.tabs = [open('Notes/plan.md', 'k1'), open('Notes/plan.md', 'k1')]
+    rooms.present = { k1: 1 }
+
+    expect(othersIn('Notes/plan.md')).toBe(true)
   })
 })
 

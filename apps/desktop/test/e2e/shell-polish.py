@@ -137,7 +137,9 @@ async () => {
   if (ws.panel !== 'tree') ws.showPanel('tree')
 
   await ws.noteFrom('# Deep work\\n\\nthe first line\\n', root)
-  await ws.noteFrom('---\\nicon: users\\n---\\n\\n# With Nina\\n\\nours\\n', root)
+  // Not `users`: a note wearing the shared mark as the icon it chose for itself
+  // is a picture nobody could read.
+  await ws.noteFrom('---\\nicon: notebook-pen\\n---\\n\\n# With Nina\\n\\nours\\n', root)
   await ws.openEntry(at('Deep work.md'))
 
   // The open space wears a stroked mark, which is the one Emil measured.
@@ -344,6 +346,29 @@ AS_PHONE = """
 """
 
 
+# Somebody else in the open note, which is what puts the shared mark on its row
+# in the file list. There is no second device behind this run, so the count the
+# rooms keep is written by hand; the mark and the rule that draws it are real.
+WITH_SOMEBODY = """
+() => {
+  const app = window.nibApp
+  const tab = app.workspace.tabs.find((one) => one.path && one.path.endsWith('.md'))
+  if (!tab) return null
+
+  app.rooms.present = { ...app.rooms.present, [tab.note.key]: 1 }
+  return tab.path
+}
+"""
+
+# Which rows in the file list wear it.
+TREE_MARKS = """
+() => [...document.querySelectorAll('aside .row')].map((row) => ({
+  row: row.textContent.trim(),
+  shared: row.querySelectorAll('.shared').length,
+}))
+"""
+
+
 # Where the drawer is, so a shot of nothing is a reading rather than a puzzle.
 ASIDE_AT = """
 () => {
@@ -493,6 +518,23 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         shared = page.evaluate(SHARED)
         say(f"[{label}] what says shared: {shared}")
         check(len(shared) >= 2, f"[{label}] the shared spaces say so at all")
+        page.evaluate("() => document.querySelector('.catch')?.click()")
+        page.wait_for_timeout(400)
+
+        # The file list's half of the same mark: a note somebody else is in.
+        say(f"[{label}] somebody else joined {page.evaluate(WITH_SOMEBODY)}")
+        page.wait_for_timeout(400)
+        rows = page.evaluate(TREE_MARKS)
+        for one in rows:
+            say(f"[{label}]   {one}")
+
+        marked = [one["row"] for one in rows if one["shared"]]
+        check(
+            len(marked) == 1,
+            f"[{label}] one note wears the mark and no other row does ({marked})",
+        )
+        page.locator("aside").screenshot(path=str(SHOTS / f"tree-{label}.png"))
+        say(f"[{label}] wrote tree-{label}.png")
         for one in shared:
             check(
                 one["marks"] >= 1 and one["radius"] != "50%",
