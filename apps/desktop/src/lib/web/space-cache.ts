@@ -172,11 +172,19 @@ class Space {
         return
       }
 
-      for (const path of this.order) {
+      // By index rather than over the list itself: a path the store no longer has
+      // is taken out of the order as it is met, and a walk over a list that is
+      // being shortened would step over whatever followed it.
+      for (let at = 0; at < this.order.length; at++) {
+        const path = this.order[at] ?? ''
         // A note the cap let go of is read again here, one row, rather than the
         // whole space being read because one note is missing from it.
         const note = this.held.get(path) ?? (await this.fetch(base, path))
-        if (!note) continue
+        if (!note) {
+          at -= 1
+          continue
+        }
+
         if (!visit(note)) return
       }
     } finally {

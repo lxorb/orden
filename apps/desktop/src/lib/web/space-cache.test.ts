@@ -203,6 +203,29 @@ describe('the cap', () => {
     expect(found.reads).toBe(1)
   })
 
+  test('and the notes after one the store has lost still answer', async () => {
+    // A long note the cap will not keep, sitting in the middle of the space: Ink
+    // comes after Deep and before Kestrel in path order.
+    write('Deep.md', '# Deep\n\nThe first of them.')
+    write('Ink.md', `# Ink\n\n${'ink '.repeat(400)}`)
+    await space.fill(ROOT)
+
+    holdAtMost(600)
+    await searched('nothing at all')
+    expect(space.warmth().dropped).toBe(1)
+
+    // And then it goes from the store as well, behind the cache's back, which is
+    // what a second tab of the same app writing these rows looks like from here. A
+    // walk that took the missing path out of the order as it went and then carried
+    // on from where it was would step over whatever followed it.
+    disk.files.delete(`${ROOT}/Ink.md`)
+
+    const found = await searched('the')
+    expect(found.names).toEqual(['Deep.md', 'Kestrel.md', 'Plan.md'])
+    // And the note that has gone is out of the space: four notes, three of them.
+    expect(space.warmth().of).toBe(3)
+  })
+
   test('a note the cap let go of and the store no longer holds is forgotten', async () => {
     write('Novel.md', `# Novel\n\n${'ink '.repeat(400)}`)
     await space.fill(ROOT)
