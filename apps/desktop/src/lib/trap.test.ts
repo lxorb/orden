@@ -69,16 +69,13 @@ function pretendDocument(body: Fake, root: Fake) {
 }
 
 /** The trap tests `from instanceof HTMLElement`, which in this environment has to
- *  be something the fakes pass. */
+ *  be something the fakes pass. Not a class: `instanceof` asks the right-hand
+ *  side for `Symbol.hasInstance`, and anything can answer. */
 function pretendHTMLElement() {
-  vi.stubGlobal(
-    'HTMLElement',
-    class {
-      static [Symbol.hasInstance](value: unknown) {
-        return typeof value === 'object' && value !== null && 'focus' in value
-      }
-    },
-  )
+  vi.stubGlobal('HTMLElement', {
+    [Symbol.hasInstance]: (value: unknown) =>
+      typeof value === 'object' && value !== null && 'focus' in value,
+  })
 }
 
 function layer(children: Fake[] = []): Fake {

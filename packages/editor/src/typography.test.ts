@@ -61,7 +61,8 @@ describe('a line that is a break rather than a sentence', () => {
   /** The whole of a line, typed one character at a time through the rule, which
    *  is the only way to catch a conversion that happens mid-word: `---` used to
    *  come out as an em dash because the second hyphen had already gone. */
-  const typed = (line: string) => [...line].reduce((so, character) => type(so, character), '')
+  const typed = (line: string) =>
+    line.split('').reduce((so, character) => type(so, character), '')
 
   test('three hyphens on their own line stay a rule', () => {
     expect(typed('---')).toBe('---')
