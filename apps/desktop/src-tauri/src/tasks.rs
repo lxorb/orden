@@ -12,11 +12,13 @@
 //! rather than with a pattern, because the `task:` operator asks it of every line
 //! of every note in a space.
 
-/// The marker, the box and the state. Offsets are bytes from the start of the
-/// line, which is what the matcher counts in.
+/// The state and the marker. Offsets are bytes from the start of the line,
+/// which is what the matcher counts in.
+///
+/// Where the box sits is not here, though the twin says it: writing a tick is
+/// the app's own path through a note and never a search's, so the offset would
+/// be a field nothing on this side ever reads.
 pub struct TaskItem {
-    /// Where the `[` sits, so a tick can write one character and nothing else.
-    pub box_at: usize,
     /// Whether the box counts as ticked: anything but a space does.
     pub done: bool,
     /// How much of the line is the marker, its indentation and the space after
@@ -66,7 +68,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
         return None;
     }
 
-    let box_at = at;
     // One character inside, which may be more than one byte.
     let mark = line.get(at + 1..)?.chars().next()?;
     if mark == ']' {
@@ -90,7 +91,6 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
     }
 
     Some(TaskItem {
-        box_at,
         done: mark != ' ',
         marker: end,
     })
@@ -110,7 +110,7 @@ mod tests {
         let task = task_at("- [ ] buy milk").expect("a task");
 
         assert!(!task.done);
-        assert_eq!(task.box_at, 2);
+        assert_eq!(task.marker, 6);
         assert_eq!(words("- [ ] buy milk"), Some("buy milk"));
     }
 
@@ -133,7 +133,7 @@ mod tests {
     fn indentation_is_kept_however_deep() {
         let task = task_at("    - [x] nested").expect("a task");
 
-        assert_eq!(task.box_at, 6);
+        assert_eq!(task.marker, 10);
         assert_eq!(words("    - [x] nested"), Some("nested"));
     }
 

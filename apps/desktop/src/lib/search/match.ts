@@ -160,7 +160,8 @@ export function lineAt(starts: readonly number[], offset: number): number {
   return low
 }
 
-/** Which units are a kind of line rather than a distance. */
+/** Which tasks a unit asks for, and nothing for a unit that is not a task at all.
+ *  The twin of `Wanted` in matcher.rs, which says the same three words. */
 const A_TASK: Partial<Record<Unit, 'any' | 'todo' | 'done'>> = {
   task: 'any',
   'task-todo': 'todo',

@@ -187,12 +187,33 @@ fn slot(unit: Unit) -> usize {
 /// How many unit lists there are, which is what `slot` indexes into.
 const UNITS: usize = 6;
 
-/// Which state a task unit asks for, and None for a unit that is not one.
-fn task_state(unit: Unit) -> Option<Option<bool>> {
+/// Which tasks a unit asks for: any of them, or only the open or only the
+/// finished ones. The twin of `A_TASK` in match.ts, which says the same three
+/// words.
+#[derive(Copy, Clone)]
+enum Wanted {
+    Any,
+    Todo,
+    Done,
+}
+
+impl Wanted {
+    /// Whether a task in this state is one of the ones asked for.
+    fn takes(self, done: bool) -> bool {
+        match self {
+            Self::Any => true,
+            Self::Todo => !done,
+            Self::Done => done,
+        }
+    }
+}
+
+/// Which tasks a unit asks for, and None for a unit that is not a task at all.
+fn task_state(unit: Unit) -> Option<Wanted> {
     match unit {
-        Unit::Task => Some(None),
-        Unit::TaskTodo => Some(Some(false)),
-        Unit::TaskDone => Some(Some(true)),
+        Unit::Task => Some(Wanted::Any),
+        Unit::TaskTodo => Some(Wanted::Todo),
+        Unit::TaskDone => Some(Wanted::Done),
         Unit::Line | Unit::Block | Unit::Section => None,
     }
 }
@@ -285,7 +306,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
             let Some(task) = task_at(text) else {
                 continue;
             };
-            if state.is_some_and(|done| done != task.done) {
+            if !state.takes(task.done) {
                 continue;
             }
 

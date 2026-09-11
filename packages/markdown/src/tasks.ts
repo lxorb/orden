@@ -10,7 +10,9 @@
  *  One reading, in the package both sides already have, because three surfaces ask
  *  the same question of the same line: the key that ticks a box, the space search's
  *  `task:` operator, and a row of results with a live box in it. The Rust side asks
- *  it too; see tasks.rs, and the tests that hold the two to the same answers. */
+ *  it too; see tasks.rs, and the tests that hold the two to the same answers. It
+ *  answers with the state and the marker alone: a tick is written on this side, so
+ *  where the box sits is a fact only this one has any use for. */
 
 /** The marker, the box, and the state. Offsets are from the start of the line. */
 export interface TaskItem {
