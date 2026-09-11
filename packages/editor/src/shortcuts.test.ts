@@ -41,9 +41,7 @@ describe('building the keymap', () => {
 
   test('carries the fields CodeMirror needs beside the key', () => {
     const find = bindings(standardBindings, {}).find((one) => one.key === 'Mod-f')
-    // Find belongs to the search panel as well as the editor, and losing the
-    // scope would stop it working from inside the panel.
-    expect(find?.scope).toBe('editor search-panel')
+    expect(typeof find?.run).toBe('function')
 
     // CodeMirror carries Find previous on Find next as a Shift handler, which
     // would be a second command on a key nobody could see or rebind. It is taken
@@ -53,8 +51,19 @@ describe('building the keymap', () => {
 
     const previous = bindings(nibBindings, {}).find((one) => one.key === 'Mod-Shift-g')
     expect(typeof previous?.run).toBe('function')
-    // And it has to work from inside the panel Find just opened, like Find itself.
-    expect(previous?.scope).toBe('editor search-panel')
+  })
+
+  /** The library scoped its Find keys to `editor search-panel` so they kept
+   *  working while the keyboard was inside its own panel. The panel is nib's bar
+   *  now - a row of the pane, not a CodeMirror panel - and the bar answers Enter
+   *  and Shift+Enter itself, so a scope naming a panel that does not exist is a
+   *  scope that means nothing. See find.ts. */
+  test('and no longer scopes a key to a panel the editor does not have', () => {
+    const scoped = [...bindings(standardBindings, {}), ...bindings(nibBindings, {})].filter((one) =>
+      (one.scope ?? '').includes('search-panel'),
+    )
+
+    expect(scoped).toEqual([])
   })
 
   test('drops a platform default the entry does not have', () => {

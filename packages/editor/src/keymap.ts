@@ -38,7 +38,7 @@ import {
   toggleTaskList,
   toggleWrap,
 } from './commands'
-import { findPrevious, openReplace } from './find'
+import { findNext, findPrevious, openFind, openReplace } from './find'
 import { foldHeadings, toggleFold, unfoldEverything } from './fold'
 import { copyMarkdown } from './copy'
 import { pastePlain } from './paste'
@@ -175,26 +175,22 @@ export const nibBindings: BindingSpec[] = [
   // Under the fence, so `- [ ] x` written inside one is still code.
   { id: 'paragraph.task', key: 'Mod-Enter', run: toggleTask, contextual: true },
 
-  // Find with the caret in the replace field, since CodeMirror's own panel holds
-  // both. Ctrl+H is what Typora and Obsidian use; a Mac keeps Cmd+H for hiding
-  // the application, so there it is the Find-and-replace chord instead.
+  // Find with the bar's replace row already open. Ctrl+H is what Typora and
+  // Obsidian use; a Mac keeps Cmd+H for hiding the application, so there it is
+  // the Find-and-replace chord instead.
   { id: 'edit.replace', key: 'Mod-h', mac: 'Mod-Alt-f', run: openReplace, preventDefault: true },
   // The library pairs previous onto next through a Shift handler; here it is a
-  // command with a name of its own, on the two keys every editor uses for it. The
-  // scope is the library's own for Find: the keys have to work while the keyboard
-  // is in the search panel, which is where it is after Find opened it.
-  {
-    id: 'edit.find-previous',
-    key: 'Mod-Shift-g',
-    run: findPrevious,
-    scope: 'editor search-panel',
-    preventDefault: true,
-  },
+  // command with a name of its own, on the two keys every editor uses for it.
+  //
+  // No scope. The library scoped its own Find keys to `editor search-panel` so
+  // they would keep working while the keyboard was inside its panel; the panel
+  // is nib's bar now, the bar answers Enter and Shift+Enter itself, and a scope
+  // naming a panel that no longer exists is a scope that means nothing.
+  { id: 'edit.find-previous', key: 'Mod-Shift-g', run: findPrevious, preventDefault: true },
   {
     id: 'edit.find-previous.alt',
     key: 'Shift-F3',
     run: findPrevious,
-    scope: 'editor search-panel',
     preventDefault: true,
     alias: true,
   },
@@ -286,6 +282,19 @@ function unpaired(spec: BindingSpec): BindingSpec {
   return alone
 }
 
+/** The same binding without the library's scope.
+ *
+ *  The library scoped its Find keys to `editor search-panel` so they kept
+ *  working while the keyboard was inside its own panel. That panel is nib's bar
+ *  now - a row of the pane rather than a CodeMirror panel - and the bar answers
+ *  its own keys, so a scope naming a panel that does not exist is a scope that
+ *  means nothing. See find.ts. */
+function unscoped(spec: BindingSpec): BindingSpec {
+  const loose = { ...spec }
+  delete loose.scope
+  return loose
+}
+
 /** Takes one of the library's bindings over by name, or fails loudly. A key
  *  the library no longer binds would otherwise become a named shortcut with no
  *  command behind it, which reads in the settings as a key that simply does
@@ -368,12 +377,19 @@ export const standardBindings: BindingSpec[] = [
     alias: true,
   },
   adopt('edit.select-all', defaultKeymap, 'Mod-a'),
-  adopt('edit.find', searchKeymap, 'Mod-f'),
+  // The library's keys, on nib's own commands. Its Find opens its own panel and
+  // its steps fall back to opening it whenever the query is empty, which would
+  // put the panel nib replaced back on the screen at the first press of F3; see
+  // find.ts. Adopted rather than declared so the key is still the library's and
+  // still comes off its keymap when a reader rebinds it.
+  unscoped(adopt('edit.find', searchKeymap, 'Mod-f', { run: openFind })),
   // Unpaired: the library carries Find previous on these two as a Shift handler,
   // and a key that quietly runs a second command is a key nobody can rebind.
   // Find previous has entries of its own in nibBindings above.
-  unpaired(adopt('edit.find-next', searchKeymap, 'Mod-g')),
-  unpaired(adopt('edit.find-next.alt', searchKeymap, 'F3', { alias: true })),
+  unscoped(unpaired(adopt('edit.find-next', searchKeymap, 'Mod-g', { run: findNext }))),
+  unscoped(
+    unpaired(adopt('edit.find-next.alt', searchKeymap, 'F3', { alias: true, run: findNext })),
+  ),
   adopt('edit.goto-line', searchKeymap, 'Mod-Alt-g'),
   adopt('edit.move-line-up', defaultKeymap, 'Alt-ArrowUp'),
   adopt('edit.move-line-down', defaultKeymap, 'Alt-ArrowDown'),

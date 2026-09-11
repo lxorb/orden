@@ -8,7 +8,25 @@
    *  which note a link is being followed from. Two panes on two notes would
    *  otherwise both answer for whichever one had the focus. */
 
-  import { type EditorView, type NoteJump, setDeck, setReadOnlyMode } from '@nib/editor'
+  import {
+    closeFind,
+    type EditorView,
+    type FindAsk,
+    type FindSpec,
+    findTally,
+    type FindTally,
+    findNext as findNextMatch,
+    findPrevious as findPreviousMatch,
+    NO_FIND,
+    NO_TALLY,
+    type NoteJump,
+    replaceEverywhere,
+    replaceHere,
+    setDeck,
+    setFind,
+    setReadOnlyMode,
+  } from '@nib/editor'
+  import { untrack } from 'svelte'
   import { isDeck } from '@nib/markdown/slides'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
@@ -17,6 +35,7 @@
   import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
+  import FindBar from './FindBar.svelte'
   import Graph from './Graph.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
@@ -52,8 +71,109 @@
   const stripped = $derived(workspace.panes.count > 1)
   /** Whether what is showing takes a dropped note itself; see `answers`. */
   const ownSurface = $derived(tab?.kind === 'canvas')
+  /** Whether the surface in this pane is the editor, which is the one that has
+   *  no find bar of its own. The same question the branch chain below asks, asked
+   *  once so the bar above it and the editor under it cannot disagree. */
+  const writing = $derived(
+    !!tab && tab.kind !== 'graph' && tab.kind !== 'canvas' && tab.kind !== 'pdf' && !tab.reading,
+  )
 
   let view = $state<EditorView>()
+
+  /** The find bar over this pane's editor.
+   *
+   *  Held here rather than in the editor, because the bar is a row of the pane -
+   *  under the strip, above the note - and because the keys that open it are the
+   *  editor's: it asks through `onfind` and this is what answers. Per pane, so
+   *  two panes can be looking for two different things.
+   *
+   *  The query itself lives in the document's own search state, which is where
+   *  the library keeps it; what is here is the copy the field is drawn from and
+   *  whether the second row is out. See find.ts in @nib/editor. */
+  /** The three the bar's flags stand for, which are three of the query's own. */
+  type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
+
+  let finding = $state(false)
+  let replacing = $state(false)
+  let spec = $state<FindSpec>(NO_FIND)
+  let tally = $state<FindTally>(NO_TALLY)
+
+  /** Whether this pane's note can be written in at all, which is what decides
+   *  whether the bar offers to replace anything. A note being read, a note in a
+   *  space shared to be read, and read-only mode all say no. */
+  const canReplace = $derived(
+    !!tab &&
+      !tab.reading &&
+      !modes.readOnly &&
+      // A note with no path yet is one this window made and has not written; it
+      // is still this machine's own, so it can be written in.
+      (tab.path === null || canWriteAt(tab.path)) &&
+      !!view,
+  )
+
+  /** The document, told what to look for, and then asked how many there are.
+   *  One call, because every change to the bar is the same two steps. */
+  function look(next: FindSpec) {
+    spec = next
+    if (!view) return
+
+    setFind(view, next)
+    tally = findTally(view.state)
+  }
+
+  function openFinding(ask: FindAsk) {
+    replacing = ask.replace
+    // A word under the caret is what somebody pressed the key about; an empty
+    // selection leaves whatever was last looked for, which is still in the
+    // field and still selected.
+    look(ask.seed ? { ...spec, query: ask.seed } : spec)
+    finding = true
+  }
+
+  function shutFinding() {
+    finding = false
+    replacing = false
+    if (view) closeFind(view)
+    // The caret goes back to the note, which is where it was before the key.
+    view?.focus()
+  }
+
+  function stepFinding(by: number) {
+    if (!view) return
+
+    if (by < 0) findPreviousMatch(view)
+    else findNextMatch(view)
+    tally = findTally(view.state)
+  }
+
+  function replaceOne() {
+    if (!view) return
+
+    replaceHere(view)
+    tally = findTally(view.state)
+  }
+
+  function replaceEvery() {
+    if (!view) return
+
+    replaceEverywhere(view)
+    tally = findTally(view.state)
+  }
+
+  /** Which note the bar was opened over. A plain variable rather than state:
+   *  the effect below writes it, and writing state it reads would be a loop. */
+  let searchedIn: string | null = null
+
+  // A pane whose note changed is a pane looking at something else, and a tally
+  // counted in the note before it is a number about nothing. Only on a real
+  // change, so the first run of this does not take the keyboard.
+  $effect(() => {
+    const here = tab?.id ?? null
+    if (here === searchedIn) return
+
+    searchedIn = here
+    if (untrack(() => finding)) shutFinding()
+  })
 
   // Every editor on the page is one the modes, the keys and the palette have to
   // reach, and a view is built fresh for every tab.
@@ -215,6 +335,33 @@
     <div class="head"><Tabs paneId={pane.id} /></div>
   {/if}
 
+  <!-- Under the strip, which is where every editor puts its find bar, and above
+       the note rather than over it: a bar that covered the first line would be a
+       bar hiding the first match. The reading view and a PDF draw the same
+       component themselves, because each holds its own idea of where the words
+       are; see FindBar.svelte. -->
+  {#if finding && writing}
+    <FindBar
+      query={spec.query}
+      count={tally.count}
+      current={tally.current}
+      capped={tally.capped}
+      flags={spec}
+      onflags={(flags: FindFlags) => look({ ...spec, ...flags })}
+      {replacing}
+      replacement={spec.replace}
+      onreplacing={(open: boolean) => {
+        replacing = open
+      }}
+      onreplacement={(typed: string) => look({ ...spec, replace: typed })}
+      onreplace={canReplace ? replaceOne : undefined}
+      onreplaceall={canReplace ? replaceEvery : undefined}
+      onstep={stepFinding}
+      onclose={shutFinding}
+      onquery={(typed: string) => look({ ...spec, query: typed })}
+    />
+  {/if}
+
   {#if tab?.kind === 'graph'}
     <!-- The graph of the space is a tab like a note is, so it takes the note's
          place in the pane rather than a surface of its own. -->
@@ -267,6 +414,7 @@
         notes={(one: Tab) => links.index(one.path)}
         opennote={(jump: NoteJump) => void workspace.followLink(jump)}
         nameblock={(path: string, line: number) => nameBlock(path, line)}
+        onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
         onselection={(current: EditorView) => {
           views.moved(current)
           placement.remember(current)

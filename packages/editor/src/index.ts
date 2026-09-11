@@ -26,7 +26,22 @@ export {
   toggleTaskList,
   toggleWrap,
 } from './commands'
-export { findNext, findPrevious, openFind, openReplace } from './find'
+export {
+  closeFind,
+  type FindAsk,
+  findNext,
+  findPrevious,
+  type FindSpec,
+  findTally,
+  type FindTally,
+  NO_FIND,
+  NO_TALLY,
+  openFind,
+  openReplace,
+  replaceEverywhere,
+  replaceHere,
+  setFind,
+} from './find'
 export {
   foldHeadings,
   type FoldLines,

@@ -187,9 +187,14 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 
 ## 10. Search
 
-- [x] Find `Ctrl+F`, find next/previous
-- [x] Replace `Ctrl+H`, replace all
-- [x] Regex and case-sensitive toggles
+- [x] Find `Ctrl+F`, find next/previous. nib's own bar rather than CodeMirror's
+      panel: one `.nib-field` under the tab strip with the three flags inside it,
+      a live count beside it, the two steps and a cross, at the row scale so a
+      thumb gets a finger-sized target. The same component the reading view and a
+      PDF already used, which is what makes finding one thing wherever you are
+      reading. See FindBar.svelte and find.ts in @nib/editor
+- [x] Replace `Ctrl+H`, replace all, on a second row the chevron opens
+- [x] Regex, case-sensitive and whole-word toggles, inside the field
 - [x] Quick open / fuzzy finder `Ctrl+P`
 - [x] Global search across the space `Ctrl+Shift+F`
 - [x] `#tag` search, with the space's tags listed by use
@@ -250,14 +255,15 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Custom fonts (via a theme)
 - [x] Custom CSS injection separate from themes
 - [x] Code block themes
-- [x] More contrast, as a switch beside the mode rather than a theme of its own.
-      A reader who needs the page easier to see should not have to give up the
-      theme they chose, so this restates the palette over whichever theme is in
-      force, on either side of it: text at 21:1, the muted words and the hairlines
-      far enough up to be read and seen, and the accent still the colour they
-      picked, moved further from the page. The syntax in a fence follows, which is
-      the one thing a theme file cannot reach. A system that has contrast turned
-      up gets it without asking here, and the switch is theirs to turn off
+- [x] More contrast, as a theme. Asking for more contrast asks for a different
+      look, so it is the `contrast` theme in the store rather than a switch beside
+      the mode: one palette per look, measured against the page it is read on,
+      with text at 21:1 in both schemes, the muted words and the hairlines far
+      enough up to be read and seen, and an accent of its own. It is installed,
+      updated and taken off like any other theme. A theme states the four
+      `--syntax-*` tokens as well, so the syntax in a fence is a theme's to answer
+      too. A system asking for more contrast is shown that theme once, on a fresh
+      install, and never asked again
 
 ## 14. Export
 

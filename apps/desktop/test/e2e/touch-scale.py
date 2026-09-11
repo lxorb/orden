@@ -241,6 +241,9 @@ TAGS = [
     ["tag row", "aside .line .row"],
     ["tag twist", "aside .twist"],
     ["search find bar row", "aside .find .row"],
+    ["find bar field", ".findbar .nib-field"],
+    ["find bar step", ".findbar .act"],
+    ["find bar flag", ".findbar .flag"],
 ]
 MARKS = [["bookmark row", "aside .row"], ["bookmark icon", "aside .row svg"]]
 

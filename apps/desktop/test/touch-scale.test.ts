@@ -61,6 +61,7 @@ const SURFACES = [
   'lib/Bookmarks.svelte',
   'lib/CanvasBar.svelte',
   'lib/ContextMenu.svelte',
+  'lib/FindBar.svelte',
   'lib/Links.svelte',
   'lib/Palette.svelte',
   'lib/SearchPanel.svelte',

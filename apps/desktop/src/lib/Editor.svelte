@@ -25,6 +25,7 @@
     createEditor,
     editorState,
     EditorView,
+    type FindAsk,
     HeldState,
     modeEffects,
     type NoteIndex,
@@ -52,6 +53,7 @@
     notes,
     opennote,
     nameblock,
+    onfind,
     view = $bindable(),
   }: {
     /** The note showing in this pane. Anything that depends on which note it is
@@ -69,6 +71,9 @@
     notes?: (tab: Tab) => NoteIndex
     opennote?: (jump: NoteJump) => void
     nameblock?: (path: string, line: number) => Promise<string | null>
+    /** Ctrl+F and Ctrl+H, which are keys in the editor and a bar in the pane;
+     *  null when something in the editor closed it. See find.ts. */
+    onfind?: (ask: FindAsk | null) => void
     /** Bound back out: undefined until the view has been made. */
     view?: EditorView | undefined
   } = $props()
@@ -97,6 +102,7 @@
       ...(notes ? { notes: notes(one) } : {}),
       ...(opennote ? { openNote: opennote } : {}),
       ...(nameblock ? { nameBlock: nameblock } : {}),
+      ...(onfind ? { onFind: onfind } : {}),
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.
       shortcuts: shortcuts.forEditor,
