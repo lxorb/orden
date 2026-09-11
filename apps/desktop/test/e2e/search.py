@@ -68,7 +68,10 @@ async () => {
   await note('# Kestrel\\n\\n#later\\n\\n- [ ] watch the kestrel again\\n\\nA kestrel hangs on the wind above the field.')
   await note('# Everything open\\n\\nWhat is still to do, everywhere:\\n\\n```query\\ntask-todo:\\n```\\n\\nAnd the long papers:\\n\\n```query\\n[pages:>200]\\n```')
 
-  await ws.createFolder(ws.activeSpace.root, 'Archive')
+  // The archive is a note, because that is all a folder is: moving something into
+  // it is what makes it one, and `moveMany` nests the note first. See
+  // folder-notes.ts.
+  await note('# Archive\\n\\nWhat is done with.')
   await note('# Old plan\\n\\nThe plan as it was, with a kestrel in it.')
   await ws.loadTree()
 
@@ -216,6 +219,20 @@ async ({ source, wait }) => {
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
+
+
+def searching(page) -> None:
+    """The search panel showing, whether it already was or not.
+
+    `showPanel` is a toggle, and a page that has just been reloaded comes back with
+    the panel the session was left on: asking for it again would shut it.
+    """
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          if (ws.panel !== 'search') ws.showPanel('search')
+        }"""
+    )
 
 
 def held_text(page) -> str:
@@ -369,8 +386,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(600)
     shot("tree-dimmed")
 
-    # And the row's own menu, which is the way in.
-    rows = page.locator("aside .row.folder")
+    # And the row's own menu, which is the way in. The archive by name rather than
+    # by a class: a row that holds notes is a note like any other now, and what says
+    # this one holds the thing being left out is its name. See folder-notes.ts.
+    rows = page.locator("aside .row").filter(has_text="Archive")
     if rows.count():
         rows.first.click(button="right", force=True)
         page.wait_for_timeout(400)
@@ -587,7 +606,7 @@ def papers(browser, out: Path) -> None:
         f"{root}/Kestrel study.pdf",
     )
     page.wait_for_timeout(2500)
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    searching(page)
     page.wait_for_timeout(400)
     say(f"[{name}] holding {held_text(page)}")
     say(f"[{name}] the store keeps {kept_papers(page)} paper")
@@ -608,7 +627,7 @@ def papers(browser, out: Path) -> None:
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=20000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
-    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    searching(page)
     page.wait_for_timeout(1500)
 
     say(f"[{name}] after a restart: 'kestrel' finds {ask('kestrel')}")
