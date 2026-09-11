@@ -12,8 +12,10 @@ import { resolveFile, resolveNote } from '@nib/editor'
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
 import { isTabFile } from '@nib/markdown/links'
 import { mapSources } from '@nib/markdown/sources'
+import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { notePicture } from '../note-images'
+import { queryRowsHtml } from '../query-block'
 import type { Scheme } from '../theme.svelte'
 
 /** The note being read: its words, and where it lives so that its links and its
@@ -76,7 +78,10 @@ export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean):
   const { prepareEmbeds, prepareFences } = await import('../export')
 
   const [fence, embed] = await Promise.all([
-    prepareFences(note.text, scheme),
+    // A query fence is answered here, which is the one surface besides the editor
+    // that can answer one: the app is around it and the space is on this machine.
+    // See query-block.ts for why a published page leaves it as code.
+    prepareFences(note.text, scheme, { query: (code) => queryRowsHtml(code, t('Nothing found')) }),
     prepareEmbeds(note.text, (target) => links.embedSource(target, note.path)),
   ])
 

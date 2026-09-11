@@ -9,6 +9,8 @@
  *  packages/editor/src/wikilink/wikilink.test.ts. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Hit } from './search/match'
+import type { Query } from './search/query'
 import { scanNote, type SpaceLinks } from './scan-note'
 
 const ROOT = '/space'
@@ -41,20 +43,36 @@ vi.mock('./tauri', async (importOriginal) => ({
 
     if (command === 'snapshot_note') return Promise.resolve(null)
 
-    if (command === 'search_space') {
-      const query = String(args.query).toLowerCase()
-      const hits: { path: string; name: string; line: number; text: string }[] = []
-      for (const [path, content] of Object.entries(notes)) {
-        content.split('\n').forEach((text, line) => {
-          if (text.toLowerCase().includes(query)) {
-            hits.push({ path: `${ROOT}/${path}`, name: path, line, text })
-          }
-        })
-      }
-      return Promise.resolve(hits)
+    return Promise.resolve(null)
+  },
+}))
+
+/** The space search, stood in for: the real one is behind the Rust crate on a
+ *  desktop and inside a worker in a browser, and neither is here. The matcher the
+ *  app actually uses runs over the notes this file holds, so what is tested is the
+ *  answer the app would get. */
+vi.mock('./search/space', () => ({
+  searchSpace: async (
+    _root: string,
+    query: Query,
+    _terms: string[],
+    limit: number,
+    onFound: (found: { hits: Hit[]; loose: Hit[] }) => void,
+  ) => {
+    const { Matcher } = await import('./search/match')
+    const matcher = new Matcher(query)
+    const hits: Hit[] = []
+
+    for (const [path, content] of Object.entries(notes)) {
+      hits.push(
+        ...matcher.hits(
+          { path: `${ROOT}/${path}`, relative: path, name: path, body: content },
+          limit,
+        ),
+      )
     }
 
-    return Promise.resolve(null)
+    onFound({ hits, loose: [] })
   },
 }))
 

@@ -40,6 +40,18 @@ export interface NoteIndex {
   /** The markdown of one note, by path. An embed and the hover preview draw
    *  their frame first and fill it in when this lands. */
   read: (path: string) => Promise<string | null>
+  /** What a ` ```query ` fence answers with, as HTML the fence can hold: the app
+   *  searches the space, and the rows it draws are the Search panel's own. Null
+   *  where there is nothing to answer from, and absent entirely where the editor is
+   *  standing on its own - a fence then stays the code it is.
+   *
+   *  Here rather than in a facet of its own because it is the same fact the rest of
+   *  this is: what the space holds, which changes while the editor is open. The
+   *  field this index sits in is replaced when it does, and that is what makes a
+   *  fence answer again. */
+  query?: ((code: string) => Promise<string | null>) | undefined
+  /** A row in a query fence was pressed: which note, and which line of it. */
+  openRow?: ((path: string, line: number) => void) | undefined
 }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }

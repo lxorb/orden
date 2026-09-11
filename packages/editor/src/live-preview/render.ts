@@ -1,5 +1,6 @@
 import { MOST_EMS } from '@nib/markdown'
 import { chartFigure } from '@nib/markdown/chart'
+import type { NoteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 import katex from 'katex'
 // Chemical equations: `\ce{H2O}` and friends, as Typora supports.
@@ -86,7 +87,11 @@ export const DIAGRAM_LANGUAGES = new Set(['mermaid', 'flow', 'sequence'])
  *
  *  A chart is here and not in `DIAGRAM_LANGUAGES` because that set is also the
  *  list of what the two heavy diagram renderers draw; a chart needs neither. */
-export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([...DIAGRAM_LANGUAGES, 'chart'])
+export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([
+  ...DIAGRAM_LANGUAGES,
+  'chart',
+  'query',
+])
 
 let diagramSeq = 0
 
@@ -146,6 +151,60 @@ export class ChartWidget extends NibWidget {
     // package never sees; see chart.ts.
     host.innerHTML = chartFigure(this.code) ?? ''
     return host
+  }
+}
+
+/** A ` ```query ` fence: a search written into a note, answered where it stands.
+ *
+ *  The rows come from the app as HTML, because what a search finds is the app's to
+ *  know and the Search panel's rows are the ones to draw. This draws the frame
+ *  first and fills it in when the answer lands, the way an embed does: reading a
+ *  space is a round trip, and a fence that waited for it would be a blank line
+ *  where a paragraph is.
+ *
+ *  It answers again whenever the space changes, and the index is what says so: the
+ *  app hands over a new one each time a note is saved, and a widget holding the old
+ *  one is not equal to a widget holding the new. */
+export class QueryWidget extends NibWidget {
+  constructor(
+    private readonly code: string,
+    private readonly index: NoteIndex,
+  ) {
+    super()
+  }
+
+  override eq(other: QueryWidget) {
+    return other.code === this.code && other.index === this.index
+  }
+
+  toDOM() {
+    const host = document.createElement('div')
+    host.className = 'nib-query-block'
+
+    // A press on a row opens the note. One listener on the host rather than one
+    // per row, because the rows are replaced when the answer lands.
+    host.addEventListener('mousedown', (event) => {
+      const row = event.target instanceof Element ? event.target.closest('[data-path]') : null
+      const path = row instanceof HTMLElement ? row.dataset.path : undefined
+      const line = row instanceof HTMLElement ? Number(row.dataset.line ?? 0) : 0
+      if (path === undefined) return
+
+      // Before the editor takes the press as a click in the document, which would
+      // put the caret inside the fence this row is drawn over.
+      event.preventDefault()
+      this.index.openRow?.(path, line)
+    })
+
+    void this.draw(host)
+    return host
+  }
+
+  private async draw(host: HTMLElement) {
+    const html = await this.index.query?.(this.code)
+    // The widget may be gone by the time the space has answered.
+    if (!host.isConnected || html === null || html === undefined) return
+
+    host.innerHTML = html
   }
 }
 

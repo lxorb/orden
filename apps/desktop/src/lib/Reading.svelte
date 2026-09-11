@@ -30,6 +30,7 @@
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
   import { isTabFile, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
+  import { openQueryRow } from './query-block'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -202,6 +203,16 @@
     const card = (event.target as Element | null)?.closest('.embed-web')
     if (card instanceof HTMLElement && loadEmbed(card)) {
       event.preventDefault()
+      return
+    }
+
+    // A row in a query fence opens the note it found, the way a row in the Search
+    // panel does. Asked before the links, because a row is a button rather than a
+    // link: a published page has no script to run and so answers no query either.
+    const row = (event.target as Element | null)?.closest('.nib-query [data-path]')
+    if (row instanceof HTMLElement && row.dataset.path) {
+      event.preventDefault()
+      void openQueryRow(row.dataset.path, Number(row.dataset.line ?? 0))
       return
     }
 

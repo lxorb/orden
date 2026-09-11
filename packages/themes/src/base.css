@@ -1513,3 +1513,42 @@ textarea.nib-field {
     overflow-x: auto;
   }
 }
+
+/* ── A query written into a note ───────────── */
+
+/* What a ` ```query ` fence answers with: the rows the Search panel draws, in a
+   block that reads as part of the note rather than as a panel inside it. The bar
+   down the left is the quote's own, because this is the same kind of thing - words
+   from elsewhere, standing where they were asked for.
+
+   Here rather than in the editor's or the document's stylesheet because both draw
+   one: the editor in a widget over the fence, the reading view in one `innerHTML`.
+   Two boxes for one block is how they drift. See query-block.ts. */
+.nib-query {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: var(--space-3) 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--line-strong);
+}
+
+/* The first word over a group has no room above it: the bar already says where
+   the block starts. */
+.nib-query .nib-section:first-child {
+  margin-top: 0;
+}
+
+.nib-query-none {
+  margin: 0;
+  padding: 0 var(--row-pad);
+  font-family: var(--font-ui);
+  font-size: var(--text-row);
+  color: var(--muted);
+}
+
+/* A figure is what the renderer wraps a drawn fence in; a query is rows rather
+   than a picture, so it keeps the margins the rows brought. */
+figure.query {
+  margin: 0;
+}

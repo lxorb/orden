@@ -32,6 +32,8 @@ import {
 } from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
+import { t } from './i18n.svelte'
+import { openQueryRow, queryRowsHtml } from './query-block'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -327,6 +329,12 @@ class Links {
       files: this.files,
       path,
       read: (wanted) => this.readNote(wanted),
+      // What a ` ```query ` fence in the note answers with, and what a row in it
+      // opens. Handed over with the rest of what the space holds, so a fence is
+      // answered again whenever a note is saved: this object is remade then, and a
+      // widget holding the old one is not equal to one holding the new.
+      query: (code) => queryRowsHtml(code, t('Nothing found')),
+      openRow: (wanted, line) => void openQueryRow(wanted, line),
     }
     this.handed.set(key, made)
     return made

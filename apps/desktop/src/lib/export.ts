@@ -203,11 +203,18 @@ export type Drawer = (code: string, language: string, scheme: Scheme) => Promise
 export async function prepareFences(
   source: string,
   scheme: Scheme,
-  options: { highlight?: boolean } = {},
+  options: {
+    highlight?: boolean
+    /** What a ` ```query ` fence answers with, where anything can answer. Absent
+     *  for an export and for a published page, which have no space to search, and
+     *  where such a fence stays the code it is; see query-block.ts. */
+    query?: ((code: string) => Promise<string | null>) | undefined
+  } = {},
   draw: Drawer = drawDiagram,
 ): Promise<Fence> {
   const blocks = codeBlocks(source)
   const diagrams = new Map<string, string>()
+  const answers = new Map<string, string>()
   const languages = new Set<string>()
 
   const drawings = blocks
@@ -216,6 +223,18 @@ export async function prepareFences(
       const svg = await draw(block.code, block.language, scheme).catch(() => null)
       if (svg) diagrams.set(`${block.language}\n${block.code}`, svg)
     })
+
+  // A query fence is answered before the render, for the reason the diagrams are:
+  // rendering is one synchronous pass and searching a space is a round trip.
+  const asking = options.query
+  const answering = asking
+    ? blocks
+        .filter((block) => block.language === 'query')
+        .map(async (block) => {
+          const html = await asking(block.code).catch(() => null)
+          if (html) answers.set(block.code, html)
+        })
+    : []
 
   for (const block of blocks) {
     // A fence the renderer draws is not a fence anybody colours; see
@@ -227,9 +246,15 @@ export async function prepareFences(
   const [parsers] = await Promise.all([
     options.highlight === false ? new Map<string, Parser>() : loadParsers(languages),
     ...drawings,
+    ...answering,
   ])
 
   return (code, language) => {
+    if (language === 'query') {
+      const rows = answers.get(code)
+      return rows === undefined ? null : `<figure class="query">${rows}</figure>\n`
+    }
+
     if (DIAGRAM_LANGUAGES.has(language)) {
       const svg = diagrams.get(`${language}\n${code}`)
       return svg ? `<figure class="diagram" data-language="${language}">${svg}</figure>\n` : null

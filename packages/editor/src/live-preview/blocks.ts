@@ -16,7 +16,7 @@ import { type EmbedKind, embedKind } from '@nib/markdown/links'
 import { readProperties } from '@nib/markdown/properties'
 import { PropertiesWidget } from './properties'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
-import { noteIndex } from '../wikilink/notes'
+import { noteIndex, type NoteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
@@ -25,6 +25,7 @@ import {
   ChartWidget,
   DiagramWidget,
   MathWidget,
+  QueryWidget,
   recordEquationLabel,
   RENDERED_LANGUAGES,
   resetEquationLabels,
@@ -190,10 +191,14 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // the fence keeps its colouring instead of becoming an empty box.
           if (language === 'chart' && readChart(code) === null) return false
 
+          // And a query fence stays code wherever there is no space to search: the
+          // editor on its own, an export, a page somebody else is reading.
+          const index = state.facet(noteIndex)
+          if (language === 'query' && !index.query) return false
+
           ranges.push(
             Decoration.replace({
-              widget:
-                language === 'chart' ? new ChartWidget(code) : new DiagramWidget(code, language),
+              widget: widgetFor(language, code, index),
               block: true,
             }).range(span.from, span.to),
           )
@@ -305,6 +310,14 @@ export function buildBlockDecorations(state: EditorState): DecorationSet {
  *  it and shows it again on the way out - so a caret that stays clear of all
  *  of them leaves the decorations exactly as they were. Compared the way
  *  `overlaps` does, edges included. */
+/** Which widget a drawn fence gets. One place, so the three of them read as the
+ *  three kinds they are rather than as a nested question. */
+function widgetFor(language: string, code: string, index: NoteIndex) {
+  if (language === 'chart') return new ChartWidget(code)
+  if (language === 'query') return new QueryWidget(code, index)
+  return new DiagramWidget(code, language)
+}
+
 function crosses(
   spans: readonly { from: number; to: number }[],
   ranges: readonly SelectionRange[],

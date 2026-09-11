@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { scanNote } from './scan-note'
+import type { Hit } from './search/match'
+import type { Query } from './search/query'
 
 /** The index reads a space through the platform shim. Under node there is none,
  *  so a folder of notes stands in for one - which is why the store is imported
@@ -46,27 +48,46 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'snapshot_note':
         snapshots.push(path.slice(ROOT.length + 1))
         return undefined
-      case 'search_space': {
-        const query = stringOf(args, 'query').toLowerCase()
-        const hits: { path: string; name: string; line: number; text: string }[] = []
-
-        for (const [one, content] of Object.entries(notes)) {
-          content.split('\n').forEach((line, index) => {
-            if (!line.toLowerCase().includes(query)) return
-            hits.push({
-              path: `${ROOT}/${one}`,
-              name: one.split('/').pop() ?? one,
-              line: index,
-              text: line.trim(),
-            })
-          })
-        }
-
-        return hits
-      }
       default:
         return undefined
     }
+  },
+}))
+
+/** The space search, stood in for. The index asks it for the mentions of a note,
+ *  and the real one is either behind the Rust crate or inside a worker; neither is
+ *  here. What matters is the shape of the question and the answer, so the matcher
+ *  the app actually uses runs over the notes this file holds. */
+vi.mock('./search/space', () => ({
+  searchSpace: async (
+    _root: string,
+    query: Query,
+    _terms: string[],
+    limit: number,
+    onFound: (found: { hits: Hit[]; loose: Hit[] }) => void,
+    excluded: readonly string[] = [],
+  ) => {
+    const { Matcher } = await import('./search/match')
+    const matcher = new Matcher(query)
+    const hits: Hit[] = []
+
+    for (const [one, content] of Object.entries(notes)) {
+      if (excluded.some((left) => one === left || one.startsWith(`${left}/`))) continue
+
+      hits.push(
+        ...matcher.hits(
+          {
+            path: `${ROOT}/${one}`,
+            relative: one,
+            name: one.split('/').pop() ?? one,
+            body: content,
+          },
+          limit,
+        ),
+      )
+    }
+
+    onFound({ hits, loose: [] })
   },
 }))
 
