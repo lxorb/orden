@@ -141,6 +141,66 @@ function count(nodes: GraphNode[], index: number) {
   if (node) node.degree++
 }
 
+/** The graph without the notes a space leaves out, and without the links that
+ *  touched them.
+ *
+ *  A whole graph rather than a mask, because these notes are not hidden: the space
+ *  has said they are not part of what it says about itself, so they are not part of
+ *  the picture and never were. Degrees are counted again over what is left, the way
+ *  `neighbourhood` counts them, so a note's size says how connected it is in the
+ *  picture being looked at.
+ *
+ *  The graph itself when nothing is left out, so a space with no exclusions pays
+ *  nothing and the view is handed the same object it was before. */
+export function without(graph: NoteGraph, excluded: readonly string[]): NoteGraph {
+  if (!excluded.length) return graph
+
+  const left = (id: string) => excluded.some((one) => id === one || id.startsWith(`${one}/`))
+
+  const dropped = new Set<number>()
+  for (const [at, node] of graph.nodes.entries()) {
+    if (node.path !== null && left(node.id)) dropped.add(at)
+  }
+
+  if (!dropped.size) return graph
+
+  // A target the space holds no note for is not a path, so nothing can leave it
+  // out. It is only in the picture because something asks for it, so it goes when
+  // the last note that asked does.
+  const asked = new Set<number>()
+  for (const edge of graph.edges) {
+    if (dropped.has(edge.a) || dropped.has(edge.b)) continue
+    asked.add(edge.a)
+    asked.add(edge.b)
+  }
+
+  for (const [at, node] of graph.nodes.entries()) {
+    if (node.path === null && !asked.has(at)) dropped.add(at)
+  }
+
+  const place = new Map<number, number>()
+  const nodes: GraphNode[] = []
+  for (const [at, node] of graph.nodes.entries()) {
+    if (dropped.has(at)) continue
+
+    place.set(at, nodes.length)
+    nodes.push({ ...node, degree: 0 })
+  }
+
+  const edges: GraphEdge[] = []
+  for (const edge of graph.edges) {
+    const a = place.get(edge.a)
+    const b = place.get(edge.b)
+    if (a === undefined || b === undefined) continue
+
+    edges.push({ a, b, both: edge.both })
+    count(nodes, a)
+    count(nodes, b)
+  }
+
+  return { nodes, edges }
+}
+
 /** Who each node is joined to, as a list per node. */
 function adjacency(graph: NoteGraph): number[][] {
   const near: number[][] = graph.nodes.map(() => [])

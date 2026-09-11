@@ -59,11 +59,12 @@ export function searchInWorker(
   terms: string[],
   limit: number,
   onFound: (found: Found) => void,
+  excluded: readonly string[] = [],
 ): Promise<void> {
   const id = ++asked
 
   return new Promise<void>((resolve) => {
     waiting.set(id, { onFound, done: resolve })
-    open().postMessage({ id, root, query, terms, limit })
+    open().postMessage({ id, root, query, terms, limit, excluded: [...excluded] })
   })
 }

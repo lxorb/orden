@@ -232,12 +232,20 @@ class Search {
     // Rows arrive in handfuls and go on the end, so the list fills from the
     // top while the rest of the space is still being read. The guesses come in
     // the last handful, already ranked; see space.ts.
-    await searchSpace(root, this.query, terms, MOST, (batch) => {
-      if (round !== this.round) return
+    const excluded = workspace.excluded.of(root)
+    await searchSpace(
+      root,
+      this.query,
+      terms,
+      MOST,
+      (batch) => {
+        if (round !== this.round) return
 
-      if (batch.hits.length) this.found = [...this.found, ...batch.hits]
-      if (batch.loose.length) this.loose = [...this.loose, ...batch.loose]
-    })
+        if (batch.hits.length) this.found = [...this.found, ...batch.hits]
+        if (batch.loose.length) this.loose = [...this.loose, ...batch.loose]
+      },
+      excluded,
+    )
 
     if (round === this.round) this.running = false
   }

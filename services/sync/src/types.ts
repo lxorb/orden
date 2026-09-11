@@ -117,6 +117,10 @@ export interface Space {
   /** How the space's graph is drawn, as one JSON object; see spaces/graph.ts.
    *  `{}` until something about it is changed. */
   graph: string
+  /** The notes and folders the space leaves out of its search, its graph and its
+   *  unlinked mentions, as a JSON array of paths; see spaces/excluded.ts. `[]`
+   *  until one is. */
+  excluded: string
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }

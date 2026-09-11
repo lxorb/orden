@@ -41,6 +41,7 @@
   import { busy } from './busy.svelte'
   import { showEditorMenu } from './editor-menu'
 
+  import { without } from './graph'
   import { links } from './link-index.svelte'
   import { modes } from './modes.svelte'
   import { notePicture } from './note-images'
@@ -62,6 +63,10 @@
   const { pane }: { pane: Pane } = $props()
 
   const tab = $derived(workspace.showing(pane.id))
+
+  /** The space as a picture, without the notes it leaves out. Lazy like the graph
+   *  itself: nothing here is worked out until a graph tab is open. */
+  const picture = $derived.by(() => without(links.graph, workspace.excluded.here))
   /** Every note this pane holds. The editor keeps a state for each one it has
    *  shown, and this is what tells it which of them are still open. */
   const strip = $derived(workspace.tabsIn(pane.id).map(noteKey))
@@ -366,7 +371,7 @@
     <!-- The graph of the space is a tab like a note is, so it takes the note's
          place in the pane rather than a surface of its own. -->
     <Graph
-      graph={links.graph}
+      graph={picture}
       whole
       current={workspace.relativeNote}
       onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}

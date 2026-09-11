@@ -34,10 +34,15 @@ export async function searchSpace(
   terms: string[],
   limit: number,
   onFound: (found: Found) => void,
+  /** The notes and folders the space leaves out, relative to it. Skipped before
+   *  the note is read on both sides, which is the whole point of leaving one out:
+   *  an archive of two thousand notes should cost a search nothing rather than cost
+   *  it a read and then a filter. See workspace/excluded.svelte.ts. */
+  excluded: readonly string[] = [],
 ): Promise<void> {
   if (!isNative) {
     const { searchInWorker } = await import('../web/search-client')
-    await searchInWorker(root, query, terms, limit, onFound)
+    await searchInWorker(root, query, terms, limit, onFound, excluded)
     return
   }
 
@@ -54,7 +59,7 @@ export async function searchSpace(
   })
 
   try {
-    await invoke('search_space', { root, query, terms, limit, id })
+    await invoke('search_space', { root, query, terms, limit, id, excluded })
   } finally {
     stop()
   }

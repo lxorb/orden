@@ -14,6 +14,7 @@ import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { readBookmarks } from './bookmarks'
+import { readExcluded } from './excluded'
 import { readGraph } from './graph'
 import { readIcons } from './icons'
 
@@ -79,6 +80,7 @@ export async function addSpace(
     files: '[]',
     icons: '{}',
     graph: '{}',
+    excluded: '[]',
   }
 
   await env.DB.prepare(
@@ -263,6 +265,9 @@ export function presentSpace(
     // And for the same reason again: the graph of a space is drawn from what the
     // listing already brings down.
     graph: readGraph(space.graph),
+    // And again: the search, the picture and the mentions all read this, and all
+    // three are drawn from what the listing already brought down.
+    excluded: readExcluded(space.excluded),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

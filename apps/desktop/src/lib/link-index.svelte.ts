@@ -32,6 +32,9 @@ import {
 } from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
+import type { Hit } from './search/match'
+import { parseQuery } from './search/query'
+import { searchSpace } from './search/space'
 import { scanCanvas, type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
 import {
   folderOf,
@@ -499,8 +502,15 @@ class Links {
   }
 
   /** Lines elsewhere in the space that write this note's name without linking to
-   *  it. Asked of the search command rather than of the index: a mention is any
-   *  text at all, and searching a space is what that command already is. */
+   *  it. Asked of the space search rather than of the index: a mention is any text
+   *  at all, and searching a space is what that already is.
+   *
+   *  Through `searchSpace`, which is the one road to it: the desktop's walk is
+   *  behind the Rust crate and the browser's is in a worker, and both of them take
+   *  a parsed query rather than a word. Asking either of them for a bare string was
+   *  asking for a shape neither could read, so this answered with nothing at all
+   *  and the panel showed no mentions. It also means the notes the space leaves out
+   *  are left out of this too, which is the point of leaving them out. */
   async unlinked(path: string, root: string): Promise<Reference[]> {
     const relative = this.relative(path)
     if (!relative) return []
@@ -513,13 +523,19 @@ class Links {
       .filter((one) => one.length >= 2)
     if (!written.length) return []
 
-    const found = await Promise.all(
-      written.map((query) =>
-        invoke<{ path: string; name: string; line: number; text: string }[]>('search_space', {
+    // Quoted, so a name of two words is one phrase rather than two words that may
+    // be anywhere; a quote inside a name is escaped the way the grammar escapes
+    // one. See search/query.ts.
+    const found: Hit[] = []
+    await Promise.all(
+      written.map((one) =>
+        searchSpace(
           root,
-          query,
-          limit: MOST_MENTIONS,
-        }).catch(() => []),
+          parseQuery(`"${one.replace(/(["\\])/g, '\\$1')}"`),
+          [],
+          MOST_MENTIONS,
+          (batch) => found.push(...batch.hits),
+        ).catch(() => undefined),
       ),
     )
 
@@ -534,7 +550,6 @@ class Links {
 
     return (
       found
-        .flat()
         .map((hit) => ({
           path: this.relative(hit.path) ?? hit.path,
           name: hit.name.replace(MARKDOWN, ''),

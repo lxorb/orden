@@ -13,6 +13,7 @@ import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { bookmarks } from './bookmarks'
+import { spaceExcluded } from './excluded'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
 import { folderIcons, isIcon } from './icons'
@@ -221,12 +222,13 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
 })
 
 // A space's published side, its bookmarks, the icons its folders wear, how its
-// graph is drawn, the files beside its notes and who else may reach it answer
-// under these same paths.
+// graph is drawn, what it leaves out, the files beside its notes and who else may
+// reach it answer under these same paths.
 // Mounted last, so `/order` above is still read as a word and not as an id.
 spaces.route('/', publish)
 spaces.route('/', bookmarks)
 spaces.route('/', folderIcons)
 spaces.route('/', spaceGraph)
+spaces.route('/', spaceExcluded)
 spaces.route('/', spaceFiles)
 spaces.route('/', share)

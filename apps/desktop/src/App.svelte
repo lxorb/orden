@@ -135,8 +135,9 @@
   // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
-  // The icons the account holds for a space's folders, and how it says the space's
-  // graph is drawn, taken on whenever its listing changes. Neither has a file to
+  // The icons the account holds for a space's folders, how it says the space's
+  // graph is drawn, and what it leaves out of its own search, taken on whenever its
+  // listing changes. Neither has a file to
   // live in - a folder has no file, and a filter is not something a note says - so
   // unlike a note's icon they come down with the space; here rather than in the
   // syncing loop because both are written by a gesture in the app and this is where
@@ -153,6 +154,7 @@
 
       workspace.folderIcons.adopt(space.root, remote.icons, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
+      workspace.excluded.adopt(space.root, remote.excluded, who)
     }
   })
 

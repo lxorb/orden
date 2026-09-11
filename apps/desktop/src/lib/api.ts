@@ -135,6 +135,10 @@ export interface RemoteSpace {
    *  a build of the service older than this app answers with nothing at all; see
    *  workspace/graph-settings.svelte.ts. */
   graph: unknown
+  /** The notes and folders the space leaves out of its search, its graph and its
+   *  unlinked mentions, relative to the space. `[]` until one is; see
+   *  workspace/excluded.svelte.ts. */
+  excluded: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -474,6 +478,15 @@ export const api = {
       method: 'PUT',
       token,
       body: { graph },
+    }),
+
+  /** The whole list, for the reason the bookmarks go whole: it is short, and a row
+   *  taken back is smaller than the request that would carry it. */
+  saveExcluded: (token: string, id: string, excluded: readonly string[]) =>
+    request<{ excluded: string[] }>(`/v1/spaces/${id}/excluded`, {
+      method: 'PUT',
+      token,
+      body: { excluded },
     }),
 
   deleteSpace: (token: string, id: string) =>

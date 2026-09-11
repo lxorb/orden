@@ -21,6 +21,9 @@ export interface Ask {
    *  one to relax. See fuzzy.ts. */
   terms: string[]
   limit: number
+  /** The notes and folders the space leaves out, relative to it. Skipped before a
+   *  row is read; see workspace/excluded.svelte.ts. */
+  excluded: string[]
 }
 
 export type Answer =
@@ -43,7 +46,9 @@ export function isAsk(value: unknown): value is Ask {
     typeof value.limit === 'number' &&
     isRecord(value.query) &&
     Array.isArray(value.terms) &&
-    value.terms.every((one) => typeof one === 'string')
+    value.terms.every((one) => typeof one === 'string') &&
+    Array.isArray(value.excluded) &&
+    value.excluded.every((one) => typeof one === 'string')
   )
 }
 

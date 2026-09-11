@@ -150,6 +150,12 @@ const ROUTES: Route[] = [
       call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph: {} } }),
   },
   {
+    what: 'leaving a note out of the search',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/excluded`, { method: 'PUT', token, body: { excluded: [] } }),
+  },
+  {
     what: 'keeping the files beside the notes',
     needs: 'write',
     go: (token) =>

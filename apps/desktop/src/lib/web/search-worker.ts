@@ -21,9 +21,16 @@ self.onmessage = (event: MessageEvent<unknown>) => {
     self.postMessage(answer)
   }
 
-  searchRows(ask.root, ask.query, ask.terms, ask.limit, (found) => {
-    post({ kind: 'found', id: ask.id, ...found })
-  })
+  searchRows(
+    ask.root,
+    ask.query,
+    ask.terms,
+    ask.limit,
+    (found) => {
+      post({ kind: 'found', id: ask.id, ...found })
+    },
+    ask.excluded,
+  )
     .then(() => post({ kind: 'done', id: ask.id }))
     .catch(() => post({ kind: 'done', id: ask.id }))
 }

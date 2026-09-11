@@ -70,6 +70,8 @@ export const de: Dictionary = {
   Folder: 'Ordner',
   Bookmark: 'Lesezeichen',
   'Remove bookmark': 'Lesezeichen entfernen',
+  'Leave out of search': 'Aus der Suche nehmen',
+  'Search here again': 'Wieder durchsuchen',
   Unsaved: 'Nicht gespeichert',
   'Undo the last file change': 'Letzte Dateiänderung rückgängig',
   'Undo moving {name}': '{name} zurück verschieben',

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildGraph, neighbourhood, type NoteGraph } from './graph'
+import { buildGraph, neighbourhood, type NoteGraph, without } from './graph'
 import { scanNote, type ScannedNote } from './scan-note'
 
 /** A folder of notes, read the way the index reads one. */
@@ -239,5 +239,52 @@ describe('a space of two thousand notes and four thousand links', () => {
     const around = neighbourhood(graph, 'Plan.md', 2)
 
     expect(around.nodes.length).toBeGreaterThan(400)
+  })
+})
+
+/** The notes a space leaves out are not in the picture at all, rather than hidden
+ *  in it: the space has said they are not part of what it says about itself. */
+describe('a space with notes left out of it', () => {
+  const held = () =>
+    space({
+      'Plan.md': 'see [[Ink]] and [[Archive/Old]]',
+      'Ink.md': 'back to [[Plan]]',
+      'Archive/Old.md': 'about [[Plan]]',
+      'Archive/Older.md': 'about [[Elsewhere]]',
+    })
+
+  test('keeps the graph itself when nothing is left out', () => {
+    const graph = held()
+    expect(without(graph, [])).toBe(graph)
+  })
+
+  test('drops a note, and the links that touched it', () => {
+    const graph = without(held(), ['Archive/Old.md'])
+
+    expect(named(graph).sort()).toEqual(['Elsewhere', 'Ink', 'Older', 'Plan'])
+    expect(joins(graph)).toEqual(['Elsewhere - Older', 'Ink - Plan'])
+  })
+
+  test('and a folder stands for everything under it', () => {
+    const graph = without(held(), ['Archive'])
+
+    expect(named(graph).sort()).toEqual(['Ink', 'Plan'])
+    expect(joins(graph)).toEqual(['Ink - Plan'])
+  })
+
+  test('and counts what is left, so a note s size is about the picture', () => {
+    const graph = without(held(), ['Archive'])
+
+    expect(graph.nodes.find((node) => node.name === 'Plan')?.degree).toBe(1)
+  })
+
+  test('and a note the space has not got goes when the last note asking for it does', () => {
+    expect(named(without(held(), ['Archive/Older.md']))).not.toContain('Elsewhere')
+  })
+
+  test('and a path that is not a note of its own leaves everything in place', () => {
+    const graph = held()
+    expect(without(graph, ['Archiv'])).toEqual(graph)
+    expect(without(graph, ['Plan.md.old'])).toEqual(graph)
   })
 })

@@ -69,6 +69,8 @@ export const fr: Dictionary = {
   Folder: 'Dossier',
   Bookmark: 'Marque-page',
   'Remove bookmark': 'Retirer le marque-page',
+  'Leave out of search': 'Exclure de la recherche',
+  'Search here again': 'Rechercher ici a nouveau',
   Unsaved: 'Non enregistré',
   'Undo the last file change': 'Annuler la dernière modification de fichier',
   'Undo moving {name}': 'Annuler le déplacement de {name}',

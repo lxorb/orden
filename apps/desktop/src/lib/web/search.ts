@@ -32,12 +32,23 @@ export interface Found {
  *  `terms` are the query's bare words, to be matched loosely against notes the
  *  query itself does not answer; empty when the query is not one to relax. See
  *  fuzzy.ts, and search.rs for the twin of this walk. */
+/** Whether a note is one the space leaves out: the path itself, or something
+ *  inside a folder that is. The twin of `has` in workspace/excluded.svelte.ts and
+ *  of `left_out` in search.rs. */
+function leftOut(relative: string, excluded: readonly string[]): boolean {
+  return excluded.some((one) => relative === one || relative.startsWith(`${one}/`))
+}
+
 export async function searchRows(
   root: string,
   query: Query,
   terms: readonly string[],
   limit: number,
   onFound: (found: Found) => void,
+  /** The notes and folders the space leaves out, relative to it. Skipped before
+   *  the row is read, which is the whole point of leaving one out; the crate's
+   *  walk skips them the same way. See workspace/excluded.svelte.ts. */
+  excluded: readonly string[] = [],
 ): Promise<void> {
   const base = normalise(root)
   const matcher = new Matcher(query)
@@ -57,9 +68,12 @@ export async function searchRows(
     if (found >= limit) return
     if (!within(base, row.path) || !isMarkdown(row.path)) return
 
+    const relative = row.path.slice(base === '/' ? 1 : base.length + 1)
+    if (leftOut(relative, excluded)) return
+
     const note = {
       path: row.path,
-      relative: row.path.slice(base === '/' ? 1 : base.length + 1),
+      relative,
       name: basename(row.path),
       body: row.content,
       // Both passes below read the note; this is what keeps them to one folded

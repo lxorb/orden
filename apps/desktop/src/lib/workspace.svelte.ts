@@ -32,6 +32,7 @@ import {
 } from './workspace/session'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
+import { Excluded } from './workspace/excluded.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
@@ -271,6 +272,10 @@ class Workspace {
    *  the same kind of thing: one space's own settings, kept on the account so
    *  every machine draws it the same way. */
   readonly graphSettings = new SpaceGraphSettings(() => this.activeSpace?.root ?? null)
+  /** The notes and folders this space leaves out of its search, its graph and its
+   *  unlinked mentions. Beside the other two because it is the same kind of thing:
+   *  one space's own settings, kept on the account so every machine agrees. */
+  readonly excluded = new Excluded(() => this.activeSpace?.root ?? null)
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
   /** Which notes are being written, and which have just been. The dot beside a
@@ -1099,6 +1104,7 @@ class Workspace {
     this.device.moveIcon(space.root, renamed.path)
     this.folderIcons.spaceMoved(space.root, renamed.path)
     this.graphSettings.spaceMoved(space.root, renamed.path)
+    this.excluded.spaceMoved(space.root, renamed.path)
 
     space.name = renamed.name
     space.root = renamed.path
@@ -1225,6 +1231,7 @@ class Workspace {
 
     this.folderIcons.forget(space.root)
     this.graphSettings.forget(space.root)
+    this.excluded.forget(space.root)
     this.spaces = this.spaces.filter((entry) => entry.id !== id)
     if (this.activeSpaceId !== id) {
       this.persist()
@@ -1294,6 +1301,7 @@ class Workspace {
     // A folder's icon is kept under its path, so a folder that moved takes its
     // icon and its subfolders' icons with it.
     this.folderIcons.moved(from, target)
+    this.excluded.moved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
     for (const note of this.documents.filter((entry) => entry.path === from)) {
@@ -2588,6 +2596,7 @@ class Workspace {
     const rewrote = (await this.retarget(path, target)) > 0
     links.notesMoved(path, target)
     this.folderIcons.moved(path, target)
+    this.excluded.moved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
     const note = this.documents.find((entry) => entry.path === path)
@@ -2655,6 +2664,7 @@ class Workspace {
 
     links.noteGone(path)
     this.folderIcons.gone(path)
+    this.excluded.gone(path)
     await this.loadTree()
     // The row deleted may have been the last thing keeping a nested note nested.
     await this.unnest(folderOf(path))
@@ -2753,6 +2763,7 @@ class Workspace {
     if (action.rewrote) await this.retarget(action.to, action.from)
     links.notesMoved(action.to, action.from)
     this.folderIcons.moved(action.to, action.from)
+    this.excluded.moved(action.to, action.from)
   }
 
   /** Puts a merge back: both notes as they were, and the note that was folded

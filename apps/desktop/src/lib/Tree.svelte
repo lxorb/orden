@@ -6,7 +6,14 @@
   import FileMark from './FileMark.svelte'
   import { folderFor, folderNote, nestedIn, renameSteps } from './folder-notes'
   import { key, t } from './i18n.svelte'
-  import { bookmarkEntry, DIVIDER, iconEntries, menu, type MenuEntry } from './menu.svelte'
+  import {
+    bookmarkEntry,
+    DIVIDER,
+    excludeEntry,
+    iconEntries,
+    menu,
+    type MenuEntry,
+  } from './menu.svelte'
   import { longPress } from './longpress'
   import { movesInto, moveTargets, type MoveTarget } from './move-targets'
   import NameField from './NameField.svelte'
@@ -75,6 +82,7 @@
       ...moveEntry(entry),
       ...iconEntries(entry.path, true),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
+      ...excludeEntry(entry.path),
       DIVIDER,
       { label: t('Delete'), danger: true, run: () => void workspace.remove(entry.path, true) },
       ...undoEntry(),
@@ -307,6 +315,7 @@
       // Beside the name, because both are what the row shows.
       ...iconEntries(entry.path),
       ...bookmarkEntry(workspace.bookmarks.forEntry(entry)),
+      ...excludeEntry(entry.path),
       // Duplicating copies a file's words, and a PDF has none: it would come out
       // as an empty file wearing the name of a paper.
       ...(isPdfTarget(entry.name)
@@ -539,6 +548,7 @@
         <button
           class="nib-row row folder is-quiet"
           data-path={entry.path}
+          class:is-left-out={workspace.excluded.has(entry.path)}
           class:is-taking={dropTarget.lit(entry.path)}
           class:is-picked={workspace.isSelected(entry.path)}
           style:--level={depth}
@@ -566,6 +576,7 @@
         <button
           class="nib-row row note"
           data-path={entry.path}
+          class:is-left-out={workspace.excluded.has(entry.path)}
           class:is-taking={nesting(entry)}
           class:is-on={workspace.active?.path === entry.path}
           class:is-picked={workspace.isSelected(entry.path)}
@@ -617,6 +628,14 @@
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+
+  /* A row the space leaves out of its own search, its picture and its mentions.
+     Still there to open and still syncing, and saying quietly that the space has
+     stopped asking it things. Opacity rather than a colour, so the mark in front
+     of the name goes quiet with it. See workspace/excluded.svelte.ts. */
+  .row.is-left-out {
+    opacity: 0.5;
   }
 
   /* The row is drawn in the themes package - see `.nib-row` in base.css. What is

@@ -65,6 +65,11 @@ struct Batch {
 /// query itself does not answer; empty when the query is not one to relax. The
 /// app works them out, because the browser build needs them in front of the
 /// bridge anyway; see fuzzy.rs for the rule they follow.
+///
+/// `excluded` are the notes and folders the space leaves out, relative to it. They
+/// are skipped before the file is read, which is the whole point of leaving one
+/// out: an archive of two thousand notes should cost a search nothing rather than
+/// cost it a read and then a filter.
 #[tauri::command]
 pub fn search_space(
     app: AppHandle,
@@ -73,6 +78,7 @@ pub fn search_space(
     terms: Vec<String>,
     limit: usize,
     id: u32,
+    excluded: Vec<String>,
 ) -> Result<(), String> {
     let dir = in_spaces(&app, &root)?;
     let fuzzy = Fuzzy::new(&terms);
@@ -92,6 +98,11 @@ pub fn search_space(
             break;
         }
 
+        let relative = relative_to(&dir, &path);
+        if left_out(&relative, &excluded) {
+            continue;
+        }
+
         // A note that cannot be read is not a search failure: the rest of the
         // space still has answers.
         let Ok(body) = fs::read_to_string(&path) else {
@@ -99,7 +110,6 @@ pub fn search_space(
         };
 
         let shown = path.to_string_lossy();
-        let relative = relative_to(&dir, &path);
         let name = path
             .file_name()
             .map_or_else(String::new, |one| one.to_string_lossy().to_string());
@@ -193,6 +203,17 @@ pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
     // Most used first, and alphabetical within a count so the list holds still.
     tags.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.tag.cmp(&b.tag)));
     Ok(tags)
+}
+
+/// Whether a note is one the space leaves out: the path itself, or something
+/// inside a folder that is. The twin of `has` in workspace/excluded.svelte.ts.
+fn left_out(relative: &str, excluded: &[String]) -> bool {
+    excluded.iter().any(|one| {
+        relative == one.as_str()
+            || (relative.len() > one.len()
+                && relative.starts_with(one.as_str())
+                && relative.as_bytes().get(one.len()) == Some(&b'/'))
+    })
 }
 
 /// Every note in a space, in a stable order so two searches of an unchanged

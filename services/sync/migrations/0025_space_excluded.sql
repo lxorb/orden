@@ -1,0 +1,15 @@
+-- Which notes and folders of a space are left out of what the space says about
+-- itself: the search, the picture of its links, and the mentions of a note that
+-- are not links yet. One JSON array of paths relative to the space, the way the
+-- bookmarks are.
+--
+-- On the space and not on the account, because a path is inside one space: an
+-- archive folder means nothing in a space that has no such folder. So it travels
+-- with the space to every device signed in, goes with it when it is deleted and
+-- comes back with it when it is restored.
+--
+-- Paths rather than patterns, which is the one decision worth writing down here.
+-- The way this list is added to is a row's own menu, and a row always names a
+-- note or a folder; a folder stands for everything under it, which is the only
+-- pattern a file tree actually needs.
+alter table spaces add column excluded text not null default '[]';

@@ -12,7 +12,7 @@
    *  same index the lists do, so the two cannot disagree about the space. */
 
   import Graph from './Graph.svelte'
-  import { neighbourhood, type NoteGraph } from './graph'
+  import { neighbourhood, type NoteGraph, without } from './graph'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
@@ -63,7 +63,12 @@
    *  above, so the space is only walked while the picture is the thing showing. */
   const around = $derived.by(() => {
     const centre = workspace.panelNote
-    return centre === null ? NOTHING : neighbourhood(links.graph, centre, depth)
+    if (centre === null) return NOTHING
+
+    // Without the notes the space leaves out, which is the same picture the tab
+    // shows: a note in an archive is not part of what the space says about itself,
+    // so it is not part of the neighbourhood either.
+    return neighbourhood(without(links.graph, workspace.excluded.here), centre, depth)
   })
 
   /** Reads a value for its own sake, so the effect around it follows it. */

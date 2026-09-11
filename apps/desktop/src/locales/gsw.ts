@@ -71,6 +71,8 @@ export const gsw: Dictionary = {
   Folder: 'Mappe',
   Bookmark: 'Lesezeiche',
   'Remove bookmark': 'Lesezeiche wegnäh',
+  'Leave out of search': 'Us der Suech näh',
+  'Search here again': 'Wieder durchsueche',
   Unsaved: 'Nöd gspicheret',
   'Undo the last file change': 'Letschti Dateiänderig zrugg',
   'Undo moving {name}': '{name} zrugg verschiebe',

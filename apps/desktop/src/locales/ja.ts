@@ -69,6 +69,8 @@ export const ja: Dictionary = {
   Folder: 'フォルダ',
   Bookmark: 'ブックマーク',
   'Remove bookmark': 'ブックマークを削除',
+  'Leave out of search': '検索から除く',
+  'Search here again': '再び検索する',
   Unsaved: '未保存',
   'Undo the last file change': '直前のファイル操作を元に戻す',
   'Undo moving {name}': '{name} の移動を元に戻す',
