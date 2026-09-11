@@ -1,7 +1,6 @@
 <script lang="ts">
-  /** The mark in front of a row in the file list: one small icon per kind of file,
-   *  the folder the row is if it is one, and, where the file chose one of its own,
-   *  that instead.
+  /** The mark in front of a row in the file list: one small icon per kind of file
+   *  and, where the file chose one of its own, that instead.
    *
    *  Which icon a kind wears is `file-mark.ts`; how any icon is drawn is
    *  `Icon.svelte`. What is here is how big it is drawn and how heavy. All of the
@@ -11,26 +10,26 @@
    *  a pixel at either size instead, which is a hairline that still has a shape, and
    *  the same weight on both so a phone and a desktop draw one family.
    *
-   *  A folder wears the same box as the files under it, so every name in the list
-   *  starts at the same place whatever the row holds.
+   *  Every row wears the same box, so every name in the list starts at the same
+   *  place whatever the row holds.
    *
    *  A note that says `icon:` in its front matter wears that, in the same box - and
    *  so does a canvas that says it under `nib.icon`, and a folder the space's own map
-   *  names. It is read here rather than passed in, from the path the row already
-   *  knows, so every list that draws a mark shows the chosen icon without knowing
-   *  that anything has icons at all: the tree, the tab strip, a search result, a
-   *  bookmark, the Move sheet. See chosen-icon.ts for where the value comes from and
-   *  icons.ts for what it may say.
+   *  names, which is how a folder out of somebody's vault wears one before it has a
+   *  note to keep it in. It is read here rather than passed in, from the path the row
+   *  already knows, so every list that draws a mark shows the chosen icon without
+   *  knowing that anything has icons at all: the tree, the tab strip, a search
+   *  result, a bookmark, the Move sheet. See chosen-icon.ts for where the value comes
+   *  from and icons.ts for what it may say.
    *
-   *  A folder wearing one shows it whether it is open or shut, and the row still says
-   *  which it is: the chevron is the caret in `aria-expanded` and the indentation of
-   *  what follows. Two icons for one folder would be two folders. */
+   *  What a row holds is said at the far end of it and by the indentation of what
+   *  follows, never by the mark: the mark says what the row is. */
   import { chosenIcon, chosenTint } from './chosen-icon'
-  import { MARKS, type Mark } from './file-mark'
+  import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { readIcon } from './icons'
 
-  const { mark, path }: { mark: Mark; path?: string } = $props()
+  const { mark, path }: { mark: FileMark; path?: string } = $props()
 
   /** What the file or folder at this path chose, or null for a row that chose
    *  nothing - and for a caller that knows a name but no path, which gets its kind's

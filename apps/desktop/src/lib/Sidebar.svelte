@@ -132,7 +132,6 @@
       DIVIDER,
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
-      { label: t('New folder'), run: () => void workspace.createFolder() },
     ]
   }
 
@@ -170,12 +169,15 @@
     return id === 'search' ? resultsMenu() : null
   }
 
-  /** What the space itself offers, wherever in the panel you ask for it. */
+  /** What the space itself offers, wherever in the panel you ask for it.
+   *
+   *  Two things, because there are two things to make. A folder is not one of
+   *  them: a note that holds notes is how a space is organised, and that is a
+   *  note made inside another note's row. See folder-notes.ts and docs/tree.md. */
   function spaceMenu(): MenuEntry[] {
     return [
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
-      { label: t('New folder'), run: () => void workspace.createFolder() },
     ]
   }
 

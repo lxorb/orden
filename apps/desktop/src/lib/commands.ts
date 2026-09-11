@@ -557,8 +557,8 @@ function stepSlide(view: EditorView, direction: number) {
  *  own it, and both are the sheet the space's own menu opens. A list rather than
  *  a disabled row, because a command that cannot run is not a command; see
  *  `exportCommands`. */
-/** Putting the note that is open somewhere else: into a folder of this space,
- *  or into another space.
+/** Putting the note that is open somewhere else: inside another note of this
+ *  space, or into another space.
  *
  *  A note used to be carried onto a square in the column of spaces, and with the
  *  column gone a pointer had no way left to move one between spaces at all - the
@@ -584,11 +584,7 @@ function moveCommand(): Command | null {
     label: t('Move this note'),
     run: () =>
       void prompt
-        .find({
-          title: t('Move to'),
-          options: targets.map((one) => ({ id: one.id, label: one.label })),
-          placeholder: t('Folder'),
-        })
+        .find({ title: t('Move to'), options: [...targets] })
         .then((into) => (into ? workspace.moveMany([path], into) : undefined)),
   }
 }

@@ -71,9 +71,9 @@ async () => {
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
 
-  // Named outright, so the folder is made rather than a row put in the list for
-  // somebody to type into. See `createFolder`.
-  await ws.createFolder(root, 'Field notes')
+  // A folder with no note of its own, which is the one kind nib does not make: it
+  // is here because the notes below are written into it, the way a vault's folders
+  // are. Its row is a note nobody has written; see docs/tree.md.
   const folder = join(root, 'Field notes')
 
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind above the field.\\n\\n## What went in this week\\n\\n- Pressure on the pen\\n- Slides out of a note\\n\\n### Wind\\n\\nThe wind was steady all week.', undefined)

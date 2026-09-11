@@ -246,6 +246,10 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(asking).toEqual([
+      // The Move sheet, whose rows are the notes of the space and then the spaces
+      // themselves: a space wears its own mark there rather than a note's, in the
+      // box a note's mark sits in. See move-targets.ts and docs/tree.md.
+      'lib/PromptSheet.svelte',
       'lib/PublishSheet.svelte',
       'lib/ShareSheet.svelte',
       'lib/SpaceSwitcher.svelte',

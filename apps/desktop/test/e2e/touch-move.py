@@ -212,12 +212,18 @@ def hold(page: Page, selector: str, label: str) -> None:
 
 
 def seed(page: Page) -> None:
-    """Two spaces, a folder in the first, and a note beside it."""
+    """Two spaces, a row that holds something in the first, and a note beside it.
+
+    `Work` is a folder with no note of its own, which is what a folder out of
+    somebody's vault is: nib never makes one, so it is seeded the way one arrives -
+    by something being in it. A canvas rather than a note, so "a note landed in
+    Work" is false until the move under test makes it true.
+    """
     page.evaluate(
         """
         async () => {
           const app = window.nibApp
-          await app.workspace.createFolder('/Notes/Work')
+          await app.workspace.createCanvas('/Notes/Work', 'Board.canvas')
           await app.workspace.addSpace('Uni')
           const notes = app.workspace.spaces.find((one) => one.name === 'Notes')
           if (notes) await app.workspace.showSpace(notes.id)
@@ -247,7 +253,7 @@ def space_names(page: Page) -> list[str]:
 
 def open_the_list(page: Page) -> None:
     page.evaluate("() => (window.nibApp.workspace.panel = 'tree')")
-    page.wait_for_selector(".row.note", timeout=5000)
+    page.wait_for_selector(".row[data-path$='.md']", timeout=5000)
 
 
 def main() -> int:
@@ -272,7 +278,7 @@ def main() -> int:
                 say(f"the list holds {tree_paths(page)!r}")
 
                 # ── A note's menu offers the move ──────────────────────────
-                hold(page, ".row.note", "phone")
+                hold(page, ".row[data-path$='.md']", "phone")
                 offered = page.locator('[role="menuitem"]').all_inner_texts()
                 if "Move" not in [one.strip() for one in offered]:
                     wrong(f"a note's menu on a touch screen offers {offered!r}, with no Move")
@@ -329,7 +335,7 @@ def main() -> int:
                 say("and undo put it back")
 
                 # ── A finger that moves first never opens the menu ──────────
-                page.evaluate(SWIPE, ".row.note")
+                page.evaluate(SWIPE, ".row[data-path$='.md']")
                 page.wait_for_timeout(900)
                 if page.locator('[role="menu"]:visible').count():
                     wrong("a finger that set off across the row still opened the menu")
@@ -380,7 +386,7 @@ def main() -> int:
                 seed(page)
                 open_the_list(page)
 
-                hold(page, ".row.note", "dark")
+                hold(page, ".row[data-path$='.md']", "dark")
                 page.wait_for_timeout(200)
                 page.screenshot(path=str(SHOTS / "touch-move-menu-dark.png"))
 

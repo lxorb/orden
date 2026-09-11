@@ -66,9 +66,8 @@ async () => {
   const root = ws.activeSpace.root
   const join = (dir, name) => (dir.endsWith('/') ? dir + name : dir + '/' + name)
 
-  await ws.createFolder()
-  ws.stopRenaming()
-  await ws.rename(join(root, 'New folder'), 'Field notes')
+  // A folder with no note of its own, which is the one kind nib does not make:
+  // it is here because notes are written into it, the way a vault's folders are.
   const folder = join(root, 'Field notes')
 
   await ws.noteFrom('# Kestrel notes\\n\\nA kestrel hangs on the wind above the field.\\n\\n## What went in this week\\n\\n- Pressure on the pen\\n\\n### Wind\\n\\nThe wind was steady all week.', undefined)
@@ -232,8 +231,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             page.keyboard.press("Control+Shift+E")
             page.wait_for_timeout(450)
         for _ in range(3):
-            classes = page.evaluate("() => document.activeElement?.className ?? ''")
-            if "note" in classes or "folder" in classes:
+            # A row of the file list and of no other list in the panel: every row
+            # there is a note, and the path it stands for is written on it. See
+            # docs/tree.md.
+            if page.evaluate("() => !!document.activeElement?.matches('.row[data-path]')"):
                 return
             page.keyboard.press("Tab")
             page.wait_for_timeout(200)

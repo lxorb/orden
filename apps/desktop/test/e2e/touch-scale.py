@@ -211,10 +211,11 @@ CHROME = [
     ["sidebar panel tab", "aside .switch button"],
     ["sidebar tab icon", "aside .switch button svg"],
     ["sidebar body", "aside .body"],
-    ["tree folder row", "aside .row.folder"],
-    ["tree folder chevron", "aside .row.folder .chevron"],
-    ["tree note row", "aside .row.note"],
-    ["tree file mark", "aside .row.note .mark"],
+    # Every row of the file list is one row: a note, and a note that holds notes
+    # wearing a twist at the far end of it. See docs/tree.md.
+    ["tree row", "aside .row"],
+    ["tree row twist", "aside .row .twist"],
+    ["tree file mark", "aside .row .mark"],
     ["rail", "nav"],
     ["rail space square", "nav .space"],
     ["rail add", "nav .add"],
@@ -382,7 +383,7 @@ def one(
     page.evaluate(AS_DEVICE, [device, portrait, narrow])
     # Opening a note shuts the drawer on a phone, so the tree is asked for again.
     open_drawer(page)
-    wait_for(page, "() => document.querySelectorAll('aside .row.note').length >= 2", "the rows")
+    wait_for(page, "() => document.querySelectorAll('aside .row').length >= 2", "the rows")
     page.wait_for_timeout(500)
 
     rows: dict = {
@@ -443,12 +444,12 @@ def one(
     open_drawer(page)
     page.wait_for_timeout(200)
     if touch:
-        if page.evaluate(PRESS, "aside .row.note"):
+        if page.evaluate(PRESS, "aside .row"):
             page.wait_for_selector('[role="menu"]:visible', timeout=5000)
             page.evaluate("() => window.__nibRelease?.()")
             page.wait_for_timeout(300)
     else:
-        page.locator("aside .row.note").first.click(button="right")
+        page.locator("aside .row").first.click(button="right")
         page.wait_for_timeout(400)
     rows.update(measure(page, CONTEXT))
     shot(page, f"{label}-{name}-context-{scheme}")

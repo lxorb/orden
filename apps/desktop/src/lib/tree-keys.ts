@@ -1,29 +1,28 @@
 /** Walking the file list with the keys.
  *
  *  What a press comes to, worked out from the rows on show and nothing else: the
- *  arrows step between them, right opens a folder and then steps into it, left
- *  closes one and otherwise steps out to the folder holding this row. Pure, so
- *  the rule reads as a list of paths rather than as a list somebody has to drive
- *  with a mouse; see tree-keys.test.ts and Tree.svelte.
+ *  arrows step between them, right shows what a row holds and then steps into it,
+ *  left hides it again and otherwise steps out to the row holding this one. Pure,
+ *  so the rule reads as a list of paths rather than as a list somebody has to
+ *  drive with a mouse; see tree-keys.test.ts and Tree.svelte.
  *
  *  Which key does which is the registry's to say, so a reader can change it; the
  *  standard name of each is the vocabulary here. */
 
 import { walked } from './walk'
 
-/** One row of the list as a walk sees it. */
+/** One row of the list as a walk sees it.
+ *
+ *  What a row opens is not here, because every row opens something: a note opens
+ *  itself and a folder opens the note it is drawn as, written or not. Enter and
+ *  Space do that through `workspace.openRow`, and these two arrows are the only
+ *  keys that care whether a row holds rows. See folder-notes.ts. */
 export interface TreeRow {
   path: string
   /** Whether it holds rows of its own. */
   folder: boolean
-  /** Whether a folder is showing what it holds. */
+  /** Whether it is showing what it holds. */
   open: boolean
-  /** The file the row opens, where it opens one. A note opens itself, and a
-   *  folder holding its own note opens that note - which is why this is not the
-   *  same question as the path: a folder-note row both holds rows and opens
-   *  something, and Enter on it should do what a click on it does. Absent for a
-   *  plain folder, which opens nothing; see folder-notes.ts. */
-  opens?: string
 }
 
 /** What a press comes to: a row to stand on, or a folder to open or shut. */

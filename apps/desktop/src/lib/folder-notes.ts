@@ -1,4 +1,4 @@
-/** A note that holds notes.
+/** A note that holds notes, which is the only way nib organises anything.
  *
  *  Dropping one note onto another nests it, the way a page nests under a page in
  *  Notion. On disk that is the folder-note convention: `A.md` becomes the folder
@@ -13,18 +13,28 @@
  *  the folder instead. So a space nib nested a note in reads as nested in Obsidian
  *  with nothing switched on, which is the point.
  *
- *  No icons here. A folder-note row draws the note's own path, so the mark it
- *  wears is whatever the note's front matter says and choosing one on the row
- *  writes it there; none of it belongs in the folder icon map. See
- *  FileMark.svelte.
+ *  Read more widely than written, as everything about somebody else's vault is:
+ *  `A/index.md` is the other convention in the wild - the same plugins offer it,
+ *  and every site generator there is calls a folder's own page that - so a folder
+ *  holding one is drawn as that page too. nib writes the namesake and never the
+ *  index, so nothing is converted by being looked at.
  *
- *  Pure, and the whole rule: the tree, the drop zones, the Move sheet and the way
- *  back out all ask here. See folder-notes.test.ts. */
+ *  A folder with no note of either kind is a folder nib did not make: it comes
+ *  from a vault, a clone or Finder. Its row is still the row of a note - the
+ *  folder's name, quiet, and the note it would be is written the moment somebody
+ *  writes in it. Nothing here writes anything; see docs/tree.md.
+ *
+ *  Pure, and the whole rule: the tree, the drop zones, the Move sheet, the icon a
+ *  row wears and the way back out all ask here. See folder-notes.test.ts. */
 
 import { isMarkdownPath, withoutExtension } from './space-paths'
-import { folderOf } from './tauri'
+import { folderOf, joinPath } from './tauri'
 import { entryAt } from './tree-edits'
 import type { Entry } from './workspace.svelte'
+
+/** The other convention's name for a folder's own note, read and never written.
+ *  `_index` is the same word with a generator's prefix on it. */
+const INDEX = /^_?index$/i
 
 /** The folder a note would become: the note without its extension, so `A.md`
  *  makes `A/`.
@@ -36,19 +46,45 @@ export function folderFor(note: string): string {
   return withoutExtension(note)
 }
 
-/** The note a folder is drawn as, or null for a folder that is only a folder.
+/** The note a folder is drawn as, written or not: the folder's own name inside
+ *  it.
  *
- *  The name has to match exactly. A vault where `Notes/` happens to hold
- *  `notes.md` is a folder holding a note, and reading it as one thing because two
- *  filesystems disagree about capitals would fold a row somebody meant to keep. */
+ *  Asked of a folder that has none, which is where it earns its keep: a row out
+ *  of somebody's vault opens the note it would be, and that note is written when
+ *  there are words in it and not before. Always `.md`, because that is what nib
+ *  writes; a vault of `.markdown` files keeps its own extension on the notes it
+ *  already has. */
+export function folderNotePath(folder: string): string {
+  return joinPath(folder, `${nameOf(folder)}.md`)
+}
+
+/** Whether a note is the one its folder is drawn as.
+ *
+ *  String work, so it can be asked wherever a path is known and no listing is:
+ *  `A/A.md` sits in the folder it names, and nothing else does. An `index.md`
+ *  answers no, which is what keeps a rename from renaming it and an icon from
+ *  being written in two places at once. */
+export function isFolderNote(note: string): boolean {
+  return isMarkdownPath(note) && nameOf(folderOf(note)) === nameOf(withoutExtension(note))
+}
+
+/** The note a folder is drawn as, or null for a folder that holds notes and has
+ *  none of its own.
+ *
+ *  The namesake first, the index after it, so a folder holding both is the note
+ *  nib would have written. The name has to match exactly. A vault where `Notes/`
+ *  happens to hold `notes.md` is a folder holding a note, and reading it as one
+ *  thing because two filesystems disagree about capitals would fold a row
+ *  somebody meant to keep. */
 export function folderNote(entry: Entry): Entry | null {
   if (!entry.is_dir) return null
 
+  const notes = entry.children.filter((child) => !child.is_dir && isMarkdownPath(child.name))
+
   return (
-    entry.children.find(
-      (child) =>
-        !child.is_dir && isMarkdownPath(child.name) && withoutExtension(child.name) === entry.name,
-    ) ?? null
+    notes.find((child) => withoutExtension(child.name) === entry.name) ??
+    notes.find((child) => INDEX.test(withoutExtension(child.name))) ??
+    null
   )
 }
 
@@ -84,10 +120,15 @@ export function noteToNest(tree: Entry | null, folder: string): string | null {
  *
  *  Automatic, because the way in was: nesting a note was one drag, and a reader
  *  who drags the last row back out has undone it. An empty `A/` left standing
- *  beside `A.md` would be tidying up after a gesture nobody knew they had made. */
+ *  beside `A.md` would be tidying up after a gesture nobody knew they had made.
+ *
+ *  Only the namesake, which is the only layout nib itself makes. A folder whose
+ *  note is an `index.md` came from somewhere else, and taking that layout apart
+ *  because a reader moved one note out of it would be nib rearranging a vault it
+ *  was only asked to show. */
 export function unnesting(entry: Entry): { note: string; into: string; folder: string } | null {
   const own = folderNote(entry)
-  if (!own || entry.children.length > 1) return null
+  if (!own || !isFolderNote(own.path) || entry.children.length > 1) return null
 
   return { note: own.path, into: folderOf(entry.path), folder: entry.path }
 }
@@ -99,11 +140,18 @@ export function unnesting(entry: Entry): { note: string; into: string; folder: s
  *  resolve to the note while it is where it was; renaming the folder first would
  *  move it out from under them.
  *
+ *  The folder alone where the note is not the folder's namesake: an `index.md` is
+ *  named after its place rather than after itself, so the name that was typed is
+ *  the folder's and the note inside keeps the name its convention gave it.
+ *
  *  Nothing at all for a name with nothing in it, which is a field somebody
  *  cleared rather than a rename. */
 export function renameSteps(note: string, typed: string): { path: string; name: string }[] {
   const name = withoutExtension(typed.trim())
   if (!name) return []
+
+  const folder = folderOf(note)
+  if (!isFolderNote(note)) return [{ path: folder, name }]
 
   // The note keeps the extension it was written with, so a vault of `.markdown`
   // files stays a vault of `.markdown` files.
@@ -111,6 +159,11 @@ export function renameSteps(note: string, typed: string): { path: string; name: 
 
   return [
     { path: note, name: name + extension },
-    { path: folderOf(note), name },
+    { path: folder, name },
   ]
+}
+
+/** The last part of a path, whichever separator the platform wrote. */
+function nameOf(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path
 }

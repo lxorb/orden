@@ -1,8 +1,8 @@
 # Icons
 
-Anything in the file list can wear an icon: a note, a canvas, a folder, and the
-space that holds them. One picker chooses it, one component draws it, and one
-string says what it is.
+Anything in the file list can wear an icon: a note, a canvas, a folder somebody
+else's vault arrived with, and the space that holds them. One picker chooses it,
+one component draws it, and one string says what it is.
 
 ## Where each one is kept
 
@@ -13,16 +13,24 @@ that thing has.
 | --- | --- | --- |
 | a note | `icon:` in its own front matter | The one place a markdown file has for metadata. It travels with the file into another vault, and Obsidian's Iconize plugin reads the same key. |
 | a canvas | `nib.icon` in the `.canvas` JSON | A canvas has no front matter. `nib` is the one top-level key the JSON Canvas spec leaves for what is ours, and the ink already lives there; under it the file is the spec exactly. |
-| a folder | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |
+| a folder with no note of its own | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |
 | a space | this device's own store, keyed by folder | It was a device's choice before it was the account's, and it still is on a machine that is not signed in. |
 
 Three ways of giving a folder an icon were weighed. A dotfile inside the folder
 would sync for free and survive a move without being told, but it puts a file in
 every folder somebody marked and every other tool that walks the vault sees it. A
-`folder.md` index note is Obsidian's folder-note convention, and until notes could
-hold notes there were no such notes to hang it on. The map is what is left, and it
-costs one obligation: a rename, a move or a delete has to rewrite the key, which is
-`moved` and `gone` in `workspace/folder-icons.svelte.ts`.
+`folder.md` index note is Obsidian's folder-note convention, and a folder that has
+one of those is a note in nib and keeps its icon in that note's front matter like
+any other. The map is what is left for the folders that have no such note - the
+ones a vault arrived with - and it costs one obligation: a rename, a move or a
+delete has to rewrite the key, which is `moved` and `gone` in
+`workspace/folder-icons.svelte.ts`.
+
+The two never disagree. A row that is a folder and the note inside it reads the
+map under the folder's path as well as the note's own front matter, so an icon
+chosen before anybody wrote in that folder still dresses the row afterwards; the
+front matter wins wherever it says anything, and the first icon written into the
+note takes the map's key away. See `chosen-icon.ts` and `docs/tree.md`.
 
 A folder's map rides the space rather than the account's settings blob, for the
 reason its bookmarks do: it points inside one space, so it goes with the space when

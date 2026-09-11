@@ -11,21 +11,18 @@
  *  little else. `FileMark.svelte` draws what it answers. */
 
 import { isCanvasTarget, isImageTarget, isPdfTarget } from '@nib/markdown/links'
-import {
-  BookText,
-  File,
-  FileText,
-  Folder,
-  FolderOpen,
-  Image,
-  type IconNode,
-  Workflow,
-} from 'lucide'
+import { BookText, File, FileText, Image, type IconNode, Workflow } from 'lucide'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
 
-/** The marks there are. `file` is the one for a name this build has no shape
- *  for, so a list can always draw a row.
+/** The marks there are, and there is no folder among them, because no row is a
+ *  folder: a note that holds notes is drawn as the note, and a folder out of
+ *  somebody's vault that has no note of its own is drawn as `file` - a page with
+ *  nothing written on it, which is exactly what such a row is until somebody
+ *  writes in it. See folder-notes.ts and docs/tree.md.
+ *
+ *  `file` is also the mark for a name this build has no shape for, so a list can
+ *  always draw a row.
  *
  *  `picture` and `file` are drawn ahead of anything that would show them: a file
  *  tree holds a note, a PDF and a canvas and nothing else, which is decided in
@@ -48,11 +45,6 @@ export function fileMark(name: string): FileMark {
   return 'file'
 }
 
-/** Everything a row in the tree can wear: what a file is, and what a folder is
- *  doing. A folder is not decided by its name, which is why it is a mark the tree
- *  asks for rather than one `fileMark` answers. */
-export type Mark = FileMark | 'folder' | 'folder-open'
-
 /** The mark the document open in a tab wears, where a bar says which document is
  *  showing rather than listing several: the phone and tablet title bar.
  *
@@ -60,7 +52,7 @@ export type Mark = FileMark | 'folder' | 'folder-open'
  *  it holds while a list has only a name to read - and because an unnamed note is
  *  still a note. The graph wears none: it is a picture drawn from the space, not
  *  a file in it. */
-export function markOf(kind: TabKind): Mark | null {
+export function markOf(kind: TabKind): FileMark | null {
   return kind === 'graph' ? null : kind
 }
 
@@ -72,19 +64,20 @@ export function markOf(kind: TabKind): Mark | null {
  *  rather than as a row of unrelated pictures. The same library the space icons
  *  come from; see icons.ts.
  *
- *  Two of them are the page they should be and two are the obvious thing: a page
- *  with writing on it, a plain page, a picture in its frame, a folder that opens.
- *  The other two are choices. A canvas is two cards with a line from one to the
- *  other, which is what a canvas in this app actually is. A PDF is a book rather
- *  than a fourth page: what tells it from a note at 13px has to be its outline
- *  and not something written inside it, and a PDF is the half of the pair that is
- *  read rather than written. */
-export const MARKS: Record<Mark, IconNode> = {
+ *  Three of them are the obvious thing: a page with writing on it, a plain page,
+ *  a picture in its frame. The other two are choices. A canvas is two cards with
+ *  a line from one to the other, which is what a canvas in this app actually is.
+ *  A PDF is a book rather than a fourth page: what tells it from a note at 13px
+ *  has to be its outline and not something written inside it, and a PDF is the
+ *  half of the pair that is read rather than written.
+ *
+ *  The pair that matters most is the first two, because one row turns into the
+ *  other: a folder somebody has not written yet is the plain page, and the words
+ *  arriving in it make it the page with writing on. */
+export const MARKS: Record<FileMark, IconNode> = {
   note: FileText,
   canvas: Workflow,
   pdf: BookText,
   picture: Image,
   file: File,
-  folder: Folder,
-  'folder-open': FolderOpen,
 }

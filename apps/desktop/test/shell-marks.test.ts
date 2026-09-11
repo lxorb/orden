@@ -129,14 +129,12 @@ describe('the mark that says shared', () => {
   test('and the file list says it on the note itself', () => {
     const tree = named('lib/Tree.svelte')
     expect(tree.text).toContain("import SharedMark from './SharedMark.svelte'")
-    // Both kinds of row that are a note: a plain one, and a folder drawn as the
-    // note inside it. A folder is not a file and has no room to be in.
-    //
-    // Twice each, because there are two things the one mark says about a file and
-    // a row says whichever is true: somebody is in it right now, or it is a file
-    // shared on its own. One shape for both - it is the same fact about other
-    // people, and a second drawing of it is how one design becomes two.
-    expect(tree.text.match(/<SharedMark /g)).toHaveLength(4)
+    // Twice, on the one row the list draws: every row is a note, and there are
+    // two things the one mark says about the note it opens - somebody is in it
+    // right now, or it is a file shared on its own. One shape for both, because it
+    // is the same fact about other people, and a second drawing of it is how one
+    // design becomes two. See docs/tree.md.
+    expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
     expect(tree.text).toContain('othersIn(')
     expect(tree.text).toContain('isSharedItem(')
   })

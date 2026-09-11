@@ -132,12 +132,12 @@ the search results, the backlinks, the strip of notes.
 
 | Key | What it does |
 | --- | --- |
-| Up, Down | the row before, the row after. The ends do not meet: falling off the bottom of a folder into its top loses your place |
-| Left, Right | in a tree, close and open a folder; right on an open one steps into it, left on a closed one steps out to the folder holding it |
+| Up, Down | the row before, the row after. The ends do not meet: falling off the bottom of a nested note into its top loses your place |
+| Left, Right | in a tree, hide and show what a row holds; right on an open one steps into it, left on a closed one steps out to the row holding it |
 | Home, End | the top and the bottom |
 | a letter | the first row whose name starts with it. Keep typing to narrow; a pause starts a new word |
-| Enter | open it, and the note takes the keyboard |
-| Space | open it and stay here, so a folder can be read down without leaving the list. Obsidian has the same idea on Ctrl and an arrow |
+| Enter | open it, and the note takes the keyboard. Every row in the file list opens something, including a note that holds notes; see `docs/tree.md` |
+| Space | open it and stay here, so a space can be read down without leaving the list. Obsidian has the same idea on Ctrl and an arrow |
 | Shift+F10, Menu | the row's own menu, the same one a right click gives |
 | Delete | on the strip of notes, close the tab |
 | Escape | drop the selection; with none, back to the note |
@@ -153,9 +153,9 @@ tabs), and those two leave up and down alone so the page underneath still
 scrolls.
 
 The file list is a list of buttons and not an ARIA `tree`. The roles were left
-off on purpose: nib's markup puts a folder's children in a sibling of the row
-rather than inside it, and a `tree` built that way announces worse than no tree
-at all. The keys are the tree keys either way.
+off on purpose: nib's markup puts what a row holds in a sibling of the row rather
+than inside it, and a `tree` built that way announces worse than no tree at all.
+The keys are the tree keys either way.
 
 ### The chords
 

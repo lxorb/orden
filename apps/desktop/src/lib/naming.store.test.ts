@@ -80,8 +80,14 @@ vi.mock('./tauri', async (importOriginal) => ({
     sent.push(`${command} ${path || text(args?.from)}`)
 
     switch (command) {
-      case 'read_note':
-        return files.get(path) ?? ''
+      case 'read_note': {
+        const held = files.get(path)
+        // The crate fails on a file that is not there, and what the store does
+        // about a note that has not been written yet depends on that: see `open`
+        // and `openRow`, which open the empty page a folder's note would be.
+        if (held === undefined) throw new Error(`no such note: ${path}`)
+        return held
+      }
       case 'write_note':
         files.set(path, text(args?.content))
         return undefined
@@ -218,24 +224,73 @@ describe('making a note', () => {
   })
 })
 
-describe('making a folder', () => {
-  test('names it on its row, inside the folder it belongs to, and opens that', async () => {
-    await workspace.createFolder('/space/Work')
+/** The only way a folder is made at all, and nothing in the app calls it that:
+ *  a note goes inside a note. See folder-notes.ts and docs/tree.md. */
+describe('making a note inside a note', () => {
+  test('nests the note it goes inside first, and names the new one on its row', async () => {
+    await workspace.createInside('/space/Beta.md')
 
-    expect(workspace.naming?.making).toBe('folder')
-    expect(workspace.naming?.path).toBe('/space/Work/New folder')
-    expect(workspace.isExpanded('/space/Work')).toBe(true)
-    expect(rows()).toContain('/space/Work/New folder')
-    expect(sent).toEqual([])
+    // `Beta.md` is `Beta/Beta.md` now, which is the folder-note layout Obsidian
+    // reads, and the row waiting for a name is beside it.
+    expect(files.has('/space/Beta/Beta.md')).toBe(true)
+    expect(files.has('/space/Beta.md')).toBe(false)
+    expect(workspace.naming?.path).toBe('/space/Beta/Untitled.md')
+    expect(workspace.isExpanded('/space/Beta')).toBe(true)
   })
 
-  test('and the typed name is the folder that is made', async () => {
-    await workspace.createFolder('/space/Work')
-    await workspace.makeNamed('Archive')
+  test('and the name that was typed makes the nested note', async () => {
+    await workspace.createInside('/space/Beta.md')
+    await workspace.makeNamed('Monday.md')
 
-    expect(folders.has('/space/Work/Archive')).toBe(true)
-    expect(folders.has('/space/Work/New folder')).toBe(false)
+    expect(files.has('/space/Beta/Monday.md')).toBe(true)
     expect(workspace.naming).toBeNull()
+  })
+
+  /** A row that is already a folder - one nib nested, or one out of somebody's
+   *  vault - only gets the new note. Nothing is written to make it a folder note,
+   *  because nobody asked for that. */
+  test('while a folder only gets the note, and no note of its own', async () => {
+    await workspace.createInside('/space/Work')
+
+    expect(workspace.naming?.path).toBe('/space/Work/Untitled.md')
+    expect(files.has('/space/Work/Work.md')).toBe(false)
+    expect(sent.filter((one) => one.startsWith('write_note'))).toEqual([])
+  })
+
+  test('and a file that can hold nothing gets nothing at all', async () => {
+    files.set('/space/paper.pdf', '%PDF')
+    await workspace.loadTree()
+
+    await workspace.createInside('/space/paper.pdf')
+    expect(workspace.naming).toBeNull()
+  })
+})
+
+/** A folder that came from outside nib has no note of its own until somebody
+ *  writes one. Opening its row opens the note it would be, and looking is not
+ *  writing: the file appears when there are words in it, which is the ordinary
+ *  save. */
+describe('opening a row that is a folder', () => {
+  test('opens the note it holds of its own name', async () => {
+    files.set('/space/Work/Work.md', '# Work')
+    await workspace.loadTree()
+
+    await workspace.openRow('/space/Work')
+    expect(workspace.active?.path).toBe('/space/Work/Work.md')
+  })
+
+  test('and opens the empty page it would be where it holds none, writing nothing', async () => {
+    await workspace.openRow('/space/Work')
+
+    expect(workspace.active?.path).toBe('/space/Work/Work.md')
+    expect(workspace.active?.doc).toBe('')
+    expect(files.has('/space/Work/Work.md')).toBe(false)
+    expect(sent.filter((one) => one.startsWith('write_note'))).toEqual([])
+  })
+
+  test('and a row that is a note opens that note', async () => {
+    await workspace.openRow('/space/Beta.md')
+    expect(workspace.active?.path).toBe('/space/Beta.md')
   })
 })
 

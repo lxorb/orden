@@ -129,18 +129,60 @@ describe('the path a note sits at', () => {
   })
 })
 
-/** What a row in the file list offers about the thing it stands for. A note's icon
- *  is written in its front matter, a canvas's under its `nib` key and a folder's in
- *  the space's own map, so the entries live in menu.svelte.ts and any list that
- *  shows a row can offer them. */
-describe('what a note offers', () => {
+/** Folders left the interface: a note that holds notes is the whole of how a
+ *  space is organised, so nothing anywhere offers to make one and nothing draws a
+ *  row as one. This is what says so if either comes back. See docs/tree.md. */
+describe('making a folder', () => {
+  const everywhere = [
+    ...componentSources(),
+    read('lib/row-menu.ts'),
+    read('lib/menu.svelte.ts'),
+    read('lib/commands.ts'),
+    read('lib/app-menu.ts'),
+    read('lib/shortcuts/registry.ts'),
+  ].join('\n')
+
+  test('is not offered anywhere, under any name', () => {
+    expect(everywhere).not.toContain("t('New folder')")
+    expect(everywhere).not.toContain('createFolder')
+  })
+
+  /** The mark went with the gesture, so there is not even a drawing of a folder
+   *  left for a row to reach for; see file-mark.ts. */
+  test('and no row can be drawn as one', () => {
+    expect(read('lib/file-mark.ts')).not.toContain("'folder'")
+    expect(everywhere).not.toContain("mark: 'folder'")
+    expect(everywhere).not.toContain("'folder-open'")
+  })
+})
+
+/** What a row in the file list offers about the thing it stands for. One menu for
+ *  every row, because every row is one kind of thing - a note, which may hold
+ *  notes - and it is a module of its own so its entries can be read as a list of
+ *  labels; see row-menu.ts and row-menu.test.ts. A note's icon is written in its
+ *  front matter, a canvas's under its `nib` key and a folder's in the space's own
+ *  map, so the entries live in menu.svelte.ts and any list that shows a row can
+ *  offer them. */
+describe('what a row of the file list offers', () => {
   const tree = read('lib/Tree.svelte')
-  const note = body(tree, 'function noteMenu(entry: Entry)')
-  const folder = body(tree, 'function folderMenu(entry: Entry)')
+  const source = read('lib/row-menu.ts')
+  const row = moduleBody(source, 'export function rowMenu(entry: Entry)')
   const entries = moduleBody(read('lib/menu.svelte.ts'), 'export function iconEntries(')
 
+  test('opening it, its name, and where it goes', () => {
+    for (const entry of ["t('Open')", "t('Rename')", 'moveEntry(entry)']) {
+      expect(row, entry).toContain(entry)
+    }
+  })
+
+  /** The one gesture that organises a space, on the row it organises. */
+  test('a note inside it, which is how a note comes to hold notes', () => {
+    expect(row).toContain("t('New note inside')")
+    expect(row).toContain('workspace.createInside(entry.path)')
+  })
+
   test('its icon, in the same words the rail uses for a space', () => {
-    expect(note).toContain('iconEntries(entry.path)')
+    expect(row).toContain('iconEntries(marked.path, entry.is_dir && !own)')
     expect(entries).toContain("t('Choose an icon')")
   })
 
@@ -155,69 +197,32 @@ describe('what a note offers', () => {
     expect(entries).toContain('iconChoice.folder(path)')
   })
 
-  /** A folder is offered the same two words, in the same place in its own menu:
-   *  what differs is only where the icon is kept. */
-  test('and a folder is offered the same two, since a folder can wear one too', () => {
-    expect(folder).toContain('iconEntries(entry.path, true)')
-  })
-
-  /** A right click and a held finger, which is the right click a touch screen
-   *  has: the icon is offered on a phone as well as on a desktop. */
-  test('through the menu a pointer opens and the one a finger opens', () => {
-    const row = tree.slice(tree.indexOf('class="nib-row row note"'))
-    expect(row).toContain('oncontextmenu={(event) =>')
-    expect(row).toContain('use:longPress={(event) =>')
-  })
-})
-
-/** A folder that holds a note of its own name is drawn as that note, so its row
- *  offers both: what the note offers about itself, and the folder's entries that
- *  still mean something once the row is a note. See folder-notes.ts. */
-describe('what a note that holds notes offers', () => {
-  const tree = read('lib/Tree.svelte')
-  const nested = body(tree, 'function folderNoteMenu(entry: Entry, note: Entry)')
-
-  test('the note itself: opening it, its name, and its icon', () => {
-    for (const entry of ["t('Open')", "t('Rename')", 'iconEntries(note.path)']) {
-      expect(nested, entry).toContain(entry)
-    }
-  })
-
-  /** The note's own front matter, through the same call a plain note's row makes:
-   *  a row drawn as a note has nothing in the folder icon map. */
-  test('and the icon is the note own, not the folder kind', () => {
-    expect(nested).not.toContain('iconEntries(entry.path, true)')
-
-    const row = tree.slice(tree.indexOf('class="nib-row row note folder-note"'))
-    expect(row).toContain('<FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />')
-
-    // Which is the note's path, for this row and for the same row while its name
-    // is being typed: one answer to what a row wears, wherever it is asked.
+  /** The note inside the folder where there is one, so the icon is written in the
+   *  file the row is drawn as; the folder itself while no note has been written in
+   *  it, since there is nowhere else to keep one. */
+  test('on the note the row is drawn as, whichever that is', () => {
+    expect(row).toContain('const marked = own ?? entry')
     expect(body(tree, 'function markPath(entry: Entry, own: Entry | null)')).toContain(
       'own?.path ?? entry.path',
     )
   })
 
-  test('the folder as well: a new note inside it, and where the lot goes', () => {
-    expect(nested).toContain("t('New note')")
-    expect(nested).toContain('moveEntry(entry)')
-  })
-
-  test('and deleting asks first, because everything nested under it goes too', () => {
-    const removing = body(tree, 'async function removeNested(entry: Entry, note: Entry)')
+  test('and deleting asks first where something is nested under it', () => {
+    const removing = moduleBody(source, 'async function removeRow(')
 
     expect(removing).toContain('prompt.confirm')
     expect(removing).toContain("t('The notes inside it go too.')")
     expect(removing).toContain('workspace.remove(entry.path, true)')
   })
 
-  /** A right click and a held finger, so the menu is there on a phone as well -
-   *  which is also the only way to move the row where there is no drag. */
+  /** A right click and a held finger, which is the right click a touch screen
+   *  has: every entry is offered on a phone as well as on a desktop, and the menu
+   *  is also the only way a row moves where there is no drag. */
   test('through the menu a pointer opens and the one a finger opens', () => {
-    const row = tree.slice(tree.indexOf('class="nib-row row note folder-note"'))
+    const drawn = tree.slice(tree.indexOf('data-path={entry.path}'))
 
-    expect(row).toContain('oncontextmenu={(event) =>')
-    expect(row).toContain('use:longPress={(event) =>')
+    expect(drawn).toContain('oncontextmenu={(event) => menu.show(event, rowMenu(entry)')
+    expect(drawn).toContain('use:longPress={(event) => menu.show(event, rowMenu(entry)')
   })
 })
 

@@ -391,12 +391,14 @@ describe('nesting a note in a note', () => {
     expect(workspace.visibleRows()).toEqual(['/space/a', '/space/a/d.md'])
   })
 
-  test('and Enter on that row opens the note rather than folding it', async () => {
+  /** The row holds rows, which is what the two arrows act on; what it opens is
+   *  `openRow`'s to work out, so the walk does not carry it. */
+  test('and the row says it holds rows, for the arrows that fold it', async () => {
     await workspace.moveMany(['/space/d.md'], '/space/a')
     const row = workspace.visibleTree().find((one) => one.path === '/space/a')
 
-    expect(row?.folder).toBe(true)
-    expect(row?.opens).toBe('/space/a/a.md')
+    // Open, because a drop that nested a note opens the row it landed on.
+    expect(row).toEqual({ path: '/space/a', folder: true, open: true })
   })
 
   test('dragging the last row back out leaves a note and no folder', async () => {

@@ -749,7 +749,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.into',
-    label: () => t('Open the folder'),
+    label: () => t('Show what it holds'),
     category: 'panel',
     scope: 'panel',
     key: 'ArrowRight',
@@ -757,7 +757,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
   {
     id: 'tree.out',
-    label: () => t('Close the folder'),
+    label: () => t('Hide what it holds'),
     category: 'panel',
     scope: 'panel',
     key: 'ArrowLeft',

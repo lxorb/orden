@@ -1,14 +1,17 @@
-/** The icons the folders of a space wear.
+/** The icons the folders of a space wear, where those folders have no note.
  *
  *  A note keeps its icon in its own front matter and a canvas under its `nib`
  *  key, which is what makes those icons the file's: they travel with it, into
- *  another vault and into Obsidian. A folder has no file, so its icon has to be
- *  kept beside the space, and the three ways of doing that are not equally good.
+ *  another vault and into Obsidian. A folder that holds a note of its own name is
+ *  drawn as that note and keeps its icon there like any other note; what is left
+ *  for this map is a folder that has no such note - one out of somebody's vault -
+ *  which has no file anywhere to keep an icon in. See folder-notes.ts,
+ *  chosen-icon.ts and docs/tree.md.
  *
  *  A dotfile in the folder would sync for free and survive a move without being
  *  told - but it puts a file in every folder somebody gave an icon to, and every
- *  other tool that walks the vault sees it. A `folder.md` index note is
- *  Obsidian's folder-note convention, and nib has no such notes to hang it on.
+ *  other tool that walks the vault sees it. So the icon is kept beside the space
+ *  instead.
  *
  *  So: one map per space, from the folder's path as the space speaks it to the
  *  icon's name. Nothing is added to anybody's folders, the map is the size of what

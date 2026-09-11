@@ -1,6 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { resolveNote } from '@nib/editor'
-import { folderFor, folderNote, nestedIn, noteToNest, renameSteps, unnesting } from './folder-notes'
+import {
+  folderFor,
+  folderNote,
+  folderNotePath,
+  isFolderNote,
+  nestedIn,
+  noteToNest,
+  renameSteps,
+  unnesting,
+} from './folder-notes'
 import { rewriteLinks } from './link-rewrite'
 import { noteName } from './space-paths'
 import type { Entry } from './workspace.svelte'
@@ -50,9 +59,47 @@ describe('the folder a note would become', () => {
   })
 })
 
+describe('the note a folder would be drawn as', () => {
+  test('is the folder name inside the folder', () => {
+    expect(folderNotePath('/s/A')).toBe('/s/A/A.md')
+    expect(folderNotePath('/s/Work/Quarter plan')).toBe('/s/Work/Quarter plan/Quarter plan.md')
+  })
+
+  test('and keeps the separator the platform wrote', () => {
+    expect(folderNotePath('C:\\Nib\\Notes\\A')).toBe('C:\\Nib\\Notes\\A\\A.md')
+  })
+
+  /** The question a rename, an icon and a drop all ask about a path, with no
+   *  listing to hand. */
+  test('and a note sitting in the folder it names is that note', () => {
+    expect(isFolderNote('/s/A/A.md')).toBe(true)
+    expect(isFolderNote('C:\\Nib\\A\\A.markdown')).toBe(true)
+  })
+
+  test('while a note beside its folder, or any other note in it, is not', () => {
+    expect(isFolderNote('/s/A.md')).toBe(false)
+    expect(isFolderNote('/s/A/B.md')).toBe(false)
+    expect(isFolderNote('/s/A/index.md')).toBe(false)
+    expect(isFolderNote('/s/A/A.pdf')).toBe(false)
+  })
+})
+
 describe('the note a folder is drawn as', () => {
   test('is the one that shares the folder name', () => {
     const entry = folder('/s/A', [note('/s/A/A.md'), note('/s/A/B.md')])
+    expect(folderNote(entry)?.path).toBe('/s/A/A.md')
+  })
+
+  /** The other convention in the wild, read so a vault that uses it reads as
+   *  nested here too. nib never writes one. */
+  test('or the index note a vault or a site generator put there', () => {
+    expect(folderNote(folder('/s/A', [note('/s/A/index.md')]))?.path).toBe('/s/A/index.md')
+    expect(folderNote(folder('/s/A', [note('/s/A/INDEX.md')]))?.path).toBe('/s/A/INDEX.md')
+    expect(folderNote(folder('/s/A', [note('/s/A/_index.md')]))?.path).toBe('/s/A/_index.md')
+  })
+
+  test('and the folder own name wins over an index beside it', () => {
+    const entry = folder('/s/A', [note('/s/A/index.md'), note('/s/A/A.md')])
     expect(folderNote(entry)?.path).toBe('/s/A/A.md')
   })
 
@@ -86,6 +133,11 @@ describe('what the tree draws under the row', () => {
   test('and everything a plain folder holds', () => {
     const entry = folder('/s/Work', [note('/s/Work/plan.md')])
     expect(nestedIn(entry).map((one) => one.path)).toEqual(['/s/Work/plan.md'])
+  })
+
+  test('and leaves out an index note the same way, since that is the row too', () => {
+    const entry = folder('/s/A', [note('/s/A/index.md'), note('/s/A/B.md')])
+    expect(nestedIn(entry).map((one) => one.path)).toEqual(['/s/A/B.md'])
   })
 })
 
@@ -141,6 +193,13 @@ describe('the way back out', () => {
     expect(unnesting(folder('/s/A'))).toBeNull()
   })
 
+  /** nib undoes what nib did. A folder whose note is an `index.md` is somebody
+   *  else's layout, and taking it apart because a reader moved the last note out
+   *  of it would be rearranging a vault nib was asked to show. */
+  test('and a folder holding only an index note is left exactly as it is', () => {
+    expect(unnesting(folder('/s/A', [note('/s/A/index.md')]))).toBeNull()
+  })
+
   test('and a path a desktop wrote with backslashes comes back up the same way', () => {
     const entry = folder('C:\\Nib\\Notes\\A', [note('C:\\Nib\\Notes\\A\\A.md')])
 
@@ -185,6 +244,14 @@ describe('renaming the row', () => {
 
   test('and nothing at all for a field somebody cleared', () => {
     expect(renameSteps('/s/A/A.md', '   ')).toEqual([])
+  })
+
+  /** An index note is named after its place rather than after itself, so the name
+   *  that was typed is the folder's and the note keeps the name its convention
+   *  gave it. Renaming it would convert a vault by renaming a row in it. */
+  test('and renames only the folder where the note inside is an index', () => {
+    expect(renameSteps('/s/A/index.md', 'B')).toEqual([{ path: '/s/A', name: 'B' }])
+    expect(renameSteps('/s/A/_index.md', 'B')).toEqual([{ path: '/s/A', name: 'B' }])
   })
 })
 

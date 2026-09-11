@@ -6,7 +6,7 @@
    *  A bookmark keeps a path the space speaks, so a note or folder that has
    *  since been deleted simply has no row. A search points at nothing on disk
    *  and is always there. */
-  import { fileMark, type Mark } from './file-mark'
+  import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { t } from './i18n.svelte'
   import { bookmarkEntry, DIVIDER, type MenuEntry, menu } from './menu.svelte'
@@ -77,7 +77,11 @@
       label: named ? mark.text : shownName(entry.name),
       note: named ? shownName(entry.name) : null,
       path: entry.path,
-      kind: entry.is_dir ? 'folder' : fileMark(entry.name),
+      // The mark the file list gives the same row: a folder that a reader
+      // bookmarked is a folder with no note of its own - one nib nested would have
+      // been bookmarked as its note - so it wears the page with nothing written on
+      // it, quietly, exactly as it does in the tree. See file-mark.ts.
+      kind: entry.is_dir ? 'file' : fileMark(entry.name),
       active: !entry.is_dir && workspace.active?.path === entry.path,
     }
   }

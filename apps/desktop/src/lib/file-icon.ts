@@ -22,10 +22,12 @@
 import { canvasIconEdit } from '@nib/markdown/canvas'
 import { frontMatterEdits } from '@nib/markdown/front-matter'
 import { isCanvasTarget } from '@nib/markdown/links'
+import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
 import { reverse } from './search/replace'
 import { settings } from './settings.svelte'
+import { folderOf } from './tauri'
 import { workspace } from './workspace.svelte'
 
 /** Writes the icon a note or a canvas wears, or takes it away when `value` is null.
@@ -49,6 +51,13 @@ export async function setFileIcon(
 ): Promise<void> {
   const before = await workspace.noteText(path)
   if (before === null) return
+
+  // `A/A.md` and `A/` are one row, so the file is where that row's icon is kept
+  // from here on and the space's map stops having a say about the folder. The map
+  // is what dressed the row while the folder had no note - a folder out of
+  // somebody's vault - and two places to keep one icon is one of them going
+  // stale. See chosen-icon.ts and workspace/folder-icons.svelte.ts.
+  if (isFolderNote(path)) workspace.setFolderIcon(folderOf(path), null)
 
   // A colour with no icon to colour is not a colour, and a tint this build has never
   // heard of is not one either: both come out as no key at all.

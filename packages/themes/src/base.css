@@ -409,7 +409,10 @@ select option {
   box-shadow: inset 0 0 0 1px var(--danger);
 }
 
-/* Quieter than a name: a folder, which is a place rather than a thing to read. */
+/* Quieter than a name: a row that is a name with nothing written under it yet - a
+   folder out of somebody's vault, which the file list draws as the note nobody has
+   written. The mark and the words go quiet together, and both come back to full
+   strength the moment there are words. See docs/tree.md. */
 .nib-row.is-quiet {
   color: var(--muted);
 }

@@ -213,6 +213,12 @@ allowed to give way, and an optional `.nib-row-meta` pushed to the far end. No
 component draws that row again; a component may say how far a row is indented and
 how wide it is in the space it sits in, and nothing else.
 
+`is-quiet` is the row that is a name with nothing written under it yet: muted ink
+for the mark and the words together. The file list is the one place it appears -
+a folder out of somebody's vault, which nib draws as the note nobody has written.
+That the list has one kind of row at all, and what a click, a twist and a drag on
+it each mean, is `docs/tree.md`.
+
 ### Header rows
 
 `--header-height` is `--titlebar-height` (38px), and it is what the title bar,

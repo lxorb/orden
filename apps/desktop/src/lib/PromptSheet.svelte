@@ -9,6 +9,7 @@
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
   import Select from './Select.svelte'
+  import SpaceMark from './SpaceMark.svelte'
   import { dur } from './motion'
   import { trap } from './trap'
 
@@ -128,9 +129,15 @@
                   onclick={() => prompt.pick(option.id)}
                 >
                   <!-- Where the answers are things the file list also shows, they
-                       wear the same marks here: a folder somebody gave an icon is
-                       that icon in the tree and in the sheet that moves into it. -->
-                  {#if option.mark}<FileMark mark={option.mark} path={option.id} />{/if}
+                       wear the same marks here: a note that chose an icon is that
+                       icon in the tree and in the sheet that moves into it. A
+                       space wears what the switcher gives it, in the same box, so
+                       the names still read as one column. -->
+                  {#if option.space}
+                    <span class="space"><SpaceMark {...option.space} /></span>
+                  {:else if option.mark}
+                    <FileMark mark={option.mark} path={option.id} />
+                  {/if}
                   <span class="found-label">{option.label}</span>
                 </button>
               </li>
@@ -245,6 +252,21 @@
     transition:
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
+  }
+
+  /* A space's mark in the box a file's mark sits in: the same width, so one
+     column of names, and the letter a space falls back to set at the size of the
+     marks beside it. The badge the switcher draws is not this - that is a place
+     with a name of its own, and this is a row in a list of rows. */
+  .space {
+    display: grid;
+    place-items: center;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: none;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--muted);
   }
 
   /* The name is what runs out of room, not the mark beside it. */

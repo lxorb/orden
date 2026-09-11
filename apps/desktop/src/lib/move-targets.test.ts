@@ -26,7 +26,8 @@ function note(path: string): Entry {
   }
 }
 
-/** A space with two folders, one of them nested, and notes in each. */
+/** A space with two folders that have no notes of their own - rows out of
+ *  somebody's vault - one of them nested, and notes in each. */
 const tree = folder('/Notes', [
   folder('/Notes/Work', [folder('/Notes/Work/Deep', [note('/Notes/Work/Deep/deep.md')])]),
   folder('/Notes/Journal', [note('/Notes/Journal/monday.md')]),
@@ -34,9 +35,9 @@ const tree = folder('/Notes', [
 ])
 
 const spaces: Space[] = [
-  { name: 'Notes', root: '/Notes' },
-  { name: 'Uni', root: '/Uni' },
-  { name: 'Archive', root: '/Archive' },
+  { id: 'n', name: 'Notes', root: '/Notes' },
+  { id: 'u', name: 'Uni', root: '/Uni' },
+  { id: 'a', name: 'Archive', root: '/Archive' },
 ]
 
 const where = (moving: string) =>
@@ -46,9 +47,10 @@ const labels = (moving: string) =>
   moveTargets({ moving, tree, spaces, here: '/Notes' }).map((one) => one.label)
 
 describe('moving a note', () => {
-  /** Every note as well as every folder, because a note dropped on a note nests
-   *  under it: the id is the folder that note is about to become. */
-  test('offers every folder and every note of the space, and every other space', () => {
+  /** One place per row of the list, because a note dropped on a note nests under
+   *  it: the id is the folder that note is about to become, and for a folder out
+   *  of a vault it is the folder that is already there. */
+  test('offers every row of the space, and every other space', () => {
     expect(where('/Notes/loose.md')).toEqual([
       '/Notes/Work',
       '/Notes/Work/Deep',
@@ -84,22 +86,40 @@ describe('moving a note', () => {
     ])
   })
 
-  /** The sheet draws the row from the mark, so a note reads as a note in the list
-   *  of places and a folder as a folder; see FileMark.svelte. */
-  test('and says which of them is a note', () => {
+  /** The sheet draws the row from the mark, and every row of a space is a note -
+   *  there are no folders to offer. A space is the one row that is not a note and
+   *  wears what the switcher gives it instead; see PromptSheet.svelte. */
+  test('and every place in the space is a note, while a space is a space', () => {
     const marks = moveTargets({ moving: '/Notes/loose.md', tree, spaces, here: '/Notes' }).map(
-      (one) => `${one.label}: ${one.mark}`,
+      (one) => `${one.label}: ${one.space ? 'space' : one.mark}`,
     )
 
     expect(marks).toEqual([
-      'Work: folder',
-      'Work/Deep: folder',
+      'Work: note',
+      'Work/Deep: note',
       'Work/Deep/deep: note',
-      'Journal: folder',
+      'Journal: note',
       'Journal/monday: note',
-      'Uni: folder',
-      'Archive: folder',
+      'Uni: space',
+      'Archive: space',
     ])
+  })
+
+  /** So the sheet can draw the space's own icon, or the letter it falls back to. */
+  test('and a space says which space it is', () => {
+    const offered = moveTargets({
+      moving: '/Notes/Journal/monday.md',
+      tree,
+      spaces,
+      here: '/Notes',
+    })
+
+    expect(offered[0]).toEqual({ id: '/Notes', label: 'Notes', space: { id: 'n', name: 'Notes' } })
+    expect(offered.at(-1)).toEqual({
+      id: '/Archive',
+      label: 'Archive',
+      space: { id: 'a', name: 'Archive' },
+    })
   })
 })
 
@@ -144,7 +164,7 @@ describe('a note that is already nested', () => {
   const offered = moveTargets({
     moving: '/Notes/loose.md',
     tree: nested,
-    spaces: [{ name: 'Notes', root: '/Notes' }],
+    spaces: [{ id: 'n', name: 'Notes', root: '/Notes' }],
     here: '/Notes',
   })
 
@@ -174,7 +194,7 @@ describe('a folder with the note beside it rather than inside', () => {
     moveTargets({
       moving,
       tree: beside,
-      spaces: [{ name: 'Notes', root: '/Notes' }],
+      spaces: [{ id: 'n', name: 'Notes', root: '/Notes' }],
       here: '/Notes',
     }).map((one) => one.id)
 
@@ -207,7 +227,7 @@ describe('a space of its own', () => {
     const offered = moveTargets({
       moving: '/Notes/loose.md',
       tree: null,
-      spaces: [{ name: 'Notes', root: '/Notes' }],
+      spaces: [{ id: 'n', name: 'Notes', root: '/Notes' }],
       here: '/Notes',
     })
 
@@ -259,7 +279,7 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
     const offered = moveTargets({
       moving: 'C:\\Nib\\Notes\\Work\\one.md',
       tree: windows,
-      spaces: [{ name: 'Notes', root: 'C:\\Nib\\Notes' }],
+      spaces: [{ id: 'n', name: 'Notes', root: 'C:\\Nib\\Notes' }],
       here: 'C:\\Nib\\Notes',
     })
 
@@ -271,7 +291,7 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
     const offered = moveTargets({
       moving: 'C:\\Nib\\Notes\\Work',
       tree: windows,
-      spaces: [{ name: 'Notes', root: 'C:\\Nib\\Notes' }],
+      spaces: [{ id: 'n', name: 'Notes', root: 'C:\\Nib\\Notes' }],
       here: 'C:\\Nib\\Notes',
     })
 

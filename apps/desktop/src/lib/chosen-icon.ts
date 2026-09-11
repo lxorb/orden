@@ -11,11 +11,24 @@
  *  both. See file-icon.ts and workspace/folder-icons.svelte.ts for the writing, and
  *  icons.ts for what the value says. */
 
+import { isFolderNote } from './folder-notes'
 import { links } from './link-index.svelte'
+import { folderOf } from './tauri'
 import { workspace } from './workspace.svelte'
 
+/** Which key the space's map is asked under. For `A/A.md` that is `A/`, because
+ *  the row wearing the mark is the folder and the note in one.
+ *
+ *  So an icon chosen on a folder that came out of somebody's vault, before that
+ *  folder had a note at all, still dresses the row once somebody writes in it. The
+ *  file wins wherever it says anything, and choosing an icon on such a row writes
+ *  the file and takes the map's word away; see `setFileIcon`. */
+function mapKey(path: string): string {
+  return isFolderNote(path) ? folderOf(path) : path
+}
+
 export function chosenIcon(path: string): string | null {
-  return links.iconOf(path) ?? workspace.folderIcons.iconOf(path)
+  return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
 }
 
 /** The colour a stroked icon is drawn in, or null for the plain foreground.
@@ -29,5 +42,5 @@ export function chosenIcon(path: string): string | null {
  *  Only a stroked icon takes one; an emoji and a coloured drawing have their own
  *  colours. See `readTint` in icons.ts for which names count. */
 export function chosenTint(path: string): string | null {
-  return links.tintOf(path) ?? workspace.folderIcons.tintOf(path)
+  return links.tintOf(path) ?? workspace.folderIcons.tintOf(mapKey(path))
 }

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import * as lucide from 'lucide'
-import { fileMark, MARKS, type Mark } from './file-mark'
+import { fileMark, type FileMark as Mark, MARKS } from './file-mark'
 
 describe('the mark a file wears', () => {
   test('a note is a note by its extension, whichever one is written', () => {
@@ -78,9 +78,11 @@ describe('the mark a file wears', () => {
  *  chosen but that the set is one set: every mark has a drawing, every drawing
  *  is Lucide's own, and no two marks are the same picture. */
 describe('the marks a row wears', () => {
-  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pdf', 'picture', 'file', 'folder', 'folder-open']
+  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pdf', 'picture', 'file']
 
-  test('every kind of row has one, folders open and shut', () => {
+  /** And no folder among them: no row in the list is a folder, so there is no
+   *  drawing of one to reach for. See folder-notes.ts. */
+  test('every kind of row has one, and a folder is not a kind of row', () => {
     for (const name of MARK_NAMES) {
       expect(MARKS[name], name).toBeDefined()
       expect(MARKS[name].length, name).toBeGreaterThan(0)

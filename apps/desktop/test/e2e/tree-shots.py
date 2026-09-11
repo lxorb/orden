@@ -163,7 +163,7 @@ def shoot(browser: Browser, scheme: str) -> None:
 
         wait_for(
             page,
-            "() => document.querySelectorAll('aside .row.note .mark').length >= 4",
+            "() => document.querySelectorAll('aside .row .mark').length >= 4",
             f"[{scheme}] a mark on every file row",
         )
         # Past the row transitions and the folder's slide.

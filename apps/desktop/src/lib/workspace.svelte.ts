@@ -54,7 +54,7 @@ import { Positions } from './workspace/positions'
 import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
-import { folderNote, noteToNest, unnesting } from './folder-notes'
+import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -90,9 +90,13 @@ export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'links'
 
-/** The three things the file list makes, each of which arrives as a row waiting
- *  for a name; see `startNaming`. */
-type NewKind = 'note' | 'canvas' | 'folder'
+/** The two things the file list makes, each of which arrives as a row waiting
+ *  for a name; see `startNaming`.
+ *
+ *  No folder among them. A note that holds notes is how a space is organised, so
+ *  the folders on disk are made by nesting and by nothing else; see
+ *  folder-notes.ts and docs/tree.md. */
+type NewKind = 'note' | 'canvas'
 
 /** What a row of each kind is called while it has no name: never shown, since
  *  the field it arrives in is empty, but the row is in the tree and the tree is
@@ -101,7 +105,6 @@ type NewKind = 'note' | 'canvas' | 'folder'
 const PLACEHOLDER: Record<NewKind, string> = {
   note: 'Untitled.md',
   canvas: 'Untitled.canvas',
-  folder: 'New folder',
 }
 
 export interface Tag {
@@ -1451,7 +1454,28 @@ class Workspace {
     this.persist()
   }
 
-  async open(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
+  /** Opens what a row of the file list stands for: the file itself, or - for a row
+   *  that is a folder - the note that row is drawn as, which may not be written
+   *  yet.
+   *
+   *  Every row opens something, because every row is a note or a file; the twist
+   *  at the end of a row is what shows the rows under it. A folder out of
+   *  somebody's vault has no note of its own until somebody writes in it, so this
+   *  opens the empty page it is: nothing is written by looking, and the first
+   *  keystroke is what makes the file. See folder-notes.ts and docs/tree.md. */
+  async openRow(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
+    const entry = this.entryAt(path)
+    if (!entry) return
+    if (!entry.is_dir) return this.openEntry(path, options)
+
+    const own = folderNote(entry)
+    await this.open(own?.path ?? folderNotePath(path), { ...options, blank: !own })
+  }
+
+  async open(
+    path: string,
+    options: { activate?: boolean; preview?: boolean; blank?: boolean } = {},
+  ) {
     const existing = this.tabs.find((tab) => tab.path === path)
     if (existing) {
       // Opening for real what was only being looked at makes it stay.
@@ -1463,14 +1487,17 @@ class Workspace {
       return
     }
 
-    const doc = await invoke<string>('read_note', { path }).catch(() => null)
+    const found = await invoke<string>('read_note', { path }).catch(() => null)
 
     // A row the first pass has named whose body has not come down yet. It opens,
     // because a row that does nothing when it is clicked reads as broken, and it
     // opens saying what it is waiting for rather than as an empty note: an empty
     // note is something to type into, and typing into this one would be writing
     // over the copy on its way. See `arrived`, which finishes it.
-    if (doc === null && arriving.coming.has(path)) {
+    //
+    // Before the blank below, and for the same reason: a note on its way is not a
+    // note nobody has written.
+    if (found === null && arriving.coming.has(path)) {
       const waiting = this.document({
         kind: 'note',
         path,
@@ -1489,6 +1516,11 @@ class Workspace {
     }
 
     // Gone, or unreadable: nothing to open, and no tab that pretends otherwise.
+    // Unless the caller knows the file is not there yet and means to open it all
+    // the same: a folder whose note nobody has written. It opens as the empty page
+    // it is, and it is written when there are words in it - which is the ordinary
+    // save, since a note in a space keeps itself.
+    const doc = found ?? (options.blank ? '' : null)
     if (doc === null) return
 
     // A preview reuses the one preview tab rather than opening another, and only
@@ -2173,8 +2205,7 @@ class Workspace {
         if (child.path === own?.path) continue
 
         const open = child.is_dir && this.isExpanded(child.path)
-        const opens = child.is_dir ? folderNote(child)?.path : child.path
-        out.push({ path: child.path, folder: child.is_dir, open, ...(opens ? { opens } : {}) })
+        out.push({ path: child.path, folder: child.is_dir, open })
         if (open) walk(child)
       }
     }
@@ -2561,18 +2592,26 @@ class Workspace {
     this.persist()
   }
 
-  /** Makes a folder, named on its row first where there is a list to name it in. */
-  async createFolder(parent?: string, named?: string) {
-    const dir = parent ?? this.activeSpace?.root
-    if (!dir) return
-    if (named === undefined && this.startNaming('folder', dir)) return
+  /** A note inside a note, which is the one way a space is organised.
+   *
+   *  The row's own gesture for what a drag does: `A.md` becomes `A/A.md` and the
+   *  new note arrives beside it, waiting for a name. A row that is already a
+   *  folder - one nib nested, or one out of somebody's vault - only gets the new
+   *  note, and a row that can hold nothing gets nothing: a PDF or a picture is not
+   *  a place.
+   *
+   *  Nesting is `moveMany` with nothing to move, which is the one call the drop
+   *  makes: it is the folder-note rule in one place, with the same rows put in
+   *  optimistically and the same undo. See folder-notes.ts. */
+  async createInside(path: string) {
+    const entry = this.entryAt(path)
+    if (!entry) return
 
-    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.folder))
-    this.showEntry(this.freshEntry(path, true))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    const folder = entry.is_dir ? path : folderFor(path)
+    if (folder === path && !entry.is_dir) return
 
-    await invoke('create_folder', { path })
-    await this.loadTree()
+    if (!entry.is_dir) await this.moveMany([], folder)
+    await this.createNote(folder)
   }
 
   /** A name nothing in the folder answers to: the one asked for, or the one asked
@@ -2638,7 +2677,7 @@ class Workspace {
     this.cancelNaming()
 
     const path = joinPath(dir, this.freeName(dir, PLACEHOLDER[kind]))
-    this.showEntry(this.freshEntry(path, kind === 'folder'))
+    this.showEntry(this.freshEntry(path, false))
     if (dir !== this.activeSpace?.root) this.device.expand(dir)
     this.naming = { path, appending: false, making: kind }
 
@@ -2656,8 +2695,7 @@ class Workspace {
     this.hideEntry(naming.path)
 
     const dir = folderOf(naming.path)
-    if (naming.making === 'folder') await this.createFolder(dir, name)
-    else if (naming.making === 'canvas') await this.createCanvas(dir, name)
+    if (naming.making === 'canvas') await this.createCanvas(dir, name)
     else await this.createNote(dir, name)
   }
 
@@ -2682,7 +2720,7 @@ class Workspace {
     if (!naming) return
 
     if (naming.making) {
-      this.showEntry(this.freshEntry(naming.path, naming.making === 'folder'))
+      this.showEntry(this.freshEntry(naming.path, false))
     } else if (!entryAt(this.tree, naming.path)) {
       this.naming = null
     }

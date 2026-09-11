@@ -6,8 +6,8 @@ import { render } from 'svelte/server'
  *  file-mark.test.ts holds the set together - every kind has a drawing, no two are
  *  the same picture. What is left is the one thing only rendering can show: that a
  *  row which chose an icon of its own wears that instead of its kind's, and that a
- *  folder and a canvas get this for nothing, because the component reads the icon
- *  off the path rather than being handed one.
+ *  canvas and a folder with no note in it get this for nothing, because the
+ *  component reads the icon off the path rather than being handed one.
  *
  *  Where the icon is kept is three different stores; that is chosen-icon.ts's to
  *  know and this component's not to, so the reader is stood in for here. */
@@ -52,20 +52,15 @@ describe('a row that chose an icon of its own', () => {
     expect(body).not.toContain(strokes(MARKS.note)[0])
   })
 
-  /** A folder is the row this could not happen for until folders had icons: the
-   *  tree passes the path now, and the same one reader answers for all three. */
-  test('a folder wears it in place of the folder', () => {
+  /** A folder out of somebody's vault, whose icon the space's own map holds
+   *  because there is no note in it to keep one: the row is the plain page, and
+   *  the same one reader answers for it as for a note. See chosen-icon.ts. */
+  test('a folder with no note of its own wears it in place of the plain page', () => {
     chosen.Work = 'rocket'
-    const body = drawn('folder', 'Work')
+    const body = drawn('file', 'Work')
 
     for (const stroke of rocket) expect(body).toContain(stroke)
-    expect(body).not.toContain(strokes(MARKS.folder)[0])
-  })
-
-  test('and the same one whether the folder is open or shut', () => {
-    chosen.Work = 'rocket'
-
-    expect(drawn('folder', 'Work')).toBe(drawn('folder-open', 'Work'))
+    expect(body).not.toContain(strokes(MARKS.file)[0])
   })
 
   test('a canvas wears it in place of the two cards', () => {
@@ -77,14 +72,14 @@ describe('a row that chose an icon of its own', () => {
   })
 
   /** Nib writes Lucide's plain name; a vault out of Obsidian's Iconize writes a
-   *  prefix per pack. Both reach the same drawing, for a folder and a canvas as
-   *  much as for a note. */
+   *  prefix per pack. Both reach the same drawing, for a canvas and a folder's map
+   *  entry as much as for a note. */
   test('however the name was spelled in the file or the map', () => {
     chosen.Work = 'LiRocket'
     chosen['Board.canvas'] = 'Rocket'
 
     for (const stroke of rocket) {
-      expect(drawn('folder', 'Work')).toContain(stroke)
+      expect(drawn('file', 'Work')).toContain(stroke)
       expect(drawn('canvas', 'Board.canvas')).toContain(stroke)
     }
   })
@@ -96,7 +91,7 @@ describe('a row that chose an icon of its own', () => {
     chosen['Board.canvas'] = '🚀'
 
     for (const path of ['Work', 'Board.canvas']) {
-      const body = drawn(path === 'Work' ? 'folder' : 'canvas', path)
+      const body = drawn(path === 'Work' ? 'file' : 'canvas', path)
       expect(body).toContain('🚀')
       expect(body).not.toContain('<svg')
     }
@@ -107,7 +102,7 @@ describe('an icon with a colour on it', () => {
   test('is drawn in that colour rather than in the foreground', () => {
     chosen.Work = 'rocket'
     tints.Work = 'violet'
-    const body = drawn('folder', 'Work')
+    const body = drawn('file', 'Work')
 
     // The accent's own shade for this scheme; see accents.ts.
     expect(body).toMatch(/style="[^"]*color:/)
@@ -117,7 +112,7 @@ describe('an icon with a colour on it', () => {
   test('and a colour nothing here knows is no colour at all', () => {
     chosen.Work = 'rocket'
     tints.Work = 'chartreuse'
-    expect(drawn('folder', 'Work')).not.toMatch(/style="[^"]*color:/)
+    expect(drawn('file', 'Work')).not.toMatch(/style="[^"]*color:/)
     tints.Work = null
   })
 
@@ -126,30 +121,30 @@ describe('an icon with a colour on it', () => {
   test('an emoji takes none', () => {
     chosen.Work = '🚀'
     tints.Work = 'violet'
-    expect(drawn('folder', 'Work')).not.toMatch(/style="[^"]*color:/)
+    expect(drawn('file', 'Work')).not.toMatch(/style="[^"]*color:/)
     tints.Work = null
   })
 })
 
 describe('a row that chose nothing', () => {
   test('wears the mark its kind wears', () => {
-    for (const mark of ['note', 'canvas', 'folder', 'folder-open'] as const) {
+    for (const mark of ['note', 'canvas', 'file', 'pdf'] as const) {
       const body = drawn(mark, `nothing chose ${mark}`)
       for (const stroke of strokes(MARKS[mark])) expect(body, mark).toContain(stroke)
     }
   })
 
   test('and so does a caller that knows a name but no path', () => {
-    const body = drawn('folder')
-    for (const stroke of strokes(MARKS.folder)) expect(body).toContain(stroke)
+    const body = drawn('file')
+    for (const stroke of strokes(MARKS.file)) expect(body).toContain(stroke)
   })
 
   /** A name from a pack this build has never heard of, or a word somebody typed
    *  into the front matter by hand. The row is never a blank space. */
   test('and so does a row whose icon the set does not hold', () => {
     chosen.Work = 'not-an-icon-anybody-drew'
-    const body = drawn('folder', 'Work')
+    const body = drawn('file', 'Work')
 
-    for (const stroke of strokes(MARKS.folder)) expect(body).toContain(stroke)
+    for (const stroke of strokes(MARKS.file)) expect(body).toContain(stroke)
   })
 })

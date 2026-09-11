@@ -1,9 +1,13 @@
-"""New note and New canvas, from the tree's background menu and from a folder row.
+"""Making things from the tree: from the empty stretch, and from inside a row.
 
-Both gestures end the same way: a row goes into the tree already in its name
-field, a name is typed, Enter commits, and the file is there. This drives all
-four - a note and a canvas from the empty stretch under the last row, and a note
-and a canvas from a folder's own menu - and checks the file list afterwards.
+Every gesture ends the same way: a row goes into the tree already in its name
+field, a name is typed, Enter commits, and the file is there. This drives all four
+- a note and a canvas from the empty stretch under the last row, a note inside a
+folder nobody has written a note in, and a note inside a note, which nests the
+note it was asked on - and checks the file list afterwards.
+
+No New folder anywhere, because nothing in the interface is a folder: a note
+inside a note is how a space is organised. See docs/tree.md.
 
 What it is guarding is the keyboard. The menu that was pressed hands focus back
 to whatever had it when the menu opened, and the field the menu entry opened is
@@ -163,8 +167,19 @@ def rest(page: Page) -> None:
     page.locator("aside .rest").click(button="right", position={"x": 20, "y": 8})
 
 
-def folder(page: Page) -> None:
-    page.locator("aside .row.folder").first.click(button="right")
+def quiet_row(page: Page) -> None:
+    """The row of a folder nobody has written a note in - `Reading` here, which the
+    seed made by writing a note inside it. Quiet is how the list says so."""
+    page.locator("aside .row.is-quiet").first.click(button="right")
+
+
+def note_row(page: Page, name: str) -> None:
+    """A row that is a note holding nothing yet, which is the other row that can
+    take a note inside it: the note becomes a folder note as the new one arrives.
+
+    Named, because every row in the list is a note now and the first of them is
+    whichever the sort put at the top."""
+    page.locator(f"aside .row[data-path$='{name}']").first.click(button="right")
 
 
 def drive(browser: Browser) -> None:
@@ -181,13 +196,13 @@ def drive(browser: Browser) -> None:
         entry(page, "New canvas")
         named(page, "a canvas from the background menu", "Ground plane")
 
-        folder(page)
-        entry(page, "New note")
-        named(page, "a note from a folder's menu", "Inside the folder")
+        quiet_row(page)
+        entry(page, "New note inside")
+        named(page, "a note inside a folder nobody wrote", "Inside the folder")
 
-        folder(page)
-        entry(page, "New canvas")
-        named(page, "a canvas from a folder's menu", "Inside plane")
+        note_row(page, "Deep work.md")
+        entry(page, "New note inside")
+        named(page, "a note inside a note", "Inside the note")
 
         # The listing, once every write has been through the store.
         wait_for(
@@ -203,24 +218,33 @@ def drive(browser: Browser) -> None:
             "From the ground.md",
             "Ground plane.canvas",
             "Inside the folder.md",
-            "Inside plane.canvas",
+            "Inside the note.md",
         ]
         missing = [one for one in want if one not in names]
         if missing:
             raise SystemExit(f"nothing was made for {missing}; the list holds {names}")
 
-        # Each in the folder the menu was asked in.
-        reading = page.evaluate(
+        # Each inside the row the menu was asked on: the folder that already was
+        # one, and the note that became one by being asked.
+        held = page.evaluate(
             """() => {
-              const tree = window.nibApp.workspace.tree
-              const folder = tree.children.find((one) => one.is_dir)
-              return folder.children.map((one) => one.name)
+              const walk = (entry) => entry.children.flatMap((one) =>
+                one.is_dir ? [[one.name, one.children.map((child) => child.name)], ...walk(one)] : [])
+              return Object.fromEntries(walk(window.nibApp.workspace.tree))
             }"""
         )
-        say(f"the folder holds {reading}")
-        for one in ("Inside the folder.md", "Inside plane.canvas"):
-            if one not in reading:
-                raise SystemExit(f"{one} was not made inside the folder; it holds {reading}")
+        say(f"the rows that hold rows hold {held}")
+
+        if "Inside the folder.md" not in held.get("Reading", []):
+            raise SystemExit(f"the note was not made inside Reading; it holds {held}")
+
+        # The note the menu was asked on is `Deep work.md`, which is now the folder
+        # `Deep work/` holding its own note and the new one. That is the
+        # folder-note layout, made by asking for a note inside a note.
+        under = held.get("Deep work", [])
+        for one in ("Deep work.md", "Inside the note.md"):
+            if one not in under:
+                raise SystemExit(f"{one} is not in the note that took one inside: {under}")
     finally:
         page.context.close()
 
@@ -259,7 +283,7 @@ def main() -> int:
         except subprocess.TimeoutExpired:
             server.kill()
 
-    print("\na note and a canvas were made from both menus", flush=True)
+    print("\nfour things made: two on the ground, and two inside rows", flush=True)
     return 0
 
 

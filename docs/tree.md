@@ -1,0 +1,145 @@
+# The file list
+
+Emil: *"no folders anymore as we can now nest notes already so they're
+unnecessary."*
+
+So the file list shows one kind of thing. Every row is a note. A note can hold
+notes, and that is the whole of how a space is organised. The word "folder" is
+not in the interface anywhere: not in a menu, not on a row, not as a mark, not as
+a kind of icon to choose, and not in any of the four dictionaries.
+
+On disk nothing changed. A note that holds notes is a folder holding a note of
+the same name - the folder-note convention Obsidian's plugins read - and the
+folders somebody else's vault arrived with are still folders. The filesystem is
+the filesystem; only the interface stopped talking about it. `read_tree` and
+`paths.rs` needed no change, and neither did sync, rooms, links, search, publish,
+exports, the glasses or the clipper: all of them go on seeing files in folders.
+
+## One row, and what it does
+
+| | |
+| --- | --- |
+| the mark in front | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts` |
+| the name | the note's, or the folder's for a row that is a folder - so a row whose note is somebody else's `index.md` is still called after its place |
+| a click | opens what the row is |
+| the twist at the far end | shows what the row holds, and only appears when it holds something |
+| right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
+| Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
+| a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests |
+| its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
+
+Clicking opens and the twist discloses, for every row without exception. That is
+Notion's rule, and it is the one nib already had for a note that holds notes: the
+name is the note, the caret beside it is what it holds. A row that opened on a
+click in one place and folded on a click in another would be two kinds of row
+wearing one design.
+
+## A folder somebody else made
+
+A vault out of Obsidian is full of folders with no note of their own -
+`Projects/` holding two notes and nothing else. nib never makes one of those: a
+folder appears only because a note was nested, or because something outside nib
+put it there. But they exist, they have to keep working, and the vault has to stay
+a vault.
+
+**Such a folder is drawn as the note it has not got.** The folder's name, the
+plain-page mark, the row's quiet ink, and a twist for what it holds. Opening it
+opens the note it would be - `Projects/Projects.md` - as an empty page, and
+**nothing is written until somebody writes in it**. The first keystroke saves the
+file the way every note in a space saves itself, and the row stops being quiet in
+the same moment: the plain page becomes a page with writing on it. Nothing about
+the vault changed by being looked at.
+
+The alternative was a row that only expands and opens nothing. It was rejected
+for the reason above: it is a second kind of row, and it would mean the list
+quietly has two meanings for the same gesture depending on which vault a row came
+out of. The quiet row says the honest thing instead - there is a name here and
+nobody has written under it - and the way to change that is to write.
+
+Two things follow, and both are deliberate:
+
+- **A click never writes.** A reader browsing a hundred folders of somebody's
+  vault leaves a hundred empty editors behind and not one file. This differs from
+  following a link to a note the space has not got, which writes the note at once
+  (`makeLinked`): the intent to have that note is in the reader's own text. A
+  click on a row in a list is not that.
+- **"New note inside" on such a row makes only the note asked for.** It does not
+  make `Projects/Projects.md` on the way; nobody asked for that one.
+
+## Which note a folder is drawn as
+
+`folderNote` in `folder-notes.ts`, in this order:
+
+1. **the namesake**, `A/A.md`. This is what nib writes, and what both of the
+   folder-note plugins an Obsidian vault is likely to have look for by default -
+   LostPaladin's `folder-notes` and xpgo's `folder-note-core`. The name has to
+   match exactly: `Notes/notes.md` is a folder holding a note, because folding two
+   rows into one over a disagreement about capitals would hide a row somebody
+   meant to keep.
+2. **the index**, `A/index.md` or `A/_index.md`, case insensitively. The other
+   convention in the wild - the same plugins offer it, and every site generator
+   calls a folder's own page that. Read on the way in, never written.
+
+Read more widely than written, which is the rule for everything about somebody
+else's vault. Two consequences:
+
+- **Renaming** a row whose note is an index renames the folder alone. An index is
+  named after its place rather than after itself, so the note keeps the name its
+  convention gave it. A namesake is renamed with its folder, note first, because
+  the links point at the note.
+- **Un-nesting** only ever takes apart what nib itself made. Drag the last note
+  out of `A/` and the namesake `A/A.md` comes back up as `A.md` and the folder
+  goes, because the way in was one drag and dragging the last row out has undone
+  it. A folder whose note is an `index.md` is left exactly as it is: that layout
+  is somebody else's, and nib was asked to show the vault, not to rearrange it.
+
+## Icons
+
+A note keeps its icon in its own front matter, so it travels with the file; see
+`docs/icons.md`. A folder has nowhere in itself to keep one, so the space keeps a
+map of them - and that map is now only for folders that have no note yet, which
+is the only kind of row that has no file of its own to write into.
+
+The two meet in `chosen-icon.ts`: for `A/A.md` the map is asked under `A/`,
+because the row wearing the mark is the folder and the note in one. So an icon
+chosen on a vault's folder still dresses the row after somebody writes in it. The
+file wins wherever it says anything, and the first icon written into the file
+takes the map's word away for good (`setFileIcon` clears the key), so one row's
+icon is never kept in two places.
+
+There is no "folder icon" as a thing to choose. The menu says "Choose an icon" on
+every row, and where the value goes is nobody's business but `file-icon.ts`'s.
+
+## Moving something
+
+The Move sheet - a row's own `Move`, and `Move this note` in the palette - offers
+one target per row of the list, plus the space itself and any other space. No
+folders, because there are none to offer: a note is offered as the folder it is
+about to become, and a folder out of a vault as the row it is. Every target wears
+a note's mark; a space wears the mark the switcher gives it, in the same box, so
+the names still read as one column. See `move-targets.ts`.
+
+## What still says "folder", and why
+
+- **The filesystem layer.** `read_tree`, `create_folder`, `remove_empty_folder`,
+  `folderOf`, `targetFor`, `TreeRow.folder`, `is_dir`. These are about the disk,
+  where folders are exactly what they have always been.
+- **`folder-notes.ts` and `workspace/folder-icons.svelte.ts`.** Named after the
+  convention they implement, which is what it is called everywhere outside this
+  app.
+- **The settings that say where pictures go**: "Assets folder of the space", "A
+  folder named after the note". Those name real folders on disk that another app
+  will also look in.
+- **"Open themes folder"**, which opens a folder in Explorer or Finder.
+- **The Files tab's mark**, which is a folder shape with its corners taken off.
+  It names the panel rather than a row, and the panel's own label says FILES.
+
+## Seeing it
+
+- `apps/desktop/test/e2e/plain-folders.py` - a vault with `Projects/` and a
+  `Handbook/index.md`, on a desktop and on a phone: the quiet row, its menu, what
+  opening it does and does not write, and what writing in it changes.
+- `apps/desktop/test/e2e/nesting.py` - a note nested into a note and back out.
+- `apps/desktop/test/e2e/tree-create.py` - the four things the list makes: a note
+  and a canvas on the empty ground, a note inside a folder nobody wrote, and a
+  note inside a note.

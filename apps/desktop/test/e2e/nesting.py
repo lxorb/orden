@@ -228,12 +228,18 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] the note moved into the folder under its own name",
         )
         check(
-            page.locator("aside .row.folder-note").count() == 1,
-            f"[{label}] the folder is drawn as the note, once",
+            page.locator("aside .row[aria-expanded]").count() == 1,
+            f"[{label}] one row holds rows, and it is drawn as the note",
         )
         check(
-            page.locator('aside .row.folder-note .mark svg[viewBox="0 0 24 24"]').count() == 1,
+            page.locator('aside .row[aria-expanded] .mark svg[viewBox="0 0 24 24"]').count() == 1,
             f"[{label}] wearing the note's own icon",
+        )
+        # Not quiet: the note is written, so the row is a note to read rather than
+        # a name nobody has put words under. See docs/tree.md.
+        check(
+            page.locator("aside .row[aria-expanded].is-quiet").count() == 0,
+            f"[{label}] at full strength, because the note has words in it",
         )
         # Once as the row, never again as a child of itself.
         check(
@@ -258,7 +264,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             f"[{label}] the note came back up as a plain note",
         )
         check(
-            page.locator("aside .row.folder").count() == 0,
+            page.locator("aside .row[aria-expanded]").count() == 0,
             f"[{label}] and no empty folder was left behind",
         )
     finally:

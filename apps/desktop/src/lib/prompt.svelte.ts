@@ -1,4 +1,4 @@
-import type { Mark } from './file-mark'
+import type { FileMark } from './file-mark'
 
 interface Ask {
   title: string
@@ -25,7 +25,12 @@ interface Choice {
    *  shows. Absent for a question about anything else, and then the row is words
    *  alone. The `id` is the path, so a row that chose an icon of its own wears it
    *  here as well; see FileMark.svelte. */
-  mark?: Mark
+  mark?: FileMark
+  /** The space this row is, where it is a space rather than a file: the one being
+   *  looked at, or another to move something into. It wears what the switcher
+   *  gives it - the space's own icon, or its first letter - in the box a mark
+   *  would be in, so the names in the list still read as one column. */
+  space?: { id: string | null; name: string }
 }
 
 interface Choose {
