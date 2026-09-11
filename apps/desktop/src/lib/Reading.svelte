@@ -30,7 +30,7 @@
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
   import { isTabFile, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
-  import { openQueryRow } from './query-block'
+  import { pressRow } from './query-block'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -206,13 +206,12 @@
       return
     }
 
-    // A row in a query fence opens the note it found, the way a row in the Search
-    // panel does. Asked before the links, because a row is a button rather than a
-    // link: a published page has no script to run and so answers no query either.
-    const row = (event.target as Element | null)?.closest('.nib-query [data-path]')
-    if (row instanceof HTMLElement && row.dataset.path) {
+    // A row in a query fence opens the note it found and a box in one ticks it,
+    // the way the Search panel's rows do. Asked before the links, because a row is
+    // a button rather than a link: a published page has no script to run and so
+    // answers no query either.
+    if (pressRow(event.target)) {
       event.preventDefault()
-      void openQueryRow(row.dataset.path, Number(row.dataset.line ?? 0))
       return
     }
 

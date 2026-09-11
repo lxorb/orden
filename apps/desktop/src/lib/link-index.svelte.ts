@@ -33,7 +33,7 @@ import {
 import { buildGraph, type NoteGraph } from './graph'
 import { rewriteLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
-import { openQueryRow, queryRowsHtml } from './query-block'
+import { pressRow, queryRowsHtml } from './query-block'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -334,7 +334,7 @@ class Links {
       // answered again whenever a note is saved: this object is remade then, and a
       // widget holding the old one is not equal to one holding the new.
       query: (code) => queryRowsHtml(code, t('Nothing found')),
-      openRow: (wanted, line) => void openQueryRow(wanted, line),
+      pressRow: (target) => pressRow(target),
     }
     this.handed.set(key, made)
     return made

@@ -18,6 +18,7 @@
  *  Nothing here writes and nothing here is reactive: it is asked, it answers, and
  *  the surface that asked draws the answer. */
 
+import { taskAt } from '@nib/markdown/tasks'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -71,17 +72,45 @@ function grouped(hits: readonly Hit[]): { name: string; hits: Hit[] }[] {
 }
 
 /** One line, with what matched in it marked. */
-function line(hit: Hit): string {
+function marked(text: string, ranges: readonly { from: number; to: number }[]): string {
   let out = ''
   let at = 0
 
-  for (const range of hit.ranges) {
-    if (range.from > at) out += escape(hit.text.slice(at, range.from))
-    out += `<mark>${escape(hit.text.slice(range.from, range.to))}</mark>`
+  for (const range of ranges) {
+    if (range.from > at) out += escape(text.slice(at, range.from))
+    out += `<mark>${escape(text.slice(range.from, range.to))}</mark>`
     at = range.to
   }
 
-  return out + escape(hit.text.slice(at))
+  return out + escape(text.slice(at))
+}
+
+/** One row: a button carrying the note and the line it is, and a box in front of
+ *  it where the line is a task.
+ *
+ *  The box is the same live box the Search panel's rows have, for the same reason:
+ *  a list of everything still to do is only a tool if it can be done from. It
+ *  carries `data-task` so the surface drawing it can tell a press on the box from a
+ *  press on the row. */
+function row(hit: Hit): string {
+  const where = `data-path="${escape(hit.path)}" data-line="${hit.line}"`
+  const task = taskAt(hit.text)
+
+  if (!task) {
+    return `<button type="button" class="nib-row is-short" ${where}>${marked(hit.text, hit.ranges)}</button>`
+  }
+
+  const words = hit.text.slice(task.marker)
+  const moved = hit.ranges
+    .map((range) => ({ from: range.from - task.marker, to: range.to - task.marker }))
+    .filter((range) => range.to > 0)
+    .map((range) => ({ from: Math.max(range.from, 0), to: range.to }))
+
+  const box =
+    `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
+    `${task.done ? ' checked' : ''} aria-label="${escape(words)}">`
+
+  return `<button type="button" class="nib-row is-short" ${where}>${box}${marked(words, moved)}</button>`
 }
 
 /** What one fence answers with, or null where there is nothing to answer from:
@@ -113,13 +142,7 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
 
   const groups = grouped(hits)
     .map((group) => {
-      const rows = group.hits
-        .map(
-          (hit) =>
-            `<button type="button" class="nib-row is-short" data-path="${escape(hit.path)}"` +
-            ` data-line="${hit.line}">${line(hit)}</button>`,
-        )
-        .join('')
+      const rows = group.hits.map(row).join('')
 
       return `<p class="nib-section">${escape(shown(group.name))}<span>${group.hits.length}</span></p>${rows}`
     })
@@ -134,10 +157,38 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
  *  The workspace is imported here rather than at the top for the reason
  *  workspace/folder-icons gives about the syncing loop: the link index hands this
  *  to the editor, and the workspace owns the link index. */
-export async function openQueryRow(path: string, line: number): Promise<void> {
+async function openQueryRow(path: string, line: number): Promise<void> {
   const { workspace } = await import('./workspace.svelte')
   await workspace.open(path)
   // The same way a bookmarked block opens: the workspace says where, and whichever
   // pane is showing the note goes there. See `goto`.
   workspace.goto = { path, line }
+}
+
+/** A box in a fence's row, ticked. The note is written where it stands, without
+ *  being opened: what a list of everything still to do is for. */
+async function tickQueryRow(path: string, line: number): Promise<void> {
+  const { workspace } = await import('./workspace.svelte')
+  await workspace.toggleTaskAt(path, line)
+}
+
+/** A press inside a fence, acted on: the box if it landed on one, the row
+ *  otherwise. Answers whether it was either, so the surface can keep the press to
+ *  itself - a press in the editor would otherwise put the caret inside the fence
+ *  the row is drawn over.
+ *
+ *  One reading of the markup rather than one per surface: the editor's widget and
+ *  the reading view draw the same rows, and this is what wrote them. */
+export function pressRow(target: EventTarget | null): boolean {
+  const found = target instanceof Element ? target.closest('[data-path]') : null
+  if (!(found instanceof HTMLElement)) return false
+
+  const path = found.dataset.path
+  if (path === undefined) return false
+
+  const line = Number(found.dataset.line ?? 0)
+  if (found.dataset.task === undefined) void openQueryRow(path, line)
+  else void tickQueryRow(path, line)
+
+  return true
 }

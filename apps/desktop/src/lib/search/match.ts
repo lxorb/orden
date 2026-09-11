@@ -345,6 +345,26 @@ function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>)
   }
 }
 
+/** Which line the note's words start on: the one after the front matter block,
+ *  or the first line where there is none.
+ *
+ *  For the row a note found by something no line of it says falls back to. The
+ *  block's own lines are metadata, and its fences are three hyphens: either would
+ *  be a row that reads as nothing. matcher.rs counts the same way. */
+function pastFrontMatter(body: string, starts: readonly number[]): number {
+  const first = starts[1]
+  if (first === undefined || body.slice(0, first).trim() !== '---') return 0
+
+  for (let line = 1; line < starts.length; line++) {
+    const from = starts[line] ?? 0
+    const to = starts[line + 1] ?? body.length
+    if (body.slice(from, to).trim() === '---') return line + 1
+  }
+
+  // A block nobody closed is not a block, so the note starts where it starts.
+  return 0
+}
+
 /** Whether a short string holds another. Plain lowercasing rather than the
  *  length-preserving fold above: nothing here is an offset into a note, so a
  *  letter that lowercases into two may as well do so. */
@@ -453,14 +473,18 @@ export class Matcher {
     if (!spans || most <= 0) return []
 
     const starts = lineStarts(note.body)
+    const past = pastFrontMatter(note.body, starts)
 
-    // Found by something no line of the note says: its path, its name, a tag.
-    // The first line with words in it stands in, so the row reads like a note
-    // rather than like an empty result.
+    // Found by something no line of the note says: its path, its name, a tag, a
+    // front matter value. The first line with words in it stands in, so the row
+    // reads like a note rather than like an empty result - and the front matter
+    // itself is stepped over, because a row saying `---` says nothing at all and
+    // a note found by `[pages:>200]` is exactly the note that has one.
     if (!spans.length) {
-      const line = starts.findIndex((start, index) =>
-        note.body.slice(start, starts[index + 1] ?? note.body.length).trim(),
-      )
+      const line = starts.findIndex((start, index) => {
+        if (index < past) return false
+        return note.body.slice(start, starts[index + 1] ?? note.body.length).trim()
+      })
 
       return [this.row(note, starts, Math.max(line, 0), [])]
     }

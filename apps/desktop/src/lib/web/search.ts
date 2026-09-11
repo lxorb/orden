@@ -33,10 +33,25 @@ export interface Found {
  *  query itself does not answer; empty when the query is not one to relax. See
  *  fuzzy.ts, and search.rs for the twin of this walk. */
 /** Whether a note is one the space leaves out: the path itself, or something
- *  inside a folder that is. The twin of `has` in workspace/excluded.svelte.ts and
- *  of `left_out` in search.rs. */
-function leftOut(relative: string, excluded: readonly string[]): boolean {
-  return excluded.some((one) => relative === one || relative.startsWith(`${one}/`))
+ *  inside a folder that is.
+ *
+ *  Asked of the note's own ancestors rather than of the list, so leaving things out
+ *  costs a handful of lookups per note however long the list is. The other way
+ *  round it was one string comparison per excluded path per note, which at two
+ *  hundred paths and five thousand notes was a million of them and showed up in the
+ *  drive as a search that got slower the more it was asked to skip.
+ *
+ *  The twin of `has` in workspace/excluded.svelte.ts and of `left_out` in
+ *  search.rs. */
+function leftOut(relative: string, excluded: ReadonlySet<string>): boolean {
+  if (!excluded.size) return false
+  if (excluded.has(relative)) return true
+
+  for (let at = relative.lastIndexOf('/'); at > 0; at = relative.lastIndexOf('/', at - 1)) {
+    if (excluded.has(relative.slice(0, at))) return true
+  }
+
+  return false
 }
 
 export async function searchRows(
@@ -57,6 +72,7 @@ export async function searchRows(
   // query with its bare words taken out. A query of nothing but words leaves
   // nothing to answer, which every note does.
   const narrowed = terms.length ? new Matcher(withoutWords(query)) : null
+  const left = new Set(excluded)
   let found = 0
   let hits: Hit[] = []
   let loose: FuzzyHit[] = []
@@ -69,7 +85,7 @@ export async function searchRows(
     if (!within(base, row.path) || !isMarkdown(row.path)) return
 
     const relative = row.path.slice(base === '/' ? 1 : base.length + 1)
-    if (leftOut(relative, excluded)) return
+    if (leftOut(relative, left)) return
 
     const note = {
       path: row.path,

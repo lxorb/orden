@@ -18,7 +18,7 @@
 
 use serde::Serialize;
 use std::cmp::Reverse;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Emitter};
@@ -81,6 +81,7 @@ pub fn search_space(
     excluded: Vec<String>,
 ) -> Result<(), String> {
     let dir = in_spaces(&app, &root)?;
+    let left: HashSet<&str> = excluded.iter().map(String::as_str).collect();
     let fuzzy = Fuzzy::new(&terms);
     // What a note has to answer before its lines are worth guessing about: the
     // query with its bare words taken out. A query of nothing but words leaves
@@ -99,7 +100,7 @@ pub fn search_space(
         }
 
         let relative = relative_to(&dir, &path);
-        if left_out(&relative, &excluded) {
+        if left_out(&relative, &left) {
             continue;
         }
 
@@ -206,14 +207,31 @@ pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
 }
 
 /// Whether a note is one the space leaves out: the path itself, or something
-/// inside a folder that is. The twin of `has` in workspace/excluded.svelte.ts.
-fn left_out(relative: &str, excluded: &[String]) -> bool {
-    excluded.iter().any(|one| {
-        relative == one.as_str()
-            || (relative.len() > one.len()
-                && relative.starts_with(one.as_str())
-                && relative.as_bytes().get(one.len()) == Some(&b'/'))
-    })
+/// inside a folder that is.
+///
+/// Asked of the note's own ancestors rather than of the list, so leaving things out
+/// costs a handful of lookups per note however long the list is. The twin of
+/// `leftOut` in web/search.ts and of `has` in workspace/excluded.svelte.ts.
+fn left_out(relative: &str, excluded: &HashSet<&str>) -> bool {
+    if excluded.is_empty() {
+        return false;
+    }
+    if excluded.contains(relative) {
+        return true;
+    }
+
+    let mut at = relative.len();
+    while let Some(cut) = relative.get(..at).and_then(|part| part.rfind('/')) {
+        if cut == 0 {
+            break;
+        }
+        if excluded.contains(&relative[..cut]) {
+            return true;
+        }
+        at = cut;
+    }
+
+    false
 }
 
 /// Every note in a space, in a stable order so two searches of an unchanged

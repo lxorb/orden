@@ -68,7 +68,8 @@ function windowOf(body: string, from: number): { text: string; at: number } {
 }
 
 /** Whether a paper is one the space leaves out: the path itself, or something
- *  inside a folder that is. The same reading the notes get. */
+ *  inside a folder that is. The same reading the notes get; a list of papers is a
+ *  handful, so the list is walked here rather than the path's own ancestors. */
 function leftOut(relative: string, excluded: readonly string[]): boolean {
   return excluded.some((one) => relative === one || relative.startsWith(`${one}/`))
 }

@@ -181,18 +181,16 @@ export class QueryWidget extends NibWidget {
     const host = document.createElement('div')
     host.className = 'nib-query-block'
 
-    // A press on a row opens the note. One listener on the host rather than one
-    // per row, because the rows are replaced when the answer lands.
+    // A press on a row opens the note it found, and one on a box ticks it. One
+    // listener on the host rather than one per row, because the rows are replaced
+    // when the answer lands, and the app reads the press because the app wrote the
+    // rows.
     host.addEventListener('mousedown', (event) => {
-      const row = event.target instanceof Element ? event.target.closest('[data-path]') : null
-      const path = row instanceof HTMLElement ? row.dataset.path : undefined
-      const line = row instanceof HTMLElement ? Number(row.dataset.line ?? 0) : 0
-      if (path === undefined) return
+      if (this.index.pressRow?.(event.target) !== true) return
 
-      // Before the editor takes the press as a click in the document, which would
-      // put the caret inside the fence this row is drawn over.
+      // The press goes no further: otherwise the editor takes it as a click in the
+      // document and puts the caret inside the fence this row is drawn over.
       event.preventDefault()
-      this.index.openRow?.(path, line)
     })
 
     void this.draw(host)

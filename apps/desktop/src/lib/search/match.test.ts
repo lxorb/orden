@@ -125,9 +125,18 @@ describe('path and file', () => {
     expect(answers('file:Agenda')).toBe(false)
   })
 
-  test('find a note nothing in the text says', () => {
-    expect(lines('file:Meeting')).toEqual(['---'])
+  /** The row stands in for a line, since no line of the note is why it was found.
+   *  The note's own words, stepping over the front matter: a row saying `---` says
+   *  nothing about the note it is about. */
+  test('find a note nothing in the text says, and read like the note', () => {
+    expect(lines('file:Meeting')).toEqual(['# Meeting notes #work/2026'])
     expect(marked('file:Meeting')).toEqual([])
+  })
+
+  test('and fall back to the first line where there is no front matter', () => {
+    expect(lines('file:Meeting', { body: '\nthe first words\n' })).toEqual(['the first words'])
+    // A block nobody closed is not a block.
+    expect(lines('file:Meeting', { body: '---\nstatus: done\n' })).toEqual(['---'])
   })
 })
 

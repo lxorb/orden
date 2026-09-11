@@ -504,10 +504,14 @@ impl Matcher {
         };
 
         // Found by something no line of the note says: its path, its name, a
-        // tag. The first line with words in it stands in, so the row reads
-        // like a note rather than like an empty result.
+        // tag, a front matter value. The first line with words in it stands in,
+        // so the row reads like a note rather than like an empty result - and
+        // the front matter itself is stepped over, because a row saying `---`
+        // says nothing at all and a note found by `[pages:>200]` is exactly the
+        // note that has one.
         if spans.is_empty() {
-            let line = (0..facts.starts().len())
+            let past = past_front_matter(note.body, facts.starts());
+            let line = (past..facts.starts().len())
                 .find(|&index| {
                     !line_text(note.body, facts.starts(), index)
                         .trim()
@@ -697,6 +701,27 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 /// Whether a tag sits under another: `work/2026` is under `work`.
 fn under(tag: &str, parent: &str) -> bool {
     tag.starts_with(parent) && tag.as_bytes().get(parent.len()) == Some(&b'/')
+}
+
+/// Which line the note's words start on: the one after the front matter block, or
+/// the first line where there is none.
+///
+/// For the row a note found by something no line of it says falls back to. The
+/// block's own lines are metadata, and its fences are three hyphens: either would
+/// be a row that reads as nothing. The twin of `pastFrontMatter` in match.ts.
+fn past_front_matter(body: &str, starts: &[usize]) -> usize {
+    if line_text(body, starts, 0).trim() != "---" {
+        return 0;
+    }
+
+    for line in 1..starts.len() {
+        if line_text(body, starts, line).trim() == "---" {
+            return line + 1;
+        }
+    }
+
+    // A block nobody closed is not a block, so the note starts where it starts.
+    0
 }
 
 /// Whether a front matter value looks like a number, as far as holding two of
@@ -1089,8 +1114,20 @@ mod tests {
         let file = |one: &str| format!(r#"{{"kind":"file","text":"{one}","fold":true}}"#);
         assert!(answers(&file("Meeting"), NOTE));
         assert!(!answers(&file("Agenda"), NOTE));
-        assert_eq!(lines(&file("Meeting"), NOTE), ["---"]);
+        // The note's own words, stepping over the front matter: a row saying
+        // `---` says nothing about the note it is about.
+        assert_eq!(
+            lines(&file("Meeting"), NOTE),
+            ["# Meeting notes #work/2026"]
+        );
         assert!(marked(&file("Meeting"), NOTE).is_empty());
+
+        assert_eq!(
+            lines(&file("Meeting"), "\nthe first words\n"),
+            ["the first words"]
+        );
+        // A block nobody closed is not a block.
+        assert_eq!(lines(&file("Meeting"), "---\nstatus: done\n"), ["---"]);
     }
 
     #[test]

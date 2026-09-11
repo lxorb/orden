@@ -50,8 +50,11 @@ export interface NoteIndex {
    *  field this index sits in is replaced when it does, and that is what makes a
    *  fence answer again. */
   query?: ((code: string) => Promise<string | null>) | undefined
-  /** A row in a query fence was pressed: which note, and which line of it. */
-  openRow?: ((path: string, line: number) => void) | undefined
+  /** Something in a query fence was pressed. Handed the press's target rather
+   *  than a note and a line, because the app wrote the rows and is the one that
+   *  should read them; it answers whether it was one of its own, so the editor can
+   *  keep the press rather than putting the caret inside the fence. */
+  pressRow?: ((target: EventTarget | null) => boolean) | undefined
 }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }
