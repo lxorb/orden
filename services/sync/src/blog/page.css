@@ -7,7 +7,7 @@
  * line at the bottom saying where it came from.
  *
  * Served from the Worker rather than written into every page; see
- * scripts/blog-css.mjs for how it is put together and services/sync/src/blog.ts
+ * scripts/blog-css.ts for how it is put together and services/sync/src/blog.ts
  * for what serves it. */
 
 /* ── A page rather than an app ───────────────────────────────────── */

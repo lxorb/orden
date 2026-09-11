@@ -275,7 +275,7 @@ function withByline(html: string, author: string | null): string {
  *  Linked rather than written into the page: it is the same bytes for every note
  *  of every blog, its path is its own hash, so a reader fetches it once and keeps
  *  it, and the second page of a blog carries no stylesheet at all. See
- *  scripts/blog-css.mjs. */
+ *  scripts/blog-css.ts. */
 function sheet(css: string): Response {
   return new Response(css, {
     headers: {

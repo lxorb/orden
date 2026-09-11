@@ -45,7 +45,7 @@ out of the same renderer and were already the same markup.
 - **One renderer.** `serveBlog` asks for what the reading view asks for:
   `footnotes`, `toc`, `escapeHtml`, a `code` fence renderer, and resolvers for
   links and embeds. The structural difference between the two is zero; see below.
-- **One stylesheet.** `scripts/blog-css.mjs` builds it from
+- **One stylesheet.** `scripts/blog-css.ts` builds it from
   `packages/themes/src/{tokens,base,document}.css` plus
   `services/sync/src/blog/page.css`, strips the comments, and writes
   `services/sync/src/blog/style.ts`. Run `pnpm blog:css` after changing any of
