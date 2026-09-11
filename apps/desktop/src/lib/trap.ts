@@ -103,9 +103,27 @@ export function trap(node: HTMLElement) {
 
   node.addEventListener('keydown', onKey)
 
+  /** Whether the keyboard is still this layer's to hand back. It is while it is
+   *  inside the layer, and while it is nowhere in particular - the page itself,
+   *  which is where it falls when the thing that held it has already gone.
+   *
+   *  It is not once something outside has taken it on purpose, and that is the
+   *  whole of this: a menu entry can open a field, and the entry that opened it
+   *  is still fading out when this runs. Handing the keyboard back then takes it
+   *  off the field - and a name field that loses the keyboard commits what is in
+   *  it, which for a row being made is nothing, so the row goes and the gesture
+   *  made no file at all. See select-all.ts, which is the other half. */
+  function ours(): boolean {
+    const at = document.activeElement
+    if (at === null || at === document.body || at === document.documentElement) return true
+
+    return node.contains(at)
+  }
+
   return {
     destroy() {
       node.removeEventListener('keydown', onKey)
+      if (!ours()) return
 
       // Back where it came from, unless what it came from has gone with it: a
       // row deleted by the very sheet that asked about deleting it.
