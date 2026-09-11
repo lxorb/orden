@@ -17,7 +17,6 @@
    *  It writes straight to the space's own settings, so every surface that draws a
    *  graph reads one answer; see workspace/graph-settings.svelte.ts. */
 
-  import CanvasDial from './CanvasDial.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
@@ -162,16 +161,26 @@
       <!-- The one force worth a dial. Two of the four the layout has are about how
            it settles rather than about the picture it settles into, and the third
            is what a link means; this is the ratio a reader can actually feel. See
-           graph-layout.ts. -->
-      <CanvasDial
-        value={spread}
-        least={LEAST_SPREAD}
-        most={MOST_SPREAD}
-        step={0.25}
-        label={t('Spread')}
-        reading="{Math.round(spread * 100)}%"
-        onvalue={(next: number) => workspace.graphSettings.set({ spread: next })}
-      />
+           graph-layout.ts.
+
+           Named, like the switches under it, rather than a bare slider with a
+           number beside it: a dial in a pen's popover is about the pen, and a dial
+           in a card of six things has to say which of the six it is. -->
+      <div class="dial">
+        <span>{t('Spread')}</span>
+        <input
+          class="nib-slider"
+          type="range"
+          min={LEAST_SPREAD}
+          max={MOST_SPREAD}
+          step="0.25"
+          value={spread}
+          aria-label={t('Spread')}
+          style:--fill="{((spread - LEAST_SPREAD) / (MOST_SPREAD - LEAST_SPREAD)) * 100}%"
+          oninput={(event) =>
+            workspace.graphSettings.set({ spread: Number(event.currentTarget.value) })}
+        />
+      </div>
 
       <button
         class="nib-row"
@@ -407,6 +416,29 @@
   svg.filled {
     fill: currentColor;
     stroke: none;
+  }
+
+  /* The one dial, laid out as the switches under it are: the word at the left, the
+     control at the right, and the row the height theirs is. */
+  .dial {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--row-gap);
+    min-height: var(--row-height);
+    padding: 0 var(--row-pad);
+  }
+
+  .dial span {
+    flex: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
+  }
+
+  .dial input {
+    flex: 0 1 11rem;
+    min-width: 0;
   }
 
   /* The play button and the bar it moves along. */
