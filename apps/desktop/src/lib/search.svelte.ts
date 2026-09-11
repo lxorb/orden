@@ -11,6 +11,7 @@ import { fuzzyTerms } from './search/fuzzy'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { searchSpace } from './search/space'
+import { isBoolean, isRecord, stored } from './stored'
 import { workspace } from './workspace.svelte'
 
 /** How long after the last keystroke to ask. Long enough that a word typed at
@@ -26,6 +27,39 @@ const MOST = 200
 const SHORTEST = 2
 
 const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
+
+/** What order the results are read in. `relevance` is the order the search
+ *  itself answered in: the notes as they were walked, and the guesses ranked
+ *  under them. */
+export type SearchSort = 'relevance' | 'name' | 'modified' | 'created'
+
+/** Where the order is kept, and why here rather than on the account.
+ *
+ *  The order a list is read in is this machine's, not the space's: it is a habit
+ *  of whoever is reading rather than a fact about the notes. The file list's own
+ *  sort is kept exactly here, under `nib:tree`, and this is the same question
+ *  about the same space asked of a different list. */
+const SORT_KEY = 'nib:search-sort'
+
+interface Ordering {
+  sort: SearchSort
+  descending: boolean
+}
+
+const AS_ASKED: Ordering = { sort: 'relevance', descending: false }
+
+const SORTS: readonly SearchSort[] = ['relevance', 'name', 'modified', 'created']
+
+function readOrdering(): Ordering {
+  const saved = stored(SORT_KEY)
+  if (!isRecord(saved)) return { ...AS_ASKED }
+
+  const sort = SORTS.find((one) => one === saved.sort)
+  return {
+    sort: sort ?? AS_ASKED.sort,
+    descending: isBoolean(saved.descending) ? saved.descending : false,
+  }
+}
 
 class Search {
   text = $state('')
@@ -60,7 +94,52 @@ class Search {
    *  underneath it ranked by score. So nothing can regress - every list the app
    *  used to show is still the top of the list it shows now - and a query that
    *  used to find nothing is where the guesses are worth most. */
-  readonly hits = $derived([...this.found, ...this.loose])
+  readonly hits = $derived([...this.inOrder(this.found), ...this.inOrder(this.loose)])
+
+  /** How the results are ordered, and which way round. */
+  ordering = $state<Ordering>(readOrdering())
+
+  /** When each note was made and last written, by the path a hit names it with.
+   *  From the file list, which has read it already: a hit carries no dates, and
+   *  putting them on one would be a date per row of two hundred rows about twenty
+   *  notes. */
+  private readonly dated = $derived.by(() => new Map(workspace.notes.map((one) => [one.path, one])))
+
+  /** Chooses the order. The same key again flips the direction, as the file
+   *  list's own sort does. */
+  setSort(sort: SearchSort) {
+    const descending = this.ordering.sort === sort ? !this.ordering.descending : false
+    this.ordering = { sort, descending }
+    localStorage.setItem(SORT_KEY, JSON.stringify(this.ordering))
+  }
+
+  /** One run of hits in the order asked for.
+   *
+   *  The exact hits and the guesses are ordered apart and stay apart, so a guess
+   *  can never come out above an answer. Rows from one note stay together
+   *  whatever the order, because the note decides and the line breaks the tie -
+   *  which is what lets the panel go on reading a run of them as a group. */
+  private inOrder<T extends Hit>(hits: readonly T[]): T[] {
+    const { sort, descending } = this.ordering
+    if (sort === 'relevance') return [...hits]
+
+    const dated = this.dated
+    const at = (hit: Hit) => {
+      if (sort === 'name') return 0
+      const entry = dated.get(hit.path)
+      return (sort === 'modified' ? entry?.modified : entry?.created) ?? 0
+    }
+
+    const way = descending ? -1 : 1
+    return [...hits].sort((one, other) => {
+      const first =
+        sort === 'name'
+          ? one.name.localeCompare(other.name, undefined, { sensitivity: 'base' })
+          : at(one) - at(other)
+
+      return first * way || one.path.localeCompare(other.path) || one.line - other.line
+    })
+  }
 
   /** What a replacement would be put into: the exact hits that are still ticked.
    *  A loose hit is never one of them. There is nothing in its line for the query

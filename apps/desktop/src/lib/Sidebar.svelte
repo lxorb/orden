@@ -23,7 +23,7 @@
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
   import { DEEPEST } from './workspace/graph-settings.svelte'
-  import { search } from './search.svelte'
+  import { search, type SearchSort } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
   import Bookmarks from './Bookmarks.svelte'
@@ -129,6 +129,40 @@
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
       { label: t('New folder'), run: () => void workspace.createFolder() },
     ]
+  }
+
+  /** The order the results are read in. The same menu the file list's sort is,
+   *  in the same place - a press on the tab - because it is the same question
+   *  about the same space asked of a different list. */
+  function resultsMenu(): MenuEntry[] {
+    const arrow = (key: SearchSort) =>
+      search.ordering.sort === key ? (search.ordering.descending ? '↓' : '↑') : undefined
+
+    return [
+      {
+        label: t('Sort by relevance'),
+        hint: arrow('relevance'),
+        run: () => search.setSort('relevance'),
+      },
+      { label: t('Sort by name'), hint: arrow('name'), run: () => search.setSort('name') },
+      {
+        label: t('Sort by modified'),
+        hint: arrow('modified'),
+        run: () => search.setSort('modified'),
+      },
+      {
+        label: t('Sort by created'),
+        hint: arrow('created'),
+        run: () => search.setSort('created'),
+      },
+    ]
+  }
+
+  /** What a press on a panel's own tab offers, for the two panels that have
+   *  something to say about the order of what they show. */
+  function tabMenu(id: Panel): MenuEntry[] | null {
+    if (id === 'tree') return sortMenu()
+    return id === 'search' ? resultsMenu() : null
   }
 
   /** What the space itself offers, wherever in the panel you ask for it. */
@@ -415,8 +449,10 @@
           aria-label={item.label}
           aria-selected={workspace.panel === item.id}
           onclick={() => workspace.showPanel(item.id)}
-          oncontextmenu={(event) =>
-            item.id === 'tree' && menu.show(event, sortMenu(), { title: item.label })}
+          oncontextmenu={(event) => {
+            const entries = tabMenu(item.id)
+            if (entries) menu.show(event, entries, { title: item.label })
+          }}
         >
           <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
         </button>
