@@ -293,8 +293,13 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     # which is a 404 for a pasted picture as much as for an imported one.
     held = page.evaluate(
         """async () => {
-          const open = indexedDB.open('nib', 1)
-          const db = await new Promise((resolve) => { open.onsuccess = () => resolve(open.result) })
+          // No version asked for: the page's own store decides which it is on, and
+          // asking for an older one is an error that never resolves.
+          const open = indexedDB.open('nib')
+          const db = await new Promise((resolve, reject) => {
+            open.onsuccess = () => resolve(open.result)
+            open.onerror = () => reject(open.error)
+          })
           const rows = await new Promise((resolve) => {
             const ask = db.transaction('assets').objectStore('assets').getAll()
             ask.onsuccess = () => resolve(ask.result)

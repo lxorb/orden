@@ -81,7 +81,9 @@ async () => {
 SPREAD_DATES = """
 async () => {
   const day = 24 * 60 * 60 * 1000
-  const open = indexedDB.open('nib', 1)
+  // No version asked for: the page's own store decides which it is on, and
+  // asking for an older one is an error rather than a database.
+  const open = indexedDB.open('nib')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
