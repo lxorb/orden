@@ -63,7 +63,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Superscript `X^2^`
 - [x] Highlight `==text==`
 - [x] Underline via `<u>`
-- [x] Smart punctuation (curly quotes, en/em dashes, ellipsis)
+- [x] Smart punctuation (curly quotes, en/em dashes, ellipsis), off by default
 - [x] Ligatures: `->`, `<=`, `!=` and the like shown as arrows and signs, in prose and code, text untouched (off by default; the choice follows the account)
 
 ## 3. HTML support
@@ -216,7 +216,12 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 ## 12. Editing behaviour
 
 - [x] Auto-pair brackets, quotes, markdown symbols
-- [x] Smart punctuation, toggleable
+- [x] Smart punctuation, toggleable, and off out of the box. Typora has it on;
+      nib would rather hand back the characters that were typed, because a note
+      is a file other tools read. It never touches a line that is a thematic
+      break, a setext underline or a front-matter fence: `---` typed on its own
+      line stays `---`, so a rule, a slide break and a metadata block can all be
+      written from the keyboard
 - [x] Select the word `Ctrl+D`, select the line `Ctrl+L`. A second `Ctrl+D` takes
       the next one like it, which is where the extra cursors come from
 - [x] Clear formatting `Ctrl+\`

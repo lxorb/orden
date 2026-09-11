@@ -4,16 +4,37 @@ import { EditorView } from '@codemirror/view'
 
 /** Substitutions applied as you type, matching Typora's smart punctuation.
  *  Order matters: the opening-quote rules must be tried before the closing
- *  ones, and the em dash before the en dash it is built from. */
-const RULES: { pattern: RegExp; insert: string }[] = [
+ *  ones, and the em dash before the en dash it is built from.
+ *
+ *  `dash` marks the two rules that eat hyphens, which are the only ones a line
+ *  of markup has to be protected from; see `BREAK` below. */
+const RULES: { pattern: RegExp; insert: string; dash?: boolean }[] = [
   { pattern: /(?:^|[\s([{"'])(")$/, insert: '“' },
   { pattern: /(")$/, insert: '”' },
   { pattern: /(?:^|[\s([{"“])(')$/, insert: '‘' },
   { pattern: /(')$/, insert: '’' },
-  { pattern: /(–-)$/, insert: '—' },
-  { pattern: /(--)$/, insert: '–' },
+  { pattern: /(–-)$/, insert: '—', dash: true },
+  { pattern: /(--)$/, insert: '–', dash: true },
   { pattern: /(\.\.\.)$/, insert: '…' },
 ]
+
+/** A line with nothing on it but the characters a break is made of.
+ *
+ *  Three things wear that shape and all three are markup rather than prose: a
+ *  thematic break, which in a deck is where the next slide starts; the underline
+ *  of a setext heading; and the fence that opens front matter. None of them can
+ *  be typed while the second hyphen turns into an en dash - `---` came out as
+ *  `-–` and then as an em dash, so a rule, a slide break and a front-matter
+ *  block were all unreachable from the keyboard. A deck Emil wrote held `—`
+ *  where every break should have been.
+ *
+ *  Asked of the second hyphen rather than the third, because the second is the
+ *  one that converts: by the time a third is typed the line already reads `–`
+ *  and there is no run of hyphens left to recognise. Up to three spaces of
+ *  indentation and any depth of quotation, which is what CommonMark allows in
+ *  front of a break; four spaces is an indented code block and `inCodeSpan`
+ *  already has that. */
+const BREAK = /^[ \t]{0,3}(?:>[ \t]*)*[-*_]+$/
 
 export interface Replacement {
   /** How many characters before the caret the replacement covers. */
@@ -21,10 +42,23 @@ export interface Replacement {
   insert: string
 }
 
+/** Whether the line, as far as the caret, is a break being typed rather than a
+ *  sentence with dashes in it. Exported because it is the rule the tests are
+ *  really about. */
+export function typingBreak(before: string): boolean {
+  return BREAK.test(before)
+}
+
 /** Decides what a freshly typed character should become, given the line text up
  *  to and including it. Pure, so the behaviour is testable without a view. */
 export function smartReplacement(before: string): Replacement | null {
+  // A line of nothing but break characters keeps its hyphens; the quotes and the
+  // ellipsis are unaffected, since neither can be part of one.
+  const markup = typingBreak(before)
+
   for (const rule of RULES) {
+    if (markup && rule.dash) continue
+
     // Every rule captures exactly the characters it replaces, so a match has
     // group one; the default is what satisfies a compiler that cannot see that.
     const [, replaced = ''] = rule.pattern.exec(before) ?? []

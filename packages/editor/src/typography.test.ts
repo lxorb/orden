@@ -1,7 +1,9 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { inCodeSpan, keepsStraightQuotes, smartReplacement } from './typography'
+import { frontMatter } from '@nib/markdown'
+import { isDeck } from '@nib/markdown/slides'
+import { inCodeSpan, keepsStraightQuotes, smartReplacement, typingBreak } from './typography'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
@@ -52,6 +54,77 @@ describe('dashes', () => {
 
   test('a lone hyphen is left alone', () => {
     expect(type('a', '-')).toBe('a-')
+  })
+})
+
+describe('a line that is a break rather than a sentence', () => {
+  /** The whole of a line, typed one character at a time through the rule, which
+   *  is the only way to catch a conversion that happens mid-word: `---` used to
+   *  come out as an em dash because the second hyphen had already gone. */
+  const typed = (line: string) =>
+    [...line].reduce((so, character) => type(so, character), '')
+
+  test('three hyphens on their own line stay a rule', () => {
+    expect(typed('---')).toBe('---')
+  })
+
+  test('and so do the longer runs a rule may be written with', () => {
+    expect(typed('----')).toBe('----')
+    expect(typed('--------')).toBe('--------')
+  })
+
+  test('the second hyphen is the one that had to be spared', () => {
+    // By the third there is no run of hyphens left to recognise, so the guard
+    // has to hold on the second: `--` is a rule halfway typed.
+    expect(type('-', '-')).toBe('--')
+    expect(type('--', '-')).toBe('---')
+  })
+
+  test('indented up to three spaces, and inside a quotation', () => {
+    expect(typed('  ---')).toBe('  ---')
+    expect(typed('> ---')).toBe('> ---')
+    expect(typed('>> ---')).toBe('>> ---')
+  })
+
+  test('but dashes in prose still become dashes', () => {
+    expect(typed('a -- b')).toBe('a – b')
+    expect(typed('a --- b')).toBe('a — b')
+    expect(typed('see -- here')).toBe('see – here')
+  })
+
+  test('and a line with words on it is prose however it ends', () => {
+    expect(typingBreak('---')).toBe(true)
+    expect(typingBreak('a --')).toBe(false)
+    expect(typingBreak('    --')).toBe(false)
+  })
+
+  test('the rule a deck is broken on, typed rather than commanded', () => {
+    // What the bug cost: every break in a deck came out as an em dash, so the
+    // note stopped being a deck at all. The detector is the judge.
+    const note = `# One
+
+${typed('---')}
+
+# Two
+`
+    expect(note).toContain('---')
+    expect(isDeck(note)).toBe(true)
+  })
+
+  test('front matter can be opened by typing its fence', () => {
+    const note = `${typed('---')}
+title: Hi
+---
+
+Body.
+`
+    expect(note.split('\n')[0]).toBe('---')
+    expect(frontMatter(note)).toBe('title: Hi')
+  })
+
+  test('a setext underline stays an underline', () => {
+    expect(typed('---')).toBe('---')
+    expect(typed('===')).toBe('===')
   })
 })
 

@@ -392,7 +392,7 @@ export function preferences(view?: EditorView): Pane[] {
               kind: 'switch',
               label: t('Smart punctuation'),
               hint: t('Turns straight quotes and dashes into typographic ones as you type.'),
-              initial: true,
+              initial: false,
               get: () => modes.punctuation,
               set: () => modes.togglePunctuation(view),
             },

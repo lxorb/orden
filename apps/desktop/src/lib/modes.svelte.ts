@@ -190,7 +190,7 @@ class Modes {
   readOnly = $state(false)
   focus = $state(false)
   typewriter = $state(false)
-  punctuation = $state(true)
+  punctuation = $state(false)
   numbers = $state(false)
   lineNumbers = $state(false)
   codeTheme = $state('follow')
@@ -306,7 +306,9 @@ class Modes {
       this.readOnly = (saved.readOnly === true || saved.reading === true) && !this.source
       this.focus = saved.focus === true
       this.typewriter = saved.typewriter === true
-      this.punctuation = saved.punctuation !== false
+      // `=== true` rather than `!== false`: a reader who never chose keeps the
+      // new default, and only one who turned it on keeps it on.
+      this.punctuation = saved.punctuation === true
       this.numbers = saved.numbers === true
       this.lineNumbers = saved.lineNumbers === true
       this.codeTheme = text(saved.codeTheme, 'follow')

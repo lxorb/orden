@@ -216,6 +216,33 @@ describe('the glasses settings', () => {
   })
 })
 
+/** Smart punctuation, which used to be on because Typora has it on.
+ *
+ *  It changes the file rather than the way the file is drawn, and the dashes did
+ *  it worst: a deck Emil wrote held an em dash where every slide break should
+ *  have been. So it is off, and a reader who never chose keeps it off. */
+describe('smart punctuation', () => {
+  test('starts off', () => {
+    expect(modes.punctuation).toBe(false)
+  })
+
+  test('stays off for a reader who never chose', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ focus: true }))
+    expect((await restarted()).punctuation).toBe(false)
+  })
+
+  test('and stays on for one who turned it on', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ punctuation: true }))
+    expect((await restarted()).punctuation).toBe(true)
+  })
+
+  test('is remembered across a restart', async () => {
+    modes.togglePunctuation()
+    expect(modes.punctuation).toBe(true)
+    expect((await restarted()).punctuation).toBe(true)
+  })
+})
+
 describe('the ligature scope', () => {
   test('starts off', () => {
     expect(modes.ligatures).toBe('off')

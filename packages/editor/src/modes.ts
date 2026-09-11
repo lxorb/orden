@@ -143,7 +143,7 @@ export function modeExtensions(): Extension {
     preview.of(previewFor(false)),
     focus.of(focusFor(false)),
     typewriter.of(typewriterFor(false)),
-    punctuation.of(punctuationFor(true)),
+    punctuation.of(punctuationFor(false)),
     equations.of(numberEquations.of(false)),
     // Off until asked for: a checker's wavy lines under prose that is not in
     // its dictionary's language are noise, and most notes start that way.
@@ -228,7 +228,10 @@ const ligaturesFor = once((scope: LigatureScope): Extension =>
   scope === 'off' ? [] : [ligatures(scope), editorClass('nib-ligatures')],
 )
 
-/** Curly quotes, dashes, ellipsis - on by default, like Typora. */
+/** Curly quotes, dashes, ellipsis. Off until asked for: a note is a file other
+ *  tools read, and a character nobody typed is a surprise in it - the dashes
+ *  most of all, which is how a deck lost every one of its slide breaks. Typora
+ *  has it on; nib would rather hand back what was written. */
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 
 /** CSS counters number the headings; the document text stays untouched. */
