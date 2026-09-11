@@ -604,11 +604,20 @@ Features Typora does not have, which are the reason this exists.
       of which PDF, and opens it there. A page's words are taken down when the
       viewer reads them, which it does anyway for its own find bar, so opening a
       paper once makes it answerable and no search ever waits for a PDF to be taken
-      apart. What was refused: reading every PDF in a space when a search runs,
-      which makes the first search of a space with twenty papers a minute long, and
-      reading them all at launch, which spends that minute whether anybody searches
-      or not. A cache on disk keyed by the file's hash, which is what would survive
-      a restart, is the follow-up
+      apart. Said plainly, because it is a rule a reader has to know: the papers
+      this sitting has opened are the papers that answer. Quit the app and a paper
+      goes quiet until it is opened again, since the words are held in memory and
+      nothing of them is written to disk. What was refused: reading every PDF in a
+      space when a search runs, which makes the first search of a space with twenty
+      papers a minute long, and reading them all at launch, which spends that
+      minute whether anybody searches or not. A cache on disk keyed by the file's
+      hash, which is what would survive a restart, is the follow-up
+- [x] The mentions of a note - the places its name is written without a link -
+      are asked the way everything else is asked: the space search, handed the
+      name as a phrase. One search, so they count an alias, they skip what the
+      space leaves out, and they cannot answer differently from the panel above
+      them. They were asking a command that does not exist on either build, which
+      is why nobody had ever seen one
 - [x] A note found by something no line of it says - its path, its name, a tag, a
       front matter value - shows its own words rather than its front matter fence.
       A row saying `---` says nothing about the note it is about, and a note found
