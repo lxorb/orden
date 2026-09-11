@@ -23,10 +23,34 @@ import { focusEditor } from './focus'
 import { spelled, type Spelling } from './list-keys'
 import { walked } from './walk'
 
+/** A list too long to keep in the page.
+ *
+ *  A space of three thousand notes mounts the twenty rows in view and leaves the
+ *  rest as height; see row-window.ts. So the walk cannot be a walk over elements -
+ *  End has to reach a row that does not exist yet, and a letter has to spell a name
+ *  nothing in the page is wearing. What the walk is over instead is the list
+ *  itself, counted and numbered by whoever draws it, and the one thing this asks of
+ *  the page is `reach`: put row n there, and say when it is.
+ *
+ *  Absent for every other list in the app, which is short enough to be all in the
+ *  page at once and is walked by its own elements. */
+interface LongList {
+  /** How many rows the list has, mounted or not. */
+  count: () => number
+  /** Which row this element is, or -1 for one the list no longer holds. */
+  indexOf: (row: HTMLElement) => number
+  /** What each row reads as, in order: the whole list, for spelling a name. */
+  labels: () => string[]
+  /** Puts row n in the page and answers the element once it is there, or null
+   *  where there is no such row. */
+  reach: (index: number) => Promise<HTMLElement | null>
+}
+
 export interface RovingOptions {
   /** A list drawn inside another list of the same kind, which the outermost one
-   *  walks. The file tree draws one of itself per folder, and two handlers reading
-   *  one press would step twice. */
+   *  walks. The tag tree draws one of itself per tag, and two handlers reading one
+   *  press would step twice. The file list is flat and has no use for it; see
+   *  tree-flat.ts. */
   inner?: boolean
   /** A list that runs left to right rather than down: the strip of notes, the row
    *  of panel tabs. Its arrows are left and right, and it leaves up and down alone,
@@ -76,6 +100,8 @@ export interface RovingOptions {
   /** Rows inside a row that leave the tab sequence with it: the cross on a tab.
    *  Reached with the arrows, and with the key that acts on the row instead. */
   quiet?: string
+  /** A list whose rows are not all in the page; see LongList. */
+  long?: LongList
 }
 
 /** Which keys walk a list, and what each of them is in the one vocabulary the walk
@@ -157,9 +183,11 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       return
     }
 
+    const long = settings.long
     const rows = rowsOf()
     const row = rowOf(event)
-    const at = row ? rows.indexOf(row) : -1
+    const at = row ? (long ? long.indexOf(row) : rows.indexOf(row)) : -1
+    const count = long ? long.count() : rows.length
     // The two ends of a list are not anybody's to rebind, and the registry says so
     // in as many words: see `fixed.lists`. So they are read off the event even in a
     // list whose arrows do come from the registry.
@@ -169,12 +197,8 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     const move = key === null ? undefined : moves[key]
 
     if (move !== undefined) {
-      const moved = walked(move, at < 0 ? null : at, rows.length, settings.wrap ?? false)
-      const landed = moved === null ? undefined : rows[moved]
-      if (landed) {
-        event.preventDefault()
-        stand(landed)
-      }
+      const moved = walked(move, at < 0 ? null : at, count, settings.wrap ?? false)
+      if (moved !== null && went(moved)) event.preventDefault()
       return
     }
 
@@ -236,14 +260,33 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     // without four hundred presses of an arrow.
     if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
 
-    const next = spelled(spelling, event.key, event.timeStamp, rows.map(labelOf))
+    const labels = long ? long.labels() : rows.map(labelOf)
+    const next = spelled(spelling, event.key, event.timeStamp, labels)
     spelling = { typed: next.typed, typedAt: next.typedAt }
 
-    const found = rows[next.found]
-    if (found) {
-      event.preventDefault()
-      stand(found)
+    if (next.found >= 0 && went(next.found)) event.preventDefault()
+  }
+
+  /** Puts the keyboard on row n, wherever it is. In a short list that is the
+   *  element; in a long one the row may not be in the page yet, and `reach` is
+   *  what puts it there - a frame later, which is why the press is taken now and
+   *  the focus moves when the row arrives. False for a row the list has not got. */
+  function went(index: number): boolean {
+    const long = settings.long
+    if (!long) {
+      const landed = rowsOf()[index]
+      if (!landed) return false
+
+      stand(landed)
+      return true
     }
+
+    if (index < 0 || index >= long.count()) return false
+
+    void long.reach(index).then((landed) => {
+      if (landed) stand(landed)
+    })
+    return true
   }
 
   /** A press with the pointer moves the tab stop too, or the keyboard and the

@@ -570,7 +570,7 @@
                    named and not fetched yet, which is what makes a fresh sign-in a
                    file list rather than a wait; see `shownTree` in
                    workspace.svelte.ts. -->
-              <Tree entries={listing.children} />
+              <Tree tree={listing} />
 
               <!-- A space with nothing in it says what to do about it. Folders can
              still be there, which is why this counts files and not rows. Nor is a

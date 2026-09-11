@@ -134,6 +134,71 @@ the names still read as one column. See `move-targets.ts`.
 - **The Files tab's mark**, which is a folder shape with its corners taken off.
   It names the panel rather than a row, and the panel's own label says FILES.
 
+## Only the rows in view
+
+A space of three thousand notes is a list of three thousand rows, and a panel shows
+twenty of them. It used to draw all three thousand: three thousand buttons, three
+thousand marks, and three thousand reads of the link index the moment that index
+landed, which was the two hundred milliseconds of rendering left after the list
+first appeared. Now it draws the twenty in view and six either side - thirty-two to
+forty, measured - and the rest of the height stands in as one empty box above the
+window and one below.
+
+Nothing about a row changed. Same button, same classes, same marks, same menu, same
+drag, same twist.
+
+- **The list is flat.** `flatRows` in `tree-flat.ts` walks the tree once into one
+  row per line the reader can see, each saying how far in it sits. The component
+  no longer draws one of itself per open note - it could not, because a component
+  that holds itself can count nothing, and a window needs the rows numbered.
+  `visibleTree`, which the keys and the selection already walked, is that same
+  list: one list, numbered once, so an arrow that lands on row forty and a window
+  that mounts thirty to sixty agree about which row forty is.
+- **No row is ever measured.** Every row is exactly `--row-height` tall, 28 under a
+  pointer and 56 under a thumb, because a label is one line that gives way with an
+  ellipsis. So where a row sits is `index * height`, and turning a twist lengthens
+  the list rather than any row in it. `row-window.ts` is that arithmetic, and it is
+  pure: what mounts for a given scroll position is a table of numbers in
+  `row-window.test.ts` rather than something to drive with a mouse.
+- **A twist still slides.** The band of rows coming out is drawn short and clipped
+  and everything under it sits that much higher, over the same 190ms the wrapper's
+  own `slide` took; a reader who has asked for less movement gets none. A twist
+  going shut holds the list as it was for those 190ms, since the rows on their way
+  out have already left it. The part of a band that is not out yet is not drawn at
+  all: a row no pixels high adds no pixels, and a note holding four hundred notes
+  would otherwise mount four hundred rows for the first frame of the slide.
+- **Three rows are held wherever they are**: the row with the keyboard on it, the
+  row whose name is being typed, and the row a key or an open has just asked for.
+  Each is drawn at its own offset outside the window when the scroll has left it
+  behind. A focus inside a row that has been taken away is a focus on nothing.
+  Held and windowed are **one keyed list**, so a row that is being held and then
+  becomes a row of the window is the same element throughout. Two lists made that
+  one element ending and another beginning, and it cost the keyboard twice: End
+  landed on nothing, and a name being typed lost its field the moment the folder
+  under it finished opening.
+- **A row is reached by pinning it and then asking the browser to scroll to it.**
+  Not by arithmetic: what a scroll has to clear is more than the rows - the label
+  above the list, the empty stretch below it, the box's own padding - and how far a
+  scroll may go at all is the box's to say.
+- **The scroll says nothing about where the rows are.** `overflow-anchor: none`:
+  a browser keeps a reader's place through a change in height by holding the scroll
+  to something on screen, which is right for a page of words and wrong for a list
+  whose rows come and go - the row it anchored to has left the page a frame later.
+  Turning a note's children out moved the scroll two thousand pixels on its own.
+- **The bookmarks above the list are not windowed**, and should not be: they are
+  what somebody chose to keep, which is tens of rows, not thousands. The section
+  labels over the two groups are unchanged - they are siblings of the list in the
+  same scroller, where they always were.
+- **How far down each space was left** is remembered beside which notes are open,
+  in `workspace/device.svelte.ts`: on this machine, per space, written down once the
+  scrolling stops. It costs one assignment to restore, because the height is
+  arithmetic rather than three thousand rows that have to exist first.
+- **Which of those two wins when the panel appears**: the place it was left on. The
+  first note the panel sees is the note that was already open - a launch, a panel
+  switched back to - and that is not a note being opened. A note opened after that
+  is brought into view, nearest, so a row already on screen is not pulled around
+  under the reader.
+
 ## Seeing it
 
 - `apps/desktop/test/e2e/plain-folders.py` - a vault with `Projects/` and a
@@ -143,3 +208,5 @@ the names still read as one column. See `move-targets.ts`.
 - `apps/desktop/test/e2e/tree-create.py` - the four things the list makes: a note
   and a canvas on the empty ground, a note inside a folder nobody wrote, and a
   note inside a note.
+- `apps/desktop/test/e2e/big-list.py` - a space of three thousand notes: how many
+  rows are in the page, and every gesture that has to reach one that is not.

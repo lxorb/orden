@@ -44,7 +44,7 @@ const shared = readFileSync(`${THEMES}base.css`, 'utf8')
 /** The branch a row is drawn by while its name is being typed: from the test that
  *  says this row is the one, to the branch for a row that is not. */
 const naming = tree.slice(
-  tree.indexOf('{#if workspace.naming?.path === entry.path}'),
+  tree.indexOf('{#if named?.path === entry.path}'),
   tree.indexOf('{:else if own}'),
 )
 
@@ -81,19 +81,37 @@ describe('the row a name is being typed on', () => {
   })
 
   /** A folder being renamed is still open: what a folder discloses has nothing to
-   *  do with what its own row is drawn as, so the rows under it are drawn outside
-   *  the branch that chooses between a button and a field. */
+   *  do with what its own row is drawn as. Nothing at all, now that the list is one
+   *  flat column - what a note holds are rows of the list, after this one, so there
+   *  is no branch inside a row for a name being typed to reach. See tree-flat.ts. */
   test('and a folder keeps the rows it discloses', () => {
-    const disclosure = '{#if entry.is_dir && workspace.isExpanded(entry.path)}'
-    expect([...tree.matchAll(/\{#if entry\.is_dir && workspace\.isExpanded/g)]).toHaveLength(1)
-    expect(tree.indexOf(disclosure)).toBeGreaterThan(tree.indexOf('{:else}'))
+    expect([...tree.matchAll(/\{#if entry\.is_dir && workspace\.isExpanded/g)]).toHaveLength(0)
+    expect(tree).toContain('flatRows(tree, isOpen)')
   })
 
   /** Which is what lets a rename survive the listing sync brings: the row is the
    *  same row, so the field inside it is never remade and never loses what has been
-   *  typed into it. See `keepNaming` in workspace.svelte.ts. */
+   *  typed into it. See `keepNaming` in workspace.svelte.ts.
+   *
+   *  And what keeps a scroll cheap: the rows a window slides in and out are keyed,
+   *  so a scroll of one row makes one row rather than remaking twenty. */
   test('and the list is keyed by path, so a fresh listing does not remake it', () => {
-    expect(tree).toContain('{#each entries as entry (entry.path)}')
+    expect(tree).toContain('{#each drawn as one (one.row.entry.path)}')
+  })
+
+  /** And a name being typed on a row far off screen is a row the window has to keep:
+   *  the field would otherwise be taken out of the page mid-word. */
+  test('and the row being named is held in the page wherever the scroll is', () => {
+    expect(tree).toContain('[workspace.naming?.path, standing, reaching]')
+  })
+
+  /** Held and drawn by the one list, so a row that is being held at its own offset
+   *  and then becomes a row of the window is the same element throughout. Two lists
+   *  made that one element ending and another beginning, and the field lost the
+   *  keyboard the moment a folder finished opening under it. */
+  test('and is the same element whether it is held or in the window', () => {
+    expect([...tree.matchAll(/\{#each drawn as/g)]).toHaveLength(1)
+    expect(tree).toContain('class:away={one.away}')
   })
 })
 

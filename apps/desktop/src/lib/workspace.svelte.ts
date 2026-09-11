@@ -56,6 +56,7 @@ import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
+import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -2205,25 +2206,18 @@ class Workspace {
 
   /** Every row the tree shows, top to bottom, and which of them are folders
    *  standing open: a folder's children only while it is open, which is what
-   *  Shift-click, Ctrl+A and the arrow keys all mean by "the next one". */
+   *  Shift-click, Ctrl+A and the arrow keys all mean by "the next one".
+   *
+   *  The list the panel draws, which is `shownTree` and so includes the rows an
+   *  account's first pass has named and not fetched yet: the keys walk what is on
+   *  screen, and the window that mounts a slice of those rows counts them from the
+   *  same list. One list, numbered once; see tree-flat.ts. */
   visibleTree(): TreeRow[] {
-    const out: TreeRow[] = []
-    const walk = (entry: Entry) => {
-      // A folder note is the row its folder is drawn as, not a row of its own, so
-      // the keys and the selection walk past it the way the eye does; see
-      // folder-notes.ts.
-      const own = folderNote(entry)
-
-      for (const child of entry.children) {
-        if (child.path === own?.path) continue
-
-        const open = child.is_dir && this.isExpanded(child.path)
-        out.push({ path: child.path, folder: child.is_dir, open })
-        if (open) walk(child)
-      }
-    }
-    if (this.tree) walk(this.tree)
-    return out
+    return flatRows(this.shownTree, (path) => this.isExpanded(path)).map(({ entry }) => ({
+      path: entry.path,
+      folder: entry.is_dir,
+      open: entry.is_dir && this.isExpanded(entry.path),
+    }))
   }
 
   /** The same rows, as the paths on them. */

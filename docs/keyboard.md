@@ -153,9 +153,20 @@ tabs), and those two leave up and down alone so the page underneath still
 scrolls.
 
 The file list is a list of buttons and not an ARIA `tree`. The roles were left
-off on purpose: nib's markup puts what a row holds in a sibling of the row rather
-than inside it, and a `tree` built that way announces worse than no tree at all.
-The keys are the tree keys either way.
+off on purpose: nib's markup puts what a row holds beside the row rather than
+inside it - one flat column, in which what a note holds is the rows under it - and
+a `tree` built that way announces worse than no tree at all. The keys are the tree
+keys either way. Each row does say how many rows there are and which of them it is
+(`aria-setsize`, `aria-posinset`), because the page holds the rows in view and not
+the other two thousand nine hundred and eighty.
+
+Which is the one thing the walk had to be told about. It is a walk over the rows
+rather than over the elements: End, Home and a spelled name all land on a row that
+is not in the page, so `roving.ts` asks the list to **reach** it - draw it at its
+own place, scroll to it - and moves the focus once it is there. The row the keyboard
+is on stays in the page however far the scroll then goes, because a focus inside a
+row that has been taken away is a focus on nothing. See `row-window.ts` and
+`docs/tree.md`.
 
 ### The chords
 

@@ -16,7 +16,7 @@
  *  every time the folder is read again - on every save, rename and sync - and
  *  took the open folders with it each time. */
 
-import { isBoolean, isString, recordOf, stored, stringList } from '../stored'
+import { isBoolean, isNumber, isString, recordOf, stored, stringList } from '../stored'
 import { without, withOrWithout } from '../records'
 
 export const RECENT_KEY = 'nib:recent'
@@ -26,6 +26,9 @@ export const ICONS_KEY = 'nib:icons'
  *  read and write back, and a value that is not a string is a value they drop. */
 export const ICON_TINTS_KEY = 'nib:icon-tints'
 export const EXPANDED_KEY = 'nib:expanded'
+/** How far down the file list each space was left. Not exported, unlike the keys
+ *  around it: nothing outside this file names it. */
+const LIST_AT_KEY = 'nib:list-at'
 export const TAGS_KEY = 'nib:expanded-tags'
 /** Which groups of bookmarks are open. Not exported, unlike the two above it:
  *  nothing outside this file names it, and the one place that lists these keys
@@ -36,12 +39,27 @@ const GROUPS_KEY = 'nib:expanded-groups'
  *  the list is worth reading. */
 const RECENT_LIMIT = 15
 
+/** How long a scroll has to have stopped before where it stopped is written down.
+ *  Long enough that a flick costs one write rather than sixty. */
+const SETTLING = 400
+
 export class DeviceView {
   /** Most recent first, no duplicates. */
   recent = $state<string[]>([])
 
   /** Which folders are open, by path. */
   expanded = $state<Record<string, boolean>>({})
+
+  /** How far down the file list each space was left, in pixels, by the space's
+   *  own folder. The same kind of fact as which notes are open: where somebody is
+   *  looking this afternoon, on this machine, and no business of the account's.
+   *
+   *  Kept so a space of three thousand notes comes back to the row it was left on.
+   *  It always could have been - the list is one column and a number of pixels - and
+   *  it matters more now that the rows in view are the only rows there are: the
+   *  window is arithmetic off this number, so restoring it costs one assignment
+   *  rather than a wait for three thousand rows to exist. */
+  listScroll = $state<Record<string, number>>({})
 
   /** Which tags are open, by tag path. Its own record rather than a share of the
    *  one above: a tag `work/nib` and a folder called `work/nib` are two
@@ -57,6 +75,9 @@ export class DeviceView {
   /** And the colour it is drawn in, where somebody chose one: the same keys, and
    *  empty for every space that wears its icon in the plain foreground. */
   iconTints = $state<Record<string, string>>({})
+
+  /** The timer waiting to write the scroll positions down, or null while none is. */
+  private writing: ReturnType<typeof setTimeout> | null = null
 
   constructor() {
     this.reread()
@@ -78,6 +99,7 @@ export class DeviceView {
   reread(): void {
     this.recent = stringList(stored(RECENT_KEY)) ?? []
     this.expanded = recordOf(stored(EXPANDED_KEY), isBoolean)
+    this.listScroll = recordOf(stored(LIST_AT_KEY), isNumber)
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
     this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
     this.icons = recordOf(stored(ICONS_KEY), isString)
@@ -119,6 +141,27 @@ export class DeviceView {
       ? without(this.expandedGroups, id)
       : { ...this.expandedGroups, [id]: true }
     localStorage.setItem(GROUPS_KEY, JSON.stringify(this.expandedGroups))
+  }
+
+  /** How far down the list this space was left, or zero for one never scrolled. */
+  listAt(root: string): number {
+    return this.listScroll[root] ?? 0
+  }
+
+  /** Where the list is now. Written to storage on a trailing timer rather than on
+   *  every scroll event: the number changes sixty times a second under a finger,
+   *  and what has to survive is where the scrolling stopped. */
+  setListAt(root: string, at: number) {
+    const round = Math.max(0, Math.round(at))
+    if (this.listScroll[root] === round) return
+
+    this.listScroll = { ...this.listScroll, [root]: round }
+    if (this.writing !== null) return
+
+    this.writing = setTimeout(() => {
+      this.writing = null
+      localStorage.setItem(LIST_AT_KEY, JSON.stringify(this.listScroll))
+    }, SETTLING)
   }
 
   isTagOpen(path: string): boolean {

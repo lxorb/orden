@@ -1,11 +1,44 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition'
+  /** The file list: one flat column of rows, of which only the ones in view are in
+   *  the page.
+   *
+   *  This used to draw one of itself per open note, which is why a space of three
+   *  thousand notes was three thousand buttons - three thousand marks, three
+   *  thousand reads of the link index, and about two hundred milliseconds of
+   *  rendering after the tree first appeared, all of it for the twenty rows a panel
+   *  can show. So the tree is flattened once into a list of rows (tree-flat.ts), a
+   *  window says which of them to mount (row-window.ts), and the rest of the height
+   *  stands in as one empty box above and one below.
+   *
+   *  Nothing about a row changed: the same button, the same classes, the same marks,
+   *  the same menu, the same drag. What changed is how many of them exist.
+   *
+   *  Three things a window has to answer for, and all three are here:
+   *
+   *  - the keyboard walks rows that are not in the page, so the walk is over the
+   *    list and `reach` puts a row there before the focus moves to it; see roving.ts
+   *  - the row with the keyboard on it, and the row whose name is being typed, are
+   *    held in the page wherever they are, because a focus inside a row that is
+   *    taken away is a focus on nothing
+   *  - a twist still slides, as a measured transition over the window rather than a
+   *    height on a box: the band of rows coming out is drawn short and clipped and
+   *    everything under it sits that much higher, which is the same picture the
+   *    wrapper's `slide` drew. */
+
+  import { tick, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   // The kind of file a row is, under a name of its own: `FileMark` here is the
   // component that draws one.
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
-  import { folderFor, folderNote, folderNotePath, nestedIn, renameSteps } from './folder-notes'
+  import {
+    folderFor,
+    folderNote,
+    folderNotePath,
+    isFolderNote,
+    nestedIn,
+    renameSteps,
+  } from './folder-notes'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { longPress } from './longpress'
@@ -20,20 +53,147 @@
   import { shortcuts } from './shortcuts.svelte'
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
   import { dropTarget, targetFor } from './drop-target.svelte'
+  import { autoScrollBy, heightOf, offsetOf, type Fold, type Rows, windowFor } from './row-window'
+  import { folderOf } from './tauri'
+  import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
   import { treeStep, TREE_MOVES } from './tree-keys'
+  import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
   import { inside } from './workspace/zones'
-  import Tree from './Tree.svelte'
   import Twist from './Twist.svelte'
   import { dur } from './motion'
 
-  const { entries, depth = 0 }: { entries: Entry[]; depth?: number } = $props()
+  const { tree }: { tree: Entry } = $props()
+
+  /** How many rows are kept beyond either edge of the view, so a wheel click
+   *  arrives at rows that are already drawn rather than at an empty box. */
+  const OVERSCAN = 6
+
+  /** How long a twist takes to slide what it holds into place. The duration the
+   *  wrapper's own `slide` had. */
+  const FOLDING = 190
+
+  /** The shortest a row may be taken to be, for a browser that will not say what
+   *  `--row-height` came to. Not a scale of its own - see `tokenHeight`. */
+  const LEAST_ROW = 28
+  const LEAST_TOUCH = 56
 
   /** Whether the name being typed cannot be written, which the row wears as a
    *  hairline in red; the field is what knows why. One flag for the list, because
    *  one row at a time is being named. */
   let wrong = $state(false)
+
+  const isOpen = (path: string) => workspace.isExpanded(path)
+
+  /** Every row the list shows, top to bottom. The same list `visibleTree` hands
+   *  the keys and the selection, numbered the same way; see tree-flat.ts. */
+  const live = $derived(flatRows(tree, isOpen))
+
+  /** The list as it was a moment ago, held while a twist closes: the rows on their
+   *  way out have already left `live`, and a slide has to have something to slide.
+   *  Null whenever the list is still. */
+  let frozen = $state<FlatRow[] | null>(null)
+
+  const flat = $derived(frozen ?? live)
+
+  /** Where each row is, by path: what turns the row an event came off into the
+   *  number the window and the walk speak in. */
+  const at = $derived(rowIndex(flat))
+
+  /** The list, and the scroller it is in. The scroller is the panel's own body,
+   *  which holds the bookmarks above this list and the empty stretch below it, so
+   *  it is found rather than passed: the drawer on a phone and the panel on a
+   *  desktop are this same component in that same box. */
+  let list = $state<HTMLUListElement>()
+
+  /** Not state: nothing is derived from which box this is, and `measure` reading it
+   *  reactively would make the effect that finds it depend on its own answer. */
+  let scroller: HTMLElement | null = null
+
+  /** How far down the list the scroller has reached and how much of it it can show.
+   *  Read rather than guessed; see `measure`. */
+  let top = $state(0)
+  let room = $state(0)
+
+  /** And how tall one row is, which is the token: 28 under a pointer, 56 under a
+   *  thumb. Off the device class, so plugging a mouse into a tablet re-reads it -
+   *  that changes the row scale without resizing anything. The observer below writes
+   *  over it as well, since a window resized is the other moment the tokens may have
+   *  moved underneath. */
+  let rowHeight = $derived(tokenHeight(viewport.touch))
+
+  /** A twist on the move, or null while the list is still. */
+  let fold = $state<Fold | null>(null)
+
+  /** The row the keyboard is on, and the row a key or an open has asked for. Held
+   *  by path rather than by number, since the numbers move under a rename. */
+  let standing = $state<string | null>(null)
+  let reaching = $state<string | null>(null)
+
+  /** The rows the window must keep whatever the scroll says: the name being typed,
+   *  the keyboard, and whatever a key or an open has just asked for. Three at the
+   *  very most, and usually the same one three times over. */
+  const pinned = $derived(
+    [workspace.naming?.path, standing, reaching]
+      .map(pathAt)
+      .filter((one): one is number => one !== null),
+  )
+
+  const rows = $derived<Rows>({
+    count: flat.length,
+    height: rowHeight,
+    top,
+    room,
+    overscan: OVERSCAN,
+    fold,
+    pinned,
+  })
+
+  const view = $derived(windowFor(rows))
+
+  /** One row of the list as it is drawn: which row it is, and whether it is drawn
+   *  where the flow puts it or at an offset of its own. */
+  interface Drawn {
+    row: FlatRow
+    index: number
+    /** Held although the window is elsewhere, so out of the flow; see `.away`. */
+    away: boolean
+  }
+
+  /** The rows to draw: the window's own, and the few the list is holding on to
+   *  wherever the scroll has gone. The part of a sliding band that is not out yet
+   *  is left out of the first of those - it is flat, and a row no pixels high adds
+   *  no pixels to the flow.
+   *
+   *  One list rather than two, and in the order of the list itself, because the two
+   *  are the same rows: a row held at its own offset while the scroll is elsewhere
+   *  becomes a row of the window the moment the scroll arrives, and two lists would
+   *  make that one element ending and another beginning. Which is not a nicety - it
+   *  took the keyboard out of a name being typed. */
+  const drawn = $derived.by(() => {
+    const out: Drawn[] = []
+    const skip = view.skip
+
+    for (let index = view.first; index <= view.last; index++) {
+      if (skip && index >= skip.from && index <= skip.to) continue
+
+      const row = flat[index]
+      if (row) out.push({ row, index, away: false })
+    }
+
+    for (const index of view.pinned) {
+      const row = flat[index]
+      if (row) out.push({ row, index, away: true })
+    }
+
+    return out.sort((one, other) => one.index - other.index)
+  })
+
+  function pathAt(path: string | null | undefined): number | null {
+    if (path === null || path === undefined) return null
+    return at.get(path) ?? null
+  }
 
   /** Ctrl and Shift build a selection and do nothing else; a plain click makes
    *  the row the one selected and goes on to what it always did. Returns
@@ -58,19 +218,53 @@
     return from instanceof HTMLElement ? (from.dataset.path ?? null) : null
   }
 
-  /** The outermost list, which is the one every row is inside: this component
-   *  draws one of itself per folder, and the row being stepped onto is usually in
-   *  another of them. Only the outermost instance binds it, since only that one
-   *  walks. */
-  let list = $state<HTMLUListElement>()
+  /** Brings row n into view and into the page, and answers its element once it is
+   *  there. Null for a row the list has not got, and for the row whose name is being
+   *  typed, which wears a field rather than a path.
+   *
+   *  The whole of what a window owes the rest of the app: a row far off screen is not
+   *  in the page, and End, a spelled name, a rename and a note being opened all have
+   *  to arrive at one.
+   *
+   *  Held first and scrolled second: the row is drawn at its own offset outside the
+   *  window, which is its true place in the list, and then the browser is asked to
+   *  bring it in. Its own scrolling rather than arithmetic of ours, because what a
+   *  scroll has to clear is not only the rows - the label above the list, the empty
+   *  stretch below it and the box's own padding are all in the way, and how far a
+   *  scroll may go at all is the box's to say.
+   *
+   *  Which is only safe because the window and the rows it is holding on to are one
+   *  keyed list: the row stays the same element as it stops being held and becomes a
+   *  row of the window, so a focus or a name being typed inside it survives the
+   *  handover. Two lists made that two elements, and End landed on nothing. */
+  async function reach(index: number): Promise<HTMLElement | null> {
+    const row = flat[index]
+    if (!row) return null
+
+    reaching = row.entry.path
+    await tick()
+
+    const line = list?.querySelector(`li[data-row="${index}"]`)
+    if (!(line instanceof HTMLElement)) return null
+
+    line.scrollIntoView({ block: 'nearest' })
+    measure()
+
+    // The row inside it, for whoever wants to put the keyboard on it. Null for the
+    // row whose name is being typed, which wears a field instead.
+    const found = line.querySelector('.row[data-path]')
+    return found instanceof HTMLElement ? found : null
+  }
 
   /** Puts the keyboard on a row and makes it the one selected, which is what
-   *  arriving at a row in a file list means. The row is found in the page rather
-   *  than held in state, for the reason above. */
+   *  arriving at a row in a file list means. */
   function stand(path: string) {
     workspace.select(path)
-    const row = list?.querySelector(`.row[data-path="${CSS.escape(path)}"]`)
-    if (row instanceof HTMLElement) row.focus()
+
+    const index = at.get(path)
+    if (index === undefined) return
+
+    void reach(index).then((row) => row?.focus())
   }
 
   /** Which of the walk's keys this press is, by the id the registry holds it
@@ -194,6 +388,13 @@
     return entry.is_dir ? 'file' : fileMark(entry.name)
   }
 
+  /** What the row is called: the folder's name where the row is a folder, so a row
+   *  whose note is somebody else's `index.md` is still called after its place. Also
+   *  what a spelled name is looked for in; see roving.ts. */
+  function labelOf(entry: Entry): string {
+    return entry.is_dir ? entry.name : shownName(entry.name)
+  }
+
   /** Whose icon it is: the note's where the row has one, and the folder's while it
    *  has none - which is the one thing the space's icon map is still for. Either
    *  way `chosen-icon.ts` reads both, so a folder that wore an icon before
@@ -231,6 +432,7 @@
     workspace.panes.dragging = null
     workspace.panes.landing = null
     carriedNothing()
+    stopRolling()
   }
 
   /** A row lights only where a drop would do something, the way a pane's drop
@@ -302,134 +504,473 @@
 
     if (!pick(event, entry)) void workspace.openRow(entry.path, { preview: true })
   }
+
+  /* ── Where the window is ──────────────────── */
+
+  /** The box this list scrolls in. The panel's body, which also holds the
+   *  bookmarks above and the empty stretch below, so the list's own top is a
+   *  distance into it rather than zero. */
+  function scrollerOf(from: HTMLElement): HTMLElement | null {
+    for (let box = from.parentElement; box; box = box.parentElement) {
+      const flow = getComputedStyle(box).overflowY
+      if (flow === 'auto' || flow === 'scroll') return box
+    }
+
+    return null
+  }
+
+  /** How tall one row is, off the token rather than off a row: `--row-height` is 28
+   *  under a pointer and 56 under a thumb, stated once in the themes package, and a
+   *  label is one line that gives way with an ellipsis - so every row in every list
+   *  is exactly this tall and none of them is ever measured.
+   *
+   *  Which kind of screen this is comes in rather than being read here, so whoever
+   *  asks asks again when a finger replaces a pointer - which changes the row scale
+   *  without resizing anything the observer below is watching. It is only used where
+   *  a browser answers nothing at all, which keeps the arithmetic off nought; it is
+   *  a floor rather than a second statement of the scale. */
+  function tokenHeight(touch: boolean): number {
+    const said = getComputedStyle(document.documentElement).getPropertyValue('--row-height')
+    const px = Number.parseFloat(said)
+
+    return Number.isFinite(px) && px > 0 ? px : touch ? LEAST_TOUCH : LEAST_ROW
+  }
+
+  /** Where the scroller has got to, and how much of the list it can show. Two
+   *  boxes read rather than a scroll offset, so whatever stands above the list -
+   *  the bookmarks, a section label, a group opening - is accounted for without
+   *  this having to know it is there. */
+  function measure() {
+    const ul = list
+    const box = scroller
+    if (!ul || !box) return
+
+    top = box.getBoundingClientRect().top - ul.getBoundingClientRect().top
+    room = box.clientHeight
+  }
+
+  $effect(() => {
+    const ul = list
+    if (!ul) return
+
+    const box = scrollerOf(ul)
+    scroller = box
+    if (!box) return
+
+    measure()
+
+    // Where this space was left. Read outside the effect's own reading, or writing
+    // it down on every scroll would run this again and put the list back where the
+    // scroll started from.
+    const root = untrack(() => workspace.activeSpace?.root)
+    if (root !== undefined) {
+      const left = untrack(() => workspace.device.listAt(root))
+      if (left > 0) box.scrollTop = left
+      measure()
+    }
+
+    const onScroll = () => {
+      measure()
+      if (root !== undefined) workspace.device.setListAt(root, box.scrollTop)
+    }
+
+    // One observer, on the scroller: a window resized, a drawer opened, the
+    // keyboard taking half a phone's screen, or a finger changing the row scale
+    // all arrive here.
+    const watch = new ResizeObserver(() => {
+      rowHeight = tokenHeight(viewport.touch)
+      measure()
+    })
+    watch.observe(box)
+
+    box.addEventListener('scroll', onScroll, { passive: true })
+    box.addEventListener('dragover', onDragOver)
+    box.addEventListener('dragleave', offList)
+    box.addEventListener('drop', stopRolling)
+    box.addEventListener('dragend', stopRolling)
+
+    return () => {
+      watch.disconnect()
+      box.removeEventListener('scroll', onScroll)
+      box.removeEventListener('dragover', onDragOver)
+      box.removeEventListener('dragleave', offList)
+      box.removeEventListener('drop', stopRolling)
+      box.removeEventListener('dragend', stopRolling)
+      stopRolling()
+    }
+  })
+
+  /* ── Autoscroll under a drag ──────────────── */
+
+  /** How far into the list the pointer is while something is held over it, and the
+   *  frame loop that brings rows in under it. A drop can only land on a row that
+   *  is there, and a space of three thousand has one row on screen in a hundred. */
+  let edgeAt: number | null = null
+  let rolling: number | null = null
+
+  function rollOn() {
+    const box = scroller
+    if (!box || edgeAt === null) {
+      rolling = null
+      return
+    }
+
+    // The band is one row deep and the fastest it goes is half a row a frame,
+    // which is the row scale rather than a number of its own.
+    const step = autoScrollBy(edgeAt, box.clientHeight, rowHeight, rowHeight / 2)
+    if (step !== 0) box.scrollTop += step
+
+    rolling = requestAnimationFrame(rollOn)
+  }
+
+  function onDragOver(event: DragEvent) {
+    const box = scroller
+    if (!box || !isTreeDrag(event.dataTransfer)) return
+
+    edgeAt = event.clientY - box.getBoundingClientRect().top
+    rolling ??= requestAnimationFrame(rollOn)
+  }
+
+  /** A `dragleave` that is the pointer moving from one row to the next, which is
+   *  most of them, is not the pointer leaving the list: the events from the rows
+   *  arrive here too. The same geometry the rows settle it with; see `stillInside`. */
+  function offList(event: DragEvent) {
+    const box = scroller
+    if (box && inside(box.getBoundingClientRect(), event.clientX, event.clientY)) return
+
+    stopRolling()
+  }
+
+  function stopRolling() {
+    edgeAt = null
+    if (rolling !== null) cancelAnimationFrame(rolling)
+    rolling = null
+  }
+
+  /* ── A twist sliding ──────────────────────── */
+
+  /** Where a block of rows appeared or went, or null for any other way the list
+   *  changed. A rename re-sorts and is not one block; a listing that arrives with
+   *  the same rows in it is no change at all. */
+  function blockMoved(was: string[], now: string[]): { at: number; rows: number } | null {
+    const grew = now.length - was.length
+    if (grew === 0) return null
+
+    const [fewer, more] = grew > 0 ? [was, now] : [now, was]
+    const many = Math.abs(grew)
+
+    let head = 0
+    while (head < fewer.length && fewer[head] === more[head]) head += 1
+    for (let rest = head; rest < fewer.length; rest++) {
+      if (fewer[rest] !== more[rest + many]) return null
+    }
+
+    return { at: head, rows: many }
+  }
+
+  let wasPaths: string[] = []
+  let wasRows: FlatRow[] = []
+  let sliding: number | null = null
+
+  /** The band coming out or going in, over `FOLDING` milliseconds, which is what
+   *  the wrapper's `slide` took. Instant for a reader who has asked for as little
+   *  movement as possible: `dur` answers zero and there is no band at all. */
+  function slide(twist: number, many: number, shutting: boolean, keep: FlatRow[]) {
+    if (sliding !== null) cancelAnimationFrame(sliding)
+
+    const ms = dur(FOLDING)
+    if (ms === 0) {
+      fold = null
+      frozen = null
+      return
+    }
+
+    if (shutting) frozen = keep
+    const started = performance.now()
+
+    const step = (now: number) => {
+      const along = Math.min(1, (now - started) / ms)
+      const eased = cubicOut(along)
+      const out = shutting ? 1 - eased : eased
+      fold = { at: twist, rows: many, grown: many * out }
+
+      if (along < 1) {
+        sliding = requestAnimationFrame(step)
+        return
+      }
+
+      sliding = null
+      fold = null
+      frozen = null
+    }
+
+    fold = { at: twist, rows: many, grown: shutting ? many : 0 }
+    sliding = requestAnimationFrame(step)
+  }
+
+  // Before the paint, so the band is short in the very first frame it exists:
+  // a frame at full height followed by a slide from nothing is a flicker.
+  $effect.pre(() => {
+    const now = live
+    const paths = now.map((one) => one.entry.path)
+    const before = wasRows
+    const moved = blockMoved(wasPaths, paths)
+
+    wasPaths = paths
+    wasRows = now
+
+    if (!moved || moved.at < 1) return
+
+    // The row the block belongs to, which is the one above it and is in both
+    // lists. A twist, and nothing else: a note arriving from a sync appears
+    // under a row that holds nothing, or is one of several a folder gained, and
+    // neither is a fold.
+    const opening = paths.length > before.length
+    const twist = (opening ? now : before)[moved.at - 1]
+    if (!twist?.entry.is_dir) return
+    if (workspace.isExpanded(twist.entry.path) !== opening) return
+    if (heldRows(twist.entry, isOpen) !== moved.rows) return
+
+    slide(moved.at - 1, moved.rows, !opening, before)
+  })
+
+  $effect(() => () => {
+    if (sliding !== null) cancelAnimationFrame(sliding)
+  })
+
+  /* ── Rows that have to be looked at ───────── */
+
+  /** The row a note is shown as: its own, or the folder's where the note is the
+   *  one its folder is drawn as. */
+  function rowOfNote(note: string): number | null {
+    const own = at.get(note)
+    if (own !== undefined) return own
+    if (!isFolderNote(note)) return null
+
+    return at.get(folderOf(note)) ?? null
+  }
+
+  /** The note being read, kept in view. Nearest, so a row already on screen is not
+   *  pulled around under the reader; and only when the note changes, so the list
+   *  stays where it was left otherwise. */
+  let showing: string | null = null
+
+  /** Whether a note has yet been opened while the panel was watching. The first one
+   *  it sees is the note that was already open when it appeared - a launch, a panel
+   *  switched back to - and the list has just come back to where the space was left,
+   *  which is the place that wins. Only a note opened after that is a note being
+   *  opened, and only that is worth moving the list for. */
+  let opened = false
+
+  $effect(() => {
+    const note = workspace.active?.path ?? null
+    if (note === showing) return
+    showing = note
+
+    if (!opened) {
+      opened = true
+      return
+    }
+    if (note === null) return
+
+    const index = rowOfNote(note)
+    if (index === null) return
+
+    void reach(index)
+  })
+
+  /** The row whose name is being typed, in view and in the page: a new note
+   *  appears at its sorted position already editing, which may be anywhere. */
+  let naming: string | null = null
+
+  $effect(() => {
+    const path = workspace.naming?.path ?? null
+    if (path === naming) return
+    naming = path
+    if (path === null) return
+
+    const index = at.get(path)
+    if (index === undefined) return
+
+    // The element is not asked for: a row being named wears a field rather than a
+    // path, so there is nothing to find and nothing to focus - the field takes the
+    // keyboard itself. `reach` is here for the scroll.
+    void reach(index)
+  })
+
+  /** Which row the keyboard is on, so the window holds it however far the reader
+   *  then scrolls. */
+  function onFocus(event: FocusEvent) {
+    const from = event.target instanceof Element ? event.target.closest('.row') : null
+    standing = from instanceof HTMLElement ? (from.dataset.path ?? null) : null
+  }
+
+  function onBlur(event: FocusEvent) {
+    const to = event.relatedTarget
+    if (to instanceof Node && list?.contains(to)) return
+    standing = null
+  }
 </script>
 
-<!-- Keys are read on the outermost list, where every row's keydown ends up: the
-     selection keys here, and the walk every list in the app shares through the
-     action; see roving.ts. The rows carry `is-on` for the note that is open, so Tab
-     into the list arrives at the note being read rather than at the top of the
-     space. -->
+<!-- Keys are read on the list, where every row's keydown ends up: the selection
+     keys here, and the walk every list in the app shares through the action; see
+     roving.ts. The rows carry `is-on` for the note that is open, so Tab into the
+     list arrives at the note being read rather than at the top of the space.
+     `long` is what tells the walk the list is longer than the page: End and a
+     spelled name reach a row that is not mounted yet. -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <ul
   bind:this={list}
-  onkeydown={depth === 0 ? onKey : undefined}
+  onkeydown={onKey}
+  onfocusin={onFocus}
+  onfocusout={onBlur}
   use:roving={{
-    inner: depth > 0,
     rows: '.row',
     keyOf: walkKey,
     sideways,
     open: openRow,
     peek: peekRow,
-    menu: (row, at) => row.dispatchEvent(at),
+    menu: (row, to) => row.dispatchEvent(to),
     leave: leaveList,
+    long: {
+      count: () => flat.length,
+      indexOf: (row) => (row.dataset.path === undefined ? -1 : (pathAt(row.dataset.path) ?? -1)),
+      labels: () => flat.map((one) => labelOf(one.entry)),
+      reach,
+    },
   }}
 >
-  {#each entries as entry (entry.path)}
-    <!-- The note a folder holds of its own name, which is the row the folder is
-         drawn as; null for every other row. See folder-notes.ts. -->
-    {@const own = folderNote(entry)}
-    <!-- What the row discloses: everything the folder holds, except the note it is
-         itself drawn as, which is this row. -->
-    {@const nested = own ? nestedIn(entry) : entry.children}
-    <!-- A folder nobody has written a note in: a row of somebody else's vault,
-         drawn quietly until there are words in it. -->
-    {@const unwritten = entry.is_dir && !own}
-    <!-- What the row opens. A folder opens its own note, the one it has or the one
-         it would have; anything else opens itself. -->
-    {@const opens = own?.path ?? (entry.is_dir ? folderNotePath(entry.path) : entry.path)}
-    <!-- What it is called: the folder's name where the row is a folder, so a row
-         whose note is somebody else's `index.md` is still called after its place. -->
-    {@const name = entry.is_dir ? entry.name : shownName(entry.name)}
-    <li>
-      {#if workspace.naming?.path === entry.path}
-        <!-- The row while its name is being typed. Its mark, its indentation, its
-             height, its font, the fill that says it is the note you have open, the
-             twist at the far end and the rows it discloses all stay exactly as they
-             were: renaming a file changes its name and nothing else about it. Only
-             the name becomes a field, in the slot the name was already in; see
-             NameField.svelte.
-             A div rather than the button a row usually is, for two reasons that
-             point the same way: a button cannot hold a field, and a row whose name
-             is being typed is not a row to press. -->
-        <div
-          class="nib-row row"
-          class:is-quiet={unwritten}
-          class:is-on={workspace.active?.path === opens}
-          class:is-picked={workspace.isSelected(entry.path)}
-          class:is-wrong={wrong}
-          style:--level={depth}
-        >
-          <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
-          <NameField
-            value={nameToEdit(entry)}
-            extension={extensionOf(entry.name, entry.is_dir)}
-            taken={workspace.namesBeside(entry.path)}
-            appending={workspace.naming.appending}
-            bind:wrong
-            oncommit={(typed: string) => commit(entry, own, typed)}
-            oncancel={() => workspace.cancelNaming()}
-          />
-          {#if nested.length}{@render twist(entry.path)}{/if}
-        </div>
-      {:else}
-        <!-- One row, because the list shows one kind of thing: a note, which may
-             hold other notes. The mark says which kind of file it is, the name is
-             the note's, and the twist at the far end appears only where there is
-             something under it - a vault may arrive with a folder holding nothing
-             but its own note, and a twist that opens on to nothing is a row
-             promising something it does not have.
-             A folder with no note of its own is the same row drawn quietly: it is
-             a note nobody has written, and clicking it opens the empty page it is
-             without writing anything. See folder-notes.ts and docs/tree.md. -->
-        <button
-          class="nib-row row"
-          data-path={entry.path}
-          class:is-left-out={workspace.excluded.has(entry.path)}
-          class:is-quiet={unwritten}
-          class:is-taking={nesting(entry)}
-          class:is-on={workspace.active?.path === opens}
-          class:is-picked={workspace.isSelected(entry.path)}
-          style:--level={depth}
-          aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
-          draggable="true"
-          onclick={(event) => openRowAt(event, entry)}
-          ondblclick={() => workspace.openRow(entry.path)}
-          oncontextmenu={(event) => menu.show(event, rowMenu(entry), { title: name })}
-          use:longPress={(event) => menu.show(event, rowMenu(entry), { title: name })}
-          ondragstart={(event) => startDrag(event, entry.path)}
-          ondragend={endDrag}
-          ondragover={(event) => overRow(event, entry)}
-          ondragleave={(event) => stillInside(event) || dropTarget.clear()}
-          ondrop={(event) => drop(event, entry)}
-        >
-          <!-- The row says what it opens into without spending a word on it, or
-               wears the icon the note itself chose; the path is how it knows. -->
-          <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
-          <span class="nib-row-label">{name}</span>
-          <!-- Somebody else is in this note. The same mark the switcher puts on a
-               shared space, in the slot a row keeps for what it has to add about
-               a name; see SharedMark.svelte.
-               Or, where nobody is in it this minute, that it is a file shared on
-               its own: the same mark about the same fact, one step less urgent.
-               Both about the note the row stands for, which for a row that holds
-               notes is the note inside it. -->
-          {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
-          {:else if isSharedItem(opens)}<SharedMark />{/if}
-          {#if nested.length}{@render twist(entry.path)}{/if}
-        </button>
-      {/if}
+  <!-- The rows above the window, as height. -->
+  <li class="gap" style:height="{view.above}px" aria-hidden="true"></li>
 
-      <!-- Outside the row rather than inside it, so a row keeps what it holds open
-           while its own name is being typed: what a row discloses has nothing to do
-           with what its name says. -->
-      {#if entry.is_dir && workspace.isExpanded(entry.path)}
-        <div transition:slide={{ duration: dur(190), easing: cubicOut }}>
-          <Tree entries={nested} depth={depth + 1} />
-        </div>
-      {/if}
-    </li>
+  {#each drawn as one (one.row.entry.path)}
+    {@render line(one)}
   {/each}
+
+  <!-- And the rows below it. A row drawn out of the flow is between the two boxes
+       like any other and takes no height from either, which is what lets the one
+       list hold both. -->
+  <li class="gap" style:height="{view.below}px" aria-hidden="true"></li>
 </ul>
+
+{#snippet line(one: Drawn)}
+  <!-- How tall the row is drawn: one row, or the part of one that is out so far
+       while the twist above it is sliding. The band is clipped rather than
+       squashed, which is what the wrapper's own overflow did. A row out of the flow
+       is at its own offset instead, and takes its height from what is in it. -->
+  {@const cut = fold === null || one.away ? rowHeight : heightOf(one.index, rows)}
+  <li
+    data-row={one.index}
+    class:away={one.away}
+    class:cut={cut < rowHeight}
+    style:top={one.away ? `${offsetOf(one.index, rows)}px` : undefined}
+    style:height={cut < rowHeight ? `${cut}px` : undefined}
+    aria-setsize={flat.length}
+    aria-posinset={one.index + 1}
+  >
+    {@render inner(one.row)}
+  </li>
+{/snippet}
+
+{#snippet inner(one: FlatRow)}
+  {@const entry = one.entry}
+  {@const depth = one.depth}
+  <!-- The note a folder holds of its own name, which is the row the folder is
+       drawn as; null for every other row. See folder-notes.ts. -->
+  {@const own = folderNote(entry)}
+  <!-- What the row discloses: everything the folder holds, except the note it is
+       itself drawn as, which is this row. -->
+  {@const nested = own ? nestedIn(entry) : entry.children}
+  <!-- A folder nobody has written a note in: a row of somebody else's vault,
+       drawn quietly until there are words in it. -->
+  {@const unwritten = entry.is_dir && !own}
+  <!-- What the row opens. A folder opens its own note, the one it has or the one
+       it would have; anything else opens itself. -->
+  {@const opens = own?.path ?? (entry.is_dir ? folderNotePath(entry.path) : entry.path)}
+  <!-- What it is called: the folder's name where the row is a folder, so a row
+       whose note is somebody else's `index.md` is still called after its place. -->
+  {@const name = labelOf(entry)}
+  <!-- The name being typed, if one is: read once, so the branch below and the field
+       inside it cannot come to different answers about whether there is one. -->
+  {@const named = workspace.naming}
+  {#if named?.path === entry.path}
+    <!-- The row while its name is being typed. Its mark, its indentation, its
+         height, its font, the fill that says it is the note you have open, the
+         twist at the far end and the rows it discloses all stay exactly as they
+         were: renaming a file changes its name and nothing else about it. Only
+         the name becomes a field, in the slot the name was already in; see
+         NameField.svelte.
+         A div rather than the button a row usually is, for two reasons that
+         point the same way: a button cannot hold a field, and a row whose name
+         is being typed is not a row to press. -->
+    <div
+      class="nib-row row"
+      class:is-quiet={unwritten}
+      class:is-on={workspace.active?.path === opens}
+      class:is-picked={workspace.isSelected(entry.path)}
+      class:is-wrong={wrong}
+      style:--level={depth}
+    >
+      <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
+      <NameField
+        value={nameToEdit(entry)}
+        extension={extensionOf(entry.name, entry.is_dir)}
+        taken={workspace.namesBeside(entry.path)}
+        appending={named.appending}
+        bind:wrong
+        oncommit={(typed: string) => commit(entry, own, typed)}
+        oncancel={() => workspace.cancelNaming()}
+      />
+      {#if nested.length}{@render twist(entry.path)}{/if}
+    </div>
+  {:else}
+    <!-- One row, because the list shows one kind of thing: a note, which may
+         hold other notes. The mark says which kind of file it is, the name is
+         the note's, and the twist at the far end appears only where there is
+         something under it - a vault may arrive with a folder holding nothing
+         but its own note, and a twist that opens on to nothing is a row
+         promising something it does not have.
+         A folder with no note of its own is the same row drawn quietly: it is
+         a note nobody has written, and clicking it opens the empty page it is
+         without writing anything. See folder-notes.ts and docs/tree.md. -->
+    <button
+      class="nib-row row"
+      data-path={entry.path}
+      class:is-left-out={workspace.excluded.has(entry.path)}
+      class:is-quiet={unwritten}
+      class:is-taking={nesting(entry)}
+      class:is-on={workspace.active?.path === opens}
+      class:is-picked={workspace.isSelected(entry.path)}
+      style:--level={depth}
+      aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
+      draggable="true"
+      onclick={(event) => openRowAt(event, entry)}
+      ondblclick={() => workspace.openRow(entry.path)}
+      oncontextmenu={(event) => menu.show(event, rowMenu(entry), { title: name })}
+      use:longPress={(event) => menu.show(event, rowMenu(entry), { title: name })}
+      ondragstart={(event) => startDrag(event, entry.path)}
+      ondragend={endDrag}
+      ondragover={(event) => overRow(event, entry)}
+      ondragleave={(event) => stillInside(event) || dropTarget.clear()}
+      ondrop={(event) => drop(event, entry)}
+    >
+      <!-- The row says what it opens into without spending a word on it, or
+           wears the icon the note itself chose; the path is how it knows. -->
+      <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
+      <span class="nib-row-label">{name}</span>
+      <!-- Somebody else is in this note. The same mark the switcher puts on a
+           shared space, in the slot a row keeps for what it has to add about
+           a name; see SharedMark.svelte.
+           Or, where nobody is in it this minute, that it is a file shared on
+           its own: the same mark about the same fact, one step less urgent.
+           Both about the note the row stands for, which for a row that holds
+           notes is the note inside it. -->
+      {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
+      {:else if isSharedItem(opens)}<SharedMark />{/if}
+      {#if nested.length}{@render twist(entry.path)}{/if}
+    </button>
+  {/if}
+{/snippet}
 
 <!-- What a row holds, said at the far end of it. One twist, whether the row is
      being read or being renamed. -->
@@ -444,6 +985,44 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    /* The rows the window has to hold on to while the scroll has moved on are drawn
+       at their own offsets rather than in the flow; see `.away`. */
+    position: relative;
+    /* The arithmetic says where the list is, and nothing else may. A browser keeps a
+       reader's place through a change in height by picking something on screen and
+       holding the scroll to it - right for a page of words, wrong for a list whose
+       rows come and go as it scrolls, because the row it anchored to has left the
+       page a frame later and the scroll jumps by whatever it was worth. Turning a
+       note's children out moved the scroll two thousand pixels on its own. The rows
+       go with it: an element that may not be anchored to takes its descendants out
+       of the running as well. */
+    overflow-anchor: none;
+  }
+
+  /* The rows above the window and the rows below it, as height and nothing else.
+     Two boxes rather than padding on the list, so the list's own top edge stays
+     where the rows start and the arithmetic that reads it stays honest. */
+  .gap {
+    /* Never on screen - a box above the window only has height while the window
+       has scrolled past it - and out of the way of a drag either way. */
+    pointer-events: none;
+  }
+
+  /* A row on its way in or out with the twist above it. Clipped rather than
+     squashed: the row inside keeps its own height and the box shows the part of
+     it that is out, which is what the wrapper's overflow did. */
+  .cut {
+    overflow: hidden;
+  }
+
+  /* A row the list is holding on to while the window is elsewhere: the keyboard's,
+     the one being named, the one a key has just asked for. At its true place in the
+     list, so the scroll that brings the reader back to it lands where the row will
+     be - and out of the flow, so the two boxes above and below still add up. */
+  .away {
+    position: absolute;
+    left: 0;
+    right: 0;
   }
 
   /* A row the space leaves out of its own search, its picture and its mentions.

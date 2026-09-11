@@ -11,8 +11,10 @@ it and the launch is timed from the navigation to three moments:
 then two numbers that are not moments - the longest gap between animation frames
 and the longest single task, both taken from the moment the tree appears, which
 together are the keystrokes a reader would lose to whatever the launch is still
-doing behind their note - and two more taken warm, with the launch out of the way:
-what one listing of the space costs, and what one read of every body costs.
+doing behind their note - and four more taken warm, with the launch out of the way:
+what one listing of the space costs, what one read of every body costs, how many
+rows of the file list are in the page at all, and the longest frame gap while the
+list is flicked from the top of the space to the bottom.
 
 Two builds at once, each on its own port, turn and turn about. A laptop's own load
 moves by more than this change does, so five launches of one build followed by five
@@ -45,6 +47,27 @@ kilobytes - before the file list was painted first, and after:
     link index landed                 2554ms -> 1447ms
     worst frame gap after the tree     383ms ->  200ms
     listing the space, warm            188ms ->   97ms
+
+and what it said for the window over the rows - the change after that one, which
+left every row exactly as it was and stopped drawing the ones nobody can see. A
+slower machine than the one above, so read the ratios rather than the numbers; 754
+is how many rows this space shows with its folders shut, and 3,005 with them open:
+
+    rows of the list in the page       754    ->   40
+    longest single task after the tree 550ms  ->  136ms
+    worst frame gap after the tree     633ms  ->  117ms
+    longest single task in that scan   543ms  ->   57ms
+    time to tree                      2551ms -> 1930ms
+
+The last of those is the pass that reads every body, and the row that asks the index
+for its icon is in it: that number is the two hundred milliseconds a reader used to
+lose to the index landing behind their note, because every row in the space asked it
+for a mark and now only the forty on screen do.
+
+Flicking the list is the same either way, and that is worth knowing: a page of seven
+hundred rows nobody is changing scrolls perfectly well. What the window is for is the
+work - painting them in the first place, and answering the index for every one of
+them - not the scrolling.
 """
 
 from __future__ import annotations
@@ -299,6 +322,52 @@ async (rounds) => {
 """
 
 
+# How many rows of the file list are in the page, and what it costs to read the
+# whole space down. A row is a button, a mark and a read of the link index, so the
+# count is the work; the frame gap is what a flick feels like. The panel says which
+# box it is in - `data-region="list"` - rather than a class, since a scoped class is
+# the build's to name.
+LIST = """
+async () => {
+  const box = document.querySelector('aside [data-region="list"]')
+  if (!box) return null
+
+  const rows = () => document.querySelectorAll('aside [data-region="list"] .row').length
+  const frame = () => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(go)))
+
+  box.scrollTop = 0
+  await frame()
+  const resting = rows()
+
+  let worst = 0
+  let last = performance.now()
+  let watching = true
+  const tick = (at) => {
+    worst = Math.max(worst, at - last)
+    last = at
+    if (watching) requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+
+  // Half a panel at a time, from the top of the space to the bottom: what reading
+  // a space of three thousand notes down actually asks of the list.
+  const most = box.scrollHeight - box.clientHeight
+  const step = Math.max(1, Math.floor(box.clientHeight / 2))
+  let seen = resting
+  for (let at = 0; at <= most; at += step) {
+    box.scrollTop = at
+    await frame()
+    seen = Math.max(seen, rows())
+  }
+
+  watching = false
+  await frame()
+
+  return { rows: seen, scroll: worst, height: Math.round(box.scrollHeight) }
+}
+"""
+
+
 def numbers(page: Page) -> dict[str, float]:
     return page.evaluate("() => window.__marks")
 
@@ -344,16 +413,21 @@ def middle(rounds: list[dict[str, float]], key: str) -> float:
     return statistics.median(one[key] for one in rounds)
 
 
-#: The numbers, in the order they are worth reading.
+#: The numbers, in the order they are worth reading, and what each is counted in.
+#: Most are milliseconds; two are not, and a count of rows printed as a duration is
+#: a number nobody can read.
 SAID = [
-    ("tree", "time to tree (first row painted)"),
-    ("note", "time to the open note (editor painted)"),
-    ("index", "link index landed"),
-    ("worst", "worst frame gap after the tree"),
-    ("task", "longest single task after the tree"),
-    ("listing", "listing the spaces and the space, warm"),
-    ("scan", "reading every body for the index, warm"),
-    ("longest", "longest single task in that scan"),
+    ("tree", "time to tree (first row painted)", "ms"),
+    ("note", "time to the open note (editor painted)", "ms"),
+    ("index", "link index landed", "ms"),
+    ("worst", "worst frame gap after the tree", "ms"),
+    ("task", "longest single task after the tree", "ms"),
+    ("listing", "listing the spaces and the space, warm", "ms"),
+    ("scan", "reading every body for the index, warm", "ms"),
+    ("longest", "longest single task in that scan", "ms"),
+    ("rows", "rows of the list in the page", ""),
+    ("scroll", "worst frame gap flicking the list", "ms"),
+    ("height", "how far the list runs", "px"),
 ]
 
 
@@ -434,16 +508,20 @@ class Lane:
             return
 
         warm(page, self.origin)
+        # The list first, before the index is asked to run again: what is being
+        # counted is the panel as a reader finds it, not as a scan leaves it.
+        listed = page.evaluate(LIST) or {}
         scanning = page.evaluate(SCAN, 3)
         self.warm = {
             "listing": page.evaluate(LISTING, ROUNDS),
             "scan": scanning["scan"],
             "longest": scanning["worst"],
+            **{key: listed[key] for key in ("rows", "scroll", "height") if key in listed},
         }
 
     def numbers(self) -> dict[str, float]:
         return {
-            **{key: middle(self.rounds, key) for key, _ in SAID if key in self.rounds[0]},
+            **{key: middle(self.rounds, key) for key, *_ in SAID if key in self.rounds[0]},
             **self.warm,
         }
 
@@ -495,8 +573,8 @@ def main() -> int:
     print(f"  {'':44} {'  '.join(f'{lane.tag:>9}' for lane in lanes)}")
     found = {lane.tag: lane.numbers() for lane in lanes}
 
-    for key, words in SAID:
-        row = "  ".join(f"{found[lane.tag].get(key, 0):7.0f}ms" for lane in lanes)
+    for key, words, unit in SAID:
+        row = "  ".join(f"{found[lane.tag].get(key, 0):7.0f}{unit:<2}" for lane in lanes)
         print(f"  {words:44} {row}")
 
     print()
