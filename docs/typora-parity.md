@@ -549,3 +549,67 @@ Features Typora does not have, which are the reason this exists.
       graphics stack tessellates every stroke into geometry, and ten thousand of
       those measured 1200 ms a frame against 17. The notes' own dots, their names
       and the arrowheads are all free by comparison
+- [x] `task:`, `task-todo:` and `task-done:`: a task item as something to search
+      for, held to one item the way `line:` is held to one line, so
+      `task-todo:(ledger send)` wants both words in the one task. On its own
+      `task-todo:` asks which notes have an open task at all, which is the question
+      most often asked of a space and the one thing a group with nothing in it can
+      mean: there is no such question about a line. A row is the task rather than
+      the note's first line, with its box in front of it, and the box works -
+      ticking it writes the one character into the note without opening it, through
+      the same path a replacement takes, so no caret in a pane moves and it is one
+      thing to undo. A space is not done and anything else is, which takes in the
+      marks a theme gives a task of its own
+- [x] Front matter held against a value rather than only read: `[pages:<200]`,
+      `[due:>2026-09-01]`, `[pages:100..200]` with both ends in, `[status:=done]`
+      for a value that is exactly this where the bare form takes a part of it, and
+      `[due:null]` for a key the note has not got. Numbers compare as numbers and
+      dates as the words they are written in, which for a date written this way
+      round is the same answer and one the Rust side cannot arrive at differently;
+      anything else compares as words, so a date held against a number falls back
+      to something rather than comparing a clock against five
+- [x] The field finishes the operators, not only their values. Typing `ta` offers
+      `tag:`, `task:`, `task-todo:` and `task-done:`, in the popup that already
+      finishes a path, a name and a tag. Nothing is preselected for a name, so a
+      reader typing the word "task" still has Enter mean Enter. What was dropped: a
+      card listing all fourteen of them. A reference card in a 300px panel is
+      documentation, and the reminder belongs where the typing is
+- [x] Results in the order you want to read them: relevance, which is the order
+      the search answered in, or by name, modified or created. Behind a press on
+      the Search tab, which is where the file list's own sorting already lives, and
+      remembered per device rather than per space: the order a list is read in is a
+      habit of whoever is reading it, and the file list keeps its own the same way.
+      The guesses stay under the answers whatever the order
+- [x] A space leaves notes and folders out of what it says about itself: the
+      search does not walk them, the picture of its links does not draw them, and
+      the mentions of a note do not count them. They are still there to open and
+      still sync; the space has simply stopped asking them things. The way in is a
+      row's own menu, and the rows say so quietly. Paths rather than patterns,
+      because a row always names a note or a folder and a folder stands for
+      everything under it, which is the only pattern a file tree needs; a glob
+      would be a second language beside the search's own, in a settings pane
+      nobody asked for. Skipped before the file is read on both builds, and asked
+      of the note's own ancestors rather than of the list, so leaving a thousand
+      notes out costs a search nothing
+- [x] A ` ```query ` fence: a search written into a note, answered where it
+      stands, in the editor and in the reading view. The Search panel's own rows, a
+      word over each note, live boxes on the tasks, and a click that opens the note
+      at the line. It answers again whenever a note is saved. The fence stays a
+      `query` fence, which is Obsidian's own spelling, so a note carrying one opens
+      there as a code block rather than as something broken - and a published page
+      leaves it as code too, deliberately: a page is one file served from a cache,
+      answering a query over the space would be one read per note on every view,
+      and a list baked at publish time is a lie the moment another note is written
+- [x] The papers you have read answer a search, at the page: a row says which page
+      of which PDF, and opens it there. A page's words are taken down when the
+      viewer reads them, which it does anyway for its own find bar, so opening a
+      paper once makes it answerable and no search ever waits for a PDF to be taken
+      apart. What was refused: reading every PDF in a space when a search runs,
+      which makes the first search of a space with twenty papers a minute long, and
+      reading them all at launch, which spends that minute whether anybody searches
+      or not. A cache on disk keyed by the file's hash, which is what would survive
+      a restart, is the follow-up
+- [x] A note found by something no line of it says - its path, its name, a tag, a
+      front matter value - shows its own words rather than its front matter fence.
+      A row saying `---` says nothing about the note it is about, and a note found
+      by `[pages:>200]` is exactly the note that has one
