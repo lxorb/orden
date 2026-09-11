@@ -8,7 +8,7 @@
 
 pkgname=nib-bin
 _pkgname=nib
-pkgver=0.6.0
+pkgver=0.7.0
 pkgrel=1
 pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
@@ -28,8 +28,8 @@ source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Nib-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
 sha256sums=('8c6919dae22daa47d0da8f1089bc19a1f4304fa95363d50eff156c4751326915')
-sha256sums_x86_64=('5b9d32d748d3f86f423cdb1d2a598f519b7bd66f66d51a51cc8fd1b402f30e5c')
-sha256sums_aarch64=('b9f5698867a009cc825f357f30c581eab020f4b66e944f07e15bb7112f54b1f2')
+sha256sums_x86_64=('1ba710079fc290b59651ee24bd82611f9c496bf89ede096f8785205f2bac829a')
+sha256sums_aarch64=('af69d1d0e0e7656628615c390802b4fbff66c14bcc04b63cc85bb93e29cfac46')
 
 package() {
   bsdtar -O -xf "${srcdir}/nib.deb" data.tar.gz |

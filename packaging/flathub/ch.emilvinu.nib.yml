@@ -89,8 +89,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/lxorb/nibeditor.git
-        tag: v0.6.0
-        commit: 15db7ab44d1c8a82bf15a8bd286401e77649d8cf
+        tag: v0.7.0
+        commit: b58a081ca2665da5093d88b26354fe898014fa6d
         x-checker-data:
           type: json
           url: https://api.github.com/repos/lxorb/nibeditor/releases/latest

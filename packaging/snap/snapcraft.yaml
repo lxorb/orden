@@ -9,12 +9,12 @@
 # blank.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable nibeditor_0.6.0_amd64.snap`; see
+# account and `snapcraft upload --release=stable nibeditor_0.7.0_amd64.snap`; see
 # packaging/README.md.
 name: nibeditor
 title: nibeditor
 base: core24
-version: '0.6.0'
+version: '0.7.0'
 summary: Markdown editor with live preview
 description: |
   Nib is a small markdown editor that formats what you write as you write it.
@@ -75,8 +75,8 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/nibeditor/releases/download/v0.6.0/Nib-0.6.0-linux-x64.deb
-      - on arm64: https://github.com/lxorb/nibeditor/releases/download/v0.6.0/Nib-0.6.0-linux-arm64.deb
+      - on amd64: https://github.com/lxorb/nibeditor/releases/download/v0.7.0/Nib-0.7.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/nibeditor/releases/download/v0.7.0/Nib-0.7.0-linux-arm64.deb
     override-build: |
       craftctl default
 
