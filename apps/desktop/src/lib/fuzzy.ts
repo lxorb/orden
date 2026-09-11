@@ -1,7 +1,11 @@
 /** Subsequence match with a score. Higher is better; null means no match.
  *  Consecutive hits and matches at word starts are rewarded, so "rdm" ranks
- *  "Read me" above a note that merely contains those letters scattered. */
-function fuzzy(query: string, text: string): number | null {
+ *  "Read me" above a note that merely contains those letters scattered.
+ *
+ *  Exported as well as used below, because the icon picker wants the score rather
+ *  than the order: there a subsequence is the last resort under the exact matches,
+ *  and the number is what places it inside that band. See icons.ts. */
+export function fuzzy(query: string, text: string): number | null {
   if (!query) return 0
 
   const needle = query.toLowerCase()

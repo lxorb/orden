@@ -6,8 +6,8 @@
  *    breadth is the point - there is an emoji for very nearly anything somebody
  *    would name a folder after - and the drawings cost nothing to ship, because
  *    every phone and every desktop already has them. What is shipped is the index
- *    that makes them findable: the name and the group of each, which is what turns
- *    a wall of pictures into something you can type "money" into.
+ *    that makes them findable: the name, the group and the keywords of each, which is
+ *    what turns a wall of pictures into something you can type "money" into.
  *  - **Lucide.** The stroked set the interface itself is drawn in, so an icon
  *    chosen here sits in a list beside the app's own marks without looking
  *    borrowed. Monochrome, and the one set a tint applies to; see icons.ts.
@@ -28,8 +28,52 @@
  *  icon-library.svelte.ts, which holds what has arrived, and the bundle test, which
  *  holds the sets out of the first chunk and out of the plugin. */
 
-import { EMOJI_SET, type IconEntry, type IconNode, loadIcons, LUCIDE } from './icons'
+import { EMOJI_SET, type IconEntry, type IconNode, loadIcons, LUCIDE, squash } from './icons'
 import { key } from './i18n.svelte'
+
+/** Lucide's own tags: what each of its icons is *for*, in the words people look for
+ *  it by. 14,545 of them over 1,799 icons, and the angle carries "math", which is the
+ *  whole of the complaint - the picker knew what every icon was called and nothing
+ *  about what any of it was for, so "math" found nothing and "function" found one.
+ *
+ *  `lucide-static` rather than `lucide`: the same project under the same ISC licence
+ *  and pinned to the same version, but the drawing package ships drawings and the
+ *  static one ships `tags.json` beside them. It is the tags this wants and not the
+ *  49 MB of SVG files they come with, which is why the import names the file.
+ *
+ *  Categories are not read. Lucide keeps them per icon in its repository rather than
+ *  in anything it publishes, and where a category says "math" its tags already do; a
+ *  second index of the same words would be weight for nothing. What tags genuinely do
+ *  not cover - nobody tagged the briefcase "work" - is what nib's own synonym list in
+ *  icons.ts is for.
+ *
+ *  Kept once, because two sets read it: the stroked one it describes, and the coloured
+ *  one it is lent to. */
+let tagged: Map<string, string> | null = null
+
+async function loadTags(): Promise<Map<string, string>> {
+  if (tagged) return tagged
+
+  const found = new Map<string, string>()
+
+  try {
+    const tags = (await import('lucide-static/tags.json')).default as Record<string, string[]>
+    // Squashed, because the file writes `square-function` and the library exports
+    // `SquareFunction`, and because `iconValue` spells a few of the ones with digits
+    // in them a third way again.
+    for (const [name, words] of Object.entries(tags)) {
+      found.set(squash(name), words.join(' ').toLowerCase())
+    }
+  } catch {
+    // The plugin build leaves the file out and a chunk can fail to arrive. Either way
+    // every set still loads: an icon found by its name alone is the picker as it was,
+    // and a picker that would not open because a list of search words was missing is
+    // a picker as it never was.
+  }
+
+  tagged = found
+  return found
+}
 
 /** How a set is drawn, once its data is here.
  *
@@ -77,20 +121,90 @@ interface EmojiGroup {
   emojis: { emoji: string; name: string; slug: string }[]
 }
 
+/** The keywords an emoji goes by, which Unicode's names do not carry: 🚀 is called
+ *  "rocket", and nothing in that says "launch". `emojilib`'s list, keyed by the
+ *  character, which is the one key the two files share.
+ *
+ *  A dependency of its own here, though the app already has it: `node-emoji` brings
+ *  the same file for the editor's `:shortcode:` completions, so this reads a chunk that
+ *  is there either way and weighs nothing to read. Named and imported the way the sets
+ *  themselves are anyway, so the day the editor stops asking for it the picker is not
+ *  what drags it in front of the first paint. 1,570 of the 1,914 base emoji are
+ *  covered; the rest keep their name and their slug, which is all any of them had
+ *  before.
+ *
+ *  The shortcode is a keyword as well as a key. Slack and GitHub have taught a lot of
+ *  people that 📅 is `:date:`, and Unicode calls it a calendar. */
+async function loadEmojiWords(): Promise<Map<string, string>> {
+  const said = new Map<string, string[]>()
+
+  try {
+    const listed = (await import('emojilib/emojis.json')).default as Record<
+      string,
+      { char?: string; keywords?: string[] }
+    >
+
+    for (const [shortcode, one] of Object.entries(listed)) {
+      if (!one.char) continue
+
+      const found = said.get(plain(one.char)) ?? []
+      found.push(...(one.keywords ?? []), shortcode)
+      said.set(plain(one.char), found)
+    }
+  } catch {
+    // The plugin leaves the emoji out altogether, so this never runs there; and a
+    // chunk that will not arrive costs the keywords rather than the set.
+  }
+
+  // Words rather than spellings, and each of them once: the list writes "outer space"
+  // and `outer_space` for the same emoji, and two of one word is a longer string to
+  // search for no more found.
+  return new Map(
+    [...said].map(([char, words]) => [
+      char,
+      [
+        ...new Set(
+          words.map((word) =>
+            word
+              .replace(/[^a-z\d]+/gi, ' ')
+              .trim()
+              .toLowerCase(),
+          ),
+        ),
+      ].join(' '),
+    ]),
+  )
+}
+
+/** An emoji without the selector that asks a platform to draw it in colour rather
+ *  than as a glyph. The two lists disagree about it on 142 of them - ❤️ against ❤ -
+ *  and it is not a character anybody searches by. */
+function plain(emoji: string): string {
+  return emoji.replace(/\uFE0F/g, '')
+}
+
 async function loadEmoji(): Promise<LoadedSet> {
-  const groups = (await import('unicode-emoji-json/data-by-group.json')).default as EmojiGroup[]
+  const [groups, said] = await Promise.all([
+    import('unicode-emoji-json/data-by-group.json'),
+    loadEmojiWords(),
+  ])
 
   const entries: IconEntry[] = []
   const shown: { label: string; names: string[] }[] = []
 
-  for (const group of groups) {
+  for (const group of groups.default as EmojiGroup[]) {
     const names: string[] = []
 
     for (const one of group.emojis) {
-      // The slug as well as the name: `smiling_face_with_heart_eyes` holds words
-      // the name spells the same way, but a search for "heart" should find it
-      // whichever of the two the person was thinking of.
-      entries.push({ name: one.emoji, words: `${one.name} ${one.slug.replace(/_/g, ' ')}` })
+      // The slug behind the name, rather than beside it: `smiling_face_with_heart_eyes`
+      // holds words the name hyphenates instead, and a search for "heart" should find
+      // it whichever of the two the person was thinking of - but a tooltip that says
+      // the same thing twice is a tooltip nobody reads.
+      entries.push({
+        name: one.emoji,
+        words: one.name.toLowerCase(),
+        terms: `${one.slug.replace(/_/g, ' ')} ${said.get(plain(one.emoji)) ?? ''}`.trim(),
+      })
       names.push(one.emoji)
     }
 
@@ -106,10 +220,42 @@ async function loadEmoji(): Promise<LoadedSet> {
 }
 
 async function loadLucide(): Promise<LoadedSet> {
-  const library = await loadIcons()
+  const [library, tags] = await Promise.all([loadIcons(), loadTags()])
+
+  /** The names that draw the same picture. Lucide exports 2,053 names over 1,799
+   *  drawings: `AlertCircle` and `CircleAlert` are one icon under two names, and each
+   *  of those names is a word somebody might look for the other by.
+   *
+   *  Grouped by the array itself, which the library hands out to an icon and to every
+   *  alias of it, so the grouping costs a comparison rather than a naming convention.
+   *  The tags follow the drawing too: Lucide files them under its current name, and an
+   *  alias is the same picture. */
+  const alike = new Map<IconNode, string[]>()
+  for (const [name, icon] of Object.entries(library)) {
+    const named = alike.get(icon)
+    if (named) named.push(name)
+    else alike.set(icon, [name])
+  }
+
+  /** What each name can be found by that is not the name itself: its aliases, and the
+   *  tags of the drawing they all share. Built as a map rather than in place, so the
+   *  set stays in the library's own alphabetical order - an alias belongs where its
+   *  own letter is, not next to the icon it points at. */
+  const terms = new Map<string, string>()
+  for (const named of alike.values()) {
+    const said = [...new Set(named.flatMap((one) => tags.get(squash(one)) ?? []))]
+
+    for (const name of named) {
+      terms.set(name, [...named.filter((one) => one !== name).map(spaced), ...said].join(' '))
+    }
+  }
 
   return {
-    entries: Object.keys(library).map((name) => ({ name, words: spaced(name) })),
+    entries: Object.keys(library).map((name) => ({
+      name,
+      words: spaced(name),
+      terms: terms.get(name) ?? '',
+    })),
     groups: [],
     shape: (name) => {
       const icon = library[name]
@@ -128,13 +274,23 @@ interface IconifyCollection {
 
 /** One Iconify collection as a set. Ten lines rather than a dependency: the format
  *  is a body and a box, and drawing it is putting the body in an `<svg>` of that
- *  box. A library to do that would be a library to concatenate two strings. */
-function iconify(collection: IconifyCollection): LoadedSet {
+ *  box. A library to do that would be a library to concatenate two strings.
+ *
+ *  The tags are lent from elsewhere, because an Iconify collection carries none: the
+ *  coloured set's metadata file is an empty object and its names are all it has. What
+ *  it does have is 53 drawings of the everyday things Lucide draws too - a calendar, a
+ *  folder, a briefcase - so the words that find Lucide's calendar find this one, and a
+ *  drawing Lucide has no name for keeps its own name, which is what it had. */
+function iconify(collection: IconifyCollection, tags: Map<string, string>): LoadedSet {
   const wide = collection.width ?? 24
   const tall = collection.height ?? 24
 
   return {
-    entries: Object.keys(collection.icons).map((name) => ({ name, words: spaced(name) })),
+    entries: Object.keys(collection.icons).map((name) => ({
+      name,
+      words: spaced(name),
+      terms: tags.get(squash(name)) ?? '',
+    })),
     groups: [],
     shape: (name) => {
       const icon = collection.icons[name]
@@ -150,7 +306,12 @@ function iconify(collection: IconifyCollection): LoadedSet {
 }
 
 async function loadFlatColour(): Promise<LoadedSet> {
-  return iconify((await import('@iconify-json/flat-color-icons/icons.json')).default)
+  const [collection, tags] = await Promise.all([
+    import('@iconify-json/flat-color-icons/icons.json'),
+    loadTags(),
+  ])
+
+  return iconify(collection.default, tags)
 }
 
 /** A name as the words somebody would search for: `BookOpen` and `book-open` both

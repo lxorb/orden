@@ -132,6 +132,9 @@ importers:
       docx:
         specifier: ^9.7.1
         version: 9.7.1
+      emojilib:
+        specifier: ^2.4.0
+        version: 2.4.0
       flowchart.js:
         specifier: ^1.18.0
         version: 1.18.0
@@ -142,6 +145,9 @@ importers:
         specifier: ^0.18.5
         version: 0.18.5
       lucide:
+        specifier: ^1.40.0
+        version: 1.40.0
+      lucide-static:
         specifier: ^1.40.0
         version: 1.40.0
       marked:
@@ -2640,6 +2646,9 @@ packages:
   lru-cache@11.5.2:
     resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
     engines: {node: 20 || >=22}
+
+  lucide-static@1.40.0:
+    resolution: {integrity: sha512-ln37Ng6A709exLQH4pBxrbl6FAUk/ZBLTJnLrj02HN/Bb84eUGzlA2JjMglScI0TEab6vH2UVs0hm4vGgLzTrQ==}
 
   lucide@1.40.0:
     resolution: {integrity: sha512-l6wUiJX9j2/ekAMw6mppYm6XXlgKHWRWF014Q7Y1/2N2n582Avg4gud7vdEQGuYUSo1U2qIjKLkBqA1cECJY5g==}
@@ -5518,6 +5527,8 @@ snapshots:
   lodash-es@4.18.1: {}
 
   lru-cache@11.5.2: {}
+
+  lucide-static@1.40.0: {}
 
   lucide@1.40.0: {}
 

@@ -71,6 +71,42 @@ describe('searching the library', () => {
     expect(search(NAMES, 'journal')).toContain('NotebookPen')
   })
 
+  /** One key per word rather than one per spelling: the query is tried without its
+   *  plural, so the list says "note" once and answers both. */
+  test('understands a plural of one of them', () => {
+    expect(search(NAMES, 'notes')).toContain('NotebookPen')
+    expect(search(NAMES, 'maths')).toEqual(search(NAMES, 'math'))
+  })
+
+  /** Somebody typing two words is describing one icon, and both words are worth
+   *  asking about: nothing is called "work journal" and the briefcase and the notebook
+   *  are both fair answers to it. */
+  test('and one written inside a longer query', () => {
+    const found = search(NAMES, 'work journal')
+
+    expect(found).toContain('Briefcase')
+    expect(found).toContain('NotebookPen')
+  })
+
+  /** A dropped letter is the commonest way to mistype a word, and the picker is a grid
+   *  somebody is typing at rather than a command line. */
+  test('forgives a letter left out', () => {
+    expect(search(NAMES, 'calndar')[0]).toBe('Calendar')
+    expect(search(NAMES, 'grduation')).toContain('GraduationCap')
+  })
+
+  /** The loose matches sit under every real one, which is what keeps forgiveness from
+   *  becoming noise: "bug" is a subsequence of "building2" too, and nobody typing it
+   *  meant that. */
+  test('and never puts a near miss ahead of a name that matches', () => {
+    const entries = [
+      { name: 'Building2', words: 'building2' },
+      { name: 'Bug', words: 'bug' },
+    ]
+
+    expect(rankIcons(entries, 'bug')).toEqual(['Bug', 'Building2'])
+  })
+
   test('is not case sensitive', () => {
     expect(search(NAMES, 'BOOK')[0]).toBe('Book')
   })
@@ -355,5 +391,44 @@ describe('searching a set whose names are already words', () => {
 
   test('nothing matching is nothing', () => {
     expect(rankIcons(emoji, 'aardvark')).toEqual([])
+  })
+})
+
+/** What an icon is *for*, as its own set files it: Lucide's tags, the emoji's
+ *  keywords, and nib's synonyms behind both. Which is the whole of Emil's complaint -
+ *  "math" found nothing and "function" found one icon, because the picker knew every
+ *  name and no meaning. */
+describe('searching by what an icon is for rather than what it is called', () => {
+  const entries = [
+    { name: 'Angle', words: 'angle', terms: 'degree corner geometry measure math' },
+    { name: 'Parentheses', words: 'parentheses', terms: 'brackets math' },
+    { name: 'Mathematician', words: 'mathematician' },
+    { name: 'Calendar', words: 'calendar', terms: 'date month year event' },
+    { name: 'Update', words: 'update' },
+  ]
+
+  test('finds one by a word its set files it under', () => {
+    expect(rankIcons(entries, 'math')).toContain('Angle')
+    expect(rankIcons(entries, 'geometry')).toEqual(['Angle'])
+  })
+
+  /** A name is what an icon is; a keyword is what it is about. Where both answer, the
+   *  name answers first. */
+  test('and puts what is named that ahead of what is filed under it', () => {
+    expect(rankIcons(entries, 'math')[0]).toBe('Mathematician')
+  })
+
+  /** And the other way where the name only happens to contain the letters: the word
+   *  "date" is what a calendar is for, and it is a fragment of "update". */
+  test('and a whole keyword ahead of a fragment of a name', () => {
+    expect(rankIcons(entries, 'date')).toEqual(['Calendar', 'Update'])
+  })
+
+  /** Keywords are searched by their words rather than loosely. An icon carries a line
+   *  of them, nearly every short query is a subsequence of a line of English, and a
+   *  search that answered with every icon that has tags would be worse than the one
+   *  that could not find "math". */
+  test('and does not find one by a scattering of letters in its keywords', () => {
+    expect(rankIcons(entries, 'dgm')).toEqual([])
   })
 })

@@ -5,12 +5,18 @@ import { describe, expect, test } from 'vitest'
 
 /** Where the icon sets are allowed to be, held to it by reading the source.
  *
- *  Two rules, and both are about weight. The emoji index is 422 KB of JSON and the
- *  coloured set 166 KB; either one imported statically anywhere lands in the chunk the
- *  app loads before it draws anything, which is the one thing a fast editor cannot
- *  afford. And neither is in the plugin at all: half a megabyte of JSON for a picker
- *  whose one job on a phone is to put a mark on a folder, while the glasses draw a row
- *  as words with no mark in it.
+ *  Two rules, and both are about weight. The emoji index is 422 KB of JSON, the
+ *  coloured set 166 KB and Lucide's tags 256 KB; any one of them imported statically
+ *  anywhere lands in the chunk the app loads before it draws anything, which is the
+ *  one thing a fast editor cannot afford. And none of them is in the plugin at all:
+ *  most of a megabyte of JSON for a picker whose one job on a phone is to put a mark
+ *  on a folder, while the glasses draw a row as words with no mark in it.
+ *
+ *  The emoji's keywords are here for the rule rather than for the weight: `node-emoji`
+ *  brings that same file eagerly for the editor's `:shortcode:` completions, so the
+ *  picker's own use of it costs nothing today. It is held to the rule anyway, so the
+ *  day the editor stops asking for it the picker is not the reason it still arrives
+ *  before the first paint.
  *
  *  Read out of the source rather than out of a build, which is what makes it a test
  *  somebody runs. The build itself is held to the same line by the plugin's own bundle
@@ -19,9 +25,18 @@ import { describe, expect, test } from 'vitest'
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
 
-/** The set data, by the specifier that asks for it. The same two names
- *  `vite.even.config.ts` leaves out, which is what the last test holds. */
-const DATA = ['unicode-emoji-json/data-by-group.json', '@iconify-json/flat-color-icons/icons.json']
+/** The set data, by the specifier that asks for it. The same four names
+ *  `vite.even.config.ts` leaves out, which is what the last test holds.
+ *
+ *  Two of them are the sets themselves and two are what the sets are searched by:
+ *  Lucide's tags and the emoji's keywords, neither of any use until somebody has
+ *  typed something into the picker. */
+const DATA = [
+  'unicode-emoji-json/data-by-group.json',
+  '@iconify-json/flat-color-icons/icons.json',
+  'lucide-static/tags.json',
+  'emojilib/emojis.json',
+]
 
 function sources(dir: string, found: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -80,7 +95,7 @@ describe('the icon sets that are data rather than drawing', () => {
     }
   })
 
-  test('and the plugin build leaves both of them out', () => {
+  test('and the plugin build leaves every one of them out', () => {
     const config = readFileSync(join(APP, 'vite.even.config.ts'), 'utf8')
     const left = config.slice(config.indexOf('const LEFT_OUT'), config.indexOf('/** What a module'))
 

@@ -63,6 +63,13 @@ const LEFT_OUT = new Set([
   // and icon-library.svelte.ts, which says so calmly when one is not here.
   'unicode-emoji-json/data-by-group.json',
   '@iconify-json/flat-color-icons/icons.json',
+  // And what those sets are searched by: Lucide's tags, another 256 KB, and the
+  // emoji's keywords, which `node-emoji` brings along for the editor regardless and
+  // which are named here for the rule rather than for the weight. The picker still
+  // opens without either and still finds an icon by its name; see icon-sets.ts, where
+  // the absence is caught rather than thrown.
+  'lucide-static/tags.json',
+  'emojilib/emojis.json',
 ])
 
 /** What a module that is not here answers with.
