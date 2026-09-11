@@ -157,6 +157,7 @@ export const ja: Dictionary = {
   'Go to note, or > for commands': 'ノートへ移動、> でコマンド',
   'Search notes and commands': 'ノートとコマンドを検索',
   'Sort by relevance': '関連度で並べる',
+  'Page {page}': '{page} ページ',
   'Sort by name': '名前順',
   'Sort by modified': '更新日順',
   'Sort by created': '作成日順',

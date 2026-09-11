@@ -157,6 +157,7 @@ export const fr: Dictionary = {
   'Go to note, or > for commands': 'Aller à une note, ou > pour les commandes',
   'Search notes and commands': 'Rechercher notes et commandes',
   'Sort by relevance': 'Trier par pertinence',
+  'Page {page}': 'Page {page}',
   'Sort by name': 'Trier par nom',
   'Sort by modified': 'Trier par modification',
   'Sort by created': 'Trier par création',

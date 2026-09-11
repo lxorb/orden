@@ -56,6 +56,11 @@ export interface Hit {
   path: string
   name: string
   line: number
+  /** Which page of a paper the row is, counting from one, and absent for a note.
+   *  What says a row opens a PDF rather than a note; see pdf/papers.ts. A paper's
+   *  words are not on disk as text, so nothing on the other side of the bridge
+   *  sends one of these. */
+  page?: number
   /** The line as a row shows it: trimmed, and cut short. */
   text: string
   /** Where in `text` the match sits. Empty for a note found by its path, its

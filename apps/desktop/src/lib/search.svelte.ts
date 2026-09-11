@@ -99,11 +99,12 @@ class Search {
   /** How the results are ordered, and which way round. */
   ordering = $state<Ordering>(readOrdering())
 
-  /** When each note was made and last written, by the path a hit names it with.
+  /** When each file was made and last written, by the path a hit names it with.
    *  From the file list, which has read it already: a hit carries no dates, and
    *  putting them on one would be a date per row of two hundred rows about twenty
-   *  notes. */
-  private readonly dated = $derived.by(() => new Map(workspace.notes.map((one) => [one.path, one])))
+   *  notes. Every file rather than every note, because a paper answers a search
+   *  too; see pdf/papers.ts. */
+  private readonly dated = $derived.by(() => new Map(workspace.files.map((one) => [one.path, one])))
 
   /** Chooses the order. The same key again flips the direction, as the file
    *  list's own sort does. */

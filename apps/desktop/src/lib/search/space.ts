@@ -24,6 +24,11 @@ export interface Found {
   loose: FuzzyHit[]
 }
 
+/** How many rows the papers may fill. A paper answers once per page, so a query
+ *  every page of a long one holds would otherwise be the whole list; the notes are
+ *  what a space is mostly made of. */
+const PAPERS = 20
+
 /** Which search a handful belongs to. Typing outruns the disk, and answers to a
  *  word that is no longer in the field would otherwise land in the list. */
 let asked = 0
@@ -40,6 +45,13 @@ export async function searchSpace(
    *  it a read and then a filter. See workspace/excluded.svelte.ts. */
   excluded: readonly string[] = [],
 ): Promise<void> {
+  // The papers that have been read answer first, and from memory: their words are
+  // not on disk as text, so neither walk below has anything to read. One handful,
+  // because there is nothing to wait for. See pdf/papers.ts.
+  const { searchPapers } = await import('../pdf/papers')
+  const papers = searchPapers(root, query, PAPERS, excluded)
+  if (papers.length) onFound({ hits: papers, loose: [] })
+
   if (!isNative) {
     const { searchInWorker } = await import('../web/search-client')
     await searchInWorker(root, query, terms, limit, onFound, excluded)

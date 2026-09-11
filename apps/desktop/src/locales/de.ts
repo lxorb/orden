@@ -158,6 +158,7 @@ export const de: Dictionary = {
   'Go to note, or > for commands': 'Zur Notiz, oder > für Befehle',
   'Search notes and commands': 'Notizen und Befehle durchsuchen',
   'Sort by relevance': 'Nach Relevanz sortieren',
+  'Page {page}': 'Seite {page}',
   'Sort by name': 'Nach Name sortieren',
   'Sort by modified': 'Nach Änderung sortieren',
   'Sort by created': 'Nach Erstellung sortieren',

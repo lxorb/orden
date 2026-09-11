@@ -21,6 +21,7 @@
   import { t } from './i18n.svelte'
   import { type OpenPdf, openDocument, textOf } from './pdf/document'
   import { textOfRuns, wordsOfRuns } from './pdf/find'
+  import { paperRead } from './pdf/papers'
   import {
     type Box,
     citation,
@@ -316,6 +317,9 @@
   function words(number: number, found: readonly string[], divs: readonly HTMLElement[]) {
     layers.set(number, { runs: found, divs })
     if (!runs.has(number)) runs.set(number, [...found])
+    // And the space search keeps them too, so a paper that has been read answers
+    // a query about it; see pdf/papers.ts.
+    if (tab.path) paperRead(tab.path, number, found)
 
     waiting.get(number)?.()
     waiting.delete(number)
@@ -348,6 +352,7 @@
     // goes straight back.
     page.cleanup()
     runs.set(number, read)
+    if (tab.path) paperRead(tab.path, number, read)
 
     return read
   }

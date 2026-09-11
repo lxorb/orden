@@ -159,6 +159,7 @@ export const gsw: Dictionary = {
   'Go to note, or > for commands': 'Zur Notiz, oder > für Befähl',
   'Search notes and commands': 'Notize und Befähl sueche',
   'Sort by relevance': 'Nach Relevanz sortiere',
+  'Page {page}': 'Siite {page}',
   'Sort by name': 'Nach Name sortiere',
   'Sort by modified': 'Nach Änderig sortiere',
   'Sort by created': 'Nach Erstellig sortiere',

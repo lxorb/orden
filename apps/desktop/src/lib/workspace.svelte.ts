@@ -3,6 +3,7 @@ import { account } from './account.svelte'
 import { blankCanvas } from './canvas/format'
 import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
 import { taskAt } from '@nib/markdown/tasks'
+import { paperGone } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
@@ -2665,6 +2666,8 @@ class Workspace {
     links.noteGone(path)
     this.folderIcons.gone(path)
     this.excluded.gone(path)
+    // A paper that has gone has no words worth searching any more.
+    paperGone(path)
     await this.loadTree()
     // The row deleted may have been the last thing keeping a nested note nested.
     await this.unnest(folderOf(path))

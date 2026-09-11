@@ -237,6 +237,13 @@
   }
 
   async function openHit(hit: Hit) {
+    // A row with a page is a paper: it opens where the words are rather than at a
+    // line, which a paper has not got. See pdf/papers.ts.
+    if (hit.page !== undefined) {
+      workspace.openPdf(hit.path, hit.page)
+      return
+    }
+
     await workspace.open(hit.path)
     ongoto?.(hit.line)
   }
@@ -388,6 +395,12 @@
               {#each shown(hit, task) as piece, at (at)}
                 {#if piece.mark}<mark>{piece.text}</mark>{:else}{piece.text}{/if}
               {/each}
+
+              <!-- Which page of a paper the words are on, at the far end where a
+                   row counts things. A note has no page and says nothing. -->
+              {#if hit.page !== undefined}
+                <span class="nib-row-meta">{t('Page {page}', { page: hit.page })}</span>
+              {/if}
             </button>
           </div>
         {/each}
