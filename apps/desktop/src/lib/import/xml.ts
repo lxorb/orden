@@ -22,7 +22,7 @@ export interface Element {
   inner: string
 }
 
-interface Tag {
+export interface Tag {
   name: string
   attributes: Record<string, string>
   /** Where the `<` is, and where the character after the `>` is. */
@@ -47,7 +47,7 @@ export function elements(xml: string, name: string): Element[] {
   let attributes: Record<string, string> = {}
   let from = 0
 
-  for (const tag of tags(xml)) {
+  for (const tag of tagsIn(xml)) {
     if (tag.name !== name) continue
 
     if (tag.empty) {
@@ -74,7 +74,7 @@ export function elements(xml: string, name: string): Element[] {
 
 /** The first `<name>` element, or null. */
 export function element(xml: string, name: string): Element | null {
-  for (const tag of tags(xml)) {
+  for (const tag of tagsIn(xml)) {
     if (tag.name !== name) continue
     if (tag.empty) return { name, attributes: tag.attributes, inner: '' }
     if (tag.closing) continue
@@ -170,7 +170,7 @@ function codePoint(value: number): string | null {
 function closingOf(xml: string, name: string, after: number): number {
   let depth = 1
 
-  for (const tag of tags(xml, after)) {
+  for (const tag of tagsIn(xml, after)) {
     if (tag.name !== name || tag.empty) continue
     if (tag.closing) {
       depth -= 1
@@ -182,8 +182,12 @@ function closingOf(xml: string, name: string, after: number): number {
 }
 
 /** Every tag in the document, in order, with comments, declarations,
- *  instructions and CDATA sections stepped over. */
-function* tags(xml: string, from = 0): Generator<Tag> {
+ *  instructions and CDATA sections stepped over.
+ *
+ *  Exported because one format is read by walking its tags rather than by asking
+ *  for them: a Tomboy note's words are the text between its tags, and the tags
+ *  are what say whether those words are bold or an item of a list. */
+export function* tagsIn(xml: string, from = 0): Generator<Tag> {
   let at = from
 
   while (at < xml.length) {
