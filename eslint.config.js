@@ -85,12 +85,12 @@ export default tseslint.config(
   {
     // Build and tool configuration sits outside every tsconfig, so the rules
     // that need type information cannot see it; the plain rules still apply.
-    files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs}'],
+    files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs,ts}'],
     ...tseslint.configs.disableTypeChecked,
   },
   {
     // Command-line scripts talk through the console; that is their output.
-    files: ['scripts/**/*.{js,mjs}'],
+    files: ['scripts/**/*.{js,mjs,ts}'],
     rules: { 'no-console': 'off' },
   },
   {

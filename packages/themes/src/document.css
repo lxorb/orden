@@ -58,8 +58,59 @@
 
 /* ── Code ────────────────────────────────────────────────────────── */
 
-/* The colours themselves come from the code palette chosen in the app, and are
-   written into the document next to this sheet. */
+/* The groups a fence is coloured in, in the theme's own colours - which is the
+   palette called "Follow the theme", said in CSS rather than in TypeScript. The
+   classes are written by @nib/markdown/highlight.
+
+   Through `:where`, so these rules carry no weight at all: a reader who has
+   chosen GitHub or Dracula has those colours written over these, and a page that
+   never picks one - a published note, which has no app to pick in - still gets a
+   coloured fence rather than a grey one. That is the whole reason they are here
+   and not only in the app: see paletteCss in apps/desktop/src/lib/highlight.ts,
+   and FOLLOW in code-theme.ts in @nib/editor, which are the other two readings
+   of this same list. */
+:where(#write) .hl-keyword {
+  color: var(--accent);
+}
+
+:where(#write) .hl-string {
+  color: var(--success);
+}
+
+:where(#write) .hl-number {
+  color: var(--syntax-number);
+}
+
+:where(#write) .hl-comment {
+  color: var(--muted);
+}
+
+:where(#write) .hl-function {
+  color: var(--syntax-function);
+}
+
+:where(#write) .hl-type {
+  color: var(--syntax-type);
+}
+
+:where(#write) .hl-punctuation {
+  color: var(--muted-strong);
+}
+
+:where(#write) .hl-property {
+  color: var(--syntax-property);
+}
+
+/* What a diff means, not what a palette makes of it. */
+:where(#write) .hl-invalid,
+:where(#write) .hl-deleted {
+  color: var(--danger);
+}
+
+:where(#write) .hl-inserted {
+  color: var(--success);
+}
+
 #write .hl-comment {
   font-style: italic;
 }

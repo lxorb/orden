@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "knip": "knip"
+    "knip": "knip",
+    "blog:css": "node scripts/blog-css.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -10,3 +10,6 @@ docs/media
 *.md
 apps/desktop/src-tauri/gen
 apps/desktop/src-tauri/icons
+
+# Written by scripts/blog-css.ts from the themes package, not by hand
+services/sync/src/blog/style.ts

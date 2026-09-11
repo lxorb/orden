@@ -6,6 +6,7 @@ import {
   renderMarkdown,
   type Wikilink,
 } from '@nib/markdown'
+import { highlightedFence } from '@nib/markdown/highlight'
 import { embedKind } from '@nib/markdown/links'
 import { sourcesOf } from '@nib/markdown/sources'
 import { exportCss, themeCss } from '@nib/themes/raw'
@@ -15,7 +16,7 @@ import { titleOf } from './export/document'
 import { inlinePictures, type Picture, swapSources } from './export/pictures'
 import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
-import { highlightCode, loadParsers, type Parser, paletteCss } from './highlight'
+import { loadParsers, type Parser, paletteCss } from './highlight'
 import { mathCss } from './math-fonts'
 import {
   DEFAULT_PAGE_SETUP,
@@ -237,7 +238,7 @@ export async function prepareFences(
     const parser = parsers.get(language)
     if (!parser) return null
 
-    return `<pre><code class="language-${escape(language)}">${highlightCode(code, parser)}\n</code></pre>\n`
+    return highlightedFence(code, language, parser)
   }
 }
 

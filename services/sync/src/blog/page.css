@@ -1,0 +1,121 @@
+/* A published note: the room it is read in once it has left the app.
+ *
+ * tokens.css, base.css and document.css are already in the sheet above this one -
+ * the same three the reading view loads and an exported document carries - so the
+ * note itself needs nothing here. What is left is the difference between a page
+ * and an app: a page scrolls, and it has a byline, a way back to the index, and a
+ * line at the bottom saying where it came from.
+ *
+ * Served from the Worker rather than written into every page; see
+ * scripts/blog-css.mjs for how it is put together and services/sync/src/blog.ts
+ * for what serves it. */
+
+/* ── A page rather than an app ───────────────────────────────────── */
+
+/* The app pins the window and scrolls the writing surface inside it. A page is
+   as long as it is and the window scrolls it, the way every other page does. */
+html,
+body {
+  height: auto;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+
+/* The app leaves half a screen under the last line so the caret can sit in the
+   middle of the window. Nothing is being typed here, so the text ends where it
+   ends. */
+#write {
+  padding: var(--space-7) var(--space-5) var(--space-6);
+}
+
+/* ── The page's own furniture ────────────────────────────────────── */
+
+/* The author, under the title where a byline goes. */
+#write .by {
+  margin: -0.4em 0 2.2em;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--muted);
+}
+
+/* The way back to the index, above the note, and the offer to read it as a talk,
+   under it. Both are the page talking rather than the note, so both are quiet:
+   the colour of a caption until the pointer is on them. */
+#write .back,
+#write .present {
+  font-family: var(--font-ui);
+  font-size: var(--text-row);
+}
+
+#write .back {
+  margin: 0 0 1.6em;
+}
+
+#write .present {
+  margin: 2.4em 0 0;
+}
+
+#write .back a,
+#write .present a,
+#write footer a {
+  color: var(--muted);
+  border-bottom: 0;
+}
+
+#write .back a:hover,
+#write .present a:hover,
+#write footer a:hover {
+  color: var(--accent);
+}
+
+#write footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+/* ── The index ───────────────────────────────────────────────────── */
+
+/* Every note the space publishes, one to a row: its name, and when it last
+   changed. A list of names is a list of rows, which is what the app draws for
+   one too - here without the app's hover, since the whole row is the link. */
+#write ul.index {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#write ul.index > li {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+#write ul.index > li::before {
+  display: none;
+}
+
+#write ul.index a {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 0;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+}
+
+#write ul.index a:hover {
+  color: var(--accent);
+}
+
+#write ul.index time {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}

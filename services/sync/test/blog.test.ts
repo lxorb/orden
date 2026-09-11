@@ -104,7 +104,7 @@ describe('publishing', () => {
     await publish({ subdomain: 'field' })
 
     const response = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
-    expect(response.text).toContain('<h1>Hello world</h1>')
+    expect(response.text).toContain('<h1 id="hello-world">Hello world</h1>')
     expect(response.text).toContain('<strong>post</strong>')
   })
 
@@ -595,12 +595,12 @@ describe('the author', () => {
     await publish({ subdomain: 'field' })
 
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
-    const title = note.text.indexOf('<h1>Hello world</h1>')
+    const title = note.text.indexOf('<h1 id="hello-world">Hello world</h1>')
     const byline = note.text.indexOf('<p class="by">by Ada Lovelace</p>')
 
     expect(title).toBeGreaterThan(-1)
     expect(byline).toBeGreaterThan(title)
-    expect(note.text.slice(title, byline)).toBe('<h1>Hello world</h1>')
+    expect(note.text.slice(title, byline)).toBe('<h1 id="hello-world">Hello world</h1>')
     expect(note.text).toContain('<meta name="author" content="Ada Lovelace">')
   })
 
@@ -614,7 +614,7 @@ describe('the author', () => {
 
     expect(byline).toBeGreaterThan(-1)
     expect(byline).toBeLessThan(note.text.indexOf('Just a paragraph.'))
-    expect(byline).toBeLessThan(note.text.indexOf('<h1>Later</h1>'))
+    expect(byline).toBeLessThan(note.text.indexOf('<h1 id="later">Later</h1>'))
   })
 
   test('is named under the title of a note published on its own', async () => {
@@ -623,7 +623,7 @@ describe('the author', () => {
     await publish({ subdomain: 'me', note: 'home.md' })
 
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
-    expect(root.text.indexOf('<h1>Home</h1>')).toBeLessThan(root.text.indexOf('by Ada'))
+    expect(root.text.indexOf('<h1 id="home">Home</h1>')).toBeLessThan(root.text.indexOf('by Ada'))
   })
 
   test('leaves a note without a byline until there is a name', async () => {
@@ -722,7 +722,7 @@ describe('the way back to the index', () => {
     const back = note.text.indexOf('<a href="/">← Field notes</a>')
 
     expect(back).toBeGreaterThan(-1)
-    expect(back).toBeLessThan(note.text.indexOf('<h1>Hello world</h1>'))
+    expect(back).toBeLessThan(note.text.indexOf('<h1 id="hello-world">Hello world</h1>'))
   })
 
   test('comes before the byline as well', async () => {
@@ -953,6 +953,17 @@ describe('a published note read as slides', () => {
     expect(response.text.match(/<div class="stage">/g)).toHaveLength(3)
     expect(response.text).toContain('<h1>The talk</h1>')
     expect(response.text).toContain('<h3>A detail</h3>')
+  })
+
+  test('wears the app’s own stage, and shows one slide of it at a time', async () => {
+    await publishDeck()
+
+    const response = await call(env, '/talk?slides', { host: 'field.nibeditor.com' })
+    // The prose sheet and the stage, both served from here; see blog/style.ts.
+    expect(response.text.match(/<link rel="stylesheet" href="\/s\//g)).toHaveLength(2)
+    expect(response.text).toContain('--stage-width:1280px')
+    // Without this every slide is drawn on top of the one before it.
+    expect(response.text).toContain('.deck .stage.away { display: none; }')
   })
 
   test('the presenter’s notes are not served with the deck', async () => {

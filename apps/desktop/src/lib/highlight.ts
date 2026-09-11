@@ -1,33 +1,15 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
-import { highlightTree, tagHighlighter, tags } from '@lezer/highlight'
 import { CODE_PALETTES, type CodePalette, fenceLanguages } from '@nib/editor'
 
 export type Parser = LanguageSupport['language']['parser']
 
-/** The same groups the editor colours, as classes rather than styles, so a
- *  document carries one palette in its stylesheet and the markup stays clean. */
-const highlighter = tagHighlighter([
-  { tag: tags.keyword, class: 'hl-keyword' },
-  { tag: [tags.string, tags.special(tags.string)], class: 'hl-string' },
-  { tag: [tags.number, tags.bool, tags.null], class: 'hl-number' },
-  { tag: [tags.comment, tags.lineComment, tags.blockComment], class: 'hl-comment' },
-  // The key in a key=value fence, and a name where it is given - above the
-  // function rule so a function's name stays a function; see code-theme.ts.
-  { tag: tags.definition(tags.variableName), class: 'hl-property' },
-  { tag: [tags.function(tags.variableName), tags.labelName], class: 'hl-function' },
-  { tag: [tags.typeName, tags.className, tags.namespace], class: 'hl-type' },
-  { tag: [tags.operator, tags.punctuation], class: 'hl-punctuation' },
-  { tag: tags.propertyName, class: 'hl-property' },
-  { tag: tags.invalid, class: 'hl-invalid' },
-  { tag: tags.inserted, class: 'hl-inserted' },
-  { tag: tags.deleted, class: 'hl-deleted' },
-])
-
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
-
-function escape(text: string): string {
-  return text.replace(/[&<>]/g, (character) => ESCAPES[character] ?? character)
-}
+/** The groups, the classes and the colouring itself are @nib/markdown/highlight:
+ *  the Worker that publishes a note colours a fence with the same list, and one
+ *  list is what keeps a published page and the reading view the same page. What
+ *  is left here is the app's own half - finding a parser among the hundred and
+ *  forty-three the editor can load, and putting the reader's chosen palette on
+ *  the screen. */
+export { highlightCode } from '@nib/markdown/highlight'
 
 /** A parser for each language named, loaded once. The list is the editor's
  *  own, so an exported document is coloured by whatever coloured it on screen:
@@ -50,20 +32,6 @@ export async function loadParsers(names: Iterable<string>): Promise<Map<string, 
   )
 
   return parsers
-}
-
-/** The code as HTML, each token wrapped in its class. */
-export function highlightCode(code: string, parser: Parser): string {
-  let out = ''
-  let last = 0
-
-  highlightTree(parser.parse(code), highlighter, (from, to, classes) => {
-    out += escape(code.slice(last, from))
-    out += `<span class="${classes}">${escape(code.slice(from, to))}</span>`
-    last = to
-  })
-
-  return out + escape(code.slice(last))
 }
 
 /** One rule per class, in the palette's colours. `var()` values resolve

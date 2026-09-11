@@ -16,6 +16,7 @@
     "./front-matter": "./src/front-matter.ts",
     "./icons": "./src/icons.ts",
     "./from-html": "./src/from-html.ts",
+    "./highlight": "./src/highlight.ts",
     "./links": "./src/links.ts",
     "./properties": "./src/properties.ts",
     "./providers": "./src/providers.ts",
@@ -28,6 +29,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@lezer/common": "^1.5.2",
+    "@lezer/highlight": "^1.2.3",
     "katex": "^0.18.5",
     "lucide": "^1.40.0",
     "marked": "^18.0.11",

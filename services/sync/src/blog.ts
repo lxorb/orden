@@ -1,7 +1,9 @@
 import { documentTitle, findLinks, renderMarkdown, type Wikilink } from '@nib/markdown'
-import { DECK_HEIGHT, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
+import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
+import { blogFence } from './blog/code'
+import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import type { Env, Note, Space } from './types'
@@ -18,7 +20,10 @@ function csp(nonce?: string): string {
   return [
     "default-src 'none'",
     nonce ? `script-src 'nonce-${nonce}'` : "script-src 'none'",
-    `style-src 'unsafe-inline' ${new URL(KATEX_CSS).origin}`,
+    // The page's own stylesheet, which is served from here; see `sheet` below.
+    // Inline styles as well, because KaTeX lays an equation out in `style`
+    // attributes and a slide is placed by ones the stage writes.
+    `style-src 'self' 'unsafe-inline' ${new URL(KATEX_CSS).origin}`,
     `font-src ${new URL(KATEX_CSS).origin}`,
     'img-src https: data:',
     // A recording or a film a note embeds, which is served from the same place
@@ -265,101 +270,37 @@ function withByline(html: string, author: string | null): string {
     : byline + html
 }
 
-const STYLE = `
-:root{--bg:#fbfcfd;--fg:#1a1d23;--muted:#8a93a2;--line:#e1e6ed;--accent:#5b4be0;--surface:#f3f5f8;--scrollbar:#c3cbd6}
-@media (prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#dde2ea;--muted:#767e8c;--line:#232830;--accent:#7c6bf5;--surface:#14171c;--scrollbar:#39404d}}
-*{box-sizing:border-box}
-@media (pointer:fine){::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--scrollbar);background-clip:padding-box;border:3px solid transparent;border-radius:99px}::-webkit-scrollbar-thumb:hover{background-color:var(--muted)}::-webkit-scrollbar-button{display:none}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:var(--scrollbar) transparent}}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16.5px/1.72 ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-main{max-width:42rem;margin:0 auto;padding:6rem 1.5rem 8rem}
-h1,h2,h3,h4{line-height:1.28;letter-spacing:-.015em;margin:1.9em 0 .6em}
-h1{font-size:1.92em;margin-top:0}
-h2{font-size:1.5em}h3{font-size:1.22em}
-p{margin:0 0 1.15em}
-a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
-a:hover{border-bottom-color:var(--accent)}
-code{font-family:ui-monospace,monospace;font-size:.88em;background:var(--surface);border:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:5px;padding:.08em .26em}
-pre{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:1rem;overflow-x:auto}
-pre code{background:none;border:0;padding:0}
-blockquote{margin:1.5em 0;padding-left:1.15em;border-left:2px solid var(--line);color:var(--muted)}
-.callout{margin:1.5em 0;padding:.85em 1.1em;border-left:3px solid var(--callout,var(--accent));border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--callout,var(--accent)) 8%,transparent)}
-.callout-title{display:flex;align-items:center;gap:.45em;margin:0;color:var(--callout,var(--accent));font-weight:620;font-size:.92em}
-.callout-title .callout-icon{width:1.05em;height:1.05em;flex:none}
-summary.callout-title{cursor:pointer;list-style:none;user-select:none}
-summary.callout-title::-webkit-details-marker{display:none}
-.callout-title .callout-fold{width:.9em;height:.9em;flex:none;margin-left:-.1em;opacity:.75;transition:transform .13s cubic-bezier(.22,1,.36,1)}
-details.callout[open]>.callout-title .callout-fold{transform:rotate(90deg)}
-@media (prefers-reduced-motion:reduce){.callout-title .callout-fold{transition:none}}
-.callout-body{margin-top:.5em}
-.callout-body>:first-child{margin-top:0}
-.callout-body>:last-child{margin-bottom:0}
-.callout-body:empty{display:none}
-.callout-note,.callout-info,.callout-todo{--callout:#4a8df6}
-.callout-abstract{--callout:#3aada8}
-.callout-tip,.callout-success{--callout:#16a06a}
-.callout-important,.callout-example{--callout:var(--accent)}
-.callout-question{--callout:#d99b2e}
-.callout-warning{--callout:#e0a233}
-.callout-caution,.callout-failure,.callout-danger{--callout:#d92b34}
-.callout-bug{--callout:#d4569b}
-.callout-quote{--callout:var(--muted)}
-table{border-collapse:collapse;width:100%;margin:1.6em 0;font-size:.94em}
-th,td{border:1px solid var(--line);padding:.5em .75em;text-align:left}
-th{background:var(--surface)}
-img{max-width:100%;height:auto;border-radius:9px}
-hr{border:0;height:1px;background:var(--line);margin:2.4em 0}
-ul.index{list-style:none;padding:0}
-ul.index li{border-bottom:1px solid var(--line)}
-ul.index a{display:flex;justify-content:space-between;gap:1rem;padding:.85rem 0;border:0;color:var(--fg)}
-ul.index a:hover{color:var(--accent)}
-ul.index time{color:var(--muted);font-size:.85em;flex:none}
-figure.embed{margin:1.4em 0;padding:0 1.15rem;background:color-mix(in srgb,var(--surface) 55%,transparent);border:1px solid var(--line);border-radius:9px;font-size:.94em}
-figure.embed>div>:first-child{margin-top:.9em}
-figure.embed figcaption{margin:0 -1.15rem;padding:.4rem 1.15rem .45rem;border-top:1px solid var(--line);color:var(--muted);font-size:.8em}
-.embed-media{max-width:100%;border-radius:9px;vertical-align:middle}
-audio.embed-media{width:min(100%,26rem);height:2.4rem}
-video.embed-media{display:block;margin:1.5em auto;height:auto;background:var(--surface);border:1px solid var(--line)}
-video.embed-media:not([width]){width:100%}
-figure.embed-file{display:flex;align-items:center;gap:.55em;padding:.5em 1.15rem;font-size:.9em}
-figure.embed-file a{border:0;color:inherit}
-figure.embed-file a:hover{color:var(--accent)}
-.embed-icon{flex:none;width:1.05em;height:1.05em;color:var(--muted)}
-figure.chart{margin:1.7em 0;padding:1.15rem;background:var(--surface);border:1px solid var(--line);border-radius:9px}
-.chart-svg{display:block;width:100%;height:auto}
-.chart-grid{stroke:var(--line);stroke-width:1}
-.chart-axis{stroke:var(--muted);stroke-width:1}
-.chart-tick,.chart-label{fill:var(--muted);font-size:13px}
-.chart-line{stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.chart-slice{stroke:var(--surface);stroke-width:2}
-.chart-keys{display:flex;flex-wrap:wrap;justify-content:center;gap:.4em 1.1em;margin-top:.6em;color:var(--muted);font-size:.8em}
-.chart-key{display:inline-flex;align-items:center;gap:.4em}
-.chart-swatch{width:.7em;height:.7em;border-radius:2px}
-figure.chart figcaption{margin-top:.5em;text-align:center;color:var(--muted);font-size:.8em}
-.embed-web{display:block;margin:1.5em 0;height:var(--embed-height,auto);border:1px solid var(--line);border-radius:9px;background:var(--surface);overflow:hidden}
-.embed-web.embed-wide{aspect-ratio:16/9;height:auto}
-.embed-play{display:flex;align-items:center;justify-content:center;gap:.5em;width:100%;height:100%;min-height:4.5em;border:0;color:var(--muted);font-size:.9em}
-.embed-play:hover{background:var(--surface);color:var(--accent)}
-.embed-play .embed-icon{width:1.15em;height:1.15em;color:inherit}
-footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.82em}
-.by{margin:-.4em 0 2.2em;color:var(--muted);font-size:.94em}
-.back{margin:0 0 1.6em;font-size:.88em}
-.back a{color:var(--muted);border:0}
-.back a:hover{color:var(--accent)}
-.present{margin:2.4em 0 0;font-size:.88em}
-.present a{color:var(--muted);border:0}
-.present a:hover{color:var(--accent)}
-`
+/** A stylesheet of the app's own, served from here.
+ *
+ *  Linked rather than written into the page: it is the same bytes for every note
+ *  of every blog, its path is its own hash, so a reader fetches it once and keeps
+ *  it, and the second page of a blog carries no stylesheet at all. See
+ *  scripts/blog-css.mjs. */
+function sheet(css: string): Response {
+  return new Response(css, {
+    headers: {
+      'content-type': 'text/css; charset=utf-8',
+      'cache-control': 'public, max-age=31536000, immutable',
+      'x-content-type-options': 'nosniff',
+    },
+  })
+}
 
 /** The author's name, when they have given one: in the head for machines,
- *  in the footer for readers. */
+ *  in the footer for readers.
+ *
+ *  `#write` is Typora's name for a rendered note and is the id the writing
+ *  surface, the reading view and an exported document all carry, so every rule in
+ *  base.css and document.css - the very sheets the app loads - lands on this page
+ *  too. That is the whole of what makes a published note look like the note. */
 function page(heading: string, body: string, env: Env, author: string | null): Response {
   const html = `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(heading)}</title>
-${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${KATEX_CSS}">
-<style>${STYLE}</style>
-</head><body><main>${body}
+${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">
+<link rel="stylesheet" href="${KATEX_CSS}">
+</head><body><main id="write">${body}
 <footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
 </main></body></html>`
 
@@ -374,53 +315,15 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
   })
 }
 
-/** The stage a published deck is read on.
- *
- *  The behaviour is shared with the app and with an exported file - the markup and
- *  the handful of lines that turn the pages come from `@nib/markdown/deck` - and
- *  the look follows this page's own palette above, the way the rest of a published
- *  note does. A published page carries its stylesheet rather than the app's; see
- *  STYLE. */
-const SLIDES_STYLE = `
-body{overflow:hidden}
-.deck{position:fixed;inset:0;overflow:hidden;background:var(--bg);user-select:none;-webkit-user-select:none}
-.stage{position:absolute;top:50%;left:50%;width:${DECK_WIDTH}px;height:${DECK_HEIGHT}px;margin:${-DECK_HEIGHT / 2}px 0 0 ${-DECK_WIDTH / 2}px;transform:scale(var(--stage-scale,1));transform-origin:center;--stage-text:30px}
-.stage.away{display:none}
-.slide{width:100%;height:100%;padding:68px 96px;box-sizing:border-box;overflow:hidden;animation:slide-in .17s cubic-bezier(.22,1,.36,1)}
-.slide #write{height:100%;overflow:hidden;font-size:calc(var(--stage-text) * var(--stage-fit,1));line-height:1.5}
-.slide #write>:first-child{margin-top:0}
-.slide[data-shape=title] #write{display:flex;flex-direction:column;justify-content:center}
-.slide[data-shape=title] #write h1{font-size:2.6em;margin:0}
-.slide[data-shape=title] #write h2{font-size:1.5em;margin:.5em 0 0;color:var(--muted);font-weight:480}
-.slide[data-shape=picture]{padding:0}
-.slide[data-shape=picture] #write,.slide[data-shape=picture] #write p{display:flex;height:100%;margin:0;align-items:center;justify-content:center}
-.slide[data-shape=picture] #write img{width:100%;height:100%;object-fit:contain;border-radius:0}
-.slide #write li.fragment{opacity:0;transition:opacity .17s cubic-bezier(.22,1,.36,1)}
-.slide #write li.fragment.shown{opacity:1}
-.slide #write pre{max-height:100%;overflow:hidden}
-.rail{position:absolute;inset:auto 0 0 0;height:2px;background:var(--line)}
-.rail .run{height:100%;width:calc(var(--at,0) * 100%);background:var(--accent);transition:width .17s cubic-bezier(.22,1,.36,1)}
-.count{position:absolute;right:20px;bottom:16px;font-size:.8rem;font-variant-numeric:tabular-nums;color:var(--muted);opacity:0;transition:opacity .34s ease}
-.count[data-shown=yes]{opacity:1}
-@keyframes slide-in{from{opacity:0;transform:translate(var(--from-x,0),var(--from-y,0))}}
-.deck[data-move=forward] .slide{--from-x:28px}
-.deck[data-move=back] .slide{--from-x:-28px}
-.deck[data-move=down] .slide{--from-y:28px}
-.deck[data-move=up] .slide{--from-y:-28px}
-@media (prefers-reduced-motion:reduce){.slide,.rail .run,.slide #write li.fragment{animation:none;transition:none}}
-@media print{
-html,body{height:auto;overflow:visible}
-.deck{position:static;display:block;overflow:visible}
-.stage,.stage.away{display:block;position:static;margin:0;transform:none;break-after:page}
-.stage:last-of-type{break-after:auto}
-.slide{animation:none}
-.slide #write li.fragment{opacity:1}
-.rail,.count{display:none}
-}
-`
-
 /** A deck as a page of its own. Every slide is in it, so a reader with scripting
- *  off still gets the whole talk and a printer gets one sheet per slide. */
+ *  off still gets the whole talk and a printer gets one sheet per slide.
+ *
+ *  The same two sheets the app presents from - the prose of a note, and the stage
+ *  it is read on - plus the two things a page with no app around it adds: how big
+ *  the stage is, and that a slide which is not the one being read is not drawn.
+ *  Both come from `@nib/markdown/deck`, along with the markup and the handful of
+ *  lines that turn the pages, so the app, an exported deck and this one are one
+ *  deck rather than three that look alike. */
 function deckPage(heading: string, body: string, author: string | null): Response {
   const nonce = crypto.randomUUID().replace(/-/g, '')
 
@@ -428,9 +331,11 @@ function deckPage(heading: string, body: string, author: string | null): Respons
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(heading)}</title>
-${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${KATEX_CSS}">
-<style>${STYLE}${SLIDES_STYLE}</style>
-</head><body>${body}
+${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">
+<link rel="stylesheet" href="${SLIDES_CSS_PATH}">
+<link rel="stylesheet" href="${KATEX_CSS}">
+<style>.deck .stage{--stage-width:${DECK_WIDTH}px;--stage-height:${DECK_HEIGHT}px}${DECK_PAGE_CSS}</style>
+</head><body class="deck-page">${body}
 <script nonce="${nonce}">${DECK_SCRIPT}</script>
 </body></html>`
 
@@ -481,6 +386,12 @@ function publishedDeck(source: string, options: Parameters<typeof renderMarkdown
 const MOST_LISTED = 2000
 
 export async function serveBlog(env: Env, space: Space, url: URL): Promise<Response> {
+  // The stylesheets, first of all: they are the same bytes whatever the space,
+  // they are asked for by every page of every blog, and neither the account nor
+  // the notes have anything to say about them.
+  if (url.pathname === PAGE_CSS_PATH) return sheet(PAGE_CSS)
+  if (url.pathname === SLIDES_CSS_PATH) return sheet(SLIDES_CSS)
+
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
   /** Whether the reader asked for the note as a talk rather than as a page. */
@@ -518,6 +429,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     // to go; an embed still shows what it names, which is inside this page.
     const reading = {
       escapeHtml: true,
+      code: blogFence,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
       // has somewhere to go.
@@ -529,7 +441,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
       return deckPage(title(only, source), publishedDeck(source, reading), author)
     }
 
-    const rendered = renderMarkdown(source, { footnotes: true, ...reading })
+    const rendered = renderMarkdown(source, { footnotes: true, toc: true, ...reading })
 
     return page(
       title(only, source),
@@ -580,6 +492,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   // what they name - one level deep, which is the renderer's own rule.
   const reading = {
     escapeHtml: true,
+    code: blogFence,
     resolveLink: linkResolver(results, readSpaceFiles(space.files)),
     resolveEmbed: await embedded(env, space, results, source),
   }
@@ -590,7 +503,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     return deckPage(title(note, source), publishedDeck(source, reading), author)
   }
 
-  const rendered = renderMarkdown(source, { footnotes: true, ...reading })
+  const rendered = renderMarkdown(source, { footnotes: true, toc: true, ...reading })
 
   // The way back sits above the note, where a reader who came from the
   // index looks for it, and the author right under the title.
