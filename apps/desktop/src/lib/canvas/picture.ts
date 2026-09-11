@@ -34,7 +34,7 @@ import { strokeBox } from './ink'
 import { inkSvg } from './svg'
 import type { Palette } from './paint'
 import { cardHtml, fileUrl, isPicture } from './render'
-import { invoke, isDesktop } from '../tauri'
+import { assetPath, invoke, isDesktop } from '../tauri'
 import { message, t } from '../i18n.svelte'
 
 /** Room left round the drawing, in plane units. */
@@ -407,7 +407,14 @@ async function readySvg(drawing: Drawing, plain = false): Promise<string> {
   const svg = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, plain)
   // `inlineImages` matches `<img src>`, which is what a card's markdown holds;
   // an `<image href>` is swapped the same way by asking for the same resolver.
-  return inlineImages(svg.replace(/<image /g, '<img ').replace(/href="/g, 'src="'), (src) => src)
+  //
+  // A picture on the plane is drawn there through `assetUrl`, so what the SVG
+  // holds is an address rather than a path: `assetPath` is that journey back, and
+  // it is the same one line on a desktop and in a browser.
+  return inlineImages(
+    svg.replace(/<image /g, '<img ').replace(/href="/g, 'src="'),
+    (src) => assetPath(src) ?? src,
+  )
     .then((inlined) => inlined.replace(/<img /g, '<image ').replace(/src="/g, 'href="'))
     .catch(() => svg)
 }

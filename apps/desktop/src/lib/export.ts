@@ -25,7 +25,7 @@ import {
   pageSetupFor,
   withRunningText,
 } from './page-setup'
-import { invoke, isDesktop } from './tauri'
+import { assetPath, invoke, isDesktop } from './tauri'
 import type { Scheme } from './theme.svelte'
 
 export { PANDOC_FORMATS, type PandocFormat } from './export-formats'
@@ -267,9 +267,15 @@ export async function prepareFences(
   }
 }
 
-/** Every `src` in the page that points at a file rather than at the network. */
+/** Every `src` in the page that points at a file rather than at the network.
+ *
+ *  A path the note wrote is one. So is an address `assetUrl` made, which is what a
+ *  page that has already been resolved for a screen carries - a plane drawn to SVG
+ *  is the one of those that is also exported; see canvas/picture.ts. Those wear a
+ *  scheme and a host on some platforms, which is why they are asked about by name
+ *  rather than sorted out by their shape. */
 export function localSources(html: string): string[] {
-  return sourcesOf(html, (src) => !/^(data:|https?:|\/\/)/i.test(src))
+  return sourcesOf(html, (src) => assetPath(src) !== null || !/^(data:|https?:|\/\/)/i.test(src))
 }
 
 /** Swaps local image paths for `data:` URIs so the exported file stands alone.

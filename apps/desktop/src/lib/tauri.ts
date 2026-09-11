@@ -3,6 +3,7 @@
  *  never branches. */
 
 import { platform } from '@tauri-apps/plugin-os'
+import { assetRoute, assetStorePath } from './web/asset-route'
 
 /** The two platforms that are a phone app rather than a desktop one. */
 const PHONES = new Set<string>(['android', 'ios'])
@@ -109,15 +110,43 @@ export async function currentWindow(): Promise<WindowLike> {
 }
 
 /** A webview cannot load a bare filesystem path; Tauri hands out a URL for one.
- *  In the browser the path is a key into storage, resolved by the image layer. */
+ *
+ *  The one resolver every surface that draws a picture goes through - the editor's
+ *  widget, the reading view, a hover preview, a card on a plane, a slide - so that
+ *  none of them knows which build it is in. In the app that is the asset protocol;
+ *  in a browser there is no file, so it is an address the asset worker answers out
+ *  of storage. See web/asset-route.ts. */
 export function assetUrl(path: string): string {
-  if (!isNative) return path
+  if (!isNative) return assetRoute(path)
 
   const internals = (
     window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } }
   ).__TAURI_INTERNALS__
 
   return internals?.convertFileSrc?.(path) ?? path
+}
+
+/** What the asset protocol's addresses look like on the way back. Two shapes,
+ *  because Tauri uses a scheme of its own where the platform allows one and a
+ *  host under http where it does not. */
+const ASSET_PROTOCOL = /^(?:asset:\/\/localhost\/|https?:\/\/asset\.localhost\/)/i
+
+/** The same journey back: the path behind an address `assetUrl` made, or null for
+ *  an address it did not make.
+ *
+ *  What a document full of addresses is read with. A canvas is drawn to SVG with
+ *  every picture in it already resolved, and a file that has to stand on its own
+ *  needs the bytes rather than the address; see canvas/picture.ts. */
+export function assetPath(url: string): string | null {
+  if (!isNative) return assetStorePath(url)
+  if (!ASSET_PROTOCOL.test(url)) return null
+
+  try {
+    return decodeURIComponent(url.replace(ASSET_PROTOCOL, '').split(/[?#]/)[0] ?? '') || null
+  } catch {
+    // Not valid encoding, so it is not an address of ours after all.
+    return null
+  }
 }
 
 export function folderOf(path: string): string {

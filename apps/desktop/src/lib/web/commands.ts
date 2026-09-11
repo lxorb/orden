@@ -19,6 +19,7 @@ import {
   spaceOf,
   within,
 } from './paths'
+import { assetType } from './asset-route'
 import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
@@ -713,7 +714,10 @@ export async function webInvoke<T>(
 
       await assets.put({
         path: join(folder, name),
-        type: `image/${name.split('.').pop() ?? 'png'}`,
+        // What the name says it is rather than the extension with `image/` in
+        // front: `image/svg` draws nothing, and the asset worker hands this row
+        // straight to an `<img>`. See asset-route.ts.
+        type: assetType(name),
         data: btoa(binary),
         modified: now(),
       })
@@ -748,7 +752,10 @@ export async function webInvoke<T>(
     case 'read_asset': {
       const row = await assets.get(normalise(path))
       if (!row) throw new Error('no such image')
-      return `data:${row.type};base64,${row.data}` as T
+      // The name first, the row second: a row written before the name was asked
+      // says `image/svg`, and an export that inlines that inlines a picture
+      // nothing draws.
+      return `data:${assetType(path, row.type)};base64,${row.data}` as T
     }
 
     case 'snapshot_note':

@@ -26,7 +26,12 @@ import { everywhere, seedFlag } from './lib/even/keep'
 import { recovery } from './lib/recovery.svelte'
 import { rememberSeedIn } from './lib/seeded'
 import { sync } from './lib/sync.svelte'
+import { serveAssets } from './lib/web/asset-worker'
 import { workspace } from './lib/workspace.svelte'
+
+// The plugin's page keeps its notes and its pictures where the web app does, so it
+// needs the same worker in front of them. See public/sw.js.
+serveAssets()
 
 const target = document.getElementById('app')
 if (!target) throw new Error('even.html has no #app to mount into')
