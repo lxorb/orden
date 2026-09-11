@@ -220,6 +220,20 @@ the panel's header, and the tab strip are all as tall as, so the two columns
 across the top of the app read as one row. On a touch screen it is
 `--touch-row`.
 
+Being that tall is not the same as sitting in it. The bar stretches what is in
+it, so anything with a height of its own has to say `align-self: center` or it
+lands at the top of the row: the three bars of the app menu are a 30px pill and
+sat four pixels above the centre line the sidebar button, the space's name and
+the first tab all share. `apps/desktop/test/e2e/shell-polish.py` measures the
+four of them against the bar's own centre and fails on more than a pixel.
+
+A button in the bar is one glyph, and its state is said by movement rather than
+by a second drawing. The sidebar button is a panel with an edge in it; the edge
+slides out of the frame as the list arrives and back into it as the list goes,
+and it is drawn the whole time. It used to fade away instead, which made the
+button a plain window shut and a split panel open: two drawings with nothing for
+the eye to follow between them.
+
 ### Swapping
 
 Changing what a surface is showing is a move, not a cut. Four tabs across the
@@ -341,6 +355,30 @@ A person's colour is derived from their address rather than picked, in
 reload, which is the opposite of how a device chooses the colour of its caret -
 two of one person's machines have to differ, two people looking at one list have
 to agree.
+
+A mark inside a badge is `display: block`, and that is load-bearing rather than
+tidy. An `svg` is an inline element: it sits on the text baseline of whatever
+wraps it, and the line box around that baseline is taller than the box the badge
+gave it, so the descender under the baseline pushes the mark down. One pixel,
+which is exactly what a mark sitting low in a badge looks like. `Icon.svelte`
+says it once for all three kinds of icon, and nothing else should have to.
+
+Where a space is named, it is named with its badge: the switcher's rows, the
+header over the file list, and the title bar while the list is shut. One pairing,
+so a space is one object whether the panel is out or away.
+
+### Dots, and what is not a dot
+
+A dot is one fact: something is not written down yet. That is the tab's saving
+dot, and the two lights that are about work in progress rather than about a file
+(a request waiting to be let in, the foot's sync light) borrow the shape because
+they are the same kind of statement.
+
+Anything about other people is a mark, never a dot. `SharedMark.svelte` draws it
+once - Lucide's `users`, at `--icon-sm` in `--muted`, in the row's trailing slot -
+and it is what says a space is shared, in the switcher's rows and on the header
+over the list. A dot in the accent used to say that, which meant the one shape
+the app had for a fact about a file was saying two unrelated things at once.
 
 ### Switches
 

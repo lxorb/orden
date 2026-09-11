@@ -8,9 +8,15 @@
    *  glyph, the same words, the same movement, whichever of the two it is drawn
    *  in.
    *
-   *  The glyph says what pressing it does. Shut, it is a plain window; open, the
-   *  panel's edge stands a little way inside it, and it slides out from the left
-   *  as the list arrives and back into the edge as it goes. */
+   *  One glyph, always: a panel with an edge in it. The edge slides out from the
+   *  frame's left side as the list arrives and back into it as the list goes, and
+   *  that movement is the whole of what says which state it is in.
+   *
+   *  It used to fade the edge away as well, and that turned one glyph into two: a
+   *  plain window when the list was shut, a split panel when it was open. A button
+   *  that redraws itself is a button you have to read twice, and there was nothing
+   *  for the eye to follow between the two readings. Now the shape is constant and
+   *  only the edge moves, which is the same thing the panel itself does. */
   import { t } from './i18n.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -75,17 +81,16 @@
     stroke-width: 1.2;
   }
 
-  /* The panel's edge, which arrives from the left as the list does and leaves
-     the same way. The same curve and the same length as the drawer's own. */
+  /* The panel's edge, which arrives from the left as the list does and leaves the
+     same way. The same curve and the same length as the drawer's own. Transform
+     only: it is always drawn, and where it is is what says whether the list is
+     out. Shut, it rests against the frame's left side. */
   .edge {
-    transition:
-      transform var(--dur-base) var(--ease-out),
-      opacity var(--dur-fast) var(--ease-out);
+    transition: transform var(--dur-base) var(--ease-out);
   }
 
   .toggle:not(.on) .edge {
-    transform: translateX(-4.5px);
-    opacity: 0;
+    transform: translateX(-3.6px);
   }
 
   /* A thumb's target rather than a pointer's, and the glyph drawn at the size

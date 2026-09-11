@@ -332,6 +332,12 @@
   .trigger {
     width: 30px;
     height: 30px;
+    /* The bar stretches what is in it, and a fixed height turns that into "top of
+       the row": the three bars sat four pixels above the centre line the button
+       beside them, the space's name and the first tab all sit on. The pill keeps
+       its own size, because a hover ring the full height of the bar is a different
+       object; what is said here is only where the pill sits in the row. */
+    align-self: center;
     display: grid;
     place-items: center;
     /* The rule for the menu rows below reaches every button in this component,

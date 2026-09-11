@@ -20,6 +20,7 @@
   import { roving } from './roving'
   import { trap } from './trap'
   import { commitSpaceName, newSpace, spaceMenu } from './space-actions'
+  import SharedMark from './SharedMark.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import { t } from './i18n.svelte'
   import { isShared } from './sharing.svelte'
@@ -82,6 +83,11 @@
     onclick={() => (open = !open)}
   >
     <span class="nib-row-label">{name}</span>
+    <!-- Said on the header as well as on the row, so a space being shared is a
+         fact you can see without opening the list of spaces to look for it. -->
+    {#if here && isShared(here.root)}
+      <SharedMark />
+    {/if}
     <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
   </button>
 {/if}
@@ -136,10 +142,11 @@
 
           <span class="nib-row-label">{space.name}</span>
 
-          <!-- Not only yours. The same fact a note's tab says with a stack of
-               devices, said once here. -->
+          <!-- Not only yours, in the mark the whole app says that with; see
+               SharedMark.svelte. It used to be a dot in the accent, which is the
+               same shape a tab uses for "not written down yet". -->
           {#if isShared(space.root)}
-            <span class="with" aria-hidden="true"></span>
+            <SharedMark />
           {/if}
         </button>
 
@@ -279,17 +286,8 @@
   /* The mark a space is known by - its drawing, or the letter it starts with
      when it has none - is `.nib-badge` in the themes package, and what goes in it
      is SpaceMark.svelte. Neither is drawn again here: the space you are in wears
-     the accent on its badge, which is `is-on`. */
-  /* Somebody else is in this space. A dot at the end of the row, where every
-     other list in the app puts what it has to add about a name. */
-  .with {
-    flex: none;
-    width: 6px;
-    height: 6px;
-    margin-left: var(--space-1);
-    border-radius: 50%;
-    background: var(--accent);
-  }
+     the accent on its badge, which is `is-on`. Nor is the shared mark at the end
+     of the row, which is SharedMark.svelte for the same reason. */
 
   .more {
     flex: none;

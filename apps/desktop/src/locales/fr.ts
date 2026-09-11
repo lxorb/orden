@@ -923,6 +923,7 @@ export const fr: Dictionary = {
   'Nudge down': 'Décaler vers le bas',
   // Writing in a note on several devices at once
   'Also open elsewhere': 'Ouvert ailleurs aussi',
+  Shared: 'Partagé',
   Browser: 'Navigateur',
   // Sharing a space with other people
   Share: 'Partager',

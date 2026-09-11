@@ -920,6 +920,7 @@ export const gsw: Dictionary = {
   'Nudge down': 'Nach une schiebe',
   // Writing in a note on several devices at once
   'Also open elsewhere': 'Au susch no offe',
+  Shared: 'Teilt',
   Browser: 'Browser',
   // Sharing a space with other people
   Share: 'Teile',

@@ -919,6 +919,7 @@ export const ja: Dictionary = {
   'Nudge down': '下へ少し動かす',
   // Writing in a note on several devices at once
   'Also open elsewhere': '他の端末でも開いています',
+  Shared: '共有中',
   Browser: 'ブラウザ',
   // Sharing a space with other people
   Share: '共有',

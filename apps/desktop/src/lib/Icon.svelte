@@ -95,6 +95,15 @@
      is only what would be wrong everywhere else - no fill on a stroked icon, and
      round joins, which is how Lucide is drawn. */
   .glyph {
+    /* Block, and that is the load-bearing word. An `svg` is an inline element by
+       default, so it sits on the text baseline of whatever wraps it, and the line
+       box around that baseline is taller than the box the caller gave: a 16px mark
+       inside a 21.6px line box is pushed down by the descender under it. One pixel,
+       which is exactly what a mark sitting low in a badge looks like. Block takes
+       the glyph out of the line box altogether, so it fills the caller's box and
+       nothing else has a say in where it sits. The emoji below was already doing
+       this for its own reason; this is the same rule for all three kinds. */
+    display: block;
     width: 100%;
     height: 100%;
     flex: none;
@@ -111,6 +120,8 @@
   }
 
   .emoji {
+    /* A character has no box of its own to fill, so it is centred in the caller's
+       instead; the rest is above. */
     display: grid;
     place-items: center;
     /* Against the box rather than the text, so one number covers a 16px mark and a

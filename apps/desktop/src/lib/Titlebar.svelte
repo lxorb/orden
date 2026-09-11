@@ -5,6 +5,7 @@
   import { markOf } from './file-mark'
   import { t } from './i18n.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
+  import SpaceMark from './SpaceMark.svelte'
   import Tabs from './Tabs.svelte'
   import { currentWindow, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
@@ -73,7 +74,18 @@
        it is back - a word, not a control: what opens the list is the button
        beside it. -->
   {#if !viewport.touch && !workspace.panel && workspace.activeSpace}
-    <span class="space">{workspace.activeSpace.name}</span>
+    {@const space = workspace.activeSpace}
+    <span class="space">
+      <!-- The mark the space wears everywhere else it is named: the same badge and
+           the same drawing the switcher's rows put in front of it, so the space is
+           one object whether the list is out or away. Plain rather than `is-on`:
+           this is the space you are in said quietly, not a row to pick out of a
+           list of them. -->
+      <span class="nib-badge" aria-hidden="true">
+        <SpaceMark id={space.id} name={space.name} />
+      </span>
+      <span class="name">{space.name}</span>
+    </span>
   {/if}
 
   {#if viewport.touch}
@@ -219,22 +231,33 @@
   }
 
   /* Which space these notes are in, while the panel that usually says so is
-     shut. Quiet: it is a fact about what is open, not something to press. */
+     shut: its mark and its name, the pair the switcher shows on every row.
+     Quiet: it is a fact about what is open, not something to press. */
   .space {
     flex: none;
-    max-width: 12rem;
+    min-width: 0;
+    max-width: 14rem;
     align-self: center;
+    display: flex;
+    align-items: center;
+    gap: var(--row-gap);
     /* Room enough on the right that it does not read as the first tab in the
        strip: it belongs to the button beside it, which is what brings the panel
        carrying this name back. */
     padding: 0 var(--space-4) 0 var(--space-1);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
     font-family: var(--font-ui);
     font-size: var(--text-row);
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
+  }
+
+  /* The name is what gives way, not the mark: a long space name is cut and the
+     badge in front of it is not. The same division every row in the app makes. */
+  .space .name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* A phone has no window to drag and a thumb to hit this with. The bar grows

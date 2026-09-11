@@ -925,6 +925,7 @@ export const de: Dictionary = {
   'Nudge down': 'Nach unten schieben',
   // Writing in a note on several devices at once
   'Also open elsewhere': 'Auch anderswo offen',
+  Shared: 'Geteilt',
   Browser: 'Browser',
   // Sharing a space with other people
   Share: 'Teilen',
