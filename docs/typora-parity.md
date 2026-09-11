@@ -298,7 +298,14 @@ Still pandoc's, and offered only where pandoc is installed:
 
 ## 15. Import
 
-- [x] Import via pandoc (docx, odt, rst, textile, epub, …), from the File menu
+- [x] Import via pandoc (docx, odt, rst, textile, epub, …), from the File menu.
+      Now one row of the sheet below rather than a row of its own: the sheet
+      recognises a Word file and hands it to pandoc, and says so where pandoc is
+      not installed instead of hiding the row
+- [x] Notes out of another app: Notion, Evernote, Google Keep, Bear, Logseq, Roam,
+      Craft, OneNote, Tomboy, Airtable and any folder of markdown, read from the
+      export the reader already has, in one sheet, on every platform. See
+      docs/import.md and section 17
 
 ## 16. System integration
 
@@ -624,3 +631,64 @@ Features Typora does not have, which are the reason this exists.
       front matter value - shows its own words rather than its front matter fence.
       A row saying `---` says nothing about the note it is about, and a note found
       by `[pages:>200]` is exactly the note that has one
+- [x] Notes out of another app, in one sheet: a zip, a folder or a file, dropped or
+      picked, on a desktop, in a browser and on a phone. Nobody picks a format,
+      because the file says what it is: a `.enex` can only be Evernote, a
+      32-character id on the end of every name can only be Notion, a `journals/`
+      folder beside a `pages/` one is a Logseq graph, and a TextBundle's own
+      `info.json` names the app that wrote it. What the sheet shows is what it is
+      about to make - how many notes, how many files, how many folders, where they
+      go, and what is not coming with them - in counts rather than a list, since
+      somebody importing four thousand notes cannot read a list of four thousand
+      notes. Ten formats between them: Notion, Evernote, Google Keep, Bear,
+      Logseq, Roam, Craft, OneNote, Tomboy, a bare CSV, and any folder of
+      markdown, which is what half of these apps write when asked nicely. See
+      docs/import.md
+- [x] A Notion export arrives as the tree it looked like in Notion. Notion writes
+      a folder per page that has pages under it and an id on the end of every
+      name; take the ids off and that is exactly nib's own shape, a note and a
+      folder of the same name. A page's properties, which it writes as lines under
+      the title, become front matter. A database is the folder's own note, holding
+      the table, with the rows as the notes they already were - and of the two
+      tables Notion writes, the one with every row in it is the one read, because
+      a saved view is a question somebody asked on a Tuesday
+- [x] An import is written through the same two commands saving and pasting use,
+      so sync sees the files, the link index sees them, version history has them
+      and the rows are in the file list before the sheet closes. Nothing is written
+      over: a name that is taken steps aside the way a new note's does, and the
+      links inside the import follow it. And however many thousand files it wrote,
+      the whole import is one thing to undo, because what somebody did was import
+      once
+- [x] A link between two imported notes becomes a wikilink, which is what survives
+      the reader renaming one afterwards and what the graph, the backlinks and the
+      mentions read. A link to a picture or a paper stays a markdown link with a
+      relative path, which is what a paste writes. A link to something that was
+      not in the export is left exactly as it was: an address into the app it came
+      from is a fact about where the note used to live
+- [x] What the export knew about a note goes into the note. Every file on disk says
+      it was written today the moment it is imported, so the day it was made is
+      written as `date`, which is the key nib already reads, and the last-edited
+      day as `updated` only where the export knew a different one. Tags become
+      `tags`, tidied to what a tag can be
+- [x] Apple Notes and Apple Journal are not imported, and say so where a reader
+      will see it. Both keep their notes in a database only they can open, on a
+      Mac, behind the system's own permission prompts; Obsidian's importer reads
+      that database because it runs there, and nib runs on five platforms. So the
+      sheet offers the useful half instead: export them first, then import that
+- [x] A checkbox comes over as a checkbox, wherever it was one: Evernote's
+      `<en-todo>`, a Google Keep list item with its tick, Logseq's `TODO` and
+      `DONE`, Roam's `{{[[TODO]]}}`. A box is a box
+- [x] What an import cannot carry is said before it is written rather than logged
+      afterwards: the passages Evernote encrypted and nothing can read, the notes
+      Keep had in the bin and leaves there, the colours a Keep note had, the block
+      references written out as the words they pointed at, the saved views a Notion
+      database had. One short line each, under "Worth knowing"
+- [x] `Convert syntax`, for the notes that arrived some other way than through the
+      sheet: a folder copied across, a space synced out of Bear, a note pasted from
+      a friend. Two rewrites, which are the two that actually break something -
+      Bear's `#two words#` becomes `#two-words`, and a Zettelkasten id link is
+      written out as the note whose name begins with that id, which is the shape
+      nib's own unique-note command writes. In this note or in the whole space,
+      with the count shown before anything is written and one thing to undo
+      afterwards. Roam's `[[page]]` is deliberately not in the list: it is already
+      a wikilink and already means what it says here
