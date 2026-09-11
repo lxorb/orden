@@ -31,6 +31,17 @@ export type FormatId =
 export type Planned =
   { kind: 'note'; path: string; text: string } | { kind: 'file'; path: string; bytes: Uint8Array }
 
+/** One line about what could not be carried over.
+ *
+ *  The words come from `key()` and are translated by the sheet that shows them:
+ *  a plan is built where there is no component and no reader yet, and a string
+ *  that went through `t()` here would be in whatever language the app was in
+ *  when the file was read. */
+export interface Lost {
+  text: string
+  values?: Record<string, string | number>
+}
+
 export interface ImportPlan {
   format: FormatId
   /** In the order they will be written, which is the order the reader found
@@ -38,7 +49,7 @@ export interface ImportPlan {
   files: Planned[]
   /** What could not be carried over, one short line each, said before anything
    *  is written rather than in a log afterwards. */
-  lost: string[]
+  lost: Lost[]
 }
 
 /** What the sheet shows about a plan. Folders are counted rather than listed:
