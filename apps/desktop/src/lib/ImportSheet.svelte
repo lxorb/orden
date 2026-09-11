@@ -47,12 +47,15 @@
   const counts = $derived(importing.counts)
 
   /** The line that says how much: the notes first, because that is what somebody
-   *  is importing, and the rest only where there is any. */
+   *  is importing, and the pictures and papers after, where there are any.
+   *
+   *  Not the folders. A note that holds notes is a note here, so they are already
+   *  counted among the notes, and the ones that are left are a shape the reader
+   *  gets rather than a thing that arrives. */
   const said = $derived(
     [
       t('{count} notes', { count: counts.notes }),
       counts.files ? t('{count} files', { count: counts.files }) : '',
-      counts.folders ? t('{count} folders', { count: counts.folders }) : '',
     ]
       .filter(Boolean)
       .join(' · '),
@@ -173,12 +176,13 @@
           <button class="pill" onclick={() => void importing.chooseTarget()}>{target}</button>
         </div>
         <div class="row">
-          <span class="name">{t('In a folder called')}</span>
+          <!-- The name everything lands under. Not "folder": a row that holds
+               notes is a note here, and the word is gone from the interface. -->
+          <span class="name">{t('Under')}</span>
           <input
             class="field"
             bind:value={importing.folder}
-            placeholder={t('Folder')}
-            aria-label={t('In a folder called')}
+            aria-label={t('Under')}
             spellcheck="false"
           />
         </div>

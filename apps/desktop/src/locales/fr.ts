@@ -1017,7 +1017,6 @@ export const fr: Dictionary = {
   'Import into': 'Importer dans',
   'That import could not be written.': 'Cet import n’a pas pu être écrit.',
   '{count} files': '{count} fichiers',
-  '{count} folders': '{count} dossiers',
   'This space': 'Cet espace',
   'Drop an export here': 'Déposez un export ici',
   'A zip, a folder, or a file another app wrote':
@@ -1033,7 +1032,6 @@ export const fr: Dictionary = {
   'As a table': 'En tableau',
   'One note per row': 'Une note par ligne',
   Into: 'Dans',
-  'In a folder called': 'Dans un dossier nommé',
   'Worth knowing': 'À savoir',
   '{count} notes arrived.': '{count} notes sont arrivées.',
   '{count} names were taken, so those files stepped aside.':
@@ -1043,4 +1041,5 @@ export const fr: Dictionary = {
   'A document': 'Un document',
   'Undo the import': 'Annuler l’import',
   'Choose an export': 'Choisir un export',
+  Under: 'Dans',
 }

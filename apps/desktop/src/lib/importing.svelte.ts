@@ -155,26 +155,22 @@ class Importing {
 
   /** Where it goes, through the picker that moving a note already uses. */
   async chooseTarget() {
-    const spaces = workspace.spaces.map((space) => ({ name: space.name, root: space.root }))
-    // Nothing is moving, so every folder of the space and every other space is
+    // Nothing is moving, so every note of the space and every other space is
     // offered: the same list, asked with nothing in hand.
     const targets = moveTargets({
       moving: '',
       tree: workspace.tree,
-      spaces,
+      spaces: workspace.spaces,
       here: workspace.activeSpace?.root ?? null,
     })
 
     const { prompt } = await import('./prompt.svelte')
-    const into = await prompt.find({
-      title: t('Import into'),
-      options: targets.map((one) => ({ id: one.id, label: one.label, mark: one.mark })),
-      placeholder: t('Folder'),
-    })
-
+    const into = await prompt.find({ title: t('Import into'), options: [...targets] })
     if (!into) return
 
-    const space = spaces.find((one) => into === one.root || into.startsWith(`${one.root}/`))
+    const space = workspace.spaces.find(
+      (one) => into === one.root || into.startsWith(`${one.root}/`),
+    )
     this.root = space?.root ?? this.root
     this.under = space && into !== space.root ? relativeFolder(space.root, into) : ''
   }

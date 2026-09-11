@@ -1014,7 +1014,6 @@ export const gsw: Dictionary = {
   'Import into': 'Importiere uf',
   'That import could not be written.': 'Dä Import het sich nöd schriibe laa.',
   '{count} files': '{count} Dateie',
-  '{count} folders': '{count} Ordner',
   'This space': 'Dä Bereich',
   'Drop an export here': 'Export do häre zieh',
   'A zip, a folder, or a file another app wrote':
@@ -1030,7 +1029,6 @@ export const gsw: Dictionary = {
   'As a table': 'As Tabelle',
   'One note per row': 'Ei Notiz pro Ziile',
   Into: 'Ziil',
-  'In a folder called': 'Imene Ordner namens',
   'Worth knowing': 'Guet zum wüsse',
   '{count} notes arrived.': '{count} Notize sind acho.',
   '{count} names were taken, so those files stepped aside.':
@@ -1040,4 +1038,5 @@ export const gsw: Dictionary = {
   'A document': 'Es Dokumänt',
   'Undo the import': 'Import zrugnäh',
   'Choose an export': 'Export uuswähle',
+  Under: 'Under',
 }

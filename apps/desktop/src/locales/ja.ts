@@ -1013,7 +1013,6 @@ export const ja: Dictionary = {
   'Import into': 'インポート先',
   'That import could not be written.': 'このインポートは書き込めませんでした。',
   '{count} files': '{count} 個のファイル',
-  '{count} folders': '{count} 個のフォルダー',
   'This space': 'このスペース',
   'Drop an export here': '書き出したファイルをここへ',
   'A zip, a folder, or a file another app wrote': 'ZIP、フォルダー、他のアプリが書き出したファイル',
@@ -1028,7 +1027,6 @@ export const ja: Dictionary = {
   'As a table': '表として',
   'One note per row': '1 行ごとに 1 ノート',
   Into: '場所',
-  'In a folder called': 'フォルダー名',
   'Worth knowing': '知っておくこと',
   '{count} notes arrived.': '{count} 件のノートが届きました。',
   '{count} names were taken, so those files stepped aside.':
@@ -1038,4 +1036,5 @@ export const ja: Dictionary = {
   'A document': '文書',
   'Undo the import': 'インポートを元に戻す',
   'Choose an export': '書き出したファイルを選ぶ',
+  Under: '場所',
 }

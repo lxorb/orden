@@ -1020,7 +1020,6 @@ export const de: Dictionary = {
   'Import into': 'Importieren nach',
   'That import could not be written.': 'Dieser Import konnte nicht geschrieben werden.',
   '{count} files': '{count} Dateien',
-  '{count} folders': '{count} Ordner',
   'This space': 'Dieser Bereich',
   'Drop an export here': 'Export hierher ziehen',
   'A zip, a folder, or a file another app wrote':
@@ -1036,7 +1035,6 @@ export const de: Dictionary = {
   'As a table': 'Als Tabelle',
   'One note per row': 'Eine Notiz pro Zeile',
   Into: 'Ziel',
-  'In a folder called': 'In einem Ordner namens',
   'Worth knowing': 'Gut zu wissen',
   '{count} notes arrived.': '{count} Notizen sind angekommen.',
   '{count} names were taken, so those files stepped aside.':
@@ -1046,4 +1044,5 @@ export const de: Dictionary = {
   'A document': 'Ein Dokument',
   'Undo the import': 'Import zurücknehmen',
   'Choose an export': 'Export auswählen',
+  Under: 'Unter',
 }
