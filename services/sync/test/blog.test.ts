@@ -970,6 +970,19 @@ describe('a published note read as slides', () => {
     expect(response.text.match(/data-vertical="yes"/g)).toHaveLength(1)
   })
 
+  test('a slide keeps the line breaks the author typed', async () => {
+    // A slide is a poster: three placed lines stay three lines. The page the
+    // same note is published as keeps CommonMark's space; see docs/slides.md.
+    await addNote('poster.md', '# One\n\n---\n\nShip it\nRead it\n')
+    await publish({ subdomain: 'field' })
+
+    const deck = await call(env, '/poster?slides', { host: 'field.nibeditor.com' })
+    expect(deck.text).toContain('Ship it<br>Read it')
+
+    const page = await call(env, '/poster', { host: 'field.nibeditor.com' })
+    expect(page.text).not.toContain('Ship it<br>Read it')
+  })
+
   test('the items that wait for a click are named', async () => {
     await publishDeck()
 

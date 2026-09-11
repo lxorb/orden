@@ -62,7 +62,17 @@ export async function deckHtml(
 
   const at = performance.now()
   const resolveLink = pointer(note)
-  const shared = { code: fence, resolveEmbed: embed, resolveLink, escapeHtml: !trusted }
+  // `breaks` is the one thing a deck does not share with the reading view: a
+  // slide is a poster, so a line the author put on its own line stays on one.
+  // The notes take it too - they are lines of the same file, typed the same way.
+  // See `RenderOptions.breaks`.
+  const shared = {
+    code: fence,
+    resolveEmbed: embed,
+    resolveLink,
+    escapeHtml: !trusted,
+    breaks: true,
+  }
 
   const pages = slides.map((slide) => ({
     html: page(slide.markdown, note, shared),

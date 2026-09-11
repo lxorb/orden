@@ -20,6 +20,7 @@ so every mark below is either ordinary markdown or nothing at all.
 | a slide of headings and nothing else | a title, centred | a heading |
 | a slide of one picture and nothing else | the picture, filling the screen | a picture |
 | `___` | an ordinary rule inside a slide | a horizontal rule |
+| a single newline | a line break | a space |
 
 ### The blank line above a rule is not optional
 
@@ -36,6 +37,31 @@ The last line of a slide
 is not a slide break anywhere: it is an `<h2>`. Nib reads it the same way every
 other renderer does, which is why the rule needs the blank line. Write a deck the
 way you would write a note and this never comes up.
+
+### A line break on a slide is a line break
+
+A slide is a poster. Its lines are placed rather than flowed, and CommonMark's
+rule that a single newline is a space turns three placed lines into one running
+sentence, which is not the slide anybody wrote. So inside a deck a single newline
+is a line break:
+
+```markdown
+Ship it
+Read it
+Keep it
+```
+
+is three lines on the slide and one sentence on the published page of the same
+note. A blank line is still a paragraph gap, and the two-space hard break still
+works - this is a superset of it, not a replacement. The speaker notes take the
+rule too: they are lines of the same file, typed the same way.
+
+Nothing else changes. The reading view, an export, a document and the published
+page of a note that is not being presented all keep CommonMark's space, so the
+file still reads the way every other renderer reads it. The flag is `breaks` on
+`RenderOptions` in `@nib/markdown`, set in one place per surface: `deckHtml` in
+`apps/desktop/src/lib/slides/render.ts` for the app and both exports, and
+`publishedDeck` in `services/sync/src/blog.ts` for `?slides`.
 
 ### Why `***` and not `--`
 
@@ -68,8 +94,8 @@ Obsidian's Slides plugin ships no key at all, so no preset takes it back; a
 browser keeps F5 for reloading, so on the web the palette is the way in.
 
 The deck opens full screen over the app with the note still open behind it. The
-slides are the note through the renderer the reading view uses, laid out on a
-fixed 1280 by 720 stage and scaled to the screen: the words never reflow between
+slides are the note through the renderer the reading view uses, with one thing
+changed, laid out on a fixed 1280 by 720 stage and scaled to the screen: the words never reflow between
 the laptop they were written on and the projector they end up on, and the text is
 shrunk until a slide fits so a slide never scrolls.
 

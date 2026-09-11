@@ -458,11 +458,17 @@ function presentLink(source: string): string {
 }
 
 /** A published note read as slides: the same renderer and the same markup rules
- *  as the page itself, one slide at a time. */
+ *  as the page itself, one slide at a time.
+ *
+ *  One thing differs, and it is the same thing that differs in the app: a single
+ *  newline is a line break on a slide, because a slide is a poster. The page the
+ *  same note is published as keeps CommonMark's space. The options the page was
+ *  built with are spread rather than written into, since the caller renders the
+ *  page with them too. */
 function publishedDeck(source: string, options: Parameters<typeof renderMarkdown>[1]): string {
   return deckBody(
     deckOf(source).map((slide) => ({
-      html: renderMarkdown(slide.markdown, options),
+      html: renderMarkdown(slide.markdown, { ...options, breaks: true }),
       shape: slide.shape,
       vertical: slide.vertical,
       fragments: slide.fragments,

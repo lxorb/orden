@@ -44,6 +44,50 @@ describe('titles', () => {
   })
 })
 
+/** A single newline. Prose flows, so CommonMark makes a space of it; a slide is
+ *  a poster, so a deck keeps the break. One flag, asked for per render, so the
+ *  two shared renderers serve both without one leaking into the other. */
+describe('a single newline', () => {
+  test('is a space, which is what CommonMark says', () => {
+    expect(renderMarkdown('one\ntwo')).toContain('one\ntwo')
+    expect(renderMarkdown('one\ntwo')).not.toContain('<br>')
+  })
+
+  test('is a line break when asked for', () => {
+    expect(renderMarkdown('one\ntwo', { breaks: true })).toContain('one<br>two')
+  })
+
+  test('and asking does not change the next render that does not', () => {
+    // The two plain renderers are built once and shared; a flag written into one
+    // of them would turn every note in the app into a poster.
+    renderMarkdown('one\ntwo', { breaks: true })
+    expect(renderMarkdown('one\ntwo')).not.toContain('<br>')
+  })
+
+  test('a blank line is still a paragraph either way', () => {
+    for (const options of [{}, { breaks: true }]) {
+      const html = renderMarkdown('one\n\ntwo', options)
+      expect(html).toContain('<p>one</p>')
+      expect(html).toContain('<p>two</p>')
+    }
+  })
+
+  test('and the two-space hard break still works either way', () => {
+    expect(renderMarkdown('one  \ntwo')).toContain('one<br>two')
+    expect(renderMarkdown('one  \ntwo', { breaks: true })).toContain('one<br>two')
+  })
+
+  test('a list is still a list, not one item with breaks in it', () => {
+    const html = renderMarkdown('- one\n- two\n', { breaks: true })
+    expect(html.match(/<li>/g)).toHaveLength(2)
+  })
+
+  test('and a fence keeps its own newlines', () => {
+    const html = renderMarkdown('```\none\ntwo\n```\n', { breaks: true })
+    expect(html).not.toContain('<br>')
+  })
+})
+
 describe('GitHub-flavoured basics', () => {
   test('renders headings, emphasis and code', () => {
     const html = renderMarkdown('# H\n\n**b** *i* `c`')

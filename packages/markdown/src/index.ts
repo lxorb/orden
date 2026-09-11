@@ -54,6 +54,16 @@ export interface RenderOptions {
    *  an embed reads as a link. One level deep - a `![[…]]` inside an embedded
    *  note is rendered without this, so it comes out as a link of its own. */
   resolveEmbed?: EmbedResolver
+  /** Keep a single newline as a line break instead of the space CommonMark
+   *  makes of it.
+   *
+   *  Off everywhere a note is read as a document, which is what CommonMark says
+   *  and what every other renderer does with the same file. On for a deck: a
+   *  slide is a poster, its lines are placed rather than flowed, and three short
+   *  lines run into one sentence is not the slide that was written. A blank line
+   *  is still a paragraph, and the two-space hard break still works - this is a
+   *  superset of it, not a replacement. See docs/slides.md. */
+  breaks?: boolean
 }
 
 export interface CodeBlock {
@@ -333,7 +343,10 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // to the writer; none of the three is a word of the note, so none of them
   // reaches the page. See comments.ts for why the comment goes before the parse.
   const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
-  let html = marked.parse(body, { async: false })
+  // `breaks` is asked for per parse rather than built into the renderer, so the
+  // two shared ones above serve a deck as well as a document: marked merges a
+  // call's options over the instance's and leaves the instance alone.
+  let html = marked.parse(body, { async: false, breaks: options.breaks === true })
 
   html = markAbbreviations(html, collectAbbreviations(body))
 
