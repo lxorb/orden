@@ -24,6 +24,7 @@ mod matcher;
 mod notes;
 #[cfg(desktop)]
 mod pandoc;
+mod papers;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
@@ -73,6 +74,9 @@ macro_rules! commands {
             assets::save_asset,
             highlights::read_highlights,
             highlights::write_highlights,
+            papers::read_paper_text,
+            papers::write_paper_text,
+            papers::list_paper_texts,
             search::search_space,
             search::space_tags,
             search::warm_search,

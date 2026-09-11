@@ -1,12 +1,53 @@
-import { beforeEach, describe, expect, test } from 'vitest'
-import { forgetPapers, paperGone, paperRead, papersRead, searchPapers } from './papers'
-import { parseQuery } from '../search/query'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Searching the papers that have been read.
  *
  *  A page's words arrive as pdf.js hands them over - a list of runs, one per span
  *  it drew - and a row is a window on the page rather than a line of it, because a
- *  page has no lines. */
+ *  page has no lines.
+ *
+ *  The store under the second half of this is a Map: what is asserted there is that
+ *  a paper read in one sitting answers in the next, and that a file which has
+ *  changed under its words does not. */
+
+const store = vi.hoisted(() => ({ records: new Map<string, string>() }))
+
+vi.mock('../tauri', () => ({
+  isNative: false,
+  invoke: (command: string, args: Record<string, unknown> = {}) => {
+    const at = args.path as string
+
+    switch (command) {
+      case 'read_paper_text':
+        return Promise.resolve(store.records.get(at) ?? '')
+      case 'write_paper_text': {
+        const content = args.content as string
+        if (content) store.records.set(at, content)
+        else store.records.delete(at)
+        return Promise.resolve(undefined)
+      }
+      case 'list_paper_texts':
+        return Promise.resolve(
+          [...store.records].map(([path, content]) => ({ path, size: content.length })),
+        )
+      default:
+        return Promise.reject(new Error(`no such command: ${command}`))
+    }
+  },
+}))
+
+const {
+  forgetPapers,
+  paperGone,
+  paperOpened,
+  paperRead,
+  papersFor,
+  papersHeld,
+  papersRead,
+  searchPapers,
+  writePapers,
+} = await import('./papers')
+const { parseQuery } = await import('../search/query')
 
 const ROOT = '/space'
 
@@ -18,6 +59,13 @@ const found = (source: string, excluded: readonly string[] = []) =>
   searchPapers(ROOT, parseQuery(source), 20, excluded)
 
 beforeEach(() => {
+  forgetPapers()
+  store.records.clear()
+})
+
+// The viewer writes a paper down a moment after the last page was read, so the
+// timer it sets goes with the sitting the test was.
+afterEach(() => {
   forgetPapers()
 })
 
@@ -99,5 +147,81 @@ describe('a space where nothing has been read', () => {
     paperRead(`${ROOT}/Blank.pdf`, 1, ['', '  '])
 
     expect(found('anything')).toEqual([])
+  })
+})
+
+describe('a paper read in an earlier sitting', () => {
+  const PAPER = `${ROOT}/papers/Ink.pdf`
+
+  /** What the file list says about the paper: one path, one moment. */
+  const listed = (modified: number) => new Map([[PAPER, modified]])
+
+  test('is written down and answers again after everything is forgotten', async () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 3, page('a study of ink on paper and its wear'))
+    await writePapers()
+
+    // The restart: nothing in memory, and the store still holding the words.
+    forgetPapers()
+    expect(found('ink')).toEqual([])
+
+    await papersFor(ROOT, listed(10))
+    const hits = found('ink')
+    expect(hits).toHaveLength(1)
+    expect(hits[0]?.page).toBe(3)
+    expect(papersHeld().papers).toBe(1)
+  })
+
+  test('is read back once per space however often a search asks', async () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('ink again'))
+    await writePapers()
+    forgetPapers()
+
+    await papersFor(ROOT, listed(10))
+    // The same space again is the promise that was kept, not a second read.
+    await papersFor(ROOT, listed(10))
+    expect(papersHeld().papers).toBe(1)
+  })
+
+  test('is not trusted when the file has been written since', async () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('ink as it was'))
+    await writePapers()
+    forgetPapers()
+
+    await papersFor(ROOT, listed(11))
+    expect(found('ink')).toEqual([])
+  })
+
+  test('and a paper whose bytes are now something else loses the words that were its', () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('ink as it was'))
+    expect(found('ink')).toHaveLength(1)
+
+    // The same path, another file.
+    paperOpened(PAPER, 'def', 12)
+    expect(found('ink')).toEqual([])
+  })
+
+  test('and a paper nobody has named is held for the sitting and written nowhere', async () => {
+    paperRead(PAPER, 1, page('ink from nowhere'))
+    await writePapers()
+
+    // It answers, because its words are here.
+    expect(found('ink')).toHaveLength(1)
+    // And nothing was written down, because nothing could say which file it was.
+    expect(store.records.size).toBe(0)
+  })
+
+  test('and one that has gone takes its words out of the store as well', async () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('ink'))
+    await writePapers()
+    expect(store.records.size).toBe(1)
+
+    paperGone(PAPER)
+    await Promise.resolve()
+    expect(store.records.size).toBe(0)
   })
 })

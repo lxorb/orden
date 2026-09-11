@@ -1,11 +1,13 @@
-"""The space search: the operators, the rows, and how long it takes.
+"""The space search: the operators, the rows, the papers, and how long it takes.
 
-Two runs in one. The first is a small space photographed on a desktop and on a
+Three runs in one. The first is a small space photographed on a desktop and on a
 phone: the field finishing an operator, tasks found and ticked from the rows, front
 matter held against a number, the order menu, a folder left out of the search and
 dimmed in the tree, and a ` ```query ` fence answered in the editor and in the
-reading view. The second is five thousand notes, timed, to say what a query costs
-against the hundred milliseconds a keystroke has.
+reading view. The second is the papers: one opened and searched, the page reloaded,
+and the same search answered out of what was written down - plus a paper nobody
+ever opened, which the idle pass reads by itself. The third is five thousand notes,
+timed, to say what a query costs against the hundred milliseconds a keystroke has.
 
 Build first, with the app's own handle on the page:
 
@@ -152,6 +154,38 @@ async ({ count, root }) => {
   new BroadcastChannel('nib:rows').postMessage({ rows, gone: [] })
 
   return { ms: Math.round(performance.now() - began), bytes }
+}
+"""
+
+# Two PDFs, written straight into the browser's own store the way the notes are.
+# A paper is an asset row and a listing row, which is what `save_asset` writes and
+# what the file tree draws a `.pdf` from.
+SEED_PAPERS = """
+async ({ root, papers }) => {
+  const open = indexedDB.open('nib')
+  const db = await new Promise((resolve, reject) => {
+    open.onsuccess = () => resolve(open.result)
+    open.onerror = () => reject(open.error)
+  })
+
+  const made = Date.now()
+  await new Promise((resolve, reject) => {
+    const write = db.transaction(['assets', 'stats'], 'readwrite')
+    const store = write.objectStore('assets')
+    const listing = write.objectStore('stats')
+
+    for (const [name, data] of papers) {
+      const path = root + '/' + name
+      store.put({ path, type: 'application/pdf', data, modified: made })
+      listing.put({ path, modified: made, created: made })
+    }
+
+    write.oncomplete = () => resolve()
+    write.onerror = () => reject(write.error)
+  })
+
+  await window.nibApp.workspace.loadTree()
+  return window.nibApp.workspace.files.filter((one) => one.name.endsWith('.pdf')).length
 }
 """
 
@@ -471,6 +505,125 @@ def measure(browser, out: Path, count: int) -> None:
     context.close()
 
 
+def paper(words: str) -> str:
+    """A one page PDF with `words` printed on it, as base64.
+
+    Written out here rather than kept as a fixture: it is a dozen objects, and a
+    drive that makes its own paper cannot drift from the paper it opens. Real
+    enough that pdf.js reads the words back out of it, which is the whole point.
+    """
+    import base64
+
+    stream = f"BT /F1 18 Tf 20 100 Td ({words}) Tj ET"
+    body = "\n".join(
+        [
+            "%PDF-1.4",
+            "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
+            "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
+            "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 4 0 R"
+            "/Resources<</Font<</F1 5 0 R>>>>>>endobj",
+            f"4 0 obj<</Length {len(stream)}>>stream",
+            stream,
+            "endstream",
+            "endobj",
+            "5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj",
+            "trailer<</Root 1 0 R/Size 6>>",
+            "%%EOF",
+        ]
+    )
+
+    return base64.b64encode(body.encode("latin-1")).decode("ascii")
+
+
+def kept_papers(page) -> int:
+    """How many papers the store is holding words for."""
+    return page.evaluate(
+        """async () => {
+          const open = indexedDB.open('nib')
+          const db = await new Promise((resolve, reject) => {
+            open.onsuccess = () => resolve(open.result)
+            open.onerror = () => reject(open.error)
+          })
+
+          const keys = await new Promise((resolve, reject) => {
+            const ask = db.transaction('meta', 'readonly').objectStore('meta').getAllKeys()
+            ask.onsuccess = () => resolve(ask.result)
+            ask.onerror = () => reject(ask.error)
+          })
+
+          return keys.filter((key) => String(key).startsWith('papers/')).length
+        }"""
+    )
+
+
+def papers(browser, out: Path) -> None:
+    """The papers: a paper opened answers, and it still answers after a restart.
+
+    Two of them, and only one is ever opened. The other is what the idle pass at the
+    search stage reads by itself, which is what makes a space of papers answerable
+    without anybody having opened any of them.
+    """
+    shots = out
+    shots.mkdir(parents=True, exist_ok=True)
+    name = "papers"
+    context, page = opened(browser, 1440, 900, DESKTOP_AGENT, False, "dark", name)
+
+    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root")
+    listed = page.evaluate(
+        SEED_PAPERS,
+        {
+            "root": root,
+            "papers": [
+                ["Kestrel study.pdf", paper("the kestrel hangs above the field")],
+                ["Ink study.pdf", paper("a study of ink and its wear on paper")],
+            ],
+        },
+    )
+    say(f"[{name}] the space holds {listed} papers")
+
+    # One of them read, the way a reader reads one: opened, and its pages drawn.
+    page.evaluate(
+        "(path) => window.nibApp.workspace.openPdf(path, 1)",
+        f"{root}/Kestrel study.pdf",
+    )
+    page.wait_for_timeout(2500)
+    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.wait_for_timeout(400)
+    say(f"[{name}] holding {held_text(page)}")
+    say(f"[{name}] the store keeps {kept_papers(page)} paper")
+    page.screenshot(path=str(shots / f"{name}-read.png"))
+
+    def ask(source: str, pause: int = 1200) -> list:
+        field = page.locator("aside input.query")
+        field.click()
+        field.fill(source)
+        page.wait_for_timeout(pause)
+        return page.evaluate(
+            "() => window.nibApp.search.hits.map((one) => one.name + ' p' + (one.page ?? 0))"
+        )
+
+    say(f"[{name}] 'kestrel' finds {ask('kestrel')}")
+
+    # The restart. The store is the same store; nothing is in memory.
+    page.reload(wait_until="domcontentloaded")
+    page.wait_for_function("() => !!window.nibApp", timeout=20000)
+    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
+    page.wait_for_timeout(1500)
+
+    say(f"[{name}] after a restart: 'kestrel' finds {ask('kestrel')}")
+    say(f"[{name}] holding {held_text(page)}")
+    page.screenshot(path=str(shots / f"{name}-after-restart.png"))
+
+    # And the paper nobody has ever opened, which the idle pass reads by itself.
+    page.wait_for_timeout(4000)
+    say(f"[{name}] the paper nobody opened: 'ink' finds {ask('ink')}")
+    say(f"[{name}] the store keeps {kept_papers(page)} papers, holding {held_text(page)}")
+    page.screenshot(path=str(shots / f"{name}-unopened.png"))
+
+    context.close()
+
+
 def main() -> int:
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
     out = Path(__file__).resolve().parent / "shots" / "search"
@@ -484,6 +637,9 @@ def main() -> int:
                 for one in DEVICES:
                     say(f"--- {one[0]} ---")
                     drive(browser, out, *one)
+
+                say("--- papers ---")
+                papers(browser, out)
 
                 say(f"--- {count} notes ---")
                 measure(browser, out, count)

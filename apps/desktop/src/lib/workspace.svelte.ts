@@ -4,7 +4,7 @@ import { arriving } from './arriving.svelte'
 import { blankCanvas } from './canvas/format'
 import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
 import { taskAt } from '@nib/markdown/tasks'
-import { paperGone } from './pdf/papers'
+import { paperGone, paperMoved } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
@@ -1366,8 +1366,14 @@ class Workspace {
     if (links.rootOf() !== root) {
       void links.build(root)
       // And the search holds the space it is about to be asked about, a turn after
-      // the index; see search/warm.svelte.ts.
+      // the index; see search/warm.svelte.ts. The papers of the space are the same
+      // question about the files the notes sit beside: what was read of them before
+      // comes back, and what has never been opened is read in idle time.
       void warm.forSpace(root)
+      // Imported here rather than at the top, so that a window which never opens a
+      // PDF never loads the module that reads one.
+      const listed = this.files
+      void import('./pdf/extract').then(({ readPapers }) => readPapers(root, listed))
     }
   }
 
@@ -1405,6 +1411,7 @@ class Workspace {
     // see `rename` below, including why this comes before the index is told.
     const rewrote = (await this.retarget(from, target)) > 0
     links.notesMoved(from, target)
+    paperMoved(from, target)
     // A folder's icon is kept under its path, so a folder that moved takes its
     // icon and its subfolders' icons with it.
     this.folderIcons.moved(from, target)
@@ -2764,6 +2771,7 @@ class Workspace {
     // pointed at the old name means resolving them against the space as it was.
     const rewrote = (await this.retarget(path, target)) > 0
     links.notesMoved(path, target)
+    paperMoved(path, target)
     this.folderIcons.moved(path, target)
     this.excluded.moved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
@@ -2933,6 +2941,7 @@ class Workspace {
     // round - and, again, before the index is told the note moved.
     if (action.rewrote) await this.retarget(action.to, action.from)
     links.notesMoved(action.to, action.from)
+    paperMoved(action.to, action.from)
     this.folderIcons.moved(action.to, action.from)
     this.excluded.moved(action.to, action.from)
   }

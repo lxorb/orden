@@ -14,6 +14,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { fileBytes } from '../bytes'
+import { hashOf } from './text-cache'
 
 type Library = typeof import('pdfjs-dist')
 
@@ -32,6 +33,12 @@ export function pdfjs(): Promise<Library> {
 /** A PDF that is open, and the one way to close it. */
 export interface OpenPdf {
   doc: PDFDocumentProxy
+  /** What the file's bytes hash to, which is what says a paper's words belong to
+   *  this file and not to whatever used to be at this path; see pdf/text-cache.ts.
+   *  Taken here because this is the one moment the bytes are in hand: the worker
+   *  takes them below, and hashing a thirty megabyte paper a second time to find
+   *  out what it is would cost what the whole cache saves. */
+  hash: string
   /** Gives the worker and the bytes back. The loading task rather than the
    *  document is what owns them, which is why closing lives here. */
   close: () => Promise<void>
@@ -41,12 +48,15 @@ export interface OpenPdf {
  *  time, because the first page cannot be drawn until both are here. */
 export async function openDocument(path: string): Promise<OpenPdf> {
   const [library, data] = await Promise.all([pdfjs(), fileBytes(path)])
+  // Before the bytes are handed over, and off the main thread: the digest of a
+  // paper is a few milliseconds where the read that just finished was hundreds.
+  const hash = await hashOf(data)
 
   // The bytes are handed to the worker, which takes ownership of them: after
   // this the copy on this side is empty, and one document costs one copy.
   const task = library.getDocument({ data })
 
-  return { doc: await task.promise, close: () => task.destroy() }
+  return { doc: await task.promise, hash, close: () => task.destroy() }
 }
 
 /** The words of a page, as the strings pdf.js lays one span out for: the same

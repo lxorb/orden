@@ -52,17 +52,36 @@ export function isWarmth(value: unknown): value is Warmth {
   )
 }
 
-/** One line of it, as the search panel carries it and a drive reads it back.
+/** And how much of the papers beside those notes is held, which is the other half
+ *  of what a search reads; see pdf/papers.ts. */
+export interface PapersHeld {
+  /** Papers with words to search. */
+  papers: number
+  characters: number
+  cap: number
+}
+
+/** One line of both, as the search panel carries it and a drive reads it back.
  *
  *  Key and value, because the only readers are a profiler, a drive and whoever is
  *  looking into why a search felt slow. Nothing here is shown to anybody, so
  *  nothing here goes through `t()`. */
-export function said(warmth: Warmth | null): string | undefined {
-  if (!warmth) return undefined
+export function said(warmth: Warmth | null, papers: PapersHeld | null): string | undefined {
+  if (!warmth && !papers) return undefined
 
-  const { notes, of, characters, cap, dropped, read, warm } = warmth
-  return (
-    `notes=${notes}/${of} chars=${characters}/${cap}` +
-    ` dropped=${dropped} read=${read} warm=${warm ? 1 : 0}`
-  )
+  const words = []
+  if (warmth) {
+    const { notes, of, characters, cap, dropped, read, warm } = warmth
+    words.push(
+      `notes=${notes}/${of}`,
+      `chars=${characters}/${cap}`,
+      `dropped=${dropped}`,
+      `read=${read}`,
+      `warm=${warm ? 1 : 0}`,
+    )
+  }
+
+  if (papers) words.push(`papers=${papers.papers}`, `pchars=${papers.characters}/${papers.cap}`)
+
+  return words.join(' ')
 }

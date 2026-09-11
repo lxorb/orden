@@ -21,7 +21,7 @@
   import { t } from './i18n.svelte'
   import { type OpenPdf, openDocument, textOf } from './pdf/document'
   import { textOfRuns, wordsOfRuns } from './pdf/find'
-  import { paperRead } from './pdf/papers'
+  import { paperOpened, paperRead } from './pdf/papers'
   import {
     type Box,
     citation,
@@ -136,6 +136,12 @@
         return
       }
       opened = held
+
+      // Which file these pages belong to, so the words taken down below outlive
+      // the sitting: the hash says they are this paper's, and the listing says
+      // when the file was last written. See pdf/papers.ts.
+      const listed = workspace.files.find((one) => one.path === path)
+      paperOpened(path, held.hash, listed?.modified ?? 0)
 
       // The first page settles the column: every other page is laid out at its
       // size until it says otherwise, which is what lets a page be drawn before

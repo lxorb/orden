@@ -430,6 +430,25 @@ fn gather(
     }
 }
 
+/// A stable, filesystem-safe folder name for a file's full path, so that what the
+/// app keeps *about* a file can be found again without the path itself being a
+/// folder name.
+///
+/// Any hash would do; this one is `FNV-1a`, which is a dozen lines and needs no
+/// dependency. Folded case first, because two spellings of one path on Windows are
+/// one file. Here rather than in one of the two modules that keeps something
+/// beside a file, because both do: the version history of a note, and the words
+/// taken out of a PDF.
+#[must_use]
+pub fn folder_key(path: &str) -> String {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in path.to_lowercase().bytes() {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    format!("{hash:016x}")
+}
+
 /// A path inside a space as the space speaks of it: relative, and with `/`
 /// separators whichever the platform writes.
 ///
@@ -544,8 +563,9 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        a_shareable_folder, drop_highlights, files_in, folded, free_spot, highlights_of, inside,
-        is_canvas, is_markdown, is_pdf, link_to, move_highlights, space_root, write_atomically,
+        a_shareable_folder, drop_highlights, files_in, folded, folder_key, free_spot,
+        highlights_of, inside, is_canvas, is_markdown, is_pdf, link_to, move_highlights,
+        space_root, write_atomically,
     };
     use std::path::{Path, PathBuf};
 
@@ -878,5 +898,27 @@ mod tests {
         let (notes, others) = files_in(here);
         assert_eq!(names(&notes), ["One.md"]);
         assert!(others.is_empty());
+    }
+
+    #[test]
+    fn the_same_path_always_gets_the_same_folder() {
+        assert_eq!(folder_key("/notes/a.md"), folder_key("/notes/a.md"));
+    }
+
+    #[test]
+    fn different_paths_get_different_folders() {
+        assert_ne!(folder_key("/notes/a.md"), folder_key("/notes/b.md"));
+    }
+
+    #[test]
+    fn the_same_file_in_another_case_is_the_same_file() {
+        assert_eq!(folder_key(r"C:\Notes\A.md"), folder_key(r"c:\notes\a.md"));
+    }
+
+    #[test]
+    fn the_folder_name_is_filesystem_safe() {
+        let name = folder_key(r"C:\notes\a b.md");
+        assert_eq!(name.len(), 16);
+        assert!(name.chars().all(|letter| letter.is_ascii_hexdigit()));
     }
 }

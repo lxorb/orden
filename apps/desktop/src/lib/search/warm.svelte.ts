@@ -16,16 +16,25 @@
 
 import { invoke, isNative } from '../tauri'
 import { startup } from '../startup.svelte'
-import { isWarmth, said, type Warmth } from './warmth'
+import { isWarmth, type PapersHeld, said, type Warmth } from './warmth'
 
 class Warm {
   /** What the search is holding, or nothing where it has not said yet. */
   private held = $state<Warmth | null>(null)
   /** Which space was asked for, so an answer about the one before it is dropped. */
   private root: string | null = null
+  /** And how much of the space's papers is held. Pushed in from pdf/papers.ts,
+   *  which is where a paper's words are: this is one line about what a search
+   *  reads, and a paper is half of that. */
+  private papers = $state<PapersHeld | null>(null)
 
   /** One line of diagnostics, for the panel to carry and a drive to read. */
-  readonly said = $derived(said(this.held))
+  readonly said = $derived(said(this.held, this.papers))
+
+  /** What the papers of the space are holding, as they change. */
+  holdingPapers(held: PapersHeld) {
+    this.papers = held
+  }
 
   /** Reads a space and keeps it, when the launch says the turn has come.
    *

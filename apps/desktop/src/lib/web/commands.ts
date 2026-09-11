@@ -494,6 +494,62 @@ async function removeTheme(id: string): Promise<void> {
   await meta.remove(themeKey(id))
 }
 
+/* ── Papers ───────────────────────────────────────────────────────── */
+
+/** The words taken out of a PDF live under a shared prefix, which is this
+ *  storage's version of the folder the desktop keeps them in; see papers.rs.
+ *
+ *  The size is part of the key. Listing the store is how the app holds it to a
+ *  bound, and a listing that had to read every record to find out how big it is
+ *  would read the megabytes it exists to avoid reading - so the keys carry it, and
+ *  there is no second row to fall out of step with the first. */
+const PAPERS = 'papers/'
+
+/** How much of one paper may be kept, the same ceiling the crate holds. */
+const PAPER_LIMIT = 4 * 1024 * 1024
+
+const paperKey = (path: string, size: number) => `${PAPERS}${size}:${path}`
+
+/** Every record the store holds, from the keys and nothing else. */
+async function paperRecords(): Promise<{ key: string; path: string; size: number }[]> {
+  const keys = (await meta.keys()).filter(
+    (key): key is string => typeof key === 'string' && key.startsWith(PAPERS),
+  )
+
+  return keys.flatMap((key) => {
+    const rest = key.slice(PAPERS.length)
+    const at = rest.indexOf(':')
+    const size = Number(rest.slice(0, at))
+    const path = rest.slice(at + 1)
+    // A key nobody here wrote is a key nobody here reads.
+    if (at < 1 || !Number.isFinite(size) || !path) return []
+
+    return [{ key, path, size }]
+  })
+}
+
+async function readPaperText(path: string): Promise<string> {
+  const wanted = normalise(path)
+  const found = (await paperRecords()).find((one) => one.path === wanted)
+
+  return found ? ((await meta.get(found.key)) ?? '') : ''
+}
+
+/** One paper's words written down, or taken away again when nothing is sent. */
+async function writePaperText(path: string, content: string): Promise<void> {
+  if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
+  if (content.length > PAPER_LIMIT) throw new Error(`${path} would keep too much`)
+
+  const wanted = normalise(path)
+  // Whatever was held for this paper goes first, however large it was: the size is
+  // in the key, so writing a record again means writing a new key.
+  for (const one of await paperRecords()) {
+    if (one.path === wanted) await meta.remove(one.key)
+  }
+
+  if (content) await meta.put(paperKey(wanted, content.length), content)
+}
+
 /** Commands the browser genuinely cannot serve. Each returns the shape that
  *  makes the interface hide the feature rather than break on it. */
 const UNSUPPORTED: Record<string, unknown> = {
@@ -663,6 +719,17 @@ export async function webInvoke<T>(
       else await files.remove(sidecarOf(path))
       return undefined as T
     }
+
+    case 'read_paper_text':
+      return (await readPaperText(path)) as T
+
+    case 'write_paper_text': {
+      await writePaperText(path, args.content as string)
+      return undefined as T
+    }
+
+    case 'list_paper_texts':
+      return (await paperRecords()).map(({ path: at, size }) => ({ path: at, size })) as T
 
     case 'read_asset': {
       const row = await assets.get(normalise(path))

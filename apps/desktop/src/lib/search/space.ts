@@ -45,10 +45,14 @@ export async function searchSpace(
    *  it a read and then a filter. See workspace/excluded.svelte.ts. */
   excluded: readonly string[] = [],
 ): Promise<void> {
-  // The papers that have been read answer first, and from memory: their words are
-  // not on disk as text, so neither walk below has anything to read. One handful,
-  // because there is nothing to wait for. See pdf/papers.ts.
-  const { searchPapers } = await import('../pdf/papers')
+  // The papers answer first, and from memory: their words are not on disk as text,
+  // so neither walk below has anything to read. What was taken down in an earlier
+  // sitting is read back once per space rather than per search - the second call
+  // awaits the first one's promise - so this is a wait only for the first question
+  // about a space, and one row per paper rather than a PDF taken apart. See
+  // pdf/papers.ts.
+  const { papersFor, searchPapers } = await import('../pdf/papers')
+  await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })
 

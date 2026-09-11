@@ -600,18 +600,20 @@ Features Typora does not have, which are the reason this exists.
       leaves it as code too, deliberately: a page is one file served from a cache,
       answering a query over the space would be one read per note on every view,
       and a list baked at publish time is a lie the moment another note is written
-- [x] The papers you have read answer a search, at the page: a row says which page
-      of which PDF, and opens it there. A page's words are taken down when the
-      viewer reads them, which it does anyway for its own find bar, so opening a
-      paper once makes it answerable and no search ever waits for a PDF to be taken
-      apart. Said plainly, because it is a rule a reader has to know: the papers
-      this sitting has opened are the papers that answer. Quit the app and a paper
-      goes quiet until it is opened again, since the words are held in memory and
-      nothing of them is written to disk. What was refused: reading every PDF in a
-      space when a search runs, which makes the first search of a space with twenty
-      papers a minute long, and reading them all at launch, which spends that
-      minute whether anybody searches or not. A cache on disk keyed by the file's
-      hash, which is what would survive a restart, is the follow-up
+- [x] The papers in a space answer a search, at the page: a row says which page of
+      which PDF, and opens it there. A page's words are taken down when the viewer
+      reads them, which it does anyway for its own find bar, so opening a paper
+      makes it answerable at once and no search ever waits for a PDF to be taken
+      apart. They are then kept, keyed by the hash of the file's bytes, so a paper
+      read last week answers today and a paper whose bytes have changed is read
+      again. The papers nobody has ever opened are read one at a time in idle time
+      after the notes, a breath between pages, never on the way up and not at all on
+      a device that has asked to be spared. Bounded on both sides: as much of one
+      paper as a thousand dense pages, as much of every paper as a shelf of them,
+      the largest going first. What was refused: reading every PDF in a space when a
+      search runs, which makes the first search of a space with twenty papers a
+      minute long, and reading them all at launch, which spends that minute whether
+      anybody searches or not
 - [x] The mentions of a note - the places its name is written without a link -
       are asked the way everything else is asked: the space search, handed the
       name as a phrase. One search, so they count an alias, they skip what the

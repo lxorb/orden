@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
 use crate::clock;
-use crate::paths::{cannot, folded, inside, write_atomically};
+use crate::paths::{cannot, folded, folder_key, inside, write_atomically};
 
 /// How many snapshots of one note are kept before the oldest is dropped.
 const KEEP: usize = 40;
@@ -202,20 +202,9 @@ fn history_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// The folder this one note's history lives in, made if it is not there yet.
 fn history_root(app: &AppHandle, note_path: &str) -> Result<PathBuf, String> {
-    let dir = history_dir(app)?.join(key(note_path));
+    let dir = history_dir(app)?.join(folder_key(note_path));
     fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
     Ok(dir)
-}
-
-/// A stable, filesystem-safe folder name for a note's full path. Any hash would
-/// do; this one is `FNV-1a`, which is a dozen lines and needs no dependency.
-fn key(note_path: &str) -> String {
-    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
-    for byte in note_path.to_lowercase().bytes() {
-        hash ^= u64::from(byte);
-        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
-    }
-    format!("{hash:016x}")
 }
 
 /// The snapshots in one folder, oldest first. The names are all the same length
@@ -237,7 +226,7 @@ fn snapshot_files(dir: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{key, snapshot_files, stale, DAY, HOUR};
+    use super::{snapshot_files, stale, DAY, HOUR};
 
     /// A fixed moment, so what the policy answers never depends on the day the
     /// tests are run.
@@ -296,28 +285,6 @@ mod tests {
 
         assert!(stale(&versions, NOW, 1 << 54).is_empty());
         assert!(stale(&versions, NOW, u64::MAX).is_empty());
-    }
-
-    #[test]
-    fn the_same_path_always_gets_the_same_folder() {
-        assert_eq!(key("/notes/a.md"), key("/notes/a.md"));
-    }
-
-    #[test]
-    fn different_paths_get_different_folders() {
-        assert_ne!(key("/notes/a.md"), key("/notes/b.md"));
-    }
-
-    #[test]
-    fn the_same_note_in_another_case_is_the_same_note() {
-        assert_eq!(key(r"C:\Notes\A.md"), key(r"c:\notes\a.md"));
-    }
-
-    #[test]
-    fn the_name_is_filesystem_safe() {
-        let name = key(r"C:\notes\a b.md");
-        assert_eq!(name.len(), 16);
-        assert!(name.chars().all(|letter| letter.is_ascii_hexdigit()));
     }
 
     #[test]
