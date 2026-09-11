@@ -1,3 +1,4 @@
+import type { Scope } from './spaces/share'
 import type { Reached } from './spaces/space'
 
 export interface Env {
@@ -153,4 +154,8 @@ export interface Variables {
   user: User
   guest: Guest
   space: Reached
+  /** What one share is about: the space, or one file of it. Set only behind
+   *  `about()` in spaces/share.ts, the way `space` is set only behind
+   *  `atLeast`. */
+  scope: Scope
 }

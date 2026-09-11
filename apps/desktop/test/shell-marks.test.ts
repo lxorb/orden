@@ -131,8 +131,14 @@ describe('the mark that says shared', () => {
     expect(tree.text).toContain("import SharedMark from './SharedMark.svelte'")
     // Both kinds of row that are a note: a plain one, and a folder drawn as the
     // note inside it. A folder is not a file and has no room to be in.
-    expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
+    //
+    // Twice each, because there are two things the one mark says about a file and
+    // a row says whichever is true: somebody is in it right now, or it is a file
+    // shared on its own. One shape for both - it is the same fact about other
+    // people, and a second drawing of it is how one design becomes two.
+    expect(tree.text.match(/<SharedMark /g)).toHaveLength(4)
     expect(tree.text).toContain('othersIn(')
+    expect(tree.text).toContain('isSharedItem(')
   })
 
   test('and the switcher says it with the mark instead', () => {

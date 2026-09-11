@@ -4,8 +4,15 @@ import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
-import { allows, atLeast, refusal, spaceOf, type Reached } from './spaces/space'
-import { reachedSpace } from './spaces/space'
+import {
+  allows,
+  atLeast,
+  reachedItem,
+  reachedSpace,
+  refusal,
+  spaceOf,
+  type Reached,
+} from './spaces/space'
 import type { Env, Note, Variables, Whoever } from './types'
 
 /** The largest note the API will take. R2 would hold more; a note this size
@@ -267,18 +274,33 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
 
 /** A note this person can reach, together with the space it sits in and the
  *  role held there. Null when the note is not there or is in a space they have
- *  nothing to do with, which are the same answer on purpose. */
+ *  nothing to do with, which are the same answer on purpose.
+ *
+ *  Two ways to reach one. The space, which is how almost everybody reaches
+ *  almost every note; or this one file, for somebody the owner handed it to on
+ *  its own. `only` says which, because the second is narrower than a role: the
+ *  words are theirs to write, and the note itself - where it sits, whether it
+ *  exists - is not. See docs/sharing.md.
+ *
+ *  The space is asked first and answers in one query, so nobody who holds the
+ *  space pays for the second question. A file shared on its own has to be a live
+ *  file: a note in Recently deleted is not something a share reaches into, which
+ *  is also what the room's door says. */
 async function reachedNote(
   env: Env,
   who: Whoever,
   noteId: string,
-): Promise<{ note: Note; space: Reached } | null> {
+): Promise<{ note: Note; space: Reached; only: boolean } | null> {
   const note = await env.DB.prepare('select * from notes where id = ?').bind(noteId).first<Note>()
 
   if (!note) return null
 
   const space = await reachedSpace(env, who, note.space_id)
-  return space ? { note, space } : null
+  if (space) return { note, space, only: false }
+  if (note.deleted) return null
+
+  const item = await reachedItem(env, who, note)
+  return item ? { note, space: item, only: true } : null
 }
 
 notes.get('/notes/:id', async (context) => {
@@ -320,6 +342,14 @@ notes.put('/notes/:id', async (context) => {
 
   const path = given === undefined ? note.path : cleanPath(given)
   if (!path) return context.json({ error: 'that path is not usable' }, 400)
+
+  // Somebody who was handed this one file may write in it and may not move it.
+  // Where a note sits belongs to the space, and the space is not what they were
+  // given: a rename here would reorganise somebody else's tree from inside a tab
+  // that cannot see it.
+  if (found.only && path !== note.path) {
+    return context.json({ error: 'this note was shared with you, not its folder' }, 403)
+  }
 
   // Reassigned when a canvas has to be put back together with the copy the
   // server already holds; see the note above.
@@ -382,6 +412,12 @@ notes.delete('/notes/:id', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
   if (!found) return context.json({ error: 'no such note' }, 404)
   if (!allows(found.space.role, 'write')) return context.json({ error: refusal('write') }, 403)
+  // A file shared on its own is not the reader's to take away. Deleting it takes
+  // something out of somebody else's space, which is what being given the space
+  // is for; what they can do instead is hand it back - see DELETE /v1/shared/:id.
+  if (found.only) {
+    return context.json({ error: 'this note was shared with you, not its folder' }, 403)
+  }
   const { note } = found
 
   const at = now()

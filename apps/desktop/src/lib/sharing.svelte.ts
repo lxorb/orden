@@ -12,11 +12,13 @@
  *  so what is drawn is what came back rather than a guess about what the change
  *  did - which is also what keeps two machines editing the same list honest. */
 
+import { isCanvasTarget } from '@nib/markdown/links'
 import {
   api,
   ApiError,
   type GivenRole,
   type RemoteSpace,
+  type SharedItem,
   type Sharing,
   type SpaceRole,
 } from './api'
@@ -46,6 +48,34 @@ export function roleOf(root: string): SpaceRole {
  *  its row in the switcher and on the header over the file list. */
 export function isShared(root: string): boolean {
   return remoteOf(root)?.shared ?? false
+}
+
+/** Whether this one file is shared on its own, which is the same mark on its row
+ *  in the tree.
+ *
+ *  The two marks are about two different things and neither implies the other: a
+ *  space everybody is in says so on the space, and one note handed to one person
+ *  says so on the note. What the listing brings down is the ids of the shared
+ *  files, so this is the id this machine holds for the path; see
+ *  sync.tracked. */
+export function isSharedItem(path: string): boolean {
+  const id = sync.tracked(path)?.id
+  if (!id) return false
+
+  return account.spaces.some((one) => one.sharedItems?.includes(id))
+}
+
+/** Whether this file can be shared from here: the space behind it is the
+ *  account's own, and the account has a copy of the file for a share to be
+ *  about. A note this machine has written and not yet handed over has no id, and
+ *  an id is what a share names. */
+export function canShareItem(path: string | null | undefined): boolean {
+  if (!path) return false
+
+  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  if (!space || !ownsRemotely(space)) return false
+
+  return !!sync.tracked(path)?.id
 }
 
 /** Whether somebody else is in this note right now, which is the same mark on
@@ -79,6 +109,25 @@ function canWrite(root: string): boolean {
 export function canWriteAt(path: string): boolean {
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
   return !space || canWrite(space.root)
+}
+
+/** Whether the document in front of the reader may be written in.
+ *
+ *  A path answers it for almost everything, which is `canWriteAt` above: what may
+ *  be done is decided by where the file sits. A file somebody shared on its own
+ *  has no path - it is one note out of their space and there is no copy of it
+ *  here - so its own share is what says it, and one shared to be read is
+ *  read-only exactly as a space shared to be read is.
+ *
+ *  Asked of the document rather than of the path, because the document is what
+ *  every pane, every bar and every surface already has to hand. */
+export function canWriteIn(
+  note: { path: string | null; shared: string | null } | null | undefined,
+): boolean {
+  if (!note) return true
+  if (note.shared !== null) return sharedWithYou.mayWrite(note.shared)
+
+  return note.path === null || canWriteAt(note.path)
 }
 
 /** Whether the space a note sits in is one somebody else can reach: shared with
@@ -144,6 +193,20 @@ class Share {
   space = $state<Space | null>(null)
   spaceId = $state<string | null>(null)
 
+  /** The one file the sheet is about, when it is about one file rather than the
+   *  whole space: its id on the account, and the path its row and its mark come
+   *  off. Null for a space.
+   *
+   *  Held here rather than read off the answer so that the head of the sheet says
+   *  what it is about from the first frame, before the account has said who is in
+   *  it - the same reason the address field is drawn before the list is. */
+  item = $state<{ id: string; path: string } | null>(null)
+
+  /** Which share every call below is about: the file, or - empty - the space. */
+  get itemId(): string {
+    return this.item?.id ?? ''
+  }
+
   /** Who may reach it, as the account last said. Null while it is being read,
    *  which is when the sheet draws the shape of the rows instead. */
   who = $state<Sharing | null>(null)
@@ -181,11 +244,29 @@ class Share {
   }
 
   async show(space: Space) {
+    await this.about(space, null)
+  }
+
+  /** The same sheet about one file of the space: a note, or a canvas.
+   *
+   *  The same sheet, because it is the same question - who else may have this,
+   *  and at what - and a second sheet for a smaller thing would be two designs
+   *  for one idea. What differs is the mark and the name in its head, and a line
+   *  saying so where the space is already shared with somebody. */
+  async showItem(space: Space, path: string) {
+    const id = sync.tracked(path)?.id
+    if (!id) return
+
+    await this.about(space, { id, path })
+  }
+
+  private async about(space: Space, item: { id: string; path: string } | null) {
     const id = sync.remoteIdFor(space.root)
     if (!id) return
 
     this.space = space
     this.spaceId = id
+    this.item = item
     this.who = null
     this.error = null
     this.email = ''
@@ -193,7 +274,7 @@ class Share {
     this.role = 'write'
     this.open = true
 
-    await this.run((token) => api.sharing(token, id), 'sheet')
+    await this.run((token) => api.sharing(token, id, this.itemId), 'sheet')
   }
 
   close() {
@@ -217,7 +298,10 @@ class Share {
     while (left.length) {
       const address = left[0] ?? ''
       if (
-        !(await this.change((token, id) => api.invite(token, id, address, this.role), 'invite'))
+        !(await this.change(
+          (token, id) => api.invite(token, id, address, this.role, this.itemId),
+          'invite',
+        ))
       ) {
         break
       }
@@ -231,7 +315,7 @@ class Share {
    *  first one took, which mints a fresh link and writes a fresh mail. */
   resend(person: Someone & { role: GivenRole }) {
     return this.change(
-      (token, id) => api.invite(token, id, person.email ?? '', person.role),
+      (token, id) => api.invite(token, id, person.email ?? '', person.role, this.itemId),
       whoIs(person),
     )
   }
@@ -244,8 +328,8 @@ class Share {
     return this.change(
       (token, id) =>
         person.guest
-          ? api.setGuestRole(token, id, person.guest, role)
-          : api.setMemberRole(token, id, person.email ?? '', role),
+          ? api.setGuestRole(token, id, person.guest, role, this.itemId)
+          : api.setMemberRole(token, id, person.email ?? '', role, this.itemId),
       whoIs(person),
     )
   }
@@ -254,8 +338,8 @@ class Share {
     return this.change(
       (token, id) =>
         person.guest
-          ? api.removeGuest(token, id, person.guest)
-          : api.removeMember(token, id, person.email ?? ''),
+          ? api.removeGuest(token, id, person.guest, this.itemId)
+          : api.removeMember(token, id, person.email ?? '', this.itemId),
       whoIs(person),
     )
   }
@@ -264,11 +348,11 @@ class Share {
    *  The link itself stays the same, so a copy already in somebody's message
    *  keeps working and starts meaning this instead. */
   setLink(role: GivenRole, mode: 'open' | 'approval') {
-    return this.change((token, id) => api.setShareLink(token, id, role, mode), 'link')
+    return this.change((token, id) => api.setShareLink(token, id, role, mode, this.itemId), 'link')
   }
 
   revoke() {
-    return this.change((token, id) => api.revokeShareLink(token, id), 'link')
+    return this.change((token, id) => api.revokeShareLink(token, id, this.itemId), 'link')
   }
 
   /** A new link in place of the one there is: the old address stops opening
@@ -277,8 +361,8 @@ class Share {
    *  link at all. */
   reset(role: GivenRole, mode: 'open' | 'approval') {
     return this.change(async (token, id) => {
-      await api.revokeShareLink(token, id)
-      return api.setShareLink(token, id, role, mode)
+      await api.revokeShareLink(token, id, this.itemId)
+      return api.setShareLink(token, id, role, mode, this.itemId)
     }, 'link')
   }
 
@@ -286,8 +370,8 @@ class Share {
     return this.change(
       (token, id) =>
         person.guest
-          ? api.acceptGuest(token, id, person.guest)
-          : api.acceptRequest(token, id, person.email ?? ''),
+          ? api.acceptGuest(token, id, person.guest, this.itemId)
+          : api.acceptRequest(token, id, person.email ?? '', this.itemId),
       whoIs(person),
     )
   }
@@ -297,7 +381,7 @@ class Share {
       (token, id) =>
         person.guest
           ? api.removeGuest(token, id, person.guest)
-          : api.declineRequest(token, id, person.email ?? ''),
+          : api.declineRequest(token, id, person.email ?? '', this.itemId),
       whoIs(person),
     )
   }
@@ -353,7 +437,7 @@ class Share {
     if (!token || !id) return false
 
     try {
-      this.who = await api.sharing(token, id)
+      this.who = await api.sharing(token, id, this.itemId)
       return true
     } catch {
       // The change itself is not in doubt; only this list is out of date, and it
@@ -392,3 +476,169 @@ export function ownsRemotely(space: Space): boolean {
 export function canShare(space: Space): boolean {
   return ownsRemotely(space)
 }
+
+/** Who else may have this one file, from the row it is on. The same sheet the
+ *  space opens; see ShareSheet.svelte. */
+export async function shareThisFile(path: string) {
+  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  if (!space) return
+
+  await share.showItem(space, path)
+}
+
+/* ── The files other people shared with you ───────────────────────────── */
+
+/** How often the list is asked for again while it holds anything. Slow enough to
+ *  be nothing on either end, quick enough that a file taken back stops being
+ *  there while somebody is still looking at it. */
+const ASK_EVERY = 15_000
+
+/** A note or a canvas somebody handed over on its own.
+ *
+ *  It is not a space and is never turned into one. There is no folder for it, no
+ *  row in the tree and no file on this machine: it is one document out of
+ *  somebody else's space, so it lives at the foot of the space switcher, grouped
+ *  under whoever shared it, and it opens in a tab whose words travel through the
+ *  file's room. Which is the whole mechanism - the room is what carries a
+ *  keystroke to the owner's space, exactly as it does for two people in a note
+ *  they both hold.
+ *
+ *  Read on every pass rather than pushed: the same listing the spaces get, on
+ *  the same beat, so a file that was shared or taken back shows up or stops
+ *  showing up without anything having to be told. */
+class SharedWithYou {
+  items = $state<SharedItem[]>([])
+  /** What is being opened, so the row can say so. Null while nothing is. */
+  opening = $state<string | null>(null)
+
+  /** Asks again while there is something here to lose.
+   *
+   *  A file somebody handed over is the one thing in the app that can be taken
+   *  away by somebody else while you are looking at it: a space of your own is
+   *  yours, and a space shared with you goes with the same listing pass that
+   *  brings the spaces. So while this list holds anything, it is asked about on
+   *  its own beat - and nobody who holds none pays for it, because the timer only
+   *  runs while there is one.
+   *
+   *  A file newly shared with somebody arrives with the spaces, on the pass that
+   *  reconciles them; see backoff.ts. That is the same wait a space shared with
+   *  them has always had. */
+  private asking: ReturnType<typeof setInterval> | undefined
+
+  /** Whether one of these may be written in. Read-only for a file that is not in
+   *  the list at all: it was taken back, and the tab on it is on its way out. */
+  mayWrite(id: string): boolean {
+    return this.items.find((one) => one.id === id)?.role === 'write'
+  }
+
+  /** The rows, grouped by whoever shared them: one heading per person and their
+   *  files under it, because "who gave me this" is the first thing a row of
+   *  somebody else's documents has to answer. */
+  get byOwner(): { owner: string; items: SharedItem[] }[] {
+    const out: { owner: string; items: SharedItem[] }[] = []
+
+    for (const item of this.items) {
+      const held = out.find((one) => one.owner === item.owner.name)
+      if (held) held.items.push(item)
+      else out.push({ owner: item.owner.name, items: [item] })
+    }
+
+    return out
+  }
+
+  /** The list again. Quiet about failure: this is part of a pass, and a listing
+   *  that could not be read is last pass's listing rather than an empty one. */
+  async load() {
+    const token = account.token
+    if (!token) {
+      this.stop()
+      this.items = []
+      return
+    }
+
+    try {
+      const { shared } = await api.shared(token)
+      const before = new Set(this.items.map((one) => one.id))
+      this.items = shared
+
+      // Anything that was here and is not any more has been taken back. Every tab
+      // of it closes, which is the same calm answer a revoked space gives: the
+      // words were never this machine's, and a tab on a room that will not have it
+      // back is not a document. See joining.svelte.ts.
+      const now = new Set(shared.map((one) => one.id))
+      for (const id of before) if (!now.has(id)) workspace.closeShared(id)
+
+      if (shared.length) this.keepAsking()
+      else this.stop()
+    } catch {
+      // Nothing to say. The next pass asks again.
+    }
+  }
+
+  /** Stops asking. Signing out, and a list that has emptied. */
+  stop() {
+    clearInterval(this.asking)
+    this.asking = undefined
+  }
+
+  private keepAsking() {
+    if (this.asking) return
+
+    this.asking = setInterval(() => void this.load(), ASK_EVERY)
+  }
+
+  /** Opening one: its words come down once to fill the tab, and travel through
+   *  its room from then on. */
+  async open(item: SharedItem) {
+    const token = account.token
+    if (!token || this.opening) return
+
+    // Already open: bring it forward rather than asking for the words again.
+    if (workspace.showingShared(item.id)) {
+      workspace.openShared({ id: item.id, name: item.name, canvas: isCanvasTarget(item.path) }, '')
+      return
+    }
+
+    this.opening = item.id
+    try {
+      const { content } = await api.readNote(token, item.id)
+      workspace.openShared(
+        { id: item.id, name: item.name, canvas: isCanvasTarget(item.path) },
+        content,
+      )
+    } catch {
+      // A file that is no longer shared answers 404, which the next pass reads as
+      // it going from the list. Nothing is said here: the row is about to leave.
+      await this.load()
+    } finally {
+      this.opening = null
+    }
+  }
+
+  /** Handing one back, which is the same gesture as leaving a space. */
+  async leave(item: SharedItem) {
+    const token = account.token
+    if (!token) return
+
+    this.items = this.items.filter((one) => one.id !== item.id)
+    workspace.closeShared(item.id)
+
+    try {
+      await api.leaveShared(token, item.id)
+    } catch {
+      // Already out of it, or the request never got there; the next pass settles
+      // which, and the row comes back if it is still theirs.
+      await this.load()
+    }
+  }
+}
+
+export const sharedWithYou = new SharedWithYou()
+
+// Somebody else's files go with the session that reached them, and so does the
+// asking behind them. Registered rather than reached for, the way everything that
+// holds something of an account's does; see `forgetWithSession`.
+account.forgetWithSession(() => {
+  sharedWithYou.stop()
+  sharedWithYou.items = []
+})

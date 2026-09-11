@@ -153,6 +153,16 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'PATCH', path: /^\/v1\/me$/ },
   // The spaces their links granted, and what is inside them.
   { method: 'GET', path: /^\/v1\/spaces$/ },
+  // And the files a link granted on their own, which are in no space a guest can
+  // reach: one note out of somebody's drawer, listed at the foot of the switcher
+  // and handed back from the same row. See spaces/share.ts.
+  { method: 'GET', path: /^\/v1\/shared$/ },
+  { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
+  // And the files a link granted on their own, which are not in any space a
+  // guest can reach: one note out of somebody's drawer, listed at the foot of
+  // the switcher and handed back from the same row. See spaces/share.ts.
+  { method: 'GET', path: /^\/v1\/shared$/ },
+  { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
   { method: 'GET', path: /^\/v1\/spaces\/[^/]+\/changes$/ },
   { method: 'POST', path: /^\/v1\/spaces\/[^/]+\/notes$/ },
   { method: 'PUT', path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|files|graph|excluded)$/ },
@@ -183,26 +193,30 @@ export function guestMayReach(method: string, path: string): boolean {
  *  turn an unanswered request into a way in. */
 export async function claimGuest(env: Env, guestId: string, user: User): Promise<void> {
   const { results } = await env.DB.prepare(
-    `select space_id, role from guest_members
+    `select space_id, item, role from guest_members
       where guest_id = ? and joined_at is not null limit 200`,
   )
     .bind(guestId)
-    .all<{ space_id: string; role: string }>()
+    .all<{ space_id: string; item: string; role: string }>()
 
   for (const held of results) {
     // Whatever the account already had in that space stands: a role the owner
     // gave the person by address is the one they meant, and a link is how they
-    // arrived rather than what they are.
+    // arrived rather than what they are. One row apiece, whichever size of share
+    // it was: a link to one note becomes a membership about that note.
     await env.DB.prepare(
-      `insert into space_members (space_id, email, role, joined_at, created_at)
-       values (?1, ?2, ?3, ?4, ?4)
-       on conflict(space_id, email) do update set joined_at = coalesce(space_members.joined_at, ?4)`,
+      `insert into space_members (space_id, email, item, role, joined_at, created_at)
+       values (?1, ?2, ?3, ?4, ?5, ?5)
+       on conflict(space_id, email, item)
+         do update set joined_at = coalesce(space_members.joined_at, ?5)`,
     )
-      .bind(held.space_id, user.email, held.role, now())
+      .bind(held.space_id, user.email, held.item, held.role, now())
       .run()
 
-    await env.DB.prepare('delete from guest_members where guest_id = ? and space_id = ?')
-      .bind(guestId, held.space_id)
+    await env.DB.prepare(
+      'delete from guest_members where guest_id = ? and space_id = ? and item = ?',
+    )
+      .bind(guestId, held.space_id, held.item)
       .run()
   }
 

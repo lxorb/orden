@@ -50,7 +50,7 @@
   import Reading from './Reading.svelte'
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
-  import { canWriteAt } from './sharing.svelte'
+  import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
   import Tabs from './Tabs.svelte'
@@ -105,15 +105,10 @@
 
   /** Whether this pane's note can be written in at all, which is what decides
    *  whether the bar offers to replace anything. A note being read, a note in a
-   *  space shared to be read, and read-only mode all say no. */
+   *  space shared to be read, a file shared to be read, and read-only mode all
+   *  say no; see `canWriteIn`. */
   const canReplace = $derived(
-    !!tab &&
-      !tab.reading &&
-      !modes.readOnly &&
-      // A note with no path yet is one this window made and has not written; it
-      // is still this machine's own, so it can be written in.
-      (tab.path === null || canWriteAt(tab.path)) &&
-      !!view,
+    !!tab && !tab.reading && !modes.readOnly && canWriteIn(tab.note) && !!view,
   )
 
   /** The document, told what to look for, and then asked how many there are.
@@ -213,10 +208,10 @@
   // pane beside this one may be showing a note of this account's own.
   $effect(() => {
     const current = view
-    const path = tab?.path
+    const note = tab?.note
     if (!current) return
 
-    setReadOnlyMode(current, modes.readOnly || (!!path && !canWriteAt(path)))
+    setReadOnlyMode(current, modes.readOnly || !canWriteIn(note))
   })
 
   // Whether this pane's note is a deck, which is what marks the rules that break

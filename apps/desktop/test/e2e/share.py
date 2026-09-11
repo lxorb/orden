@@ -15,6 +15,14 @@ once it hands out reading, and finds a note they can see and cannot type into. A
 third follows it once it asks first, gives a name, waits on a calm page, and is in
 the moment the owner presses Accept.
 
+Then the other size of the same act: one file out of a space that is shared with
+nobody. The owner opens the same sheet from the note's own row and gives that one
+note away; the other side gets no space, no folder and no row in the tree - a row
+at the foot of the space switcher, under whoever shared it, which opens a tab that
+syncs through the file's room. The same row and the same tab are photographed on a
+phone. Then a guest follows a link to one canvas and draws on it. Then the owner
+takes the note back and the row and its tab go, with nothing asked.
+
 Everything here is the real thing: the built web app, the Worker under
 `wrangler dev` on workerd, a Durable Object holding the room, the D1 migrations
 including the sharing one, and the mailer writing where a mail would have gone.
@@ -57,10 +65,24 @@ ORIGIN = f"http://127.0.0.1:{PORT}"
 
 OWNER = "owner@example.com"
 WRITER = "writer@example.com"
+# Somebody who is given one note and nothing else, and one who is handed a
+# canvas by a link. Neither is ever in the space the file came out of.
+ALONE = "alone@example.com"
 
 SPACE = "Notes"
 NOTE = "together.md"
 OPENING = "# Together\n\nthe first line\n"
+
+# A second space, shared with nobody, so that sharing one file out of it is the
+# only way anybody else reaches anything in it.
+SOLO = "Solo"
+ITEM = "one.md"
+ITEM_OPENING = "# One note\n\nshared on its own\n"
+ITEM_CANVAS = "board.canvas"
+ITEM_CANVAS_FILE = '{"nib":{"version":1},"nodes":[],"edges":[]}'
+
+# A phone, for the shots that say the section and the tab are one design on both.
+PHONE = {"width": 390, "height": 844}
 
 # How long anything is waited for before the test gives up and says what it saw.
 PATIENCE = 40
@@ -320,10 +342,20 @@ def note_console(label: str, message) -> None:
         say(f"[{label}] {message.type}: {message.text[:200]}")
 
 
-def fresh(browser: Browser, label: str, at: str = ORIGIN, token: str | None = None) -> Page:
+def fresh(
+    browser: Browser,
+    label: str,
+    at: str = ORIGIN,
+    token: str | None = None,
+    viewport: dict | None = None,
+) -> Page:
     """A browser context that has never held anything: its own storage, its own
-    session, and no idea that the other two exist."""
-    context = browser.new_context(viewport={"width": 1180, "height": 760})
+    session, and no idea that the other two exist.
+
+    `viewport` is how the same session is opened on a second device: a phone is
+    the same app at another width, and a token handed to two contexts is one
+    account on two machines."""
+    context = browser.new_context(viewport=viewport or {"width": 1180, "height": 760})
     if token:
         context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
 
@@ -369,31 +401,34 @@ def joined(page: Page, label: str, space_id: str, role: str) -> str:
     )
 
 
-def open_the_note(page: Page, label: str, note_id: str, space: str) -> None:
-    """Waits for the note to arrive in that folder, opens it, and waits for it
-    to be in its room."""
+def open_the_file(page: Page, label: str, note_id: str, path: str) -> None:
+    """Waits for a file to arrive in the tree, brings its space up, opens it, and
+    waits for it to be in its room. A note or a canvas: `openEntry` is the one way
+    in every list in the app uses, and it knows which kind a name is."""
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
-        f"  return walk(window.nibApp.workspace.tree).includes('/{space}/{NOTE}')"
+        f"  return walk(window.nibApp.workspace.tree).includes({json.dumps(path)})"
         "}"
     )
-    page.evaluate(
-        "(name) => {"
-        "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
-        "  if (space) window.nibApp.workspace.showSpace(space.id)"
-        "}",
-        space,
-    )
-    wait_for(page, listed, f"[{label}] the note to arrive")
+    show_space(page, path.split("/")[1])
+    wait_for(page, listed, f"[{label}] {path} to arrive")
 
-    page.evaluate(f"() => window.nibApp.workspace.open('/{space}/{NOTE}')")
-    wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
+    page.evaluate("(path) => window.nibApp.workspace.openEntry(path)", path)
+    if not path.endswith(".canvas"):
+        wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
+
     wait_for(
         page,
         f"() => window.nibApp.rooms.joined.has({json.dumps(note_id)})",
-        f"[{label}] the note to join its room",
+        f"[{label}] {path} to join its room",
     )
+
+
+def open_the_note(page: Page, label: str, note_id: str, space: str) -> None:
+    """The note this run's first half is about, in the folder that mirrors the
+    shared space - which is not always called what the space is called here."""
+    open_the_file(page, label, note_id, f"/{space}/{NOTE}")
 
 
 def dismiss(page: Page) -> None:
@@ -531,6 +566,79 @@ def set_link(token: str, space_id: str, role: str, mode: str) -> None:
     )
 
 
+def set_item_link(token: str, space_id: str, note_id: str, role: str, mode: str) -> None:
+    """The same one switch, about one file of the space rather than the space: it
+    is the same route with the note named on it. See docs/sharing.md."""
+    request(
+        f"/v1/spaces/{space_id}/share/link?item={note_id}",
+        token,
+        {"role": role, "mode": mode},
+        method="PUT",
+    )
+
+
+def show_space(page: Page, name: str) -> None:
+    """Brings a space up, so the file list under the header is its files."""
+    page.evaluate(
+        "(name) => {"
+        "  const space = window.nibApp.workspace.spaces.find((one) => one.name === name);"
+        "  if (space) window.nibApp.workspace.showSpace(space.id)"
+        "}",
+        name,
+    )
+
+
+def tree_row(page: Page, path: str):
+    """A row in the file list, by the path it stands for."""
+    page.evaluate(
+        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }"
+    )
+
+    row = page.locator(f'.row[data-path="{path}"]')
+    row.wait_for(state="visible", timeout=10_000)
+    return row
+
+
+def open_the_file_sheet(page: Page, path: str):
+    """The Share sheet about one file, opened the way anybody opens it: the row's
+    own menu in the file list. The same sheet a space opens, with the file's mark
+    and name in its head."""
+    # The share names the file's id on the account, so the row has to have been
+    # handed over before there is anything to share; see canShareItem.
+    wait_for(
+        page,
+        f"() => !!window.nibApp.sync.tracked({json.dumps(path)})",
+        f"the account to hold {path}",
+    )
+
+    tree_row(page, path).click(button="right")
+    page.get_by_role("menuitem", name="Share", exact=True).click()
+
+    sheet = page.get_by_role("dialog")
+    sheet.wait_for(state="visible", timeout=10_000)
+    sheet.get_by_text("Who has access").wait_for(timeout=10_000)
+    return sheet
+
+
+def shared_with_you(page: Page, label: str, count: int = 1) -> None:
+    """Waits until the account holds that many files other people shared on their
+    own. They arrive on the same listing pass the spaces do."""
+    wait_for(
+        page,
+        f"() => window.nibApp.sharedWithYou.items.length === {count}",
+        f"[{label}] a file shared on its own",
+    )
+
+
+def shared_row(page: Page, name: str):
+    """A row in the Shared-with-you section at the foot of the switcher, which is
+    where a file that is in no space lives.
+
+    The same locator a space's row uses, because it is the same list drawn in the
+    same shapes: a row, its mark, its name, and the button at the end of it."""
+    return space_row(page, name)
+
+
 def typed(page: Page, at: int, said: str) -> None:
     """Real keystrokes into the real editor, at a place in the note."""
     page.click(".cm-content")
@@ -598,6 +706,23 @@ def main() -> int:
             {"path": NOTE, "content": OPENING},
         )["note"]
         say(f"the owner holds {SPACE}/{NOTE} as {note['id']}")
+
+        # A second space, which nobody is ever let into. What the last part of
+        # this run shares is one file out of it and then one canvas, so anything
+        # the other side can reach came from the file's own share and not from the
+        # space; see docs/sharing.md.
+        solo = request("/v1/spaces", owner_token, {"name": SOLO})["space"]
+        one = request(
+            f"/v1/spaces/{solo['id']}/notes",
+            owner_token,
+            {"path": ITEM, "content": ITEM_OPENING},
+        )["note"]
+        plane = request(
+            f"/v1/spaces/{solo['id']}/notes",
+            owner_token,
+            {"path": ITEM_CANVAS, "content": ITEM_CANVAS_FILE},
+        )["note"]
+        say(f"and {SOLO}/{ITEM} as {one['id']}, with a canvas beside it")
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -699,7 +824,9 @@ def main() -> int:
                 owner.locator("aside .spaces").screenshot(
                     path=str(SHOTS / "shared-in-the-switcher.png")
                 )
-                if not owner.locator("aside .spaces .with").count():
+                # The mark the whole app says this with, which used to be a dot in
+                # the accent and is SharedMark.svelte now; see batch 70.
+                if not owner.locator("aside .spaces .shared").count():
                     wrong("the switcher does not mark the space as shared")
 
                 # ── The link the space itself holds ────────────────────────
@@ -865,6 +992,196 @@ def main() -> int:
                     wrong("the waiting page is still up after the owner accepted")
                 say("the calm page turned into the space, with nothing pressed")
 
+                # ── One note, shared on its own ────────────────────────────
+                # Not the space: the space this file sits in is shared with
+                # nobody, and stays that way. The sheet is the same sheet, opened
+                # from the file's own row.
+                show_space(owner, SOLO)
+                owner.wait_for_timeout(300)
+                sheet = open_the_file_sheet(owner, f"/{SOLO}/{ITEM}")
+                owner.wait_for_timeout(200)
+                sheet.screenshot(path=str(SHOTS / "share-a-note.png"))
+
+                # Its head says which file, not which space.
+                head = sheet.locator(".head .title").inner_text()
+                if head != f"Share {ITEM[:-3]}":
+                    wrong(f"the sheet is headed {head!r} rather than about the note")
+                else:
+                    say(f"the sheet is headed {head!r}, with the file's own mark")
+
+                sheet.locator(".compose input").fill(ALONE)
+                sheet.get_by_role("button", name="Invite").click()
+                sheet.get_by_text(ALONE).wait_for(timeout=10_000)
+                owner.wait_for_timeout(200)
+                sheet.screenshot(path=str(SHOTS / "share-a-note-invited.png"))
+                dismiss(owner)
+                say(f"{ALONE} was given one note out of {SOLO}")
+
+                token = worker.waits_for_mail(
+                    ALONE, r"https://nibeditor\.com/join/([a-f0-9]+)", "the note's invitation"
+                ).group(1)
+                said = worker.mail_to(ALONE)
+                if "shared the note" not in said:
+                    wrong("the mail does not say a note was shared")
+                if "shared the space" in said:
+                    wrong("the mail about one note says a space was shared")
+
+                # ── The other side: a row, not a space ─────────────────────
+                alone = fresh(browser, "alone", at=f"{ORIGIN}/join/{token}")
+                let_in(alone, "alone", keeps=True)
+                asked_nothing(alone, "alone", wrong)
+                shared_with_you(alone, "alone")
+                settled(alone, "alone")
+                say(f"{ALONE} is in, holding one file")
+
+                # Not the space it came out of, and no folder mirroring it: that is
+                # the whole point of an item share. Their own space is there,
+                # because every new account is given one; see spaces/first.ts.
+                held = alone.evaluate(
+                    "(id) => window.nibApp.account.spaces.some((one) => one.id === id)",
+                    solo["id"],
+                )
+                if held:
+                    wrong("one shared note brought the space it came out of with it")
+
+                folder = alone.evaluate(
+                    "(id) => window.nibApp.workspace.spaces.some("
+                    "  (one) => window.nibApp.sync.remoteIdFor(one.root) === id)",
+                    solo["id"],
+                )
+                if folder:
+                    wrong("one shared note made a folder for somebody else's space")
+
+                # It is at the foot of the switcher, under whoever shared it.
+                row = shared_row(alone, ITEM[:-3])
+                alone.wait_for_timeout(250)
+                alone.locator("aside .spaces").screenshot(
+                    path=str(SHOTS / "shared-with-you.png")
+                )
+                if not alone.locator("aside .spaces .from").count():
+                    wrong("the shared file is not grouped under whoever shared it")
+                if not row.locator(".shared").count():
+                    wrong("the shared file's row does not wear the shared mark")
+
+                # Opening it opens a tab, whose words came through the wire and
+                # whose keystrokes go through the file's room.
+                row.locator(".nib-row").click()
+                wait_for(
+                    alone,
+                    "() => !!window.nibApp.workspace.active?.note.shared",
+                    "[alone] the shared note to open in a tab",
+                )
+                wait_for(
+                    alone,
+                    f"() => window.nibApp.rooms.joined.has({json.dumps(one['id'])})",
+                    "[alone] the shared note to join its room",
+                )
+                alone.wait_for_timeout(250)
+                alone.screenshot(path=str(SHOTS / "shared-note-open.png"))
+                if not alone.locator(".tab .shared").count():
+                    wrong("the tab on a shared file does not wear the shared mark")
+                say("the note opened in a tab of its own, in its room, with the mark")
+
+                # And the owner, in the same file from their own tree.
+                open_the_file(owner, "owner", one["id"], f"/{SOLO}/{ITEM}")
+                typed(owner, len(ITEM_OPENING), "from the owner\n")
+                typed(alone, 0, "from the one person\n")
+                agree(owner, alone, "from the owner")
+                if "from the one person" not in words(owner):
+                    wrong("what the one person wrote never reached the owner")
+                say("both of them hold the same words, with no space between them")
+
+                # Nothing else of that space is reachable from there.
+                # The page and the Worker are the same origin here, so the ask is
+                # the one the app itself would make, with the app's own session.
+                reachable = alone.evaluate(
+                    "async (id) => {"
+                    "  const answer = await fetch(`/v1/notes/${id}`,"
+                    "    { headers: { authorization: `Bearer ${window.nibApp.account.token}` } });"
+                    "  return answer.status"
+                    "}",
+                    plane["id"],
+                )
+                if reachable != 404:
+                    wrong(f"the canvas beside the shared note answered {reachable}")
+                else:
+                    say("the file beside it is a file that does not exist")
+
+                # ── The same file on a phone ───────────────────────────────
+                held = alone.evaluate("() => localStorage.getItem('nib:session')")
+                phone = fresh(browser, "phone", token=held, viewport=PHONE)
+                shared_with_you(phone, "phone")
+                settled(phone, "phone")
+                shared_row(phone, ITEM[:-3])
+                phone.wait_for_timeout(300)
+                phone.screenshot(path=str(SHOTS / "shared-with-you-phone.png"))
+
+                shared_row(phone, ITEM[:-3]).locator(".nib-row").click()
+                wait_for(
+                    phone,
+                    "() => !!window.nibApp.workspace.active?.note.shared",
+                    "[phone] the shared note to open",
+                )
+                phone.wait_for_timeout(400)
+                phone.screenshot(path=str(SHOTS / "shared-note-phone.png"))
+                say("the same row and the same tab under a thumb")
+
+                # ── One canvas, by a link ──────────────────────────────────
+                set_item_link(owner_token, solo["id"], plane["id"], "write", "open")
+                canvas_link = request(
+                    f"/v1/spaces/{solo['id']}/share?item={plane['id']}", owner_token
+                )["link"]["url"]
+                found = re.search(r"/join/([a-f0-9]+)", canvas_link)
+                if not found:
+                    raise SystemExit(f"that is not a join link: {canvas_link}")
+
+                drawer = fresh(browser, "drawer", at=f"{ORIGIN}/join/{found.group(1)}")
+                let_in(drawer, "drawer")
+                asked_nothing(drawer, "drawer", wrong)
+                shared_with_you(drawer, "drawer")
+                if drawer.evaluate("() => window.nibApp.account.user"):
+                    wrong("a link to one canvas made an account rather than a guest")
+
+                shared_row(drawer, ITEM_CANVAS).locator(".nib-row").click()
+                wait_for(
+                    drawer,
+                    "() => window.nibApp.workspace.active?.kind === 'canvas'",
+                    "[drawer] the shared canvas to open",
+                )
+                wait_for(
+                    drawer,
+                    f"() => window.nibApp.rooms.joined.has({json.dumps(plane['id'])})",
+                    "[drawer] the canvas to join its room",
+                )
+                settled(drawer, "drawer")
+                drawer.wait_for_timeout(400)
+                drawer.screenshot(path=str(SHOTS / "shared-canvas.png"))
+                say("a guest with no account is drawing on one shared canvas")
+
+                if drawer.evaluate("() => window.nibApp.account.spaces.length"):
+                    wrong("a link to one canvas handed over a space as well")
+
+                # ── Taking it back ────────────────────────────────────────
+                request(
+                    f"/v1/spaces/{solo['id']}/share/members/{ALONE}?item={one['id']}",
+                    owner_token,
+                    method="DELETE",
+                )
+
+                wait_for(
+                    alone,
+                    "() => window.nibApp.sharedWithYou.items.length === 0",
+                    "[alone] the row to go once it was taken back",
+                )
+                wait_for(
+                    alone,
+                    "() => !window.nibApp.workspace.tabs.some((tab) => tab.note.shared)",
+                    "[alone] the tab on it to close",
+                )
+                alone.wait_for_timeout(300)
+                alone.screenshot(path=str(SHOTS / "shared-note-revoked.png"))
+                say("the row went and the tab closed, with nothing asked")
+
                 say("nobody typed a code, and everybody who was let in was let in")
             finally:
                 browser.close()
@@ -878,7 +1195,8 @@ def main() -> int:
         return 1
 
     print(
-        "\nevery way in opened by itself: a mailed link, two guests, and one that asked first",
+        "\nevery way in opened by itself: a mailed link, two guests, one that asked"
+        " first, one note and one canvas",
         flush=True,
     )
     return 0

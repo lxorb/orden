@@ -27,6 +27,7 @@ import { account } from './account.svelte'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
 import { settleLocalNotes } from './settling'
+import { sharedWithYou } from './sharing.svelte'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -188,13 +189,21 @@ class Joining {
       return
     }
 
+    // A link to one file rather than to a space. There is no folder to make and
+    // nothing to bring down: the file goes into the switcher's Shared-with-you
+    // section and opens in a tab whose words travel through its room. See
+    // sharing.svelte.ts and docs/sharing.md.
+    if (joined.item) {
+      this.arrived()
+      await sharedWithYou.load()
+      await sharedWithYou.open(joined.item)
+      return
+    }
+
     const space = joined.space
     if (!space) return
 
-    this.stopAsking()
-    this.step = null
-    this.token = null
-    this.invitation = null
+    this.arrived()
 
     // The space is theirs to reach now. One pass makes the folder, brings the
     // notes down, and leaves the switcher holding it.
@@ -203,6 +212,15 @@ class Joining {
 
     const here = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === space.id)
     if (here) await workspace.showSpace(here.id)
+  }
+
+  /** In, whatever was shared: the page goes and the link is spent. Both ways in
+   *  end here, so neither can forget half of it. */
+  private arrived() {
+    this.stopAsking()
+    this.step = null
+    this.token = null
+    this.invitation = null
   }
 
   /** The calm page, and the asking behind it. */

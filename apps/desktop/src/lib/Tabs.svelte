@@ -4,7 +4,7 @@
   import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
+  import { DIVIDER, menu, shareEntry, type MenuEntry } from './menu.svelte'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
@@ -13,6 +13,7 @@
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
   import FileMark from './FileMark.svelte'
+  import SharedMark from './SharedMark.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import { dur } from './motion'
@@ -128,6 +129,9 @@
       },
       ...reopenEntry(),
       DIVIDER,
+      // Who else may have the file this tab is showing, in the same word and the
+      // same sheet the tree's row and the space's own menu use.
+      ...shareEntry(tab.path),
       ...splitEntries(tab),
       ...keepEntry(tab),
     ]
@@ -358,6 +362,13 @@
                gives way as the strip fills. -->
           {#if !(tab.pinned && markOf(tab.kind))}
             <span class="label">{tab.shown}</span>
+          {/if}
+          <!-- Not yours: this document is one somebody else shared on its own, and
+               the tab says so in the mark the whole app says it with. On the tab
+               because there is nowhere else it could be said - a shared file has no
+               row in the tree to carry it. See SharedMark.svelte. -->
+          {#if tab.note.shared}
+            <SharedMark label={t('Shared with you')} />
           {/if}
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are

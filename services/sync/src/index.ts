@@ -16,7 +16,7 @@ import { settings } from './settings'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
 import { recheckDomains } from './spaces/proof'
-import { expireRequests } from './spaces/share'
+import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
@@ -153,6 +153,10 @@ app.get('/v1/usage', async (context) => {
 app.route('/v1/ask', ask)
 
 app.route('/v1/blobs', blobs)
+// The files somebody else shared on their own, which belong to no space this
+// account can reach: its own route rather than a corner of the space listing,
+// because that is exactly what they are not part of. See spaces/share.ts.
+app.route('/v1/shared', sharedWithMe)
 app.route('/v1/spaces', spaces)
 app.route('/v1/trash', trash)
 app.route('/v1/settings', settings)

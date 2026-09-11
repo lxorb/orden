@@ -146,17 +146,23 @@ export function inviteMessage(invite: {
   from: string
   role: 'write' | 'read'
   link: string
+  /** The one file that was shared, when it was one file and not the space. The
+   *  mail says what was actually handed over, because that is what the person
+   *  opening it will find: a note, and not the drawer it came out of. */
+  item?: string | null
 }) {
   const what = invite.role === 'write' ? 'write in it' : 'read it'
+  const named = invite.item ?? invite.space
+  const kind = invite.item ? 'note' : 'space'
 
   return {
-    subject: oneLine(`${invite.from} shared ${invite.space} with you`),
+    subject: oneLine(`${invite.from} shared ${named} with you`),
     ...letter(
       [
-        `${invite.from} shared the space ${invite.space} with you on Nib, and you can ${what}.`,
+        `${invite.from} shared the ${kind} ${named} with you on Nib, and you can ${what}.`,
         'Open it below. Nib emails you a code to check the address, and asks for nothing else.',
       ],
-      { label: 'Open the space', href: invite.link },
+      { label: `Open the ${kind}`, href: invite.link },
     ),
   }
 }

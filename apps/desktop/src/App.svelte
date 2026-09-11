@@ -40,7 +40,7 @@
   import { rooms } from './lib/rooms.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
-  import { canWriteAt, share } from './lib/sharing.svelte'
+  import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'
@@ -67,7 +67,7 @@
   /** Whether the note on the stage is one this account may write in. A space
    *  somebody shared to read says the same word in the strip that the reader's
    *  own read-only switch does; see sharing.svelte.ts. */
-  const canWriteHere = $derived(!workspace.active?.path || canWriteAt(workspace.active.path))
+  const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   let palette = $state(false)
   /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
@@ -266,9 +266,15 @@
   // looking at: a socket per open note, opened into a window that is already being
   // read and written in. See startup.svelte.ts for the order and why.
   $effect(() => {
+    // A file somebody shared on its own has no file here for the mirror to know
+    // about, and its room is the whole of how its words travel: it says its own
+    // id, with no hash, because there is no copy on this machine to compare.
     const open =
       account.syncable && startup.reached('rooms')
-        ? workspace.openNotes.map((one) => ({ ...one, tracked: sync.tracked(one.path) }))
+        ? workspace.openNotes.map((one) => ({
+            ...one,
+            tracked: one.note.shared ? { id: one.note.shared, hash: null } : sync.tracked(one.path),
+          }))
         : []
 
     rooms.follow(
@@ -303,6 +309,10 @@
         iconChoice,
         rooms,
         share,
+        // The files other people shared on their own, so a drive can watch one
+        // arrive at the foot of the switcher and disappear again when it is
+        // taken back; see apps/desktop/test/e2e/share.py.
+        sharedWithYou,
         sync,
         workspace,
         search,

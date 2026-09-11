@@ -22,6 +22,7 @@ import { share } from './share'
 import {
   addSpace,
   atLeast,
+  itemsSharedIn,
   notesAmong,
   presentSpace,
   sharedAmong,
@@ -52,7 +53,7 @@ export const spaces = new Hono<{ Bindings: Env; Variables: Variables }>()
 const REACHABLE = `select sp.*,
     case when sp.user_id = ?1 then 'owner' else m.role end as role
   from spaces sp
-  left join space_members m on m.space_id = sp.id and m.email = ?2
+  left join space_members m on m.space_id = sp.id and m.email = ?2 and m.item = ''
  where sp.deleted = ?3 and (sp.user_id = ?1 or m.role is not null)
  order by case when sp.user_id = ?1 then 0 else 1 end, sp.position, sp.created_at
  limit ?4`
@@ -62,7 +63,7 @@ const REACHABLE = `select sp.*,
  *  after and no order but the one their owners put them in. */
 const GUEST_REACHABLE = `select sp.*, g.role as role
   from spaces sp
-  join guest_members g on g.space_id = sp.id and g.guest_id = ?1
+  join guest_members g on g.space_id = sp.id and g.guest_id = ?1 and g.item = ''
  where sp.deleted = ?2 and g.joined_at is not null
  order by sp.position, sp.created_at
  limit ?3`
@@ -89,10 +90,13 @@ spaces.get('/', async (context) => {
 
   // Which of them anybody else is in, so the rail can mark them. One query for
   // the listing rather than one per space.
-  const shared = await sharedAmong(
-    context.env,
-    results.filter((one) => one.user_id === mine).map((one) => one.id),
-  )
+  const own = results.filter((one) => one.user_id === mine).map((one) => one.id)
+  const shared = await sharedAmong(context.env, own)
+
+  // And which files of them are shared on their own, which is the same mark on a
+  // row of the tree. Also one query, and only about the account's own spaces:
+  // who else was given a note of somebody else's space is that owner's to see.
+  const items = await itemsSharedIn(context.env, own)
 
   // A space somebody shared leaves the same marker for everybody who was in it.
   const gone = await reachable(context.env, who, 1)
@@ -107,7 +111,14 @@ spaces.get('/', async (context) => {
 
   return context.json({
     spaces: results.map((one) =>
-      presentSpace(one, context.env, one.role, shared.has(one.id), held.get(one.id) ?? 0),
+      presentSpace(
+        one,
+        context.env,
+        one.role,
+        shared.has(one.id),
+        held.get(one.id) ?? 0,
+        items.get(one.id) ?? [],
+      ),
     ),
     deleted: gone.results.map((one) => one.id),
   })

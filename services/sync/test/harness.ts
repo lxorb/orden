@@ -225,6 +225,8 @@ interface SpaceView {
   icon: string | null
   role: string
   shared: boolean
+  /** Which of its files are shared on their own, by note id; see 0026. */
+  sharedItems: string[]
   bookmarks: BookmarkView[]
   icons: Record<string, string>
   graph: Record<string, unknown>
@@ -365,6 +367,8 @@ export interface Reply {
  *  id the space's own link handed out. */
 export interface ShareView {
   owner: { email: string; name: string | null }
+  /** Which file the sheet is about, or null for the whole space. */
+  item: { id: string; path: string } | null
   members: {
     email: string | null
     guest: string | null
@@ -389,6 +393,8 @@ export interface ShareView {
 export interface JoinView {
   kind: string
   space: string
+  /** The one file the link is about, by name, or null for the space. */
+  note: string | null
   role: string
   email: string | null
   asks: boolean

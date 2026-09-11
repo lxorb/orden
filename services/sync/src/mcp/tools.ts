@@ -117,14 +117,20 @@ function text(args: Record<string, unknown>, name: string): string | undefined |
 
 /** Every space the account can reach: its own, and the ones somebody shared
  *  with it. The membership is joined on the address, which is how it is joined
- *  everywhere else; see spaces/space.ts. */
+ *  everywhere else; see spaces/space.ts.
+ *
+ *  Spaces, and not one file of somebody else's space: `item = ''` is the same
+ *  condition every space route holds to. Somebody handed one note is not somebody
+ *  who may be told what else is in the drawer, and a connector that listed the
+ *  space would hand a model the lot. */
 export async function spacesFor(env: Env, userId: string): Promise<Space[]> {
   const { results } = await env.DB.prepare(
     `select sp.id, sp.name, sp.user_id,
         case when sp.user_id = ?1 then 'owner' else m.role end as role
       from spaces sp
       left join space_members m
-        on m.space_id = sp.id and m.email = (select email from users where id = ?1)
+        on m.space_id = sp.id and m.item = ''
+       and m.email = (select email from users where id = ?1)
      where sp.deleted = 0 and (sp.user_id = ?1 or m.role is not null)
      order by sp.name limit ?2`,
   )

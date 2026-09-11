@@ -48,6 +48,10 @@ export interface DocumentStart {
   name: string
   text: string
   dirty: boolean
+  /** The note's id on the account, for a file somebody shared on its own: one
+   *  note out of their space, which has no file on this machine and never gets
+   *  one. Null for everything else, which is almost everything. */
+  shared?: string | null
 }
 
 export class NoteDoc {
@@ -60,6 +64,16 @@ export class NoteDoc {
   path = $state<string | null>(null)
   name = $state('')
   dirty = $state(false)
+
+  /** For a file somebody shared on its own: its id on the account, which is what
+   *  names its room.
+   *
+   *  Such a document has no path, because it has no file here. One note out of
+   *  somebody else's space is not something to write into a folder of ours - that
+   *  would be a copy, and a copy of a shared note is the one thing sharing is
+   *  for not having. Its words live in the room, which every keystroke reaches
+   *  and which writes them into the owner's space; see docs/sharing.md. */
+  readonly shared: string | null
 
   /** The live text and the undo history, shared by every view of this note. */
   readonly live: SharedDoc
@@ -96,6 +110,7 @@ export class NoteDoc {
   ) {
     this.kept = kept
     this.kind = start.kind
+    this.shared = start.shared ?? null
     this.path = start.path
     this.name = start.name
     this.dirty = start.dirty
@@ -161,6 +176,13 @@ export class NoteDoc {
    *  space and has none of that behind it, which is why saving stays the reader's
    *  to ask for there. */
   get keepsItself(): boolean {
+    // A file somebody shared on its own keeps itself too, and by the same
+    // argument: something other than a person pressing save is holding the words.
+    // Its room is, which writes them into the owner's space as they are typed.
+    // So no mark, no question on the way out, and nothing to save - there is no
+    // file here for a save to be about.
+    if (this.shared !== null) return true
+
     return this.path !== null && this.kept(this.path)
   }
 

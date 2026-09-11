@@ -346,7 +346,7 @@ class Workspace {
    *  and a PDF is read; neither has anything for a room to hold. */
   get openNotes(): { key: string; path: string; note: NoteDoc }[] {
     return this.documents
-      .filter((note) => holdsWords(note.kind) && note.path !== null)
+      .filter((note) => holdsWords(note.kind) && (note.path !== null || note.shared !== null))
       .map((note) => ({ key: note.key, path: note.path ?? '', note }))
   }
 
@@ -790,6 +790,58 @@ class Workspace {
   openBlank(name = UNTITLED, doc = '') {
     const note = this.document({ kind: 'note', path: null, name, text: doc, dirty: !!doc })
     this.add(new Tab(note, this.panes.focusedId))
+  }
+
+  /** A file somebody shared on its own, in a tab of its own.
+   *
+   *  No path, because there is no file here and there is not going to be one: it
+   *  is one note out of somebody else's space, and writing a copy of it into a
+   *  folder of ours is what sharing exists in order not to do. The words come
+   *  down once to fill the tab and travel through the file's room from then on,
+   *  which is also what writes them into the owner's space; see rooms.svelte.ts
+   *  and docs/sharing.md.
+   *
+   *  One tab per shared file, the way a canvas and the graph are one: asking for
+   *  one that is already open brings it forward. */
+  openShared(item: { id: string; name: string; canvas: boolean }, text: string) {
+    const existing = this.documents.find((one) => one.shared === item.id)
+    const open = existing ? this.tabs.find((tab) => tab.note.key === existing.key) : undefined
+
+    if (open) {
+      this.panes.activate(open.paneId, open.id)
+      this.showNote()
+      return
+    }
+
+    const note = this.document({
+      kind: item.canvas ? 'canvas' : 'note',
+      path: null,
+      name: item.name,
+      text,
+      dirty: false,
+      shared: item.id,
+    })
+
+    const tab = new Tab(note, this.panes.focusedId)
+    this.add(tab)
+    this.dropScaffolding(tab)
+    this.showNote()
+  }
+
+  /** Whether a file somebody shared is open right now, so the switcher's row can
+   *  say which one is being read. */
+  showingShared(id: string): boolean {
+    return this.documents.some((one) => one.shared === id)
+  }
+
+  /** A shared file that is no longer shared: every tab of it goes.
+   *
+   *  The calm answer a revoked space already gives, said about one file. Nothing
+   *  is asked and nothing is kept: the words were never this machine's, and a tab
+   *  left open on a room that will not have it back is a tab that quietly stops
+   *  being a document. */
+  closeShared(id: string) {
+    for (const tab of this.tabs.filter((one) => one.note.shared === id)) this.close(tab.id)
   }
 
   /** A document, wired so that every change to it - a keystroke in any pane, an
@@ -1840,9 +1892,12 @@ class Workspace {
    *
    *  A file opened from the computer is written when the reader says so, and not
    *  a moment before. That is the only place saving is still a thing somebody
-   *  does, so it is the only place where waiting for them is right. */
+   *  does, so it is the only place where waiting for them is right.
+   *
+   *  A file somebody shared on its own has no file here at all: its room is what
+   *  keeps it, and there is nowhere on this machine for a write to go. */
   private scheduleSave(note: NoteDoc) {
-    if (!note.keepsItself) return
+    if (!note.keepsItself || note.shared !== null) return
 
     this.waiting.add(note)
     clearTimeout(this.saveTimer)

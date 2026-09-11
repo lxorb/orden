@@ -95,7 +95,7 @@
   import { menu } from './menu.svelte'
   import { dur } from './motion'
   import { rooms } from './rooms.svelte'
-  import { canWriteAt, trustsHtmlIn } from './sharing.svelte'
+  import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
@@ -605,7 +605,7 @@
   // the edit rather than the gesture, so one rule covers every gesture there is;
   // see store.svelte.ts. The pane does the same for a note's editor.
   $effect(() => {
-    store.readOnly = tab.path !== null && !canWriteAt(tab.path)
+    store.readOnly = !canWriteIn(tab.note)
   })
 
   // This plane is one several devices may be drawing on, so the surface offers

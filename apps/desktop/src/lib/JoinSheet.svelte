@@ -20,9 +20,14 @@
   const who = $derived(invitation?.from ?? t('Somebody'))
 
   /** What the link was about, when the link said. The one sentence every state
-   *  here sits under. */
+   *  here sits under - and it names what was actually shared, which is the one
+   *  file where the link was about one and the space where it was about the
+   *  space. The same sentence either way: a smaller thing to be given is not a
+   *  different page. */
   const shared = $derived(
-    invitation ? t('{who} shared {space} with you', { who, space: invitation.space }) : null,
+    invitation
+      ? t('{who} shared {space} with you', { who, space: invitation.note ?? invitation.space })
+      : null,
   )
 </script>
 

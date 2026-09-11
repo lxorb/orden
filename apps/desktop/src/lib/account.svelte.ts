@@ -281,6 +281,16 @@ class Session {
     const listed = await api.listSpaces(this.token)
     this.spaces = listed.spaces
     this.deletedSpaces = listed.deleted
+
+    // And the files other people shared on their own, which belong to no space
+    // and so are not in that listing. On the same beat, because it is the same
+    // question - what can this account open - and a file that was shared or taken
+    // back should show up or stop showing up when a space would have.
+    //
+    // Imported here rather than at the top: the sharing store reads the account,
+    // and the two would import each other. See docs/sharing.md.
+    const { sharedWithYou } = await import('./sharing.svelte')
+    await sharedWithYou.load()
   }
 
   private forget() {

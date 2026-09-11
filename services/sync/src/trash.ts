@@ -109,6 +109,29 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
     .bind(note.id)
     .run()
+
+  // And whatever was shared about this one file. A share about a note whose
+  // words have gone reaches nothing - every read of one joins the live note -
+  // but a row nobody can ever use is a row nothing would take away, and it is
+  // what a listing and a ceiling still count. See spaces/share.ts.
+  await env.DB.batch([
+    env.DB.prepare('delete from space_members where space_id = ? and item = ?').bind(
+      note.space_id,
+      note.id,
+    ),
+    env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(
+      note.space_id,
+      note.id,
+    ),
+    env.DB.prepare('delete from space_requests where space_id = ? and item = ?').bind(
+      note.space_id,
+      note.id,
+    ),
+    env.DB.prepare('delete from guest_members where space_id = ? and item = ?').bind(
+      note.space_id,
+      note.id,
+    ),
+  ])
 }
 
 /** Empties a space for good, a batch of notes at a time. The row stays as the

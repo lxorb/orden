@@ -44,6 +44,18 @@ interface World {
   /** The open tabs, as much of each as `othersIn` reads: a path and the key its
    *  document's room is counted under. */
   tabs: { path: string | null; note: { key: string } }[]
+  /** What the account holds for each path on this machine: the note's id, which
+   *  is what a share about one file names. */
+  notes: Record<string, string>
+  /** What `GET /v1/shared` answers: the files other people shared on their own. */
+  shared: SharedItem[]
+  /** The words each of those files comes down with. */
+  words: Record<string, string>
+  /** Every shared file that was opened, and every one whose tabs were closed. */
+  opened: { id: string; name: string; canvas: boolean; text: string }[]
+  closed: string[]
+  /** Which shared files have a tab right now, as the workspace would answer. */
+  showing: string[]
 }
 
 const world = vi.hoisted((): World => ({
@@ -58,6 +70,12 @@ const world = vi.hoisted((): World => ({
   refuseStatus: 403,
   asked: [],
   tabs: [],
+  notes: {},
+  shared: [],
+  words: {},
+  opened: [],
+  closed: [],
+  showing: [],
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -72,31 +90,73 @@ vi.mock('./api', async (importOriginal) => {
     return Promise.resolve(world.sharing)
   }
 
+  /** Which share a call was about, as the calls themselves say it: the space, or
+   *  one file of it. Written into what the test reads, so a control that forgot
+   *  to carry the file it is about is a call that says the wrong thing. */
+  const about = (item: string) => (item ? ` about ${item}` : '')
+
   return {
     ...original,
     api: {
-      sharing: (_token: string, id: string) => answer(`read ${id}`),
-      invite: (_token: string, id: string, email: string, role: string) =>
-        answer(`invite ${email} as ${role} to ${id}`),
-      setMemberRole: (_token: string, id: string, email: string, role: string) =>
-        answer(`${email} is now ${role} in ${id}`),
-      removeMember: (_token: string, _id: string, email: string) => answer(`remove ${email}`),
-      setGuestRole: (_token: string, id: string, id2: string, role: string) =>
-        answer(`guest ${id2} is now ${role} in ${id}`),
-      removeGuest: (_token: string, _id: string, id2: string) => answer(`remove guest ${id2}`),
-      acceptGuest: (_token: string, _id: string, id2: string) => answer(`accept guest ${id2}`),
-      setShareLink: (_token: string, _id: string, role: string, mode: string) =>
-        answer(`link ${role} ${mode}`),
-      revokeShareLink: () => answer('revoke'),
-      acceptRequest: (_token: string, _id: string, email: string) => answer(`accept ${email}`),
-      declineRequest: (_token: string, _id: string, email: string) => answer(`decline ${email}`),
+      sharing: (_token: string, id: string, item = '') => answer(`read ${id}${about(item)}`),
+      invite: (_token: string, id: string, email: string, role: string, item = '') =>
+        answer(`invite ${email} as ${role} to ${id}${about(item)}`),
+      setMemberRole: (_token: string, id: string, email: string, role: string, item = '') =>
+        answer(`${email} is now ${role} in ${id}${about(item)}`),
+      removeMember: (_token: string, _id: string, email: string, item = '') =>
+        answer(`remove ${email}${about(item)}`),
+      setGuestRole: (_token: string, id: string, id2: string, role: string, item = '') =>
+        answer(`guest ${id2} is now ${role} in ${id}${about(item)}`),
+      removeGuest: (_token: string, _id: string, id2: string, item = '') =>
+        answer(`remove guest ${id2}${about(item)}`),
+      acceptGuest: (_token: string, _id: string, id2: string, item = '') =>
+        answer(`accept guest ${id2}${about(item)}`),
+      setShareLink: (_token: string, _id: string, role: string, mode: string, item = '') =>
+        answer(`link ${role} ${mode}${about(item)}`),
+      revokeShareLink: (_token: string, _id: string, item = '') => answer(`revoke${about(item)}`),
+      acceptRequest: (_token: string, _id: string, email: string, item = '') =>
+        answer(`accept ${email}${about(item)}`),
+      declineRequest: (_token: string, _id: string, email: string, item = '') =>
+        answer(`decline ${email}${about(item)}`),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
+
+      // The files other people shared on their own, and the two things that can
+      // be done with one: read its words, and hand it back.
+      // Not written into `asked`: the listing rides along with the spaces on
+      // every pass, and a ledger of what a control asked for should not fill up
+      // with a read nobody pressed anything for.
+      shared: () => {
+        if (world.refuse) {
+          return Promise.reject(new original.ApiError(world.refuseStatus, world.refuse))
+        }
+
+        return Promise.resolve({ shared: world.shared })
+      },
+      readNote: (_token: string, id: string) => {
+        world.asked.push(`words of ${id}`)
+        const content = world.words[id]
+        if (content === undefined) {
+          return Promise.reject(new original.ApiError(404, 'no such note'))
+        }
+
+        return Promise.resolve({ note: { id }, content })
+      },
+      leaveShared: (_token: string, id: string) => {
+        world.asked.push(`leave ${id}`)
+        return Promise.resolve({ ok: true as const })
+      },
     },
   }
 })
 
 vi.mock('./sync.svelte', () => ({
-  sync: { remoteIdFor: (root: string) => world.mirrors[root] ?? null },
+  sync: {
+    remoteIdFor: (root: string) => world.mirrors[root] ?? null,
+    tracked: (path: string) => {
+      const id = world.notes[path]
+      return id ? { id, hash: 'h' } : null
+    },
+  },
 }))
 
 vi.mock('./workspace.svelte', () => ({
@@ -107,6 +167,10 @@ vi.mock('./workspace.svelte', () => ({
     get tabs() {
       return world.tabs
     },
+    openShared: (item: { id: string; name: string; canvas: boolean }, text: string) =>
+      world.opened.push({ ...item, text }),
+    closeShared: (id: string) => world.closed.push(id),
+    showingShared: (id: string) => world.showing.includes(id),
   },
 }))
 
@@ -123,21 +187,42 @@ import { accentFor } from './accents'
 import {
   addressesIn,
   canShare,
+  canShareItem,
   canWriteAt,
   isShared,
+  isSharedItem,
   looksLikeAddress,
   originOfDocument,
   othersIn,
   roleOf,
   share,
+  sharedWithYou,
   trustsHtmlIn,
 } from './sharing.svelte'
-import type { RemoteSpace } from './api'
+import type { RemoteSpace, SharedItem } from './api'
 import type { NoteDoc } from './workspace/documents.svelte'
 
 /** A space on the account, with only the fields any of this reads. */
-function remote(id: string, role: 'owner' | 'write' | 'read', shared = false): RemoteSpace {
-  return { id, name: id, role, shared } as RemoteSpace
+function remote(
+  id: string,
+  role: 'owner' | 'write' | 'read',
+  shared = false,
+  sharedItems: string[] = [],
+): RemoteSpace {
+  return { id, name: id, role, shared, sharedItems } as RemoteSpace
+}
+
+/** One file somebody else shared on its own, as the account hands it over. */
+function sharedFile(id: string, path: string, owner: string, role = 'write'): SharedItem {
+  return {
+    id,
+    path,
+    name: path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, ''),
+    role: role as 'write' | 'read',
+    updatedAt: 1,
+    owner: { name: owner },
+    space: { id: 'theirs', name: 'Theirs' },
+  }
 }
 
 const local = (name: string) => ({ id: name, name, root: name })
@@ -154,7 +239,17 @@ beforeEach(() => {
   world.refuseStatus = 403
   world.asked = []
   world.tabs = []
+  world.notes = {}
+  world.shared = []
+  world.words = {}
+  world.opened = []
+  world.closed = []
+  world.showing = []
   rooms.present = {}
+  // The list asks again on its own while it holds anything; no test wants
+  // yesterday's timer still running in it.
+  sharedWithYou.stop()
+  sharedWithYou.items = []
 
   account.token = 'session'
   account.user = { id: 'u1', email: 'owner@example.com', name: 'Emil' }
@@ -622,5 +717,207 @@ describe('the Share sheet', () => {
 
     expect(await share.remove(member('ada@example.com'))).toBe(false)
     expect(share.error).toBe('only the owner can do that')
+  })
+})
+
+/** Sharing one file rather than the whole space. The same store, the same sheet
+ *  and the same calls, with the note's id carried alongside: what a control asks
+ *  for has to say which of the two it is about, or an owner changing who may read
+ *  one note would be changing who may read the space. */
+describe('the sheet about one file', () => {
+  beforeEach(() => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'note-1' }
+    account.spaces = [remote('space-1', 'owner')]
+  })
+
+  test('asks about the file, and says which file it is about', async () => {
+    await share.showItem(local('Notes'), 'Notes/plan.md')
+
+    expect(share.item).toEqual({ id: 'note-1', path: 'Notes/plan.md' })
+    expect(world.asked).toEqual(['read space-1 about note-1'])
+  })
+
+  test('and the same sheet about the space carries no file at all', async () => {
+    await share.show(local('Notes'))
+
+    expect(share.item).toBeNull()
+    expect(world.asked).toEqual(['read space-1'])
+  })
+
+  /** Every control, because forgetting one is the bug that cannot be seen: the
+   *  sheet would look right and be about the wrong thing. */
+  test('carries the file through every control on it', async () => {
+    await share.showItem(local('Notes'), 'Notes/plan.md')
+    world.asked = []
+
+    share.email = 'ada@example.com'
+    await share.invite()
+    await share.setRole(member('ada@example.com'), 'read')
+    await share.remove(member('ada@example.com'))
+    await share.setRole(guest('g1', 'Ada'), 'read')
+    await share.remove(guest('g1', 'Ada'))
+    await share.accept(guest('g1', 'Ada'))
+    await share.accept(member('bob@example.com'))
+    await share.decline(member('bob@example.com'))
+    await share.setLink('read', 'approval')
+    await share.revoke()
+    await share.reset('write', 'open')
+
+    expect(world.asked).toEqual([
+      'invite ada@example.com as write to space-1 about note-1',
+      'ada@example.com is now read in space-1 about note-1',
+      'remove ada@example.com about note-1',
+      'guest g1 is now read in space-1 about note-1',
+      'remove guest g1 about note-1',
+      'accept guest g1 about note-1',
+      'accept bob@example.com about note-1',
+      'decline bob@example.com about note-1',
+      'link read approval about note-1',
+      'revoke about note-1',
+      'revoke about note-1',
+      'link write open about note-1',
+    ])
+  })
+
+  test('opens on nothing at all where the file never reached the account', async () => {
+    world.notes = {}
+    await share.showItem(local('Notes'), 'Notes/plan.md')
+
+    expect(share.open).toBe(false)
+    expect(world.asked).toEqual([])
+  })
+})
+
+describe('the mark on a file shared on its own', () => {
+  test('is drawn from the listing, by the id this machine holds for the path', () => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'note-1', 'Notes/other.md': 'note-2' }
+    account.spaces = [remote('space-1', 'owner', false, ['note-1'])]
+
+    expect(isSharedItem('Notes/plan.md')).toBe(true)
+    expect(isSharedItem('Notes/other.md')).toBe(false)
+  })
+
+  /** The two marks are about two things and neither implies the other. A space
+   *  everybody is in says so on the space; one note handed to one person says so
+   *  on the note. */
+  test('and is not the same fact as the space being shared', () => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'note-1' }
+    account.spaces = [remote('space-1', 'owner', true, [])]
+
+    expect(isShared('Notes')).toBe(true)
+    expect(isSharedItem('Notes/plan.md')).toBe(false)
+  })
+})
+
+describe('whether a file can be shared from here', () => {
+  beforeEach(() => {
+    world.mirrors = { Notes: 'space-1', Theirs: 'space-2' }
+    world.notes = { 'Notes/plan.md': 'note-1', 'Theirs/plan.md': 'note-2' }
+    account.spaces = [remote('space-1', 'owner'), remote('space-2', 'write')]
+  })
+
+  test('yes, for a file of the account own space that the account holds', () => {
+    expect(canShareItem('Notes/plan.md')).toBe(true)
+  })
+
+  test('no, for a file of a space somebody else owns', () => {
+    expect(canShareItem('Theirs/plan.md')).toBe(false)
+  })
+
+  test('no, for a file the account has never been handed: a share names an id', () => {
+    expect(canShareItem('Notes/fresh.md')).toBe(false)
+  })
+
+  test('and no, for nothing at all', () => {
+    expect(canShareItem(null)).toBe(false)
+    expect(canShareItem('/elsewhere/loose.md')).toBe(false)
+  })
+})
+
+/** The other side of it: the files other people shared on their own, which sit
+ *  in no space this account can reach and so live at the foot of the switcher. */
+describe('the files other people shared with you', () => {
+  test('arrive grouped under whoever shared them, in the order they came', async () => {
+    world.shared = [
+      sharedFile('n1', 'Plans/meeting.md', 'Ada'),
+      sharedFile('n2', 'Plans/next.md', 'Ada'),
+      sharedFile('n3', 'Work/board.canvas', 'Grace'),
+    ]
+
+    await sharedWithYou.load()
+
+    expect(sharedWithYou.byOwner.map((one) => one.owner)).toEqual(['Ada', 'Grace'])
+    expect(sharedWithYou.byOwner[0]?.items.map((one) => one.name)).toEqual(['meeting', 'next'])
+    expect(sharedWithYou.byOwner[1]?.items.map((one) => one.name)).toEqual(['board.canvas'])
+  })
+
+  test('open in a tab whose words came down once, and a canvas as a canvas', async () => {
+    world.shared = [
+      sharedFile('n1', 'Plans/meeting.md', 'Ada'),
+      sharedFile('n3', 'Work/b.canvas', 'Ada'),
+    ]
+    world.words = { n1: '# the meeting', n3: '{}' }
+    await sharedWithYou.load()
+
+    await sharedWithYou.open(world.shared[0]!)
+    await sharedWithYou.open(world.shared[1]!)
+
+    expect(world.opened).toEqual([
+      { id: 'n1', name: 'meeting', canvas: false, text: '# the meeting' },
+      { id: 'n3', name: 'b.canvas', canvas: true, text: '{}' },
+    ])
+  })
+
+  test('and one already open is brought forward rather than read again', async () => {
+    world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada')]
+    world.words = { n1: '# the meeting' }
+    world.showing = ['n1']
+    await sharedWithYou.load()
+    world.asked = []
+
+    await sharedWithYou.open(world.shared[0]!)
+
+    expect(world.asked).toEqual([])
+    expect(world.opened).toHaveLength(1)
+  })
+
+  /** Revoking. The row goes on the next pass and the tab goes with it: the words
+   *  were never this machine's, and a tab on a room that will not have it back is
+   *  not a document. */
+  test('stop being listed once they are taken back, and their tabs close', async () => {
+    world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada')]
+    await sharedWithYou.load()
+    expect(sharedWithYou.items).toHaveLength(1)
+
+    world.shared = []
+    await sharedWithYou.load()
+
+    expect(sharedWithYou.items).toEqual([])
+    expect(world.closed).toEqual(['n1'])
+  })
+
+  test('and can be handed back from the row, which closes the tab at once', async () => {
+    world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada')]
+    await sharedWithYou.load()
+
+    await sharedWithYou.leave(world.shared[0]!)
+
+    expect(sharedWithYou.items).toEqual([])
+    expect(world.closed).toEqual(['n1'])
+    expect(world.asked).toContain('leave n1')
+  })
+
+  test('and a listing that could not be read leaves the last one standing', async () => {
+    world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada')]
+    await sharedWithYou.load()
+
+    world.refuse = 'could not reach the server'
+    await sharedWithYou.load()
+
+    expect(sharedWithYou.items).toHaveLength(1)
+    expect(world.closed).toEqual([])
   })
 })

@@ -48,7 +48,7 @@ import { prompt } from './prompt.svelte'
 import { openSpaces, revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { canPublish } from './publishing.svelte'
-import { canShare } from './sharing.svelte'
+import { canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { settings } from './settings.svelte'
@@ -616,6 +616,18 @@ function spaceCommands(): Command[] {
     { id: 'new-space', label: t('New space'), run: () => void newSpace() },
     ...(canShare(space)
       ? [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
+      : []),
+    // And the one document in front of the reader, which is the other size of the
+    // same act. Offered only where there is one and it can be shared; see
+    // sharing.svelte.ts.
+    ...(canShareItem(workspace.active?.path)
+      ? [
+          {
+            id: 'share-note',
+            label: t('Share this note'),
+            run: () => void shareThisFile(workspace.active?.path ?? ''),
+          },
+        ]
       : []),
     ...(canPublish(space)
       ? [

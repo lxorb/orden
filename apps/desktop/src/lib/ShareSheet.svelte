@@ -16,13 +16,16 @@
    *  it. Drawn in the box every space sheet is drawn in; see Sheet.svelte. */
   import { fade, scale } from 'svelte/transition'
   import { accentFor } from './accents'
+  import { fileMark } from './file-mark'
   import { t } from './i18n.svelte'
   import { initial } from './icons'
-  import { share } from './sharing.svelte'
+  import { shownName } from './note-name'
+  import { isShared, share } from './sharing.svelte'
   import { theme } from './theme.svelte'
   import { called } from './person'
   import type { GivenRole, Member, Sharing } from './api'
   import Copyable from './Copyable.svelte'
+  import FileMark from './FileMark.svelte'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
   import SpaceMark from './SpaceMark.svelte'
@@ -37,6 +40,21 @@
 
   const who = $derived(share.who)
   const link = $derived(who?.link ?? null)
+
+  /** The one file this sheet is about, where it is about one file rather than the
+   *  whole space. */
+  const item = $derived(share.item)
+
+  /** What the head says it is about: the file's name, else the space's. The same
+   *  words and the same shape for both - a smaller thing to share is not a
+   *  different sheet. */
+  const subject = $derived(
+    item ? shownName(item.path.slice(item.path.lastIndexOf('/') + 1)) : (share.space?.name ?? ''),
+  )
+
+  /** Whether the space this file sits in is already shared with somebody, which
+   *  is what the hint under the head is about. */
+  const alreadyInTheSpace = $derived(!!share.space && isShared(share.space.root))
 
   /** Somebody waiting to be let in, of either kind. */
   type Waiting = Sharing['requests'][number]
@@ -98,17 +116,28 @@
   }
 </script>
 
-<Sheet
-  open={share.open}
-  title={t('Share {name}', { name: share.space?.name ?? '' })}
-  onclose={() => share.close()}
->
+<Sheet open={share.open} title={t('Share {name}', { name: subject })} onclose={() => share.close()}>
   {#snippet mark()}
-    <SpaceMark id={share.spaceId} name={share.space?.name ?? ''} />
+    <!-- What the sheet is about wears its own mark: the space's badge, or - for one
+         file of it - the mark that file wears on its row in the tree, chosen icon
+         and all. Same box either way; see FileMark.svelte. -->
+    {#if item}
+      <FileMark mark={fileMark(item.path)} path={item.path} />
+    {:else}
+      <SpaceMark id={share.spaceId} name={share.space?.name ?? ''} />
+    {/if}
   {/snippet}
 
   {#if share.error}
     <p class="wrong">{share.error}</p>
+  {/if}
+
+  {#if item && alreadyInTheSpace}
+    <!-- Two levels, one sentence, so neither is a surprise: this note can be
+         handed to one person, and everybody already in the space has it whatever
+         this sheet says. Only where the space actually is shared - a line that is
+         always there is a line nobody reads. -->
+    <p class="note">{t('Everyone in the space already has it.')}</p>
   {/if}
 
   <!-- ── The people ───────────────────────────────────────────────

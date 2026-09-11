@@ -3,6 +3,7 @@ import { chosenIcon } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
+import { canShareItem, shareThisFile } from './sharing.svelte'
 import { isMarkdownPath } from './space-paths'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
@@ -136,4 +137,19 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
     },
     ...(chosenIcon(path) === null ? [] : [{ label: t('Remove icon'), run: take }]),
   ]
+}
+
+/** Who else may have this one file. The same word and the same sheet a space is
+ *  shared with, about a note or a canvas instead; see ShareSheet.svelte.
+ *
+ *  Here beside the icon for the same reason that is: the share belongs to the
+ *  thing rather than to the list, so every list that shows a file can offer it
+ *  without knowing anything about sharing - the tree today, a tab's own menu, the
+ *  palette. Nothing to offer where there is nothing to share: a file in a space
+ *  that is not the account's own, one the account has never been handed, and a
+ *  folder, which is not a file. */
+export function shareEntry(path: string | null | undefined): MenuEntry[] {
+  if (!path || !canShareItem(path)) return []
+
+  return [{ label: t('Share'), run: () => void shareThisFile(path) }]
 }

@@ -62,13 +62,38 @@ interface JoinRequest {
   at: number
 }
 
-/** Who else may reach a space, which is the whole of what the Share sheet
- *  draws and what every change to it answers with. */
+/** Who else may reach a space, or one file of it, which is the whole of what the
+ *  Share sheet draws and what every change to it answers with. */
 export interface Sharing {
   owner: { email: string; name: string | null }
+  /** Which file this is about, when it is about one file rather than the whole
+   *  space. Null for the space, which is what every sheet was about before. */
+  item: { id: string; path: string } | null
   members: Member[]
   requests: JoinRequest[]
   link: ShareLink | null
+}
+
+/** One file somebody else shared on its own: a note or a canvas out of their
+ *  space, with no folder of its own on this machine.
+ *
+ *  It is not a space and is never made into one. It is a row at the foot of the
+ *  space switcher, grouped under whoever shared it, and it opens in a tab whose
+ *  words travel through the file's room; see docs/sharing.md. */
+export interface SharedItem {
+  /** The note's id on the account, which is also what names its room. */
+  id: string
+  /** Where it sits in the owner's space, which is what its name comes off. */
+  path: string
+  /** What to call it: the file's own name, without the markdown extension. */
+  name: string
+  role: GivenRole
+  updatedAt: number
+  /** Whoever shared it, by name. Never an address. */
+  owner: { name: string }
+  /** Which space it came out of - for the row, not for a way in: nothing about
+   *  that space is reachable with this. */
+  space: { id: string; name: string }
 }
 
 /** What a link somebody was sent leads to, answered before there is a session,
@@ -77,6 +102,8 @@ export interface Invitation {
   kind: 'invite' | 'link'
   /** The space's name. */
   space: string
+  /** The one file the link is about, by name, or null where it is the space. */
+  note: string | null
   role: GivenRole
   /** The address an invitation was written to, so the sign-in is filled in.
    *  Null for a link, which is for whoever has it. */
@@ -102,6 +129,9 @@ export interface Joined {
   /** The guest a link handed out, or the one that followed it. */
   guest?: Guest
   space?: RemoteSpace
+  /** The one file the link was about, where it was about one file. Exactly one
+   *  of this and `space` comes back from a link that let somebody in. */
+  item?: SharedItem
   /** The owner has been asked, and has not answered. */
   waiting?: boolean
   /** The owner said no. */
@@ -118,8 +148,13 @@ export interface RemoteSpace {
    *  this first, so a reader is never shown a button that would be refused. */
   role: SpaceRole
   /** Whether anybody besides the owner is in it, which is the dot on its row in
-   *  the switcher. */
+   *  the switcher. About the space itself: a file of it shared on its own is a
+   *  mark on that row, and does not make the whole space shared. */
   shared: boolean
+  /** Which of its files are shared on their own, by note id, so the tree can
+   *  mark those rows. Empty for a space somebody else owns, and absent from a
+   *  build of the service older than this app. */
+  sharedItems?: string[]
   /** How many notes it holds. What a machine bringing the account down for the
    *  first time counts against, since it knows this before the first note has
    *  landed; see arriving.svelte.ts. */
@@ -319,6 +354,14 @@ async function request<T>(
   return body as T
 }
 
+/** Which share a call is about, as the query the service reads: one file of the
+ *  space, or - empty - the space itself. Written once, because every call about
+ *  sharing carries it and a hand-rolled query string is a place to forget the
+ *  encoding. */
+function about(item: string): string {
+  return item ? `?item=${encodeURIComponent(item)}` : ''
+}
+
 export const api = {
   requestCode: (email: string) =>
     request<{ ok: true; resendIn: number }>('/v1/auth/code', { body: { email } }),
@@ -492,64 +535,77 @@ export const api = {
   deleteSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),
 
-  // Sharing a space. Every one of these answers with the whole of who may reach
-  // it, so the sheet is drawn from what came back rather than from a guess
-  // about what the change did.
-  sharing: (token: string, id: string) => request<Sharing>(`/v1/spaces/${id}/share`, { token }),
+  // Sharing a space, or one file of it. Every one of these answers with the
+  // whole of who may reach that thing, so the sheet is drawn from what came back
+  // rather than from a guess about what the change did.
+  //
+  // `item` is the note's id where the share is about one file, and empty where
+  // it is about the space - which is what all of these meant before there were
+  // items. One set of calls for both, because it is one set of routes and one
+  // sheet; see services/sync/src/spaces/share.ts.
+  sharing: (token: string, id: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share${about(item)}`, { token }),
 
-  invite: (token: string, id: string, email: string, role: GivenRole) =>
-    request<Sharing>(`/v1/spaces/${id}/share/invite`, { token, body: { email, role } }),
+  invite: (token: string, id: string, email: string, role: GivenRole, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/invite${about(item)}`, {
+      token,
+      body: { email, role },
+    }),
 
-  setMemberRole: (token: string, id: string, email: string, role: GivenRole) =>
-    request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}`, {
+  setMemberRole: (token: string, id: string, email: string, role: GivenRole, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}${about(item)}`, {
       method: 'PATCH',
       token,
       body: { role },
     }),
 
-  removeMember: (token: string, id: string, email: string) =>
-    request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}`, {
+  removeMember: (token: string, id: string, email: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}${about(item)}`, {
       method: 'DELETE',
       token,
     }),
 
-  setShareLink: (token: string, id: string, role: GivenRole, mode: ShareLink['mode']) =>
-    request<Sharing>(`/v1/spaces/${id}/share/link`, { method: 'PUT', token, body: { role, mode } }),
+  setShareLink: (token: string, id: string, role: GivenRole, mode: ShareLink['mode'], item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/link${about(item)}`, {
+      method: 'PUT',
+      token,
+      body: { role, mode },
+    }),
 
-  revokeShareLink: (token: string, id: string) =>
-    request<Sharing>(`/v1/spaces/${id}/share/link`, { method: 'DELETE', token }),
+  revokeShareLink: (token: string, id: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/link${about(item)}`, { method: 'DELETE', token }),
 
   // The same four things, about somebody a link let in rather than an address.
   // A guest is one row rather than a membership and a request, so letting them
   // in, changing what they may do and ending it are three verbs on one path.
-  acceptGuest: (token: string, id: string, guest: string) =>
-    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}`, {
+  acceptGuest: (token: string, id: string, guest: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}${about(item)}`, {
       method: 'POST',
       token,
     }),
 
-  setGuestRole: (token: string, id: string, guest: string, role: GivenRole) =>
-    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}`, {
+  setGuestRole: (token: string, id: string, guest: string, role: GivenRole, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}${about(item)}`, {
       method: 'PATCH',
       token,
       body: { role },
     }),
 
   /** Declining somebody who is waiting, and taking out somebody who is in. */
-  removeGuest: (token: string, id: string, guest: string) =>
-    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}`, {
+  removeGuest: (token: string, id: string, guest: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/guests/${encodeURIComponent(guest)}${about(item)}`, {
       method: 'DELETE',
       token,
     }),
 
-  acceptRequest: (token: string, id: string, email: string) =>
-    request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}`, {
+  acceptRequest: (token: string, id: string, email: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}${about(item)}`, {
       method: 'POST',
       token,
     }),
 
-  declineRequest: (token: string, id: string, email: string) =>
-    request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}`, {
+  declineRequest: (token: string, id: string, email: string, item = '') =>
+    request<Sharing>(`/v1/spaces/${id}/share/requests/${encodeURIComponent(email)}${about(item)}`, {
       method: 'DELETE',
       token,
     }),
@@ -558,6 +614,19 @@ export const api = {
    *  cannot be left, only deleted. */
   leaveSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}/share/me`, { method: 'DELETE', token }),
+
+  /** The files somebody shared on their own, which belong to no space this
+   *  account can reach: what the switcher's Shared-with-you section is drawn
+   *  from. A guest reads the same. */
+  shared: (token: string) => request<{ shared: SharedItem[] }>('/v1/shared', { token }),
+
+  /** And handing one back, which is the same act as leaving a space: what
+   *  somebody was given is theirs to give up. */
+  leaveShared: (token: string, noteId: string) =>
+    request<{ ok: true }>(`/v1/shared/${encodeURIComponent(noteId)}`, {
+      method: 'DELETE',
+      token,
+    }),
 
   /** What a link leads to. No session: this is what the page shows somebody who
    *  has not signed in, which is most of the people who follow one. */

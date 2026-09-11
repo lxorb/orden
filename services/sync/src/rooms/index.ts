@@ -34,7 +34,17 @@ import { roomKind } from './kind'
  *  membership is joined on the address rather than on the account id, which is
  *  what lets somebody invited before they had an account walk straight in on the
  *  day they prove it; a guest's is joined on the guest, which is what a link
- *  handed out. Neither kind can be both, so the union is at most one row. */
+ *  handed out. Neither kind can be both, so the union is at most one row.
+ *
+ *  And there are two sizes of membership, which is why there are four joins
+ *  rather than two: one for the whole space, one for this file alone. The door
+ *  is the one place where a share about one note means anything - a person given
+ *  one file gets its room and no other, and asks the rest of the service about
+ *  the space to be told there is no such space. Each join matches at most one
+ *  row, because the item is part of the key, so the whole of this is still one
+ *  row and one round trip. Where somebody holds both - a reader of the space who
+ *  was given this note to write in - the stronger of the two is what the room is
+ *  told: what they may do to this file is the most any of it allows. */
 const ALLOWED = `with me as (
   select u.id as user_id, u.email as email, null as guest_id
     from sessions s join users u on u.id = s.user_id
@@ -47,14 +57,21 @@ const ALLOWED = `with me as (
 reached as (
   select n.space_id as space_id,
          n.path as path,
-         case when sp.user_id = me.user_id then 'owner' else coalesce(m.role, g.role) end as role
+         case when sp.user_id = me.user_id then 'owner'
+              when 'write' in (coalesce(ms.role, ''), coalesce(mi.role, ''),
+                               coalesce(gs.role, ''), coalesce(gi.role, '')) then 'write'
+              else 'read' end as role
     from me
     join notes n on n.id = ?3 and n.deleted = 0
     join spaces sp on sp.id = n.space_id and sp.deleted = 0
-    left join space_members m on m.space_id = sp.id and m.email = me.email
-    left join guest_members g on g.space_id = sp.id and g.guest_id = me.guest_id
-                             and g.joined_at is not null
-   where sp.user_id = me.user_id or m.role is not null or g.role is not null
+    left join space_members ms on ms.space_id = sp.id and ms.email = me.email and ms.item = ''
+    left join space_members mi on mi.space_id = sp.id and mi.email = me.email and mi.item = n.id
+    left join guest_members gs on gs.space_id = sp.id and gs.guest_id = me.guest_id
+                              and gs.item = '' and gs.joined_at is not null
+    left join guest_members gi on gi.space_id = sp.id and gi.guest_id = me.guest_id
+                              and gi.item = n.id and gi.joined_at is not null
+   where sp.user_id = me.user_id or ms.role is not null or mi.role is not null
+      or gs.role is not null or gi.role is not null
 )
 select (select coalesce(user_id, guest_id) from me) as who,
        (select space_id from reached) as space_id,
@@ -138,21 +155,33 @@ const MOST_OPEN = 50
  *
  *  `role` is what they have left: `read` downgrades the sockets, `none` closes
  *  them. `who` may be null, because a membership can name an address nobody has
- *  proved yet and there is nothing of theirs to close. */
+ *  proved yet and there is nothing of theirs to close.
+ *
+ *  `item` narrows it to one file, for a share that was about one file: the rest
+ *  of what that person holds has not changed, and closing their other rooms
+ *  because one note was taken back would be an app that flickered for reasons
+ *  nobody could see. Empty means the space, which is every room of it. */
 export async function roomsRevoked(
   env: Env,
   spaceId: string,
   who: string | null,
   role: 'none' | 'read',
+  item = '',
 ): Promise<void> {
   const namespace = env.ROOMS
   if (!namespace || !who) return
 
-  const { results } = await env.DB.prepare(
-    'select note_id from room_sockets where space_id = ? and who = ? limit ?',
-  )
-    .bind(spaceId, who, MOST_OPEN)
-    .all<{ note_id: string }>()
+  const { results } = item
+    ? await env.DB.prepare(
+        'select note_id from room_sockets where space_id = ? and who = ? and note_id = ? limit ?',
+      )
+        .bind(spaceId, who, item, MOST_OPEN)
+        .all<{ note_id: string }>()
+    : await env.DB.prepare(
+        'select note_id from room_sockets where space_id = ? and who = ? limit ?',
+      )
+        .bind(spaceId, who, MOST_OPEN)
+        .all<{ note_id: string }>()
 
   await Promise.all(
     results.map(async ({ note_id: noteId }) => {

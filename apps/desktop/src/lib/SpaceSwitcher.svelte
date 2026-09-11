@@ -12,6 +12,9 @@
    *  of notes and needs no measuring, no flipping at an edge and no second sheet
    *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
    *  pointer gets. */
+  import type { SharedItem } from './api'
+  import { fileMark } from './file-mark'
+  import FileMark from './FileMark.svelte'
   import { arrive, leave, LIST_STEP } from './slide'
   import { longPress } from './longpress'
   import { menu } from './menu.svelte'
@@ -23,7 +26,7 @@
   import SharedMark from './SharedMark.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import { t } from './i18n.svelte'
-  import { isShared } from './sharing.svelte'
+  import { isShared, sharedWithYou } from './sharing.svelte'
   import { type Space, workspace } from './workspace.svelte'
 
   let open = $state(false)
@@ -48,6 +51,24 @@
 
   function about(event: MouseEvent, space: Space) {
     menu.show(event, spaceMenu(space), { title: space.name })
+  }
+
+  /** What a file somebody shared with you offers: the one thing it can, which is
+   *  handing it back. It is not yours to rename, to move or to delete - it is one
+   *  document out of somebody else's space - and letting go of it is exactly what
+   *  leaving a shared space is. */
+  function aboutShared(event: MouseEvent, item: SharedItem) {
+    menu.show(
+      event,
+      [
+        {
+          label: t('Remove from your list'),
+          danger: true,
+          run: () => void sharedWithYou.leave(item),
+        },
+      ],
+      { title: item.name },
+    )
   }
 
   // Escape closes it, the way Escape closes everything else the app opens over
@@ -185,6 +206,60 @@
       </span>
       <span class="nib-row-label">{t('New space')}</span>
     </button>
+
+    <!-- ── Shared with you ────────────────────────────────────────────
+         Files other people handed over on their own: one note or one canvas out
+         of somebody else's space. They are not spaces and are not made into
+         spaces - there is no folder for one and no row in the tree - so this is
+         where they live: the foot of the list of everything you can open, under
+         whoever gave it to you. See docs/sharing.md. -->
+    {#if sharedWithYou.items.length}
+      <hr />
+
+      {#each sharedWithYou.byOwner as group (group.owner)}
+        <!-- The owner's name, quietly, once over their files rather than again on
+             every row: "who gave me this" is one fact about the group. -->
+        <p class="from">{group.owner}</p>
+
+        {#each group.items as item (item.id)}
+          <div class="line">
+            <button
+              class="nib-row"
+              class:is-on={workspace.showingShared(item.id)}
+              role="menuitem"
+              title={item.name}
+              onclick={() => {
+                open = false
+                void sharedWithYou.open(item)
+              }}
+              oncontextmenu={(event) => aboutShared(event, item)}
+              use:longPress={(event) => aboutShared(event, item)}
+            >
+              <span class="nib-badge is-quiet" aria-hidden="true">
+                <FileMark mark={fileMark(item.path)} />
+              </span>
+              <span class="nib-row-label">{item.name}</span>
+              <SharedMark label={t('Shared with you')} />
+            </button>
+
+            <button
+              class="more"
+              title={t('More')}
+              aria-label={t('More')}
+              onclick={(event) => aboutShared(event, item)}
+            >
+              <svg viewBox="0 0 13 13"
+                ><circle cx="3" cy="6.5" r="1" /><circle cx="6.5" cy="6.5" r="1" /><circle
+                  cx="10"
+                  cy="6.5"
+                  r="1"
+                /></svg
+              >
+            </button>
+          </div>
+        {/each}
+      {/each}
+    {/if}
   </div>
 {/if}
 
@@ -344,6 +419,20 @@
     margin: var(--space-1) 4px;
     border: none;
     border-top: 1px solid var(--line);
+  }
+
+  /* Who shared the files under it. A label rather than a row: there is nothing to
+     press, and the name is here so the files below it need not repeat it. Indented
+     to where a row's name starts, so the group reads as holding them. */
+  .from {
+    margin: var(--space-1) 0 2px;
+    padding: 0 var(--row-pad);
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   button:focus-visible {

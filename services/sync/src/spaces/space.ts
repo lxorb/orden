@@ -117,7 +117,7 @@ export interface Reached extends Space {
 const REACHED = `select sp.*,
     case when sp.user_id = ?2 then 'owner' else m.role end as role
   from spaces sp
-  left join space_members m on m.space_id = sp.id and m.email = ?3
+  left join space_members m on m.space_id = sp.id and m.email = ?3 and m.item = ''
  where sp.id = ?1 and sp.deleted = 0`
 
 /** And the same question from a guest, whose row is keyed by the guest rather
@@ -125,7 +125,25 @@ const REACHED = `select sp.*,
  *  in: a link that asks first writes the row before the owner has answered. */
 const GUEST_REACHED = `select sp.*, g.role as role
   from spaces sp
-  join guest_members g on g.space_id = sp.id and g.guest_id = ?2
+  join guest_members g on g.space_id = sp.id and g.guest_id = ?2 and g.item = ''
+ where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
+
+/** Somebody who was given one file of a space and not the space: the space the
+ *  file sits in, and what they may do to that one file.
+ *
+ *  A membership about an item is deliberately invisible to the question above,
+ *  which is what every route that names a space asks. Being handed one note is
+ *  not being let into the drawer it came out of: the listing, the change feed,
+ *  the bookmarks and the sharing of a space all answer 404 to somebody holding
+ *  one of its notes, and this is the one question they answer yes to. */
+const ITEM_REACHED = `select sp.*, m.role as role
+  from spaces sp
+  join space_members m on m.space_id = sp.id and m.email = ?2 and m.item = ?3
+ where sp.id = ?1 and sp.deleted = 0`
+
+const GUEST_ITEM_REACHED = `select sp.*, g.role as role
+  from spaces sp
+  join guest_members g on g.space_id = sp.id and g.guest_id = ?2 and g.item = ?3
  where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
 
 export async function reachedSpace(
@@ -140,6 +158,30 @@ export async function reachedSpace(
           .first<Space & { role: string | null }>()
       : await env.DB.prepare(GUEST_REACHED)
           .bind(spaceId, who.guest.id)
+          .first<Space & { role: string | null }>()
+
+  if (!row || !isRole(row.role)) return null
+  return { ...row, role: row.role }
+}
+
+/** And the same for one file: the space it sits in, at the role this person was
+ *  given over that file alone. Null for anybody who was not given it.
+ *
+ *  Asked only after `reachedSpace` has said no, so somebody who can reach the
+ *  whole space costs one query and never takes this path: what they hold is the
+ *  space, and an item share on top of it says nothing new. */
+export async function reachedItem(
+  env: Env,
+  who: Whoever,
+  note: { id: string; space_id: string },
+): Promise<Reached | null> {
+  const row =
+    who.kind === 'user'
+      ? await env.DB.prepare(ITEM_REACHED)
+          .bind(note.space_id, who.user.email, note.id)
+          .first<Space & { role: string | null }>()
+      : await env.DB.prepare(GUEST_ITEM_REACHED)
+          .bind(note.space_id, who.guest.id, note.id)
           .first<Space & { role: string | null }>()
 
   if (!row || !isRole(row.role)) return null
@@ -192,9 +234,9 @@ export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promis
     async (chunk) => {
       const list = places(chunk.length)
       const { results } = await env.DB.prepare(
-        `select space_id from space_members where space_id in (${list})
+        `select space_id from space_members where space_id in (${list}) and item = ''
        union select space_id from guest_members
-        where space_id in (${list}) and joined_at is not null`,
+        where space_id in (${list}) and item = '' and joined_at is not null`,
       )
         .bind(...chunk, ...chunk)
         .all<{ space_id: string }>()
@@ -205,6 +247,55 @@ export async function sharedAmong(env: Env, spaceIds: readonly string[]): Promis
   )
 
   return new Set(found.map((row) => row.space_id))
+}
+
+/** How many files of one space may be shared on their own. The sheet lists two
+ *  hundred people, and this is the same number for the same reason: a space
+ *  whose listing cannot name every share it has is a space whose owner cannot
+ *  find the one they want to end. */
+export const MOST_ITEMS = 200
+
+/** Which files of these spaces are shared on their own, so the tree can mark
+ *  the rows. One query for the whole listing rather than one per space, the way
+ *  `sharedAmong` is, and for the same reason: the app reads the listing on every
+ *  reconcile pass.
+ *
+ *  Only what somebody actually holds counts. A request nobody answered is not
+ *  somebody in the file, and a mark that appeared while the owner was still
+ *  deciding would say the wrong thing. */
+export async function itemsSharedIn(
+  env: Env,
+  spaceIds: readonly string[],
+): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>()
+  if (!spaceIds.length) return out
+
+  // Names the list twice, so half the usual chunk; see sharedAmong above.
+  const found = await askInChunks(
+    spaceIds,
+    async (chunk) => {
+      const list = places(chunk.length)
+      const { results } = await env.DB.prepare(
+        `select space_id, item from space_members
+          where space_id in (${list}) and item <> ''
+         union select space_id, item from guest_members
+          where space_id in (${list}) and item <> '' and joined_at is not null`,
+      )
+        .bind(...chunk, ...chunk)
+        .all<{ space_id: string; item: string }>()
+
+      return results
+    },
+    AT_A_TIME / 2,
+  )
+
+  for (const row of found) {
+    const held = out.get(row.space_id) ?? []
+    if (held.length < MOST_ITEMS && !held.includes(row.item)) held.push(row.item)
+    out.set(row.space_id, held)
+  }
+
+  return out
 }
 
 /** How many notes each of these spaces holds. One query for the whole listing,
@@ -240,6 +331,7 @@ export function presentSpace(
   role: Role = 'owner',
   shared = false,
   notes = 0,
+  sharedItems: readonly string[] = [],
 ) {
   return {
     id: space.id,
@@ -252,8 +344,14 @@ export function presentSpace(
     // What this account may do here, so the app knows which affordances to
     // show before it has asked for anything else.
     role,
-    // Whether anybody else is in it, which is the mark the rail draws.
+    // Whether anybody else is in it, which is the mark the rail draws. About the
+    // space itself: a file of it shared on its own is a mark on that row, not on
+    // the whole drawer; see `sharedItems`.
     shared: shared || role !== 'owner',
+    /** Which of its files are shared on their own, by note id, so the tree can
+     *  mark those rows. Empty for a space somebody else owns: what they hold is
+     *  the space, and who else was given one of its notes is the owner's to see. */
+    sharedItems: [...sharedItems],
     // Carried on the listing rather than fetched per space: the app reads the
     // list on every reconcile pass, and one request for every space's
     // bookmarks would be one request per space.

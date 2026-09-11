@@ -1,5 +1,5 @@
-/** Sharing a space: who else may reach it, the link that lets somebody ask, and
- *  the requests waiting on the owner.
+/** Sharing: who else may reach a space, or one file of it, the link that lets
+ *  somebody ask, and the requests waiting on the owner.
  *
  *  Everything here is the owner's, which is what `owner` means. What the people
  *  it lets in may then do is decided somewhere else, by `atLeast` in front of
@@ -12,17 +12,24 @@
  *  address to write down: what the owner sees of them is the name their device
  *  gave them or the one they typed. Both hold one of the two given roles, and
  *  the sheet treats them the same because they are the same thing to it: a
- *  person in a space who is not its owner. */
+ *  person in a space who is not its owner.
+ *
+ *  And two sizes of thing to share, which is the one addition: the space, as
+ *  ever, or one note or canvas out of it. Every route below takes `?item=<note
+ *  id>` and answers about that file instead; without it they answer about the
+ *  space exactly as they always have. It is the same membership, the same two
+ *  roles, the same link, the same guests and the same sheet - the row simply
+ *  says what it is about. See docs/sharing.md. */
 
-import { Hono } from 'hono'
+import { Hono, type MiddlewareHandler } from 'hono'
 import { readBody } from '../body'
 import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { inviteMessage, mailer, mayMail } from '../email'
 import { forgetEmptyGuest } from '../guests'
 import { machineOf } from '../limits'
 import { roomsRevoked } from '../rooms'
-import type { Env, Space, User, Variables } from '../types'
-import { atLeast, isGiven, spaceOf, type Given } from './space'
+import type { Env, Note, Space, User, Variables } from '../types'
+import { atLeast, isGiven, MOST_ITEMS, spaceOf, type Given } from './space'
 
 /** More people in one space than anyone shares with, and the bound on every
  *  listing below. Exported because `join.ts` holds a link to the same number: a
@@ -30,6 +37,8 @@ import { atLeast, isGiven, spaceOf, type Given } from './space'
  *  take anybody out. */
 export const MOST_MEMBERS = 200
 export const EMAIL_LIMIT = 320
+/** An id is a UUID; the length is all this needs to know. */
+const ID_LIMIT = 64
 /** How long the link in an invitation stays a shortcut. After that the address
  *  still opens the space; only the link has stopped carrying it there. */
 const INVITE_TTL = 30 * 24 * 60 * 60 * 1000
@@ -61,6 +70,73 @@ function givenRole(value: unknown): Given | null {
   return isGiven(value) ? value : null
 }
 
+/* ── What one share is about ──────────────────────────────────────────── */
+
+/** What a share is about: one file of the space, or the space itself.
+ *
+ *  `id` is the empty string for the space, which is what the column holds for
+ *  every row written before there were items and what every query below binds.
+ *  See migration 0026: a key has to be able to say that two rows are the same
+ *  row, and one null is not equal to another. */
+export interface Scope {
+  id: string
+  /** The file's path, for the head of the sheet and for the mail. Null for the
+   *  space, which is named by the space. */
+  path: string | null
+}
+
+const WHOLE_SPACE: Scope = { id: '', path: null }
+
+/** Which share the request is about, off `?item=`. Null when it names a note
+ *  that is not a live note of this space - which is the same 404 a note nobody
+ *  shared gets, and says nothing about whether the id exists somewhere else. */
+async function scopeOf(
+  env: Env,
+  spaceId: string,
+  asked: string | undefined,
+): Promise<Scope | null> {
+  const id = (asked ?? '').slice(0, ID_LIMIT)
+  if (!id) return WHOLE_SPACE
+
+  const note = await env.DB.prepare(
+    'select id, path from notes where id = ? and space_id = ? and deleted = 0',
+  )
+    .bind(id, spaceId)
+    .first<Pick<Note, 'id' | 'path'>>()
+
+  return note ? { id: note.id, path: note.path } : null
+}
+
+/** How many of a space's files are shared on their own right now, counting the
+ *  ones nobody has opened yet: an invitation is a share whether or not it has
+ *  been walked through, and a ceiling that only counted arrivals would not be
+ *  one. */
+async function itemsShared(env: Env, spaceId: string): Promise<Set<string>> {
+  const { results } = await env.DB.prepare(
+    `select item from space_members where space_id = ?1 and item <> ''
+      union select item from space_links where space_id = ?1 and item <> ''
+      union select item from guest_members where space_id = ?1 and item <> ''
+      limit ?2`,
+  )
+    .bind(spaceId, MOST_ITEMS + 1)
+    .all<{ item: string }>()
+
+  return new Set(results.map((row) => row.item))
+}
+
+/** Whether one more of this space's files may be shared. Nothing is refused
+ *  about a file that is already shared: what is bounded is how many of them
+ *  there are, not how many people are in one. */
+async function roomForAnItem(env: Env, spaceId: string, item: string): Promise<boolean> {
+  if (!item) return true
+
+  const held = await itemsShared(env, spaceId)
+  return held.has(item) || held.size < MOST_ITEMS
+}
+
+/** What a sheet is told when a space is sharing as many of its files as it can. */
+const TOO_MANY_ITEMS = 'that is as many notes as one space shares on their own'
+
 interface MemberRow {
   email: string
   role: Given
@@ -77,6 +153,7 @@ interface RequestRow {
 
 interface LinkRow {
   space_id: string
+  item: string
   token: string
   role: Given
   mode: Mode
@@ -113,6 +190,13 @@ export function personName(user: { name: string | null; email: string }): string
   return user.email.split('@')[0] ?? user.email
 }
 
+/** What a file is called in a sentence: its own name, without the folders in
+ *  front of it and without the extension the app keeps its documents under. */
+export function itemName(path: string): string {
+  const file = path.slice(path.lastIndexOf('/') + 1)
+  return file.replace(/\.(md|markdown|mdown|mkd)$/i, '')
+}
+
 /** The account at an address, which is what a room knows a person as. Null for a
  *  membership written to an address nobody has proved yet: that person has no
  *  session anywhere, so there is nothing of theirs to close. */
@@ -124,50 +208,50 @@ async function accountAt(env: Env, email: string): Promise<string | null> {
   return row?.id ?? null
 }
 
-async function membersOf(env: Env, spaceId: string): Promise<MemberRow[]> {
+async function membersOf(env: Env, spaceId: string, item: string): Promise<MemberRow[]> {
   const { results } = await env.DB.prepare(
     `select m.email, m.role, m.joined_at, u.name
        from space_members m
        left join users u on u.email = m.email
-      where m.space_id = ?
+      where m.space_id = ? and m.item = ?
       order by m.created_at, m.email limit ?`,
   )
-    .bind(spaceId, MOST_MEMBERS)
+    .bind(spaceId, item, MOST_MEMBERS)
     .all<MemberRow>()
 
   return results
 }
 
-async function requestsOf(env: Env, spaceId: string): Promise<RequestRow[]> {
+async function requestsOf(env: Env, spaceId: string, item: string): Promise<RequestRow[]> {
   const { results } = await env.DB.prepare(
     `select r.email, r.role, r.created_at, u.name
        from space_requests r
        left join users u on u.email = r.email
-      where r.space_id = ?
+      where r.space_id = ? and r.item = ?
       order by r.created_at, r.email limit ?`,
   )
-    .bind(spaceId, MOST_MEMBERS)
+    .bind(spaceId, item, MOST_MEMBERS)
     .all<RequestRow>()
 
   return results
 }
 
-async function guestsOf(env: Env, spaceId: string): Promise<GuestRow[]> {
+async function guestsOf(env: Env, spaceId: string, item: string): Promise<GuestRow[]> {
   const { results } = await env.DB.prepare(
     `select g.id as guest_id, g.name, g.email, m.role, m.joined_at, m.declined_at, m.created_at
        from guest_members m join guests g on g.id = m.guest_id
-      where m.space_id = ? and m.declined_at is null
+      where m.space_id = ? and m.item = ? and m.declined_at is null
       order by m.created_at, g.id limit ?`,
   )
-    .bind(spaceId, MOST_MEMBERS)
+    .bind(spaceId, item, MOST_MEMBERS)
     .all<GuestRow>()
 
   return results
 }
 
-async function linkOf(env: Env, spaceId: string): Promise<LinkRow | null> {
-  const row = await env.DB.prepare('select * from space_links where space_id = ?')
-    .bind(spaceId)
+async function linkOf(env: Env, spaceId: string, item: string): Promise<LinkRow | null> {
+  const row = await env.DB.prepare('select * from space_links where space_id = ? and item = ?')
+    .bind(spaceId, item)
     .first<LinkRow>()
 
   return row ?? null
@@ -208,16 +292,19 @@ function presentLink(env: Env, link: LinkRow) {
  *  Members and guests are one list, and so are the two ways of waiting: what the
  *  owner is being asked is the same question either way, and a sheet with two
  *  Waiting sections would be saying so twice. */
-async function sharing(env: Env, space: Space, owner: User) {
+async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
   const [members, requests, guests, link] = await Promise.all([
-    membersOf(env, space.id),
-    requestsOf(env, space.id),
-    guestsOf(env, space.id),
-    linkOf(env, space.id),
+    membersOf(env, space.id, scope.id),
+    requestsOf(env, space.id, scope.id),
+    guestsOf(env, space.id, scope.id),
+    linkOf(env, space.id, scope.id),
   ])
 
   return {
     owner: { email: owner.email, name: owner.name },
+    /** Which file this is about, so the sheet's head can say so. Null for the
+     *  space, which the sheet already knows it is in. */
+    item: scope.path === null ? null : { id: scope.id, path: scope.path },
     members: [
       ...members.map(presentMember),
       ...guests.filter((one) => one.joined_at !== null).map(presentGuest),
@@ -246,15 +333,37 @@ async function sharing(env: Env, space: Space, owner: User) {
 
 export const share = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-share.get('/:id/share', atLeast('owner'), async (context) => {
-  return context.json(await sharing(context.env, spaceOf(context), context.get('user')))
+/** Middleware: the share the request names, put on the request.
+ *
+ *  Written once, behind `atLeast('owner')`, so that no route can forget it and
+ *  so that a note id naming nothing in this space is refused in one place. Every
+ *  route below then reads `scope` and is otherwise the route it always was:
+ *  there is one set of routes for both sizes of share, because there is one
+ *  question. */
+function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
+  return async (context, next) => {
+    const space = spaceOf(context)
+    const scope = await scopeOf(context.env, space.id, context.req.query('item'))
+    if (!scope) return context.json({ error: 'no such note' }, 404)
+
+    context.set('scope', scope)
+    await next()
+  }
+}
+
+share.get('/:id/share', atLeast('owner'), about(), async (context) => {
+  return context.json(
+    await sharing(context.env, spaceOf(context), context.get('user'), context.get('scope')),
+  )
 })
 
-/** Somebody is given the space, and told so. The row is written first and the
- *  mail sent after: the membership is what lets them in, and a mail that could
- *  not go out is not a reason for the sharing not to have happened. */
-share.post('/:id/share/invite', atLeast('owner'), async (context) => {
+/** Somebody is given the space, or one file of it, and told so. The row is
+ *  written first and the mail sent after: the membership is what lets them in,
+ *  and a mail that could not go out is not a reason for the sharing not to have
+ *  happened. */
+share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const owner = context.get('user')
 
   const body = await readBody(context)
@@ -267,11 +376,20 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
 
   if (!isEmail(email)) return context.json({ error: 'enter a valid email address' }, 400)
   if (!role) return context.json({ error: 'say whether they may write or read' }, 400)
-  if (email === owner.email) return context.json({ error: 'this space is already yours' }, 409)
+  if (email === owner.email) {
+    return context.json(
+      { error: scope.id ? 'this note is already yours' : 'this space is already yours' },
+      409,
+    )
+  }
 
-  const held = await membersOf(context.env, space.id)
+  const held = await membersOf(context.env, space.id, scope.id)
   if (held.length >= MOST_MEMBERS && !held.some((one) => one.email === email)) {
     return context.json({ error: 'that is as many people as one space holds' }, 409)
+  }
+
+  if (!(await roomForAnItem(context.env, space.id, scope.id))) {
+    return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
 
   // Asked before anything is written, because a ceiling is the one answer here
@@ -283,19 +401,21 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
 
   const token = randomToken()
   await context.env.DB.prepare(
-    `insert into space_members (space_id, email, role, invite_hash, expires_at, created_at)
-     values (?1, ?2, ?3, ?4, ?5, ?6)
-     on conflict(space_id, email) do update set
+    `insert into space_members (space_id, email, item, role, invite_hash, expires_at, created_at)
+     values (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+     on conflict(space_id, email, item) do update set
        role = excluded.role,
        invite_hash = excluded.invite_hash,
        expires_at = excluded.expires_at`,
   )
-    .bind(space.id, email, role, await sha256(token), now() + INVITE_TTL, now())
+    .bind(space.id, email, scope.id, role, await sha256(token), now() + INVITE_TTL, now())
     .run()
 
   // Asking to be let in and then being let in is one thing, not two.
-  await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ?')
-    .bind(space.id, email)
+  await context.env.DB.prepare(
+    'delete from space_requests where space_id = ? and email = ? and item = ?',
+  )
+    .bind(space.id, email, scope.id)
     .run()
 
   // Whether the mail went is not answered back. The gate is per address across
@@ -304,6 +424,7 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
   if (may.ok) {
     const message = inviteMessage({
       space: space.name,
+      item: scope.path === null ? null : itemName(scope.path),
       from: personName(owner),
       role,
       link: joinUrl(context.env, token),
@@ -311,11 +432,12 @@ share.post('/:id/share/invite', atLeast('owner'), async (context) => {
     await mailer(context.env).send(email, message.subject, message)
   }
 
-  return context.json(await sharing(context.env, space, owner))
+  return context.json(await sharing(context.env, space, owner, scope))
 })
 
-share.patch('/:id/share/members/:email', atLeast('owner'), async (context) => {
+share.patch('/:id/share/members/:email', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
 
   const body = await readBody(context)
   const asked = body.text('role', 16)
@@ -326,53 +448,65 @@ share.patch('/:id/share/members/:email', atLeast('owner'), async (context) => {
 
   const email = normaliseEmail(context.req.param('email'))
   const held = await context.env.DB.prepare(
-    'select role from space_members where space_id = ? and email = ?',
+    'select role from space_members where space_id = ? and email = ? and item = ?',
   )
-    .bind(space.id, email)
+    .bind(space.id, email, scope.id)
     .first<{ role: Given }>()
 
   if (!held) return context.json({ error: 'nobody by that address' }, 404)
 
-  await context.env.DB.prepare('update space_members set role = ? where space_id = ? and email = ?')
-    .bind(role, space.id, email)
+  await context.env.DB.prepare(
+    'update space_members set role = ? where space_id = ? and email = ? and item = ?',
+  )
+    .bind(role, space.id, email, scope.id)
     .run()
 
   // A writer who is now a reader may have a file of this space open, and a socket
-  // is not a request: nothing else would ask again.
+  // is not a request: nothing else would ask again. Only the one file, when the
+  // share was about one file: nothing else they hold has changed.
   if (held.role === 'write' && role === 'read') {
-    await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read')
+    await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
   }
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-share.delete('/:id/share/members/:email', atLeast('owner'), async (context) => {
+share.delete('/:id/share/members/:email', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
 
-  await context.env.DB.prepare('delete from space_members where space_id = ? and email = ?')
-    .bind(space.id, email)
+  await context.env.DB.prepare(
+    'delete from space_members where space_id = ? and email = ? and item = ?',
+  )
+    .bind(space.id, email, scope.id)
     .run()
 
-  await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'none')
+  await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'none', scope.id)
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-/** Somebody letting themselves out. The one thing under this path that is not
- *  the owner's: being in a space is something a person can stop, and having to
- *  ask the owner to do it for them is not a way to leave.
+/** Somebody letting themselves out of a space. The one thing under this path
+ *  that is not the owner's: being in a space is something a person can stop, and
+ *  having to ask the owner to do it for them is not a way to leave.
  *
  *  Which is as true of a guest, so this is the one route under `share` a guest
  *  may ask for. A guest who leaves their last space is nobody, and the session
- *  goes with them: the device is back to the app it had before the link. */
+ *  goes with them: the device is back to the app it had before the link.
+ *
+ *  Only ever about the space, because reaching this route at all means reaching
+ *  the space. Letting yourself out of one file is `DELETE /v1/shared/:id`, which
+ *  is where the files somebody was given are listed. */
 share.delete('/:id/share/me', atLeast('read'), async (context) => {
   const space = spaceOf(context)
   const who = context.get('who')
   if (space.role === 'owner') return context.json({ error: 'this space is yours' }, 409)
 
   if (who.kind === 'guest') {
-    await context.env.DB.prepare('delete from guest_members where space_id = ? and guest_id = ?')
+    await context.env.DB.prepare(
+      "delete from guest_members where space_id = ? and guest_id = ? and item = ''",
+    )
       .bind(space.id, who.guest.id)
       .run()
     await forgetEmptyGuest(context.env, who.guest.id)
@@ -381,7 +515,9 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
     return context.json({ ok: true })
   }
 
-  await context.env.DB.prepare('delete from space_members where space_id = ? and email = ?')
+  await context.env.DB.prepare(
+    "delete from space_members where space_id = ? and email = ? and item = ''",
+  )
     .bind(space.id, who.user.email)
     .run()
 
@@ -394,9 +530,13 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
 
 /** The link, made on the first ask and kept afterwards. Changing what it hands
  *  out changes it for the copy already in somebody's message, which is what an
- *  owner means by changing it; a link that should stop working is revoked. */
-share.put('/:id/share/link', atLeast('owner'), async (context) => {
+ *  owner means by changing it; a link that should stop working is revoked.
+ *
+ *  One per thing shared: the space has its own, and so does each file shared on
+ *  its own. A file's link opens that file and nothing around it. */
+share.put('/:id/share/link', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
 
   const body = await readBody(context)
   const askedRole = body.text('role', 16)
@@ -408,36 +548,44 @@ share.put('/:id/share/link', atLeast('owner'), async (context) => {
   if (!role) return context.json({ error: 'say whether the link may write or read' }, 400)
   if (!mode) return context.json({ error: 'say whether the link asks first' }, 400)
 
-  const held = await linkOf(context.env, space.id)
+  if (!(await roomForAnItem(context.env, space.id, scope.id))) {
+    return context.json({ error: TOO_MANY_ITEMS }, 409)
+  }
+
+  const held = await linkOf(context.env, space.id, scope.id)
   const token = held?.token ?? randomToken()
 
   await context.env.DB.prepare(
-    `insert into space_links (space_id, token, role, mode, created_at)
-     values (?1, ?2, ?3, ?4, ?5)
-     on conflict(space_id) do update set role = excluded.role, mode = excluded.mode`,
+    `insert into space_links (space_id, item, token, role, mode, created_at)
+     values (?1, ?2, ?3, ?4, ?5, ?6)
+     on conflict(space_id, item) do update set role = excluded.role, mode = excluded.mode`,
   )
-    .bind(space.id, token, role, mode, now())
+    .bind(space.id, scope.id, token, role, mode, now())
     .run()
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-share.delete('/:id/share/link', atLeast('owner'), async (context) => {
+share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
 
-  await context.env.DB.prepare('delete from space_links where space_id = ?').bind(space.id).run()
+  await context.env.DB.prepare('delete from space_links where space_id = ? and item = ?')
+    .bind(space.id, scope.id)
+    .run()
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-share.post('/:id/share/requests/:email', atLeast('owner'), async (context) => {
+share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
 
   const waiting = await context.env.DB.prepare(
-    'select role from space_requests where space_id = ? and email = ?',
+    'select role from space_requests where space_id = ? and email = ? and item = ?',
   )
-    .bind(space.id, email)
+    .bind(space.id, email, scope.id)
     .first<{ role: Given }>()
 
   if (!waiting) return context.json({ error: 'nobody by that address' }, 404)
@@ -448,31 +596,36 @@ share.post('/:id/share/requests/:email', atLeast('owner'), async (context) => {
   // the request would leave the sheet saying they are still waiting to arrive
   // when they have already been.
   await context.env.DB.prepare(
-    `insert into space_members (space_id, email, role, joined_at, created_at)
-     values (?1, ?2, ?3, ?4, ?4)
-     on conflict(space_id, email) do update set
+    `insert into space_members (space_id, email, item, role, joined_at, created_at)
+     values (?1, ?2, ?3, ?4, ?5, ?5)
+     on conflict(space_id, email, item) do update set
        role = excluded.role,
        joined_at = coalesce(space_members.joined_at, excluded.joined_at)`,
   )
-    .bind(space.id, email, waiting.role, now())
+    .bind(space.id, email, scope.id, waiting.role, now())
     .run()
 
-  await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ?')
-    .bind(space.id, email)
+  await context.env.DB.prepare(
+    'delete from space_requests where space_id = ? and email = ? and item = ?',
+  )
+    .bind(space.id, email, scope.id)
     .run()
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-share.delete('/:id/share/requests/:email', atLeast('owner'), async (context) => {
+share.delete('/:id/share/requests/:email', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
 
-  await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ?')
-    .bind(space.id, email)
+  await context.env.DB.prepare(
+    'delete from space_requests where space_id = ? and email = ? and item = ?',
+  )
+    .bind(space.id, email, scope.id)
     .run()
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
 /* ── The guests the link let in ───────────────────────────────────────── */
@@ -484,38 +637,38 @@ share.delete('/:id/share/requests/:email', atLeast('owner'), async (context) => 
  *
  *  Nothing here takes an address, because a guest has none to take. */
 
-/** An id is a UUID; the length is all this needs to know. */
-const ID_LIMIT = 64
-
 function guestIdOf(context: { req: { param: (name: string) => string | undefined } }): string {
   return (context.req.param('guest') ?? '').slice(0, ID_LIMIT)
 }
 
 /** Letting a waiting guest in, at the role the link promised them. */
-share.post('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
+share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const guest = guestIdOf(context)
 
   const waiting = await context.env.DB.prepare(
     `select role from guest_members
-      where space_id = ? and guest_id = ? and joined_at is null and declined_at is null`,
+      where space_id = ? and guest_id = ? and item = ?
+        and joined_at is null and declined_at is null`,
   )
-    .bind(space.id, guest)
+    .bind(space.id, guest, scope.id)
     .first<{ role: Given }>()
 
   if (!waiting) return context.json({ error: 'nobody is waiting by that name' }, 404)
 
   await context.env.DB.prepare(
-    'update guest_members set joined_at = ? where space_id = ? and guest_id = ?',
+    'update guest_members set joined_at = ? where space_id = ? and guest_id = ? and item = ?',
   )
-    .bind(now(), space.id, guest)
+    .bind(now(), space.id, guest, scope.id)
     .run()
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
-share.patch('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
+share.patch('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const guest = guestIdOf(context)
 
   const body = await readBody(context)
@@ -526,24 +679,24 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
   if (!role) return context.json({ error: 'say whether they may write or read' }, 400)
 
   const held = await context.env.DB.prepare(
-    'select role from guest_members where space_id = ? and guest_id = ?',
+    'select role from guest_members where space_id = ? and guest_id = ? and item = ?',
   )
-    .bind(space.id, guest)
+    .bind(space.id, guest, scope.id)
     .first<{ role: Given }>()
 
   if (!held) return context.json({ error: 'nobody by that name' }, 404)
 
   await context.env.DB.prepare(
-    'update guest_members set role = ? where space_id = ? and guest_id = ?',
+    'update guest_members set role = ? where space_id = ? and guest_id = ? and item = ?',
   )
-    .bind(role, space.id, guest)
+    .bind(role, space.id, guest, scope.id)
     .run()
 
   if (held.role === 'write' && role === 'read') {
-    await roomsRevoked(context.env, space.id, guest, 'read')
+    await roomsRevoked(context.env, space.id, guest, 'read', scope.id)
   }
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
 })
 
 /** Declining somebody who is waiting, and taking out somebody who is in. One
@@ -553,29 +706,166 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
  *  waiting on can say they were told no rather than only stop saying anything. A
  *  guest who was in loses the row, which is what ends their access on the next
  *  pass - and loses the guest itself once nothing of theirs is left. */
-share.delete('/:id/share/guests/:guest', atLeast('owner'), async (context) => {
+share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (context) => {
   const space = spaceOf(context)
+  const scope = context.get('scope')
   const guest = guestIdOf(context)
 
   const held = await context.env.DB.prepare(
-    'select joined_at from guest_members where space_id = ? and guest_id = ?',
+    'select joined_at from guest_members where space_id = ? and guest_id = ? and item = ?',
   )
-    .bind(space.id, guest)
+    .bind(space.id, guest, scope.id)
     .first<{ joined_at: number | null }>()
 
   if (held?.joined_at === null) {
     await context.env.DB.prepare(
-      'update guest_members set declined_at = ? where space_id = ? and guest_id = ?',
+      'update guest_members set declined_at = ? where space_id = ? and guest_id = ? and item = ?',
     )
-      .bind(now(), space.id, guest)
+      .bind(now(), space.id, guest, scope.id)
       .run()
   } else {
-    await context.env.DB.prepare('delete from guest_members where space_id = ? and guest_id = ?')
-      .bind(space.id, guest)
+    await context.env.DB.prepare(
+      'delete from guest_members where space_id = ? and guest_id = ? and item = ?',
+    )
+      .bind(space.id, guest, scope.id)
       .run()
     await forgetEmptyGuest(context.env, guest)
-    await roomsRevoked(context.env, space.id, guest, 'none')
+    await roomsRevoked(context.env, space.id, guest, 'none', scope.id)
   }
 
-  return context.json(await sharing(context.env, space, context.get('user')))
+  return context.json(await sharing(context.env, space, context.get('user'), scope))
+})
+
+/* ── The files somebody else shared with me ───────────────────────────── */
+
+/** One file this person was given on its own: what it is, whose it is, and what
+ *  they may do to it.
+ *
+ *  A file, not a space: there is no folder for it on the machine and no row in
+ *  the tree, because it is one note out of somebody else's drawer and inventing
+ *  a drawer to put it in would be inventing a space. It is listed at the foot of
+ *  the space switcher and opens in a tab of its own, whose words travel through
+ *  the file's room; see docs/sharing.md. */
+interface SharedRow {
+  id: string
+  path: string
+  updated_at: number
+  role: Given
+  space_id: string
+  space_name: string
+  owner_name: string | null
+  owner_email: string
+}
+
+const SHARED_WITH_ME = `select n.id, n.path, n.updated_at, m.role,
+    sp.id as space_id, sp.name as space_name, u.name as owner_name, u.email as owner_email
+  from space_members m
+  join notes n on n.id = m.item and n.deleted = 0
+  join spaces sp on sp.id = m.space_id and sp.deleted = 0
+  join users u on u.id = sp.user_id
+ where m.email = ?1 and m.item <> ''
+ order by u.email, n.path limit ?2`
+
+/** And the same for a guest, whose row is keyed by the guest and who is only in
+ *  once the owner has said so. */
+const GUEST_SHARED_WITH_ME = `select n.id, n.path, n.updated_at, g.role,
+    sp.id as space_id, sp.name as space_name, u.name as owner_name, u.email as owner_email
+  from guest_members g
+  join notes n on n.id = g.item and n.deleted = 0
+  join spaces sp on sp.id = g.space_id and sp.deleted = 0
+  join users u on u.id = sp.user_id
+ where g.guest_id = ?1 and g.item <> '' and g.joined_at is not null
+ order by u.email, n.path limit ?2`
+
+/** One shared file as the app reads it, wherever it is answered: the listing
+ *  below, and walking through a link to one; see join.ts. One shape, because the
+ *  app opens it the same way whichever answer carried it. */
+export function presentItem(item: {
+  id: string
+  path: string
+  updatedAt: number
+  role: Given
+  space: { id: string; name: string }
+  owner: { name: string | null; email: string }
+}) {
+  return {
+    id: item.id,
+    path: item.path,
+    name: itemName(item.path),
+    role: item.role,
+    updatedAt: item.updatedAt,
+    /** Whose it is, by name. Never the address: a name is what a row needs, and
+     *  an address is something the person shared with may not have been given. */
+    owner: { name: personName(item.owner) },
+    /** Which space it came out of, so two notes called the same thing from two
+     *  people are still told apart. The id travels because the room's door needs
+     *  no space and the app's listing does not either - it is here for the mark,
+     *  not for a way in. */
+    space: { id: item.space.id, name: item.space.name },
+  }
+}
+
+function presentShared(row: SharedRow) {
+  return presentItem({
+    id: row.id,
+    path: row.path,
+    updatedAt: row.updated_at,
+    role: row.role,
+    space: { id: row.space_id, name: row.space_name },
+    owner: { name: row.owner_name, email: row.owner_email },
+  })
+}
+
+export const sharedWithMe = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+sharedWithMe.get('/', async (context) => {
+  const who = context.get('who')
+  const { results } =
+    who.kind === 'user'
+      ? await context.env.DB.prepare(SHARED_WITH_ME)
+          .bind(who.user.email, MOST_ITEMS)
+          .all<SharedRow>()
+      : await context.env.DB.prepare(GUEST_SHARED_WITH_ME)
+          .bind(who.guest.id, MOST_ITEMS)
+          .all<SharedRow>()
+
+  return context.json({ shared: results.map(presentShared) })
+})
+
+/** Letting yourself out of one file, which is the same act as leaving a space
+ *  and for the same reason: what somebody was handed is theirs to hand back.
+ *
+ *  Outside `atLeast`, because somebody holding one note of a space cannot reach
+ *  the space at all - which is the whole point of an item share. */
+sharedWithMe.delete('/:noteId', async (context) => {
+  const who = context.get('who')
+  const noteId = context.req.param('noteId').slice(0, ID_LIMIT)
+
+  const note = await context.env.DB.prepare('select id, space_id from notes where id = ?')
+    .bind(noteId)
+    .first<Pick<Note, 'id' | 'space_id'>>()
+
+  if (!note) return context.json({ error: 'no such note' }, 404)
+
+  if (who.kind === 'guest') {
+    await context.env.DB.prepare(
+      'delete from guest_members where space_id = ? and guest_id = ? and item = ?',
+    )
+      .bind(note.space_id, who.guest.id, note.id)
+      .run()
+    await forgetEmptyGuest(context.env, who.guest.id)
+    await roomsRevoked(context.env, note.space_id, who.guest.id, 'none', note.id)
+
+    return context.json({ ok: true })
+  }
+
+  await context.env.DB.prepare(
+    'delete from space_members where space_id = ? and email = ? and item = ?',
+  )
+    .bind(note.space_id, who.user.email, note.id)
+    .run()
+
+  await roomsRevoked(context.env, note.space_id, who.user.id, 'none', note.id)
+
+  return context.json({ ok: true })
 })
