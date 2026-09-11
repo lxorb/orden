@@ -1206,7 +1206,7 @@ mod tests {
     fn a_canvas_carries_no_tags() {
         let read = canvas_note(
             "Board.canvas".to_string(),
-            r#"{"nodes":[{"id":"a","type":"text","text":"#work"}],"edges":[]}"#,
+            r##"{"nodes":[{"id":"a","type":"text","text":"#work"}],"edges":[]}"##,
         );
 
         assert!(read.tags.is_empty());

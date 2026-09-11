@@ -338,12 +338,7 @@ function head(path: Path2D, ax: number, ay: number, bx: number, by: number, radi
 
 /** A note the space does not hold is a ring rather than a dot, the same "there is
  *  nothing here yet" the dotted link in the text says. */
-function outline(
-  context: CanvasRenderingContext2D,
-  path: Path2D,
-  colour: string,
-  hair: number,
-) {
+function outline(context: CanvasRenderingContext2D, path: Path2D, colour: string, hair: number) {
   context.strokeStyle = colour
   context.lineWidth = EDGE_PIXELS * hair
   context.stroke(path)
