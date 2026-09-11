@@ -49,6 +49,11 @@
   let redraw: ReturnType<typeof setTimeout> | undefined
   let drawn = false
 
+  /** Whether the note holds a ` ```query ` fence, which is what makes it answer
+   *  again when the space changes. A scan of the words rather than a parse: the
+   *  fence has to be written out to be one. */
+  const asks = $derived(tab.doc.includes('```query'))
+
   /** The note, read outside the reactive graph: flushing brings the words forward
    *  and reading them here as a dependency would set the render off again. */
   function note() {
@@ -86,7 +91,18 @@
     // Read, not used: these are what this effect is watching for.
     // Trust among them: a space becoming shared, or a paste landing, changes
     // whether the HTML in the note is markup or the characters it is made of.
-    const reasons = [tab.note.revision, theme.current, trustsHtmlIn(tab.note)]
+    //
+    // And the space itself, but only for a note with a query fence in it: what a
+    // fence says is about the space rather than about the note, so a note saved
+    // anywhere is a fence with something else to say. Only such a note, because
+    // redrawing every other one whenever anything is saved is exactly the churn
+    // the wait below is here to avoid. See query-block.ts.
+    const reasons = [
+      tab.note.revision,
+      theme.current,
+      trustsHtmlIn(tab.note),
+      asks ? links.version : 0,
+    ]
     if (!reasons.length) return
 
     if (!drawn) {

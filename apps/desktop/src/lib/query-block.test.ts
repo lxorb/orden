@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Hit } from './search/match'
 
@@ -34,7 +33,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-const { pressRow, queryRowsHtml } = await import('./query-block')
+const { queryRowsHtml } = await import('./query-block')
 
 const hit = (over: Partial<Hit> = {}): Hit => ({
   path: '/space/Plan.md',
@@ -136,57 +135,30 @@ describe('what a note says', () => {
   })
 })
 
-/** One reading of the markup, because the editor's widget and the reading view
- *  both hand their press to it. */
-describe('a press inside a fence', () => {
-  /** The press reaches the workspace through a dynamic import - the link index
-   *  hands this to the editor, and the workspace owns the link index - so a turn of
-   *  the loop is what it takes to land. */
-  const landed = () => new Promise((resolve) => setTimeout(resolve, 0))
+/** A task row, which is the one row that is not simply the line it found. That a
+ *  press on the box ticks it and a press on the row opens the note is driven in a
+ *  browser rather than here: `pressRow` reads the markup with `closest` and this
+ *  environment has no DOM to read. See test/e2e/search.py. */
+describe('a row whose line is a task', () => {
+  test('shows the words rather than the marker, and a box in front of them', async () => {
+    answering = [hit({ text: '- [ ] write the plan', ranges: [] })]
 
-  /** The rows as a surface would have them: what `queryRowsHtml` wrote. */
-  const drawn = async (over: Partial<Hit> = {}) => {
-    answering = [hit(over)]
-    const host = document.createElement('div')
-    host.innerHTML = (await answered('plan')) ?? ''
-    return host
-  }
-
-  test('on a row opens the note and says which line', async () => {
-    const { workspace } = await import('./workspace.svelte')
-    const row = (await drawn()).querySelector('.nib-row')
-
-    expect(pressRow(row)).toBe(true)
-    await landed()
-    expect(workspace.goto).toEqual({ path: '/space/Plan.md', line: 3 })
+    const html = (await answered('plan')) ?? ''
+    expect(html).toContain('class="nib-checkbox" data-task')
+    expect(html).toContain('>write the plan<')
+    expect(html).not.toContain('- [ ]')
   })
 
-  test('on a task s box ticks it rather than opening anything', async () => {
-    const { workspace } = await import('./workspace.svelte')
-    const ticked: unknown[] = []
-    workspace.toggleTaskAt = (path: string, line: number) => {
-      ticked.push([path, line])
-      return Promise.resolve(true)
-    }
+  test('and a box that is ticked says so', async () => {
+    answering = [hit({ text: '- [x] read the paper', ranges: [] })]
 
-    const box = (await drawn({ text: '- [ ] write the plan', ranges: [] })).querySelector(
-      '[data-task]',
-    )
-    expect(box).not.toBeNull()
-    expect(pressRow(box)).toBe(true)
-    await landed()
-    expect(ticked).toEqual([['/space/Plan.md', 3]])
+    expect((await answered('plan')) ?? '').toContain('data-line="3" checked')
   })
 
-  test('and a task row shows the words rather than the marker', async () => {
-    const host = await drawn({ text: '- [x] read the paper', ranges: [] })
+  test('and the emphasis moves along with the words', async () => {
+    // `plan` sits at 16 in the whole line, and at 10 once the marker is off it.
+    answering = [hit({ text: '- [ ] write the plan', ranges: [{ from: 16, to: 20 }] })]
 
-    expect(host.querySelector('.nib-row')?.textContent?.trim()).toBe('read the paper')
-    expect(host.querySelector('input')?.hasAttribute('checked')).toBe(true)
-  })
-
-  test('and a press on nothing of its own is not its press', () => {
-    expect(pressRow(document.createElement('div'))).toBe(false)
-    expect(pressRow(null)).toBe(false)
+    expect((await answered('plan')) ?? '').toContain('<mark>plan</mark>')
   })
 })

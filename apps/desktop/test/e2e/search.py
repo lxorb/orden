@@ -353,6 +353,22 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f" {page.evaluate('() => document.querySelectorAll(String.raw`.nib-query .nib-row`).length')} rows"
     )
 
+    # A box in a fence, pressed: the note is written where it stands, so the fence
+    # answers again with one row fewer. This is the one path `pressRow` takes that
+    # a test under node cannot: it reads the markup with `closest`.
+    box = page.locator(".nib-query input[data-task]")
+    if box.count():
+        was = box.count()
+        box.first.click(force=True)
+        page.wait_for_timeout(2000)
+        say(
+            f"[{name}] a box ticked in the fence: {was} open tasks became"
+            f" {page.locator('.nib-query input[data-task]').count()}"
+        )
+        shot("fence-ticked")
+    else:
+        say(f"[{name}] no box in the fence to press")
+
     context.close()
 
 
@@ -391,9 +407,10 @@ def measure(browser, out: Path, count: int) -> None:
     ]
 
     for source in asked:
-        # Twice, and the better of the two: the first ask of a space also warms the
-        # worker and the store's cursor.
-        runs = [page.evaluate(TIMED, {"source": source, "wait": wait}) for _ in range(2)]
+        # The best of several: the first ask of a space warms the worker and the
+        # store's cursor, and a clock only ever says what the machine was doing at
+        # the time. The best run is the one where it was doing this.
+        runs = [page.evaluate(TIMED, {"source": source, "wait": wait}) for _ in range(5)]
         best = min(runs, key=lambda one: one["ms"])
         say(f"[{name}] {source!r}: {best['ms']} ms, {best['hits']} rows")
 
@@ -410,8 +427,9 @@ def measure(browser, out: Path, count: int) -> None:
     )
     page.wait_for_timeout(400)
     left = page.evaluate("() => window.nibApp.workspace.excluded.here.length")
-    timed = page.evaluate(TIMED, {"source": "quarter", "wait": wait})
-    say(f"[{name}] with {left} notes left out: {timed['ms']} ms, {timed['hits']} rows")
+    held = [page.evaluate(TIMED, {"source": "quarter", "wait": wait}) for _ in range(5)]
+    quickest = min(held, key=lambda one: one["ms"])
+    say(f"[{name}] with {left} notes left out: {quickest['ms']} ms, {quickest['hits']} rows")
 
     context.close()
 
