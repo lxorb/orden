@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { MOST_MEMBERS } from '../src/spaces/share'
 import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
@@ -520,6 +520,33 @@ describe('an invitation', () => {
     })
 
     expect(json.mailed).toBeUndefined()
+  })
+
+  /** The other half of the live 500s: the same unguarded send, on the route that
+   *  had already written the row. An owner was shown a fault of the provider's
+   *  and told nothing had happened, while the person was in fact invited. */
+  test('stands, and still says nothing, when the message cannot go', async () => {
+    env.MAIL_FROM = 'Nib <nib@nibeditor.com>'
+    env.EMAIL = { send: () => Promise.reject(new Error('the sender is not answering')) }
+
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const response = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: STRANGER, role: 'read' },
+    })
+    quiet.mockRestore()
+
+    expect(response.status).toBe(200)
+    // The invitation is the row, and the row is written: the owner can hand the
+    // link over themselves.
+    expect(response.json.members.some((one) => one.email === STRANGER)).toBe(true)
+
+    // And the gap the send took is given up, so pressing the button again writes
+    // to the address rather than being held behind a message that never went.
+    const gap = env.db
+      .prepare('select count(*) as many from mailed where email = ?')
+      .get(STRANGER) as { many: number }
+    expect(gap.many).toBe(0)
   })
 
   test('carries a space name that is one line, whatever the name holds', async () => {

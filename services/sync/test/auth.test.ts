@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { EmailSender } from '../src/types'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -70,6 +71,90 @@ describe('requesting a code', () => {
   })
 })
 
+/** The message not going out.
+ *
+ *  This is the bug the live service had: the send was the one call in a sign-in
+ *  that leaves the building, it was awaited with nothing around it, and every
+ *  provider refusal came back as a bare 500. Five of the six failures the zone
+ *  recorded over three days were this route. See src/failed.ts.
+ *
+ *  Worse than the status, and the reason a second press did not help: the thirty
+ *  second gap had already been written, so the next try answered `ok` with a
+ *  `resendIn` and sent nothing at all. */
+describe('a provider that will not take the message', () => {
+  /** The environment again, with a sender that fails. `send` is handed the
+   *  message, so a test can read the code out of one that never went. */
+  function refusing(send: EmailSender['send']): void {
+    env.close()
+    env = testEnv({ MAIL_FROM: 'Nib <nib@nibeditor.com>', EMAIL: { send } })
+  }
+
+  /** Runs `work` with the log held, because a failed send writes one line to it. */
+  async function quietly<T>(work: () => Promise<T>): Promise<T> {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      return await work()
+    } finally {
+      spy.mockRestore()
+    }
+  }
+
+  test('is answered with a sentence and a status that means try again', async () => {
+    refusing(() => Promise.reject(new Error('the sender is not answering')))
+
+    const response = await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+
+    expect(response.status).toBe(503)
+    expect(response.json.error).toBe('could not send the mail - try again')
+    expect(response.headers.get('retry-after')).toBe('5')
+  })
+
+  /** A send can fail after the message went: what was lost is the answer, not
+   *  the mail. So the code stays good, because somebody holding one that no
+   *  longer works is worse off than somebody who had to ask twice. */
+  test('keeps the code it issued, so a message that did go still signs them in', async () => {
+    let carried = ''
+    refusing((message) => {
+      carried = String(message.text)
+      return Promise.reject(new Error('the answer was lost'))
+    })
+
+    await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+
+    const found = /(\d{3}) (\d{3})/.exec(carried)
+    expect(found).not.toBeNull()
+
+    const verified = await call(env, '/v1/auth/verify', {
+      body: { email: 'a@b.dev', code: `${found?.[1]}${found?.[2]}` },
+    })
+    expect(verified.status).toBe(200)
+  })
+
+  test('gives up the gap, so the next press actually writes to the address', async () => {
+    let asked = 0
+    refusing(() => {
+      asked++
+      return Promise.reject(new Error('the sender is not answering'))
+    })
+
+    await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+    const again = await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+
+    // Without the gap being given up this is 200 with a `resendIn`, the provider
+    // is never asked a second time, and nothing ever arrives.
+    expect(asked).toBe(2)
+    expect(again.status).toBe(503)
+  })
+
+  test('leaves no gap behind for an address that heard nothing', async () => {
+    refusing(() => Promise.reject(new Error('the sender is not answering')))
+    await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+
+    const gap = env.db.prepare('select sent_at from login_codes where email = ?').get('a@b.dev')
+    expect(gap).toEqual({ sent_at: 0 })
+  })
+})
+
 describe('verifying a code', () => {
   test('creates the account on first use', async () => {
     const code = await requestCode('new@b.dev')
@@ -128,6 +213,54 @@ describe('verifying a code', () => {
 
     expect(response.status).toBe(200)
     expect(response.json.user.email).toBe('mixed@b.dev')
+  })
+})
+
+/** Two devices signing in together with an address nobody has used yet.
+ *
+ *  Both read `select ... where email = ?` and both found nothing, so both went on
+ *  to insert - and the second one was `UNIQUE constraint failed: users.email`
+ *  coming back as a 500 on somebody's very first sign-in. The address is the
+ *  account, so the second insert is not a mistake to report: it is the account,
+ *  already made. */
+describe('two sign-ins arriving together', () => {
+  /** The other device's row, landing between this one's read and its write. */
+  function theOtherDeviceGetsThereFirst(email: string): void {
+    env.justBefore(/insert into users/, () => {
+      env.db
+        .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
+        .run('the-other-one', email, Date.now())
+    })
+  }
+
+  test('make one account rather than a unique constraint failure', async () => {
+    const code = await requestCode('both@b.dev')
+    theOtherDeviceGetsThereFirst('both@b.dev')
+
+    const response = await call(env, '/v1/auth/verify', { body: { email: 'both@b.dev', code } })
+
+    expect(response.status).toBe(200)
+    // The account to carry on with is the row in the table, not the id this
+    // request made and could not write.
+    expect(response.json.user.id).toBe('the-other-one')
+
+    const many = env.db.prepare('select count(*) as many from users').get() as { many: number }
+    expect(many.many).toBe(1)
+  })
+
+  /** Only the sign-in whose insert wrote the row seeds, because the guard inside
+   *  `makeFirstSpace` reads a space the other request has not written yet and so
+   *  is not something either of them can be held to. */
+  test('do not give that one account two spaces called Notes', async () => {
+    const code = await requestCode('both@b.dev')
+    theOtherDeviceGetsThereFirst('both@b.dev')
+
+    await call(env, '/v1/auth/verify', { body: { email: 'both@b.dev', code } })
+
+    const spaces = env.db
+      .prepare("select count(*) as many from spaces where name = 'Notes'")
+      .get() as { many: number }
+    expect(spaces.many).toBe(0)
   })
 })
 

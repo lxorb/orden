@@ -28,7 +28,7 @@ import { Hono, type Context } from 'hono'
 import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoever } from '../auth'
 import { readBody } from '../body'
 import { cleanName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
-import { mailer, mayMail, requestMessage } from '../email'
+import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
 import { claimGuest, newGuest, presentGuest } from '../guests'
 import { machineOf, mayTellTheOwner } from '../limits'
 import type { Env, Guest, Space, User, Variables } from '../types'
@@ -331,7 +331,13 @@ async function tellTheOwner(context: Reply, found: Leads, who: string): Promise<
   // where the link was about one, and the space where it was about the space.
   const named = found.path === null ? space.name : itemName(found.path)
   const message = requestMessage({ space: named, who, link: env.APP_ORIGIN })
-  await mailer(env).send(owner.email, message.subject, message)
+
+  // Still nothing said back - but a send that failed gives up the gap it took, so
+  // the next person at the door is one the owner can actually be told about. The
+  // request itself is written either way, and the sheet is where it is answered.
+  if (!(await mailer(env).send(owner.email, message.subject, message))) {
+    await forgetMailed(env, owner.email)
+  }
 }
 
 export const join = new Hono<{ Bindings: Env; Variables: Variables }>()

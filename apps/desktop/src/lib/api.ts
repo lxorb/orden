@@ -343,10 +343,18 @@ async function request<T>(
   const body = parsed(await response.text())
 
   if (!response.ok) {
-    // The server says why in `error` when it can. When it cannot - a proxy
-    // between here and there, say - the status is all there is to go on.
+    // The server says why in `error`, and it says so for everything it answers,
+    // a fault of its own included. When there is no sentence to read - an edge
+    // between here and there answering with a page of its own - the status is all
+    // there is to go on, and a five hundred of that kind is something to try
+    // again rather than a number to show somebody.
     const said = isRecord(body) && isString(body.error) ? body.error : null
-    throw new ApiError(response.status, said ?? `request failed (${response.status})`, body)
+    const otherwise =
+      response.status >= 500
+        ? 'could not reach the server - try again'
+        : `request failed (${response.status})`
+
+    throw new ApiError(response.status, said ?? otherwise, body)
   }
 
   // The service is the other half of this repo and answers the shapes above;

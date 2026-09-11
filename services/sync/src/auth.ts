@@ -99,20 +99,42 @@ export async function accountFor(
   if (held) return held
 
   const user: User = { id: newId(), email: address, name: null, created_at: now() }
-  await env.DB.prepare('insert into users (id, email, created_at) values (?, ?, ?)')
+
+  // Two devices signing in at once with an address nobody has used yet both read
+  // nothing above, and the second insert was `UNIQUE constraint failed` coming
+  // back as a 500 on somebody's very first sign-in. The address is the account,
+  // so the second insert is not a mistake to report; it is the same account,
+  // already made.
+  const wrote = await env.DB.prepare(
+    'insert into users (id, email, created_at) values (?, ?, ?) on conflict(email) do nothing',
+  )
     .bind(user.id, user.email, user.created_at)
     .run()
 
-  try {
-    await makeFirstSpace(env, user.id, accepted)
-  } catch {
-    // An account is worth more than the note it opens with, so a store that
-    // baulks here does not cost somebody their sign-in. Nothing tries again:
-    // only an account being made is given a space, because a later sign-in
-    // cannot tell an empty rail somebody meant from one that went wrong.
+  // Whichever request wrote the row, this is the account: the id to carry on with
+  // is the one in the table and not necessarily the one made above.
+  const account =
+    (await env.DB.prepare('select id, email, name, created_at from users where email = ?')
+      .bind(address)
+      .first<User>()) ?? user
+
+  // And the request whose insert actually wrote the row is the one that seeds.
+  // `changes` is zero for the one that lost, which is what keeps two sign-ins
+  // arriving together from giving one account two spaces called Notes: the guard
+  // inside `makeFirstSpace` reads a row that the other request has not written
+  // yet, so it is not one either of them can be held to.
+  if (wrote.meta.changes > 0) {
+    try {
+      await makeFirstSpace(env, account.id, accepted)
+    } catch {
+      // An account is worth more than the note it opens with, so a store that
+      // baulks here does not cost somebody their sign-in. Nothing tries again:
+      // only an account being made is given a space, because a later sign-in
+      // cannot tell an empty rail somebody meant from one that went wrong.
+    }
   }
 
-  return user
+  return account
 }
 
 /** Whatever a guest on this device, or a guest at this address, was already in
@@ -145,7 +167,7 @@ export async function sendCode(
   env: Env,
   address: string,
   machine: string | null = null,
-): Promise<{ ok: true; resendIn: number } | { error: string; status: 400 | 429 }> {
+): Promise<{ ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503 }> {
   if (!isEmail(address)) return { error: 'enter a valid email address', status: 400 }
 
   const existing = await env.DB.prepare('select sent_at from login_codes where email = ?')
@@ -185,7 +207,21 @@ export async function sendCode(
     .run()
 
   const message = codeMessage(code)
-  await mailer(env).send(address, message.subject, message)
+
+  if (!(await mailer(env).send(address, message.subject, message))) {
+    // The code itself stands. The message may well have gone out and only its
+    // answer been lost, and somebody holding a code that no longer works is
+    // worse off than somebody who had to ask twice.
+    //
+    // What goes is the thirty second gap written a moment ago. It exists to keep
+    // an address from being written to twice over; nothing was written to it, and
+    // leaving the row would answer the next try with "already sent" and send
+    // nothing - which is how one failed send became a sign-in that could not be
+    // retried at all.
+    await env.DB.prepare('update login_codes set sent_at = 0 where email = ?').bind(address).run()
+
+    return { error: 'could not send the mail - try again', status: 503 }
+  }
 
   return { ok: true, resendIn: RESEND_GAP / 1000 }
 }
@@ -248,7 +284,15 @@ auth.post('/code', async (context) => {
 
   const sent = await sendCode(context.env, normaliseEmail(email ?? ''), machineOf(context.req))
 
-  if ('error' in sent) return context.json({ error: sent.error }, sent.status)
+  if ('error' in sent) {
+    // A provider having a bad minute is worth trying again straight away, and
+    // saying so is what keeps a client from treating it as a dead end. The
+    // ceilings are the other kind of no and name their own wait in words.
+    return sent.status === 503
+      ? context.json({ error: sent.error }, 503, { 'retry-after': '5' })
+      : context.json({ error: sent.error }, sent.status)
+  }
+
   return context.json(sent)
 })
 

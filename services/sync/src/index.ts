@@ -6,6 +6,7 @@ import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { cleanName, NAME_LIMIT } from './crypto'
+import { failed } from './failed'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
@@ -23,6 +24,11 @@ import { QUOTA, usedBytes } from './storage'
 import type { Env, Variables } from './types'
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
+
+/** Anything a route threw rather than answered: written to the log with the
+ *  route that threw it, and answered as JSON like every other refusal here. See
+ *  failed.ts, which says what is written and what is deliberately not. */
+app.onError(failed)
 
 /** The desktop app is not served from the API's origin, so it needs to be let in
  *  by name. Auth rides on a bearer token, never on cookies. */

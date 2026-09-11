@@ -24,7 +24,7 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import { readBody } from '../body'
 import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
-import { inviteMessage, mailer, mayMail } from '../email'
+import { forgetMailed, inviteMessage, mailer, mayMail } from '../email'
 import { forgetEmptyGuest } from '../guests'
 import { machineOf } from '../limits'
 import { roomsRevoked } from '../rooms'
@@ -429,7 +429,15 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
       role,
       link: joinUrl(context.env, token),
     })
-    await mailer(context.env).send(email, message.subject, message)
+
+    // Still nothing said back about it - but a send that failed gives up the gap
+    // it took, so an owner pressing the button again writes to the address
+    // instead of being held behind a message that never went. The invitation
+    // above stands either way: the row is what lets somebody in, and the link in
+    // it is one the owner can hand over themselves.
+    if (!(await mailer(context.env).send(email, message.subject, message))) {
+      await forgetMailed(context.env, email)
+    }
   }
 
   return context.json(await sharing(context.env, space, owner, scope))

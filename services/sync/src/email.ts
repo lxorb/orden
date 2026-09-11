@@ -1,4 +1,5 @@
 import { now } from './crypto'
+import { note } from './failed'
 import { mailCeilings } from './limits'
 import type { EmailSender, Env } from './types'
 
@@ -58,8 +59,26 @@ export async function mayMail(
   return { ok: true, error: null }
 }
 
+/** Takes back the gap `mayMail` wrote, for a message that then did not go.
+ *
+ *  The row is there so one address is not written to twice in half a minute. A
+ *  message that never left the building wrote to nobody, and a row left behind
+ *  for it would answer the next try with the gap's silent no - so whoever asked
+ *  would press the button again, be told nothing, and still receive nothing. */
+export async function forgetMailed(env: Env, address: string): Promise<void> {
+  await env.DB.prepare('delete from mailed where email = ?').bind(address).run()
+}
+
 export interface Mailer {
-  send(to: string, subject: string, body: { text: string; html: string }): Promise<void>
+  /** Whether the message went.
+   *
+   *  A boolean rather than a throw, because a provider refusing an address,
+   *  timing out or having a bad minute is not a fault in this service and is not
+   *  something for a route to fall over on. Every caller here has already
+   *  written the row the message is about - a code, an invitation - and the
+   *  person in front of it needs a sentence and a button, not a 500. The
+   *  provider's own words go to the log; see failed.ts. */
+  send(to: string, subject: string, body: { text: string; html: string }): Promise<boolean>
 }
 
 /** Without the binding - local dev and tests - codes go to the log. */
@@ -70,7 +89,7 @@ function logging(): Mailer {
       // locally, and the tests read the code back out of it.
       // eslint-disable-next-line no-console -- the log stands in for the mail
       console.log(`[mail] ${to} - ${subject}\n${body.text}`)
-      return Promise.resolve()
+      return Promise.resolve(true)
     },
   }
 }
@@ -80,7 +99,16 @@ function logging(): Mailer {
 function cloudflare(sender: EmailSender, from: string): Mailer {
   return {
     async send(to, subject, body) {
-      await sender.send({ from, to, subject, text: body.text, html: body.html })
+      try {
+        await sender.send({ from, to, subject, text: body.text, html: body.html })
+        return true
+      } catch (error) {
+        // The one call in a sign-in that leaves the building, and the only thing
+        // in it that no amount of care here can keep from failing. Written down
+        // with the provider's own words, and answered no.
+        note('mail', error, null)
+        return false
+      }
     },
   }
 }
