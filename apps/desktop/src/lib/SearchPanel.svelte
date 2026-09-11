@@ -14,6 +14,7 @@
   import { roving } from './roving'
   import { search } from './search.svelte'
   import { OPERATORS } from './search/query'
+  import { warm } from './search/warm.svelte'
   import { chosen, completing, naming, nearest, offered } from './search/suggest'
   import { taskAt } from '@nib/markdown/tasks'
   import type { Hit, Range } from './search/match'
@@ -249,7 +250,11 @@
   }
 </script>
 
-<div class="find">
+<!-- What the search is holding, said in one line: how many notes, how much text,
+     against what cap. Not shown to anybody - it is an attribute, and the panel
+     looks exactly as it did - but a profiler, a drive and whoever is asking why a
+     search felt slow can all read it. See search/warmth.ts. -->
+<div class="find" data-search={warm.said}>
   <div class="row">
     <div class="box">
       <!-- The same magnifier the pill it replaces wears, in the same place: one

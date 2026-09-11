@@ -200,10 +200,15 @@ pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
 
 /// When a file was last written, and how long it is: enough to tell that
 /// something other than this app has changed it.
-#[derive(serde::Serialize)]
+///
+/// Two numbers and a copy, so that anything holding what it read of a file can
+/// hold one of these beside it and tell in a `stat` call whether what it read is
+/// still what is there; see `warm` in search.rs.
+#[derive(Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct Stamp {
     /// Milliseconds since the epoch, as the window counts time.
     pub modified: u64,
+    /// How many bytes the file holds.
     pub len: u64,
 }
 
@@ -220,12 +225,20 @@ pub struct Stamp {
 /// replaced is a thing that happens, not a failure to report.
 #[tauri::command]
 pub fn file_stamp(path: String) -> Result<Option<Stamp>, String> {
-    let target = chosen(&path)?;
-    let Ok(data) = fs::metadata(&target) else {
-        return Ok(None);
-    };
+    Ok(stamp_of(&chosen(&path)?))
+}
+
+/// The stamp of one file, for the crate's own use: the command above, and the
+/// search asking whether the note it is holding is still the note on disk.
+///
+/// Nothing here reads a byte of the file, which is the whole point: a space of
+/// five thousand notes can be asked whether it has changed for the price of five
+/// thousand `stat` calls rather than of five thousand reads.
+#[must_use]
+pub fn stamp_of(target: &Path) -> Option<Stamp> {
+    let data = fs::metadata(target).ok()?;
     if !data.is_file() {
-        return Ok(None);
+        return None;
     }
 
     let modified = data
@@ -236,10 +249,10 @@ pub fn file_stamp(path: String) -> Result<Option<Stamp>, String> {
             u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
         });
 
-    Ok(Some(Stamp {
+    Some(Stamp {
         modified,
         len: data.len(),
-    }))
+    })
 }
 
 #[cfg(test)]

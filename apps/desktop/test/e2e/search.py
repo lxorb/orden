@@ -85,7 +85,9 @@ async () => {
 # the store, so this is the space it would read.
 SEED_MANY = """
 async ({ count, root }) => {
-  const open = indexedDB.open('nib', 1)
+  // No version: the app has already opened the database at whichever one it is at,
+  // and asking for an older one is a VersionError rather than a seed.
+  const open = indexedDB.open('nib')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
     open.onerror = () => reject(open.error)
@@ -97,8 +99,11 @@ async ({ count, root }) => {
 
   for (let batch = 0; batch < count; batch += 500) {
     await new Promise((resolve, reject) => {
-      const write = db.transaction('files', 'readwrite')
+      // The listing is a store of its own now, and a note written without its
+      // stat is a note the file list cannot see; see web/store.ts.
+      const write = db.transaction(['files', 'stats'], 'readwrite')
       const store = write.objectStore('files')
+      const listing = write.objectStore('stats')
 
       for (let one = batch; one < Math.min(batch + 500, count); one++) {
         const content = [
@@ -119,12 +124,14 @@ async ({ count, root }) => {
         ].join('\\n')
 
         bytes += content.length
-        store.put({
+        const row = {
           path: root + '/Note ' + one + '.md',
           content,
           modified: made - one * 1000,
           created: made - one * 2000,
-        })
+        }
+        store.put(row)
+        listing.put({ path: row.path, modified: row.modified, created: row.created })
       }
 
       write.oncomplete = () => resolve()
@@ -133,6 +140,17 @@ async ({ count, root }) => {
   }
 
   await window.nibApp.workspace.loadTree()
+
+  // The rows went in behind the app's back, so they are called out the way the
+  // store would have called them out: the search worker holds the space between
+  // two searches and hears about every row that is written. See web/store.ts.
+  const rows = await new Promise((resolve, reject) => {
+    const ask = db.transaction('files', 'readonly').objectStore('files').getAll()
+    ask.onsuccess = () => resolve(ask.result)
+    ask.onerror = () => reject(ask.error)
+  })
+  new BroadcastChannel('nib:rows').postMessage({ rows, gone: [] })
+
   return { ms: Math.round(performance.now() - began), bytes }
 }
 """
@@ -164,6 +182,13 @@ async ({ source, wait }) => {
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
+
+
+def held_text(page) -> str:
+    """What the search says it is holding, off the panel's own diagnostics."""
+    return str(
+        page.evaluate("() => document.querySelector('.find')?.getAttribute('data-search')")
+    )
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -406,13 +431,25 @@ def measure(browser, out: Path, count: int) -> None:
         "zzzqx",
     ]
 
+    # What the search is holding before a word has been typed: the worker reads the
+    # space at the search stage of the launch, so the first query is already warm.
+    # See search/warmth.ts for what the line says.
+    say(f"[{name}] holding {held_text(page)}")
+
     for source in asked:
-        # The best of several: the first ask of a space warms the worker and the
-        # store's cursor, and a clock only ever says what the machine was doing at
-        # the time. The best run is the one where it was doing this.
+        # The first run and the best of several. A clock only ever says what the
+        # machine was doing at the time, so the best run is the one where it was
+        # doing this; the first is kept beside it because a cache that only looked
+        # good on the second ask would not be worth having.
         runs = [page.evaluate(TIMED, {"source": source, "wait": wait}) for _ in range(5)]
         best = min(runs, key=lambda one: one["ms"])
-        say(f"[{name}] {source!r}: {best['ms']} ms, {best['hits']} rows")
+        first = runs[0]
+        say(
+            f"[{name}] {source!r}: {best['ms']} ms best, {first['ms']} ms first,"
+            f" {best['hits']} rows"
+        )
+
+    say(f"[{name}] holding {held_text(page)}")
 
     page.screenshot(path=str(shots / f"{name}-searched.png"))
     say(f"shot {name}-searched.png")

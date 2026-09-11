@@ -75,6 +75,7 @@ macro_rules! commands {
             highlights::write_highlights,
             search::search_space,
             search::space_tags,
+            search::warm_search,
             links::scan_links,
             themes::theme_dir,
             themes::list_themes,

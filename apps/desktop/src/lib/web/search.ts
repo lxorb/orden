@@ -1,17 +1,22 @@
 /** Searching a space in the browser: the same walk the crate does on a desktop,
- *  over the rows in this browser's own storage.
+ *  over the notes the worker is holding.
  *
  *  The query arrives already parsed and the matching itself is shared code, so
  *  the two builds cannot answer differently; what differs is only where the
  *  notes are. Its own module rather than a case in commands.ts because it is
  *  what the search worker runs, and a worker that pulled in the whole command
- *  surface would pull the app in behind it. */
+ *  surface would pull the app in behind it.
+ *
+ *  Where the notes come from is space-cache.ts: from memory once the space has
+ *  been read, and from the store while it has not. Either way they arrive in path
+ *  order, which is the order the desktop walks a space in, so the two builds fill
+ *  a list the same way. */
 
 import { Fuzzy, type FuzzyHit, withoutWords } from '../search/fuzzy'
-import { foldedOnce, type Hit, Matcher } from '../search/match'
+import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
-import { basename, isMarkdown, normalise, within } from './paths'
-import { files } from './store'
+import { normalise } from './paths'
+import { space } from './space-cache'
 
 /** How many hits are worth handing over at once. The same handful the Rust side
  *  sends, so a list fills the same way on both. */
@@ -77,25 +82,15 @@ export async function searchRows(
   let hits: Hit[] = []
   let loose: FuzzyHit[] = []
 
-  // A cursor rather than the whole store: the rows come in path order, which is
-  // the order the desktop walks a space in, and the first rows are on screen
-  // while the last folder is still being read.
-  await files.each((row) => {
-    if (found >= limit) return
-    if (!within(base, row.path) || !isMarkdown(row.path)) return
-
-    const relative = row.path.slice(base === '/' ? 1 : base.length + 1)
-    if (leftOut(relative, left)) return
-
-    const note = {
-      path: row.path,
-      relative,
-      name: basename(row.path),
-      body: row.content,
-      // Both passes below read the note; this is what keeps them to one folded
-      // copy of it between them. See `foldedOnce` in search/match.ts.
-      folded: foldedOnce(row.content),
-    }
+  // Note by note rather than the whole space at once: the first rows are on
+  // screen while the last folder is still being read, and a query that has found
+  // its fill stops the walk where it stands. A note carries its own folded copy
+  // and its own line index, so the two passes below share one of each and a
+  // second search over the same note makes neither again; see `Held` in
+  // space-cache.ts and `foldedOnce` in search/match.ts.
+  await space.each(base, (note) => {
+    if (found >= limit) return false
+    if (leftOut(note.relative, left)) return true
 
     const exact = matcher.hits(note, limit - found)
     if (exact.length) {
@@ -105,12 +100,12 @@ export async function searchRows(
         onFound({ hits, loose: [] })
         hits = []
       }
-      return
+      return true
     }
 
     // Only a note the query does not answer is worth guessing about, which is
     // also what keeps the loose pass off every note that already has a row.
-    if (narrowed?.spans(note) == null) return
+    if (narrowed?.spans(note) == null) return true
 
     const guess = fuzzy.best(note)
     if (guess) loose.push(guess)
@@ -119,6 +114,7 @@ export async function searchRows(
     // twice the limit rather than at it, so the sort happens once in a while
     // rather than once a note.
     if (loose.length > limit * 2) loose = best(loose, limit)
+    return true
   })
 
   onFound({ hits, loose: best(loose, limit) })

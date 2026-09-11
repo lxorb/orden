@@ -20,7 +20,7 @@ import {
 } from './paths'
 import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
-import { breathe } from '../startup.svelte'
+import { breathe } from '../breathe'
 import { WELCOME, WELCOME_PATH } from '../welcome'
 
 interface Entry {

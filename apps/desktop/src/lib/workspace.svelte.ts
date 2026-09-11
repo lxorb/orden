@@ -19,6 +19,7 @@ import { lineOfHeading, scanHeadings } from './outline'
 import { without } from './records'
 import type { Change } from './search/apply'
 import { lineStarts } from './search/match'
+import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
 import { isRecord, stored } from './stored'
@@ -1362,7 +1363,12 @@ class Workspace {
     // on a space of a few thousand notes is the same thing. Opening a second space
     // is the case that is not the launch: see `turn` in startup.svelte.ts, which is
     // what makes the frame with the rows in it go out first either way.
-    if (links.rootOf() !== root) void links.build(root)
+    if (links.rootOf() !== root) {
+      void links.build(root)
+      // And the search holds the space it is about to be asked about, a turn after
+      // the index; see search/warm.svelte.ts.
+      void warm.forSpace(root)
+    }
   }
 
   setSort(sort: SortKey) {

@@ -5,10 +5,15 @@
  *  already running is not stopped when the next one is asked - it is answering
  *  about a word nobody is looking for any more, and its answers are dropped by
  *  their id - because there is nothing to gain by tearing the walk down that
- *  finishing it does not give sooner. */
+ *  finishing it does not give sooner.
+ *
+ *  The worker also holds the space between two searches, which is what `warm`
+ *  below sets going: see space-cache.ts for what is held and warm.svelte.ts for
+ *  who asks. */
 
 import type { Found } from './search'
-import { type Answer, isAnswer } from './search-protocol'
+import { type Answer, type Ask, isAnswer, type Warm } from './search-protocol'
+import type { Warmth } from '../search/warmth'
 import type { Query } from '../search/query'
 
 let worker: Worker | null = null
@@ -18,6 +23,21 @@ let worker: Worker | null = null
 const waiting = new Map<number, { onFound: (found: Found) => void; done: () => void }>()
 
 let asked = 0
+
+/** Who to tell what the worker is holding. One listener: it is the diagnostics
+ *  the panel carries, and there is one panel. */
+let told: ((warmth: Warmth) => void) | null = null
+
+/** Hears what the worker is holding, whenever it changes. */
+export function whenWarmer(heard: (warmth: Warmth) => void): void {
+  told = heard
+}
+
+/** Asks the worker to read the space and keep it. Opening the worker here is
+ *  half the point: the module graph is compiled while nobody is typing. */
+export function warmSpace(root: string): void {
+  open().postMessage({ kind: 'warm', root } satisfies Warm)
+}
 
 function open(): Worker {
   if (worker) return worker
@@ -40,6 +60,11 @@ function open(): Worker {
 }
 
 function answer(message: Answer) {
+  if (message.kind === 'warmth') {
+    told?.(message.warmth)
+    return
+  }
+
   const one = waiting.get(message.id)
   if (!one) return
 
@@ -65,6 +90,14 @@ export function searchInWorker(
 
   return new Promise<void>((resolve) => {
     waiting.set(id, { onFound, done: resolve })
-    open().postMessage({ id, root, query, terms, limit, excluded: [...excluded] })
+    open().postMessage({
+      kind: 'ask',
+      id,
+      root,
+      query,
+      terms,
+      limit,
+      excluded: [...excluded],
+    } satisfies Ask)
   })
 }

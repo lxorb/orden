@@ -31,6 +31,15 @@ export interface SearchNote {
    *  thousand notes twice over is most of what a loose search would spend.
    *  Absent for a note nobody offered it to, which folds its own. */
   folded?: (() => string) | undefined
+  /** Where every line of the note starts, made the first time it is asked for
+   *  and then kept; see `startsOnce`. A `line:` `block:` `section:` or `task:`
+   *  group asks for it, and so does every hit that becomes a row, so a note the
+   *  search field asks about on every keystroke would otherwise be walked for its
+   *  newlines once per keystroke. Made the same way the fold is, and kept beside
+   *  it; see `Held` in web/space-cache.ts and `Facts::starts` in matcher.rs, which
+   *  is a `OnceCell` for the same reason. Absent for a note nobody offered one,
+   *  which counts its own. */
+  starts?: (() => readonly number[]) | undefined
 }
 
 /** A note's folded text, made when it is first wanted and then the same string
@@ -170,15 +179,14 @@ const A_TASK: Partial<Record<Unit, 'any' | 'todo' | 'done'>> = {
 
 /** The regions a group of terms looks inside: a line, a paragraph, a heading's
  *  section, or a task item. */
-function unitsIn(body: string, unit: Unit): Range[] {
-  const starts = lineStarts(body)
+function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   const ends = starts.map((_start, index) => {
     const next = starts[index + 1]
     return next === undefined ? body.length : next - 1
   })
 
   if (unit === 'line') {
-    return starts.map((from, index) => ({ from, to: ends[index] ?? body.length }))
+    return starts.map((from: number, index: number) => ({ from, to: ends[index] ?? body.length }))
   }
 
   const state = A_TASK[unit]
@@ -259,6 +267,9 @@ function frontMatter(body: string): Map<string, string> {
 interface Facts {
   note: SearchNote
   folded: string | null
+  /** Where every line starts, from the note's own kept copy where it offered
+   *  one; see `SearchNote.starts`. */
+  starts: readonly number[] | null
   tags: string[] | null
   front: Map<string, string> | null
   units: Partial<Record<Unit, Range[]>>
@@ -273,6 +284,10 @@ function foldedOf(facts: Facts): string {
   return (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
 }
 
+function startsOf(facts: Facts): readonly number[] {
+  return (facts.starts ??= facts.note.starts?.() ?? lineStarts(facts.note.body))
+}
+
 function tagsOf(facts: Facts): string[] {
   return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tag.slice(1).toLowerCase()))
 }
@@ -282,7 +297,7 @@ function frontOf(facts: Facts): Map<string, string> {
 }
 
 function unitsOf(facts: Facts, unit: Unit): Range[] {
-  return (facts.units[unit] ??= unitsIn(facts.note.body, unit))
+  return (facts.units[unit] ??= unitsIn(facts.note.body, startsOf(facts), unit))
 }
 
 /** What a front matter value looks like it is, as far as holding two of them
@@ -458,6 +473,7 @@ export class Matcher {
     const facts: Facts = {
       note,
       folded: null,
+      starts: null,
       tags: null,
       front: null,
       units: {},
@@ -473,7 +489,7 @@ export class Matcher {
     const spans = this.spans(note)
     if (!spans || most <= 0) return []
 
-    const starts = lineStarts(note.body)
+    const starts = note.starts?.() ?? lineStarts(note.body)
     const past = pastFrontMatter(note.body, starts)
 
     // Found by something no line of the note says: its path, its name, a tag, a

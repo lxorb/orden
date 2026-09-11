@@ -15,19 +15,231 @@
 //! puts it rather than in the order the disk handed it over. The scores are not
 //! all in until the space has been read, so they go out with the last handful.
 //! The scoring is in fuzzy.rs, and web/search.ts is the twin of this walk.
+//!
+//! The space itself is held between two searches. Reading five thousand files to
+//! answer a word somebody has not finished typing is almost all of what a search
+//! used to spend, and none of it was the search: the same bytes came off the disk
+//! per keystroke. So a note read here stays here with the stamp the file had when
+//! it was read, and a search asks the disk only what it cannot answer from that:
+//! which files are now newer than what is held, and what is in those. A stamp
+//! rather than a message from the window, because these files are not only the
+//! app's - a sync, a script, a branch being checked out or another editor writes
+//! them too, and one `stat` call catches all four where a notification catches
+//! none. See `warm_search` below, and web/space-cache.ts, which holds the same
+//! space in the browser's worker and hears about its rows instead.
 
 use serde::Serialize;
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
 use tauri::{AppHandle, Emitter};
 
 use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
 use crate::matcher::{Hit, Matcher, Note};
+use crate::notes::{stamp_of, Stamp};
 use crate::paths::{files_in, in_spaces, relative_to};
 use crate::query::Query;
 use crate::tags::tags_in;
+
+/// How much note text the crate holds, in bytes. The same ceiling the browser's
+/// worker keeps, said in the unit a `String` is measured in: a space of five
+/// thousand ordinary notes several times over, and tens of megabytes rather than
+/// hundreds for a space somebody keeps a library in.
+const CAP: usize = 24_000_000;
+
+/// One note as it was read, and the stamp the file had when it was.
+struct Kept {
+    stamp: Stamp,
+    /// Shared, so a search can take the words out of the cache and let the lock go
+    /// before it starts matching against them.
+    body: Arc<str>,
+}
+
+/// The space the searches are holding.
+struct Warm {
+    /// Which space was read whole, where one has been.
+    root: Option<PathBuf>,
+    notes: HashMap<PathBuf, Kept>,
+    /// How many notes that space had when it was last read whole.
+    of: usize,
+    characters: usize,
+    dropped: usize,
+    read: usize,
+    whole: bool,
+    /// What it is held to. `CAP` everywhere but in the tests below, which would
+    /// otherwise have to build twenty-four megabytes of notes to cross it.
+    cap: usize,
+}
+
+impl Default for Warm {
+    fn default() -> Self {
+        Self {
+            root: None,
+            notes: HashMap::new(),
+            of: 0,
+            characters: 0,
+            dropped: 0,
+            read: 0,
+            whole: false,
+            cap: CAP,
+        }
+    }
+}
+
+/// What the search is holding, as the window reads it. The twin of `Warmth` in
+/// search/warmth.ts, field for field, so one line of diagnostics says the same
+/// thing on both builds.
+#[derive(Serialize)]
+pub struct Warmth {
+    /// Notes held with their words.
+    notes: usize,
+    /// Notes the space has, whether they are held or not.
+    of: usize,
+    /// Bytes of note text held, which for the notes people write is the same
+    /// number as characters.
+    characters: usize,
+    /// The most it will hold.
+    cap: usize,
+    /// Notes the cap has pushed out since the space was opened.
+    dropped: usize,
+    /// Notes read off the disk since then: the space once, and after that only the
+    /// ones that changed.
+    read: usize,
+    /// Whether a whole pass over the space has finished.
+    warm: bool,
+}
+
+impl Warm {
+    /// One note into the cache, replacing whatever was held under its path.
+    fn keep(&mut self, path: &Path, stamp: Stamp, body: &Arc<str>) {
+        if let Some(was) = self.notes.insert(
+            path.to_path_buf(),
+            Kept {
+                stamp,
+                body: Arc::clone(body),
+            },
+        ) {
+            self.characters = self.characters.saturating_sub(was.body.len());
+        }
+
+        self.characters += body.len();
+        self.hold();
+    }
+
+    /// Held to the cap, the largest notes first: one long note costs what a
+    /// hundred ordinary ones cost, so letting it go buys the most room for the
+    /// fewest notes read again. One that was let go is read again the next time a
+    /// search reaches it.
+    fn hold(&mut self) {
+        if self.characters <= self.cap {
+            return;
+        }
+
+        let mut sizes: Vec<(PathBuf, usize)> = self
+            .notes
+            .iter()
+            .map(|(path, kept)| (path.clone(), kept.body.len()))
+            .collect();
+        sizes.sort_by_key(|(_path, len)| Reverse(*len));
+
+        for (path, len) in sizes {
+            if self.characters <= self.cap {
+                break;
+            }
+            if self.notes.remove(&path).is_some() {
+                self.characters = self.characters.saturating_sub(len);
+                self.dropped += 1;
+            }
+        }
+    }
+
+    fn warmth(&self) -> Warmth {
+        Warmth {
+            notes: self.notes.len(),
+            of: self.of.max(self.notes.len()),
+            characters: self.characters,
+            cap: self.cap,
+            dropped: self.dropped,
+            read: self.read,
+            warm: self.whole,
+        }
+    }
+}
+
+fn cache() -> &'static Mutex<Warm> {
+    static WARM: OnceLock<Mutex<Warm>> = OnceLock::new();
+    WARM.get_or_init(|| Mutex::new(Warm::default()))
+}
+
+/// The cache, however it was left. A panic while a note was being written into it
+/// must not take every later search with it: what is held is a copy of what is on
+/// disk, and the worst a poisoned one holds is a note that will be read again.
+fn held() -> MutexGuard<'static, Warm> {
+    cache().lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+/// The words of one note: from the cache when the file on disk is still the file
+/// that was read, and off the disk when it is not.
+///
+/// Nothing is held while the file is being read, because that is the slow part and
+/// a second search should not wait behind it. The stamp is taken before the read
+/// rather than after, so a file written while it was being read comes back as
+/// changed on the next search rather than being trusted as current.
+fn body_of(path: &Path) -> Option<Arc<str>> {
+    let stamp = stamp_of(path)?;
+
+    {
+        let warm = held();
+        // The file on disk is the authority: what is held answers only while the
+        // stamp it was read at is still the stamp the file has.
+        if let Some(kept) = warm.notes.get(path).filter(|kept| kept.stamp == stamp) {
+            return Some(Arc::clone(&kept.body));
+        }
+    }
+
+    // A note that cannot be read is not a search failure: the rest of the space
+    // still has answers.
+    let body: Arc<str> = Arc::from(fs::read_to_string(path).ok()?);
+
+    let mut warm = held();
+    warm.read += 1;
+    warm.keep(path, stamp, &body);
+    Some(body)
+}
+
+/// Reads a space and keeps it, so that the keystroke after this reads nothing.
+///
+/// Asked for at the search stage of the launch, which is after the file list is on
+/// screen and after the link index has had its turn; see startup.svelte.ts and
+/// search/warm.svelte.ts. One space at a time, the way the browser's worker holds
+/// one: another space's notes are memory nobody is about to ask about.
+#[tauri::command]
+pub fn warm_search(app: AppHandle, root: String) -> Result<Warmth, String> {
+    let dir = in_spaces(&app, &root)?;
+    let paths = notes_in(&dir);
+
+    {
+        let mut warm = held();
+        if warm.root.as_deref() != Some(dir.as_path()) {
+            *warm = Warm::default();
+            warm.root = Some(dir.clone());
+        }
+        warm.of = paths.len();
+        warm.whole = false;
+    }
+
+    // A note that cannot be read is one the search will not answer about, which is
+    // the walk's own rule; nothing here is worth failing the warm pass over.
+    for path in &paths {
+        let _ = body_of(path);
+    }
+
+    let mut warm = held();
+    warm.whole = true;
+    Ok(warm.warmth())
+}
 
 /// How many hits are worth sending at once. Small enough that the first rows
 /// are on screen while the rest of the space is still being read, large enough
@@ -104,9 +316,9 @@ pub fn search_space(
             continue;
         }
 
-        // A note that cannot be read is not a search failure: the rest of the
-        // space still has answers.
-        let Ok(body) = fs::read_to_string(&path) else {
+        // From what the crate is holding, and off the disk only for a file that
+        // has changed since it was read; see `body_of`.
+        let Some(body) = body_of(&path) else {
             continue;
         };
 
@@ -187,7 +399,9 @@ pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
     let mut counts: HashMap<String, usize> = HashMap::new();
 
     for path in notes_in(&dir) {
-        let Ok(body) = fs::read_to_string(&path) else {
+        // The same notes the search is holding: a space read for its tags is a
+        // space the next search does not have to read, and the other way round.
+        let Some(body) = body_of(&path) else {
             continue;
         };
 
@@ -239,4 +453,100 @@ fn left_out(relative: &str, excluded: &HashSet<&str>) -> bool {
 /// `links` gets it from.
 fn notes_in(dir: &Path) -> Vec<PathBuf> {
     files_in(dir).0
+}
+
+#[cfg(test)]
+mod tests {
+    // A test module is its own scope: everything it touches is named here rather
+    // than borrowed from the module above.
+    use super::{body_of, held, left_out, Warm};
+    use crate::notes::Stamp;
+    use std::collections::HashSet;
+    use std::fs;
+    use std::path::Path;
+    use std::sync::Arc;
+
+    fn words(of: usize) -> Arc<str> {
+        Arc::from("ink ".repeat(of).as_str())
+    }
+
+    fn stamp(len: u64) -> Stamp {
+        Stamp { modified: 1, len }
+    }
+
+    #[test]
+    fn what_is_held_is_counted_once_per_note() {
+        let mut warm = Warm::default();
+        let plan = Path::new("Plan.md");
+
+        warm.keep(plan, stamp(8), &words(2));
+        assert_eq!(warm.notes.len(), 1);
+        assert_eq!(warm.characters, 8);
+
+        // The same note again is the same note, not a second one.
+        warm.keep(plan, stamp(16), &words(4));
+        assert_eq!(warm.notes.len(), 1);
+        assert_eq!(warm.characters, 16);
+    }
+
+    #[test]
+    fn the_cap_lets_the_largest_notes_go_first() {
+        let mut warm = Warm::default();
+        warm.cap = 100;
+
+        warm.keep(Path::new("Plan.md"), stamp(20), &words(5));
+        warm.keep(Path::new("Ink.md"), stamp(20), &words(5));
+        assert_eq!(warm.notes.len(), 2);
+        assert_eq!(warm.dropped, 0);
+
+        // A novel, which on its own is more than the cap: it goes, and the two
+        // short notes stay.
+        warm.keep(Path::new("Novel.md"), stamp(400), &words(100));
+        assert_eq!(warm.dropped, 1);
+        assert!(warm.characters <= warm.cap);
+        assert!(!warm.notes.contains_key(Path::new("Novel.md")));
+        assert!(warm.notes.contains_key(Path::new("Plan.md")));
+    }
+
+    /// The one test that touches the cache the searches share, so that nothing
+    /// else here has to run after it.
+    #[test]
+    fn a_note_is_read_once_and_held_until_the_file_changes() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let note = dir.path().join("Plan.md");
+        fs::write(&note, "the quarter plan").expect("the note written");
+
+        let first = body_of(&note).expect("the words");
+        assert_eq!(&*first, "the quarter plan");
+        let read = held().read;
+
+        // Asked again with the file untouched: the same words, and nothing read.
+        assert_eq!(&*body_of(&note).expect("the words"), "the quarter plan");
+        assert_eq!(held().read, read);
+
+        // Written again, and what comes back is what was written. The length is
+        // part of the stamp, so this is caught however coarse the clock is.
+        fs::write(&note, "the quarter plan, rewritten").expect("the rewrite");
+        assert_eq!(
+            &*body_of(&note).expect("the words"),
+            "the quarter plan, rewritten"
+        );
+        assert_eq!(held().read, read + 1);
+
+        // And a note that is not there is not an error to report.
+        fs::remove_file(&note).expect("the note removed");
+        assert!(body_of(&note).is_none());
+    }
+
+    #[test]
+    fn a_space_leaves_out_a_note_and_everything_in_a_folder_it_leaves_out() {
+        let left: HashSet<&str> = ["Archive", "Old/Plan.md"].into_iter().collect();
+
+        assert!(left_out("Archive", &left));
+        assert!(left_out("Archive/Deep/Note.md", &left));
+        assert!(left_out("Old/Plan.md", &left));
+        assert!(!left_out("Old", &left));
+        assert!(!left_out("Archived.md", &left));
+        assert!(!left_out("Plan.md", &HashSet::new()));
+    }
 }

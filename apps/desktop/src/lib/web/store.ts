@@ -181,6 +181,65 @@ function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
   )
 }
 
+/** One change to the rows, as anything holding a copy of them hears it. */
+export interface RowChange {
+  /** The rows as they now stand. */
+  rows: FileRow[]
+  /** The paths that no longer have one. */
+  gone: string[]
+}
+
+/** Where a change to the rows is called out, so that a thread holding a copy of
+ *  them can keep up.
+ *
+ *  Here rather than at the call sites, because here is the only place a row is
+ *  written: every write below is one transaction over the file and its listing, so
+ *  a change that is announced from here cannot be a change nobody mentioned. The
+ *  search worker is the one listener, and what it does with a change is read that
+ *  one note again rather than the space; see space-cache.ts.
+ *
+ *  A broadcast rather than the worker's own `postMessage`, because the page is not
+ *  the only thing that writes: a second tab of the same app writes these rows too,
+ *  and a channel reaches both. */
+const CHANNEL = 'nib:rows'
+
+let channel: BroadcastChannel | null = null
+
+/** The channel, opened when something first writes or listens, and nothing at all
+ *  where the browser has none: a search that reads the store every time is slower,
+ *  not wrong. */
+function bus(): BroadcastChannel | null {
+  if (typeof BroadcastChannel !== 'function') return null
+  return (channel ??= new BroadcastChannel(CHANNEL))
+}
+
+function announce(rows: FileRow[], gone: string[]): void {
+  bus()?.postMessage({ rows, gone } satisfies RowChange)
+}
+
+function isRowChange(value: unknown): value is RowChange {
+  if (typeof value !== 'object' || value === null) return false
+
+  const shape = value as { rows?: unknown; gone?: unknown }
+  return (
+    Array.isArray(shape.rows) &&
+    shape.rows.every((row) => typeof (row as FileRow | null)?.path === 'string') &&
+    Array.isArray(shape.gone) &&
+    shape.gone.every((path) => typeof path === 'string')
+  )
+}
+
+/** Hears every row written or dropped, wherever it was written. What comes over a
+ *  channel is unknown until something has looked, so it is checked here. */
+export function watchRows(heard: (change: RowChange) => void): void {
+  const listening = bus()
+  if (!listening) return
+
+  listening.onmessage = (event: MessageEvent<unknown>) => {
+    if (isRowChange(event.data)) heard(event.data)
+  }
+}
+
 /** Both stores a path can live in, plus the listing they share. */
 const WITH_STATS = ['files', 'stats'] as const
 const ASSETS_WITH_STATS = ['assets', 'stats'] as const
@@ -203,16 +262,19 @@ export const files = {
    *  commands.ts. */
   between: (from: string, to: string) =>
     run<FileRow[]>('files', 'readonly', (s) => s.getAll(IDBKeyRange.bound(from, to))),
+  // Each of the three writes says what it did once it has done it, and not
+  // before: a listener that read a row on the strength of an announcement that
+  // had not landed yet would read the row as it was.
   put: (row: FileRow) =>
     batch(WITH_STATS, (change) => {
       change.objectStore('files').put(row)
       change.objectStore('stats').put(statOf(row))
-    }),
+    }).then(() => announce([row], [])),
   remove: (path: string) =>
     batch(WITH_STATS, (change) => {
       change.objectStore('files').delete(path)
       change.objectStore('stats').delete(path)
-    }),
+    }).then(() => announce([], [path])),
   /** Writes `rows` and drops `gone`, all or nothing. What a rename is: every
    *  note under the folder lands under its new name at the same moment. */
   move: (rows: FileRow[], gone: string[]) =>
@@ -233,7 +295,12 @@ export const files = {
         store.delete(path)
         listing.delete(path)
       }
-    }),
+    }).then(() =>
+      announce(
+        rows,
+        gone.filter((path) => !rows.some((row) => row.path === path)),
+      ),
+    ),
 }
 
 export const assets = {

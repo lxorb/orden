@@ -21,7 +21,9 @@
  *  it would open a socket would be a phone that never opened one.
  *
  *  `breathe` is the other half of the same idea, for inside one of those stages: a
- *  pass long enough to be worth breaking up hands the thread back with it.
+ *  pass long enough to be worth breaking up hands the thread back with it. It
+ *  lives in breathe.ts, because the search worker breathes too and a worker has no
+ *  runes runtime to load this file with.
  *
  *  Nothing here is about a particular store, which is why it is not in any of
  *  them: the order is the app's, and an order spread across five files is not an
@@ -63,33 +65,6 @@ function idle(): Promise<void> {
 
     requestIdleCallback(() => go(), { timeout: 500 })
   })
-}
-
-/** What a browser that can be asked to hand the thread back offers. Chrome has
- *  it; the fallback below is for everything else. */
-interface Yields {
-  yield?: () => Promise<void>
-}
-
-/** Lets go of the thread, for a pass that has more to do than a frame's worth.
- *
- *  A long pass that yields nowhere is one task however many things it is made of,
- *  and a keystroke during it is a keystroke that appears when it ends. Awaited
- *  between chunks of work, this turns that one task into as many short ones with
- *  room for a keystroke between them.
- *
- *  Not an idle callback, which is what this was first written as: idle time is
- *  exactly what a launch does not have, and waiting for it turned a scan of three
- *  thousand notes from one second into two and a half. `scheduler.yield` is the
- *  one that answers this properly - it lets input through and comes back at the
- *  front of the queue rather than the back - and a timer is the same bargain more
- *  roughly where there is no scheduler. See `scanLinks` in web/commands.ts, which
- *  is the pass that reads every note there is. */
-export function breathe(): Promise<void> {
-  const scheduler = (globalThis as { scheduler?: Yields }).scheduler
-  if (scheduler?.yield) return scheduler.yield()
-
-  return new Promise((go) => setTimeout(go, 0))
 }
 
 class Startup {
