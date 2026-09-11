@@ -242,6 +242,32 @@ mod tests {
         }
     }
 
+    /// The listing is a listing: names, kinds and two times off one `stat` each,
+    /// and not one byte of any note.
+    ///
+    /// Which is the whole of why the file list can be on screen before anything
+    /// else has happened, so it is worth a test that would fail the moment a field
+    /// arrived here that had to be read out of a body - an icon, a title, a tag.
+    /// A note whose bytes are not text is how that is said without stubbing a
+    /// filesystem: every way Rust has of reading a file as a string fails on it, so
+    /// a walk that lists it is a walk that did not open it. See `scan_links` in
+    /// links.rs, which is where reading every note belongs.
+    #[test]
+    fn a_listing_reads_no_note() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        // A lone continuation byte, which is not valid UTF-8 anywhere in it.
+        std::fs::write(here.join("Unreadable.md"), [0x80, 0x80, 0x80]).expect("a note");
+        std::fs::write(here.join("Plain.md"), "icon: rocket\n").expect("a second note");
+
+        let top = walk(here, &options("name", false), 0, &mut Seen::default());
+
+        assert_eq!(names(&top.children), ["Plain.md", "Unreadable.md"]);
+        for child in &top.children {
+            assert!(child.modified > 0, "{} has no time", child.name);
+        }
+    }
+
     #[test]
     fn an_unknown_key_sorts_by_name() {
         let mut children = vec![entry("b.md", false, 9), entry("a.md", false, 1)];

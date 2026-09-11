@@ -99,6 +99,25 @@ export function within(root: string, path: string): string | null {
   return file.slice(folder.length + 1)
 }
 
+/** A page of changes with the notes somebody is waiting on at the front.
+ *
+ *  Partitioned rather than sorted, so everything keeps the order the account sent
+ *  it in and only the wanted few move. Which end of a page a note is fetched from
+ *  makes no difference to what is written: each note is settled against the file
+ *  beside it and nothing else, and the cursor moves only once the page is through.
+ *  See `pull`. */
+function ordered<T extends { path: string }>(
+  notes: readonly T[],
+  wanted: ReadonlySet<string> | undefined,
+): readonly T[] {
+  if (!wanted?.size) return notes
+
+  const first = notes.filter((one) => wanted.has(one.path))
+  if (!first.length) return notes
+
+  return [...first, ...notes.filter((one) => !wanted.has(one.path))]
+}
+
 /** Whether a path the account named can be joined onto a space's folder.
  *
  *  The listing arrives over the network, and in a shared space the names in it
@@ -195,16 +214,35 @@ function flatten(entry: Entry): Entry[] {
  *  next door knows about rooms, and a test can say there are none. */
 export type Joined = ReadonlySet<string>
 
-/** Takes what the account has moved on to. Answers whether anything did.
+/** Whoever is waiting on a pass, and what they need out of it while it runs.
  *
- *  `wrote` is called once for each note that lands, so whoever is waiting on the
- *  pass can count. Handed in for the same reason `joined` is: this file stays
- *  about moving files, and the store next door is what knows who is waiting. */
+ *  Handed in for the same reason `joined` is: this file stays about moving files,
+ *  and the store next door is what knows who is waiting. See sync.svelte.ts and
+ *  arriving.svelte.ts.
+ *
+ *  None of it changes what the pass does to a file. The names go out earlier and
+ *  the bodies come down in a different order; every write, every comparison and
+ *  every conflict copy is the one it always was. */
+export interface Waiting {
+  /** Every note a page of changes named, by the path it will have here, said
+   *  before a single body has been asked for. This is what lets the file list be
+   *  right within a second of signing in. */
+  listed?: (paths: string[]) => void
+  /** One note written, by the path it landed at. */
+  wrote?: (path: string) => void
+  /** Notes to fetch first, by their path in the space: the one somebody is looking
+   *  at, and the one they were looking at last. A page is a few hundred notes and
+   *  a slow connection is a body a second, so which end of it the open note is at
+   *  is the difference between reading it now and reading it in five minutes. */
+  wanted?: ReadonlySet<string>
+}
+
+/** Takes what the account has moved on to. Answers whether anything did. */
 export async function pull(
   mirror: Mirror,
   token: string,
   joined: Joined,
-  wrote?: () => void,
+  waiting?: Waiting,
 ): Promise<boolean> {
   // Read once: a rename lands in `renamed` while a pass is in the air, and a
   // pass that changed folder halfway would join the new root onto paths it
@@ -216,7 +254,16 @@ export async function pull(
     const page = await api.changes(token, mirror.spaceId, mirror.cursor)
     if (page.notes.length) moved = true
 
-    for (const remote of page.notes) {
+    // The names, at once. One page of changes is the whole listing of a space the
+    // account has and this machine has not, and it arrives a request in: the file
+    // list can be drawn from it while the bodies below take as long as they take.
+    waiting?.listed?.(
+      page.notes
+        .filter((one) => !one.deleted && placeable(one.path))
+        .map((one) => join(root, one.path)),
+    )
+
+    for (const remote of ordered(page.notes, waiting?.wanted)) {
       // A name that would land outside the space is left where it is; see
       // `placeable`.
       if (!placeable(remote.path)) continue
@@ -243,7 +290,7 @@ export async function pull(
       // space nothing has changed, without a body being fetched for any of it.
       if (local !== null && (await holdsSameWords(local, remote.hash))) {
         mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
-        wrote?.()
+        waiting?.wrote?.(target)
         continue
       }
 
@@ -282,13 +329,13 @@ export async function pull(
         // An empty hash guarantees the push below sends our copy, now based
         // on the version we just saw, so it lands as the newest one.
         mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
-        wrote?.()
+        waiting?.wrote?.(target)
         continue
       }
 
       await writeDown(target, content, local)
       mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
-      wrote?.()
+      waiting?.wrote?.(target)
     }
 
     // A page saying there is more that hands back the cursor it was given would

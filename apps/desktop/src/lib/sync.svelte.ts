@@ -12,7 +12,7 @@ import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
-import { type Mirror, newMirror, pull, push, readMirror, within } from './sync/mirror'
+import { type Mirror, newMirror, pull, push, readMirror, type Waiting, within } from './sync/mirror'
 import { workspace } from './workspace.svelte'
 
 export const STORAGE_KEY = 'nib:mirrors'
@@ -424,6 +424,37 @@ class Sync {
     return null
   }
 
+  /** What a pull over this space tells whoever is waiting on it, and what it
+   *  fetches first.
+   *
+   *  Three things, and all three are about the half minute a first sync takes on a
+   *  slow connection. The names go into the file list as soon as the page of
+   *  changes names them, so the list is right long before the writing is here. Each
+   *  body that lands takes its row out of that set and, if somebody has that note
+   *  open on the strength of the row, fills the tab in. And the notes on screen are
+   *  fetched before the rest, because a page is a few hundred notes and the one
+   *  being read should not be at the back of it.
+   *
+   *  The reading is the workspace's and the counting is `arriving`'s; this is the
+   *  wiring between them and the pass, which knows about neither. See
+   *  sync/mirror.ts. */
+  private waiting(mirror: Mirror): Waiting {
+    const open = new Set(
+      workspace.openNotes
+        .map((one) => within(mirror.root, one.path))
+        .filter((one): one is string => one !== null),
+    )
+
+    return {
+      listed: (paths) => arriving.listing(paths),
+      wrote: (path) => {
+        arriving.landed(path)
+        void workspace.arrived(path)
+      },
+      wanted: open,
+    }
+  }
+
   /** One full pass: take what the server has, then offer what we have.
    *  Answers whether anything actually moved, which is what paces the loop. */
   async run(): Promise<boolean> {
@@ -449,7 +480,7 @@ class Sync {
         // every note as deleted here, and delete them from the account.
         if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
 
-        if (await pull(mirror, token, joined, () => arriving.arrived())) {
+        if (await pull(mirror, token, joined, this.waiting(mirror))) {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
         }

@@ -1,9 +1,21 @@
 /** The browser's stand-in for a disk. Notes are rows keyed by path, so the same
  *  path-shaped commands the desktop app sends work unchanged. IndexedDB rather
- *  than localStorage: it holds megabytes, and it can hold images. */
+ *  than localStorage: it holds megabytes, and it can hold images.
+ *
+ *  A disk can be asked what it holds without being read; a store of rows cannot,
+ *  because a row comes back whole and a note's row is the note. Listing a space of
+ *  three thousand notes by reading every one of them is six megabytes of strings
+ *  built to answer a question about names, and it was the first thing the app did
+ *  on the way up. So the listing is kept apart: `stats` is one small row per path,
+ *  written with the file and read on its own, which is what makes the file list
+ *  cost the names and nothing else. See `tree` in commands.ts.
+ *
+ *  Keeping two stores in step is the price, and it is paid in one place: every
+ *  write below that touches a path touches its stat in the same transaction, so
+ *  the two cannot come apart even if the tab is closed mid-write. */
 
 const NAME = 'nib'
-const VERSION = 1
+const VERSION = 2
 
 export interface FileRow {
   path: string
@@ -27,6 +39,14 @@ export interface SnapshotRow {
   size: number
 }
 
+/** What a file list needs and nothing else: a path and its two times. The same
+ *  three fields the desktop's `read_tree` gets out of one `stat`. */
+export interface StatRow {
+  path: string
+  modified: number
+  created: number
+}
+
 let open: Promise<IDBDatabase> | null = null
 
 function database(): Promise<IDBDatabase> {
@@ -46,6 +66,16 @@ function database(): Promise<IDBDatabase> {
         const store = db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true })
         store.createIndex('notePath', 'notePath')
       }
+
+      if (!db.objectStoreNames.contains('stats')) {
+        db.createObjectStore('stats', { keyPath: 'path' })
+        // A device that already holds notes has its listing read out of them
+        // once, here, rather than every launch from now on. The upgrade owns
+        // every store, so the walk and the writes are one transaction: either
+        // this browser comes up with a listing or it comes up at version 1 and
+        // tries again next launch.
+        fillStats(request.transaction)
+      }
     }
 
     request.onsuccess = () => resolve(request.result)
@@ -53,6 +83,33 @@ function database(): Promise<IDBDatabase> {
   })
 
   return open
+}
+
+/** The listing, from the rows that were there before there was one. Runs inside
+ *  the version change, so it sees both stores and needs no promise of its own. */
+function fillStats(change: IDBTransaction | null) {
+  if (!change) return
+
+  const stats = change.objectStore('stats')
+
+  for (const name of ['files', 'assets'] as const) {
+    const cursor = change.objectStore(name).openCursor()
+    cursor.onsuccess = () => {
+      const at = cursor.result
+      if (!at) return
+
+      const row = at.value as FileRow | AssetRow
+      stats.put(statOf(row))
+      at.continue()
+    }
+  }
+}
+
+/** A row's listing. An asset has one time rather than two, and a file that was
+ *  never told when it was made is as old as its last write. */
+function statOf(row: FileRow | AssetRow): StatRow {
+  const created = 'created' in row ? row.created : row.modified
+  return { path: row.path, modified: row.modified, created }
 }
 
 function run<T>(
@@ -72,22 +129,30 @@ function run<T>(
   )
 }
 
-/** Several writes as one. IndexedDB commits a transaction when the last
- *  request in it settles, so the whole batch has to be queued together: this
- *  resolves on the transaction rather than on any one request, which is what
- *  makes "all of it, or none of it" true. */
-function batch(store: string, queue: (store: IDBObjectStore) => void): Promise<void> {
+/** Several writes as one, across however many stores they touch. IndexedDB
+ *  commits a transaction when the last request in it settles, so the whole batch
+ *  has to be queued together: this resolves on the transaction rather than on any
+ *  one request, which is what makes "all of it, or none of it" true.
+ *
+ *  Every write goes through here now that a file and its listing are two rows: a
+ *  note written without its stat is a note the file list cannot see. */
+function batch(
+  stores: readonly string[],
+  queue: (transaction: IDBTransaction) => void,
+): Promise<void> {
+  const named = stores.join(' and ')
+
   return database().then(
     (db) =>
       new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(store, 'readwrite')
+        const transaction = db.transaction([...stores], 'readwrite')
 
         transaction.oncomplete = () => resolve()
         transaction.onabort = () =>
-          reject(transaction.error ?? new Error(`${store} was rolled back`))
-        transaction.onerror = () => reject(transaction.error ?? new Error(`${store} failed`))
+          reject(transaction.error ?? new Error(`${named} was rolled back`))
+        transaction.onerror = () => reject(transaction.error ?? new Error(`${named} failed`))
 
-        queue(transaction.objectStore(store))
+        queue(transaction)
       }),
   )
 }
@@ -116,21 +181,46 @@ function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
   )
 }
 
+/** Both stores a path can live in, plus the listing they share. */
+const WITH_STATS = ['files', 'stats'] as const
+const ASSETS_WITH_STATS = ['assets', 'stats'] as const
+
 export const files = {
   get: (path: string) => run<FileRow | undefined>('files', 'readonly', (s) => s.get(path)),
   all: () => run<FileRow[]>('files', 'readonly', (s) => s.getAll()),
+  /** Every path, in path order, and not one body. What anything that only has to
+   *  know whether a name is taken asks for. */
+  paths: () => run<string[]>('files', 'readonly', (s) => s.getAllKeys()),
   each: (visit: (row: FileRow) => void) => walk('files', visit),
-  put: (row: FileRow) => run<IDBValidKey>('files', 'readwrite', (s) => s.put(row)),
-  remove: (path: string) => run<undefined>('files', 'readwrite', (s) => s.delete(path)),
+  put: (row: FileRow) =>
+    batch(WITH_STATS, (change) => {
+      change.objectStore('files').put(row)
+      change.objectStore('stats').put(statOf(row))
+    }),
+  remove: (path: string) =>
+    batch(WITH_STATS, (change) => {
+      change.objectStore('files').delete(path)
+      change.objectStore('stats').delete(path)
+    }),
   /** Writes `rows` and drops `gone`, all or nothing. What a rename is: every
    *  note under the folder lands under its new name at the same moment. */
   move: (rows: FileRow[], gone: string[]) =>
-    batch('files', (store) => {
-      for (const row of rows) store.put(row)
+    batch(WITH_STATS, (change) => {
+      const store = change.objectStore('files')
+      const listing = change.objectStore('stats')
+
+      for (const row of rows) {
+        store.put(row)
+        listing.put(statOf(row))
+      }
+
       // After the writes, so a path that is both written and dropped - a
       // rename that only changes a folder above it - keeps the new row.
       for (const path of gone) {
-        if (!rows.some((row) => row.path === path)) store.delete(path)
+        if (rows.some((row) => row.path === path)) continue
+
+        store.delete(path)
+        listing.delete(path)
       }
     }),
 }
@@ -138,8 +228,25 @@ export const files = {
 export const assets = {
   get: (path: string) => run<AssetRow | undefined>('assets', 'readonly', (s) => s.get(path)),
   all: () => run<AssetRow[]>('assets', 'readonly', (s) => s.getAll()),
-  put: (row: AssetRow) => run<IDBValidKey>('assets', 'readwrite', (s) => s.put(row)),
-  remove: (path: string) => run<undefined>('assets', 'readwrite', (s) => s.delete(path)),
+  /** Every path, and not one picture. A picture is a data URI in its row, so this
+   *  is the difference between listing the papers in a space and loading them. */
+  paths: () => run<string[]>('assets', 'readonly', (s) => s.getAllKeys()),
+  put: (row: AssetRow) =>
+    batch(ASSETS_WITH_STATS, (change) => {
+      change.objectStore('assets').put(row)
+      change.objectStore('stats').put(statOf(row))
+    }),
+  remove: (path: string) =>
+    batch(ASSETS_WITH_STATS, (change) => {
+      change.objectStore('assets').delete(path)
+      change.objectStore('stats').delete(path)
+    }),
+}
+
+/** The listing: one row per path, whichever store the file itself is in. Read as
+ *  a whole, because that is the one question it exists to answer. */
+export const stats = {
+  all: () => run<StatRow[]>('stats', 'readonly', (s) => s.getAll()),
 }
 
 export const meta = {

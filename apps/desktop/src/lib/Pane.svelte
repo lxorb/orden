@@ -391,6 +391,13 @@
     {#key tab.id}
       <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
     {/key}
+  {:else if tab?.coming}
+    <!-- A note whose row the account's first pass listed and whose words have not
+         come down yet. One line, in the middle of the space the note will fill: an
+         empty editor here would be something to type into, and typing into it would
+         be writing over the copy that is on its way. It fills itself in without
+         anybody asking again; see `arrived` in workspace.svelte.ts. -->
+    <div class="coming" role="status">{t('Loading…')}</div>
   {:else if tab?.reading}
     <!-- The note through the renderer. A tab keeps its own face, so the same note
          can be read here and written in next door. -->
@@ -475,6 +482,20 @@
     flex: 1;
     min-height: 0;
     display: flex;
+  }
+
+  /* A note still on its way: the quietest thing the app can put in a pane, in the
+     muted colour everything that is not the writing is drawn in. Centred, because
+     there is nothing here to read from the top. */
+  .coming {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    user-select: none;
   }
 
   /* Over the note while a tab is being dragged, so the drop lands here rather

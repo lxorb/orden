@@ -9,15 +9,26 @@
  *  the welcome note and an empty file list, and the honest reading of that is
  *  that the notes are gone.
  *
- *  So the app says so, over the whole surface, and does not let anybody type into
- *  a note that is half arrived. Every later pass stays quiet: the light is right
- *  for a pass nobody is waiting on, and a screen that greys itself out every few
- *  minutes would be worse than one that never did.
+ *  So the app says so. Over the whole surface for exactly as long as it has
+ *  nothing to say anything about, and no longer: the first thing the pass learns
+ *  is the *names* - the spaces and what is in them, one request each and no
+ *  bodies - so the file list can be right within a second of signing in while the
+ *  writing itself is still coming down behind it. A row whose body has not landed
+ *  is a row like any other; clicking it says so. What is left of the full-surface
+ *  state after that is a count in the panel's foot, which is what somebody who
+ *  can already see their notes actually wants to know.
+ *
+ *  Every later pass stays quiet: the light is right for a pass nobody is waiting
+ *  on, and a screen that greys itself out every few minutes would be worse than
+ *  one that never did.
  *
  *  What is not here: any decision about whether a pass is the first one. That
  *  belongs to the loop, which is the thing that knows; see sync.svelte.ts. This
  *  file only holds up the state it is told to hold up, counts, and makes sure
  *  nobody is ever stuck behind it. */
+
+import { SvelteSet } from 'svelte/reactivity'
+import { t } from './i18n.svelte'
 
 /** How long with nothing arriving before the way out is offered.
  *
@@ -40,7 +51,33 @@ class Arriving {
    *  while and this may not be a wait that ends. */
   stuck = $state(false)
 
+  /** Notes the account has named that this machine has not written yet, by the
+   *  path they will have here.
+   *
+   *  The file list draws them as rows, so a space is listed as soon as the pass
+   *  has its listing rather than once every body has come down; see `withComing`
+   *  in tree-edits.ts. A set, because a page of changes can name a note twice
+   *  over two passes and a row is a row either way. */
+  private readonly onTheWay = new SvelteSet<string>()
+
   private timer: ReturnType<typeof setTimeout> | null = null
+
+  /** What the pass has to say about itself, in as few words as it can. A count
+   *  once it knows one, and the app's own word for this until then: two things
+   *  saying one thing is one too many. */
+  readonly said = $derived(
+    this.total === null || this.total === 0
+      ? t('Syncing')
+      : t('{done} of {total}', {
+          done: Math.min(this.done, this.total),
+          total: this.total,
+        }),
+  )
+
+  /** Rows for notes whose bodies are still coming. */
+  get coming(): ReadonlySet<string> {
+    return this.onTheWay
+  }
 
   /** There is a session and nothing of this account's writing here yet. Raised
    *  before the pass has asked the account anything, because the asking is
@@ -50,7 +87,24 @@ class Arriving {
     this.total = null
     this.stuck = false
     this.showing = true
+    this.onTheWay.clear()
     this.wait()
+  }
+
+  /** Names the pass has read out of a page of changes, before it has fetched a
+   *  single body. Absolute paths, because that is what a row in the list is.
+   *
+   *  Kept whether or not the state is showing: a later pass bringing a note this
+   *  machine has never had is a row worth showing the same way, and it costs one
+   *  string until the body lands a moment later. */
+  listing(paths: readonly string[]) {
+    for (const path of paths) this.onTheWay.add(path)
+  }
+
+  /** One note written, by the path it landed at. Counted, and no longer coming. */
+  landed(path: string) {
+    this.onTheWay.delete(path)
+    this.arrived()
   }
 
   /** What the pass now knows it is bringing down. Nothing coming means nothing
@@ -95,6 +149,7 @@ class Arriving {
     this.finish()
     this.done = 0
     this.total = null
+    this.onTheWay.clear()
   }
 
   private finish() {

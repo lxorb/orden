@@ -20,6 +20,7 @@
 
 import { type IconNode, keyNamed, loadIcons, LUCIDE, shapeFor, type WrittenIcon } from './icons'
 import { type IconShape, type LoadedSet, setNamed } from './icon-sets'
+import { startup } from './startup.svelte'
 
 class IconLibrary {
   /** The sets that have arrived, by id. Empty until the first one does, which is
@@ -46,7 +47,14 @@ class IconLibrary {
    *
    *  A set this build has never heard of is not fetched and not remembered as
    *  asked: a file may name one a newer nib ships, and it should start working the
-   *  moment that nib is installed rather than after a restart. */
+   *  moment that nib is installed rather than after a restart.
+   *
+   *  Asked for, on the launch, after the file list is on screen. A set is a
+   *  fetch - a chunk this build carries, or a file off the network - and the first
+   *  screenful of rows asks for one the moment it is drawn, which put it in front
+   *  of the note somebody was waiting to read. The row shows its kind's own mark
+   *  until the set lands, which is what it does anyway for the second or two a set
+   *  takes; see FileMark.svelte and startup.svelte.ts. */
   load(id: string = LUCIDE) {
     if (this.asked.has(id)) return
 
@@ -55,19 +63,21 @@ class IconLibrary {
 
     this.asked.add(id)
 
-    void set
-      .load()
-      .then((held) => {
-        this.loaded = { ...this.loaded, [id]: held }
-      })
-      .catch(() => {
-        this.absent = { ...this.absent, [id]: true }
-      })
+    void startup.turn('icons').then(() => {
+      void set
+        .load()
+        .then((held) => {
+          this.loaded = { ...this.loaded, [id]: held }
+        })
+        .catch(() => {
+          this.absent = { ...this.absent, [id]: true }
+        })
 
-    // The stroked set is also held flat, under the library's own keys. Asked for
-    // again rather than derived from what arrived, because `loadIcons` answers with
-    // the one copy it already has: two asks, one fetch.
-    if (id === LUCIDE) void loadIcons().then((all) => (this.set = all))
+      // The stroked set is also held flat, under the library's own keys. Asked for
+      // again rather than derived from what arrived, because `loadIcons` answers
+      // with the one copy it already has: two asks, one fetch.
+      if (id === LUCIDE) void loadIcons().then((all) => (this.set = all))
+    })
   }
 
   /** Whether a set has been asked for, has not arrived, and still might. */

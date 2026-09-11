@@ -33,6 +33,8 @@ const fake = vi.hoisted(() => {
   const disk = new Map<string, string>()
   const remote = new Map<string, Remote>()
   const calls: string[] = []
+  /** Every note whose body the pass asked the account for, in the order it did. */
+  const fetched: string[] = []
   /** The version history, as the platforms keep it: every note's earlier words,
    *  oldest first, under the note they are versions of. What the sheet lists and
    *  what Restore puts back; see recovery.svelte.ts. */
@@ -137,6 +139,9 @@ const fake = vi.hoisted(() => {
     readNote: async (_token: string, id: string) => {
       const note = remote.get(id)
       if (!note) throw new Error('no such note')
+      // Kept apart from `calls`, which is what the writes are counted in: the
+      // order bodies are asked for in is its own question.
+      fetched.push(note.path)
       return { note: await present(note), content: note.content }
     },
     writeNote: async (_token: string, id: string, path: string, content: string) => {
@@ -198,10 +203,11 @@ const fake = vi.hoisted(() => {
     remote.clear()
     history.clear()
     calls.length = 0
+    fetched.length = 0
     seq = 0
   }
 
-  return { addRemote, api, calls, disk, editRemote, history, invoke, remote, reset }
+  return { addRemote, api, calls, disk, editRemote, fetched, history, invoke, remote, reset }
 })
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -562,5 +568,91 @@ describe('a note the mirror has no entry for', () => {
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what the room settled\n')
     // And the words it replaced are still a version.
     expect(versions('note.md')).toEqual(['what I wrote here\n'])
+  })
+})
+
+describe('a first pass, with somebody waiting on it', () => {
+  /** A space this machine has nothing of, the way a fresh sign-in finds one. */
+  function untouched(...names: string[]) {
+    for (const name of names) fake.addRemote(name, `# ${name}\n`)
+    return newMirror('s-one', ROOT)
+  }
+
+  test('reads out every name before it asks for a single body', async () => {
+    const said: string[][] = []
+    const fetchedWhen: number[] = []
+    const mirror = untouched('one.md', 'Work/two.md', 'three.md')
+
+    await pull(mirror, 'token', NOBODY, {
+      listed: (paths) => said.push(paths),
+      wrote: () => fetchedWhen.push(said.length),
+    })
+
+    // One listing, with all three in it, and nothing had landed by then.
+    expect(said).toEqual([[`${ROOT}/one.md`, `${ROOT}/Work/two.md`, `${ROOT}/three.md`]])
+    expect(fetchedWhen).toEqual([1, 1, 1])
+  })
+
+  test('leaves out a name that could not be placed in the folder', async () => {
+    const said: string[][] = []
+    fake.addRemote('../escape.md', 'nope\n')
+    const mirror = untouched('one.md')
+
+    await pull(mirror, 'token', NOBODY, { listed: (paths) => said.push(paths) })
+
+    // The same names the pass would write, and a name that climbs out of the space
+    // is not one of them; see `placeable`.
+    expect(said).toEqual([[`${ROOT}/one.md`]])
+  })
+
+  test('leaves out a name the account has deleted', async () => {
+    const said: string[][] = []
+    const id = fake.addRemote('gone.md', 'was here\n')
+    await fake.api.deleteNote('token', id)
+    const mirror = untouched('one.md')
+
+    await pull(mirror, 'token', NOBODY, { listed: (paths) => said.push(paths) })
+
+    expect(said.flat()).not.toContain(`${ROOT}/gone.md`)
+  })
+
+  test('says which path each body landed at', async () => {
+    const landed: string[] = []
+    const mirror = untouched('one.md', 'Work/two.md')
+
+    await pull(mirror, 'token', NOBODY, { wrote: (path) => landed.push(path) })
+
+    expect(landed.sort()).toEqual([`${ROOT}/Work/two.md`, `${ROOT}/one.md`])
+  })
+
+  test('fetches the note on screen first, whatever order the page came in', async () => {
+    const mirror = untouched('one.md', 'two.md', 'open.md', 'four.md')
+
+    await pull(mirror, 'token', NOBODY, { wanted: new Set(['open.md']) })
+
+    expect(fake.fetched[0]).toBe('open.md')
+    // And every other note still comes down, in the order the account sent them.
+    expect(fake.fetched).toEqual(['open.md', 'one.md', 'two.md', 'four.md'])
+  })
+
+  test('brings down the same words whichever end it starts from', async () => {
+    const wanted = untouched('one.md', 'two.md', 'three.md')
+    await pull(wanted, 'token', NOBODY, { wanted: new Set(['three.md']) })
+    const both = new Map(fake.disk)
+
+    fake.disk.clear()
+    const plain = newMirror('s-two', ROOT)
+    await pull(plain, 'token', NOBODY)
+
+    expect([...fake.disk.entries()].sort()).toEqual([...both.entries()].sort())
+  })
+
+  test('a page that names nothing says so once and nothing else', async () => {
+    const said: string[][] = []
+    const mirror = newMirror('s-one', ROOT)
+
+    await pull(mirror, 'token', NOBODY, { listed: (paths) => said.push(paths) })
+
+    expect(said).toEqual([[]])
   })
 })

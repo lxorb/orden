@@ -18,7 +18,7 @@ import {
   spaceOf,
   within,
 } from './paths'
-import { assets, files, KEEP, meta, snapshots } from './store'
+import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
 import { WELCOME, WELCOME_PATH } from '../welcome'
 
@@ -53,17 +53,16 @@ function sidecarOf(path: string): string {
   return `${normalise(path)}${SIDECAR}`
 }
 
-/** Builds the folder tree from the flat list of paths. */
+/** Builds the folder tree from the flat list of paths.
+ *
+ *  From the listing rather than from the notes, which is the whole of why the file
+ *  list is on screen before anything has been read: a space of three thousand
+ *  notes answers this in one small read instead of handing back three thousand
+ *  bodies to have their names taken off them. Notes and pictures alike, since a
+ *  path has one stat wherever the file itself lives. See web/store.ts. */
 async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
   const base = normalise(root)
-  // The notes live in one store and everything else in another, and the tree
-  // shows both kinds a tab can hold; see `listed` below.
-  const rows = [
-    ...(await files.all()).filter((row) => within(base, row.path)),
-    ...(await assets.all())
-      .filter((row) => within(base, row.path))
-      .map((row) => ({ path: row.path, modified: row.modified, created: row.modified })),
-  ]
+  const rows = (await stats.all()).filter((row) => within(base, row.path))
 
   const folders = new Map<string, Entry>()
   const make = (path: string): Entry => {
@@ -168,10 +167,10 @@ async function renameNote(from: string, to: string) {
 
 async function removeFolder(path: string) {
   const base = normalise(path)
-  const under = (row: { path: string }) => row.path === base || row.path.startsWith(`${base}/`)
+  const under = (one: string) => one === base || one.startsWith(`${base}/`)
 
-  for (const row of (await files.all()).filter(under)) await files.remove(row.path)
-  for (const row of (await assets.all()).filter(under)) await assets.remove(row.path)
+  for (const one of (await files.paths()).filter(under)) await files.remove(one)
+  for (const one of (await assets.paths()).filter(under)) await assets.remove(one)
 }
 
 /** The desktop's `remove_empty_folder`: gone only if nothing whatever is left
@@ -181,11 +180,11 @@ async function removeFolder(path: string) {
  *  refusal the desktop's `fs::remove_dir` makes for the same reason. */
 async function removeEmptyFolder(path: string) {
   const base = normalise(path)
-  const inside = (row: { path: string }) => row.path.startsWith(`${base}/`)
-  const rows = [...(await files.all()), ...(await assets.all())].filter(inside)
+  const inside = (one: string) => one.startsWith(`${base}/`)
+  const held = [...(await files.paths()), ...(await assets.paths())].filter(inside)
 
-  if (rows.some((row) => basename(row.path) !== KEEP)) return
-  for (const row of rows) await files.remove(row.path)
+  if (held.some((one) => basename(one) !== KEEP)) return
+  for (const one of held) await files.remove(one)
 }
 
 /** The files beside the notes, moved with them. A PDF is a row in the asset store
@@ -248,7 +247,7 @@ async function saveTrash(entries: TrashEntry[]) {
 
 async function occupied(path: string): Promise<boolean> {
   if (await files.get(path)) return true
-  return (await files.all()).some((row) => row.path.startsWith(`${path}/`))
+  return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
@@ -306,11 +305,13 @@ async function purgeTrash(id: string) {
 }
 
 async function spaceList() {
-  const rows = await files.all()
   const names = new Set<string>()
 
-  for (const row of rows) {
-    const space = spaceOf(row.path)
+  // Paths, because a space is a folder name: this is the first thing the app asks
+  // for on the way up and it used to hand back every note in the browser to find
+  // out how many folders there were.
+  for (const path of await files.paths()) {
+    const space = spaceOf(path)
     // A dot folder is the app's own, not a space: Recently deleted lives in one.
     if (space !== '/' && !basename(space).startsWith('.')) names.add(space)
   }
@@ -336,36 +337,53 @@ async function spaceTags(root: string) {
 }
 
 /** The browser's answer to the desktop's `scan_links`, which reads a whole space
- *  in one pass. Here the space is already in memory, so the pass is over rows
- *  rather than over files; each note is read by `scanNote`, which is also what
- *  the index uses for a note that has just been saved. */
+ *  in one pass. Here the space is a store of rows rather than a folder of files;
+ *  each note is read by `scanNote`, which is also what the index uses for a note
+ *  that has just been saved.
+ *
+ *  Row by row over a cursor rather than the whole store at once. Two reasons, and
+ *  the second is the one that shows: the space is never held twice over, and the
+ *  reading is spread across a callback per note instead of one long task, so the
+ *  scan of a few thousand notes no longer swallows the keystrokes of whoever is
+ *  typing in the note that is open while it runs. IndexedDB walks a cursor at the
+ *  pace the main thread can take it, which is exactly the pace wanted here.
+ *
+ *  Off the launch's critical path either way; see `build` in link-index.svelte.ts
+ *  and startup.svelte.ts. */
 async function scanLinks(root: string): Promise<SpaceLinks> {
   const base = normalise(root)
-  const rows = (await files.all()).filter((row) => within(base, row.path))
   const relative = (path: string) => path.slice(base === '/' ? 1 : base.length + 1)
 
-  const notes = rows
-    .filter((row) => isMarkdown(row.path) || isCanvas(row.path))
-    .sort((a, b) => (a.path < b.path ? -1 : 1))
+  const notes: SpaceLinks['notes'] = []
+  const beside: string[] = []
+
+  await files.each((row) => {
+    if (!within(base, row.path)) return
+
     // A canvas is read too, for the icon its `nib` key may carry: every row of
     // the tree wants that, and the desktop's `scan_links` reads it on the same
     // pass for the same reason.
-    .map((row) =>
-      isCanvas(row.path)
-        ? scanCanvas(relative(row.path), row.content)
-        : scanNote(relative(row.path), row.content),
-    )
+    if (isCanvas(row.path)) {
+      notes.push(scanCanvas(relative(row.path), row.content))
+      return
+    }
 
-  // Pictures live in their own store here, and a `.keep` is scaffolding rather
-  // than a file somebody put in the space.
-  const kept = rows.filter(
-    (row) => !isMarkdown(row.path) && basename(row.path) !== KEEP && !row.path.endsWith(SIDECAR),
-  )
-  const pictures = (await assets.all()).filter((row) => within(base, row.path))
+    if (isMarkdown(row.path)) {
+      notes.push(scanNote(relative(row.path), row.content))
+      return
+    }
+
+    // A `.keep` is scaffolding rather than a file somebody put in the space, and a
+    // PDF's highlights are part of the PDF.
+    if (basename(row.path) !== KEEP && !row.path.endsWith(SIDECAR)) beside.push(row.path)
+  })
+
+  // Pictures live in their own store here, and only their names are wanted.
+  const pictures = (await assets.paths()).filter((path) => within(base, path))
 
   return {
-    notes,
-    files: [...kept, ...pictures].map((row) => relative(row.path)).sort(),
+    notes: notes.sort((a, b) => (a.path < b.path ? -1 : 1)),
+    files: [...beside, ...pictures].map(relative).sort(),
   }
 }
 
@@ -692,7 +710,7 @@ export async function webInvoke<T>(
 
 /** True once anything has been written, so a first visit can be seeded. */
 async function hasContent(): Promise<boolean> {
-  return (await files.all()).length > 0
+  return (await files.paths()).length > 0
 }
 
 /** The welcome note, once per device.

@@ -1,11 +1,18 @@
 <script lang="ts">
-  /** The whole surface, while the account's writing is still on its way.
+  /** The whole surface, for as long as there is nothing of theirs to put on it.
    *
    *  A mark to say whose it is, the line the app already draws for work worth
    *  waiting on, and a count when the pass knows one. Nothing else: there is no
    *  sentence that would tell anybody more than the line already does, and the
    *  one thing they might want - out - only appears once waiting has stopped
    *  looking like it will end.
+   *
+   *  And only for that moment. A first sync used to hold this up for the whole half
+   *  minute it took to bring every note down; now the pass reads out the names
+   *  first, so within a second there is a file list to show and this comes down and
+   *  becomes a count in the panel's foot. Which means the test for it is not "is a
+   *  first pass running" but "is there anything here yet": a space, a listing, a
+   *  tree. Nothing at all is the one case worth a whole screen.
    *
    *  The state it draws is `arriving`, in arriving.svelte.ts. Named for the pass
    *  rather than for the state because a file called Arriving.svelte would be the
@@ -18,24 +25,19 @@
   import { t } from './i18n.svelte'
   import Sweep from './Sweep.svelte'
   import { dur } from './motion'
+  import { workspace } from './workspace.svelte'
 
   /** Whoever is here, in one letter. The name they chose or the front of their
    *  address, which is what everything else in the app calls them. */
   const initial = $derived((account.name ?? '?').trim().charAt(0).toUpperCase())
 
-  /** A count while the pass knows one, and the app's own word for this while it
-   *  does not. Never both: two things saying one thing is one too many. */
-  const said = $derived(
-    arriving.total === null || arriving.total === 0
-      ? t('Syncing')
-      : t('{done} of {total}', {
-          done: Math.min(arriving.done, arriving.total),
-          total: arriving.total,
-        }),
-  )
+  /** Whether there is nothing of theirs on screen at all yet; see
+   *  `nothingToShow` in workspace.svelte.ts, which is what App.svelte holds the
+   *  app inert on for exactly as long. */
+  const holding = $derived(workspace.nothingToShow)
 </script>
 
-{#if arriving.showing}
+{#if holding}
   <div class="arriving" transition:fade={{ duration: dur(190) }} role="status" aria-live="polite">
     <div class="mark">{initial}</div>
 
@@ -46,7 +48,7 @@
       <Sweep />
     </div>
 
-    <p class="said">{said}</p>
+    <p class="said">{arriving.said}</p>
 
     {#if arriving.stuck}
       <button

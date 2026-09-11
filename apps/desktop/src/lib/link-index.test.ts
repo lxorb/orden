@@ -92,6 +92,12 @@ vi.mock('./search/space', () => ({
 }))
 
 const { links } = await import('./link-index.svelte')
+const { startup } = await import('./startup.svelte')
+
+// A space is scanned once its file list is on screen, which is what the launch
+// says for itself; here it is said once so a scan is not waiting on a frame that
+// never comes. See startup.svelte.ts.
+void startup.shown()
 
 async function space(contents: Record<string, string>, others: string[] = []) {
   notes = { ...contents }

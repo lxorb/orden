@@ -344,6 +344,15 @@ export class Tab {
    *  this note - a note always opens for writing. */
   reading = $state(false)
 
+  /** Whether this tab is holding a place for a note whose words have not come
+   *  down yet: a row the account's first pass named and the pass has not fetched.
+   *
+   *  Per tab rather than per document, because it is about this view of it: the
+   *  pane draws the wait instead of an editor, so nobody types into an empty note
+   *  that is about to be filled in. Cleared when the body lands; see
+   *  `arrived` in workspace.svelte.ts. */
+  coming = $state(false)
+
   /** For a canvas: where the plane is being looked at from. Kept for this
    *  sitting only and not written into the session: a canvas opens framed on
    *  what it holds, which is the right place to start from, and where somebody

@@ -20,6 +20,12 @@ vi.mock('./store', () => ({
   files: {
     get: (path: string) => Promise.resolve(disk.files.get(path)),
     all: () => Promise.resolve([...disk.files.values()]),
+    paths: () => Promise.resolve([...disk.files.keys()].sort()),
+    each: (visit: (row: FileRow) => void) => {
+      // In key order, which is what a cursor over the real store gives.
+      for (const path of [...disk.files.keys()].sort()) visit(disk.files.get(path)!)
+      return Promise.resolve()
+    },
     put: (row: FileRow) => Promise.resolve(void disk.files.set(row.path, row)),
     remove: (path: string) => Promise.resolve(void disk.files.delete(path)),
     // The real one is a single transaction; here it is a single statement,
@@ -35,8 +41,27 @@ vi.mock('./store', () => ({
   assets: {
     get: (path: string) => Promise.resolve(disk.assets.get(path)),
     all: () => Promise.resolve([...disk.assets.values()]),
+    paths: () => Promise.resolve([...disk.assets.keys()].sort()),
     put: (row: AssetRow) => Promise.resolve(void disk.assets.set(row.path, row)),
     remove: (path: string) => Promise.resolve(void disk.assets.delete(path)),
+  },
+  // Derived from the two maps rather than kept beside them, which is the
+  // invariant the real store pays a transaction to hold: a path's listing says
+  // what the file at that path says, always.
+  stats: {
+    all: () =>
+      Promise.resolve([
+        ...[...disk.files.values()].map((row) => ({
+          path: row.path,
+          modified: row.modified,
+          created: row.created,
+        })),
+        ...[...disk.assets.values()].map((row) => ({
+          path: row.path,
+          modified: row.modified,
+          created: row.modified,
+        })),
+      ]),
   },
   meta: {
     get: (key: string) => Promise.resolve(disk.meta.get(key)),

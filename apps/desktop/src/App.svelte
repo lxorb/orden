@@ -42,6 +42,7 @@
   import { settings } from './lib/settings.svelte'
   import { canWriteAt, share } from './lib/sharing.svelte'
   import { start } from './lib/start'
+  import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'
   import StatusBar from './lib/StatusBar.svelte'
   import Titlebar from './lib/Titlebar.svelte'
@@ -261,10 +262,14 @@
   // and what the account holds for each are both things the app already knows, so
   // this is the whole of the wiring: no call site has to remember to join or to
   // leave. See rooms.svelte.ts.
+  // Last of the things a launch does, because it is the only one of them nobody is
+  // looking at: a socket per open note, opened into a window that is already being
+  // read and written in. See startup.svelte.ts for the order and why.
   $effect(() => {
-    const open = account.syncable
-      ? workspace.openNotes.map((one) => ({ ...one, tracked: sync.tracked(one.path) }))
-      : []
+    const open =
+      account.syncable && startup.reached('rooms')
+        ? workspace.openNotes.map((one) => ({ ...one, tracked: sync.tracked(one.path) }))
+        : []
 
     rooms.follow(
       open
@@ -493,7 +498,7 @@
      the same line. -->
 <!-- Nothing in the app is reachable while the account's writing is still on
      its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
-<main class:focus={modes.focus} class:full={fullscreen.on} inert={arriving.showing}>
+<main class:focus={modes.focus} class:full={fullscreen.on} inert={workspace.nothingToShow}>
   <div class="middle" bind:this={middle}>
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on

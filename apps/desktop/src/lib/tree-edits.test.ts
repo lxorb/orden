@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Entry, TreeOptions } from './workspace.svelte'
-import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
+import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 
 const BY_NAME: TreeOptions = { showHidden: false, sort: 'name', descending: false }
 
@@ -148,5 +148,59 @@ describe('finding a row', () => {
     expect(entryAt(root(), '/N/Deep/inner.md')?.path).toBe('/N/Deep/inner.md')
     expect(entryAt(root(), '/N/nope.md')).toBeNull()
     expect(entryAt(null, '/N/a.md')).toBeNull()
+  })
+})
+
+describe('rows for notes the account has named and not sent yet', () => {
+  test('land beside the ones already listed', () => {
+    expect(shape(withComing(root(), ['/N/b.md', '/N/d.md'], BY_NAME))).toEqual([
+      '/N/Deep',
+      '/N/Deep/inner.md',
+      '/N/a.md',
+      '/N/b.md',
+      '/N/c.md',
+      '/N/d.md',
+    ])
+  })
+
+  test('bring their folders with them, however deep', () => {
+    expect(shape(withComing(root(), ['/N/Work/Q3/plan.md'], BY_NAME))).toEqual([
+      '/N/Deep',
+      '/N/Deep/inner.md',
+      '/N/Work',
+      '/N/Work/Q3',
+      '/N/Work/Q3/plan.md',
+      '/N/a.md',
+      '/N/c.md',
+    ])
+  })
+
+  test('go into a folder that is already there rather than beside it', () => {
+    expect(shape(withComing(root(), ['/N/Deep/other.md'], BY_NAME))).toEqual([
+      '/N/Deep',
+      '/N/Deep/inner.md',
+      '/N/Deep/other.md',
+      '/N/a.md',
+      '/N/c.md',
+    ])
+  })
+
+  test('a note that has landed already is left exactly as it is', () => {
+    expect(shape(withComing(root(), ['/N/a.md'], BY_NAME))).toEqual(shape(root()))
+  })
+
+  test('a path in another space is not a row in this one', () => {
+    expect(shape(withComing(root(), ['/Other/a.md'], BY_NAME))).toEqual(shape(root()))
+  })
+
+  test('nothing coming leaves the listing alone', () => {
+    expect(withComing(root(), [], BY_NAME)).toEqual(root())
+  })
+
+  test('the same listing lands the same way whatever order it arrives in', () => {
+    const one = withComing(root(), ['/N/z.md', '/N/Work/b.md', '/N/b.md'], BY_NAME)
+    const other = withComing(root(), ['/N/b.md', '/N/Work/b.md', '/N/z.md'], BY_NAME)
+
+    expect(shape(one)).toEqual(shape(other))
   })
 })

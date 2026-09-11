@@ -1,5 +1,6 @@
 import { flushTableEdits, type FoldLines, type NoteJump, sameFolds } from '@nib/editor'
 import { account } from './account.svelte'
+import { arriving } from './arriving.svelte'
 import { blankCanvas } from './canvas/format'
 import { blockIds, isCanvasTarget, isPdfTarget, isTabFile } from '@nib/markdown/links'
 import { taskAt } from '@nib/markdown/tasks'
@@ -19,6 +20,7 @@ import { without } from './records'
 import type { Change } from './search/apply'
 import { lineStarts } from './search/match'
 import { within } from './sync/mirror'
+import { startup } from './startup.svelte'
 import { isRecord, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
 import {
@@ -53,7 +55,7 @@ import { type FileAction, FileActions } from './workspace/undo.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import { folderNote, noteToNest, unnesting } from './folder-notes'
-import { entryAt, withEntry, withMove, withoutEntry } from './tree-edits'
+import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
 
@@ -427,6 +429,30 @@ class Workspace {
    *  on; neither is a note to write in. */
   readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
 
+  /** The tree as the file list draws it: what is on disk, plus a row for every
+   *  note the account has named and the pass has not fetched yet.
+   *
+   *  Two values rather than one, because the difference matters everywhere else.
+   *  `tree` is the disk, and it is what a push reads, what a search walks, what a
+   *  rename edits and what says whether a space is empty: a row for a file that is
+   *  not there yet would be a lie to every one of them. This one is only ever
+   *  drawn. See `withComing` in tree-edits.ts and arriving.svelte.ts. */
+  readonly shownTree = $derived.by((): Entry | null => {
+    if (!this.tree || !arriving.coming.size) return this.tree
+    return withComing(this.tree, [...arriving.coming], this.treeOptions)
+  })
+
+  /** Whether an account's first pass is running and there is still nothing of
+   *  theirs on screen: no space, no listing, no tree.
+   *
+   *  The one moment that is worth taking the whole surface for, and the test for
+   *  it is here because this is what knows. Any one of the three is a file list,
+   *  and a file list means the pass belongs in the panel's foot as a count rather
+   *  than over everything. See FirstSync.svelte and arriving.svelte.ts. */
+  readonly nothingToShow = $derived(
+    arriving.showing && !this.spaces.length && !this.tree && !arriving.coming.size,
+  )
+
   async restore() {
     // The browser build starts empty, so give a first visit something to read.
     //
@@ -448,6 +474,9 @@ class Workspace {
       await this.loadSpaces()
       if (this.activeSpaceId) await this.loadTree()
 
+      // The list is on screen before a body is read; see startup.svelte.ts.
+      await startup.shown()
+
       // A first visit opens what it was given rather than a blank page.
       const first = this.files[0]
       if (first) await this.openEntry(first.path)
@@ -466,6 +495,15 @@ class Workspace {
     await this.loadSpaces()
 
     if (this.activeSpaceId) await this.loadTree()
+
+    // The one line in the launch that matters most. Everything above is a folder
+    // listing and a string of settings; everything below reads a note - the open
+    // one, and on a slow disk several of them - and awaiting it in the same run of
+    // microtasks is what used to keep the file list off the screen until the last
+    // of them came back. The frame goes out here instead, with the tree in it, and
+    // the notes are read into a window somebody can already see and scroll. See
+    // startup.svelte.ts, which also starts the queue behind this.
+    await startup.shown()
 
     if (state.layout) await this.applyLayout(state.layout)
     else if (state.tabs?.length) await this.restoreStrip(state.tabs, state.active ?? 0)
@@ -1367,6 +1405,30 @@ class Workspace {
     }
 
     const doc = await invoke<string>('read_note', { path }).catch(() => null)
+
+    // A row the first pass has named whose body has not come down yet. It opens,
+    // because a row that does nothing when it is clicked reads as broken, and it
+    // opens saying what it is waiting for rather than as an empty note: an empty
+    // note is something to type into, and typing into this one would be writing
+    // over the copy on its way. See `arrived`, which finishes it.
+    if (doc === null && arriving.coming.has(path)) {
+      const waiting = this.document({
+        kind: 'note',
+        path,
+        name: basename(path),
+        text: '',
+        dirty: false,
+      })
+      const tab = new Tab(waiting, this.panes.focusedId)
+      tab.coming = true
+      this.add(tab, options.activate !== false)
+
+      if (options.activate !== false) this.showNote()
+      this.dropScaffolding(tab)
+      this.persist()
+      return
+    }
+
     // Gone, or unreadable: nothing to open, and no tab that pretends otherwise.
     if (doc === null) return
 
@@ -2798,6 +2860,23 @@ class Workspace {
 
   /** Text written to a note from outside the editor, put into the document if it
    *  is open, which puts it into every pane showing it. */
+  /** A note the first pass has just written, by the path it landed at.
+   *
+   *  A tab that was holding its place takes the words and becomes an ordinary
+   *  note. Only that case: a note already open with words of its own is the
+   *  syncing loop's business and is settled by the mirror rather than here. See
+   *  `pull` in sync/mirror.ts, which says when each body lands. */
+  async arrived(path: string) {
+    const waiting = this.tabs.filter((tab) => tab.coming && tab.path === path)
+    if (!waiting.length) return
+
+    const content = await invoke<string>('read_note', { path }).catch(() => null)
+    if (content === null) return
+
+    this.reload(path, content)
+    for (const tab of waiting) tab.coming = false
+  }
+
   private reload(path: string, content: string) {
     this.documents.find((one) => one.path === path)?.replace(content, false)
   }

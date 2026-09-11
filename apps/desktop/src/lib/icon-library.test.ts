@@ -43,9 +43,18 @@ vi.mock('./icons', async (importOriginal) => ({
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
+const { startup } = await import('./startup.svelte')
 
-/** Waits for the loads in flight, which are promises rather than anything to poll. */
-const settled = () => new Promise((done) => setTimeout(done, 0))
+// A set is fetched once the file list is on screen, so the launch says so here
+// before anything asks for one; see startup.svelte.ts.
+void startup.shown()
+
+/** Waits for the loads in flight, which are promises rather than anything to poll.
+ *  The startup queue hands out its turns one macrotask at a time, so this waits out
+ *  a handful of them rather than one. */
+const settled = async () => {
+  for (let round = 0; round < 8; round++) await new Promise((done) => setTimeout(done, 0))
+}
 
 describe('asking for a set', () => {
   test('fetches it once however often it is asked for', async () => {

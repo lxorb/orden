@@ -15,6 +15,7 @@
   import { movesInto } from './move-targets'
   import { FILES_MARK, GRAPH_MARK, LINKS_MARK, OUTLINE_MARK, SEARCH_MARK } from './panel-marks'
   import { newSpace } from './space-actions'
+  import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
@@ -100,6 +101,10 @@
    *  two views of the same setting. See workspace/graph-settings.svelte.ts. */
   let graphing = $state(false)
   const depth = $derived(workspace.graphSettings.here.depth)
+
+  /** What the file list draws: the listing off the disk with the rows an account's
+   *  first pass has named grafted into it. See `shownTree` in workspace.svelte.ts. */
+  const listing = $derived(workspace.shownTree)
 
   /** Right-clicking the Files tab is where a file list keeps its sorting. */
   function sortMenu(): MenuEntry[] {
@@ -552,18 +557,23 @@
           {/if}
 
           {#if workspace.panel === 'tree'}
-            {#if workspace.tree}
+            {#if listing}
               <Bookmarks onsearch={runBookmarked} />
 
               <!-- A word in capitals over each group, the way every list worth
                reading is cut up; see docs/design.md. -->
               <p class="nib-section">{t('Files')}</p>
 
-              <Tree entries={workspace.tree.children} />
+              <!-- The listing plus a row for every note an account's first pass has
+                   named and not fetched yet, which is what makes a fresh sign-in a
+                   file list rather than a wait; see `shownTree` in
+                   workspace.svelte.ts. -->
+              <Tree entries={listing.children} />
 
               <!-- A space with nothing in it says what to do about it. Folders can
-             still be there, which is why this counts files and not rows. -->
-              {#if !workspace.files.length}
+             still be there, which is why this counts files and not rows. Nor is a
+             space with notes on their way an empty one. -->
+              {#if !workspace.files.length && !arriving.coming.size}
                 <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
                 >
               {/if}

@@ -11,8 +11,11 @@
    *  One component on every device. A drawer is the sidebar, so a phone gets
    *  this row at the bottom of the drawer, clear of the gesture bar, and it is
    *  the same three controls in the same order. */
+  import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
+  import { arriving } from './arriving.svelte'
   import { initial } from './icons'
+  import { dur } from './motion'
   import { settings } from './settings.svelte'
   import { sync } from './sync.svelte'
   import { t } from './i18n.svelte'
@@ -62,6 +65,16 @@
     </span>
     <span class="nib-row-label">{who ?? t('Sign in')}</span>
   </button>
+
+  <!-- What an account's first pass has left to bring down, while it has any. The
+       list above is already right - the names arrive a request in - so this is the
+       whole of what is left to say, and it says it here instead of over the app.
+       It goes as soon as the pass does. See arriving.svelte.ts. -->
+  {#if arriving.showing}
+    <span class="coming" transition:fade={{ duration: dur(160) }} role="status" aria-live="polite">
+      {arriving.said}
+    </span>
+  {/if}
 
   <div class="acts">
     <!-- Off while the theme in force has only the one scheme: there is no other
@@ -192,6 +205,20 @@
     50% {
       opacity: 0.85;
     }
+  }
+
+  /* The count, between the name and the switches: quieter than either, in the
+     tabular figures every number in the app is set in so the width does not
+     flicker as it counts. It takes no room when it is not there, which is nearly
+     always. */
+  .coming {
+    flex: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
   }
 
   .acts {

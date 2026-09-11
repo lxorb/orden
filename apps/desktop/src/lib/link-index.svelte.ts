@@ -38,6 +38,7 @@ import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
 import { scanCanvas, type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
+import { startup } from './startup.svelte'
 import {
   folderOf,
   insideSpace,
@@ -133,10 +134,25 @@ class Links {
   )
 
   /** Reads a whole space. Called when a space opens; everything after that is
-   *  `noteSaved`. */
+   *  `noteSaved`.
+   *
+   *  It waits for the file list to be on screen first. This is the one thing in
+   *  the app that reads every body there is, and a space of a few thousand notes
+   *  is a second of disk on a desktop and several on a phone: started in the same
+   *  breath as the listing, it was a second of the launch spent on the panel
+   *  nobody had asked for yet, competing with the one read that was in anybody's
+   *  way - the open note's. The space it is of is written down at once, though, so
+   *  a second space opening while this is still queued still cancels it, and the
+   *  panel can say it is scanning rather than showing an empty list as an answer.
+   *
+   *  Rows go up without their chosen icons and take them when this lands; see
+   *  `icons` below and chosen-icon.ts. See startup.svelte.ts for the order. */
   async build(root: string) {
     this.root = root
     this.scanning = true
+
+    await startup.turn('index')
+    if (this.root !== root) return
 
     const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
 

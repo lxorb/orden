@@ -92,6 +92,53 @@ function rebased(entry: Entry, from: string, to: string): Entry {
   }
 }
 
+/** The rows for notes the account has named and this machine has not written yet.
+ *
+ *  The same idea as everything above, over a longer wait: a first sync knows every
+ *  note's *name* one request in and spends the next half minute fetching bodies,
+ *  so the list is drawn from the names and the rows fill in behind them. A row
+ *  here is a row like any other - it is the file that is coming, not the row - and
+ *  the folders above it are made as well, since a note the account keeps two
+ *  folders deep has neither of them on this disk yet.
+ *
+ *  Sorted before they go in, so the same listing lands the same way twice. No time
+ *  on them: a file that is not here has no age, and the listing that follows
+ *  brings the real one.
+ *
+ *  A path the listing already holds is left alone, which is what makes this safe
+ *  to apply to every pass rather than only the first. */
+export function withComing(tree: Entry, paths: readonly string[], options: TreeOptions): Entry {
+  let out = tree
+
+  for (const path of [...paths].sort()) {
+    if (!path.startsWith(`${tree.path === '/' ? '' : tree.path}/`)) continue
+    if (entryAt(out, path)) continue
+
+    out = withFolders(out, folderOf(path), options)
+    out = withEntry(out, blank(path, false), options)
+  }
+
+  return out
+}
+
+/** The folder at `path`, and every folder above it the listing has none for. */
+function withFolders(tree: Entry, path: string, options: TreeOptions): Entry {
+  if (!path || path === tree.path || entryAt(tree, path)) return tree
+
+  return withEntry(withFolders(tree, folderOf(path), options), blank(path, true), options)
+}
+
+function blank(path: string, isFolder: boolean): Entry {
+  return {
+    name: basename(path),
+    path,
+    is_dir: isFolder,
+    modified: 0,
+    created: 0,
+    children: [],
+  }
+}
+
 /** A note or folder under its new name, or in its new folder. */
 export function withMove(tree: Entry, from: string, to: string, options: TreeOptions): Entry {
   const entry = entryAt(tree, from)

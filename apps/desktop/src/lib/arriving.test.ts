@@ -126,6 +126,87 @@ describe('the way out', () => {
   })
 })
 
+describe('the names, before the writing', () => {
+  test('a listing puts rows on the tree without a body between them', () => {
+    arriving.begin()
+    arriving.listing(['/space/one.md', '/space/Work/two.md'])
+
+    expect([...arriving.coming]).toEqual(['/space/one.md', '/space/Work/two.md'])
+  })
+
+  test('a note that lands takes its row and is counted', () => {
+    arriving.begin()
+    arriving.expect(2)
+    arriving.listing(['/space/one.md', '/space/two.md'])
+    arriving.landed('/space/one.md')
+
+    expect([...arriving.coming]).toEqual(['/space/two.md'])
+    expect(arriving.done).toBe(1)
+  })
+
+  test('a note named twice is one row', () => {
+    arriving.begin()
+    arriving.listing(['/space/one.md'])
+    arriving.listing(['/space/one.md', '/space/two.md'])
+
+    expect(arriving.coming.size).toBe(2)
+  })
+
+  test('rows outlive the state that was waiting on them', () => {
+    arriving.begin()
+    arriving.expect(2)
+    arriving.listing(['/space/one.md', '/space/two.md'])
+    arriving.settled()
+
+    // The pass ended and the count went; what has not landed is still coming, and
+    // the rows for it stay on the tree until it does.
+    expect(arriving.showing).toBe(false)
+    expect(arriving.coming.size).toBe(2)
+  })
+
+  test('a later pass bringing a new note lists it too', () => {
+    arriving.listing(['/space/late.md'])
+
+    expect([...arriving.coming]).toEqual(['/space/late.md'])
+    // And says nothing: a pass nobody is waiting on is the sync light's business.
+    expect(arriving.showing).toBe(false)
+  })
+
+  test('signing out forgets what was on its way', () => {
+    arriving.begin()
+    arriving.listing(['/space/one.md'])
+    arriving.reset()
+
+    expect(arriving.coming.size).toBe(0)
+  })
+})
+
+describe('what the pass says about itself', () => {
+  test('a word while the number is unknown', () => {
+    arriving.begin()
+
+    expect(arriving.said).toBe('Syncing')
+  })
+
+  test('the count once it has one', () => {
+    arriving.begin()
+    arriving.expect(340)
+    arriving.listing(['/space/one.md'])
+    arriving.landed('/space/one.md')
+
+    expect(arriving.said).toBe('1 of 340')
+  })
+
+  test('never more than it set out to bring', () => {
+    arriving.begin()
+    arriving.expect(1)
+    arriving.arrived()
+    arriving.arrived()
+
+    expect(arriving.said).toBe('1 of 1')
+  })
+})
+
 describe('signing out', () => {
   test('takes the state down and forgets the count', () => {
     arriving.begin()
