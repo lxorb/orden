@@ -15,7 +15,7 @@
    *  the arrows, the sizes, the time being scrubbed to - changes only what is
    *  painted, and costs one frame however many notes there are. */
 
-  import { onDestroy } from 'svelte'
+  import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
   import type { NoteGraph } from './graph'
   import { graphFilter, type Keeps } from './graph-filter'
@@ -84,6 +84,11 @@
   let colours: GraphColours | null = null
   let width = 0
   let height = 0
+  /** How many of the screen's pixels one of the page's is worth. Read when the
+   *  surface is sized, since that is what it is sized by, and handed to the drawing:
+   *  a link is a hairline in the screen's pixels rather than in the page's, and the
+   *  difference is sixty frames a second against two. See EDGE_PIXELS. */
+  let ratio = 1
   let hovered = -1
 
   let frame = 0
@@ -117,11 +122,14 @@
 
   const settings = $derived(workspace.graphSettings.here)
 
+  /** What the filter reads, as the reader wrote it. Its own step, so the predicate
+   *  below is built again when the words change rather than every time anything
+   *  about the picture does. */
+  const asked = $derived(whole ? settings.filter.trim() : '')
+
   /** What the filter keeps, compiled once per query rather than per note. Only the
    *  whole space's picture has one. */
-  const filter = $derived<Keeps | null>(
-    whole && settings.filter.trim() ? graphFilter(parseQuery(settings.filter)) : null,
-  )
+  const filter = $derived<Keeps | null>(asked ? graphFilter(parseQuery(asked)) : null)
 
   /** Each colour group as the colour it paints, counting from zero, and what it
    *  keeps. A note is in the first group that keeps it, so two overlapping queries
@@ -188,18 +196,32 @@
     current === null ? -1 : graph.nodes.findIndex((node) => node.id === current),
   )
 
+  /** What the arrangement is of: the graph itself, and the two forces that decide
+   *  where a note goes.
+   *
+   *  As one string, and that is the point of it. The settings are one object behind
+   *  one getter, so reading `spread` off it makes the effect that reads it follow
+   *  every setting there is - and an effect that laid five thousand notes out again
+   *  because an arrowhead was switched on is four seconds of the picture unforming
+   *  and forming. A derived that answers the same string wakes nothing. */
+  const arrangedBy = $derived([settings.spread, settings.gather, shape].join('\n'))
+
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   // A different graph is a different arrangement, framed afresh. The same graph
   // handed over again is not, so the view stays where the reader left it. And the
-  // two forces are here rather than below because they are the only things the
+  // two forces are in the string it follows because they are the only things the
   // reader can ask for that change where a note goes.
   $effect(() => {
-    follows(shape)
-    follows(settings.spread)
-    follows(settings.gather)
-    rebuild()
+    follows(arrangedBy)
+    // Untracked, and that is the whole of the guard: `rebuild` reads the graph and
+    // both forces itself, so an effect that simply called it would follow every one
+    // of them - the graph is handed over afresh whenever anything in the space is
+    // saved, and the settings are one object, so a note being written or an
+    // arrowhead being switched on would each lay five thousand notes out again. The
+    // string above is what says the arrangement is really a different one.
+    untrack(rebuild)
   })
 
   // What is shown, what colour it is, and how big. None of these move anything, so
@@ -212,7 +234,16 @@
     follows(settings.sized)
     follows(madeAt)
     follows(at)
-    remask()
+    // Untracked for the reason above: what this follows is the list written out
+    // here, not everything one pass over five thousand notes happens to read.
+    untrack(remask)
+    schedule()
+  })
+
+  // An arrowhead changes what is drawn and nothing else, so it asks for a frame and
+  // nothing more.
+  $effect(() => {
+    follows(settings.arrows)
     schedule()
   })
 
@@ -299,6 +330,22 @@
       }
       tint[one] = colour
     }
+
+    // A note the space does not hold is a hole rather than a note, and a hole
+    // belongs to whatever asks for it: it is shown where something asking is shown
+    // and nowhere else. So it answers to its neighbours rather than to the filter -
+    // it has no name worth filtering and no tags at all, and a filter that took
+    // every hole out of the picture would be a picture that could never say what
+    // these notes are missing. Without this, a filter and a time being played each
+    // leave hollow rings standing on their own.
+    for (let one = 0; one < count; one++) {
+      if (graph.nodes[one]?.path === null) hiding[one] = 0
+    }
+
+    for (const edge of graph.edges) {
+      if (graph.nodes[edge.a]?.path === null && hiding[edge.b]) hiding[edge.a] = 1
+      if (graph.nodes[edge.b]?.path === null && hiding[edge.a]) hiding[edge.b] = 1
+    }
   }
 
   /** Puts the whole graph in view. */
@@ -313,7 +360,7 @@
     if (!element || !surface) return
 
     const box = element.getBoundingClientRect()
-    const ratio = window.devicePixelRatio || 1
+    ratio = window.devicePixelRatio || 1
     const next = { width: Math.round(box.width), height: Math.round(box.height) }
     if (!next.width || !next.height) return
 
@@ -451,6 +498,7 @@
       shown: hiding,
       tint,
       arrows: settings.arrows,
+      ratio,
     })
   }
 

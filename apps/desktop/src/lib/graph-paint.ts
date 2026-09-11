@@ -44,8 +44,23 @@ const LABELS_FULL = 0.85
 const MOST_LABELS = 400
 
 const LABEL_SIZE = 11
-const EDGE_WIDTH = 1
-const LIT_EDGE_WIDTH = 1.6
+
+/** How wide a link is drawn, in the screen's own pixels rather than in the page's.
+ *
+ *  A link is a hairline, and a hairline is one pixel of the screen: at one device
+ *  pixel Skia strokes a line by walking it, and above that it tessellates the
+ *  stroke into geometry and hands it to the card as a shape. The difference is not
+ *  a few per cent. Measured on a space of five thousand notes and ten thousand
+ *  links, on a screen at two device pixels to the page's one: 617 ms a frame at one
+ *  page pixel, 17 ms at one device pixel. Two frames a second against sixty, for a
+ *  line half a pixel thinner on a dense screen - and thinner is what a picture of
+ *  ten thousand links wants anyway. See test/e2e/graph.py, which is where those
+ *  numbers come from and what measures them again.
+ *
+ *  The lit ones are the handful around whatever the pointer is on, so they can
+ *  afford to be twice as wide and say so. */
+const EDGE_PIXELS = 1
+const LIT_EDGE_PIXELS = 2
 
 /** How close the view has to be before arrowheads are worth drawing. Further out
  *  than this they are a smudge at the end of a line, and ten thousand smudges are
@@ -103,13 +118,19 @@ export interface GraphView {
   tint: Int8Array
   /** Whether a link is drawn with a head saying which note reached for which. */
   arrows: boolean
+  /** How many of the screen's pixels one of the page's is worth, which is what the
+   *  context has been scaled by. The line widths are stated in the screen's; see
+   *  `EDGE_PIXELS`. */
+  ratio: number
 }
 
 /** One pass over the graph, into as few drawing calls as it takes. */
 export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   const { graph, x, y, radii, camera, width, height, colours, current, hovered, lit } = view
-  const { shown, tint, arrows } = view
+  const { shown, tint, arrows, ratio } = view
   const highlighting = hovered >= 0
+  /** One pixel of the screen, in the units everything here is drawn in. */
+  const hair = 1 / Math.max(1, ratio)
 
   const scale = camera.scale
   const offsetX = width / 2 - camera.x * scale
@@ -150,7 +171,7 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
     }
   }
 
-  context.lineWidth = EDGE_WIDTH
+  context.lineWidth = EDGE_PIXELS * hair
   context.strokeStyle = colours.edge
   context.globalAlpha = highlighting ? DIMMED : 1
   context.stroke(edges)
@@ -160,7 +181,7 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   }
 
   if (highlighting) {
-    context.lineWidth = LIT_EDGE_WIDTH
+    context.lineWidth = LIT_EDGE_PIXELS * hair
     context.strokeStyle = colours.litEdge
     context.globalAlpha = 1
     context.stroke(litEdges)
@@ -225,14 +246,14 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   context.globalAlpha = highlighting ? DIMMED : 1
   fill(context, plain, colours.node)
   fill(context, here, colours.current)
-  outline(context, hollow, colours.hollow)
+  outline(context, hollow, colours.hollow, hair)
   fillGroups(context, grouped, colours.groups)
 
   if (highlighting) {
     context.globalAlpha = 1
     fill(context, litPlain, colours.node)
     fill(context, litHere, colours.current)
-    outline(context, litHollow, colours.hollow)
+    outline(context, litHollow, colours.hollow, hair)
     fillGroups(context, litGrouped, colours.groups)
   }
 
@@ -245,7 +266,7 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
 
     context.globalAlpha = highlighting && lit[current] === 0 ? DIMMED : 1
     context.strokeStyle = colours.current
-    context.lineWidth = 1.2
+    context.lineWidth = Math.max(1.2, LIT_EDGE_PIXELS * hair)
     context.beginPath()
     context.arc(px, py, radius + 3.5, 0, Math.PI * 2)
     context.stroke()
@@ -317,8 +338,13 @@ function head(path: Path2D, ax: number, ay: number, bx: number, by: number, radi
 
 /** A note the space does not hold is a ring rather than a dot, the same "there is
  *  nothing here yet" the dotted link in the text says. */
-function outline(context: CanvasRenderingContext2D, path: Path2D, colour: string) {
+function outline(
+  context: CanvasRenderingContext2D,
+  path: Path2D,
+  colour: string,
+  hair: number,
+) {
   context.strokeStyle = colour
-  context.lineWidth = 1
+  context.lineWidth = EDGE_PIXELS * hair
   context.stroke(path)
 }
