@@ -47,7 +47,10 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
   const found: Source[] = []
 
   for (const one of picked) {
-    const path = tidyPath(one.webkitRelativePath || one.name)
+    // The relative path when the browser gave one, and the bare name when it
+    // gave an empty string, which is what a single picked file has.
+    const inside = (one.webkitRelativePath ?? '').trim()
+    const path = tidyPath(inside.length ? inside : one.name)
     const bytes = new Uint8Array(await one.arrayBuffer())
     found.push(...(await expand(path, bytes, 0)))
   }
@@ -61,6 +64,11 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
  *  showing up in the space. */
 async function expand(path: string, bytes: Uint8Array, depth: number): Promise<Source[]> {
   if (depth >= DEEPEST || !isZip(path, bytes)) return [sourceOf(path, bytes)]
+
+  // The glasses plugin offers no import, and this is what keeps the zip library
+  // out of its package: said as a throw rather than a guard so the bundler drops
+  // the line under it. See vite.even.config.ts and diagrams.ts.
+  if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
 
   const { default: JSZip } = await import('jszip')
   const zip = await JSZip.loadAsync(bytes)
@@ -119,6 +127,3 @@ export function tidyPath(path: string): string {
 export function tooMuch(bytes: number): boolean {
   return bytes > MOST_BYTES
 }
-
-/** The most bytes an import will read, for the sheet to say. */
-export const READ_LIMIT = MOST_BYTES

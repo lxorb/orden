@@ -16,7 +16,7 @@ import { ExportFiles, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
 /** What a note's file says, once the format has had a look at it. */
-export interface Written {
+interface Written {
   text: string
   /** The title, for a note whose file name is not it. Null leaves the words as
    *  they are, which is right for a format that already writes its own heading. */
@@ -24,7 +24,7 @@ export interface Written {
   meta?: Meta
 }
 
-export interface Placement {
+interface Placement {
   /** Where it goes inside the import, or null to leave it out. */
   to: string | null
   /** How the file's text becomes a note. Left out for a file that is copied as

@@ -12,6 +12,7 @@
   import History from './lib/History.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
   import IconPicker from './lib/IconPicker.svelte'
+  import ImportSheet from './lib/ImportSheet.svelte'
   import { menu } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import Palette from './lib/Palette.svelte'
@@ -651,6 +652,7 @@
 <History bind:open={settings.historyOpen} />
 <ShareSheet />
 <PublishSheet />
+<ImportSheet />
 <PromptSheet />
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet

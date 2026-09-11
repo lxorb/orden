@@ -985,4 +985,61 @@ export const fr: Dictionary = {
   Unstable: 'Instable',
   'Stable follows the official releases, Unstable every push to main and can break.':
     'Stable suit les versions officielles, Instable chaque push sur main et peut casser.',
+  // Bringing notes in from another app: the sheet, what it says, and the
+  // conversion of another app’s spellings.
+  Import: 'Importer',
+  'Convert syntax': 'Convertir la syntaxe',
+  'In this note': 'Dans cette note',
+  'In the whole space': 'Dans tout l’espace',
+  'Nothing here needs converting.': 'Rien à convertir ici.',
+  'Rewrite {count} things?': 'Réécrire {count} éléments ?',
+  'In {count} notes.': 'Dans {count} notes.',
+  Rewrite: 'Réécrire',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} passages sont chiffrés et illisibles sans Evernote',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} notes avaient un rappel, absent de l’export',
+  '{count} notes were in the bin and stay there':
+    '{count} notes étaient à la corbeille et y restent',
+  '{count} archived notes are in a folder called Archive':
+    '{count} notes archivées sont dans un dossier nommé Archive',
+  'The colours a note had are not kept': 'Les couleurs d’une note ne sont pas conservées',
+  '{count} block references were written out as the words they pointed at':
+    '{count} références de bloc ont été remplacées par le texte visé',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} vues enregistrées sont omises ; le tableau contient toutes les lignes',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} pages sont arrivées en HTML : le texte reste, la mise en forme non',
+  'There are no rows in this file.': 'Ce fichier ne contient aucune ligne.',
+  'Nothing in there can be read as notes.': 'Rien là-dedans ne se lit comme des notes.',
+  'That export could not be read.': 'Cet export n’a pas pu être lu.',
+  'That export is too big to read in one go.': 'Cet export est trop gros pour être lu d’un coup.',
+  'Import into': 'Importer dans',
+  'That import could not be written.': 'Cet import n’a pas pu être écrit.',
+  '{count} files': '{count} fichiers',
+  '{count} folders': '{count} dossiers',
+  'This space': 'Cet espace',
+  'Drop an export here': 'Déposez un export ici',
+  'A zip, a folder, or a file another app wrote':
+    'Un zip, un dossier ou un fichier écrit par une autre application',
+  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
+    'Apple Notes et Apple Journal gardent leurs notes là où elles seules peuvent les ouvrir. Exportez-les d’abord, puis importez le résultat.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Pandoc lit celui-ci, depuis le fichier sur votre disque.',
+  'Read it with pandoc': 'Lire avec pandoc',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Seul pandoc lit celui-ci, et il n’est pas installé sur cette machine.',
+  Rows: 'Lignes',
+  'As a table': 'En tableau',
+  'One note per row': 'Une note par ligne',
+  Into: 'Dans',
+  'In a folder called': 'Dans un dossier nommé',
+  'Worth knowing': 'À savoir',
+  '{count} notes arrived.': '{count} notes sont arrivées.',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} noms étaient pris, ces fichiers se sont décalés.',
+  'A table': 'Un tableau',
+  'Markdown files': 'Fichiers Markdown',
+  'A document': 'Un document',
+  'Undo the import': 'Annuler l’import',
 }

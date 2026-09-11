@@ -1,0 +1,190 @@
+/** Which app an export came out of, and reading it.
+ *
+ *  Nobody is asked to pick a format. A reader who exported their notes yesterday
+ *  knows what they exported; what they have in front of them is a file, and every
+ *  one of these formats says what it is if you look. So the sheet looks, names
+ *  what it found, and shows what it is about to make.
+ *
+ *  The order below is the order of certainty: a `.enex` can only be Evernote, a
+ *  32-character id on every file name can only be Notion, and a folder of
+ *  markdown is what is left when nothing more specific fits. */
+
+import type { FormatId, ImportPlan } from './plan'
+import type { Source } from './sources'
+import { hasNotionId } from './names'
+import type { Rows } from './table'
+
+/** How many files are opened to work out what an export is. Enough to be sure,
+ *  few enough that a zip of six thousand notes is not unpacked to answer it. */
+const PEEK = 20
+
+/** What pandoc reads and nothing here does. Only offered where pandoc is
+ *  installed, which the sheet knows and this does not. */
+const PANDOC = /\.(docx|odt|rtf|epub|rst|textile|tex|opml|org|docbook|fb2)$/i
+
+export async function detect(sources: readonly Source[]): Promise<FormatId | null> {
+  if (!sources.length) return null
+
+  const paths = sources.map((one) => one.path)
+  const has = (pattern: RegExp) => paths.some((one) => pattern.test(one))
+
+  if (has(/\.enex$/i)) return 'evernote'
+  if (has(/\.note$/i)) return 'tomboy'
+
+  const bundle = await bundleWriter(sources)
+  if (bundle) return bundle
+
+  // Takeout names the folder, and a Keep note says what it is even loose.
+  if (has(/(^|\/)Keep\//i)) return 'keep'
+
+  const json = await jsonKind(sources)
+  if (json) return json
+
+  if (has(/^(journals|pages|logseq)\//i) || has(/\/(journals|pages)\//i)) return 'logseq'
+  if (paths.some((one) => hasNotionId(one.split('/').pop() ?? one))) return 'notion'
+
+  const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
+  const html = paths.filter((one) => /\.html?$/i.test(one))
+  const csv = paths.filter((one) => /\.csv$/i.test(one))
+
+  if (csv.length && !markdown.length && !html.length) return 'table'
+
+  if (markdown.length) return (await looksLikeBear(sources)) ? 'bear' : 'markdown'
+  if (html.length) return (await looksLikeOneNote(sources)) ? 'onenote' : 'markdown'
+  if (has(PANDOC)) return 'pandoc'
+
+  return null
+}
+
+/** What wrote a TextBundle, which the bundle itself says. */
+async function bundleWriter(sources: readonly Source[]): Promise<FormatId | null> {
+  const info = sources.find((one) => /\.textbundle\/info\.json$/i.test(one.path))
+  if (!info) return null
+
+  const said = (await info.text()).toLowerCase()
+  if (said.includes('shinyfrog')) return 'bear'
+  if (said.includes('lukilabs')) return 'craft'
+
+  // A bundle from somewhere else is still a folder of markdown, which is read.
+  return 'markdown'
+}
+
+/** Whether the JSON in here is a Roam graph, a Keep note, or neither. */
+async function jsonKind(sources: readonly Source[]): Promise<FormatId | null> {
+  const jsons = sources.filter((one) => /\.json$/i.test(one.path)).slice(0, PEEK)
+
+  for (const one of jsons) {
+    let said: unknown
+    try {
+      said = JSON.parse(await one.text())
+    } catch {
+      continue
+    }
+
+    if (Array.isArray(said)) {
+      const pages: unknown[] = said
+      const page = pages.find((entry) => !!entry && typeof entry === 'object')
+      if (page && 'title' in page && 'children' in page) return 'roam'
+      continue
+    }
+
+    if (said && typeof said === 'object') {
+      const note = said as Record<string, unknown>
+      const keep =
+        'textContent' in note ||
+        'listContent' in note ||
+        'isTrashed' in note ||
+        'isArchived' in note
+      if (keep) return 'keep'
+    }
+  }
+
+  return null
+}
+
+/** Bear's closed tags, which nothing else writes: `#two words#`. One is enough to
+ *  say where a folder of markdown came from, and the only difference it makes is
+ *  that those tags are tidied. */
+async function looksLikeBear(sources: readonly Source[]): Promise<boolean> {
+  const notes = sources.filter((one) => /\.(md|markdown)$/i.test(one.path)).slice(0, PEEK)
+
+  for (const note of notes) {
+    if (/(^|[\s(])#[^#\s][^#\n]{0,60}#/m.test(await note.text())) return true
+  }
+
+  return false
+}
+
+/** OneNote says so in the HTML it writes. */
+async function looksLikeOneNote(sources: readonly Source[]): Promise<boolean> {
+  const pages = sources.filter((one) => /\.html?$/i.test(one.path)).slice(0, PEEK)
+
+  for (const page of pages) {
+    if (/content="Microsoft OneNote/i.test((await page.text()).slice(0, 4000))) return true
+  }
+
+  return false
+}
+
+export interface ReadOptions {
+  /** What a bare table becomes, which is the one thing the sheet asks. */
+  rows?: Rows
+}
+
+/** The plan for these files, read as this format. */
+export async function readAs(
+  format: FormatId,
+  sources: readonly Source[],
+  options: ReadOptions = {},
+): Promise<ImportPlan> {
+  // The glasses plugin offers no import, and this is what keeps every reader and
+  // the HTML converter out of its package: said as a throw rather than a guard so
+  // the bundler drops what is under it. See vite.even.config.ts.
+  if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
+
+  switch (format) {
+    case 'notion': {
+      const { readNotion } = await import('./notion')
+      return readNotion(sources)
+    }
+    case 'evernote': {
+      const { readEvernote } = await import('./evernote')
+      return readEvernote(sources)
+    }
+    case 'keep': {
+      const { readKeep } = await import('./keep')
+      return readKeep(sources)
+    }
+    case 'bear': {
+      const { readBear } = await import('./bear')
+      return readBear(sources)
+    }
+    case 'logseq': {
+      const { readLogseq } = await import('./logseq')
+      return readLogseq(sources)
+    }
+    case 'roam': {
+      const { readRoam } = await import('./roam')
+      return readRoam(sources)
+    }
+    case 'table': {
+      const { readTable } = await import('./table')
+      return readTable(sources, options.rows ?? 'table')
+    }
+    case 'tomboy': {
+      const { readTomboy } = await import('./tomboy')
+      return readTomboy(sources)
+    }
+    case 'craft':
+    case 'onenote':
+    case 'markdown': {
+      const { readPlain } = await import('./plain')
+      return readPlain(sources, { format })
+    }
+    case 'pandoc': {
+      // Pandoc is a program on the machine rather than a reader in here, and the
+      // sheet sends those files straight to it.
+      return { format, files: [], lost: [] }
+    }
+  }
+}

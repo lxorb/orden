@@ -46,8 +46,9 @@ export function md5(bytes: Uint8Array): string {
 
     for (let step = 0; step < 64; step += 1) {
       const round = step >> 4
-      let mixed = 0
-      let at = 0
+      // Assigned by every branch below, which is what the four rounds are.
+      let mixed: number
+      let at: number
 
       switch (round) {
         case 0:

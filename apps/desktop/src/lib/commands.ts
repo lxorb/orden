@@ -225,25 +225,30 @@ export function exportCommands(): Command[] {
   return commands
 }
 
-/** Reading another kind of document in as a note: Word, ODT, ePub, LaTeX and the
- *  rest, through pandoc, which is what reads them.
+/** Notes from another app, and documents of every other kind: one row, which
+ *  opens the import sheet.
  *
- *  A row in File rather than in Export, because importing makes a note of its own
+ *  A row in File rather than in Export, because importing makes notes of its own
  *  and has nothing to do with what is open - it belongs beside Open file, which is
- *  the other way a document that is not yet a note becomes one. Null on a machine
- *  with no pandoc: a row that cannot work is not a row. */
+ *  the other way a document that is not yet a note becomes one.
+ *
+ *  Always there, on every platform. What can be read is a question about the file
+ *  the reader is holding, and the sheet answers it once the file is in; a row that
+ *  appears only where pandoc happens to be installed answers it before they have
+ *  even said what they have. */
 export function importCommand(): Command | null {
-  if (!settings.pandoc) return null
+  // Not in the plugin, which has no file to be given and nowhere to pick one
+  // from. Answered before anything else so the bundler takes the whole of the
+  // import with it: the readers, the zip library and the HTML converter. See
+  // vite.even.config.ts.
+  if (__EVEN_PLUGIN__) return null
 
   return {
     id: 'import',
-    label: t('Import a document'),
-    run: () =>
-      busy.start(t('Importing'), async () => {
-        const m = await import('./export')
-        const imported = await m.importDocument()
-        if (imported) workspace.openBlank(imported.name, imported.markdown)
-      }),
+    label: t('Import'),
+    run: () => {
+      void import('./importing.svelte').then(({ importing }) => importing.show())
+    },
   }
 }
 
@@ -666,6 +671,11 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void openFile(),
     },
     ...(imported ? [imported] : []),
+    {
+      id: 'convert-syntax',
+      label: t('Convert syntax'),
+      run: () => void import('./convert-syntax').then((m) => m.convertSyntax()),
+    },
     ...(canPrint
       ? [
           {

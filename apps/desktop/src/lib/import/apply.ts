@@ -1,0 +1,188 @@
+/** Writing an import, through the same road every other file in the app takes.
+ *
+ *  `write_note` for a note and `write_bytes` for anything else: the two commands
+ *  saving and pasting already use, so sync sees the files, the link index sees
+ *  them, version history has them, and the file list has the rows before the
+ *  sheet is closed. Nothing here writes to disk itself and nothing here knows
+ *  whether the app is on a desktop, in a browser or on a phone.
+ *
+ *  Two rules about names, both of which the sheet has already said out loud:
+ *
+ *  Nothing is written over. A name that is taken steps aside the way a new note's
+ *  does - `Plan 2.md` - and the links inside the import follow it, so an import
+ *  that landed beside notes of the same name still points at its own notes rather
+ *  than at the ones that were already there.
+ *
+ *  The whole import is one thing to undo. However many thousand files it wrote,
+ *  what somebody did was import once. */
+
+import { links } from '../link-index.svelte'
+import { folderOf, relativePath } from '../space-paths'
+import { invoke, joinPath } from '../tauri'
+import { toBase64 } from '../bytes'
+import { workspace } from '../workspace.svelte'
+
+import type { ImportPlan, Planned } from './plan'
+
+/** Where an import lands: a space, and a folder inside it. */
+export interface ImportTarget {
+  /** The space's root, as the platform spells paths. */
+  root: string
+  /** The folder inside the space, `/`-separated, or the empty string for the
+   *  space itself. */
+  folder: string
+}
+
+export interface Landed {
+  /** What was written, as the platform spells paths. */
+  paths: string[]
+  /** How many names had to step aside because something was already there. */
+  stepped: number
+}
+
+export interface Writing {
+  /** Called after each file, so the sheet can say how far along it is. */
+  onWritten?: (done: number, total: number) => void
+}
+
+export async function applyImport(
+  plan: ImportPlan,
+  target: ImportTarget,
+  options: Writing = {},
+): Promise<Landed> {
+  const stamped = restamped(plan, takenIn(target), target.folder)
+  const paths: string[] = []
+  let done = 0
+
+  for (const file of stamped.files) {
+    const path = joinPath(target.root, file.path)
+
+    if (file.kind === 'note') {
+      await invoke('write_note', { path, content: file.text })
+      links.noteSaved(path, file.text)
+    } else {
+      await invoke('write_bytes', { path, base64: toBase64(file.bytes) })
+    }
+
+    paths.push(path)
+    done += 1
+    options.onWritten?.(done, stamped.files.length)
+  }
+
+  if (paths.length) {
+    workspace.undone.record({ kind: 'import', paths })
+    await workspace.loadTree()
+    const { sync } = await import('../sync.svelte')
+    sync.nudge()
+  }
+
+  return { paths, stepped: stamped.stepped }
+}
+
+/** Every path the space already holds, lowercased, so a name that is taken can be
+ *  recognised however it is spelled. */
+function takenIn(target: ImportTarget): Set<string> {
+  const taken = new Set<string>()
+  const root = target.root
+
+  for (const entry of workspace.files) {
+    if (!entry.path.startsWith(root)) continue
+    taken.add(
+      entry.path
+        .slice(root.length)
+        .replace(/^[\\/]+/, '')
+        .replace(/\\/g, '/')
+        .toLowerCase(),
+    )
+  }
+
+  return taken
+}
+
+/** The plan with its paths inside the target folder, nothing landing on a name
+ *  that is taken, and every link inside the import pointing at where its target
+ *  actually went. */
+export function restamped(
+  plan: ImportPlan,
+  taken: ReadonlySet<string>,
+  folder: string,
+): { files: Planned[]; stepped: number } {
+  const under = folder.replace(/^\/+|\/+$/g, '')
+  // Lowercased on the way in, because two names that differ only in case are one
+  // name on Windows and on a Mac.
+  const held = new Set([...taken].map((one) => one.toLowerCase()))
+  const moved = new Map<string, string>()
+  const placed: { file: Planned; was: string; now: string }[] = []
+
+  for (const file of plan.files) {
+    const wanted = under ? `${under}/${file.path}` : file.path
+    const free = freePath(wanted, held)
+    held.add(free.toLowerCase())
+
+    if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
+    placed.push({ file, was: file.path, now: free })
+  }
+
+  const files = placed.map(({ file, was, now }) => {
+    if (file.kind === 'file') return { ...file, path: now }
+    const text = moved.size ? followed(file.text, was, moved) : file.text
+    return { ...file, path: now, text }
+  })
+
+  return { files, stepped: moved.size }
+}
+
+/** A free path, stepped the way a new note's name is stepped. */
+function freePath(wanted: string, held: ReadonlySet<string>): string {
+  if (!held.has(wanted.toLowerCase())) return wanted
+
+  const at = wanted.lastIndexOf('.')
+  const slash = wanted.lastIndexOf('/')
+  const dotted = at > slash + 1
+  const stem = dotted ? wanted.slice(0, at) : wanted
+  const extension = dotted ? wanted.slice(at) : ''
+
+  for (let step = 2; ; step += 1) {
+    const next = `${stem} ${step}${extension}`
+    if (!held.has(next.toLowerCase())) return next
+  }
+}
+
+/** A note's links, pointing at where the import's own files ended up.
+ *
+ *  Only what moved is touched, and it is touched in the two spellings the import
+ *  wrote: a note by its name in a wikilink, and a file by the path from this
+ *  note's own folder. */
+function followed(text: string, was: string, moved: ReadonlyMap<string, string>): string {
+  let said = text
+
+  for (const [from, to] of moved) {
+    if (isNote(from)) {
+      const before = nameOf(from)
+      const after = nameOf(to)
+      if (before === after) continue
+
+      said = said.replaceAll(`[[${before}]]`, `[[${after}]]`)
+      said = said.replaceAll(`[[${before}|`, `[[${after}|`)
+      said = said.replaceAll(`[[${before}#`, `[[${after}#`)
+      continue
+    }
+
+    const here = folderOf(was)
+    const before = relativePath(here, from).replace(/ /g, '%20')
+    const after = relativePath(here, to).replace(/ /g, '%20')
+    if (before === after) continue
+
+    said = said.replaceAll(`](${before})`, `](${after})`)
+  }
+
+  return said
+}
+
+function isNote(path: string): boolean {
+  return /\.(md|markdown)$/i.test(path)
+}
+
+function nameOf(path: string): string {
+  return (path.split('/').pop() ?? path).replace(/\.(md|markdown)$/i, '')
+}

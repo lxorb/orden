@@ -95,7 +95,11 @@ describe('File', () => {
     expect(row?.disabled).toBe(true)
   })
 
-  test('leaves Import out where there is no pandoc to import with', () => {
+  /** It used to be offered only where pandoc was installed, which answered
+   *  "can this be read" before the reader had said what they had. The sheet asks
+   *  for the file first and answers it afterwards, so the row is always here. */
+  test('offers Import wherever it runs', () => {
+    expect(labels('file')).toContain('Import')
     expect(labels('file')).not.toContain('Import a document')
   })
 })

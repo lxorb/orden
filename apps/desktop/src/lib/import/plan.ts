@@ -89,8 +89,3 @@ function everyFolder(folder: string): string[] {
   const parts = folder.split('/')
   return parts.map((_part, index) => parts.slice(0, index + 1).join('/'))
 }
-
-/** An empty plan, which is what a file nothing can read answers with. */
-export function nothingToImport(format: FormatId): ImportPlan {
-  return { format, files: [], lost: [] }
-}

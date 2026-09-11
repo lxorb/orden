@@ -24,7 +24,7 @@ function file(path: string, body: string): Source {
 
 function noteAt(plan: ImportPlan, path: string): string {
   const found = plan.files.find((one) => one.path === path)
-  if (!found || found.kind !== 'note') throw new Error(`no note at ${path}`)
+  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
   return found.text
 }
 

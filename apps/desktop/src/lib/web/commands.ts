@@ -1,6 +1,7 @@
 /** The desktop app's command surface, served from the browser's own storage.
  *  Same names, same shapes - so every call site works on both. */
 
+import { mimeOf } from '../export/copy'
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { scanCanvas, scanNote, type SpaceLinks } from '../scan-note'
@@ -585,6 +586,19 @@ export async function webInvoke<T>(
 
     case 'write_note':
       await writeNote(path, args.content as string)
+      return undefined as T
+
+    case 'write_bytes':
+      // A file whose path the caller chose, which is what an import's pictures
+      // and papers are. `save_asset` below is the same write with the app's own
+      // naming rule in front of it, for a picture that was pasted rather than
+      // brought along.
+      await assets.put({
+        path: normalise(path),
+        type: mimeOf(path),
+        data: args.base64 as string,
+        modified: now(),
+      })
       return undefined as T
 
     case 'delete_note':

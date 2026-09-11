@@ -30,6 +30,11 @@ export type FileAction =
    *  words it had and the edits that put them back, so a note open in a pane
    *  gets its old words the way it got the new ones and keeps its caret. */
   | { kind: 'replace'; notes: { path: string; content: string; edits: Edit[] }[] }
+  /** An import. However many files it wrote, what somebody did was import once,
+   *  so it is one thing to take back. The paths alone: undoing is removing files
+   *  that were not there a minute ago, and a file nobody has touched yet needs no
+   *  snapshot kept of it. */
+  | { kind: 'import'; paths: string[] }
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
@@ -92,6 +97,8 @@ export class FileActions {
         return t('Undo extracting from {name}', { name: basename(action.from) })
       case 'replace':
         return t('Undo the replacement')
+      case 'import':
+        return t('Undo the import')
     }
   }
 }

@@ -2873,6 +2873,9 @@ class Workspace {
         case 'replace':
           await this.putWordsBack(action)
           break
+        case 'import':
+          await this.unimport(action)
+          break
       }
     } catch {
       // Something else has since changed the file; leave what is there alone.
@@ -2884,6 +2887,28 @@ class Workspace {
     this.undone.drop()
     await this.loadTree()
     this.persist()
+  }
+
+  /** An import taken back: the files it wrote, gone again.
+   *
+   *  Outright rather than into the trash. What an import wrote was never a note
+   *  anybody kept, and putting three thousand rows into Recently deleted would
+   *  bury whatever is actually in there. A tab that is open on one of them is
+   *  closed, the way a deleted note's is.
+   *
+   *  A file that will not go is stepped over rather than stopping the undo: the
+   *  rest of the import still goes, and what is left is what somebody has since
+   *  taken an interest in. */
+  private async unimport(action: Extract<FileAction, { kind: 'import' }>) {
+    for (const path of action.paths) {
+      const gone = await invoke('delete_note', { path })
+        .then(() => true)
+        .catch(() => false)
+      if (!gone) continue
+
+      for (const tab of this.tabs.filter((entry) => entry.path === path)) this.close(tab.id)
+      links.noteGone(path)
+    }
   }
 
   /** A deleted note back where it was. Out of the device's trash when it went

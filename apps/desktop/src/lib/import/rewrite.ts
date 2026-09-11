@@ -70,7 +70,9 @@ export function rewriteLinks(text: string, at: Rewriting, find: Resolver): strin
     return `${bang}[${label}](${encodeTarget(path)}${title})`
   })
 
-  return linked.replace(WIKILINK, (whole, target: string, shown: string) => {
+  // `shown` is the second group, which a link with no `|` in it does not have: the
+  // replacer is handed `undefined` there whatever the types say.
+  return linked.replace(WIKILINK, (whole, target: string, shown: string | undefined) => {
     const found = find(decoded(target.trim()), at.was)
     if (!found) return whole
     return `${whole.startsWith('!') ? '!' : ''}[[${found.name}${shown ?? ''}]]`
@@ -97,7 +99,7 @@ function isAddress(target: string): boolean {
 /** A path out of what a link wrote, with the percent encoding every exporter
  *  uses for spaces undone. A target that is not valid encoding is its own
  *  answer rather than an error. */
-export function decoded(target: string): string {
+function decoded(target: string): string {
   try {
     return decodeURIComponent(target)
   } catch {

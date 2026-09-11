@@ -982,4 +982,61 @@ export const gsw: Dictionary = {
   Unstable: 'Instabil',
   'Stable follows the official releases, Unstable every push to main and can break.':
     'Stabil folgt de offizielle Releases, Instabil jedem Push uf main und cha kaputt gaa.',
+  // Bringing notes in from another app: the sheet, what it says, and the
+  // conversion of another app’s spellings.
+  Import: 'Importiere',
+  'Convert syntax': 'Syntax umschriibe',
+  'In this note': 'I dere Notiz',
+  'In the whole space': 'Im ganze Bereich',
+  'Nothing here needs converting.': 'Da mues nüt umgschribe werde.',
+  'Rewrite {count} things?': '{count} Stelle umschriibe?',
+  'In {count} notes.': 'I {count} Notize.',
+  Rewrite: 'Umschriibe',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} Abschnitt sind verschlüsslet und ohni Evernote nöd läsbar',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} Notize hend en Erinnerig gha, wo im Export nöd drin isch',
+  '{count} notes were in the bin and stay there':
+    '{count} Notize sind im Papierchorb und bliibed det',
+  '{count} archived notes are in a folder called Archive':
+    '{count} archivierti Notize sind imene Ordner namens Archive',
+  'The colours a note had are not kept': 'D Farbe vo de Notize werded nöd übernoh',
+  '{count} block references were written out as the words they pointed at':
+    '{count} Blockverwiis sind as de Text gschribe worde, wo si zeigt hend',
+  '{count} saved views are left out, and every row is in the table':
+    '{count} gspeicherti Aasichte fähled; i de Tabelle sind alli Ziile',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} Siite sind as HTML cho: de Text bliibt, s Ussehe nöd',
+  'There are no rows in this file.': 'I dere Datei git s kei Ziile.',
+  'Nothing in there can be read as notes.': 'Da dinne findt sich kei Notize.',
+  'That export could not be read.': 'Dä Export het sich nöd läse laa.',
+  'That export is too big to read in one go.': 'Dä Export isch z gross zum uf eimal läse.',
+  'Import into': 'Importiere uf',
+  'That import could not be written.': 'Dä Import het sich nöd schriibe laa.',
+  '{count} files': '{count} Dateie',
+  '{count} folders': '{count} Ordner',
+  'This space': 'Dä Bereich',
+  'Drop an export here': 'Export do häre zieh',
+  'A zip, a folder, or a file another app wrote':
+    'Es ZIP, en Ordner oder e Datei us ere andere App',
+  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
+    'Apple Notize und Apple Journal halted ihri Notize det, wo nur si sälber chönd ufmache. Zerscht dete exportiere, denn das da importiere.',
+  'Pandoc reads this one, from the file on your disk.':
+    'Das liist pandoc, grad vo de Datei uf de Festplatte.',
+  'Read it with pandoc': 'Mit pandoc läse',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'Das liist nur pandoc, und pandoc isch da nöd installiert.',
+  Rows: 'Ziile',
+  'As a table': 'As Tabelle',
+  'One note per row': 'Ei Notiz pro Ziile',
+  Into: 'Ziil',
+  'In a folder called': 'Imene Ordner namens',
+  'Worth knowing': 'Guet zum wüsse',
+  '{count} notes arrived.': '{count} Notize sind acho.',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} Näme sind bsetzt gsi, die Dateie sind uusgwiche.',
+  'A table': 'E Tabelle',
+  'Markdown files': 'Markdown-Dateie',
+  'A document': 'Es Dokumänt',
+  'Undo the import': 'Import zrugnäh',
 }

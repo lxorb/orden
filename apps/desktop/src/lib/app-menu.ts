@@ -188,7 +188,8 @@ export function appMenu(context: Context): MenuGroup[] {
       ]
     })
 
-  /** Importing, which is offered only where pandoc is installed. */
+  /** Importing: notes out of another app, and any document pandoc reads. One
+   *  row, which opens the sheet that works out what the file is. */
   const imported = importCommand()
 
   return [

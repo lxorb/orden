@@ -981,4 +981,60 @@ export const ja: Dictionary = {
   Unstable: '不安定版',
   'Stable follows the official releases, Unstable every push to main and can break.':
     '安定版は公式リリースを、不安定版は main への毎回のプッシュを追うので壊れることがあります。',
+  // Bringing notes in from another app: the sheet, what it says, and the
+  // conversion of another app’s spellings.
+  Import: 'インポート',
+  'Convert syntax': '記法を変換',
+  'In this note': 'このノート内',
+  'In the whole space': 'スペース全体',
+  'Nothing here needs converting.': 'ここに変換するものはありません。',
+  'Rewrite {count} things?': '{count} 件を書き換えますか？',
+  'In {count} notes.': '{count} 件のノート内。',
+  Rewrite: '書き換える',
+  '{count} passages are encrypted, and nothing can read them without Evernote':
+    '{count} 件の本文は暗号化されており、Evernote なしでは読めません',
+  '{count} notes had a reminder, which the export does not carry':
+    '{count} 件のノートにリマインダーがありましたが、書き出しには含まれていません',
+  '{count} notes were in the bin and stay there':
+    '{count} 件のノートはゴミ箱にあり、そのままにします',
+  '{count} archived notes are in a folder called Archive':
+    'アーカイブ済みの {count} 件は Archive フォルダーに入ります',
+  'The colours a note had are not kept': 'ノートの色は引き継がれません',
+  '{count} block references were written out as the words they pointed at':
+    '{count} 件のブロック参照は、参照先の文に置き換えました',
+  '{count} saved views are left out, and every row is in the table':
+    '保存済みビュー {count} 件は省き、表にはすべての行が入ります',
+  '{count} pages came as HTML, so their words are kept and their look is not':
+    '{count} ページは HTML のため、文章は残り、見た目は残りません',
+  'There are no rows in this file.': 'このファイルに行はありません。',
+  'Nothing in there can be read as notes.': 'この中にノートとして読めるものはありません。',
+  'That export could not be read.': 'この書き出しは読み込めませんでした。',
+  'That export is too big to read in one go.': 'この書き出しは一度に読み込むには大きすぎます。',
+  'Import into': 'インポート先',
+  'That import could not be written.': 'このインポートは書き込めませんでした。',
+  '{count} files': '{count} 個のファイル',
+  '{count} folders': '{count} 個のフォルダー',
+  'This space': 'このスペース',
+  'Drop an export here': '書き出したファイルをここへ',
+  'A zip, a folder, or a file another app wrote': 'ZIP、フォルダー、他のアプリが書き出したファイル',
+  'Apple Notes and Apple Journal keep their notes where only they can open them. Export them first, then import that.':
+    'Apple のメモと日記は、自分たちだけが開ける場所にノートを保存します。まず書き出して、それをインポートしてください。',
+  'Pandoc reads this one, from the file on your disk.':
+    'これは pandoc がディスク上のファイルから読み込みます。',
+  'Read it with pandoc': 'pandoc で読み込む',
+  'Only pandoc reads this one, and it is not installed on this machine.':
+    'これは pandoc だけが読み込めますが、この端末には入っていません。',
+  Rows: '行',
+  'As a table': '表として',
+  'One note per row': '1 行ごとに 1 ノート',
+  Into: '場所',
+  'In a folder called': 'フォルダー名',
+  'Worth knowing': '知っておくこと',
+  '{count} notes arrived.': '{count} 件のノートが届きました。',
+  '{count} names were taken, so those files stepped aside.':
+    '{count} 件の名前が使われていたため、そのファイルは名前をずらしました。',
+  'A table': '表',
+  'Markdown files': 'Markdown ファイル',
+  'A document': '文書',
+  'Undo the import': 'インポートを元に戻す',
 }

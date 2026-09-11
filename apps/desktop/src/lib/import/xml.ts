@@ -104,7 +104,7 @@ export function plainText(inner: string): string {
   return unescapeXml(withoutCdata(inner))
 }
 
-export function withoutCdata(text: string): string {
+function withoutCdata(text: string): string {
   let out = ''
   let at = 0
 
