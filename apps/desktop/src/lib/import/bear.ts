@@ -9,17 +9,14 @@
  *  a thing you click, and a space in one is why Bear had to invent the closing
  *  hash in the first place.
  *
- *  Not touched: a hash inside a fence, because `#include` is not a tag and a note
- *  about C is allowed to say `C#`. */
+ *  The rewrite itself is convert.ts, because the Convert syntax command does the
+ *  same thing to notes that arrived some other way, and one rule about what a tag
+ *  is beats two. */
 
+import { convertTags } from './convert'
 import { readPlain } from './plain'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
-import { tagName } from './meta'
-
-/** A tag that closes itself: a hash, something that is not a hash or a newline,
- *  and a hash. At the start of a line or after a space, so `a#b#c` is a word. */
-const CLOSED_TAG = /(^|[\s(])#([^#\n]{1,60})#/g
 
 export function readBear(sources: readonly Source[]): Promise<ImportPlan> {
   return readPlain(sources, { format: 'bear', words: bearTags })
@@ -27,23 +24,5 @@ export function readBear(sources: readonly Source[]): Promise<ImportPlan> {
 
 /** Bear's closed tags as nib's, leaving every fenced block exactly as written. */
 export function bearTags(text: string): string {
-  let fenced = false
-
-  return text
-    .split('\n')
-    .map((line) => {
-      if (/^\s*(```|~~~)/.test(line)) {
-        fenced = !fenced
-        return line
-      }
-
-      if (fenced) return line
-
-      return line.replace(CLOSED_TAG, (whole, before: string, inside: string) => {
-        const name = tagName(inside)
-        // A pair of hashes around something that is not a name is words.
-        return name ? `${before}#${name}` : whole
-      })
-    })
-    .join('\n')
+  return convertTags(text).text
 }
