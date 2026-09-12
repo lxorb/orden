@@ -446,7 +446,7 @@
       </div>
     </div>
 
-    {#if changes?.dressing.css || changes?.dressing.js}
+    {#if changes && (changes.dressing.css || changes.dressing.js)}
       <p class="hint">
         {changes.dressing.css && changes.dressing.js
           ? t('publish.css and publish.js in this space dress the site.')

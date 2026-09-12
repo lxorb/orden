@@ -173,7 +173,7 @@ class Publish {
   ): Promise<{ name: string; hash: string } | null | undefined> {
     if (!this.themeName) return null
 
-    const held = this.blog?.site?.theme
+    const held = this.blog?.site.theme
     if (held?.name === this.themeName) return held
 
     const file = theme.files.find((one) => one.name === this.themeName && one.path)
@@ -187,7 +187,7 @@ class Publish {
       .map((byte) => byte.toString(16).padStart(2, '0'))
       .join('')
 
-    await api.putBlob(token, hash, 'text/css', bytes.buffer as ArrayBuffer)
+    await api.putBlob(token, hash, 'text/css', bytes.buffer)
     return { name: this.themeName, hash }
   }
 
