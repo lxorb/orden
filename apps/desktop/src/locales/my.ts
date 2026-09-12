@@ -392,6 +392,7 @@ export const my: Dictionary = {
   Light: 'အလင်း',
   Dark: 'အမှောင်',
   'Switch theme': 'အပြင်အဆင်ပြောင်း',
+  Style: 'စတိုင်',
   Mode: 'မုဒ်',
   System: 'စနစ်',
   'Mode: {name}': 'မုဒ်: {name}',

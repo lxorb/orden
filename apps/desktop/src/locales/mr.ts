@@ -392,6 +392,7 @@ export const mr: Dictionary = {
   Light: 'फिकट',
   Dark: 'गडद',
   'Switch theme': 'थीम बदला',
+  Style: 'शैली',
   Mode: 'मोड',
   System: 'सिस्टम',
   'Mode: {name}': 'मोड: {name}',

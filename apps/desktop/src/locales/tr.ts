@@ -392,6 +392,7 @@ export const tr: Dictionary = {
   Light: 'Açık',
   Dark: 'Koyu',
   'Switch theme': 'Temayı değiştir',
+  Style: 'Stil',
   Mode: 'Kip',
   System: 'Sistem',
   'Mode: {name}': 'Kip: {name}',

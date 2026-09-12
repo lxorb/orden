@@ -394,6 +394,7 @@ export const kn: Dictionary = {
   Light: 'ಲೈಟ್',
   Dark: 'ಡಾರ್ಕ್',
   'Switch theme': 'ಥೀಮ್ ಬದಲಿಸಿ',
+  Style: 'ಶೈಲಿ',
   Mode: 'ಮೋಡ್',
   System: 'ಸಿಸ್ಟಂ',
   'Mode: {name}': 'ಮೋಡ್: {name}',

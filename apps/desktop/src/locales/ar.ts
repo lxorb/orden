@@ -420,6 +420,7 @@ export const ar: Dictionary = {
   Light: 'فاتح',
   Dark: 'داكن',
   'Switch theme': 'تبديل السمة',
+  Style: 'النمط',
   Mode: 'الوضع',
   System: 'النظام',
   'Mode: {name}': 'الوضع: {name}',

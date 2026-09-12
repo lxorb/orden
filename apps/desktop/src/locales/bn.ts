@@ -392,6 +392,7 @@ export const bn: Dictionary = {
   Light: 'লাইট',
   Dark: 'ডার্ক',
   'Switch theme': 'থিম বদল',
+  Style: 'ধরন',
   Mode: 'মোড',
   System: 'সিস্টেম',
   'Mode: {name}': 'মোড: {name}',

@@ -389,6 +389,7 @@ export const zhHant: Dictionary = {
   Light: '淺色',
   Dark: '深色',
   'Switch theme': '切換主題',
+  Style: '樣式',
   Mode: '模式',
   System: '系統',
   'Mode: {name}': '模式：{name}',

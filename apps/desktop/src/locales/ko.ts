@@ -391,6 +391,7 @@ export const ko: Dictionary = {
   Light: '밝게',
   Dark: '어둡게',
   'Switch theme': '테마 바꾸기',
+  Style: '스타일',
   Mode: '모드',
   System: '시스템',
   'Mode: {name}': '모드: {name}',

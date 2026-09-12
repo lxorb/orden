@@ -390,6 +390,7 @@ export const te: Dictionary = {
   Light: 'లైట్',
   Dark: 'డార్క్',
   'Switch theme': 'థీమ్ మార్చు',
+  Style: 'శైలి',
   Mode: 'మోడ్',
   System: 'సిస్టమ్',
   'Mode: {name}': 'మోడ్: {name}',

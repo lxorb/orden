@@ -400,6 +400,7 @@ export const ptBR: Dictionary = {
   Light: 'Claro',
   Dark: 'Escuro',
   'Switch theme': 'Trocar de tema',
+  Style: 'Estilo',
   Mode: 'Modo',
   System: 'Sistema',
   'Mode: {name}': 'Modo: {name}',

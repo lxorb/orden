@@ -395,6 +395,7 @@ export const pa: Dictionary = {
   Light: 'ਚਾਨਣ',
   Dark: 'ਗੂੜ੍ਹਾ',
   'Switch theme': 'ਥੀਮ ਬਦਲੋ',
+  Style: 'ਸ਼ੈਲੀ',
   Mode: 'ਰੂਪ',
   System: 'ਸਿਸਟਮ',
   'Mode: {name}': 'ਰੂਪ: {name}',

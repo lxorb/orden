@@ -392,6 +392,7 @@ export const jv: Dictionary = {
   Light: 'Padhang',
   Dark: 'Peteng',
   'Switch theme': 'Ganti tema',
+  Style: 'Gaya',
   Mode: 'Mode',
   System: 'Sistem',
   'Mode: {name}': 'Mode: {name}',

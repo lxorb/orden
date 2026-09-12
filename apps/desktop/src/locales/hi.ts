@@ -392,6 +392,7 @@ export const hi: Dictionary = {
   Light: 'हल्का',
   Dark: 'गहरा',
   'Switch theme': 'थीम बदलें',
+  Style: 'शैली',
   Mode: 'मोड',
   System: 'सिस्टम',
   'Mode: {name}': 'मोड: {name}',

@@ -392,6 +392,7 @@ export const fa: Dictionary = {
   Light: 'روشن',
   Dark: 'تیره',
   'Switch theme': 'تغییر پوسته',
+  Style: 'سبک',
   Mode: 'حالت',
   System: 'سامانه',
   'Mode: {name}': 'حالت: {name}',

@@ -392,6 +392,7 @@ export const ur: Dictionary = {
   Light: 'ہلکا',
   Dark: 'گہرا',
   'Switch theme': 'تھیم بدلیں',
+  Style: 'انداز',
   Mode: 'موڈ',
   System: 'سسٹم',
   'Mode: {name}': 'موڈ: {name}',

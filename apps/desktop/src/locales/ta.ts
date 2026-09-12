@@ -391,6 +391,7 @@ export const ta: Dictionary = {
   Light: 'வெளிர்',
   Dark: 'இருள்',
   'Switch theme': 'தீம் மாற்று',
+  Style: 'பாங்கு',
   Mode: 'நிலை',
   System: 'கணினி',
   'Mode: {name}': 'நிலை: {name}',

@@ -400,6 +400,7 @@ export const es: Dictionary = {
   Light: 'Claro',
   Dark: 'Oscuro',
   'Switch theme': 'Cambiar de tema',
+  Style: 'Estilo',
   Mode: 'Modo',
   System: 'Sistema',
   'Mode: {name}': 'Modo: {name}',

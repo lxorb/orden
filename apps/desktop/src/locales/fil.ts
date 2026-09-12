@@ -395,6 +395,7 @@ export const fil: Dictionary = {
   Light: 'Maliwanag',
   Dark: 'Madilim',
   'Switch theme': 'Palitan ang tema',
+  Style: 'Estilo',
   Mode: 'Mode',
   System: 'Sistema',
   'Mode: {name}': 'Mode: {name}',

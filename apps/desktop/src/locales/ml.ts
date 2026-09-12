@@ -395,6 +395,7 @@ export const ml: Dictionary = {
   Light: 'ലൈറ്റ്',
   Dark: 'ഡാർക്ക്',
   'Switch theme': 'തീം മാറ്റുക',
+  Style: 'ശൈലി',
   Mode: 'മോഡ്',
   System: 'സിസ്റ്റം',
   'Mode: {name}': 'മോഡ്: {name}',

@@ -392,6 +392,7 @@ export const id: Dictionary = {
   Light: 'Terang',
   Dark: 'Gelap',
   'Switch theme': 'Ganti tema',
+  Style: 'Gaya',
   Mode: 'Mode',
   System: 'Sistem',
   'Mode: {name}': 'Mode: {name}',

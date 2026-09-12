@@ -412,6 +412,7 @@ export const ru: Dictionary = {
   Light: 'Светлая',
   Dark: 'Тёмная',
   'Switch theme': 'Сменить тему',
+  Style: 'Стиль',
   Mode: 'Режим',
   System: 'Системная',
   'Mode: {name}': 'Режим: {name}',

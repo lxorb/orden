@@ -390,6 +390,7 @@ export const am: Dictionary = {
   Light: 'ብርሃን',
   Dark: 'ጨለማ',
   'Switch theme': 'ገጽታ ቀይር',
+  Style: 'ቅጥ',
   Mode: 'ዘዴ',
   System: 'ሥርዓት',
   'Mode: {name}': 'ዘዴ: {name}',

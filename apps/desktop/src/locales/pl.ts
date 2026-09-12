@@ -412,6 +412,7 @@ export const pl: Dictionary = {
   Light: 'Jasny',
   Dark: 'Ciemny',
   'Switch theme': 'Zmień motyw',
+  Style: 'Styl',
   Mode: 'Tryb',
   System: 'Systemowy',
   'Mode: {name}': 'Tryb: {name}',

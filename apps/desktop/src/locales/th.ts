@@ -390,6 +390,7 @@ export const th: Dictionary = {
   Light: 'สว่าง',
   Dark: 'มืด',
   'Switch theme': 'สลับธีม',
+  Style: 'สไตล์',
   Mode: 'โหมด',
   System: 'ระบบ',
   'Mode: {name}': 'โหมด: {name}',

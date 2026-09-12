@@ -395,6 +395,7 @@ export const sw: Dictionary = {
   Light: 'Nuru',
   Dark: 'Giza',
   'Switch theme': 'Badili mandhari',
+  Style: 'Mtindo',
   Mode: 'Hali',
   System: 'Mfumo',
   'Mode: {name}': 'Hali: {name}',

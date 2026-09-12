@@ -392,6 +392,7 @@ export const gu: Dictionary = {
   Light: 'આછું',
   Dark: 'ઘાટું',
   'Switch theme': 'થીમ બદલો',
+  Style: 'શૈલી',
   Mode: 'રીત',
   System: 'સિસ્ટમ',
   'Mode: {name}': 'રીત: {name}',

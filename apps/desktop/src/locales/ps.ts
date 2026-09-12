@@ -392,6 +392,7 @@ export const ps: Dictionary = {
   Light: 'روښانه',
   Dark: 'تياره',
   'Switch theme': 'بڼه بدلول',
+  Style: 'ډول',
   Mode: 'حالت',
   System: 'غونډال',
   'Mode: {name}': 'حالت: {name}',

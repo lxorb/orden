@@ -389,6 +389,7 @@ export const zhHans: Dictionary = {
   Light: '浅色',
   Dark: '深色',
   'Switch theme': '切换主题',
+  Style: '样式',
   Mode: '模式',
   System: '系统',
   'Mode: {name}': '模式：{name}',

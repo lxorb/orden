@@ -411,6 +411,7 @@ export const uk: Dictionary = {
   Light: 'Світла',
   Dark: 'Темна',
   'Switch theme': 'Змінити тему',
+  Style: 'Стиль',
   Mode: 'Режим',
   System: 'Системна',
   'Mode: {name}': 'Режим: {name}',

@@ -391,6 +391,7 @@ export const vi: Dictionary = {
   Light: 'Sáng',
   Dark: 'Tối',
   'Switch theme': 'Đổi chủ đề',
+  Style: 'Kiểu',
   Mode: 'Chế độ',
   System: 'Hệ thống',
   'Mode: {name}': 'Chế độ: {name}',

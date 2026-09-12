@@ -394,6 +394,7 @@ export const ha: Dictionary = {
   Light: 'Haske',
   Dark: 'Duhu',
   'Switch theme': 'Sauya kamanni',
+  Style: 'Salo',
   Mode: 'Yanayi',
   System: 'Tsarin',
   'Mode: {name}': 'Yanayi: {name}',
