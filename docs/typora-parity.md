@@ -733,10 +733,10 @@ Features Typora does not have, which are the reason this exists.
       about to make - how many notes, how many files, how many folders, where they
       go, and what is not coming with them - in counts rather than a list, since
       somebody importing four thousand notes cannot read a list of four thousand
-      notes. Ten formats between them: Notion, Evernote, Google Keep, Bear,
-      Logseq, Roam, Craft, OneNote, Tomboy, a bare CSV, and any folder of
-      markdown, which is what half of these apps write when asked nicely. See
-      docs/import.md
+      notes. Twelve formats between them: Notion, Evernote, Google Keep, Bear,
+      Logseq, Roam, Craft, OneNote, Tomboy, Apple Journal, Apple Notes, a bare
+      CSV, and any folder of markdown, which is what half of these apps write when
+      asked nicely. See docs/import.md
 - [x] A Notion export arrives as the tree it looked like in Notion. Notion writes
       a folder per page that has pages under it and an id on the end of every
       name; take the ids off and that is exactly nib's own shape, a note and a
@@ -763,11 +763,26 @@ Features Typora does not have, which are the reason this exists.
       written as `date`, which is the key nib already reads, and the last-edited
       day as `updated` only where the export knew a different one. Tags become
       `tags`, tidied to what a tag can be
-- [x] Apple Notes and Apple Journal are not imported, and say so where a reader
-      will see it. Both keep their notes in a database only they can open, on a
-      Mac, behind the system's own permission prompts; Obsidian's importer reads
-      that database because it runs there, and nib runs on five platforms. So the
-      sheet offers the useful half instead: export them first, then import that
+- [x] Apple Journal, through the export Journal itself writes:
+      `AppleJournalEntries`, an HTML document per entry under `Entries/` and the
+      media under `Resources/`. One note per entry, named after the day it was
+      written so a year of them sorts, with the day as `date` and the title as the
+      heading. The day is read from the entry's file name rather than the line
+      Journal draws above it, because that line is in the language of the phone it
+      came off. Media land in `assets/` beside the notes, video included, which the
+      HTML converter drops. HEIC pictures and the cards Journal draws itself - a
+      mood, a walk, a map - are counted and said
+- [x] Apple Notes both ways there are, because Notes has no export of its own and
+      its "Export as PDF" is a picture of a note. A folder somebody's exporter
+      wrote is read as Apple Notes by the one sign those exporters share, which is
+      Apple's own rich-text HTML, and an attachment the note points at by its old
+      `file:///` address is found among the files that came with it. And on a Mac,
+      the database Notes keeps: `NoteStore.sqlite`, a note's body a gzipped
+      protobuf, read by the crate behind a macOS gate the way Obsidian's importer
+      reads it. Headings, boxes, lists, quotes, code, marks, links between notes
+      and tags all come over; passworded notes, the bin, drawings, scans, tables
+      and attachments still in iCloud are counted and said. Full Disk Access is
+      what macOS asks for, and the sheet says so and opens the setting
 - [x] A checkbox comes over as a checkbox, wherever it was one: Evernote's
       `<en-todo>`, a Google Keep list item with its tick, Logseq's `TODO` and
       `DONE`, Roam's `{{[[TODO]]}}`. A box is a box

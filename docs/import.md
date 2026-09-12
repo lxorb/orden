@@ -12,9 +12,13 @@ So: one row in File called Import, one sheet, and one rule behind all of it.
 The sheet takes what the reader has. A zip out of Notion, a `.enex` out of
 Evernote, a Takeout folder out of Google Keep, a Logseq graph, a Roam JSON, a
 TextBundle out of Bear or Craft, a folder of markdown out of anything, a CSV out
-of Airtable, a `.note` out of Tomboy, an HTML export out of OneNote, and a Word
-file or an ePub for pandoc to read. Drop it in, or press the same panel to pick
-it.
+of Airtable, a `.note` out of Tomboy, an HTML export out of OneNote, an
+`AppleJournalEntries` zip out of Apple Journal, the folder an Apple Notes
+exporter wrote, and a Word file or an ePub for pandoc to read. Drop it in, or
+press the same panel to pick it.
+
+On a Mac there is one more row, because Apple Notes has no export at all: the
+sheet reads the database Notes keeps, and nothing is dropped.
 
 **Nobody picks a format.** A reader who exported their notes yesterday knows what
 they exported; what they have in front of them is a file, and every one of these
@@ -138,13 +142,60 @@ list where every row has a page of notes behind it is forty notes, and a table o
 their titles is worse than useless. So the sheet asks, once, with the answer that
 is right more often already chosen.
 
-**Apple Notes and Apple Journal are not imported, and cannot be.** Both keep
-their notes in a database only they can open, on a Mac, behind the system's own
-permission prompts. Obsidian's importer runs on macOS and reads that database
-directly; nib runs on Windows, macOS, Linux, Android and in a browser, and an
-importer that works on one of those five is not a feature of nib. What the sheet
-says instead is the useful half: export them first, then import that. The sheet
-says it where a reader will see it, on the drop zone's own panel.
+**Apple Journal.** Journal's own export, which the app writes under Settings:
+`AppleJournalEntries`, holding `Entries/` with one HTML document per entry and
+`Resources/` with the photos, videos and recordings, plus a JSON per file saying
+when it was taken and where. The HTML goes through the same converter every other
+HTML export does, and the two things the document says about itself are lifted out
+first: the day, which becomes `date`, and the title, which becomes the note's name
+and its heading. So an entry arrives as one note named `2026-09-04 Evening on the
+lake`, a year of them sorts in the file list, and the media land in `assets/`
+beside them, which is where a picture pasted into a note goes.
+
+The day comes from the entry's own file name rather than from the line Journal
+draws above it, because that line is written in the language of the phone it came
+off and `Freitag, 5. Dezember 2025` is a date nothing in here is going to read.
+
+A mood, a walk and a place are cards Journal draws: whatever they say in words
+comes over with the words, and the drawing does not come over at all. The count is
+given. Photos are HEIC, which only Apple's own software shows, and that is said
+too rather than left as a file that opens nowhere.
+
+**Apple Notes** arrives two ways, because Notes has no export. What it offers is a
+PDF per note, which is a picture of a note rather than a note.
+
+The first way is a folder somebody else's exporter wrote - the `Exporter` app, a
+Shortcut, a script - which is a folder per notebook and a file per note with the
+attachments beside them. Those are read as what they are, and what says the folder
+came out of Notes is Apple's own HTML: every one of those exporters asks the
+system for the note's rich text, and macOS writes rich text the same way wherever
+it is asked. An exporter that wrote markdown instead says nothing about where the
+markdown came from, so that folder is read as a folder of markdown, which is what
+it is. An attachment that Notes pointed at by its address on the old machine -
+`file:///Users/…` - is found among the files that came with the export and pointed
+at where it landed; one that did not come with the export is left as it was, like
+every other address into the app a note came from.
+
+The second way is the Mac itself. `~/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite`
+is where Notes keeps everything, and reading it is what Obsidian's importer does;
+the crate does the same, behind a macOS gate, and the sheet offers it as one row
+where a reader will see it. A note's body on that row is a gzipped protobuf: the
+note's plain text once, and a run per stretch of it saying what that stretch is.
+Headings, boxes, lists, quotes, code, bold, links and highlights all come over;
+the highlight arrives as `==marked==` without the coloured circle Obsidian writes,
+because nib has one highlight. A link from one note to another becomes a wikilink
+the way every other export's links do. A tag or a mention is a run of its own in
+Notes, and arrives as the words it drew.
+
+What does not come over is said before anything is written: notes behind a
+password, which are encrypted with a passphrase nobody here has; notes in Recently
+Deleted, which stay there, the same rule Keep's bin gets; drawings and scanned
+pages, which are a picture Notes draws itself; tables inside notes; and
+attachments that are in iCloud rather than on the disk.
+
+macOS keeps that folder behind Full Disk Access, so the first read is refused by
+the system. The sheet says so in a line and opens the setting, rather than leaving
+a reader to find the pane themselves.
 
 ## Dates and tags
 
