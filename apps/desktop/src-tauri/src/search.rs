@@ -393,6 +393,15 @@ fn send(app: &AppHandle, id: u32, pending: &mut Vec<Hit>, loose: Vec<FuzzyHit>) 
 }
 
 /// Every `#tag` used in a space, most-used first.
+///
+/// Nothing in the app asks any more: the tag tree is built from the link index,
+/// which already holds each note's tags from the one pass that reads the space.
+/// The contract there is not this one - the number beside a tag is the notes
+/// carrying it, deduped and folded, rather than the uses of it, and the spelling
+/// is folded too. This still counts uses and keeps the spelling. Bringing the two
+/// together, or taking this away, is a follow-up; see `tagCounts` in
+/// link-index.svelte.ts and `spaceTags` in web/commands.ts, which carries the same
+/// note.
 #[tauri::command]
 pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
     let dir = in_spaces(&app, &root)?;

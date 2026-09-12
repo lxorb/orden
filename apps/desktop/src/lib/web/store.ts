@@ -14,6 +14,8 @@
  *  write below that touches a path touches its stat in the same transaction, so
  *  the two cannot come apart even if the tab is closed mid-write. */
 
+import { breathe } from '../breathe'
+
 const NAME = 'nib'
 const VERSION = 2
 
@@ -240,6 +242,57 @@ export function watchRows(heard: (change: RowChange) => void): void {
   }
 }
 
+/** How many rows one slice of a whole-store read holds.
+ *
+ *  `getAll` with nothing narrowing it builds every row inside one callback, and the
+ *  listing of five thousand notes is several hundred milliseconds in which nothing
+ *  else on the thread runs. On the way up that is the file list appearing and then
+ *  the app holding still; the browser blamed `IDBRequest.onsuccess` for the longest
+ *  task of every launch, and for one during a pan of a canvas.
+ *
+ *  Five hundred is a few milliseconds a slice, and eleven slices for a space of five
+ *  thousand notes. The rows and the order are exactly what one read gave. */
+const SLICE = 500
+
+/** Every row of a store keyed by path, in path order, a slice at a time with the
+ *  thread handed back between them.
+ *
+ *  Separate reads on purpose rather than one cursor: a transaction commits as soon
+ *  as the event loop goes quiet, so a walk that breathed inside one would find it
+ *  closed underneath. A range starting just past the last key read is where the
+ *  next slice begins, which is the same walk of the same tree `between` does.
+ *
+ *  Exported so store.test.ts can count the slices: what this is for is that no one
+ *  task builds the whole listing, and a count says that where a clock says what the
+ *  machine was doing at the time. */
+export async function inSlices<T>(
+  read: (after: string | null, most: number) => Promise<T[]>,
+  keyOf: (row: T) => string,
+  most: number = SLICE,
+): Promise<T[]> {
+  const out: T[] = []
+  let after: string | null = null
+
+  for (;;) {
+    const slice = await read(after, most)
+    out.push(...slice)
+
+    const last = slice.at(-1)
+    // Short of what was asked for is the end of the store, and so is nothing at
+    // all - which is also what an empty store answers the first time.
+    if (slice.length < most || last === undefined) return out
+
+    after = keyOf(last)
+    await breathe()
+  }
+}
+
+/** One slice of a store keyed by path: everything after `after`, up to `most`. */
+function slice<T>(store: string, after: string | null, most: number): Promise<T[]> {
+  const range = after === null ? null : IDBKeyRange.lowerBound(after, true)
+  return run<T[]>(store, 'readonly', (one) => one.getAll(range, most))
+}
+
 /** Both stores a path can live in, plus the listing they share. */
 const WITH_STATS = ['files', 'stats'] as const
 const ASSETS_WITH_STATS = ['assets', 'stats'] as const
@@ -322,9 +375,15 @@ export const assets = {
 }
 
 /** The listing: one row per path, whichever store the file itself is in. Read as
- *  a whole, because that is the one question it exists to answer. */
+ *  a whole, because that is the one question it exists to answer - and in slices,
+ *  because on the way up it is the one question that holds everything else; see
+ *  `inSlices`. */
 export const stats = {
-  all: () => run<StatRow[]>('stats', 'readonly', (s) => s.getAll()),
+  all: () =>
+    inSlices<StatRow>(
+      (after, most) => slice<StatRow>('stats', after, most),
+      (row) => row.path,
+    ),
 }
 
 export const meta = {

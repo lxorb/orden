@@ -2388,11 +2388,29 @@ class Workspace {
   }
 
   /** Every `#tag` in the space, most used first. */
+  /** The space's tags, for the tree above the search field.
+   *
+   *  From the link index rather than from the space. Both know the answer, and only
+   *  one of them knows it already: the scan that reads every note for its links
+   *  writes down its tags on the way past, while asking the space read every body
+   *  again - twenty-two megabytes of strings on the thread the panel was opening on.
+   *  See `tagCounts` in link-index.svelte.ts, which is also where what the number
+   *  means is written down.
+   *
+   *  A panel opened while the space is still being read shows what the index has so
+   *  far and the rest of it when the scan lands, which is what the wait below is
+   *  for: asking the disk used to answer whatever the scan was doing, and a tag tree
+   *  that stayed empty until something else happened to ask again would be worse
+   *  than the read it replaced. */
   async loadTags() {
     const root = this.activeSpace?.root
     if (!root) return
 
-    this.tags = await invoke<Tag[]>('space_tags', { root }).catch(() => [])
+    this.tags = links.tagCounts()
+    if (!links.scanning) return
+
+    await links.scanned()
+    if (this.activeSpace?.root === root) this.tags = links.tagCounts()
   }
 
   /** Renames a tag, and everything under it, in every note of the space.

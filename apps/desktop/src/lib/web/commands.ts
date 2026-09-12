@@ -328,6 +328,16 @@ async function spaceList() {
     .map((path) => ({ name: basename(path), path }))
 }
 
+/** Every tag in a space and how many times it is written, as the command has always
+ *  answered.
+ *
+ *  Nothing in the app asks any more. The tag tree is built from the link index,
+ *  which already holds each note's tags from the one pass that reads the space, and
+ *  the number beside a tag there is the notes carrying it rather than the uses of it;
+ *  see `tagCounts` in link-index.svelte.ts. This stays because the command exists on
+ *  both platforms and the crate still answers it this way - and reading every body in
+ *  a space to count them is exactly what the index was there to stop, so a new caller
+ *  should reach for the index instead. */
 async function spaceTags(root: string) {
   const rows = (await files.all()).filter(
     (row) => within(normalise(root), row.path) && isMarkdown(row.path),

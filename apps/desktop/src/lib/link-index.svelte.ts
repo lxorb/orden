@@ -201,19 +201,41 @@ class Links {
   async build(root: string) {
     this.root = root
     this.scanning = true
+    const landing = new Promise<void>((go) => (this.landed = go))
+    this.landing = landing
 
     await startup.turn('index')
-    if (this.root !== root) return
+    if (this.root !== root) {
+      this.landed()
+      return
+    }
 
     const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
 
     // Another space may have opened while this one was being read.
-    if (this.root !== root) return
+    if (this.root !== root) {
+      this.landed()
+      return
+    }
 
     this.scanning = false
     this.notes = found?.notes ?? []
     this.files = found?.files ?? []
     this.changed()
+    this.landed()
+  }
+
+  /** Whoever is waiting for the scan in flight, and how they are told. */
+  private landing: Promise<void> = Promise.resolve()
+  private landed: () => void = () => undefined
+
+  /** Resolves when the scan in flight has landed, or at once when none is.
+   *
+   *  What a surface drawn from the whole index waits for rather than polling
+   *  `scanning`: the tag tree is the case, since it is a fact about every note in
+   *  the space and the honest answer before the scan lands is nothing. */
+  scanned(): Promise<void> {
+    return this.scanning ? this.landing : Promise.resolve()
   }
 
   /** Which space the index is of, so the caller can tell whether it is the one
@@ -255,6 +277,31 @@ class Links {
 
     return map
   })
+
+  /** Every tag in the space and how many notes carry it, most used first and
+   *  alphabetical within a count, which is the order the tag tree is drawn in.
+   *
+   *  From the one pass that already read every note. Asking the space instead read
+   *  every body again to count them - twenty-two megabytes of strings built on the
+   *  thread the panel was opening on, three to four hundred milliseconds of it; the
+   *  index has held each note's tags since the scan that found its links.
+   *
+   *  The number beside a tag is the notes carrying it, deduped and folded: a note
+   *  that writes `#work` three times is one note with that tag, and `#Work` and
+   *  `#work` are one tag. That is what a tag tree reads as - the tree already folds
+   *  the path it groups by - and it is what the index gives for nothing. The crate's
+   *  `space_tags` counts uses rather than notes and keeps the spelling; see the note
+   *  beside it in search.rs. */
+  tagCounts(): { tag: string; count: number }[] {
+    const counts = new Map<string, number>()
+    for (const note of this.notes) {
+      for (const tag of note.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+    }
+
+    return [...counts]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((one, other) => other.count - one.count || (one.tag < other.tag ? -1 : 1))
+  }
 
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.

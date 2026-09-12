@@ -13,6 +13,10 @@ let notes: Record<string, string> = {}
 let files: string[] = []
 /** Every note that was written, so a rewrite can be read back. */
 let written: string[] = []
+/** How many notes have been read off the "disk" since the space was built. The
+ *  index exists so that a surface drawn from the whole space does not read it again;
+ *  a count says whether one did, where a clock says what the machine was doing. */
+let reads = 0
 /** Every note a snapshot was taken of, so "one snapshot per touched note" is a
  *  thing the test can see rather than a thing the comment claims. */
 let snapshots: string[] = []
@@ -37,6 +41,7 @@ vi.mock('./tauri', async (importOriginal) => ({
         const relative = path.slice(ROOT.length + 1)
         const doc = notes[relative]
         if (doc === undefined) throw new Error(`no such note: ${path}`)
+        reads += 1
         return doc
       }
       case 'write_note': {
@@ -104,6 +109,7 @@ async function space(contents: Record<string, string>, others: string[] = []) {
   files = [...others]
   written = []
   snapshots = []
+  reads = 0
   await links.build(ROOT)
 }
 
@@ -509,6 +515,50 @@ describe('the icon a note says it wears', () => {
   test('a note outside the space wears nothing', async () => {
     await space({ 'Plan.md': '---\nicon: rocket\n---\n' })
     expect(links.iconOf('/elsewhere/Plan.md')).toBeNull()
+  })
+})
+
+/** The tags of a space, counted off the index rather than read off the disk.
+ *
+ *  Asking the space read every body again to count them - twenty-two megabytes of
+ *  strings on the thread the search panel was opening on. The scan that finds a
+ *  note's links writes down its tags on the way past, so the answer is already in
+ *  hand. What is counted here is rows read: none. */
+describe("a space's tags", () => {
+  test('come off the index without a row being read', async () => {
+    await space({
+      'Plan.md': '#work/nib and #paper, and #work again\n',
+      'Ink.md': '#paper on #paper\n',
+      'Kestrel.md': 'nothing tagged here\n',
+    })
+
+    const before = reads
+    expect(links.tagCounts()).toEqual([
+      { tag: 'paper', count: 2 },
+      { tag: 'work', count: 1 },
+      { tag: 'work/nib', count: 1 },
+    ])
+
+    // Not one note read to answer it, however many times it is asked.
+    links.tagCounts()
+    links.tagCounts()
+    expect(reads - before).toBe(0)
+  })
+
+  test('count the notes carrying one, not the times it was written', async () => {
+    await space({ 'Plan.md': '#work #work #work\n', 'Ink.md': '#Work\n' })
+
+    // Three uses in one note and one in another, spelled two ways: two notes.
+    expect(links.tagCounts()).toEqual([{ tag: 'work', count: 2 }])
+  })
+
+  test('and follow a note being saved, without the space being read again', async () => {
+    await space({ 'Plan.md': '#work\n' })
+    const before = reads
+
+    links.noteSaved(at('Plan.md'), '#paper\n')
+    expect(links.tagCounts()).toEqual([{ tag: 'paper', count: 1 }])
+    expect(reads - before).toBe(0)
   })
 })
 
