@@ -35,28 +35,36 @@ const away = (layout: Layout, a: number, b: number) =>
 
 const positions = (layout: Layout) => [[...layout.x], [...layout.y]]
 
+/** Ticked until it has arrived. `settle` takes a budget in milliseconds rather than
+ *  running to the end in one go - which on five thousand notes was a second and a
+ *  half of a thread answering nothing - so a test that wants the finished
+ *  arrangement asks for it a stretch at a time until it says yes. */
+function rested(layout: Layout) {
+  while (!layout.settle(100));
+}
+
 describe('a layout that settles', () => {
   test('arrives, and says so', () => {
     const layout = new Layout(star(6))
     expect(layout.settled).toBe(false)
 
-    layout.settle()
+    rested(layout)
     expect(layout.settled).toBe(true)
   })
 
   test('does nothing once it has arrived, so a still picture stays still', () => {
     const layout = new Layout(star(6))
-    layout.settle()
+    rested(layout)
 
-    const rested = positions(layout)
+    const arrived = positions(layout)
     layout.tick(500)
 
-    expect(positions(layout)).toEqual(rested)
+    expect(positions(layout)).toEqual(arrived)
   })
 
   test('holds linked notes about a link apart', () => {
     const layout = new Layout(star(8))
-    layout.settle()
+    rested(layout)
 
     for (let spoke = 1; spoke <= 8; spoke++) {
       const distance = away(layout, 0, spoke)
@@ -67,7 +75,7 @@ describe('a layout that settles', () => {
 
   test('holds unlinked notes apart as well, so nothing hides behind anything', () => {
     const layout = new Layout(graph(24, []))
-    layout.settle()
+    rested(layout)
 
     for (let one = 0; one < 24; one++) {
       for (let other = one + 1; other < 24; other++) {
@@ -87,7 +95,7 @@ describe('a layout that settles', () => {
       [4, 5],
     ])
     const layout = new Layout(chain)
-    layout.settle()
+    rested(layout)
 
     expect(away(layout, 0, 1)).toBeLessThan(away(layout, 0, 3))
     expect(away(layout, 2, 3)).toBeLessThan(away(layout, 2, 5))
@@ -103,7 +111,7 @@ describe('a layout that settles', () => {
 
   test('one note on its own lands in the middle', () => {
     const layout = new Layout(graph(1, []))
-    layout.settle()
+    rested(layout)
 
     expect(away(layout, 0, 0)).toBe(0)
     expect(Math.hypot(layout.x[0] ?? 0, layout.y[0] ?? 0)).toBeLessThan(20)
@@ -116,8 +124,8 @@ describe('the same seed lays out the same way', () => {
 
     const one = new Layout(shape, { seed: 7 })
     const other = new Layout(shape, { seed: 7 })
-    one.settle()
-    other.settle()
+    rested(one)
+    rested(other)
 
     expect(positions(one)).toEqual(positions(other))
   })
@@ -127,7 +135,7 @@ describe('the same seed lays out the same way', () => {
 
     const whole = new Layout(shape, { seed: 7 })
     const inBits = new Layout(shape, { seed: 7 })
-    whole.settle()
+    rested(whole)
     while (!inBits.settled) inBits.tick(3)
 
     expect(positions(inBits)).toEqual(positions(whole))
@@ -138,8 +146,8 @@ describe('the same seed lays out the same way', () => {
 
     const one = new Layout(shape, { seed: 7 })
     const other = new Layout(shape, { seed: 8 })
-    one.settle()
-    other.settle()
+    rested(one)
+    rested(other)
 
     expect(positions(one)).not.toEqual(positions(other))
   })
@@ -148,7 +156,7 @@ describe('the same seed lays out the same way', () => {
 describe('a note moved by hand', () => {
   test('stays where it was put', () => {
     const layout = new Layout(star(8))
-    layout.settle()
+    rested(layout)
 
     layout.hold(3, 400, -250)
     expect(layout.x[3]).toBe(400)
@@ -157,7 +165,7 @@ describe('a note moved by hand', () => {
     // Holding warms the layout again so the neighbours follow; the held note is
     // not one of the things that moves.
     expect(layout.settled).toBe(false)
-    layout.settle()
+    rested(layout)
     expect(layout.x[3]).toBe(400)
     expect(layout.y[3]).toBe(-250)
   })
@@ -166,11 +174,11 @@ describe('a note moved by hand', () => {
     // A pair joined by one link. Pulling one of them a long way off has to pull
     // the other after it, or the picture reads as a broken link.
     const layout = new Layout(graph(2, [[0, 1]]))
-    layout.settle()
+    rested(layout)
 
     const was = layout.x[1] ?? 0
     layout.hold(0, 200, 0)
-    layout.settle()
+    rested(layout)
 
     expect(layout.x[1] ?? 0).toBeGreaterThan(was)
     expect(away(layout, 0, 1)).toBeLessThan(60)
@@ -192,7 +200,7 @@ describe('the forces a reader can ask about', () => {
 
   const settled = (options: { spread?: number; gather?: boolean }) => {
     const layout = new Layout(shape(), options)
-    layout.settle()
+    rested(layout)
     return layout
   }
 
@@ -248,7 +256,7 @@ describe('a space of two thousand notes and four thousand links', () => {
 
   beforeAll(() => {
     layout.tick(30)
-    layout.settle()
+    rested(layout)
   })
 
   test('places them all, at a tick a view can afford', () => {

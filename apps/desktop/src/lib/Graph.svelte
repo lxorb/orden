@@ -17,7 +17,7 @@
 
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
-  import type { NoteGraph } from './graph'
+  import { type NoteGraph, neighbours, signature } from './graph'
   import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
   import { type Camera, framing, graphPoint, nodeAt, zoomed } from './camera'
@@ -58,6 +58,13 @@
    *  settled by the second frame and a large one at sixty frames a second while
    *  it finds its shape. Six leaves the rest of the frame for the drawing. */
   const A_FRAME = 6
+
+  /** And how long a frame may spend on it while nothing is being drawn, which is
+   *  what a reader who asked for less movement gets. More than the above because
+   *  there is no drawing to leave room for and the picture is not on screen yet -
+   *  eight frames for a space of five thousand notes, against the second and a half
+   *  of a thread answering nothing that reaching it in one go used to cost. */
+  const A_SETTLE = 10
 
   /** How far a pointer may travel and still count as a click rather than a
    *  drag. */
@@ -174,23 +181,21 @@
     return from <= to && from !== to ? { from, to } : null
   })
 
-  /** The shape of the graph, as one string. The panel is handed a fresh graph
+  /** The shape of the graph, as one number. The panel is handed a fresh graph
    *  object whenever anything in the space is saved, and laying the arrangement
    *  out again then would make the picture jump every time the typing pauses.
    *  This is what says whether it is really another graph.
    *
-   *  Newline-separated, since that is the one character a note's path cannot
-   *  hold, so two different sets of notes cannot read as the same graph.
+   *  The graph itself works it out where it is built, which is the one place that
+   *  already walks every node and every edge; see `signature` in graph.ts. It used
+   *  to be every id and every pair joined into one string - three hundred kilobytes
+   *  built and compared per save over five thousand notes, to find out that nothing
+   *  had changed.
    *
    *  The filter is deliberately not in it. A note the filter takes out is hidden
    *  rather than removed, so the notes that stay do not move; that is what lets a
    *  switch in the card cost one frame in a space of five thousand notes. */
-  const shape = $derived(
-    [
-      graph.nodes.map((node) => node.id).join('\n'),
-      graph.edges.map((edge) => `${edge.a},${edge.b}`).join(' '),
-    ].join('\n'),
-  )
+  const shape = $derived(signature(graph))
 
   const currentAt = $derived(
     current === null ? -1 : graph.nodes.findIndex((node) => node.id === current),
@@ -288,19 +293,38 @@
     hovered = -1
     remask()
 
-    // A reader who has asked for less movement gets the arrangement it arrives
-    // at, without watching it get there.
-    if (stillness()) layout.settle()
+    // A reader who has asked for less movement gets the arrangement it arrives at,
+    // without watching it get there: `run` keeps ticking without drawing until it
+    // has, a frame at a time. It used to be one loop with no way out of it, which on
+    // five thousand notes meant the readers who asked for less movement were the
+    // only ones the picture froze for.
+    settling = stillness()
 
     touched = false
     frameGraph()
     schedule()
   }
 
+  /** Whether the arrangement is being reached without being shown, which is what a
+   *  reader who asked for less movement gets. Nothing is drawn while this is true. */
+  let settling = false
+
   /** Which notes are drawn, in what colour, and how big - the three things that
    *  change without anything moving. One pass over the nodes for all three. */
   function remask() {
-    const count = graph.nodes.length
+    // Read once, here, and not inside the loop. Every one of these is a derived,
+    // and reading one is a walk of whatever it depends on to find out whether it
+    // has changed: five thousand nodes times five of them was 1.6 seconds inside
+    // Svelte's own dirtiness check, which was more than half of what opening the
+    // picture of a space cost.
+    const nodes = graph.nodes
+    const edges = graph.edges
+    const dates = madeAt
+    const colours = groups
+    const keeps = filter
+    const sized = settings.sized
+
+    const count = nodes.length
     if (hiding.length !== count) hiding = new Uint8Array(count)
     if (tint.length !== count) tint = new Int8Array(count)
     if (radii.length !== count) radii = new Float64Array(count)
@@ -309,21 +333,21 @@
     const orphans = !whole || settings.orphans
 
     for (let one = 0; one < count; one++) {
-      const node = graph.nodes[one]
+      const node = nodes[one]
       if (!node) continue
 
-      const made = node.path === null ? 0 : (madeAt.get(node.path) ?? 0)
+      const made = node.path === null ? 0 : (dates.get(node.path) ?? 0)
 
       // A note the space does not hold has no date of its own; it appears with the
       // first note that asks for it, which is what its edges already say.
       const yet = cut === null || made === 0 || made <= cut
-      const kept = !filter || filter(node)
+      const kept = !keeps || keeps(node)
       hiding[one] = yet && kept && (orphans || node.degree > 0) ? 1 : 0
 
-      radii[one] = radiusOf(settings.sized ? node.degree : 0)
+      radii[one] = radiusOf(sized ? node.degree : 0)
 
       let colour = -1
-      for (const group of groups) {
+      for (const group of colours) {
         if (!group.keeps(node)) continue
         colour = group.colour
         break
@@ -339,12 +363,12 @@
     // these notes are missing. Without this, a filter and a time being played each
     // leave hollow rings standing on their own.
     for (let one = 0; one < count; one++) {
-      if (graph.nodes[one]?.path === null) hiding[one] = 0
+      if (nodes[one]?.path === null) hiding[one] = 0
     }
 
-    for (const edge of graph.edges) {
-      if (graph.nodes[edge.a]?.path === null && hiding[edge.b]) hiding[edge.a] = 1
-      if (graph.nodes[edge.b]?.path === null && hiding[edge.a]) hiding[edge.b] = 1
+    for (const edge of edges) {
+      if (nodes[edge.a]?.path === null && hiding[edge.b]) hiding[edge.a] = 1
+      if (nodes[edge.b]?.path === null && hiding[edge.a]) hiding[edge.b] = 1
     }
   }
 
@@ -386,6 +410,22 @@
     frame = 0
     const arrangement = layout
     if (!arrangement) return
+
+    // Reaching the arrangement without showing it get there: as much of it as a
+    // frame can hold, and nothing drawn until it has arrived. A frame's worth at a
+    // time rather than all of it, so the thread still answers a keystroke and a
+    // click while the picture is being worked out.
+    if (settling) {
+      if (!arrangement.settle(A_SETTLE)) {
+        schedule()
+        return
+      }
+
+      settling = false
+      if (!touched) frameGraph()
+      draw()
+      return
+    }
 
     // As many ticks as the frame has room for. Another frame is asked for only
     // while there is still settling to do, so an arrangement that has arrived
@@ -509,10 +549,10 @@
     if (node < 0) return
 
     lit[node] = 2
-    for (const edge of graph.edges) {
-      if (edge.a === node) lit[edge.b] ||= 1
-      else if (edge.b === node) lit[edge.a] ||= 1
-    }
+    // The node's own neighbours, out of the list the graph keeps per node, rather
+    // than every edge in the space: this runs whenever the pointer moves onto
+    // another note, and a space of five thousand notes has ten thousand edges.
+    for (const near of neighbours(graph, node)) lit[near] ||= 1
   }
 
   function nodeUnder(event: PointerEvent | MouseEvent): number {

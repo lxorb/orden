@@ -50,6 +50,61 @@ export interface NoteGraph {
   edges: GraphEdge[]
 }
 
+/** One id mixed into a signature. FNV-1a over the characters, which is a multiply
+ *  and an exclusive-or each and no allocation at all. */
+function mixed(into: number, word: string): number {
+  let hash = into
+  for (let at = 0; at < word.length; at++) {
+    hash ^= word.charCodeAt(at)
+    hash = Math.imul(hash, 0x01000193)
+  }
+
+  return hash >>> 0
+}
+
+/** And one number, in two halves, so an edge is mixed without a string being built
+ *  for it: ten thousand of those is ten thousand allocations to answer a question
+ *  about whether anything changed. */
+function counted(into: number, value: number): number {
+  let hash = Math.imul(into ^ (value & 0xffff), 0x01000193)
+  hash = Math.imul(hash ^ (value >>> 16), 0x01000193)
+
+  return hash >>> 0
+}
+
+/** What set of notes and links a graph is, as one number.
+ *
+ *  The picture is handed a fresh graph object whenever anything in the space is
+ *  saved, and laying the arrangement out again then would make it jump every time
+ *  the typing pauses - so the view needs to know whether it is really another graph.
+ *  It used to ask by joining every id and every pair into one string and comparing
+ *  that: three hundred kilobytes built per save over five thousand notes, to find
+ *  out that nothing had changed.
+ *
+ *  A number instead, mixed from the same facts in the same order - the counts as
+ *  well as the ids, so a graph that lost one node and gained another of the same
+ *  name somewhere else still reads as another graph. Two different sets of notes can
+ *  collide in principle; what that would cost is one arrangement not being laid out
+ *  again, which is what the view does on purpose for every save that changes
+ *  nothing.
+ *
+ *  Kept per graph, weakly, so it is worked out once for each one the view is handed
+ *  and lives exactly as long as it does. */
+const signatures = new WeakMap<NoteGraph, number>()
+
+export function signature(graph: NoteGraph): number {
+  const held = signatures.get(graph)
+  if (held !== undefined) return held
+
+  const { nodes, edges } = graph
+  let hash = counted(counted(0x811c9dc5, nodes.length), edges.length)
+  for (const node of nodes) hash = mixed(hash, node.id)
+  for (const edge of edges) hash = counted(counted(hash, edge.a), edge.b)
+
+  signatures.set(graph, hash)
+  return hash
+}
+
 /** Which note a link in a given note points at, or null for one that points
  *  nowhere. The link index's own answer, cached there. */
 export type Resolve = (from: string, link: { kind: LinkKind; target: string }) => string | null
@@ -199,6 +254,27 @@ export function without(graph: NoteGraph, excluded: readonly string[]): NoteGrap
   }
 
   return { nodes, edges }
+}
+
+/** Who each node is joined to, kept per graph.
+ *
+ *  Weak, and keyed on the graph object, so it lives exactly as long as the picture
+ *  it is about and two pictures on screen keep one each. Built the first time
+ *  anything asks, because most things never do.
+ *
+ *  What it is for: lighting up what the pointer is over used to walk every edge in
+ *  the space per hover - ten thousand of them, on every pointer move that changed
+ *  which node was under it. */
+const joined = new WeakMap<NoteGraph, readonly (readonly number[])[]>()
+
+export function neighbours(graph: NoteGraph, node: number): readonly number[] {
+  let near = joined.get(graph)
+  if (!near) {
+    near = adjacency(graph)
+    joined.set(graph, near)
+  }
+
+  return near[node] ?? []
 }
 
 /** Who each node is joined to, as a list per node. */

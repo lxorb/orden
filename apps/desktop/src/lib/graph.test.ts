@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildGraph, neighbourhood, type NoteGraph, without } from './graph'
+import { buildGraph, neighbourhood, neighbours, type NoteGraph, signature, without } from './graph'
 import { scanNote, type ScannedNote } from './scan-note'
 
 /** A folder of notes, read the way the index reads one. */
@@ -286,5 +286,120 @@ describe('a space with notes left out of it', () => {
     const graph = held()
     expect(without(graph, ['Archiv'])).toEqual(graph)
     expect(without(graph, ['Plan.md.old'])).toEqual(graph)
+  })
+})
+
+/** What set of notes and links a graph is, as one number.
+ *
+ *  The view is handed a fresh graph whenever anything in the space is saved, and it
+ *  has to know whether that is really another graph before it lays the arrangement
+ *  out again. It used to ask by joining every id and every pair into one string:
+ *  three hundred kilobytes over five thousand notes, per save. So what matters is
+ *  that the answer still tells the graphs apart, and that asking twice costs
+ *  nothing. */
+describe('the signature of a graph', () => {
+  const notes = { 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink', 'Alone.md': '# Alone' }
+
+  test('is the same for the same notes and links, read twice', () => {
+    expect(signature(space(notes))).toBe(signature(space(notes)))
+  })
+
+  test('and is worked out once for a graph however often it is asked', () => {
+    const graph = space(notes)
+    let walked = 0
+
+    // Counted through the nodes themselves: the walk reads every id, so a getter
+    // that counts says how many walks there were. One, for six asks.
+    const counting = {
+      ...graph,
+      nodes: graph.nodes.map((node) => ({
+        ...node,
+        get id() {
+          walked += 1
+          return node.path ?? ''
+        },
+      })),
+    }
+
+    const first = signature(counting)
+    const after = walked
+    for (let again = 0; again < 5; again++) expect(signature(counting)).toBe(first)
+
+    expect(after).toBe(graph.nodes.length)
+    expect(walked).toBe(after)
+  })
+
+  test('differs when a note is added, taken away, or renamed', () => {
+    const whole = signature(space(notes))
+
+    // One more note, one fewer, and one under another name.
+    expect(signature(space({ ...notes, 'More.md': '# More' }))).not.toBe(whole)
+    expect(signature(space({ 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink' }))).not.toBe(whole)
+    expect(
+      signature(space({ 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink', 'Lonely.md': '# Lonely' })),
+    ).not.toBe(whole)
+  })
+
+  test('differs when a link is made or broken, and not when a word is written', () => {
+    const whole = signature(space(notes))
+
+    expect(signature(space({ ...notes, 'Alone.md': 'now see [[Ink]]' }))).not.toBe(whole)
+    expect(signature(space({ ...notes, 'Plan.md': '# Plan' }))).not.toBe(whole)
+    // The same notes and the same links, with more written in one of them: the
+    // arrangement must not be laid out again for this, which is the whole point.
+    expect(signature(space({ ...notes, 'Plan.md': 'a line, and see [[Ink]]' }))).toBe(whole)
+  })
+})
+
+/** Who a node is joined to.
+ *
+ *  Lighting up what the pointer is over walked every edge in the space, on every
+ *  pointer move that changed which note was under it - ten thousand of them over five
+ *  thousand notes. The list per node is built once for a graph and kept with it. */
+describe('the neighbours of a node', () => {
+  const held = () =>
+    space({
+      'Hub.md': 'see [[One]] and [[Two]] and [[Three]]',
+      'One.md': '# One',
+      'Two.md': '# Two',
+      'Three.md': '# Three',
+      'Alone.md': '# Alone',
+    })
+
+  test('are the nodes one link away and nothing else', () => {
+    const graph = held()
+    const at = (name: string) => graph.nodes.findIndex((node) => node.name === name)
+    const names = (node: number) =>
+      [...neighbours(graph, node)].map((one) => graph.nodes[one]?.name).sort()
+
+    expect(names(at('Hub'))).toEqual(['One', 'Three', 'Two'])
+    expect(names(at('One'))).toEqual(['Hub'])
+    expect(names(at('Alone'))).toEqual([])
+  })
+
+  test('and the list is built once for a graph, not once per question', () => {
+    const graph = held()
+    let walked = 0
+
+    const counting = {
+      ...graph,
+      // The build walks the edges; a getter that counts says how many walks there
+      // were. The old way walked them once per question.
+      get edges() {
+        walked += 1
+        return graph.edges
+      },
+    }
+
+    for (let again = 0; again < 20; again++) neighbours(counting, 0)
+    expect(walked).toBe(1)
+  })
+
+  test('and two graphs keep a list each', () => {
+    const one = held()
+    const other = space({ 'A.md': 'see [[B]]', 'B.md': '# B' })
+
+    expect(neighbours(one, 0)).not.toBe(neighbours(other, 0))
+    expect(neighbours(other, 0)).toHaveLength(1)
   })
 })

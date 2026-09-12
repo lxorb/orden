@@ -43,6 +43,11 @@ const COLD = 0.001
  *  animation at eight ticks a frame. */
 const TICKS = 300
 const COOLING = 1 - Math.pow(COLD, 1 / TICKS)
+
+/** How many ticks `settle` takes between looks at the clock. Small enough that a
+ *  budget is kept to on a space large enough for one tick to be milliseconds, large
+ *  enough that the clock is not most of the work on a small one. */
+const SETTLING_TICKS = 4
 /** How warm a drag makes the layout again: enough for the neighbours of the node
  *  being moved to follow it, not enough to rearrange the picture. */
 const DRAG_WARMTH = 0.3
@@ -187,10 +192,21 @@ export class Layout {
     }
   }
 
-  /** Ticks until it has arrived, for a reader who has asked not to see things
-   *  move. */
-  settle() {
-    while (!this.settled) this.tick(32)
+  /** Ticks towards the arrangement for as long as `budget` milliseconds allow, and
+   *  answers whether it has arrived. For a reader who has asked not to see things
+   *  move: the view calls this a frame at a time and draws nothing until it says
+   *  yes, so the picture appears already laid out.
+   *
+   *  It used to be a `while` loop with no way out, which on five thousand notes is
+   *  three hundred ticks and a second and a half of a thread that answers nothing -
+   *  so the readers who asked for less movement were the only ones who got a freeze.
+   *  A budget rather than a count of ticks, because a tick is as long as the space
+   *  is large and only a clock knows what a frame has left. */
+  settle(budget: number): boolean {
+    const until = performance.now() + budget
+    while (!this.settled && performance.now() < until) this.tick(SETTLING_TICKS)
+
+    return this.settled
   }
 
   /** Holds a node where the pointer put it, and warms the layout so its
