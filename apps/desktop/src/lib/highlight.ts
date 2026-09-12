@@ -18,12 +18,16 @@ export { highlightCode } from '@nib/markdown/highlight'
  *  stays plain. */
 export async function loadParsers(names: Iterable<string>): Promise<Map<string, Parser>> {
   const parsers = new Map<string, Parser>()
+  // The whole list, because this is the caller that wants all of it: a document on
+  // its way out names whatever languages its fences name, and the export is already
+  // a wait. See languages.ts, which fetches it once.
+  const known = await fenceLanguages()
 
   await Promise.all(
     [...new Set(names)].map(async (name) => {
       const description =
-        LanguageDescription.matchLanguageName(fenceLanguages, name, true) ??
-        LanguageDescription.matchFilename(fenceLanguages, `code.${name}`)
+        LanguageDescription.matchLanguageName(known, name, true) ??
+        LanguageDescription.matchFilename(known, `code.${name}`)
       if (!description) return
 
       const support = await description.load().catch(() => null)

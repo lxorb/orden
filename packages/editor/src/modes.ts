@@ -16,7 +16,7 @@ import { language as currentLanguage, syntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
-import { fenceLanguages } from './languages'
+import { fenceLanguage } from './languages'
 import { livePreview } from './live-preview'
 import { noReveal } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
@@ -66,11 +66,16 @@ function editorClass(name: string): Extension {
  *
  *  `addKeymap: false` because the two keys `markdown()` would bind for itself
  *  are bound in editor.ts instead, where every keymap of plain bindings lives
- *  and where Enter can be told how a list ends. */
+ *  and where Enter can be told how a list ends.
+ *
+ *  `codeLanguages` is the lookup rather than the list, which `markdown()` takes
+ *  either way: the list of a hundred and forty-three is fetched when a fence first
+ *  names a language, and a function is what can answer before it is here. See
+ *  languages.ts. */
 const markdownFor = once((strict: boolean): Extension =>
   markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
-    codeLanguages: fenceLanguages,
+    codeLanguages: fenceLanguage,
     extensions: strict ? [] : nibMarkdownExtensions,
     addKeymap: false,
   }),

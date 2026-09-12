@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { LanguageDescription, StringStream, type StreamParser } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { languages as stock } from '@codemirror/language-data'
-import { fenceLanguages, SPELLINGS } from './languages'
+import { fenceLanguages } from './languages'
+import { SPELLINGS } from './language-spellings'
 import { DIAGRAM_LANGUAGES } from './live-preview/render'
 import { isRunnableLanguage } from './run/run'
 import { graphqlParser } from './graphql'
@@ -10,9 +11,14 @@ import { makefileParser } from './makefile'
 import { mermaidParser } from './mermaid'
 import { prismaParser } from './prisma'
 
+/** The list, in hand. The app fetches it with the first fence that names a language;
+ *  every test here is about what is in it, so it is awaited once and read as an array
+ *  throughout. */
+const languages = await fenceLanguages()
+
 /** What a fence saying this word opens, the way `markdown()` asks it. */
 const languageFor = (word: string) =>
-  LanguageDescription.matchLanguageName(fenceLanguages, word, true)?.name ?? null
+  LanguageDescription.matchLanguageName(languages, word, true)?.name ?? null
 
 describe('the word a fence is opened with', () => {
   /** The spellings people type, and what each has to come out as. Every one of
@@ -175,14 +181,14 @@ describe('the word a fence is opened with', () => {
 
 describe('the list itself', () => {
   test('every language is named once', () => {
-    const names = fenceLanguages.map((language) => language.name)
+    const names = languages.map((language) => language.name)
     expect(names).toHaveLength(new Set(names).size)
   })
 
   test('no two languages answer to the same word', () => {
     const claimed = new Map<string, string>()
 
-    for (const language of fenceLanguages) {
+    for (const language of languages) {
       for (const word of language.alias) {
         expect(claimed.get(word) ?? language.name, `\`\`\`${word}`).toBe(language.name)
         claimed.set(word, language.name)
@@ -205,7 +211,7 @@ describe('the list itself', () => {
 
   test('the stock list is still here in full', () => {
     for (const original of stock) {
-      const language = fenceLanguages.find((other) => other.name === original.name)
+      const language = languages.find((other) => other.name === original.name)
       expect(language?.alias, original.name).toEqual(expect.arrayContaining([...original.alias]))
     }
   })
@@ -255,7 +261,7 @@ describe('loading a language', () => {
 
   for (const word of sample) {
     test(`\`\`\`${word} loads and parses`, async () => {
-      const description = LanguageDescription.matchLanguageName(fenceLanguages, word, true)!
+      const description = LanguageDescription.matchLanguageName(languages, word, true)!
       const support = await description.load()
 
       expect(support.language.parser.parse('x')).toBeTruthy()

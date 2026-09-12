@@ -32,13 +32,14 @@ const highlighter = tagHighlighter([
  *  whose language is still arriving is parsed as plain text and filled in
  *  afterwards. */
 async function colouring(word: string, code: string) {
-  const description = LanguageDescription.matchLanguageName(fenceLanguages, word, true)
+  const languages = await fenceLanguages()
+  const description = LanguageDescription.matchLanguageName(languages, word, true)
   await description?.load()
 
   const document = `Before.\n\n\`\`\`${word}\n${code}\n\`\`\`\n\nAfter.\n`
   const parser = markdown({
     base: markdownLanguage,
-    codeLanguages: fenceLanguages,
+    codeLanguages: languages,
     extensions: nibMarkdownExtensions,
   }).language.parser
 
