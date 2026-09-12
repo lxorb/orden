@@ -115,4 +115,49 @@ describe('the content policy', () => {
     expect(connect).toContain('ipc:')
     expect(connect).toContain('http://ipc.localhost')
   })
+
+  /** This machine by name and by address, which a policy reads as two different
+   *  hosts: it matches what is written rather than what the name resolves to, so a
+   *  line that allows only `localhost` refuses a model served on 127.0.0.1 - the
+   *  address every local runner prints when it starts - and says nothing a reader
+   *  could act on, a blocked request being a failure with no reason attached. */
+  test('and reaches this machine by address as well as by name', () => {
+    const connect = CSP.split('; ').find((one) => one.startsWith('connect-src ')) ?? ''
+
+    for (const host of ['localhost', '127.0.0.1']) {
+      expect(connect, host).toContain(`http://${host}:*`)
+      expect(connect, host).toContain(`ws://${host}:*`)
+    }
+
+    // And the same line in the two carriers that take a `<meta>`, which is where an
+    // installed app and the PWA read it from.
+    expect(META_CSP).toContain('http://127.0.0.1:*')
+    expect(TAURI.app.security.csp).toContain('http://127.0.0.1:*')
+    expect(metaPolicy(INDEX)).toContain('http://127.0.0.1:*')
+  })
+
+  /** And never the IPv6 form of it, which cannot be said: a host source in CSP is a
+   *  name or a dotted quad, and Chromium answers a bracketed address with "contains
+   *  an invalid source ... it will be ignored" on every page load. That is a console
+   *  error in a shipping build and a failed drive, which is the same failure the
+   *  meta and header split above was made to remove. A server bound to `::1` alone
+   *  is still reached as `http://localhost:port`. */
+  test('and says nothing a browser will reject out loud', () => {
+    for (const policy of [CSP, META_CSP, metaPolicy(INDEX), TAURI.app.security.csp ?? '']) {
+      expect(policy).not.toContain('[::1]')
+      expect(policy).not.toMatch(/\[[0-9a-f:]*]/i)
+    }
+  })
+
+  /** Plain http is for this machine and nowhere else: a note that points at a
+   *  picture over http on somebody else's host is a note that leaks. */
+  test('and lets plain http nowhere but this machine', () => {
+    const connect = CSP.split('; ').find((one) => one.startsWith('connect-src ')) ?? ''
+    const hosts = connect.split(' ').filter((one) => one.startsWith('http://'))
+
+    expect(hosts).not.toContain('http:')
+    for (const host of hosts) {
+      expect(host, host).toMatch(/^http:\/\/(localhost|127\.0\.0\.1|\[::1\]|[a-z]+\.localhost)(:\*)?$/)
+    }
+  })
 })

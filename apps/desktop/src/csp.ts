@@ -73,7 +73,24 @@ const POLICY: readonly string[] = [
   // names the schemes instead, and what it forbids is plain http to anywhere but
   // this machine, and every other scheme there is. The localhost ports are the dev
   // server and its hot-reload socket; Tauri's own IPC is the two `ipc` entries.
-  "connect-src 'self' https: wss: ws://localhost:* http://localhost:*" +
+  //
+  // This machine by name and by address, which are two different things to a policy:
+  // it matches the host as it is written rather than what the name resolves to, so a
+  // line that allows only `localhost` refuses `http://127.0.0.1:11434` - which is the
+  // address a local model prints when it starts, and the address a drive serves the
+  // built app from. Measured: a page served from localhost under the old line was
+  // refused with "violates the following Content Security Policy directive" on the
+  // console and nothing a reader could act on in the app; with the address named, it
+  // connects.
+  //
+  // There is no IPv6 form of this. A host source in CSP is a name or a dotted quad,
+  // and Chromium answers `http://[::1]:*` with "contains an invalid source ... it
+  // will be ignored" on every page load - a console error in a shipping build, which
+  // is the one thing the split below this file exists to avoid. Nothing is lost: a
+  // server bound to `::1` alone is still reached as `http://localhost:port`, because
+  // the name is what the policy sees and the resolver does the rest.
+  "connect-src 'self' https: wss: ws://localhost:* ws://127.0.0.1:*" +
+    ' http://localhost:* http://127.0.0.1:*' +
     ' ipc: http://ipc.localhost asset: http://asset.localhost blob: data:',
 
   // A card standing in for a page somewhere else frames that page once the reader
