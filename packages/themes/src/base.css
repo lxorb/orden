@@ -1055,6 +1055,28 @@ select:focus-visible,
   padding: 3px;
   border-radius: var(--radius-md);
   background: var(--surface-2);
+  /* Which surface reads raised out of this groove, which is not the same token on
+     both sides of the palette. The surfaces step *away from the page*, and away is
+     lighter in the dark scheme and darker in the light one, so no one pair of them
+     says "raised" on both: the thumb was `--surface` inside a `--surface-2` track,
+     which is a step up out of a light card and a step down into a dark one - a
+     groove with a hole in it, measured at 1.075 the wrong way round while the light
+     scheme carried 1.067 the right way.
+
+     So the raised surface is named once here and answered per scheme, the way
+     `--scrollbar` and the select arrow are; dark is the default, as it is in
+     tokens.css, and a theme that restates the surfaces moves this with them.
+
+     Said with the attribute because the app states it on the document on every
+     change of theme - see theme.svelte.ts - and so do an export, a deck and the
+     clipper. A published page is the one carrier that leaves it off and reads the
+     system instead, and no published page has a control like this on it: anything
+     that puts one there has to answer the scheme the way blog-css.ts does. */
+  --segment-raised: var(--surface-3);
+}
+
+[data-theme='light'] .nib-segmented {
+  --segment-raised: var(--surface);
 }
 
 /* The one raised surface that says which half is chosen. It slides from one to
@@ -1072,7 +1094,7 @@ select:focus-visible,
   left: 0;
   z-index: 0;
   border-radius: calc(var(--radius-md) - 3px);
-  background: var(--surface);
+  background: var(--segment-raised);
   box-shadow: var(--shadow-sm);
   pointer-events: none;
   transition:
@@ -1116,7 +1138,7 @@ select:focus-visible,
 /* What being the chosen one is, where nothing is sliding: the surface itself.
    The words go dark either way. */
 .nib-segmented button.on {
-  background: var(--surface);
+  background: var(--segment-raised);
   color: var(--text-strong);
   box-shadow: var(--shadow-sm);
 }

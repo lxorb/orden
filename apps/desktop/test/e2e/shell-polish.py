@@ -16,7 +16,10 @@ than clicks:
   - the formatting bar on a phone sits on the keyboard, follows it, and leaves with
     it - nothing of it is left in the middle of the screen;
   - the bar is one row: the menu, the button, the space label and the first tab
-    all sit on one centre line, inside `--header-height`.
+    all sit on one centre line, inside `--header-height`;
+  - the segmented control's chosen half reads raised in both schemes - lighter than
+    the groove it sits in, with the shadow that says so - which one pair of the
+    palette's surfaces cannot say on both sides.
 
 Builds the web app, serves `dist` on a port of its own, measures and shoots on a
 desktop 1180 wide and a phone 420 wide, each in both schemes, and stops everything
@@ -568,6 +571,52 @@ TREE_MARKS = """
 """
 
 
+# The segmented control, read as light rather than looked at: the surface of the
+# half that is chosen, the surface of the groove it sits in, and how far apart the
+# two are. Raised means lighter than what it sits in, and it has to mean that on
+# both sides of the palette.
+#
+# It could not. The surfaces step away from the page - lighter as they go in the
+# dark scheme, darker in the light one - so the thumb at `--surface` inside a
+# `--surface-2` track was a step up out of a light card and a step down into a dark
+# one: 1.075 the wrong way round in the dark, against 1.067 the right way in the
+# light. See `--segment-raised` in base.css.
+SEGMENTED = """
+() => {
+  const track = document.querySelector('.nib-segmented')
+  if (!track) return { none: true }
+
+  // The surface belongs to the thumb wherever one slides, and to the chosen
+  // button where none does; see `.nib-segmented.has-thumb button.on`.
+  const raised = track.querySelector('.nib-segmented-thumb') ?? track.querySelector('button.on')
+  if (!raised) return { none: true }
+
+  const lit = (css) => {
+    const [r, g, b] = (css.match(/[\\d.]+/g) ?? [0, 0, 0]).slice(0, 3).map(Number)
+    const one = (v) => {
+      const x = v / 255
+      return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4
+    }
+    return 0.2126 * one(r) + 0.7152 * one(g) + 0.0722 * one(b)
+  }
+
+  const over = getComputedStyle(raised).backgroundColor
+  const under = getComputedStyle(track).backgroundColor
+  const hi = Math.max(lit(over), lit(under))
+  const lo = Math.min(lit(over), lit(under))
+
+  return {
+    none: false,
+    thumb: over,
+    track: under,
+    lighter: lit(over) > lit(under),
+    ratio: Math.round(((hi + 0.05) / (lo + 0.05)) * 1000) / 1000,
+    shadow: getComputedStyle(raised).boxShadow !== 'none',
+  }
+}
+"""
+
+
 # Where the drawer is, so a shot of nothing is a reading rather than a puzzle.
 ASIDE_AT = """
 () => {
@@ -892,6 +941,39 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 bool(one["label"]),
                 f"[{label}] and says it in a word too ({one['label']!r})",
             )
+
+        # ── The segmented control, where a raised surface has to read raised ──
+        # Appearance, because it is the pane that has one in it, and because which
+        # scheme is in force is chosen on exactly this control.
+        page.evaluate("() => window.nibApp.settings.show()")
+        page.wait_for_timeout(600)
+        page.evaluate(
+            "() => { window.nibApp.settings.section = 'appearance';"
+            " window.nibApp.settings.listing = false }"
+        )
+        page.wait_for_timeout(700)
+        segment = page.evaluate(SEGMENTED)
+        say(f"[{label}] the segmented control: {segment}")
+        check(not segment["none"], f"[{label}] the appearance pane draws a segmented control")
+        if not segment["none"]:
+            page.locator(".nib-segmented").first.screenshot(
+                path=str(SHOTS / f"segmented-{label}.png")
+            )
+            say(f"[{label}] wrote segmented-{label}.png")
+            check(
+                segment["lighter"],
+                f"[{label}] the chosen half is lighter than the groove it sits in"
+                f" ({segment['thumb']} over {segment['track']})",
+            )
+            check(
+                segment["ratio"] >= 1.05,
+                f"[{label}] and lifted far enough out of it to see ({segment['ratio']})",
+            )
+            check(segment["shadow"], f"[{label}] and casts the shadow that says so")
+        page.evaluate(
+            "() => window.nibApp.settings.hide?.() ?? (window.nibApp.settings.open = false)"
+        )
+        page.wait_for_timeout(300)
     finally:
         page.context.close()
 
