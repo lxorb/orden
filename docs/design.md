@@ -193,6 +193,34 @@ A space's badge and the face in the panel's foot are `--row-height-sm` square
 with a corner a third of their side, so they are the same shape at 24px under a
 pointer and at 48 under a thumb, and neither needs a size of its own.
 
+### A glyph that is a button
+
+`.nib-glyph` in `base.css`: a `--row-height` square, `--radius-row`, the row's
+own hover and press surfaces, and a mark of exactly `--icon-lg` that is never
+allowed to give way. 28px under a pointer, 56 under a thumb, which clears
+`--touch-target` without a number of its own.
+
+Seven components drew their own, and between them they had five sizes (24, 28,
+28 hard-coded, 30, 38), three corners (`--radius-row`, `--radius-sm`, and none
+at all - so the button that opens the file list lit a sharp-edged block where
+the three bars beside it lit a rounded one) and two hover colours, for one job.
+
+`padding: 0` in that class is load-bearing rather than tidy. A browser gives
+every `button` `1px 6px` of its own, and a component that never mentions padding
+inherits it: the panel's foot asked for an 18px glyph in a 28px square and got a
+content box 16 wide, so both marks at the bottom of the sidebar were drawn 16
+across and 18 down while every other glyph in the app was round. `flex: none` on
+the mark is the other half of the same bug.
+
+A component says where the button sits and what its own states mean - the find
+bar's hairline when a step is pressed in, the sidebar button's edge sliding, the
+accent on `is-on`. Nothing else.
+
+Where a mark has to stay small and still be aimed at - the `i` after a setting's
+name - what is drawn and what can be hit are two sizes: the glyph grows to
+`--touch-icon` and an invisible `::after` grows the target to `--touch-target`.
+A 48px circle in the middle of a label would be the label's size.
+
 ### Rows
 
 | Token | Desktop | Touch |
@@ -317,6 +345,27 @@ Elevation follows the same three:
 A shadow above zero always comes with a hairline border, and nothing at zero has
 both a border and a background.
 
+Levels 2 and 3 are drawn once each, in `base.css`, because five components had a
+copy of one of them and the copies had already drifted:
+
+- **`.nib-bar`** is the small bar over the text: the format bar above a
+  selection, the two actions a PDF offers, the canvas toolbar.
+- **`.nib-layer`** is a layer that **floats over** the app at `--radius-md`: the
+  context menu, the app menu, the list of spaces, the suggestions under a `[[`,
+  a dropdown, the canvas and graph flyouts. The app menu and the dropdown used
+  to light their surface a step brighter than the menus beside them, and the
+  dropdown and the suggestions spent `--shadow-md` where the menus spent
+  `--shadow-lg` - so two things doing one job sat at two heights and two shades.
+- **`.nib-screen`** is a surface that **replaces** part of the screen at
+  `--radius-lg`: the palette, the sheet a space is shared from, the one small
+  modal the app asks its questions in, the sign-in panel, the word a link owes
+  whoever followed it. Five components declared the same eight lines; one opened
+  six vh above the others and each picked its own width. How wide is the
+  caller's, as `--screen-width`; how far down is too, because a list of commands
+  wants the room under it that a question does not.
+
+Where it sits is the caller's. What it is, is the class.
+
 ### The surfaces a row wears
 
 Four states, four tokens, one meaning each, and each defined from a token a
@@ -360,6 +409,39 @@ with it.
 A system that asks for more contrast is shown that theme once, on a fresh install,
 on the card it would be installed from. Nothing installs itself, and nothing asks
 twice.
+
+### The floor under the default palette
+
+Asking for *more* contrast is asking for a different look. Being able to read the
+words at all is not, and the palette both looks started from did not clear it.
+
+Every colour words are written in carries **four and a half to one against every
+surface in its own palette** - `--bg`, `--surface`, `--surface-2` and
+`--surface-3` - because that is what WCAG asks of text and what the eye asks of
+an 11px capital. Measured over the built app, the two levels of secondary ink
+failed that on every surface they sat on:
+
+| Token | Was | On a panel | Inside a menu | Now |
+| --- | --- | --- | --- | --- |
+| `--muted` (dark) | `#767e8c` | 4.39 | 3.63 | `#878f9d`, 4.55 at worst |
+| `--muted` (light) | `#8a93a2` | 2.84 | 2.44 | `#5c6574`, 4.50 at worst |
+| `--muted-strong` (light) | `#646d7c` | 4.78 | 4.12 | `#464f5e`, 6.52 at worst |
+| `--danger` (dark) | `#f2555a` | 4.39 | - | `#f5585d` |
+| `--danger` (light) | `#d92b34` | 4.70 | 3.81 | `#c91b24` |
+| `--success` (light) | `#16a06a` | 3.26 | - | `#007640` |
+
+`--muted` is what most of the chrome's second line is written in - a section
+label, a count, a key beside a command, the placeholder in the search pill, the
+name of a tab you are not in - so one colour was a hundred readings in a single
+pass of the app, and the light side was the worse of the two by a long way.
+
+Raising it would have darkened something that is meant to be barely there, so
+the signature was named instead: `--faint` is the shade the `#` and the `**`
+bleed in at, and `--md-char-color` and `--heading-char-color` read it. Markup
+says the same thing the heading already says; prose does not.
+
+Two colours are still short of the floor, and both are one decision rather than a
+number - see "What needs deciding" at the end of this file.
 
 ### Alignment
 
@@ -586,3 +668,36 @@ control. It gains the row: `.nib-row` is drawn in `base.css` and nowhere else,
 and no list paints a hover or a press of its own. It gains the badge and the
 switch on the same terms, and `SpaceMark.svelte`, which is the one answer to what
 goes inside a space's badge.
+
+Three things are **not** guarded yet, and each of them is how the drift being
+undone here got in:
+
+- **A duration written into CSS.** `motion.test.ts` refuses a bare number handed
+  to a Svelte transition, which is why every one of those goes through `dur()`.
+  It says nothing about `transition: opacity 190ms ease` in a `<style>` block,
+  and one of those was on screen: a name beside somebody else's caret faded for
+  190ms however loudly the reader had asked for no movement, because `--dur-*`
+  goes to zero under `prefers-reduced-motion` and a number does not.
+- **A focus ring drawn as a `box-shadow`.** The guard reads `outline` only, so
+  five components hand-copied `.nib-field:focus`'s two lines instead of wearing
+  the class, and one of them drew a 1px ring where the rest draw 3.
+- **A third weight.** The chrome has two - `--weight-row` and `--weight-strong`
+  - and `550` had appeared twenty-five times, `500` twice and `650` once,
+  including inside `base.css` itself.
+
+## What needs deciding
+
+Two colours are still under the floor, and neither is a number to nudge:
+
+**The accent cannot be both the ink and the fill.** On the dark palette
+`--accent` carries 4.52 against a panel, 4.20 against a card and 3.73 inside a
+menu - so the accent as *text* fails wherever the surface is lighter than the
+page - and white on an accent fill carries 3.98, which is every primary button's
+words. Making the accent darker fixes the fill and makes the text worse; making
+it lighter does the opposite. The answer is two tokens - the accent to write in,
+and the accent to fill with - and picking them is picking the brand.
+
+**The tab strip's inactive labels.** They are `--muted` by design, which now
+clears the floor; what is left is whether the tab you are *not* in should be
+readable at all or deliberately recede. Notion lets it recede. Obsidian does
+not.
