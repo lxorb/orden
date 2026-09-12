@@ -183,9 +183,9 @@ rooms.get('/:noteId', async (context) => {
       // A reader is in the room and sees every keystroke; what the room does
       // with this is refuse the messages that would change the text.
       //
-      // Said the other way round - not `read` means yes - until a role the
-      // query could not name would have been a socket that writes. It is the
-      // one flag between a reader and the words, so the two roles that may are
+      // Said the other way round until now - anything but `read` meant yes - so
+      // a role the query could not name was a socket that writes. It is the one
+      // flag between a reader and the words, so the two roles that may write are
       // named and everything else reads, the way the room reads the header it
       // arrives on; see `writesOf`.
       'x-nib-write': allowed.role === 'write' || allowed.role === 'owner' ? 'yes' : 'no',
