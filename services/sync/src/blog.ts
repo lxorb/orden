@@ -7,6 +7,7 @@ import {
   type Wikilink,
 } from '@nib/markdown'
 import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
+import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@nib/markdown/diagrams'
 // The formula engine and the emoji table, imported outright rather than loaded when a
 // note turns out to want one. The app does the opposite, because it has a first paint
 // to make and a session to spread the loading over; an isolate answers one request and
@@ -28,6 +29,7 @@ import { pageOf, pathsOf, rememberedNote } from './blog/paths'
 import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
+import { askInChunks, places } from './bound'
 import { machineOf, maySendAnswer, mayTakeAnswer } from './limits'
 import { newId } from './crypto'
 import { noteKey } from './notes'
@@ -74,7 +76,11 @@ function csp(options: { nonce?: string; scripts?: boolean; counter?: string } = 
     // third party who was reading what and left the maths of a page broken for
     // anybody offline or behind a blocker.
     "font-src 'self'",
-    'img-src https: data:',
+    // The pictures a note names, wherever they are, and the diagrams the app drew
+    // for this page, which are served from here; `'self'` is said out loud because
+    // a site read over plain http - a drive against a local Worker - is not `https:`
+    // and its own images are still its own.
+    "img-src 'self' https: data:",
     // A recording or a film a note embeds, which is served from the same place
     // its pictures are: the blob behind the file, over https. Said out loud
     // because media does not fall back to `img-src`, and left off `default-src`
@@ -773,17 +779,96 @@ function near(pages: readonly Page[], page: Page): Set<string> {
   return around
 }
 
-/** What a fence on a page becomes: coloured code, and - where a note asks a
- *  question - a form.
+/** How many diagrams one page shows. A note is prose; past this it is a deck of
+ *  pictures, and each one is two lookups before the page can be written. */
+const MOST_DIAGRAMS = 24
+
+/** Which of those hashes the space's owner is actually keeping.
  *
- *  The one hook the renderer offers, so both live here rather than the renderer
- *  learning about either. A ` ```form ` fence nobody can read stays a fence: see
- *  blog/form.ts for the grammar and why it is nib's own. */
-function fencesOf(noteId: string, url: URL, request: Request) {
+ *  The owner's own account rather than the store as a whole: a blob is addressed
+ *  by its name and any account may write any name, so asking "does anybody hold
+ *  this" would let somebody else's upload decide what appears on this page. One
+ *  query for every diagram of the page, chunked because D1 binds a hundred
+ *  parameters; see src/bound.ts. */
+async function heldBlobs(
+  env: Env,
+  userId: string,
+  hashes: readonly string[],
+): Promise<Set<string>> {
+  if (!hashes.length) return new Set<string>()
+
+  const found = await askInChunks(hashes, async (chunk) => {
+    const { results } = await env.DB.prepare(
+      `select hash from blobs where user_id = ? and type = 'image/svg+xml'
+        and hash in (${places(chunk.length)})`,
+    )
+      .bind(userId, ...chunk)
+      .all<{ hash: string }>()
+
+    return results
+  })
+
+  return new Set(found.map((row) => row.hash))
+}
+
+/** The diagrams this note has a picture for, as the figure each fence becomes.
+ *
+ *  Read before the render, for the same reason an embed is: rendering is one
+ *  synchronous pass and this is a query. A fence with no picture yet is not in the
+ *  map and stays the code block it was - which is what a note published from a
+ *  device that has never drawn it looks like, and what a diagram mermaid refused
+ *  looks like for ever. See packages/markdown/src/diagrams.ts for the naming and
+ *  apps/desktop/src/lib/site-diagrams.ts for what puts the bytes there. */
+async function diagramsIn(env: Env, space: Space, source: string): Promise<Map<string, string>> {
+  const fences = codeBlocks(source)
+    .filter((one) => isDiagram(one.language))
+    .slice(0, MOST_DIAGRAMS)
+
+  if (!fences.length) return new Map<string, string>()
+
+  const named = await Promise.all(
+    fences.map(async (one) => ({
+      fence: one,
+      light: await diagramKey(space.id, one.language, one.code, 'light'),
+      dark: await diagramKey(space.id, one.language, one.code, 'dark'),
+    })),
+  )
+
+  const held = await heldBlobs(env, space.user_id, [
+    ...new Set(named.flatMap((one) => [one.light, one.dark])),
+  ])
+
+  const drawn = new Map<string, string>()
+  for (const { fence, light, dark } of named) {
+    if (!held.has(light)) continue
+
+    drawn.set(
+      `${fence.language}\n${fence.code}`,
+      diagramFigure(fence.language.toLowerCase(), diagramAlt(fence.code), {
+        light: `/i/${light}.svg`,
+        // A device that sent the light drawing and not the dark leaves one
+        // picture, which everybody then sees; see `diagramFigure`.
+        dark: held.has(dark) ? `/i/${dark}.svg` : null,
+      }),
+    )
+  }
+
+  return drawn
+}
+
+/** What a fence on a page becomes: a diagram the app drew, coloured code, and -
+ *  where a note asks a question - a form.
+ *
+ *  The one hook the renderer offers, so all three live here rather than the
+ *  renderer learning about any of them. A ` ```form ` fence nobody can read stays
+ *  a fence: see blog/form.ts for the grammar and why it is nib's own. */
+function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap<string, string>) {
   const sent = url.searchParams.get('sent') === noteId
   const wrong = url.searchParams.get('wrong')
 
   return (code: string, language: string): string | null => {
+    if (isDiagram(language)) return drawn.get(`${language}\n${code}`) ?? null
+
     if (language.toLowerCase() !== 'form') return blogFence(code, language)
 
     const form = formOf(code)
@@ -991,7 +1076,7 @@ export async function serveBlog(
     // to go; an embed still shows what it names, which is inside this page.
     const reading = {
       escapeHtml: true,
-      code: fencesOf(only.id, url, request),
+      code: fencesOf(only.id, url, request, await diagramsIn(env, space, source)),
       breaks,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
@@ -1175,7 +1260,7 @@ export async function serveBlog(
   // what they name - one level deep, which is the renderer's own rule.
   const reading = {
     escapeHtml: true,
-    code: fencesOf(note.id, url, request),
+    code: fencesOf(note.id, url, request, await diagramsIn(env, space, source)),
     breaks,
     resolveLink: linkResolver(pageList, files),
     resolveEmbed: await embedded(

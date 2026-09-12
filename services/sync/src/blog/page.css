@@ -639,3 +639,65 @@ body > .card h3 {
   font-size: var(--text-base);
   border: none;
 }
+
+/* ── A diagram the app drew ─────────────────────────────────────── */
+
+/* The app renders a ` ```mermaid `, ` ```flow ` or ` ```sequence ` fence to an
+   SVG and sends it up as a blob; the page writes it as a picture inside the same
+   `figure.diagram` an export frames its inline SVG with. So the frame, the
+   padding and the scroll are document.css's, and what is left is the picture
+   itself and which of the two schemes' pictures is being looked at.
+
+   Two pictures, because an `<img>` is a document of its own that no variable of
+   this page reaches, and because `prefers-color-scheme` inside one would answer
+   the reader's system rather than the button in the bar; see
+   packages/markdown/src/diagrams.ts for the whole of that reasoning. The light
+   one is the default here for the same reason the light tokens are: nothing said
+   is a page on the open web. The order below matters - the system's word, then
+   the reader's - which is exactly how the token blocks are stacked. */
+
+#write .diagram img {
+  max-width: 100%;
+  height: auto;
+}
+
+#write .diagram img[data-scheme='dark'] {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) #write .diagram img[data-scheme='light'] {
+    display: none;
+  }
+
+  :root:not([data-theme='light']) #write .diagram img[data-scheme='dark'] {
+    display: inline;
+  }
+}
+
+:root[data-theme='dark'] #write .diagram img[data-scheme='light'] {
+  display: none;
+}
+
+:root[data-theme='dark'] #write .diagram img[data-scheme='dark'] {
+  display: inline;
+}
+
+:root[data-theme='light'] #write .diagram img[data-scheme='light'] {
+  display: inline;
+}
+
+:root[data-theme='light'] #write .diagram img[data-scheme='dark'] {
+  display: none;
+}
+
+/* Paper is light whatever the screen was, the way the tokens are. */
+@media print {
+  #write .diagram img[data-scheme='light'] {
+    display: inline;
+  }
+
+  #write .diagram img[data-scheme='dark'] {
+    display: none;
+  }
+}

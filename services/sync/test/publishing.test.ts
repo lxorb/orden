@@ -13,6 +13,8 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { codeBlocks } from '@nib/markdown'
+import { diagramKey } from '@nib/markdown/diagrams'
 import { blogMath, blogStyle } from '../../../scripts/blog-css'
 import { COLOURED } from '../src/blog/code'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from '../src/blog/math'
@@ -31,13 +33,16 @@ const RED = '\u{1F534}'
 
 let env: TestEnv
 let token: string
+/** The space the fixture is published from. Held out here because the diagram a
+ *  page shows is named after it; see @nib/markdown/diagrams. */
+let space: string
 
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
 
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
-  const space = (created.json as { space: { id: string } }).space.id
+  space = (created.json as { space: { id: string } }).space.id
 
   for (const [path, content] of [
     ['Everything.md', EVERYTHING],
@@ -382,5 +387,145 @@ describe('a published note', () => {
       expect(answer.status).toBe(200)
       expect(answer.text).toContain(`${WRAPPED}<br>`)
     })
+  })
+})
+
+/** A mermaid diagram on a published page.
+ *
+ *  The Worker draws nothing: the app drew the SVG, named it after the fence and
+ *  sent it up as a blob, and the page writes a picture where the fence stood if the
+ *  blob is there. So these tests do what the app does - a PUT of an SVG under the
+ *  name the fence computes - and then read the page. See
+ *  packages/markdown/src/diagrams.ts and apps/desktop/src/lib/site-diagrams.ts. */
+describe('a diagram the app drew', () => {
+  /** The fixture's own mermaid fence, read out of it rather than typed again:
+   *  the name is the fence's contents, character for character. */
+  const fence = () => {
+    const found = codeBlocks(EVERYTHING).find((one) => one.language === 'mermaid')
+    if (!found) throw new Error('everything.md no longer has a mermaid fence in it')
+
+    return found
+  }
+
+  /** One drawing, as the app sends it: a small SVG with the scheme in it, under the
+   *  name the fence and the space come to. */
+  async function draw(scheme: 'light' | 'dark'): Promise<string> {
+    const { language, code } = fence()
+    const hash = await diagramKey(space, language, code, scheme)
+    const svg =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120">` +
+      `<text>${scheme}</text></svg>`
+
+    const put = await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: svg,
+      headers: { 'content-type': 'image/svg+xml' },
+    })
+
+    expect(put.status).toBe(201)
+    return hash
+  }
+
+  test('stays a code block until something has drawn it', async () => {
+    const answer = await published()
+
+    expect(answer.text).toContain('<code class="language-mermaid">')
+    expect(answer.text).not.toContain('<figure class="diagram"')
+  })
+
+  test('becomes a picture in the frame an export uses, one per scheme', async () => {
+    const light = await draw('light')
+    const dark = await draw('dark')
+    const answer = await published()
+
+    expect(answer.text).toContain(
+      `<figure class="diagram" data-language="mermaid">` +
+        `<img src="/i/${light}.svg" alt="Diagram" data-scheme="light">` +
+        `<img src="/i/${dark}.svg" alt="Diagram" data-scheme="dark">` +
+        `</figure>`,
+    )
+    // And the fence itself is gone: a diagram is a picture or it is code, never
+    // both.
+    expect(answer.text).not.toContain('<code class="language-mermaid">')
+  })
+
+  test('is one picture where only the light drawing arrived', async () => {
+    const light = await draw('light')
+    const answer = await published()
+
+    expect(answer.text).toContain(`<img src="/i/${light}.svg" alt="Diagram">`)
+    expect(answer.text).not.toContain('data-scheme=')
+  })
+
+  test('is served from the site itself, as an SVG that may do nothing', async () => {
+    const light = await draw('light')
+    const answer = await call(env, `/i/${light}.svg`, { host: HOST })
+
+    expect(answer.status).toBe(200)
+    expect(answer.headers.get('content-type')).toBe('image/svg+xml')
+    expect(answer.headers.get('cache-control')).toContain('immutable')
+    expect(answer.headers.get('x-content-type-options')).toBe('nosniff')
+    // Opened on its own it is a document on this origin, so it is sandboxed and
+    // allowed nothing but the colours it is drawn in; see src/blobs.ts.
+    const policy = answer.headers.get('content-security-policy') ?? ''
+    expect(policy).toContain("default-src 'none'")
+    expect(policy).toContain('sandbox')
+    expect(answer.text).toContain('<text>light</text>')
+  })
+
+  test('is a picture this page may show, and nobody else’s', async () => {
+    await draw('light')
+    const answer = await published()
+
+    // `'self'` said out loud, so a site read over plain http - a drive against a
+    // local Worker - shows its own pictures.
+    expect(answer.headers.get('content-security-policy')).toContain("img-src 'self' https: data:")
+    // Everything the page fetches is this site's; the diagram is no exception.
+    expect(fetched(answer.text, [PAGE_CSS, MATH_CSS]).filter(elsewhere)).toEqual([])
+  })
+
+  test('is dressed by the sheet, in both schemes and on paper', () => {
+    expect(PAGE_CSS).toContain('#write .diagram img{max-width:100%;height:auto}')
+    expect(PAGE_CSS).toContain("#write .diagram img[data-scheme='dark']{display:none}")
+    expect(PAGE_CSS).toContain(
+      ":root[data-theme='dark'] #write .diagram img[data-scheme='dark']{display:inline}",
+    )
+    // The reader's own word after the system's, the way the token blocks are.
+    expect(PAGE_CSS.indexOf(":root[data-theme='dark'] #write .diagram")).toBeGreaterThan(
+      PAGE_CSS.indexOf('@media (prefers-color-scheme:dark)'),
+    )
+  })
+
+  test('is another name in another space, so the page cannot be poisoned', async () => {
+    const { language, code } = fence()
+    const elsewhereKey = await diagramKey('some-other-space', language, code, 'light')
+
+    await call(env, `/v1/blobs/${elsewhereKey}`, {
+      method: 'PUT',
+      token,
+      raw: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>',
+      headers: { 'content-type': 'image/svg+xml' },
+    })
+
+    const answer = await published()
+    expect(answer.text).not.toContain('<figure class="diagram"')
+  })
+
+  test('is a picture only where the space’s own owner keeps the bytes', async () => {
+    const { language, code } = fence()
+    const hash = await diagramKey(space, language, code, 'light')
+    const stranger = await signIn(env, 'stranger@b.dev')
+
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token: stranger,
+      raw: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>',
+      headers: { 'content-type': 'image/svg+xml' },
+    })
+
+    const answer = await published()
+    expect(answer.text).not.toContain('<figure class="diagram"')
   })
 })
