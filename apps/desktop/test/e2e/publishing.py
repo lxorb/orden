@@ -327,6 +327,14 @@ ALLOWED = [
     " from the app, so nothing has drawn its picture and the fence stays code",
 ]
 
+#: Where the site's own script is served from: this origin, at a path that is the
+#: file's own hash, never a CDN. See services/sync/src/blog/script.ts.
+OWN_SCRIPT = "/s/"
+
+#: The one inline script a page carries, which puts the reader's theme on the root
+#: before the first paint; the policy names it by its hash.
+THEME_LINE = "nib:site-theme"
+
 #: The page's own chrome, which the note has nothing to do with.
 CHROME = re.compile(r"^(?:p\.back|p\.by|p\.present|footer)$")
 
@@ -611,9 +619,33 @@ def main() -> int:
                 for note in ALLOWED:
                     say(f"allowed: {note}")
 
-                # The page must still be a page nothing runs on.
-                if page.evaluate("() => document.querySelectorAll('script').length"):
-                    wrong("the published page carries a script")
+                # Whose code runs on the page. It used to be nobody's: a published note
+                # carried no script at all. A site has a search box, a tree, contents,
+                # backlinks and a picture of the space now, and the theme is set before
+                # the first paint by one inline line the policy names by its hash - so
+                # what is checked is not that nothing runs but that only this site's own
+                # does. See services/sync/src/blog/script.ts and shell.ts.
+                carried = page.evaluate(
+                    """() => [...document.querySelectorAll('script')].map((one) => ({
+                         src: one.getAttribute('src') ?? '',
+                         kind: one.getAttribute('type') ?? '',
+                         words: (one.textContent ?? '').trim(),
+                       }))"""
+                )
+                for one in carried:
+                    # The picture of the space arrives as data in a tag of its own,
+                    # which is read rather than run.
+                    if one["kind"] == "application/json":
+                        say("allowed: the graph's own data, which is not code")
+                    elif one["src"]:
+                        if one["src"].startswith(OWN_SCRIPT):
+                            say(f"allowed: the site's own script at {one['src']}")
+                        else:
+                            wrong(f"the published page carries somebody else's script: {one['src']!r}")
+                    elif THEME_LINE in one["words"]:
+                        say("allowed: the one inline line that sets the theme before the first paint")
+                    else:
+                        wrong(f"the published page carries an inline script: {one['words'][:80]!r}")
                 if not page.evaluate(
                     "() => [...document.styleSheets].some((one) => (one.href ?? '').includes('/s/'))"
                 ):
