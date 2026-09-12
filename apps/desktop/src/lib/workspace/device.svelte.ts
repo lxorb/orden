@@ -16,7 +16,16 @@
  *  every time the folder is read again - on every save, rename and sync - and
  *  took the open folders with it each time. */
 
-import { isBoolean, isNumber, isString, recordOf, stored, stringList } from '../stored'
+import {
+  forget,
+  isBoolean,
+  isNumber,
+  isString,
+  keep,
+  recordOf,
+  stored,
+  stringList,
+} from '../stored'
 import { without, withOrWithout } from '../records'
 
 export const RECENT_KEY = 'nib:recent'
@@ -108,12 +117,12 @@ export class DeviceView {
 
   remember(path: string) {
     this.recent = [path, ...this.recent.filter((entry) => entry !== path)].slice(0, RECENT_LIMIT)
-    localStorage.setItem(RECENT_KEY, JSON.stringify(this.recent))
+    keep(RECENT_KEY, JSON.stringify(this.recent))
   }
 
   forgetRecent() {
     this.recent = []
-    localStorage.removeItem(RECENT_KEY)
+    forget(RECENT_KEY)
   }
 
   isExpanded(path: string): boolean {
@@ -125,7 +134,7 @@ export class DeviceView {
       ? without(this.expanded, path)
       : { ...this.expanded, [path]: true }
 
-    localStorage.setItem(EXPANDED_KEY, JSON.stringify(this.expanded))
+    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
   }
 
   /** Which groups of bookmarks are open, by the group's own name. Its own record
@@ -140,7 +149,7 @@ export class DeviceView {
     this.expandedGroups = this.isGroupOpen(id)
       ? without(this.expandedGroups, id)
       : { ...this.expandedGroups, [id]: true }
-    localStorage.setItem(GROUPS_KEY, JSON.stringify(this.expandedGroups))
+    keep(GROUPS_KEY, JSON.stringify(this.expandedGroups))
   }
 
   /** How far down the list this space was left, or zero for one never scrolled. */
@@ -160,7 +169,7 @@ export class DeviceView {
 
     this.writing = setTimeout(() => {
       this.writing = null
-      localStorage.setItem(LIST_AT_KEY, JSON.stringify(this.listScroll))
+      keep(LIST_AT_KEY, JSON.stringify(this.listScroll))
     }, SETTLING)
   }
 
@@ -173,7 +182,7 @@ export class DeviceView {
       ? without(this.expandedTags, path)
       : { ...this.expandedTags, [path]: true }
 
-    localStorage.setItem(TAGS_KEY, JSON.stringify(this.expandedTags))
+    keep(TAGS_KEY, JSON.stringify(this.expandedTags))
   }
 
   /** Opens a folder without closing one that is already open: making a note
@@ -233,11 +242,11 @@ export class DeviceView {
 
   private writeIcons(next: Record<string, string>) {
     this.icons = next
-    localStorage.setItem(ICONS_KEY, JSON.stringify(next))
+    keep(ICONS_KEY, JSON.stringify(next))
   }
 
   private writeTints(next: Record<string, string>) {
     this.iconTints = next
-    localStorage.setItem(ICON_TINTS_KEY, JSON.stringify(next))
+    keep(ICON_TINTS_KEY, JSON.stringify(next))
   }
 }

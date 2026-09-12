@@ -10,7 +10,7 @@
  *  space that goes takes its bookmarks with it. */
 
 import { isMarkdownPath, relativeTo } from '../space-paths'
-import { isRecord, isString, stored, stringList } from '../stored'
+import { forget, isRecord, isString, keep, stored, stringList } from '../stored'
 
 const STORAGE_KEY = 'nib:bookmarks'
 
@@ -375,7 +375,7 @@ export class Bookmarks {
 
     // Dropped whatever comes of it, so a pin that belonged to no space still
     // here does not have this run again on every launch.
-    localStorage.removeItem(PINNED_KEY)
+    forget(PINNED_KEY)
 
     const next = { ...this.spaces }
     for (const [root, pinned] of Object.entries(bookmarksFromPins(pins, roots))) {
@@ -401,6 +401,9 @@ export class Bookmarks {
   }
 
   private write() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.spaces))
+    // Through `keep`, which cannot throw: this is reached from inside a syncing
+    // pass, and a storage that is full would otherwise end the pass rather than
+    // cost this machine one remembered list; see stored.ts.
+    keep(STORAGE_KEY, JSON.stringify(this.spaces))
   }
 }

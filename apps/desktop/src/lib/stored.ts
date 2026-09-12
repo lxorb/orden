@@ -1,4 +1,4 @@
-/** Reading what an earlier run wrote down.
+/** Reading what an earlier run wrote down, and writing it down for the next one.
  *
  *  Storage is not a type system. The string under a key was written by some
  *  version of this app - possibly an older one, possibly one interrupted
@@ -30,6 +30,39 @@ export function stored(key: string): unknown {
     return parsed(localStorage.getItem(key))
   } catch {
     return null
+  }
+}
+
+/** Writes one value down. Answers whether storage took it, and never throws.
+ *
+ *  Three ways a setter fails and not one of them is the caller's to handle: a
+ *  browser told to keep no site data refuses the setter the way it refuses the
+ *  getter above, a private window can have a quota of nothing, and a storage that
+ *  is full throws on the write that would fill it. What follows in every case is
+ *  that this machine forgets something between launches - never that what was being
+ *  remembered did not happen, because the state itself is in memory and true. An
+ *  unguarded setter turns all three into an exception in the middle of whatever was
+ *  going on, which is how a full storage came to fail a whole syncing pass and, with
+ *  it, the cursor that pass had just moved; see `save` in sync.svelte.ts.
+ *
+ *  The answer is there for the one caller that has something better to do than
+ *  shrug: writing less beats writing nothing. Everyone else ignores it. */
+export function keep(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** And forgetting one, which fails the same three ways and matters even less: a
+ *  value that could not be removed is a value the next launch reads and drops. */
+export function forget(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // Nothing to do and nobody to tell.
   }
 }
 

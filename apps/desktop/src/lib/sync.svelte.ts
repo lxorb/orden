@@ -6,7 +6,8 @@
 import { api } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
-import { isRecord, parsed } from './stored'
+import { log } from './log'
+import { isRecord, keep, stored } from './stored'
 import { NUDGE_DELAY, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
@@ -595,7 +596,7 @@ class Sync {
   /** What this machine has written down about its relationship with an account:
    *  the mirrors, and whether a pass has ever finished. */
   private load(accountId: string | null): { mirrors: Record<string, Mirror>; seen: boolean } {
-    const saved = parsed(localStorage.getItem(STORAGE_KEY))
+    const saved = stored(STORAGE_KEY)
     if (!isRecord(saved)) return { mirrors: {}, seen: false }
 
     // An older version wrapped the mirrors in an object of their own, and one
@@ -676,20 +677,71 @@ class Sync {
     if (grew) this.save()
   }
 
+  /** Writes down where this machine is with the account, and does not let a full
+   *  storage undo it.
+   *
+   *  Two very different things are in one blob and only one of them matters. The
+   *  cursors are a number per space. The tracked notes are an id, a version and a
+   *  hash per note - a hundred and thirty odd bytes and the path - which for an
+   *  account of a few thousand notes is most of a megabyte, and localStorage is
+   *  five. So the notes are what fills storage up and the cursors are what a pass
+   *  cannot afford to lose.
+   *
+   *  Losing them is what an unguarded setter did: it threw, the pass reported a
+   *  failure, and the cursor it had just moved was never written. The next pass
+   *  asked for changes since the cursor before it, got the whole account back, and
+   *  threw again - every pass, for as long as storage stayed full. Seen from the
+   *  server as the same handful of cursors walked round and round, and from the
+   *  machine as a launch that reads every note it already has.
+   *
+   *  So the whole thing is offered to storage first, and if storage will not take
+   *  it, the same again without the note and file caches. A mirror read back
+   *  without those re-hashes its notes once, which costs a read each and no
+   *  download and no write; a mirror read back without its cursor is the whole
+   *  account again, and again after that. */
   private save() {
     // A new object, so whoever is watching what the account holds hears that a
     // pass changed it. The mirrors themselves are written into in place; this is
     // the one moment that says so out loud.
     this.mirrors = { ...this.mirrors }
-    localStorage.setItem(
+
+    if (this.write(this.mirrors)) return
+    if (this.write(withoutCaches(this.mirrors))) {
+      log('warn', 'sync: storage is full, so the note caches went and the cursors stayed')
+      return
+    }
+
+    log('error', 'sync: storage would take no cursors, so the next pass reads the account again')
+  }
+
+  /** One offer to storage. Answers whether it was taken.
+   *
+   *  Never throws. A storage that is full and a browser told to keep no site data
+   *  both throw from the setter, and neither is a reason for a pass that found
+   *  something to report a failure: what it found is in memory and true, and the
+   *  only thing lost is the next launch's head start. */
+  private write(mirrors: Record<string, Mirror>): boolean {
+    return keep(
       STORAGE_KEY,
       JSON.stringify({
         account: account.user?.id ?? null,
         seen: this.seen,
-        mirrors: this.mirrors,
+        mirrors,
       }),
     )
   }
+}
+
+/** The mirrors with their caches left out: everything that says where this machine
+ *  is with a space, and nothing that says what it holds. What is offered to a
+ *  storage that would not take the whole table; see `save`. */
+function withoutCaches(mirrors: Record<string, Mirror>): Record<string, Mirror> {
+  const out: Record<string, Mirror> = {}
+  for (const [root, mirror] of Object.entries(mirrors)) {
+    out[root] = { ...mirror, notes: {}, files: {} }
+  }
+
+  return out
 }
 
 export const sync = new Sync()

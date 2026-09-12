@@ -870,6 +870,81 @@ describe('the mirrors this machine remembers', () => {
   })
 })
 
+describe('a storage with no room left for the note caches', () => {
+  /** A storage that takes a short write and refuses a long one, which is what a
+   *  browser does at its five megabytes: the setter throws. */
+  function cramped(most: number): Storage {
+    const store = new Map<string, string>()
+
+    return {
+      get length() {
+        return store.size
+      },
+      key: (index) => [...store.keys()][index] ?? null,
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => {
+        if (value.length > most) throw new Error('QuotaExceededError')
+        store.set(key, value)
+      },
+      removeItem: (key) => void store.delete(key),
+      clear: () => store.clear(),
+    }
+  }
+
+  /** What is under nib:mirrors, read back the way the next launch reads it. */
+  function written(): { mirrors: Record<string, { cursor?: number; notes?: object }> } {
+    const held = localStorage.getItem('nib:mirrors')
+    expect(held).not.toBeNull()
+    return JSON.parse(held ?? '{}') as ReturnType<typeof written>
+  }
+
+  test('keeps the cursor, so the next pass does not read the whole account again', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+
+    // Room for the cursors and not for the notes beside them. Installed before the
+    // pass, so the write the pass makes is the one that has to fit.
+    const full = JSON.stringify({
+      account: 'x',
+      seen: true,
+      mirrors: {
+        '/Account': { spaceId: 's-Account', root: '/Account', cursor: 1, notes: {}, files: {} },
+      },
+    }).length
+    vi.stubGlobal('localStorage', cramped(full + 40))
+
+    // The pass itself must not fail over it: what it found is in memory and true.
+    await expect(sync.pass()).resolves.not.toThrow()
+
+    const mirror = Object.values(written().mirrors)[0]
+    expect(mirror?.cursor).toBeGreaterThan(0)
+    // And the thing that would not fit is the thing that was dropped.
+    expect(mirror?.notes).toEqual({})
+    // In memory it is all still there, so nothing this session does reads a note
+    // again either.
+    expect(sync.tracked('/Account/Hello.md')).not.toBeNull()
+
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  })
+
+  test('says so rather than failing the pass when nothing at all will fit', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    vi.stubGlobal('localStorage', cramped(0))
+
+    await expect(sync.pass()).resolves.not.toThrow()
+    expect(localStorage.getItem('nib:mirrors')).toBeNull()
+    // The session still knows where it is; only the next launch pays for it.
+    expect(sync.remoteIdFor('/Account')).toBe('s-Account')
+
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  })
+})
+
 describe('turning syncing off while a pass is in the air', () => {
   test('leaves the light off and does not start the loop again', async () => {
     accountWithNotes()
