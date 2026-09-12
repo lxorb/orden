@@ -8,7 +8,7 @@
    *  is Sheet.svelte. */
   import { slide } from 'svelte/transition'
   import { domainNotice } from './domain-status'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { publish } from './publishing.svelte'
   import { segmented } from './slide'
   import { shownName } from './note-name'
@@ -75,8 +75,7 @@
    *  read them. */
   const SHOWN_ANSWERS = 20
 
-  const when = (stamp: number) =>
-    new Date(stamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+  const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
   /** How much the pages come to, said the way the storage line says it. */
   const size = (bytes: number) =>
