@@ -186,6 +186,12 @@ cannot read the file, cannot send that content type to another origin without a
 preflight nothing here answers, and cannot put `127.0.0.1:<port>` in the host while
 pointing a name of its own at the loopback.
 
+Nothing inside the app ever reaches the endpoint: the crate hands a request to the
+window as an event and the window answers through a command, so the app's own
+content policy has nothing to do with any of this. The host check accepts
+`localhost:<port>` as well as `127.0.0.1:<port>`, which is the name `connect-src` in
+`src/csp.ts` allows, so if anything in the page ever does have to ask, it can.
+
 **`eval` is off.** It runs whatever it is sent with everything the window can
 reach, which is every note on the machine. Turning it on means opening
 `automation.json` and setting `"eval": true`, which is deliberately the same file
