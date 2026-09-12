@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import type { EditorState, Range } from '@codemirror/state'
+import type { EditorState, Line, Range, Text } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -61,8 +61,8 @@ class Decorator {
   private readonly marks: Range<Decoration>[] = []
   private readonly hidden: Range<Decoration>[] = []
   private readonly lineClasses = new Map<number, Set<string>>()
-  /** What a line carries besides its classes, keyed the same way. Only the code
-   *  line numbers use it; see `numberLines`. */
+  /** What a line carries besides its classes, keyed the same way: the code line
+   *  numbers and their column width, and the type a callout was written with. */
   private readonly lineAttrs = new Map<number, Record<string, string>>()
   /** Spans already replaced wholesale. Nested syntax inside them must not be
    *  decorated again, or the two replacements would overlap and throw. */
@@ -331,24 +331,19 @@ class Decorator {
   private blockNames(from: number, to: number) {
     const doc = this.state.doc
 
-    for (let pos = from; pos <= to;) {
-      const line = doc.lineAt(pos)
+    for (const line of linesBetween(doc, from, to)) {
       const classes = this.lineClasses.get(line.from)
+      if (classes && Decorator.VERBATIM.some((one) => classes.has(one))) continue
 
-      if (!classes || !Decorator.VERBATIM.some((one) => classes.has(one))) {
-        const id = blockIdOf(line.text)
-        if (id) {
-          const end = line.from + line.text.trimEnd().length
-          const caret = end - id.length - 1
-          const before = doc.sliceString(caret - 1, caret)
-          const start = before === ' ' || before === '\t' ? caret - 1 : caret
+      const id = blockIdOf(line.text)
+      if (!id) continue
 
-          this.conceal(start, end, lineRevealed(this.state, line.from))
-        }
-      }
+      const end = line.from + line.text.trimEnd().length
+      const caret = end - id.length - 1
+      const before = doc.sliceString(caret - 1, caret)
+      const start = before === ' ' || before === '\t' ? caret - 1 : caret
 
-      if (line.to >= doc.length) break
-      pos = line.to + 1
+      this.conceal(start, end, lineRevealed(this.state, line.from))
     }
   }
 
@@ -651,7 +646,6 @@ class Decorator {
     }
   }
 
-  /** `firstOnly` keeps a nested list item from restyling its children's lines. */
   /** Whether this rule is the one that breaks a deck into its next slide.
    *
    *  The same reading `deckOf` does, so the mark and the deck never disagree: an
@@ -666,6 +660,7 @@ class Decorator {
     return line.number === 1 || this.state.doc.line(line.number - 1).text.trim() === ''
   }
 
+  /** `firstOnly` keeps a nested list item from restyling its children's lines. */
   private markLines(
     node: SyntaxNode,
     className: string,
@@ -675,13 +670,24 @@ class Decorator {
     const doc = this.state.doc
     const last = firstOnly ? node.from : Math.min(node.to, doc.length)
 
-    for (let pos = node.from; pos <= last;) {
-      const line = doc.lineAt(pos)
+    for (const line of linesBetween(doc, node.from, last)) {
       if (className) this.addLineClass(line.from, className)
       if (attrs) this.addLineAttrs(line.from, attrs)
-      if (line.to >= doc.length) break
-      pos = line.to + 1
     }
+  }
+}
+
+/** Every line from `from` to `to`, both ends included.
+ *
+ *  Written once because two walks here want it, and because the end of it is
+ *  where the loop goes wrong: the last line of a document has no newline after it
+ *  to step over, so a loop that only watches `to` never finishes. */
+function* linesBetween(doc: Text, from: number, to: number): Generator<Line> {
+  for (let pos = from; pos <= to; ) {
+    const line = doc.lineAt(pos)
+    yield line
+    if (line.to >= doc.length) break
+    pos = line.to + 1
   }
 }
 
