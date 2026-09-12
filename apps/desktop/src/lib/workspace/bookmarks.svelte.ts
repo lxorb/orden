@@ -61,7 +61,7 @@ export interface Bookmark {
 /** How long the settings of a bookmarked view may be, as JSON. A filter, six
  *  colour groups and a handful of numbers; the service holds a space to the same
  *  number. */
-export const LONGEST_VIEW = 400
+const LONGEST_VIEW = 400
 
 export function isBookmark(value: unknown): value is Bookmark {
   return (

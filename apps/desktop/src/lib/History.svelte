@@ -365,7 +365,6 @@
     margin: var(--space-3) 0 var(--space-1);
   }
 
-  .versions li:first-child .month p,
   .versions .month:first-child p {
     margin-top: 0;
   }
