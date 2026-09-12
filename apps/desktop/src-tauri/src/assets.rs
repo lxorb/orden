@@ -34,24 +34,9 @@ const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 #[tauri::command]
 pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
     let target = beside_a_note(&app, &path)?;
-    let file = fs::File::open(&target).map_err(|error| cannot("read", &target, &error))?;
-
-    // Asked of the open file rather than of the path, so the answer is about the
-    // very bytes that are read below.
-    let size = file
-        .metadata()
-        .map_err(|error| cannot("read", &target, &error))?
-        .len();
-    if size > FILE_LIMIT {
+    let Some(bytes) = under(&target, FILE_LIMIT)? else {
         return Err(format!("{path} is too large to open"));
-    }
-
-    let mut bytes = Vec::with_capacity(usize::try_from(size).unwrap_or_default());
-    // Capped again on the way in: a file that grows after the question was asked
-    // still cannot answer with more than it was allowed.
-    file.take(FILE_LIMIT)
-        .read_to_end(&mut bytes)
-        .map_err(|error| cannot("read", &target, &error))?;
+    };
 
     Ok(tauri::ipc::Response::new(bytes))
 }
@@ -61,30 +46,41 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
 #[tauri::command]
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     let target = beside_a_note(&app, &path)?;
-    let file = fs::File::open(&target).map_err(|error| cannot("read", &target, &error))?;
-
-    // Asked of the open file rather than of the path, so the answer is about the
-    // very bytes that are read below.
-    let size = file
-        .metadata()
-        .map_err(|error| cannot("read", &target, &error))?
-        .len();
-    if size > LIMIT {
+    let Some(bytes) = under(&target, LIMIT)? else {
         return Err(format!("{path} is larger than 12 MB"));
-    }
-
-    let mut bytes = Vec::new();
-    // Capped again on the way in: a file that grows after the question was asked
-    // still cannot answer with more than it was allowed.
-    file.take(LIMIT)
-        .read_to_end(&mut bytes)
-        .map_err(|error| cannot("read", &target, &error))?;
+    };
 
     Ok(format!(
         "data:{};base64,{}",
         mime_of(&target),
         encode(&bytes)
     ))
+}
+
+/// A whole file, or None when it holds more than `limit` bytes.
+///
+/// Both readers are held to a ceiling, and neither may be talked past it: the size
+/// is asked of the open file rather than of the path, so the answer is about the
+/// very bytes that are read, and the read is capped again on the way in, so a file
+/// that grows after the question was asked still cannot answer with more than it
+/// was allowed. How much is too much is each reader's own business, and so is what
+/// to say about it.
+fn under(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
+    let file = fs::File::open(target).map_err(|error| cannot("read", target, &error))?;
+    let size = file
+        .metadata()
+        .map_err(|error| cannot("read", target, &error))?
+        .len();
+    if size > limit {
+        return Ok(None);
+    }
+
+    let mut bytes = Vec::with_capacity(usize::try_from(size).unwrap_or_default());
+    file.take(limit)
+        .read_to_end(&mut bytes)
+        .map_err(|error| cannot("read", target, &error))?;
+
+    Ok(Some(bytes))
 }
 
 /// Copies a pasted or dropped picture into the folder the window asked for and
@@ -270,8 +266,24 @@ fn encode(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{asset_dir, encode, mime_of, safe_name, trimmed, MAX_NAME};
+    use super::{asset_dir, encode, mime_of, safe_name, trimmed, under, MAX_NAME};
     use std::path::{Path, PathBuf};
+
+    /// Both readers are held to a ceiling. A file over it comes back as nothing
+    /// rather than as an error, because what to say about it - a picture too large
+    /// for a document, a file too large to open in a tab - is each reader's own.
+    #[test]
+    fn reads_a_file_whole_and_stops_at_the_ceiling() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("shot.png");
+        std::fs::write(&target, b"a picture").expect("the file");
+
+        assert_eq!(under(&target, 64), Ok(Some(b"a picture".to_vec())));
+        assert_eq!(under(&target, 8), Ok(None));
+        // A file that is not there at all is an error: the caller asked about one
+        // it believes sits beside a note.
+        assert!(under(&dir.path().join("gone.png"), 64).is_err());
+    }
 
     /// Written the way the platform writes them, so the assertions read the same
     /// on a runner as they do on a laptop.
