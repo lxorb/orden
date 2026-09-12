@@ -336,7 +336,21 @@ def drive_trail(browser: Browser) -> None:
     if on["showing"] != "Second.md":
         wrong(f"Alt and an arrow did not go forward: {on['showing']}")
 
-    # A note opened from halfway along drops what was ahead.
+    # A note opened from halfway along drops what was ahead - as long as it is not
+    # already open in another tab, because a note that is gets brought forward instead
+    # and the trail read below would be that tab's rather than this one's. It can be:
+    # a window with no sitting behind it opens the first file of the space once the
+    # list is on screen, the seed hands it these four while that read is still out,
+    # and `Daily` is the first of them. So the strip is cleared back to the tab that
+    # was walked. See `open` in workspace.svelte.ts.
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          for (const one of [...ws.tabs]) if (one.id !== ws.activeTabId) ws.close(one.id)
+        }"""
+    )
+    page.wait_for_timeout(250)
+
     peek(page, "Daily")
     turned = strip(page)
     say(f"[trail] after turning off it: {json.dumps(turned['trail'])} at {turned['at']}")
