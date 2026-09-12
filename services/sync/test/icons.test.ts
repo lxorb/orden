@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { isIcon } from '../src/spaces/icons'
+import { isIcon, isTint } from '../src/spaces/icons'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -14,11 +14,11 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-function put(icons: unknown, options: { as?: string; id?: string } = {}) {
+function put(icons: unknown, options: { as?: string; id?: string; tints?: unknown } = {}) {
   return call(env, `/v1/spaces/${options.id ?? space}/icons`, {
     method: 'PUT',
     token: options.as ?? token,
-    body: { icons },
+    body: { icons, tints: options.tints },
   })
 }
 
@@ -28,9 +28,15 @@ async function listed(as = token) {
   return json.spaces.find((one) => one.id === space)?.icons
 }
 
+/** And the colours, under the same keys. */
+async function tinted(as = token) {
+  const { json } = await call(env, '/v1/spaces', { token: as })
+  return json.spaces.find((one) => one.id === space)?.tints
+}
+
 /** The column as somebody else's build left it, which no route would write. */
-function column(raw: string) {
-  env.db.prepare('update spaces set icons = ? where id = ?').run(raw, space)
+function column(raw: string, which: 'icons' | 'tints' = 'icons') {
+  env.db.prepare(`update spaces set ${which} = ? where id = ?`).run(raw, space)
 }
 
 /** Somebody the owner gave the space to at read, and in it: invited, then having
@@ -279,5 +285,121 @@ describe('the icons are the space’s', () => {
 
   test('answer 404 for a space that is not there', async () => {
     expect((await put(DRESSED, { id: 'nope' })).status).toBe(404)
+  })
+})
+
+/** The colour each of those icons is drawn in.
+ *
+ *  A second map in the same request, because a folder's icon and its colour are one
+ *  gesture in the picker and one request is what that gesture should cost. It was
+ *  this machine's own until there was a column for it, which meant a tree dressed on
+ *  a desktop came down to a phone in the plain foreground. */
+describe('the colour a folder’s icon is drawn in', () => {
+  const PAINTED = { Work: 'violet', 'Work/Ideas': 'teal' }
+
+  test('starts empty', async () => {
+    expect(await tinted()).toEqual({})
+  })
+
+  test('is written beside the icons and rides the same listing', async () => {
+    const set = await put(DRESSED, { tints: PAINTED })
+
+    expect(set.status).toBe(200)
+    expect(set.json.tints).toEqual(PAINTED)
+    expect(await tinted()).toEqual(PAINTED)
+    expect(await listed()).toEqual(DRESSED)
+  })
+
+  test('is replaced whole, which is how a folder loses its colour', async () => {
+    await put(DRESSED, { tints: PAINTED })
+    await put(DRESSED, { tints: { Work: 'violet' } })
+
+    expect(await tinted()).toEqual({ Work: 'violet' })
+  })
+
+  test('goes away when an empty map is sent', async () => {
+    await put(DRESSED, { tints: PAINTED })
+    await put(DRESSED, { tints: {} })
+
+    expect(await tinted()).toEqual({})
+  })
+
+  /** An app older than this route sends the icons alone. Undressing every colour on
+   *  the account because one machine has not been updated is the one thing that must
+   *  not happen, so nothing said is nothing changed. */
+  test('stays as it was when a request says nothing about it', async () => {
+    await put(DRESSED, { tints: PAINTED })
+    const again = await put({ Work: 'Folder' })
+
+    expect(again.json.tints).toEqual(PAINTED)
+    expect(await tinted()).toEqual(PAINTED)
+  })
+
+  test('drops an entry that is not a folder of this space wearing a colour', async () => {
+    const set = await put(DRESSED, {
+      tints: { Work: 'violet', '../elsewhere': 'teal', Travel: '#ff0000', Deep: 7 },
+    })
+
+    expect(set.json.tints).toEqual({ Work: 'violet' })
+  })
+
+  test('is refused when it is not a map, and says so', async () => {
+    const sent = await put(DRESSED, { tints: ['violet'] })
+
+    expect(sent.status).toBe(400)
+    expect(sent.json.error).toBe('tints must be a map')
+  })
+
+  test('is refused past the number of folders a space dresses', async () => {
+    const many = Object.fromEntries(Array.from({ length: 401 }, (_, at) => [`${at}`, 'violet']))
+
+    expect((await put({}, { tints: many })).status).toBe(400)
+  })
+
+  test('is read as far as this build understands a column a newer one wrote', async () => {
+    column(JSON.stringify({ ...PAINTED, '../elsewhere': 'violet', Travel: 7 }), 'tints')
+    expect(await tinted()).toEqual(PAINTED)
+
+    column('not json', 'tints')
+    expect(await tinted()).toEqual({})
+  })
+
+  test('is the space’s, so everybody in it reads the same colours', async () => {
+    const theirs = await reader()
+    await put(DRESSED, { tints: PAINTED })
+
+    expect(await tinted(theirs)).toEqual(PAINTED)
+  })
+
+  test('is not a reader’s to write, the same as the icons', async () => {
+    const theirs = await reader()
+
+    expect((await put(DRESSED, { as: theirs, tints: PAINTED })).status).toBe(403)
+    expect(await tinted()).toEqual({})
+  })
+})
+
+describe('what colour a folder may be drawn in', () => {
+  /** The accents by their own ids, which is what the app writes; see accents.ts
+   *  there. Read as a shape rather than resolved, for the reason an icon set is: the
+   *  colours are the app's and a palette that gains one must not wait on a deploy of
+   *  this. */
+  test('is an accent’s id', () => {
+    expect(isTint('violet')).toBe(true)
+    expect(isTint('slate')).toBe(true)
+    expect(isTint('some-future-accent')).toBe(true)
+  })
+
+  test('and never a colour a machine picked out of its own palette', () => {
+    expect(isTint('#ff0000')).toBe(false)
+    expect(isTint('rgb(1, 2, 3)')).toBe(false)
+    expect(isTint('Violet')).toBe(false)
+    expect(isTint('')).toBe(false)
+  })
+
+  test('and never anything a client could read back as a path', () => {
+    expect(isTint('Work/Ideas')).toBe(false)
+    expect(isTint(String.raw`..\..\violet`)).toBe(false)
+    expect(isTint('a'.repeat(33))).toBe(false)
   })
 })

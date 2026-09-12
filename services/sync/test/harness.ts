@@ -223,12 +223,16 @@ interface SpaceView {
   name: string
   position: number
   icon: string | null
+  /** The colour that icon is drawn in; see 0036. */
+  tint: string | null
   role: string
   shared: boolean
   /** Which of its files are shared on their own, by note id; see 0026. */
   sharedItems: string[]
   bookmarks: BookmarkView[]
   icons: Record<string, string>
+  /** And the colour each of those icons is drawn in, under the same keys. */
+  tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
   createdAt: number
@@ -318,6 +322,7 @@ export interface Reply {
   spaces: SpaceView[]
   bookmarks: BookmarkView[]
   icons: Record<string, string>
+  tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
   files: SpaceFileView[]

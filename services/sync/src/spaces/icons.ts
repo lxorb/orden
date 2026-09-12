@@ -1,5 +1,5 @@
 /** The folder icons of one space: which folder in its file tree wears which
- *  icon.
+ *  icon, and the colour each of those icons is drawn in.
  *
  *  A map rather than a list, keyed by the folder's path relative to the space -
  *  which is what lets every machine read the same tree. A note keeps its icon in
@@ -10,7 +10,15 @@
  *  The whole map is written at once rather than one folder at a time, the way
  *  bookmarks are. It is the client's own statement about its tree, and one PUT of
  *  the lot is the only shape in which a folder being renamed - every icon under it
- *  leaving one key and arriving at another - is a single request. */
+ *  leaving one key and arriving at another - is a single request.
+ *
+ *  The colours are a second map under the same keys, sent in the same request: an
+ *  icon and the colour it is drawn in are picked in one gesture, so one request is
+ *  what that gesture costs. Two maps rather than one, because the first is a map of
+ *  strings that builds older than this one read and write back whole, and a value
+ *  that is not a string is a value they drop - which would be every colour anybody
+ *  chose, lost the first time an old build synced. Two columns, the same way round
+ *  as the two keys a note keeps: `icon:` and `icon-color:` beside it. */
 
 import { Hono } from 'hono'
 import { now } from '../crypto'
@@ -26,12 +34,14 @@ import { atLeast, spaceOf } from './space'
 const MOST = 400
 /** A path inside a space, which is a few folder names. */
 const LONGEST_PATH = 300
-/** What the column may grow to. Every entry is bounded on its own; this is the
- *  other end of the same guard, so a map of legal entries still cannot make the
- *  space listing heavy for every device that reads it. Four times what bookmarks
- *  are allowed, because four hundred folder paths is that much more than sixty
- *  bookmarks - a map the app considers legal has to be one this takes, or an icon
- *  somebody chose would vanish on the way up. */
+/** What the two columns may grow to between them. Every entry is bounded on its
+ *  own; this is the other end of the same guard, so a map of legal entries still
+ *  cannot make the space listing heavy for every device that reads it. Four times
+ *  what bookmarks are allowed, because four hundred folder paths is that much more
+ *  than sixty bookmarks - a map the app considers legal has to be one this takes, or
+ *  an icon somebody chose would vanish on the way up. Both maps against the one
+ *  number, since the colours are the same paths again with an accent's name on each
+ *  and the pair is what a listing carries. */
 const MOST_BYTES = 32 * 1024
 
 /** An icon name: what the space's own icon is checked against, plus the hyphen.
@@ -79,6 +89,23 @@ export function isIcon(value: string): boolean {
   return value.length <= LONGEST_MARK && A_PICTURE.test(value) && !NOT_A_MARK.test(value)
 }
 
+/** A colour a stroked icon may be drawn in: one of the app's own accents, by its
+ *  id. `violet`, `teal`, `slate`. */
+const TINT = /^[a-z][a-z-]{0,31}$/
+
+/** Whether this is the shape of a colour a space or a folder can be drawn in.
+ *
+ *  The shape rather than the list, for the reason `isIcon` reads a set it has never
+ *  heard of: the accents are the app's, they are named in one file there, and a
+ *  palette that gains a colour must not need this service deployed before anybody
+ *  can choose it. What the column is held to is that a value is a short lowercase
+ *  name - so it cannot be a path, a hex, or anything a client would read back as
+ *  something other than an accent it either knows or ignores. See `isIconTint` in
+ *  the app's icons.ts, which is where the names actually are. */
+export function isTint(value: string): boolean {
+  return TINT.test(value)
+}
+
 /** Whether this key names a folder in the space rather than somewhere else. A
  *  path climbing out of the space is not a place in it: the app already sends a
  *  path the space speaks, and this is so the column can never hold one that a
@@ -95,29 +122,30 @@ function inside(path: string): boolean {
  *  dropped rather than refused: the map is written whole, so refusing the request
  *  over one entry the app and this version disagree about would be losing every
  *  icon in the tree. */
-function wrong(value: unknown): string | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'icons must be a map'
-  if (Object.keys(value).length > MOST) return `icons holds at most ${MOST} folders`
+function wrong(value: unknown, called: string): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return `${called} must be a map`
+  if (Object.keys(value).length > MOST) return `${called} holds at most ${MOST} folders`
 
   return null
 }
 
-/** The entries that are a folder in this space with an icon on it, and nothing
- *  else. The one place the two directions agree: what a PUT keeps is what a read
- *  gives back. */
-function iconsOf(value: object): Record<string, string> {
+/** The entries that are a folder in this space with a value this column takes, and
+ *  nothing else. The one place the two directions agree: what a PUT keeps is what a
+ *  read gives back. Both maps are read by it, since they differ in nothing but what
+ *  a value may say. */
+function mapOf(value: object, said: (value: string) => boolean): Record<string, string> {
   const kept = Object.entries(value).filter(
     (entry): entry is [string, string] =>
-      inside(entry[0]) && typeof entry[1] === 'string' && isIcon(entry[1]),
+      inside(entry[0]) && typeof entry[1] === 'string' && said(entry[1]),
   )
 
   return Object.fromEntries(kept.slice(0, MOST))
 }
 
-/** The column, as the app reads it back. Anything in it that is not a folder
- *  wearing an icon is left out: the column is written whole by clients, and a
- *  newer one may keep an icon this version has never heard of. */
-export function readIcons(raw: string): Record<string, string> {
+/** A column, as the app reads it back. Anything in it that is not a folder with a
+ *  value on it is left out: the column is written whole by clients, and a newer one
+ *  may keep an icon this version has never heard of. */
+function read(raw: string, said: (value: string) => boolean): Record<string, string> {
   let parsed: unknown
   try {
     parsed = JSON.parse(raw)
@@ -126,14 +154,32 @@ export function readIcons(raw: string): Record<string, string> {
   }
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-  return iconsOf(parsed)
+  return mapOf(parsed, said)
+}
+
+export function readIcons(raw: string): Record<string, string> {
+  return read(raw, isIcon)
+}
+
+/** And the colours, under the same keys. A colour whose folder wears no icon this
+ *  build knows is still kept: which icon a folder wears and which colour it is drawn
+ *  in are written by the same gesture but read by two different builds, and dropping
+ *  one because the other was unreadable would be losing the half this build
+ *  understood. */
+export function readTints(raw: string): Record<string, string> {
+  return read(raw, isTint)
 }
 
 export const folderIcons = new Hono<{ Bindings: Env; Variables: Variables }>()
 
-/** The map, whole. Reading it needs no route of its own: the space listing
- *  carries it, so one request brings every space's folder icons along with its
- *  name and its own icon. */
+/** The maps, whole. Reading them needs no route of its own: the space listing
+ *  carries them, so one request brings every space's folder icons along with its
+ *  name and its own icon.
+ *
+ *  `tints` may be left out, and then the colours stay as they were - which is what
+ *  an app older than this route sends, and it must not undress what a newer one on
+ *  the same account coloured. A client that means "no folder is coloured" says so
+ *  with an empty map, the same way it undresses every folder. */
 // The icons are the space's rather than the reader's: everyone in it sees the
 // same tree, so dressing a folder is writing in the space.
 folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
@@ -145,22 +191,34 @@ folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
   }
 
   const sent = (body as Record<string, unknown>).icons
-  const problem = wrong(sent)
+  const problem = wrong(sent, 'icons')
   if (problem) return context.json({ error: problem }, 400)
+
+  const sentTints = (body as Record<string, unknown>).tints
+  const tintProblem = sentTints === undefined ? null : wrong(sentTints, 'tints')
+  if (tintProblem) return context.json({ error: tintProblem }, 400)
 
   // Written from the entries that were checked rather than from what arrived, so
   // nothing else a client sent along ends up in the column.
-  const kept = iconsOf(sent as object)
+  const kept = mapOf(sent as object, isIcon)
+  const tints = sentTints === undefined ? null : mapOf(sentTints as object, isTint)
   const written = JSON.stringify(kept)
-  if (new TextEncoder().encode(written).length > MOST_BYTES) {
+  const writtenTints = tints === null ? null : JSON.stringify(tints)
+  const bytes = new TextEncoder()
+  if (bytes.encode(written).length + bytes.encode(writtenTints ?? '').length > MOST_BYTES) {
     return context.json({ error: 'that is more folder icons than a space holds' }, 413)
   }
 
   // The space is touched as well, so a device that watches for spaces that
   // changed learns that this one did.
-  await context.env.DB.prepare('update spaces set icons = ?, updated_at = ? where id = ?')
-    .bind(written, now(), space.id)
+  await context.env.DB.prepare(
+    'update spaces set icons = ?1, tints = coalesce(?2, tints), updated_at = ?3 where id = ?4',
+  )
+    .bind(written, writtenTints, now(), space.id)
     .run()
 
-  return context.json({ icons: kept })
+  // What was kept, both maps, so a client can see what a colour it sent was read
+  // as. The colours are answered even when none were sent: the reply says what the
+  // space now holds rather than what this request was about.
+  return context.json({ icons: kept, tints: tints ?? readTints(space.tints) })
 })

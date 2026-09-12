@@ -16,7 +16,7 @@ import type { Env, Space, Variables, Whoever } from '../types'
 import { readBookmarks } from './bookmarks'
 import { readExcluded } from './excluded'
 import { readGraph } from './graph'
-import { readIcons } from './icons'
+import { readIcons, readTints } from './icons'
 import { presentSite, readSite } from '../blog/site'
 
 /** The same view with the setting up of the site taken out of it.
@@ -85,6 +85,10 @@ export async function addSpace(
     name,
     position: (last?.last ?? -1) + 1,
     icon,
+    // A space is made with an icon at most, never with a colour: the one place a
+    // space is given an icon without being asked is the first space of an account,
+    // and that one wears it in the plain foreground.
+    tint: null,
     deleted: 0,
     deleted_at: null,
     created_at: now(),
@@ -99,6 +103,7 @@ export async function addSpace(
     bookmarks: '[]',
     files: '[]',
     icons: '{}',
+    tints: '{}',
     graph: '{}',
     excluded: '[]',
     site: '{}',
@@ -359,6 +364,9 @@ export function presentSpace(
     name: space.name,
     position: space.position,
     icon: space.icon,
+    /** And the colour it is drawn in, where one was chosen. Beside the icon rather
+     *  than folded into it, the way a note keeps `icon-color:` beside `icon:`. */
+    tint: space.tint,
     /** How many notes it holds, so a machine bringing the account down can say
      *  how far through it is rather than only that it is working. */
     notes,
@@ -381,6 +389,9 @@ export function presentSpace(
     // pass, and asking each space which of its folders wear an icon would be one
     // request per space.
     icons: readIcons(space.icons),
+    // And the colour each of those icons is drawn in, under the same keys. The same
+    // request writes both, so the same listing carries both.
+    tints: readTints(space.tints),
     // And for the same reason again: the graph of a space is drawn from what the
     // listing already brings down.
     graph: readGraph(space.graph),

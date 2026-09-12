@@ -90,6 +90,10 @@ export interface Space {
   position: number
   /** The name of the icon the rail shows, if one was chosen. */
   icon: string | null
+  /** The colour that icon is drawn in, as one of the app's own accents by its id;
+   *  see spaces/icons.ts. Null for the plain foreground, which is every space that
+   *  never chose one. */
+  tint: string | null
   /** A deleted space stays as a marker, so every machine learns it went. */
   deleted: number
   created_at: number
@@ -115,6 +119,11 @@ export interface Space {
   /** Which folder of the space's tree wears which icon, as a JSON map keyed by
    *  the folder's path; see spaces/icons.ts. `{}` until one does. */
   icons: string
+  /** And the colour each of those icons is drawn in, under the same keys. Its own
+   *  map rather than a second value in the one above, so that a build older than
+   *  this one reads the icons it knows and writes them back without dropping a
+   *  colour it cannot read. `{}` until one is chosen. */
+  tints: string
   /** How the space's graph is drawn, as one JSON object; see spaces/graph.ts.
    *  `{}` until something about it is changed. */
   graph: string

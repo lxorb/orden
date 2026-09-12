@@ -198,6 +198,78 @@ describe("a space's icon", () => {
   })
 })
 
+/** The colour the mark in the rail is drawn in. It was this machine's own choice
+ *  until there was a column for it, which meant a space looked like itself on the
+ *  machine it was dressed on and plain everywhere else. */
+describe("the colour a space's icon is drawn in", () => {
+  async function inRail() {
+    const listed = await call(env, '/v1/spaces', { token })
+    return listed.json.spaces.find((one) => one.id === space)
+  }
+
+  /** An icon and a colour, which is what one gesture in the picker chooses. */
+  function dress(body: Record<string, unknown>) {
+    return call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body })
+  }
+
+  test('starts unset, which is the plain foreground', async () => {
+    expect((await inRail())?.tint).toBe(null)
+  })
+
+  test('rides the same request the icon does, and the same listing', async () => {
+    const response = await dress({ icon: 'Briefcase', tint: 'violet' })
+
+    expect(response.json.space.tint).toBe('violet')
+    expect((await inRail())?.tint).toBe('violet')
+  })
+
+  test('survives a rename, and an icon changed without a word about the colour', async () => {
+    await dress({ icon: 'Briefcase', tint: 'teal' })
+
+    expect((await dress({ name: 'Renamed' })).json.space.tint).toBe('teal')
+    expect((await dress({ icon: 'Book' })).json.space.tint).toBe('teal')
+  })
+
+  test('can be taken off on its own, leaving the icon where it was', async () => {
+    await dress({ icon: 'Briefcase', tint: 'red' })
+    const cleared = await dress({ tint: null })
+
+    expect(cleared.json.space.tint).toBe(null)
+    expect(cleared.json.space.icon).toBe('Briefcase')
+  })
+
+  /** A colour with nothing to colour is not a colour. The app says the same thing
+   *  where the picker writes: see `chose` in IconPicker.svelte. */
+  test('goes with the icon it was drawing', async () => {
+    await dress({ icon: 'Briefcase', tint: 'green' })
+    const bare = await dress({ icon: null })
+
+    expect(bare.json.space.icon).toBe(null)
+    expect(bare.json.space.tint).toBe(null)
+  })
+
+  /** The accents are the app's own and this service ships none of them, so what the
+   *  column is held to is the shape of an accent's id. A hex, a path or a sentence is
+   *  not one, and leaves the colour as it was rather than being written. */
+  test('is an accent name and nothing else', async () => {
+    await dress({ icon: 'Briefcase', tint: 'violet' })
+
+    for (const tint of ['#ff0000', '../../etc/passwd', 'rgb(1, 2, 3)', 'Violet']) {
+      const response = await dress({ tint })
+      expect(response.json.space.tint, tint).toBe('violet')
+    }
+  })
+
+  /** A colour the palette gains after this Worker was deployed. Read as a name it
+   *  does not know rather than refused, the way an icon set it has never heard of is:
+   *  the app resolves accents, this does not, and an older Worker must not be what
+   *  stops somebody choosing a new colour. */
+  test('may name a colour this build has never heard of', async () => {
+    const response = await dress({ icon: 'Briefcase', tint: 'oxblood' })
+    expect(response.json.space.tint).toBe('oxblood')
+  })
+})
+
 describe('the order spaces appear in', () => {
   /** Names as the account lists them, which is the rail order. */
   async function order(): Promise<string[]> {

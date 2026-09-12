@@ -16,7 +16,7 @@ import { bookmarks } from './bookmarks'
 import { spaceExcluded } from './excluded'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
-import { folderIcons, isIcon } from './icons'
+import { folderIcons, isIcon, isTint } from './icons'
 import { site } from './site'
 import { publish } from './publish'
 import { share } from './share'
@@ -185,14 +185,15 @@ spaces.put('/order', async (context) => {
   return context.json({ ok: true })
 })
 
-// The space itself - its name, its icon, its address, whether it exists - is
-// the owner's. What is inside it is what a writer writes.
+// The space itself - its name, its icon and the colour of it, its address, whether
+// it exists - is the owner's. What is inside it is what a writer writes.
 spaces.patch('/:id', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
 
   const body = await readBody(context)
   const name = body.text('name', NAME_LIMIT)
   const chosen = body.nullableText('icon', ID_LIMIT)
+  const painted = body.nullableText('tint', ID_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
 
   const label = name === undefined ? space.name : cleanName(name)
@@ -212,11 +213,28 @@ spaces.patch('/:id', atLeast('owner'), async (context) => {
           ? chosen
           : space.icon
 
-  await context.env.DB.prepare('update spaces set name = ?, icon = ?, updated_at = ? where id = ?')
-    .bind(label, icon, now(), space.id)
+  // And the colour that icon is drawn in, beside it. One of the app's own accents
+  // by its id, read the way a folder's colour is; anything else leaves the colour
+  // as it was. An icon taken away takes its colour with it: a colour with nothing
+  // to colour is not a colour, which is what the app says too.
+  const tint =
+    icon === null
+      ? null
+      : painted === undefined
+        ? space.tint
+        : painted === null
+          ? null
+          : isTint(painted)
+            ? painted
+            : space.tint
+
+  await context.env.DB.prepare(
+    'update spaces set name = ?, icon = ?, tint = ?, updated_at = ? where id = ?',
+  )
+    .bind(label, icon, tint, now(), space.id)
     .run()
 
-  return context.json({ space: presentSpace({ ...space, name: label, icon }, context.env) })
+  return context.json({ space: presentSpace({ ...space, name: label, icon, tint }, context.env) })
 })
 
 spaces.delete('/:id', atLeast('owner'), async (context) => {
