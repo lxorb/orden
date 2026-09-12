@@ -508,8 +508,8 @@
     width: auto;
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px 14px 10px;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-4) var(--space-3);
     border-right: none;
     border-bottom: 1px solid var(--line);
     overflow: visible;
@@ -560,6 +560,6 @@
   }
 
   :global([data-touch]) .phone .split {
-    margin: 6px 12px;
+    margin: var(--space-1) var(--space-3);
   }
 </style>

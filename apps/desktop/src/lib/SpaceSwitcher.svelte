@@ -394,7 +394,7 @@
   }
 
   hr {
-    margin: var(--space-1) 4px;
+    margin: var(--space-1);
     border: none;
     border-top: 1px solid var(--line);
   }

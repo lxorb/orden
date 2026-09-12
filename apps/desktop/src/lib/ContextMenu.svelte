@@ -259,7 +259,7 @@
   }
 
   hr {
-    margin: var(--space-1) 4px;
+    margin: var(--space-1);
     border: none;
     border-top: 1px solid var(--line);
   }
@@ -294,7 +294,7 @@
   }
 
   .touch hr {
-    margin: 6px 12px;
+    margin: var(--space-1) var(--space-3);
   }
 
   /* The callout: still a popover, grown from the side the finger is on. */
@@ -335,16 +335,21 @@
     background: var(--line-strong);
   }
 
-  /* Only ever drawn in the sheet, which is only ever a touch screen, so it is
-     read at the size the rows under it are. */
+  /* What the sheet is about. Only ever drawn in the sheet, which is only ever a
+     touch screen, and it is a sheet's head like any other: `--text-head`, which
+     is a step above the rows under it on either kind of screen, and the ink a
+     name is written in. It used to be `--text-base` in `--muted`, which made the
+     one thing saying which file all of this was about the quietest and smallest
+     line on the sheet - while every other sheet in the app heads itself in
+     `--text-strong`. */
   .title {
     flex: none;
     margin: 0;
-    padding: 10px 20px 4px;
+    padding: var(--space-2) var(--row-pad) var(--space-1);
     font-family: var(--font-ui);
-    font-size: var(--text-base);
+    font-size: var(--text-head);
     font-weight: var(--weight-strong);
-    color: var(--muted);
+    color: var(--text-strong);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -355,7 +360,8 @@
   .sheet .rows {
     flex: 1;
     min-height: 0;
-    padding: 6px max(8px, var(--inset-right)) 8px max(8px, var(--inset-left));
+    padding: var(--space-1) max(var(--space-2), var(--inset-right)) var(--space-2)
+      max(var(--space-2), var(--inset-left));
     overflow-y: auto;
     overscroll-behavior: contain;
   }
