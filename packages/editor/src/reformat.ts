@@ -1,23 +1,11 @@
 import type { StateCommand } from '@codemirror/state'
+import { closesFence, fenceMark } from '@nib/markdown/fences'
 import { parseTable, serializeTable } from './table/model'
 
-/** A fence line: up to three spaces of indent, then three or more backticks or
- *  tildes. The mark matters, not just the shape: a `~~~` in the middle of a
- *  ``` block is code, and reading it as a fence would end the block early and
- *  let the rest of it be rewritten as prose. */
-const FENCE = /^ {0,3}(`{3,}|~{3,})/
-
-function fenceMark(line: string): string | null {
-  return FENCE.exec(line)?.[1] ?? null
-}
-
-/** Whether a line closes a fence opened with `mark`: the same character, at
- *  least as many of them, and nothing else on the line. */
-function closesFence(line: string, mark: string): boolean {
-  const found = fenceMark(line)
-  if (!found?.startsWith(mark.charAt(0)) || found.length < mark.length) return false
-  return !line.slice(line.indexOf(found) + found.length).trim()
-}
+/** Which lines are code comes from @nib/markdown/fences, the same reading the
+ *  renderer and the comment stripper use. The mark matters, not just the shape: a
+ *  `~~~` in the middle of a ``` block is code, and reading it as a fence would
+ *  end the block early and let the rest of it be rewritten as prose. */
 
 /** Tidies a document without changing what it means: one bullet character, one
  *  emphasis style, pipe-aligned tables, and no runs of blank lines. */

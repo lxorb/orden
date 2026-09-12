@@ -1,4 +1,5 @@
 import { type ChangeSpec, EditorSelection, type StateCommand } from '@codemirror/state'
+import { closesFence } from '@nib/markdown/fences'
 import { taskAt } from '@nib/markdown/tasks'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
@@ -238,14 +239,6 @@ function fenceOf(text: string): { mark: string; info: string } | null {
   return { mark, info: info.trim() }
 }
 
-/** Whether a line closes a fence opened with `mark`: the same character, at
- *  least as many of them, and nothing else. */
-function closes(text: string, mark: string): boolean {
-  const found = fenceOf(text)
-  if (!found) return false
-  return found.mark.startsWith(mark.charAt(0)) && found.mark.length >= mark.length && !found.info
-}
-
 /** A line that is quote marks and nothing else, with each mark captured so the
  *  levels can be counted. Up to three spaces of indent, which is as far as
  *  CommonMark lets a block be pushed in before it is code. */
@@ -310,7 +303,7 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   for (let number = 1; number < line.number; number++) {
     const text = state.doc.line(number).text
     if (open) {
-      if (closes(text, open)) open = null
+      if (closesFence(text, open)) open = null
     } else {
       open = fenceOf(text)?.mark ?? null
     }
@@ -318,7 +311,7 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   if (open) return false
 
   for (let number = line.number + 1; number <= state.doc.lines; number++) {
-    if (closes(state.doc.line(number).text, fence.mark)) return false
+    if (closesFence(state.doc.line(number).text, fence.mark)) return false
   }
 
   dispatch(

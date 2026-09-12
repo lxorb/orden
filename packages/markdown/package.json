@@ -13,6 +13,7 @@
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
     "./edits": "./src/edits.ts",
+    "./fences": "./src/fences.ts",
     "./front-matter": "./src/front-matter.ts",
     "./icons": "./src/icons.ts",
     "./from-html": "./src/from-html.ts",
