@@ -46,6 +46,7 @@
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
+  import { publish } from './lib/publishing.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { startup } from './lib/startup.svelte'
@@ -319,6 +320,10 @@
         // The import sheet, which opens from a row in File: a drive walks the file
         // chooser rather than the menu, so it needs the sheet on screen first.
         importing,
+        // The publish sheet, for the same reason the share sheet is here: it opens
+        // from a space's own menu, which a drive cannot reach by pointing. See
+        // apps/desktop/test/e2e/site.py.
+        publish,
         rooms,
         // One rewrite, which is a sheet opened from the editor's own menu: a drive
         // cannot reach a right-click menu, so it asks for the sheet.

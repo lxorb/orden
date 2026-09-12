@@ -105,6 +105,15 @@
 
   const changes = $derived(publish.changes)
 
+  /** Whether the whole space is what is about to be public, which is what the
+   *  warning above the form has to be right about: it is only everything while
+   *  the default publishes and no folder says otherwise. */
+  const everything = $derived(
+    publish.rules.otherwise === 'all' &&
+      !publish.rules.exclude.length &&
+      !publish.rules.include.length,
+  )
+
   /** The badge the icon is drawn in, so that what the site wears is the mark the
    *  app has already drawn; see site-icon.ts. */
   let markBox = $state<HTMLElement | null>(null)
@@ -154,7 +163,7 @@
     <input data-lands type="checkbox" bind:checked={publish.confirmed} disabled={published} />
     <span>
       <strong>
-        {publish.rules.otherwise === 'all'
+        {everything
           ? t('Everything in this space becomes public.')
           : t('The folders you choose become public.')}
       </strong>
