@@ -157,7 +157,7 @@ describe('the content policy', () => {
 
     expect(hosts).not.toContain('http:')
     for (const host of hosts) {
-      expect(host, host).toMatch(/^http:\/\/(localhost|127\.0\.0\.1|\[::1\]|[a-z]+\.localhost)(:\*)?$/)
+      expect(host, host).toMatch(/^http:\/\/(localhost|127\.0\.0\.1|[a-z]+\.localhost)(:\*)?$/)
     }
   })
 })
