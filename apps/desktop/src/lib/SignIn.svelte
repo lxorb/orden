@@ -260,9 +260,12 @@
     gap: var(--space-3);
   }
 
+  /* The height from the row scale, so a thumb gets a row where it used to get
+     44px, and the room inside it on the grid. */
   input {
     width: 100%;
-    padding: 11px 13px;
+    min-height: var(--row-height);
+    padding: var(--space-3);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-md);
     background: var(--bg);

@@ -391,10 +391,14 @@
     gap: var(--space-1);
   }
 
+  /* The box takes the border and the ring; this is only the words in it. The
+     height comes from the row scale rather than from padding, so what a thumb
+     lands on is a row and not the 34px this was on every screen. */
   .compose input {
     flex: 1;
     min-width: 0;
-    padding: 6px 0;
+    min-height: var(--row-height);
+    padding: 0;
     border: none;
     background: none;
     color: var(--text-strong);

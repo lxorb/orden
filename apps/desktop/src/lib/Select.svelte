@@ -236,7 +236,13 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: 8px 10px 8px 11px;
+    /* Said rather than left to the padding, which is what makes it a thumb's
+       target: 28 under a pointer, 56 under a finger, and the words and their room
+       take it past 28 anyway. It was 36px tall on every screen, so the one kind
+       of control the settings are mostly made of was the one thing on a phone
+       under the touch floor. */
+    min-height: var(--row-height);
+    padding: var(--space-2) var(--space-3);
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-md);
     background: var(--bg);
