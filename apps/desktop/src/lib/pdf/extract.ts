@@ -24,6 +24,7 @@
 import { isPdfTarget } from '@nib/markdown/links'
 import { breathe } from '../breathe'
 import { startup } from '../startup.svelte'
+import { mark } from '../trace'
 import type { Entry } from '../workspace.svelte'
 import { openDocument, textOf } from './document'
 import { paperOpened, paperRead, papersFor, writePapers } from './papers'
@@ -59,6 +60,7 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
 
   // What earlier sittings took down, first: it is a read of a row rather than of a
   // PDF, and it is what makes the first search of a space answer about papers.
+  mark(`papers: ${papers.length} in the space`)
   await papersFor(root, stamps)
   if (reading !== root || sparing()) return
 
@@ -73,6 +75,8 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
     await writePapers()
     await breathe()
   }
+
+  mark('papers read')
 }
 
 /** One paper, page by page. Its words are held in memory as they arrive, the way

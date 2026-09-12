@@ -138,9 +138,9 @@ class Startup {
     }
 
     // The launch is over as far as the order is concerned, so whatever was timed
-    // goes to the crate to be written beside its own steps; see trace.ts. One idle
-    // callback later, so the last stage's own first breath is on the trace too.
-    await idle()
+    // goes to the crate to be written beside its own steps; see trace.ts. Nothing
+    // is awaited for it: the order costs the four idle callbacks above and not one
+    // more, and the trace waits on a timer of its own.
     mark('launch order finished')
     sendTrace()
   }

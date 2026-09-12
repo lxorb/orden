@@ -16,6 +16,7 @@
 
 import { invoke, isNative } from '../tauri'
 import { startup } from '../startup.svelte'
+import { mark } from '../trace'
 import { isWarmth, type PapersHeld, said, type Warmth } from './warmth'
 
 class Warm {
@@ -59,7 +60,9 @@ class Warm {
     // The crate reads the space on a thread of its own, so this is awaited without
     // anything on screen waiting for it. A space that cannot be read is not a
     // failure to report: the next search reads what it can.
+    mark('warm_search asked')
     const found = await invoke<unknown>('warm_search', { root }).catch(() => null)
+    mark('warm_search answered')
     if (this.root === root && isWarmth(found)) this.held = found
   }
 }

@@ -32,6 +32,15 @@ const STEPS: Step[] = []
  *  marks in a loop is a bug, and a bug here should not be a leak. */
 const MOST = 200
 
+/** How long after the launch order finishes the trace is handed over.
+ *
+ *  Not at once. The stages the order lets go of are only *started* by it - the scan
+ *  of the space, the search's own read, the papers - and those are exactly the
+ *  steps somebody tracing a slow launch wants to see land. So the trace waits for
+ *  them, on a timer rather than on an idle callback: the launch order costs the
+ *  callbacks it costs, and a diagnostic has no business adding one to it. */
+const SETTLE = 3000
+
 /** Whether the trace has already been handed over, so the stages that finish after
  *  it do not send the same launch twice. */
 let sent = false
@@ -52,10 +61,12 @@ export function sendTrace(): void {
   if (sent || !isNative) return
   sent = true
 
-  void invoke('trace_startup', {
-    origin: performance.timeOrigin,
-    steps: [...navigationSteps(), ...STEPS],
-  }).catch(() => undefined)
+  setTimeout(() => {
+    void invoke('trace_startup', {
+      origin: performance.timeOrigin,
+      steps: [...navigationSteps(), ...STEPS],
+    }).catch(() => undefined)
+  }, SETTLE)
 }
 
 /** What the webview did before the first line of the app ran, as the navigation

@@ -43,6 +43,7 @@ import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
 import { scanCanvas, type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
 import { startup } from './startup.svelte'
+import { mark } from './trace'
 import {
   folderOf,
   insideSpace,
@@ -221,7 +222,9 @@ class Links {
       return
     }
 
+    mark('scan_links asked')
     const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
+    mark('scan_links answered')
 
     // Another space may have opened while this one was being read.
     if (this.root !== root) {
