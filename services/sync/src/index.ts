@@ -1,12 +1,14 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { ask } from './ask'
-import { auth, presentUser, requireWhoever } from './auth'
+import { accountById, auth, presentUser, requireWhoever } from './auth'
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
 import { cleanName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
+import { bearer } from './mcp/tokens'
+import { programMayReach } from './programs'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
@@ -22,7 +24,7 @@ import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
-import type { Env, Variables } from './types'
+import type { Env, Variables, Whoever } from './types'
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
@@ -91,7 +93,9 @@ app.route('/oauth', oauth)
  *  are. A guest's reaches the handful of routes `guestMayReach` names and
  *  nothing else: the spaces its links granted, and who it is. */
 app.use('/v1/*', async (context, next) => {
-  const who = await requireWhoever(context.env, context.req.header('authorization'))
+  const header = context.req.header('authorization')
+  const who: Asking | null =
+    (await requireWhoever(context.env, header)) ?? (await asProgram(context.env, header))
   if (!who) return context.json({ error: 'sign in first' }, 401)
 
   context.set('who', who)
@@ -103,11 +107,41 @@ app.use('/v1/*', async (context, next) => {
     }
     context.set('guest', who.guest)
   } else {
+    // A program acting for somebody reaches the sync routes and nothing else,
+    // and a read-only one reaches none that write. Checked here rather than in
+    // each route, so a route added tomorrow is closed to it until somebody says
+    // otherwise; see programs.ts.
+    if (who.program) {
+      const path = new URL(context.req.url).pathname
+      if (!programMayReach(context.req.method, path, who.readOnly === true)) {
+        return context.json({ error: 'that is not something a token can do' }, 403)
+      }
+    }
+
     context.set('user', who.user)
   }
 
   await next()
 })
+
+/** Whoever is asking, and whether it is a program rather than somebody at a
+ *  keyboard. A program is the account for the routes it may reach, so nothing
+ *  downstream has a third kind to know about; see programs.ts. */
+type Asking = Whoever & { program?: true; readOnly?: boolean }
+
+/** Whoever a `nib_` token acts for: the connector's token, or one an LLM client
+ *  was granted. It becomes the account for the handful of routes programs may
+ *  reach, which is what lets a CI job speak the same sync API the app does with
+ *  no second surface to keep in step. */
+async function asProgram(env: Env, header: string | undefined): Promise<Asking | null> {
+  const token = await bearer(env, header)
+  if (!token) return null
+
+  const user = await accountById(env, token.user_id)
+  if (!user) return null
+
+  return { kind: 'user', user, program: true, readOnly: !!token.read_only }
+}
 
 app.get('/v1/me', (context) => {
   const who = context.get('who')

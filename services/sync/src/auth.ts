@@ -63,6 +63,17 @@ export async function requireWhoever(
   return guest ? { kind: 'guest', guest } : null
 }
 
+/** The account one row names, for a caller that has the id and not the session.
+ *
+ *  Which is a program acting for somebody: its token says whose account it is
+ *  and nothing about a session, and the routes it reaches read `user` like any
+ *  other. See programs.ts for which those are. */
+export function accountById(env: Env, id: string): Promise<User | null> {
+  return env.DB.prepare('select id, email, name, created_at from users where id = ?')
+    .bind(id)
+    .first<User>()
+}
+
 /** A session for an account, and the row behind it. Sessions that ran out are
  *  cleared as new ones arrive: nothing else would ever take them away, and a
  *  row nobody can use is only a row. */
