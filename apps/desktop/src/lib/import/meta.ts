@@ -12,6 +12,8 @@
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
+import { type FrontMatterRow, writeFrontMatter } from '@nib/markdown/front-matter'
+
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
   date?: string | null
@@ -23,23 +25,26 @@ export interface Meta {
   extra?: readonly (readonly [string, string])[]
 }
 
-/** A front matter block, or nothing at all when there is nothing to say. Notes
- *  that carry no properties should not carry an empty fence. */
+/** A front matter block, or nothing at all when there is nothing to say. Which
+ *  rows there are is decided here - only what the export knew - and how each value
+ *  is spelled is @nib/markdown/front-matter's, shared with the clipper so that a
+ *  clipped page and an imported note say the same thing the same way. */
 export function frontMatterFor(meta: Meta): string {
-  const rows: string[] = []
+  const rows: FrontMatterRow[] = []
 
-  if (meta.date) rows.push(`date: ${scalar(meta.date)}`)
-  if (meta.updated && meta.updated !== meta.date) rows.push(`updated: ${scalar(meta.updated)}`)
+  if (meta.date) rows.push(['date', meta.date])
+  if (meta.updated && meta.updated !== meta.date) rows.push(['updated', meta.updated])
 
   const tags = tagList(meta.tags ?? [])
-  if (tags.length) rows.push(`tags: [${tags.join(', ')}]`)
+  if (tags.length) rows.push(['tags', tags])
 
   for (const [key, value] of meta.extra ?? []) {
     const name = propertyName(key)
-    if (name && value.trim()) rows.push(`${name}: ${scalar(value.trim())}`)
+    if (name && value.trim()) rows.push([name, value])
   }
 
-  return rows.length ? `---\n${rows.join('\n')}\n---\n\n` : ''
+  const written = writeFrontMatter(rows)
+  return written ? `${written}\n\n` : ''
 }
 
 /** A whole note: its properties, its title as a heading, and its words.
@@ -54,19 +59,6 @@ export function noteText(title: string | null, body: string, meta: Meta = {}): s
   const head = title && !heads ? `# ${title}\n\n` : ''
 
   return `${frontMatterFor(meta)}${head}${words}${words ? '\n' : ''}`
-}
-
-/** A YAML value that reads back as what was written. Quoted only when it has to
- *  be: a space full of notes whose every property is in quotes looks like
- *  something a machine made, which is exactly what the import is trying not to
- *  look like. */
-export function scalar(value: string): string {
-  const plain =
-    /^[A-Za-z0-9][\w ./+-]*$/.test(value) &&
-    !/^(true|false|null|yes|no|on|off)$/i.test(value) &&
-    !/^[\d.]+$/.test(value)
-
-  return plain ? value : JSON.stringify(value)
 }
 
 /** A property name YAML will read as one word, for a column called

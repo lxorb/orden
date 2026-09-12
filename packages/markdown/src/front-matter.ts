@@ -18,7 +18,14 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { flowItems, listItem, unquoted } from './yaml'
+import { flowItem, flowItems, listItem, scalar, unquoted } from './yaml'
+
+/** Named here as well because the block is this module's business and yaml.ts is
+ *  its private grammar: a caller writing a block asks for one import, and a caller
+ *  that has to state a value as one line - a title that is written into the block
+ *  and used as the note's heading - asks the same rule that the block was built
+ *  with rather than a rule of its own. */
+export { oneLine } from './yaml'
 
 /** Where a note's front matter sits.
  *
@@ -81,6 +88,33 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
   }
 
   return null
+}
+
+/** What a written row holds: one key, and either a value or a list of them. */
+export type FrontMatterRow = readonly [key: string, value: string | readonly string[]]
+
+/** A front matter block saying these rows, or nothing at all when there are none:
+ *  a note that carries no properties should not carry an empty fence.
+ *
+ *  The block alone, with no line break after its closing fence, so the caller
+ *  decides what the note's words are separated from it by.
+ *
+ *  Two writers wanted this: an import, which knows a note's date, its tags and
+ *  whatever columns its export carried, and a clipped page, which knows where it
+ *  came from and when. Which rows there are is theirs to decide - one writes only
+ *  what it knows, the other always writes its four so that a folder of clips has
+ *  the same shape in every one of them - and how a value is spelled is not, because
+ *  both are read back by the reader above and by Obsidian. */
+export function writeFrontMatter(rows: readonly FrontMatterRow[]): string {
+  if (!rows.length) return ''
+
+  const said = rows.map(([key, value]) =>
+    typeof value === 'string'
+      ? `${key}: ${scalar(value)}`
+      : `${key}: [${value.map(flowItem).join(', ')}]`,
+  )
+
+  return `---\n${said.join('\n')}\n---`
 }
 
 /** The block's own lines as text, or null where there is no block. */

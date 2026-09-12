@@ -6,6 +6,7 @@ import {
   frontMatterList,
   frontMatterValue,
   stripFrontMatter,
+  writeFrontMatter,
 } from './front-matter'
 
 /** What the block is read as. The three readers of it - an export, a search and
@@ -221,5 +222,44 @@ describe('setting several keys at once', () => {
       ]),
     ).toBeNull()
     expect(frontMatterEdits('# Plan\n', [['icon', null]])).toBeNull()
+  })
+})
+
+describe('writing a block', () => {
+  test('is the rows asked for, fenced, and nothing after the fence', () => {
+    expect(
+      writeFrontMatter([
+        ['date', '2026-01-02'],
+        ['tags', ['work', 'a/b']],
+      ]),
+    ).toBe('---\ndate: 2026-01-02\ntags: [work, a/b]\n---')
+  })
+
+  test('a block with no rows is no block at all', () => {
+    expect(writeFrontMatter([])).toBe('')
+  })
+
+  test('an empty list is still stated, because the caller asked for the row', () => {
+    expect(writeFrontMatter([['tags', []]])).toBe('---\ntags: []\n---')
+  })
+
+  test('and what is written is read back as what was given', () => {
+    const rows = [
+      ['source', 'https://site.example/a?b=1#c'],
+      ['title', "It's: here"],
+      ['tags', ['work', 'two words']],
+    ] as const
+    const note = `${writeFrontMatter(rows)}\n\n# One\n`
+
+    expect(frontMatterValue(note, 'source')).toBe('https://site.example/a?b=1#c')
+    expect(frontMatterValue(note, 'title')).toBe("It's: here")
+    expect(frontMatterList(note, 'tags')).toEqual(['work', 'two words'])
+    expect(stripFrontMatter(note)).toBe('\n# One\n')
+  })
+
+  test('cannot be ended early by a value with lines in it', () => {
+    const block = writeFrontMatter([['title', 'Fine\n---\n\n<img src=x>']])
+
+    expect(block).toBe('---\ntitle: Fine --- <img src=x>\n---')
   })
 })

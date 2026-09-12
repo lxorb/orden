@@ -5,6 +5,7 @@
  *  decided here: this is the file's contents and the name it wants, and
  *  `paths.ts` says where that name may go. */
 
+import { oneLine, writeFrontMatter } from '@nib/markdown/front-matter'
 import { withoutForbidden } from '@nib/markdown/paths'
 
 import type { Origin } from './extract'
@@ -34,49 +35,19 @@ export function fits(content: string): boolean {
  *  field. */
 const LONGEST_TITLE = 300
 
-/** One line, however many the page wrote.
- *
- *  A title comes from the page - `og:title`, `<title>`, the words a link shows -
- *  and a page may put anything at all in it. A line break in there would end the
- *  front matter early, and everything after it would land in the note as
- *  markdown of the page's choosing; `---` on a line of its own is exactly the
- *  terminator. So no value in the block above a note is ever more than a line. */
-function oneLine(value: string): string {
-  return value.replace(/\s+/gu, ' ').trim()
-}
-
-/** A YAML scalar. Plain where that is unambiguous, single quoted where it is
- *  not: a colon and a space open a mapping, a space and a hash open a comment,
- *  and a handful of characters mean something at the start of a value. Every
- *  value arrives as one line, so nothing here has to think about folding. */
-function scalar(source: string): string {
-  const value = oneLine(source)
-
-  const ambiguous = !value || /:\s|:$|\s#/.test(value) || /^[-?:,[\]{}#&*!|>'"%@`]/.test(value)
-
-  return ambiguous ? `'${value.replace(/'/g, "''")}'` : value
-}
-
-/** A member of a flow sequence, which is what `tags` is. The same rules, plus
- *  the characters that would end the member or the list itself. */
-function member(source: string): string {
-  const value = oneLine(source)
-  return /[,[\]{}]/.test(value) ? `'${value.replace(/'/g, "''")}'` : scalar(value)
-}
-
 /** The block above the note. Four fields, always all four: a reader scanning a
- *  folder of clips should find the same shape in every one of them. */
+ *  folder of clips should find the same shape in every one of them.
+ *
+ *  How a value is spelled - what is quoted, and how a line the page wrote is made
+ *  one - is @nib/markdown/front-matter's, which is also what reads the block back
+ *  in the app. */
 export function frontMatter(origin: Origin, clipped: Date): string {
-  const tags = origin.tags.map(member).join(', ')
-
-  return [
-    '---',
-    `source: ${scalar(origin.url)}`,
-    `title: ${scalar(origin.title)}`,
-    `clipped: ${clipped.toISOString()}`,
-    `tags: [${tags}]`,
-    '---',
-  ].join('\n')
+  return writeFrontMatter([
+    ['source', origin.url],
+    ['title', origin.title],
+    ['clipped', clipped.toISOString()],
+    ['tags', origin.tags],
+  ])
 }
 
 /** The extractor sometimes leaves the article's own headline at the top of the

@@ -47,7 +47,9 @@ describe('a CSV as one note per row', () => {
     const text = noteAt(plan, 'Books/Dune.md')
     expect(text).toContain('# Dune')
     expect(text).toContain('status: Read')
-    expect(text).toContain('pages: "412"')
+    // Quoted, so the column stays the words it held rather than becoming a
+    // number; single quotes, because those need no escapes inside them.
+    expect(text).toContain("pages: '412'")
     expect(text).toContain('date: 2026-01-02')
     expect(text).not.toContain('name: Dune')
   })

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { dayOf, frontMatterFor, noteText, scalar, tagName } from './meta'
+import { dayOf, frontMatterFor, noteText, tagName } from './meta'
 
 describe('front matter for an imported note', () => {
   test('writes the day it was made under the key nib already reads', () => {
@@ -45,23 +45,6 @@ describe('a whole note', () => {
 
   test('a note with no words at all is its heading, the way a new note is', () => {
     expect(noteText('Empty', '   \n\n')).toBe('# Empty\n\n')
-  })
-})
-
-describe('a YAML value', () => {
-  test('is left plain where it reads back as itself', () => {
-    expect(scalar('Done')).toBe('Done')
-    expect(scalar('2026-01-02')).toBe('2026-01-02')
-    expect(scalar('a b c')).toBe('a b c')
-  })
-
-  test('is quoted where it would read as something else', () => {
-    expect(scalar('yes')).toBe('"yes"')
-    expect(scalar('12')).toBe('"12"')
-    expect(scalar('one: two')).toBe('"one: two"')
-    expect(scalar('# hash')).toBe('"# hash"')
-    expect(scalar('')).toBe('""')
-    expect(scalar('say "hi"')).toBe('"say \\"hi\\""')
   })
 })
 

@@ -49,8 +49,12 @@ describe('front matter', () => {
     expect(frontMatter(origin({ title: '"quoted"' }), AT)).toContain(`title: '"quoted"'`)
   })
 
-  test('doubles a quote inside a quoted value, as YAML asks', () => {
-    expect(frontMatter(origin({ title: "It's: here" }), AT)).toContain("title: 'It''s: here'")
+  // Doubling the apostrophe is YAML, but the app's own front matter reader takes
+  // quotes off a value without undoubling anything inside them, so a clipped
+  // article read `It''s: here` in its own properties row. Double quotes say the
+  // same thing to Obsidian and to that reader.
+  test('quotes a title with an apostrophe in the quotes that need no escape', () => {
+    expect(frontMatter(origin({ title: "It's: here" }), AT)).toContain(`title: "It's: here"`)
   })
 
   test('leaves an ordinary address unquoted, colons and all', () => {

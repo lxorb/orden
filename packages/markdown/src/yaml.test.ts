@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { flowItems, listItem, unquoted } from './yaml'
+import { flowItem, flowItems, listItem, oneLine, scalar, unquoted } from './yaml'
 
 describe('a quoted value', () => {
   test('loses the quotes around the whole of it', () => {
@@ -64,5 +64,55 @@ describe('a list item', () => {
   test('and a line that is not a list item at all is nothing', () => {
     expect(listItem('key: value')).toBeNull()
     expect(listItem('')).toBeNull()
+  })
+})
+
+describe('a value being written', () => {
+  test('is left plain where it reads back as itself', () => {
+    expect(scalar('Done')).toBe('Done')
+    expect(scalar('2026-01-02')).toBe('2026-01-02')
+    expect(scalar('a b c')).toBe('a b c')
+    expect(scalar('https://site.example/a?b=1#c')).toBe('https://site.example/a?b=1#c')
+  })
+
+  test('is quoted where YAML would read it as something else', () => {
+    expect(scalar('yes')).toBe("'yes'")
+    expect(scalar('12')).toBe("'12'")
+    expect(scalar('one: two')).toBe("'one: two'")
+    expect(scalar('# hash')).toBe("'# hash'")
+    expect(scalar('- not a list')).toBe("'- not a list'")
+    expect(scalar('')).toBe("''")
+  })
+
+  test('and comes back out of the reader as what was written', () => {
+    // The two writers this replaced each quoted the other's case in a way this
+    // package's own reader could not undo: `'It''s'` came back doubled, and
+    // `"say \"hi\""` came back with its backslashes.
+    for (const value of ['say "hi"', "It's: here", 'plain', 'one: two', '# hash', 'yes']) {
+      expect(unquoted(scalar(value)), value).toBe(value)
+    }
+  })
+
+  test('takes single quotes unless it holds an apostrophe of its own', () => {
+    // A quote inside a value is not syntax, so a value needing quotes for another
+    // reason keeps it: `'"quoted"'` starts with one and does need them.
+    expect(scalar('say "hi": really')).toBe(`'say "hi": really'`)
+    expect(scalar('"quoted"')).toBe(`'"quoted"'`)
+    expect(scalar("It's: here")).toBe(`"It's: here"`)
+  })
+
+  test('is one line, whatever arrived', () => {
+    expect(scalar('Fine\n---\n\n<img src=x>')).toBe('Fine --- <img src=x>')
+    expect(oneLine('  two\t lines\n here ')).toBe('two lines here')
+  })
+
+  test('a member of a flow list also quotes what would end the list', () => {
+    expect(flowItem('work')).toBe('work')
+    expect(flowItem('a, b')).toBe("'a, b'")
+    expect(flowItem('[x]')).toBe("'[x]'")
+    expect(flowItems(`[${flowItem('work')}, ${flowItem('two words')}]`)).toEqual([
+      'work',
+      'two words',
+    ])
   })
 })
