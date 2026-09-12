@@ -37,6 +37,12 @@
 
   const KINDS: ProviderKind[] = ['anthropic', 'openai', 'compatible']
 
+  /** What a base URL looks like, as the address Ollama answers on. An address and
+   *  not a sentence, so it is the same in every language; named here rather than
+   *  written into the field, because a placeholder written there reads as prose
+   *  nobody translated. */
+  const EXAMPLE_URL = 'http://localhost:11434'
+
   /** The word a provider wears: its own name, or its kind's. */
   const named = (provider: Provider) => provider.name || t(KIND_NAMES[provider.kind])
 
@@ -143,7 +149,7 @@
           <input
             class="nib-field inline"
             value={provider.baseUrl ?? ''}
-            placeholder="http://localhost:11434"
+            placeholder={EXAMPLE_URL}
             spellcheck="false"
             autocomplete="off"
             onchange={(event) => {

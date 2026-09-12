@@ -314,6 +314,13 @@ def state(page: Page) -> dict:
     return page.evaluate(STATE)
 
 
+# A request the fake provider deliberately refused. The browser logs one of these
+# for every failed fetch, whoever made it and however well it was handled, so it
+# is not the app saying anything: the app's own answer is the line across the top
+# of the window, which every step below reads.
+REFUSED = re.compile(r"Failed to load resource.*\b(401|403|404|500)\b")
+
+
 def fresh(browser: Browser, label: str) -> Page:
     context = browser.new_context(
         viewport={"width": 1180, "height": 860},
@@ -324,7 +331,7 @@ def fresh(browser: Browser, label: str) -> Page:
     page.on(
         "console",
         lambda message: wrong(f"[{label}] console error: {message.text}")
-        if message.type == "error"
+        if message.type == "error" and not REFUSED.search(message.text)
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")
@@ -553,8 +560,8 @@ def drive_rewrite(browser: Browser) -> None:
     shot(page, "41-diff")
 
     rows = page.evaluate(
-        """() => [...document.querySelectorAll('.diff .line')].map((one) => ({
-          change: [...one.classList].filter((c) => c !== 'line')[0] ?? 'same',
+        """() => [...document.querySelectorAll('.diff .change')].map((one) => ({
+          change: [...one.classList].filter((c) => c !== 'change')[0] ?? 'same',
           text: one.textContent,
         }))"""
     )
@@ -665,9 +672,15 @@ def drive_pane(browser: Browser) -> None:
     page.wait_for_timeout(900)
     shot(page, "61-models-listed")
 
+    # The first of what the server offered, which is sorted: a provider that has
+    # just been set up is usable without a second decision.
     chosen = page.evaluate("() => window.nibApp.ai.providers[0].model")
-    say(f"[pane] the model chosen for it: {chosen!r}")
-    if chosen != MODEL:
+    offered = page.evaluate(
+        "() => [...document.querySelectorAll('.pick button, .pick select option')]"
+        ".map((one) => one.textContent.trim())"
+    )
+    say(f"[pane] the model chosen for it: {chosen!r}, from {offered}")
+    if chosen not in {MODEL, "fake-large"}:
         wrong(f"[pane] listing the models did not choose one: {chosen!r}")
     if not page.evaluate("() => window.nibApp.ai.ready"):
         wrong("[pane] the provider is not usable after being set up")

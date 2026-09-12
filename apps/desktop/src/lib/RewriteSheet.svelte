@@ -72,7 +72,7 @@
     </p>
     <div class="diff" use:scrollbar>
       {#each changes as row, at (at)}
-        <div class="line {row.change}">{row.text || ' '}</div>
+        <div class="change {row.change}">{row.text || ' '}</div>
       {/each}
     </div>
   {:else if rewriting.running}
@@ -130,18 +130,21 @@
     line-height: 1.6;
   }
 
-  .line {
+  /* One line of the change. Not `.line`, which the sheet draws as a hairline
+     between a card's rows: two rules for one name put every row of the diff on
+     top of the one above it. */
+  .change {
     padding: 0 var(--space-3);
     color: var(--muted-strong);
     white-space: pre-wrap;
   }
 
-  .line.added {
+  .change.added {
     background: color-mix(in srgb, var(--success) 14%, transparent);
     color: var(--text-strong);
   }
 
-  .line.removed {
+  .change.removed {
     background: color-mix(in srgb, var(--danger) 14%, transparent);
     color: var(--text-strong);
   }
