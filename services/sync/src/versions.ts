@@ -319,6 +319,40 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
  *  in Recently deleted is one somebody may still want back, and its history is
  *  part of what coming back means. Each body goes only once the last row naming
  *  it has, which is what keeps a version another note shares. */
+/** How many notes one rollback puts back. The same ceiling `versionsAt` reads
+ *  under, said out loud so the route can tell a full answer from a truncated
+ *  one. */
+export const ROLLBACK_AT_ONCE = AT_ONCE
+
+/** How many notes a rollback has in all to put back, for the moment it hits that
+ *  ceiling.
+ *
+ *  An answer that said "400 notes" where there were twelve hundred read as
+ *  finished, and half the space was still where it had been. This is the same
+ *  question `versionsAt` asks, counted rather than listed, and asked only when
+ *  the answer was cut off - which is rarely, because most spaces are smaller than
+ *  the ceiling. */
+export async function countVersionsAt(
+  env: Env,
+  spaceId: string,
+  under: string,
+  at: number,
+): Promise<number> {
+  const prefix = under ? `${under.replace(/\/+$/, '')}/%` : '%'
+
+  const found = await env.DB.prepare(
+    `select count(*) as held from note_versions v
+       join notes n on n.id = v.note_id
+      where n.space_id = ?1 and n.path like ?2 and v.at <= ?3
+        and v.hash != n.hash
+        and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)`,
+  )
+    .bind(spaceId, prefix, at)
+    .first<{ held: number }>()
+
+  return found?.held ?? 0
+}
+
 export async function forgetVersions(env: Env, noteId: string): Promise<number> {
   const { results } = await env.DB.prepare(
     'delete from note_versions where note_id = ? returning hash',

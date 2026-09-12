@@ -102,6 +102,11 @@ notes than that under the path named is put back 400 at a time, and neither the
 dry run nor the answer says so yet - so the count the sheet shows is what this
 request would do and not necessarily what the space holds.
 
+Four hundred notes per request, because a Worker is bounded in writes. A space
+with more than that says so rather than answering four hundred as though it were
+the whole space, and the sheet asks again until there is nothing left; the number
+it shows is the number of notes in all.
+
 ## When the same note was written twice
 
 It happens for one reason: two devices had the note, and both changed it. Nothing

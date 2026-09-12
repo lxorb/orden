@@ -74,11 +74,23 @@
 
     try {
       const said = await api.rollback(token, spaceId, moment(), '', true)
-      asked = { notes: said.notes, paths: said.paths ?? [], more: said.more === true }
+      asked = {
+        // What it would change in all, which is more than one request puts back
+        // where a space is big; the pane says the number, the loop does the rest.
+        notes: said.notes + (said.left ?? 0),
+        paths: said.paths ?? [],
+        more: said.more === true,
+      }
     } catch (error) {
       wrong = error instanceof Error ? error.message : t('That did not work.')
     }
   }
+
+  /** How many times it will ask. The server puts back four hundred notes per
+   *  request, so this is forty thousand notes, which is more than a space holds;
+   *  a ceiling all the same, because a loop that talks to a server should have
+   *  one. */
+  const ROUNDS = 100
 
   async function roll() {
     const token = account.accountToken
@@ -86,10 +98,20 @@
 
     rolling = true
     wrong = null
+    rolled = 0
 
     try {
-      const done = await api.rollback(token, spaceId, moment())
-      rolled = done.notes
+      // Until there is nothing left. The server answers how many it wrote and
+      // whether more is waiting, because it is bounded in writes per request -
+      // and an answer of four hundred used to read as the whole space when it was
+      // the first four hundred of twelve.
+      for (let round = 0; round < ROUNDS; round++) {
+        const done = await api.rollback(token, spaceId, moment())
+        rolled = (rolled ?? 0) + done.notes
+
+        if (!done.partial || done.notes === 0) break
+      }
+
       asked = null
       // The notes are on the account; this is what brings them down here.
       sync.nudge()

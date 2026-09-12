@@ -17,8 +17,10 @@ import {
 } from './spaces/space'
 import type { Env, Note, Variables, Whoever } from './types'
 import {
+  countVersionsAt,
   deviceIn,
   keepVersion,
+  ROLLBACK_AT_ONCE,
   presentVersion,
   versionAt,
   versionsAt,
@@ -388,7 +390,12 @@ notes.get('/notes/:id/versions/:at', async (context) => {
  *  there is nothing to put back - and so is one the account never held.
  *
  *  `dry` answers what would change without changing anything, which is what the
- *  sheet shows before the reader presses the one button that matters. */
+ *  sheet shows before the reader presses the one button that matters.
+ *
+ *  Bounded in writes, because a Worker is: four hundred notes at a time. A space
+ *  with more than that says so - `partial`, and how many there are in all - and
+ *  the sheet asks again until there is nothing left rather than reading four
+ *  hundred as finished, which is what it used to do. See the client's `roll`. */
 notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (context) => {
   const space = spaceOf(context)
 
@@ -399,14 +406,23 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
-  const found = await versionsAt(context.env, space.id, under.replace(/^\/+/, ''), at)
+  const folder = under.replace(/^\/+/, '')
+  const found = await versionsAt(context.env, space.id, folder, at)
   const changed = found.filter((one) => one.hash !== one.live)
+
+  // The listing above stops at its ceiling, so a full page of rows may be a
+  // whole answer or the first of several. Counted only then, and the count is
+  // what lets the sheet say "four hundred of twelve hundred".
+  const cut = found.length >= ROLLBACK_AT_ONCE
+  const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
 
   if (dry) {
     return context.json({
       notes: changed.length,
       paths: changed.slice(0, SHOWN_PATHS).map((one) => one.path),
       more: changed.length > SHOWN_PATHS,
+      partial: cut && held > changed.length,
+      left: Math.max(held - changed.length, 0),
     })
   }
 
@@ -431,7 +447,12 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
     if (saved) written += 1
   }
 
-  return context.json({ notes: written })
+  // What is left is what was not reached this time: the rows beyond the ceiling,
+  // plus anything this pass could not write (a note somebody took away while it
+  // ran). A client that asks again gets the next four hundred.
+  const left = Math.max(held - written, 0)
+
+  return context.json({ notes: written, partial: left > 0, left })
 })
 
 /** How many of the paths a rollback would touch it names. Enough to recognise

@@ -831,8 +831,16 @@ export const api = {
 
   /** A space, or one folder of it, back to how it read at a moment. `dry` asks
    *  what would change and changes nothing. */
+  /** Putting a space back to a moment. Bounded on the server, so `partial` says
+   *  there is more to do and `left` how much; see SyncPane's `roll`. */
   rollback: (token: string, spaceId: string, at: number, under = '', dry = false) =>
-    request<{ notes: number; paths?: string[]; more?: boolean }>(`/v1/spaces/${spaceId}/rollback`, {
+    request<{
+      notes: number
+      paths?: string[]
+      more?: boolean
+      partial?: boolean
+      left?: number
+    }>(`/v1/spaces/${spaceId}/rollback`, {
       token,
       body: { at, under, dry },
       device: true,

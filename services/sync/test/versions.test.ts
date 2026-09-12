@@ -10,6 +10,9 @@ interface VersionView {
   notes?: number
   paths?: string[]
   more?: boolean
+  /** Whether a rollback reached its ceiling, and how many notes are left. */
+  partial?: boolean
+  left?: number
   error?: string
   note?: { id: string; version: number; path: string }
   space?: { id: string }
@@ -307,6 +310,46 @@ describe('putting a space back to a moment', () => {
 
     const two = await call<VersionView>(env, `/v1/notes/${second}`, { token })
     expect(two.json.content).toBe('the other words')
+  })
+
+  test('says so when there is more to put back than one request may', async () => {
+    // Four hundred and one notes, each with one version that differs from what
+    // the note now says - written as rows rather than through the API, because
+    // what is being tested is the ceiling and a dry run reads no bodies at all.
+    const at = Date.now() - 5 * 60 * 1000
+    for (let made = 0; made < 401; made++) {
+      const id = `big-${made}`
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values (?, ?, ?, ?, 1, ?, 0, 4, 'now')`,
+        )
+        .run(id, space, `Big/${made}.md`, 100 + made, at)
+      env.db
+        .prepare(
+          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
+        )
+        .run(id, at - 1000)
+    }
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now(), under: 'Big', dry: true },
+    })
+
+    expect(asked.json.notes).toBe(400)
+    expect(asked.json.partial).toBe(true)
+    expect(asked.json.left).toBe(1)
+  })
+
+  test('and nothing of the sort when it fits', async () => {
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: before(), dry: true },
+    })
+
+    expect(asked.json.partial).toBe(false)
+    expect(asked.json.left).toBe(0)
   })
 
   test('and the version it writes says which device asked', async () => {
