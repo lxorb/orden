@@ -18,34 +18,15 @@
  */
 
 import { createHash } from 'node:crypto'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
+import { sourceHash } from './site-sources.ts'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = new URL('../', import.meta.url)
 const ENTRY = fileURLToPath(new URL('apps/desktop/src/site/site.ts', ROOT))
 const TARGET = fileURLToPath(new URL('services/sync/src/blog/script.ts', ROOT))
-
-/** Every file the bundle is made of, for the staleness check: the entry and the
- *  app modules it imports. Named rather than walked, because a walk over every
- *  import of the app would be the app. */
-export const SOURCES = [
-  'apps/desktop/src/site/site.ts',
-  'apps/desktop/src/lib/camera.ts',
-  'apps/desktop/src/lib/graph.ts',
-  'apps/desktop/src/lib/graph-layout.ts',
-  'apps/desktop/src/lib/graph-paint.ts',
-]
-
-/** What the sources add up to, so a generated module can say which ones it was
- *  built from and a test can say whether that is still true. */
-export function sourceHash(): string {
-  const hash = createHash('sha256')
-  for (const name of SOURCES) hash.update(readFileSync(fileURLToPath(new URL(name, ROOT))))
-
-  return hash.digest('hex').slice(0, 16)
-}
 
 /** The bundle: one file, no imports, minified, for a browser.
  *

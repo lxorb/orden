@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { SITE_JS, SITE_JS_PATH, SITE_JS_SOURCES, THEME_JS, THEME_JS_HASH } from '../src/blog/script'
-import { sourceHash } from '../../../scripts/site-js'
+import { sourceHash } from '../../../scripts/site-sources'
 
 /** The script a published page runs is generated from the app's own modules and
  *  committed, so the Worker needs no build step. This is the check that the
