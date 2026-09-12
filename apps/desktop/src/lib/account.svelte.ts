@@ -353,6 +353,10 @@ class Session {
     this.token = null
     this.user = null
     this.guest = null
+    // Half a sign-in is a sign-in that did not happen, which is what the field
+    // says of itself: it was let go of when one finished and held onto for the
+    // life of the app when somebody walked away from one.
+    this.holding = null
     this.settling = false
     this.spaces = []
     this.deletedSpaces = []

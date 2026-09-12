@@ -174,6 +174,7 @@
           placeholder="000000"
           aria-label={t('Code from the app')}
           inputmode="numeric"
+          autocomplete="one-time-code"
           spellcheck="false"
         />
         <button class="pill" disabled={busy} onclick={() => void confirm()}>{t('Confirm')}</button>
@@ -211,6 +212,7 @@
           placeholder="000000"
           aria-label={t('Code from the app')}
           inputmode="numeric"
+          autocomplete="one-time-code"
           spellcheck="false"
         />
       </div>

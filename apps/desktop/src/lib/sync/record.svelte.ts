@@ -136,10 +136,29 @@ class Record {
     this.persist()
   }
 
-  /** Everything, for somebody who wants the list gone. */
+  /** The list, for somebody who wants it gone. What is still waiting to be
+   *  answered stays: a clash is work, not a log line, and the other copy is the
+   *  only place those words are. */
   clear() {
     this.passes = []
     this.persist()
+  }
+
+  /** And all of it, when the session goes.
+   *
+   *  A clash holds the other device's whole note, so this store is the one place
+   *  on the device where somebody else's words sit outside the vault. The vault is
+   *  emptied on sign-out and this was not, which left a note readable by whoever
+   *  is at the machine next with no session that could have fetched it. */
+  forgetEverything() {
+    this.passes = []
+    this.clashes = []
+
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // The same browser that cannot keep the log cannot be holding one.
+    }
   }
 
   private persist() {

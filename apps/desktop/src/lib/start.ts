@@ -40,8 +40,10 @@ export function start(): () => void {
   settings.restore()
   recovery.restore()
   // What the last passes did, and what is waiting to be settled; see
-  // sync/record.svelte.ts.
+  // sync/record.svelte.ts. It goes with the session, because a clash holds the
+  // other device's whole note and the session is what could read it.
   record.restore()
+  account.forgetWithSession(() => record.forgetEverything())
 
   // A system that asks for more contrast is shown the theme that answers it, on
   // the card it would be installed from. Contrast is a theme, and a theme is a
