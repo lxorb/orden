@@ -14,7 +14,7 @@
 
 import { oneEdit } from '@nib/markdown/edits'
 
-import { t } from './i18n.svelte'
+import { plural, t } from './i18n.svelte'
 import { converted } from './import/convert'
 import type { Change } from './search/apply'
 import { reverse } from './search/replace'
@@ -84,8 +84,8 @@ export async function convertSyntax() {
   }
 
   const sure = await prompt.confirm({
-    title: t('Rewrite {count} things?', { count: rewrites }),
-    detail: t('In {count} notes.', { count: changes.length }),
+    title: plural(rewrites, { one: 'Rewrite {count} thing?', other: 'Rewrite {count} things?' }),
+    detail: plural(changes.length, { one: 'In {count} note.', other: 'In {count} notes.' }),
     confirmLabel: t('Rewrite'),
   })
 

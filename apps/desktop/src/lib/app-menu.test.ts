@@ -212,20 +212,25 @@ describe('the menu, the palette and the shortcut settings agree', () => {
  *  every row of it has to read in the language the app is set to. A row built by
  *  pasting a name onto an English word reads as English in all four. */
 describe('the palette in another language', () => {
-  const inGerman = <T>(read: () => T): T => {
+  /** The catalogue is fetched when a language is chosen, so the reading happens
+   *  once it has landed. Through `choice` and `load()` rather than `select()`,
+   *  which writes to storage a test has none of. */
+  const inGerman = async <T>(read: () => T): Promise<T> => {
     const was = i18n.choice
     i18n.choice = 'de'
+    await i18n.load()
     try {
       return read()
     } finally {
       i18n.choice = was
+      await i18n.load()
     }
   }
 
-  test('says nothing in English', () => {
+  test('says nothing in English', async () => {
     // The words that used to be pasted on: `Theme: Sepia`, `Code theme: One`,
     // `Mode: Dark`, `Recent: Note`. Each is a key with a `{name}` in it now.
-    const english = inGerman(() =>
+    const english = await inGerman(() =>
       appCommands()
         .map((one) => one.label)
         .filter((label) => /^(Theme|Code theme|Mode|Recent):/.test(label)),
@@ -234,14 +239,14 @@ describe('the palette in another language', () => {
     expect(english).toEqual([])
   })
 
-  test('leaves no row standing in its English wording', () => {
+  test('leaves no row standing in its English wording', async () => {
     // A label that is still an English key the German dictionary translates to
     // something else never went through `t()`. A word German keeps as it is -
     // Graph, Code - is its own translation and is not one of these.
-    const unchanged = inGerman(() =>
+    const unchanged = await inGerman(() =>
       appCommands()
         .map((one) => one.label)
-        .filter((label) => label in de && de[label] !== label),
+        .filter((label) => typeof de[label] === 'string' && de[label] !== label),
     )
 
     expect(unchanged).toEqual([])

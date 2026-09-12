@@ -4,7 +4,7 @@
    *  device otherwise; both when the device still holds older items. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { i18n, t } from './i18n.svelte'
+  import { i18n, plural, t } from './i18n.svelte'
   import { settings } from './settings.svelte'
   import { trash, type TrashItem } from './trash.svelte'
   import { dur } from './motion'
@@ -44,7 +44,7 @@
     return [
       item.detail,
       t('deleted {when}', { when: ago(item.deletedAt) }),
-      t('gone in {days} days', { days: daysLeft(item) }),
+      plural(daysLeft(item), { one: 'gone in {count} day', other: 'gone in {count} days' }),
       item.source === 'device' ? t('on this device') : '',
     ]
       .filter(Boolean)

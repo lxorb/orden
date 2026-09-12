@@ -16,7 +16,7 @@
 
   import { account } from './account.svelte'
   import { api } from './api'
-  import { t } from './i18n.svelte'
+  import { i18n, plural, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
@@ -57,8 +57,8 @@
       at.getDate() === now.getDate()
 
     return today
-      ? at.toLocaleTimeString(undefined, { timeStyle: 'short' })
-      : at.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+      ? i18n.when(at, { timeStyle: 'short' })
+      : i18n.when(at, { dateStyle: 'short', timeStyle: 'short' })
   }
 
   function moment(): number {
@@ -220,7 +220,7 @@
         value={String(days)}
         options={DAYS.map((one) => ({
           value: String(one),
-          label: one === 1 ? t('1 day ago') : t('{count} days ago', { count: one }),
+          label: plural(one, { one: '{count} day ago', other: '{count} days ago' }),
         }))}
         onchange={(value: string) => {
           days = Number(value)
@@ -235,13 +235,18 @@
 {#if asked}
   <p class="note" transition:fade={{ duration: dur(130) }}>
     {asked.notes
-      ? t('{count} notes would go back to what they said then.', { count: asked.notes })
+      ? plural(asked.notes, {
+          one: '{count} note would go back to what it said then.',
+          other: '{count} notes would go back to what they said then.',
+        })
       : t('Nothing has changed since then.')}
   </p>
 {/if}
 
 {#if rolled !== null}
-  <p class="note">{t('{count} notes went back.', { count: rolled })}</p>
+  <p class="note">
+    {plural(rolled, { one: '{count} note went back.', other: '{count} notes went back.' })}
+  </p>
 {/if}
 
 {#if wrong}

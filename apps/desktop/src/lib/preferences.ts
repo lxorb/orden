@@ -1,7 +1,7 @@
 import type { EditorView } from '@nib/editor'
 import { CODE_PALETTES } from '@nib/editor'
 import { glassesGroups, wordFields } from './even/settings'
-import { i18n, LANGUAGES, t } from './i18n.svelte'
+import { CATALOGUES_URL, i18n, LANGUAGES, plural, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { isPlugin } from './plugin'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
@@ -76,8 +76,17 @@ export type Field = Common &
       }
   )
 
+/** A line under a card, for what no control on it can say about itself. Its own
+ *  words where there is nothing to open, and a link where there is: the language
+ *  row says a catalogue was machine-written and where a correction goes. */
+export interface Caption {
+  text: string
+  url?: string
+}
+
 export interface Group {
   title: string
+  caption?: Caption
   fields: Field[]
 }
 
@@ -145,7 +154,7 @@ export function preferences(view?: EditorView): Pane[] {
               label: t('Keep versions for'),
               options: KEEP_DAYS.map((days) => ({
                 value: String(days),
-                label: days === 1 ? t('1 day') : t('{count} days', { count: days }),
+                label: plural(days, { one: '{count} day', other: '{count} days' }),
               })),
               initial: String(DEFAULT_DAYS),
               get: () => String(recovery.days),
@@ -155,6 +164,18 @@ export function preferences(view?: EditorView): Pane[] {
         },
         {
           title: t('Language'),
+          // Most of the catalogues were written in one pass and never read
+          // through. Saying so is the honest part; the folder they live in is
+          // the useful part, because the reader who can see the wrong word is
+          // the only person who can put it right.
+          ...(i18n.machine
+            ? {
+                caption: {
+                  text: t('Machine-translated. Corrections welcome.'),
+                  url: CATALOGUES_URL,
+                },
+              }
+            : {}),
           fields: [
             {
               kind: 'select',

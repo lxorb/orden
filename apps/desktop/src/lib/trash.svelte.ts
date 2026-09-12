@@ -8,7 +8,7 @@
 
 import { account } from './account.svelte'
 import { api } from './api'
-import { message, t } from './i18n.svelte'
+import { message, plural, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
 import { sync } from './sync.svelte'
 import { invoke } from './tauri'
@@ -92,7 +92,7 @@ class Trash {
       ref: space.id,
       kind: 'space' as const,
       name: space.name,
-      detail: t('{count} notes', { count: space.notes }),
+      detail: plural(space.notes, { one: '{count} note', other: '{count} notes' }),
       deletedAt: space.deletedAt,
       purgeAt: space.purgeAt,
       source: 'account' as const,

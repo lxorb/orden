@@ -11,7 +11,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
+  import { plural, t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { scrollbar } from './scrollbar'
   import Select from './Select.svelte'
@@ -364,7 +364,10 @@
            still a theme, and pretending otherwise would be the lie. -->
       {#if store.refused.id === one.id && store.refused.notes.length}
         <p class="note">
-          {t('{count} things in this theme were left out.', { count: store.refused.notes.length })}
+          {plural(store.refused.notes.length, {
+            one: '{count} thing in this theme was left out.',
+            other: '{count} things in this theme were left out.',
+          })}
         </p>
       {/if}
     </div>

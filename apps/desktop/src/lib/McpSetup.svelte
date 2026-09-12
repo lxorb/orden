@@ -14,7 +14,7 @@
   import { type Client, connectors } from './connectors.svelte'
   import Copyable from './Copyable.svelte'
   import CopyButton from './CopyButton.svelte'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { openExternal } from './tauri'
   import { dur } from './motion'
 
@@ -48,7 +48,11 @@
     )
 
   const when = (at: number | null) =>
-    at ? t('Last used {time}.', { time: new Date(at).toLocaleString() }) : t('Not used yet.')
+    at
+      ? t('Last used {time}.', {
+          time: i18n.when(at, { dateStyle: 'short', timeStyle: 'medium' }),
+        })
+      : t('Not used yet.')
 
   const access = (readOnly: boolean) =>
     readOnly ? t('Reads your notes.') : t('Reads and writes your notes.')

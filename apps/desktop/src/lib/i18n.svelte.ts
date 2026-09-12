@@ -1,47 +1,301 @@
 import { englishLabel, LABEL_KEYS, setLabels } from '@nib/editor'
-import { de } from '../locales/de'
-import { fr } from '../locales/fr'
-import { gsw } from '../locales/gsw'
-import { ja } from '../locales/ja'
 
 /** The English string is its own key. A language that has not translated
- *  something falls back to it, so nothing can ever come out blank. */
-export type Dictionary = Record<string, string>
+ *  something falls back to it, so nothing can ever come out blank.
+ *
+ *  A count-bearing row holds the forms its language needs instead of one string:
+ *  `plural()` asks `Intl.PluralRules` which of them a number wants, so a
+ *  language with four forms is not made to write English's two. */
+export type Forms = Partial<Record<Intl.LDMLPluralRule, string>>
+export type Dictionary = Record<string, string | Forms>
 
-export const LANGUAGES = [
+/** What a call site hands over. Every language has an `other`, so that is the
+ *  form the row is filed under and the one form nothing may be missing. */
+export interface Plural extends Forms {
+  other: string
+}
+
+/** One row in the language list. `machine` marks a catalogue nobody has read
+ *  through yet: written in one pass, short and consistent, and still worth
+ *  correcting - which is what `CATALOGUES_URL` is there for. */
+export interface Language {
+  id: string
+  /** As its own speakers write it, so it reads the same whatever the app is in. */
+  name: string
+  machine?: true
+}
+
+/** Where a correction goes. Shown under the list, because a reader who can see
+ *  that a word is wrong is the only person who can put it right. */
+export const CATALOGUES_URL =
+  'https://github.com/lxorb/nibeditor/tree/main/apps/desktop/src/locales'
+
+/** Every language with fifty million speakers, and the four that came first.
+ *  Read through in order: the hand-written ones, then the rest by their id, so
+ *  the list does not reshuffle when a catalogue stops being machine-written. */
+export const LANGUAGES: readonly Language[] = [
   { id: 'system', name: 'Match the system' },
   { id: 'en', name: 'English' },
   { id: 'de', name: 'Deutsch' },
   { id: 'gsw', name: 'Schwiizerdütsch' },
   { id: 'fr', name: 'Français' },
   { id: 'ja', name: '日本語' },
-] as const
+  { id: 'am', name: 'አማርኛ', machine: true },
+  { id: 'ar', name: 'العربية', machine: true },
+  { id: 'bn', name: 'বাংলা', machine: true },
+  { id: 'es', name: 'Español', machine: true },
+  { id: 'fa', name: 'فارسی', machine: true },
+  { id: 'fil', name: 'Filipino', machine: true },
+  { id: 'gu', name: 'ગુજરાતી', machine: true },
+  { id: 'ha', name: 'Hausa', machine: true },
+  { id: 'hi', name: 'हिन्दी', machine: true },
+  { id: 'id', name: 'Bahasa Indonesia', machine: true },
+  { id: 'it', name: 'Italiano', machine: true },
+  { id: 'jv', name: 'Basa Jawa', machine: true },
+  { id: 'kn', name: 'ಕನ್ನಡ', machine: true },
+  { id: 'ko', name: '한국어', machine: true },
+  { id: 'ml', name: 'മലയാളം', machine: true },
+  { id: 'mr', name: 'मराठी', machine: true },
+  { id: 'ms', name: 'Bahasa Melayu', machine: true },
+  { id: 'my', name: 'မြန်မာ', machine: true },
+  { id: 'pa', name: 'ਪੰਜਾਬੀ', machine: true },
+  { id: 'pl', name: 'Polski', machine: true },
+  { id: 'ps', name: 'پښتو', machine: true },
+  { id: 'pt-BR', name: 'Português (Brasil)', machine: true },
+  { id: 'pt-PT', name: 'Português (Portugal)', machine: true },
+  { id: 'ru', name: 'Русский', machine: true },
+  { id: 'sw', name: 'Kiswahili', machine: true },
+  { id: 'ta', name: 'தமிழ்', machine: true },
+  { id: 'te', name: 'తెలుగు', machine: true },
+  { id: 'th', name: 'ไทย', machine: true },
+  { id: 'tr', name: 'Türkçe', machine: true },
+  { id: 'uk', name: 'Українська', machine: true },
+  { id: 'ur', name: 'اردو', machine: true },
+  { id: 'vi', name: 'Tiếng Việt', machine: true },
+  { id: 'zh-Hans', name: '简体中文', machine: true },
+  { id: 'zh-Hant', name: '繁體中文', machine: true },
+  { id: 'zh-Hant-HK', name: '繁體中文（香港）', machine: true },
+]
 
-const DICTIONARIES: Record<string, Dictionary> = { de, gsw, fr, ja }
+/** A catalogue is fetched when it is chosen, not at start: forty of them in the
+ *  first chunk is two megabytes downloaded to read one. Written out one by one
+ *  rather than built from the id, so the bundler can see every file and `knip`
+ *  can see that each one is used. */
+const CATALOGUES: Record<string, () => Promise<Dictionary>> = {
+  am: () => import('../locales/am').then((module) => module.am),
+  ar: () => import('../locales/ar').then((module) => module.ar),
+  bn: () => import('../locales/bn').then((module) => module.bn),
+  de: () => import('../locales/de').then((module) => module.de),
+  es: () => import('../locales/es').then((module) => module.es),
+  fa: () => import('../locales/fa').then((module) => module.fa),
+  fil: () => import('../locales/fil').then((module) => module.fil),
+  fr: () => import('../locales/fr').then((module) => module.fr),
+  gsw: () => import('../locales/gsw').then((module) => module.gsw),
+  gu: () => import('../locales/gu').then((module) => module.gu),
+  ha: () => import('../locales/ha').then((module) => module.ha),
+  hi: () => import('../locales/hi').then((module) => module.hi),
+  id: () => import('../locales/id').then((module) => module.id),
+  it: () => import('../locales/it').then((module) => module.it),
+  ja: () => import('../locales/ja').then((module) => module.ja),
+  jv: () => import('../locales/jv').then((module) => module.jv),
+  kn: () => import('../locales/kn').then((module) => module.kn),
+  ko: () => import('../locales/ko').then((module) => module.ko),
+  ml: () => import('../locales/ml').then((module) => module.ml),
+  mr: () => import('../locales/mr').then((module) => module.mr),
+  ms: () => import('../locales/ms').then((module) => module.ms),
+  my: () => import('../locales/my').then((module) => module.my),
+  pa: () => import('../locales/pa').then((module) => module.pa),
+  pl: () => import('../locales/pl').then((module) => module.pl),
+  ps: () => import('../locales/ps').then((module) => module.ps),
+  'pt-BR': () => import('../locales/pt-BR').then((module) => module.ptBR),
+  'pt-PT': () => import('../locales/pt-PT').then((module) => module.ptPT),
+  ru: () => import('../locales/ru').then((module) => module.ru),
+  sw: () => import('../locales/sw').then((module) => module.sw),
+  ta: () => import('../locales/ta').then((module) => module.ta),
+  te: () => import('../locales/te').then((module) => module.te),
+  th: () => import('../locales/th').then((module) => module.th),
+  tr: () => import('../locales/tr').then((module) => module.tr),
+  uk: () => import('../locales/uk').then((module) => module.uk),
+  ur: () => import('../locales/ur').then((module) => module.ur),
+  vi: () => import('../locales/vi').then((module) => module.vi),
+  'zh-Hans': () => import('../locales/zh-Hans').then((module) => module.zhHans),
+  'zh-Hant': () => import('../locales/zh-Hant').then((module) => module.zhHant),
+  'zh-Hant-HK': () => import('../locales/zh-Hant-HK').then((module) => module.zhHantHK),
+}
+
+/** The ids a catalogue can be asked for by. The test holds this, the list above
+ *  and the folder on disk to one set. */
+export const CATALOGUE_IDS = Object.keys(CATALOGUES)
+
+/** Tags a system sends for a catalogue filed under another name. Chinese is
+ *  asked for by region far more often than by script, and `tl` is what an older
+ *  system calls Filipino. */
+const ALSO: Record<string, string> = {
+  in: 'id',
+  pes: 'fa',
+  prs: 'fa',
+  // Portuguese with no region is Brazilian on the web; a region the app has no
+  // catalogue for spells the way Portugal does, which is the rule below.
+  pt: 'pt-BR',
+  tl: 'fil',
+  yue: 'zh-Hant-HK',
+  zh: 'zh-Hans',
+  'zh-CN': 'zh-Hans',
+  'zh-HK': 'zh-Hant-HK',
+  'zh-MO': 'zh-Hant',
+  'zh-MY': 'zh-Hans',
+  'zh-SG': 'zh-Hans',
+  'zh-TW': 'zh-Hant',
+}
+
+/** A tag the way BCP 47 writes one: the language in lower case, a script
+ *  capitalised, a region in capitals. A system is consistent about this; a tag
+ *  that has been through storage or a hand-edited setting is not. */
+function tidy(tag: string): string {
+  return tag
+    .replace(/_/g, '-')
+    .split('-')
+    .map((part, at) => {
+      if (at === 0) return part.toLowerCase()
+      if (part.length === 4) return part.slice(0, 1).toUpperCase() + part.slice(1).toLowerCase()
+      return part.toUpperCase()
+    })
+    .join('-')
+}
+
+/** The catalogue that fits a tag best, or `en` when none does.
+ *
+ *  Longest first: Hong Kong has a catalogue of its own, and dropping a subtag at
+ *  a time from what the system asked for lands on Traditional and then on
+ *  Simplified rather than on English. Portuguese goes the other way - every
+ *  region but Brazil spells the way Portugal does, so a region nobody has a
+ *  catalogue for is answered in `pt-PT` rather than in Brazilian. */
+export function catalogueFor(tag: string): string {
+  let parts = tidy(tag).split('-')
+
+  while (parts.length) {
+    const candidate = parts.join('-')
+    if (candidate in CATALOGUES) return candidate
+
+    const named = ALSO[candidate]
+    if (named) return named
+
+    if (parts[0] === 'pt') return 'pt-PT'
+
+    parts = parts.slice(0, -1)
+  }
+
+  return 'en'
+}
+
+/** The first of the system's languages the app has a catalogue for. A system set
+ *  to Norwegian and then to German is answered in German rather than in
+ *  English, which is what a list of languages is a list for. */
+function systemCatalogue(): string {
+  const asked = navigator.languages?.length ? navigator.languages : [navigator.language || 'en']
+
+  for (const tag of asked) {
+    const found = catalogueFor(tag)
+    if (found !== 'en') return found
+  }
+
+  return 'en'
+}
 
 const STORAGE_KEY = 'nib:language'
 
-function systemLanguage(): string {
-  return (navigator.language || 'en').slice(0, 2).toLowerCase()
+/** Built once per language and shape, then kept: the status bar formats a number
+ *  every time the caret moves, and building the formatter is most of what that
+ *  would cost. */
+const dates = new Map<string, Intl.DateTimeFormat>()
+const numbers = new Map<string, Intl.NumberFormat>()
+
+function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const at = `${locale} ${JSON.stringify(options)}`
+  const kept = dates.get(at)
+  if (kept) return kept
+
+  const made = new Intl.DateTimeFormat(locale, options)
+  dates.set(at, made)
+  return made
+}
+
+function numberFormat(locale: string): Intl.NumberFormat {
+  const kept = numbers.get(locale)
+  if (kept) return kept
+
+  const made = new Intl.NumberFormat(locale)
+  numbers.set(locale, made)
+  return made
+}
+
+/** The form a count takes in one language, falling back the way a catalogue short
+ *  of a form should: the category asked for, then `other`, then nothing, which
+ *  the caller reads as English. */
+function pick(count: number, locale: string, forms: Forms): string {
+  return forms[new Intl.PluralRules(locale).select(count)] ?? forms.other ?? ''
+}
+
+/** `{name}` placeholders, filled in from what was handed over.
+ *
+ *  Only what was handed over: every object inherits `toString` and
+ *  `constructor`, and reading a placeholder off the prototype would put the
+ *  source of a function on screen. */
+function fill(text: string, values?: Record<string, string | number>): string {
+  if (!values) return text
+
+  return text.replace(/\{(\w+)\}/g, (whole, name: string) =>
+    Object.hasOwn(values, name) ? String(values[name]) : whole,
+  )
 }
 
 class I18n {
   /** `system`, or a language chosen explicitly. */
   choice = $state('system')
 
-  readonly language = $derived(this.choice === 'system' ? systemLanguage() : this.choice)
-  private readonly dictionary = $derived(DICTIONARIES[this.language] ?? {})
+  /** What is on screen right now. Empty until the catalogue lands, and empty is
+   *  English: every string is its own key, so nothing is blank on the way. */
+  private catalogue = $state<Dictionary>({})
+
+  /** The catalogue in force, which is also the tag `Intl` is asked in: the app's
+   *  language rather than the system's, so somebody reading a German app on an
+   *  English machine reads German dates. */
+  readonly language = $derived(this.choice === 'system' ? systemCatalogue() : this.choice)
+
+  /** Whether what is on screen was written in one pass and never read through.
+   *  The setting says so under the row, with somewhere to send a correction. */
+  readonly machine = $derived(
+    LANGUAGES.some((one) => one.id === this.language && one.machine === true),
+  )
 
   restore() {
     this.choice = localStorage.getItem(STORAGE_KEY) ?? 'system'
-    document.documentElement.lang = this.language
-    this.translateEditor()
+    void this.load()
   }
 
   select(id: string) {
     this.choice = id
     localStorage.setItem(STORAGE_KEY, id)
-    document.documentElement.lang = this.language
+    void this.load()
+  }
+
+  /** Fetches the catalogue for whatever is chosen now. A second choice made
+   *  while the first is still on its way wins: an answer that arrives for a
+   *  language nobody is waiting for any more is dropped.
+   *
+   *  Public, and awaitable, because a test that wants the app in German sets
+   *  `choice` and waits for this rather than going through `select()`, which
+   *  writes to storage a test has none of. */
+  async load(): Promise<void> {
+    const wanted = this.language
+    // Not in a test, which has no page to mark.
+    if (typeof document !== 'undefined') document.documentElement.lang = wanted
+
+    const fetching = CATALOGUES[wanted]
+    const next = fetching ? await fetching().catch(() => ({})) : {}
+    if (this.language !== wanted) return
+
+    this.catalogue = next
     this.translateEditor()
   }
 
@@ -52,15 +306,36 @@ class I18n {
 
   /** Translates one string, filling in `{name}` placeholders. */
   t(text: string, values?: Record<string, string | number>): string {
-    const translated = this.dictionary[text] ?? text
-    if (!values) return translated
+    const found = this.catalogue[text]
+    return fill(typeof found === 'string' ? found : text, values)
+  }
 
-    // Only what was handed over: every object inherits `toString` and
-    // `constructor`, and reading a placeholder off the prototype would put the
-    // source of a function on screen.
-    return translated.replace(/\{(\w+)\}/g, (whole, name: string) =>
-      Object.hasOwn(values, name) ? String(values[name]) : whole,
-    )
+  /** One of the forms a count wants, in the language's own shape: English has
+   *  two, Polish four and Arabic six, and which one a number takes is
+   *  `Intl.PluralRules`'s answer rather than a comparison with 1.
+   *
+   *  A catalogue holding one string for the row is a language with one form,
+   *  which is most of East and Southeast Asia. */
+  plural(count: number, forms: Plural, values?: Record<string, string | number>): string {
+    const found = this.catalogue[forms.other]
+    const translated =
+      typeof found === 'string'
+        ? found
+        : found
+          ? pick(count, this.language, found)
+          : pick(count, 'en', forms)
+
+    return fill(translated || forms.other, { count, ...values })
+  }
+
+  /** A date, a time, or both, in the app's language. */
+  when(at: Date | number, options: Intl.DateTimeFormatOptions): string {
+    return dateFormat(this.language, options).format(at)
+  }
+
+  /** A number with the language's own grouping and digits. */
+  amount(value: number): string {
+    return numberFormat(this.language).format(value)
   }
 }
 
@@ -81,3 +356,17 @@ export const key = (text: string) => text
 
 /** Shorthand, so a component reads `{t('Save')}` rather than `{i18n.t('Save')}`. */
 export const t = (text: string, values?: Record<string, string | number>) => i18n.t(text, values)
+
+/** Shorthand for a count: `plural(n, { one: '{count} note', other: '{count} notes' })`.
+ *  The `other` form is the row every catalogue holds. */
+export const plural = (
+  count: number,
+  forms: Plural,
+  values?: Record<string, string | number>,
+): string => i18n.plural(count, forms, values)
+
+/** Shorthand for a number in the app's language. A date or a time goes through
+ *  `i18n.when()` rather than a shorthand of its own: three of the four panes that
+ *  show one already call a local helper `when`, and two names for the same idea in
+ *  one file is worse than the longer call. */
+export const amount = (value: number): string => i18n.amount(value)

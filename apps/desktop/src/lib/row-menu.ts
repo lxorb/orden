@@ -18,7 +18,7 @@
 
 import { isPdfTarget } from '@nib/markdown/links'
 import { folderNote, nestedIn } from './folder-notes'
-import { key, t } from './i18n.svelte'
+import { key, plural, t } from './i18n.svelte'
 import {
   bookmarkEntry,
   DIVIDER,
@@ -94,7 +94,7 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
 
   return [
     {
-      label: t('Delete {count} items', { count }),
+      label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
       danger: true,
       run: () => void workspace.removeMany(workspace.selection),
     },

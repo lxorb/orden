@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tooLongToParse, type VimMode } from '@nib/editor'
   import { countText } from './counts'
-  import { t } from './i18n.svelte'
+  import { amount, t } from './i18n.svelte'
   import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
   import { recorder } from './recorder/recording.svelte'
@@ -55,8 +55,8 @@
   /** A count on its own, or as a part of the whole. */
   const said = (part: number | undefined, whole: number) =>
     part === undefined
-      ? whole.toLocaleString()
-      : `${part.toLocaleString()}/${whole.toLocaleString()}`
+      ? amount(whole)
+      : `${amount(part)}/${amount(whole)}`
 </script>
 
 <!-- Which mode the keyboard is in, on the left, and only while modal editing is
@@ -139,7 +139,7 @@
          what changed and what it is a part of. -->
     <span>{said(chosen?.words, counts.words)}w</span>
     <span>{said(chosen?.characters, counts.characters)}c</span>
-    <span>{counts.lines.toLocaleString()}l</span>
+    <span>{amount(counts.lines)}l</span>
     <span>{counts.minutes}m</span>
   {/if}
 </footer>

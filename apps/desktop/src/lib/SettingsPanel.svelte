@@ -8,7 +8,7 @@
   import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
   import Hint from './Hint.svelte'
-  import { message, t } from './i18n.svelte'
+  import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
   import McpSetup from './McpSetup.svelte'
   import Security from './Security.svelte'
@@ -26,7 +26,7 @@
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
-  import { isDesktop } from './tauri'
+  import { isDesktop, openExternal } from './tauri'
   import { theme } from './theme.svelte'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
@@ -559,6 +559,22 @@
           {@render row(field)}
         {/each}
       </div>
+
+      <!-- What no control on the card can say about itself. A link where the
+           words lead somewhere outside the app, plain words where they do not. -->
+      {#if group.caption}
+        {#if group.caption.url}
+          {@const url = group.caption.url}
+          <p class="hint caption">
+            <button class="link" onclick={() => void openExternal(url)}>
+              {group.caption.text}
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3L5 11" /></svg>
+            </button>
+          </p>
+        {:else}
+          <p class="hint caption">{group.caption.text}</p>
+        {/if}
+      {/if}
     {/each}
 
     {#if settings.section === 'appearance'}
@@ -622,10 +638,13 @@
             })}
           </p>
           <p class="hint">
-            {t('{count} spaces sync to your account.', { count: workspace.spaces.length })}
+            {plural(workspace.spaces.length, {
+              one: '{count} space syncs to your account.',
+              other: '{count} spaces sync to your account.',
+            })}
             {#if sync.lastSyncedAt}
               {t('Last synced {time}.', {
-                time: new Date(sync.lastSyncedAt).toLocaleTimeString(),
+                time: i18n.when(sync.lastSyncedAt, { timeStyle: 'medium' }),
               })}
             {/if}
           </p>
@@ -1550,6 +1569,41 @@
   /* Under the card it explains, closer to it than the next group. */
   .hint.caption {
     margin-top: calc(-1 * var(--space-2));
+  }
+
+  /* A caption that leads somewhere outside the app: the same sentence, in the
+     accent, with the arrow every other outward link in the app carries. */
+  .hint.caption .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: var(--font-ui);
+    font-size: inherit;
+    line-height: inherit;
+    color: var(--accent);
+    text-align: start;
+    cursor: default;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  .hint.caption .link svg {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (hover: hover) {
+    .hint.caption .link:hover {
+      color: var(--accent-hover);
+    }
   }
 
   .hint.bad {

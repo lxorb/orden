@@ -14,7 +14,7 @@
 
   import { fade } from 'svelte/transition'
 
-  import { key, t } from './i18n.svelte'
+  import { key, plural, t } from './i18n.svelte'
   import { importing, onMac } from './importing.svelte'
   import { droppedFiles, pickFiles } from './import/picking'
   import type { FormatId } from './import/plan'
@@ -59,8 +59,8 @@
    *  gets rather than a thing that arrives. */
   const said = $derived(
     [
-      t('{count} notes', { count: counts.notes }),
-      counts.files ? t('{count} files', { count: counts.files }) : '',
+      plural(counts.notes, { one: '{count} note', other: '{count} notes' }),
+      counts.files ? plural(counts.files, { one: '{count} file', other: '{count} files' }) : '',
     ]
       .filter(Boolean)
       .join(' · '),
@@ -235,11 +235,17 @@
       {/if}
 
       {#if importing.stage === 'done'}
-        <p class="note">{t('{count} notes arrived.', { count: counts.notes })}</p>
+        <p class="note">
+          {plural(counts.notes, {
+            one: '{count} note arrived.',
+            other: '{count} notes arrived.',
+          })}
+        </p>
         {#if importing.stepped}
           <p class="hint">
-            {t('{count} names were taken, so those files stepped aside.', {
-              count: importing.stepped,
+            {plural(importing.stepped, {
+              one: '{count} name was taken, so that file stepped aside.',
+              other: '{count} names were taken, so those files stepped aside.',
             })}
           </p>
         {/if}

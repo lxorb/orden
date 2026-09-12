@@ -7,7 +7,7 @@
   import { recovery } from './recovery.svelte'
   import { scrollbar } from './scrollbar'
   import { sync } from './sync.svelte'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { invoke } from './tauri'
@@ -177,8 +177,8 @@
       at.getDate() === now.getDate()
 
     return today
-      ? at.toLocaleTimeString(undefined, { timeStyle: 'short' })
-      : at.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+      ? i18n.when(at, { timeStyle: 'short' })
+      : i18n.when(at, { dateStyle: 'medium', timeStyle: 'short' })
   }
 
   /** Restoring is itself an edit, so the words being replaced are kept first:

@@ -251,8 +251,103 @@ file shares is done once, in a hook.
 
 Comments say why, in plain prose, not what the next line already says. No em
 dashes anywhere, in code, comments, strings or docs; tests forbid them in the
-dictionaries. User-facing strings in the editor go through `labels.ts`; in the
-app through `t()`; every key is translated in all four dictionaries.
+catalogues. User-facing strings in the editor go through `labels.ts`; in the
+app through `t()`; every key is translated in every catalogue.
+
+## Words the reader sees
+
+`apps/desktop/src/lib/i18n.svelte.ts` is the whole mechanism, and
+`apps/desktop/src/locales/` holds one catalogue per language. **The English
+string is its own key**, so nothing can come out blank: a language that has not
+translated a row shows the English.
+
+### Adding a string
+
+1. Write it in English at the call site, through one of four shapes:
+
+   | Shape | For |
+   | --- | --- |
+   | `t('Save')` | a string translated where it is written |
+   | `key('Save')` | a string something further along translates, in a table of rows |
+   | `message(error, 'could not reach the server')` | the sentence a failure falls back to |
+   | `plural(n, { one: '{count} note', other: '{count} notes' })` | anything a number decides |
+
+2. Add the row to `locales/de.ts`, which is the reference every other catalogue
+   is held to, and then to the rest.
+
+`src/lib/i18n.test.ts` is the check: it fails the build when a catalogue is
+short of a row, carries one nothing asks for, has the wrong count forms for its
+language, loses a placeholder, or holds an em dash. Run it alone with
+
+```sh
+pnpm --filter @nib/desktop exec vitest run src/lib/i18n.test.ts
+```
+
+Rules the tests enforce:
+
+- **No English in the markup.** `test/localised.test.ts` walks the source and
+  fails on a phrase, a `title`, an `aria-label`, a `placeholder`, an `alt` or a
+  `label:` that is not an expression. Sample values (`you@example.com`) and
+  single glyphs are exempt by name.
+- **A count goes through `plural()`**, never through `count === 1 ? … : …`.
+  English has two forms, Polish four and Arabic six; which one a number takes is
+  `Intl.PluralRules`'s answer. The `other` form is the key the row is filed
+  under, and a catalogue holds either one string (a language with one form) or
+  exactly the categories `Intl` gives that language.
+- **A date, a time or a number goes through `when()` or `amount()`**, which ask
+  `Intl` in the app's language rather than the browser's. Never
+  `toLocaleString()`: somebody reading a German app on an English machine should
+  read German dates.
+- **Nothing is concatenated.** One row is one whole sentence with `{placeholders}`
+  in it; two halves joined with `+` cannot be reordered by a language that wants
+  them the other way round.
+- **A sentence the Worker answers with is a row too.** `services/sync` replies in
+  English, the client throws it, and `message()` looks the text up like any other
+  string. A new `{ error: '…' }` a reader can bring about needs a row in every
+  catalogue; the ones a correct client never sends (`send an object`, `not a
+  request`) are deliberately left in English.
+
+### Adding a language
+
+1. Add it to `LANGUAGES` and to `CATALOGUES` in `i18n.svelte.ts`, named the way
+   its own speakers write it, with `machine: true` unless somebody has read the
+   catalogue through. The `CATALOGUES` map is written out entry by entry so the
+   bundler and `knip` can both see every file; each catalogue is fetched when it
+   is chosen, not at start.
+2. Add the tags a system might send it under to `ALSO` where they are not the id
+   (`zh-TW`, `tl`, `prs`).
+3. Write `locales/<id>.ts`. `node scripts/locale-template.mjs <id>` writes a
+   starting file into `target/locale-templates/` with the right rows in the right
+   order, the section comments, and every count row already shaped for the plural
+   forms that language has. Translate the values and change nothing else.
+4. `python scripts/locale-e2e.py --languages <id>` photographs every surface at
+   desktop and phone widths and fails on anything the translation cut off that
+   the English does not.
+
+Keep one word per term. nib's own vocabulary, and what to follow:
+
+| nib's word | What it is | Precedent |
+| --- | --- | --- |
+| space | a folder of notes that syncs and is shared as a unit | Obsidian's *vault*, Notion's *workspace*. de `Bereich`, fr `Espace`, ja `スペース` |
+| note | one markdown document | Obsidian's *note*, Notion's *page*. de `Notiz`, fr `Note`, ja `ノート` |
+| canvas | a board of cards, pictures and ink | Obsidian's *Canvas*. de `Leinwand`, fr `Canevas` |
+| room | a live session two people write one note in | the language's word for a collaboration *room* |
+| mark | the markdown characters live preview hides | the language's word for a *syntax mark* |
+| journal | the dated daily note | Obsidian's *daily note*. de `Tagebuch` |
+| theme | a colour scheme | de `Design`, fr `Thème` |
+
+`Nib`, `nibeditor`, format names (`Markdown`, `PDF`, `HTML`), other products
+(`Obsidian`, `Notion`, `OpenAI`) and key names (`Ctrl`, `Enter`, `⌘`) are never
+translated. The glasses' own words are shown on a 640×200 panel that cannot
+scroll, so they must be no longer than the English.
+
+The language setting follows the system by default: the first of
+`navigator.languages` the app has a catalogue for, longest tag first, English if
+none. `catalogueFor()` is that rule and is tested on its own.
+
+Most catalogues were written in one pass and never read through. The language
+row says so and links to the folder, which is the only honest thing to do and
+the only way they get better.
 
 ## Commits
 

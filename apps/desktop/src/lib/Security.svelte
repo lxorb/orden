@@ -18,7 +18,7 @@
   import { api, type RemoteSession, type SecondState } from './api'
   import Copyable from './Copyable.svelte'
   import CopyButton from './CopyButton.svelte'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { dur } from './motion'
 
   let factor = $state<SecondState | null>(null)
@@ -170,7 +170,7 @@
   const when = (stamp: number | null) =>
     stamp === null
       ? t('Never')
-      : new Date(stamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+      : i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
 </script>
 
 <h3>{t('Signing in')}</h3>

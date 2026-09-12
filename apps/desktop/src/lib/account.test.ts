@@ -70,10 +70,15 @@ vi.mock('./api', async (importOriginal) => {
   }
 })
 
-// The connector store reads `message` from here; the real module pulls the
-// editor package and four dictionaries in behind it, which no test here reads.
+// The connector store reads `message` from here and the trash store reads
+// `plural`; the real module pulls the editor package and forty catalogues in
+// behind it, which no test here reads. English, which is what a key already is.
 vi.mock('./i18n.svelte', () => ({
   t: (text: string) => text,
+  key: (text: string) => text,
+  plural: (count: number, forms: { one?: string; other: string }) =>
+    (count === 1 ? (forms.one ?? forms.other) : forms.other).replace('{count}', String(count)),
+  amount: (value: number) => String(value),
   message: (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback,
 }))
