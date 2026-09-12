@@ -1,7 +1,22 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
+import worker from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
+import { sha256 } from '../src/crypto'
 import { base32, codeAt, matches, newSecret, otpauth, recoveryCodes } from '../src/second'
+
+/** The nightly job, run to the end: what it hands to `waitUntil` is what it is
+ *  doing, so a test that wants the sweep awaits those. */
+async function nightly(env: TestEnv): Promise<void> {
+  const waiting: Promise<unknown>[] = []
+  const context = {
+    waitUntil: (work: Promise<unknown>) => waiting.push(work),
+    passThroughOnException: () => undefined,
+  }
+
+  worker.scheduled({} as ScheduledEvent, env, context as unknown as ExecutionContext)
+  await Promise.all(waiting)
+}
 
 interface SecondView {
   on?: boolean
@@ -184,11 +199,13 @@ describe('signing in with it on', () => {
   })
 
   test('a recovery code finishes it too, and is spent', async () => {
-    // Fresh codes, so the test has one it knows.
+    // Fresh codes, so the test has one it knows. The next step's code rather
+        // than this one's: signing in above spent the code it used, and the app
+    // would be showing the next one by the time somebody pressed the button.
     const token = await signInWith(env, secret)
     const made = await call<SecondView>(env, '/v1/second/recovery', {
       token,
-      body: { code: await codeAt(secret, step()) },
+      body: { code: await codeAt(secret, step() + 1) },
     })
     const code = made.json.recovery?.[0] ?? ''
 
@@ -228,6 +245,65 @@ describe('signing in with it on', () => {
     expect(again.status).toBe(400)
   })
 
+  test('and a code the app has already answered with is spent', async () => {
+    // RFC 6238 §5.2: a code that has been accepted must not be accepted again.
+    // Without that, a code read over somebody's shoulder or out of a phishing
+    // page is a second sign-in for the ninety seconds it stays in the window.
+    const code = await codeAt(secret, step())
+
+    const first = await signInHalfWay(env)
+    const got = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: first.json.holding, code },
+    })
+    expect(got.json.token).toBeTruthy()
+
+    const second = await signInHalfWay(env)
+    const again = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: second.json.holding, code },
+    })
+
+    expect(again.status).toBe(400)
+  })
+
+  test('but a wrong code does not throw the whole sign-in away', async () => {
+    // The emailed half was answered; mistyping the second half is not a reason
+    // to ask for another mail. The token is spent by a code that works.
+    const half = await signInHalfWay(env)
+
+    const wrong = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: '000000' },
+    })
+    expect(wrong.status).toBe(400)
+
+    const done = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: await codeAt(secret, step()) },
+    })
+
+    expect(done.status).toBe(200)
+    expect(done.json.token).toBeTruthy()
+  })
+
+  test('and a recovery code is not a bare digest of five bytes at rest', async () => {
+    // Forty bits under one round of SHA-256 is a table a GPU builds in minutes,
+    // so a leaked database would be a way past the factor for every account at
+    // once. The entropy is the fix; the derivation is what stops one table
+    // serving every account.
+    const token = await signInWith(env, secret)
+    const made = await call<SecondView>(env, '/v1/second/recovery', {
+      token,
+      body: { code: await codeAt(secret, step() + 1) },
+    })
+
+    const code = made.json.recovery?.[0] ?? ''
+    expect(code.replace(/\W/g, '')).toHaveLength(20)
+
+    const held = env.db.prepare('select code_hash from recovery_codes').all() as {
+      code_hash: string
+    }[]
+
+    expect(held.map((one) => one.code_hash)).not.toContain(await sha256(code))
+  })
+
   test('and turning it off takes a code', async () => {
     const token = await signInWith(env, secret)
 
@@ -241,12 +317,105 @@ describe('signing in with it on', () => {
     const off = await call<SecondView>(env, '/v1/second', {
       method: 'DELETE',
       token,
-      body: { code: await codeAt(secret, step()) },
+      body: { code: await codeAt(secret, step() + 1) },
     })
     expect(off.status).toBe(200)
 
     const said = await call<SecondView>(env, '/v1/second', { token })
     expect(said.json.on).toBe(false)
+  })
+})
+
+describe('how many codes may be tried', () => {
+  let env: TestEnv
+
+  beforeEach(() => {
+    env = testEnv(KEPT)
+  })
+
+  afterEach(() => env.close())
+
+  /** Somebody with the factor on, and the secret their app would be showing. */
+  async function enrolled(email: string): Promise<{ token: string; secret: string }> {
+    const token = await signIn(env, email)
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const secret = secretOf(env)
+
+    await call(env, '/v1/second/confirm', {
+      token,
+      body: { holding: begun.json.holding, code: await codeAt(secret, step()) },
+    })
+
+    return { token, secret }
+  }
+
+  /** One code tried against one account, from a machine. */
+  function tryOne(token: string, code: string, machine: string) {
+    return call<SecondView>(env, '/v1/second/recovery', {
+      method: 'POST',
+      token,
+      body: { code },
+      headers: { 'cf-connecting-ip': machine },
+    })
+  }
+
+  test('stops at a number of tries for one account', async () => {
+    const { token } = await enrolled('a@b.dev')
+
+    for (let at = 0; at < 20; at++) await tryOne(token, '000000', '203.0.113.7')
+
+    // Twenty wrong ones in, and the ceiling is what answers rather than the
+    // factor: the right code is refused too.
+    const refused = await tryOne(token, '000000', '203.0.113.7')
+    expect(refused.status).toBe(400)
+  })
+
+  test('and at a number of tries from one machine, whoever they are about', async () => {
+    // The per-account ceiling does nothing about a script with a list of
+    // accounts: twenty each is as many guesses as it likes, from one machine, so
+    // long as it keeps moving on to the next address.
+    const mine = await enrolled('a@b.dev')
+
+    for (const email of ['c@d.dev', 'e@f.dev', 'g@h.dev']) {
+      const { token } = await enrolled(email)
+      for (let at = 0; at < 20; at++) await tryOne(token, '000000', '203.0.113.9')
+    }
+
+    // This account has spent none of its own twenty and the code is its app's.
+    const refused = await tryOne(mine.token, await codeAt(mine.secret, step() + 1), '203.0.113.9')
+    expect(refused.status).toBe(400)
+
+    // And from anywhere else the same code still works, so it is the machine
+    // that ran out and not the account.
+    const fine = await tryOne(mine.token, await codeAt(mine.secret, step() + 1), '203.0.113.10')
+    expect(fine.status).toBe(200)
+  })
+})
+
+describe('what an abandoned enrolment leaves behind', () => {
+  let env: TestEnv
+
+  beforeEach(() => {
+    env = testEnv(KEPT)
+  })
+
+  afterEach(() => env.close())
+
+  test('is swept by the nightly job, secret and all', async () => {
+    // The secret a pending enrolment holds is the one thing here kept in the
+    // clear, because until a code proves the app has it there is nothing to
+    // encrypt it against. Ten minutes is what the row promises; nothing was
+    // taking it away, so an enrolment somebody closed the pane on left a working
+    // secret in the table for good.
+    const token = await signIn(env, 'a@b.dev')
+    await call(env, '/v1/second', { token, body: {} })
+
+    expect(secretOf(env)).toMatch(/^[0-9a-f]{40}$/)
+
+    env.db.exec("update cached set until = 0 where scope = 'second-pending'")
+    await nightly(env)
+
+    expect(secretOf(env)).toBe('')
   })
 })
 

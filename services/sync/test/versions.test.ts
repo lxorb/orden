@@ -149,6 +149,78 @@ describe('the account keeps what a note said', () => {
 
     expect(held.status).toBe(404)
   })
+
+  test('and says so when the body a row names has gone', async () => {
+    // A row whose body is missing is a version the account cannot answer, and
+    // answering it with no words at all is worse than answering nothing: the
+    // history sheet shows an empty note and restoring it writes that emptiness
+    // over the words somebody still has.
+    const at = rows(env, note)[0]?.at ?? 0
+    await env.NOTES.delete(versionKey(rows(env, note)[0]?.hash ?? ''))
+
+    const said = await call<VersionView>(env, `/v1/notes/${note}/versions/${at}`, { token })
+
+    expect(said.status).toBe(404)
+    expect(said.json.content).toBeUndefined()
+  })
+
+  test('and keeps a bounded number of them per note', async () => {
+    // One every five minutes is two hundred and eighty-eight a day, and the
+    // thinning that answers for that runs nightly with a write budget of four
+    // hundred for the whole service. So a note written in all day outruns the
+    // sweep, and the ceiling has to hold where the version is written.
+    const insert = env.db.prepare(
+      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+    )
+    const oldest = Date.now() - MOST_KEPT * 5 * 60 * 1000
+    for (let at = 0; at < MOST_KEPT; at++) {
+      insert.run(note, oldest + at * 5 * 60 * 1000, `seeded-${at}`, 5, '')
+    }
+
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { content: '# one more', baseVersion: 1 },
+    })
+
+    const held = rows(env, note)
+    expect(held.length).toBeLessThanOrEqual(MOST_KEPT)
+    // What went is the oldest, and what arrived is there.
+    expect(held.some((one) => one.hash === 'seeded-0')).toBe(false)
+    expect(held.at(-1)?.at).toBeGreaterThan(oldest + (MOST_KEPT - 1) * 5 * 60 * 1000)
+  })
+
+  test('and the sweep keeps up with a busy day rather than falling behind it', async () => {
+    // Two notes written in all day is more versions a day than the sweep's write
+    // budget, so the month thinned to one an hour was a promise the nightly job
+    // could not keep: the rows it could not reach stayed, and every night it
+    // started the same distance behind.
+    const insert = env.db.prepare(
+      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+    )
+
+    const other = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'other.md', content: 'other' },
+    })
+    const second = other.json.note?.id ?? ''
+
+    // A day of saves each, two days back, so the thinning is what applies.
+    const from = Date.now() - 2 * 24 * 60 * 60 * 1000
+    for (const which of [note, second]) {
+      for (let at = 0; at < 288; at++) {
+        insert.run(which, from + at * 5 * 60 * 1000, `${which}-${at}`, 5, '')
+      }
+    }
+
+    await sweepVersions(env, Date.now())
+
+    // One an hour is what is left of a day of saves, for both notes.
+    for (const which of [note, second]) {
+      const kept = rows(env, which).filter((one) => one.at >= from && one.at < from + 24 * 60 * 60 * 1000)
+      expect(kept.length).toBeLessThanOrEqual(24)
+    }
+  })
 })
 
 describe('putting a space back to a moment', () => {
