@@ -52,6 +52,9 @@ export interface Draft {
    *  tab holding a note, which keeps a caret and a scroll instead. */
   page?: number | undefined
   zoom?: number | undefined
+  /** For a website: the address it was on, which may not be the one its file says.
+   *  Absent for every other kind of tab. */
+  address?: string | undefined
 }
 
 /** One pane: its strip of tabs, which of them was showing, and whether it was
@@ -126,7 +129,7 @@ function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas']
+const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'web']
 
 /** Which kind of tab an entry is, which is its file's name first and what the entry
  *  claims second.
@@ -185,7 +188,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned } = value
+  const { folds, page, zoom, pinned, address } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -206,6 +209,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(pinned === true ? { pinned: true } : {}),
     ...(isNumber(page) && page >= 1 ? { page } : {}),
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
+    ...(isString(address) ? { address } : {}),
   }
 }
 

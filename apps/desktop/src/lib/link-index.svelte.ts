@@ -288,6 +288,24 @@ class Links {
     return map
   })
 
+  /** The notes that are websites, by the address each points at.
+   *
+   *  The same shape as the icons above and for the same reason: a space of a
+   *  thousand notes holds a handful of these, so the map is the size of what is
+   *  there rather than of the space, and a row redraws itself the moment the line is
+   *  written or taken out. What reads it is the mark a row wears and the click that
+   *  opens one; see web-tab/note.ts and file-mark.ts. */
+  private readonly addresses = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const note of this.notes) {
+      if (note.url) map.set(note.path, note.url)
+    }
+
+    return map
+  })
+
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
    *
@@ -304,6 +322,13 @@ class Links {
   tintOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
     return this.tints.get(relative) ?? null
+  }
+
+  /** The address the note at this path points at, or null for a note that is prose.
+   *  Takes either spelling of a path, like the two above. */
+  urlOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.addresses.get(relative) ?? null
   }
 
   /** Forgets everything, for a window with no space open. */

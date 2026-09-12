@@ -932,6 +932,35 @@ Features Typora does not have, which are the reason this exists.
       edit. `eval` is there and off, behind a line in that same file, because it runs
       whatever it is sent with everything the window can reach. See
       docs/automation.md
+- [x] A tab can be a website. The page is the system's own engine, placed over the
+      pane as a child webview - WebView2 on Windows, which is Chromium, WKWebView on
+      macOS, which is WebKit - with back, forward, reload and an address field that
+      reads as the site and the page's own title when nobody is typing in it. Ctrl+L
+      is the field and Alt with an arrow is the page's history, which is the same key
+      a note tab walks its own trail with. The page is hidden when its tab is not
+      showing and taken down after five minutes of nobody looking, so a window left
+      open overnight holds no browsers
+- [x] A website is a document in the space, not a bookmark in a list: a note whose
+      front matter says `url:`, so it is a row in the file list with a globe in front
+      of it, renamable, bookmarkable, `[[linked]]`, searchable by its title and its
+      address, and carried by the sync like any other note - and still a note in the
+      same vault opened in Obsidian, which a `.web` file would not have been. It
+      writes itself the moment the page says what it is called, the way every note in
+      a space keeps itself. No room and no collaboration: there are no words in it to
+      share
+- [x] Clip the page a tab is showing into the space, through the same converter the
+      browser extension uses: the selection, or the article, as markdown under
+      `source:` and `date:`. On a desktop the page is read in the document as the
+      reader sees it, through the engine's own script callback rather than through the
+      app's IPC, so the page is read without being given anything to call
+- [x] A page in a tab gets none of the app and none of this machine: its own cookie
+      store, no nib command reachable from it, and the camera, the microphone, the
+      clipboard, the location and every hardware bus taken away before its first
+      script runs. Two of them can be allowed by hand, per site. The web build falls
+      back to a sandboxed frame where the site allows framing and to a card with the
+      title, the favicon and one row to the reader's own browser where it does not; a
+      phone opens the system browser, which has their logins, their blocking and
+      their password manager. See docs/web-tabs.md
 
 - [x] A note decides whether it is published: `publish: true|false` in its front
       matter, which is Obsidian Publish's own key, so a vault moves between the

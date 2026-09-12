@@ -78,7 +78,7 @@ describe('the mark a file wears', () => {
  *  chosen but that the set is one set: every mark has a drawing, every drawing
  *  is Lucide's own, and no two marks are the same picture. */
 describe('the marks a row wears', () => {
-  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pdf', 'picture', 'file']
+  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pdf', 'picture', 'file', 'web']
 
   /** And no folder among them: no row in the list is a folder, so there is no
    *  drawing of one to reach for. See folder-notes.ts. */
@@ -134,7 +134,16 @@ describe('the mark a file or folder chose for itself', () => {
   test('and the kind s own mark is what a row falls back to', () => {
     // Which covers all four of: a row that chose nothing, a caller that knows no
     // path, a name no set holds, and the moment before a set has arrived.
-    expect(source).toContain('fallback={MARKS[mark]}')
+    expect(source).toContain('fallback={MARKS[shown]}')
+  })
+
+  /** The one mark a name cannot earn: a website in the space is a note called
+   *  `Svelte docs.md`, and only the `url:` in it says otherwise. The index holds what
+   *  every note's front matter says, so the row asks the same lookup the chosen icon
+   *  above is. See web-tab/note.ts. */
+  test('a note that is a website wears the globe, read off the index', () => {
+    expect(source).toContain('links.urlOf(path)')
+    expect(source).toContain("? 'web'")
   })
 
   /** One box, whichever of the three kinds is in it, and one size in it: `--icon-md`

@@ -48,6 +48,7 @@
   import Pdf from './Pdf.svelte'
   import { placement } from './placement.svelte'
   import Reading from './Reading.svelte'
+  import WebTab from './web-tab/WebTab.svelte'
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
   import { canWriteIn } from './sharing.svelte'
@@ -80,7 +81,12 @@
    *  no find bar of its own. The same question the branch chain below asks, asked
    *  once so the bar above it and the editor under it cannot disagree. */
   const writing = $derived(
-    !!tab && tab.kind !== 'graph' && tab.kind !== 'canvas' && tab.kind !== 'pdf' && !tab.reading,
+    !!tab &&
+      tab.kind !== 'graph' &&
+      tab.kind !== 'canvas' &&
+      tab.kind !== 'pdf' &&
+      tab.kind !== 'web' &&
+      !tab.reading,
   )
 
   let view = $state<EditorView>()
@@ -385,6 +391,13 @@
          into an editor. -->
     {#key tab.id}
       <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
+    {/key}
+  {:else if tab?.kind === 'web'}
+    <!-- A website, in the note's place. Keyed like the others: the page is a webview
+         of its own placed over this pane, and nothing about it is swapped into an
+         editor. See docs/web-tabs.md. -->
+    {#key tab.id}
+      <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
     {/key}
   {:else if tab?.coming}
     <!-- A note whose row the account's first pass listed and whose words have not

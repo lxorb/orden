@@ -15,7 +15,7 @@ import { paperGone, paperMoved } from './pdf/papers'
 import { extracted, merged, splitAt } from './composer'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
-import { folderOf as folderIn, insideSpace, noteName, relativeTo } from './space-paths'
+import { folderOf as folderIn, insideSpace, isMarkdownPath, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
 import { identifier } from './identifier'
 import { nameFromContent } from './note-name'
@@ -65,8 +65,10 @@ import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
-import { folderOf, invoke, isDesktop, isNative, joinPath } from './tauri'
+import { folderOf, invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
+import { webNote, webTitleOf, webUrlOf } from './web-tab/note'
+import { pages } from './web-tab/pages.svelte'
 
 export interface Entry {
   name: string
@@ -599,6 +601,7 @@ class Workspace {
     tab.pinned = draft.pinned === true
     tab.page = draft.page
     tab.zoom = draft.zoom
+    tab.address = draft.address
     return tab
   }
 
@@ -701,6 +704,7 @@ class Workspace {
       ...(tab.pinned ? { pinned: true } : {}),
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
+      ...(tab.address === undefined ? {} : { address: tab.address }),
     }
   }
 
@@ -1016,6 +1020,143 @@ class Workspace {
     this.persist()
   }
 
+  /** A website in the space, in a tab of its own: a note whose front matter says
+   *  `url:`, drawn as the page rather than as the two lines in the file. One tab per
+   *  file, the way a canvas is one.
+   *
+   *  A phone opens the system browser instead, and that is the answer rather than a
+   *  gap. A phone app's webview is the app's own: no extensions, no ad blocking, none
+   *  of the reader's logins, and no way to hand a page on to anything else. Their
+   *  browser has all four, and the file is still theirs in the space - so the note is
+   *  a bookmark there, which is what a website on a phone is worth being. Tauri has
+   *  no child webviews on a phone either; see docs/web-tabs.md. */
+  async openWeb(path: string) {
+    const existing = this.tabs.find((tab) => tab.kind === 'web' && tab.path === path)
+    if (existing) {
+      this.activeTabId = existing.id
+      this.showNote()
+      return
+    }
+
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    const url = webUrlOf(text)
+    // Not a website after all - somebody took the line out, or it says an address
+    // no tab may open. It is a note, and it opens as one.
+    if (text === null || url === null) {
+      await this.open(path)
+      return
+    }
+
+    if (viewport.device === 'phone') {
+      await openExternal(url)
+      this.remember(path)
+      return
+    }
+
+    const file = this.document({
+      kind: 'web',
+      path,
+      name: basename(path),
+      text,
+      dirty: false,
+    })
+    const tab = new Tab(file, this.panes.focusedId)
+    tab.address = url
+
+    // What the file says, so the bar reads as the page before the page has
+    // answered: the address it points at, and the title it was written with.
+    const page = pages.of(tab.id)
+    page.url = url
+    page.title = webTitleOf(text) ?? ''
+
+    this.add(tab)
+    this.dropScaffolding(tab)
+
+    this.showNote()
+    this.remember(path)
+    this.persist()
+  }
+
+  /** A web tab with nowhere to go yet: what "Open a website" makes. The address
+   *  field takes the keyboard, and the file is written as soon as the page says what
+   *  it is called; see `keepWeb`.
+   *
+   *  No file first, because a website nobody has chosen yet has no name to be
+   *  written under, and a folder of `Untitled` files is what asking for the name
+   *  first would leave behind. */
+  openWebsite() {
+    if (viewport.device === 'phone') return
+
+    const file = this.document({
+      kind: 'web',
+      path: null,
+      name: t('Website'),
+      text: '',
+      dirty: false,
+    })
+    const tab = new Tab(file, this.panes.focusedId)
+    this.add(tab)
+    this.dropScaffolding(tab)
+    this.showNote()
+    this.persist()
+  }
+
+  /** The address a web tab's file says, or null for a tab with no file yet. */
+  webAddressOf(tab: Tab): string | null {
+    return tab.kind === 'web' ? webUrlOf(tab.doc) : null
+  }
+
+  /** The page a web tab went to, written down for the session so a restart comes
+   *  back on it. Not into the file: following a link is browsing, and the file says
+   *  where the document points. */
+  webWalked(tab: Tab, url: string) {
+    if (tab.address === url) return
+
+    tab.address = url
+    this.scheduleSession()
+  }
+
+  /** Which web tabs are in the middle of being written, so two reports of the same
+   *  page do not write two files. */
+  private readonly keeping = new Set<string>()
+
+  /** A website keeps itself, the way a note in a space does.
+   *
+   *  As soon as the page has said what it is called there is a file, named after the
+   *  title the way every other note this app writes is. Nothing to press and nothing
+   *  to save: what the file holds - the address, the title, the day - is all the
+   *  document is, and the reader never edits it.
+   *
+   *  A tab that already has a file is left alone. Its title is the page's while it is
+   *  open, because a page renaming its own file as somebody reads it would be a file
+   *  that moves under every link to it. */
+  async keepWeb(tab: Tab, url: string, title: string) {
+    if (tab.kind !== 'web') return
+
+    if (tab.path !== null) return
+
+    // Before there is a file the strip says what the page says, so a tab nobody has
+    // named is still a tab somebody recognises.
+    const named = title.trim()
+    if (named && tab.name !== named) tab.name = named
+    if (!named || this.keeping.has(tab.id) || !this.activeSpace) return
+
+    this.keeping.add(tab.id)
+    try {
+      const text = webNote(url, named, new Date())
+      const path = await this.noteFrom(text)
+      if (path === null) return
+
+      tab.note.path = path
+      tab.note.name = basename(path)
+      tab.note.replace(text, false)
+      this.remember(path)
+      this.persist()
+    } finally {
+      this.keeping.delete(tab.id)
+    }
+  }
+
   /** Which page of a PDF a followed link asked for. Read and taken down by the
    *  pane showing that PDF, the way `goto` is by the one showing a note. */
   gotoPage = $state<{ path: string; page: number } | null>(null)
@@ -1061,6 +1202,21 @@ class Workspace {
       if (__EVEN_PLUGIN__) return
 
       this.openPdf(path)
+      return
+    }
+
+    // A note whose front matter says `url:` is a website, and the index is what
+    // knows: the pass that reads every note for its icon and its aliases reads that
+    // line too, so a row in the file list, a bookmark, a link and the palette all
+    // open the page without anything reading the file twice. A file the index has
+    // not reached yet opens as the note it also is, and the next pass settles it.
+    if (isMarkdownPath(path) && links.urlOf(path) !== null) {
+      // Not in front of a pair of glasses, for the reason a canvas is not: there is
+      // no page on seven lines of a heads-up display, and the viewer is not in that
+      // build at all.
+      if (isPlugin()) return
+
+      await this.openWeb(path)
       return
     }
 
@@ -1682,12 +1838,20 @@ class Workspace {
   /** One step back, and one step on. */
   goBack(id: string | null = this.activeTabId) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (tab) void this.walk(tab.at - 1, tab.id)
+    if (!tab) return
+
+    // In a web tab the trail is the page's own history, which is the browser's
+    // meaning of the same key rather than a second one; see web-tab/pages.svelte.ts.
+    if (tab.kind === 'web') void pages.step(tab.id, 'back')
+    else void this.walk(tab.at - 1, tab.id)
   }
 
   goForward(id: string | null = this.activeTabId) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (tab) void this.walk(tab.at + 1, tab.id)
+    if (!tab) return
+
+    if (tab.kind === 'web') void pages.step(tab.id, 'forward')
+    else void this.walk(tab.at + 1, tab.id)
   }
 
   /** Holds a tab at the front of its strip, or lets it go again.
@@ -1830,6 +1994,10 @@ class Workspace {
     if (worthReopening(tab)) {
       this.closed.record({ draft: this.draftOf(tab), paneId, at: Math.max(at, 0) })
     }
+
+    // The page is a webview of its own, and a tab that has gone is not holding a
+    // browser open behind it.
+    if (tab.kind === 'web') pages.forget(tab.id)
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null

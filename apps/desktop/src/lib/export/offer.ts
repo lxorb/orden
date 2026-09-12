@@ -98,7 +98,12 @@ export function exportKindOf(open: Open | null): ExportKind {
     case 'pdf':
       return open.path === null ? 'none' : 'file'
 
+    // Nothing to hand over: the graph is drawn from the space rather than held in a
+    // file, and a website is a window on somebody else's page. What there is of a
+    // page worth keeping is kept by clipping it, which writes a note; see
+    // web-tab/clip.ts.
     case 'graph':
+    case 'web':
       return 'none'
   }
 }

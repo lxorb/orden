@@ -5,8 +5,8 @@
 //! so a page sits exactly where the pane is and nothing else about the window
 //! changes. That is the only embedding on a desktop that renders a site the way a
 //! browser does: a frame cannot, because a great deal of the web refuses to be
-//! framed. The engine is the system's - WebView2 on Windows, which is Chromium,
-//! and WKWebView on macOS, which is WebKit and not Chromium however the tab is
+//! framed. The engine is the system's - `WebView2` on Windows, which is Chromium,
+//! and `WKWebView` on macOS, which is `WebKit` and not Chromium however the tab is
 //! asked for. See docs/web-tabs.md.
 //!
 //! What the window may do with one of these is deliberately small: make it, move
@@ -161,8 +161,8 @@ const READER: &str = r"(function () {
 
 /// Where a page has been in one tab, and where along it the tab is.
 ///
-/// Kept here rather than asked of the engine, because neither WebView2 nor
-/// WKWebView tells Tauri whether a page can go back, and a back arrow that is
+/// Kept here rather than asked of the engine, because neither `WebView2` nor
+/// `WKWebView` tells Tauri whether a page can go back, and a back arrow that is
 /// always lit is an arrow that lies half the time.
 #[derive(Default)]
 struct Trail {
@@ -325,7 +325,7 @@ fn store(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(dir)
 }
 
-/// The same sixteen bytes every time, so WKWebView hands back the store it handed
+/// The same sixteen bytes every time, so `WKWebView` hands back the store it handed
 /// out last time. macOS 14 and later; older macOS has no such API and falls back
 /// to the default store, which is the one case where a web tab and the app share a
 /// profile on disk. Said out loud in docs/web-tabs.md rather than hidden here.
@@ -387,7 +387,7 @@ pub fn web_open(
             &sending,
             &view,
             &moved,
-            &payload.url().to_string(),
+            payload.url().as_str(),
             None,
             loading,
         );
@@ -481,8 +481,8 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
 
 /// Back, forward, or the same page again.
 ///
-/// The history is the page's own, so it is stepped in the page: neither WebView2
-/// nor WKWebView hands Tauri a Go Back, and `history.back()` is what a browser's
+/// The history is the page's own, so it is stepped in the page: neither `WebView2`
+/// nor `WKWebView` hands Tauri a Go Back, and `history.back()` is what a browser's
 /// own button calls. Reload goes through the engine, which is the one of the three
 /// it does offer.
 #[tauri::command]

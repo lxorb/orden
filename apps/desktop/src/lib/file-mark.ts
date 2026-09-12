@@ -11,7 +11,7 @@
  *  little else. `FileMark.svelte` draws what it answers. */
 
 import { isCanvasTarget, isImageTarget, isPdfTarget } from '@nib/markdown/links'
-import { BookText, File, FileText, Image, type IconNode, Workflow } from 'lucide'
+import { BookText, File, FileText, Globe, Image, type IconNode, Workflow } from 'lucide'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
 
@@ -27,8 +27,14 @@ import type { TabKind } from './workspace/documents.svelte'
  *  `picture` and `file` are drawn ahead of anything that would show them: a file
  *  tree holds a note, a PDF and a canvas and nothing else, which is decided in
  *  `src-tauri/src/tree.rs` and, for the browser, in `web/commands.ts`. They are
- *  here so the first list that does show another kind has its mark already. */
-export type FileMark = 'note' | 'canvas' | 'pdf' | 'picture' | 'file'
+ *  here so the first list that does show another kind has its mark already.
+ *
+ *  `web` is the one mark a name cannot earn. A website in the space is a note whose
+ *  front matter says `url:`, so the file is called `Svelte docs.md` like any other
+ *  and only the line inside it tells them apart; the index is asked for that, once,
+ *  by the component that draws the mark. See web-tab/note.ts, which says why the
+ *  file is a note rather than an extension of its own, and `FileMark.svelte`. */
+export type FileMark = 'note' | 'canvas' | 'pdf' | 'picture' | 'file' | 'web'
 
 /** The mark a file's name earns it.
  *
@@ -80,4 +86,7 @@ export const MARKS: Record<FileMark, IconNode> = {
   pdf: BookText,
   picture: Image,
   file: File,
+  // A globe, because that is what every browser has meant by the web for thirty
+  // years, and because it reads at 16px as a shape rather than as a drawing.
+  web: Globe,
 }

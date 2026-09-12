@@ -53,6 +53,13 @@ export interface ScannedNote {
    *  Read on this pass for the same reason the icon is: the space is already
    *  being read. */
   aliases: string[]
+  /** The address the note points at, for a note that is a website rather than
+   *  words: `url:` in its front matter. Null for every ordinary note.
+   *
+   *  Read on this pass for the reason the icon is, and read at all because it is
+   *  what tells the two apart: the row wears a globe and a click on it opens a web
+   *  tab. The twin of the same field in links.rs. See web-tab/note.ts. */
+  url: string | null
 }
 
 export interface SpaceLinks {
@@ -77,6 +84,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     icon: frontMatterValue(content, ICON_KEY),
     iconColor: frontMatterValue(content, ICON_COLOUR_KEY),
     aliases: frontMatterList(content, 'aliases'),
+    url: frontMatterValue(content, 'url'),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,
@@ -120,6 +128,9 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     // No other name for itself, though: an alias is something a link is written
     // with, and nothing writes `[[Board]]` for a canvas.
     aliases: [],
+    // And a plane of cards is never a website: there is no front matter in JSON to
+    // say so, and JSON Canvas has no key for one.
+    url: null,
     links: canvas.nodes
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
       .map((node) => ({

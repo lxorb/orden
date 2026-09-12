@@ -1222,4 +1222,14 @@ export const de: Dictionary = {
   Photo: 'Foto',
   Dictate: 'Diktieren',
   'Add to {name}': 'Zu {name} hinzufügen',
+  // Web tabs
+  Reload: 'Neu laden',
+  'Clip this page': 'Diese Seite speichern',
+  'Clip the link': 'Den Link speichern',
+  'Allow the camera': 'Kamera erlauben',
+  'Allow the clipboard': 'Zwischenablage erlauben',
+  'Open in the browser': 'Im Browser öffnen',
+  'Copy the address': 'Adresse kopieren',
+  Website: 'Webseite',
+  'Open a website': 'Webseite öffnen',
 }

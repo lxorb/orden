@@ -28,8 +28,10 @@ export const UNTITLED = 'Untitled'
  *  without one, because a picture of the notes belongs beside them rather than in
  *  a panel; a PDF is a tab without one because a paper someone is reading belongs
  *  in the same place as the notes they are making about it; a canvas is a file of
- *  its own with its own surface, and its words are the JSON in it. */
-export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas'
+ *  its own with its own surface, and its words are the JSON in it; a website is a
+ *  note whose front matter says `url:`, drawn as the page it points at rather than
+ *  as the two lines in the file. See docs/web-tabs.md. */
+export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas' | 'web'
 
 /** Whether a tab's words are a file's words: a note, and a canvas, whose words
  *  are the JSON in it.
@@ -37,7 +39,13 @@ export type TabKind = 'note' | 'graph' | 'pdf' | 'canvas'
  *  What the answer decides is every place words cross between a tab and a file:
  *  whether there is anything unsaved, what a save writes, and what a tab that is
  *  put back after a restart is filled from. The graph is drawn from the space and
- *  a PDF is read, so neither has words to write down or to read back. */
+ *  a PDF is read, so neither has words to write down or to read back.
+ *
+ *  A website is not one either, and the answer carries more here than anywhere
+ *  else: nothing the reader does in the page is an edit, so there is nothing to
+ *  save and nothing to keep in step - and a room is only ever opened for a file
+ *  whose words are a document, which is why a web tab has no collaboration and
+ *  needs no switch to say so. See `workspace.openNotes`. */
 export function holdsWords(kind: TabKind): boolean {
   return kind === 'note' || kind === 'canvas'
 }
@@ -381,6 +389,13 @@ export class Tab {
    *  panned to belongs to the afternoon rather than to the file. Per tab, since
    *  one canvas can be looked at from two places in two panes. */
   camera = $state<Camera | undefined>(undefined)
+
+  /** For a website: the address the tab is on, which is not always the one its file
+   *  says. Following a link in the page is browsing rather than editing, so the
+   *  file keeps the address it was written with and the tab keeps where it went.
+   *  Per tab, since the same site can be open at two pages in two panes, and
+   *  written into the session so a restart comes back on the page it was on. */
+  address = $state<string | undefined>(undefined)
 
   /** For a PDF: the page being read, counting from one, and how far it is zoomed.
    *  Where a note keeps a caret and a scroll, a PDF keeps these, and for the same

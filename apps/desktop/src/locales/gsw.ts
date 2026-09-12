@@ -1213,4 +1213,14 @@ export const gsw: Dictionary = {
   Photo: 'Foti',
   Dictate: 'Diktiere',
   'Add to {name}': 'Zu {name} dezuetue',
+  // Web tabs
+  Reload: 'Neu lade',
+  'Clip this page': 'Die Siite spichere',
+  'Clip the link': 'De Link spichere',
+  'Allow the camera': 'Kamera erlaube',
+  'Allow the clipboard': 'Zwüschenablag erlaube',
+  'Open in the browser': 'Im Browser ufmache',
+  'Copy the address': 'Adrässe kopiere',
+  Website: 'Webssite',
+  'Open a website': 'Webssite ufmache',
 }

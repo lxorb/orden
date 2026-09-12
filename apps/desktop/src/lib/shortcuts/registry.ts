@@ -30,6 +30,7 @@ import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
 import { invoke } from '../tauri'
 import type { Platform } from '../keys'
+import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
 
 /** Where an entry sits in the list. The first five are the app's own menus,
@@ -311,6 +312,17 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Alt-ArrowLeft',
     mac: 'Ctrl-[',
     run: () => workspace.goBack(),
+  },
+  {
+    // A browser's key for its address bar, which is what a web tab's field is. It
+    // does nothing anywhere else: the pane that has the focus is the one that
+    // answers, and a pane holding a note has no address to focus.
+    id: 'web.address',
+    label: () => t('Address'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-l',
+    run: () => pages.askForAddress(),
   },
   {
     id: 'app.forward',

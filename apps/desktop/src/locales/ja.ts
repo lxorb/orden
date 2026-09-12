@@ -1210,4 +1210,14 @@ export const ja: Dictionary = {
   Photo: '写真',
   Dictate: '音声入力',
   'Add to {name}': '{name} に追加',
+  // Web tabs
+  Reload: '再読み込み',
+  'Clip this page': 'このページを保存',
+  'Clip the link': 'リンクを保存',
+  'Allow the camera': 'カメラを許可',
+  'Allow the clipboard': 'クリップボードを許可',
+  'Open in the browser': 'ブラウザーで開く',
+  'Copy the address': 'アドレスをコピー',
+  Website: 'ウェブサイト',
+  'Open a website': 'ウェブサイトを開く',
 }

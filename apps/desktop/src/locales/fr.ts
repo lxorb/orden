@@ -1218,4 +1218,14 @@ export const fr: Dictionary = {
   Photo: 'Photographie',
   Dictate: 'Dicter',
   'Add to {name}': 'Ajouter à {name}',
+  // Web tabs
+  Reload: 'Recharger',
+  'Clip this page': 'Enregistrer cette page',
+  'Clip the link': 'Enregistrer le lien',
+  'Allow the camera': 'Autoriser la caméra',
+  'Allow the clipboard': 'Autoriser le presse-papiers',
+  'Open in the browser': 'Ouvrir dans le navigateur',
+  'Copy the address': 'Copier l’adresse',
+  Website: 'Site web',
+  'Open a website': 'Ouvrir un site web',
 }

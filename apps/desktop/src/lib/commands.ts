@@ -702,6 +702,19 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
     { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
+    ...(viewport.device === 'phone'
+      ? []
+      : [
+          {
+            // A tab with an address field and nothing in it yet. The file is written
+            // as soon as the page says what it is called, the way every note in a
+            // space keeps itself; see workspace.keepWeb and docs/web-tabs.md. A phone
+            // has no web tab at all - there the system browser is the answer.
+            id: 'new-website',
+            label: t('Open a website'),
+            run: () => workspace.openWebsite(),
+          },
+        ]),
     {
       id: 'open',
       label: t('Open file'),
