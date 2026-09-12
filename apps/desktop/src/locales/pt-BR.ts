@@ -1274,6 +1274,20 @@ export const ptBR: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Adicione um provedor de IA nas configurações para resumir.',
   'The summary could not be written.': 'Não foi possível escrever o resumo.',
+  // Publishing part two.
+  Spreadsheet: 'Planilha',
+  'The app’s own': 'O do app',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css e publish.js deste espaço vestem o site.',
+  'publish.css in this space dresses the site.': 'publish.css deste espaço veste o site.',
+  'publish.js in this space runs on the site.': 'publish.js deste espaço roda no site.',
+  Visits: 'Visitas',
+  'Counter script': 'Script de contagem',
+  'Site name it expects': 'Nome de site esperado',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'A visita vai para quem serve esse script. Vazio, nada é enviado.',
+  Answers: 'Respostas',
+  'Save as CSV': 'Salvar como CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'não foi possível enviar o e-mail - tentar de novo',
   'start again - that took too long': 'começar de novo - isso demorou demais',

@@ -1258,6 +1258,20 @@ export const kn: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'ಸಾರ ಬರೆಯಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಒಂದು AI ಪೂರೈಕೆದಾರನನ್ನು ಸೇರಿಸು.',
   'The summary could not be written.': 'ಸಾರ ಬರೆಯಲಾಗಲಿಲ್ಲ.',
+  // Publishing part two.
+  Spreadsheet: 'ಸ್ಪ್ರೆಡ್‌ಶೀಟ್',
+  'The app’s own': 'ಆ್ಯಪ್‌ನ ಸ್ವಂತ',
+  'publish.css and publish.js in this space dress the site.':
+    'ಈ ಸ್ಪೇಸ್‌ನ publish.css ಮತ್ತು publish.js ತಾಣವನ್ನು ಅಲಂಕರಿಸುತ್ತವೆ.',
+  'publish.css in this space dresses the site.': 'ಈ ಸ್ಪೇಸ್‌ನ publish.css ತಾಣವನ್ನು ಅಲಂಕರಿಸುತ್ತದೆ.',
+  'publish.js in this space runs on the site.': 'ಈ ಸ್ಪೇಸ್‌ನ publish.js ತಾಣದಲ್ಲಿ ಓಡುತ್ತದೆ.',
+  Visits: 'ಭೇಟಿಗಳು',
+  'Counter script': 'ಎಣಿಕೆ ಸ್ಕ್ರಿಪ್ಟ್',
+  'Site name it expects': 'ನಿರೀಕ್ಷಿಸುವ ತಾಣದ ಹೆಸರು',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'ಓದುಗನ ಭೇಟಿ ಆ ಸ್ಕ್ರಿಪ್ಟ್ ಕೊಡುವವರಿಗೆ ಹೋಗುತ್ತದೆ. ಖಾಲಿ ಇದ್ದರೆ ಏನೂ ಕಳಿಸುವುದಿಲ್ಲ.',
+  Answers: 'ಉತ್ತರಗಳು',
+  'Save as CSV': 'CSV ಆಗಿ ಉಳಿಸು',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ಮೇಲ್ ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'start again - that took too long': 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ - ಅದು ತುಂಬಾ ಸಮಯ ತೆಗೆದುಕೊಂಡಿತು',

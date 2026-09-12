@@ -1245,6 +1245,20 @@ export const mr: Dictionary = {
   '{count} pieces of this meeting were lost.': 'या बैठकीचे {count} भाग हरवले.',
   'Add an AI provider in settings to summarise.': 'सारांशासाठी सेटिंग्जमध्ये AI पुरवठादार जोडा.',
   'The summary could not be written.': 'सारांश लिहिता आला नाही.',
+  // Publishing part two.
+  Spreadsheet: 'स्प्रेडशीट',
+  'The app’s own': 'अॅपचे स्वतःचे',
+  'publish.css and publish.js in this space dress the site.':
+    'या स्पेसमधील publish.css आणि publish.js संस्थळ सजवतात.',
+  'publish.css in this space dresses the site.': 'या स्पेसमधील publish.css संस्थळ सजवते.',
+  'publish.js in this space runs on the site.': 'या स्पेसमधील publish.js संस्थळावर चालते.',
+  Visits: 'भेटी',
+  'Counter script': 'मोजणी स्क्रिप्ट',
+  'Site name it expects': 'अपेक्षित संस्थळाचे नाव',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'वाचकाची भेट ती स्क्रिप्ट देणाऱ्याकडे जाते. रिकामे असल्यास काहीच पाठवले जात नाही.',
+  Answers: 'उत्तरे',
+  'Save as CSV': 'CSV म्हणून जतन करा',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'मेल पाठवता आला नाही - पुन्हा पाहा',
   'start again - that took too long': 'पुन्हा सुरू करा - फार वेळ लागला',

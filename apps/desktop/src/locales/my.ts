@@ -1233,6 +1233,22 @@ export const my: Dictionary = {
   '{count} pieces of this meeting were lost.': 'ဤအစည်းအဝေး၏ အပိုင်း {count} ပျောက်သွားသည်။',
   'Add an AI provider in settings to summarise.': 'အနှစ်ချုပ်ရန် ဆက်တင်တွင် AI ပေးသူ ထည့်ပါ။',
   'The summary could not be written.': 'အနှစ်ချုပ်ကို ရေးမရပါ။',
+  // Publishing part two.
+  Spreadsheet: 'စာရင်းဇယား',
+  'The app’s own': 'အက်ပ်၏ ကိုယ်ပိုင်',
+  'publish.css and publish.js in this space dress the site.':
+    'ဤအလုပ်ခွင်ရှိ publish.css နှင့် publish.js သည် ဆိုက်ကို အဝတ်ဆင်သည်။',
+  'publish.css in this space dresses the site.':
+    'ဤအလုပ်ခွင်ရှိ publish.css သည် ဆိုက်ကို အဝတ်ဆင်သည်။',
+  'publish.js in this space runs on the site.':
+    'ဤအလုပ်ခွင်ရှိ publish.js သည် ဆိုက်ပေါ်တွင် အလုပ်လုပ်သည်။',
+  Visits: 'အလည်လာမှု',
+  'Counter script': 'ရေတွက်စကရစ်',
+  'Site name it expects': 'မျှော်လင့်သည့် ဆိုက်အမည်',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'ဖတ်သူ၏ အလည်လာမှုသည် ထိုစကရစ်ကို ပေးသူဆီ သွားသည်။ ကွက်လပ်ဆိုပါက မည်သည့်အရာမျှ မပို့ပါ။',
+  Answers: 'အဖြေများ',
+  'Save as CSV': 'CSV အဖြစ် သိမ်းမည်',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'စာပို့မရပါ - ထပ်စမ်းပါ',
   'start again - that took too long': 'ပြန်စပါ - အလွန်ကြာသွားပြီ',

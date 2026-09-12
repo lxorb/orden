@@ -1230,6 +1230,20 @@ export const am: Dictionary = {
   '{count} pieces of this meeting were lost.': 'የዚህ ስብሰባ {count} ክፍሎች ጠፍተዋል።',
   'Add an AI provider in settings to summarise.': 'ለማጠቃለል በማስተካከያ የAI አቅራቢ ጨምር።',
   'The summary could not be written.': 'ማጠቃለያው መጻፍ አልቻለም።',
+  // Publishing part two.
+  Spreadsheet: 'የተመን ሉህ',
+  'The app’s own': 'የመተግበሪያው ራሱ',
+  'publish.css and publish.js in this space dress the site.':
+    'በዚህ ቦታ ያሉት publish.css እና publish.js ጣቢያውን ያስውባሉ።',
+  'publish.css in this space dresses the site.': 'በዚህ ቦታ ያለው publish.css ጣቢያውን ያስውባል።',
+  'publish.js in this space runs on the site.': 'በዚህ ቦታ ያለው publish.js በጣቢያው ላይ ይሠራል።',
+  Visits: 'ጉብኝቶች',
+  'Counter script': 'የመቁጠሪያ ስክሪፕት',
+  'Site name it expects': 'የሚጠብቀው የጣቢያ ስም',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'የአንባቢው ጉብኝት ያንን ስክሪፕት ለሚያቀርበው ሁሉ ይሄዳል። ባዶ ከሆነ ምንም አይላክም።',
+  Answers: 'መልሶች',
+  'Save as CSV': 'እንደ CSV አስቀምጥ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ደብዳቤ መላክ አልተቻለም - እንደገና ሞክር',
   'start again - that took too long': 'እንደገና ጀምር - ያ በጣም ረዘመ',

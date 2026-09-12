@@ -1221,6 +1221,20 @@ export const th: Dictionary = {
   '{count} pieces of this meeting were lost.': 'การประชุมนี้ขาดไป {count} ส่วน',
   'Add an AI provider in settings to summarise.': 'เพิ่มผู้ให้บริการ AI ในการตั้งค่าเพื่อสรุป',
   'The summary could not be written.': 'เขียนบทสรุปไม่ได้',
+  // Publishing part two.
+  Spreadsheet: 'สเปรดชีต',
+  'The app’s own': 'ของแอปเอง',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css และ publish.js ในพื้นที่นี้แต่งหน้าเว็บ',
+  'publish.css in this space dresses the site.': 'publish.css ในพื้นที่นี้แต่งหน้าเว็บ',
+  'publish.js in this space runs on the site.': 'publish.js ในพื้นที่นี้ทำงานบนเว็บ',
+  Visits: 'การเข้าชม',
+  'Counter script': 'สคริปต์นับ',
+  'Site name it expects': 'ชื่อเว็บที่ต้องการ',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'การเข้าชมไปถึงผู้ที่ให้บริการสคริปต์นั้น เว้นว่างไว้จะไม่ส่งอะไรเลย',
+  Answers: 'คำตอบ',
+  'Save as CSV': 'บันทึกเป็น CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ส่งเมลไม่ได้ - ลองใหม่',
   'start again - that took too long': 'เริ่มใหม่ - ใช้เวลานานเกินไป',

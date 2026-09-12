@@ -1215,6 +1215,20 @@ export const zhHantHK: Dictionary = {
   '{count} pieces of this meeting were lost.': '今次會議遺失咗 {count} 個片段。',
   'Add an AI provider in settings to summarise.': '在設定加入 AI 供應商嚟產生摘要。',
   'The summary could not be written.': '寫唔出摘要。',
+  // Publishing part two.
+  Spreadsheet: '電子表格',
+  'The app’s own': '應用自帶嘅',
+  'publish.css and publish.js in this space dress the site.':
+    '呢個空間嘅 publish.css 同 publish.js 為網站妝點。',
+  'publish.css in this space dresses the site.': '呢個空間嘅 publish.css 為網站妝點。',
+  'publish.js in this space runs on the site.': '呢個空間嘅 publish.js 在網站上執行。',
+  Visits: '造訪',
+  'Counter script': '計數腳本',
+  'Site name it expects': '佢期待嘅網站名',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    '讀者嘅造訪會送去提供該腳本嘅一方。留空就咩都唔傳送。',
+  Answers: '回答',
+  'Save as CSV': '存為 CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '無法發出郵件，請再試一次',
   'start again - that took too long': '花太久了，請重新開始',

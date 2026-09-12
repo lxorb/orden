@@ -1249,6 +1249,20 @@ export const fa: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'برای چکیده‌سازی در تنظیمات فراهم‌کننده هوش مصنوعی بیفزایید.',
   'The summary could not be written.': 'چکیده نوشته نشد.',
+  // Publishing part two.
+  Spreadsheet: 'صفحه‌گسترده',
+  'The app’s own': 'مالِ خودِ برنامه',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css و publish.js در این فضا سایت را می‌آرایند.',
+  'publish.css in this space dresses the site.': 'publish.css در این فضا سایت را می‌آراید.',
+  'publish.js in this space runs on the site.': 'publish.js در این فضا روی سایت اجرا می‌شود.',
+  Visits: 'بازدیدها',
+  'Counter script': 'اسکریپت شمارش',
+  'Site name it expects': 'نام سایتی که انتظار دارد',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'بازدید خواننده به هر کسی که آن اسکریپت را می‌دهد می‌رسد. خالی باشد چیزی فرستاده نمی‌شود.',
+  Answers: 'پاسخ‌ها',
+  'Save as CSV': 'ذخیره به شکل CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'نامه فرستاده نشد - دوباره بیازمایید',
   'start again - that took too long': 'از نو آغاز کنید - آن بسیار درازید',

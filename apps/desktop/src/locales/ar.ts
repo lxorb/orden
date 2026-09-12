@@ -1328,6 +1328,20 @@ export const ar: Dictionary = {
   '{count} pieces of this meeting were lost.': 'فُقدت {count} أجزاء من هذا الاجتماع.',
   'Add an AI provider in settings to summarise.': 'أضف مزوّد ذكاء اصطناعي في الإعدادات للتلخيص.',
   'The summary could not be written.': 'تعذّرت كتابة الملخص.',
+  // Publishing part two.
+  Spreadsheet: 'جدول بيانات',
+  'The app’s own': 'الخاص بالتطبيق',
+  'publish.css and publish.js in this space dress the site.':
+    'يكسو publish.css و publish.js في هذه المساحة الموقع.',
+  'publish.css in this space dresses the site.': 'يكسو publish.css في هذه المساحة الموقع.',
+  'publish.js in this space runs on the site.': 'يعمل publish.js في هذه المساحة على الموقع.',
+  Visits: 'الزيارات',
+  'Counter script': 'سكربت العدّ',
+  'Site name it expects': 'اسم الموقع الذي يتوقعه',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'تذهب زيارة القارئ إلى من يقدّم ذلك السكربت. ولا يُرسل شيء إذا كان فارغًا.',
+  Answers: 'الأجوبة',
+  'Save as CSV': 'حفظ بصيغة CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'تعذّر إرسال البريد - حاول مرة أخرى',
   'start again - that took too long': 'ابدأ من جديد - استغرق ذلك وقتًا طويلًا',

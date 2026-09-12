@@ -1268,6 +1268,21 @@ export const ha: Dictionary = {
   '{count} pieces of this meeting were lost.': 'Yankuna {count} na wannan taron sun ɓace.',
   'Add an AI provider in settings to summarise.': 'Ƙara mai bayar da AI a saituna don taƙaitawa.',
   'The summary could not be written.': 'Ba a iya rubuta taƙaitawar ba.',
+  // Publishing part two.
+  Spreadsheet: 'Takardar lissafi',
+  'The app’s own': 'Na manhajar kanta',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css da publish.js a wannan wuri suna sanya kayan shafin.',
+  'publish.css in this space dresses the site.':
+    'publish.css a wannan wuri yana sanya kayan shafin.',
+  'publish.js in this space runs on the site.': 'publish.js a wannan wuri yana aiki a shafin.',
+  Visits: 'Ziyarce-ziyarce',
+  'Counter script': 'Rubutun ƙidaya',
+  'Site name it expects': 'Sunan shafin da ake tsammani',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Ziyarar mai karatu na zuwa ga wanda ke bayar da wannan rubutu. Idan babu komai, ba a aika kome.',
+  Answers: 'Amsoshi',
+  'Save as CSV': 'Ajiye a matsayin CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ba a iya aika imel ba - sake gwadawa',
   'start again - that took too long': 'sake farawa - wannan ya ɗauki lokaci mai tsawo',

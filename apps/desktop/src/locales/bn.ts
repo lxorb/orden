@@ -1246,6 +1246,20 @@ export const bn: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'সারসংক্ষেপের জন্য সেটিংসে একটি AI প্রদানকারী যোগ করুন।',
   'The summary could not be written.': 'সারসংক্ষেপ লেখা গেল না।',
+  // Publishing part two.
+  Spreadsheet: 'স্প্রেডশিট',
+  'The app’s own': 'অ্যাপের নিজের',
+  'publish.css and publish.js in this space dress the site.':
+    'এই স্পেসের publish.css ও publish.js সাইট সাজায়।',
+  'publish.css in this space dresses the site.': 'এই স্পেসের publish.css সাইট সাজায়।',
+  'publish.js in this space runs on the site.': 'এই স্পেসের publish.js সাইটে চলে।',
+  Visits: 'আগমন',
+  'Counter script': 'গণনার স্ক্রিপ্ট',
+  'Site name it expects': 'যে সাইটের নাম চায়',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'পাঠকের আগমন যায় সেই স্ক্রিপ্ট যে দেয় তার কাছে। খালি থাকলে কিছুই পাঠানো হয় না।',
+  Answers: 'উত্তর',
+  'Save as CSV': 'CSV হিসেবে রাখুন',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'মেইল পাঠানো গেল না - আবার চেষ্টা করুন',
   'start again - that took too long': 'আবার শুরু করুন - অনেক সময় লেগেছে',

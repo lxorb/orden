@@ -68,6 +68,7 @@ export const ja: Dictionary = {
   Delete: '削除',
   Move: '移動',
   'Move after': 'この後に移動',
+  Heading: '見出し',
   'Move to': '移動先',
   'Move this note': 'このノートを移動',
   'Move up': '上へ',
@@ -114,7 +115,6 @@ export const ja: Dictionary = {
   'Merge into…': '統合先…',
   'Split at caret': 'カーソル位置で分割',
   'Extract selection': '選択範囲を抽出',
-
   // Panels and navigation
   Bookmarks: 'ブックマーク',
   'New group': '新しいグループ',
@@ -170,14 +170,12 @@ export const ja: Dictionary = {
   'Sort by created': '作成日順',
   'Show hidden files': '隠しファイルを表示',
   'Hide hidden files': '隠しファイルを隠す',
-
   // Writing
   Bold: '太字',
   Italic: '斜体',
   Strikethrough: '取り消し線',
   Highlight: 'ハイライト',
   Code: 'コード',
-  Heading: '見出し',
   Quote: '引用',
   Link: 'リンク',
   'Clear formatting': '書式を消去',
@@ -223,7 +221,7 @@ export const ja: Dictionary = {
   Notes: 'ノート',
   'Delete now': '今すぐ削除',
   'deleted {when}': '{when}に削除',
-  'gone in {days} days': 'あと{days}日で消えます',
+  'gone in {count} days': 'あと{count}日で消えます',
   'on this device': 'このデバイス上',
   '{count} notes': '{count}件のノート',
   'Empty Recently deleted?': '最近削除した項目を空にしますか？',
@@ -254,11 +252,9 @@ export const ja: Dictionary = {
   'Horizontal rule': '区切り線',
   'Page break': '改ページ',
   'Tidy up this note': 'ノートを整える',
-
   // PDFs
   'Copy a link': 'リンクをコピー',
   'That PDF could not be opened': 'この PDF を開けませんでした',
-
   // Modes and view
   Reading: '閲覧',
   'Leave reading': '閲覧を終了',
@@ -299,7 +295,6 @@ export const ja: Dictionary = {
   'Zoom in': '拡大',
   'Zoom out': '縮小',
   'Actual size': '実際のサイズ',
-
   // Appearance
   Accent: 'アクセント',
   'Accent: {name}': 'アクセント: {name}',
@@ -405,8 +400,7 @@ export const ja: Dictionary = {
   'Edit custom CSS': 'カスタム CSS を編集',
   'Edit snippets': 'スニペットを編集',
   'Reload themes and custom CSS': 'テーマとカスタム CSS を再読み込み',
-
-  // テーマストアと、そのカードに並ぶ見本のノート
+  // The theme store, and the sample note its cards show
   Themes: 'テーマ一覧',
   Browse: '見てみる',
   'Search themes': 'テーマを検索',
@@ -435,7 +429,6 @@ export const ja: Dictionary = {
   'could not install that theme': 'そのテーマをインストールできませんでした',
   'could not remove that theme': 'そのテーマを取り外せませんでした',
   'that theme has nothing a theme may set': 'このテーマにはテーマが設定できるものがありません',
-
   General: '一般',
   Editor: 'エディター',
   Markdown: 'Markdown',
@@ -447,7 +440,6 @@ export const ja: Dictionary = {
   'Keep a version every': 'バージョンを保持する間隔',
   'Keep versions for': 'バージョンの保持期間',
   '{count} min': '{count} 分',
-  '1 day': '1 日',
   '{count} days': '{count} 日',
   Changes: '変更',
   Text: 'テキスト',
@@ -522,8 +514,8 @@ export const ja: Dictionary = {
   'Check for updates': '更新を確認',
   Language: '言語',
   'Match the system': 'システムに合わせる',
+  'Machine-translated. Corrections welcome.': '機械翻訳です。修正を歓迎します。',
   'Match the app': 'アプリに合わせる',
-
   // Settings
   Settings: '設定',
   Account: 'アカウント',
@@ -549,7 +541,6 @@ export const ja: Dictionary = {
   '{count} spaces sync to your account.': '{count} 個のスペースがアカウントと同期しています。',
   Update: '更新',
   'Live at': '公開先',
-
   // Publishing
   'Publish {name}': '{name} を公開',
   'What to publish': '公開する範囲',
@@ -569,7 +560,6 @@ export const ja: Dictionary = {
   Value: '値',
   available: '利用できます',
   'checking…': '確認中…',
-
   // LLM
   'Connect an LLM to your notes': 'LLM をノートにつなぐ',
   'Sign in first - the connector reaches the notes in your account.':
@@ -621,7 +611,6 @@ export const ja: Dictionary = {
     'URL ではなく JSON ブロックを受け取るクライアント向けです。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'サインインできないクライアントには、代わりにトークンを渡せます。表示は一度きりです。',
-
   // Export
   'Plain text': 'テキスト',
   'Markdown with the pictures': '画像付き Markdown',
@@ -641,7 +630,6 @@ export const ja: Dictionary = {
   Margin: '余白',
   Header: 'ヘッダー',
   Footer: 'フッター',
-
   // History
   'Version history': '変更履歴',
   'Copy link to this note': 'このノートへのリンクをコピー',
@@ -651,7 +639,6 @@ export const ja: Dictionary = {
   'No earlier versions yet. One is kept each time you save.':
     'まだ以前のバージョンがありません。保存するたびに 1 つ保管されます。',
   'Restore this version': 'このバージョンに戻す',
-
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'そこにはすでにノートがあります',
   'enter a valid email address': '有効なメールアドレスを入力してください',
@@ -685,7 +672,6 @@ export const ja: Dictionary = {
   'could not publish': '公開できませんでした',
   'could not create a token': 'トークンを作成できませんでした',
   'that did not work': 'うまくいきませんでした',
-
   // Settings on a phone, display names, one blog address
   Back: '戻る',
   'Display name': '表示名',
@@ -706,7 +692,6 @@ export const ja: Dictionary = {
   Spelling: 'スペルチェック',
   Checking: 'チェック',
   Dictionary: '辞書',
-
   // A domain of one's own, on its way
   'Waiting for the record to show up.': 'レコードが見つかるのを待っています。',
   'Certificate issued.': '証明書を発行しました。',
@@ -718,7 +703,6 @@ export const ja: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare がこのドメインをブロックしました',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ドメインのルートでは、プロバイダーが CNAME を許可しない場合、ALIAS か ANAME レコード、または CNAME フラット化を使ってください。',
-
   // Shortcuts
   Shortcuts: 'ショートカット',
   'Search shortcuts': 'ショートカットを検索',
@@ -844,7 +828,6 @@ export const ja: Dictionary = {
   'Code theme: {name}': 'コードテーマ: {name}',
   'Recent: {name}': '最近: {name}',
   'Delete a layout': 'レイアウトを削除',
-
   // Keyboards and modal editing
   Default: '既定',
   'Vim keys': 'Vim キー',
@@ -857,12 +840,11 @@ export const ja: Dictionary = {
   INSERT: '挿入',
   VISUAL: 'ビジュアル',
   REPLACE: '置換',
-
   // Even Realities glasses
   'Page {page} of {count} on the glasses': 'グラスで {count} ページ中 {page} ページ',
   'Reaching the glasses': 'グラスに接続中',
   'The glasses are not keeping up': 'グラスが追いついていません',
-  // キャンバス: 道具、ペン、そしてできること
+  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: '追加',
   Select: '選択',
   Pan: '画面を動かす',
@@ -933,7 +915,7 @@ export const ja: Dictionary = {
   'Export as PNG': 'PNG で書き出す',
   'Export as SVG': 'SVG で書き出す',
   'Export as PDF': 'PDF で書き出す',
-  // キャンバス: そのキーの名前
+  // The canvas: what its own keys are called
   'Delete what is picked': '選択したものを削除',
   'Nudge left': '左へ少し動かす',
   'Nudge right': '右へ少し動かす',
@@ -1097,7 +1079,6 @@ export const ja: Dictionary = {
   'Go back': '巻き戻す',
   'Going back': '巻き戻し中',
   'This space, as it was': 'このスペースの過去の状態',
-  '1 day ago': '1 日前',
   '{count} days ago': '{count} 日前',
   'What would change?': '何が変わりますか？',
   '{count} notes would go back to what they said then.':
@@ -1130,7 +1111,6 @@ export const ja: Dictionary = {
   'this one': 'この端末',
   End: '終了',
   'End every other session': '他のすべてのセッションを終了',
-
   // Said and not shown: what a reader is told about a surface
   'The note': 'ノート',
   '{space} panel': '{space} パネル',
@@ -1141,7 +1121,6 @@ export const ja: Dictionary = {
   'What is selected': '選択中のもの',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'キャンバス: カード {cards} 枚、リンク {links} 本、描画 {drawings} 点',
-
   // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'プロバイダ',
@@ -1259,7 +1238,6 @@ export const ja: Dictionary = {
   'Add an AI provider in settings to summarise.':
     '要約するには設定で AI プロバイダーを追加してください。',
   'The summary could not be written.': '要約を書けませんでした。',
-
   // Publishing part two.
   Spreadsheet: '表計算',
   'The app’s own': 'アプリと同じ',
@@ -1276,4 +1254,50 @@ export const ja: Dictionary = {
     '訪問の記録はそのスクリプトの提供元に送られます。空欄なら何も送りません。',
   Answers: '回答',
   'Save as CSV': 'CSV で保存',
+  // Signing in, and the mail that carries a code.
+  'could not send the mail - try again': 'メールを送信できませんでした。もう一度お試しください',
+  'start again - that took too long': '時間がかかりすぎました。最初からやり直してください',
+  'sign in to do that': 'それを行うにはサインインしてください',
+  'that is not something a token can do': 'トークンではできない操作です',
+  'something went wrong here - try again': '問題が発生しました。もう一度お試しください',
+  'this service cannot keep a secret safely': 'このサービスは秘密を安全に保管できません',
+  // Pictures, files and what an account has room for.
+  'images and PDFs only': '画像とPDFのみ',
+  'that file is too big': 'このファイルは大きすぎます',
+  'that is more settings than an account holds': 'アカウントが保持できる設定の数を超えています',
+  'that is more bookmarks than a space holds': 'スペースが保持できるブックマークの数を超えています',
+  'that is more paths than a space leaves out': 'スペースが除外できるパスの数を超えています',
+  'that is more files than a space keeps': 'スペースが保持できるファイルの数を超えています',
+  'that is more than a space keeps about its graph':
+    'スペースがグラフについて保持できる量を超えています',
+  'that is more folder icons than a space holds':
+    'スペースが保持できるフォルダー記号の数を超えています',
+  // Sharing a space, and being let into one.
+  'nobody by that address': 'そのアドレスの人はいません',
+  'nobody by that name': 'その名前の人はいません',
+  'nobody is waiting by that name': 'その名前で待っている人はいません',
+  'this space is yours': 'このスペースはあなたのものです',
+  'that link is busy, try again in a minute':
+    'このリンクは使用中です。1分後にもう一度お試しください',
+  // Versions, the bin, and a room two people write in.
+  'no such version': 'そのバージョンはありません',
+  'this note was shared with you, not its folder':
+    'このノートは共有されていますが、そのフォルダーは共有されていません',
+  'nothing to restore': '復元するものがありません',
+  'restore its space first': '先にそのスペースを復元してください',
+  'nothing to delete': '削除するものがありません',
+  'this room is not answering - try again': 'このルームが応答しません。もう一度お試しください',
+  'rooms are not running here': 'ここではルームが動いていません',
+  // The theme store, and asking a model something.
+  'the theme store is not answering': 'テーマストアが応答しません',
+  'that is not a theme': 'それはテーマではありません',
+  'no such theme': 'そのテーマはありません',
+  'choose a model first': '先にモデルを選んでください',
+  'set an OpenAI key in Nib’s settings first': '先にNibの設定でOpenAIキーを設定してください',
+  'that is a lot of questions - try again later':
+    '質問が多すぎます。しばらくしてからお試しください',
+  'that is too much audio': '音声が長すぎます',
+  'that is more than a spoken command': '音声コマンドとしては長すぎます',
+  'that is a lot of listening - try again later':
+    '聞き取りが多すぎます。しばらくしてからお試しください',
 }

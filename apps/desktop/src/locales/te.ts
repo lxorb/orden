@@ -1249,6 +1249,20 @@ export const te: Dictionary = {
   '{count} pieces of this meeting were lost.': 'ఈ సమావేశంలో {count} భాగాలు పోయాయి.',
   'Add an AI provider in settings to summarise.': 'సారాంశం కోసం అమరికల్లో ఒక AI ప్రదాతను చేర్చు.',
   'The summary could not be written.': 'సారాంశం రాయలేకపోయాం.',
+  // Publishing part two.
+  Spreadsheet: 'స్ప్రెడ్‌షీట్',
+  'The app’s own': 'యాప్ దానిదే',
+  'publish.css and publish.js in this space dress the site.':
+    'ఈ స్పేస్‌లోని publish.css, publish.js సైట్‌ను అలంకరిస్తాయి.',
+  'publish.css in this space dresses the site.': 'ఈ స్పేస్‌లోని publish.css సైట్‌ను అలంకరిస్తుంది.',
+  'publish.js in this space runs on the site.': 'ఈ స్పేస్‌లోని publish.js సైట్‌లో నడుస్తుంది.',
+  Visits: 'రాకపోకలు',
+  'Counter script': 'లెక్కింపు స్క్రిప్ట్',
+  'Site name it expects': 'ఆశించే సైట్ పేరు',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'పాఠకుడి రాక ఆ స్క్రిప్ట్ ఇచ్చేవారికి వెళ్తుంది. ఖాళీగా ఉంటే ఏదీ పంపబడదు.',
+  Answers: 'జవాబులు',
+  'Save as CSV': 'CSV గా భద్రపరచు',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'మెయిల్ పంపలేకపోయింది - మళ్లీ ప్రయత్నించండి',
   'start again - that took too long': 'మళ్లీ మొదలుపెట్టండి - అది చాలా సమయం తీసుకుంది',

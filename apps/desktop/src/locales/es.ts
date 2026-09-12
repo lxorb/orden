@@ -1285,6 +1285,21 @@ export const es: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Añadir un proveedor de IA en los ajustes para resumir.',
   'The summary could not be written.': 'No se pudo escribir el resumen.',
+  // Publishing part two.
+  Spreadsheet: 'Hoja de cálculo',
+  'The app’s own': 'El de la app',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css y publish.js de este espacio visten el sitio.',
+  'publish.css in this space dresses the site.': 'publish.css de este espacio viste el sitio.',
+  'publish.js in this space runs on the site.':
+    'publish.js de este espacio se ejecuta en el sitio.',
+  Visits: 'Visitas',
+  'Counter script': 'Script de recuento',
+  'Site name it expects': 'Nombre de sitio que espera',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'La visita va a quien sirva ese script. Si está vacío no se envía nada.',
+  Answers: 'Respuestas',
+  'Save as CSV': 'Guardar como CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'no se pudo enviar el correo - probar de nuevo',
   'start again - that took too long': 'empezar de nuevo - eso tardó demasiado',

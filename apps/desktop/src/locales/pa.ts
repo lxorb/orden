@@ -1253,6 +1253,20 @@ export const pa: Dictionary = {
   '{count} pieces of this meeting were lost.': 'ਇਸ ਮੀਟਿੰਗ ਦੇ {count} ਹਿੱਸੇ ਗੁਆਚ ਗਏ।',
   'Add an AI provider in settings to summarise.': 'ਸਾਰ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ AI ਪ੍ਰਦਾਤਾ ਜੋੜੋ।',
   'The summary could not be written.': 'ਸਾਰ ਲਿਖਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
+  // Publishing part two.
+  Spreadsheet: 'ਸਪਰੈੱਡਸ਼ੀਟ',
+  'The app’s own': 'ਐਪ ਦਾ ਆਪਣਾ',
+  'publish.css and publish.js in this space dress the site.':
+    'ਇਸ ਥਾਂ ਦੇ publish.css ਤੇ publish.js ਸਾਈਟ ਸਜਾਉਂਦੇ ਹਨ।',
+  'publish.css in this space dresses the site.': 'ਇਸ ਥਾਂ ਦਾ publish.css ਸਾਈਟ ਸਜਾਉਂਦਾ ਹੈ।',
+  'publish.js in this space runs on the site.': 'ਇਸ ਥਾਂ ਦਾ publish.js ਸਾਈਟ ਉੱਤੇ ਚੱਲਦਾ ਹੈ।',
+  Visits: 'ਆਮਦ',
+  'Counter script': 'ਗਿਣਤੀ ਸਕ੍ਰਿਪਟ',
+  'Site name it expects': 'ਲੋੜੀਂਦਾ ਸਾਈਟ ਨਾਮ',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'ਪੜ੍ਹਨ ਵਾਲੇ ਦੀ ਆਮਦ ਉਸ ਕੋਲ ਜਾਂਦੀ ਹੈ ਜੋ ਇਹ ਸਕ੍ਰਿਪਟ ਦਿੰਦਾ ਹੈ। ਖ਼ਾਲੀ ਹੋਵੇ ਤਾਂ ਕੁਝ ਨਹੀਂ ਭੇਜਿਆ ਜਾਂਦਾ।',
+  Answers: 'ਜਵਾਬ',
+  'Save as CSV': 'CSV ਵਜੋਂ ਸਾਂਭੋ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ਡਾਕ ਨਹੀਂ ਭੇਜੀ ਜਾ ਸਕੀ - ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'start again - that took too long': 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ - ਉਸ ਵਿੱਚ ਬਹੁਤ ਸਮਾਂ ਲੱਗਾ',

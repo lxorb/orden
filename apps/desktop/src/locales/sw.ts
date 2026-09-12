@@ -1265,6 +1265,21 @@ export const sw: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Ongeza mtoa huduma wa AI kwenye mipangilio ili kufupisha.',
   'The summary could not be written.': 'Muhtasari haukuweza kuandikwa.',
+  // Publishing part two.
+  Spreadsheet: 'Lahajedwali',
+  'The app’s own': 'Ya programu yenyewe',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css na publish.js katika nafasi hii huvalisha tovuti.',
+  'publish.css in this space dresses the site.': 'publish.css katika nafasi hii huvalisha tovuti.',
+  'publish.js in this space runs on the site.':
+    'publish.js katika nafasi hii hufanya kazi kwenye tovuti.',
+  Visits: 'Mitembelezi',
+  'Counter script': 'Hati ya kuhesabu',
+  'Site name it expects': 'Jina la tovuti linalotarajiwa',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Mtembelezi huenda kwa yule anayetoa hati hiyo. Ikiwa wazi, hakuna kinachotumwa.',
+  Answers: 'Majibu',
+  'Save as CSV': 'Hifadhi kama CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'barua haikutumwa - jaribu tena',
   'start again - that took too long': 'anza tena - hiyo ilichukua muda mrefu mno',

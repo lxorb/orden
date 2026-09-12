@@ -1292,6 +1292,20 @@ export const it: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Aggiungere un fornitore di IA nelle impostazioni per riassumere.',
   'The summary could not be written.': 'Non è stato possibile scrivere il riassunto.',
+  // Publishing part two.
+  Spreadsheet: 'Foglio di calcolo',
+  'The app’s own': 'Quello dell’app',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css e publish.js di questo spazio vestono il sito.',
+  'publish.css in this space dresses the site.': 'publish.css di questo spazio veste il sito.',
+  'publish.js in this space runs on the site.': 'publish.js di questo spazio gira sul sito.',
+  Visits: 'Visite',
+  'Counter script': 'Script di conteggio',
+  'Site name it expects': 'Nome del sito che si aspetta',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'La visita va a chi serve quello script. Se è vuoto non si invia nulla.',
+  Answers: 'Risposte',
+  'Save as CSV': 'Salva come CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'invio del messaggio fallito - riprova',
   'start again - that took too long': 'ricomincia - ci è voluto troppo',

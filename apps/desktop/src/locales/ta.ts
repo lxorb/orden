@@ -1266,6 +1266,20 @@ export const ta: Dictionary = {
   '{count} pieces of this meeting were lost.': 'இந்தக் கூட்டத்தின் {count} பகுதிகள் இழந்தன.',
   'Add an AI provider in settings to summarise.': 'சுருக்க அமைப்புகளில் ஒரு AI வழங்குநரைச் சேர்.',
   'The summary could not be written.': 'சுருக்கத்தை எழுத முடியவில்லை.',
+  // Publishing part two.
+  Spreadsheet: 'விரிதாள்',
+  'The app’s own': 'செயலியின் சொந்தம்',
+  'publish.css and publish.js in this space dress the site.':
+    'இந்த இடத்தின் publish.css உம் publish.js உம் தளத்தை அணிசெய்கின்றன.',
+  'publish.css in this space dresses the site.': 'இந்த இடத்தின் publish.css தளத்தை அணிசெய்கிறது.',
+  'publish.js in this space runs on the site.': 'இந்த இடத்தின் publish.js தளத்தில் இயங்குகிறது.',
+  Visits: 'வருகைகள்',
+  'Counter script': 'எண்ணும் நிரல்',
+  'Site name it expects': 'எதிர்பார்க்கும் தள பெயர்',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'வாசகரின் வருகை அந்த நிரலை வழங்குபவரிடம் செல்லும். காலியாக இருந்தால் எதுவும் அனுப்பப்படாது.',
+  Answers: 'பதில்கள்',
+  'Save as CSV': 'CSV ஆகச் சேமி',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'அஞ்சலை அனுப்ப முடியவில்லை - மீண்டும் முயற்சிக்கவும்',
   'start again - that took too long': 'மீண்டும் தொடங்கவும் - அது மிக நேரம் எடுத்தது',

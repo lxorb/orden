@@ -1248,6 +1248,20 @@ export const tr: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Özetlemek için ayarlarda bir YZ sağlayıcısı ekleyin.',
   'The summary could not be written.': 'Özet yazılamadı.',
+  // Publishing part two.
+  Spreadsheet: 'Hesap tablosu',
+  'The app’s own': 'Uygulamanın kendi',
+  'publish.css and publish.js in this space dress the site.':
+    'Bu alandaki publish.css ve publish.js siteyi giydirir.',
+  'publish.css in this space dresses the site.': 'Bu alandaki publish.css siteyi giydirir.',
+  'publish.js in this space runs on the site.': 'Bu alandaki publish.js sitede çalışır.',
+  Visits: 'Ziyaretler',
+  'Counter script': 'Sayaç betiği',
+  'Site name it expects': 'Beklediği site adı',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Ziyaret, o betiği sunan kime aitse ona gider. Boşken hiçbir şey gönderilmez.',
+  Answers: 'Yanıtlar',
+  'Save as CSV': 'CSV olarak kaydet',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'posta gönderilemedi - yine deneyin',
   'start again - that took too long': 'yeniden başlayın - bu çok uzun sürdü',

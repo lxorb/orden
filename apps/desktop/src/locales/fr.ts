@@ -68,6 +68,7 @@ export const fr: Dictionary = {
   Delete: 'Supprimer',
   Move: 'Déplacer',
   'Move after': 'Déplacer après',
+  Heading: 'Titre',
   'Move to': 'Déplacer vers',
   'Move this note': 'Déplacer cette note',
   'Move up': 'Monter',
@@ -114,7 +115,6 @@ export const fr: Dictionary = {
   'Merge into…': 'Fusionner dans…',
   'Split at caret': 'Diviser au curseur',
   'Extract selection': 'Extraire la sélection',
-
   // Panels and navigation
   Bookmarks: 'Signets',
   'New group': 'Nouveau groupe',
@@ -170,14 +170,12 @@ export const fr: Dictionary = {
   'Sort by created': 'Trier par création',
   'Show hidden files': 'Afficher les fichiers masqués',
   'Hide hidden files': 'Masquer les fichiers cachés',
-
   // Writing
   Bold: 'Gras',
   Italic: 'Italique',
   Strikethrough: 'Barré',
   Highlight: 'Surligner',
   Code: 'Code',
-  Heading: 'Titre',
   Quote: 'Citation',
   Link: 'Lien',
   'Clear formatting': 'Effacer la mise en forme',
@@ -213,7 +211,11 @@ export const fr: Dictionary = {
   'Delete image': 'Supprimer l’image',
   'Reset size': 'Réinitialiser la taille',
   'Image not found': 'Image introuvable',
-  'Delete {count} items': 'Supprimer ces {count} éléments',
+  'Delete {count} items': {
+    one: 'Supprimer {count} élément',
+    many: 'Supprimer {count} d’éléments',
+    other: 'Supprimer {count} éléments',
+  },
   'Recently deleted': 'Supprimés récemment',
   'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
     'Les notes et espaces supprimés attendent ici 14 jours, puis disparaissent pour de bon.',
@@ -223,9 +225,13 @@ export const fr: Dictionary = {
   Notes: 'Notes',
   'Delete now': 'Supprimer maintenant',
   'deleted {when}': 'supprimé {when}',
-  'gone in {days} days': 'disparaît dans {days} jours',
+  'gone in {count} days': {
+    one: 'disparaît dans {count} jour',
+    many: 'disparaît dans {count} de jours',
+    other: 'disparaît dans {count} jours',
+  },
   'on this device': 'sur cet appareil',
-  '{count} notes': '{count} notes',
+  '{count} notes': { one: '{count} note', many: '{count} de notes', other: '{count} notes' },
   'Empty Recently deleted?': 'Vider Supprimés récemment ?',
   'Everything in it is gone for good.': 'Tout ce qui s’y trouve disparaît pour de bon.',
   'could not reach the server': 'Impossible de joindre le serveur',
@@ -254,11 +260,9 @@ export const fr: Dictionary = {
   'Horizontal rule': 'Ligne horizontale',
   'Page break': 'Saut de page',
   'Tidy up this note': 'Mettre au propre',
-
   // PDFs
   'Copy a link': 'Copier un lien',
   'That PDF could not be opened': 'Ce PDF n’a pas pu être ouvert',
-
   // Modes and view
   Reading: 'Lecture',
   'Leave reading': 'Quitter la lecture',
@@ -299,7 +303,6 @@ export const fr: Dictionary = {
   'Zoom in': 'Agrandir',
   'Zoom out': 'Réduire',
   'Actual size': 'Taille réelle',
-
   // Appearance
   Accent: 'Couleur',
   'Accent: {name}': 'Couleur : {name}',
@@ -355,7 +358,7 @@ export const fr: Dictionary = {
   'Glasses microphone': 'Micro des lunettes',
   'No way to listen': 'Aucun moyen d’écouter',
   'no sound yet': 'pas encore de son',
-  '{count} frames': '{count} trames',
+  '{count} frames': { one: '{count} trame', many: '{count} de trames', other: '{count} trames' },
   'Nothing heard': 'Rien entendu',
   'no recognition': 'pas de reconnaissance',
   'no microphone': 'pas de micro',
@@ -405,8 +408,7 @@ export const fr: Dictionary = {
   'Edit custom CSS': 'Modifier le CSS personnalisé',
   'Edit snippets': 'Modifier les extraits',
   'Reload themes and custom CSS': 'Recharger les thèmes et le CSS',
-
-  // La boutique de thèmes, et la note d'exemple sur ses cartes
+  // The theme store, and the sample note its cards show
   Themes: 'Thèmes',
   Browse: 'Parcourir',
   'Search themes': 'Chercher un thème',
@@ -422,7 +424,11 @@ export const fr: Dictionary = {
   'Add a word': 'Ajouter un mot',
   'Add {word} to the dictionary': 'Ajouter {word} au dictionnaire',
   'Remove {word} from the dictionary': 'Retirer {word} du dictionnaire',
-  '{count} things in this theme were left out.': '{count} éléments de ce thème ont été écartés.',
+  '{count} things in this theme were left out.': {
+    one: '{count} élément de ce thème a été écarté.',
+    many: '{count} d’éléments de ce thème ont été écartés.',
+    other: '{count} éléments de ce thème ont été écartés.',
+  },
   'A note': 'Une note',
   'Words with {bold} and a {link}.': 'Des mots avec du {bold} et un {link}.',
   bold: 'gras',
@@ -436,7 +442,6 @@ export const fr: Dictionary = {
   'could not remove that theme': 'Ce thème n’a pas pu être retiré',
   'that theme has nothing a theme may set':
     'Ce thème ne définit rien de ce qu’un thème peut définir',
-
   General: 'Général',
   Editor: 'Éditeur',
   Markdown: 'Markdown',
@@ -448,8 +453,7 @@ export const fr: Dictionary = {
   'Keep a version every': 'Garder une version toutes les',
   'Keep versions for': 'Garder les versions pendant',
   '{count} min': '{count} min',
-  '1 day': '1 jour',
-  '{count} days': '{count} jours',
+  '{count} days': { one: '{count} jour', many: '{count} de jours', other: '{count} jours' },
   Changes: 'Modifications',
   Text: 'Texte',
   'No changes': 'Aucune modification',
@@ -523,8 +527,8 @@ export const fr: Dictionary = {
   'Check for updates': 'Rechercher des mises à jour',
   Language: 'Langue',
   'Match the system': 'Comme le système',
+  'Machine-translated. Corrections welcome.': 'Traduit automatiquement. Corrections bienvenues.',
   'Match the app': 'Comme l’application',
-
   // Settings
   Settings: 'Réglages',
   Account: 'Compte',
@@ -547,10 +551,13 @@ export const fr: Dictionary = {
   'Digit {number}': 'Chiffre {number}',
   'Resend in {seconds}s': 'Renvoyer dans {seconds} s',
   'Last synced {time}.': 'Dernière synchronisation à {time}.',
-  '{count} spaces sync to your account.': '{count} espaces sont synchronisés avec votre compte.',
+  '{count} spaces sync to your account.': {
+    one: '{count} espace est synchronisé avec votre compte.',
+    many: '{count} d’espaces sont synchronisés avec votre compte.',
+    other: '{count} espaces sont synchronisés avec votre compte.',
+  },
   Update: 'Mettre à jour',
   'Live at': 'En ligne sur',
-
   // Publishing
   'Publish {name}': 'Publier {name}',
   'What to publish': 'Ce qui est publié',
@@ -571,7 +578,6 @@ export const fr: Dictionary = {
   Value: 'Valeur',
   available: 'disponible',
   'checking…': 'vérification…',
-
   // LLM
   'Connect an LLM to your notes': 'Connecter un LLM à vos notes',
   'Sign in first - the connector reaches the notes in your account.':
@@ -625,7 +631,6 @@ export const fr: Dictionary = {
     'Pour un client qui prend un bloc JSON plutôt qu’une URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Un client qui ne peut pas se connecter peut recevoir un jeton à la place. Il n’est affiché qu’une fois.',
-
   // Export
   'Plain text': 'Texte',
   'Markdown with the pictures': 'Markdown avec les images',
@@ -645,7 +650,6 @@ export const fr: Dictionary = {
   Margin: 'Marge',
   Header: 'En-tête',
   Footer: 'Pied de page',
-
   // History
   'Version history': 'Historique des versions',
   'Copy link to this note': 'Copier le lien vers cette note',
@@ -655,7 +659,6 @@ export const fr: Dictionary = {
   'No earlier versions yet. One is kept each time you save.':
     'Aucune version antérieure. Une est conservée à chaque enregistrement.',
   'Restore this version': 'Restaurer cette version',
-
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'Une note se trouve déjà là',
   'enter a valid email address': 'Entrez une adresse e-mail valide',
@@ -663,6 +666,7 @@ export const fr: Dictionary = {
   'no such note in this space': 'Cette note n’existe pas dans cet espace',
   'no such note': 'Cette note n’existe pas',
   'no such space': 'Cet espace n’existe pas',
+  'sign in first': 'Connectez-vous d’abord',
   'you can only read this space': 'Vous pouvez seulement lire cet espace',
   'only the owner can do that': 'Seul le propriétaire peut faire cela',
   'this space is already yours': 'Cet espace est déjà le vôtre',
@@ -670,7 +674,6 @@ export const fr: Dictionary = {
   'that invitation was sent to another address':
     'Cette invitation a été envoyée à une autre adresse',
   'that link has expired': 'Ce lien a expiré',
-  'sign in first': 'Connectez-vous d’abord',
   'that code has expired - ask for a new one': 'Ce code a expiré - demandez-en un nouveau',
   'that code is not right': 'Ce code n’est pas le bon',
   'that does not look like a domain': 'Cela ne ressemble pas à un domaine',
@@ -689,7 +692,6 @@ export const fr: Dictionary = {
   'could not publish': 'La publication a échoué',
   'could not create a token': 'La création du jeton a échoué',
   'that did not work': 'Cela n’a pas fonctionné',
-
   // Settings on a phone, display names, one blog address
   Back: 'Retour',
   'Display name': 'Nom d’affichage',
@@ -710,7 +712,6 @@ export const fr: Dictionary = {
   Spelling: 'Orthographe',
   Checking: 'Vérification',
   Dictionary: 'Dictionnaire',
-
   // A domain of one's own, on its way
   'Waiting for the record to show up.': 'En attente de l’enregistrement.',
   'Certificate issued.': 'Certificat émis.',
@@ -723,7 +724,6 @@ export const fr: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare a bloqué ce domaine',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'À la racine d’un domaine, utilisez un enregistrement ALIAS ou ANAME, ou l’aplatissement CNAME, si votre fournisseur n’y autorise pas de CNAME.',
-
   // Shortcuts
   Shortcuts: 'Raccourcis',
   'Search shortcuts': 'Rechercher un raccourci',
@@ -848,7 +848,6 @@ export const fr: Dictionary = {
   'Code theme: {name}': 'Thème du code : {name}',
   'Recent: {name}': 'Récent : {name}',
   'Delete a layout': 'Supprimer une disposition',
-
   // Keyboards and modal editing
   Default: 'Par défaut',
   'Vim keys': 'Touches Vim',
@@ -861,12 +860,11 @@ export const fr: Dictionary = {
   INSERT: 'INSERTION',
   VISUAL: 'VISUEL',
   REPLACE: 'REMPLACER',
-
   // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Page {page} sur {count} dans les lunettes',
   'Reaching the glasses': 'Connexion aux lunettes',
   'The glasses are not keeping up': 'Les lunettes ne suivent plus',
-  // Le canevas : les outils, les stylos et ce qu'on peut lui demander
+  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Ajouter',
   Select: 'Sélectionner',
   Pan: 'Déplacer la vue',
@@ -937,7 +935,7 @@ export const fr: Dictionary = {
   'Export as PNG': 'Exporter en PNG',
   'Export as SVG': 'Exporter en SVG',
   'Export as PDF': 'Exporter en PDF',
-  // Le canevas : le nom de ses propres touches
+  // The canvas: what its own keys are called
   'Delete what is picked': 'Supprimer la sélection',
   'Nudge left': 'Décaler à gauche',
   'Nudge right': 'Décaler à droite',
@@ -1006,8 +1004,16 @@ export const fr: Dictionary = {
   'In this note': 'Dans cette note',
   'In the whole space': 'Dans tout l’espace',
   'Nothing here needs converting.': 'Rien à convertir ici.',
-  'Rewrite {count} things?': 'Réécrire {count} éléments ?',
-  'In {count} notes.': 'Dans {count} notes.',
+  'Rewrite {count} things?': {
+    one: 'Réécrire {count} élément ?',
+    many: 'Réécrire {count} d’éléments ?',
+    other: 'Réécrire {count} éléments ?',
+  },
+  'In {count} notes.': {
+    one: 'Dans {count} note.',
+    many: 'Dans {count} de notes.',
+    other: 'Dans {count} notes.',
+  },
   Rewrite: 'Réécrire',
   '{count} passages are encrypted, and nothing can read them without Evernote':
     '{count} passages sont chiffrés et illisibles sans Evernote',
@@ -1030,7 +1036,11 @@ export const fr: Dictionary = {
   'That export is too big to read in one go.': 'Cet export est trop gros pour être lu d’un coup.',
   'Import into': 'Importer dans',
   'That import could not be written.': 'Cet import n’a pas pu être écrit.',
-  '{count} files': '{count} fichiers',
+  '{count} files': {
+    one: '{count} fichier',
+    many: '{count} de fichiers',
+    other: '{count} fichiers',
+  },
   'This space': 'Cet espace',
   'Drop an export here': 'Déposez un export ici',
   'A zip, a folder, or a file another app wrote':
@@ -1069,9 +1079,16 @@ export const fr: Dictionary = {
   'One note per row': 'Une note par ligne',
   Into: 'Dans',
   'Worth knowing': 'À savoir',
-  '{count} notes arrived.': '{count} notes sont arrivées.',
-  '{count} names were taken, so those files stepped aside.':
-    '{count} noms étaient pris, ces fichiers se sont décalés.',
+  '{count} notes arrived.': {
+    one: '{count} note est arrivée.',
+    many: '{count} de notes sont arrivées.',
+    other: '{count} notes sont arrivées.',
+  },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} nom était pris, ce fichier s’est décalé.',
+    many: '{count} de noms étaient pris, ces fichiers se sont décalés.',
+    other: '{count} noms étaient pris, ces fichiers se sont décalés.',
+  },
   'A table': 'Un tableau',
   'Markdown files': 'Fichiers Markdown',
   'A document': 'Un document',
@@ -1103,13 +1120,23 @@ export const fr: Dictionary = {
   'Go back': 'Revenir en arrière',
   'Going back': 'Retour en cours',
   'This space, as it was': 'Cet espace, tel qu’il était',
-  '1 day ago': 'il y a 1 jour',
-  '{count} days ago': 'il y a {count} jours',
+  '{count} days ago': {
+    one: 'il y a {count} jour',
+    many: 'il y a {count} de jours',
+    other: 'il y a {count} jours',
+  },
   'What would change?': 'Qu’est-ce qui changerait ?',
-  '{count} notes would go back to what they said then.':
-    '{count} notes reviendraient à ce qu’elles disaient alors.',
+  '{count} notes would go back to what they said then.': {
+    one: '{count} note reviendrait à ce qu’elle disait alors.',
+    many: '{count} de notes reviendraient à ce qu’elles disaient alors.',
+    other: '{count} notes reviendraient à ce qu’elles disaient alors.',
+  },
   'Nothing has changed since then.': 'Rien n’a changé depuis.',
-  '{count} notes went back.': '{count} notes sont revenues en arrière.',
+  '{count} notes went back.': {
+    one: '{count} note est revenue en arrière.',
+    many: '{count} de notes sont revenues en arrière.',
+    other: '{count} notes sont revenues en arrière.',
+  },
   'The account keeps a month of versions of every note that syncs.':
     'Le compte garde un mois de versions de chaque note synchronisée.',
   'That did not work.': 'Cela n’a pas fonctionné.',
@@ -1137,7 +1164,6 @@ export const fr: Dictionary = {
   'this one': 'celui-ci',
   End: 'Terminer',
   'End every other session': 'Terminer toutes les autres sessions',
-
   // Said and not shown: what a reader is told about a surface
   'The note': 'La note',
   '{space} panel': 'Panneau {space}',
@@ -1148,7 +1174,6 @@ export const fr: Dictionary = {
   'What is selected': 'Ce qui est sélectionné',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Toile : {cards} cartes, {links} liens, {drawings} dessins',
-
   // The AI providers, the block in a note, and the four rewrites
   AI: 'IA',
   Providers: 'Fournisseurs',
@@ -1268,7 +1293,6 @@ export const fr: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Ajoutez un fournisseur d’IA dans les réglages pour résumer.',
   'The summary could not be written.': 'Le résumé n’a pas pu être écrit.',
-
   // Publishing part two.
   Spreadsheet: 'Tableur',
   'The app’s own': 'Celui de l’application',
@@ -1283,4 +1307,52 @@ export const fr: Dictionary = {
     'La visite part vers qui sert ce script. Rien n’est envoyé quand le champ est vide.',
   Answers: 'Réponses',
   'Save as CSV': 'Enregistrer en CSV',
+  // Signing in, and the mail that carries a code.
+  'could not send the mail - try again': 'l’envoi du message a échoué - réessayez',
+  'start again - that took too long': 'recommencez - cela a pris trop de temps',
+  'sign in to do that': 'connectez-vous pour faire cela',
+  'that is not something a token can do': 'un jeton ne peut pas faire cela',
+  'something went wrong here - try again': 'quelque chose s’est mal passé ici - réessayez',
+  'this service cannot keep a secret safely': 'ce service ne peut pas garder un secret en sécurité',
+  // Pictures, files and what an account has room for.
+  'images and PDFs only': 'images et PDF uniquement',
+  'that file is too big': 'ce fichier est trop volumineux',
+  'that is more settings than an account holds':
+    'cela fait plus de réglages qu’un compte n’en garde',
+  'that is more bookmarks than a space holds': 'cela fait plus de signets qu’un espace n’en garde',
+  'that is more paths than a space leaves out':
+    'cela fait plus de chemins qu’un espace n’en écarte',
+  'that is more files than a space keeps': 'cela fait plus de fichiers qu’un espace n’en garde',
+  'that is more than a space keeps about its graph':
+    'cela fait plus qu’un espace ne garde de son graphe',
+  'that is more folder icons than a space holds':
+    'cela fait plus d’icônes de dossier qu’un espace n’en garde',
+  // Sharing a space, and being let into one.
+  'nobody by that address': 'personne à cette adresse',
+  'nobody by that name': 'personne de ce nom',
+  'nobody is waiting by that name': 'personne de ce nom n’attend',
+  'this space is yours': 'cet espace est le vôtre',
+  'that link is busy, try again in a minute': 'ce lien est occupé, réessayez dans une minute',
+  // Versions, the bin, and a room two people write in.
+  'no such version': 'cette version n’existe pas',
+  'this note was shared with you, not its folder':
+    'cette note vous a été partagée, pas son dossier',
+  'nothing to restore': 'rien à restaurer',
+  'restore its space first': 'restaurez d’abord son espace',
+  'nothing to delete': 'rien à supprimer',
+  'this room is not answering - try again': 'cette salle ne répond pas - réessayez',
+  'rooms are not running here': 'les salles ne fonctionnent pas ici',
+  // The theme store, and asking a model something.
+  'the theme store is not answering': 'la boutique de thèmes ne répond pas',
+  'that is not a theme': 'ce n’est pas un thème',
+  'no such theme': 'ce thème n’existe pas',
+  'choose a model first': 'choisissez d’abord un modèle',
+  'set an OpenAI key in Nib’s settings first':
+    'renseignez d’abord une clé OpenAI dans les réglages de Nib',
+  'that is a lot of questions - try again later':
+    'cela fait beaucoup de questions - réessayez plus tard',
+  'that is too much audio': 'cela fait trop d’audio',
+  'that is more than a spoken command': 'cela dépasse une commande vocale',
+  'that is a lot of listening - try again later':
+    'cela fait beaucoup d’écoute - réessayez plus tard',
 }

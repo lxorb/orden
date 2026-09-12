@@ -1215,6 +1215,20 @@ export const zhHans: Dictionary = {
   '{count} pieces of this meeting were lost.': '本次会议丢失了 {count} 个片段。',
   'Add an AI provider in settings to summarise.': '在设置中添加 AI 服务商以生成摘要。',
   'The summary could not be written.': '无法写出摘要。',
+  // Publishing part two.
+  Spreadsheet: '电子表格',
+  'The app’s own': '应用自带的',
+  'publish.css and publish.js in this space dress the site.':
+    '本空间的 publish.css 与 publish.js 为站点装点。',
+  'publish.css in this space dresses the site.': '本空间的 publish.css 为站点装点。',
+  'publish.js in this space runs on the site.': '本空间的 publish.js 在站点上运行。',
+  Visits: '访问',
+  'Counter script': '计数脚本',
+  'Site name it expects': '它期待的站点名',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    '读者的访问会送给提供该脚本的一方。留空则什么都不发送。',
+  Answers: '回答',
+  'Save as CSV': '存为 CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '邮件发送失败，请重试',
   'start again - that took too long': '耗时过长，请重新开始',

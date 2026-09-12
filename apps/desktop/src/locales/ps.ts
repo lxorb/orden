@@ -1250,6 +1250,20 @@ export const ps: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'د لنډيز لپاره په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
   'The summary could not be written.': 'لنډيز ونه ليکل شو.',
+  // Publishing part two.
+  Spreadsheet: 'د شمېر پاڼه',
+  'The app’s own': 'د اپ خپل',
+  'publish.css and publish.js in this space dress the site.':
+    'په دې ځای کې publish.css او publish.js سایټ جوړوي.',
+  'publish.css in this space dresses the site.': 'په دې ځای کې publish.css سایټ جوړوي.',
+  'publish.js in this space runs on the site.': 'په دې ځای کې publish.js په سایټ کار کوي.',
+  Visits: 'کتنې',
+  'Counter script': 'د شمېرنې سکرېپټ',
+  'Site name it expects': 'هغه سایټ نوم چې غواړي',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'د لوستونکي کتنه هغه ته ځي چې دا سکرېپټ ورکوي. که تش وي، هېڅ نه لېږل کېږي.',
+  Answers: 'ځوابونه',
+  'Save as CSV': 'لکه CSV خوندي کړه',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ليک ونه لېږل شو - بيا هڅه وکړئ',
   'start again - that took too long': 'بيا پيل کړئ - هغه ډېر وخت ونيو',

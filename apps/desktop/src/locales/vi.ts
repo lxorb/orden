@@ -1234,6 +1234,21 @@ export const vi: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Hãy thêm nhà cung cấp AI trong cài đặt để tóm tắt.',
   'The summary could not be written.': 'Không viết được bản tóm tắt.',
+  // Publishing part two.
+  Spreadsheet: 'Bảng tính',
+  'The app’s own': 'Của chính ứng dụng',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css và publish.js trong không gian này khoác áo cho trang.',
+  'publish.css in this space dresses the site.':
+    'publish.css trong không gian này khoác áo cho trang.',
+  'publish.js in this space runs on the site.': 'publish.js trong không gian này chạy trên trang.',
+  Visits: 'Lượt xem',
+  'Counter script': 'Script đếm',
+  'Site name it expects': 'Tên trang nó cần',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Lượt xem đi tới bên phục vụ script đó. Để trống thì không gửi gì.',
+  Answers: 'Câu trả lời',
+  'Save as CSV': 'Lưu thành CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'không gửi được thư - thử lại',
   'start again - that took too long': 'bắt đầu lại - việc đó quá lâu',

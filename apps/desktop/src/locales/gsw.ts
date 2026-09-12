@@ -1,7 +1,5 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
-/** Züridütsch, the dialect of Zurich: `nöd` rather than `nid`, `uusblände`
- *  rather than `verstecke`, and never an ß. */
 export const gsw: Dictionary = {
   // Files and notes
   Save: 'Spichere',
@@ -70,6 +68,7 @@ export const gsw: Dictionary = {
   Delete: 'Lösche',
   Move: 'Verschiebe',
   'Move after': 'Verschiebe hinter',
+  Heading: 'Überschrift',
   'Move to': 'Verschiebe uf',
   'Move this note': 'Die Notiz verschiebe',
   'Move up': 'Ufe',
@@ -116,7 +115,6 @@ export const gsw: Dictionary = {
   'Merge into…': 'Zsammelege mit…',
   'Split at caret': 'Am Cursor uftrenne',
   'Extract selection': 'Uswahl uselöse',
-
   // Panels and navigation
   Bookmarks: 'Lesezeiche',
   'New group': 'Neui Gruppe',
@@ -172,14 +170,12 @@ export const gsw: Dictionary = {
   'Sort by created': 'Nach Erstellig sortiere',
   'Show hidden files': 'Versteckti Dateie zeige',
   'Hide hidden files': 'Versteckti Dateie uusblände',
-
   // Writing
   Bold: 'Fett',
   Italic: 'Kursiv',
   Strikethrough: 'Durestriche',
   Highlight: 'Uszeichne',
   Code: 'Code',
-  Heading: 'Überschrift',
   Quote: 'Zitat',
   Link: 'Link',
   'Clear formatting': 'Formatierig ewägnäh',
@@ -215,7 +211,7 @@ export const gsw: Dictionary = {
   'Delete image': 'Bild lösche',
   'Reset size': 'Grössi zruggsetze',
   'Image not found': 'Bild nöd gfunde',
-  'Delete {count} items': 'Die {count} Iiträg lösche',
+  'Delete {count} items': { one: 'Dä {count} Iitrag lösche', other: 'Die {count} Iiträg lösche' },
   'Recently deleted': 'Zletscht glöscht',
   'Deleted notes and spaces wait here for 14 days, then they are gone for good.':
     'Glöschti Notize und Ablage warted da 14 Täg, dänn sind si für immer wäg.',
@@ -225,9 +221,9 @@ export const gsw: Dictionary = {
   Notes: 'Notize',
   'Delete now': 'Jetz lösche',
   'deleted {when}': 'glöscht {when}',
-  'gone in {days} days': 'in {days} Täg wäg',
+  'gone in {count} days': { one: 'in {count} Tag wäg', other: 'in {count} Täg wäg' },
   'on this device': 'uf dem Grät',
-  '{count} notes': '{count} Notize',
+  '{count} notes': { one: '{count} Notiz', other: '{count} Notize' },
   'Empty Recently deleted?': 'Zletscht glöscht leere?',
   'Everything in it is gone for good.': 'Alles drin isch für immer wäg.',
   'could not reach the server': 'De Server isch nöd z erreiche gsi',
@@ -256,11 +252,9 @@ export const gsw: Dictionary = {
   'Horizontal rule': 'Trennlinie',
   'Page break': 'Sitteumbruch',
   'Tidy up this note': 'Notiz ufruume',
-
   // PDFs
   'Copy a link': 'Link kopiere',
   'That PDF could not be opened': 'Das PDF hät me nöd chöne uufmache',
-
   // Modes and view
   Reading: 'Läse',
   'Leave reading': 'Läse verlaa',
@@ -301,7 +295,6 @@ export const gsw: Dictionary = {
   'Zoom in': 'Vergrössere',
   'Zoom out': 'Verchlinere',
   'Actual size': 'Originalgrössi',
-
   // Appearance
   Accent: 'Akzänt',
   'Accent: {name}': 'Akzänt: {name}',
@@ -357,7 +350,7 @@ export const gsw: Dictionary = {
   'Glasses microphone': 'Brüllemikrofon',
   'No way to listen': 'Kei Wäg zum ghöre',
   'no sound yet': 'na kei Ton',
-  '{count} frames': '{count} Päckli',
+  '{count} frames': { one: '{count} Päckli', other: '{count} Päckli' },
   'Nothing heard': 'Nüt ghört',
   'no recognition': 'kei Erkennig',
   'no microphone': 'kei Mikrofon',
@@ -407,8 +400,7 @@ export const gsw: Dictionary = {
   'Edit custom CSS': 'Eiges CSS bearbeite',
   'Edit snippets': 'Textbaustei bearbeite',
   'Reload themes and custom CSS': 'Designs und eiges CSS neu lade',
-
-  // De Design-Store, und d Bispil-Notiz uf sine Charte
+  // The theme store, and the sample note its cards show
   Themes: 'Designs',
   Browse: 'Umeluege',
   'Search themes': 'Designs sueche',
@@ -424,7 +416,10 @@ export const gsw: Dictionary = {
   'Add a word': 'Wort hinzuefüege',
   'Add {word} to the dictionary': '{word} is Wörterbuech uufnäh',
   'Remove {word} from the dictionary': '{word} usem Wörterbuech ewägnäh',
-  '{count} things in this theme were left out.': '{count} Sache i dem Design sind uusegloh worde.',
+  '{count} things in this theme were left out.': {
+    one: '{count} Sach i dem Design isch uusegloh worde.',
+    other: '{count} Sache i dem Design sind uusegloh worde.',
+  },
   'A note': 'E Notiz',
   'Words with {bold} and a {link}.': 'Wörter mit {bold} und emene {link}.',
   bold: 'fett',
@@ -437,7 +432,6 @@ export const gsw: Dictionary = {
   'could not install that theme': 'Das Design hät mer nöd chöne installiere',
   'could not remove that theme': 'Das Design hät mer nöd chöne ewägnäh',
   'that theme has nothing a theme may set': 'Das Design setzt nüt, wo nes Design setze dörf',
-
   General: 'Allgemein',
   Editor: 'Editor',
   Markdown: 'Markdown',
@@ -449,8 +443,7 @@ export const gsw: Dictionary = {
   'Keep a version every': 'Version behalte alli',
   'Keep versions for': 'Versione behalte für',
   '{count} min': '{count} Min.',
-  '1 day': '1 Tag',
-  '{count} days': '{count} Täg',
+  '{count} days': { one: '{count} Tag', other: '{count} Täg' },
   Changes: 'Änderige',
   Text: 'Text',
   'No changes': 'Kei Änderige',
@@ -524,8 +517,8 @@ export const gsw: Dictionary = {
   'Check for updates': 'Nach Updates sueche',
   Language: 'Sprach',
   'Match the system': 'Wie s System',
+  'Machine-translated. Corrections welcome.': 'Maschinell übersetzt. Korrekture willkomme.',
   'Match the app': 'Wie d App',
-
   // Settings
   Settings: 'Iistellige',
   Account: 'Konto',
@@ -548,10 +541,12 @@ export const gsw: Dictionary = {
   'Digit {number}': 'Ziffer {number}',
   'Resend in {seconds}s': 'Nomal i {seconds}s',
   'Last synced {time}.': 'Zletscht abgliche am {time}.',
-  '{count} spaces sync to your account.': '{count} Ablage wärded mit dim Konto abgliche.',
+  '{count} spaces sync to your account.': {
+    one: '{count} Ablag wird mit dim Konto abgliche.',
+    other: '{count} Ablage wärded mit dim Konto abgliche.',
+  },
   Update: 'Aktualisiere',
   'Live at': 'Erreichbar under',
-
   // Publishing
   'Publish {name}': '{name} veröffentliche',
   'What to publish': 'Was veröffentlicht wird',
@@ -571,7 +566,6 @@ export const gsw: Dictionary = {
   Value: 'Wert',
   available: 'verfüegbar',
   'checking…': 'wird prüeft…',
-
   // LLM
   'Connect an LLM to your notes': 'Es LLM mit dine Notize verbinde',
   'Sign in first - the connector reaches the notes in your account.':
@@ -623,7 +617,6 @@ export const gsw: Dictionary = {
     'Für en Client, wo statt ere URL en JSON-Block nimmt.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'En Client, wo sich nöd cha aamälde, überchunnt statt däm es Token. Es wird nume eimal zeigt.',
-
   // Export
   'Plain text': 'Text',
   'Markdown with the pictures': 'Markdown mit Bilder',
@@ -643,7 +636,6 @@ export const gsw: Dictionary = {
   Margin: 'Rand',
   Header: 'Chopfzile',
   Footer: 'Fuesszile',
-
   // History
   'Version history': 'Versionsverlauf',
   'Copy link to this note': 'Link zu dere Notiz kopiere',
@@ -653,7 +645,6 @@ export const gsw: Dictionary = {
   'No earlier versions yet. One is kept each time you save.':
     'No kei früechere Versione. Bi jedem Spichere wird eini behalte.',
   'Restore this version': 'Die Version zrugg hole',
-
   // Messages the server sends, shown as they arrive.
   'a note already lives there': 'Det liit scho e Notiz',
   'enter a valid email address': 'Gib e gültigi E-Mail-Adrässe ii',
@@ -686,7 +677,6 @@ export const gsw: Dictionary = {
   'could not publish': 'Veröffentliche het nöd klappt',
   'could not create a token': 'Token mache het nöd klappt',
   'that did not work': 'Das het nöd klappt',
-
   // Settings on a phone, display names, one blog address
   Back: 'Zrugg',
   'Display name': 'Aazeigname',
@@ -707,7 +697,6 @@ export const gsw: Dictionary = {
   Spelling: 'Rächtschriibig',
   Checking: 'Prüefig',
   Dictionary: 'Wörterbuech',
-
   // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Wartet, bis de Iitrag sichtbar isch.',
   'Certificate issued.': 'Zertifikat usgstellt.',
@@ -719,7 +708,6 @@ export const gsw: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare het d Domain gsperrt',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'A de Wurzle vo de Domain nimm en ALIAS- oder ANAME-Iitrag oder CNAME-Flattening, falls din Aabieter dert kei CNAME erlaubt.',
-
   // Shortcuts
   Shortcuts: 'Tastechürzel',
   'Search shortcuts': 'Tastechürzel sueche',
@@ -845,7 +833,6 @@ export const gsw: Dictionary = {
   'Code theme: {name}': 'Code-Design: {name}',
   'Recent: {name}': 'Zletscht: {name}',
   'Delete a layout': 'Es Layout lösche',
-
   // Keyboards and modal editing
   Default: 'Standard',
   'Vim keys': 'Vim-Taschte',
@@ -858,12 +845,11 @@ export const gsw: Dictionary = {
   INSERT: 'IIFÜEGE',
   VISUAL: 'VISUELL',
   REPLACE: 'ERSETZE',
-
   // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Siite {page} vo {count} uf de Brülle',
   'Reaching the glasses': 'Verbindig zur Brülle',
   'The glasses are not keeping up': 'D Brülle chunnt nöd naa',
-  // D Liinwand: d Wärchzüg, d Stift und was mer mit ere cha mache
+  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Hinzuefüege',
   Select: 'Uswähle',
   Pan: 'Verschiebe',
@@ -934,7 +920,7 @@ export const gsw: Dictionary = {
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
   'Export as PDF': 'Als PDF exportiere',
-  // D Liinwand: wie ihri eigene Tasten heissed
+  // The canvas: what its own keys are called
   'Delete what is picked': 'Uswahl lösche',
   'Nudge left': 'Nach links schiebe',
   'Nudge right': 'Nach rächts schiebe',
@@ -1003,8 +989,11 @@ export const gsw: Dictionary = {
   'In this note': 'I dere Notiz',
   'In the whole space': 'Im ganze Bereich',
   'Nothing here needs converting.': 'Da mues nüt umgschribe werde.',
-  'Rewrite {count} things?': '{count} Stelle umschriibe?',
-  'In {count} notes.': 'I {count} Notize.',
+  'Rewrite {count} things?': {
+    one: '{count} Stell umschriibe?',
+    other: '{count} Stelle umschriibe?',
+  },
+  'In {count} notes.': { one: 'I {count} Notiz.', other: 'I {count} Notize.' },
   Rewrite: 'Umschriibe',
   '{count} passages are encrypted, and nothing can read them without Evernote':
     '{count} Abschnitt sind verschlüsslet und ohni Evernote nöd läsbar',
@@ -1027,7 +1016,7 @@ export const gsw: Dictionary = {
   'That export is too big to read in one go.': 'Dä Export isch z gross zum uf eimal läse.',
   'Import into': 'Importiere uf',
   'That import could not be written.': 'Dä Import het sich nöd schriibe laa.',
-  '{count} files': '{count} Dateie',
+  '{count} files': { one: '{count} Datei', other: '{count} Dateie' },
   'This space': 'Dä Bereich',
   'Drop an export here': 'Export do häre zieh',
   'A zip, a folder, or a file another app wrote':
@@ -1065,9 +1054,11 @@ export const gsw: Dictionary = {
   'One note per row': 'Ei Notiz pro Ziile',
   Into: 'Ziil',
   'Worth knowing': 'Guet zum wüsse',
-  '{count} notes arrived.': '{count} Notize sind acho.',
-  '{count} names were taken, so those files stepped aside.':
-    '{count} Näme sind bsetzt gsi, die Dateie sind uusgwiche.',
+  '{count} notes arrived.': { one: '{count} Notiz isch acho.', other: '{count} Notize sind acho.' },
+  '{count} names were taken, so those files stepped aside.': {
+    one: '{count} Name isch bsetzt gsi, die Datei isch uusgwiche.',
+    other: '{count} Näme sind bsetzt gsi, die Dateie sind uusgwiche.',
+  },
   'A table': 'E Tabelle',
   'Markdown files': 'Markdown-Dateie',
   'A document': 'Es Dokumänt',
@@ -1099,13 +1090,17 @@ export const gsw: Dictionary = {
   'Go back': 'Zrugggah',
   'Going back': 'Gaht zrugg',
   'This space, as it was': 'Dä Bereich, wie er gsi isch',
-  '1 day ago': 'vor 1 Tag',
-  '{count} days ago': 'vor {count} Täg',
+  '{count} days ago': { one: 'vor {count} Tag', other: 'vor {count} Täg' },
   'What would change?': 'Was würd sich ändere?',
-  '{count} notes would go back to what they said then.':
-    '{count} Notize würded uf dä damalig Stand zruggah.',
+  '{count} notes would go back to what they said then.': {
+    one: '{count} Notiz würd uf dä damalig Stand zruggah.',
+    other: '{count} Notize würded uf dä damalig Stand zruggah.',
+  },
   'Nothing has changed since then.': 'Sithär het sich nüt gändert.',
-  '{count} notes went back.': '{count} Notize sind zruggagangen.',
+  '{count} notes went back.': {
+    one: '{count} Notiz isch zruggagangen.',
+    other: '{count} Notize sind zruggagangen.',
+  },
   'The account keeps a month of versions of every note that syncs.':
     'S Konto behaltet en Monet Fassige vo jedere synchronisierte Notiz.',
   'That did not work.': 'Das het nöd funktioniert.',
@@ -1132,7 +1127,6 @@ export const gsw: Dictionary = {
   'this one': 'das da',
   End: 'Beände',
   'End every other session': 'Alli anderi Sitzige beände',
-
   // Said and not shown: what a reader is told about a surface
   'The note': 'D Notiz',
   '{space} panel': 'Bereich {space}',
@@ -1143,7 +1137,6 @@ export const gsw: Dictionary = {
   'What is selected': 'Was uusgwählt isch',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Leinwand: {cards} Charte, {links} Verbindige, {drawings} Zeichnige',
-
   // The AI providers, the block in a note, and the four rewrites
   AI: 'KI',
   Providers: 'Aabieter',
@@ -1262,7 +1255,6 @@ export const gsw: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Füeg i de Iistellige en KI-Aabieter dezue zum Zämefasse.',
   'The summary could not be written.': 'D Zämefassig hät sich nöd schriibe laa.',
-
   // Publishing part two.
   Spreadsheet: 'Tabälle',
   'The app’s own': 'Das vo de App',
@@ -1277,4 +1269,48 @@ export const gsw: Dictionary = {
     'De Bsuech gaht a die, wo das Skript uusliefere. Wänn s läär isch, wird nüt gschickt.',
   Answers: 'Antworte',
   'Save as CSV': 'Als CSV spichere',
+  // Signing in, and the mail that carries a code.
+  'could not send the mail - try again': 'D Mail hät me nöd chöne schicke - probier s nomal',
+  'start again - that took too long': 'Fang nomal a - das hät z lang duuret',
+  'sign in to do that': 'Mäld di a, zum das z mache',
+  'that is not something a token can do': 'Das cha en Token nöd mache',
+  'something went wrong here - try again': 'Da isch öppis schiefgange - probier s nomal',
+  'this service cannot keep a secret safely': 'Dä Dienst cha es Gheimnis nöd sicher ufbewahre',
+  // Pictures, files and what an account has room for.
+  'images and PDFs only': 'Nur Bilder und PDFs',
+  'that file is too big': 'Die Datei isch z gross',
+  'that is more settings than an account holds': 'Das sind mee Iistellige, als es Konto ufbewahrt',
+  'that is more bookmarks than a space holds': 'Das sind mee Lesezeiche, als en Ablag ufbewahrt',
+  'that is more paths than a space leaves out': 'Das sind mee Pfäd, als en Ablag uusloht',
+  'that is more files than a space keeps': 'Das sind mee Dateie, als en Ablag behaltet',
+  'that is more than a space keeps about its graph':
+    'Das isch mee, als en Ablag über ire Graph behaltet',
+  'that is more folder icons than a space holds':
+    'Das sind mee Ordnersymbol, als en Ablag ufbewahrt',
+  // Sharing a space, and being let into one.
+  'nobody by that address': 'Niemer under dere Adress',
+  'nobody by that name': 'Niemer mit dem Name',
+  'nobody is waiting by that name': 'Niemer mit dem Name wartet',
+  'this space is yours': 'Die Ablag ghört dir',
+  'that link is busy, try again in a minute': 'Dä Link isch bsetzt, probier s i ere Minute nomal',
+  // Versions, the bin, and a room two people write in.
+  'no such version': 'Die Version gits nöd',
+  'this note was shared with you, not its folder':
+    'Die Notiz isch mit dir gteilt worde, nöd ire Ordner',
+  'nothing to restore': 'Nüt zum Widerhärstelle',
+  'restore its space first': 'Stell zerscht d Ablag wider her',
+  'nothing to delete': 'Nüt zum Lösche',
+  'this room is not answering - try again': 'Dä Ruum antwortet nöd - probier s nomal',
+  'rooms are not running here': 'Rüüm laufed da nöd',
+  // The theme store, and asking a model something.
+  'the theme store is not answering': 'Dä Design-Store antwortet nöd',
+  'that is not a theme': 'Das isch kes Design',
+  'no such theme': 'Das Design gits nöd',
+  'choose a model first': 'Wähl zerscht es Modäll',
+  'set an OpenAI key in Nib’s settings first':
+    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo Nib ab',
+  'that is a lot of questions - try again later': 'Das sind vil Frage - probier s spöter nomal',
+  'that is too much audio': 'Das isch z vil Audio',
+  'that is more than a spoken command': 'Das isch mee als en Sprachbefehl',
+  'that is a lot of listening - try again later': 'Das isch vil Zuelose - probier s spöter nomal',
 }

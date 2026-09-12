@@ -1237,6 +1237,20 @@ export const jv: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Tambahake panyedhiya AI ing setelan kanggo ngringkes.',
   'The summary could not be written.': 'Ringkesan ora bisa ditulis.',
+  // Publishing part two.
+  Spreadsheet: 'Lembar itungan',
+  'The app’s own': 'Duwèkè aplikasi',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css lan publish.js ing papan iki nyandhangi situs.',
+  'publish.css in this space dresses the site.': 'publish.css ing papan iki nyandhangi situs.',
+  'publish.js in this space runs on the site.': 'publish.js ing papan iki mlaku ing situs.',
+  Visits: 'Dolan',
+  'Counter script': 'Skrip petungan',
+  'Site name it expects': 'Jeneng situs sing dikarepké',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Dolanané sing maca marang sapa waé sing nyediyakaké skrip iku. Yèn kosong ora ana sing dikirim.',
+  Answers: 'Wangsulan',
+  'Save as CSV': 'Simpen minangka CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ora bisa ngirim layang - coba maneh',
   'start again - that took too long': 'wiwiti maneh - kuwi suwe banget',

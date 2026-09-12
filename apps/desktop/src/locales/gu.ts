@@ -1240,6 +1240,20 @@ export const gu: Dictionary = {
   '{count} pieces of this meeting were lost.': 'આ બેઠકના {count} ભાગ ખોવાયા.',
   'Add an AI provider in settings to summarise.': 'સારાંશ માટે ગોઠવણમાં AI પ્રદાતા ઉમેરો.',
   'The summary could not be written.': 'સારાંશ લખી શકાયો નહીં.',
+  // Publishing part two.
+  Spreadsheet: 'સ્પ્રેડશીટ',
+  'The app’s own': 'ઍપનું પોતાનું',
+  'publish.css and publish.js in this space dress the site.':
+    'આ જગ્યાના publish.css અને publish.js સાઇટને સજાવે છે.',
+  'publish.css in this space dresses the site.': 'આ જગ્યાનું publish.css સાઇટને સજાવે છે.',
+  'publish.js in this space runs on the site.': 'આ જગ્યાનું publish.js સાઇટ પર ચાલે છે.',
+  Visits: 'મુલાકાતો',
+  'Counter script': 'ગણતરી સ્ક્રિપ્ટ',
+  'Site name it expects': 'અપેક્ષિત સાઇટ નામ',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'વાચકની મુલાકાત તે સ્ક્રિપ્ટ આપનારને જાય છે. ખાલી હોય તો કંઈ મોકલાતું નથી.',
+  Answers: 'જવાબો',
+  'Save as CSV': 'CSV તરીકે સાચવો',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ટપાલ મોકલી શકાઈ નહીં - ફરી પ્રયત્ન કરો',
   'start again - that took too long': 'ફરી શરૂ કરો - એમાં બહુ વાર લાગી',

@@ -1242,6 +1242,20 @@ export const ms: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Tambah pembekal AI dalam tetapan untuk meringkaskan.',
   'The summary could not be written.': 'Ringkasan tidak dapat ditulis.',
+  // Publishing part two.
+  Spreadsheet: 'Hamparan',
+  'The app’s own': 'Milik apl',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css dan publish.js dalam ruang ini mendandan laman.',
+  'publish.css in this space dresses the site.': 'publish.css dalam ruang ini mendandan laman.',
+  'publish.js in this space runs on the site.': 'publish.js dalam ruang ini berjalan pada laman.',
+  Visits: 'Kunjungan',
+  'Counter script': 'Skrip pembilang',
+  'Site name it expects': 'Nama laman yang dijangka',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Kunjungan pembaca pergi kepada sesiapa yang menyajikan skrip itu. Kosong, tiada apa dihantar.',
+  Answers: 'Jawapan',
+  'Save as CSV': 'Simpan sebagai CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'tidak dapat menghantar mel - cuba lagi',
   'start again - that took too long': 'mula semula - itu mengambil masa terlalu lama',

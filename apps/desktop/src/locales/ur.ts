@@ -1247,6 +1247,20 @@ export const ur: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'خلاصہ کرنے کے لیے ترتیبات میں AI فراہم کنندہ شامل کریں۔',
   'The summary could not be written.': 'خلاصہ لکھا نہ جا سکا۔',
+  // Publishing part two.
+  Spreadsheet: 'اسپریڈ شیٹ',
+  'The app’s own': 'ایپ کا اپنا',
+  'publish.css and publish.js in this space dress the site.':
+    'اس اسپیس کے publish.css اور publish.js سائٹ کو سجاتے ہیں۔',
+  'publish.css in this space dresses the site.': 'اس اسپیس کا publish.css سائٹ کو سجاتا ہے۔',
+  'publish.js in this space runs on the site.': 'اس اسپیس کا publish.js سائٹ پر چلتا ہے۔',
+  Visits: 'آمد',
+  'Counter script': 'گنتی کا اسکرپٹ',
+  'Site name it expects': 'مطلوبہ سائٹ نام',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'پڑھنے والے کی آمد اُس تک جاتی ہے جو یہ اسکرپٹ دیتا ہے۔ خالی ہو تو کچھ نہیں بھیجا جاتا۔',
+  Answers: 'جوابات',
+  'Save as CSV': 'CSV کے طور پر محفوظ کریں',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'میل نہیں بھیجی جا سکی - دوبارہ کوشش کریں',
   'start again - that took too long': 'دوبارہ شروع کریں - بہت دیر لگ گئی',

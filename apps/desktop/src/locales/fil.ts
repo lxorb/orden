@@ -1270,6 +1270,22 @@ export const fil: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Magdagdag ng AI provider sa mga setting para maglagom.',
   'The summary could not be written.': 'Hindi naisulat ang lagom.',
+  // Publishing part two.
+  Spreadsheet: 'Spreadsheet',
+  'The app’s own': 'Sa app mismo',
+  'publish.css and publish.js in this space dress the site.':
+    'Ang publish.css at publish.js sa espasyong ito ang nagbibihis sa site.',
+  'publish.css in this space dresses the site.':
+    'Ang publish.css sa espasyong ito ang nagbibihis sa site.',
+  'publish.js in this space runs on the site.':
+    'Ang publish.js sa espasyong ito ay tumatakbo sa site.',
+  Visits: 'Bisita',
+  'Counter script': 'Script na nagbibilang',
+  'Site name it expects': 'Pangalan ng site na hinihintay',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Ang bisita ay napupunta sa kung sino ang naghahatid ng script. Walang ipinapadala kapag walang laman.',
+  Answers: 'Sagot',
+  'Save as CSV': 'I-save bilang CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'hindi maipadala ang mail - subukan muli',
   'start again - that took too long': 'magsimula muli - masyadong tumagal',

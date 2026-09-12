@@ -1312,6 +1312,20 @@ export const ru: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Добавьте поставщика ИИ в настройках, чтобы получить сводку.',
   'The summary could not be written.': 'Сводку не удалось написать.',
+  // Publishing part two.
+  Spreadsheet: 'Таблица данных',
+  'The app’s own': 'Как в приложении',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css и publish.js в этом пространстве оформляют сайт.',
+  'publish.css in this space dresses the site.': 'publish.css в этом пространстве оформляет сайт.',
+  'publish.js in this space runs on the site.': 'publish.js в этом пространстве работает на сайте.',
+  Visits: 'Посещения',
+  'Counter script': 'Скрипт счётчика',
+  'Site name it expects': 'Ожидаемое имя сайта',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Посещение уходит тому, кто отдаёт этот скрипт. Пустое поле ничего не отправляет.',
+  Answers: 'Ответы',
+  'Save as CSV': 'Сохранить как CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'не удалось отправить письмо - попробуйте снова',
   'start again - that took too long': 'начните снова - это заняло слишком долго',

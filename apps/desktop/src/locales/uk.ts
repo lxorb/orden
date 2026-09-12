@@ -1308,6 +1308,20 @@ export const uk: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'Додайте постачальника ШІ в налаштуваннях, щоб отримати підсумок.',
   'The summary could not be written.': 'Підсумок не вдалося написати.',
+  // Publishing part two.
+  Spreadsheet: 'Таблиця даних',
+  'The app’s own': 'Як у застосунку',
+  'publish.css and publish.js in this space dress the site.':
+    'publish.css і publish.js у цьому просторі оформлюють сайт.',
+  'publish.css in this space dresses the site.': 'publish.css у цьому просторі оформлює сайт.',
+  'publish.js in this space runs on the site.': 'publish.js у цьому просторі працює на сайті.',
+  Visits: 'Відвідування',
+  'Counter script': 'Скрипт лічильника',
+  'Site name it expects': 'Очікувана назва сайту',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'Відвідування йде тому, хто віддає цей скрипт. Порожнє поле нічого не надсилає.',
+  Answers: 'Відповіді',
+  'Save as CSV': 'Зберегти як CSV',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'не вдалося надіслати лист - спробуйте знову',
   'start again - that took too long': 'почніть знову - це тривало надто довго',

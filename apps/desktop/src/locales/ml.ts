@@ -1263,6 +1263,20 @@ export const ml: Dictionary = {
   'Add an AI provider in settings to summarise.':
     'സാരാംശത്തിന് ക്രമീകരണങ്ങളിൽ ഒരു AI ദാതാവിനെ ചേർക്കുക.',
   'The summary could not be written.': 'സാരാംശം എഴുതാനായില്ല.',
+  // Publishing part two.
+  Spreadsheet: 'സ്പ്രെഡ്‌ഷീറ്റ്',
+  'The app’s own': 'ആപ്പിന്റെ സ്വന്തം',
+  'publish.css and publish.js in this space dress the site.':
+    'ഈ സ്പേസിലെ publish.css ഉം publish.js ഉം സൈറ്റിനെ അലങ്കരിക്കുന്നു.',
+  'publish.css in this space dresses the site.': 'ഈ സ്പേസിലെ publish.css സൈറ്റിനെ അലങ്കരിക്കുന്നു.',
+  'publish.js in this space runs on the site.': 'ഈ സ്പേസിലെ publish.js സൈറ്റിൽ പ്രവർത്തിക്കുന്നു.',
+  Visits: 'സന്ദർശനങ്ങൾ',
+  'Counter script': 'എണ്ണൽ സ്ക്രിപ്റ്റ്',
+  'Site name it expects': 'പ്രതീക്ഷിക്കുന്ന സൈറ്റ് പേര്',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    'വായനക്കാരന്റെ സന്ദർശനം ആ സ്ക്രിപ്റ്റ് നൽകുന്നവരിലേക്ക് പോകും. ശൂന്യമെങ്കിൽ ഒന്നും അയയ്ക്കില്ല.',
+  Answers: 'ഉത്തരങ്ങൾ',
+  'Save as CSV': 'CSV ആയി സൂക്ഷിക്കുക',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'മെയിൽ അയയ്ക്കാനായില്ല - വീണ്ടും ശ്രമിക്കുക',
   'start again - that took too long': 'വീണ്ടും തുടങ്ങുക - അത് വളരെ സമയമെടുത്തു',

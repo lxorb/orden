@@ -1228,6 +1228,20 @@ export const ko: Dictionary = {
   '{count} pieces of this meeting were lost.': '이 회의에서 {count}부분이 사라졌습니다.',
   'Add an AI provider in settings to summarise.': '요약하려면 설정에서 AI 공급자를 추가하세요.',
   'The summary could not be written.': '요약을 쓸 수 없었습니다.',
+  // Publishing part two.
+  Spreadsheet: '스프레드시트',
+  'The app’s own': '앱 자체의 것',
+  'publish.css and publish.js in this space dress the site.':
+    '이 공간의 publish.css와 publish.js가 사이트를 꾸밉니다.',
+  'publish.css in this space dresses the site.': '이 공간의 publish.css가 사이트를 꾸밉니다.',
+  'publish.js in this space runs on the site.': '이 공간의 publish.js가 사이트에서 실행됩니다.',
+  Visits: '방문',
+  'Counter script': '집계 스크립트',
+  'Site name it expects': '기대하는 사이트 이름',
+  'The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.':
+    '방문 기록은 그 스크립트를 제공하는 쪽으로 갑니다. 비워 두면 아무것도 보내지 않습니다.',
+  Answers: '답변',
+  'Save as CSV': 'CSV로 저장',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '메일을 보낼 수 없었습니다 - 다시 하세요',
   'start again - that took too long': '다시 시작하세요 - 너무 오래 걸렸습니다',
