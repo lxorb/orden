@@ -137,12 +137,14 @@ fn note_at(relative: String, body: &str) -> Note {
     let stem = file.rsplit_once('.').map_or(file, |(stem, _)| stem);
     let name = stem.to_string();
 
+    let read = prose(body);
+
     Note {
         path: relative,
         name,
-        headings: headings_in(body),
-        blocks: block_ids_in(body),
-        links: links_in(body),
+        headings: read.headings,
+        blocks: read.blocks,
+        links: read.links,
         tags: note_tags(body),
         icon: front_matter::value(body, "icon"),
         icon_color: front_matter::value(body, "icon-color"),
@@ -300,17 +302,54 @@ fn prose_lines(body: &str, mut each: impl FnMut(usize, &str)) {
     }
 }
 
-/// Every ATX heading in a note, in order, as the words it shows.
-fn headings_in(body: &str) -> Vec<String> {
-    let mut found = Vec::new();
+/// What one pass down a note's prose takes out of it: the two things a link can
+/// point at inside it, and the links out of it.
+struct Prose {
+    headings: Vec<String>,
+    blocks: Vec<String>,
+    links: Vec<Link>,
+}
 
-    prose_lines(body, |_, line| {
+/// That pass. One rather than three, because all three lists are filled line by
+/// line and in the order the lines come: three were three splittings of every note
+/// in a space into lines and three rounds of fence bookkeeping down each of them,
+/// for one answer.
+fn prose(body: &str) -> Prose {
+    let mut headings = Vec::new();
+    let mut blocks = Vec::new();
+    let mut links = Vec::new();
+
+    prose_lines(body, |index, line| {
         if let Some(text) = heading_of(line) {
-            found.push(text);
+            headings.push(text);
         }
+        if let Some(id) = block_id_of(line) {
+            blocks.push(id);
+        }
+
+        // Inline code spans are blanked rather than removed, so what is left
+        // still lines up with the line the context is taken from.
+        let mut found = links_on(&without_code(line));
+        if found.is_empty() {
+            return;
+        }
+
+        // The words the link is read in, built only for a line that holds one: a
+        // space of notes is mostly lines that hold none.
+        let context: String = line.trim().chars().take(LINE).collect();
+        for link in &mut found {
+            link.line = index;
+            link.text.clone_from(&context);
+        }
+
+        links.append(&mut found);
     });
 
-    found
+    Prose {
+        headings,
+        blocks,
+        links,
+    }
 }
 
 /// The words of a heading line, or nothing when the line is not one.
@@ -332,19 +371,6 @@ fn heading_of(line: &str) -> Option<String> {
 
     // A closing run of hashes is a style of writing a heading, not part of it.
     Some(rest.trim().trim_end_matches('#').trim().to_string())
-}
-
-/// Every block name in a note: the `^abc123` at the end of a line.
-fn block_ids_in(body: &str) -> Vec<String> {
-    let mut found = Vec::new();
-
-    prose_lines(body, |_, line| {
-        if let Some(id) = block_id_of(line) {
-            found.push(id);
-        }
-    });
-
-    found
 }
 
 /// The name a line ends by giving its block, if it gives one.
@@ -372,32 +398,6 @@ fn block_id_of(line: &str) -> Option<String> {
     }
 
     Some(id.to_string())
-}
-
-/// Every link out of a note, in the order they were written.
-fn links_in(body: &str) -> Vec<Link> {
-    let mut found = Vec::new();
-
-    prose_lines(body, |index, line| {
-        // Inline code spans are blanked rather than removed, so what is left
-        // still lines up with the line the context is taken from.
-        let mut links = links_on(&without_code(line));
-        if links.is_empty() {
-            return;
-        }
-
-        // The words the link is read in, built only for a line that holds one: a
-        // space of notes is mostly lines that hold none.
-        let context: String = line.trim().chars().take(LINE).collect();
-        for link in &mut links {
-            link.line = index;
-            link.text.clone_from(&context);
-        }
-
-        found.append(&mut links);
-    });
-
-    found
 }
 
 /// The same line with every inline code span replaced by spaces of the same
@@ -719,9 +719,19 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, canvas_note, decode, heading_of, headings_in, links_in, note_at, note_tags,
-        without_code,
+        block_id_of, canvas_note, decode, heading_of, note_at, note_tags, prose, without_code, Link,
     };
+
+    /// The links out of one note, which is one of the three lists the pass down it
+    /// fills. Named for what it answers, so a case reads as the note it is about.
+    fn links_in(body: &str) -> Vec<Link> {
+        prose(body).links
+    }
+
+    /// The headings in one note, off the same pass.
+    fn headings_in(body: &str) -> Vec<String> {
+        prose(body).headings
+    }
 
     /// One note as the index sees it, which is everything the scan takes out of
     /// the one reading it makes.
