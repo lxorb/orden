@@ -106,10 +106,18 @@ Nothing else changes.
 
 ## What is committed and what is generated
 
-`src-tauri/gen/android` is source. Its manifest, its theme, its colours, the two
-files under `res/xml` and `MainActivity.kt` are edited by hand, and everything
-gradle writes inside it is ignored by the project's own `.gitignore`, along with
-the `tauri.*` gradle files the CLI rewrites on every build.
+`src-tauri/gen/android` is source. What is edited by hand:
+
+- `AndroidManifest.xml`, `app/build.gradle.kts` and `app/proguard-rules.pro`
+- `MainActivity.kt`, and beside it `Shared.kt` (what another app sent), `Tiles.kt`
+  (the quick settings rows), `Widgets.kt` (the home screen) and `Speech.kt` (the
+  recogniser)
+- `res/values` and `res/values-night` - the theme, the colours and the words the
+  system reads before the app has run - plus `res/values-de`, `res/layout`,
+  `res/drawable` and `res/xml`
+
+Everything gradle writes inside it is ignored by the project's own `.gitignore`,
+along with the `tauri.*` gradle files the CLI rewrites on every build.
 
 `src-tauri/gen/apple` is not committed. The CLI only writes it on a macOS
 machine, and nothing in it is edited, so there is nothing a commit would
