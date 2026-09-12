@@ -1,0 +1,85 @@
+/** What the ```` ```ai ```` block in a note asks, and who answers it.
+ *
+ *  The editor owns the block: it finds the question, writes the answer under it and
+ *  stops a stream that is still coming; see ai/run.ts there. This is the other half
+ *  of that seam - which provider, which model, what the model is told, and what a
+ *  reader sees when it goes wrong.
+ *
+ *  Installed once, at startup, so the glyph on a fence works from the first note.
+ *  With no provider set up it still installs: a press then says where to add one,
+ *  which is better than a glyph that is not there for reasons nobody can see. */
+
+import { setAiRunner } from '@nib/editor'
+import { busy } from '../busy.svelte'
+import { message, t } from '../i18n.svelte'
+import { complete, wasStopped } from './complete'
+import { ai } from './store.svelte'
+
+/** What the model is told before the question.
+ *
+ *  Short on purpose. Three things it cannot work out for itself: that the answer is
+ *  going into a markdown note, that the note is read in whatever language the
+ *  question was written in, and that nobody wants a paragraph of preamble in front
+ *  of the answer. Not translated, because nobody reads it: it is instructions to a
+ *  model, and asking it to answer in the question's own language covers every
+ *  language the app has without a dictionary entry.
+ *
+ *  No code fence around the whole answer, because the answer is written into the
+ *  note as markdown: one that came back fenced would render as a block of grey. */
+const SYSTEM = [
+  'You are answering inside a markdown note, and your answer is written straight',
+  'into it. Reply in markdown, in the same language the question is written in.',
+  'No preamble, no sign-off, and never wrap the whole reply in a code fence.',
+].join(' ')
+
+/** How the note is handed over for a question that said `@note`. Fenced, so the
+ *  model can tell the note from the question, and labelled so it knows what it is
+ *  looking at. */
+function noteContext(note: string): string {
+  return `The note this question is in:\n\n<note>\n${note}\n</note>`
+}
+
+export function installAiRunner() {
+  setAiRunner(async (ask, signal) => {
+    const provider = ai.chosen
+    if (!provider) {
+      busy.failed(t('Add an AI provider in Settings first.'))
+      throw new Error('no provider')
+    }
+
+    // The answer's span is written when the first words arrive rather than when the
+    // request is made, so a question that was refused - a key that has expired, a
+    // model that is gone - leaves the note exactly as it was.
+    let begun = false
+    const wrote = (piece: string) => {
+      if (!begun) {
+        begun = true
+        ask.started(provider.model)
+      }
+      ask.wrote(piece)
+    }
+
+    try {
+      await complete({
+        provider,
+        model: provider.model,
+        messages: [
+          { role: 'system', content: SYSTEM },
+          ...(ask.note ? [{ role: 'system' as const, content: noteContext(ask.note) }] : []),
+          { role: 'user', content: ask.prompt },
+        ],
+        stream: wrote,
+        signal,
+      })
+
+      // A stream that ended without a word in it. Nothing was written, so without a
+      // line saying so the press would look like nothing happened at all.
+      if (!begun) busy.failed(t('The model did not answer.'))
+    } catch (error) {
+      // Stopping is not a failure: the reader pressed the square, and what arrived
+      // before they did is in the note where they can see it.
+      if (!wasStopped(error)) busy.failed(message(error, t('The model did not answer.')))
+      throw error
+    }
+  })
+}

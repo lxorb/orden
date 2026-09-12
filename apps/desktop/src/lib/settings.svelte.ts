@@ -21,6 +21,7 @@ export type Section =
   | 'markdown'
   | 'appearance'
   | 'glasses'
+  | 'ai'
   | 'account'
   | 'sync'
   | 'llm'

@@ -812,10 +812,32 @@ export async function webInvoke<T>(
       window.open(location.href, '_blank')
       return undefined as T
 
+    // An AI provider's key. A browser has no keychain and no hardware store, so it
+    // goes where everything else the page keeps goes, under a prefix of its own, and
+    // the AI pane says plainly that the browser is holding it. See ai/keys.ts, and
+    // src-tauri/src/secrets.rs for what the desktop does instead.
+    case 'secret_read':
+      return ((await meta.get(secretKey(args.name as string))) ?? null) as T
+
+    case 'secret_write':
+      await meta.put(secretKey(args.name as string), args.secret as string)
+      return undefined as T
+
+    case 'secret_forget':
+      await meta.remove(secretKey(args.name as string))
+      return undefined as T
+
     default:
       if (command in UNSUPPORTED) return UNSUPPORTED[command] as T
       throw new Error(`${command} is not available in the browser`)
   }
+}
+
+/** Where a provider's key sits among the rows. Prefixed so the themes, the custom
+ *  CSS and the snippets that share this store cannot be reached by asking for a
+ *  provider, and so a key is recognisable as one to anybody clearing site data. */
+function secretKey(name: string): string {
+  return `ai-key/${name}`
 }
 
 /** True once anything has been written, so a first visit can be seeded. */

@@ -37,6 +37,10 @@ export const ICONS: Record<string, string> = {
     'M4.3 9.4a2.7 2.7 0 1 0 0-.1M11.7 9.4a2.7 2.7 0 1 0 0-.1M7 9.4h2M1.6 8L2.6 5.3h2.7M14.4 8l-1-2.7h-2.7',
   account: 'M8 8.4a2.9 2.9 0 1 0 0-5.8 2.9 2.9 0 0 0 0 5.8zM2.6 14a5.4 5.4 0 0 1 10.8 0',
   llm: 'M5 2.5h6a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5.5 14v-2.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
+  // A four-pointed spark, which is what a model answering has looked like since
+  // everybody started drawing one. Two of them, so it reads as a spark and not as
+  // a star: the small one is what says this is the machine and not the sky.
+  ai: 'M6 2.2l1.1 2.9L10 6.2 7.1 7.3 6 10.2 4.9 7.3 2 6.2l2.9-1.1zM11.5 9.2l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z',
   // Two arrows going round, which is what syncing has looked like since before
   // any of this.
   sync: 'M13.2 7a5.3 5.3 0 0 0-9.1-2.6L2.8 5.7M2.8 9a5.3 5.3 0 0 0 9.1 2.6l1.3-1.3M2.8 3v2.7h2.7M13.2 13v-2.7h-2.7',
@@ -64,6 +68,10 @@ export function sectionGroups(): Item[][] {
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
+      // The providers a note's `ai` block and the rewrites reach, and where their
+      // keys went. Always here: unlike the connector below, nothing about it needs
+      // an account, and the pane's own first row is how one is added.
+      { id: 'ai', label: t('AI') },
       // Only for somebody who has a pair: in the plugin always, and on any other
       // device once the plugin has answered one, which the account remembers.
       // Spread rather than hidden, so the group closes over the gap instead of

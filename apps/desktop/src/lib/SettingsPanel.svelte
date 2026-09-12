@@ -9,6 +9,7 @@
   import { arrive, segmented } from './slide'
   import Hint from './Hint.svelte'
   import { message, t } from './i18n.svelte'
+  import AiPane from './AiPane.svelte'
   import McpSetup from './McpSetup.svelte'
   import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
@@ -684,6 +685,10 @@
     <!-- Its own component, for the same reason as the connector's: what syncing
          is doing is a small report with two decisions in it. -->
     <SyncPane />
+  {:else if settings.section === 'ai'}
+    <!-- Its own component: a provider is two or three fields and a list fetched
+         from a server, not a row of settings. -->
+    <AiPane />
   {:else if settings.section === 'llm'}
     <!-- Its own component: the pane is a small guide, not a list of settings. -->
     <McpSetup />

@@ -23,6 +23,7 @@
   import SettingsPanel from './lib/SettingsPanel.svelte'
   import ShareSheet from './lib/ShareSheet.svelte'
   import PublishSheet from './lib/PublishSheet.svelte'
+  import RewriteSheet from './lib/RewriteSheet.svelte'
   import JoinSheet from './lib/JoinSheet.svelte'
   import SignIn from './lib/SignIn.svelte'
   import Slides from './lib/Slides.svelte'
@@ -30,6 +31,8 @@
   import StorageWarning from './lib/StorageWarning.svelte'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
+  import { ai } from './lib/ai/store.svelte'
+  import { rewriting } from './lib/ai/rewriting.svelte'
   import { arriving } from './lib/arriving.svelte'
   import { busy } from './lib/busy.svelte'
   import FirstSync from './lib/FirstSync.svelte'
@@ -304,6 +307,9 @@
     Object.assign(window, {
       nibApp: {
         account,
+        // The AI providers, which a drive sets up against a fake OpenAI-compatible
+        // server rather than against anybody's key; see test/e2e/ai.py.
+        ai,
         arriving,
         busy,
         fullscreen,
@@ -314,6 +320,9 @@
         // chooser rather than the menu, so it needs the sheet on screen first.
         importing,
         rooms,
+        // One rewrite, which is a sheet opened from the editor's own menu: a drive
+        // cannot reach a right-click menu, so it asks for the sheet.
+        rewriting,
         share,
         // The files other people shared on their own, so a drive can watch one
         // arrive at the foot of the switcher and disappear again when it is
@@ -688,6 +697,7 @@
 <ShareSheet />
 <PublishSheet />
 <ImportSheet />
+<RewriteSheet />
 <PromptSheet />
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet

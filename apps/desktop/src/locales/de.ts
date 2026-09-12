@@ -1119,4 +1119,42 @@ export const de: Dictionary = {
   'What is selected': 'Was ausgewählt ist',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Leinwand: {cards} Karten, {links} Verbindungen, {drawings} Zeichnungen',
+
+  // The AI providers, the block in a note, and the four rewrites
+  AI: 'KI',
+  Providers: 'Anbieter',
+  'Make default': 'Als Standard',
+  'OpenAI-compatible': 'OpenAI-kompatibel',
+  'Base URL': 'Basis-URL',
+  'API key': 'API-Schlüssel',
+  'Set on this device': 'Auf diesem Gerät gesetzt',
+  Optional: 'Optional',
+  'List models': 'Modelle abrufen',
+  'Asking…': 'Wird gefragt…',
+  'No providers yet.': 'Noch keine Anbieter.',
+  'Add {name}': '{name} hinzufügen',
+  'Keys stay in the secure store on this device.':
+    'Schlüssel bleiben im sicheren Speicher dieses Geräts.',
+  'This browser holds the keys in its own storage.':
+    'Dieser Browser bewahrt die Schlüssel in seinem eigenen Speicher auf.',
+  'Used by the glasses': 'Von der Brille genutzt',
+  'Could not read the models.': 'Die Modelle konnten nicht gelesen werden.',
+  'That provider is not set up yet.': 'Dieser Anbieter ist noch nicht eingerichtet.',
+  'Could not reach {url}': '{url} nicht erreichbar',
+  'That key was refused.': 'Dieser Schlüssel wurde abgelehnt.',
+  'The provider answered {status}.': 'Der Anbieter antwortete mit {status}.',
+  'Add an AI provider in Settings first.':
+    'Zuerst in den Einstellungen einen KI-Anbieter hinzufügen.',
+  'The model did not answer.': 'Das Modell hat nicht geantwortet.',
+  'Rewrite…': 'Umschreiben…',
+  Shorter: 'Kürzer',
+  Longer: 'Länger',
+  'Fix grammar': 'Grammatik korrigieren',
+  Translate: 'Übersetzen',
+  'Rewriting…': 'Wird umgeschrieben…',
+  Discard: 'Verwerfen',
+  Ask: 'Fragen',
+  'Ask the model': 'Das Modell fragen',
+  'answered by {model}, {date}': 'beantwortet von {model}, {date}',
+  'AI block': 'KI-Block',
 }

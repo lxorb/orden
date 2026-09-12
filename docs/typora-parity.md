@@ -797,3 +797,31 @@ Features Typora does not have, which are the reason this exists.
       `scripts/nib-sync.mjs` is forty lines of fetch over the change feed. Not a
       delete, ever - a script that can delete is a script that can empty a space on
       a bad `if`
+- [x] Models, brought rather than sold: Claude, OpenAI, and anything that speaks
+      OpenAI's shape, which is Ollama or LM Studio on this machine and OpenRouter
+      or a gateway behind it. A key goes in the device's own store - the
+      Credential Manager, the Keychain, the Secret Service, Android's encrypted
+      preferences - and never on the account, in a note or in a log; a browser
+      keeps it in IndexedDB and the pane says so in one line rather than
+      pretending. The model list is asked for, never written down. Neither
+      Anthropic nor OpenAI lets a third-party app sign anybody in with a Claude or
+      a ChatGPT subscription, for anybody, so the two honest options are the two
+      offered: your own key, or a model on your own machine. See `docs/ai.md`
+- [x] A question as a block of the note: a ` ```ai ` fence holding the prompt, a
+      triangle on its header row that asks it and becomes a square that stops it,
+      and the answer streamed in as ordinary markdown underneath, under a quiet
+      italic line saying which model said it and on what day. Two HTML comments
+      around the answer are what a second press replaces, so asking again does not
+      stack answers; every renderer hides a comment and nib strips both spellings
+      before rendering anything, so they show nowhere. Which means the note opens
+      in Obsidian with no plugin at all: the question is a code block and the
+      answer is prose. `@note` in the prompt sends the note as context, and a
+      prompt that does not say it sends nothing but itself
+- [x] Four rewrites on a selection, behind one row in the editor's menu: shorter,
+      longer, the grammar fixed, or translated into the interface language or one
+      picked. What comes back arrives as a diff against what was selected, in the
+      rows the version history already draws, and is kept or thrown away before
+      anything is written - a model replacing a paragraph is the one gesture here
+      that can lose work, and by the time an undo has been read the paragraph is
+      off the screen
+

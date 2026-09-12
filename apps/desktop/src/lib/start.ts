@@ -7,6 +7,8 @@
 
 import { setBlocks } from '@nib/editor'
 import { account } from './account.svelte'
+import { installAiRunner } from './ai/ask'
+import { ai } from './ai/store.svelte'
 import { blockRows } from './commands'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
@@ -39,6 +41,11 @@ export function start(): () => void {
   modes.restore()
   shortcuts.restore()
   settings.restore()
+  // Which providers are set up, and the one glyph on an `ai` fence that asks one.
+  // Installed whether or not any are, so a press on a block in a note somebody was
+  // sent says where to add one; see ai/ask.ts.
+  ai.restore()
+  installAiRunner()
   recovery.restore()
   // What the last passes did, and what is waiting to be settled; see
   // sync/record.svelte.ts. It goes with the session, because a clash holds the

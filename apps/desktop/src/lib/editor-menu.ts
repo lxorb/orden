@@ -19,6 +19,7 @@ import {
   toggleWrap,
   type Transaction,
 } from '@nib/editor'
+import { rewriting } from './ai/rewriting.svelte'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { countText } from './counts'
 import { composerEntries } from './composer-commands'
@@ -233,6 +234,20 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
   return [
     ...clipboard,
     ...block,
+    // One row for the four rewrites, on a selection and only on one: what they do is
+    // replace what is selected, and four rows here would be four rows greyed out in
+    // every menu opened anywhere else. See ai/rewriting.svelte.ts.
+    ...(selected
+      ? [
+          DIVIDER,
+          {
+            label: t('Rewrite…'),
+            run: () => {
+              if (view) rewriting.show(view)
+            },
+          },
+        ]
+      : []),
     DIVIDER,
     { label: t('Bold'), hint: shortcuts.hint('format.bold'), run: run(toggleWrap('**')) },
     { label: t('Italic'), hint: shortcuts.hint('format.italic'), run: run(toggleWrap('*')) },

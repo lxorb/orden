@@ -5,6 +5,7 @@ import {
   foldLess,
   foldMore,
   insertCallout,
+  insertAiBlock,
   insertChart,
   insertCodeFence,
   insertComment,
@@ -499,6 +500,15 @@ const BLOCKS: Block[] = [
   block('paragraph.quote', () => t('Quote'), toggleQuote),
   block('paragraph.math-block', () => t('Math block'), insertMathBlock),
   block('paragraph.chart', () => t('Chart'), insertChart),
+  // A question for a model, as a block of the note. No key of its own: the answer
+  // is asked for with the glyph on the fence, and a key that only wrote an empty
+  // fence would be a key for half the gesture. See ai/block.ts in the editor
+  // package for what the block and its answer look like in the file.
+  {
+    id: 'ai-block',
+    label: () => t('AI block'),
+    apply: insertAiBlock,
+  },
   block('paragraph.callout', () => t('Callout'), insertCallout),
   block('paragraph.bullet-list', () => t('Bulleted list'), toggleBulletList),
   block('paragraph.ordered-list', () => t('Numbered list'), toggleOrderedList),

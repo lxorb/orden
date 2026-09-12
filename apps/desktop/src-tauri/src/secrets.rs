@@ -6,7 +6,7 @@
 //!
 //! So it goes where the operating system keeps secrets: the Credential Manager on
 //! Windows, the Keychain on macOS, and the Secret Service on Linux, which is
-//! gnome-keyring or KWallet depending on the desktop. The `keyring` crate is the
+//! gnome-keyring or `KWallet` depending on the desktop. The `keyring` crate is the
 //! one interface to the three of them.
 //!
 //! Desktop only. A phone keeps them in `EncryptedSharedPreferences`, which is

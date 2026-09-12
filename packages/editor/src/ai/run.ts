@@ -39,9 +39,12 @@ export interface AiAsk {
   wrote: (text: string) => void
 }
 
-/** Asks, and resolves when the answer is complete. Rejects with whatever went
- *  wrong, already in the reader's language: the app knows about providers and the
- *  editor does not. */
+/** Asks, and settles when the answer is complete or has stopped coming.
+ *
+ *  Saying what went wrong is the app's: a provider, a key and a quota are all things
+ *  the editor knows nothing about, and the app has a line across the top of the
+ *  window to say it on. So a rejection here is only a signal that the answer ended
+ *  early, and what is left in the note is what had arrived. */
 export type AiRunner = (ask: AiAsk, signal: AbortSignal) => Promise<void>
 
 let runner: AiRunner | null = null
@@ -238,10 +241,15 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
       wrote: (text) => writeAnswer(view, id, text),
     },
     controller.signal,
-  ).finally(() => {
-    trimAnswer(view, id)
-    view.dispatch({ effects: closeAsk.of(id) })
-  })
+  )
+    // Whatever went wrong, the app has already said so; see `AiRunner`. Caught
+    // rather than dropped, because a rejection nobody handles is a console full of
+    // noise and, in a webview, sometimes worse.
+    .catch(() => undefined)
+    .finally(() => {
+      trimAnswer(view, id)
+      view.dispatch({ effects: closeAsk.of(id) })
+    })
 
   return true
 }
