@@ -108,6 +108,12 @@ file wins wherever it says anything, and the first icon written into the file
 takes the map's word away for good (`setFileIcon` clears the key), so one row's
 icon is never kept in two places.
 
+The colour that icon is drawn in travels the same way, under the same keys: a
+second map beside the first, sent in the same request, because one gesture in the
+picker chooses both. It was this device's own until migration 0036 gave it a column
+beside the icon it colours, which is why a tree dressed on a desktop used to arrive
+on a phone in the plain foreground. See `docs/icons.md`.
+
 There is no "folder icon" as a thing to choose. The menu says "Choose an icon" on
 every row, and where the value goes is nobody's business but `file-icon.ts`'s.
 

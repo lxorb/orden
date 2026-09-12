@@ -14,7 +14,7 @@ that thing has.
 | a note | `icon:` in its own front matter | The one place a markdown file has for metadata. It travels with the file into another vault, and Obsidian's Iconize plugin reads the same key. |
 | a canvas | `nib.icon` in the `.canvas` JSON | A canvas has no front matter. `nib` is the one top-level key the JSON Canvas spec leaves for what is ours, and the ink already lives there; under it the file is the spec exactly. |
 | a folder with no note of its own | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |
-| a space | this device's own store, keyed by folder | It was a device's choice before it was the account's, and it still is on a machine that is not signed in. |
+| a space | this device's own store, keyed by folder, and the account's `icon` column | It was a device's choice before it was the account's, and it still is on a machine that is not signed in. Keyed by folder here rather than by id, so it survives the ids being handed out again. |
 
 Three ways of giving a folder an icon were weighed. A dotfile inside the folder
 would sync for free and survive a move without being told, but it puts a file in
@@ -38,6 +38,50 @@ it is deleted and comes back when it is restored. `PUT /v1/spaces/:id/icons` wri
 it and `GET /v1/spaces` carries it, so a machine reads it in the listing it already
 fetches rather than one request per space.
 
+## The colour, and where it goes
+
+Each of those two icons - a space's and a folder's - has a second value beside it
+for the colour it is drawn in, and each is kept beside the icon it colours:
+`spaces.tint` beside `spaces.icon`, `spaces.tints` beside `spaces.icons`, both
+added by migration 0036. One request writes both halves, because one gesture in the
+picker chooses both: `PATCH /v1/spaces/:id` takes `tint` beside `icon`, and
+`PUT /v1/spaces/:id/icons` takes a `tints` map under the same keys as the `icons`
+one.
+
+Two values rather than one, and two columns rather than a pair per entry. The first
+is what other apps and older builds read: a note says `icon: rocket` and
+`icon-color: violet` on two lines so Obsidian's Iconize still finds the icon and
+ignores the colour, and a map of strings is a map an older build reads and writes
+back whole - a value that is not a string is a value it drops, which would be every
+colour anybody chose.
+
+The service reads the shape of an accent's id rather than a list of them - a short
+lowercase name - for the reason it reads a set it has never heard of in an icon: the
+accents are the app's, they are named in one file there, and a palette that gains a
+colour must not wait on a deploy. A hex, a path or a shouted name is not that shape
+and leaves the colour as it was.
+
+Two things a sync must not do, and neither does:
+
+- **Undress what an older machine cannot see.** A request with no word about the
+  colours leaves the columns as they are; only an empty map takes them away. So an
+  app older than 0036, syncing the same account, carries the icons and touches
+  nothing else.
+- **Lose what was chosen offline.** A push that did not land is written down as not
+  said, and the pass after that folds this machine's maps in and sends them again
+  instead of handing back the account's copy of a choice the account never heard.
+  A space's own colour has the same rule in one line: a listing with nothing at all
+  where the colour goes is a service older than the column, so this machine's colour
+  stays and is sent up.
+
+After that the account holds the one copy of both, the way it does for the icons:
+a colour taken off on another machine is taken off here.
+
+`apps/desktop/test/e2e/tints.py` drives the pair against a real Worker: the
+migrations applied the way a deploy runs them, one account on two devices, a mark
+dressed on one and read on the other, an older app that undresses nothing, a colour
+taken off, a folder renamed with its colour, and the values that are not accents.
+
 ## What a value says
 
 One string, three things it can be:
@@ -57,11 +101,12 @@ nothing at all. Letters and digits alone decide, so `FileText`, `file-text` and
 `file_text` are one icon.
 
 The colour a stroked icon is drawn in is a second value, never folded into the
-first: a note keeps it under `icon-color:`, a canvas under `nib.iconColor`. Two keys
-so that an app reading the note still finds the icon and simply ignores the colour.
-The value is one of the app's own accents by its id, so it has a shade for black and
-one for white and still means something in next year's palette. An emoji and a
-coloured drawing take no colour: they are already pictures in their own colours.
+first: a note keeps it under `icon-color:`, a canvas under `nib.iconColor`, a space
+and a folder in the columns above. Two keys so that an app reading the note still
+finds the icon and simply ignores the colour. The value is one of the app's own
+accents by its id, so it has a shade for black and one for white and still means
+something in next year's palette. An emoji and a coloured drawing take no colour:
+they are already pictures in their own colours.
 
 ## The sets
 
