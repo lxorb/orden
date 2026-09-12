@@ -545,9 +545,16 @@ def main() -> int:
                 sign_in(page, worker, "reader", PERSON)
 
                 # ── It says so, from the moment the code is accepted ────────
+                # Where it says it depends on whether there is anything to say it
+                # over. This browser holds the welcome note, so it has a space and
+                # a file list already, and the pass reports as a count in the
+                # panel's foot rather than over the whole surface: the full
+                # surface is for a machine with nothing of the account's to show
+                # at all. See `nothingToShow` in workspace.svelte.ts and the head
+                # of arriving.svelte.ts.
                 say("waiting for the state to go up")
                 try:
-                    wait_for(page, "() => !!document.querySelector('.arriving')", "the state", 30)
+                    wait_for(page, "() => window.nibApp.arriving.showing", "the state", 30)
                 except SystemExit:
                     raise SystemExit(
                         f"the state never went up. the app says: {state(page)}\n"
@@ -556,15 +563,18 @@ def main() -> int:
                 say("it went up before the account had been asked anything")
                 say(f"the surface is {surface(page)}")
 
-                # Nothing of the app is reachable behind it: no stale note to type
-                # into, no half arrived file list to click.
-                if not page.evaluate("() => document.querySelector('main')?.inert === true"):
-                    wrong("the app is still reachable while the first pass runs")
+                # And the app stays reachable, because the list beside it is
+                # already right: the names land a request in, and a row whose body
+                # has not arrived says so when it is clicked.
+                if page.evaluate("() => document.querySelector('main')?.inert === true"):
+                    wrong("the app was shut off while there was already a list to use")
 
-                # The question about the notes already here is answerable over it,
-                # because it is the app asking rather than the app working.
+                # The question about the notes already here.
                 keep_local_notes(page, "reader")
 
+                # The foot of the list panel, which is where the pass reports.
+                page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+                page.wait_for_selector("aside .foot", timeout=10_000)
                 page.wait_for_timeout(300)
                 page.screenshot(path=str(SHOTS / "signing-in-light.png"))
                 say("photographed the state, light")
@@ -573,7 +583,7 @@ def main() -> int:
                 counted = wait_for(
                     page,
                     "() => {"
-                    "  const said = document.querySelector('.arriving .said')?.innerText ?? '';"
+                    "  const said = document.querySelector('aside .foot .coming')?.innerText ?? '';"
                     "  return /\\d+\\s*of\\s*\\d+/.test(said) ? said : null"
                     "}",
                     "the count",
@@ -582,15 +592,15 @@ def main() -> int:
                 say(f"the state counts: {counted!r}")
                 page.screenshot(path=str(SHOTS / "signing-in-counting.png"))
 
-                # ── And it lifts on its own, with nobody reloading ──────────
-                say("waiting for the state to lift")
+                # ── And it goes on its own, with nobody reloading ───────────
+                say("waiting for the state to go")
                 wait_for(
                     page,
-                    "() => !document.querySelector('.arriving')",
-                    "the state to lift",
+                    "() => !window.nibApp.arriving.showing",
+                    "the state to go",
                     patience=90,
                 )
-                say("it lifted on its own, and the app is reachable again")
+                say("it went on its own, and the app is reachable again")
 
                 if page.evaluate("() => document.querySelector('main')?.inert === true"):
                     wrong("the app was left unreachable after the pass finished")
@@ -641,7 +651,11 @@ def main() -> int:
                 # ── Later passes stay quiet ────────────────────────────────
                 page.evaluate("() => window.nibApp.sync.nudge()")
                 page.wait_for_timeout(1500)
-                if page.locator(".arriving").count():
+                # Neither over the surface nor in the foot: a later pass is one
+                # nobody is waiting on, so the sync light is the whole report.
+                if page.locator(".arriving").count() or page.evaluate(
+                    "() => window.nibApp.arriving.showing"
+                ):
                     wrong("a later pass put the state back up")
                 else:
                     say("a later pass says nothing: the sync light is the whole report")
@@ -665,7 +679,7 @@ def main() -> int:
                 page.evaluate("() => (window.nibApp.account.open = true)")
                 page.locator("input[type=email]").wait_for(timeout=10_000)
                 sign_in(page, worker, "dark", PERSON)
-                wait_for(page, "() => !!document.querySelector('.arriving')", "the state", 30)
+                wait_for(page, "() => window.nibApp.arriving.showing", "the state", 30)
                 keep_local_notes(page, "dark")
                 page.wait_for_timeout(300)
                 page.screenshot(path=str(SHOTS / "signing-in-dark.png"))
@@ -680,7 +694,7 @@ def main() -> int:
                 page.evaluate("() => (window.nibApp.account.open = true)")
                 page.locator("input[type=email]").wait_for(timeout=10_000)
                 sign_in(page, worker, "offline", PERSON)
-                wait_for(page, "() => !!document.querySelector('.arriving')", "the state", 30)
+                wait_for(page, "() => window.nibApp.arriving.showing", "the state", 30)
 
                 # The radio goes the moment the code has been accepted, which is
                 # the case that used to leave somebody looking at nothing forever.
@@ -703,7 +717,7 @@ def main() -> int:
                 say("waiting for the wait to end on its own")
                 wait_for(
                     page,
-                    "() => !document.querySelector('.arriving')",
+                    "() => !window.nibApp.arriving.showing",
                     "the state to let go of a dead connection",
                     30,
                 )
@@ -718,6 +732,19 @@ def main() -> int:
                 # that neither answers nor fails. Nothing can be asked of a socket
                 # that hangs, so the state is driven rather than emulated - it is
                 # the real surface, waiting the way it waits.
+                #
+                # The full surface is only drawn while there is nothing of the
+                # account's to draw it over, which is the machine this is about: a
+                # first sign-in that has not landed anything yet. So the browser is
+                # emptied to be that machine. See `nothingToShow` in
+                # workspace.svelte.ts.
+                page.evaluate(
+                    """() => {
+                         const ws = window.nibApp.workspace
+                         ws.spaces = []
+                         ws.tree = null
+                       }"""
+                )
                 page.evaluate("() => window.nibApp.arriving.begin()")
                 out = page.get_by_role("button", name="Continue")
                 out.wait_for(timeout=15_000)
@@ -728,7 +755,7 @@ def main() -> int:
                 out.click()
                 wait_for(
                     page,
-                    "() => !document.querySelector('.arriving')",
+                    "() => !window.nibApp.arriving.showing",
                     "the way out to let go",
                 )
                 if page.evaluate("() => document.querySelector('main')?.inert === true"):
