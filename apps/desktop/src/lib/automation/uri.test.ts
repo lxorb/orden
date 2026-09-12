@@ -49,6 +49,12 @@ describe('reading a link', () => {
     expect(readUri('nibble://open')).toBeNull()
   })
 
+  /** So that a link naming a verb the app declines is declined by name rather than
+   *  read as a broken address; see the cancel callback in start.ts. */
+  test('reads an action written with a dot in it', () => {
+    expect(readUri('nib://files.delete?path=A.md')?.action).toBe('files.delete')
+  })
+
   test('is nothing for an action that is not a word', () => {
     expect(readUri('nib://?path=A.md')).toBeNull()
     expect(readUri('nib://../../etc?x=1')).toBeNull()

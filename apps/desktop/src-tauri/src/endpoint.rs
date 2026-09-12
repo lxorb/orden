@@ -390,14 +390,14 @@ impl Request {
 /// body as long as `content-length` says. None for anything that is not shaped
 /// like a request at all, which is the shape a port scanner arrives in.
 fn read_request(stream: &mut TcpStream) -> std::io::Result<Option<Request>> {
-    let mut held: Vec<u8> = Vec::new();
+    let mut bytes: Vec<u8> = Vec::new();
     let mut chunk = [0_u8; 8192];
 
     let ends = loop {
-        if let Some(at) = find(&held, b"\r\n\r\n") {
+        if let Some(at) = find(&bytes, b"\r\n\r\n") {
             break at;
         }
-        if held.len() > MOST_BYTES {
+        if bytes.len() > MOST_BYTES {
             return Ok(None);
         }
 
@@ -405,10 +405,10 @@ fn read_request(stream: &mut TcpStream) -> std::io::Result<Option<Request>> {
         if read == 0 {
             return Ok(None);
         }
-        held.extend_from_slice(&chunk[..read]);
+        bytes.extend_from_slice(&chunk[..read]);
     };
 
-    let Ok(head) = std::str::from_utf8(&held[..ends]) else {
+    let Ok(head) = std::str::from_utf8(&bytes[..ends]) else {
         return Ok(None);
     };
     let Some((method, headers)) = parse_head(head) else {
@@ -424,7 +424,7 @@ fn read_request(stream: &mut TcpStream) -> std::io::Result<Option<Request>> {
         return Ok(None);
     }
 
-    let mut body = held[ends + 4..].to_vec();
+    let mut body = bytes[ends + 4..].to_vec();
     while body.len() < length {
         let read = stream.read(&mut chunk)?;
         if read == 0 {

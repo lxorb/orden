@@ -66,13 +66,24 @@ async ([plan, other]) => {
 """
 
 # What the app is showing, and whatever it had to say about a link.
+#
+# The caret comes off the editor rather than off `workspace.goto`, which is the ask
+# rather than the answer: the window takes the ask down as soon as it has jumped, so
+# a moment later there is nothing there to read. Where the caret ended up is the
+# thing that was being asked about anyway.
 STATE = """
 () => {
+  const caretLine = () => {
+    const view = window.nib
+    if (!view) return null
+    return view.state.doc.lineAt(view.state.selection.main.head).number - 1
+  }
+
   const ws = window.nibApp.workspace
   return {
     active: ws.active?.name ?? null,
     text: ws.active?.doc ?? null,
-    goto: ws.goto?.line ?? null,
+    caret: caretLine(),
     panel: ws.panel,
     tabs: ws.tabs.length,
     names: ws.notes.map((one) => one.name),
@@ -226,14 +237,14 @@ def drive_opening(page: Page) -> None:
 
 def drive_heading(page: Page) -> None:
     state = follow(page, "nib://open?path=The plan.md&heading=Later", "heading")
-    say(f"[heading] landed on line {state['goto']}")
+    say(f"[heading] the caret is on line {state['caret']}")
     shot(page, "02-heading")
 
     if state["active"] != "The plan.md":
         wrong(f"the note did not open: {state['active']}")
     # `## Later` is the fifth line of the note, counting from zero.
-    if state["goto"] != 4:
-        wrong(f"the link did not land on the heading: line {state['goto']}")
+    if state["caret"] != 4:
+        wrong(f"the link did not land on the heading: line {state['caret']}")
 
 
 def drive_making(page: Page) -> None:

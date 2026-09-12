@@ -62,8 +62,12 @@ export function readUri(uri: string): Followable | null {
 
   // `x-callback-url/open` is how the tools that invented the callbacks write it,
   // and it means the same as `open` with an `x-success` on it.
+  // A dot is allowed so that a link naming a verb the app will not do for a link -
+  // `nib://files.delete` - is read as that verb and declined by name, rather than
+  // read as a broken address. What a link may actually ask for is the table's
+  // business and nothing to do with the spelling; see verbs.ts.
   const action = said.replace(/^x-callback-url\//i, '').toLowerCase()
-  if (!/^[a-z][a-z-]*$/.test(action)) return null
+  if (!/^[a-z][a-z.-]*$/.test(action)) return null
 
   const given: Record<string, string> = {}
   for (const [name, value] of new URLSearchParams(query)) {
