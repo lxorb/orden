@@ -173,13 +173,19 @@ describe('the sidebar button', () => {
 
 describe('the row across the top of the app', () => {
   test('is one row tall, and nothing in it is pinned to the top of it', () => {
-    const style = declarations(named('lib/AppMenu.svelte').style)
-    const trigger = /\.trigger\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
+    const menu = named('lib/AppMenu.svelte')
+    const trigger = /\.trigger\s*\{([^}]*)\}/.exec(declarations(menu.style))?.[1] ?? ''
 
-    // A fixed height inside a stretching bar means "top of the row", which is
-    // where the three bars sat while everything beside them was centred.
-    expect(trigger).toMatch(/height\s*:\s*30px/)
+    // The bar stretches what is in it, and a button with a height of its own
+    // lands at the top of the row unless it says otherwise - which is where the
+    // three bars sat while everything beside them was centred.
     expect(trigger).toMatch(/align-self\s*:\s*center/)
+
+    // The height itself comes from `.nib-glyph` in the themes package, which is
+    // the one square every icon button in the app is. It used to be a 30px pill
+    // stated here, which made it the only button in the bar at that size.
+    expect(menu.text).toMatch(/class="nib-glyph trigger"/)
+    expect(trigger).not.toMatch(/height\s*:/)
   })
 
   test('and the bar itself is the header height', () => {
