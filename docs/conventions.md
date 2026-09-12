@@ -267,6 +267,29 @@ doing. For the same reason a state the editor parses is read through
 `packages/editor/test/parsed.ts` rather than as it comes, and work a whole
 file shares is done once, in a hook.
 
+The app runs them in two projects; see `apps/desktop/vitest.config.ts`. The
+`node` one is everything, and the `effects` one is the files named
+`*.effect.test.ts`. A rune compiled for the server is not reactive - `$state`
+is a plain field there and `$effect` does not exist at all - so no test in the
+node project can run an effect; the effects project is `jsdom`, which Vitest
+serves out of Vite's client environment, where the runes compile exactly as
+they ship. A store test belongs there when what it is about only happens
+because something is watching: a store method called from an `$effect`, a
+`$derived` read inside one, an effect's teardown giving something back.
+Everything else stays in the node project, which is the faster of the two. A
+rune is syntax rather than a function, so a plain `.ts` test cannot write one:
+`$effect`, `$effect.root` and `$state` come from
+`apps/desktop/test/effects/runes.svelte.ts`.
+
+And the rule those tests hold: **a store method called from an effect must
+never read the state it writes.** A read inside an effect is a dependency and a
+write to it is the next run, so a method that decides anything from its own
+state runs away as soon as one effect calls it. Svelte abandons the batch with
+`effect_update_depth_exceeded` and the page is drawn and never updates again -
+no menu opens, no space can be chosen. Decide from what was passed in, or from
+a plain field the reactive one is written through; see
+`apps/desktop/src/lib/said.svelte.ts`.
+
 ## Writing
 
 Comments say why, in plain prose, not what the next line already says. No em
