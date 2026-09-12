@@ -45,8 +45,21 @@
     workspace.activeSpace ? sync.remoteIdFor(workspace.activeSpace.root) : null,
   )
 
-  const when = (stamp: number) =>
-    new Date(stamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+  /** A moment, as shortly as it can be said: a pass from today is a time, and
+   *  almost every pass worth reading is from today. The same rule the history
+   *  sheet reads by; see History.svelte. */
+  const when = (stamp: number) => {
+    const at = new Date(stamp)
+    const now = new Date()
+    const today =
+      at.getFullYear() === now.getFullYear() &&
+      at.getMonth() === now.getMonth() &&
+      at.getDate() === now.getDate()
+
+    return today
+      ? at.toLocaleTimeString(undefined, { timeStyle: 'short' })
+      : at.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+  }
 
   function moment(): number {
     return Date.now() - days * 24 * 60 * 60 * 1000
@@ -126,13 +139,13 @@
         <span class="name">{shortPath(clash.path)}</span>
         <span class="hint">{when(clash.at)}</span>
         <div class="answers">
-          <button class="action" onclick={() => void settle(clash, 'mine')}>
+          <button class="pill" onclick={() => void settle(clash, 'mine')}>
             {t('Keep mine')}
           </button>
-          <button class="action" onclick={() => void settle(clash, 'theirs')}>
+          <button class="pill" onclick={() => void settle(clash, 'theirs')}>
             {t('Take theirs')}
           </button>
-          <button class="action" onclick={() => void settle(clash, 'both')}>
+          <button class="pill" onclick={() => void settle(clash, 'both')}>
             {t('Keep both')}
           </button>
         </div>
@@ -168,7 +181,9 @@
     {/each}
   </div>
 
-  <button class="action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+  <div class="card">
+    <button class="action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+  </div>
 {/if}
 
 <h3>{t('Go back')}</h3>
@@ -226,6 +241,150 @@
 </p>
 
 <style>
+  /* The settings pane's own shapes. A section in its own component does not
+     inherit the panel's styles - those are scoped to it - so the ones this pane
+     uses are here with the panel's values, the way McpSetup and RecentlyDeleted
+     carry theirs. See SettingsPanel.svelte. */
+  h3 {
+    margin: var(--space-3) 0 calc(-1 * var(--space-2));
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--muted-strong);
+  }
+
+  /* The pane's first heading sits under the section's title, or at the top of
+     the sheet on a phone, where there is no title above it. The title is the
+     panel's, so that half of the selector is global. */
+  h3:first-child,
+  :global(h2) + h3 {
+    margin-top: 0;
+  }
+
+  /* A run of rows. Plain on a desktop; a phone draws the box around it. */
+  .card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* Name on the left, control on the right, one line each. */
+  .setting {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 38px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    text-align: left;
+    cursor: default;
+  }
+
+  .setting .name {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Wide enough for the longest choice the pane offers. */
+  .pick {
+    flex: none;
+    width: 14rem;
+  }
+
+  /* An action in a card: full width, quiet until pointed at. */
+  .action {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    text-align: left;
+    cursor: default;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .action:hover:not(:disabled) {
+      color: var(--text-strong);
+    }
+
+    .action.danger:hover:not(:disabled) {
+      color: var(--danger);
+    }
+  }
+
+  .action:disabled {
+    opacity: 0.5;
+  }
+
+  .note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
+    line-height: 1.6;
+  }
+
+  .hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .hint.bad {
+    color: var(--danger);
+  }
+
+  /* A phone draws the box, the touch rows, and the hairlines between them. The
+     sheet is the panel's, so that half of the selector is global and the rows
+     are this pane's. */
+  :global(.sheet.phone) .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  /* A pass sits inside the phone's box like a row, so it takes the same
+     padding: a line that runs to the edge is a line with its ends cut off. */
+  :global(.sheet.phone) .pass,
+  :global(.sheet.phone) .clash {
+    padding: var(--space-2) var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .setting {
+    position: relative;
+    gap: var(--touch-gap);
+    min-height: var(--touch-row);
+    padding: var(--space-2) var(--touch-pad);
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .action {
+    position: relative;
+    min-height: var(--touch-row);
+    padding: var(--space-2) var(--touch-pad);
+    color: var(--accent);
+    font-size: var(--touch-text);
+  }
+
+  :global(.sheet.phone) .action.danger {
+    color: var(--danger);
+  }
+
   /* One waiting note: what it is, when it happened, and the three answers. The
      answers are a row of their own, because on a phone three verbs do not fit
      beside a file name. */
@@ -238,10 +397,48 @@
     padding: var(--space-2) 0;
   }
 
+  .clash .name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .answers {
     display: flex;
     gap: var(--space-2);
     width: 100%;
+  }
+
+  /* The three answers, each the small round action the panel uses at the end of
+     a row: three of them read as a choice rather than as three rows. */
+  .pill {
+    flex: none;
+    padding: 5px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 99px;
+    background: none;
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 550;
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  .pill:active {
+    background: var(--accent-soft);
   }
 
   /* One pass: when, what moved, and which space. The middle column takes the

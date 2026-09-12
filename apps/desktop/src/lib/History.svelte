@@ -163,11 +163,23 @@
   const changes = $derived(trimmed(difference))
   const counted = $derived(diffCount(difference))
 
-  const when = (stamp: number) =>
-    new Date(stamp).toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
+  /** A moment, said as shortly as it can be said without becoming ambiguous.
+   *
+   *  A version from today is a time and nothing else: the date would be the same
+   *  words on every row, and the width it takes is the width the device that
+   *  wrote it needs. Anything older says its day as well. */
+  const when = (stamp: number) => {
+    const at = new Date(stamp)
+    const now = new Date()
+    const today =
+      at.getFullYear() === now.getFullYear() &&
+      at.getMonth() === now.getMonth() &&
+      at.getDate() === now.getDate()
+
+    return today
+      ? at.toLocaleTimeString(undefined, { timeStyle: 'short' })
+      : at.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  }
 
   /** Restoring is itself an edit, so the words being replaced are kept first:
    *  putting an old version back is one more version, and undoable like any. */
