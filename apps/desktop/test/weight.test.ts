@@ -17,6 +17,12 @@ import { describe, expect, test } from 'vitest'
  *  `:shortcode:` in them, the Vim keymap for a mode that is off, the canvas and the
  *  PDF viewer and the graph and the settings sheet for a window that opens on a note.
  *
+ *  Batch 110 took the same 1.70 to 1.47, and every one of the four was the same shape
+ *  again: the sheets App.svelte mounted for a window that shows none of them, the
+ *  collaboration engine for a session nobody has signed in to, the list of a hundred
+ *  and forty-three fence languages for a note with no fence in it, and the HTML
+ *  converter for a paste of plain text. Each is one edge below.
+ *
  *  Each of those is one edge in this graph, and any of them can come back by
  *  accident: a barrel import instead of a file, a type that was not imported as a
  *  type, a helper moved into a module that happens to sit behind a library. So the
@@ -128,12 +134,12 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,387,525 bytes over 423 files as this is written, measured on 2026-09-12, against
- *  1.70 MB of built JavaScript in the chunks `index.html` preloads - source counts
- *  the comments, and this repository has a great many of them. Both ceilings are ten
- *  per cent over what was measured: close enough that a whole subsystem arriving
- *  eagerly fails here, wide enough that a fortnight of ordinary work on the shell
- *  does not.
+ *  3,018,832 bytes over 376 files as this is written, measured on 2026-09-13, against
+ *  1,504,884 bytes of built JavaScript in the chunks `index.html` preloads - source
+ *  counts the comments, and this repository has a great many of them. Both ceilings
+ *  are ten per cent over what was measured: close enough that a whole subsystem
+ *  arriving eagerly fails here, wide enough that a fortnight of ordinary work on the
+ *  shell does not.
  *
  *  Our own source only, and the library names below instead, because what a package in
  *  `node_modules` weighs is not something this file can read - and because the
@@ -149,8 +155,8 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_730_000
-const MOST_FILES = 465
+const BUDGET = 3_330_000
+const MOST_FILES = 414
 
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
@@ -194,6 +200,19 @@ describe('what the app evaluates before it draws anything', () => {
     ['emojilib', "the emoji table's own names"],
     ['unicode-emoji-json', 'the emoji index'],
     ['lucide-static', "Lucide's tags"],
+    // Batch 110's four. The collaboration engine, which is what a room costs and is
+    // of no use until somebody signs in: it comes with the account now, because a
+    // room is only ever joined for a file the account holds. See rooms.svelte.ts.
+    ['yjs', 'the shared document'],
+    ['y-protocols/awareness', 'the awareness protocol'],
+    // The stock list of a hundred and forty-three fence languages - the list, not the
+    // parsers, which were always fetched one at a time. It arrives with the first
+    // fence that names a language; see packages/editor/src/languages.ts.
+    ['@codemirror/language-data', 'the language list'],
+    // The HTML converter, which arrives with the first page pasted or clipped. See
+    // packages/editor/src/paste.ts.
+    ['turndown', 'the HTML converter'],
+    ['turndown-plugin-gfm', "the converter's GFM rules"],
   ])('does not reach %s (%s)', (asked) => {
     expect([...graph.packages]).not.toContain(asked)
   })
@@ -215,6 +234,24 @@ describe('what the app evaluates before it draws anything', () => {
     ['/markdown/src/maths.ts', 'the formula engine, dressed'],
     ['/markdown/src/eager.ts', "the Worker's pair of engines"],
     ['/glasses/src/mark.ts', "the glasses' text engine"],
+    // The sheets App.svelte used to mount for a window that shows none of them. Each
+    // is latched there and fetched the first time something opens it; see surfaces.ts.
+    ['/lib/History.svelte', 'the version list'],
+    ['/lib/ShareSheet.svelte', 'the share sheet'],
+    ['/lib/PublishSheet.svelte', 'the publish sheet'],
+    ['/lib/ImportSheet.svelte', 'the import sheet'],
+    ['/lib/IconPicker.svelte', 'the icon picker'],
+    ['/lib/Slides.svelte', 'the deck'],
+    // The two kinds of room and the protocol under them, which is where yjs came in.
+    ['/lib/rooms/room.ts', "a note's room"],
+    ['/lib/rooms/plane.ts', "a canvas's room"],
+    ['/rooms/src/index.ts', 'the room protocol'],
+    // The fence languages: the vocabulary, the modes beside it and Mermaid's own.
+    ['/editor/src/language-spellings.ts', "the fence languages' vocabulary"],
+    ['/editor/src/language-modes.ts', 'the languages nobody ported'],
+    ['/editor/src/mermaid.ts', "the diagram fence's tokenizer"],
+    // And the converter a pasted page goes through.
+    ['/markdown/src/from-html.ts', 'the HTML converter'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -229,6 +266,12 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/editor.ts', "the editor's own state"],
     ['/markdown/src/index.ts', 'the renderer'],
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],
+    // The doors of the four above, which are the other half of each claim: a boundary
+    // nothing reaches is a subsystem somebody deleted rather than one somebody moved.
+    ['/lib/surfaces.ts', 'the doors the sheets come through'],
+    ['/lib/rooms.svelte.ts', 'the store that joins a room'],
+    ['/editor/src/languages.ts', "the fence languages' door"],
+    ['/editor/src/paste.ts', 'the paste that asks for the converter'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })
