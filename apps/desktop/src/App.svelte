@@ -20,7 +20,6 @@
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
   import Sidebar from './lib/Sidebar.svelte'
-  import SettingsPanel from './lib/SettingsPanel.svelte'
   import ShareSheet from './lib/ShareSheet.svelte'
   import PublishSheet from './lib/PublishSheet.svelte'
   import RewriteSheet from './lib/RewriteSheet.svelte'
@@ -48,6 +47,7 @@
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { settings } from './lib/settings.svelte'
+  import { settingsSheet } from './lib/surfaces'
   import { publish } from './lib/publishing.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -83,6 +83,21 @@
   /** The element holding both layers, which is what the drawer gesture
    *  listens on. */
   let middle = $state<HTMLElement>()
+
+  /** The settings sheet, once it has been asked for.
+   *
+   *  Fetched rather than imported, because it is the app's largest single panel and it
+   *  is by definition not on screen when the window opens; and kept for good once it
+   *  is here, so that its own way in and out is exactly what it was. See surfaces.ts. */
+  let SettingsPanel = $state<Awaited<ReturnType<typeof settingsSheet>> | null>(null)
+
+  $effect(() => {
+    if (!settings.open || SettingsPanel) return
+
+    void settingsSheet().then((one) => {
+      SettingsPanel = one
+    })
+  })
 
   // Everything that has to happen as the app comes up; see start.ts.
   onDestroy(start())
@@ -707,7 +722,15 @@
 <SignIn />
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />
-<SettingsPanel {view} />
+<!-- The settings sheet, fetched the first time it is asked for: it is the app's
+     largest single panel - the pane per section, the theme store, the sync pane, the
+     AI pane, the security pane - and it is by definition not on screen when the window
+     opens. Mounted for good once it is here, so that its own way in and out is exactly
+     what it was: a component unmounted the moment it closed would have no way out to
+     play. See surfaces.ts. -->
+{#if SettingsPanel}
+  <SettingsPanel {view} />
+{/if}
 <FormatBar bind:this={formatBar} {view} />
 <History bind:open={settings.historyOpen} />
 <ShareSheet />

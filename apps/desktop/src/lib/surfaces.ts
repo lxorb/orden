@@ -38,3 +38,15 @@ export const pdfSurface = held(() => import('./Pdf.svelte'))
 
 /** A website in a tab. See docs/web-tabs.md. */
 export const webSurface = held(() => import('./web-tab/WebTab.svelte'))
+
+/** The settings sheet: every pane it has, the theme store, the sync pane, the AI pane,
+ *  the security pane. The app's largest single panel, and not on screen when the window
+ *  opens. Mounted for good once it arrives rather than with the sheet, so that opening
+ *  and closing it animates exactly as it did; see App.svelte. */
+export const settingsSheet = held(() => import('./SettingsPanel.svelte'))
+
+/** Not a surface but the same bargain, and it belongs beside the one it is about: the
+ *  outline panel's thumbnails of a page note, which are drawn with the canvas's own ink
+ *  engine and so carry the larger half of the canvas with them. Fetched the first time
+ *  a page note is in front. See Sidebar.svelte. */
+export const pagesNavigator = held(() => import('./PagesNavigator.svelte'))

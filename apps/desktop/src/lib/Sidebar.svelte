@@ -27,7 +27,7 @@
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
-  import PagesNavigator from './PagesNavigator.svelte'
+  import { pagesNavigator } from './surfaces'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, SortKey } from './workspace.svelte'
@@ -654,7 +654,13 @@
                  of it. So the panel shows whichever the thing in front has, in the
                  same place, rather than growing a fourth panel nobody asked for. -->
             {#if pages.current}
-              <PagesNavigator />
+              <!-- Fetched the first time a page note is in front. It draws its
+                   thumbnails with the surface's own ink engine - one picture of a
+                   stroke - and that engine is the larger half of the canvas; see
+                   surfaces.ts, where the pages surface itself is. -->
+              {#await pagesNavigator() then PagesNavigator}
+                <PagesNavigator />
+              {/await}
             {:else if workspace.headings.length}
               <!-- The same walk and the same one tab stop every list in the app
                    has; see roving.ts. Enter goes to the heading and hands the
