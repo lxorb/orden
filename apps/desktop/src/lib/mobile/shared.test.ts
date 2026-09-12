@@ -47,7 +47,11 @@ describe('what the activity said', () => {
 
   test('a share of a picture, which is bytes to ask for', () => {
     const read = arrivedFrom(
-      JSON.stringify({ action: '', subject: '', items: [{ name: 'a.png', mime: 'image/png', size: 12 }] }),
+      JSON.stringify({
+        action: '',
+        subject: '',
+        items: [{ name: 'a.png', mime: 'image/png', size: 12 }],
+      }),
     )
 
     expect(read?.items).toEqual([{ name: 'a.png', mime: 'image/png', size: 12, text: null }])
@@ -109,9 +113,9 @@ describe('what the note is called', () => {
   })
 
   test('the host, for a link and nothing else', () => {
-    expect(sharedTitle(arrived({ items: [item({ text: 'https://www.example.test/a/b?c' })] }))).toBe(
-      'example.test',
-    )
+    expect(
+      sharedTitle(arrived({ items: [item({ text: 'https://www.example.test/a/b?c' })] })),
+    ).toBe('example.test')
   })
 
   test('the file, for a share with no words in it', () => {
@@ -126,9 +130,9 @@ describe('the markdown for one thing', () => {
     expect(embedFor(item({ name: 'a b.png', mime: 'image/png' }), 'assets/a b.png')).toBe(
       '![](assets/a%20b.png)',
     )
-    expect(embedFor(item({ name: 'report.pdf', mime: 'application/pdf' }), 'assets/report.pdf')).toBe(
-      '[report.pdf](assets/report.pdf)',
-    )
+    expect(
+      embedFor(item({ name: 'report.pdf', mime: 'application/pdf' }), 'assets/report.pdf'),
+    ).toBe('[report.pdf](assets/report.pdf)')
   })
 })
 

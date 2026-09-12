@@ -470,13 +470,20 @@ def shared_at_a_cold_start(page: Page) -> str:
 
     drawn = page.evaluate(
         """() => {
-             const image = document.querySelector('.cm-content img')
+             // The editor's own image, and not the empty one-pixel buffers CodeMirror
+             // puts either side of every widget it draws.
+             const image = document.querySelector('.cm-content img.nib-image')
              if (!image) return null
-             return {
-               src: new URL(image.src).pathname,
-               complete: image.complete,
-               width: image.naturalWidth,
-             }
+
+             // The address as the page resolved it, and as the note wrote it: an
+             // `<img>` the resolver has not answered for yet has the second and
+             // not the first.
+             let where = image.getAttribute('src') ?? ''
+             try {
+               where = new URL(image.src, location.href).pathname
+             } catch {}
+
+             return { src: where, complete: image.complete, width: image.naturalWidth }
            }"""
     )
     say(f"[cold] the picture as the editor drew it: {json.dumps(drawn)}")
@@ -750,9 +757,11 @@ def dictation(page: Page, phone: bool) -> None:
 
     # The quiet mark: the line across the top, saying what it is doing, which is
     # the one the app already uses for work that takes a moment.
+    # The line the app draws over the document, and not whatever else on the page
+    # wears a status role: what is under test is that sweep saying this word.
     listening = page.evaluate(
         """() => {
-             const found = document.querySelector('[role=status]')
+             const found = document.querySelector('.track[role=status]')
              return found ? found.getAttribute('aria-label') : null
            }"""
     )
@@ -805,7 +814,7 @@ def dictation(page: Page, phone: bool) -> None:
             wrong("the same row did not turn it off again")
 
     quiet = page.evaluate(
-        "() => document.querySelector('[role=status]')?.getAttribute('aria-label') ?? null"
+        "() => document.querySelector('.track[role=status]')?.getAttribute('aria-label') ?? null"
     )
     say(f"[{where}] the line now says {quiet!r}")
     if quiet == "Listening":

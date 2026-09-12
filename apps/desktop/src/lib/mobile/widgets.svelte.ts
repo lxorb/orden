@@ -31,7 +31,7 @@ export interface WidgetRow {
 }
 
 /** Everything a widget draws. */
-export interface WidgetState {
+interface WidgetState {
   title: string
   empty: string
   notes: WidgetRow[]
@@ -67,7 +67,7 @@ export function widgetRows(
 }
 
 /** What the app would hand over now. */
-export function widgetState(): WidgetState {
+function widgetState(): WidgetState {
   const kept = workspace.tabs.filter((one) => one.pinned).map((one) => one.path ?? '')
 
   return {

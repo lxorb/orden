@@ -108,7 +108,9 @@ describe('what another app may share with nib', () => {
 })
 
 describe('the quick settings tiles', () => {
-  const declared = [...manifest.matchAll(/<service\s+android:name="\.(\w+Tile)"([\s\S]*?)<\/service>/g)]
+  const declared = [
+    ...manifest.matchAll(/<service\s+android:name="\.(\w+Tile)"([\s\S]*?)<\/service>/g),
+  ]
 
   test('are the three the page can answer', () => {
     expect(declared.map((one) => one[1])).toEqual(['NewNoteTile', 'SearchTile', 'RecordTile'])
@@ -177,8 +179,7 @@ describe('the home screen widget', () => {
   test('says its own words in both languages the app has', () => {
     const english = read(ANDROID, 'res', 'values', 'strings.xml')
     const german = read(ANDROID, 'res', 'values-de', 'strings.xml')
-    const names = (text: string) =>
-      [...text.matchAll(/<string name="(\w+)"/g)].map((one) => one[1]).filter((one) => one !== null)
+    const names = (text: string) => [...text.matchAll(/<string name="(\w+)"/g)].map((one) => one[1])
 
     // The app's own name is the same word in both, so the German file holds
     // everything but those two.

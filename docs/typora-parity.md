@@ -376,6 +376,38 @@ Still pandoc's, and offered only where pandoc is installed:
       in place as the app closes. Which stream it follows is one setting in
       General; the updater key is in tauri.conf.json and the private half is a
       release secret.
+- [x] Android share target - anything shared to nib becomes a note: the words
+      under a heading with `date` and `source` in the front matter, pictures and
+      files beside it in the folder the Attachments setting names, and a shared
+      `.md` as itself. Through `applyImport`, which is the road every import
+      already takes, so a name steps aside rather than overwriting and the lot is
+      one undo. Where a note is open and the share is words and pictures, the
+      same small sheet the app asks every question with asks whether it goes
+      there instead, and the words land at the caret. A `.md` opened from a file
+      manager or a mail attachment comes in the same way
+- [x] Quick settings tiles on Android - New note, Search, and Record for the
+      recorder, each carrying the id of a row in the app's own command registry
+      and nothing else, so a tile cannot drift from the row it is named after.
+      The recorder's service is disabled until that command exists
+- [x] A home screen widget on Android - the space's name, a search and a new
+      note along the top, then the notes last written in, each opening that note.
+      A note pinned in the app comes first, which is how one chosen note is
+      reached from the home screen. The page decides the rows and hands them
+      over; the launcher only draws them, in the app's own colours, light and dark
+- [x] Take a photo into a note - a `capture` file input, which is the camera app
+      on Android and on a phone browser, and the photograph lands beside a pasted
+      picture with the embed at the caret. Offered only where the glass is under a
+      finger, since a desktop ignores `capture`
+- [x] Voice dictation - the phone's own recogniser on Android and the Web Speech
+      API everywhere else, inserting at the caret in turns while the line across
+      the top of the document says it is listening. Nothing is recorded and
+      nothing is uploaded
+- [-] Syncing in the background on Android. The mirror is the page's, and Android
+      stops a paused webview's timers and freezes a cached process, so it does not
+      run while the app is away; a WorkManager job cannot drive it without a
+      second implementation of the whole protocol in Kotlin holding a copy of the
+      session token. A note is a file on disk either way and the next pass pushes
+      it, so what is lost is time rather than notes. See docs/mobile.md
 
 ## 17. Beyond Typora
 

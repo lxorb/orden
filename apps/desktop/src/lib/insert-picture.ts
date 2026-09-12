@@ -102,9 +102,7 @@ export function writeAtCaret(view: EditorView, text: string): void {
 function pickPicture(capture: boolean): Promise<File | null> {
   const input = document.createElement('input')
   input.type = 'file'
-  input.accept = capture
-    ? 'image/*'
-    : [...PICTURES.map((one) => `.${one}`), 'image/*'].join(',')
+  input.accept = capture ? 'image/*' : [...PICTURES.map((one) => `.${one}`), 'image/*'].join(',')
   if (capture) input.capture = 'environment'
 
   return new Promise((resolve) => {
