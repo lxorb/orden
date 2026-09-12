@@ -7,6 +7,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import { syntaxTree } from '@codemirror/language'
+import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
 import { fenceLanguages } from './languages'
@@ -14,6 +15,7 @@ import { livePreview } from './live-preview'
 import { noReveal } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
+import { enclosing } from './nodes'
 import { closeBrackets } from '@codemirror/autocomplete'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
@@ -108,15 +110,18 @@ const focusPlugin = ViewPlugin.fromClass(
 
 /** The paragraph, list or fence the caret sits in - Typora dims by block, not line. */
 function enclosingBlock(state: EditorView['state'], pos: number) {
-  let node = syntaxTree(state).resolveInner(pos, -1)
+  // The outermost node under the document, which is the block the caret is in.
+  let block: SyntaxNode | null = null
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) {
+    if (node.name !== 'Document') block = node
+  }
 
-  while (node.parent && node.parent.name !== 'Document') node = node.parent
-  if (node.name === 'Document') {
+  if (!block) {
     const line = state.doc.lineAt(pos)
     return { from: line.from, to: line.to }
   }
 
-  return { from: node.from, to: node.to }
+  return { from: block.from, to: block.to }
 }
 
 /** Keeps the caret's line parked in the middle of the viewport. */

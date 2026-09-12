@@ -19,8 +19,8 @@
 
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { syntaxTree } from '@codemirror/language'
-import type { SyntaxNode } from '@lezer/common'
 import type { EditorView } from '@codemirror/view'
+import { enclosingNamed } from './nodes'
 
 /** One block the menu offers. The label is already translated: the words belong
  *  to the app, which is where the dictionaries are. */
@@ -49,14 +49,8 @@ const TYPED = /(?:^|\s)\/([\w-]*)$/
 const VERBATIM = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'CodeText', 'CodeMark'])
 
 function inCode(context: CompletionContext): boolean {
-  let node: SyntaxNode | null = syntaxTree(context.state).resolveInner(context.pos, -1)
-
-  while (node) {
-    if (VERBATIM.has(node.name)) return true
-    node = node.parent
-  }
-
-  return false
+  const at = syntaxTree(context.state).resolveInner(context.pos, -1)
+  return enclosingNamed(at, VERBATIM) !== null
 }
 
 /** Deletes the `/` and what was typed after it, then does the thing.

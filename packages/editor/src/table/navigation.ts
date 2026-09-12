@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
 import type { ChangeSpec, EditorState } from '@codemirror/state'
+import { enclosingNamed } from '../nodes'
 import { overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
 
@@ -64,10 +65,8 @@ export function renderedTables(state: EditorState): TableSpan[] {
 
 /** The table whose text holds a position, rendered or not. */
 export function tableAt(state: EditorState, pos: number): TableSpan | null {
-  for (let node = syntaxTree(state).resolveInner(pos, -1); node.parent; node = node.parent) {
-    if (node.name === 'Table') return tableSpan(state, node.from, node.to)
-  }
-  return null
+  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'Table')
+  return node && tableSpan(state, node.from, node.to)
 }
 
 /** The rendered table a caret move from one position to another would pass

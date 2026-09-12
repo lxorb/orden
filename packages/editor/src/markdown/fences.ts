@@ -1,5 +1,6 @@
 import { TreeFragment, type Input, type PartialParse, type Tree } from '@lezer/common'
 import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from '@lezer/markdown'
+import { enclosing } from '../nodes'
 import { BACKTICK, isSpace, TILDE } from './syntax'
 
 /** Fenced code, with one deliberate departure from CommonMark: a fence that
@@ -171,9 +172,15 @@ function scanForOpenFences(tree: Tree, input: Input): readonly number[] {
 /** The leaf block holding `pos`, so a fragment can be cut around the whole of
  *  it rather than at the line it starts on. */
 function leafBlockAt(tree: Tree, pos: number): { from: number; to: number } {
-  let node = tree.resolveInner(pos, 1)
-  while (!node.type.is('LeafBlock') && node.parent) node = node.parent
-  return { from: node.from, to: node.to }
+  // The document itself where the position is in no leaf block at all, which is
+  // the node the walk ends on.
+  let found = tree.resolveInner(pos, 1)
+  for (const node of enclosing(found)) {
+    found = node
+    if (node.type.is('LeafBlock')) break
+  }
+
+  return { from: found.from, to: found.to }
 }
 
 /** The fragments of an earlier parse, cut so that no block which opens a

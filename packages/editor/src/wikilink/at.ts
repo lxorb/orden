@@ -2,6 +2,7 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { isNoteTarget, type LinkKind, parseWikilink, type Wikilink } from '@nib/markdown/links'
+import { enclosingNamed } from '../nodes'
 
 /** Reading a link out of the document, wherever it is asked about.
  *
@@ -71,21 +72,20 @@ function decode(target: string): string {
   }
 }
 
+/** Every spelling of a link this module reads. */
+const LINKS = new Set(['Wikilink', 'Link', 'Image'])
+
 /** The innermost link enclosing a position, looking to one side of it. */
-function enclosing(state: EditorState, pos: number, side: 1 | -1): LinkSpan | null {
-  let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side)
+function linkToward(state: EditorState, pos: number, side: 1 | -1): LinkSpan | null {
+  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, side), LINKS)
+  if (!node) return null
 
-  for (; node; node = node.parent) {
-    if (node.name === 'Wikilink') return wikilinkOfNode(state, node)
-    if (node.name === 'Link' || node.name === 'Image') return noteLinkOfNode(state, node)
-  }
-
-  return null
+  return node.name === 'Wikilink' ? wikilinkOfNode(state, node) : noteLinkOfNode(state, node)
 }
 
 /** The link at a document position, of either spelling. Used by the hover
  *  preview, which is handed a position and nothing else. Both sides are tried,
  *  because a position at a link's very edge resolves to whatever is next to it. */
 export function linkAt(state: EditorState, pos: number): LinkSpan | null {
-  return enclosing(state, pos, 1) ?? enclosing(state, pos, -1)
+  return linkToward(state, pos, 1) ?? linkToward(state, pos, -1)
 }

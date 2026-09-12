@@ -7,8 +7,8 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from '@codemirror/view'
-import type { SyntaxNode } from '@lezer/common'
 import { inCode } from './code'
+import { enclosingNamed } from './nodes'
 
 /** How much of a note the glyphs are drawn over: nothing, the code in it, or
  *  all of it. Code only is the setting for somebody who wants `->` to be an
@@ -108,10 +108,7 @@ function standsAlone(state: EditorState, from: number, to: number): boolean {
   const tail = tree.resolveInner(to, -1)
   if (head.from !== tail.from || head.to !== tail.to || head.name !== tail.name) return false
 
-  for (let node: SyntaxNode | null = head; node; node = node.parent) {
-    if (LEFT_ALONE.has(node.name)) return false
-  }
-  return true
+  return enclosingNamed(head, LEFT_ALONE) === null
 }
 
 /** The runs in `ranges` that are shown as glyphs: not the one the caret is

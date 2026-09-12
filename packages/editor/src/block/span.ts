@@ -18,6 +18,7 @@ import { foldable, syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { headingLevel } from '../headings'
+import { enclosing } from '../nodes'
 
 /** What a block is, in a word. The app turns these into the reader's own
  *  language; the editor never writes them down. */
@@ -128,12 +129,10 @@ export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   )
   if (starting) return starting
 
+  // The outermost block that matches rather than the innermost, so the walk runs
+  // to the end of the chain.
   let found: BlockSpan | null = null
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, -1);
-    node;
-    node = node.parent
-  ) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) {
     const kind = kindOf(node.name)
     if (kind) found = spanOf(state, node.node, kind)
   }

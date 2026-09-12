@@ -15,7 +15,7 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState, Extension } from '@codemirror/state'
 import { EditorSelection } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import type { SyntaxNode } from '@lezer/common'
+import { enclosingNamed } from './nodes'
 
 /** Blocks that close themselves, and so end the document with no line after. */
 const CLOSED = new Set(['Table', 'FencedCode', 'CodeBlock', 'BlockMath'])
@@ -31,13 +31,8 @@ export function tailOf(state: EditorState): { at: number; insert: string } | nul
   // A note that already ends in an empty line has the place to stand.
   if (!last.text.trim()) return null
 
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(doc.length, -1);
-    node;
-    node = node.parent
-  ) {
-    if (CLOSED.has(node.name)) return { at: doc.length, insert: '\n' }
-  }
+  const end = syntaxTree(state).resolveInner(doc.length, -1)
+  if (enclosingNamed(end, CLOSED)) return { at: doc.length, insert: '\n' }
 
   return PICTURE.test(last.text) ? { at: doc.length, insert: '\n\n' } : null
 }

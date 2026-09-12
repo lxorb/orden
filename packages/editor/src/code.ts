@@ -8,7 +8,7 @@
 
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
-import type { SyntaxNode } from '@lezer/common'
+import { enclosingNamed } from './nodes'
 
 /** Every node a piece of code is made of: a fenced block, an indented block,
  *  an inline span, and the marks and the language name that go with them.
@@ -21,13 +21,5 @@ const CODE = new Set(['InlineCode', 'CodeText', 'CodeMark', 'CodeInfo', 'FencedC
 /** `side` is which way to look when the position sits between two nodes, the
  *  same as CodeMirror's: 1 is the node starting here, -1 the one ending here. */
 export function inCode(state: EditorState, pos: number, side: -1 | 1 = 1): boolean {
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side);
-    node;
-    node = node.parent
-  ) {
-    if (CODE.has(node.name)) return true
-  }
-
-  return false
+  return enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE) !== null
 }

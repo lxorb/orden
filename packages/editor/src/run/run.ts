@@ -1,8 +1,8 @@
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState, StateEffect } from '@codemirror/state'
 import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
-import type { SyntaxNode } from '@lezer/common'
 import { fenceCode, fenceLanguage } from '../fence'
+import { enclosingNamed } from '../nodes'
 import { addRunLines, closeRun, dropRun, openRun, runPanels } from './panel'
 import { parseRunMessage, runnerDocument } from './protocol'
 
@@ -43,20 +43,14 @@ export interface RunnableFence {
 /** The runnable fence the caret is in, if it is in one. Used by Ctrl+Enter;
  *  the Run button already knows which block it belongs to. */
 export function runnableFenceAt(state: EditorState, pos: number): RunnableFence | null {
-  let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, -1)
+  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'FencedCode')
+  if (!node || !isRunnableLanguage(fenceLanguage(state, node))) return null
 
-  for (; node; node = node.parent) {
-    if (node.name !== 'FencedCode') continue
-    if (!isRunnableLanguage(fenceLanguage(state, node))) return null
-
-    return {
-      from: state.doc.lineAt(node.from).from,
-      to: state.doc.lineAt(Math.min(node.to, state.doc.length)).to,
-      code: fenceCode(state, node),
-    }
+  return {
+    from: state.doc.lineAt(node.from).from,
+    to: state.doc.lineAt(Math.min(node.to, state.doc.length)).to,
+    code: fenceCode(state, node),
   }
-
-  return null
 }
 
 /** A sandbox on screen: the frame the code runs in, and what has to be undone

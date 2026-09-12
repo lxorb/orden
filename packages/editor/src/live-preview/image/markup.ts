@@ -2,6 +2,7 @@ import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { attributeValue } from '../../attributes'
+import { enclosing } from '../../nodes'
 
 /** Reading an image out of the document and writing one back.
  *
@@ -117,11 +118,7 @@ export function imageOfNode(state: EditorState, node: SyntaxNode): ImageSpan | n
 }
 
 function imageNode(state: EditorState, pos: number, side: -1 | 1): SyntaxNode | null {
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side);
-    node;
-    node = node.parent
-  ) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, side))) {
     if (IMAGE_NODES.has(node.name) && (side > 0 ? node.from : node.to) === pos) return node
   }
   return null

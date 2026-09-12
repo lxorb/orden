@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import { type EditorState, type Extension, Prec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { enclosingNamed } from './nodes'
 
 /** Substitutions applied as you type, matching Typora's smart punctuation.
  *  Order matters: the opening-quote rules must be tried before the closing
@@ -112,10 +113,7 @@ export function keepsStraightQuotes(state: EditorState, pos: number): boolean {
   const line = state.doc.lineAt(pos)
   if (inCodeSpan(line.text, pos - line.from)) return true
 
-  for (let node = syntaxTree(state).resolveInner(pos, -1); node.parent; node = node.parent) {
-    if (STRAIGHT.has(node.name)) return true
-  }
-  return false
+  return enclosingNamed(syntaxTree(state).resolveInner(pos, -1), STRAIGHT) !== null
 }
 
 export function smartPunctuation(): Extension {
