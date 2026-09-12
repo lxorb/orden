@@ -526,9 +526,13 @@
     font-weight: var(--weight-strong);
   }
 
+  /* The chosen chip is the filled row every "this one" in the app is: the
+     surface says which, and the words go dark. They used to go to the accent on
+     an accent-tinted fill, which is 3.77 to one - the accent carries three to one
+     against a surface, not four and a half against a wash of itself. */
   :global([data-touch]) .phone .groups button.is-on {
     background: var(--surface-selected);
-    color: var(--accent);
+    color: var(--active-file-text-color);
   }
 
   :global([data-touch]) .phone .rows {
