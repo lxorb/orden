@@ -220,8 +220,26 @@
   --press: #2a313c;
   --line: #232830;
   --line-strong: #2f3641;
-  --muted: #767e8c;
-  --muted-strong: #9aa3b2;
+  /* The two levels secondary text is written in, and the floor they are held
+     to: four and a half to one against every surface in this palette, which is
+     what WCAG asks of text and what the eye asks of an 11px capital.
+
+     They used to be #767e8c and #9aa3b2. The second was fine; the first carried
+     4.66 against the page, 4.39 against a panel, 4.09 against a card and 3.63
+     inside a menu - so the colour most of the chrome's second line is written
+     in failed on every surface it sat on, and failed worst where the type was
+     smallest. Thirty-five readings in one pass of the app; see the muted rows
+     in the audit. Both are stepped up together, so the two levels stay a level
+     apart. */
+  --muted: #878f9d;
+  --muted-strong: #a4adbc;
+  /* Quieter than muted, and not for words. The signature - the `#` and the `**`
+     bleeding in as they are typed - is markup rather than prose: it says the
+     same thing the heading and the bold already say, and it is meant to be
+     barely there. It was `--muted` until `--muted` became a colour text can be
+     read in, and it keeps the shade the signature has always had so that
+     raising the ink did not darken the page's punctuation with it. */
+  --faint: #767e8c;
   --text: #dde2ea;
   --text-strong: #f4f7fb;
   --accent: #7c6bf5;
@@ -229,7 +247,9 @@
   --accent-press: #6a58ef;
   --accent-soft: rgb(124 107 245 / 0.15);
   --accent-line: rgb(124 107 245 / 0.42);
-  --danger: #f2555a;
+  /* A word about something that failed, held to the same floor: 4.55 inside a
+     menu, where #f2555a was 4.47. */
+  --danger: #f5585d;
   --success: #3fcf8e;
   --selection: rgb(124 107 245 / 0.28);
 
@@ -262,6 +282,12 @@
   --canvas-6: #a882ff;
   --canvas-dot: #2b323d;
 
+  /* The chevron on a dropdown, in this scheme's own muted grey. A picture and
+     not a rule, so it cannot read `--muted` and has to be restated per scheme;
+     see `select` in base.css. The angle brackets are written out because a
+     `data:` URL with a raw `<` in it is not a valid URL. */
+  --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%23878f9d' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+
   --scrollbar: #39404d;
   --scrollbar-hover: #4d5665;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -279,8 +305,15 @@
   --press: #d3dbe5;
   --line: #e1e6ed;
   --line-strong: #ccd4de;
-  --muted: #8a93a2;
-  --muted-strong: #646d7c;
+  /* The same floor as the dark palette's, and this side was the worse of the
+     two by a long way: #8a93a2 carried 3.02 against the page and 2.44 inside a
+     menu, which is a caption nobody can read and a hundred readings of it in
+     one pass. #646d7c was the second level and came to 4.48 on a card, so both
+     move together and the step between them is kept. */
+  --muted: #5c6574;
+  --muted-strong: #464f5e;
+  /* The shade the signature has always had on this side; see the dark block. */
+  --faint: #8a93a2;
   --text: #1a1d23;
   --text-strong: #0b0d10;
   --accent: #5b4be0;
@@ -288,8 +321,12 @@
   --accent-press: #4131c2;
   --accent-soft: rgb(91 75 224 / 0.1);
   --accent-line: rgb(91 75 224 / 0.38);
-  --danger: #d92b34;
-  --success: #16a06a;
+  /* Words, not only fills: a failure is said in this colour and a sync light is
+     drawn in that one, and on this side both were short of the floor as text -
+     3.81 and 3.26. Darker rather than a different hue, so a fill they are
+     spent on carries white better too. */
+  --danger: #c91b24;
+  --success: #007640;
   --selection: rgb(91 75 224 / 0.18);
 
   /* The same four, because these are the colours our own fences have always been
@@ -309,6 +346,9 @@
   --canvas-6: #7852ee;
   --canvas-dot: #d5dce5;
 
+  /* This side's own; see the dark block. */
+  --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%235c6574' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+
   --scrollbar: #c3cbd6;
   --scrollbar-hover: #a7b1bf;
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
@@ -322,8 +362,8 @@
   --bg-color: var(--bg);
   --text-color: var(--text);
   --primary-color: var(--accent);
-  --md-char-color: var(--muted);
-  --heading-char-color: var(--muted);
+  --md-char-color: var(--faint);
+  --heading-char-color: var(--faint);
   --meta-content-color: var(--muted-strong);
   --monospace: var(--font-mono);
   --side-bar-bg-color: var(--surface);

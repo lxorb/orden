@@ -66,16 +66,24 @@ body {
    step with everything else. */
 select {
   appearance: none;
-  padding: 8px 30px 8px 11px;
+  /* A thumb's target, said the way every other row says it: 28 under a pointer,
+     56 under a finger. The words and their padding make it taller than 28 on a
+     desktop anyway; what this is for is the phone, where a dropdown was the one
+     control in the settings under the touch floor. */
+  min-height: var(--row-height);
+  padding: var(--space-2) var(--space-6) var(--space-2) var(--space-3);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background-color: var(--bg);
-  /* The angle brackets are written out: a `data:` URL is a URL, and one with a
-     raw `<` in it is not valid. Browsers forgive it; a book that is checked
-     before it is read does not. */
-  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%238a93a2' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+  /* The arrow, drawn here because the platform's own is the one thing a theme
+     cannot reach. It comes from `--select-arrow`, which is stated per scheme in
+     tokens.css: a `data:` URL is a picture rather than a rule, so it cannot read
+     a variable, and the one colour it held - `#8a93a2`, the light palette's
+     muted grey - was worn by every dark window in the app as well. A token is
+     the only way a theme gets a say in it. */
+  background-image: var(--select-arrow);
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right var(--space-3) center;
   background-size: 10px;
   color: var(--text-strong);
   font-family: var(--font-ui);
@@ -90,19 +98,6 @@ select {
 
 select:hover {
   border-color: var(--muted);
-}
-
-/* A field says where the keyboard is by turning its own border, which is the
-   answer a box you type into has always given. So it gives that one and not the
-   ring as well: two answers to one question read as a mistake. */
-select:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-select:disabled {
-  opacity: 0.55;
 }
 
 /* Honoured by the popup on Windows and Linux, where it would otherwise open a
@@ -257,6 +252,65 @@ select option {
   border-bottom-color: var(--accent);
 }
 
+/* ── Layers over the app ───────────────────── */
+
+/* Level 3 of the elevation model, at the corner a thing that *floats* takes: a
+   context menu, the app menu, the list of spaces, the suggestions under a
+   `[[`, a dropdown. Five components had the same four lines of it and two had
+   already drifted - the app menu and the dropdown lit their surface a step
+   brighter, and the dropdown and the suggestions spent a smaller shadow - so a
+   menu and the dropdown beside it did not read as the same kind of thing. See
+   docs/design.md.
+
+   Where it sits and how wide it is are the caller's; what it is, is this. */
+.nib-layer {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+/* The same level, at the corner a surface that *replaces* part of the screen
+   takes: the palette, the one small modal the app asks its questions in, the
+   sign-in panel, the word a link owes whoever followed it. Four components had
+   the same eight lines, and the drift was already on screen - one opened six vh
+   above the others and each picked its own width.
+
+   How wide is the caller's, as `--screen-width`; how far down is too, because a
+   list of commands wants to start higher than a question does. */
+.nib-screen {
+  position: fixed;
+  top: 22vh;
+  left: 50%;
+  translate: -50% 0;
+  width: min(var(--screen-width, 23rem), calc(100vw - var(--space-7)));
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Out of anybody's hands ────────────────── */
+
+/* One fade, on everything that can be refused. Four surfaces had 0.3, 0.4, 0.5
+   and 0.55 between them, and the menus faded nothing at all - a row that cannot
+   be pressed was the same grey as one that can, and only the words gave it away.
+   `:where` so it carries no weight: a control that says it another way still
+   can, and one that says nothing gets this. */
+:where(
+  button,
+  [role='button'],
+  [role='menuitem'],
+  [role='tab'],
+  a[href],
+  input,
+  select,
+  textarea
+):disabled,
+:where(button, [role='button'], [role='menuitem'], [role='tab'], a[href])[aria-disabled='true'] {
+  opacity: 0.4;
+}
+
 /* ── Floating bars ─────────────────────────── */
 
 /* One shape for the small bars that appear over a surface: the format bar
@@ -288,17 +342,21 @@ select option {
   }
 }
 
+/* A button in one of those bars. Sized from the row scale rather than from two
+   numbers of its own, which is what makes it a thumb's target on a phone: it was
+   24px tall there, half what a finger needs, on the one bar that only ever
+   appears under a finger's own selection. */
 .nib-bar button {
-  min-width: 26px;
-  height: 24px;
-  padding: 0 5px;
+  min-width: var(--row-height-sm);
+  height: var(--row-height-sm);
+  padding: 0 var(--space-1);
   border: none;
   border-radius: var(--radius-sm);
   background: none;
   color: var(--muted-strong);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--weight-strong);
   cursor: default;
   transition:
     background var(--dur-instant) var(--ease-out),
@@ -396,6 +454,76 @@ select option {
   background: var(--surface-selected);
   box-shadow: inset 0 0 0 1px var(--accent);
   color: var(--text-strong);
+}
+
+/* ── A glyph that is a button ──────────────── */
+
+/* One square with a mark in it and nothing else: the button that opens the file
+   list, the three bars beside it, the two switches in the panel's foot, the
+   cross on a sheet, the find bar's own actions, the button at the end of a
+   space's row. Seven components drew their own, and between them they had five
+   sizes (24, 28, 28 hard-coded, 30, 38), three corners (`--radius-row`,
+   `--radius-sm`, none at all) and two hover colours for one job. So it is drawn
+   here, at the same square a row is tall - 28 under a pointer, 56 under a thumb,
+   which is the touch floor without a number of its own.
+
+   `padding: 0` is load-bearing rather than tidy. A browser gives every button
+   `1px 6px` of its own, and a component that never mentions padding inherits it:
+   the panel's foot drew an 18px glyph in a 28px square and got a content box 16
+   wide, so the two marks at the bottom of the sidebar were squashed - 16 across
+   and 18 down - while every other glyph in the app was round. `flex: none` on
+   the mark is the other half of the same bug.
+
+   A component says where the button sits and what it does; the drawing is
+   here. */
+.nib-glyph {
+  flex: none;
+  width: var(--row-height);
+  height: var(--row-height);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-row);
+  background: none;
+  color: var(--muted);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+/* The mark inside it. `block` for the same reason a badge's is; see the badge. */
+.nib-glyph > svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  flex: none;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Only where there is a pointer to hover with: a touch browser keeps the last
+   tap hovered, which leaves a button lit after it has been pressed. */
+@media (hover: hover) {
+  .nib-glyph:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text-strong);
+  }
+}
+
+.nib-glyph:active:not(:disabled) {
+  background: var(--surface-press);
+  color: var(--text-strong);
+}
+
+/* The one it is about is on: the accent, which is what the open note's mark and
+   the space you are in both wear. */
+.nib-glyph.is-on {
+  color: var(--accent);
 }
 
 /* A name that cannot be written, said on the thing the name is being typed in: a
@@ -508,7 +636,7 @@ select option {
   color: var(--badge-ink, var(--muted-strong));
   font-family: var(--font-ui);
   font-size: calc(var(--row-height-sm) * 0.46);
-  font-weight: 620;
+  font-weight: var(--weight-strong);
   letter-spacing: 0.01em;
   user-select: none;
 }
@@ -642,6 +770,12 @@ textarea.nib-field {
   }
 }
 
+/* What a box you type into says when the keyboard lands in it: its own border
+   turns, which is the answer such a box has always given, and it gives that one
+   rather than the ring as well - two answers to one question read as a mistake.
+   The native dropdown says it the same way, so `select` is in the same rule
+   rather than in a second copy of these three lines further up the file. */
+select:focus-visible,
 .nib-field:focus,
 .nib-field:focus-visible,
 .nib-field:focus-within {
@@ -674,7 +808,7 @@ textarea.nib-field {
 .nib-bubble {
   width: max-content;
   max-width: 16rem;
-  padding: 7px 10px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background: var(--surface-3);
@@ -705,7 +839,12 @@ textarea.nib-field {
 
    The markup is a row of buttons inside it, the chosen one wearing `on`; what
    they mean to a screen reader is the component's own business, since a pair of
-   choices is a radio group and a set of panels is a tab strip. */
+   choices is a radio group and a set of panels is a tab strip.
+
+   A choice that cannot be honoured right now - a scheme the theme in force does
+   not have - stays in the row rather than being taken out of it, so the control
+   does not change shape as the thing above it is chosen. What it looks like
+   while it cannot be pressed is the one disabled fade above, not a copy here. */
 .nib-segmented {
   position: relative;
   display: flex;
@@ -751,14 +890,19 @@ textarea.nib-field {
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  padding: 0 10px;
+  padding: 0 var(--space-3);
   border: none;
   border-radius: calc(var(--radius-md) - 3px);
   background: none;
   color: var(--muted-strong);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  font-weight: 550;
+  /* The chrome has two weights and this was a third. A button's words are
+     `--weight-strong` here as they are in a floating bar; which half is chosen
+     is said by the surface sliding under it, not by the type getting heavier -
+     a weight that changed would move the words the surface is measured
+     against. */
+  font-weight: var(--weight-strong);
   cursor: default;
   transition:
     background var(--dur-fast) var(--ease-out),
@@ -779,14 +923,6 @@ textarea.nib-field {
 .nib-segmented.has-thumb button.on {
   background: none;
   box-shadow: none;
-}
-
-/* A choice that cannot be honoured right now - a scheme the theme in force does
-   not have - stays in the row rather than being taken out of it, so the control
-   does not change shape as the thing above it is chosen. The same fade every
-   other disabled control in the app wears. */
-.nib-segmented button:disabled {
-  opacity: 0.4;
 }
 
 /* A thumb needs the height every other row on a touch screen has, and the words
@@ -832,6 +968,12 @@ textarea.nib-field {
     var(--surface-3);
 }
 
+/* The knob. White, like the switch's when it is on - it sits on the filled half
+   of the track as often as not - and ringed with the hairline every other edge
+   in the app is drawn in rather than with a shade of black: 12% black against a
+   light theme's track was a white circle on a near-white groove with nothing to
+   tell them apart, and it could only ever be right on one of the two schemes.
+   The ring is a shadow rather than a border so the knob keeps its 16px. */
 .nib-slider::-webkit-slider-thumb {
   appearance: none;
   width: 16px;
@@ -841,8 +983,8 @@ textarea.nib-field {
   border-radius: 50%;
   background: #fff;
   box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.12),
-    0 1px 3px rgb(0 0 0 / 0.35);
+    0 0 0 1px var(--line-strong),
+    var(--shadow-sm);
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
@@ -869,8 +1011,8 @@ textarea.nib-field {
   border-radius: 50%;
   background: #fff;
   box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.12),
-    0 1px 3px rgb(0 0 0 / 0.35);
+    0 0 0 1px var(--line-strong),
+    var(--shadow-sm);
 }
 
 /* A dial a thumb drags rather than a pointer: a bigger thumb over a track of the
