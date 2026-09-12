@@ -1006,9 +1006,11 @@ class Lane:
         for _ in range(WARMING):
             page.goto(self.origin, wait_until="domcontentloaded")
             page.wait_for_function(LAUNCHED, timeout=180000)
+            # Said every time: a first visit has no session behind it and opens on
+            # whichever panel the app starts with.
+            page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
             page.wait_for_selector("aside .row", timeout=60000)
 
-        page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")
         # The session is written as things settle, so give it the moment it takes.
         page.wait_for_timeout(2500)

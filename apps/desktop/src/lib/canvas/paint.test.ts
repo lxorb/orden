@@ -176,6 +176,25 @@ describe('repainting the ink under the camera', () => {
     expect(fills).toHaveLength(3)
   })
 
+  test('keeps one plane per list of strokes, so two panes do not empty each other', () => {
+    const one = plane(600)
+    const other = plane(600, 30)
+    const { ctx } = context()
+
+    paintInk(ctx, one, view(1000, 1000), {})
+    paintInk(ctx, other, view(1000, 1000), {})
+    const before = strokesBatched()
+
+    // Back and forth between two canvases, as two panes showing one each would
+    // be. Neither is gathered again: what was gathered belongs to its own plane.
+    for (let turn = 0; turn < 6; turn++) {
+      paintInk(ctx, one, view(1000, 1000), {})
+      paintInk(ctx, other, view(1000, 1000), {})
+    }
+
+    expect(strokesBatched() - before).toBe(0)
+  })
+
   test('never paints fewer strokes than a fresh gather for the same view', () => {
     const strokes = plane(600)
     const fresh = context()

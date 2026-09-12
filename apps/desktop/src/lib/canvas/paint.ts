@@ -180,12 +180,6 @@ function inside(box: Box, outer: Box): boolean {
   )
 }
 
-/** The batches last gathered, and the part of the plane they cover.
- *
- *  One, because there is one plane on screen. Kept because gathering them is the
- *  expensive half of a repaint and the camera moving does not change them: the
- *  paths are in plane coordinates, so a pan is a transform and the shapes are the
- *  shapes. See `paintInk`. */
 interface Batch {
   stroke: InkStroke
   path: Path2D
@@ -198,7 +192,22 @@ interface Gathered {
   drawn: number
 }
 
-let gathered: Gathered | null = null
+/** The batches gathered for a plane, and the part of it they cover.
+ *
+ *  Kept because gathering them is the expensive half of a repaint and the camera
+ *  moving does not change them: the paths are in plane coordinates, so a pan is a
+ *  transform and the shapes are the shapes. See `paintInk`.
+ *
+ *  Weak, and keyed on the list of strokes itself, so nothing here outlives the
+ *  plane it is about: a canvas closed takes its geometry with it, which a slot
+ *  holding the last plane painted would not have. Two panes each showing a canvas
+ *  get one entry each rather than taking turns emptying a single slot. */
+const gathered = new WeakMap<readonly InkStroke[], Gathered>()
+
+/** The list painted last, weakly, which is the only thing a plane with a stroke
+ *  added on the end can be recognised by: the new list is a key nothing has seen.
+ *  Weak for the reason above - a plane nobody is looking at is nobody's. */
+let painted: WeakRef<readonly InkStroke[]> | null = null
 
 let batched = 0
 
@@ -306,18 +315,21 @@ export function paintInk(
   place(ctx, view)
 
   const box = seen(view)
-  let held = gathered && inside(box, gathered.covers) ? gathered : null
+  const near = (one: Gathered | undefined) => (one && inside(box, one.covers) ? one : null)
 
   // The same plane with a stroke added on the end: what was gathered still stands,
   // and only the new one goes into it. Without this, drawing a stroke on a plane of
   // ten thousand gathered all ten thousand again, which is the hundred
   // milliseconds the pen lifted for.
-  if (held && held.strokes !== strokes) {
-    if (grewFrom(held.strokes, strokes)) {
-      held.drawn += gather(held.batches, strokes, held.covers, held.strokes.length)
-      held.strokes = strokes
-    } else {
-      held = null
+  let held = near(gathered.get(strokes))
+  if (!held) {
+    const was = painted?.deref()
+    const grew = was && grewFrom(was, strokes) ? near(gathered.get(was)) : null
+
+    if (grew) {
+      grew.drawn += gather(grew.batches, strokes, grew.covers, grew.strokes.length)
+      grew.strokes = strokes
+      held = grew
     }
   }
 
@@ -329,7 +341,8 @@ export function paintInk(
     held = { strokes, covers, batches, drawn: gather(batches, strokes, covers, 0) }
   }
 
-  gathered = held
+  gathered.set(strokes, held)
+  painted = new WeakRef(strokes)
 
   for (const batch of held.batches.values()) {
     inkStyle(ctx, batch.stroke, palette)
