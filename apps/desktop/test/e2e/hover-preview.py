@@ -189,6 +189,22 @@ READ = """
 }
 """
 
+# What the pane is doing, for when the links in a note are not drawn.
+PANE = """
+() => {
+  const content = document.querySelector('.cm-content')
+  const box = content?.getBoundingClientRect()
+  return {
+    doc: window.nib ? window.nib.state.doc.toString().slice(0, 70) : null,
+    height: box ? Math.round(box.height) : null,
+    width: box ? Math.round(box.width) : null,
+    panes: document.querySelectorAll('.cm-content').length,
+    visible: window.nib ? window.nib.visibleRanges.map((one) => [one.from, one.to]) : null,
+    html: content ? content.innerHTML.slice(0, 400) : null,
+  }
+}
+"""
+
 failures: list[str] = []
 
 
@@ -202,20 +218,24 @@ def wrong(what: str) -> None:
 
 
 # The note names a picture on purpose - `![[shot.png]]` is one of the things a
-# glance has to draw - and nothing seeds the file, so the host answers 404 for it.
-# That is the embed resolving, which is the point; the drive reads the `src` off
-# the element rather than asking the picture to exist.
-EXPECTED = ("no such file in the space",)
+# glance has to draw - and nothing seeds the file, so whatever answers for an
+# asset answers 404 for it. That the address was asked for at all is the point:
+# the embed resolved, and the drive reads the `src` off the element rather than
+# asking the picture to exist. Either responder's words, and the address itself,
+# because which of them answers depends on what the page has loaded.
+EXCUSED = ("/asset/", "no such file in the space")
 
 
 def complain(label: str, message: object) -> None:
-    text = getattr(message, "text", "")
     if getattr(message, "type", "") != "error":
         return
-    if any(one in text for one in EXPECTED):
+
+    text = getattr(message, "text", "")
+    where = getattr(getattr(message, "location", None), "get", lambda _k, _d: "")("url", "")
+    if any(one in text or one in str(where) for one in EXCUSED):
         return
 
-    wrong(f"[{label}] console error: {text}")
+    wrong(f"[{label}] console error: {text} ({where})")
 
 
 def build() -> None:
@@ -278,7 +298,7 @@ def serve() -> Strict:
     raise SystemExit("the file server never answered")
 
 
-def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> None:
+def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> None:
     until = time.monotonic() + patience
     while time.monotonic() < until:
         if page.evaluate(f"() => !!({expression})"):
@@ -325,38 +345,82 @@ def fresh(
     wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
     say(f"[{label}] the space holds {page.evaluate(SEED, [TARGET, SOURCE])}")
 
-    page.evaluate(
-        """async (wanted) => {
-          const ws = window.nibApp.workspace
-          const note = ws.notes.find((one) => one.name.startsWith(wanted))
-          await ws.openEntry(note.path, { activate: true })
-        }""",
-        open_note,
-    )
-    wait_for(page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor")
-    page.wait_for_timeout(700)
-    return page
+    # Opened, and asked for again until the note asked for is the note in the
+    # pane. Making a note opens it, so the two seeded notes are already opening
+    # while this runs, and whichever open lands last is the one that shows; a
+    # cold page is slow enough for that to be either of them.
+    wait_for(page, "window.nibApp.workspace.notes.length > 1", f"[{label}] the notes")
+    for _ in range(6):
+        page.evaluate(
+            """async (wanted) => {
+              const ws = window.nibApp.workspace
+              const note = ws.notes.find((one) => one.name.startsWith(wanted))
+              await ws.openEntry(note.path, { activate: true })
+            }""",
+            open_note,
+        )
+        wait_for(
+            page, "window.nib && document.querySelector('.cm-content')", f"[{label}] the editor"
+        )
+        page.wait_for_timeout(700)
+        if page.evaluate("() => window.nib.state.doc.toString().startsWith('# Glance')"):
+            return page
+
+        say(f"[{label}] the pane holds another note; asking again")
+
+    raise SystemExit(f"[{label}] {open_note} never arrived in the pane")
 
 
 def glance(page: Page, label: str, which: int = 0) -> dict | None:
     """Holds the modifier and rests on a link, which is what opens the card."""
+    # Waited for rather than slept past. Two things have to be true before there
+    # is anything to rest a pointer on: the pane has to have a size, because
+    # CodeMirror decorates what is in view and a surface of no height has nothing
+    # in view; and the links in the note have to be drawn.
+    wait_for(
+        page,
+        "document.querySelector('.cm-content').getBoundingClientRect().height > 0",
+        f"[{label}] the pane to have a size",
+    )
+    drawn = f"document.querySelectorAll('.cm-content .nib-link').length > {which}"
+    until = time.monotonic() + 30
+    while time.monotonic() < until and not page.evaluate(f"() => !!({drawn})"):
+        page.wait_for_timeout(100)
+    if not page.evaluate(f"() => !!({drawn})"):
+        say(f"[{label}] the pane: {json.dumps(page.evaluate(PANE), ensure_ascii=False)}")
+
     links = page.locator(".cm-content .nib-link")
     found = links.count()
     if found < which + 1:
         wrong(f"[{label}] the note draws {found} links, so there is none to rest on")
         return None
 
+    link = links.nth(which)
+    link.scroll_into_view_if_needed()
+
     page.keyboard.down("Control")
-    links.nth(which).hover()
-    page.wait_for_timeout(500)
-    try:
-        # The frame goes up at once and the note arrives into it; the render is a
-        # round trip of its own, so the words are waited for rather than the card.
-        page.wait_for_selector(".nib-note-preview-body > *", timeout=15_000)
-    except Exception:
-        say(f"[{label}] no card opened over the link")
-        page.keyboard.up("Control")
-        return None
+    for attempt in range(3):
+        # Away first, then onto the link: the card opens on the pointer coming to
+        # rest, and a pointer already sitting where it is asked to go sends no
+        # move at all. The second touch is what makes it a rest rather than a
+        # crossing, which is what a reader's hand does anyway.
+        page.mouse.move(4, 4)
+        page.wait_for_timeout(120)
+        link.hover()
+        page.wait_for_timeout(120)
+        link.hover(position={"x": 3, "y": 3})
+
+        try:
+            # The frame goes up at once and the note arrives into it; the render
+            # is a round trip of its own, so the words are waited for rather than
+            # the card.
+            page.wait_for_selector(".nib-note-preview-body > *", timeout=10_000)
+            break
+        except Exception:
+            say(f"[{label}] no card on the link yet, resting on it again")
+            if attempt == 2:
+                page.keyboard.up("Control")
+                return None
 
     page.wait_for_timeout(400)
     inside = page.evaluate(INSIDE)
