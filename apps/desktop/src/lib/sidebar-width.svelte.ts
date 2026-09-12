@@ -1,10 +1,16 @@
-/** How wide the sidebar is, and the drag along its edge that changes it.
+/** How wide a sidebar is, and the drag along its edge that changes it.
  *
  *  A habit of the machine rather than of the account: a laptop and a wide
  *  monitor want different widths, so this is kept here and never synced. Null
  *  means the default from the theme tokens, which is also what a double click
- *  on the edge puts back. */
+ *  on the edge puts back.
+ *
+ *  One of these per side. The two sides are two columns and a reader who wants a
+ *  wide file list does not thereby want a wide outline beside their note, so each
+ *  is remembered under its own key - and the edge is mirrored: the right side's
+ *  handle is on its left, where dragging left makes it wider. */
 
+import type { PanelSide } from './workspace.svelte'
 import { isNumber, stored } from './stored'
 import { viewport } from './viewport.svelte'
 
@@ -12,18 +18,24 @@ const STORAGE_KEY = 'nib:sidebar-width'
 const NARROWEST = 180
 const WIDEST = 520
 
-function saved(): number | null {
-  const width = stored(STORAGE_KEY)
+/** Where a side's width is kept. The left side keeps the key it always had, so
+ *  a width somebody set before there was a right side is still their width. */
+function keyFor(side: PanelSide): string {
+  return side === 'right' ? `${STORAGE_KEY}-right` : STORAGE_KEY
+}
+
+function saved(side: PanelSide): number | null {
+  const width = stored(keyFor(side))
   return isNumber(width) && width >= NARROWEST && width <= WIDEST ? width : null
 }
 
 /** Writes the width down, or does not. `stored` already answers nothing for a
  *  browser told to keep no site data; the setter throws outright there, and a
  *  width nobody can remember is not worth failing a drag over. */
-function keep(width: number | null) {
+function keep(side: PanelSide, width: number | null) {
   try {
-    if (width === null) localStorage.removeItem(STORAGE_KEY)
-    else localStorage.setItem(STORAGE_KEY, String(width))
+    if (width === null) localStorage.removeItem(keyFor(side))
+    else localStorage.setItem(keyFor(side), String(width))
   } catch {
     // As above: the sidebar is the width it is, just not after a restart.
   }
@@ -39,7 +51,24 @@ export class SidebarWidth {
   readonly widest = WIDEST
 
   /** Null means the default width from the theme tokens. */
-  pixels = $state<number | null>(saved())
+  pixels = $state<number | null>(null)
+
+  /** Which side this is, asked rather than given: the component that owns one of
+   *  these holds its side as a prop, and a prop read once at construction is a
+   *  value Svelte is right to warn about. */
+  constructor(private readonly which: () => PanelSide = () => 'left') {
+    this.pixels = saved(which())
+  }
+
+  private get side(): PanelSide {
+    return this.which()
+  }
+
+  /** Which way the edge goes: the right side's handle is on its left, so a drag
+   *  to the left makes it wider. */
+  private get towards(): number {
+    return this.side === 'right' ? -1 : 1
+  }
 
   /** True while a finger or pointer is on the edge, so the panel can turn its
    *  transitions off and follow instead of easing after. */
@@ -51,7 +80,7 @@ export class SidebarWidth {
   /** Puts the default back. */
   reset() {
     this.pixels = null
-    keep(null)
+    keep(this.side, null)
   }
 
   /** The same edge, moved with a key: the arrows a step at a time, Home and End
@@ -67,15 +96,15 @@ export class SidebarWidth {
 
     const put = (width: number) => {
       this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
-      keep(this.pixels)
+      keep(this.side, this.pixels)
       return true
     }
 
     switch (key) {
       case 'ArrowLeft':
-        return put(from - STEP)
+        return put(from - STEP * this.towards)
       case 'ArrowRight':
-        return put(from + STEP)
+        return put(from + STEP * this.towards)
       case 'Home':
         return put(NARROWEST)
       case 'End':
@@ -120,7 +149,8 @@ export class SidebarWidth {
     document.body.style.userSelect = 'none'
 
     const move = (moved: PointerEvent) => {
-      this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, from + moved.clientX - startX)))
+      const moving = (moved.clientX - startX) * this.towards
+      this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, from + moving)))
     }
 
     const stop = () => {
@@ -134,7 +164,7 @@ export class SidebarWidth {
       this.dragging = false
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
-      if (this.pixels !== null) keep(this.pixels)
+      if (this.pixels !== null) keep(this.side, this.pixels)
     }
 
     this.ending = stop

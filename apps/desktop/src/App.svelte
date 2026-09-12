@@ -258,9 +258,18 @@
     viewport.drawer && workspace.panel ? overlays.show(() => workspace.closePanel()) : undefined,
   )
 
+  // The same for the other side, which is a drawer over the note wherever the
+  // left one is; see the right-hand rules in the stylesheet below.
+  $effect(() =>
+    viewport.drawer && workspace.rightPanel
+      ? overlays.show(() => workspace.closePanel('right'))
+      : undefined,
+  )
+
   // On a phone each of these is a screen of its own, so back closes it rather
   // than leaving the app - newest first, the way Android expects.
   $effect(() => closeOnBack(!!workspace.panel, () => workspace.closePanel()))
+  $effect(() => closeOnBack(!!workspace.rightPanel, () => workspace.closePanel('right')))
   $effect(() =>
     closeOnBack(palette, () => {
       palette = false
@@ -652,14 +661,18 @@
       </div>
     {/if}
 
-    {#if workspace.panel && !fullscreen.on}
+    {#if (workspace.panel ?? workspace.rightPanel) !== null && !fullscreen.on}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
       <div
         class="scrim"
+        class:over={!!workspace.rightPanel}
         class:held={drawer.held}
         class:dragging={drawer.at !== null}
         style:opacity={drawer.at === null || !drawer.width ? undefined : drawer.at / drawer.width}
-        onclick={() => workspace.closePanel()}
+        onclick={() => {
+          workspace.closePanel()
+          workspace.closePanel('right')
+        }}
       ></div>
     {/if}
 
@@ -694,11 +707,42 @@
         />
       {/if}
 
-      <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
-           enough to be waited for draws a line along the top of them. -->
-      <div class="panes">
-        <Progress />
-        <PaneTree frame={workspace.panes.frame} />
+      <!-- The note and, beside it, the other side of the window - which is empty
+           for everybody until a panel is moved over to it: nothing is drawn at all
+           until then, so the left side, the foot row and the tab strip are exactly
+           where they always were. Its own toggle is in the bar and appears with
+           it; see Titlebar.svelte.
+
+           Under the bar rather than beside it, which is where the left sidebar
+           sits: the bar carries the window's own buttons at its right end, and a
+           column to the right of it would push them out of the corner every
+           window on every platform keeps them in.
+
+           Wherever the panels are drawers - a phone, a tablet held upright - this
+           one comes in from the right over the note, the way a members panel
+           does, and the same scrim dismisses it. It does not follow the thumb:
+           the drag belongs to the left drawer, which is the one gesture a phone's
+           edge has, and a second engine for the other edge is a batch of its
+           own. -->
+      <div class="body">
+        <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
+             enough to be waited for draws a line along the top of them. -->
+        <div class="panes">
+          <Progress />
+          <PaneTree frame={workspace.panes.frame} />
+        </div>
+
+        {#if workspace.right.length && !fullscreen.on}
+          <div
+            class="panels right"
+            inert={viewport.drawer && !workspace.rightPanel}
+            class:open={!!workspace.rightPanel}
+          >
+            {#if workspace.rightPanel}
+              <Sidebar side="right" ongoto={goto} onmovesection={moveSectionTo} />
+            {/if}
+          </div>
+        {/if}
       </div>
 
       <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
@@ -821,6 +865,15 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+  }
+
+  /* The note and the other side of the window, side by side under the bar. One
+     row, because the bar above it spans both: see the note in the markup. */
+  .body {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
   }
 
   /* Positioned, so the line that says the app is busy draws along the top of
@@ -1020,6 +1073,35 @@
     }
   }
 
+  /* The other side's drawer comes in from the right and stays a drawer at every
+     width: it is a panel over the note, the way a members panel is, rather than
+     a floor the note slides off. */
+  :global([data-drawer]) .panels.right {
+    inset: 0 0 0 auto;
+    transform: translateX(100%);
+  }
+
+  :global([data-drawer]) .panels.right.open {
+    transform: none;
+  }
+
+  /* Not the whole screen, even at the narrowest: a panel that covered
+     everything would be a panel with nothing beside it to press to get out, and
+     the strip of note left showing is what the scrim is. The left drawer can
+     cover the lot because the note slides off to uncover it - this one is over
+     the note rather than beside it. */
+  :global([data-drawer][data-narrow]) .panels.right {
+    width: min(86%, 20rem);
+    z-index: 30;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--dur-base) var(--ease-out);
+    transform: translateX(100%);
+  }
+
+  :global([data-drawer][data-narrow]) .panels.right.open {
+    transform: none;
+  }
+
   /* Full width rather than leaving a sliver of the document showing - and once
      it covers everything it is no longer a drawer over the note but the layer
      beneath it. Only where the panels are a drawer at all: `data-narrow` is the
@@ -1058,8 +1140,10 @@
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
-  /* Nothing to dim: the note is either over the list or off the screen. */
-  :global([data-drawer][data-narrow]) .scrim {
+  /* Nothing to dim: the note is either over the list or off the screen - unless
+     what is open is the other side's drawer, which is over the note at every
+     width and is dismissed by pressing the note it is over. */
+  :global([data-drawer][data-narrow]) .scrim:not(.over) {
     display: none;
   }
 </style>

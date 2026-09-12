@@ -122,6 +122,12 @@ export interface Session {
   closed?: ClosedTab[]
   /** The sidebar, for entries written before it became part of the layout. */
   panel: Panel | null
+  /** Which panels this window keeps on the right, and which of them is open.
+   *  Absent for a window that has never moved one over, which is every window
+   *  until somebody does: the left side is where all four have always been, so
+   *  there is no right side at all rather than an empty one. */
+  right?: Panel[]
+  rightPanel?: Panel | null
 }
 
 const PANELS: readonly Panel[] = ['tree', 'outline', 'search', 'links']
@@ -331,6 +337,10 @@ export function readSession(value: unknown): Session | null {
     spaces: Array.isArray(value.spaces) ? value.spaces.filter(isSpace) : [],
     activeSpace: isString(value.activeSpace) ? value.activeSpace : null,
     panel: layout?.panel ?? (isPanel(value.panel) ? value.panel : null),
+    // Only what reads as a panel, and only once each: a list written by hand
+    // would otherwise put a side's own tab strip out of step with itself.
+    ...(Array.isArray(value.right) ? { right: [...new Set(value.right.filter(isPanel))] } : {}),
+    ...(isPanel(value.rightPanel) ? { rightPanel: value.rightPanel } : {}),
     positions: readPositions(value.positions),
     ...(layout ? { layout } : {}),
     ...(drafts ? { tabs: drafts } : {}),

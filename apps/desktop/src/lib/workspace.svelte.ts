@@ -115,6 +115,12 @@ export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'links'
 
+/** Which side of the window a panel sits on. Left is where every one of them has
+ *  always been and where every one of them starts; see `right` below. Its own
+ *  name because `Side` is already a pane's drop zone, which has four of them; see
+ *  workspace/zones.ts. */
+export type PanelSide = 'left' | 'right'
+
 /** The three things the file list makes, each of which arrives as a row waiting
  *  for a name; see `startNaming`.
  *
@@ -264,6 +270,18 @@ class Workspace {
   readonly layouts = new Layouts()
   // Hidden until asked for, the way Typora starts.
   panel = $state<Panel | null>(null)
+  /** Which panels this window keeps on the right, in the order they were moved
+   *  there, and which of them is open.
+   *
+   *  Empty, always, until somebody moves one over: the left side is where all
+   *  four have always been, so a window nobody has arranged has no right side -
+   *  not an empty one. Nothing is drawn for it, which is what keeps the left
+   *  side, the foot row and the tab strip exactly where they were.
+   *
+   *  Per window rather than per account: which side a panel sits on is a fact
+   *  about this screen, the way the sidebar's width is. */
+  right = $state<Panel[]>([])
+  rightPanel = $state<Panel | null>(null)
   /** The one tab holding a note that is only being looked at. */
   previewTabId = $state<string | null>(null)
   /** The row a name is being typed on, in place: a row that exists and is being
@@ -511,8 +529,10 @@ class Workspace {
     this.spaces = state.spaces
     this.positions = new Positions(state.positions ?? {})
     this.closed.restore(state.closed ?? [])
-    // The sidebar comes back the way it was left.
+    // The sidebar comes back the way it was left, on both sides.
     this.panel = state.panel
+    this.right = state.right ?? []
+    this.rightPanel = state.rightPanel ?? null
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
 
     // The folder wins over what was remembered, so the two cannot drift apart.
@@ -735,6 +755,8 @@ class Workspace {
       activeSpace: this.activeSpaceId,
       layout: this.layout(),
       panel: this.panel,
+      ...(this.right.length ? { right: [...this.right] } : {}),
+      ...(this.rightPanel ? { rightPanel: this.rightPanel } : {}),
       positions: this.positions.all,
       closed: this.closed.stack,
     }
@@ -3565,18 +3587,73 @@ class Workspace {
     await this.loadTree()
   }
 
+  /** Which side a panel lives on. Left unless it was moved. */
+  sideOf(panel: Panel): PanelSide {
+    return this.right.includes(panel) ? 'right' : 'left'
+  }
+
+  /** The panel open on one side, which is what that side's tab strip marks and
+   *  what its body draws. */
+  openOn(side: PanelSide): Panel | null {
+    return side === 'right' ? this.rightPanel : this.panel
+  }
+
+  /** Which tabs one side holds, in the order the strip shows them: the right
+   *  side's in the order they were moved over, the left side's in the app's own
+   *  order - which is the order they have always been in. */
+  panelsOn(side: PanelSide, every: readonly Panel[]): Panel[] {
+    return side === 'right'
+      ? this.right.filter((one) => every.includes(one))
+      : every.filter((one) => !this.right.includes(one))
+  }
+
+  /** Shows a panel, or shuts it where it is already the one showing. On its own
+   *  side, so a panel moved to the right opens over there and the side it left
+   *  is not disturbed. */
   showPanel(next: Panel) {
-    this.panel = this.panel === next ? null : next
+    const side = this.sideOf(next)
+    if (side === 'right') this.rightPanel = this.rightPanel === next ? null : next
+    else this.panel = this.panel === next ? null : next
+
     this.persist()
   }
 
-  /** Shuts the sidebar whichever panel is in it. Its own method because every
-   *  caller had to name the panel it was closing, and `showPanel(panel)` only
-   *  closes it by happening to be the one already open. */
-  closePanel() {
-    if (!this.panel) return
+  /** Shuts a side whichever panel is in it. Its own method because every caller
+   *  had to name the panel it was closing, and `showPanel(panel)` only closes it
+   *  by happening to be the one already open. */
+  closePanel(side: PanelSide = 'left') {
+    if (!this.openOn(side)) return
 
-    this.panel = null
+    if (side === 'right') this.rightPanel = null
+    else this.panel = null
+
+    this.persist()
+  }
+
+  /** Moves a panel to the other side, and takes its open state with it: a panel
+   *  somebody moved while reading it is a panel they want to go on reading, over
+   *  there. The side it left keeps whatever else was open on it.
+   *
+   *  A side with nothing on it is not drawn at all, which is what the last panel
+   *  leaving the right side means. */
+  movePanel(panel: Panel, side: PanelSide) {
+    if (this.sideOf(panel) === side) return
+
+    const showing = this.openOn(this.sideOf(panel)) === panel
+    if (side === 'right') {
+      this.right = [...this.right, panel]
+      if (showing) {
+        this.panel = null
+        this.rightPanel = panel
+      }
+    } else {
+      this.right = this.right.filter((one) => one !== panel)
+      if (showing) {
+        this.rightPanel = null
+        this.panel = panel
+      }
+    }
+
     this.persist()
   }
 

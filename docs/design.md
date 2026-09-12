@@ -596,6 +596,40 @@ entry has to be in one place whether it is the pill or the field, and the field
 belongs to the Search panel, which begins under the tabs. So the order on the
 screen is name, tabs, entry, list - and the entry never moves.
 
+### Either side of the note
+
+Any panel tab can live on the other side of the window - its own menu says
+`Move to the right`, and `Move to the left` again - and the right side is empty
+for everybody until somebody moves one over. Empty, not narrow: nothing is drawn
+at all, so the left column, the row under it and the strip of notes are pixel for
+pixel where they always were, which `test/e2e/right-side.py` measures before and
+after rather than promising.
+
+One component draws both sides; the side is a prop. What differs is what belongs
+to the window rather than to a panel: the identity row - the space's name and its
+switcher - and the foot row of the account, the theme and the settings stay on the
+left, because two of either would be two switchers for one space and two gears for
+one app. The search pill is drawn on whichever side the Search panel itself lives
+on: a door on one side that opens a panel on the other moves the reader's eye
+across the window for nothing. The resize handle is mirrored, and each side
+remembers its own width - a wide file list is not a wish for a wide outline.
+
+It sits under the window's own bar rather than beside it, which is where the left
+sidebar sits. The bar carries the window's buttons at its right end, and a column
+to the right of the bar would push them out of the corner every window on every
+platform keeps them in.
+
+Wherever the panels are drawers - a phone, a tablet upright - the right side is a
+drawer from the right over the note, the way a members panel is, dismissed by the
+same scrim, by Escape and by back. It leaves a strip of the note showing even at
+the narrowest width, because that strip is what there is to press to get out of
+it. It does not follow the thumb: the drag belongs to the left drawer, which is
+the one gesture a phone's edge has.
+
+Which side each panel is on, and which of them is open over there, is part of what
+the window remembers - beside which notes are open, and per window rather than per
+account, the way the sidebar's width already is.
+
 ### The rail is gone
 
 There were two ways to choose a space, and the header's is the better one,

@@ -113,6 +113,13 @@
     <div class="drag" data-tauri-drag-region></div>
   {/if}
 
+  <!-- The other side's own button, and only once that side holds a panel: a
+       window nobody has moved a panel over on has no right side, so there is
+       nothing here to press and nothing here at all. See workspace.movePanel. -->
+  {#if workspace.right.length}
+    <SidebarToggle side="right" />
+  {/if}
+
   <!-- A page in a browser has no window of its own to minimise or close, so it
        has none of these. Left out rather than hidden: three buttons a stylesheet
        hides are still three buttons a screen reader reads out and a key reaches. -->

@@ -1325,4 +1325,8 @@ export const ja: Dictionary = {
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'この表示を保存',
   Keep: '保存',
+
+  // Which side of the window a panel sits on.
+  'Move to the right': '右へ移動',
+  'Move to the left': '左へ移動',
 }

@@ -30,7 +30,7 @@
   import { pagesNavigator } from './surfaces'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
-  import type { Panel, SortKey } from './workspace.svelte'
+  import type { Panel, PanelSide, SortKey } from './workspace.svelte'
   import { pullable } from './pull.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
@@ -49,9 +49,14 @@
   import { dur } from './motion'
 
   const {
+    side = 'left',
     ongoto,
     onmovesection,
   }: {
+    /** Which side of the window this one is. The left side is the sidebar the app
+     *  has always had; the right side is drawn only once a panel has been moved
+     *  over to it, and holds only those. See workspace.movePanel. */
+    side?: PanelSide
     ongoto?: (line: number) => void
     /** Moves a whole section of the open note, by the two places in the outline
      *  it came from and landed on. The app owns the editor, so the edit is made
@@ -97,12 +102,28 @@
    *  note at the top of that file. */
   const HOLD_MARK = 'M4.6 2h4M6.6 2v3.2M4 5.2h5.2M6.6 5.2v5.6'
 
+  /** The panel showing on this side, which every row below reads instead of
+   *  `workspace.panel`: the left side's is that, and the right side's is its
+   *  own. */
+  const showing = $derived(workspace.openOn(side))
+
   const PANELS: { id: Panel; label: string; path: string }[] = [
     { id: 'tree', label: t('Files'), path: FILES_MARK },
     { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
     { id: 'search', label: t('Search'), path: SEARCH_MARK },
     { id: 'links', label: t('Links'), path: LINKS_MARK },
   ]
+
+  /** The tabs this side holds, in the order it shows them; see
+   *  workspace.panelsOn. */
+  const mine = $derived.by(() => {
+    const held = workspace.panelsOn(
+      side,
+      PANELS.map((one) => one.id),
+    )
+
+    return held.flatMap((id) => PANELS.filter((one) => one.id === id))
+  })
 
   /** Whether the Links panel is showing the picture. Held here because the switch
    *  for it is in the row of panel tabs above.
@@ -175,9 +196,23 @@
 
   /** What a press on a panel's own tab offers, for the two panels that have
    *  something to say about the order of what they show. */
-  function tabMenu(id: Panel): MenuEntry[] | null {
-    if (id === 'tree') return sortMenu()
-    return id === 'search' ? resultsMenu() : null
+  function tabMenu(id: Panel): MenuEntry[] {
+    const own = id === 'tree' ? sortMenu() : id === 'search' ? resultsMenu() : []
+    const there: PanelSide = side === 'right' ? 'left' : 'right'
+
+    // On every tab, and last: which side a panel sits on is a thing to do to the
+    // tab rather than a thing the panel is about, so it goes under whatever the
+    // panel's own rows are. A phone has no two sides to speak of - the right one
+    // is a drawer of its own there - and the row is offered all the same: the
+    // choice travels with the window, and a phone in a dock is a wide screen.
+    return [
+      ...own,
+      ...(own.length ? [DIVIDER] : []),
+      {
+        label: there === 'right' ? t('Move to the right') : t('Move to the left'),
+        run: () => workspace.movePanel(id, there),
+      },
+    ]
   }
 
   /** What the space itself offers, wherever in the panel you ask for it.
@@ -210,12 +245,12 @@
    *  panel is named rather than shown, because `showPanel` is a switch and
    *  would shut a search panel that was already open. */
   function runBookmarked(text: string) {
-    if (workspace.panel !== 'search') workspace.showPanel('search')
+    if (showing !== 'search') workspace.showPanel('search')
     search.ask(text)
   }
 
   $effect(() => {
-    if (workspace.panel === 'search') void workspace.loadTags()
+    if (showing === 'search') void workspace.loadTags()
   })
 
   /** Whether the panels are held on a tab rather than following the pane. */
@@ -227,9 +262,7 @@
    *  Not on a handheld, which holds one document at a time: there is nothing to
    *  hold a panel against, and opening another note closes the tab the panel
    *  would have been held on. */
-  const holdable = $derived(
-    !viewport.touch && (workspace.panel === 'outline' || workspace.panel === 'links'),
-  )
+  const holdable = $derived(!viewport.touch && (showing === 'outline' || showing === 'links'))
 
   /** Takes the reader to a line of the note the panel is about.
    *
@@ -253,7 +286,7 @@
    *  on a phone it is also the only thing that says where in the note you
    *  were, since the drawer covers the note. */
   const current = $derived.by(() => {
-    if (workspace.panel !== 'outline') return -1
+    if (showing !== 'outline') return -1
 
     const tab = workspace.panelTab
     const headings = workspace.headings
@@ -378,7 +411,7 @@
     lastPlace = place
   })
 
-  const size = new SidebarWidth()
+  const size = new SidebarWidth(() => side)
   let aside = $state<HTMLElement>()
   /** How wide it is drawn right now, which is what the handle says it is. Measured
    *  rather than read off the store, because until somebody has moved it the width
@@ -409,8 +442,10 @@
 <aside
   bind:this={aside}
   bind:clientWidth={asideWidth}
+  data-region={side === 'right' ? 'right' : undefined}
   aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
   class:resizing={size.dragging}
+  class:right={side === 'right'}
   style:width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
   transition:slide={{ axis: 'x', duration: dur(viewport.touch ? 0 : 210), easing: cubicOut }}
 >
@@ -447,40 +482,46 @@
        space is a row in it, with its own mark, and there is no second column of
        wordless squares saying the same thing. See SpaceSwitcher.svelte. -->
   <!-- The regions of the window carry one attribute each, so the order F6 walks is
-       the order the sidebar is built in and cannot drift from it; see focus.ts. -->
-  <div class="head" data-region="space">
-    <!-- Where the panel is a drawer over the note it covers the bar the sidebar
+       the order the sidebar is built in and cannot drift from it; see focus.ts.
+
+       The space's name, its switcher and the plus belong to one side of the
+       window: a second identity row on the right would be a second switcher for
+       the same space, and the right side is one region of its own. -->
+  {#if side === 'left'}
+    <div class="head" data-region="space">
+      <!-- Where the panel is a drawer over the note it covers the bar the sidebar
          button sits in, so the drawer carries the same button at the same corner
          of the screen - one component, one glyph, one movement; see
          SidebarToggle.svelte. A docked panel leaves the bar's own button where
          it is and has none of its own. -->
-    {#if viewport.drawer}
-      <SidebarToggle />
-    {/if}
+      {#if viewport.drawer}
+        <SidebarToggle />
+      {/if}
 
-    <!-- It takes the width the head has left, so the whole row is the control
+      <!-- It takes the width the head has left, so the whole row is the control
          that opens the list of spaces; the plus below is what "the width left"
          means. There used to be an empty span here holding the two apart, which
          was the same arrangement with a spacer in the middle. -->
-    <SpaceSwitcher />
+      <SpaceSwitcher />
 
-    <!-- The one plus. A desktop's lives at the end of the tab strip, where a
+      <!-- The one plus. A desktop's lives at the end of the tab strip, where a
          browser puts it; a handheld has no tab strip, so it is here. Either way
          a plain press makes a note and a held finger offers the other two kinds,
          which is what the strip's plus does; see Tabs.svelte. -->
-    {#if viewport.touch}
-      <button
-        class="new"
-        title={t('New note')}
-        aria-label={t('New note')}
-        onclick={() => void workspace.createNote()}
-        oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-        use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
-      >
-        <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
-      </button>
-    {/if}
-  </div>
+      {#if viewport.touch}
+        <button
+          class="new"
+          title={t('New note')}
+          aria-label={t('New note')}
+          onclick={() => void workspace.createNote()}
+          oncontextmenu={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+          use:longPress={(event) => menu.show(event, spaceMenu(), titleOfSpace())}
+        >
+          <svg viewBox="0 0 13 13"><path d="M6.5 2v9M2 6.5h9" /></svg>
+        </button>
+      {/if}
+    </div>
+  {/if}
 
   <div class="switch">
     <!-- Four tabs are one tab stop, and left and right move between them. They
@@ -489,7 +530,7 @@
          give for choosing on arrival. See roving.ts. -->
     <div
       class="nib-segmented"
-      data-region="panels"
+      data-region={side === 'left' ? 'panels' : undefined}
       use:roving={{
         across: true,
         rows: '[role=tab]',
@@ -501,18 +542,16 @@
       aria-label={t('Panels')}
       use:segmented
     >
-      {#each PANELS as item (item.id)}
+      {#each mine as item (item.id)}
         <button
-          class:on={workspace.panel === item.id}
+          class:on={showing === item.id}
           role="tab"
           title={item.label}
           aria-label={item.label}
-          aria-selected={workspace.panel === item.id}
+          aria-selected={showing === item.id}
           onclick={() => workspace.showPanel(item.id)}
-          oncontextmenu={(event) => {
-            const entries = tabMenu(item.id)
-            if (entries) menu.show(event, entries, { title: item.label })
-          }}
+          oncontextmenu={(event) => menu.show(event, tabMenu(item.id), { title: item.label })}
+          use:longPress={(event) => menu.show(event, tabMenu(item.id), { title: item.label })}
         >
           <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
         </button>
@@ -541,7 +580,7 @@
         </button>
       </div>
     {/if}
-    {#if workspace.panel === 'links'}
+    {#if showing === 'links'}
       <div class="tools">
         {#if graphing}
           <!-- One link out, two, or three. Not four: at four most spaces answer
@@ -574,9 +613,13 @@
   <!-- The one thing you can do from anywhere in the app. Outside the Search
        panel it is the door to it; inside, the panel's own field stands in the
        same place, at the same height and in the same box - one control that
-       becomes editable rather than two that look alike. -->
-  {#if workspace.panel !== 'search'}
-    <div class="hunt" data-region="search">
+       becomes editable rather than two that look alike.
+
+       On the side the Search panel lives on, and only there: a door on one side
+       that opens a panel on the other is a door that moves the reader's eye
+       across the window for no reason. -->
+  {#if showing !== 'search' && workspace.sideOf('search') === side}
+    <div class="hunt" data-region={side === 'left' ? 'search' : undefined}>
       <button class="nib-field" onclick={() => workspace.showPanel('search')}>
         <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
         <span class="nib-row-label">{t('Search this space')}</span>
@@ -592,15 +635,15 @@
        alone. -->
   {#key workspace.activeSpaceId}
     <div class="stack" in:fly={{ y: 16 * direction, duration: dur(220), easing: cubicOut }}>
-      {#key workspace.panel}
+      {#key showing}
         <!-- Which panel this is holding, because the body crossfades: for a moment
              there are two of it on screen and only one of them is the one that is
              arriving. See boxOf in focus.ts. -->
         <div
           class="body"
-          data-region="list"
-          data-panel={workspace.panel}
-          use:scrollbar={workspace.panel}
+          data-region={side === 'left' ? 'list' : undefined}
+          data-panel={showing}
+          use:scrollbar={showing}
           use:pullable
           in:arrive
           out:leave
@@ -612,7 +655,7 @@
             <p class="holding">{workspace.panelTab?.shown ?? ''}</p>
           {/if}
 
-          {#if workspace.panel === 'tree'}
+          {#if showing === 'tree'}
             {#if listing}
               <Bookmarks onsearch={runBookmarked} />
 
@@ -650,7 +693,7 @@
             {:else}
               <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
             {/if}
-          {:else if workspace.panel === 'outline'}
+          {:else if showing === 'outline'}
             <!-- A page note has pages where a note has headings, and they are the
                  same thing: the shape of what is open, and a row that goes to a part
                  of it. So the panel shows whichever the thing in front has, in the
@@ -732,9 +775,9 @@
                 {/each}
               </ul>
             {/if}
-          {:else if workspace.panel === 'links'}
+          {:else if showing === 'links'}
             <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
-          {:else if workspace.panel === 'search'}
+          {:else if showing === 'search'}
             <SearchPanel {ongoto} />
           {/if}
         </div>
@@ -745,8 +788,13 @@
   <!-- Who is at this device, the theme and the settings, in a quiet row at the
        bottom of the panel: the three things the column of spaces used to carry
        under it, which belong to the app rather than to any one note. The same
-       row on a desktop and in a drawer; see SidebarFoot.svelte. -->
-  <SidebarFoot />
+       row on a desktop and in a drawer; see SidebarFoot.svelte.
+
+       One row for the window, on the side that has always had it: two would be
+       two accounts to read and two gears to press. -->
+  {#if side === 'left'}
+    <SidebarFoot />
+  {/if}
 </aside>
 
 <style>
@@ -761,6 +809,14 @@
     background: var(--side-bar-bg-color);
   }
 
+  /* The hairline belongs between the panel and the note, so on the right side it
+     is the other edge. Nothing else about the panel changes: it is the same
+     column of the same rows, which is the whole point of one component. */
+  aside.right {
+    border-right: 0;
+    border-left: 1px solid var(--line);
+  }
+
   /* Wider than the line it sits on, so it can be caught, and drawn only while
      it is being used: a handle that is always visible is a stripe. */
   .edge {
@@ -771,6 +827,18 @@
     width: 8px;
     z-index: 2;
     cursor: col-resize;
+  }
+
+  /* The right side's handle faces the note too, which is its left edge. Both
+     the strip and the hairline inside it go over. */
+  aside.right .edge {
+    right: auto;
+    left: -4px;
+  }
+
+  aside.right .edge::after {
+    left: auto;
+    right: 3px;
   }
 
   .edge::after {

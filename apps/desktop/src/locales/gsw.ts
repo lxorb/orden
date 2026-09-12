@@ -1339,4 +1339,8 @@ export const gsw: Dictionary = {
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Die Asicht merke',
   Keep: 'Merke',
+
+  // Which side of the window a panel sits on.
+  'Move to the right': 'Uf rechts',
+  'Move to the left': 'Uf links',
 }

@@ -23,6 +23,7 @@ describe('the order', () => {
       'tabs',
       'editor',
       'status',
+      'right',
     ])
   })
 
@@ -65,6 +66,17 @@ describe('one step along', () => {
   test('lands at the end the key came from when the keyboard is nowhere', () => {
     expect(stepRegion(WINDOW, null, 1)).toBe('space')
     expect(stepRegion(WINDOW, null, -1)).toBe('status')
+  })
+
+  /** The other side of the window, which most windows do not have: a region is
+   *  walked to only where the page is drawing it. */
+  test('reaches the other side of the window, and only where there is one', () => {
+    expect(stepRegion(WINDOW, 'status', 1)).toBe('space')
+
+    const both = [...WINDOW, 'right']
+    expect(stepRegion(both, 'status', 1)).toBe('right')
+    expect(stepRegion(both, 'right', 1)).toBe('space')
+    expect(stepRegion(both, 'space', -1)).toBe('right')
   })
 
   test('and does the same from a region that has since gone', () => {

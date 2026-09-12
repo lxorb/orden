@@ -100,25 +100,32 @@ Four sentences.
 
 ### The regions
 
-Eight, in the order the window draws them, which is the order Tab already walks:
+Nine, in the order the window draws them, which is the order Tab already walks:
 
 | | |
 | --- | --- |
 | `space` | the panel's header, which is the space's name and its switcher |
-| `panels` | the row of four panel tabs |
+| `panels` | the row of panel tabs |
 | `search` | the search pill under them |
 | `list` | whichever panel is open |
 | `foot` | the row under it: the account, the theme, the settings |
 | `tabs` | the strip of notes |
 | `editor` | the note |
 | `status` | the bar under it, over a note |
+| `right` | the other side of the window, once a panel has been moved over to it |
 
 They are marked in the page with one `data-region` attribute each, so the order
 F6 walks is the order the window is built in and cannot drift from it. What is
 not on screen is not in the ring: the sidebar may be shut, a phone has no strip,
-and the graph, a canvas and a page note have no status bar - the bar counts the
-words of a note, and none of those three has a note for it to count. See
-`hasStatusBar` in regions.ts, which is the one rule the window draws from.
+the graph, a canvas and a page note have no status bar - the bar counts the
+words of a note, and none of those three has a note for it to count; see
+`hasStatusBar` in regions.ts, which is the one rule the window draws from - and
+most windows have no right side at all.
+
+The right side is one region rather than five. It has no header and no foot -
+those belong to the window, and the left side carries them - so what is over
+there is its own tab strip and whichever panel it holds, and a reader stepping
+out of the note wants that panel rather than four stops inside it.
 
 The space switcher is a menu that drops out of the panel header, so
 Ctrl+Shift+Space presses that header's own control rather than opening a second

@@ -22,7 +22,14 @@ import type { TabKind } from './workspace/documents.svelte'
  *  `panels` is the row of panel tabs; `search` is the pill under them; `list` is
  *  whichever panel is open; `foot` is the row under it, which is the account, the
  *  theme and the settings; `tabs` is the strip of notes; `editor` is the note;
- *  `status` is the bar under it. */
+ *  `status` is the bar under it; `right` is the other side of the window, once
+ *  something has been moved over to it.
+ *
+ *  The right side is one region rather than five. It has no header and no foot -
+ *  those belong to the window and the left side carries them - so what is there
+ *  is its own tab strip and whichever panel it holds, and a reader walking out of
+ *  the note with F6 wants the panel rather than four stops inside it. It comes
+ *  last because it is the last column the window draws. */
 export const REGIONS = [
   'space',
   'panels',
@@ -32,6 +39,7 @@ export const REGIONS = [
   'tabs',
   'editor',
   'status',
+  'right',
 ] as const
 
 export type Region = (typeof REGIONS)[number]

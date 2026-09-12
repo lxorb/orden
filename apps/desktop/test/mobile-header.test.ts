@@ -93,9 +93,17 @@ describe('the button that opens the file list', () => {
   /** Where the sidebar is a drawer it covers the bar the button sits in, so the
    *  drawer's own head carries the same button at the same corner of the screen -
    *  and only there, or a tablet with the sidebar docked beside the note would
-   *  have two of them in one row. */
+   *  have two of them in one row.
+   *
+   *  Read with the whitespace squeezed out: what this is about is the condition
+   *  around the button, and the head it sits in is itself inside a condition now.
+   *  The right side of the window has no head at all - the space's name and its
+   *  switcher belong to the side that has always carried them. */
   test('is in the drawer head exactly where the sidebar is a drawer', () => {
-    expect(sidebar).toContain('{#if viewport.drawer}\n      <SidebarToggle />\n    {/if}')
+    const squeezed = sidebar.replace(/\s+/g, ' ')
+
+    expect(squeezed).toContain('{#if viewport.drawer} <SidebarToggle /> {/if}')
+    expect(squeezed).toContain('{#if side === \'left\'} <div class="head"')
   })
 })
 

@@ -1369,4 +1369,8 @@ export const de: Dictionary = {
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Diese Ansicht merken',
   Keep: 'Merken',
+
+  // Which side of the window a panel sits on.
+  'Move to the right': 'Nach rechts',
+  'Move to the left': 'Nach links',
 }

@@ -218,6 +218,82 @@ describe('picking a space from the switcher', () => {
   })
 })
 
+/** Which side of the window each panel sits on. The whole of what this has to be
+ *  right about is that a window nobody has arranged is the window it always was:
+ *  everything on the left, and no right side at all. */
+describe('the two sides of the window', () => {
+  // The store is one store for the whole file, and this is the state these tests
+  // are about: every one of them starts from the window nobody has arranged.
+  beforeEach(() => {
+    workspace.right = []
+    workspace.rightPanel = null
+    workspace.panel = null
+  })
+
+  test('start with everything on the left and no right side', () => {
+    expect(workspace.right).toEqual([])
+    expect(workspace.rightPanel).toBeNull()
+    expect(workspace.sideOf('outline')).toBe('left')
+    expect(workspace.panelsOn('left', ['tree', 'outline'])).toEqual(['tree', 'outline'])
+    expect(workspace.panelsOn('right', ['tree', 'outline'])).toEqual([])
+  })
+
+  test('a panel moved over takes its open state with it', () => {
+    workspace.showPanel('outline')
+    expect(workspace.panel).toBe('outline')
+
+    workspace.movePanel('outline', 'right')
+    expect(workspace.sideOf('outline')).toBe('right')
+    // The side it left is not left showing a panel that is no longer on it.
+    expect(workspace.panel).toBeNull()
+    expect(workspace.rightPanel).toBe('outline')
+  })
+
+  test('and a panel that was not showing arrives shut', () => {
+    workspace.showPanel('tree')
+    workspace.movePanel('outline', 'right')
+
+    expect(workspace.panel).toBe('tree')
+    expect(workspace.rightPanel).toBeNull()
+  })
+
+  test('each side shows and shuts its own', () => {
+    workspace.movePanel('outline', 'right')
+
+    workspace.showPanel('tree')
+    workspace.showPanel('outline')
+    expect(workspace.openOn('left')).toBe('tree')
+    expect(workspace.openOn('right')).toBe('outline')
+
+    // Pressing the one already showing shuts that side and leaves the other.
+    workspace.showPanel('outline')
+    expect(workspace.openOn('right')).toBeNull()
+    expect(workspace.openOn('left')).toBe('tree')
+
+    workspace.closePanel()
+    expect(workspace.openOn('left')).toBeNull()
+  })
+
+  test('and moving the last one back leaves no right side behind', () => {
+    workspace.movePanel('links', 'right')
+    workspace.showPanel('links')
+    expect(workspace.right).toEqual(['links'])
+
+    workspace.movePanel('links', 'left')
+    expect(workspace.right).toEqual([])
+    expect(workspace.rightPanel).toBeNull()
+    expect(workspace.panel).toBe('links')
+  })
+
+  test('a move to the side it is already on does nothing', () => {
+    workspace.showPanel('tree')
+    workspace.movePanel('tree', 'left')
+
+    expect(workspace.right).toEqual([])
+    expect(workspace.panel).toBe('tree')
+  })
+})
+
 describe('selecting several rows', () => {
   const note = (path: string): Entry => ({
     name: path.split('/').pop()!,

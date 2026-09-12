@@ -21,19 +21,38 @@
    *  was reported as. A button that redraws itself is a button you have to read
    *  twice, and the state is already said three ways. */
   import { t } from './i18n.svelte'
-  import { workspace } from './workspace.svelte'
+  import { type PanelSide, workspace } from './workspace.svelte'
 
-  const open = $derived(!!workspace.panel)
+  const { side = 'left' }: { side?: PanelSide } = $props()
+
+  const open = $derived(!!workspace.openOn(side))
   const label = $derived(open ? t('Hide sidebar') : t('Show sidebar'))
+
+  /** The one on the right shuts whatever is open there and opens whatever was
+   *  last open - which, on a side that holds one panel, is that panel. The left
+   *  one keeps the method it has always called. */
+  function press() {
+    if (side === 'left') {
+      workspace.toggleSidebar()
+      return
+    }
+
+    const first = workspace.rightPanel ?? workspace.right[0]
+    if (first) workspace.showPanel(first)
+  }
 </script>
 
+<!-- The glyph is mirrored for the right side and nothing else about it changes:
+     the edge it draws is the edge between the panel and the note, which is on the
+     other side over there. -->
 <button
   class="nib-glyph toggle"
   class:is-on={open}
+  class:right={side === 'right'}
   title={label}
   aria-label={label}
   aria-pressed={open}
-  onclick={() => workspace.toggleSidebar()}
+  onclick={press}
 >
   <svg viewBox="0 0 14 14">
     <rect x="1" y="2.5" width="12" height="9" rx="1.5" />
@@ -54,6 +73,10 @@
 
   .toggle svg {
     stroke-width: 1.2;
+  }
+
+  .toggle.right svg {
+    scale: -1 1;
   }
 
   /* The panel's edge. Drawn in one place, in both states, on every device: no

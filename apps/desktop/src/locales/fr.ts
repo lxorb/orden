@@ -1382,4 +1382,8 @@ export const fr: Dictionary = {
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Garder cette vue',
   Keep: 'Garder',
+
+  // Which side of the window a panel sits on.
+  'Move to the right': 'Déplacer à droite',
+  'Move to the left': 'Déplacer à gauche',
 }
