@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { PROVIDERS } from './interpret/providers'
+import { NO_INTERPRETER, setupOf } from './interpret/setup'
+import { TEMPLATES } from './interpret/templates'
 import { forget, remember, settings } from './settings'
 
 let held: Record<string, unknown> = {}
@@ -34,7 +37,96 @@ describe('a first run', () => {
       target: { spaceId: '', folder: '' },
       language: 'system',
       theme: 'system',
+      interpreter: NO_INTERPRETER,
     })
+  })
+
+  test('has no provider, so nothing about a page can leave the browser', async () => {
+    expect((await settings()).interpreter.provider).toBe(null)
+  })
+
+  test('has the templates that ship, ready to be edited', async () => {
+    expect((await settings()).interpreter.templates).toBe(TEMPLATES)
+  })
+})
+
+describe('the interpreter, as storage holds it', () => {
+  test('comes back as it was written', async () => {
+    await remember({
+      interpreter: {
+        provider: 'claude',
+        keys: { claude: 'sk-ant-x' },
+        models: { claude: 'a-model' },
+        address: 'http://localhost:20099/v1',
+        templates: '- name: Mine\n',
+        on: { Mine: true },
+      },
+    })
+
+    expect((await settings()).interpreter).toEqual({
+      provider: 'claude',
+      keys: { claude: 'sk-ant-x' },
+      models: { claude: 'a-model' },
+      address: 'http://localhost:20099/v1',
+      templates: '- name: Mine\n',
+      on: { Mine: true },
+    })
+  })
+
+  test('is off for a provider nothing has heard of', async () => {
+    held['nib:interpreter'] = { provider: 'a-friend-of-mine', keys: {} }
+
+    expect((await settings()).interpreter.provider).toBe(null)
+  })
+
+  test('drops a key or a model that is not a string', async () => {
+    held['nib:interpreter'] = { provider: 'openai', keys: { openai: 7, other: 'x' } }
+
+    expect((await settings()).interpreter.keys).toEqual({ other: 'x' })
+  })
+
+  test('reads only a real yes as a switch that is on', async () => {
+    held['nib:interpreter'] = { on: { One: true, Two: 'yes', Three: false } }
+
+    expect((await settings()).interpreter.on).toEqual({ One: true })
+  })
+
+  test('falls back to the templates that ship when the entry holds none', async () => {
+    held['nib:interpreter'] = { provider: 'openai', templates: '   ' }
+
+    expect((await settings()).interpreter.templates).toBe(TEMPLATES)
+  })
+
+  test('is off altogether when the entry is not an object', async () => {
+    held['nib:interpreter'] = 'claude'
+
+    expect((await settings()).interpreter).toEqual(NO_INTERPRETER)
+  })
+})
+
+describe('the provider the interpreter would ask', () => {
+  test('is the chosen one, with the key and the model kept for it', () => {
+    expect(
+      setupOf({
+        ...NO_INTERPRETER,
+        provider: 'openai',
+        keys: { openai: 'sk-x', claude: 'sk-ant-y' },
+        models: { openai: 'a-model' },
+      }),
+    ).toEqual({
+      provider: 'openai',
+      key: 'sk-x',
+      address: NO_INTERPRETER.address,
+      model: 'a-model',
+    })
+  })
+
+  test('falls back to the model the provider itself suggests where none was picked', () => {
+    expect(setupOf({ ...NO_INTERPRETER, provider: 'claude' })?.model).toBe(PROVIDERS.claude.model)
+  })
+
+  test('is nobody at all when no provider is chosen', () => {
+    expect(setupOf(NO_INTERPRETER)).toBe(null)
   })
 })
 

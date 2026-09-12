@@ -3,9 +3,12 @@
   import { api, type Space } from '../lib/api'
   import { openShortcuts } from '../lib/browser'
   import { i18n, t } from '../lib/i18n.svelte'
+  import { modelsOf, ollamaModels } from '../lib/interpret'
+  import { OLLAMA, PROVIDER_IDS, PROVIDERS } from '../lib/interpret/providers'
+  import { readTemplates, TEMPLATES } from '../lib/interpret/templates'
   import { opened } from '../lib/opened'
   import SignIn from '../lib/SignIn.svelte'
-  import { forget, remember, type Theme } from '../lib/settings'
+  import { forget, remember, settings, type Theme } from '../lib/settings'
   import { applyTheme, followSystem } from '../lib/theme'
   import { LANGUAGES } from '../lib/translate'
 
@@ -23,6 +26,116 @@
   let spaceId = $state(firstOf(held.spaces, held.target.spaceId))
   let folder = $state(held.target.folder)
   let theme = $state(held.theme)
+
+  /** The interpreter's half of this page.
+   *
+   *  A key and a chosen model belong to their provider, so both are kept by
+   *  provider and only the chosen one is in a field: switching from Claude to a
+   *  model on the machine and back does not lose the key that was typed. These two
+   *  maps are plain rather than reactive - nothing draws them, the fields do. */
+  const keys = { ...held.interpreter.keys }
+  const models = { ...held.interpreter.models }
+
+  const opening = held.interpreter.provider
+
+  let provider = $state(opening)
+  let key = $state(opening ? (keys[opening] ?? '') : '')
+  let model = $state(opening ? (models[opening] ?? PROVIDERS[opening].model) : '')
+  let address = $state(held.interpreter.address)
+  let templates = $state(held.interpreter.templates)
+
+  /** What the provider says it has, for the field to suggest, and what Ollama says
+   *  it has on this machine, which is null until it has been asked and stays null
+   *  when nothing answers there. */
+  let offers = $state<string[]>([])
+  let local = $state<string[] | null>(null)
+
+  /** The first line of the templates that did not read, in words, or nothing at all
+   *  while they all do. */
+  const trouble = $derived.by(() => {
+    const read = readTemplates(templates)
+    return 'problem' in read ? t(read.problem, { line: read.line }) : ''
+  })
+
+  /** Whether it is worth suggesting what is already in use. */
+  const suggest = $derived(!!local && !(provider === 'compatible' && address.trim() === OLLAMA))
+
+  /** Written back whole, over what storage holds rather than over the snapshot this
+   *  page opened with: the popup remembers its Interpret switches in the same entry
+   *  and may have flipped one while this page was open. */
+  async function keep() {
+    if (provider) {
+      keys[provider] = key
+      models[provider] = model
+    }
+
+    const fresh = await settings()
+    await remember({
+      interpreter: {
+        ...fresh.interpreter,
+        provider,
+        keys: { ...keys },
+        models: { ...models },
+        address,
+        templates,
+      },
+    })
+  }
+
+  /** What models the chosen provider has. An answer of nothing is an answer: the
+   *  field is typed into instead, which is what a server that lists nothing wants
+   *  anyway. */
+  async function look() {
+    if (!provider) {
+      offers = []
+      return
+    }
+
+    offers = await modelsOf({ provider, key, address, model })
+
+    // A provider that was just chosen has no model yet, and the first one it lists
+    // is a better guess than an empty field.
+    const first = offers[0]
+    if (first && !model.trim()) {
+      model = first
+      await keep()
+    }
+  }
+
+  function choose(next: string) {
+    if (provider) {
+      keys[provider] = key
+      models[provider] = model
+    }
+
+    provider = PROVIDER_IDS.find((one) => one === next) ?? null
+    key = provider ? (keys[provider] ?? '') : ''
+    model = provider ? (models[provider] ?? PROVIDERS[provider].model) : ''
+
+    void keep().then(look)
+  }
+
+  /** Local first: the address, no key, and the first model it has. */
+  function useLocal() {
+    provider = 'compatible'
+    address = OLLAMA
+    key = ''
+    model = local?.[0] ?? ''
+    offers = local ?? []
+
+    void keep()
+  }
+
+  function restore() {
+    templates = TEMPLATES
+    void keep()
+  }
+
+  // Once, as the page opens rather than from an effect: both of these read the
+  // fields, and an effect that read them would run again on every keystroke in
+  // them. Neither holds the page up.
+  void ollamaModels().then((found) => (local = found))
+  void look()
 
   $effect(() => {
     if (!token) return
@@ -97,6 +210,88 @@
         <span class="name">{t('Folder')}</span>
         <input bind:value={folder} oninput={chooseTarget} spellcheck="false" placeholder="/" />
       </label>
+    </section>
+
+    <section>
+      <div class="setting">
+        <span class="name">{t('Interpreter')}</span>
+        <select
+          value={provider ?? 'off'}
+          onchange={(event) => choose(event.currentTarget.value)}
+          aria-label={t('Interpreter')}
+        >
+          <option value="off">{t('Off')}</option>
+          {#each PROVIDER_IDS as one (one)}
+            <option value={one}>{t(PROVIDERS[one].name)}</option>
+          {/each}
+        </select>
+      </div>
+
+      {#if suggest}
+        <div class="setting">
+          <span class="name">{t('Ollama is running here')}</span>
+          <button class="quiet" type="button" onclick={useLocal}>{t('Use it')}</button>
+        </div>
+      {/if}
+
+      {#if provider}
+        {#if provider === 'compatible'}
+          <label class="setting">
+            <span class="name">{t('Address')}</span>
+            <input
+              bind:value={address}
+              oninput={() => void keep()}
+              onchange={() => void look()}
+              spellcheck="false"
+              placeholder={OLLAMA}
+            />
+          </label>
+        {/if}
+
+        <label class="setting">
+          <span class="name">{t('API key')}</span>
+          <input
+            type="password"
+            bind:value={key}
+            oninput={() => void keep()}
+            onchange={() => void look()}
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </label>
+
+        <label class="setting">
+          <span class="name">{t('Model')}</span>
+          <input bind:value={model} oninput={() => void keep()} spellcheck="false" list="models" />
+        </label>
+
+        <datalist id="models">
+          {#each offers as one (one)}
+            <option value={one}></option>
+          {/each}
+        </datalist>
+
+        <p class="said">
+          {t(
+            'Keys are kept in this browser and are not encrypted: an extension has no keychain. Each one is sent to its own provider and nowhere else.',
+          )}
+        </p>
+
+        <div class="setting">
+          <span class="name">{t('Templates')}</span>
+          <button class="quiet" type="button" onclick={restore}>{t('Restore')}</button>
+        </div>
+
+        <textarea
+          bind:value={templates}
+          oninput={() => void keep()}
+          spellcheck="false"
+          aria-label={t('Templates')}></textarea>
+
+        {#if trouble}
+          <p class="said bad">{trouble}</p>
+        {/if}
+      {/if}
     </section>
 
     <section>
@@ -180,6 +375,43 @@
 
   .value {
     color: var(--muted-strong);
+  }
+
+  /* A sentence rather than a setting: what the row above it does not say, and the
+     one place on this page where a whole line of words is the point. */
+  .said {
+    margin: 0 0 var(--space-3);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  .said.bad {
+    color: var(--danger);
+  }
+
+  /* The templates are the one thing here that is a document rather than a value, so
+     they get the width of the card and a hand that does not change with the
+     language. */
+  textarea {
+    display: block;
+    width: 100%;
+    height: 19rem;
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    resize: vertical;
+  }
+
+  textarea:focus-visible {
+    border-color: var(--accent);
+    outline: none;
   }
 
   .setting select,

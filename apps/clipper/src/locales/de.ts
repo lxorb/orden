@@ -27,6 +27,32 @@ export const de = {
   Shortcuts: 'Tastenkürzel',
   Open: 'Öffnen',
 
+  Template: 'Vorlage',
+  Interpret: 'Deuten',
+  '{count} characters sent': '{count} Zeichen gesendet',
+
+  Interpreter: 'Deutung',
+  Off: 'Aus',
+  'Another server': 'Ein anderer Server',
+  'Ollama is running here': 'Ollama läuft hier',
+  'Use it': 'Verwenden',
+  Address: 'Adresse',
+  'API key': 'API-Schlüssel',
+  Model: 'Modell',
+  Templates: 'Vorlagen',
+  Restore: 'Zurücksetzen',
+  'Keys are kept in this browser and are not encrypted: an extension has no keychain. Each one is sent to its own provider and nowhere else.':
+    'Schlüssel liegen unverschlüsselt in diesem Browser: eine Erweiterung hat keinen Schlüsselbund. Jeder geht nur an seinen eigenen Anbieter und sonst nirgendwohin.',
+
+  'Line {line} is not something a template says.':
+    'Zeile {line} sagt nichts, was eine Vorlage sagen kann.',
+  'Line {line} names a property the clip writes itself.':
+    'Zeile {line} nennt eine Eigenschaft, die der Ausschnitt selbst schreibt.',
+  'The template on line {line} has no name.': 'Die Vorlage in Zeile {line} hat keinen Namen.',
+  'Line {line} repeats a name that is already there.':
+    'Zeile {line} wiederholt einen Namen, den es schon gibt.',
+  'There is no template in there.': 'Da ist keine Vorlage drin.',
+
   'Email address': 'E-Mail-Adresse',
   Continue: 'Weiter',
   Sending: 'Wird gesendet',
@@ -43,6 +69,8 @@ export const de = {
     'Dieser Ausschnitt ist grösser, als eine Notiz sein darf.',
   'Your account is out of space.': 'Dein Konto hat keinen Speicher mehr frei.',
   'Could not reach Nib.': 'Nib war nicht zu erreichen.',
+  'Could not reach the provider.': 'Der Anbieter war nicht zu erreichen.',
+  'The provider answered with something else.': 'Der Anbieter hat etwas anderes geantwortet.',
 
   'enter a valid email address': 'Gib eine gültige E-Mail-Adresse ein',
   'that code is not right': 'Der Code stimmt nicht',

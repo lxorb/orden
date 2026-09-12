@@ -13,7 +13,7 @@ import { api, ApiError, outOfSpace, pathTaken } from '../lib/api'
 import { uploaded } from '../lib/images'
 import type { Kind } from '../lib/kinds'
 import { type Clip, type Clipped, readClip, type Reading, type Saved } from '../lib/messages'
-import { fileName, fits, noteFor } from '../lib/note'
+import { fileName, fits, interpreted, noteFor } from '../lib/note'
 import { inFolder } from '../lib/paths'
 import { fill } from '../lib/placeholders'
 import { PROBLEMS } from '../lib/problems'
@@ -81,10 +81,17 @@ export async function save(clip: Clip, spaceId: string, folder: string): Promise
     return { problem: reason(error) }
   }
 
-  const content = noteFor(clip.origin, fill(clip.markdown, urls), new Date(clip.clipped))
+  const content = noteFor(
+    clip.origin,
+    fill(clip.markdown, urls),
+    new Date(clip.clipped),
+    clip.filled,
+  )
   if (!fits(content)) return { problem: PROBLEMS.tooLarge }
 
-  const wanted = inFolder(folder, fileName(clip.origin.title))
+  // Through the same fold the note's heading went through, so a clip whose title
+  // a template filled in is called what the note calls itself.
+  const wanted = inFolder(folder, fileName(interpreted(clip.origin, clip.filled).title))
   let refusal: unknown = null
 
   for (let counter = 1; counter <= MOST_NAMES; counter++) {

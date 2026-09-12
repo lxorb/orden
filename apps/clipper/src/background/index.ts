@@ -9,6 +9,7 @@
 import { done, failed, working } from './badge'
 import { clip, save } from './clip'
 import { firstOf, refreshSpaces } from '../lib/account'
+import { filledQuietly } from '../lib/interpreting'
 import { type Kind, KINDS, LABELS } from '../lib/kinds'
 import { type Answer, type Ask, readAsk } from '../lib/messages'
 import { PROBLEMS } from '../lib/problems'
@@ -87,7 +88,13 @@ async function straightToNotes(kind: Kind, tabId: number, link: string | null) {
     return
   }
 
-  const saved = await save(made.clip, spaceId, held.target.folder)
+  // The same question the popup would have asked, for the same page, when the
+  // switch for its template is on; see `lib/interpreting.ts`. The clip is already
+  // in hand either way, so an interpreter that cannot answer costs the note its
+  // extra properties and nothing else.
+  const filled = await filledQuietly(made.clip, held.interpreter)
+
+  const saved = await save({ ...made.clip, filled }, spaceId, held.target.folder)
   if ('problem' in saved) say(saved.problem)
   else done(tabId, saved.path)
 }

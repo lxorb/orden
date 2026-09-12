@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Borrow checking, ten years on | The Systems Weekly</title>
+    <meta property="og:title" content="Borrow checking, ten years on | The Systems Weekly" />
+    <meta name="keywords" content="rust, systems" />
+  </head>
+  <body>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/archive">Archive nobody clipped</a>
+    </nav>
+
+    <article>
+      <h1>Borrow checking, ten years on</h1>
+      <p class="byline">By Rowan Keld, published 14 February 2026</p>
+
+      <p>
+        The borrow checker began as a way to make one guarantee cheap to state: that no two parts of
+        a program hold a mutable reference to the same value at the same moment. Ten years of
+        compilers later, the guarantee has not moved, and almost everything around it has.
+      </p>
+
+      <p>
+        The first version reasoned about whole lexical scopes, which meant a reference borrowed at
+        the top of a function was borrowed at the bottom of it whether anything read it or not.
+        Programs were written around that, with blocks introduced to end borrows early and temporary
+        bindings introduced to start them late. The shapes those workarounds left behind are still
+        visible in libraries of that era.
+      </p>
+
+      <p>
+        Non-lexical lifetimes replaced scopes with the region a reference is actually live in, and a
+        great deal of that ceremony went away in one release. What replaced it was harder to explain
+        rather than harder to satisfy: an error that used to point at a closing brace now points at
+        the last use of a value, which is correct and takes longer to read.
+      </p>
+
+      <p>
+        The interesting part of the next ten years is not the checker but the diagnostics. A rule
+        nobody can act on is a rule nobody keeps, and the compiler spends more code on saying what to
+        do about a borrow than on deciding whether the borrow is allowed.
+      </p>
+    </article>
+
+    <footer>Decoration the page would rather keep to itself.</footer>
+  </body>
+</html>

@@ -19,4 +19,10 @@ export const PROBLEMS = {
   full: 'Your account is out of space.',
   /** The network, or a service that answered with something unreadable. */
   unreachable: 'Could not reach Nib.',
+  /** The interpreter's provider: no network, nothing listening at the address,
+   *  or a refusal it gave no words for. Where it did give words, those are shown
+   *  instead - untranslated, the way the sync service's are. */
+  provider: 'Could not reach the provider.',
+  /** The provider answered, and what it said was not properties. */
+  unreadable: 'The provider answered with something else.',
 } as const

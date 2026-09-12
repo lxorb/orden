@@ -8,6 +8,7 @@
 
 import { absolute, runsCode } from './addresses'
 import type { Origin } from './extract'
+import type { Filled } from './interpret/values'
 import { type Kind, KINDS } from './kinds'
 import { isRecord, isString, listOf } from './stored'
 
@@ -23,6 +24,11 @@ export interface Clip {
   /** With `nib:0` style placeholders where the pictures go; see `markdown.ts`. */
   markdown: string
   images: string[]
+  /** What the interpreter filled in about the page, empty until it has been asked
+   *  and empty for good where nobody asked. It travels with the clip so that the
+   *  preview and the note that is saved say the same thing, the way the instant
+   *  above does; see `interpret/`. */
+  filled: Filled[]
 }
 
 export type Ask =
@@ -77,6 +83,26 @@ function readOrigin(value: unknown): Origin | null {
   }
 }
 
+/** One property the interpreter filled, coming back from the popup with the clip
+ *  it belongs to.
+ *
+ *  Checked here as strictly as `interpret/values.ts` checked it when it came out of
+ *  the model, because this is a second boundary and not the same one: what arrives
+ *  is whatever the sender put in the message, and it is about to be written into a
+ *  file. A row whose key is not a name, or whose value is neither a line nor a list
+ *  of lines, is a row that never happened. */
+const PROPERTY = /^[A-Za-z_][\w-]*$/
+
+function readFilledRow(value: unknown): Filled | null {
+  if (!isRecord(value) || !isString(value.key) || !PROPERTY.test(value.key)) return null
+
+  if (isString(value.value)) return { key: value.key, value: value.value }
+  if (!Array.isArray(value.value)) return null
+
+  const items = listOf(value.value, (one) => (isString(one) ? one : null))
+  return items.length === value.value.length ? { key: value.key, value: items } : null
+}
+
 export function readClip(value: unknown): Clip | null {
   if (!isRecord(value)) return null
 
@@ -92,6 +118,7 @@ export function readClip(value: unknown): Clip | null {
     clipped: value.clipped,
     markdown: value.markdown,
     images: listOf(value.images, (one) => (isString(one) ? one : null)),
+    filled: listOf(value.filled, readFilledRow),
   }
 }
 

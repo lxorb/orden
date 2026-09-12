@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import type { Origin } from './extract'
-import { byteLength, fileName, fits, frontMatter, MAX_NOTE_BYTES, noteFor } from './note'
+import {
+  byteLength,
+  fileName,
+  fits,
+  frontMatter,
+  interpreted,
+  MAX_NOTE_BYTES,
+  noteFor,
+} from './note'
 
 const AT = new Date('2026-03-04T09:12:00Z')
 
@@ -179,6 +187,75 @@ describe('the note itself', () => {
   test('shortens a title a page wrote a paragraph into', () => {
     const note = noteFor(origin({ title: 'a'.repeat(500) }), 'body', AT)
     expect(note).toContain(`# ${'a'.repeat(300)}\n`)
+  })
+})
+
+describe('what the interpreter filled in', () => {
+  const filled = [
+    { key: 'author', value: 'A. Writer' },
+    { key: 'published', value: '2026-02-01' },
+    { key: 'tags', value: ['rust', 'compilers'] },
+  ]
+
+  test('comes under the four the clip always writes, in the order it was asked for', () => {
+    // The pairing the note is written with: the origin folded, then the block
+    // written from it and the rest of the properties.
+    expect(frontMatter(interpreted(origin(), filled), AT, filled).split('\n')).toEqual([
+      '---',
+      'source: https://site.example/a',
+      'title: A title',
+      'clipped: 2026-03-04T09:12:00.000Z',
+      'tags: [rust, compilers]',
+      'author: A. Writer',
+      'published: 2026-02-01',
+      '---',
+    ])
+  })
+
+  test('writes a list as the flow sequence tags are written as', () => {
+    expect(frontMatter(origin(), AT, [{ key: 'authors', value: ['A', 'B'] }])).toContain(
+      'authors: [A, B]',
+    )
+  })
+
+  test('joins the tags it found to the ones the page published, each once', () => {
+    const one = interpreted(origin({ tags: ['rust', 'systems'] }), filled)
+
+    expect(one.tags).toEqual(['rust', 'systems', 'compilers'])
+  })
+
+  test('stops the tags well short of a line nobody reads', () => {
+    const page = origin({ tags: Array.from({ length: 8 }, (_, at) => `p${at}`) })
+    const many = [{ key: 'tags', value: Array.from({ length: 8 }, (_, at) => `m${at}`) }]
+
+    expect(interpreted(page, many).tags).toHaveLength(12)
+  })
+
+  test('becomes the title of the note where it filled one in, everywhere at once', () => {
+    const one = [{ key: 'title', value: 'The real headline' }]
+    const note = noteFor(origin({ title: 'The real headline | Site' }), 'The body.', AT, one)
+
+    expect(note).toContain('title: The real headline\n')
+    expect(note).toContain('# The real headline\n')
+    expect(interpreted(origin({ title: 'x' }), one).title).toBe('The real headline')
+    expect(fileName(interpreted(origin({ title: 'x' }), one).title)).toBe('The real headline.md')
+  })
+
+  test('leaves the title the page gave itself where it filled none in', () => {
+    expect(interpreted(origin(), filled).title).toBe('A title')
+    expect(interpreted(origin(), [{ key: 'title', value: '' }]).title).toBe('A title')
+  })
+
+  test('says the title once, in the block and the heading, and never in the body twice', () => {
+    const one = [{ key: 'title', value: 'The real headline' }]
+    const note = noteFor(origin({ title: 'Whatever' }), '# The real headline\n\nThe body.', AT, one)
+
+    expect([...note.matchAll(/^# /gm)]).toHaveLength(1)
+    expect(note.endsWith('The body.\n')).toBe(true)
+  })
+
+  test('changes nothing about a clip nobody asked about', () => {
+    expect(noteFor(origin(), 'The body.', AT, [])).toBe(noteFor(origin(), 'The body.', AT))
   })
 })
 

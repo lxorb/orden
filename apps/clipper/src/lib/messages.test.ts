@@ -6,6 +6,7 @@ const CLIP: Clip = {
   clipped: '2026-03-04T09:12:00.000Z',
   markdown: 'body',
   images: ['https://site.example/x.png'],
+  filled: [],
 }
 
 describe('a clip arriving from the page', () => {

@@ -23,5 +23,8 @@ export function readPage(document: Document, kind: Kind, url: string, link?: str
     clipped: new Date().toISOString(),
     markdown,
     images,
+    // Nothing has been asked about the page yet, and nothing will be unless
+    // somebody turns the interpreter on; see `interpret/`.
+    filled: [],
   }
 }

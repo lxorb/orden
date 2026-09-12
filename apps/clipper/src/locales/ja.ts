@@ -26,6 +26,31 @@ export const ja = {
   Shortcuts: 'ショートカット',
   Open: '開く',
 
+  Template: 'テンプレート',
+  Interpret: '解釈する',
+  '{count} characters sent': '{count} 文字を送信',
+
+  Interpreter: '解釈',
+  Off: 'オフ',
+  'Another server': '別のサーバー',
+  'Ollama is running here': 'Ollama がここで動いています',
+  'Use it': '使う',
+  Address: 'アドレス',
+  'API key': 'API キー',
+  Model: 'モデル',
+  Templates: 'テンプレート一覧',
+  Restore: '初期状態に戻す',
+  'Keys are kept in this browser and are not encrypted: an extension has no keychain. Each one is sent to its own provider and nowhere else.':
+    'キーは暗号化されずにこのブラウザーに保存されます。拡張機能にはキーチェーンがありません。それぞれのキーは対応する提供元にのみ送られます。',
+
+  'Line {line} is not something a template says.':
+    '{line} 行目はテンプレートの書き方になっていません。',
+  'Line {line} names a property the clip writes itself.':
+    '{line} 行目のプロパティは取り込みが自分で書きます。',
+  'The template on line {line} has no name.': '{line} 行目のテンプレートに名前がありません。',
+  'Line {line} repeats a name that is already there.': '{line} 行目の名前はすでに使われています。',
+  'There is no template in there.': 'テンプレートが入っていません。',
+
   'Email address': 'メールアドレス',
   Continue: '続ける',
   Sending: '送信中',
@@ -41,6 +66,8 @@ export const ja = {
   'This clip is larger than a note can be.': 'この取り込みはノートの上限を超えています。',
   'Your account is out of space.': 'アカウントの空き容量がありません。',
   'Could not reach Nib.': 'Nib に接続できませんでした。',
+  'Could not reach the provider.': '提供元に接続できませんでした。',
+  'The provider answered with something else.': '提供元が別のものを返しました。',
 
   'enter a valid email address': '有効なメールアドレスを入力してください',
   'that code is not right': 'コードが違います',

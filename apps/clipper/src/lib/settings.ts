@@ -10,6 +10,7 @@
  *  off the network and under a frame. */
 
 import type { Space } from './api'
+import { type Interpreter, readInterpreter } from './interpret/setup'
 import { isRecord, isString, listOf, readSpace, text } from './stored'
 
 export type Theme = 'system' | 'dark' | 'light'
@@ -29,6 +30,9 @@ export interface Settings {
   target: Target
   language: string
   theme: Theme
+  /** The provider, the keys and the templates the interpreter works from; see
+   *  `interpret/setup.ts`. Off until somebody chooses a provider. */
+  interpreter: Interpreter
 }
 
 const KEYS = {
@@ -38,6 +42,7 @@ const KEYS = {
   target: 'nib:target',
   language: 'nib:language',
   theme: 'nib:theme',
+  interpreter: 'nib:interpreter',
 } as const
 
 const THEMES: Theme[] = ['system', 'dark', 'light']
@@ -61,6 +66,7 @@ function shape(held: Record<string, unknown>): Settings {
     target: readTarget(held[KEYS.target]),
     language: text(held, KEYS.language) ?? 'system',
     theme: THEMES.find((one) => one === theme) ?? 'system',
+    interpreter: readInterpreter(held[KEYS.interpreter]),
   }
 }
 

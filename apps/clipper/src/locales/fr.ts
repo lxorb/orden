@@ -26,6 +26,32 @@ export const fr = {
   Shortcuts: 'Raccourcis',
   Open: 'Ouvrir',
 
+  Template: 'Gabarit',
+  Interpret: 'Interpréter',
+  '{count} characters sent': '{count} caractères envoyés',
+
+  Interpreter: 'Interprétation',
+  Off: 'Désactivée',
+  'Another server': 'Un autre serveur',
+  'Ollama is running here': 'Ollama tourne ici',
+  'Use it': 'Utiliser',
+  Address: 'Adresse',
+  'API key': 'Clé API',
+  Model: 'Modèle',
+  Templates: 'Gabarits',
+  Restore: 'Réinitialiser',
+  'Keys are kept in this browser and are not encrypted: an extension has no keychain. Each one is sent to its own provider and nowhere else.':
+    "Les clés restent dans ce navigateur, sans chiffrement: une extension n'a pas de porte-clés. Chacune est envoyée à son propre fournisseur et nulle part ailleurs.",
+
+  'Line {line} is not something a template says.':
+    "La ligne {line} ne dit rien qu'un gabarit puisse dire.",
+  'Line {line} names a property the clip writes itself.':
+    'La ligne {line} nomme une propriété que la capture écrit elle-même.',
+  'The template on line {line} has no name.': "Le gabarit de la ligne {line} n'a pas de nom.",
+  'Line {line} repeats a name that is already there.':
+    'La ligne {line} répète un nom déjà présent.',
+  'There is no template in there.': "Il n'y a aucun gabarit là-dedans.",
+
   'Email address': 'Adresse e-mail',
   Continue: 'Continuer',
   Sending: 'Envoi',
@@ -41,6 +67,8 @@ export const fr = {
   'This clip is larger than a note can be.': "Cette capture dépasse la taille maximale d'une note.",
   'Your account is out of space.': "Votre compte n'a plus d'espace disponible.",
   'Could not reach Nib.': 'Impossible de joindre Nib.',
+  'Could not reach the provider.': 'Impossible de joindre le fournisseur.',
+  'The provider answered with something else.': 'Le fournisseur a répondu autre chose.',
 
   'enter a valid email address': 'Entrez une adresse e-mail valide',
   'that code is not right': "Ce code n'est pas le bon",
