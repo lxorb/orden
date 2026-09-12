@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { scanNote } from '../scan-note'
 
 /** The note behind a hover preview, and the note inside an `![[embed]]`, read
  *  through the editor exactly as the app wires it - against the reading view of
@@ -10,34 +11,16 @@ import { describe, expect, test, vi } from 'vitest'
  *  So a fenced code block in a hover preview came out grey and frameless, a
  *  callout as a plain quote, a picture as a broken image - while the reading view
  *  of that very note showed all of it. There is one render now, and the whole of
- *  what this file says is that the two paths end in the same string. */
+ *  what this file says is that the two paths end in the same string.
+ *
+ *  The space is the app's own index over real notes rather than something shaped
+ *  like one: both paths have to resolve a link and read an embedded note, and a
+ *  stand-in is a second answer to go wrong. One did - the reading view's resolver
+ *  changed shape under this very file - and a stand-in would have hidden it. Only
+ *  the two things that are not the app are stood in for: the disk, and where a
+ *  picture ends up on a platform this test is not running on. */
 
-const NOTES = [
-  { path: 'Plan.md', name: 'Plan', headings: ['Why it works'], blocks: [], aliases: [] },
-  { path: 'ideas/Later.md', name: 'Later', headings: [], blocks: [], aliases: [] },
-]
-
-vi.mock('../link-index.svelte', () => ({
-  links: {
-    index: (path: string | null) => ({ notes: NOTES, path, read: () => Promise.resolve(null) }),
-    embedSource: (target: string) =>
-      Promise.resolve(target === 'Plan' ? '## Why it works\n\nBecause.\n' : null),
-  },
-}))
-
-/** Where a picture ends up is note-images.ts's business; here it only matters
- *  that a shown note's pictures go through it at all - they used to go through
- *  the open note's resolver, which is a different note's folder. */
-vi.mock('../note-images', () => ({
-  notePicture: (src: string) => `asset://${src}`,
-}))
-
-const { readingHtml } = await import('./render')
-const { EditorState, noteIndexExtension, renderNote } = await import('@nib/editor')
-
-/** The exporter, loaded once rather than by whichever test rendered first; see
- *  render.test.ts, and docs/conventions.md. */
-await import('../export')
+const ROOT = '/space'
 
 /** Every kind of block a note is made of, in one note. */
 const FIXTURE = `---
@@ -80,8 +63,66 @@ Text[^1].
 [^1]: The note.
 `
 
+/** The space around it, as notes rather than as an index: the app's own scanner
+ *  reads the headings, the blocks and the aliases out of these. */
+const BODIES: Record<string, string> = {
+  'Notes/Today.md': FIXTURE,
+  'Plan.md': '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n',
+  'ideas/Later.md': '# Later\n\nSoon.\n',
+}
+
+/** Everything in the space that is not a note: the picture an embed names. */
+const FILES = ['shot.png']
+
+/** The disk, stood in for. The index scans a space and reads a note through the
+ *  platform shim, and under node there is none. */
+vi.mock('../tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../tauri')>()),
+  invoke: async (command: string, args?: Record<string, unknown>) => {
+    const path = typeof args?.path === 'string' ? args.path : ''
+
+    switch (command) {
+      case 'scan_links':
+        return {
+          notes: Object.entries(BODIES).map(([one, content]) => scanNote(one, content)),
+          files: FILES,
+        }
+      case 'read_note': {
+        const doc = BODIES[path.slice(ROOT.length + 1)]
+        if (doc === undefined) throw new Error(`no such note: ${path}`)
+        return doc
+      }
+      default:
+        return undefined
+    }
+  },
+}))
+
+/** Where a picture ends up is note-images.ts's business, and depends on a
+ *  platform; here it only matters that a shown note's pictures go through it at
+ *  all - they used to go through the open note's resolver, which is a different
+ *  note's folder. */
+vi.mock('../note-images', () => ({
+  notePicture: (src: string) => `asset://${src}`,
+}))
+
+const { links } = await import('../link-index.svelte')
+const { startup } = await import('../startup.svelte')
+const { readingHtml } = await import('./render')
+const { EditorState, noteIndexExtension, renderNote } = await import('@nib/editor')
+
+/** The exporter, loaded once rather than by whichever test rendered first; see
+ *  render.test.ts, and docs/conventions.md. */
+await import('../export')
+
+// A space is scanned once its file list is on screen, which is what the launch
+// says for itself; said once here so the scan is not waiting on a frame that
+// never comes. See startup.svelte.ts, and link-index.test.ts.
+void startup.shown()
+await links.build(ROOT)
+
 /** The note's path as the app holds it, and as a link speaks of it. */
-const PATH = '/space/Notes/Today.md'
+const PATH = `${ROOT}/Notes/Today.md`
 const RELATIVE = 'Notes/Today.md'
 
 /** The state the editor renders a shown note in, with the render the app hands
@@ -92,12 +133,19 @@ function shown(render = true) {
   return EditorState.create({
     extensions: [
       noteIndexExtension({
-        notes: NOTES,
-        files: ['shot.png'],
+        notes: [],
+        files: FILES,
         path: RELATIVE,
         read: () => Promise.resolve(null),
         ...(render
-          ? { render: (source: string) => readingHtml({ text: source, path: PATH }, 'light', true) }
+          ? {
+              render: (source: string, from: string | null) =>
+                readingHtml(
+                  { text: source, path: from === null ? null : `${ROOT}/${from}` },
+                  'light',
+                  true,
+                ),
+            }
           : {}),
       }),
     ],
@@ -135,11 +183,12 @@ describe('the note behind a hover preview', () => {
     expect(html).toContain('src="asset://shot.png"')
     // A note named by an embed, read out of the space.
     expect(html).toContain('<figure class="embed">')
-    expect(html).toContain('Because.')
+    expect(html).toContain('The plan itself.')
     // The note's own metadata, as the rows the editor draws.
     expect(html).toContain('class="properties"')
     expect(html).toContain('Everything')
-    // Links into the space, the heading a link names, and the contents.
+    // Links into the space, through the index's own resolver: the heading a link
+    // names, and a note named by the end of its path.
     expect(html).toContain('href="Plan.md#why-it-works"')
     expect(html).toContain('<a class="wikilink" href="ideas/Later.md">later</a>')
     expect(html).toContain('<nav class="toc">')
