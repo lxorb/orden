@@ -202,9 +202,11 @@ export function setChartLocale(tag: string): void {
 }
 
 /** What a caller may say about one chart. The locale is the language its numbers
- *  are grouped and spelled in - `1,234.5` in English, `1.234,5` in German. */
+ *  are grouped and spelled in - `1,234.5` in English, `1.234,5` in German.
+ *  Written as it is so a caller can hand over what it has without asking whether
+ *  it has anything; saying nothing and saying `undefined` mean the same here. */
 export interface ChartOptions {
-  locale?: string
+  locale?: string | undefined
 }
 
 /** A number as a reader writes one: no trailing zeroes, and thousands grouped
@@ -443,8 +445,7 @@ function legend(chart: Chart): string {
 export function chartSvg(chart: Chart, options?: ChartOptions): string {
   const { low, high, step } = span(chart)
   const said = sayer(options)
-  const drawn =
-    chart.kind === 'line' ? lines(chart, low, high, said) : bars(chart, low, high, said)
+  const drawn = chart.kind === 'line' ? lines(chart, low, high, said) : bars(chart, low, high, said)
   const body =
     chart.kind === 'pie'
       ? pie(chart, 0, said)
