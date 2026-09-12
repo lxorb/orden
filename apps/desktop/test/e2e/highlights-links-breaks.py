@@ -130,21 +130,6 @@ def wrong(what: str) -> None:
     failures.append(what)
 
 
-# Not this batch's, and not this drive's to fix: the desktop build delivers its
-# content policy in a `<meta>`, where `frame-ancestors` has no meaning, and the
-# browser says so once on every page load. It is the content-policy work's own
-# line and it breaks every drive in this folder the same way, so it is named here
-# rather than swallowed by a pattern that could hide something real.
-NOISE = (
-    "The Content Security Policy directive 'frame-ancestors' is ignored when "
-    "delivered via a <meta> element."
-)
-
-
-def ignored(said: str) -> bool:
-    return said.strip() == NOISE
-
-
 def is_true(claim: bool, what: str) -> None:
     if claim:
         say(f"ok: {what}")
@@ -235,7 +220,7 @@ def fresh(browser: Browser, scheme: str) -> Page:
     page.on(
         "console",
         lambda message: wrong(f"console error: {message.text}")
-        if message.type == "error" and not ignored(message.text)
+        if message.type == "error"
         else None,
     )
     page.goto(ORIGIN, wait_until="domcontentloaded")

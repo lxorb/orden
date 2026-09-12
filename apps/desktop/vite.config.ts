@@ -34,8 +34,10 @@ export default defineConfig({
   // The same policy the installed app is served with. `tauri dev` loads the dev
   // server rather than the bundle, so without this the app being worked on is a
   // looser app than the one that ships - and a policy nobody develops under is a
-  // policy that breaks on the day it is turned on. The header as well as the meta
-  // in index.html, because only a header carries `frame-ancestors`. See src/csp.ts.
+  // policy that breaks on the day it is turned on. These two send it as a header,
+  // so they get the form with `frame-ancestors` in it: the meta in index.html
+  // cannot carry that directive and the browser says so out loud when it tries.
+  // See src/csp.ts.
   server: {
     port: 1420,
     strictPort: true,

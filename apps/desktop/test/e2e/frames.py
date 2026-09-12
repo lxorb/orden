@@ -182,8 +182,12 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self) -> None:
         self.send_header("Cache-Control", "no-store, must-revalidate")
-        # The header as well as the meta the page carries: only a header is what
-        # the installed app gets, and only a header carries `frame-ancestors`.
+        # The header as well as the meta the page carries, because a served build
+        # is the nearest thing to the installed app this drive can stand in. It is
+        # the meta form, read out of the page itself: the one directive the header
+        # form adds is `frame-ancestors`, which says who may frame this page and so
+        # has nothing to do with the frames the page makes, which is all this drive
+        # is about. See src/csp.ts.
         self.send_header("Content-Security-Policy", self.policy)
         super().end_headers()
 
@@ -240,17 +244,16 @@ def scroll_to(page: Page, selector: str) -> None:
     page.wait_for_timeout(400)
 
 
-"""Said by the browser about every page that carries the policy in a `<meta>`, and
-not a complaint about the app: `frame-ancestors` is a header's business, which is
-how the installed app gets it. See src/csp.ts."""
-IGNORED = "'frame-ancestors' is ignored when delivered via a <meta> element"
-
-
 def noticed(message: ConsoleMessage) -> None:
-    """Every complaint the browser makes about the policy, kept."""
+    """Every complaint the browser makes about the policy, kept.
+
+    Nothing is excused here any more. The browser used to say `frame-ancestors` was
+    ignored on every page load, because the policy named it in a `<meta>` where it
+    has no meaning, and this drive stepped over that one line. The policy is now
+    written in the two forms its carriers can hold - see src/csp.ts - so the line
+    cannot be said, and a filter for it would only be somewhere for the next real
+    complaint to hide."""
     text = message.text
-    if IGNORED in text:
-        return
     if "Content Security Policy" in text or "Content-Security-Policy" in text:
         violations.append(text)
         say(f"violation: {text[:170]}")

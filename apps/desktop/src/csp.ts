@@ -1,11 +1,24 @@
-/** The content policy the app runs under, written once.
+/** The content policy the app runs under, written once, in the two forms its
+ *  carriers can actually hold.
  *
- *  Three places need the same string and none of them can import from another: the
- *  Tauri config, which is JSON and is what the installed app is served with;
+ *  Three places need it and none of them can import from another: the Tauri
+ *  config, which is JSON and is what the installed app is served with;
  *  `index.html`, which is what a browser and the PWA get, there being no server of
  *  ours to set a header; and the dev server, so that `pnpm dev` and `pnpm app` are
  *  the same app as the one that ships rather than a looser one. So it lives here,
  *  and `test/csp.test.ts` holds the other two to it.
+ *
+ *  Two forms, because a `<meta http-equiv>` is not a header and the browser will
+ *  not pretend otherwise: `frame-ancestors` is about who may frame this page, which
+ *  is settled before a byte of it is parsed, so a `<meta>` is too late to say it.
+ *  A browser handed it there ignores the directive *and says so on the console*,
+ *  once per page load - which is a real error in a build that ships, and it is the
+ *  one error every drive in `test/e2e` used to trip over. So the meta form leaves
+ *  it out and the header form keeps it. Nothing is lost by that: the two carriers
+ *  that take the meta are the installed app and the PWA, and a Tauri window is a
+ *  window rather than somebody else's frame. Where the directive can be honoured
+ *  it is said - the dev and preview servers here, and the Worker's own headers for
+ *  a published page, which is services/sync's policy and not this one.
  *
  *  What the policy is for: a note is a file, and a file can come from anywhere - a
  *  download, a repository, a folder somebody shared. In the app a document of the
@@ -78,10 +91,18 @@ const POLICY: readonly string[] = [
   // a form could post what is on it somewhere else.
   "base-uri 'none'",
   "form-action 'none'",
-  // Ignored in a `<meta>`, by design, and honoured as a header: the app is a window
-  // of its own and is never somebody else's frame.
-  "frame-ancestors 'none'",
 ]
 
-/** The policy as a header or a `<meta>` takes it. */
-export const CSP: string = POLICY.join('; ')
+/** The one directive a `<meta>` cannot carry: who may frame this page, which the
+ *  browser has to know before it parses the page that would say it. The app is a
+ *  window of its own and is never somebody else's frame. */
+const ONLY_AS_HEADER: readonly string[] = ["frame-ancestors 'none'"]
+
+/** The policy as a `<meta http-equiv>` takes it: everything a parsed document can
+ *  still be held to. What `index.html` declares and what the installed app is
+ *  served with. */
+export const META_CSP: string = POLICY.join('; ')
+
+/** The policy as a header takes it: the same, and the directive only a header can
+ *  say. What the dev and preview servers send. */
+export const CSP: string = [...POLICY, ...ONLY_AS_HEADER].join('; ')
