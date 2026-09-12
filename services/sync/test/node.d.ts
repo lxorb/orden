@@ -22,17 +22,27 @@ interface ImportMeta {
 
 declare module 'node:fs' {
   export function readdirSync(path: string): string[]
-  export function readFileSync(path: string, encoding: 'utf8'): string
+  /** latin1 is how a font is read: one character to a byte, which is a string
+   *  `btoa` takes and a hash can be made of without a reading in between. */
+  export function readFileSync(path: string, encoding: 'utf8' | 'latin1'): string
   export function writeFileSync(path: string, contents: string): void
 }
 
 declare module 'node:crypto' {
   interface Hash {
-    update(data: string): Hash
+    update(data: string, encoding?: 'utf8' | 'latin1'): Hash
     digest(encoding: 'hex'): string
   }
 
   export function createHash(algorithm: 'sha256'): Hash
+}
+
+declare module 'node:module' {
+  /** Enough of a require to ask where a package's own file is: the generator
+   *  bakes KaTeX's stylesheet and faces in, and resolves the package rather than
+   *  naming a version, so a page cannot be dressed by a release the editor does
+   *  not render with. */
+  export function createRequire(from: string): { resolve(id: string): string }
 }
 
 /** Only what says whether a script was run rather than imported. */
@@ -40,6 +50,7 @@ declare const process: { argv: string[] }
 
 declare module 'node:url' {
   export function fileURLToPath(url: string | URL): string
+  export function pathToFileURL(path: string): URL
 }
 
 declare module 'node:sqlite' {

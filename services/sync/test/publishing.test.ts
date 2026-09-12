@@ -13,8 +13,9 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { blogStyle } from '../../../scripts/blog-css'
+import { blogMath, blogStyle } from '../../../scripts/blog-css'
 import { COLOURED } from '../src/blog/code'
+import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from '../src/blog/math'
 import { PAGE_CSS, PAGE_CSS_PATH } from '../src/blog/style'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
@@ -102,6 +103,32 @@ function withoutMaths(html: string): string {
   return out
 }
 
+/** Whether an address is somebody else's to serve: it names a host of its own, or
+ *  a scheme that is not the `data:` a sheet draws its own arrow with. A path, with
+ *  or without a leading slash, is this blog's. */
+function elsewhere(url: string): boolean {
+  return url.startsWith('//') || (/^[a-z][a-z\d+.-]*:/i.test(url) && !url.startsWith('data:'))
+}
+
+/** Every address a stylesheet asks a browser to fetch. */
+function urlsIn(css: string): string[] {
+  return [...css.matchAll(/url\(\s*"?([^)"]+)"?\s*\)/g)].map(([, url = '']) => url)
+}
+
+/** Everything a reader's browser fetches on its way to seeing the page: the sheets
+ *  it links, the pictures and players in it, and whatever those sheets ask for in
+ *  turn. Not the links in the prose - a note may point anywhere it likes, and a
+ *  reader who presses one has chosen to go. */
+function fetched(html: string, sheets: readonly string[]): string[] {
+  const asked = (pattern: RegExp) => [...html.matchAll(pattern)].map(([, url = '']) => url)
+
+  return [
+    ...asked(/<link\b[^>]*\bhref="([^"]*)"/g),
+    ...asked(/<(?:script|img|audio|video|source|iframe|embed)\b[^>]*\bsrc="([^"]*)"/g),
+    ...sheets.flatMap(urlsIn),
+  ]
+}
+
 describe('the stylesheet a page is served with', () => {
   test('is the one the generator writes from the themes package', () => {
     const target = fileURLToPath(new URL('../src/blog/style.ts', import.meta.url))
@@ -141,6 +168,62 @@ describe('the stylesheet a page is served with', () => {
     // The page never sets `data-theme`, so the tokens on `:root` are what it
     // gets, and on the open web those are the light ones.
     expect(PAGE_CSS).toContain(':root{color-scheme:light;--bg:#fbfcfd')
+  })
+})
+
+describe("the sheet an equation is set with, and KaTeX's faces", () => {
+  test('are the ones the generator writes from the katex package', () => {
+    const target = fileURLToPath(new URL('../src/blog/math.ts', import.meta.url))
+    expect(readFileSync(target, 'utf8')).toBe(blogMath())
+  })
+
+  test('are served from the blog itself, at paths that are their own hashes', async () => {
+    const answer = await call(env, MATH_CSS_PATH, { host: HOST })
+
+    expect(answer.status).toBe(200)
+    expect(answer.headers.get('content-type')).toContain('text/css')
+    expect(answer.headers.get('cache-control')).toContain('immutable')
+    expect(answer.text).toBe(MATH_CSS)
+
+    // Every face the sheet names, and nothing the sheet does not: a `src` the
+    // Worker does not answer is an equation set in the reader's serif.
+    expect(urlsIn(MATH_CSS).sort()).toEqual(Object.keys(MATH_FONTS).sort())
+
+    for (const path of Object.keys(MATH_FONTS)) {
+      const font = await call(env, path, { host: HOST })
+
+      expect(font.status).toBe(200)
+      expect(font.headers.get('content-type')).toBe('font/woff2')
+      expect(font.headers.get('cache-control')).toContain('immutable')
+      // The four characters a woff2 file opens with, so what is served is the
+      // font and not a base64 of it.
+      expect(font.text.startsWith('wOF2')).toBe(true)
+    }
+  })
+
+  test('are linked by a page with an equation on it and by no other', async () => {
+    const withMaths = await published()
+    const without = await call(env, '/another-note', { host: HOST })
+
+    expect(withMaths.text).toContain(`<link rel="stylesheet" href="${MATH_CSS_PATH}">`)
+    expect(without.status).toBe(200)
+    expect(without.text).not.toContain(MATH_CSS_PATH)
+  })
+
+  test('leave the reader of a page nothing to fetch from anybody else', async () => {
+    const answer = await published()
+
+    expect(fetched(answer.text, [PAGE_CSS, MATH_CSS]).filter(elsewhere)).toEqual([])
+    // The CDN this used to come from, said out loud so the day somebody links a
+    // sheet again is the day this fails.
+    expect(answer.text).not.toContain('cdn.jsdelivr')
+    expect(MATH_CSS).not.toContain('cdn.jsdelivr')
+
+    // And a policy that allows nothing else either.
+    const policy = answer.headers.get('content-security-policy') ?? ''
+    expect(policy).toContain("style-src 'self' 'unsafe-inline'")
+    expect(policy).toContain("font-src 'self'")
+    expect(policy).not.toContain('https://cdn')
   })
 })
 

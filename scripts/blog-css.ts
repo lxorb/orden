@@ -19,23 +19,46 @@
  *  over every rule; what goes over the wire is the rules. Comments go and runs of
  *  whitespace collapse, which is about half of it.
  *
- *  Run `pnpm blog:css` after changing any of those sheets. What it writes is
- *  committed, so the Worker needs no build step of its own, and
- *  services/sync/test/publishing.test.ts fails if the two have drifted. TypeScript
- *  rather than the .mjs the other scripts here are, because that test imports it:
- *  the generator and the check on it are one piece of code. Node runs it as it is.
+ *  Two modules come out of this: blog/style.ts, which is the sheet above, and
+ *  blog/math.ts, which is KaTeX's own sheet with its faces in it. A page with an
+ *  equation on it used to fetch that sheet and those faces from a CDN, which told
+ *  a third party who was reading what and broke the maths for anybody offline or
+ *  behind a blocker. Now the Worker carries both, so everything a reader's browser
+ *  asks for while reading a published note comes from the domain the note is on.
+ *
+ *  Run `pnpm blog:css` after changing any of those sheets, or after the katex
+ *  package moves. What it writes is committed, so the Worker needs no build step
+ *  of its own, and services/sync/test/publishing.test.ts fails if the two have
+ *  drifted. TypeScript rather than the .mjs the other scripts here are, because
+ *  that test imports it: the generator and the check on it are one piece of code.
+ *  Node runs it as it is.
  */
 
 import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = new URL('../', import.meta.url)
 const THEMES = new URL('packages/themes/src/', ROOT)
 const BLOG = new URL('services/sync/src/blog/', ROOT)
 
-/** Where the generated module goes. */
-const TARGET = fileURLToPath(new URL('style.ts', BLOG))
+/** KaTeX's own files, in the package the app renders equations with: it is a
+ *  dependency of @nib/themes, of the editor and of the markdown renderer, all at
+ *  the one version, and it is resolved here rather than named so that the release
+ *  a page is dressed in cannot drift from the release that drew the markup. */
+const KATEX = new URL(
+  '.',
+  pathToFileURL(
+    createRequire(fileURLToPath(new URL('packages/themes/package.json', ROOT))).resolve(
+      'katex/dist/katex.min.css',
+    ),
+  ),
+)
+
+/** Where each generated module goes. */
+const STYLE_TARGET = fileURLToPath(new URL('style.ts', BLOG))
+const MATH_TARGET = fileURLToPath(new URL('math.ts', BLOG))
 
 function read(where: URL): string {
   return readFileSync(fileURLToPath(where), 'utf8')
@@ -125,10 +148,53 @@ function slidesCss(): string {
   return tighten(read(new URL('slides.css', THEMES)))
 }
 
-/** Where a sheet is served: its own contents, so a reader can keep it forever
- *  and it can never go stale. */
+/** What a file is named by: enough of its own contents that two files are never
+ *  one name, so a reader can keep it forever and it can never go stale.
+ *
+ *  A font is read and hashed as latin1 - one character to a byte - so that the
+ *  name a face is served under is that file's own bytes rather than a reading of
+ *  them, and so that `btoa` has a string it can take. */
+function hash(what: string, encoding: 'utf8' | 'latin1'): string {
+  return createHash('sha256').update(what, encoding).digest('hex').slice(0, 16)
+}
+
+/** Where a sheet is served. */
 function pathFor(css: string): string {
-  return `/s/${createHash('sha256').update(css).digest('hex').slice(0, 16)}.css`
+  return `/s/${hash(css, 'utf8')}.css`
+}
+
+/** The `src` of one `@font-face`, and the woff2 in it. */
+const FACE_SRC = /src:[^;}]+/g
+const WOFF2 = /url\(fonts\/([^)]+\.woff2)\)/
+
+/** KaTeX's own stylesheet with its faces served from here, and those faces.
+ *
+ *  woff2 alone of the three formats the package ships: every browser that can
+ *  read a page like this one has taken woff2 for ten years, and carrying the woff
+ *  and the ttf as well would treble the weight for nobody. The `src` of each face
+ *  becomes the one path that face is served at - its own hash, with the file's
+ *  name after it so a network panel says which face a page asked for.
+ *
+ *  The bytes are base64 because a Worker's bundle is its source: there is no build
+ *  step here, the module is committed like the sheet above, and a face the Worker
+ *  holds is a face no CDN sees a reader ask for. 254kB of them, which is what a
+ *  page with an equation on it costs to serve first-party; a page without one
+ *  links neither the sheet nor a face. */
+function math(): { css: string; fonts: Record<string, string> } {
+  const fonts: Record<string, string> = {}
+
+  const css = read(new URL('katex.min.css', KATEX)).replace(FACE_SRC, (src) => {
+    const file = WOFF2.exec(src)?.[1]
+    if (!file) throw new Error(`a KaTeX face names no woff2 to serve: ${src}`)
+
+    const bytes = readFileSync(fileURLToPath(new URL(`fonts/${file}`, KATEX)), 'latin1')
+    const path = `/s/${hash(bytes, 'latin1')}-${file}`
+    fonts[path] = btoa(bytes)
+
+    return `src:url(${path}) format("woff2")`
+  })
+
+  return { css, fonts }
 }
 
 /** The module the Worker imports. */
@@ -154,8 +220,33 @@ export const SLIDES_CSS_PATH = ${JSON.stringify(pathFor(slides))}
 `
 }
 
+/** The module the Worker serves an equation's dressing from. */
+export function blogMath(): string {
+  const { css, fonts } = math()
+
+  return `/* Generated by scripts/blog-css.ts from the katex package.
+ * Do not edit: run \`pnpm blog:css\`. publishing.test.ts fails if it is stale.
+ *
+ * KaTeX's own stylesheet and the faces it names, carried by the Worker so that a
+ * reader of a page with maths on it fetches nothing from anybody else. Each is
+ * served at a path that is its own hash, so a reader keeps it forever and a new
+ * release of katex is a different file rather than a stale one. */
+
+export const MATH_CSS = ${JSON.stringify(css)}
+
+export const MATH_CSS_PATH = ${JSON.stringify(pathFor(css))}
+
+/** Every face MATH_CSS asks for, as base64, by the path it asks for it at. */
+export const MATH_FONTS: Readonly<Record<string, string>> = ${JSON.stringify(fonts, null, 2)}
+`
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const written = blogStyle()
-  writeFileSync(TARGET, written)
-  console.log(`wrote ${TARGET} (${(written.length / 1024).toFixed(1)}kB)`)
+  for (const [target, written] of [
+    [STYLE_TARGET, blogStyle()],
+    [MATH_TARGET, blogMath()],
+  ] as const) {
+    writeFileSync(target, written)
+    console.log(`wrote ${target} (${(written.length / 1024).toFixed(1)}kB)`)
+  }
 }

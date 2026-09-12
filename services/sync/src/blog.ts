@@ -3,12 +3,11 @@ import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
 import { blogFence } from './blog/code'
+import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import type { Env, Note, Space } from './types'
-
-const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
 
 /** Scripts cannot run on a published note, whatever its markdown contained.
  *
@@ -20,11 +19,15 @@ function csp(nonce?: string): string {
   return [
     "default-src 'none'",
     nonce ? `script-src 'nonce-${nonce}'` : "script-src 'none'",
-    // The page's own stylesheet, which is served from here; see `sheet` below.
+    // The page's own stylesheets, which are served from here; see `sheet` below.
     // Inline styles as well, because KaTeX lays an equation out in `style`
     // attributes and a slide is placed by ones the stage writes.
-    `style-src 'self' 'unsafe-inline' ${new URL(KATEX_CSS).origin}`,
-    `font-src ${new URL(KATEX_CSS).origin}`,
+    "style-src 'self' 'unsafe-inline'",
+    // The faces an equation is set in, which the Worker carries too; see `face`.
+    // Both of these lines used to name the CDN KaTeX came from, which told a
+    // third party who was reading what and left the maths of a page broken for
+    // anybody offline or behind a blocker.
+    "font-src 'self'",
     'img-src https: data:',
     // A recording or a film a note embeds, which is served from the same place
     // its pictures are: the blob behind the file, over https. Said out loud
@@ -286,6 +289,35 @@ function sheet(css: string): Response {
   })
 }
 
+/** One of the faces an equation is set in, served from here.
+ *
+ *  Carried in the bundle as base64 and handed over as the bytes it was. The whole
+ *  set is 254kB of woff2; a reader's browser fetches the two or three faces the
+ *  page it is reading actually uses and nothing else, and each path is that file's
+ *  own hash, so a face is fetched once and kept. See scripts/blog-css.ts. */
+function face(base64: string): Response {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
+
+  return new Response(bytes, {
+    headers: {
+      'content-type': 'font/woff2',
+      'cache-control': 'public, max-age=31536000, immutable',
+      'x-content-type-options': 'nosniff',
+    },
+  })
+}
+
+/** KaTeX's sheet, linked by a page with an equation on it and by no other: a note
+ *  without maths should not fetch a stylesheet for maths, let alone a font. The
+ *  class the renderer writes around every formula is what says whether there is
+ *  one - the same question an exported document asks of itself; see
+ *  apps/desktop/src/lib/math-fonts.ts. */
+function mathLink(body: string): string {
+  return body.includes('class="katex') ? `\n<link rel="stylesheet" href="${MATH_CSS_PATH}">` : ''
+}
+
 /** The author's name, when they have given one: in the head for machines,
  *  in the footer for readers.
  *
@@ -298,8 +330,7 @@ function page(heading: string, body: string, env: Env, author: string | null): R
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(heading)}</title>
-${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">
-<link rel="stylesheet" href="${KATEX_CSS}">
+${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">${mathLink(body)}
 </head><body><main id="write">${body}
 <footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
 </main></body></html>`
@@ -332,8 +363,7 @@ function deckPage(heading: string, body: string, author: string | null): Respons
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(heading)}</title>
 ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">
-<link rel="stylesheet" href="${SLIDES_CSS_PATH}">
-<link rel="stylesheet" href="${KATEX_CSS}">
+<link rel="stylesheet" href="${SLIDES_CSS_PATH}">${mathLink(body)}
 <style>.deck .stage{--stage-width:${DECK_WIDTH}px;--stage-height:${DECK_HEIGHT}px}${DECK_PAGE_CSS}</style>
 </head><body class="deck-page">${body}
 <script nonce="${nonce}">${DECK_SCRIPT}</script>
@@ -391,6 +421,12 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   // the notes have anything to say about them.
   if (url.pathname === PAGE_CSS_PATH) return sheet(PAGE_CSS)
   if (url.pathname === SLIDES_CSS_PATH) return sheet(SLIDES_CSS)
+  if (url.pathname === MATH_CSS_PATH) return sheet(MATH_CSS)
+
+  // And the faces that last sheet names, which were the one thing a reader of a
+  // page with an equation on it still fetched from somebody else.
+  const wanted = MATH_FONTS[url.pathname]
+  if (wanted) return face(wanted)
 
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name

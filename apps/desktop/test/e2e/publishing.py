@@ -12,6 +12,13 @@ whole of what a stylesheet has to work with. Nothing may differ except what is
 written down in ALLOWED below - the page's own furniture, the metadata that became
 that furniture, and the one diagram a Worker cannot draw.
 
+The drive also lists every address the published page asked its browser for, and
+fails if one of them is not this origin's: KaTeX's stylesheet and the faces an
+equation is set in are the Worker's own now, so a reader of a page with maths on it
+tells nobody else what they are reading. The equation's width and the faces it was
+set in are printed, because a formula laid out in the reader's serif is what a
+missing font looks like and it looks like nothing is wrong.
+
 Run it from the repository root:
 
     python apps/desktop/test/e2e/publishing.py
@@ -386,7 +393,13 @@ def tall(page: Page) -> None:
     page.wait_for_timeout(600)
 
 
-def fresh(browser: Browser, label: str, at: str, token: str | None = None) -> Page:
+def fresh(
+    browser: Browser,
+    label: str,
+    at: str,
+    token: str | None = None,
+    asked: list[str] | None = None,
+) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900})
     if token:
         context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
@@ -394,6 +407,11 @@ def fresh(browser: Browser, label: str, at: str, token: str | None = None) -> Pa
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
+    # Every address the browser asks for, in the order it asked: what proves that a
+    # page fetches from its own domain or not at all. Attached before the first
+    # navigation, so the page itself is in the list too.
+    if asked is not None:
+        page.on("request", lambda request: asked.append(request.url))
     page.goto(at, wait_until="domcontentloaded")
     return page
 
@@ -513,9 +531,42 @@ def main() -> int:
                 worker.stop()
                 worker.start(upstream=f"field.{BLOG_ROOT}")
 
-                page = fresh(browser, "page", f"{ORIGIN}/everything")
+                asked: list[str] = []
+                page = fresh(browser, "page", f"{ORIGIN}/everything", asked=asked)
                 page.wait_for_selector("#write .callout", timeout=15_000)
                 page.wait_for_timeout(500)
+
+                # ── What the page fetched, and from whom ─────────────────
+                # A face is fetched when something on the page is set in it, so the
+                # equations have to be drawn before the list is read.
+                page.evaluate("async () => { await document.fonts.ready }")
+                elsewhere = sorted({url for url in asked if not url.startswith(ORIGIN)})
+                say(f"the page asked for {len(asked)} addresses:")
+                for url in sorted(set(asked)):
+                    say(f"  {url[len(ORIGIN) :] if url.startswith(ORIGIN) else url}")
+                if elsewhere:
+                    wrong(f"the published page fetched from elsewhere: {', '.join(elsewhere)}")
+
+                # And the maths is drawn in KaTeX's own faces, served from here: a
+                # formula laid out in the reader's serif is what a missing font
+                # looks like, and it looks like nothing is wrong.
+                faces = page.evaluate(
+                    "() => [...document.fonts]"
+                    "  .filter((one) => one.family.startsWith('KaTeX_') && one.status === 'loaded')"
+                    "  .map((one) => one.family).sort()"
+                )
+                drawn = page.evaluate(
+                    "() => {"
+                    "  const found = document.querySelector('#write .katex-display .katex');"
+                    "  return found ? Math.round(found.getBoundingClientRect().width) : 0"
+                    "}"
+                )
+                if not faces:
+                    wrong("the published page drew its maths without any KaTeX face")
+                elif not drawn:
+                    wrong("the published page drew no block equation")
+                else:
+                    say(f"the equation is {drawn}px wide, set in {', '.join(faces)}")
 
                 published = page.evaluate(TREE)
                 if not published:

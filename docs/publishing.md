@@ -64,6 +64,21 @@ out of the same renderer and were already the same markup.
   so a reader's chosen palette still wins in the app.
 - **No script on the page.** The CSP still says `script-src 'none'`. Highlighting
   is done before the bytes leave the Worker; nothing is coloured in the browser.
+- **Nothing from anybody else.** KaTeX's stylesheet and the faces it names used to
+  come from jsdelivr, so every reader of a page with an equation on it pinged a CDN
+  that had no business knowing who was reading what, and the maths came out in the
+  reader's serif offline or behind a blocker. The same generator now writes
+  `services/sync/src/blog/math.ts` from the `katex` package the editor renders
+  with: the sheet, and its twenty faces as base64. woff2 only - the woff and the
+  ttf would treble what the Worker carries for browsers nobody reads a blog in -
+  and each face is served at a path that is its own hash, cached forever, so a
+  browser fetches the two or three faces a page actually sets its equations in. A
+  page with no maths in it links neither the sheet nor a face. The page's own type
+  was always local: the token stacks name Geist and iA Writer and fall back to
+  `ui-sans-serif` and `ui-monospace`, so a reader with neither installed gets their
+  system's faces rather than a download. So the policy is now `style-src 'self'
+  'unsafe-inline'` and `font-src 'self'`, and a page fetches from its own domain or
+  not at all.
 
 ## What still differs, and why
 
@@ -87,12 +102,9 @@ out of the same renderer and were already the same markup.
   `blog/code.ts` is all it takes for one more.
 - **Line numbers** are the editor's gutter, not the renderer's. Neither the
   reading view nor a page has them.
-- **KaTeX's own stylesheet** is the one thing a page still fetches from
-  elsewhere (jsdelivr). Its fonts are 254kB of woff2, which is a lot to carry in
-  a Worker bundle for the notes that have no equation in them. Everything else,
-  the page's own type included, is local: the token stacks name Geist and iA
-  Writer and fall back to `ui-sans-serif` and `ui-monospace`, so a reader with
-  neither installed gets their system's faces rather than a download.
+- **An equation in a browser older than woff2.** The Worker serves KaTeX's faces
+  as woff2 and nothing else, so a browser from before 2016 sets the maths in its
+  own serif. The markup and the layout are still KaTeX's.
 
 ## How to check it
 
@@ -101,7 +113,12 @@ out of the same renderer and were already the same markup.
   the real API, opens it in the reading view and as a published page, compares
   the tag and class tree of both, and writes the two pictures beside each other
   under `apps/desktop/test/e2e/shots/publishing/`. It fails on any structural
-  difference that is not in the list above.
+  difference that is not in the list above. It also lists every address the page
+  asked its browser for and fails if one of them is somebody else's; on 12.09.2026
+  that list was the page, its two stylesheets, the three KaTeX faces its equations
+  are set in, and the one picture the fixture names and the space does not hold.
 - `pnpm --filter @nib/sync test` covers the rest: the stylesheet is the one the
   generator writes, it is served and cached, every class the page uses has a rule
-  in it, the fences are coloured, the headings have ids, nothing runs.
+  in it, the fences are coloured, the headings have ids, nothing runs, and the
+  maths sheet and its faces are served from the blog with nothing left on the page
+  for anybody else to serve.
