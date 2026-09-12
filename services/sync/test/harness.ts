@@ -240,6 +240,15 @@ interface SpaceView {
     title: string | null
     note: string | null
     dns: DnsRecord[]
+    /** What the site itself decides; see spaces/site.ts. The password is only
+     *  ever whether there is one. */
+    site: {
+      rules: { include: string[]; exclude: string[]; otherwise: string }
+      description?: string
+      image?: string
+      icon?: string
+      password: boolean
+    }
   }
 }
 
@@ -296,6 +305,13 @@ export interface Reply {
   limit: number
   hash: string
   stored: boolean
+
+  // What a publish would change, which is which pages appear and disappear.
+  pages: number
+  before: number
+  adds: string[]
+  removes: string[]
+  more: boolean
 
   // Spaces, what they keep above their file list, and their published address.
   space: SpaceView

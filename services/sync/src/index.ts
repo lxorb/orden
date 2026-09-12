@@ -9,6 +9,7 @@ import { cleanName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
+import { fillFronts } from './blog/fill'
 import { forgetHalfDone, second } from './second'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
@@ -237,7 +238,7 @@ app.all('*', async (context) => {
   const url = new URL(context.req.url)
   const space = await spaceForHost(context.env, url.host)
 
-  if (space) return serveBlog(context.env, space, url)
+  if (space) return serveBlog(context.env, space, url, context.req.raw)
 
   // A name on the shared domain that nobody publishes under has nothing to
   // show, and the editor does not live there either. Temporary, because the
@@ -273,6 +274,9 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
   context.waitUntil(forgetHalfDone(env, at))
+  // And what the notes written before publishing could read them say about
+  // themselves, two hundred at a time; see blog/fill.ts.
+  context.waitUntil(fillFronts(env, null))
 }
 
 export default { fetch: app.fetch, scheduled }

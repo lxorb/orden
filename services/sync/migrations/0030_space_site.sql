@@ -1,0 +1,14 @@
+-- What the site decides, as against what each note decides.
+--
+-- The address, the title and the one-note site have columns of their own from
+-- when publishing was those three things. Everything a site chooses now is one
+-- JSON object on the same row, the way a space already keeps its bookmarks, its
+-- folder icons, its graph and its excluded paths: which folders are in and which
+-- are out, what a note that says nothing about itself gets, the description and
+-- the picture the pages fall back on, the icon a browser tab shows, and the
+-- password, if it has one.
+--
+-- One column because it is read on every request the site answers, and a second
+-- table would be a second read per page. Bounded in bytes on the way in, like
+-- every other column of its kind; see services/sync/src/spaces/site.ts.
+alter table spaces add column site text not null default '{}';

@@ -127,7 +127,9 @@ function fetched(html: string, sheets: readonly string[]): string[] {
   const asked = (pattern: RegExp) => [...html.matchAll(pattern)].map(([, url = '']) => url)
 
   return [
-    ...asked(/<link\b[^>]*\bhref="([^"]*)"/g),
+    // A `<link>` that is a statement rather than a fetch - where the page lives,
+    // and the feed beside it - is not something a browser goes and gets.
+    ...asked(/<link\b(?![^>]*\brel="(?:canonical|alternate)")[^>]*\bhref="([^"]*)"/g),
     ...asked(/<(?:script|img|audio|video|source|iframe|embed)\b[^>]*\bsrc="([^"]*)"/g),
     ...sheets.flatMap(urlsIn),
   ]

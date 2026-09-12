@@ -17,6 +17,7 @@ import { readBookmarks } from './bookmarks'
 import { readExcluded } from './excluded'
 import { readGraph } from './graph'
 import { readIcons } from './icons'
+import { presentSite, readSite } from '../blog/site'
 
 /** What somebody may do in a space. Ordered: an owner may do what a writer may,
  *  and a writer what a reader may. */
@@ -81,6 +82,7 @@ export async function addSpace(
     icons: '{}',
     graph: '{}',
     excluded: '[]',
+    site: '{}',
   }
 
   await env.DB.prepare(
@@ -377,6 +379,11 @@ export function presentSpace(
       // Carried on the listing as well, so the pane can show what to add at
       // the registrar after a reload and not only right after publishing.
       dns: dnsRecords(env, space),
+      // What the site itself decides: which folders it publishes, what it falls
+      // back on, whether it has a password. On the listing for the same reason
+      // the bookmarks are - the sheet opens on what the account already holds
+      // rather than on a request of its own. See spaces/site.ts.
+      site: presentSite(readSite(space.site)),
     },
   }
 }

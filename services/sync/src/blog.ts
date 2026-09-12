@@ -3,11 +3,21 @@ import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@
 import { isCanvasTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
 import { blogFence } from './blog/code'
+import { feed, type FeedPage, newestFirst, robots, sitemap } from './blog/feed'
+import { type NoteFront, readFront } from './blog/front'
+import { gateBody, matches, newTicket, ticketCookie, ticketHolds, ticketIn } from './blog/gate'
+import { escape, type Head, headOf } from './blog/head'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
+import { pageOf, pathsOf, rememberedNote } from './blog/paths'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
+import { publishes, readSite, type Site, type SitePassword } from './blog/site'
 import type { Env, Note, Space } from './types'
+
+/** Where a page lives is blog/paths.ts now that a note can say so itself; the
+ *  name stays reachable from here, where every other caller already looks. */
+export { slugFor } from './blog/paths'
 
 /** Scripts cannot run on a published note, whatever its markdown contained.
  *
@@ -15,7 +25,7 @@ import type { Env, Note, Space } from './types'
  *  pages - and it gets a nonce rather than a door left open: the only script that
  *  runs is the one written here, and the note's own markup is still shown as text
  *  rather than parsed. See `deckPage`. */
-function csp(nonce?: string): string {
+function csp(nonce?: string, forms = false): string {
   return [
     "default-src 'none'",
     nonce ? `script-src 'nonce-${nonce}'` : "script-src 'none'",
@@ -35,7 +45,9 @@ function csp(nonce?: string): string {
     // so nothing else about this page gains a way out.
     'media-src https: data:',
     "base-uri 'none'",
-    "form-action 'none'",
+    // The password form posts itself back, and nothing on any other page of a
+    // site may post anywhere at all.
+    forms ? "form-action 'self'" : "form-action 'none'",
     "frame-ancestors 'none'",
   ].join('; ')
 }
@@ -79,21 +91,6 @@ export async function spaceForHost(env: Env, host: string): Promise<Space | null
   )
 }
 
-/** `Notes/First Idea.md` becomes `notes/first-idea`. */
-export function slugFor(path: string): string {
-  return path
-    .replace(/\.(md|markdown|mdown|mkd)$/i, '')
-    .split('/')
-    .map((part) =>
-      part
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, ''),
-    )
-    .filter(Boolean)
-    .join('/')
-}
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 /** A note's path as the name a link uses for it: no extension, folded case. The
@@ -103,24 +100,38 @@ function nameOf(path: string): string {
   return path.replace(/\\/g, '/').replace(MARKDOWN, '').toLowerCase()
 }
 
+/** One note of a site: the row, what the note says about its own page, and where
+ *  that puts it. Worked out once per request, because every list on the page and
+ *  every link in it asks the same two questions. */
+interface Page {
+  note: Note
+  front: NoteFront
+  /** Where it lives, without the leading slash; see blog/paths.ts. */
+  slug: string
+}
+
 /** Where each note of a space is published, by every name a link could use for
  *  it: its own name and every tail of its path, which is what `[[Note]]` and
  *  `[[folder/Note]]` are. A name two notes answer to goes to the shallower one,
  *  which is the reading the editor settles on too.
  *
+ *  Where it is published is the page's own answer rather than its path: a note
+ *  with a `permalink:` is linked at the permalink, so a link that follows in the
+ *  app follows to the same place on the site.
+ *
  *  Built once per page rather than per link: a note with fifty links in it would
  *  otherwise walk the space fifty times. */
-function pages(notes: readonly Note[]): Map<string, string> {
+function pages(listed: readonly Page[]): Map<string, string> {
   const byName = new Map<string, string>()
 
   // Deepest first, so a shallower note overwrites it and wins the bare name.
-  const ordered = [...notes].sort(
-    (one, other) => other.path.split('/').length - one.path.split('/').length,
+  const ordered = [...listed].sort(
+    (one, other) => other.note.path.split('/').length - one.note.path.split('/').length,
   )
 
-  for (const note of ordered) {
-    const whole = nameOf(note.path)
-    const url = `/${slugFor(note.path)}`
+  for (const page of ordered) {
+    const whole = nameOf(page.note.path)
+    const url = `/${page.slug}`
     const parts = whole.split('/')
 
     for (let at = 0; at < parts.length; at++) byName.set(parts.slice(at).join('/'), url)
@@ -187,8 +198,8 @@ function fileFor(space: Space, slug: string, url: URL): Response | null {
 
 /** What a `[[wikilink]]` on a published page points at. A note the space does
  *  not publish resolves to nothing, and the renderer leaves it as words. */
-function linkResolver(notes: readonly Note[], files: readonly SpaceFile[]) {
-  const byName = pages(notes)
+function linkResolver(listed: readonly Page[], files: readonly SpaceFile[]) {
+  const byName = pages(listed)
   const byFile = fileUrls(files)
 
   return (link: Wikilink) => ({
@@ -245,17 +256,6 @@ function title(note: Note, body: string): string {
       .pop() ??
     note.path
   )
-}
-
-const ESCAPES: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-}
-
-function escape(text: string): string {
-  return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
 }
 
 /** The author's name under the note's own heading when it opens with one,
@@ -325,23 +325,31 @@ function mathLink(body: string): string {
  *  surface, the reading view and an exported document all carry, so every rule in
  *  base.css and document.css - the very sheets the app loads - lands on this page
  *  too. That is the whole of what makes a published note look like the note. */
-function page(heading: string, body: string, env: Env, author: string | null): Response {
+function page(
+  head: Head,
+  body: string,
+  env: Env,
+  options: { status?: number; forms?: boolean; headers?: Record<string, string> } = {},
+): Response {
+  const author = head.author ?? null
   const html = `<!doctype html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escape(heading)}</title>
-${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">${mathLink(body)}
+${headOf(head, [PAGE_CSS_PATH])}${mathLink(body)}
 </head><body><main id="write">${body}
 <footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
 </main></body></html>`
 
   return new Response(html, {
+    status: options.status ?? 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=60',
-      'content-security-policy': csp(),
+      // A page nobody has said the password for is that reader's own to hold and
+      // no shared cache's.
+      'cache-control': options.forms ? 'private, no-store' : 'public, max-age=60',
+      'content-security-policy': csp(undefined, options.forms),
       'referrer-policy': 'strict-origin-when-cross-origin',
       'x-content-type-options': 'nosniff',
+      ...options.headers,
     },
   })
 }
@@ -355,16 +363,18 @@ ${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="
  *  Both come from `@nib/markdown/deck`, along with the markup and the handful of
  *  lines that turn the pages, so the app, an exported deck and this one are one
  *  deck rather than three that look alike. */
-function deckPage(heading: string, body: string, author: string | null): Response {
+function deckPage(head: Head, body: string): Response {
   const nonce = crypto.randomUUID().replace(/-/g, '')
 
   const html = `<!doctype html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escape(heading)}</title>
-${author ? `<meta name="author" content="${escape(author)}">\n` : ''}<link rel="stylesheet" href="${PAGE_CSS_PATH}">
-<link rel="stylesheet" href="${SLIDES_CSS_PATH}">${mathLink(body)}
-<style>.deck .stage{--stage-width:${DECK_WIDTH}px;--stage-height:${DECK_HEIGHT}px}${DECK_PAGE_CSS}</style>
+${headOf(
+  {
+    ...head,
+    style: `.deck .stage{--stage-width:${DECK_WIDTH}px;--stage-height:${DECK_HEIGHT}px}${DECK_PAGE_CSS}`,
+  },
+  [PAGE_CSS_PATH, SLIDES_CSS_PATH],
+)}${mathLink(body)}
 </head><body class="deck-page">${body}
 <script nonce="${nonce}">${DECK_SCRIPT}</script>
 </body></html>`
@@ -440,7 +450,141 @@ function hardBreaksIn(raw: string | null | undefined): boolean {
  *  ceiling so that one hostname cannot ask for an unbounded page. */
 const MOST_LISTED = 2000
 
-export async function serveBlog(env: Env, space: Space, url: URL): Promise<Response> {
+/** What a note's page is called: its own `title:`, the heading it opens with, or
+ *  its file name. All three are in the column, so a list of pages costs no
+ *  bodies out of storage; see blog/front.ts. */
+function titleOf(page: Page): string {
+  return (
+    page.front.title ??
+    page.front.heading ??
+    page.note.path
+      .replace(MARKDOWN, '')
+      .split('/')
+      .pop() ??
+    page.note.path
+  )
+}
+
+/** The pages of a site, in path order: every note the rules publish, with what
+ *  each says about itself.
+ *
+ *  A canvas is left out. It syncs as a note because it is text somebody edits on
+ *  two machines, but it is a drawing rather than a page, and published it would
+ *  come out as the JSON it is made of. */
+async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
+  const listing = await env.DB.prepare(
+    'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
+  )
+    .bind(space.id, MOST_LISTED)
+    .all<Note>()
+
+  const listed: Page[] = []
+  for (const note of listing.results) {
+    if (isCanvasTarget(note.path)) continue
+
+    const front = readFront(note.front)
+    if (!publishes(site.rules, note.path, front)) continue
+
+    listed.push({ note, front, slug: pageOf(note.path, front) })
+  }
+
+  return listed
+}
+
+/** What the machines are given about each page; see blog/feed.ts. */
+function feedPages(listed: readonly Page[], origin: string): FeedPage[] {
+  return listed.map((page) => ({
+    url: `${origin}/${page.slug}`,
+    title: titleOf(page),
+    updated: page.note.updated_at,
+    date: page.front.date,
+    summary: page.front.description ?? page.front.summary,
+  }))
+}
+
+/** The icon a browser tab shows: the drawing the app made of the space's own
+ *  mark, or the letter it falls back to, drawn here.
+ *
+ *  Why the app draws it: a space wears an emoji, a Lucide stroke or a finished
+ *  drawing out of a set the app fetches, and the side that has the sets is the
+ *  side that can render one. A Worker that bundled every icon set to answer with
+ *  half a kilobyte would be a Worker that starts slower for every request there
+ *  is. See docs/publishing.md. */
+function favicon(space: Space, site: Site): Response {
+  const letter = escape(
+    (space.blog_title ?? space.name)
+      .trim()
+      .slice(0, 1)
+      .toUpperCase(),
+  )
+
+  const drawn =
+    site.icon ??
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">` +
+      `<rect width="32" height="32" rx="7" fill="#6f5ce0"/>` +
+      `<text x="16" y="23" text-anchor="middle" fill="#fff" font-family="ui-sans-serif,system-ui,sans-serif" font-size="19" font-weight="600">${letter}</text>` +
+      `</svg>`
+
+  return new Response(drawn, {
+    headers: {
+      'content-type': 'image/svg+xml; charset=utf-8',
+      'cache-control': 'public, max-age=3600',
+      'x-content-type-options': 'nosniff',
+    },
+  })
+}
+
+/** Where a picture named in front matter is served from: a file of the space, by
+ *  any name a link could use for it, or a URL as it was written. Absolute,
+ *  because the machines that read `og:image` do not resolve a relative one. */
+function pictureAt(
+  said: string | undefined,
+  files: Map<string, string>,
+  origin: string,
+): string | undefined {
+  if (!said) return undefined
+
+  const written = said.replace(/^!?\[\[/, '').replace(/\]\]$/, '').split('|')[0]?.trim() ?? ''
+  if (!written) return undefined
+
+  if (/^https?:\/\//i.test(written)) return written
+  // A path of this site's own, which is what `/i/<hash>` is: the address a
+  // picture in a note already has.
+  if (written.startsWith('/')) return `${origin}${written}`
+
+  const held = files.get(written.replace(/\\/g, '/').toLowerCase())
+  return held ? `${origin}${held}` : undefined
+}
+
+/** The first picture on a page, for a note that named none of its own.
+ *
+ *  Read off the rendered page rather than out of the markdown, because by then
+ *  every kind of picture a note can hold - a pasted one, an embedded file, a
+ *  linked URL - is one tag with one address. A post whose first picture is its
+ *  cover is the ordinary shape of a post, and a card with a picture is worth a
+ *  great deal more than a card without one. */
+function firstPicture(html: string, origin: string): string | undefined {
+  const found = /<img\b[^>]*\ssrc="([^"]+)"/i.exec(html)?.[1]
+  if (!found) return undefined
+
+  if (/^https?:\/\//i.test(found)) return found
+  return found.startsWith('/') ? `${origin}${found}` : undefined
+}
+
+/** Whoever is asking has typed the password. */
+async function answered(request: Request, held: SitePassword): Promise<boolean> {
+  const form = await request.formData().catch(() => null)
+  const said = form?.get('password')
+
+  return typeof said === 'string' ? matches(held, said) : false
+}
+
+export async function serveBlog(
+  env: Env,
+  space: Space,
+  url: URL,
+  request: Request,
+): Promise<Response> {
   // The stylesheets, first of all: they are the same bytes whatever the space,
   // they are asked for by every page of every blog, and neither the account nor
   // the notes have anything to say about them.
@@ -453,10 +597,44 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   const wanted = MATH_FONTS[url.pathname]
   if (wanted) return face(wanted)
 
+  const site = readSite(space.site)
   const slug = url.pathname.replace(/^\/+|\/+$/g, '')
   const heading = space.blog_title ?? space.name
   /** Whether the reader asked for the note as a talk rather than as a page. */
   const slides = url.searchParams.has(SLIDES_QUERY)
+
+  if (slug === 'favicon.svg') return favicon(space, site)
+  if (slug === 'robots.txt') return robots(url.origin, !!site.password)
+
+  // The password, before anything a reader could read. A site that has none -
+  // which is every site until somebody sets one - pays nothing for this.
+  if (site.password) {
+    const held = site.password
+    const said = request.method === 'POST' ? await answered(request, held) : false
+
+    if (said) {
+      // Back to the page that was asked for, as a GET, carrying the ticket. A
+      // reload after this is a reload of the page rather than of the form.
+      return new Response(null, {
+        status: 303,
+        headers: {
+          location: url.pathname,
+          'set-cookie': ticketCookie(await newTicket(held, Date.now())),
+          'cache-control': 'private, no-store',
+        },
+      })
+    }
+
+    if (!(await ticketHolds(held, ticketIn(request.headers.get('cookie')), Date.now()))) {
+      const wrong = request.method === 'POST'
+      return page(
+        { title: heading, site: heading, url: `${url.origin}/`, noindex: true },
+        gateBody(heading, url.pathname, wrong),
+        env,
+        { status: wrong ? 401 : 200, forms: true },
+      )
+    }
+  }
 
   // The owner's name and the one setting of theirs a page has to know: whether a
   // single newline breaks the line. Both off the one row, because it is one row -
@@ -466,6 +644,26 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     .first<{ name: string | null; settings: string | null }>()
   const author = owner?.name ?? null
   const breaks = hardBreaksIn(owner?.settings)
+
+  const files = readSpaceFiles(space.files)
+  const byFile = fileUrls(files)
+
+  /** What every page of this site says about itself before the page itself has
+   *  its turn: the site's name, its description, its picture, its feed. */
+  const about = (title: string, over: Partial<Head> = {}): Head => ({
+    title,
+    site: heading,
+    url: `${url.origin}/${slug}`,
+    author,
+    description: site.description,
+    image: pictureAt(site.image, byFile, url.origin),
+    feed: true,
+    icon: true,
+    ...over,
+  })
+
+  const missing = () =>
+    page(about('Not found'), '<h1>Not found</h1>', env, { status: 404 })
 
   // A file the space keeps beside its notes, asked for by the path a link in one
   // of them wrote. Before the notes, because it is settled by the path alone.
@@ -477,7 +675,7 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
   // name rather than found in the listing, so it is served whatever else the
   // space holds.
   if (space.blog_note) {
-    if (slug) return page('Not found', '<h1>Not found</h1>', env, author)
+    if (slug) return missing()
 
     const only = await env.DB.prepare(
       'select * from notes where space_id = ? and path = ? and deleted = 0',
@@ -485,10 +683,11 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
       .bind(space.id, space.blog_note)
       .first<Note>()
 
-    if (!only) return page('Not found', '<h1>Not found</h1>', env, author)
+    if (!only) return missing()
 
     const object = await env.NOTES.get(noteKey(space.id, only.id))
     const source = object ? await object.text() : ''
+    const front = readFront(only.front)
 
     // One note is the whole site, so there is nowhere for a link between notes
     // to go; an embed still shows what it names, which is inside this page.
@@ -499,57 +698,79 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
       // has somewhere to go.
-      resolveLink: linkResolver([], readSpaceFiles(space.files)),
+      resolveLink: linkResolver([], files),
       resolveEmbed: await embedded(env, space, [only], source),
     }
 
-    if (slides && isDeck(source)) {
-      return deckPage(title(only, source), publishedDeck(source, reading), author)
-    }
+    // A site of one note has no index and no feed: the page is the site, so it
+    // is the site's own front rather than one article of it.
+    const head = about(front.title ?? title(only, source), {
+      url: `${url.origin}/`,
+      description: front.description ?? front.summary ?? site.description,
+      image:
+        pictureAt(front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
+      date: front.date,
+      feed: false,
+    })
+
+    if (slides && isDeck(source)) return deckPage(head, publishedDeck(source, reading))
 
     const rendered = renderMarkdown(source, { footnotes: true, toc: true, ...reading })
+    head.image ??= firstPicture(rendered, url.origin)
 
-    return page(
-      title(only, source),
-      withByline(rendered, author) + presentLink(source),
-      env,
-      author,
-    )
+    return page(head, withByline(rendered, author) + presentLink(source), env)
   }
 
-  const listing = await env.DB.prepare(
-    'select * from notes where space_id = ? and deleted = 0 order by path limit ?',
-  )
-    .bind(space.id, MOST_LISTED)
-    .all<Note>()
+  const listed = await sitePages(env, space, site)
 
-  // A canvas syncs as a note because it is text somebody edits on two machines,
-  // but it is a drawing rather than a page: published it would come out as the
-  // JSON it is made of. So it is not listed and has no page of its own.
-  const results = listing.results.filter((note) => !isCanvasTarget(note.path))
+  // What a machine reads: every page, and the writing newest first. Both are the
+  // list above in another shape, so neither can disagree with the site about
+  // what is on it.
+  if (slug === 'sitemap.xml') {
+    return sitemap([
+      { url: `${url.origin}/`, title: heading, updated: space.updated_at },
+      ...feedPages(listed, url.origin),
+    ])
+  }
+
+  if (slug === 'feed.xml') {
+    return feed(feedPages(listed, url.origin), { title: heading, url: url.origin, author })
+  }
 
   if (!slug) {
-    const items = results
-      .map((note) => {
-        const date = new Date(note.updated_at).toISOString().slice(0, 10)
-        const label = note.path.replace(/\.(md|markdown|mdown|mkd)$/i, '')
-        return `<li><a href="/${slugFor(note.path)}"><span>${escape(label)}</span><time datetime="${date}">${date}</time></a></li>`
+    // Newest first, because a blog is read from the top, and by the name the
+    // page itself carries rather than by its file name.
+    const items = newestFirst(feedPages(listed, url.origin))
+      .map((one) => {
+        const date = new Date(one.updated).toISOString().slice(0, 10)
+        const where = escape(new URL(one.url).pathname)
+        return `<li><a href="${where}"><span>${escape(one.title)}</span><time datetime="${date}">${date}</time></a></li>`
       })
       .join('')
 
     const byline = author ? `<p class="by">by ${escape(author)}</p>` : ''
 
     return page(
-      heading,
+      about(heading, { url: `${url.origin}/` }),
       `<h1>${escape(heading)}</h1>${byline}<ul class="index">${items}</ul>`,
       env,
-      author,
     )
   }
 
-  const note = results.find((entry) => slugFor(entry.path) === slug)
-  if (!note) return page('Not found', '<h1>Not found</h1>', env, author)
+  const found = listed.find((one) => pathsOf(one.note.path, one.front).includes(slug))
 
+  if (!found) {
+    // A path this site used to answer on. Somebody's link, somebody's history or
+    // somebody's feed reader still says it, so it goes where the page went rather
+    // than nowhere. Permanent, because the page did move; see blog/paths.ts.
+    const was = await rememberedNote(env, space.id, slug)
+    const moved = was ? listed.find((one) => one.note.id === was) : null
+    if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
+
+    return missing()
+  }
+
+  const note = found.note
   const object = await env.NOTES.get(noteKey(space.id, note.id))
   const source = object ? await object.text() : ''
 
@@ -560,24 +781,35 @@ export async function serveBlog(env: Env, space: Space, url: URL): Promise<Respo
     escapeHtml: true,
     code: blogFence,
     breaks,
-    resolveLink: linkResolver(results, readSpaceFiles(space.files)),
-    resolveEmbed: await embedded(env, space, results, source),
+    resolveLink: linkResolver(listed, files),
+    resolveEmbed: await embedded(
+      env,
+      space,
+      listed.map((one) => one.note),
+      source,
+    ),
   }
+
+  const head = about(found.front.title ?? title(note, source), {
+    article: true,
+    url: `${url.origin}/${found.slug}`,
+    description: found.front.description ?? found.front.summary ?? site.description,
+    image: pictureAt(found.front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
+    date: found.front.date,
+  })
 
   // A note whose rules break it into slides can be read as a talk instead. The
   // same renderer and the same rules, one slide to a screen.
-  if (slides && isDeck(source)) {
-    return deckPage(title(note, source), publishedDeck(source, reading), author)
-  }
+  if (slides && isDeck(source)) return deckPage(head, publishedDeck(source, reading))
 
   const rendered = renderMarkdown(source, { footnotes: true, toc: true, ...reading })
+  head.image ??= firstPicture(rendered, url.origin)
 
   // The way back sits above the note, where a reader who came from the
   // index looks for it, and the author right under the title.
   return page(
-    title(note, source),
+    head,
     `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}${presentLink(source)}`,
     env,
-    author,
   )
 }

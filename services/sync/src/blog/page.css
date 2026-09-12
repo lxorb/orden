@@ -119,3 +119,55 @@ body {
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
+
+/* ── The password ────────────────────────────────────────────────── */
+
+/* One field and one button, in the same faces and the same tokens as
+   everything else: a site behind a password should look like the site rather
+   than like a login screen. See services/sync/src/blog/gate.ts. */
+#write form.gate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 1.6rem 0 0;
+}
+
+#write form.gate input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+}
+
+#write form.gate input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+#write form.gate button {
+  flex: none;
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 550;
+  cursor: pointer;
+}
+
+/* Said once, under the field, and nothing beyond that about why. */
+#write form.gate .wrong {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--danger);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}

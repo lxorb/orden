@@ -2,6 +2,8 @@ import { type Context, Hono } from 'hono'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { readBody } from './body'
+import { readFront, writeFront } from './blog/front'
+import { rememberOldPaths } from './blog/paths'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
 import {
@@ -106,14 +108,15 @@ export async function addNote(
     deleted_at: null,
     size: byteLength(content),
     hash: await sha256(content),
+    front: writeFront(content),
   }
 
   // The row first, then the bytes, for the reason `saveNote` gives: a space holds
   // one live note per path, so this is the write that can be refused, and bytes
   // written before it would be bytes under an id no row ever names.
   await env.DB.prepare(
-    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
-     values (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front)
+     values (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
   )
     .bind(
       note.id,
@@ -124,6 +127,7 @@ export async function addNote(
       note.updated_at,
       note.size,
       note.hash,
+      note.front,
     )
     .run()
 
@@ -180,13 +184,15 @@ export async function saveNote(
     deleted: 0,
     size,
     hash,
+    front: writeFront(content),
   }
 
   // The row first, because naming the version in it is what claims the write.
   // The bytes follow only once that has landed: a save that lost the claim must
   // not have replaced the bucket's copy, which the winner's row now describes.
   const written = await env.DB.prepare(
-    `update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?, hash = ?
+    `update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?,
+                      hash = ?, front = ?
       where id = ? and version = ?`,
   )
     .bind(
@@ -196,6 +202,7 @@ export async function saveNote(
       updated.updated_at,
       updated.size,
       updated.hash,
+      updated.front,
       note.id,
       note.version,
     )
@@ -210,6 +217,11 @@ export async function saveNote(
   // effort: the note is already stored, and a version that could not be written
   // is not a reason to answer the save with a failure. See versions.ts.
   await keepVersion(env, updated, content, by).catch(() => undefined)
+
+  // And the paths this note has just stopped answering on - it was renamed, or
+  // its permalink or its aliases changed - so that a link somebody else wrote
+  // still lands on it. Best effort for the same reason. See blog/paths.ts.
+  await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
 
   return updated
 }

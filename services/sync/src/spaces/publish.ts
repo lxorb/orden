@@ -21,6 +21,7 @@ import {
   reserved,
   SUBDOMAIN,
 } from './addresses'
+import { fillFronts } from '../blog/fill'
 import { newProof, proveDomain } from './proof'
 import { atLeast, presentSpace, spaceOf } from './space'
 
@@ -59,6 +60,11 @@ export const publish = new Hono<{ Bindings: Env; Variables: Variables }>()
 /** Turning a space into a blog publishes every note in it. */
 publish.put('/:id/blog', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
+
+  // What the notes say about themselves, for any that arrived before there was
+  // somewhere to keep it: a `publish: false` nobody has read is a page that was
+  // meant to be private. Bounded; see blog/fill.ts.
+  await fillFronts(context.env, space.id).catch(() => 0)
 
   const body = await readBody(context)
   const subdomain = body.text('subdomain', SUBDOMAIN_LIMIT)?.trim().toLowerCase()

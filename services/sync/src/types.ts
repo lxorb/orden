@@ -122,6 +122,9 @@ export interface Space {
    *  unlinked mentions, as a JSON array of paths; see spaces/excluded.ts. `[]`
    *  until one is. */
   excluded: string
+  /** What the site made of this space decides, as one JSON object; see
+   *  spaces/site.ts. `{}` until something about it is chosen. */
+  site: string
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }
@@ -138,6 +141,10 @@ export interface Note {
   deleted_at: number | null
   size: number
   hash: string
+  /** What the note says about its own page, as JSON; see blog/front.ts. Null for
+   *  a note that says nothing, and for one last written before the site read
+   *  such things at all. */
+  front: string | null
 }
 
 /** What the session guard puts on the request for the routes behind it, and

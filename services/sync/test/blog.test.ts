@@ -613,7 +613,9 @@ describe('the author', () => {
     const byline = note.text.indexOf('<p class="by">by Ada</p>')
 
     expect(byline).toBeGreaterThan(-1)
-    expect(byline).toBeLessThan(note.text.indexOf('Just a paragraph.'))
+    // The paragraph as it is rendered, not the description in the head: the
+    // first words of a note are what stands in for one it never wrote.
+    expect(byline).toBeLessThan(note.text.indexOf('<p>Just a paragraph.'))
     expect(byline).toBeLessThan(note.text.indexOf('<h1 id="later">Later</h1>'))
   })
 
