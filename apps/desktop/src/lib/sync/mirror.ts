@@ -24,6 +24,7 @@ import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { invoke } from '../tauri'
 import { isUntouchedWelcome } from '../welcome'
+import { type Clash, type ConflictRule, conflictPath, DEFAULT_RULE } from './conflicts'
 import type { Entry } from '../workspace.svelte'
 
 /** What the last sync left on disk, so local edits can be told apart from
@@ -182,10 +183,15 @@ async function writeDown(path: string, content: string, was?: string | null) {
   await invoke('write_note', { path, content })
 }
 
-/** Where the other side's copy goes when both changed the same note. */
-function conflictPath(path: string): string {
-  const stamp = new Date().toISOString().slice(0, 10)
-  return path.replace(/(\.[^.\\/]+)$/, ` (from another device ${stamp})$1`)
+/** Whether the copy the account holds was written after the file here.
+ *
+ *  The file's own stamp, which is what the watcher already reads. A platform that
+ *  keeps none - the browser, where a note is a row rather than a file - answers
+ *  that theirs is newer: the copy that travelled is the one more likely to have
+ *  been written last, and the other is in this device's history either way. */
+async function theirsIsNewer(path: string, updatedAt: number): Promise<boolean> {
+  const stamp = await invoke<number | null>('file_stamp', { path }).catch(() => null)
+  return stamp === null || updatedAt > stamp
 }
 
 function flatten(entry: Entry): Entry[] {
@@ -235,6 +241,17 @@ export interface Waiting {
    *  a slow connection is a body a second, so which end of it the open note is at
    *  is the difference between reading it now and reading it in five minutes. */
   wanted?: ReadonlySet<string>
+  /** What to do when the same note was written in two places. Handed in rather
+   *  than read here, so the pass has no opinion about where a setting lives; see
+   *  sync/conflicts.ts. */
+  rule?: ConflictRule
+  /** One note the two copies disagree about, for the rule that leaves it alone
+   *  and says so. */
+  clashed?: (clash: Clash) => void
+  /** Notes not to send, because a clash about them is still waiting for an
+   *  answer: pushing one is exactly what would write over the copy nobody has
+   *  looked at yet. */
+  held?: ReadonlySet<string>
 }
 
 /** Takes what the account has moved on to. Answers whether anything did. */
@@ -318,13 +335,46 @@ export async function pull(
         // A canvas is put back together rather than copied: both drawings are
         // kept, and what is written here is already the answer both devices
         // will settle on, since the merge gives the same file either way round.
+        // Which is the same answer under every rule: nothing was lost, so there
+        // is nothing to choose between.
         const together = isCanvasTarget(remote.path) ? mergeCanvasFiles(local, content) : null
 
-        await writeDown(
-          together === null ? conflictPath(target) : target,
-          together ?? content,
-          together === null ? undefined : local,
-        )
+        if (together !== null) {
+          await writeDown(target, together, local)
+          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
+          waiting?.wrote?.(target)
+          continue
+        }
+
+        const rule = waiting?.rule ?? DEFAULT_RULE
+
+        // Left exactly as it is, with the other copy held for somebody to look
+        // at. The entry takes the version we just saw so the pass stops asking
+        // about it, and `held` keeps the push below from sending ours over it.
+        if (rule === 'ask') {
+          waiting?.clashed?.({
+            path: target,
+            id: remote.id,
+            version: remote.version,
+            theirs: content,
+            at: Date.now(),
+          })
+
+          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
+          continue
+        }
+
+        // The later of the two stands. What loses is in this device's own
+        // history either way - `writeDown` keeps it on the way past - which is
+        // what makes this safe rather than lossy.
+        if (rule === 'newest' && (await theirsIsNewer(target, remote.updatedAt))) {
+          await writeDown(target, content, local)
+          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
+          waiting?.wrote?.(target)
+          continue
+        }
+
+        if (rule === 'both') await writeDown(conflictPath(target), content)
 
         // An empty hash guarantees the push below sends our copy, now based
         // on the version we just saw, so it lands as the newest one.
@@ -350,7 +400,23 @@ export async function pull(
 }
 
 /** Offers what this machine has. Answers whether anything moved. */
-export async function push(mirror: Mirror, token: string, joined: Joined): Promise<boolean> {
+/** What the caller wants to know about, and to keep out of, a push. */
+export interface Sending {
+  /** Notes waiting for an answer about two copies, which are not sent: sending
+   *  one is what would write over the copy nobody has read yet. Paths as this
+   *  machine spells them; see sync/conflicts.ts. */
+  held?: ReadonlySet<string>
+  /** One note sent, by its path in the space. What the log counts. */
+  sent?: (path: string) => void
+}
+
+export async function push(
+  mirror: Mirror,
+  token: string,
+  joined: Joined,
+  sending: Sending = {},
+): Promise<boolean> {
+  const held = sending.held ?? new Set<string>()
   // Read once, for the same reason as in `pull`.
   const root = mirror.root
   const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
@@ -367,6 +433,10 @@ export async function push(mirror: Mirror, token: string, joined: Joined): Promi
   for (const file of listed.filter((one) => !isPdfTarget(one.name))) {
     const path = relative(root, file.path)
     seen.add(path)
+
+    // A note whose two copies are still waiting for an answer stays where it is,
+    // on both sides: this is the one file the pass deliberately leaves alone.
+    if (held.has(file.path)) continue
 
     const content = await invoke<string>('read_note', { path: file.path })
     const hash = await sha256(content)
@@ -396,6 +466,7 @@ export async function push(mirror: Mirror, token: string, joined: Joined): Promi
     try {
       const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
       mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+      sending.sent?.(path)
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 409) throw error
       await keepBoth(mirror, path, tracked, error.body, token)

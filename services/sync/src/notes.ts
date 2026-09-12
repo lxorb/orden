@@ -361,9 +361,7 @@ notes.get('/notes/:id/versions/:at', async (context) => {
   if (!found) return context.json({ error: 'no such note' }, 404)
 
   const asked = Math.floor(Number(context.req.param('at')))
-  const content = Number.isFinite(asked)
-    ? await versionAt(context.env, found.note.id, asked)
-    : null
+  const content = Number.isFinite(asked) ? await versionAt(context.env, found.note.id, asked) : null
 
   if (content === null) return context.json({ error: 'no such version' }, 404)
   return context.json({ at: asked, content })

@@ -151,6 +151,12 @@ function switched(name: string): Check {
 const RECOVERY_MINUTES = [0, 1, 5, 15]
 const RECOVERY_DAYS = [1, 7, 30]
 
+/** What a device does when the same note was written in two places. Named after
+ *  what happens rather than after a policy: `both` keeps the other copy beside
+ *  the note, `newest` lets the later of the two stand, and `ask` leaves the note
+ *  alone until somebody says. See apps/desktop/src/lib/sync/mirror.ts. */
+const CONFLICT_RULES = ['both', 'newest', 'ask']
+
 /** One of a list of numbers, said the way the app would say it. */
 function oneOf(name: string, allowed: readonly number[]): Check {
   return (value) =>
@@ -196,6 +202,7 @@ const KNOWN: Record<string, Check> = {
   shortcuts: shortcutMap,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
+  conflicts: wordOf('conflicts', CONFLICT_RULES),
 }
 
 /** How much of any of this an account may hold.

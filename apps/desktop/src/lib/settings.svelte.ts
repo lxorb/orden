@@ -22,6 +22,7 @@ export type Section =
   | 'appearance'
   | 'glasses'
   | 'account'
+  | 'sync'
   | 'llm'
   | 'trash'
   | 'export'

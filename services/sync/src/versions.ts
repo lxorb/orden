@@ -73,7 +73,10 @@ export function presentVersion(version: Version) {
 
 /** The name a device sent for itself, as far as it is worth keeping. */
 export function deviceIn(header: string | undefined): string {
-  return (header ?? '').replace(/[\r\n]/g, ' ').trim().slice(0, DEVICE_LIMIT)
+  return (header ?? '')
+    .replace(/[\r\n]/g, ' ')
+    .trim()
+    .slice(0, DEVICE_LIMIT)
 }
 
 /** Keeps what the account was just sent, unless it says nothing new.

@@ -37,6 +37,9 @@ export const ICONS: Record<string, string> = {
     'M4.3 9.4a2.7 2.7 0 1 0 0-.1M11.7 9.4a2.7 2.7 0 1 0 0-.1M7 9.4h2M1.6 8L2.6 5.3h2.7M14.4 8l-1-2.7h-2.7',
   account: 'M8 8.4a2.9 2.9 0 1 0 0-5.8 2.9 2.9 0 0 0 0 5.8zM2.6 14a5.4 5.4 0 0 1 10.8 0',
   llm: 'M5 2.5h6a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5.5 14v-2.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
+  // Two arrows going round, which is what syncing has looked like since before
+  // any of this.
+  sync: 'M13.2 7a5.3 5.3 0 0 0-9.1-2.6L2.8 5.7M2.8 9a5.3 5.3 0 0 0 9.1 2.6l1.3-1.3M2.8 3v2.7h2.7M13.2 13v-2.7h-2.7',
   trash:
     'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
   export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
@@ -71,6 +74,9 @@ export function sectionGroups(): Item[][] {
     ],
     [
       { id: 'account', label: t('Account') },
+      // Only with an account: a pane about what syncs where has nothing to say
+      // until there is somewhere for notes to sync to.
+      ...(account.user ? [{ id: 'sync' as Section, label: t('Sync') }] : []),
       ...(account.user ? [{ id: 'llm' as Section, label: t('LLM access') }] : []),
     ],
     [

@@ -12,7 +12,9 @@ import { planSpaces } from './space-plan'
 import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
+import { modes } from './modes.svelte'
 import { type Mirror, newMirror, pull, push, readMirror, type Waiting, within } from './sync/mirror'
+import { record } from './sync/record.svelte'
 import { workspace } from './workspace.svelte'
 
 export const STORAGE_KEY = 'nib:mirrors'
@@ -450,9 +452,38 @@ class Sync {
       wrote: (path) => {
         arriving.arrived()
         void workspace.arrived(path)
+        this.pulled += 1
       },
       wanted: open,
+      // The reader's answer to "what if the same note was written twice", and
+      // the notes still waiting for one. See sync/conflicts.ts.
+      rule: modes.conflicts,
+      clashed: (clash) => {
+        record.clash(clash)
+        this.clashed += 1
+      },
+      held: record.held,
     }
+  }
+
+  /** What the pass being run has moved, for the log. Counted on the store rather
+   *  than passed back, because the two halves answer a boolean each and what a
+   *  line in the log says is how many. */
+  private pulled = 0
+  private pushed = 0
+  private clashed = 0
+
+  /** One line in the log for one space, unless there is nothing to say about it.
+   *  See sync/record.svelte.ts, which decides that. */
+  private noted(mirror: Mirror, began: number, failed: string | null) {
+    record.wrote({
+      at: began,
+      space: workspace.spaces.find((one) => one.root === mirror.root)?.name ?? mirror.root,
+      pulled: this.pulled,
+      pushed: this.pushed,
+      clashed: this.clashed,
+      failed,
+    })
   }
 
   /** One full pass: take what the server has, then offer what we have.
@@ -480,6 +511,11 @@ class Sync {
         // every note as deleted here, and delete them from the account.
         if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
 
+        this.pulled = 0
+        this.pushed = 0
+        this.clashed = 0
+        const began = Date.now()
+
         if (await pull(mirror, token, joined, this.waiting(mirror))) {
           moved = true
           if (mirror.root === workspace.activeSpace?.root) shown = true
@@ -488,8 +524,14 @@ class Sync {
         // A space shared to read only comes down. Offering what is here would
         // be refused by the account, and a folder somebody is reading is not a
         // statement about what the space should hold.
-        if (this.reads(mirror.spaceId)) continue
-        if (await push(mirror, token, joined)) moved = true
+        if (this.reads(mirror.spaceId)) {
+          this.noted(mirror, began, null)
+          continue
+        }
+
+        const sending = { held: record.held, sent: () => (this.pushed += 1) }
+        if (await push(mirror, token, joined, sending)) moved = true
+        this.noted(mirror, began, null)
       }
 
       // Nothing else re-reads the folder for notes that arrived from another
@@ -516,6 +558,18 @@ class Sync {
       this.lastSyncedAt = Date.now()
       this.status = Object.keys(this.mirrors).length ? 'idle' : 'off'
     } catch (error) {
+      // What went wrong is worth a line even though the pass is over: the words
+      // the server used are the whole of what a reader can act on.
+      const said = error instanceof Error ? error.message : String(error)
+      record.wrote({
+        at: Date.now(),
+        space: '',
+        pulled: this.pulled,
+        pushed: this.pushed,
+        clashed: this.clashed,
+        failed: said,
+      })
+
       if (mine !== this.generation) return moved
 
       this.status = 'error'

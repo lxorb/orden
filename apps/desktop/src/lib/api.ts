@@ -289,6 +289,10 @@ export interface AccountSettings {
    *  recovery.ts. */
   recoveryEvery?: number
   recoveryDays?: number
+  /** What a device does when the same note was written in two places; see
+   *  sync/conflicts.ts. On the account rather than on the device, because it is
+   *  a decision about the notes rather than about the machine. */
+  conflicts?: string
 }
 
 /** What any read can say about the account's OpenAI key.
@@ -709,10 +713,10 @@ export const api = {
   /** A space, or one folder of it, back to how it read at a moment. `dry` asks
    *  what would change and changes nothing. */
   rollback: (token: string, spaceId: string, at: number, under = '', dry = false) =>
-    request<{ notes: number; paths?: string[]; more?: boolean }>(
-      `/v1/spaces/${spaceId}/rollback`,
-      { token, body: { at, under, dry } },
-    ),
+    request<{ notes: number; paths?: string[]; more?: boolean }>(`/v1/spaces/${spaceId}/rollback`, {
+      token,
+      body: { at, under, dry },
+    }),
 
   deleteNote: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/notes/${id}`, { method: 'DELETE', token }),

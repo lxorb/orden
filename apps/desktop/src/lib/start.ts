@@ -13,6 +13,7 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { modes } from './modes.svelte'
 import { recovery } from './recovery.svelte'
+import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, invoke, isDesktop } from './tauri'
@@ -38,6 +39,9 @@ export function start(): () => void {
   shortcuts.restore()
   settings.restore()
   recovery.restore()
+  // What the last passes did, and what is waiting to be settled; see
+  // sync/record.svelte.ts.
+  record.restore()
 
   // A system that asks for more contrast is shown the theme that answers it, on
   // the card it would be installed from. Contrast is a theme, and a theme is a

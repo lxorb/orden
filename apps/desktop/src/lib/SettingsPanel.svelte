@@ -10,6 +10,7 @@
   import Hint from './Hint.svelte'
   import { message, t } from './i18n.svelte'
   import McpSetup from './McpSetup.svelte'
+  import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { ORIENTATIONS, PAPER_SIZES } from './page-setup'
   import { scrollbar } from './scrollbar'
@@ -70,6 +71,13 @@
       { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
       { section: 'account', label: t('Storage'), text: [] },
       { section: 'account', label: account.user ? t('Sign out') : t('Sign in'), text: [] },
+      {
+        section: 'sync',
+        label: t('When the same note was written twice'),
+        text: [t('Keep both copies'), t('Let the newest win'), t('Ask me each time')],
+      },
+      { section: 'sync', label: t('What synced'), text: [] },
+      { section: 'sync', label: t('Go back'), text: [t('This space, as it was')] },
       { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
       {
         section: 'export',
@@ -660,6 +668,10 @@
     {/if}
   {:else if settings.section === 'shortcuts'}
     {@render keyboard()}
+  {:else if settings.section === 'sync'}
+    <!-- Its own component, for the same reason as the connector's: what syncing
+         is doing is a small report with two decisions in it. -->
+    <SyncPane />
   {:else if settings.section === 'llm'}
     <!-- Its own component: the pane is a small guide, not a list of settings. -->
     <McpSetup />

@@ -30,6 +30,7 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
 import { type Compaction, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from '@nib/glasses'
 import { glassesKey } from './even/key.svelte'
 import { isScroll, type Scroll } from './even/scroll'
@@ -110,6 +111,7 @@ interface Saved {
   glassesEffort: string
   vim: boolean
   attachments: string
+  conflicts: string
 }
 
 /** The word the status bar shows for each mode modal editing has, in Vim's own
@@ -284,6 +286,11 @@ class Modes {
    *  the machine they are at. */
   attachments = $state<AttachmentFolder>('space')
 
+  /** What a device does when the same note was written in two places. On the
+   *  account, because it is a decision about the notes rather than about the
+   *  machine; see sync/conflicts.ts. */
+  conflicts = $state<ConflictRule>(DEFAULT_RULE)
+
   constructor() {
     // The editor package reports a view's mode as it changes and null when
     // that view leaves modal editing; see packages/editor/src/vim.ts.
@@ -326,6 +333,7 @@ class Modes {
       this.alwaysOnTop = saved.alwaysOnTop === true
       this.closeBrackets = saved.closeBrackets !== false
       this.ligatures = ligatureScope(saved.ligatures) ?? 'off'
+      this.conflicts = conflictRule(saved.conflicts) ?? DEFAULT_RULE
       this.glassesBreak = glassesBreak(saved.glassesBreak) ?? 2
       this.glassesLineNumbers = saved.glassesLineNumbers !== false
       this.glassesVoice = saved.glassesVoice === true
@@ -666,6 +674,15 @@ class Modes {
     this.share({ attachments: value })
   }
 
+  setConflicts(value: string) {
+    const rule = conflictRule(value)
+    if (!rule) return
+
+    this.conflicts = rule
+    this.persist()
+    this.share({ conflicts: rule })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -723,6 +740,12 @@ class Modes {
     const folder = remote.attachments
     if (isAttachmentFolder(folder) && unheard && folder !== this.attachments) {
       this.attachments = folder
+      this.persist()
+    }
+
+    const clash = conflictRule(remote.conflicts)
+    if (clash && unheard && clash !== this.conflicts) {
+      this.conflicts = clash
       this.persist()
     }
 
@@ -973,6 +996,7 @@ class Modes {
       glassesEffort: this.glassesEffort,
       vim: this.vim,
       attachments: this.attachments,
+      conflicts: this.conflicts,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }
