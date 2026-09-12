@@ -287,9 +287,12 @@ export async function inSlices<T>(
   }
 }
 
-/** One slice of a store keyed by path: everything after `after`, up to `most`. */
+/** One slice of a store keyed by path: everything after `after`, up to `most`.
+ *
+ *  The first slice asks with no range at all rather than with a null one, because
+ *  "no range" is what it means and null is not a key. */
 function slice<T>(store: string, after: string | null, most: number): Promise<T[]> {
-  const range = after === null ? null : IDBKeyRange.lowerBound(after, true)
+  const range = after === null ? undefined : IDBKeyRange.lowerBound(after, true)
   return run<T[]>(store, 'readonly', (one) => one.getAll(range, most))
 }
 

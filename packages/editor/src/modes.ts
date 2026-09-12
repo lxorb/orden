@@ -119,27 +119,36 @@ const strictness = StateField.define<boolean>({
   },
 })
 
-/** The parse, taken away from a document too long to be worth it and given back to
- *  one that is short enough.
- *
- *  A plugin rather than a decision at the call sites, because the call sites do not
- *  all know how long the document is: `modeEffects` is handed the modes and puts the
- *  language back whenever a pane takes a note on, a sync can replace a short document
- *  with a long one, and a paste can make a short one long. This is the one place that
- *  decides, and it decides from the document.
- *
- *  What a document with no parse loses: the syntax colouring, the code inside a
- *  fence coloured by its own language, folding a section from the gutter, and
- *  bracket matching. What it keeps: every widget the live preview draws, the
- *  wikilink widgets and their completion, the tables, the maths, list continuation
- *  on Enter, the outline, the find bar and everything the formatting bar does - all
- *  of those read the lines rather than the tree. See `parsedFully`, which is how the
- *  app says so to whoever is reading. */
 /** Whether this state has been through a transaction yet. A state is created with
  *  the language in it, because nothing at that point knows how long the document is;
  *  the first transaction is where the guard below looks. */
 const seen = StateField.define<boolean>({ create: () => false, update: () => true })
 
+/** The parse, taken away from a document too long to be worth it and given back to
+ *  one that is short enough.
+ *
+ *  Here rather than at the call sites, because the call sites do not all know how
+ *  long the document is: `modeEffects` is handed the modes and puts the language back
+ *  whenever a pane takes a note on, a sync can replace a short document with a long
+ *  one, and a paste can make a short one long. This is the one place that decides,
+ *  and it decides from the document.
+ *
+ *  What a document with no parse loses, and it is not a little: the syntax colouring,
+ *  and everything the live preview draws - a heading as a heading, bold as bold, a
+ *  table as a table, an equation set, an image shown, a callout, the contents widget,
+ *  the syntax concealed around the caret. All of those are built by walking the tree;
+ *  see live-preview/decorate.ts. With them go folding a section, bracket matching, the
+ *  code inside a fence coloured by its own language, the slash menu's and `[[`'s test
+ *  for "am I inside code", smart punctuation's same test, moving between table cells,
+ *  and the block ids a link can point at.
+ *
+ *  What it keeps is the note: every word, every line, the caret, typing, undo, find
+ *  and replace, the word count - and everything the app reads out of the text rather
+ *  than out of the editor, which is the outline, the links, the tags, the reading view
+ *  and every export. So a note this long is legible and writeable, and reads as source.
+ *
+ *  That is a lot to lose quietly, so it is not lost quietly: `parsedFully` is how the
+ *  app asks, and the status bar says "No preview" beside the note's other facts. */
 const parseGuard = EditorState.transactionExtender.of((transaction) => {
   const was = transaction.startState
   const plain = tooLongToParse(transaction.newDoc.length)
@@ -240,10 +249,17 @@ const typewriterPlugin = EditorView.updateListener.of((update) => {
 /** A fresh editor's modes: the defaults, said through the same builders the
  *  effects below use, so a view the app dresses the moment it is built is handed
  *  the values it already holds rather than equal ones built again. See once.ts.
+ *
+ *  `length` is how long the document it is being built around is, so a note already
+ *  too long to parse is built without the language rather than having it taken away
+ *  on the first transaction after. That distinction is the whole fix: a note opened
+ *  and read rather than typed in sends no transaction at all, and the parse would
+ *  have run for its two seconds before anything came along to stop it. See
+ *  `parseGuard`, which is what catches every later way a document can change size.
  */
-export function modeExtensions(): Extension {
+export function modeExtensions(length = 0): Extension {
   return [
-    language.of(markdownFor(false)),
+    language.of(tooLongToParse(length) ? [] : markdownFor(false)),
     // Which language the compartment holds when it holds one, and the guard that
     // takes it away from a document too long to be worth parsing.
     strictness,
@@ -474,13 +490,12 @@ export function setStrictMode(view: EditorView, on: boolean) {
   })
 }
 
-/** Whether the document in this state is being parsed, which is what decides
- *  whether its syntax is coloured, whether a fence's own language colours the code
- *  in it, and whether a section can be folded from the gutter.
+/** Whether the document in this state is being parsed, which is what decides whether
+ *  its syntax is coloured and whether the live preview draws anything at all.
  *
- *  False for a document past `PARSED_AT_MOST`. Read by the app so it can say so
- *  rather than leave a reader wondering why a long note came out grey; see
- *  `parseGuard` for what such a note keeps. */
+ *  False for a document past `PARSED_AT_MOST`. Read by the app so it can say so rather
+ *  than leave a reader wondering why a long note came out as source; see `parseGuard`
+ *  for the whole of what such a note loses and keeps. */
 export function parsedFully(state: EditorState): boolean {
   return state.facet(currentLanguage) !== null
 }

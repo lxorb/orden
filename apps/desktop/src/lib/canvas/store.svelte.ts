@@ -26,6 +26,7 @@
  *  else did. See shared.ts for the contract and rooms/plane.ts for the room. */
 
 import { type Camera, clampScale, framingBox } from '../camera'
+import { owes } from '../parting'
 import { type Canvas, emptyCanvas, merged, readCanvas, stamped, writeCanvas } from './format'
 import { pickedBox } from './edits'
 import { bounds } from './geometry'
@@ -406,12 +407,15 @@ export class CanvasStore implements PlaneSurface {
  *  else about it and this list never keeps one alive. */
 const drawn = new Set<WeakRef<CanvasStore>>()
 
-/** Every plane's file written now. Called where the window is going; see `onClose`
- *  in start.ts. */
-export function flushCanvases(): void {
+/** Every plane's file written now. Said to `parting.ts` when this module is first
+ *  loaded, which is when the first canvas opens: the launch must not have to load the
+ *  ink engine in order to know that a plane might owe a write. */
+function flushCanvases(): void {
   for (const held of drawn) {
     const store = held.deref()
     if (store) store.part()
     else drawn.delete(held)
   }
 }
+
+owes(flushCanvases)

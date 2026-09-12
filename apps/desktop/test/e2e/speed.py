@@ -432,7 +432,10 @@ LAUNCH = r"""
     worst,
     tasks: tasks.filter((one) => one.ms >= 50).length,
     memory: Math.round(memory / 1e6),
-    loaf: marks.loaf.filter((one) => one.at > after && one.ms >= 100),
+    // Every long frame of the launch, not only the ones after the editor: what
+    // holds the first paint up is before it by definition, and a profile that
+    // started at the editor could not see it.
+    loaf: marks.loaf.filter((one) => one.ms >= 60),
   }
 }
 """

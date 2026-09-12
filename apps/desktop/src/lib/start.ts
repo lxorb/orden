@@ -7,12 +7,12 @@
 
 import { setBlocks } from '@nib/editor'
 import { account } from './account.svelte'
-import { flushCanvases } from './canvas/store.svelte'
 import { blockRows } from './commands'
 import { i18n } from './i18n.svelte'
 import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { modes } from './modes.svelte'
+import { settleUp } from './parting'
 import { recovery } from './recovery.svelte'
 import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
@@ -151,12 +151,12 @@ interface Closable {
 async function onClose(event: Closing, window: Closable) {
   // Whatever is waiting on a timer goes down now, before anything below can end the
   // window: a filter typed into the graph's card in the last breath is written once
-  // the typing stops, and the typing has just stopped for good; a plane's file is
-  // written once the drawing does. Both of those run off a timer that a window going
-  // away would never reach, and the canvas has to go first - it writes into a
-  // document, and it is the unsaved documents that decide whether this asks. See
-  // `soon` in workspace/graph-settings.svelte.ts and in canvas/store.svelte.ts.
-  flushCanvases()
+  // the typing stops, and a plane's file once the drawing does. Both run off a timer
+  // that a window going away would never reach, and a plane has to go first - it
+  // writes into a document, and it is the unsaved documents that decide whether this
+  // asks below. Whoever owes a write has said so themselves rather than being reached
+  // for from here; see parting.ts.
+  settleUp()
   workspace.graphSettings.flush()
 
   // A tab gets no chance to ask its own question - `beforeunload` runs to

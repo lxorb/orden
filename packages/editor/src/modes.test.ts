@@ -435,13 +435,26 @@ describe('a document too long to parse', () => {
   /** A state as the app makes one: created, then dressed by the modes, which is the
    *  transaction every pane sends when it takes a note on. */
   function opened(doc: string): EditorState {
-    const made = EditorState.create({ doc, extensions: modeExtensions() })
+    // Told the length, the way editor.ts tells it: a note already too long is built
+    // without the language rather than losing it a transaction later.
+    const made = EditorState.create({ doc, extensions: modeExtensions(doc.length) })
     return made.update({ effects: modeEffects(DEFAULTS) }).state
   }
 
   test('is not parsed at all, and a short one still is', () => {
     expect(parsedFully(opened(SHORT))).toBe(true)
     expect(parsedFully(opened(LONG))).toBe(false)
+  })
+
+  test('and is built that way rather than turned plain a transaction later', () => {
+    // The one that matters: a note opened and read rather than typed in sends no
+    // transaction at all, so a guard that waited for one would let the parse run its
+    // whole two seconds first.
+    const made = EditorState.create({ doc: LONG, extensions: modeExtensions(LONG.length) })
+
+    expect(parsedFully(made)).toBe(false)
+    ensureSyntaxTree(made, made.doc.length, 10_000)
+    expect(syntaxTree(made).length).toBe(0)
   })
 
   test('so nothing of it is walked, however long the parse is given', () => {

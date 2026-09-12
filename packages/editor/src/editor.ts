@@ -145,7 +145,10 @@ export function editorState(options: StateOptions): EditorState {
       EditorView.contentAttributes.of({ id: 'write' }),
       syntaxHighlighting(nibHighlightStyle),
       codeThemeExtension(options.codeTheme),
-      modeExtensions(),
+      // Told how long the document is, because a note too long to parse is built
+      // without the language rather than having it taken away a transaction later;
+      // see `modeExtensions`.
+      modeExtensions(text.length),
       editorCompletion(),
       // Images are checked first, so a screenshot beats the HTML around it.
       ...(onImage ? [imageHandling(onImage)] : []),
