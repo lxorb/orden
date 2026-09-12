@@ -325,6 +325,32 @@ def in_the_editor(page: Page) -> None:
     is_true("\U0001F534" in line, "and so does the colour, so it stays editable")
     shot(page, "editor-revealed")
 
+    # A click on the first word of a coloured highlight: the caret lands in the
+    # words, never inside the colour, which has no width and is atomic while it is
+    # hidden. Clicked rather than dispatched, because it is the pointer that could
+    # land in a mark nobody can see; see snap.ts.
+    select(page, at(page, "A last paragraph"), at(page, "A last paragraph"))
+    page.wait_for_timeout(300)
+    box = page.evaluate(
+        """() => {
+          const mark = document.querySelector('.cm-content .nib-mark')
+          const box = mark.getBoundingClientRect()
+          return { x: box.left + 4, y: box.top + box.height / 2 }
+        }"""
+    )
+    page.mouse.click(box["x"], box["y"])
+    page.wait_for_timeout(400)
+    landed = page.evaluate(
+        """() => {
+          const at = window.nib.state.selection.main.head
+          return window.nib.state.doc.sliceString(at, at + 6)
+        }"""
+    )
+    is_true(
+        not any(emoji in landed for emoji in EMOJI),
+        f"a click on the words lands in the words, not in the colour: {landed!r}",
+    )
+
 
 def in_the_reading_view(page: Page) -> None:
     """The same note read: the same classes, the same colours, no emoji."""

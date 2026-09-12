@@ -25,6 +25,10 @@ const OTHER = '# Another note\n\nThe other note itself.\n\n## Why it works\n\nBe
 
 const HOST = 'field.nibeditor.com'
 
+/** The emoji that names the first palette tone, which a published page dresses a
+ *  highlight in and never shows. */
+const RED = '\u{1F534}'
+
 let env: TestEnv
 let token: string
 
@@ -319,5 +323,47 @@ describe('a published note', () => {
     // The metadata is what the page's own title and byline were built from.
     expect(answer.text).not.toContain('class="properties"')
     expect(answer.text).toContain('<title>Everything</title>')
+  })
+
+  /** A coloured highlight on a published page. The emoji is the colour, not a word
+   *  of the note, so it never reaches a stranger's screen; the class is the one
+   *  the reading view and an export wear, and the sheet the Worker serves dresses
+   *  it. See highlights.ts in @nib/markdown. */
+  test('colours a highlight the way the app does, and hides the emoji', async () => {
+    const answer = await published()
+
+    expect(answer.text).toContain('<mark class="tone-1">a red mark</mark>')
+    expect(answer.text).toContain('<mark>marked</mark>')
+    expect(body(answer.text)).not.toContain(RED)
+    expect(PAGE_CSS).toContain('mark.tone-1')
+  })
+
+  /** Whether a single newline breaks the line is the author's own answer, so a
+   *  published page reads the way its author reads it; see `hardBreaksIn` in
+   *  blog.ts. CommonMark until the account says otherwise, which is what every
+   *  other reader of the same file does with it. */
+  describe('whether a single newline breaks the line', () => {
+    const WRAPPED = 'A paragraph wrapped over'
+
+    test('is CommonMark for an account that has never said', async () => {
+      const answer = await published()
+
+      expect(answer.text).toContain(`${WRAPPED}\nthree lines in the file`)
+      expect(answer.text).not.toContain(`${WRAPPED}<br>`)
+    })
+
+    test('is the answer the author gave, once they have given one', async () => {
+      await call(env, '/v1/settings', { method: 'PATCH', token, body: { hardBreaks: true } })
+      const answer = await published()
+
+      expect(answer.text).toContain(`${WRAPPED}<br>`)
+    })
+
+    test('is a break on a slide whatever the account says, because a slide is a poster', async () => {
+      const answer = await call(env, '/everything?slides', { host: HOST })
+
+      expect(answer.status).toBe(200)
+      expect(answer.text).toContain(`${WRAPPED}<br>`)
+    })
   })
 })

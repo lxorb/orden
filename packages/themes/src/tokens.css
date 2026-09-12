@@ -282,11 +282,15 @@
   --canvas-6: #a882ff;
   --canvas-dot: #2b323d;
 
-  /* A coloured highlight, as a wash of the tone it named. `==🔴 careful==` is how
-     Obsidian 1.14 says which colour, and these are the five it can say; see
-     highlights.ts in @nib/markdown. The same strength as `--accent-soft`, which is
-     what a highlight with no colour of its own still wears: words have to stay
-     readable through a highlight.
+  /* A coloured highlight, as a wash of the tone it named. A colour emoji at the
+     start of the highlight is how Obsidian 1.14 says which colour, and these are
+     the five it can say; the emoji themselves are in highlights.ts in
+     @nib/markdown, which is where they belong - a stylesheet is baked into every
+     exported document, and none of those bytes should be an emoji in a comment.
+
+     The same strength as `--accent-soft`, which is what a highlight with no
+     colour of its own still wears: words have to stay readable through a
+     highlight.
 
      Said once and not per scheme, because each is written in terms of a canvas
      tone and a custom property is substituted where it is used - so a light

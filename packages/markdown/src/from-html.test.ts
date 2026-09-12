@@ -177,6 +177,17 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<mark>kept</mark>')).toBe('==kept==')
   })
 
+  /** The colour has a markdown form too, so a highlight copied out of the reading
+   *  view and pasted back is still the colour it was; see highlights.ts. */
+  test('a coloured highlight comes back as the colour it was', () => {
+    expect(htmlToMarkdown('<mark class="tone-1">kept</mark>')).toBe('==\u{1F534} kept==')
+    expect(htmlToMarkdown('<mark class="tone-6">kept</mark>')).toBe('==\u{1F7E3} kept==')
+  })
+
+  test('a mark from anywhere else is a highlight with no colour of its own', () => {
+    expect(htmlToMarkdown('<mark class="hljs-thing">kept</mark>')).toBe('==kept==')
+  })
+
   test('underline has no markdown, so the tag stays', () => {
     expect(htmlToMarkdown('<u>under</u>')).toBe('<u>under</u>')
   })

@@ -19,6 +19,10 @@ maths $e^{i\pi} + 1 = 0$, an abbreviation for HTML, and a #tag in prose.
 
 *[HTML]: HyperText Markup Language
 
+A paragraph wrapped over
+three lines in the file
+and meant as one, holding ==🔴 a red mark== as well.
+
 ## Second level
 
 ### Third level

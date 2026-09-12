@@ -176,6 +176,25 @@ describe('a styled export', () => {
   })
 })
 
+/** A document that has left the app takes the colours with it: the class the
+ *  renderer writes and the rules that dress it are both in the sheet baked into
+ *  the page, so a highlight is the same colour on paper as on screen. See
+ *  highlights.ts in @nib/markdown and `--mark-*` in tokens.css. */
+describe('a coloured highlight in an exported document', () => {
+  const html = buildHtml('Be ==\u{1F534} careful== here.\n', 'x.md')
+
+  test('wears the tone it named, and never the emoji', () => {
+    expect(html).toContain('<mark class="tone-1">careful</mark>')
+    expect(html).not.toContain('\u{1F534}')
+  })
+
+  test('carries the rule that colours it, and the tone it reads', () => {
+    expect(html).toContain('mark.tone-1')
+    expect(html).toContain('--mark-1')
+    expect(html).toContain('--canvas-1')
+  })
+})
+
 describe('a bare export', () => {
   const html = buildHtml(NOTE, 'Handbook.md', { bare: true })
 

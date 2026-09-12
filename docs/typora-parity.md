@@ -66,10 +66,12 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       (🔴, 🟠, 🟢, 🔵, 🟣) to the start of a highlight to change its color".
       Five colours, because five is what the emoji say, and the plain highlight is
       the sixth answer; Obsidian has no yellow emoji because a plain highlight is
-      already its yellow. The six swatches sit behind the Highlight row of the
-      Format menu and behind the dot beside the highlight button on the formatting
-      bar, and the last colour chosen sticks - the button, the shortcut and the
-      table's own `h` all write it from then on. Drawn from `--canvas-1` and its
+      already its yellow. The six sit behind one word in the Format menu - a
+      Highlight colour row under the Highlight row that keeps the shortcut - and
+      behind one dot beside the highlight button on the formatting bar, where they
+      are the row of dots the app asks every other "which colour" with. The last
+      colour chosen sticks: that button, the shortcut and the table's own `h` all
+      write it from then on. Drawn from `--canvas-1` and its
       neighbours, the six tones the canvas and the charts already use, so the
       editor, the reading view, every export and a published page all tint one
       highlight the same. The emoji itself never reaches a page, an export, a
