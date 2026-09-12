@@ -247,6 +247,37 @@ The firmware's font carries the box drawing, the bullets, the blocks, the
 superscripts, the arrows and the geometric shapes, and between them they can say
 what every construct in a note *is*. Section 3 is that mapping.
 
+### Which language the panel is in
+
+The app's interface is in thirty-nine languages, one lazily loaded catalogue each.
+The firmware's font draws **Latin, Cyrillic, Greek, CJK and emoji**, and nothing
+else: Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati,
+Arabic, Persian, Pashto, Urdu, Thai, Burmese and Amharic have no glyphs in it at all.
+A reader in one of those got a menu of perfectly correct words drawn as a row of
+boxes, which is the one way of being wrong text mode cannot afford.
+
+So **the panel falls back to English wherever the font cannot draw the reader's own
+language**, and the phone's own panes are untouched - a reader reads their language on
+the glass where the glass can draw it, and on the phone always. Every string in this
+app is filed under what it says in English, so the fallback is the key itself and
+there is no second catalogue to ship; see `lib/even/panel-words.ts`.
+
+**Decided by what the font can draw, not by a list of scripts.** `undrawable` in
+`packages/glasses/src/firmware.ts` answers what share of a text has no glyph, and it
+is asked of the reader's own catalogue. Measured over all thirty-nine, the answer is
+two groups and nothing in between: every Latin, Cyrillic, Greek and CJK catalogue is
+at **0.0%**, and those fifteen scripts at **31% and more**. The line is drawn at a
+tenth, which is nowhere near either, and a catalogue in a script the firmware ever
+gains is drawable the day the metrics say so.
+
+The same measurement decides what is *packed*. A reader loads one catalogue and the
+store fetches the package whole, so all thirty-nine were paid for by everybody: the
+sixteen catalogues in those fifteen scripts are left out of the plugin build, which
+took it from **8.59 MB to 7.36 MB**. Those readers get an English plugin rather than a
+Thai one with a panel of boxes - and `src/lib/even/bundle.test.ts` holds the package
+to the rule from both ends, so a drawable catalogue cannot be dropped by accident
+either.
+
 ### The one fact nobody publishes
 
 **A codepoint the firmware has no glyph for is drawn as nothing at all.** Zero
@@ -1251,6 +1282,12 @@ The reduction, measured: **11.8 MB in 270 chunks became 6.0 MB in 162**, and the
 packed `.ehpk` went from 4.4 MB to 2.7 MB. Half of what a phone downloads was
 libraries it had no way to use.
 
+It has grown since, and been cut again. The interface's thirty-nine catalogues took
+it to 8.59 MB; leaving out the sixteen whose scripts the firmware has no glyphs for
+brought it to **7.36 MB**, measured on 2026-09-12. What is left that is not the app
+is node-emoji's table, 1.1 MB, which is what writes an emoji the font cannot draw as
+its own `:name:` rather than as a box.
+
 The few URLs left after that are a library's own error links, and they are
 rewritten where the folder is staged, which is the only place they can be touched
 without changing the code the editor runs. Svelte names its errors by a link, so
@@ -1430,7 +1467,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 87 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 89 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1480,6 +1517,9 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 87 checks:
 - **a space icon survived a launch through the phone app's own store**, which is the
   path everything that does not fit the cookie now takes: the drive's stand-in host
   keeps what it is given, so the icons are gone from the cookie and back from the host;
+- **a reader whose script the firmware has no glyphs for got an English panel** and
+  not one box on it, with the catalogue that would have said otherwise absent from the
+  package altogether;
 - **a note holding everything the app has learned to write since** reached the panel
   whole: a fence with a caption (the caption above the code, the language alone on the
   fence line), callouts by name - known, unknown, titled and folded - tasks as boxes,

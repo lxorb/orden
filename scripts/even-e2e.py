@@ -1460,6 +1460,36 @@ def main() -> int:
             )
             page.screenshot(path=str(OUT / "phone-spaces.png"))
 
+            # ── A language the firmware has no glyphs for ─────────────────────
+            # The app has thirty-nine interface catalogues; the firmware's one font
+            # draws Latin, Cyrillic, Greek, CJK and emoji. A reader in Thai, Hindi or
+            # Arabic had a menu of boxes on the glass, so the panel falls back to
+            # English - and the catalogues the font cannot draw are not in the package
+            # at all, which is 1.2 MB of it. Both halves are here: the panel is in
+            # English, and the chunk that would have said otherwise is missing without
+            # anything on the page breaking over it.
+            page.evaluate("localStorage.setItem('nib:language', 'th')")
+            page.wait_for_timeout(700)
+            page.reload()
+            page.wait_for_timeout(1800)
+            page.evaluate("window.__gesture('hold')")
+            page.wait_for_timeout(500)
+            held = page.evaluate("window.__bands()")
+            asked = held.get("nibBody", "")
+            report.ok(
+                "a reader whose script the firmware cannot draw gets an English panel",
+                "Switch space" in asked and "Settings" in asked,
+                asked.replace("\n", " | ")[:80],
+            )
+            report.ok(
+                "and not one box on it",
+                "□" not in asked,
+                asked.replace("\n", " | ")[:80],
+            )
+            page.evaluate("window.__gesture('double')")
+            page.wait_for_timeout(400)
+            page.evaluate("localStorage.removeItem('nib:language')")
+
             # The note names a picture on purpose, to exercise the one block that
             # cannot be what it is on a panel of one font. Where the editor looks for
             # it in a browser is the editor's own business and not the plugin's, so
@@ -1538,11 +1568,20 @@ def press(page, name: str) -> bool:
 
 
 def open_note(page, name: str) -> None:
-    """A note opened the way a reader opens one: the sidebar, and a row in it."""
+    """A note opened the way a reader opens one: the sidebar, and a row in it.
+
+    By its row in the file list rather than by its words anywhere on the page: the
+    note's own heading says the same thing, and a click that lands in the editor
+    instead of on the list opens nothing."""
     if press(page, "Show sidebar"):
         page.wait_for_timeout(300)
 
-    page.get_by_text(name, exact=True).first.click()
+    row = page.locator(f'.row[data-path$="/{name}.md"]')
+    if row.count():
+        row.first.click()
+    else:
+        page.get_by_text(name, exact=True).first.click()
+
     page.wait_for_timeout(1400)
 
 
