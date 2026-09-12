@@ -37,7 +37,7 @@ header comment is two files.
 ## Security
 
 A note is a file, and a file can come from anywhere: a download, a repository,
-a folder somebody shared. Three rules follow, and none of them is widened
+a folder somebody shared. Four rules follow, and none of them is widened
 quietly: a change that touches one says so where it is made.
 
 - **Whose markup is markup.** Raw HTML in a document of the reader's own is
@@ -55,11 +55,65 @@ quietly: a change that touches one says so where it is made.
 - **Nothing loads from a third party until the reader asks.** An address a
   note points at is a card the size the frame will be, and the frame arrives on
   a press; see `packages/markdown/src/web-embed.ts`.
+- **A path somebody else wrote is judged before anything on disk is touched.**
+  `apps/desktop/src-tauri/src/paths.rs` holds the four judges, strictest first.
+  `a_space`: a folder directly inside the spaces folder, for the commands that
+  move a whole tree. `in_spaces`: inside the spaces folder and not the trash,
+  which is every note, folder, tree, search and trash command. `beside_a_note`:
+  that, or beside a note the app was asked to open from elsewhere, which is the
+  reach a note's own pictures get. And `chosen`, which is any path at all.
 
-The policy that backs all three is `apps/desktop/src/csp.ts`, which is the one
-copy of the app's `Content-Security-Policy`: the Tauri config, `index.html` and
-the dev server all carry it and `apps/desktop/test/csp.test.ts` holds them to
-each other. Two lines in it are load-bearing. `script-src-attr 'none'` is why
+`chosen` is the deliberate exception, not a gap in the other three: nib edits
+files, and a file worth editing is wherever it already is, so `read_note`,
+`write_note`, `write_bytes`, `file_stamp` and `import_document` take whatever
+path they are handed. It checks that the string names a file, and `folded`
+_collapses_ a `..` rather than refusing it, so a path climbing out of a space
+is not an error there: it is a different file, created if it is missing and
+replaced if it is not. Those five are safe because of what
+stands in front of them, which means a new caller of one of them is exactly
+where that stops being true:
+
+- **The window's own gestures.** The path came from the file dialog, the
+  command line, a shell hand-off, or `joinPath` off a space root. The reader
+  chose it.
+- **The local endpoint and every `nib://` link**, the two roads another
+  program has in. Both are judged by one function, `insideOnly` in
+  `apps/desktop/src/lib/automation/inside.ts`: relative, `/` separators, no
+  `..`, no drive letter, no control character, no name Windows keeps for a
+  device. `insideSpace` then only concatenates, which cannot leave a root
+  given steps that hold no `..`. A link reaches four verbs and no writing
+  one; `eval` is refused in the crate, before the window is asked, unless
+  the endpoint file turns it on.
+- **A link inside a note**, because a note can arrive from a shared space, a
+  room, a pull or a paste, so its prose is somebody else's. `followLink` in
+  `apps/desktop/src/lib/workspace.svelte.ts` judges the target with that
+  same `insideOnly` before making the note a link names.
+- **A sync pull**, whose names were written by whoever shares the space:
+  `placeable` in `apps/desktop/src/lib/sync/mirror.ts`.
+- **An import**, where every format reader puts each path component through
+  `safeName` before `applyImport` joins it to the space root. The check
+  lives in the readers, so a new format that forwards a zip entry's own name
+  unsanitised is a new hole; nothing at the write site would catch it.
+- **The browser build**, which has no filesystem: the same three commands
+  are rows in IndexedDB (`apps/desktop/src/lib/web/commands.ts`), and
+  `web/paths.ts` clamps at the virtual root.
+- **The phone**, whose spaces folder is inside the app's own external files
+  directory and whose manifest asks for no storage permission, so the whole
+  of `chosen`'s reach there is this app's own sandbox. A share hands over
+  bytes and a name, never a path. The one road bounded by nothing but that
+  sandbox is the `open` intent extra in
+  `apps/desktop/src/lib/mobile/handed.ts`, which the widget sends as an
+  absolute path and which reaches `read_note` unjudged.
+
+So: a path that came from outside the app is judged by `insideOnly` on the
+window's side, or by `in_spaces` in the crate, before it reaches any of those
+five. A caller that skips both is the bug, not the command.
+
+The policy that backs the first three is `apps/desktop/src/csp.ts`, which is
+the one copy of the app's `Content-Security-Policy`: the Tauri config,
+`index.html` and the dev server all carry it and
+`apps/desktop/test/csp.test.ts` holds them to each other. Two lines in it are
+load-bearing. `script-src-attr 'none'` is why
 an `onerror` in a file somebody was handed is inert even where that file's
 markup is rendered. And `script-src-elem 'unsafe-inline'` is why the sandboxed
 frames above still work at all: a `srcdoc` document inherits the policy of the
