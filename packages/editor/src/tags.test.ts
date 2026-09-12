@@ -116,6 +116,14 @@ describe('where the characters are not prose', () => {
   test('not in a link target', () => {
     expect(rowsAt('[a](note.md#work', 16)).toBeNull()
   })
+
+  /** The one place two sources of the same popup could both answer: a hash
+   *  between brackets names a heading of a note, and the wikilink source owns it. */
+  test('not inside a wikilink, where a hash means a heading', () => {
+    expect(rowsAt('[[Plan#')).toBeNull()
+    expect(rowsAt('[[Plan#wo')).toBeNull()
+    expect(rowsAt('[[#')).toBeNull()
+  })
 })
 
 describe('the front matter', () => {
