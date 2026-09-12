@@ -54,9 +54,7 @@
 
   /** A count on its own, or as a part of the whole. */
   const said = (part: number | undefined, whole: number) =>
-    part === undefined
-      ? amount(whole)
-      : `${amount(part)}/${amount(whole)}`
+    part === undefined ? amount(whole) : `${amount(part)}/${amount(whole)}`
 </script>
 
 <!-- Which mode the keyboard is in, on the left, and only while modal editing is

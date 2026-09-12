@@ -168,9 +168,7 @@
   }
 
   const when = (stamp: number | null) =>
-    stamp === null
-      ? t('Never')
-      : i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
+    stamp === null ? t('Never') : i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
 </script>
 
 <h3>{t('Signing in')}</h3>

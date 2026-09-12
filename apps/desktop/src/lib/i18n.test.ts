@@ -141,7 +141,10 @@ const WIDE = new RegExp(
 )
 
 const columns = (text: string): number =>
-  [...text].reduce((sum, one) => sum + (WIDE.test(one) ? 2 : 1), 0)
+  // Code points rather than graphemes: what the firmware draws is a glyph per
+  // code point, so a Devanagari conjunct costs what its pieces cost and an
+  // emoji built out of a joiner is as wide as the glyphs it is built from.
+  Array.from(text).reduce((sum, one) => sum + (WIDE.test(one) ? 2 : 1), 0)
 
 /** The panel is 576 pixels wide with an eight-pixel margin either side, which is
  *  about sixty Latin columns. Forty-eight leaves room for the longest of them to
@@ -168,7 +171,7 @@ const placeholders = (text: string): string[] =>
 
 /** Every form a row holds, whether it holds one or six. */
 const forms = (value: string | Forms): string[] =>
-  typeof value === 'string' ? [value] : Object.values(value).filter((one) => one !== undefined)
+  typeof value === 'string' ? [value] : Object.values<string>(value)
 
 describe('the folder, the list and the loader', () => {
   test('hold the same languages', () => {

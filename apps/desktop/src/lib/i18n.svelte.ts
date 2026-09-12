@@ -192,7 +192,7 @@ export function catalogueFor(tag: string): string {
  *  to Norwegian and then to German is answered in German rather than in
  *  English, which is what a list of languages is a list for. */
 function systemCatalogue(): string {
-  const asked = navigator.languages?.length ? navigator.languages : [navigator.language || 'en']
+  const asked = navigator.languages.length ? navigator.languages : [navigator.language || 'en']
 
   for (const tag of asked) {
     const found = catalogueFor(tag)
@@ -206,9 +206,16 @@ const STORAGE_KEY = 'nib:language'
 
 /** Built once per language and shape, then kept: the status bar formats a number
  *  every time the caret moves, and building the formatter is most of what that
- *  would cost. */
+ *  would cost.
+ *
+ *  A plain Map on purpose, not a `SvelteMap`. Nothing reads these but the two
+ *  functions under them, and a reactive map would make every formatted number a
+ *  dependency of the cache it was built from: the first date of a render would
+ *  invalidate everything that had already read one. */
+/* eslint-disable svelte/prefer-svelte-reactivity */
 const dates = new Map<string, Intl.DateTimeFormat>()
 const numbers = new Map<string, Intl.NumberFormat>()
+/* eslint-enable svelte/prefer-svelte-reactivity */
 
 function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
   const at = `${locale} ${JSON.stringify(options)}`

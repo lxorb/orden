@@ -74,6 +74,23 @@ LANGUAGES = {
 
 WIDTHS = {"desktop": (1400, 900), "phone": (390, 844)}
 
+# The phone layout is not a width. lib/viewport.svelte.ts asks the machine first -
+# a handheld in the user agent and a finger on the glass - and only then the width,
+# so that a desktop window dragged narrow stays a desktop. A Chrome launched on
+# Windows says "Windows NT", which that code reads as a desktop however small the
+# window is, and the phone pass would then screenshot the desktop settings sheet
+# squeezed into 390 pixels and call every heading in it clipped.
+PHONE_AGENT = (
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"
+    " (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+)
+
+# And which chord that platform uses. The app takes its modifier from the machine
+# too, so a pass pretending to be an iPhone has to ask for Cmd: Ctrl reaches
+# nothing there, and the settings sheet - the largest body of words in the app -
+# would go unphotographed while the drive reported it as reached.
+MOD = {"desktop": "Control", "phone": "Meta"}
+
 # What the app keeps its notes in, seeded before the first paint so a launch finds
 # a space with something in it. The same shape as the other drives use.
 SEED = """
@@ -134,6 +151,7 @@ CLIPPED = """
   }
 
   const clipped = []
+  const elided = []
   const tall = []
 
   for (const element of document.querySelectorAll('body *')) {
@@ -148,7 +166,14 @@ CLIPPED = """
     if (element.clientWidth < 2) continue
 
     const over = element.scrollWidth - element.clientWidth
-    if (over > 1) clipped.push({ where: path(element), over, text: (element.textContent || '').trim().slice(0, 48) })
+    if (over > 1) {
+      // An element that asks for an ellipsis has said its text may be cut: a
+      // select showing a long folder name is doing what it was built to do. Those
+      // are written down rather than failed, because a language that elides where
+      // English fits is worth a look and is not a broken layout.
+      const found = { where: path(element), over, text: (element.textContent || '').trim().slice(0, 48) }
+      ;(style.textOverflow === 'ellipsis' ? elided : clipped).push(found)
+    }
 
     // A glyph taller than the row it sits in: Bengali and Thai stack above and
     // below the line, and a row sized for Latin cuts the top off.
@@ -161,6 +186,7 @@ CLIPPED = """
   const page = document.documentElement
   return {
     clipped,
+    elided,
     tall,
     sideways: page.scrollWidth - page.clientWidth,
     lang: page.lang,
@@ -232,10 +258,10 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
     return f"http://127.0.0.1:{port}/", server
 
 
-def open_note(page) -> None:
+def open_note(page, mod: str) -> None:
     """The seeded note, by the palette, which takes the name rather than a word
     of the interface and so works in every language."""
-    page.keyboard.press("Control+p")
+    page.keyboard.press(f"{mod}+p")
     page.wait_for_timeout(300)
     page.keyboard.type("Sprachen")
     page.wait_for_timeout(700)
@@ -268,9 +294,11 @@ class Shots:
         self.readings[name] = self.page.evaluate(CLIPPED)
 
 
-def walk(page, shots: Shots) -> list[str]:
+def walk(page, shots: Shots, mod: str) -> list[str]:
     """Every surface with words on it, photographed and measured. Answers the
-    surfaces it could not reach, which on a phone is some of them by design."""
+    surfaces it could not reach, which on a phone is some of them by design.
+
+    `mod` is the chord the platform this pass pretends to be uses; see MOD."""
     missed: list[str] = []
 
     def reach(name: str, open_it) -> None:
@@ -290,13 +318,13 @@ def walk(page, shots: Shots) -> list[str]:
     # The palette, both halves of it: the files it opens with, and the commands
     # behind `>`, which is where most of the app's words are.
     def files():
-        page.keyboard.press("Control+p")
+        page.keyboard.press(f"{mod}+p")
         page.wait_for_timeout(400)
 
     reach("palette-files", files)
 
     def commands():
-        page.keyboard.press("Control+p")
+        page.keyboard.press(f"{mod}+p")
         page.wait_for_timeout(300)
         page.keyboard.type(">")
         page.wait_for_timeout(600)
@@ -330,7 +358,7 @@ def walk(page, shots: Shots) -> list[str]:
 
     def settings():
         nonlocal panes
-        page.keyboard.press("Control+Comma")
+        page.keyboard.press(f"{mod}+Comma")
         page.wait_for_timeout(600)
         panes = page.locator(".sheet .group .item").count()
 
@@ -338,7 +366,7 @@ def walk(page, shots: Shots) -> list[str]:
 
     for index in range(panes):
         def pane(at=index):
-            page.keyboard.press("Control+Comma")
+            page.keyboard.press(f"{mod}+Comma")
             page.wait_for_timeout(500)
             page.locator(".sheet .group .item").nth(at).click()
             page.wait_for_timeout(700)
@@ -375,6 +403,28 @@ def regressions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[st
             faults.append(f"{surface}: the page scrolls sideways by {reading['sideways']}px")
 
     return faults
+
+
+def elisions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[str]:
+    """Where this language asked for the ellipsis it was offered and English did
+    not. Not a failure - the element declared that its text may be cut - but the
+    shortlist of rows whose translation could stand to be shorter."""
+    found: list[str] = []
+
+    for surface, reading in readings.items():
+        before = {one["where"] for one in baseline.get(surface, {}).get("elided", [])}
+        worst: dict[str, tuple[int, str]] = {}
+        for one in reading["elided"]:
+            if one["where"] in before:
+                continue
+            had = worst.get(one["where"])
+            if not had or one["over"] > had[0]:
+                worst[one["where"]] = (one["over"], one["text"])
+
+        for where, (over, text) in worst.items():
+            found.append(f"{surface}: {where} elides {over}px - {text!r}")
+
+    return found
 
 
 def main() -> int:
@@ -417,10 +467,11 @@ def main() -> int:
                 for language in languages:
                     context = browser.new_context(
                         viewport={"width": size[0], "height": size[1]},
-                        # A phone is a phone: the app reads the pointer, not the width
-                        # alone, and half its layout hangs off that.
+                        # A phone is a phone: the app reads the machine, not the width
+                        # alone, and half its layout hangs off that. See PHONE_AGENT.
                         has_touch=width == "phone",
                         is_mobile=width == "phone",
+                        **({"user_agent": PHONE_AGENT} if width == "phone" else {}),
                         locale=language if language != "en" else "en-US",
                     )
                     page = context.new_page()
@@ -434,10 +485,10 @@ def main() -> int:
                         page.evaluate(SEED, [NOTE_PATH, NOTE, language])
                         page.reload()
                         page.wait_for_timeout(2500)
-                        open_note(page)
+                        open_note(page, MOD[width])
 
                         shots = Shots(page, language, width)
-                        missed = walk(page, shots)
+                        missed = walk(page, shots, MOD[width])
 
                         said = f"{language} {width}"
                         report[f"{said}: surfaces"] = sorted(shots.readings)
@@ -455,10 +506,14 @@ def main() -> int:
                             report[f"{said}: clipped"] = faults or "nothing the English does not"
                             failures += [f"{said}: {one}" for one in faults]
 
+                            elided = elisions(baselines[width], shots.readings)
+                            if elided:
+                                report[f"{said}: elided where English fits"] = elided
+
                         if language == "ar":
                             # With a pane of words open: the shell on its own is
                             # file names, which are whatever somebody typed.
-                            page.keyboard.press("Control+Comma")
+                            page.keyboard.press(f"{MOD[width]}+Comma")
                             page.wait_for_timeout(700)
                             report[f"{said}: right-to-left text in left-to-right boxes"] = (
                                 page.evaluate(BIDI)

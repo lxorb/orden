@@ -60,8 +60,7 @@ function reference() {
  *  the `other` form is what the row is filed under. */
 function singulars() {
   const found = new Map()
-  const pattern =
-    /one:\s*'((?:[^'\\]|\\.)*)'[\s\S]{0,400}?other:\s*'((?:[^'\\]|\\.)*)'/g
+  const pattern = /one:\s*'((?:[^'\\]|\\.)*)'[\s\S]{0,400}?other:\s*'((?:[^'\\]|\\.)*)'/g
 
   const walk = (directory) => {
     for (const name of readdirSync(directory)) {

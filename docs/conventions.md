@@ -322,7 +322,8 @@ Rules the tests enforce:
    forms that language has. Translate the values and change nothing else.
 4. `python scripts/locale-e2e.py --languages <id>` photographs every surface at
    desktop and phone widths and fails on anything the translation cut off that
-   the English does not.
+   the English does not. A row that asked for the ellipsis it was offered is
+   listed rather than failed: the element said its text may be cut.
 
 Keep one word per term. nib's own vocabulary, and what to follow:
 
@@ -335,11 +336,24 @@ Keep one word per term. nib's own vocabulary, and what to follow:
 | mark | the markdown characters live preview hides | the language's word for a *syntax mark* |
 | journal | the dated daily note | Obsidian's *daily note*. de `Tagebuch` |
 | theme | a colour scheme | de `Design`, fr `Thème` |
+| share | letting another person into a space or a room | de `Teilen`, fr `Partager`, ja `共有` |
+| publish | putting notes on the web at an address | Notion's *publish*. de `Veröffentlichen`, fr `Publier` |
+| drawer | the panel that slides in from the side on a phone | de `Schublade`, fr `Panneau` |
+| foot row | the strip of state under the note | de `Fußzeile`, fr `Barre d'état` |
 
 `Nib`, `nibeditor`, format names (`Markdown`, `PDF`, `HTML`), other products
 (`Obsidian`, `Notion`, `OpenAI`) and key names (`Ctrl`, `Enter`, `⌘`) are never
-translated. The glasses' own words are shown on a 640×200 panel that cannot
-scroll, so they must be no longer than the English.
+translated.
+
+The glasses' own words are drawn on a 576×288 panel of eight lines, so they must
+be no longer than the English: `i18n.test.ts` holds every string `lib/even` asks
+for to one line of it, and to half again its English for the two the English
+itself does not fit. The firmware's font is the other half of that story — it
+covers Latin, Cyrillic, Greek, CJK and emoji, and draws a box for everything
+else, so the Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi,
+Gujarati, Arabic, Thai, Burmese and Ethiopic catalogues are translated for the
+app's own panes and cannot reach the glass. Those rows are worth writing anyway
+and are not worth shortening for a panel they never reach.
 
 The language setting follows the system by default: the first of
 `navigator.languages` the app has a catalogue for, longest tag first, English if
