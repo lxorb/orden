@@ -4,6 +4,7 @@ import 'katex/contrib/mhchem'
 import type { MarkedExtension, Token, Tokens } from 'marked'
 import { get } from 'node-emoji'
 import { calloutChevron, calloutIcon, calloutOf } from './callouts'
+import { closesFence, fenceMark } from './fences'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
 
@@ -361,7 +362,6 @@ export const abbreviations: MarkedExtension = {
 }
 
 const ABBREV_DEF = /^\*\[([^\]\n]+)\]:[ \t]*(.*)$/
-const FENCE = /^ {0,3}(`{3,}|~{3,})/
 
 /** Collects the abbreviations a document defines, so the rendered HTML can be
  *  marked up afterwards - the definition may come after its first use.
@@ -369,18 +369,21 @@ const FENCE = /^ {0,3}(`{3,}|~{3,})/
  *  Read line by line rather than with one pass of the whole source, so that
  *  fenced code can be stepped over. The block tokenizer above never sees a line
  *  inside a fence, and this has to agree with it: a note showing what a
- *  definition looks like would otherwise teach itself the word. */
+ *  definition looks like would otherwise teach itself the word. What a fence is
+ *  and what closes one comes from fences.ts, which is what makes the two agree -
+ *  the reading here used to take ```` ```ts ```` for a closing fence, and read
+ *  the code after it as prose. */
 export function collectAbbreviations(source: string): Map<string, string> {
   const found = new Map<string, string>()
   let fence: string | null = null
 
   for (const line of source.split('\n')) {
-    const mark = FENCE.exec(line)?.[1]
-
     if (fence !== null) {
-      if (mark?.startsWith(fence.charAt(0)) && mark.length >= fence.length) fence = null
+      if (closesFence(line, fence)) fence = null
       continue
     }
+
+    const mark = fenceMark(line)
     if (mark) {
       fence = mark
       continue

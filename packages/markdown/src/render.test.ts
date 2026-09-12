@@ -517,6 +517,14 @@ describe('abbreviations', () => {
     expect(html).not.toContain('<abbr')
     expect(html).toContain('*[HTML]: Markup')
   })
+
+  test('a fence carrying a language does not close the fence above it', () => {
+    // A note showing two blocks: the second ``` line names a language, which
+    // CommonMark allows only on the line that opens a block. Read as a closing
+    // fence it let the lines after it define words the note was only showing.
+    const html = renderMarkdown('```\n*[A]: one\n```ts\n*[B]: two\n```\n\nA and B.\n')
+    expect(html).not.toContain('<abbr')
+  })
 })
 
 /** Everything a note contains is written by whoever wrote the note, and a
