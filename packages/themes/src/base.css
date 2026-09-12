@@ -1121,9 +1121,11 @@ select:focus-visible,
 }
 
 /* A dial a thumb drags rather than a pointer: a bigger thumb over a track of the
-   same weight, which is what the settings sheet has always shown on a phone. */
+   same weight, which is what the settings sheet has always shown on a phone.
+   The height is the whole of what can be grabbed - the track itself is four
+   pixels - so it is the touch floor and not 32, which is what it was. */
 [data-touch] .nib-slider {
-  height: 32px;
+  height: var(--touch-target);
 }
 
 [data-touch] .nib-slider::-webkit-slider-thumb {
