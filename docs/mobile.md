@@ -531,22 +531,42 @@ Three more are left out on purpose.
 ## What compiles the phone's own half
 
 `check.yml`'s `android-check` job, on every pull request that touches
-`apps/desktop/src-tauri/**`. It sets up a JDK, the SDK and the NDK, and assembles
-the debug APK for one ABI - which is the Kotlin compiled, the manifest merged and
-the resources built.
+`apps/desktop/src-tauri/**`. It sets up a JDK, the SDK and the NDK and assembles
+the APK - which is the Kotlin compiled, the manifest merged, the resources built
+and R8 run over the lot.
 
 It exists because nothing else did it. The `rust` job builds the crate for the
 runner's own platform, and `publish-mobile.yml` - the only thing that ever
 assembled the Android project - runs on pushes to main and on tags, not on pull
 requests. So a Kotlin file that did not compile or a manifest that would not merge
-reached main and was found by a release. The job that would have caught the
-`MasterKey` that was not in `security-crypto:1.0.0` is this one.
+reached main and was found by a release. The two failures that led to this job -
+a `MasterKey` that was not in `security-crypto:1.0.0`, and then a keep rule R8
+wanted - are both things it now catches.
 
-The debug APK rather than the release one: same Kotlin, same resources, same
-manifest merge, without minifying and without a keystore. What a release adds is
-proguard, and what the page needs kept through it is asserted in
-`test/android.test.ts` instead - every `@JavascriptInterface` method the page calls
-by name, and the rule that keeps them.
+The release APK, and the same two targets `publish-mobile.yml` passes, because the
+number of targets is what picks the flavour: two or more and the CLI builds
+`universal`, which is the variant that ships. The only difference is the signing -
+a runner with no `keystore.properties` produces an unsigned APK - and that is the
+last step of all.
+
+It has to be the release one. A debug assembly does not run R8, so a job that
+built one proved the Kotlin and nothing about the APK anybody installs: the first
+time this job ran it was a debug build, it went green, and `publish-mobile` failed
+one step further on, inside R8. Both of those are now asserted in
+`test/android.test.ts`, along with every `@JavascriptInterface` method the page
+calls by name and the rule that keeps it through minifying.
+
+### What R8 has to be told
+
+`app/proguard-rules.pro`, and only two lines of it are not about our own code:
+`javax.annotation.Nullable` and `javax.annotation.concurrent.GuardedBy` are
+JSR-305 annotations that Tink - what `androidx.security:security-crypto` encrypts
+the key file with - is annotated with. They are compile-time only, no Android
+release ships them, and nothing loads them; R8 still stops while a reference
+dangles, so it is told these two are meant to. They are named one at a time rather
+than as `javax.annotation.**`, so the next dependency that really is missing
+something still stops the build. The job prints R8's own `missing_rules.txt` on
+every run, green or not, which is where the next two names would appear.
 
 Clippy for `aarch64-linux-android` and `aarch64-apple-ios` stays in the mobile
 workflow, because the Android job above already compiles the crate for the phone

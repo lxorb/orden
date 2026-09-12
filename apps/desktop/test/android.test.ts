@@ -236,3 +236,33 @@ describe('the bridge the page talks over', () => {
     }
   })
 })
+
+describe('what a release build shrinks', () => {
+  const gradle = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'build.gradle.kts')
+  const workflow = read(HERE, '..', '..', '..', '.github', 'workflows', 'check.yml')
+
+  /** Tink is what the keystore library encrypts with, and it is annotated with
+   *  JSR-305 - two annotations that are compile-time only and on no classpath. R8
+   *  stops on a dangling reference, so it is told about exactly those two. Without
+   *  them a release APK cannot be built at all, which is a failure only a release
+   *  assembly sees; see the job below. */
+  test('is told which missing classes are meant to be missing', () => {
+    if (!gradle.includes('androidx.security:security-crypto')) return
+
+    expect(proguard).toContain('-dontwarn javax.annotation.Nullable')
+    expect(proguard).toContain('-dontwarn javax.annotation.concurrent.GuardedBy')
+    // A wildcard would silence the next dependency's real missing class too.
+    expect(proguard).not.toContain('-dontwarn javax.annotation.**')
+  })
+
+  /** The variant matters. A debug assembly does not run R8 at all, so a job that
+   *  built one proved the Kotlin and nothing about the APK anybody installs -
+   *  which is how a missing keep rule reached main once already. */
+  test('is what the pull request assembles, not only what a release does', () => {
+    const job = workflow.slice(workflow.indexOf('android-check:'))
+    const built = /tauri android build[^\n]*(?:\\\n[^\n]*)*/.exec(job)?.[0] ?? ''
+
+    expect(built).toContain('--apk')
+    expect(built, 'a debug assembly does not run R8').not.toContain('--debug')
+  })
+})

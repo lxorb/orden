@@ -147,17 +147,19 @@ jobs:
             echo "touched=false" >>"$GITHUB_OUTPUT"
           fi
 
-  # The Kotlin, the manifest and the resources, compiled. Nothing else in the
-  # project does: `check.yml`'s rust job builds the crate for the runner's own
-  # platform, and the Android project is only ever assembled by
-  # publish-mobile.yml, which does not run on a pull request - so until this job
-  # existed, a manifest that would not build or a Kotlin file that would not
-  # compile reached main and was found by a release.
+  # The Kotlin, the manifest, the resources and R8. Nothing else in the project
+  # does: `check.yml`'s rust job builds the crate for the runner's own platform,
+  # and the Android project is only ever assembled by publish-mobile.yml, which
+  # does not run on a pull request - so until this job existed, a manifest that
+  # would not build or a Kotlin file that would not compile reached main and was
+  # found by a release.
   #
-  # The debug APK rather than the release one: it is the same Kotlin, the same
-  # resources and the same manifest merge, without minifying and without a
-  # keystore. What the release build adds is proguard, and what the page needs
-  # kept is asserted in test/android.test.ts instead.
+  # The release APK, and not the debug one. A debug assembly does not run R8, and
+  # the first version of this job built one: it went green, and publish-mobile
+  # failed one step further on with a keep rule R8 wanted. The variant is what has
+  # to match, so this runs the same command with the same two targets and only the
+  # signing left out - a runner with no keystore.properties produces an unsigned
+  # APK, which is the last step of all. See docs/mobile.md.
   android-check:
     needs: android-touched
     if: needs.android-touched.outputs.touched == 'true'
@@ -185,27 +187,47 @@ jobs:
       - name: The NDK the crate is cross-compiled with
         run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >>"$GITHUB_ENV"
 
-      # One ABI. What is under test is the Kotlin and the manifest, and a second
-      # architecture compiles the same code again for another machine.
+      # The same two targets publish-mobile passes, because that is what decides
+      # the variant: two or more of them and the CLI builds the `universal`
+      # flavour, which is the one R8 runs over there.
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android
+          targets: aarch64-linux-android,x86_64-linux-android
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
-          key: android-debug
+          key: android
 
       - run: pnpm install --frozen-lockfile
 
+      # The same command publish-mobile runs, without the signing: a runner that
+      # was given no keystore.properties simply produces an unsigned release APK,
+      # and every step before that - the Kotlin, the manifest merge, the resources
+      # and R8 - is the same work on the same variant.
+      #
       # This builds the frontend itself, through the config's beforeBuildCommand.
-      - name: Assemble the debug APK
+      - name: Assemble the release APK, R8 and all
         run: |
-          pnpm --filter @nib/desktop exec tauri android build --apk --debug --target aarch64
+          pnpm --filter @nib/desktop exec tauri android build --apk \
+            --target aarch64 --target x86_64
 
       - name: Say what came out
         run: |
           find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print
+
+      # R8 writes what it could not resolve here whether or not it goes on to fail,
+      # so this is worth reading on a green run too: a rule that is no longer
+      # needed and a new dependency's dangling reference both show up in it.
+      - name: What R8 could not resolve
+        if: always()
+        run: |
+          mapping=apps/desktop/src-tauri/gen/android/app/build/outputs/mapping
+          if [ -d "$mapping" ]; then
+            find "$mapping" -name 'missing_rules.txt' -print -exec cat {} ';'
+          else
+            echo "R8 wrote no mapping folder"
+          fi
 
   # Whatever is on main is what nibeditor.com serves. Gated on the tests above,
   # so a red build never reaches anyone.
