@@ -1,9 +1,9 @@
 //! Time the way the window counts it: whole milliseconds since the epoch.
 //!
-//! Four things need this same number - the file tree, the trash, the snapshots
-//! and the name of a print job - and each one of them would otherwise carry its
-//! own cast. A clock set to before the epoch reads as zero here rather than as a
-//! panic somewhere else.
+//! Five things need this same number - the file tree, the stamp an open note is
+//! watched by, the trash, the snapshots and the name of a print job - and each one
+//! of them would otherwise carry its own cast. A clock set to before the epoch
+//! reads as zero here rather than as a panic somewhere else.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 

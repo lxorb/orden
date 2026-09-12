@@ -11,7 +11,9 @@ use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{beside_a_note, cannot, folded, free_spot, inside, space_root, spaces_root};
+use crate::paths::{
+    beside_a_note, cannot, folded, free_spot, inside, made, space_root, spaces_root,
+};
 
 /// Bigger than any picture belongs in a document, and small enough that turning
 /// it into text cannot exhaust the memory of the window asking.
@@ -113,7 +115,7 @@ pub fn save_asset(
 
     let relative = trimmed(&folder);
     let dir = asset_dir(note_folder, relative, &limit)?;
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    made(&dir)?;
 
     let safe = safe_name(&name).ok_or("that picture has no name that can be written")?;
     let mut target = dir.join(&safe);

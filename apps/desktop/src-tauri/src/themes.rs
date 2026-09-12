@@ -9,9 +9,9 @@ use std::ffi::OsStr;
 use std::fs;
 use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
-use crate::paths::{cannot, folded, inside, write_atomically};
+use crate::paths::{cannot, config_dir, folded, inside, made, write_atomically};
 
 /// What `custom.css` says when it is first made.
 const CUSTOM_CSS: &str = "/* Loaded after the active theme. Anything here wins. */\n";
@@ -206,32 +206,28 @@ fn seed(path: &Path, content: &str) -> Result<(), String> {
 
 /// The app's own settings folder, made if it is not there yet: on a fresh install
 /// nothing has written to it, and the two files below have to land somewhere.
-fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_config_dir()
-        .map_err(|error| format!("could not find the settings folder: {error}"))?;
-
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+fn settings_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = config_dir(app)?;
+    made(&dir)?;
     Ok(dir)
 }
 
 /// The themes folder, made if it is not there yet.
 fn themes_root(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = config_dir(app)?.join("themes");
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    let dir = settings_dir(app)?.join("themes");
+    made(&dir)?;
     Ok(dir)
 }
 
 /// `custom.css` sits beside the themes folder rather than in it, so it is not
 /// offered as a theme of its own.
 fn custom_css_file(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(config_dir(app)?.join("custom.css"))
+    Ok(settings_dir(app)?.join("custom.css"))
 }
 
 /// `snippets.json`, beside `custom.css`.
 fn snippets_file(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(config_dir(app)?.join("snippets.json"))
+    Ok(settings_dir(app)?.join("snippets.json"))
 }
 
 /// Whether a file is a stylesheet, in whichever case the extension is written.

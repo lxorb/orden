@@ -20,9 +20,9 @@
 use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
-use crate::paths::{cannot, folder_key, is_pdf, write_atomically};
+use crate::paths::{config_dir, folder_key, is_pdf, made, write_atomically, ORIGIN};
 
 /// How much of one paper's words may be kept. A thousand pages of a dense book,
 /// and a ceiling so that a window asking a cache to hold more than a cache should
@@ -41,11 +41,7 @@ pub struct PaperFile {
 
 /// The folder every paper's words live under.
 fn papers_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(app
-        .path()
-        .app_config_dir()
-        .map_err(|error| format!("could not find the settings folder: {error}"))?
-        .join("papers"))
+    Ok(config_dir(app)?.join("papers"))
 }
 
 /// One paper's folder. The path is judged first: a store of what is inside PDFs
@@ -67,7 +63,7 @@ fn pages_file(dir: &Path) -> PathBuf {
 }
 
 fn origin_file(dir: &Path) -> PathBuf {
-    dir.join("origin.txt")
+    dir.join(ORIGIN)
 }
 
 /// What was taken down for one paper, or nothing at all. A record larger than a
@@ -101,7 +97,7 @@ fn write_pages(dir: &Path, content: &str) -> Result<(), String> {
         return Err(format!("{} would keep too much", dir.display()));
     }
 
-    fs::create_dir_all(dir).map_err(|error| cannot("create", dir, &error))?;
+    made(dir)?;
     write_atomically(&pages_file(dir), content.as_bytes())
 }
 

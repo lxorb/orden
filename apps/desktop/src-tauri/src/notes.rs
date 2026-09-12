@@ -1,8 +1,9 @@
-//! A note is a file. This module owns the seven things the window can ask of
-//! one: read it, write it back as text, write it back as bytes, rename or move
-//! it, delete it, make the folder it is going to live in, and take that folder
-//! away again once it is empty. Whether a path is allowed at all is decided by
-//! `paths`, not here.
+//! A note is a file. This module owns the nine things the window can ask of one:
+//! read it, write it back as text, write it back as bytes, rename or move it,
+//! delete it, ask when it was last written and how long it is, make the folder it
+//! is going to live in, take that folder away, and take it away only if nothing
+//! whatever is left in it. Whether a path is allowed at all is decided by `paths`,
+//! not here.
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
@@ -11,9 +12,10 @@ use std::io::Read as _;
 use std::path::Path;
 use tauri::AppHandle;
 
+use crate::clock;
 use crate::paths::{
-    cannot, chosen, drop_highlights, in_spaces, move_highlights, note_from_outside, outside_spaces,
-    write_atomically,
+    cannot, chosen, drop_highlights, in_spaces, made, move_highlights, note_from_outside,
+    outside_spaces, write_atomically,
 };
 
 /// Reads a note, whatever folder it is in. Opening a file from outside the
@@ -126,7 +128,7 @@ fn write_file(path: &str, bytes: &[u8]) -> Result<(), String> {
         .parent()
         .ok_or_else(|| format!("{path} has no folder to write into"))?;
 
-    fs::create_dir_all(parent).map_err(|error| cannot("create", parent, &error))?;
+    made(parent)?;
     write_atomically(&target, bytes)
 }
 
@@ -159,7 +161,7 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
     }
 
     if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent).map_err(|error| cannot("create", parent, &error))?;
+        made(parent)?;
     }
 
     fs::rename(&source, &target).map_err(|error| cannot("rename", &source, &error))?;
@@ -173,7 +175,7 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
 #[tauri::command]
 pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
-    fs::create_dir_all(&target).map_err(|error| cannot("create", &target, &error))
+    made(&target)
 }
 
 /// Removes a folder and everything under it.
@@ -241,16 +243,8 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
         return None;
     }
 
-    let modified = data
-        .modified()
-        .ok()
-        .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
-        .map_or(0, |since| {
-            u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
-        });
-
     Some(Stamp {
-        modified,
+        modified: clock::of(data.modified().ok()),
         len: data.len(),
     })
 }

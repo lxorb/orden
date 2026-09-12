@@ -1,10 +1,11 @@
 //! Where notes are allowed to live, and how a path handed in from the window is
 //! judged before anything on disk is touched.
 //!
-//! This module owns four things: the folder the spaces live in, the containment
-//! check every note and space command goes through, the one deliberate way out
-//! of that folder, and the two file operations that must not leave a mess behind
-//! when they fail.
+//! This module owns the two folders the app has - the one the spaces live in and
+//! its own, where what it keeps *about* a file goes - the containment check every
+//! note and space command goes through, the one deliberate way out of that folder,
+//! what counts as a note, a PDF or a canvas, the walk that reads a whole space,
+//! and the two file operations that must not leave a mess behind when they fail.
 
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -129,6 +130,15 @@ pub fn cannot(verb: &str, path: &Path, error: &impl Display) -> String {
     format!("could not {verb} {}: {error}", path.display())
 }
 
+/// Makes a folder, and every folder above it, saying which one it could not make.
+///
+/// Here rather than in each of the modules that keeps something in a folder of its
+/// own, because all of them do: the spaces folder, the trash, the themes, one
+/// note's history, a paper's words, the log, and the folder a note is written into.
+pub fn made(dir: &Path) -> Result<(), String> {
+    fs::create_dir_all(dir).map_err(|error| cannot("create", dir, &error))
+}
+
 /// `Documents/Nib`, so notes sit where a person would look for them rather than
 /// buried in application data. Falls back to the home folder on a system that
 /// has no documents folder of its own.
@@ -140,8 +150,20 @@ pub fn spaces_root(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| format!("could not find the documents folder: {error}"))?;
 
     let dir = base.join("Nib");
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    made(&dir)?;
     Ok(dir)
+}
+
+/// The app's own folder, which is where what the app keeps *about* a file lives:
+/// the themes, the reader's own stylesheet, every version of every note, the words
+/// taken out of a paper.
+///
+/// Nothing is made here. A folder is made by whoever writes into it, with `made`,
+/// because most of the callers want a folder further down anyway.
+pub fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_config_dir()
+        .map_err(|error| format!("could not find the settings folder: {error}"))
 }
 
 /// The same path with `.` and `..` folded away, so it is judged by where it
@@ -439,6 +461,12 @@ fn gather(
 /// one file. Here rather than in one of the two modules that keeps something
 /// beside a file, because both do: the version history of a note, and the words
 /// taken out of a PDF.
+/// What a folder named that way holds the file's own path in, so the store can be
+/// listed by file without every record in it being read. The other half of
+/// `folder_key`, and in the same place for the same reason: the version history of
+/// a note and the words taken out of a PDF both keep one.
+pub const ORIGIN: &str = "origin.txt";
+
 #[must_use]
 pub fn folder_key(path: &str) -> String {
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;

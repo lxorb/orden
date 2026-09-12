@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
-use crate::paths::cannot;
+use crate::paths::{cannot, made};
 
 /// Anything past this and the file is rolled over, so a loop cannot fill a disk.
 const MAX_BYTES: u64 = 1024 * 1024;
@@ -74,7 +74,7 @@ fn log_file(app: &AppHandle) -> Result<PathBuf, String> {
         .app_log_dir()
         .map_err(|error| format!("could not find the log folder: {error}"))?;
 
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    made(&dir)?;
     Ok(dir.join("nib.log"))
 }
 

@@ -14,7 +14,7 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, folded, free_spot, in_spaces, inside, is_reserved, move_highlights, spaces_root,
+    cannot, folded, free_spot, in_spaces, inside, is_reserved, made, move_highlights, spaces_root,
     write_atomically, TRASH,
 };
 
@@ -82,7 +82,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     let dir = trash_dir(&app)?;
     let id = new_id();
     let slot = dir.join(&id);
-    fs::create_dir_all(&slot).map_err(|error| cannot("create", &slot, &error))?;
+    made(&slot)?;
 
     let held = slot.join(&name);
     if let Err(error) = fs::rename(&source, &held) {
@@ -160,7 +160,7 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     }
 
     if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent).map_err(|error| cannot("create", parent, &error))?;
+        made(parent)?;
     }
 
     fs::rename(&held, &target).map_err(|error| cannot("restore", &target, &error))?;
@@ -215,7 +215,7 @@ pub fn purge_trash_older_than(app: AppHandle, age: u64) -> Result<u32, String> {
 /// The trash folder, made if it is not there yet.
 fn trash_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = spaces_root(app)?.join(TRASH);
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    made(&dir)?;
     Ok(dir)
 }
 

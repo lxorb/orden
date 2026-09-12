@@ -11,10 +11,12 @@ use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 use crate::clock;
-use crate::paths::{cannot, folded, folder_key, inside, write_atomically};
+use crate::paths::{
+    cannot, config_dir, folded, folder_key, inside, made, write_atomically, ORIGIN,
+};
 
 /// How many snapshots of one note are kept before the oldest is dropped.
 const KEEP: usize = 40;
@@ -64,7 +66,7 @@ pub fn snapshot_note(app: AppHandle, path: String, content: String) -> Result<()
 
     // The note's own path is recorded so history can be listed by name later. Not
     // worth failing a snapshot over.
-    let _ = fs::write(dir.join("origin.txt"), &path);
+    let _ = fs::write(dir.join(ORIGIN), &path);
     Ok(())
 }
 
@@ -164,7 +166,7 @@ pub fn purge_snapshots(app: AppHandle, days: u64) -> Result<usize, String> {
         // A note whose every version has gone leaves an empty folder and the
         // note's path in it; both go with the last version.
         if snapshot_files(&note).is_empty() {
-            let _ = fs::remove_file(note.join("origin.txt"));
+            let _ = fs::remove_file(note.join(ORIGIN));
             let _ = fs::remove_dir(&note);
         }
     }
@@ -193,17 +195,13 @@ pub fn read_snapshot(app: AppHandle, path: String) -> Result<String, String> {
 
 /// The folder every note's history lives under.
 fn history_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(app
-        .path()
-        .app_config_dir()
-        .map_err(|error| format!("could not find the settings folder: {error}"))?
-        .join("history"))
+    Ok(config_dir(app)?.join("history"))
 }
 
 /// The folder this one note's history lives in, made if it is not there yet.
 fn history_root(app: &AppHandle, note_path: &str) -> Result<PathBuf, String> {
     let dir = history_dir(app)?.join(folder_key(note_path));
-    fs::create_dir_all(&dir).map_err(|error| cannot("create", &dir, &error))?;
+    made(&dir)?;
     Ok(dir)
 }
 
