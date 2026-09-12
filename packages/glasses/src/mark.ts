@@ -25,6 +25,7 @@
 import { lexMarkdown, stripFrontMatter, withoutComments } from '@nib/markdown'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
+import { captionIn, languageIn } from '@nib/markdown/code'
 import { embedKind, type Wikilink } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
@@ -805,20 +806,37 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
  *  cannot work out for themselves: on a panel with one font, code and prose look
  *  exactly alike, and knowing which is which changes what the words mean. */
 function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
-  const language = ('lang' in token && typeof token.lang === 'string' ? token.lang : '').trim()
+  // An info string is a language and then a caption: ```ts src/main.ts is TypeScript
+  // from that file, and `title="..."` is the same thing said the way other editors
+  // write it. Read through the one module that knows that - the whole string used to
+  // be taken as the language, so a captioned fence opened with `‘‘‘ts src/main.ts`
+  // and the caption was never a caption at all. See @nib/markdown/code.
+  const info = ('lang' in token && typeof token.lang === 'string' ? token.lang : '').trim()
+  const language = languageIn(info)
+  const caption = captionIn(info)
   const raw = rawOf(token)
   const code = textOf(token)
   const from = where.take(raw)
 
   // A chart is a picture, and a picture is one line here saying what it is of.
-  // Only when it has a title, though: an untitled chart is nothing but its
-  // numbers, and the numbers are the one thing about it a panel of one font can
-  // still carry, so that one stays a fence.
+  // Only when it has something to call it, though: an untitled chart is nothing but
+  // its numbers, and the numbers are the one thing about it a panel of one font can
+  // still carry, so that one stays a fence. Its own title first, and the fence's
+  // caption where it has none.
   const drawn = language.toLowerCase() === 'chart' ? readChart(code) : null
-  if (drawn?.title) {
-    sheet.add(`${PICTURE} ${drawn.title}`, from, nest)
+  // Its own title where it has one, and the fence's caption where it has not. Null
+  // rather than empty when a chart names nothing; see readChart.
+  const called = drawn?.title ?? caption
+  if (drawn && called) {
+    sheet.add(`${PICTURE} ${called}`, from, nest)
     return
   }
+
+  // What the code is, above it, where the reading view puts it too - and in words
+  // rather than in a mark, so it is there whether or not the reader keeps the fence
+  // lines. On a panel of one font it is the one thing about a block of code that the
+  // code itself cannot say.
+  if (caption) sheet.add(caption, from, nest)
 
   // Each line of code keeps its own place in the file, so a page break inside a
   // long fence still maps back to the line the reader is looking at, and "go to
@@ -829,7 +847,10 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   // they are on unless the reader turned them off. Off, the code is still every
   // line of it, glued together and unwrapped: rule two.
   const marked = sheet.marks.fence
-  if (marked) sheet.add(`${FENCE}${language}`, from, nest)
+  // Glued to the caption, which is one block with it: a page break between what the
+  // code is called and the code itself would leave a line of prose at the foot of a
+  // page with nothing to say what it belonged to.
+  if (marked) sheet.add(`${FENCE}${language}`, from, nest, { glued: caption !== '' })
   for (const [at, line] of code.split('\n').entries()) {
     sheet.add(line, inside, nest, { glued: marked || at > 0 })
     inside += line.length + 1

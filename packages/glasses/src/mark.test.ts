@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { draws, fold, width } from './firmware'
-import { markLines, workDone } from './mark'
+import { markLines, MARKS, workDone } from './mark'
 import { BODY_INNER } from './panel'
 
 const lines = (source: string, inner = BODY_INNER) =>
@@ -49,6 +49,42 @@ describe('marks that say what something is', () => {
 
   test('a fence with no language still says it is one', () => {
     expect(lines('```\nplain\n```\n')).toEqual(['‘‘‘', 'plain', '‘‘‘'])
+  })
+
+  /** An info string is a language and then a caption - ```ts src/main.ts is
+   *  TypeScript from that file - and the whole string used to be read as the
+   *  language, so a captioned fence opened with `‘‘‘ts src/main.ts` and the caption
+   *  was never a caption. It says what the code is, which is the one thing about a
+   *  block of code that a panel of one font cannot get from the code. */
+  test('a fence says what it is called, above it, and names its language alone', () => {
+    expect(lines('```ts src/main.ts\nconst a = 1\n```\n')).toEqual([
+      'src/main.ts',
+      '‘‘‘ts',
+      'const a = 1',
+      '‘‘‘',
+    ])
+  })
+
+  test('and reads a caption written the way other editors write one', () => {
+    expect(lines('```ts title="What it does"\nconst a = 1\n```\n')[0]).toBe('What it does')
+    expect(lines("```ts title='What it does'\nconst a = 1\n```\n")[0]).toBe('What it does')
+  })
+
+  /** The caption and the block are one thing, so a page cannot be cut between
+   *  them. */
+  test('and the caption is glued to the block it names', () => {
+    const marked = markLines('```ts src/main.ts\nconst a = 1\n```\n', { inner: BODY_INNER })
+
+    expect(marked.map((line) => line.glued)).toEqual([false, true, true, true])
+  })
+
+  test('and the caption is there even with the fence lines turned off', () => {
+    const marked = markLines('```ts src/main.ts\nconst a = 1\n```\n', {
+      inner: BODY_INNER,
+      marks: { ...MARKS, fence: false },
+    })
+
+    expect(marked.map((line) => line.text)).toEqual(['src/main.ts', 'const a = 1'])
   })
 
   test('a fence keeps its code exactly, indentation and all', () => {
