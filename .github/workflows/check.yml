@@ -12,6 +12,12 @@ concurrency:
   # ahead of the code that reads it - so main queues instead of cancelling.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# The floor, so a job added below without a block of its own still only reads.
+# Every job states its own as well, because what a job may do is part of what the
+# job is.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
