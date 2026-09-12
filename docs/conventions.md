@@ -348,7 +348,7 @@ translated.
 The glasses' own words are drawn on a 576×288 panel of eight lines, so they must
 be no longer than the English: `i18n.test.ts` holds every string `lib/even` asks
 for to one line of it, and to half again its English for the two the English
-itself does not fit. The firmware's font is the other half of that story — it
+itself does not fit. The firmware's font is the other half of that story: it
 covers Latin, Cyrillic, Greek, CJK and emoji, and draws a box for everything
 else, so the Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi,
 Gujarati, Arabic, Thai, Burmese and Ethiopic catalogues are translated for the
