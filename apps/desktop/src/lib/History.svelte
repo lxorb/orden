@@ -1,9 +1,12 @@
 <script lang="ts">
+  import { account } from './account.svelte'
+  import { api } from './api'
   import { closeOnBack } from './backstack.svelte'
   import { diffCount, lineDiff, trimmed } from './diff'
   import { overlays } from './overlays'
   import { recovery } from './recovery.svelte'
   import { scrollbar } from './scrollbar'
+  import { sync } from './sync.svelte'
   import { t } from './i18n.svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -18,10 +21,25 @@
     path: string
   }
 
+  /** One version, wherever it is kept.
+   *
+   *  Two places keep them and the reader wants one list: the device's own, which
+   *  is instant and goes back to before the note was ever synced, and the
+   *  account's, which is the only one another machine can see. `by` is the device
+   *  that wrote an account version, which is the whole of what a row has to say
+   *  about where it came from. */
+  interface Version {
+    at: number
+    size: number
+    /** The device's handle on it, or null for one the account holds. */
+    path: string | null
+    by: string
+  }
+
   let { open = $bindable(false) }: { open?: boolean } = $props()
 
-  let snapshots = $state<Snapshot[]>([])
-  let selected = $state<Snapshot | null>(null)
+  let versions = $state<Version[]>([])
+  let selected = $state<Version | null>(null)
   let preview = $state('')
   /** Which tab the version on show was read for. A version belongs to one note,
    *  and the sheet stays open while tabs can be switched under it, so restoring
@@ -40,26 +58,58 @@
 
     const path = workspace.active?.path
     if (!path) {
-      snapshots = []
+      versions = []
       return
     }
 
     let current = true
 
-    void invoke<Snapshot[]>('list_snapshots', { path })
+    void listed(path)
       .then((found) => {
         if (!current) return
-        snapshots = found
+        versions = found
         selected = found[0] ?? null
       })
       .catch(() => {
-        if (current) snapshots = []
+        if (current) versions = []
       })
 
     return () => {
       current = false
     }
   })
+
+  /** Both histories as one list, newest first.
+   *
+   *  A save the device kept and then pushed is one moment, and it is in both
+   *  lists; the device's copy wins, because reading it costs nothing. Anything
+   *  the account holds that this machine does not - written on the phone, or
+   *  written here before the disk was wiped - comes after it in time order like
+   *  any other version. */
+  async function listed(path: string): Promise<Version[]> {
+    const mine = await invoke<Snapshot[]>('list_snapshots', { path }).catch(() => [])
+    const here: Version[] = mine.map((one) => ({
+      at: one.taken_at,
+      size: one.size,
+      path: one.path,
+      by: '',
+    }))
+
+    const token = account.accountToken
+    const id = sync.tracked(path)?.id
+    if (!token || !id) return here
+
+    const theirs = await api.noteVersions(token, id).catch(() => ({ versions: [] }))
+    const fromAccount = theirs.versions
+      .filter((one) => !here.some((ours) => Math.abs(ours.at - one.at) < TOGETHER))
+      .map((one) => ({ at: one.at, size: one.size, path: null, by: one.by }))
+
+    return [...here, ...fromAccount].sort((one, other) => other.at - one.at)
+  }
+
+  /** How close two versions have to be to be the same save seen twice. A push
+   *  follows the save that caused it by a pass at most. */
+  const TOGETHER = 60 * 1000
 
   $effect(() => {
     const tab = workspace.active
@@ -71,12 +121,7 @@
 
     let current = true
 
-    // The note is named as well as the version, because the browser keeps its
-    // versions in one store and the desktop keeps each note's in a folder.
-    void invoke<string>('read_snapshot', {
-      path: selected.path,
-      notePath: tab?.path ?? '',
-    })
+    void read(selected, tab?.path ?? '')
       .then((body) => {
         if (!current) return
         preview = body
@@ -94,6 +139,22 @@
       current = false
     }
   })
+
+  /** One version's words, from wherever that version is kept. */
+  async function read(version: Version, notePath: string): Promise<string> {
+    // The note is named as well as the version, because the browser keeps its
+    // versions in one store and the desktop keeps each note's in a folder.
+    if (version.path !== null) {
+      return await invoke<string>('read_snapshot', { path: version.path, notePath })
+    }
+
+    const token = account.accountToken
+    const id = sync.tracked(notePath)?.id
+    if (!token || !id) return ''
+
+    const said = await api.noteVersion(token, id, version.at)
+    return said.content
+  }
 
   /** What this version would change, against the note as it stands now. One diff
    *  read two ways: the lines and how many of them there are are the same walk
@@ -136,18 +197,21 @@
   >
     {#if !workspace.active?.path}
       <p class="empty">{t('Save this note first; there is nothing to compare against yet.')}</p>
-    {:else if !snapshots.length}
+    {:else if !versions.length}
       <p class="empty">{t('No earlier versions yet. One is kept each time you save.')}</p>
     {:else}
       <ul class="versions" use:scrollbar>
-        {#each snapshots as snapshot (snapshot.path)}
+        {#each versions as version (version.at)}
           <li>
-            <button
-              class:active={selected?.path === snapshot.path}
-              onclick={() => (selected = snapshot)}
-            >
-              <span>{when(snapshot.taken_at)}</span>
-              <kbd>{Math.max(1, Math.round(snapshot.size / 1024))} kB</kbd>
+            <button class:active={selected?.at === version.at} onclick={() => (selected = version)}>
+              <span>{when(version.at)}</span>
+              <!-- Where it came from, said only where that is worth saying: a
+                   version this machine kept needs no label, and one the account
+                   holds is worth knowing the device for. -->
+              {#if version.by}
+                <em>{version.by}</em>
+              {/if}
+              <kbd>{Math.max(1, Math.round(version.size / 1024))} kB</kbd>
             </button>
           </li>
         {/each}
@@ -273,6 +337,20 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+
+  /* The device a version came from, where the account is what kept it. Quiet
+     and in the middle, so the list still reads as a column of times. */
+  .versions em {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-style: normal;
+    font-size: var(--text-xs);
+    color: var(--muted);
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .preview {

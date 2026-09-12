@@ -1,6 +1,7 @@
 /** Typed client for the sync service. Every call carries the session token;
  *  nothing here touches cookies, so it works the same in the app and the web. */
 
+import { deviceName } from './device'
 import { isRecord, isString, parsed } from './stored'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import type { GraphSettings } from './workspace/graph-settings.svelte'
@@ -200,6 +201,14 @@ export interface RemoteNote {
 
 /** A file a space keeps beside its notes: where it sits, and the blob holding
  *  its bytes. Today a PDF, so that a published note linking one can serve it. */
+/** One version the account holds: when it was written, how big it was, and the
+ *  device that sent it. */
+export interface RemoteVersion {
+  at: number
+  size: number
+  by: string
+}
+
 export interface SpaceFile {
   /** Relative to the space, `/`-separated. */
   path: string
@@ -328,11 +337,14 @@ export class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  options: { method?: string; body?: unknown; token?: string } = {},
+  options: { method?: string; body?: unknown; token?: string; device?: boolean } = {},
 ): Promise<T> {
   const headers: Record<string, string> = {}
   if (options.body !== undefined) headers['content-type'] = 'application/json'
   if (options.token) headers.authorization = `Bearer ${options.token}`
+  // Only where it is the answer to something: a version the account keeps says
+  // which device wrote those words. See device.ts and services/sync/versions.ts.
+  if (options.device) headers['x-nib-device'] = deviceName()
 
   const response = await fetch(`${BASE}${path}`, {
     method: options.method ?? (options.body === undefined ? 'GET' : 'POST'),
@@ -671,6 +683,7 @@ export const api = {
     request<{ note: RemoteNote }>(`/v1/spaces/${spaceId}/notes`, {
       token,
       body: { path, content },
+      device: true,
     }),
 
   readNote: (token: string, id: string) =>
@@ -681,7 +694,25 @@ export const api = {
       method: 'PUT',
       token,
       body: { path, content, baseVersion },
+      device: true,
     }),
+
+  /** Every version the account holds of one note, newest first, and what one of
+   *  them said. The device's own history is `list_snapshots`; see History.svelte,
+   *  which shows the two as one list. */
+  noteVersions: (token: string, id: string) =>
+    request<{ versions: RemoteVersion[] }>(`/v1/notes/${id}/versions`, { token }),
+
+  noteVersion: (token: string, id: string, at: number) =>
+    request<{ at: number; content: string }>(`/v1/notes/${id}/versions/${at}`, { token }),
+
+  /** A space, or one folder of it, back to how it read at a moment. `dry` asks
+   *  what would change and changes nothing. */
+  rollback: (token: string, spaceId: string, at: number, under = '', dry = false) =>
+    request<{ notes: number; paths?: string[]; more?: boolean }>(
+      `/v1/spaces/${spaceId}/rollback`,
+      { token, body: { at, under, dry } },
+    ),
 
   deleteNote: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/notes/${id}`, { method: 'DELETE', token }),
