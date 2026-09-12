@@ -8,6 +8,8 @@ browser's own storage, which is all writing on paper needs.
 What it checks and photographs:
 
     a new page note opens on one A4 page, fitted across the pane
+    the paper stays across the pane when the sidebar narrows it, and a zoom the reader
+      asked for is theirs until they ask for the paper back
     a stroke drawn with a pen lands on the page it was drawn on, in the file
     a finger draws on glass that has never seen a pen, and stops once one has - which
       is the palm rejection, and the one rule a page note must not have its own copy of
@@ -395,6 +397,64 @@ def check_opens(page: Page, label: str) -> None:
         fail(f"[{label}] one page, {page.locator('.pages .sheet').count()} sheets drawn")
 
     shot(page, f"{label}-one-page")
+
+
+def check_refits(page: Page, label: str) -> None:
+    """The paper stays across the pane when the pane changes width, until somebody zooms.
+
+    This is what a sheet of paper means and what every PDF viewer does. It is also the
+    bug this check was written for: the sidebar opening narrowed the pane by three
+    hundred pixels and the page kept the scale it had been fitted at, so a third of the
+    paper was off the side of the view with no way to know it was there."""
+    say("--- the paper stays across the pane ---")
+
+    was = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
+    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.wait_for_timeout(800)
+
+    narrowed = page.evaluate(
+        """() => {
+          const s = window.nibApp.pages.current.store
+          return { scale: s.camera.scale, width: s.pane.width, widest: s.widest }
+        }"""
+    )
+
+    # The paper, plus its two margins, inside the pane it is now in.
+    across = narrowed["widest"] * narrowed["scale"]
+    if across > narrowed["width"]:
+        fail(
+            f"[{label}] the page is {across:.0f}px across a {narrowed['width']:.0f}px pane "
+            f"after the sidebar opened (was {was:.3f}, now {narrowed['scale']:.3f})"
+        )
+
+    shot(page, f"{label}-refitted")
+
+    # And a zoom the reader asked for is theirs: the pane changing must not take it away.
+    store_call(page, "s.zoomBy(2)")
+    theirs = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
+    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    page.wait_for_timeout(800)
+
+    still = page.evaluate("() => window.nibApp.pages.current.store.camera.scale")
+    if abs(still - theirs) > 0.001:
+        fail(f"[{label}] a zoom the reader chose was taken away by a resize ({theirs} -> {still})")
+
+    # Until they ask for the paper back, which hands the fitting over again.
+    store_call(page, "s.fitAgain()")
+    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.wait_for_timeout(800)
+
+    after = page.evaluate(
+        """() => {
+          const s = window.nibApp.pages.current.store
+          return { scale: s.camera.scale, width: s.pane.width, widest: s.widest }
+        }"""
+    )
+    if after["widest"] * after["scale"] > after["width"]:
+        fail(f"[{label}] Fit did not hand the fitting back")
+
+    page.evaluate("() => { window.nibApp.workspace.panel = null }")
+    page.wait_for_timeout(500)
 
 
 def check_pen(page: Page, cdp, label: str) -> None:
@@ -909,6 +969,7 @@ def drive(browser, theme: str) -> None:
         opened(page, theme, device="tablet")
 
         check_opens(page, theme)
+        check_refits(page, theme)
         check_pen(page, cdp, theme)
         check_palm(page, cdp, theme)
         check_rulings(page, theme)

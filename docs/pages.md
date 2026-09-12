@@ -145,7 +145,8 @@ One engine, one code path. `Pages.svelte` composes the canvas's own parts:
 | Palm rejection | `Contacts` and `inks` in `canvas/contacts.ts` and `canvas/pointer.ts` |
 | The store | `PagesStore extends CanvasStore` |
 
-`PagesStore` is about eighty lines and overrides two methods. The canvas store
+`PagesStore` is two hundred lines, half of them the camera arithmetic that holds the
+view to the column, and it overrides three methods. The canvas store
 grew one `parse`/`serialise` pair for it - additively, tests unchanged - so the
 one edit per gesture, the one undo step, the one debounced write, the room binding
 and the merge-on-arrival are all inherited rather than copied. Undo is the app's
@@ -236,13 +237,13 @@ pdf-lib's low-level API; that is a decision, not an oversight.
 
 ### The other apps' formats
 
-Asked honestly, after looking: **none of the five can be written or read**, and
-none of them for the same reason twice.
+Asked honestly, after looking: **not one of the five hands over its handwriting**,
+and none of them for the same reason twice.
 
 | App | Format | Documented? | Verdict |
 | --- | --- | --- | --- |
 | Samsung Notes | `.snb`, `.sdoc`/`.sdocx` | No published specification. `.snb` is Samsung's own container; the newer `.sdoc` family replaced it and is undocumented too. Samsung Notes itself exports PDF, Word, PowerPoint, images. | **Cannot.** Nothing to write against but a reverse-engineering effort we would have to do and then maintain against an app that has already changed format once. Import a PDF instead - which is what Samsung Notes exports. |
-| Apple Notes | SQLite + protobuf inside the app container | No specification at all, and the store is sandboxed where only Notes can reach it. The Import sheet already says so. | **Cannot.** Export from Notes first. |
+| Apple Notes | `NoteStore.sqlite` + protobuf in the app's group container | No specification; what everybody does instead is read the database, which is what nib's own Apple Notes import does on macOS (see `import/apple.ts`). The *words* therefore already come over. A **drawing** in a note is a separate proprietary blob in that database and is not read by it. | **The prose, yes, already. The handwriting, no.** Nothing documents the drawing blob, so a scribble in Apple Notes arrives as a note without its scribble. The road for that one is Apple's own PDF-per-note, imported as pages. |
 | OneNote | `.one` (MS-ONE / MS-ONESTORE) | *Genuinely published* by Microsoft as an Open Specification - the one on this list that is. But it is a large binary revision-store format, and the ink in it is `PictureContainer`/ink-stroke structures that would need their own reader and writer. | **Not attempted.** Possible in principle; a batch of its own, not a row in this one. The HTML export path already exists (`import/read.ts` detects OneNote HTML). |
 | GoodNotes | `.goodnotes` / `.note` | No published specification. | **Cannot.** GoodNotes exports PDF. |
 | Notability | `.note` | No published specification. | **Cannot.** Notability exports PDF. |

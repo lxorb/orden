@@ -31,7 +31,7 @@
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import PagesPage from './PagesPage.svelte'
-  import { graphPoint, zoomed } from './camera'
+  import { graphPoint } from './camera'
   import { toolPressed } from './canvas/actions'
   import { movedBy, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
@@ -98,10 +98,11 @@
    *  and not ink. Pages draw themselves; see PagesPage.svelte. */
   const cards = $derived(canvas.nodes.filter((node) => node.type !== 'page'))
 
-  /** How big the pane is, which every sum about the view needs and only a component
-   *  can measure. */
+  /** How big the pane is, which every sum about the view needs and only a component can
+   *  measure. The paper stays fitted across it until the reader zooms: the sidebar
+   *  opening must not push the page off the side of the pane. See `measured`. */
   $effect(() => {
-    store.pane = { width, height }
+    store.measured(width, height)
   })
 
   /** The status bar's counter and the outline panel's thumbnails are elsewhere in the
@@ -503,7 +504,7 @@
       const box = host?.getBoundingClientRect()
       const x = event.clientX - (box?.left ?? 0)
       const y = event.clientY - (box?.top ?? 0)
-      store.camera = store.held(zoomed(camera, width, height, x, y, Math.exp(-event.deltaY / 400)))
+      store.zoomAt({ x, y }, Math.exp(-event.deltaY / 400))
       return
     }
 
@@ -562,13 +563,20 @@
   }
 </script>
 
+<!-- Named by how much paper is on it rather than by what it is, the way the canvas is
+     named by what is on the plane: "Pages" alone says nothing a reader could act on.
+     `role="application"` is what lets the paper keep its own keyboard - one letter per
+     tool, Page up and Page down to turn - and it is also what stops a reader browsing
+     the sheets, so the label is the whole of what is said about them. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="pages"
   bind:this={host}
   tabindex="0"
   role="application"
-  aria-label={t('Pages')}
+  aria-roledescription={t('Pages')}
+  aria-label={t('{count} pages', { count: pages.length })}
   {onpointerdown}
   {onpointermove}
   {onpointerup}
@@ -628,7 +636,7 @@
     onredo={() => store.redo()}
     onerase={() => store.edit({ ...canvas, ink: [] })}
     onzoom={(by: number) => store.zoomBy(by)}
-    onfit={() => store.fitWidth()}
+    onfit={() => store.fitAgain()}
   />
 </div>
 

@@ -41,6 +41,35 @@ export class PagesStore extends CanvasStore {
    *  nowhere near the pane, and this is the thing they can both reach. */
   pane = $state.raw<{ width: number; height: number }>({ width: 0, height: 0 })
 
+  /** Whether the reader has chosen a zoom of their own.
+   *
+   *  Until they have, the paper stays fitted across the pane: the sidebar opening, a
+   *  pane splitting, a phone turning, a window dragged narrower. That is what a page is
+   *  - a sheet you are reading, not a thing at a coordinate - and it is what every PDF
+   *  viewer does. Once somebody has zoomed in on a corner of a diagram, the zoom is
+   *  theirs and nothing takes it off them.
+   *
+   *  A canvas has no equivalent, and rightly: an endless plane has no width to fit. */
+  private chose = false
+
+  /** The pane's new size, and the paper still fitted across it if nobody has said
+   *  otherwise. Told by the surface on every resize; see Pages.svelte. */
+  measured(width: number, height: number) {
+    const was = this.pane
+    if (was.width === width && was.height === height) return
+
+    this.pane = { width, height }
+    if (this.chose || !width || !height || !this.widest) return
+    // Only once there is something to fit: a note whose pages have not arrived yet is
+    // framed by the surface when they do.
+    if (this.framed) this.fitWidth()
+  }
+
+  /** A zoom the reader asked for, by whichever road. From here on the scale is theirs. */
+  private theirs() {
+    this.chose = true
+  }
+
   /** The pages, in the order they turn. Derived rather than held: the canvas is
    *  the state, and a second list of the same pages is a second thing to keep in
    *  step. */
@@ -132,10 +161,25 @@ export class PagesStore extends CanvasStore {
   }
 
   /** In or out about the middle of the view, which is what the bar's two buttons
-   *  ask for. */
+   *  ask for. From here on the zoom is the reader's. */
   zoomBy(by: number) {
     const { width, height } = this.pane
+    this.theirs()
     this.camera = this.held(zoomed(this.camera, width, height, width / 2, height / 2, by))
+  }
+
+  /** In or out about a point: a pinch, or Ctrl and the wheel. Also theirs. */
+  zoomAt(at: { x: number; y: number }, by: number) {
+    const { width, height } = this.pane
+    this.theirs()
+    this.camera = this.held(zoomed(this.camera, width, height, at.x, at.y, by))
+  }
+
+  /** Back to the paper across the pane, which is what the bar's fit button asks for -
+   *  and it hands the scale back, so the pane resizing keeps it fitted again. */
+  fitAgain() {
+    this.chose = false
+    this.fitWidth()
   }
 
   /** An edit, with the long pages grown to hold what is now on them.
