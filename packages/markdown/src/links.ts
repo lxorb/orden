@@ -15,6 +15,8 @@
  *  Imported on its own - `@nib/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
+import { closesFence, fenceMark } from './fences'
+
 /** What one link between notes says. */
 export interface Wikilink {
   /** The note it names, as written: `Note`, `folder/Note` or `Note.md`. Empty
@@ -58,9 +60,6 @@ const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${INNER})\\]\\]`, 'g')
  *  target names a note rather than the web is decided by `isNoteTarget`. */
 const MARKDOWN_LINK =
   /(?<!\\)(!?)\[((?:[^[\]\\]|\\.)*)\]\(\s*(?:<([^<>\n]*)>|([^\s()]+))\s*(?:"[^"\n]*"|'[^'\n]*')?\s*\)/g
-
-/** A fence opening or closing a code block. */
-const FENCE = /^\s{0,3}(?:```|~~~)/
 
 /** A block's name: `^abc123` at the end of it, on its own or after a space. */
 const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*$/
@@ -324,24 +323,37 @@ interface Row {
   code: boolean
 }
 
-/** Every line of some markdown, so the three walks here do not each carry their
- *  own fence state.
+/** Every line of some markdown, so the walks here do not each carry their own
+ *  fence state.
  *
  *  Walked with indexOf rather than split, because this runs over every note in a
  *  space: a large note should not be copied into an array of lines only to be
- *  thrown away again. */
+ *  thrown away again.
+ *
+ *  Which lines are a fence is fences.ts, shared with the comment stripper and the
+ *  deck's break scanner, so all three step over the same code. A block closes on
+ *  its own mark and nothing else: a line of tildes inside a backtick block is
+ *  code being shown, and reading it as the end of the block took the rest of the
+ *  note for prose. */
 function* lines(text: string): Generator<Row> {
-  let fenced = false
+  let fence: string | null = null
   let line = 0
   let at = 0
 
   for (;;) {
     const end = text.indexOf('\n', at)
     const row = text.slice(at, end === -1 ? text.length : end)
-    const fence = FENCE.test(row)
-    if (fence) fenced = !fenced
 
-    yield { text: row, from: at, line, code: fenced || fence }
+    let delimiter = false
+    if (fence === null) {
+      fence = fenceMark(row)
+      delimiter = fence !== null
+    } else if (closesFence(row, fence)) {
+      fence = null
+      delimiter = true
+    }
+
+    yield { text: row, from: at, line, code: delimiter || fence !== null }
 
     if (end === -1) break
     at = end + 1
@@ -485,16 +497,21 @@ function headingSection(source: string, wanted: string): string | null {
   const needle = wanted.trim().toLowerCase()
   const slug = slugify(wanted)
 
-  let fenced = false
+  let fence: string | null = null
   let start = -1
   let level = 0
 
   for (const [index, line] of lines.entries()) {
-    if (FENCE.test(line)) {
-      fenced = !fenced
+    if (fence !== null) {
+      if (closesFence(line, fence)) fence = null
       continue
     }
-    if (fenced) continue
+
+    const mark = fenceMark(line)
+    if (mark) {
+      fence = mark
+      continue
+    }
 
     const [, hashes = '', text = ''] = HEADING.exec(line) ?? []
     if (!hashes) continue

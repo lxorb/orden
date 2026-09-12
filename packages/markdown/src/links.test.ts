@@ -322,6 +322,16 @@ describe('finding the links in a note', () => {
 
   test('a fenced block holds no links', () => {
     expect(findLinks('```\n[[Note]]\n```\n[[Real]]').map((one) => one.target)).toEqual(['Real'])
+  })
+
+  test('a block closes on its own mark and on nothing else', () => {
+    // A block showing tildes, and a block naming a language: neither of those
+    // lines ends the block above it, so the links in between are still code.
+    const shown = '```\n~~~\n[[Inside]]\n~~~\n```\n[[Real]]'
+    expect(findLinks(shown).map((one) => one.target)).toEqual(['Real'])
+
+    const named = '```\n[[One]]\n```ts\n[[Two]]\n```\n[[Real]]'
+    expect(findLinks(named).map((one) => one.target)).toEqual(['Real'])
     expect(findLinks('~~~md\n[[Note]]\n~~~').map((one) => one.target)).toEqual([])
   })
 
